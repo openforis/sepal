@@ -1,10 +1,10 @@
 .container {
     --half-margin-size: 1px;
-    --half-center-handle-size: 20px;
+    --half-center-handle-size: 12px;
     --half-axis-handle-size: 1px;
     --handle-comfort-margin: -.25rem;
-    --idle-color: gray;
-    --dragging-color: white;
+    --idle-color: var(--wireframe-color);
+    --dragging-color: #a0a0a0;
     --color: var(--idle-color);
 
     /* --x and --y are injected */
@@ -23,11 +23,11 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    pointer-events: all;
+    pointer-events: none;
 }
 
 .container.initialized {
-    background-color: var(--idle-color);
+    /* background-color: var(--idle-color); */
 }
 
 .container.dragging {
@@ -37,7 +37,12 @@
 /* areas */
 
 .areas {
-    pointer-events: all;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
 }
 
 .container.dragging .areas:after {
@@ -66,6 +71,9 @@
     right: 0;
     user-select: none;
     clip-path: inset(var(--clip-top) var(--clip-right) var(--clip-bottom) var(--clip-left));
+    display: flex;
+    flex-direction: column;
+    pointer-events: none;
 }
 
 .area.top {

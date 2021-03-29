@@ -1,8 +1,9 @@
 import {ReplaySubject} from 'rxjs'
+import {SplitContent} from 'widget/splitContent'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {debounceTime, finalize} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, finalize} from 'rxjs/operators'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
 import {mapBoundsTag, mapTag} from 'tag'
@@ -13,24 +14,22 @@ import React from 'react'
 import _ from 'lodash'
 import styles from './map.module.css'
 import withSubscriptions from 'subscription'
+const log = getLogger('map')
 
 const MapContext = React.createContext()
-
 const {Provider} = MapContext
 
 export const withMap = withContext(MapContext)
-
-const log = getLogger('map')
 
 class _Map extends React.Component {
     updateBounds$ = new Subject()
     linked$ = new ReplaySubject()
 
-    map = React.createRef()
-
     state = {
+        maps: {},
+        areas: null,
+        selectedArea: null,
         mapId: null,
-        map: null,
         googleMapsApiKey: null,
         norwayPlanetApiKey: null,
         metersPerPixel: null,
@@ -38,28 +37,132 @@ class _Map extends React.Component {
         linked: null
     }
 
+    constructor() {
+        super()
+        this.toggleLinked = this.toggleLinked.bind(this)
+        this.setAreas = this.setAreas.bind(this)
+    }
+
+    allMaps(callback) {
+        const {maps} = this.state
+        _.forEach(maps, ({map, listeners, subscriptions}, area) => {
+            callback({area, map, listeners, subscriptions})
+        })
+    }
+
+    // aMap(callback) {
+    //     const {maps} = this
+    //     const area = _.head(_.keys(maps))
+    //     const map = maps[area]
+    //     callback(map, area)
+    // }
+
+    removeArea(area) {
+        const {maps} = this.state
+        const {map, listeners, subscriptions} = maps[area]
+        const {google} = map.getGoogle()
+        _.forEach(listeners, listener =>
+            google.maps.event.removeListener(listener)
+        )
+        _.forEach(subscriptions, subscription =>
+            subscription.unsubscribe()
+        )
+    }
+
+    synchronizeOut(area, map) {
+        const {center, zoom} = map.getView()
+        this.allMaps(({map, area: currentArea}) => {
+            if (currentArea !== area) {
+                map.setView({center, zoom})
+            }
+        })
+        this.updateScale(map.getMetersPerPixel())
+        this.updateBounds$.next({center, zoom})
+    }
+
+    synchronizeIn({center, zoom}) {
+        this.allMaps(({map}) => map.setView({center, zoom}))
+    }
+
+    setVisibility(visible) {
+        this.allMaps(({map}) => map.setVisibility(visible))
+    }
+
+    setAreas(areas) {
+        const {areas: prevAreas} = this.state
+        if (!_.isEmpty(_.xor(areas, prevAreas))) {
+            log.debug('Areas have changed', prevAreas, '->', areas)
+            const selectedArea = _.head(areas)
+            this.setState({areas, selectedArea, maps: {}})
+        }
+    }
+
+    renderArea(area) {
+        return (
+            <div
+                className={[styles.split, styles[area]].join(' ')}
+                ref={element => this.createArea(area, element)}
+            />
+        )
+    }
+
+    createArea(area, element) {
+        const {maps} = this.state
+        if (!maps[area]) {
+            log.debug('Creating new area', area)
+            const {mapsContext: {createSepalMap}} = this.props
+            const map = createSepalMap(element)
+            const {googleMap} = map.getGoogle()
+
+            const zoomArea$ = map.getZoomArea$()
+
+            const listeners = [
+                googleMap.addListener('center_changed', () => this.synchronizeOut(area, map)),
+                googleMap.addListener('zoom_changed', () => this.synchronizeOut(area, map))
+            ]
+
+            const subscriptions = [
+                zoomArea$.subscribe(zoomArea => this.setState({zoomArea}))
+            ]
+
+            maps[area] = {map, listeners, subscriptions}
+            this.setState({maps})
+        }
+    }
+
+    setSelected(selectedArea) {
+        log.debug('selected area:', selectedArea)
+        this.setState({selectedArea})
+    }
+
+    setLinked(linked) {
+        this.setState({linked}, () => this.linked$.next(linked))
+    }
+
     toggleLinked() {
         const {linked: wasLinked} = this.state
         const linked = !wasLinked
-        this.setState({linked})
-    }
-
-    addListener(event, listener) {
-        const {map} = this.state
-        const {google, googleMap} = map.getGoogle()
-        const listenerId = googleMap.addListener(event, listener)
-        return {
-            remove: () => google.maps.event.removeListener(listenerId)
-        }
+        this.setLinked(linked)
     }
 
     render() {
         const {children} = this.props
-        const {map, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
-        const toggleLinked = this.toggleLinked.bind(this)
+        const {areas, selectedArea, maps, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
+
+        const areaMap = _.transform(areas, (areaMap, area) => {
+            areaMap[area] = this.renderArea(area)
+        }, {})
+
+        const map = selectedArea && !_.isEmpty(maps) && maps[selectedArea]
+            ? maps[selectedArea].map
+            : null
+
+        const toggleLinked = this.toggleLinked
+        const setAreas = this.setAreas
+
         return (
-            <Provider value={{map, googleMapsApiKey, norwayPlanetApiKey, toggleLinked, linked, metersPerPixel, zoomArea}}>
-                <div ref={this.map} className={styles.map}/>
+            <Provider value={{map, googleMapsApiKey, norwayPlanetApiKey, toggleLinked, linked, metersPerPixel, zoomArea, setAreas, areas}}>
+                <SplitContent areaMap={areaMap}/>
                 <div className={styles.content}>
                     {map ? children : null}
                 </div>
@@ -71,88 +174,56 @@ class _Map extends React.Component {
         this.setState({metersPerPixel})
     }
 
+    updateLinked() {
+        const {linked} = this.state
+        this.linked$.next(linked)
+    }
+
     componentDidMount() {
-        const {mapsContext: {createSepalMap, createMapContext}, onEnable, onDisable} = this.props
+        const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
         const {mapId, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked} = createMapContext()
-        const map = createSepalMap(this.map.current)
-        const zoomArea$ = map.getZoomArea$()
+
+        this.setAreas(['top', 'bottom-left', 'bottom-right'])
+        // this.setAreas(['center'])
+
+        this.setLinked(getProcessTabsInfo().single)
 
         this.setState({
             mapId,
-            map,
             googleMapsApiKey,
-            norwayPlanetApiKey,
-            linked: getProcessTabsInfo().single
+            norwayPlanetApiKey
         }, () => {
-            this.subscribe({zoomArea$, bounds$, updateBounds, notifyLinked})
-            onEnable(() => map.setVisibility(true))
-            onDisable(() => map.setVisibility(false))
+            this.subscribe({bounds$, updateBounds, notifyLinked})
+            onEnable(() => this.setVisibility(true))
+            onDisable(() => this.setVisibility(false))
         })
-    }
-
-    componentDidUpdate(prevProps, prevState) {
-        const {linked} = this.state
-        const {linked: wasLinked} = prevState
-        if (!linked && wasLinked) {
-            this.linked$.next(false)
-        } else {
-            if (linked && !wasLinked) {
-                this.linked$.next(true)
-            }
-            this.updateBounds$.next()
-        }
     }
 
     componentWillUnmount() {
-        const {map} = this.state
-        map.removeAllLayers()
-        this.unsubscribe()
+        this.allMaps(({area}) => {
+            this.removeArea(area)
+        })
     }
 
-    subscribe({zoomArea$, bounds$, updateBounds, notifyLinked}) {
-        const {map} = this.state
+    subscribe({bounds$, updateBounds, notifyLinked}) {
         const {addSubscription} = this.props
-        const {googleMap} = map.getGoogle()
-
-        this.centerChangedListener = this.addListener('center_changed', () => {
-            this.updateScale(map.getMetersPerPixel())
-            this.updateBounds$.next()
-        })
-
-        this.zoomChangedListener = this.addListener('zoom_changed', () => {
-            this.updateScale(map.getMetersPerPixel())
-            this.updateBounds$.next()
-        })
-
         addSubscription(
-            zoomArea$.subscribe(
-                zoomArea => this.setState({zoomArea})
-            ),
             bounds$.subscribe(
                 bounds => {
                     const {linked} = this.state
                     if (bounds && linked) {
-                        const {center, zoom} = bounds
                         log.debug(`${mapTag(this.state.mapId)} received ${mapBoundsTag(bounds)}`)
-                        const currentCenter = googleMap.getCenter()
-                        const currentZoom = googleMap.getZoom()
-                        if (!currentCenter || !currentCenter.equals(center)) {
-                            googleMap.setCenter(center)
-                        }
-                        if (!currentZoom || currentZoom !== zoom) {
-                            googleMap.setZoom(zoom)
-                        }
+                        this.synchronizeIn(bounds)
                     }
                 }
             ),
             this.updateBounds$.pipe(
-                debounceTime(50)
+                debounceTime(50),
+                distinctUntilChanged()
             ).subscribe(
-                () => {
+                ({center, zoom}) => {
                     const {linked} = this.state
                     if (linked) {
-                        const center = googleMap.getCenter()
-                        const zoom = googleMap.getZoom()
                         if (center && zoom) {
                             const bounds = {center, zoom}
                             log.debug(`${mapTag(this.state.mapId)} reporting ${mapBoundsTag(bounds)}`)
@@ -162,6 +233,7 @@ class _Map extends React.Component {
                 }
             ),
             this.linked$.pipe(
+                distinctUntilChanged(),
                 finalize(() => notifyLinked(false))
             ).subscribe(
                 linked => {
@@ -170,11 +242,6 @@ class _Map extends React.Component {
                 }
             )
         )
-    }
-
-    unsubscribe() {
-        this.centerChangedListener && this.centerChangedListener.remove()
-        this.zoomChangedListener && this.zoomChangedListener.remove()
     }
 }
 

@@ -5,7 +5,7 @@ import {msg} from 'translate'
 import Notifications from 'widget/notifications'
 import _ from 'lodash'
 
-const log = getLogger('map')
+const log = getLogger('sepalMap')
 
 export class SepalMap {
     constructor(google, googleMap) {
@@ -44,6 +44,33 @@ export class SepalMap {
         const listenerId = googleMap.addListener(event, listener)
         return {
             remove: () => google.maps.event.removeListener(listenerId)
+        }
+    }
+
+    // View
+
+    getView() {
+        const center = this.getCenter()
+        const zoom = this.getZoom()
+        return {center, zoom}
+    }
+
+    setView({center, zoom}) {
+        this.setCenter(center)
+        this.setZoom(zoom)
+    }
+
+    // Center
+
+    getCenter() {
+        const {googleMap} = this
+        return googleMap.getCenter()
+    }
+
+    setCenter(center) {
+        const {googleMap} = this
+        if (!googleMap.getCenter().equals(center)) {
+            googleMap.setCenter(center)
         }
     }
 

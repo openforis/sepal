@@ -2,12 +2,14 @@ import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
 import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, mapTo, scan, switchMap} from 'rxjs/operators'
+import {getLogger} from 'log'
 import Hammer from 'hammerjs'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './splitContent.module.css'
 import withSubscriptions from 'subscription'
+const log = getLogger('splitContent')
 
 const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
 
@@ -17,7 +19,7 @@ const SMOOTHING_FACTOR = .2
 
 const resize$ = new Subject()
 
-class _SplitContent extends React.Component {
+class _SplitContent extends React.PureComponent {
     centerHandle = React.createRef()
     verticalHandle = React.createRef()
     horizontalHandle = React.createRef()
@@ -72,8 +74,8 @@ class _SplitContent extends React.Component {
     }
 
     renderAreas() {
-        const {areas} = this.props
-        return areas.map(area => this.renderArea(area))
+        const {areaMap} = this.props
+        return _.map(areaMap, (content, placement) => this.renderArea({placement, content}))
     }
 
     renderArea({placement, content}) {
@@ -142,21 +144,23 @@ class _SplitContent extends React.Component {
     }
 
     getInterferingPlacements(placements) {
-        const {areas} = this.props
-        return _.chain(areas)
-            .map(area => area.placement)
+        const {areaMap} = this.props
+        return _.chain(areaMap)
+            .keys()
             .intersection(placements)
             .value()
     }
 
     static getDerivedStateFromProps(props) {
-        const hasSplit = (areas, nonSplitPlacements) =>
-            _.some(areas, ({placement}) =>
+        const {areaMap} = props
+
+        const hasSplit = (areaMap, nonSplitPlacements) =>
+            _.some(_.keys(areaMap), placement =>
                 !nonSplitPlacements.includes(placement)
             )
 
-        const calculateSplit = areas => {
-            const areaCount = areas.length
+        const calculateSplit = areaMap => {
+            const areaCount = _.keys(areaMap).length
             if (areaCount > 2) {
                 return {
                     vertical: true,
@@ -166,8 +170,8 @@ class _SplitContent extends React.Component {
             }
             if (areaCount === 2) {
                 return {
-                    vertical: hasSplit(areas, ['center', 'top', 'bottom']),
-                    horizontal: hasSplit(areas, ['center', 'left', 'right']),
+                    vertical: hasSplit(areaMap, ['center', 'top', 'bottom']),
+                    horizontal: hasSplit(areaMap, ['center', 'left', 'right']),
                     center: true
                 }
             }
@@ -179,13 +183,11 @@ class _SplitContent extends React.Component {
         }
     
         return {
-            handle: calculateSplit(props.areas)
+            handle: calculateSplit(areaMap)
         }
     }
 
-    componentDidMount() {
-        this.initializeResizeDetector()
-
+    initialize() {
         const directionConstraint = () => {
             if (!this.horizontalHandle.current) {
                 return 'y'
@@ -210,6 +212,22 @@ class _SplitContent extends React.Component {
             direction: 'x',
             lockDirection: 'y'
         })
+    }
+
+    componentDidMount() {
+        this.initializeResizeDetector()
+        this.initialize()
+    }
+
+    componentDidUpdate(prevProps) {
+        const {areaMap: prevAreaMap} = prevProps
+        const {areaMap} = this.props
+        const currentPlacements = _.keys(areaMap)
+        const previousPlacements = _.keys(prevAreaMap)
+        if (!_.isEmpty(_.xor(currentPlacements, previousPlacements))) {
+            log.debug('areas have changed:', {previousPlacements, currentPlacements})
+            this.initialize()
+        }
     }
 
     initializeResizeDetector() {
@@ -333,11 +351,5 @@ export const SplitContent = compose(
 )
 
 SplitContent.propTypes = {
-    areas: PropTypes.arrayOf(
-        PropTypes.shape({
-            content: PropTypes.any.isRequired,
-            placement: PropTypes.oneOf(['center', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-left', 'left', 'top-left']).isRequired,
-            className: PropTypes.string
-        })
-    )
+    areaMap: PropTypes.object
 }

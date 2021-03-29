@@ -25,3 +25,9 @@
     left: 0;
     right: 0;
 }
+
+.split {
+    display: flex;
+    flex-grow: 1;
+    pointer-events: all;
+}
