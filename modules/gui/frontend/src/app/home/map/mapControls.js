@@ -1,4 +1,6 @@
 import {Button} from 'widget/button'
+import {Layout} from 'widget/layout'
+import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {getLogger} from 'log'
@@ -6,7 +8,21 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './mapControls.module.css'
+
 const log = getLogger('mapControls')
+
+const Info = () =>
+    <Layout>
+        <Widget label='one'>
+            Some info here
+        </Widget>
+        <Widget label='two'>
+            Some other info here
+        </Widget>
+        <Widget label='three'>
+            Last piece of info here
+        </Widget>
+    </Layout>
 
 class _MapControls extends React.Component {
     render() {
@@ -19,6 +35,8 @@ class _MapControls extends React.Component {
                         shape='pill'
                         icon='cog'
                         label='Layer'
+                        tooltip={<Info/>}
+                        tooltipDelay={0}
                         onClick={() => log.debug('options', area)}
                     />
                 </div>

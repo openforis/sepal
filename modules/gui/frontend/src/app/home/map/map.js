@@ -25,17 +25,16 @@ const {Provider} = MapContext
 
 export const withMap = withContext(MapContext)
 
-const mapRecipeToProps = recipe => {
-    const emptyLayer = {
-        'center': {
-            imageLayer: null,
-            featureLayers: []
-        }
-    }
-    return {
-        layers: selectFrom(recipe, 'layers') || emptyLayer
+const emptyLayer = {
+    'center': {
+        imageLayer: null,
+        featureLayers: []
     }
 }
+
+const mapRecipeToProps = recipe => ({
+    layers: selectFrom(recipe, 'layers') || emptyLayer
+})
 
 class _Map extends React.Component {
     updateBounds$ = new Subject()
