@@ -43,12 +43,12 @@ class _OpticalMosaic extends React.Component {
                         <MosaicToolbar/>
                         {initialized
                             ? <React.Fragment>
-                                <OpticalMosaicPreview/>
+                                {/*<OpticalMosaicPreview/>*/}
                                 <SceneAreas/>
                                 <AutoSelectScenes/>
                                 <SceneSelection/>
                                 <SceneDeselection/>
-                                <BandSelection/>
+                                {/*<BandSelection/>*/}
                             </React.Fragment>
                             : null}
                     </div>
@@ -58,13 +58,16 @@ class _OpticalMosaic extends React.Component {
     }
 
     componentDidMount() {
-        const {map, aoi} = this.props
-        setAoiLayer({
-            map,
-            aoi,
-            // destroy$: componentWillUnmount$, [TODO] check
-            onInitialized: () => map.fitLayer('aoi')
-        })
+        const {map, aoi, recipeId} = this.props
+
+        RecipeActions(recipeId).initializeLayers()
+
+        // setAoiLayer({
+        //     map,
+        //     aoi,
+        //     // destroy$: componentWillUnmount$, [TODO] check
+        //     onInitialized: () => map.fitLayer('aoi')
+        // })
     }
 }
 

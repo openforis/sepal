@@ -3,6 +3,7 @@ import {recipeActionBuilder} from '../../recipe'
 import {selectFrom} from 'stateUtils'
 import _ from 'lodash'
 import api from 'api'
+import guid from 'guid'
 import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -51,6 +52,55 @@ export const RecipeActions = id => {
             .build()
 
     return {
+
+        // image layer source: {id: asdf, type: recipe, recipeId: recipeId}
+        // feature layer sources: [{id: qwer, type: aoi}, {id: zxcv, type: sceneAreas}]
+        // set layout: {center: {sourceId: asdf}}
+        initializeLayers() {
+            const recipeImageLayerSource = {
+                id: guid(),
+                type: 'Recipe',
+                config: {
+                    recipeId: id
+                }
+            }
+            const planetImageLayerSource = {
+                id: guid(),
+                type: 'Planet',
+                config: {}
+            }
+            const googleSatelliteImageLayerSource = {
+                id: guid(),
+                type: 'GoogleSatellite',
+                config: {}
+            }
+            const imageLayerSources = [
+                recipeImageLayerSource,
+                planetImageLayerSource,
+                googleSatelliteImageLayerSource
+            ]
+            const imageLayer = {
+                sourceId: recipeImageLayerSource.id,
+                config: {
+                    recipeId: id
+                }
+            }
+            const layers = {
+                center: {
+                    imageLayer,
+                    featureLayers: [
+                        {type: 'Aoi'}
+                    ]
+                }
+            }
+            setAll('INITIALIZE_LAYER_SOURCES',
+                {
+                    'ui.imageLayerSources': imageLayerSources,
+                    layers
+                },
+                {imageLayerSources}
+            ).dispatch()
+        },
         setSceneAreasShown(shown) {
             return set('SET_SCENE_AREAS_SHOWN', 'ui.sceneAreasShown', shown, {shown})
         },

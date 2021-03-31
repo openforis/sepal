@@ -7,8 +7,10 @@ import {debounceTime, distinctUntilChanged, finalize} from 'rxjs/operators'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
 import {mapBoundsTag, mapTag} from 'tag'
+import {selectFrom} from '../../../stateUtils'
 import {withContext} from 'context'
 import {withMapsContext} from './maps'
+import {withRecipe} from '../body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -20,6 +22,18 @@ const MapContext = React.createContext()
 const {Provider} = MapContext
 
 export const withMap = withContext(MapContext)
+
+const mapRecipeToProps = recipe => {
+    const emptyLayer = {
+        'center': {
+            imageLayer: null,
+            featureLayers: []
+        }
+    }
+    return {
+        layers: selectFrom(recipe, 'layers') || emptyLayer
+    }
+}
 
 class _Map extends React.Component {
     updateBounds$ = new Subject()
@@ -40,7 +54,7 @@ class _Map extends React.Component {
     constructor() {
         super()
         this.toggleLinked = this.toggleLinked.bind(this)
-        this.setAreas = this.setAreas.bind(this)
+        // this.setAreas = this.setAreas.bind(this)
     }
 
     allMaps(callback) {
@@ -88,14 +102,14 @@ class _Map extends React.Component {
         this.allMaps(({map}) => map.setVisibility(visible))
     }
 
-    setAreas(areas) {
-        const {areas: prevAreas} = this.state
-        if (!_.isEmpty(_.xor(areas, prevAreas))) {
-            log.debug('Areas have changed', prevAreas, '->', areas)
-            const selectedArea = _.head(areas)
-            this.setState({areas, selectedArea, maps: {}})
-        }
-    }
+    // setAreas(areas) {
+    //     const {areas: prevAreas} = this.state
+    //     if (!_.isEmpty(_.xor(areas, prevAreas))) {
+    //         log.debug('Areas have changed', prevAreas, '->', areas)
+    //         const selectedArea = _.head(areas)
+    //         this.setState({areas, selectedArea, maps: {}})
+    //     }
+    // }
 
     renderArea(area) {
         return (
@@ -146,22 +160,27 @@ class _Map extends React.Component {
     }
 
     render() {
-        const {children} = this.props
-        const {areas, selectedArea, maps, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
+        const {layers, children} = this.props
 
+        // const {areas, selectedArea, maps, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
+        // const areaMap = _.transform(areas, (areaMap, area) => {
+        //     areaMap[area] = this.renderArea(area)
+        // }, {})
+        // const map = selectedArea && !_.isEmpty(maps) && maps[selectedArea]
+        //     ? maps[selectedArea].map
+        //     : null
+
+        const {maps, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
+        const areas = Object.keys(layers)
         const areaMap = _.transform(areas, (areaMap, area) => {
             areaMap[area] = this.renderArea(area)
         }, {})
-
-        const map = selectedArea && !_.isEmpty(maps) && maps[selectedArea]
-            ? maps[selectedArea].map
-            : null
+        const map = Object.keys(maps).length ? Object.values(maps)[0].map : null
 
         const toggleLinked = this.toggleLinked
-        const setAreas = this.setAreas
-
+        // const setAreas = this.setAreas
         return (
-            <Provider value={{map, googleMapsApiKey, norwayPlanetApiKey, toggleLinked, linked, metersPerPixel, zoomArea, setAreas, areas}}>
+            <Provider value={{map, googleMapsApiKey, norwayPlanetApiKey, toggleLinked, linked, metersPerPixel, zoomArea, areas}}>
                 <SplitContent areaMap={areaMap}/>
                 <div className={styles.content}>
                     {map ? children : null}
@@ -183,7 +202,11 @@ class _Map extends React.Component {
         const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
         const {mapId, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked} = createMapContext()
 
-        this.setAreas(['top', 'bottom-left', 'bottom-right'])
+        // this.setAreas(['top-left', 'top-right', 'bottom-left', 'bottom-right'])
+        // this.setAreas(['top', 'bottom-left', 'bottom-right'])
+        // this.setAreas(['left', 'top-right', 'bottom-right'])
+        // this.setAreas(['left', 'right'])
+        // this.setAreas(['top', 'bottom'])
         // this.setAreas(['center'])
 
         this.setLinked(getProcessTabsInfo().single)
@@ -249,6 +272,7 @@ export const Map = compose(
     _Map,
     connect(),
     withMapsContext(),
+    withRecipe(mapRecipeToProps),
     withSubscriptions()
 )
 
