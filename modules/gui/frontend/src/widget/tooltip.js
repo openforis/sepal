@@ -15,7 +15,7 @@ export default class Tooltip extends React.Component {
                     <RcTooltip
                         overlay={msg}
                         placement={placement}
-                        mouseEnterDelay={delay}
+                        mouseEnterDelay={delay * 1000}
                         trigger={['hover']}
                         {...otherProps}>
                         {children}
@@ -46,5 +46,5 @@ Tooltip.propTypes = {
 Tooltip.defaultProps = {
     placement: 'top',
     disabled: false,
-    delay: .75
+    delay: 750
 }
