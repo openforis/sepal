@@ -92,6 +92,37 @@
     --clip-left: calc(var(--left) + var(--half-margin-size));
 }
 
+.area .view {
+    --margin-top: 0;
+    --margin-bottom: 0;
+    --margin-left: 0;
+    --margin-right: 0;
+
+    position: absolute;
+    top: var(--margin-top);
+    bottom: var(--margin-bottom);
+    left: var(--margin-left);
+    right: var(--margin-right);
+    display: flex;
+    z-index: 1;
+}
+
+.area.top .view {
+    --margin-bottom: calc(var(--bottom) + var(--half-margin-size));
+}
+
+.area.bottom .view {
+    --margin-top: calc(var(--top) + var(--half-margin-size));
+}
+
+.area.left .view {
+    --margin-right: calc(var(--right) + var(--half-margin-size));
+}
+
+.area.right .view {
+    --margin-left: calc(var(--left) + var(--half-margin-size));
+}
+
 /* handle */
 
 .container.initialized .handle {

@@ -74,11 +74,11 @@ class _SplitContent extends React.PureComponent {
     }
 
     renderAreas() {
-        const {areaMap} = this.props
-        return _.map(areaMap, (content, placement) => this.renderArea({placement, content}))
+        const {areas} = this.props
+        return areas.map(area => this.renderArea(area))
     }
 
-    renderArea({placement, content}) {
+    renderArea({placement, content, view}) {
         const {initialized} = this.state
         return (
             <div
@@ -87,8 +87,19 @@ class _SplitContent extends React.PureComponent {
                     styles.area,
                     placement.split('-').map(placement => styles[placement])
                 ]).join(' ')}>
-                {initialized ? content : null}
+                {initialized ? this.renderContent(content, view) : null}
             </div>
+        )
+    }
+
+    renderContent(content, view) {
+        return (
+            <React.Fragment>
+                <div className={styles.view}>
+                    {view}
+                </div>
+                {content}
+            </React.Fragment>
         )
     }
 
@@ -351,5 +362,12 @@ export const SplitContent = compose(
 )
 
 SplitContent.propTypes = {
-    areaMap: PropTypes.object
+    areas: PropTypes.arrayOf(
+        PropTypes.shape({
+            content: PropTypes.any.isRequired,
+            placement: PropTypes.oneOf(['center', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-left', 'left', 'top-left']).isRequired,
+            className: PropTypes.string,
+            view: PropTypes.any
+        })
+    )
 }

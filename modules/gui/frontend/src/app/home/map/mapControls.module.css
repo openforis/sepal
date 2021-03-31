@@ -1,0 +1,11 @@
+.container {
+    display: flex;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.controls {
+    margin: 2rem;
+    pointer-events: all;
+}

@@ -1,3 +1,5 @@
+import {MapArea} from './mapArea'
+import {MapControls} from './mapControls'
 import {ReplaySubject} from 'rxjs'
 import {SplitContent} from 'widget/splitContent'
 import {Subject} from 'rxjs'
@@ -111,12 +113,15 @@ class _Map extends React.Component {
     //     }
     // }
 
-    renderArea(area) {
+    renderMap(area) {
         return (
-            <div
-                className={[styles.split, styles[area]].join(' ')}
-                ref={element => this.createArea(area, element)}
-            />
+            <MapArea area={area} refCallback={element => this.createArea(area, element)}/>
+        )
+    }
+
+    renderMapControls(area) {
+        return (
+            <MapControls area={area}/>
         )
     }
 
@@ -171,17 +176,29 @@ class _Map extends React.Component {
         //     : null
 
         const {maps, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
-        const areas = Object.keys(layers)
-        const areaMap = _.transform(areas, (areaMap, area) => {
-            areaMap[area] = this.renderArea(area)
-        }, {})
+
+        // const areas = Object.keys(layers)
+        // const areaMap = _.transform(areas, (areaMap, area) => {
+        //     areaMap[area] = {
+        //         content: this.renderArea(area),
+        //         view: this.renderControls(area)
+        //     }
+        // }, {})
+
+        const areas = _.map(Object.keys(layers), area => ({
+            placement: area,
+            content: this.renderMap(area),
+            view: this.renderMapControls(area)
+        }))
+
         const map = Object.keys(maps).length ? Object.values(maps)[0].map : null
 
         const toggleLinked = this.toggleLinked
         // const setAreas = this.setAreas
         return (
             <Provider value={{map, googleMapsApiKey, norwayPlanetApiKey, toggleLinked, linked, metersPerPixel, zoomArea, areas}}>
-                <SplitContent areaMap={areaMap}/>
+                <SplitContent areas={areas}/>
+                {/* <SplitContent areaMap={areaMap}/> */}
                 <div className={styles.content}>
                     {map ? children : null}
                 </div>
