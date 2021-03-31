@@ -160,9 +160,9 @@ class _Button extends React.Component {
     }
 
     renderTooltip(contents) {
-        const {tooltip, tooltipPlacement, tooltipDisabled} = this.props
+        const {tooltip, tooltipPlacement, tooltipDisabled, tooltipDelay} = this.props
         return this.active() && tooltip && !tooltipDisabled ? (
-            <Tooltip msg={tooltip} placement={tooltipPlacement}>
+            <Tooltip msg={tooltip} placement={tooltipPlacement} delay={tooltipDelay}>
                 {contents}
             </Tooltip>
         ) : contents
@@ -342,6 +342,7 @@ Button.propTypes = {
     stopPropagation: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.any,
+    tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
     tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
     type: PropTypes.oneOf(['button', 'submit', 'reset']),
