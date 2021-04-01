@@ -153,7 +153,7 @@
         "date": "Debe ser una fecha",
         "email": "Debe ser un email",
         "greaterThan": "Debe ser superior a {minValue}",
-        "int": "debe ser un entero",
+        "int": "debe ser un número entero",
         "lessThan": "Debe ser inferior a {maxValue}",
         "match": "Debe coincidir con {regex}",
         "max": "El valor máximo es {maxValue}",
@@ -223,12 +223,12 @@
     "landing": {
         "features": {
             "apps": {
-                "description": "Amplíe las funciones de SEPAL con aplicaciones de procesamiento de datos personalizadas",
+                "description": "Amplía las funciones de SEPAL con aplicaciones de procesamiento de datos personalizadas",
                 "title": "Extensible con aplicaciones"
             },
             "browse": {
-                "description": "Previsualice y descargue sus productos",
-                "title": "Examine sus datos"
+                "description": "Previsualiza y descargue sus productos",
+                "title": "Examinar datos"
             },
             "process": {
                 "description": "Procesamiento rápido y sencillo de los datos geográficos",
@@ -292,7 +292,7 @@
         },
         "launch": "Iniciar",
         "login": {
-            "button": "Inicio de sesión",
+            "button": "Iniciar sesión",
             "forgot-password-link": "¿Olvidaste tu contraseña?",
             "password": {
                 "invalid": "Nombre de usuario/contraseña no válidos",
@@ -300,7 +300,7 @@
                 "placeholder": "Introduce tu contraseña",
                 "required": "La contraseña es obligatoria"
             },
-            "sign-up": "Inscríbete",
+            "sign-up": "Regístrate",
             "username": {
                 "label": "Nombre de usuario",
                 "placeholder": "Introduce tu nombre de usuario",
@@ -399,13 +399,13 @@
                     }
                 },
                 "zoom": {
-                    "tooltip": "Zoom a la zona"
+                    "tooltip": "Acercar a la zona"
                 },
                 "zoomIn": {
-                    "tooltip": "Acercarse"
+                    "tooltip": "Acercar"
                 },
                 "zoomOut": {
-                    "tooltip": "Alejar el zoom"
+                    "tooltip": "Alejar"
                 }
             },
             "panel": {
@@ -533,15 +533,15 @@
                     "classificationLoadError": "Fallo en la carga de la clasificación: {error}",
                     "form": {
                         "breakpointBands": {
-                            "atLeastOne": "Seleccione al menos una banda",
+                            "atLeastOne": "Selecciona al menos una banda",
                             "label": "Bandas de puntos de quiebre",
                             "probability": "{label} %",
                             "regression": "Regresión"
                         },
                         "classification": {
                             "label": "Clasificación",
-                            "placeholder": "Seleccione una clasificación...",
-                            "tooltip": "(Opcional) Seleccione un flujo de clasificación y aplique el clasificador a cada adquisición de la serie temporal."
+                            "placeholder": "Selecciona una clasificación...",
+                            "tooltip": "(Opcional) Selecciona un flujo de clasificación y aplique el clasificador a cada adquisición de la serie temporal."
                         },
                         "required": "Debes seleccionar una fuente de datos"
                     },
@@ -559,7 +559,7 @@
                 "loadSegments.error": "No se ha podido cargar los segmentos: {error}",
                 "start.tooltip": "Gráfico de series temporales para el pixel"
             },
-            "create": "Rodaja de CCDC",
+            "create": "Corte de CCDC",
             "description": "Crear un corte de un asset de CCDC, para una fecha específica.",
             "mapToolbar": {
                 "centerMap": {
@@ -580,7 +580,7 @@
                     "tooltip": "Ampliar"
                 },
                 "zoomOut": {
-                    "tooltip": "Reducir"
+                    "tooltip": "Alejar"
                 }
             },
             "panel": {
@@ -743,8 +743,8 @@
                 },
                 "source": {
                     "asset": {
-                        "label": "Asset Earth Engine CCDC",
-                        "title": "Asset Earth Engine CCDC"
+                        "label": "Asset de Earth Engine CCDC",
+                        "title": "Asset de Earth Engine CCDC"
                     },
                     "button": "SRC",
                     "form": {
@@ -760,12 +760,12 @@
                         "title": "Flujo de SEPAL CCDC salvada"
                     },
                     "title": "Fuente",
-                    "tooltip": "Seleccione el asset de EE con segmentos de CCDC para cortar"
+                    "tooltip": "Selecciona el asset de EE con segmentos de CCDC para cortar"
                 }
             },
             "preview": {
                 "description": "Vista previa de un corte de CCDC, generado en la nube por EE.",
-                "error": "Fallo en la generación de la vista previa",
+                "error": "Fallo en la generación de vista previa",
                 "initializing": "Cargando vista previa...",
                 "label": "Corte de CCDC",
                 "loading": "Cargado {loaded} de {count} tiles",
@@ -775,27 +775,27 @@
         },
         "classification": {
             "bands": {
-                "class": "Class",
-                "classProbability": "Class probability",
+                "class": "Clase",
+                "classProbability": "Probabilidad de clase",
                 "probability": "{class} %",
-                "regression": "Regression"
+                "regression": "Regresión"
             },
             "collect": {
-                "disable.tooltip": "Disable reference data collection",
-                "enable.tooltip": "Enable reference data collection",
+                "disable.tooltip": "Desactivar la recopilación de datos de referencia",
+                "enable.tooltip": "Activar la recopilación de datos de referencia",
                 "findingNextPoint": {
-                    "error": "Failed to find points: {error}",
-                    "message": "Finding next point...",
-                    "notFound": "Unable to find any points for you. Try to select some yourself.",
-                    "title": "Finding next point..."
+                    "error": "Fallo al encontrar puntos: {error}",
+                    "message": "Buscando el siguiente punto...",
+                    "notFound": "No fue posible encontrar ningún punto, intenta seleccionar alguno manualmente.",
+                    "title": "Buscando el siguiente punto..."
                 }
             },
             "create": "Clasificación",
             "description": "Clasificar imágenes desde SEPAL o Google Earth Engine. Incluir imágenes de múltiples fechas para hacer la detección de cambios.",
             "layers": {
                 "referenceData": {
-                    "description": "Reference data points used to create classification",
-                    "label": "Reference data"
+                    "description": "Puntos de datos de referencia utilizados para crear la clasificación",
+                    "label": "Datos de referencia"
                 }
             },
             "panel": {
@@ -806,11 +806,11 @@
                             "label": "Fuentes",
                             "latitude": {
                                 "label": "Latitud",
-                                "tooltip": "Incluya latitud de cada píxel."
+                                "tooltip": "Incluir latitud de cada píxel."
                             },
                             "terrain": {
                                 "label": "Terreno",
-                                "tooltip": "Incluir datos SRTM."
+                                "tooltip": "Incluir datos de SRTM."
                             },
                             "water": {
                                 "label": "Agua",
@@ -818,8 +818,8 @@
                             }
                         }
                     },
-                    "title": "Auxiliary sources",
-                    "tooltip": "Include Auxiliary image sources in classification"
+                    "title": "Fuentes auxiliares",
+                    "tooltip": "Incluir fuentes de imágenes auxiliares en la clasificación"
                 },
                 "classifier": {
                     "button": "CLS",
@@ -828,189 +828,189 @@
                             "label": "Cart"
                         },
                         "decisionTree": {
-                            "label": "Decision tree",
-                            "placeholder": "Paste or drop file with the decision tree...",
-                            "tooltip": "Paste or drop file with the decision tree"
+                            "label": "Árbol de decisión",
+                            "placeholder": "Pega o  arrastra un archivo con el árbol de decisión...",
+                            "tooltip": "Pega o arrastra un archivo con el árbol de decisión"
                         },
                         "gradientTreeBoost": {
                             "config": {
                                 "loss": {
-                                    "label": "Loss function",
+                                    "label": "Función de pérdida",
                                     "options": {
                                         "Huber.label": "Huber",
-                                        "LeastAbsoluteDeviation.label": "Least abs. deviation",
-                                        "LeastSquares.label": "Least squares"
+                                        "LeastAbsoluteDeviation.label": "Mínima desviación absoluta",
+                                        "LeastSquares.label": "Mínimos cuadrados"
                                     },
-                                    "placeholder": "Loss function...",
-                                    "tooltip": "Loss function for regression"
+                                    "placeholder": "Función de pérdida...",
+                                    "tooltip": "Función de pérdida para regresión"
                                 },
                                 "samplingRate": {
-                                    "label": "Sampling rate",
-                                    "placeholder": "Sampling rate...",
-                                    "tooltip": "The sampling rate for stochastic tree boosting"
+                                    "label": "Tasa de muestreo",
+                                    "placeholder": "Tasa de muestreo...",
+                                    "tooltip": "Tasa de muestreo para el impulso estocástico de árboles"
                                 },
                                 "shrinkage": {
-                                    "label": "Shrinkage",
-                                    "placeholder": "Shrinkage...",
-                                    "tooltip": "The shrinkage parameter in [0, 1] controls the learning rate of procedure"
+                                    "label": "Contracción",
+                                    "placeholder": "Contracción...",
+                                    "tooltip": "El parámetro de contracción en [0, 1] controla la tasa de aprendizaje del procedimiento"
                                 }
                             },
-                            "label": "Gradient tree boost"
+                            "label": "Impulso del gradiente del arbol"
                         },
                         "minimumDistance": {
                             "config": {
                                 "metric": {
-                                    "label": "Metric",
+                                    "label": "Métrica",
                                     "options": {
                                         "cosine": {
-                                            "label": "Spectral angle",
-                                            "tooltip": "Spectral angle from the un-normalized class mean"
+                                            "label": "Ángulo espectral",
+                                            "tooltip": "Ángulo espectral de la media de la clase no normalizada"
                                         },
                                         "euclidean": {
-                                            "label": "Euclidean",
-                                            "tooltip": "Euclidean distance from the un-normalized class mean"
+                                            "label": "Euclidiana",
+                                            "tooltip": "Distancia euclidiana de la media de la clase no normalizada"
                                         },
                                         "mahalanobis": {
                                             "label": "Mahalanobis",
-                                            "tooltip": "Mahalanobis distance from the class mean"
+                                            "tooltip": "Distancia de Mahalanobis de la media de la clase"
                                         }
                                     }
                                 }
                             },
-                            "label": "Min distance"
+                            "label": "Distancia mínima"
                         },
                         "naiveBayes": {
                             "config": {
                                 "lambda": {
                                     "label": "Lambda",
                                     "placeholder": "Lambda...",
-                                    "tooltip": "A smoothing lambda. Used to avoid assigning zero probability to classes not seen during training, instead using lambda / (lambda * nFeatures)"
+                                    "tooltip": "Un lambda suave se usa para evitar asignar probabilidad de cero a clases que no se ven durante el entrenamiento, en su lugar se usa: lambda / (lambda * nFeatures)"
                                 }
                             },
-                            "label": "Naive bayes"
+                            "label": "Bayes ingenuos"
                         },
                         "randomForest": {
                             "config": {
                                 "bagFraction": {
-                                    "label": "Bag fraction",
-                                    "placeholder": "Bag fraction...",
-                                    "tooltip": "The fraction of input to bag per tree"
+                                    "label": "Fracción de bolsa",
+                                    "placeholder": "Fracción de bolsa...",
+                                    "tooltip": "La fracción de entrada a bolsa por árbol."
                                 },
                                 "maxNodes": {
-                                    "label": "Max nodes",
-                                    "placeholder": "Max nodes...",
-                                    "tooltip": "The maximum number of leaf nodes in each tree. If unspecified, defaults to no limit"
+                                    "label": "Nodos máximos",
+                                    "placeholder": "Nodos máximos...",
+                                    "tooltip": "El número máximo de nodos de hojas en cada árbol. Si no se especifica el valor predeterminado no tiene límite"
                                 },
                                 "minLeafPopulation": {
-                                    "label": "Min leaf population",
-                                    "placeholder": "Min leaf population...",
-                                    "tooltip": "Only create nodes whose training set contains at least this many points"
+                                    "label": "Población mínima de hojas",
+                                    "placeholder": "Población mínima de hojas...",
+                                    "tooltip": "Sólo crear nodos en donde el conjunto de entrenamiento contenga al menos esta cantidad de puntos"
                                 },
                                 "numberOfTrees": {
-                                    "label": "Number of trees",
-                                    "placeholder": "Number of trees...",
-                                    "tooltip": "The number of decision trees to create"
+                                    "label": "Número de árboles",
+                                    "placeholder": "Número de árboles...",
+                                    "tooltip": "Número de árboles de decisión a crear"
                                 },
                                 "seed": {
-                                    "label": "Seed",
-                                    "placeholder": "Seed...",
-                                    "tooltip": "The randomization seed"
+                                    "label": "Semilla",
+                                    "placeholder": "Semilla...",
+                                    "tooltip": "Semilla de aleatorización"
                                 },
                                 "variablesPerSplit": {
-                                    "label": "Variables per split",
-                                    "placeholder": "Variables per split...",
-                                    "tooltip": "The number of variables per split. If unspecified, uses the square root of the number of variables."
+                                    "label": "Variables por corte",
+                                    "placeholder": "Variables por corte...",
+                                    "tooltip": "Número de variables por corte. Si no se escpecifica se usa la raíz cuadrada del número de variables."
                                 }
                             },
-                            "label": "Random Forest"
+                            "label": "Bosques aleatorios"
                         },
                         "svm": {
                             "config": {
                                 "coef0": {
                                     "label": "coef₀",
                                     "placeholder": "coef₀...",
-                                    "tooltip": "The coef₀ value in the kernel function"
+                                    "tooltip": "El valor del coef₀ en la función del kernel"
                                 },
                                 "cost": {
-                                    "label": "Cost",
-                                    "placeholder": "Cost...",
-                                    "tooltip": "The cost (C) parameter"
+                                    "label": "Costo",
+                                    "placeholder": "Costo...",
+                                    "tooltip": "El parámetro de costo (C) "
                                 },
                                 "decisionProcedure": {
-                                    "label": "Decision procedure",
+                                    "label": "Procedimiento de decisión",
                                     "options": {
-                                        "Margin.label": "Margin",
-                                        "Voting.label": "Voting"
+                                        "Margin.label": "Márgen",
+                                        "Voting.label": "Votación"
                                     }
                                 },
                                 "degree": {
-                                    "label": "Degree of polynomial",
-                                    "placeholder": "Degree..."
+                                    "label": "Grado de polinomio",
+                                    "placeholder": "Grado..."
                                 },
                                 "gamma": {
                                     "label": "Gamma",
                                     "placeholder": "Gamma...",
-                                    "tooltip": "The gamma value in the kernel function. Defaults to the reciprocal of the number of features"
+                                    "tooltip": "El valor de gamma en la función del kernel. El valor por defecto es el recíproco del número de funciones"
                                 },
                                 "kernelType": {
-                                    "label": "Kernel type",
+                                    "label": "Tipo de kernel",
                                     "options": {
                                         "LINEAR": {
-                                            "label": "Linear",
-                                            "tooltip": "u′×v (work well with large training data sets)"
+                                            "label": "Lineal",
+                                            "tooltip": "u′×v (funciona bien con grandes conjuntos de datos de entrenamiento)"
                                         },
                                         "POLY": {
-                                            "label": "Polynomial",
-                                            "tooltip": "(γ×u′×v + coef₀)ᵈᵉᵍʳᵉᵉ"
+                                            "label": "Polinómica",
+                                            "tooltip": "(γ×u′×v + coef₀)ᵍʳᵃᵈᵒˢ"
                                         },
                                         "RBF": {
-                                            "label": "Gaussian RBD",
-                                            "tooltip": "exp(-γ×|u-v|²) (Handles non-linear problems well)"
+                                            "label": "RBD gaussiano",
+                                            "tooltip": "exp(-γ×|u-v|²) (Maneja bien problemas no lineales)"
                                         },
                                         "SIGMOID": {
-                                            "label": "Sigmoid",
+                                            "label": "Sigmoide",
                                             "tooltip": "tanh(γ×u′×v + coef₀)"
                                         }
                                     },
-                                    "tooltip": "The type of kernel function"
+                                    "tooltip": "Tipo de función del kernel"
                                 },
                                 "nu": {
                                     "label": "nu",
-                                    "placeholder": "nu parameter...",
-                                    "tooltip": "The nu parameter"
+                                    "placeholder": "Parámetro nu...",
+                                    "tooltip": "Parámetro nu"
                                 },
                                 "oneClass": {
-                                    "label": "Class to train on",
-                                    "placeholder": "Class to train on..."
+                                    "label": "Clase para entrenar",
+                                    "placeholder": "Clase para entrenar..."
                                 },
                                 "shrinking": {
-                                    "label": "Shrinking",
+                                    "label": "Contracción",
                                     "options": {
                                         "no.label": "No",
-                                        "yes.label": "Yes"
+                                        "yes.label": "Si"
                                     },
-                                    "tooltip": "Whether to use shrinking heuristics"
+                                    "tooltip": "Usar (o no) heurísticas de reducción"
                                 },
                                 "svmType": {
-                                    "label": "SVM type",
+                                    "label": "Tipo de MVS (SVM)",
                                     "options": {
                                         "C_SVC": {
                                             "label": "C-SVC",
-                                            "tooltip": "Default type"
+                                            "tooltip": "Tipo por defecto"
                                         },
                                         "NU_SVC": {
                                             "label": "NU-SVC",
-                                            "tooltip": "More flexible type"
+                                            "tooltip": "Tipo más flexible"
                                         },
                                         "ONE_CLASS": {
                                             "label": "ONE-CLASS",
-                                            "tooltip": "Train on a single class, using outliers as negative examples"
+                                            "tooltip": "Entrenar en una única clase, usando valores atípicos como ejemplos negativos"
                                         }
                                     },
-                                    "tooltip": "The decision procedure to use for classification"        
+                                    "tooltip": "Procedimiento de decisión para usar en la clasificación"        
                                 }
                             },
-                            "label": "SVM"
+                            "label": "MVS (SVM)"
                         },
                         "type": {
                             "label": "Tipo"
@@ -1106,7 +1106,7 @@
                         },
                         "recipe": {
                             "label": "Flujo de trabajo",
-                            "placeholder": "Seleccione un flujo de trabajo...",
+                            "placeholder": "Selecciona un flujo de trabajo...",
                             "required": "Debes seleccionar un flujo de trabajo"
                         },
                         "section": {
@@ -1127,9 +1127,9 @@
                         "title": "Imagen a clasificar"
                     },
                     "title": "Imágenes para clasificar",
-                    "tooltip": "Seleccione las imágenes a clasificar",
+                    "tooltip": "Selecciona las imágenes a clasificar",
                     "type": {
-                        "ASSET": "Asset Earth Engine",
+                        "ASSET": "Asset de Earth Engine",
                         "RECIPE_REF": "Flujo de trabajo de SEPAL"
                     }
                 },
@@ -1161,7 +1161,7 @@
                             },
                             "valueColumn": {
                                 "label": "Columna de la clase",
-                                "placeholder": "Seleccione la columna que contiene los valores de la clase...",
+                                "placeholder": "Selecciona la columna que contiene los valores de la clase...",
                                 "required": "Debe seleccionarse una columna",
                                 "tooltip": "Seleccionar la columna que contiene los valores de la clase"
                             }
@@ -1187,7 +1187,7 @@
                                     "tooltip": "La localización está en una sola columna GeoJSON"
                                 },
                                 "label": "Tipo de localización",
-                                "tooltip": "Seleccione cómo se representa la localización de los datos de referencia",
+                                "tooltip": "Selecciona cómo se representa la localización de los datos de referencia",
                                 "XY_COLUMNS": {
                                     "label": "Columnas de coordenadas X/Y",
                                     "tooltip": "La localización está en dos columnas de coordenadas X/Y"
@@ -1195,7 +1195,7 @@
                             },
                             "xColumn": {
                                 "label": "Columna de coordenadas X",
-                                "placeholder": "Seleccione la columna"
+                                "placeholder": "Selecciona la columna"
                             },
                             "yColumn": {
                                 "label": "Columna de coordenadas Y",
@@ -1356,7 +1356,7 @@
                         "classColumn": {
                             "label": "Columna de clase",
                             "placeholder": {
-                                "loaded": "Seleccione una columna...",
+                                "loaded": "Selecciona una columna...",
                                 "loading": "Cargando columnas...",
                                 "noFusionTable": "Introduce primero el ID de la tabla de fusión"
                             },
@@ -1378,7 +1378,7 @@
                         "yearColumn": {
                             "label": "Columna de años",
                             "placeholder": {
-                                "loaded": "Seleccione una columna...",
+                                "loaded": "Selecciona una columna...",
                                 "loading": "Cargando columnas...",
                                 "noFusionTable": "Indica primero el ID de la tabla Fusion"
                             },
@@ -1415,10 +1415,10 @@
                 "combinations": "Combinaciones",
                 "metadata": "Metadatos",
                 "panSharpen": "Pan sharpen",
-                "placeholder": "Seleccione las bandas preliminares"
+                "placeholder": "Selecciona las bandas preliminares"
             },
             "create": "Mosaico óptico",
-            "description": "Crear un mosaico con Landsat o Sentinel 2.",
+            "description": "Crear mosaico de Landsat o Sentinel 2.",
             "mapToolbar": {
                 "centerMap": {
                     "tooltip": "Zoom a la zona de interés"
@@ -1461,13 +1461,13 @@
                     "tooltip": "Desenlazar este mapa"
                 },
                 "zoom": {
-                    "tooltip": "Zoom al área"
+                    "tooltip": "Acercar al área"
                 },
                 "zoomIn": {
-                    "tooltip": "Acercarse"
+                    "tooltip": "Acercar"
                 },
                 "zoomOut": {
-                    "tooltip": "Reducir"
+                    "tooltip": "Alejar"
                 }
             },
             "panel": {
@@ -1486,29 +1486,29 @@
                             "area": {
                                 "label": "Provincia/zona",
                                 "placeholder": {
-                                    "loaded": "Seleccione una provincia",
-                                    "loading": "Seleccione una provincia",
+                                    "loaded": "Selecciona una provincia",
+                                    "loading": "Selecciona una provincia",
                                     "noAreas": "Ninguna provincia configurada",
-                                    "noCountry": "Seleccione primero un país"
+                                    "noCountry": "Selecciona primero un país"
                                 },
-                                "title": "Seleccione la zona"
+                                "title": "Selecciona la zona"
                             },
                             "country": {
                                 "label": "País",
                                 "loadFailed": "Imposible cargar los países",
                                 "placeholder": {
-                                    "loaded": "Seleccione un país...",
+                                    "loaded": "Selecciona un país...",
                                     "loading": "Cargando países..."
                                 }
                             },
                             "required": "El país es necesario",
-                            "title": "Seleccione el país/provincia"
+                            "title": "Selecciona el país/provincia"
                         },
                         "eeTable": {
                             "column": {
                                 "label": "Columna",
                                 "placeholder": {
-                                    "loaded": "Seleccione una columna...",
+                                    "loaded": "Selecciona una columna...",
                                     "loading": "Cargando columnas...",
                                     "noEETable": "Indique primero un ID de tabla EE"
                                 },
@@ -1860,7 +1860,7 @@
         },
         "radarMosaic": {
             "create": "Mosaico de radar",
-            "description": "Crea un mosaico con Sentinel 1.",
+            "description": "Crear mosaico de Sentinel 1.",
             "panel": {
                 "dates": {
                     "button": "DAT",
@@ -2045,10 +2045,10 @@
                     "tooltip": "Zoom a la zona"
                 },
                 "zoomIn": {
-                    "tooltip": "Acercarse"
+                    "tooltip": "Acercar"
                 },
                 "zoomOut": {
-                    "tooltip": "Reducir"
+                    "tooltip": "Alejar"
                 }
             },
             "panel": {
@@ -2122,8 +2122,8 @@
                     "form": {
                         "classification": {
                             "label": "Clasificación",
-                            "placeholder": "Seleccione una clasificación...",
-                            "tooltip": "(Opcional) Seleccione un flujo de clasificación y aplique el clasificador a cada adquisición de la serie temporal."
+                            "placeholder": "Selecciona una clasificación...",
+                            "tooltip": "(Opcional) Selecciona un flujo de clasificación y aplique el clasificador a cada adquisición de la serie temporal."
                         },
                         "dataSets": {
                             "optical": {
