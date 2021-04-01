@@ -26,7 +26,15 @@ const {Provider} = MapContext
 export const withMap = withContext(MapContext)
 
 const emptyLayer = {
-    'center': {
+    'left': {
+        imageLayer: null,
+        featureLayers: []
+    },
+    'top-right': {
+        imageLayer: null,
+        featureLayers: []
+    },
+    'bottom-right': {
         imageLayer: null,
         featureLayers: []
     }
