@@ -29,7 +29,6 @@ sphinx-bootstrap-theme
 numpydoc
 
 ########  sepal modules  ########
-sepal-ui>=1.1.0
 geemap==0.8.9
 Unidecode
 pyperclip

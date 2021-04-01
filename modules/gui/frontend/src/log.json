@@ -1,6 +1,8 @@
 {
     "default": "debug",
     "tileManager": "info",
-    "map": "info",
-    "maps": "info"
+    "map": "debug",
+    "sepalMap": "info",
+    "maps": "debug",
+    "splitContent": "info"
 }
