@@ -24,9 +24,9 @@ require new libs, should be use with a GEE acount ... etc
 
 **maintainer checklist**  
 - [ ] Name is set 
-- [ ] Desccription set 
-- [ ] Comprehensive readme 
-- [ ] 3 languages docuentation files (can be empty)
-- [ ] The module works with the default availalbe python libs
-- [ ] Existence of a `release`branch 
+- [ ] Description set 
+- [ ] Comprehensive README 
+- [ ] 3 languages documentation files (can be empty)
+- [ ] The module works with the default available Python libs
+- [ ] Existence of a `release` branch 
 - [ ] check behaviour 
