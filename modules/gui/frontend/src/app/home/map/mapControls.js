@@ -26,7 +26,7 @@ const Info = () =>
 
 class _MapControls extends React.Component {
     render() {
-        const {area} = this.props
+        // const {area} = this.props
         return (
             <div className={styles.container}>
                 <div className={styles.controls}>
@@ -36,8 +36,7 @@ class _MapControls extends React.Component {
                         icon='cog'
                         label='Layer'
                         tooltip={<Info/>}
-                        tooltipDelay={0}
-                        onClick={() => log.debug('options', area)}
+                        // onClick={() => log.debug('options', area)}
                     />
                 </div>
             </div>

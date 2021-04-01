@@ -72,14 +72,11 @@ class MapToolbar extends React.Component {
                         icon={'bullseye'}
                         tooltip={msg('process.mosaic.mapToolbar.centerMap.tooltip')}/>
                     <Toolbar.ToolbarButton
-                        // disabled={!hasBounds}
-                        onClick={() => areas.length === 1 ? setAreas(['top', 'bottom-left', 'bottom-right']) : setAreas(['center'])}
                         selected={areas.length !== 1}
                         icon={'th-large'}
                         tooltip={<MapLayout/>}
                         tooltipDelay={0}
                         tooltipPlacement='bottom'
-                        // tooltip={msg('process.mosaic.mapToolbar.centerMap.tooltip')}
                     />
                     <Toolbar.ActivationButton
                         id='layersMenu'
