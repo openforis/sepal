@@ -1,4 +1,7 @@
+import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {LayersMenu} from './layersMenu'
+import {Layout} from 'widget/layout'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -8,9 +11,31 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './mapToolbar.module.css'
 
+class MapLayout extends React.Component {
+    render() {
+        return (
+            <Layout type='vertical'>
+                <ButtonGroup>
+                    <Button
+                        // chromeless
+                        look='highlight'
+                        icon='square'
+                        onClick={console.log}
+                    />
+                    <Button
+                        look='transparent'
+                        icon='th-large'
+                        onClick={console.log}
+                    />
+                </ButtonGroup>
+            </Layout>
+        )
+    }
+}
+
 class MapToolbar extends React.Component {
     render() {
-        const {statePath, map, zoomArea, labelLayerIndex, toggleLinked, linked, children} = this.props
+        const {statePath, map, zoomArea, labelLayerIndex, toggleLinked, linked, setAreas, areas, children} = this.props
         const hasBounds = map.isLayerInitialized('aoi')
         return (
             <React.Fragment>
@@ -46,6 +71,16 @@ class MapToolbar extends React.Component {
                         onClick={() => map.fitLayer('aoi')}
                         icon={'bullseye'}
                         tooltip={msg('process.mosaic.mapToolbar.centerMap.tooltip')}/>
+                    <Toolbar.ToolbarButton
+                        // disabled={!hasBounds}
+                        onClick={() => areas.length === 1 ? setAreas(['top', 'bottom-left', 'bottom-right']) : setAreas(['center'])}
+                        selected={areas.length !== 1}
+                        icon={'th-large'}
+                        tooltip={<MapLayout/>}
+                        tooltipDelay={0}
+                        tooltipPlacement='bottom'
+                        // tooltip={msg('process.mosaic.mapToolbar.centerMap.tooltip')}
+                    />
                     <Toolbar.ActivationButton
                         id='layersMenu'
                         icon='layer-group'
