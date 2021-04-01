@@ -40,7 +40,8 @@ class _Button extends React.Component {
     }
 
     nonInteractive() {
-        return !this.active() || !this.linked()
+        const {tooltip} = this.props
+        return !this.active() || !(this.linked() || tooltip)
     }
 
     classNames() {
@@ -162,7 +163,7 @@ class _Button extends React.Component {
     renderTooltip(contents) {
         const {tooltip, tooltipPlacement, tooltipDisabled, tooltipDelay} = this.props
         return this.active() && tooltip && !tooltipDisabled ? (
-            <Tooltip msg={tooltip} placement={tooltipPlacement} delay={tooltipDelay}>
+            <Tooltip msg={tooltip} placement={tooltipPlacement} delay={tooltipDelay} clickTrigger={!this.linked()}>
                 {contents}
             </Tooltip>
         ) : contents

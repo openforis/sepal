@@ -7,23 +7,25 @@ import React from 'react'
 
 export default class Tooltip extends React.Component {
     render() {
-        const {msg, placement, disabled, delay, children, ...otherProps} = this.props
-        return isMobile()
-            ? children
-            : msg && !disabled
-                ? (
-                    <RcTooltip
-                        overlay={msg}
-                        placement={placement}
-                        mouseEnterDelay={delay / 1000}
-                        trigger={['hover']}
-                        {...otherProps}>
-                        {children}
-                    </RcTooltip>
-                )
-                : (
-                    <React.Fragment>{children}</React.Fragment>
-                )
+        const {msg, placement, disabled, delay, clickTrigger, children, ...otherProps} = this.props
+        const trigger = [
+            clickTrigger ? 'click' : '',
+            isMobile() ? '' : 'hover'
+        ]
+        return msg && !disabled
+            ? (
+                <RcTooltip
+                    overlay={msg}
+                    placement={placement}
+                    mouseEnterDelay={clickTrigger ? 0 : delay / 1000}
+                    trigger={trigger}
+                    {...otherProps}>
+                    {children}
+                </RcTooltip>
+            )
+            : (
+                <React.Fragment>{children}</React.Fragment>
+            )
     }
 }
 
@@ -32,6 +34,7 @@ Tooltip.propTypes = {
     bottomLeft: PropTypes.bool,
     bottomRight: PropTypes.bool,
     children: PropTypes.object,
+    clickTrigger: PropTypes.any,
     delay: PropTypes.number,
     disabled: PropTypes.bool,
     left: PropTypes.bool,
@@ -44,7 +47,8 @@ Tooltip.propTypes = {
 }
 
 Tooltip.defaultProps = {
-    placement: 'top',
+    clickTrigger: false,
+    delay: 750,
     disabled: false,
-    delay: 750
+    placement: 'top'
 }
