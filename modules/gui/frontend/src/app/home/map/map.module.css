@@ -25,3 +25,8 @@
     left: 0;
     right: 0;
 }
+
+.mapOverlay {
+    display: flex;
+    flex-grow: 1;
+}

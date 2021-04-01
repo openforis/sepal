@@ -6,11 +6,11 @@
     right: 0;
     display: flex;
     flex-grow: 1;
-    justify-content: center;
-    align-items: flex-end;
+    justify-content: flex-start;
+    align-items: flex-start;
 }
 
 .content {
-    margin: 2rem;
+    margin: 1rem;
     pointer-events: all;
 }

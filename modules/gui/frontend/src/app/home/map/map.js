@@ -1,5 +1,6 @@
 import {MapArea} from './mapArea'
 import {MapControls} from './mapControls'
+import {MapInfo} from './mapInfo'
 import {ReplaySubject} from 'rxjs'
 import {SplitContent} from 'widget/splitContent'
 import {Subject} from 'rxjs'
@@ -116,9 +117,12 @@ class _Map extends React.Component {
         )
     }
 
-    renderMapControls(area) {
+    renderMapOverlay(area) {
         return (
-            <MapControls area={area}/>
+            <div className={styles.mapOverlay}>
+                <MapInfo/>
+                <MapControls area={area}/>
+            </div>
         )
     }
 
@@ -168,7 +172,7 @@ class _Map extends React.Component {
         const areas = _.map(Object.keys(layers), area => ({
             placement: area,
             content: this.renderMap(area),
-            view: this.renderMapControls(area)
+            view: this.renderMapOverlay(area)
         }))
 
         const map = Object.keys(maps).length ? Object.values(maps)[0].map : null
