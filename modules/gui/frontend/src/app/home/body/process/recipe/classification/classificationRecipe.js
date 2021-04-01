@@ -178,7 +178,7 @@ const submitRetrieveRecipeTask = recipe => {
     const bands = recipe.ui.retrieveOptions.bands
     const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
-    const taskTitle = msg(['process.classification.panel.retrieve.form.task', destination], {name})
+    const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const pyramidingPolicy = {}
     bands.forEach(band => pyramidingPolicy[band] = band === 'class' ? 'mode' : 'mean')
     const properties = {}

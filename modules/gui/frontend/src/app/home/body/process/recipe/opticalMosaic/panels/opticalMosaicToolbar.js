@@ -69,7 +69,7 @@ class MosaicToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'
-                        tooltip={msg('process.mosaic.panel.retrieve.tooltip')}
+                        tooltip={msg('process.retrieve.tooltip')}
                         disabled={!initialized || (selectScenes && !scenesSelected)}
                     />
                 </Toolbar>

@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
@@ -17,7 +18,9 @@ const fields = {
     bandTypes: new Form.Field()
         .predicate(selection => selection && selection.length, 'process.ccdcSlice.panel.retrieve.form.bandTypes.atLeastOne'),
     segmentBands: new Form.Field(),
-    scale: new Form.Field(),
+    scale: new Form.Field()
+        .notBlank()
+        .number(),
     destination: new Form.Field()
         .notEmpty('process.ccdcSlice.panel.retrieve.form.destination.required')
 }
@@ -28,6 +31,10 @@ const mapRecipeToProps = recipe => ({
 })
 
 class Retrieve extends React.Component {
+    state = {
+        customScale: false
+    }
+
     constructor(props) {
         super(props)
         const {recipeId, inputs: {scale}} = this.props
@@ -189,19 +196,55 @@ class Retrieve extends React.Component {
     }
 
     renderScale() {
+        const {customScale} = this.state
+        return customScale
+            ? this.renderCustomScale()
+            : this.renderPresetScale()
+    }
+
+    renderPresetScale() {
         const {inputs: {scale}} = this.props
         return (
-            <Form.Slider
-                label={msg('process.ccdcSlice.panel.retrieve.form.scale.label')}
-                info={scale => msg('process.ccdcSlice.panel.retrieve.form.scale.info', {scale})}
-                input={scale}
-                minValue={10}
-                maxValue={100}
-                scale={'log'}
-                ticks={[10, 15, 20, 30, 60, 100]}
-                snap
-                range='none'
-            />
+            <div>
+                <Form.Slider
+                    label={msg('process.retrieve.form.scale.label')}
+                    info={scale => msg('process.retrieve.form.scale.info', {scale})}
+                    input={scale}
+                    minValue={10}
+                    maxValue={100}
+                    scale={'log'}
+                    ticks={[10, 15, 20, 30, 60, 100]}
+                    snap
+                    range='none'
+                />
+                <div className={styles.scaleChange}>
+                    <Button
+                        shape={'none'}
+                        label={'Custom scale'}
+                        onClick={() => this.setState({customScale: true})}
+                    />
+                </div>
+            </div>
+        )
+    }
+
+    renderCustomScale() {
+        const {inputs: {scale}} = this.props
+        return (
+            <div>
+                <Form.Input
+                    label={msg('process.retrieve.form.scale.label')}
+                    input={scale}
+                    placeholder={msg('process.retrieve.form.scale.label')}
+                />
+                <div className={styles.scaleChange}>
+                    <Button
+                        shape={'none'}
+                        label={'Preset scale'}
+                        onClick={() => this.setState({customScale: false})}
+                    />
+                </div>
+            </div>
         )
     }
 

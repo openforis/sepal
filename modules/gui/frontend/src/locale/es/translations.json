@@ -241,7 +241,7 @@
         "title": "Sobre"
       },
       "partners": {
-        "title": "Socios"      
+        "title": "Socios"
       }
     },
     "features": {
@@ -493,22 +493,6 @@
           },
           "title": "Pre-proceso",
           "tooltip": "Configurar el preprocesamiento de imágenes"
-        },
-        "retrieve": {
-          "apply": "Recuperar",
-          "form": {
-            "bands": {
-              "atLeastOne": "Selecciona al menos una banda",
-              "label": "Bandas"
-            },
-            "scale": {
-              "info": "{scale} metros",
-              "label": "Escala"
-            }
-          },
-          "task": "Recuperar {name} como activo de Google Earth Engine",
-          "title": "Recuperar",
-          "tooltip": "Recuperar"
         },
         "sources": {
           "form": {
@@ -829,13 +813,6 @@
             "confirmationMessage": "¿Está seguro de que quiere eliminar un {name} de su clasificación?",
             "tooltip": "Eliminar imagen de la clasificación"
           },
-          "retrieve": {
-            "form": {
-              "destination": {
-                "label": "Destino"
-              }
-            }
-          },
           "sections": {
             "title": "Imagen a clasificar"
           },
@@ -844,27 +821,6 @@
           "type": {
             "RECIPE_REF": "Flujo de trabajo de SEPAL"
           }
-        },
-        "retrieve": {
-          "apply": "Importar",
-          "form": {
-            "destination": {
-              "GEE": "Asset de Google Earth Engine",
-              "SEPAL": "Espacio de trabajo en SEPAL",
-              "label": "Importar en",
-              "required": "Debes seleccionar un destino"
-            },
-            "scale": {
-              "info": "{scale} metros",
-              "label": "Escala"
-            },
-            "task": {
-              "GEE": "Exportar {name} como asset de Google Earth Engine",
-              "SEPAL": "Importar {name} al espacio de trabajo de Sepal"
-            }
-          },
-          "title": "Importar",
-          "tooltip": "Importar la clasificación"
         },
         "source": {
           "asset": {
@@ -1367,26 +1323,6 @@
         "layers": {
           "title": "Capas"
         },
-        "retrieve": {
-          "apply": "Importar",
-          "form": {
-            "bands": {
-              "atLeastOne": "Al menos una banda debe ser importada",
-              "label": "Bandas a importar"
-            },
-            "destination": {
-              "SEPAL": "Espacio de trabajo SEPAL",
-              "label": "Importar a",
-              "required": "Debe seleccionarse un destino"
-            },
-            "task": {
-              "GEE": "Exportar {name} como asset de Google Earth Engine",
-              "SEPAL": "Importar {name} al espacio de trabajo de SEPAL"
-            }
-          },
-          "title": "Importar",
-          "tooltip": "Importar mosaico"
-        },
         "sceneSelection": {
           "availableScenes": "Escenas disponibles",
           "loadingScenes": "Cargando escenas...",
@@ -1582,30 +1518,6 @@
           },
           "title": "Opciones",
           "tooltip": "Configurar las opciones del mosaico"
-        },
-        "retrieve": {
-          "apply": "Importar",
-          "form": {
-            "bands": {
-              "atLeastOne": "Al menos una banda debe ser importada",
-              "label": "Bandas a importar"
-            },
-            "destination": {
-              "SEPAL": "Espacio de trabajo SEPAL",
-              "label": "importar a",
-              "required": "Debes seleccionar un destino"
-            },
-            "scale": {
-              "info": "{scale} metros",
-              "label": "Escala"
-            },
-            "task": {
-              "GEE": "Exportar {name} como asset de Google Earth Engine",
-              "SEPAL": "Importar {name} al espacio de trabajo de SEPAL"
-            }
-          },
-          "title": "Importar",
-          "tooltip": "Importar mosaico de radar"
         }
       },
       "preview": {
@@ -1626,6 +1538,30 @@
         "success": "El flujo de trabajo ha sido eliminado"
       },
       "type": "Tipo"
+    },
+    "retrieve": {
+      "apply": "Importar",
+      "form": {
+        "bands": {
+          "atLeastOne": "Al menos una banda debe ser importada",
+          "label": "Bandas a importar"
+        },
+        "destination": {
+          "SEPAL": "Espacio de trabajo SEPAL",
+          "label": "importar a",
+          "required": "Debes seleccionar un destino"
+        },
+        "scale": {
+          "info": "{scale} metros",
+          "label": "Escala"
+        },
+        "task": {
+          "GEE": "Exportar {name} como asset de Google Earth Engine",
+          "SEPAL": "Importar {name} al espacio de trabajo de SEPAL"
+        }
+      },
+      "title": "Importar",
+      "tooltip": "Importar mosaico de radar"
     },
     "revisions": {
       "none": "Ninguna revisión disponible.",
@@ -1725,7 +1661,7 @@
             },
             "snowMasking": {
               "label": "Enmascaramiento de nieve",
-              "off": {  
+              "off": {
                 "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
               },
               "on": {
@@ -1735,22 +1671,6 @@
           },
           "title": "Pre-proceso",
           "tooltip": "Configurar el preprocesamiento de imágenes"
-        },
-        "retrieve": {
-          "apply": "Importar",
-          "form": {
-            "indicator": {
-              "label": "Indicador",
-              "required": "Debe seleccionar un indicador"
-            },
-            "scale": {
-              "info": "{scale} metros",
-              "label": "Escala"
-            }
-          },
-          "task": "Importar {name} al espacio de trabajo de SEPAL",
-          "title": "Importar",
-          "tooltip": "Importar series temporales"
         },
         "sources": {
           "button": "SRC",

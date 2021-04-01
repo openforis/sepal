@@ -731,13 +731,6 @@
             "confirmationMessage": "Are you sure you want to remove {name} from your classification?",
             "tooltip": "Remove image from classification"
           },
-          "retrieve": {
-            "form": {
-              "destination": {
-                "label": "Destination"
-              }
-            }
-          },
           "sections": {
             "title": "Image to classify"
           },
@@ -752,31 +745,6 @@
           "button": "LEG",
           "title": "Legend",
           "tooltip": "Setup legend for classification"
-        },
-        "retrieve": {
-          "apply": "Retrieve",
-          "form": {
-            "bands": {
-              "atLeastOne": "At least one band must be retrieved",
-              "label": "Bands to retrieve"
-            },
-            "destination": {
-              "GEE": "Google Earth Engine asset",
-              "SEPAL": "Sepal workspace",
-              "label": "Retrieve to",
-              "required": "A destination must be selected"
-            },
-            "scale": {
-              "info": "{scale} meters",
-              "label": "Scale"
-            },
-            "task": {
-              "GEE": "Export {name} as a Google Earth Engine asset",
-              "SEPAL": "Retrieve {name} to Sepal workspace"
-            }
-          },
-          "title": "Retrieve",
-          "tooltip": "Retrieve classification"
         },
         "trainingData": {
           "button": "TRN",
@@ -1386,27 +1354,6 @@
         "layers": {
           "title": "Layers"
         },
-        "retrieve": {
-          "apply": "Retrieve",
-          "form": {
-            "bands": {
-              "atLeastOne": "At least one band must be retrieved",
-              "label": "Bands to retrieve"
-            },
-            "destination": {
-              "GEE": "Google Earth Engine asset",
-              "SEPAL": "Sepal workspace",
-              "label": "Retrieve to",
-              "required": "A destination must be selected"
-            },
-            "task": {
-              "GEE": "Export {name} as a Google Earth Engine asset",
-              "SEPAL": "Retrieve {name} to Sepal workspace"
-            }
-          },
-          "title": "Retrieve",
-          "tooltip": "Retrieve mosaic"
-        },
         "sceneSelection": {
           "availableScenes": "Available scenes",
           "loadingScenes": "Loading scenes...",
@@ -1633,31 +1580,6 @@
           },
           "title": "Options",
           "tooltip": "Configure mosaic options"
-        },
-        "retrieve": {
-          "apply": "Retrieve",
-          "form": {
-            "bands": {
-              "atLeastOne": "At least one band must be retrieved",
-              "label": "Bands to retrieve"
-            },
-            "destination": {
-              "GEE": "Google Earth Engine asset",
-              "SEPAL": "Sepal workspace",
-              "label": "Retrieve to",
-              "required": "A destination must be selected"
-            },
-            "scale": {
-              "info": "{scale} meters",
-              "label": "Scale"
-            },
-            "task": {
-              "GEE": "Export {name} as a Google Earth Engine asset",
-              "SEPAL": "Retrieve {name} to Sepal workspace"
-            }
-          },
-          "title": "Retrieve",
-          "tooltip": "Retrieve radar mosaic"
         }
       },
       "preview": {
@@ -1677,6 +1599,31 @@
       },
       "type": "Type",
       "lastUpdate": "Last update"
+    },
+    "retrieve": {
+      "apply": "Retrieve",
+      "form": {
+        "bands": {
+          "atLeastOne": "At least one band must be retrieved",
+          "label": "Bands to retrieve"
+        },
+        "destination": {
+          "GEE": "Google Earth Engine asset",
+          "SEPAL": "Sepal workspace",
+          "label": "Retrieve to",
+          "required": "A destination must be selected"
+        },
+        "scale": {
+          "info": "{scale} meters",
+          "label": "Scale"
+        },
+        "task": {
+          "GEE": "Export {name} as a Google Earth Engine asset",
+          "SEPAL": "Retrieve {name} to Sepal workspace"
+        }
+      },
+      "title": "Retrieve",
+      "tooltip": "Retrieve radar mosaic"
     },
     "revisions": {
       "revert": "Revert to revision",
@@ -1782,22 +1729,6 @@
           },
           "title": "Pre-process",
           "tooltip": "Configure imagery pre-processing"
-        },
-        "retrieve": {
-          "apply": "Retrieve",
-          "form": {
-            "indicator": {
-              "label": "Indicator",
-              "required": "You must select an indicator"
-            },
-            "scale": {
-              "label": "Scale",
-              "info": "{scale} meters"
-            }
-          },
-          "task": "Retrieve {name} to Sepal workspace",
-          "title": "Retrieve",
-          "tooltip": "Retrieve time-series"
         },
         "sources": {
           "button": "SRC",
@@ -2019,22 +1950,6 @@
           },
           "title": "CCDC options",
           "tooltip": "Configure CCDC options"
-        },
-        "retrieve": {
-          "apply": "Retrieve",
-          "form": {
-            "bands": {
-              "label": "Bands",
-              "atLeastOne": "Select at least one band"
-            },
-            "scale": {
-              "label": "Scale",
-              "info": "{scale} meters"
-            }
-          },
-          "task": "Retrieve {name} as a Google Earth Engine asset",
-          "title": "Retrieve",
-          "tooltip": "Retrieve time-series"
         },
         "sources": {
           "button": "SRC",

@@ -515,22 +515,6 @@
           "title": "Prétraitement",
           "tooltip": "Configurer le prétraitement des images"
         },
-        "retrieve": {
-          "apply": "Récupérer",
-          "form": {
-            "bands": {
-              "atLeastOne": "Sélectionnez au moins une bande",
-              "label": "Bandes"
-            },
-            "scale": {
-              "info": "{scale} mètres",
-              "label": "Echelle"
-            }
-          },
-          "task": "Récupérer {name} en tant qu'asset Google Earth Engine",
-          "title": "Récupérer",
-          "tooltip": "Récupérer les series temporelles"
-        },
         "sources": {
           "button": "SRC",
           "form": {
@@ -839,13 +823,6 @@
             "confirmationMessage": "Êtes-vous sûr de vouloir supprimer {name} de votre classification ?",
             "tooltip": "Retirer une image de la classification"
           },
-          "retrieve": {
-            "form": {
-              "destination": {
-                "label": "Destination"
-              }
-            }
-          },
           "sections": {
             "title": "Image à classifier"
           },
@@ -855,27 +832,6 @@
             "ASSET": "Asset Earth Engine",
             "RECIPE_REF": "Formule SEPAL"
           }
-        },
-        "retrieve": {
-          "apply": "Récupérer",
-          "form": {
-            "destination": {
-              "GEE": "Asset de Google Earth Engine",
-              "SEPAL": "Espace de travail SEPAL",
-              "label": "Récuperer vers",
-              "required": "Une destination doit être sélectionnée"
-            },
-            "scale": {
-              "info": "{scale} mètres",
-              "label": "Echelle"
-            },
-            "task": {
-              "GEE": "Exporter {name} en tant qu'asset Google Earth Engine",
-              "SEPAL": "Télécharger {name} vers l'espace de travail SEPAL"
-            }
-          },
-          "title": "Récupérer",
-          "tooltip": "Récupérer la classification"
         },
         "trainingData": {
           "button": "ETR",
@@ -1357,27 +1313,6 @@
         "layers": {
           "title": "Couches"
         },
-        "retrieve": {
-          "apply": "Récupérer",
-          "form": {
-            "bands": {
-              "atLeastOne": "Choisir au moins une bande",
-              "label": "Bandes à récupérer"
-            },
-            "destination": {
-              "GEE": "Asset Google Earth Engine",
-              "SEPAL": "Espace de travail SEPAL",
-              "label": "Récupérer dans",
-              "required": "Une destination doit être sélectionnée"
-            },
-            "task": {
-              "GEE": "Exporter {name} en tant que Asset Google Earth Engine",
-              "SEPAL": "Récupérer {name} ands l'espace de travail SEPAL"
-            }
-          },
-          "title": "Récupérer",
-          "tooltip": "Récupérer la mosaique"
-        },
         "sceneSelection": {
           "availableScenes": "Scènes disponibles",
           "loadingScenes": "Chargement des scènes...",
@@ -1600,31 +1535,6 @@
           "title": "Options",
           "tooltip": "Configurer les options de mosaique"
         },
-        "retrieve": {
-          "apply": "Récupérer",
-          "form": {
-            "bands": {
-              "atLeastOne": "Au moins une bande doit être récupérée",
-              "label": "Bandes à récupérer"
-            },
-            "destination": {
-              "GEE": "Asset Google Earth Engine",
-              "SEPAL": "Espace SEPAL",
-              "label": "Récupérer vers",
-              "required": "Une destination doit être choisie"
-            },
-            "scale": {
-              "info": "{scale} mètres",
-              "label": "Échelle"
-            },
-            "task": {
-              "GEE": "Exporter {name} en tant qu'asset Google Earth Engine",
-              "SEPAL": "Récupérer {name} vers l'espace de travail SEPAL"
-            }
-          },
-          "title": "Récupérer",
-          "tooltip": "Récupérer la mosaique radar"
-        }
       },
       "preview": {
         "description": "Aperçu de la mosaïque radar, générée à la volée par EE.",
@@ -1643,6 +1553,31 @@
       "remove": {
         "success": "La formule a été supprimée"
       }
+    },
+    "retrieve": {
+      "apply": "Récupérer",
+      "form": {
+        "bands": {
+          "atLeastOne": "Au moins une bande doit être récupérée",
+          "label": "Bandes à récupérer"
+        },
+        "destination": {
+          "GEE": "Asset Google Earth Engine",
+          "SEPAL": "Espace SEPAL",
+          "label": "Récupérer vers",
+          "required": "Une destination doit être choisie"
+        },
+        "scale": {
+          "info": "{scale} mètres",
+          "label": "Échelle"
+        },
+        "task": {
+          "GEE": "Exporter {name} en tant qu'asset Google Earth Engine",
+          "SEPAL": "Récupérer {name} vers l'espace de travail SEPAL"
+        }
+      },
+      "title": "Récupérer",
+      "tooltip": "Récupérer la mosaique radar"
     },
     "revisions": {
       "none": "Pas de révision disponible.",
@@ -1744,22 +1679,6 @@
           },
           "title": "Pré-traitement",
           "tooltip": "Configurer le prétraitement des scènes"
-        },
-        "retrieve": {
-          "apply": "Récupérer",
-          "form": {
-            "indicator": {
-              "label": "Indicateur",
-              "required": "Vous devez sélectionner un indicateur"
-            },
-            "scale": {
-              "info": "{scale} mètres",
-              "label": "Echelle"
-            }
-          },
-          "task": "Récupérer {name} dans l'espace de travail SEPAL",
-          "title": "Récupérer",
-          "tooltip": "Récupérer les séries temporelles"
         },
         "sources": {
           "button": "SRC",

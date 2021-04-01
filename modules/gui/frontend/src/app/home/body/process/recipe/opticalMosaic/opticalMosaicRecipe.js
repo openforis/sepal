@@ -123,7 +123,7 @@ const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
-    const taskTitle = msg(['process.mosaic.panel.retrieve.form.task', destination], {name})
+    const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
