@@ -155,23 +155,21 @@ class _SplitContent extends React.PureComponent {
     }
 
     getInterferingPlacements(placements) {
-        const {areaMap} = this.props
-        return _.chain(areaMap)
-            .keys()
+        const {areas} = this.props
+        return _.chain(areas)
+            .map(area => area.placement)
             .intersection(placements)
             .value()
     }
 
     static getDerivedStateFromProps(props) {
-        const {areaMap} = props
-
-        const hasSplit = (areaMap, nonSplitPlacements) =>
-            _.some(_.keys(areaMap), placement =>
+        const hasSplit = (areas, nonSplitPlacements) =>
+            _.some(areas, ({placement}) =>
                 !nonSplitPlacements.includes(placement)
             )
 
-        const calculateSplit = areaMap => {
-            const areaCount = _.keys(areaMap).length
+        const calculateSplit = areas => {
+            const areaCount = areas.length
             if (areaCount > 2) {
                 return {
                     vertical: true,
@@ -181,8 +179,8 @@ class _SplitContent extends React.PureComponent {
             }
             if (areaCount === 2) {
                 return {
-                    vertical: hasSplit(areaMap, ['center', 'top', 'bottom']),
-                    horizontal: hasSplit(areaMap, ['center', 'left', 'right']),
+                    vertical: hasSplit(areas, ['center', 'top', 'bottom']),
+                    horizontal: hasSplit(areas, ['center', 'left', 'right']),
                     center: true
                 }
             }
@@ -194,7 +192,7 @@ class _SplitContent extends React.PureComponent {
         }
     
         return {
-            handle: calculateSplit(areaMap)
+            handle: calculateSplit(props.areas)
         }
     }
 
@@ -231,10 +229,10 @@ class _SplitContent extends React.PureComponent {
     }
 
     componentDidUpdate(prevProps) {
-        const {areaMap: prevAreaMap} = prevProps
-        const {areaMap} = this.props
-        const currentPlacements = _.keys(areaMap)
-        const previousPlacements = _.keys(prevAreaMap)
+        const {areas: prevAreas} = prevProps
+        const {areas} = this.props
+        const currentPlacements = _.pick(areas, 'placement')
+        const previousPlacements = _.pick(prevAreas, 'placement')
         if (!_.isEmpty(_.xor(currentPlacements, previousPlacements))) {
             log.debug('areas have changed:', {previousPlacements, currentPlacements})
             this.initialize()
