@@ -6,7 +6,7 @@ import styles from './toolbar.module.css'
 
 export class ToolbarButton extends React.Component {
     render() {
-        const {className, icon, label, tooltip, disabled, selected, onClick} = this.props
+        const {className, icon, label, tooltip, tooltipDelay, disabled, selected, onClick} = this.props
         return (
             <Context.Consumer>
                 {({horizontal, panel}) =>
@@ -19,6 +19,7 @@ export class ToolbarButton extends React.Component {
                         tooltip={tooltip}
                         tooltipPlacement={horizontal ? 'top' : 'left'}
                         tooltipDisabled={!!(disabled || (panel && selected))}
+                        tooltipDelay={tooltipDelay}
                     />
                 }
             </Context.Consumer>
@@ -33,5 +34,6 @@ ToolbarButton.propTypes = {
     label: PropTypes.string,
     selected: PropTypes.any,
     tooltip: PropTypes.string,
+    tooltipDelay: PropTypes.number,
     onClick: PropTypes.func
 }
