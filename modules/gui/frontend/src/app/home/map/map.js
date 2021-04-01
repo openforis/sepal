@@ -63,7 +63,6 @@ class _Map extends React.Component {
     constructor() {
         super()
         this.toggleLinked = this.toggleLinked.bind(this)
-        // this.setAreas = this.setAreas.bind(this)
     }
 
     allMaps(callback) {
@@ -110,15 +109,6 @@ class _Map extends React.Component {
     setVisibility(visible) {
         this.allMaps(({map}) => map.setVisibility(visible))
     }
-
-    // setAreas(areas) {
-    //     const {areas: prevAreas} = this.state
-    //     if (!_.isEmpty(_.xor(areas, prevAreas))) {
-    //         log.debug('Areas have changed', prevAreas, '->', areas)
-    //         const selectedArea = _.head(areas)
-    //         this.setState({areas, selectedArea, maps: {}})
-    //     }
-    // }
 
     renderMap(area) {
         return (
@@ -173,24 +163,7 @@ class _Map extends React.Component {
 
     render() {
         const {layers, children} = this.props
-
-        // const {areas, selectedArea, maps, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
-        // const areaMap = _.transform(areas, (areaMap, area) => {
-        //     areaMap[area] = this.renderArea(area)
-        // }, {})
-        // const map = selectedArea && !_.isEmpty(maps) && maps[selectedArea]
-        //     ? maps[selectedArea].map
-        //     : null
-
         const {maps, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
-
-        // const areas = Object.keys(layers)
-        // const areaMap = _.transform(areas, (areaMap, area) => {
-        //     areaMap[area] = {
-        //         content: this.renderArea(area),
-        //         view: this.renderControls(area)
-        //     }
-        // }, {})
 
         const areas = _.map(Object.keys(layers), area => ({
             placement: area,
@@ -201,7 +174,7 @@ class _Map extends React.Component {
         const map = Object.keys(maps).length ? Object.values(maps)[0].map : null
 
         const toggleLinked = this.toggleLinked
-        // const setAreas = this.setAreas
+
         return (
             <Provider value={{map, googleMapsApiKey, norwayPlanetApiKey, toggleLinked, linked, metersPerPixel, zoomArea, areas}}>
                 <SplitContent areas={areas}/>
@@ -225,13 +198,6 @@ class _Map extends React.Component {
     componentDidMount() {
         const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
         const {mapId, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked} = createMapContext()
-
-        // this.setAreas(['top-left', 'top-right', 'bottom-left', 'bottom-right'])
-        // this.setAreas(['top', 'bottom-left', 'bottom-right'])
-        // this.setAreas(['left', 'top-right', 'bottom-right'])
-        // this.setAreas(['left', 'right'])
-        // this.setAreas(['top', 'bottom'])
-        // this.setAreas(['center'])
 
         this.setLinked(getProcessTabsInfo().single)
 

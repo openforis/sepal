@@ -16,8 +16,8 @@ export class RetryingTileManager extends DelegatingTileProvider {
     }
 }
 
-const renderImageBlob = (element, blob) =>
-    element.innerHTML = `<img src="${(window.URL || window.webkitURL).createObjectURL(blob)}"/>`
+// const renderImageBlob = (element, blob) =>
+//     element.innerHTML = `<img src="${(window.URL || window.webkitURL).createObjectURL(blob)}"/>`
 
 const retry = (maxRetries, {minDelay = 500, maxDelay = 30000, exponentiality = 2, description} = {}) => pipe(
     retryWhen(error$ =>
