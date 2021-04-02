@@ -27,7 +27,7 @@ R -e "pacman::p_load(\
         'xlsxjars'\
     )"
 R -e "pacman::p_load_gh(\
-        'bfast2/bfast',\
+        'appelmar/bfast',\
         'azvoleff/gfcanalysis',\
         'loicdtx/bfastSpatial',\
         'jreiche/bayts'\
