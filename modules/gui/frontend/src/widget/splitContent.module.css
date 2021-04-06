@@ -1,6 +1,6 @@
 .container {
     --half-margin-size: 1px;
-    --half-center-handle-size: 12px;
+    --half-center-handle-size: 15px;
     --half-axis-handle-size: 1px;
     --handle-comfort-margin: -.25rem;
     --idle-color: var(--wireframe-color);
@@ -26,14 +26,6 @@
     pointer-events: none;
 }
 
-.container.initialized {
-    /* background-color: var(--idle-color); */
-}
-
-.container.dragging {
-    cursor: move;
-}
-
 /* areas */
 
 .areas {
@@ -54,6 +46,19 @@
     left: 0;
     right: 0;
     pointer-events: all;
+    z-index: 1;
+}
+
+.container.dragging.x .areas:after {
+    cursor: ew-resize;
+}
+
+.container.dragging.y .areas:after {
+    cursor: ns-resize;
+}
+
+.container.dragging.x.y .areas:after {
+    cursor: move;
 }
 
 /* area */
@@ -132,7 +137,6 @@
 .handle {
     position: absolute;
     pointer-events: all;
-    cursor: move;
     visibility: hidden;
 }
 
@@ -145,6 +149,7 @@
     height: calc(2 * var(--half-center-handle-size));
     border: calc(2 * var(--half-axis-handle-size)) solid var(--color);
     border-radius: var(--half-center-handle-size);
+    cursor: move;
     z-index: 2;
 }
 
@@ -152,6 +157,13 @@
 
 .handle.axis {
     background-color: var(--color);
+    /* background: repeating-linear-gradient(
+        45deg,
+        var(--color),
+        var(--color) 10px,
+        transparent 10px,
+        transparent 20px
+    ); */
     z-index: 1;
 }
 
@@ -167,6 +179,7 @@
     bottom: var(--vertical-handle-bottom);
     left: calc(var(--left) - var(--half-axis-handle-size));
     width: calc(2 * var(--half-axis-handle-size));
+    cursor: ew-resize;
 }
 
 .handle.axis.vertical:before {
@@ -191,6 +204,7 @@
     height: calc(2 * var(--half-axis-handle-size));
     left: var(--horizontal-handle-left);
     right: var(--horizontal-handle-right);
+    cursor: ns-resize;
 }
 
 .handle.axis.horizontal:before {
