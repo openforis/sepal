@@ -38,13 +38,13 @@ class _OpticalMosaic extends React.Component {
             <SectionLayout>
                 <Content>
                     <div className={styles.mosaic}>
-                        <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
+                        {/*<MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>*/}
                         <MapScale/>
-                        <MosaicToolbar/>
+                        {/*<MosaicToolbar/>*/}
                         {initialized
                             ? <React.Fragment>
                                 {/*<OpticalMosaicPreview/>*/}
-                                <SceneAreas/>
+                                {/*<SceneAreas/>*/}
                                 <AutoSelectScenes/>
                                 <SceneSelection/>
                                 <SceneDeselection/>
