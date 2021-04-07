@@ -60,19 +60,19 @@ export const RecipeActions = id => {
             const recipeImageLayerSource = {
                 id: guid(),
                 type: 'Recipe',
-                config: {
+                sourceConfig: {
                     recipeId: id
                 }
             }
             const planetImageLayerSource = {
                 id: guid(),
                 type: 'Planet',
-                config: {}
+                sourceConfig: {}
             }
             const googleSatelliteImageLayerSource = {
                 id: guid(),
                 type: 'GoogleSatellite',
-                config: {}
+                sourceConfig: {}
             }
             const imageLayerSources = [
                 recipeImageLayerSource,
@@ -81,8 +81,10 @@ export const RecipeActions = id => {
             ]
             const imageLayer = {
                 sourceId: recipeImageLayerSource.id,
-                config: {
-                    recipeId: id
+                layerConfig: {
+                    bands: {
+                        selection: ['red', 'green', 'blue'] // TODO: Fix...
+                    }
                 }
             }
             const layers = {

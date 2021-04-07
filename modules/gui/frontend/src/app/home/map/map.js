@@ -1,8 +1,10 @@
 import {MapArea} from './mapArea'
+import {MapAreaContext} from './mapAreaContext'
 import {MapControls} from './mapControls'
 import {MapInfo} from './mapInfo'
 import {ReplaySubject} from 'rxjs'
 import {SplitContent} from 'widget/splitContent'
+import {StaticMap} from './staticMap'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -26,23 +28,9 @@ const {Provider} = MapContext
 
 export const withMap = withContext(MapContext)
 
-const emptyLayer = {
-    'left': {
-        imageLayer: null,
-        featureLayers: []
-    },
-    'top-right': {
-        imageLayer: null,
-        featureLayers: []
-    },
-    'bottom-right': {
-        imageLayer: null,
-        featureLayers: []
-    }
-}
-
 const mapRecipeToProps = recipe => ({
-    layers: selectFrom(recipe, 'layers') || emptyLayer
+    layers: selectFrom(recipe, 'layers'),
+    imageLayerSources: selectFrom(recipe, 'ui.imageLayerSources')
 })
 
 class _Map extends React.Component {
@@ -111,9 +99,16 @@ class _Map extends React.Component {
         this.allMaps(({map}) => map.setVisibility(visible))
     }
 
-    renderMap(area) {
+    renderMap(source, layerConfig, area) {
+        const {maps} = this.state
+        const mapForArea = maps[area]
         return (
-            <MapArea area={area} refCallback={element => this.createArea(area, element)}/>
+            <MapAreaContext.Provider value={{
+                area,
+                refCallback: element => this.createArea(area, element)
+            }}>
+                <MapArea source={source} layerConfig={layerConfig}/>
+            </MapAreaContext.Provider>
         )
     }
 
@@ -166,14 +161,33 @@ class _Map extends React.Component {
     }
 
     render() {
-        const {layers, children} = this.props
-        const {maps, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
+        const {layers} = this.props
+        return layers
+            ? this.renderSepalMap()
+            : this.renderStaticMap()
+    }
 
-        const areas = _.map(Object.keys(layers), area => ({
-            placement: area,
-            content: this.renderMap(area),
-            view: this.renderMapOverlay(area)
-        }))
+    renderStaticMap() {
+        const {children} = this.props
+        return (
+            <StaticMap>{children}</StaticMap>
+        )
+    }
+
+    renderSepalMap() {
+        const {layers, imageLayerSources, children} = this.props
+        console.log({imageLayerSources})
+        const {maps, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
+        const areas = _.map(Object.keys(layers), area => {
+            const {sourceId, layerConfig} = layers[area].imageLayer
+            const source = imageLayerSources.find(({id}) => id === sourceId)
+
+            return ({
+                placement: area,
+                content: this.renderMap(source, layerConfig, area),
+                view: this.renderMapOverlay(area)
+            })
+        })
 
         const map = Object.keys(maps).length ? Object.values(maps)[0].map : null
 
