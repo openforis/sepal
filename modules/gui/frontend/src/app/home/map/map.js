@@ -180,7 +180,8 @@ class _Map extends React.Component {
 
         return (
             <Provider value={{map, googleMapsApiKey, norwayPlanetApiKey, toggleLinked, linked, metersPerPixel, zoomArea, areas}}>
-                <SplitContent areas={areas}/>
+                {/* <SplitContent areas={areas} mode='stack'/> */}
+                <SplitContent areas={areas} mode='grid'/>
                 <div className={styles.content}>
                     {map ? children : null}
                 </div>

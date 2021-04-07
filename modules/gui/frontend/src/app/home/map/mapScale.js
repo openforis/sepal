@@ -1,6 +1,7 @@
 import {compose} from 'compose'
 import {withMap} from './map'
 import React from 'react'
+import format from 'format'
 import styles from './mapScale.module.css'
 
 class MapToolbar extends React.Component {
@@ -9,7 +10,7 @@ class MapToolbar extends React.Component {
         return metersPerPixel
             ? (
                 <div className={styles.container}>
-                    {metersPerPixel}m/px
+                    {format.number({value: metersPerPixel, unit: 'm/px'})}
                 </div>
             )
             : null

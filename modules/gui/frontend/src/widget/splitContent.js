@@ -10,6 +10,7 @@ import _ from 'lodash'
 import styles from './splitContent.module.css'
 import withSubscriptions from 'subscription'
 const log = getLogger('splitContent')
+import Portal from 'widget/portal'
 
 const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
 
@@ -19,7 +20,10 @@ const SMOOTHING_FACTOR = .2
 
 const resize$ = new Subject()
 
+const SplitContext = React.createContext()
+
 class _SplitContent extends React.PureComponent {
+    container = React.createRef()
     centerHandle = React.createRef()
     verticalHandle = React.createRef()
     horizontalHandle = React.createRef()
@@ -49,26 +53,29 @@ class _SplitContent extends React.PureComponent {
         const {position: {x, y}, dragging, initialized, className} = this.state
         return (
             <ElementResizeDetector onResize={size => resize$.next(size)}>
-                <div
-                    className={[
-                        styles.container,
-                        dragging.x || dragging.y ? styles.dragging : null,
-                        dragging.x ? styles.x : null,
-                        dragging.y ? styles.y : null,
-                        initialized ? styles.initialized : null,
-                        className
-                    ].join(' ')}
-                    style={{
-                        '--x': `${x}px`,
-                        '--y': `${y}px`
-                    }}>
-                    <div className={styles.areas}>
-                        {this.renderAreas()}
+                <SplitContext.Provider value={this.container.current}>
+                    <div
+                        ref={this.container}
+                        className={[
+                            styles.container,
+                            dragging.x || dragging.y ? styles.dragging : null,
+                            dragging.x ? styles.x : null,
+                            dragging.y ? styles.y : null,
+                            initialized ? styles.initialized : null,
+                            className
+                        ].join(' ')}
+                        style={{
+                            '--x': `${x}px`,
+                            '--y': `${y}px`
+                        }}>
+                        <div className={styles.areas}>
+                            {this.renderAreas()}
+                        </div>
+                        {this.renderCenterHandle()}
+                        {this.renderVerticalHandle()}
+                        {this.renderHorizontalHandle()}
                     </div>
-                    {this.renderCenterHandle()}
-                    {this.renderVerticalHandle()}
-                    {this.renderHorizontalHandle()}
-                </div>
+                </SplitContext.Provider>
             </ElementResizeDetector>
         )
     }
@@ -79,16 +86,26 @@ class _SplitContent extends React.PureComponent {
     }
 
     renderArea({placement, content}) {
+        const {mode} = this.props
         const {initialized} = this.state
         return (
             <div
                 key={placement}
                 className={_.flatten([
                     styles.area,
+                    mode === 'stack' ? styles.full : styles.partial,
                     placement.split('-').map(placement => styles[placement])
                 ]).join(' ')}>
                 {initialized ? content : null}
             </div>
+            // <div
+            //     key={placement}
+            //     className={_.flatten([
+            //         mode === 'stack' ? styles.area : styles.view,
+            //         placement.split('-').map(placement => styles[placement])
+            //     ]).join(' ')}>
+            //     {initialized ? content : null}
+            // </div>
         )
     }
 
@@ -179,7 +196,7 @@ class _SplitContent extends React.PureComponent {
                 center: false
             }
         }
-
+    
         return {
             handle: calculateSplit(props.areas)
         }
@@ -302,12 +319,12 @@ class _SplitContent extends React.PureComponent {
                 )
             })
         )
-
+        
         const dragging$ = merge(
             panStart$.pipe(mapTo(true)),
             panEnd$.pipe(mapTo(false)),
         )
-
+        
         addSubscription(
             handlePosition$.subscribe(position =>
                 this.setState({position})
@@ -353,7 +370,49 @@ SplitContent.propTypes = {
         PropTypes.shape({
             content: PropTypes.any.isRequired,
             placement: PropTypes.oneOf(['center', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-left', 'left', 'top-left']).isRequired,
-            className: PropTypes.string
+            className: PropTypes.string,
+            view: PropTypes.any
         })
-    )
+    ),
+    mode: PropTypes.oneOf('stack', 'grid')
+}
+
+SplitContent.defaultProps = {
+    mode: 'stack'
+}
+
+export class SplitOverlay extends React.Component {
+    render() {
+        const {area, children} = this.props
+        return (
+            <SplitContext.Consumer>
+                {container => {
+                    return (
+                        <Portal type='container' container={container}>
+                            <div className={_.flatten([
+                                styles.area,
+                                styles.partial,
+                                area.split('-').map(area => styles[area])
+                            ]).join(' ')}>
+                                {children}
+                            </div>
+                        </Portal>
+                        // <Portal type='container' container={container}>
+                        //     <div className={_.flatten([
+                        //         styles.view,
+                        //         area.split('-').map(area => styles[area])
+                        //     ]).join(' ')}>
+                        //         {children}
+                        //     </div>
+                        // </Portal>
+                    )
+                }}
+            </SplitContext.Consumer>
+        )
+    }
+}
+
+SplitOverlay.propTypes = {
+    area: PropTypes.string,
+    children: PropTypes.any
 }

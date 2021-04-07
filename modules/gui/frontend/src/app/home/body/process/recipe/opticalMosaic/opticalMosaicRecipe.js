@@ -88,7 +88,25 @@ export const RecipeActions = id => {
                 }
             }
             const layers = {
-                center: {
+                // 'center': {
+                //     imageLayer,
+                //     featureLayers: [
+                //         {type: 'Aoi'}
+                //     ]
+                // }
+                'top-right': {
+                    imageLayer,
+                    featureLayers: [
+                        {type: 'Aoi'}
+                    ]
+                },
+                'left': {
+                    imageLayer,
+                    featureLayers: [
+                        {type: 'Aoi'}
+                    ]
+                },
+                'bottom-right': {
                     imageLayer,
                     featureLayers: [
                         {type: 'Aoi'}

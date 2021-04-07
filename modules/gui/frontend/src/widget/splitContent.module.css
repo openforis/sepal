@@ -64,68 +64,52 @@
 /* area */
 
 .area {
-    --clip-top: 0;
-    --clip-bottom: 0;
-    --clip-left: 0;
-    --clip-right: 0;
-    
+    --area-top: 0;
+    --area-bottom: 0;
+    --area-left: 0;
+    --area-right: 0;
     position: absolute;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.area.full {
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
-    user-select: none;
-    clip-path: inset(var(--clip-top) var(--clip-right) var(--clip-bottom) var(--clip-left));
-    display: flex;
-    flex-direction: column;
-    pointer-events: none;
+    clip-path: inset(
+        var(--area-top)
+        var(--area-right)
+        var(--area-bottom)
+        var(--area-left)
+    );
+}
+
+.area.partial {
+    top: var(--area-top);
+    bottom: var(--area-bottom);
+    left: var(--area-left);
+    right: var(--area-right);
 }
 
 .area.top {
-    --clip-bottom: calc(var(--bottom) + var(--half-margin-size));
+    --area-bottom: calc(var(--bottom) + var(--half-margin-size));
 }
 
 .area.bottom {
-    --clip-top: calc(var(--top) + var(--half-margin-size));
+    --area-top: calc(var(--top) + var(--half-margin-size));
 }
 
 .area.left {
-    --clip-right: calc(var(--right) + var(--half-margin-size));
+    --area-right: calc(var(--right) + var(--half-margin-size));
 }
 
 .area.right {
-    --clip-left: calc(var(--left) + var(--half-margin-size));
-}
-
-.area .view {
-    --margin-top: 0;
-    --margin-bottom: 0;
-    --margin-left: 0;
-    --margin-right: 0;
-
-    position: absolute;
-    top: var(--margin-top);
-    bottom: var(--margin-bottom);
-    left: var(--margin-left);
-    right: var(--margin-right);
-    display: flex;
-    z-index: 1;
-}
-
-.area.top .view {
-    --margin-bottom: calc(var(--bottom) + var(--half-margin-size));
-}
-
-.area.bottom .view {
-    --margin-top: calc(var(--top) + var(--half-margin-size));
-}
-
-.area.left .view {
-    --margin-right: calc(var(--right) + var(--half-margin-size));
-}
-
-.area.right .view {
-    --margin-left: calc(var(--left) + var(--half-margin-size));
+    --area-left: calc(var(--left) + var(--half-margin-size));
 }
 
 /* handle */

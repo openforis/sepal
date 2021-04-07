@@ -1,6 +1,6 @@
 .container {
     position: absolute;
-    bottom: .5rem;
+    top: .5rem;
     right: .5rem;
     font-size: .8rem;
     line-height: .8rem;
@@ -9,4 +9,7 @@
     padding: .35rem;
     border: 1px solid var(--wireframe-color);
     border-radius: .25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }

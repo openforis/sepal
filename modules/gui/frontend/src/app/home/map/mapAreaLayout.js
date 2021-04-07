@@ -1,4 +1,5 @@
 import {MapControls} from './mapControls'
+import {SplitOverlay} from 'widget/splitContent'
 import {compose} from 'compose'
 import {withMapAreaContext} from './mapAreaContext'
 import PropTypes from 'prop-types'
@@ -14,10 +15,9 @@ class _MapAreaLayout extends React.Component {
                     className={[styles.split, styles[area]].join(' ')}
                     ref={refCallback}
                 />
-
-                <div className={styles.view}>
+                <SplitOverlay area={area}>
                     <MapControls area={area}/>
-                </div>
+                </SplitOverlay>
             </React.Fragment>
         )
     }
@@ -29,6 +29,6 @@ export const MapAreaLayout = compose(
 )
 
 MapAreaLayout.propTypes = {
-    layer: PropTypes.object,
-    configForm: PropTypes.object
+    form: PropTypes.object,
+    layer: PropTypes.object
 }
