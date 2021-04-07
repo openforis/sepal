@@ -13,7 +13,6 @@ class _RecipeMap extends React.Component {
 
     render() {
         const {recipe} = this.state
-        console.log({recipe})
         return recipe
             ? this.renderRecipeMap()
             : null
