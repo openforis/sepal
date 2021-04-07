@@ -2010,7 +2010,7 @@
                 }
             },
             "title": "Retrieve",
-            "tooltip": "Retrieve radar mosaic"
+            "tooltip": "Retrieve mosaic"
         },
         "revisions": {
             "none": "No revision available.",
