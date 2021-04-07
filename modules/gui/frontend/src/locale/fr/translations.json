@@ -2010,7 +2010,7 @@
 				}
 			},
 			"title": "Récupérer",
-			"tooltip": "Récupérer la mosaique radar"
+			"tooltip": "Récupérer la mosaique"
 		},
 		"revisions": {
 			"none": "Pas de révision disponible.",
