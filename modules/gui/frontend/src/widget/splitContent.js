@@ -78,7 +78,7 @@ class _SplitContent extends React.PureComponent {
         return areas.map(area => this.renderArea(area))
     }
 
-    renderArea({placement, content, view}) {
+    renderArea({placement, content}) {
         const {initialized} = this.state
         return (
             <div
@@ -87,19 +87,8 @@ class _SplitContent extends React.PureComponent {
                     styles.area,
                     placement.split('-').map(placement => styles[placement])
                 ]).join(' ')}>
-                {initialized ? this.renderContent(content, view) : null}
+                {initialized ? content : null}
             </div>
-        )
-    }
-
-    renderContent(content, view) {
-        return (
-            <React.Fragment>
-                <div className={styles.view}>
-                    {view}
-                </div>
-                {content}
-            </React.Fragment>
         )
     }
 
@@ -190,7 +179,7 @@ class _SplitContent extends React.PureComponent {
                 center: false
             }
         }
-    
+
         return {
             handle: calculateSplit(props.areas)
         }
@@ -313,12 +302,12 @@ class _SplitContent extends React.PureComponent {
                 )
             })
         )
-        
+
         const dragging$ = merge(
             panStart$.pipe(mapTo(true)),
             panEnd$.pipe(mapTo(false)),
         )
-        
+
         addSubscription(
             handlePosition$.subscribe(position =>
                 this.setState({position})
@@ -364,8 +353,7 @@ SplitContent.propTypes = {
         PropTypes.shape({
             content: PropTypes.any.isRequired,
             placement: PropTypes.oneOf(['center', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-left', 'left', 'top-left']).isRequired,
-            className: PropTypes.string,
-            view: PropTypes.any
+            className: PropTypes.string
         })
     )
 }

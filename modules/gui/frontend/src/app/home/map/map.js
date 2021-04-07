@@ -1,7 +1,5 @@
 import {MapArea} from './mapArea'
 import {MapAreaContext} from './mapAreaContext'
-import {MapControls} from './mapControls'
-import {MapInfo} from './mapInfo'
 import {ReplaySubject} from 'rxjs'
 import {SplitContent} from 'widget/splitContent'
 import {StaticMap} from './staticMap'
@@ -101,23 +99,12 @@ class _Map extends React.Component {
 
     renderMap(source, layerConfig, area) {
         const {maps} = this.state
-        const mapForArea = maps[area]
+        const map = maps[area] && maps[area].map
+        const refCallback = element => this.createArea(area, element)
         return (
-            <MapAreaContext.Provider value={{
-                area,
-                refCallback: element => this.createArea(area, element)
-            }}>
-                <MapArea source={source} layerConfig={layerConfig}/>
+            <MapAreaContext.Provider value={{area, map, refCallback}}>
+                <MapArea source={source} layerConfig={layerConfig} map={map}/>
             </MapAreaContext.Provider>
-        )
-    }
-
-    renderMapOverlay(area) {
-        return (
-            <div className={styles.mapOverlay}>
-                <MapInfo/>
-                <MapControls area={area}/>
-            </div>
         )
     }
 
@@ -176,7 +163,6 @@ class _Map extends React.Component {
 
     renderSepalMap() {
         const {layers, imageLayerSources, children} = this.props
-        console.log({imageLayerSources})
         const {maps, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
         const areas = _.map(Object.keys(layers), area => {
             const {sourceId, layerConfig} = layers[area].imageLayer
@@ -184,8 +170,7 @@ class _Map extends React.Component {
 
             return ({
                 placement: area,
-                content: this.renderMap(source, layerConfig, area),
-                view: this.renderMapOverlay(area)
+                content: this.renderMap(source, layerConfig, area)
             })
         })
 
@@ -196,7 +181,6 @@ class _Map extends React.Component {
         return (
             <Provider value={{map, googleMapsApiKey, norwayPlanetApiKey, toggleLinked, linked, metersPerPixel, zoomArea, areas}}>
                 <SplitContent areas={areas}/>
-                {/* <SplitContent areaMap={areaMap}/> */}
                 <div className={styles.content}>
                     {map ? children : null}
                 </div>

@@ -1,10 +1,26 @@
 import {EarthEngineTileProvider} from './tileProvider/earthEngineTileProvider'
+import {Subject, of} from 'rxjs'
 import {TileLayer} from './googleMaps/googleMapsLayer'
 import {mapTo, tap} from 'rxjs/operators'
-import {of} from 'rxjs'
 import _ from 'lodash'
+import api from 'api'
 
 export default class EarthEngineLayer {
+    static fromRecipe({recipe, layerConfig, map}) {
+        const previewRequest = {
+            recipe: _.omit(recipe, ['ui']),
+            ...layerConfig
+        }
+        return new EarthEngineLayer({
+            map,
+            layerIndex: 2,
+            bounds: previewRequest.recipe.model.aoi.bounds,
+            mapId$: api.gee.preview$(previewRequest),
+            props: previewRequest,
+            progress$: new Subject()
+        })
+    }
+
     constructor({map, layerIndex, toggleable, label, description, bounds, mapId$, props, progress$}) {
         this.map = map
         this.layerIndex = layerIndex
