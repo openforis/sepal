@@ -2010,7 +2010,7 @@
 				}
 			},
 			"title": "Importar",
-			"tooltip": "Importar mosaico de radar"
+			"tooltip": "Importar mosaico"
 		},
 		"revisions": {
 			"none": "Ninguna revisión disponible.",
