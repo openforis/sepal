@@ -111,21 +111,20 @@ class _Map extends React.Component {
             log.debug('Creating new area', area)
             const {mapsContext: {createSepalMap}} = this.props
             const map = createSepalMap(element)
-            const {googleMap} = map.getGoogle()
-
-            const zoomArea$ = map.getZoomArea$()
-
+            const {google, googleMap} = map.getGoogle()
             const listeners = [
                 googleMap.addListener('center_changed', () => this.synchronizeOut(area, map)),
                 googleMap.addListener('zoom_changed', () => this.synchronizeOut(area, map))
             ]
 
+            const zoomArea$ = map.getZoomArea$()
             const subscriptions = [
                 zoomArea$.subscribe(zoomArea => this.setState({zoomArea}))
             ]
 
-            maps[area] = {map, listeners, subscriptions}
-            this.setState({maps})
+            google.maps.event.addListenerOnce(googleMap, 'idle', () => {
+                this.setState({maps: {...maps, [area]: {map, listeners, subscriptions}}})
+            })
         }
     }
 
@@ -290,6 +289,12 @@ class _Map extends React.Component {
             cancelZoomArea() {
                 // TODO: Different for non-grid layouts
                 return map.cancelZoomArea()
+            },
+            getZoom() {
+                return map.getZoom()
+            },
+            getBounds() {
+                return map.getBounds()
             },
             canFit() {
                 return map.isLayerInitialized('Aoi')

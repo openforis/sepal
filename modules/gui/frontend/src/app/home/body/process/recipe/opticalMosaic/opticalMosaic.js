@@ -38,7 +38,7 @@ class _OpticalMosaic extends React.Component {
         const {initialized} = this.props
         return (
             <Map className={styles.mosaic}>
-                {/*<MosaicToolbar/>*/}
+                <MosaicToolbar/>
                 {initialized
                     ? <React.Fragment>
                         {/*<OpticalMosaicPreview/>*/}

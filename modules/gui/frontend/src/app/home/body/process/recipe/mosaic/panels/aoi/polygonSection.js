@@ -4,6 +4,7 @@ import {isRecipeOpen} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
+import {withMap} from 'app/home/map/mapContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -25,7 +26,8 @@ class _PolygonSection extends React.Component {
 
     componentDidMount() {
         const {map, inputs: {polygon}} = this.props
-        this.recipeActions.setLabelsShown(map, true).dispatch()
+        // TODO: Show labels?
+        // this.recipeActions.setLabelsShown(map, true).dispatch()
         map.drawPolygon('aoi', drawnPolygon => {
             polygon.set(drawnPolygon)
         })
@@ -75,7 +77,8 @@ class _PolygonSection extends React.Component {
 
 export const PolygonSection = compose(
     _PolygonSection,
-    withRecipe(mapRecipeToProps)
+    withRecipe(mapRecipeToProps),
+    withMap()
 )
 
 PolygonSection.propTypes = {

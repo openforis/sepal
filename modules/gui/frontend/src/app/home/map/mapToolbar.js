@@ -38,7 +38,7 @@ class MapToolbar extends React.Component {
         const {statePath, map, zoomArea, labelLayerIndex, toggleLinked, linked, setAreas, areas, children} = this.props
         return (
             <React.Fragment>
-                <LayersMenu statePath={statePath} labelLayerIndex={labelLayerIndex}/>
+                {/*<LayersMenu statePath={statePath} labelLayerIndex={labelLayerIndex}/>*/}
                 <Toolbar
                     className={styles.mapToolbar}
                     horizontal

@@ -22,7 +22,7 @@ export const RecipeActions = id => {
 
     return {
         setLabelsShown(map, shown) {
-            return LabelsLayer.showLabelsAction({map, shown, statePath: recipePath(id, 'ui'), layerIndex: 3})
+            // return LabelsLayer.showLabelsAction({map, shown, statePath: recipePath(id, 'ui'), layerIndex: 3})
         },
         setBands(bands) {
             return setAll('SET_BANDS', {

@@ -121,20 +121,20 @@ export const RecipeActions = id => {
                 'top-right': {
                     imageLayer: planetLayer,
                     featureLayers: [
-                        {type: 'Aoi'},
+                        // {type: 'Aoi'},
                         {type: 'Labels'}
                     ]
                 },
                 'left': {
                     imageLayer: googleSatelliteLayer,
                     featureLayers: [
-                        {type: 'Aoi'}
+                        // {type: 'Aoi'}
                     ]
                 },
                 'bottom-right': {
                     imageLayer: planetLayer3,
                     featureLayers: [
-                        {type: 'Aoi'}
+                        // {type: 'Aoi'}
                     ]
                 }
             }
