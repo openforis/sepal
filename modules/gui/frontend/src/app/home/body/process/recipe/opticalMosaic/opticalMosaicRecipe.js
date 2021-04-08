@@ -97,7 +97,8 @@ export const RecipeActions = id => {
                 'top-right': {
                     imageLayer,
                     featureLayers: [
-                        {type: 'Aoi'}
+                        {type: 'Aoi'},
+                        {type: 'Labels'}
                     ]
                 },
                 'left': {
@@ -116,7 +117,7 @@ export const RecipeActions = id => {
             setAll('INITIALIZE_LAYER_SOURCES',
                 {
                     'ui.imageLayerSources': imageLayerSources,
-                    layers
+                    layers,
                 },
                 {imageLayerSources}
             ).dispatch()

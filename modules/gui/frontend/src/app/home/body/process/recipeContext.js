@@ -24,7 +24,7 @@ export const RecipeContext = ({rootStatePath = 'process.tabs', recipeId, childre
         : null
 
 const withRecipeContext = withContext(Context, 'recipeContext')
-    
+
 export const withRecipe = mapRecipeToProps =>
     WrappedComponent => {
         const mapStateToProps = (state, ownProps) => {
@@ -39,10 +39,10 @@ export const withRecipe = mapRecipeToProps =>
             WrappedComponent,
             connect(mapStateToProps),
             withRecipeContext(),
-            withMap()
+            // withMap() // TODO: Used where?
         )
     }
-    
+
 export const recipe = ({getDefaultModel, defaultModel, mapRecipeToProps}) =>
     WrappedComponent => {
         const mapStateToProps = (state, ownProps) => {

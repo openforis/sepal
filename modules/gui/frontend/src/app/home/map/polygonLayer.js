@@ -20,7 +20,7 @@ export const setPolygonLayer = ({
     return layer
 }
 
-class PolygonLayer {
+export class PolygonLayer {
     constructor({map, path, fill}) {
         const {google, googleMap} = map.getGoogle()
         this.googleMap = googleMap

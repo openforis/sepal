@@ -11,7 +11,7 @@ export const setEETableLayer = ({
 }) => {
     const watchedProps = {tableId, columnName, columnValue, buffer}
     const layer = tableId
-        ? new RecipeGeometryLayer({
+        ? new EETableLayer({
             map,
             mapId$: api.gee.eeTableMap$({tableId, columnName, columnValue, buffer, color: '#FFFFFF50', fillColor: '#FFFFFF08'}),
             layerIndex,
@@ -21,7 +21,7 @@ export const setEETableLayer = ({
     return layer
 }
 
-class RecipeGeometryLayer extends EarthEngineLayer {
+export class EETableLayer extends EarthEngineLayer {
     constructor({map, mapId$, layerIndex, watchedProps}) {
         super({map, layerIndex, mapId$, props: watchedProps})
     }

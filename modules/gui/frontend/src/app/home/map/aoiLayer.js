@@ -1,10 +1,60 @@
-import {setEETableLayer} from './eeTableLayer'
-import {setPolygonLayer} from './polygonLayer'
+import {EETableLayer, setEETableLayer} from './eeTableLayer'
+import {PolygonLayer, setPolygonLayer} from './polygonLayer'
+import api from '../../../api'
 
 export const countryEETable = 'users/wiell/SepalResources/countries'
 
 export const removeAoiLayer = map => {
     map.removeLayer('aoi')
+}
+
+export const createAoiLayer = ({map, recipe, layerIndex}) => {
+    const layerId = 'AOI'
+    const aoi = recipe.model.aoi
+    const aoiType = aoi.type
+    const color = '#FFFFFF50'
+    const fillColor = '#FFFFFF08'
+    switch (aoiType) {
+    case 'COUNTRY':
+        return new EETableLayer({
+            map,
+            mapId$: api.gee.eeTableMap$({
+                tableId: countryEETable,
+                columnName: 'id',
+                columnValue: aoi.areaCode || aoi.countryCode,
+                buffer: aoi.buffer,
+                color,
+                fillColor
+            }),
+            layerIndex,
+            watchedProps: aoi
+        })
+    case 'EE_TABLE':
+        return new EETableLayer({
+            map,
+            mapId$: api.gee.eeTableMap$({
+                tableId: aoi.id,
+                columnName: aoi.keyColumn,
+                columnValue: aoi.key,
+                buffer: aoi.buffer,
+                color,
+                fillColor
+            }),
+            layerIndex,
+            watchedProps: aoi
+        })
+    case 'POLYGON':
+        return new PolygonLayer({
+            map,
+            path: aoi.path,
+            fill: false, // TODO: Should fill sometimes
+            color,
+            fillColor
+        })
+
+    default:
+        throw Error(`Unsupported AOI type: ${aoiType}`)
+    }
 }
 
 export const setAoiLayer = ({map, aoi, fill, destroy$, onInitialized, layerIndex = 1}) => {

@@ -196,7 +196,7 @@ class _SplitContent extends React.PureComponent {
                 center: false
             }
         }
-    
+
         return {
             handle: calculateSplit(props.areas)
         }
@@ -319,12 +319,12 @@ class _SplitContent extends React.PureComponent {
                 )
             })
         )
-        
+
         const dragging$ = merge(
             panStart$.pipe(mapTo(true)),
             panEnd$.pipe(mapTo(false)),
         )
-        
+
         addSubscription(
             handlePosition$.subscribe(position =>
                 this.setState({position})
@@ -374,7 +374,7 @@ SplitContent.propTypes = {
             view: PropTypes.any
         })
     ),
-    mode: PropTypes.oneOf('stack', 'grid')
+    mode: PropTypes.oneOf(['stack', 'grid'])
 }
 
 SplitContent.defaultProps = {

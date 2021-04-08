@@ -1,5 +1,5 @@
-import {MapAreaLayout} from '../../../../map/mapAreaLayout'
-import EarthEngineLayer from '../../../../map/earthEngineLayer'
+import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
+import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import React from 'react'
 
 export class OpticalMosaicMap extends React.Component {
@@ -8,17 +8,12 @@ export class OpticalMosaicMap extends React.Component {
         const layer = map
             ? EarthEngineLayer.fromRecipe({recipe, layerConfig, map})
             : null
-        if (layer) {
-            map.setLayer({
-                id: 'imageLayer',
-                layer
-            })
-        }
 
         return (
             <MapAreaLayout
-                layer={layer}
                 form={null}
+                layer={layer}
+                map={map}
             />
         )
     }
