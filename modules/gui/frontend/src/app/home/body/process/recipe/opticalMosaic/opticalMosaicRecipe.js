@@ -79,12 +79,33 @@ export const RecipeActions = id => {
                 planetImageLayerSource,
                 googleSatelliteImageLayerSource
             ]
-            const imageLayer = {
+            const recipeLayer = {
                 sourceId: recipeImageLayerSource.id,
                 layerConfig: {
                     bands: {
                         selection: ['red', 'green', 'blue'] // TODO: Fix...
                     }
+                }
+            }
+            const planetLayer = {
+                sourceId: planetImageLayerSource.id,
+                layerConfig: {
+                    dateRange: '2019-12_2020-05',
+                    proc: 'rgb'
+                }
+            }
+            const planetLayer2 = {
+                sourceId: planetImageLayerSource.id,
+                layerConfig: {
+                    dateRange: '2018-12_2019-05',
+                    proc: 'rgb'
+                }
+            }
+            const planetLayer3 = {
+                sourceId: planetImageLayerSource.id,
+                layerConfig: {
+                    dateRange: '2018-12_2019-05',
+                    proc: 'cir'
                 }
             }
             const layers = {
@@ -95,20 +116,20 @@ export const RecipeActions = id => {
                 //     ]
                 // }
                 'top-right': {
-                    imageLayer,
+                    imageLayer: planetLayer,
                     featureLayers: [
                         {type: 'Aoi'},
                         {type: 'Labels'}
                     ]
                 },
                 'left': {
-                    imageLayer,
+                    imageLayer: planetLayer2,
                     featureLayers: [
                         {type: 'Aoi'}
                     ]
                 },
                 'bottom-right': {
-                    imageLayer,
+                    imageLayer: planetLayer3,
                     featureLayers: [
                         {type: 'Aoi'}
                     ]

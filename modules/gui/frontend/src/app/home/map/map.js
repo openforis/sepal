@@ -2,10 +2,8 @@ import {Content, SectionLayout} from '../../../widget/sectionLayout'
 import {MapArea} from './mapArea'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
-import {ReplaySubject} from 'rxjs'
+import {ReplaySubject, Subject} from 'rxjs'
 import {SplitContent} from 'widget/splitContent'
-import {StaticMap} from './staticMap'
-import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {debounceTime, distinctUntilChanged, finalize} from 'rxjs/operators'
@@ -22,6 +20,7 @@ import React from 'react'
 import _ from 'lodash'
 import styles from './map.module.css'
 import withSubscriptions from 'subscription'
+
 const log = getLogger('map')
 
 const mapRecipeToProps = recipe => ({
@@ -160,23 +159,21 @@ class _Map extends React.Component {
 
         const toggleLinked = this.toggleLinked
         return (
-            <React.Fragment>
-                <SplitContent areas={areas} mode='grid'/>
-                <MapContext.Provider value={{
-                    map: this.mapDelegate(),
-                    googleMapsApiKey,
-                    norwayPlanetApiKey,
-                    toggleLinked,
-                    linked,
-                    metersPerPixel,
-                    zoomArea,
-                    areas
-                }}>
-                    <div className={styles.content}>
-                        {_.isEmpty(maps) ? null : this.renderRecipe()}
-                    </div>
-                </MapContext.Provider>
-            </React.Fragment>
+            <MapContext.Provider value={{
+                map: this.mapDelegate(),
+                googleMapsApiKey,
+                norwayPlanetApiKey,
+                toggleLinked,
+                linked,
+                metersPerPixel,
+                zoomArea,
+                areas
+            }}>
+                <SplitContent areas={areas} mode='stack'/>
+                <div className={styles.content}>
+                    {_.isEmpty(maps) ? null : this.renderRecipe()}
+                </div>
+            </MapContext.Provider>
         )
     }
 

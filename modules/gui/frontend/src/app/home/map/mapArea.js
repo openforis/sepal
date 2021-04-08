@@ -1,4 +1,5 @@
 import {MapAreaLayout} from './mapAreaLayout'
+import {PlanetMap} from './planetMap'
 import {RecipeMap} from 'app/home/body/process/recipe/recipeMap'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -6,15 +7,15 @@ import React from 'react'
 export class MapArea extends React.Component {
     render() {
         const {source: {type, sourceConfig}, layerConfig, map} = this.props
-        // if (!map) {
-        //     return (
-        //         <MapAreaLayout/> // TODO: Probably not a good idea...
-        //     )
-        // }
         switch(type) {
         case 'Recipe': return (
             <RecipeMap
                 recipeId={sourceConfig.recipeId}
+                layerConfig={layerConfig}
+                map={map}/>
+        )
+        case 'Planet': return (
+            <PlanetMap
                 layerConfig={layerConfig}
                 map={map}/>
         )

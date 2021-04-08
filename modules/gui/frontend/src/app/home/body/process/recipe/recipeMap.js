@@ -1,6 +1,8 @@
 import {OpticalMosaicMap} from './opticalMosaic/opticalMosaicMap'
+import {PlanetMap} from '../../../map/planetMap'
 import {compose} from 'compose'
 import {connect} from 'store'
+import PropTypes from 'prop-types'
 import React from 'react'
 import api from 'api'
 
@@ -47,3 +49,9 @@ export const RecipeMap = compose(
 )
 
 const loadRecipe$ = recipeId => api.recipe.load$(recipeId)
+
+RecipeMap.propTypes = {
+    recipeId: PropTypes.string.isRequired,
+    layerConfig: PropTypes.object,
+    map: PropTypes.object,
+}
