@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {withMap} from './map'
+import {withMap} from './mapContext'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'

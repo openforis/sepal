@@ -1,10 +1,10 @@
 import {ActivationContext} from 'widget/activation/activationContext'
+import {Map} from '../../map/map'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {recipeActionBuilder} from './recipe'
 import {toPathList} from 'stateUtils'
 import {withContext} from 'context'
-import {withMap} from '../../map/map'
 import React from 'react'
 import actionBuilder from 'action-builder'
 
@@ -38,8 +38,7 @@ export const withRecipe = mapRecipeToProps =>
         return compose(
             WrappedComponent,
             connect(mapStateToProps),
-            withRecipeContext(),
-            // withMap() // TODO: Used where?
+            withRecipeContext()
         )
     }
 

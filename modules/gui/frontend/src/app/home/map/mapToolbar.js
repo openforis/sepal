@@ -5,7 +5,7 @@ import {Layout} from 'widget/layout'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {withMap} from './map'
+import {withMap} from './mapContext'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -36,7 +36,6 @@ class MapLayout extends React.Component {
 class MapToolbar extends React.Component {
     render() {
         const {statePath, map, zoomArea, labelLayerIndex, toggleLinked, linked, setAreas, areas, children} = this.props
-        const hasBounds = map.isLayerInitialized('aoi')
         return (
             <React.Fragment>
                 <LayersMenu statePath={statePath} labelLayerIndex={labelLayerIndex}/>
@@ -54,21 +53,20 @@ class MapToolbar extends React.Component {
                         onClick={() => map.zoomOut()}
                         icon={'minus'}
                         tooltip={msg('process.mosaic.mapToolbar.zoomOut.tooltip')}/>
+                    {/*<Toolbar.ToolbarButton*/}
+                    {/*    selected={zoomArea}*/}
+                    {/*    disabled={map.isMaxZoom()}*/}
+                    {/*    onClick={() => zoomArea ? map.cancelZoomArea() : map.zoomArea()}*/}
+                    {/*    icon={'search'}*/}
+                    {/*    tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>*/}
                     <Toolbar.ToolbarButton
-                        selected={zoomArea}
-                        disabled={map.isMaxZoom()}
-                        onClick={() => zoomArea ? map.cancelZoomArea() : map.zoomArea()}
-                        icon={'search'}
-                        tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
-                    <Toolbar.ToolbarButton
-                        disabled={!hasBounds}
                         onClick={() => toggleLinked()}
                         selected={linked}
                         icon='link'
                         tooltip={msg(linked ? 'process.mosaic.mapToolbar.unlink.tooltip' : 'process.mosaic.mapToolbar.link.tooltip')}/>
                     <Toolbar.ToolbarButton
-                        disabled={!hasBounds}
-                        onClick={() => map.fitLayer('aoi')}
+                        disabled={!map.canFit()}
+                        onClick={() => map.fit()}
                         icon={'bullseye'}
                         tooltip={msg('process.mosaic.mapToolbar.centerMap.tooltip')}/>
                     <Toolbar.ToolbarButton
@@ -84,7 +82,7 @@ class MapToolbar extends React.Component {
                         tooltip={msg('process.mosaic.mapToolbar.layers.tooltip')}/>
                     {children}
                 </Toolbar>
-                <Keybinding disabled={!zoomArea} keymap={{Escape: () => map.cancelZoomArea()}}/>
+                {/*<Keybinding disabled={!zoomArea} keymap={{Escape: () => map.cancelZoomArea()}}/>*/}
             </React.Fragment>
         )
     }

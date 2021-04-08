@@ -1,5 +1,7 @@
+import {Content, SectionLayout} from '../../../widget/sectionLayout'
 import {MapArea} from './mapArea'
 import {MapAreaContext} from './mapAreaContext'
+import {MapContext} from './mapContext'
 import {ReplaySubject} from 'rxjs'
 import {SplitContent} from 'widget/splitContent'
 import {StaticMap} from './staticMap'
@@ -11,20 +13,16 @@ import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
 import {mapBoundsTag, mapTag} from 'tag'
 import {selectFrom} from '../../../stateUtils'
-import {withContext} from 'context'
 import {withMapsContext} from './maps'
 import {withRecipe} from '../body/process/recipeContext'
+import MapScale from './mapScale'
+import MapToolbar from './mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './map.module.css'
 import withSubscriptions from 'subscription'
 const log = getLogger('map')
-
-const MapContext = React.createContext()
-const {Provider} = MapContext
-
-export const withMap = withContext(MapContext)
 
 const mapRecipeToProps = recipe => ({
     layers: selectFrom(recipe, 'layers'),
@@ -148,20 +146,6 @@ class _Map extends React.Component {
     }
 
     render() {
-        const {layers} = this.props
-        return layers
-            ? this.renderSepalMap()
-            : this.renderStaticMap()
-    }
-
-    renderStaticMap() {
-        const {children} = this.props
-        return (
-            <StaticMap>{children}</StaticMap>
-        )
-    }
-
-    renderSepalMap() {
         const {layers, imageLayerSources, children} = this.props
         const {maps, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
         const areas = _.map(Object.keys(layers), area => {
@@ -174,18 +158,40 @@ class _Map extends React.Component {
             })
         })
 
-        const map = Object.keys(maps).length ? Object.values(maps)[0].map : null
-
         const toggleLinked = this.toggleLinked
-
         return (
-            <Provider value={{map, googleMapsApiKey, norwayPlanetApiKey, toggleLinked, linked, metersPerPixel, zoomArea, areas}}>
-                {/* <SplitContent areas={areas} mode='stack'/> */}
+            <React.Fragment>
                 <SplitContent areas={areas} mode='grid'/>
-                <div className={styles.content}>
-                    {map ? children : null}
-                </div>
-            </Provider>
+                <MapContext.Provider value={{
+                    map: this.mapDelegate(),
+                    googleMapsApiKey,
+                    norwayPlanetApiKey,
+                    toggleLinked,
+                    linked,
+                    metersPerPixel,
+                    zoomArea,
+                    areas
+                }}>
+                    <div className={styles.content}>
+                        {_.isEmpty(maps) ? null : this.renderRecipe()}
+                    </div>
+                </MapContext.Provider>
+            </React.Fragment>
+        )
+    }
+
+    renderRecipe() {
+        const {className, recipeContext: {statePath}, children} = this.props
+        return (
+            <SectionLayout>
+                <Content>
+                    <div className={className}>
+                        <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
+                        <MapScale/>
+                        {children}
+                    </div>
+                </Content>
+            </SectionLayout>
         )
     }
 
@@ -258,6 +264,43 @@ class _Map extends React.Component {
                 }
             )
         )
+    }
+
+    mapDelegate() {
+        const {maps: mapByArea} = this.state
+        const maps = Object.values(mapByArea)
+            .map(({map}) => map)
+
+        const map = maps[0]
+
+        return {
+            isMinZoom() {
+                return map.isMinZoom()
+            },
+            isMaxZoom() {
+                return map.isMaxZoom()
+            },
+            zoomIn() {
+                return map.zoomIn()
+            },
+            zoomOut() {
+                return map.zoomOut()
+            },
+            zoomArea() {
+                // TODO: Different for non-grid layouts
+                return map.zoomArea()
+            },
+            cancelZoomArea() {
+                // TODO: Different for non-grid layouts
+                return map.cancelZoomArea()
+            },
+            canFit() {
+                return map.isLayerInitialized('Aoi')
+            },
+            fit() {
+                return map.fitLayer('Aoi')
+            }
+        }
     }
 }
 

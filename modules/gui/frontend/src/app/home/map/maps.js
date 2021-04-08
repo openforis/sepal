@@ -88,7 +88,7 @@ class _Maps extends React.Component {
             backgroundColor: '#131314',
             gestureHandling: 'greedy'
         }
-    
+
         // https://developers.google.com/maps/documentation/javascript/style-reference
         const sepalStyle = new google.maps.StyledMapType([
             {stylers: [{visibility: 'simplified'}]},
@@ -98,12 +98,12 @@ class _Maps extends React.Component {
             {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
             {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
         ], {name: 'map'})
-    
+
         const googleMap = new google.maps.Map(mapElement, mapOptions)
-    
+
         googleMap.mapTypes.set('sepalStyle', sepalStyle)
         googleMap.setMapTypeId('sepalStyle')
-    
+
         return googleMap
     }
 
@@ -151,7 +151,7 @@ class _Maps extends React.Component {
                 this.currentBounds = bounds
             }
         }
-        
+
         return {mapId, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked}
     }
 

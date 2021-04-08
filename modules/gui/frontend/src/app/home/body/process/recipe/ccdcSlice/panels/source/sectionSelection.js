@@ -2,7 +2,7 @@ import {Form} from 'widget/form/form'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {removeAoiLayer} from 'app/home/map/aoiLayer'
-import {withMap} from 'app/home/map/map'
+import {withMap} from 'app/home/map/mapContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 

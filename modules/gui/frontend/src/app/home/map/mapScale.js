@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {withMap} from './map'
+import {withMap} from './mapContext'
 import React from 'react'
 import format from 'format'
 import styles from './mapScale.module.css'

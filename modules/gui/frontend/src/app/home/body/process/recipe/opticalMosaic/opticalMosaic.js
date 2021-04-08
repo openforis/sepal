@@ -1,4 +1,5 @@
 import {Content, SectionLayout} from 'widget/sectionLayout'
+import {Map} from '../../../../map/map'
 import {RecipeActions, defaultModel} from './opticalMosaicRecipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -30,44 +31,26 @@ class _OpticalMosaic extends React.Component {
         recipeActions.setSceneAreasShown(true).dispatch()
         recipeActions.setBands('red, green, blue').dispatch()
         recipeActions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
+        recipeActions.initializeLayers()
     }
 
     render() {
-        const {recipeContext: {statePath}, initialized} = this.props
+        const {initialized} = this.props
         return (
-            <SectionLayout>
-                <Content>
-                    <div className={styles.mosaic}>
-                        {/*<MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>*/}
-                        <MapScale/>
-                        {/*<MosaicToolbar/>*/}
-                        {initialized
-                            ? <React.Fragment>
-                                {/*<OpticalMosaicPreview/>*/}
-                                {/*<SceneAreas/>*/}
-                                <AutoSelectScenes/>
-                                <SceneSelection/>
-                                <SceneDeselection/>
-                                {/*<BandSelection/>*/}
-                            </React.Fragment>
-                            : null}
-                    </div>
-                </Content>
-            </SectionLayout>
+            <Map className={styles.mosaic}>
+                {/*<MosaicToolbar/>*/}
+                {initialized
+                    ? <React.Fragment>
+                        {/*<OpticalMosaicPreview/>*/}
+                        {/*<SceneAreas/>*/}
+                        <AutoSelectScenes/>
+                        <SceneSelection/>
+                        <SceneDeselection/>
+                        {/*<BandSelection/>*/}
+                    </React.Fragment>
+                    : null}
+            </Map>
         )
-    }
-
-    componentDidMount() {
-        const {map, aoi, recipeId} = this.props
-
-        RecipeActions(recipeId).initializeLayers()
-
-        // setAoiLayer({
-        //     map,
-        //     aoi,
-        //     // destroy$: componentWillUnmount$, [TODO] check
-        //     onInitialized: () => map.fitLayer('aoi')
-        // })
     }
 }
 

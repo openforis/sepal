@@ -9,7 +9,6 @@ export const removeAoiLayer = map => {
 }
 
 export const createAoiLayer = ({map, recipe, layerIndex}) => {
-    const layerId = 'AOI'
     const aoi = recipe.model.aoi
     const aoiType = aoi.type
     const color = '#FFFFFF50'

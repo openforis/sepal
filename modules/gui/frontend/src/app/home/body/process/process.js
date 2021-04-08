@@ -1,6 +1,7 @@
 import {Map} from '../../map/map'
 import {RecipeContext} from 'app/home/body/process/recipeContext'
 import {RecipeHome} from './recipeHome'
+import {StaticMap} from '../../map/staticMap'
 import {Tabs} from 'widget/tabs/tabs'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
@@ -61,9 +62,7 @@ class Process extends React.Component {
                 >
                     {({id, type}) =>
                         <RecipeContext recipeId={id}>
-                            <Map>
-                                {this.renderRecipe(id, type)}
-                            </Map>
+                            {this.renderRecipe(id, type)}
                         </RecipeContext>
                     }
                 </Tabs>
