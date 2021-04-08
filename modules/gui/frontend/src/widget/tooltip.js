@@ -33,7 +33,7 @@ Tooltip.propTypes = {
     bottom: PropTypes.bool,
     bottomLeft: PropTypes.bool,
     bottomRight: PropTypes.bool,
-    children: PropTypes.object,
+    children: PropTypes.any,
     clickTrigger: PropTypes.any,
     delay: PropTypes.number,
     disabled: PropTypes.bool,

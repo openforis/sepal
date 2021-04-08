@@ -310,6 +310,6 @@ export const Map = compose(
 )
 
 Map.propTypes = {
-    children: PropTypes.object,
+    children: PropTypes.any,
     className: PropTypes.string
 }

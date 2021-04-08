@@ -80,7 +80,7 @@ export default compose(
 )
 
 FloatingBox.propTypes = {
-    children: PropTypes.object.isRequired,
+    children: PropTypes.any.isRequired,
     alignment: PropTypes.oneOf(['left', 'right']),
     autoWidth: PropTypes.any,
     className: PropTypes.string,
