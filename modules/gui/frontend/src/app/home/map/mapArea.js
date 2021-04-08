@@ -1,3 +1,4 @@
+import {GoogleSatelliteMap} from './googleSatelliteMap'
 import {MapAreaLayout} from './mapAreaLayout'
 import {PlanetMap} from './planetMap'
 import {RecipeMap} from 'app/home/body/process/recipe/recipeMap'
@@ -17,6 +18,10 @@ export class MapArea extends React.Component {
         case 'Planet': return (
             <PlanetMap
                 layerConfig={layerConfig}
+                map={map}/>
+        )
+        case 'GoogleSatellite': return (
+            <GoogleSatelliteMap
                 map={map}/>
         )
         default: throw Error(`Unsupported layer type: ${type}`)

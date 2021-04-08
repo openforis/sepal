@@ -108,6 +108,9 @@ export const RecipeActions = id => {
                     proc: 'cir'
                 }
             }
+            const googleSatelliteLayer = {
+                sourceId: googleSatelliteImageLayerSource.id
+            }
             const layers = {
                 // 'center': {
                 //     imageLayer,
@@ -123,7 +126,7 @@ export const RecipeActions = id => {
                     ]
                 },
                 'left': {
-                    imageLayer: planetLayer2,
+                    imageLayer: googleSatelliteLayer,
                     featureLayers: [
                         {type: 'Aoi'}
                     ]

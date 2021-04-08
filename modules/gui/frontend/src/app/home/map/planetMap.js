@@ -12,7 +12,6 @@ class _PlanetMap extends React.Component {
             map,
             urlTemplate: `https://tiles0.planet.com/basemaps/v1/planet-tiles/planet_medres_normalized_analytic_${dateRange}_mosaic/gmap/{z}/{x}/{y}.png?api_key=${planetApiKey || norwayPlanetApiKey}&proc=${proc}&color=auto`
         })
-
         return (
             <MapAreaLayout
                 form={null}
