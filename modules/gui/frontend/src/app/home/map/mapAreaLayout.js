@@ -20,6 +20,7 @@ class _MapAreaLayout extends React.Component {
             <React.Fragment>
                 <div
                     className={[styles.split, styles[area]].join(' ')}
+                    data-area={area}
                     ref={refCallback}
                 />
                 <SplitOverlay area={area}>
@@ -31,6 +32,9 @@ class _MapAreaLayout extends React.Component {
 
     componentDidUpdate() {
         const {layer, map, recipe, mapAreaContext: {area}} = this.props
+        if (!map) {
+            return
+        }
         const imageLayerId = 'imageLayer'
         if (layer) {
             map.setLayer({id: imageLayerId, layer})

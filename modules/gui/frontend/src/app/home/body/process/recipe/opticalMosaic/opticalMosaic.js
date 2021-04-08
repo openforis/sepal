@@ -1,17 +1,11 @@
-import {Content, SectionLayout} from 'widget/sectionLayout'
-import {Map} from '../../../../map/map'
+import {Map} from 'app/home/map/map'
 import {RecipeActions, defaultModel} from './opticalMosaicRecipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
 import AutoSelectScenes from './autoSelectScenes'
-import BandSelection from './bandSelection'
-import MapScale from 'app/home/map/mapScale'
-import MapToolbar from 'app/home/map/mapToolbar'
 import MosaicToolbar from './panels/opticalMosaicToolbar'
-import OpticalMosaicPreview from './opticalMosaicPreview'
 import React from 'react'
 import SceneAreas from './sceneAreas'
 import SceneDeselection from './sceneDeselection'
@@ -41,12 +35,10 @@ class _OpticalMosaic extends React.Component {
                 <MosaicToolbar/>
                 {initialized
                     ? <React.Fragment>
-                        {/*<OpticalMosaicPreview/>*/}
                         {/*<SceneAreas/>*/}
                         <AutoSelectScenes/>
                         <SceneSelection/>
                         <SceneDeselection/>
-                        {/*<BandSelection/>*/}
                     </React.Fragment>
                     : null}
             </Map>

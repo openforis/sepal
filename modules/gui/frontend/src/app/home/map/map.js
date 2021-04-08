@@ -47,6 +47,7 @@ class _Map extends React.Component {
     constructor() {
         super()
         this.toggleLinked = this.toggleLinked.bind(this)
+        this.refCallback = this.refCallback.bind(this)
     }
 
     allMaps(callback) {
@@ -97,9 +98,8 @@ class _Map extends React.Component {
     renderMap(source, layerConfig, area) {
         const {maps} = this.state
         const map = maps[area] && maps[area].map
-        const refCallback = element => this.createArea(area, element)
         return (
-            <MapAreaContext.Provider value={{area, map, refCallback}}>
+            <MapAreaContext.Provider value={{area, map, refCallback: this.refCallback}}>
                 <MapArea source={source} layerConfig={layerConfig} map={map}/>
             </MapAreaContext.Provider>
         )
@@ -121,16 +121,12 @@ class _Map extends React.Component {
             const subscriptions = [
                 zoomArea$.subscribe(zoomArea => this.setState({zoomArea}))
             ]
+            // maps[area] = {map, listeners, subscriptions}
 
             google.maps.event.addListenerOnce(googleMap, 'idle', () => {
-                this.setState({maps: {...maps, [area]: {map, listeners, subscriptions}}})
+                this.setState(({maps}) => ({maps: {...maps, [area]: {map, listeners, subscriptions}}}))
             })
         }
-    }
-
-    setSelected(selectedArea) {
-        log.debug('selected area:', selectedArea)
-        this.setState({selectedArea})
     }
 
     setLinked(linked) {
@@ -143,8 +139,15 @@ class _Map extends React.Component {
         this.setLinked(linked)
     }
 
+    refCallback(element) {
+        if (element) { // Hot-reload can cause it to be null
+            const area = element.dataset.area
+            this.createArea(area, element)
+        }
+    }
+
     render() {
-        const {layers, imageLayerSources, children} = this.props
+        const {layers, imageLayerSources} = this.props
         const {maps, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
         const areas = _.map(Object.keys(layers), area => {
             const {sourceId, layerConfig} = layers[area].imageLayer
@@ -157,6 +160,9 @@ class _Map extends React.Component {
         })
 
         const toggleLinked = this.toggleLinked
+        // TODO: Maybe overkill. Requires proper cleanup of removed map areas too.
+        //  Thinking is that the this.setState() is async, and we might not have got all at the same time
+        const mapsInitialized = !_.isEmpty(maps) && _.isEqual(Object.keys(maps), Object.keys(layers))
         return (
             <MapContext.Provider value={{
                 map: this.mapDelegate(),
@@ -170,7 +176,7 @@ class _Map extends React.Component {
             }}>
                 <SplitContent areas={areas} mode='stack'/>
                 <div className={styles.content}>
-                    {_.isEmpty(maps) ? null : this.renderRecipe()}
+                    {mapsInitialized ? this.renderRecipe() : null}
                 </div>
             </MapContext.Provider>
         )
