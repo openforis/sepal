@@ -97,12 +97,12 @@ class _Map extends React.Component {
         this.allMaps(({map}) => map.setVisibility(visible))
     }
 
-    renderMap(source, layerConfig, area) {
+    renderMap(source, layerConfig, layerIndex, area) {
         const {maps} = this.state
         const map = maps[area] && maps[area].map
         return (
             <MapAreaContext.Provider value={{area, map, refCallback: this.refCallback}}>
-                <MapArea source={source} layerConfig={layerConfig} map={map}/>
+                <MapArea source={source} layerConfig={layerConfig} layerIndex={layerIndex} map={map}/>
             </MapAreaContext.Provider>
         )
     }
@@ -152,12 +152,11 @@ class _Map extends React.Component {
         const {layers, imageLayerSources} = this.props
         const {googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
         const areas = _.map(Object.keys(layers), area => {
-            const {sourceId, layerConfig} = layers[area].imageLayer
+            const {sourceId, layerConfig, layerIndex} = layers[area].imageLayer
             const source = imageLayerSources.find(({id}) => id === sourceId)
-
             return ({
                 placement: area,
-                content: this.renderMap(source, layerConfig, area)
+                content: this.renderMap(source, layerConfig, layerIndex, area)
             })
         })
 
@@ -233,10 +232,7 @@ class _Map extends React.Component {
                 this.mapInitialized$.pipe(
                     filter(initialized => initialized),
                     first(),
-                    switchMap(() => {
-                        console.log('Getting bounds')
-                        return getBounds$({aoi, google})
-                    }),
+                    switchMap(() => getBounds$({aoi, google})),
                 ),
                 bounds => this.withFirstMap(map => map.fitBounds(bounds))
             )

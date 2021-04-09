@@ -22,7 +22,8 @@ export class MapArea extends React.Component {
         )
         case 'GoogleSatellite': return (
             <GoogleSatelliteMap
-                map={map}/>
+                map={map}
+            />
         )
         default: throw Error(`Unsupported layer type: ${type}`)
         }

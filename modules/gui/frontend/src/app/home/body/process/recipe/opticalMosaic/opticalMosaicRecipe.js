@@ -79,38 +79,6 @@ export const RecipeActions = id => {
                 planetImageLayerSource,
                 googleSatelliteImageLayerSource
             ]
-            const recipeLayer = {
-                sourceId: recipeImageLayerSource.id,
-                layerConfig: {
-                    bands: {
-                        selection: ['red', 'green', 'blue'] // TODO: Fix...
-                    }
-                }
-            }
-            const planetLayer = {
-                sourceId: planetImageLayerSource.id,
-                layerConfig: {
-                    dateRange: '2019-12_2020-05',
-                    proc: 'rgb'
-                }
-            }
-            const planetLayer2 = {
-                sourceId: planetImageLayerSource.id,
-                layerConfig: {
-                    dateRange: '2018-12_2019-05',
-                    proc: 'rgb'
-                }
-            }
-            const planetLayer3 = {
-                sourceId: planetImageLayerSource.id,
-                layerConfig: {
-                    dateRange: '2018-12_2019-05',
-                    proc: 'cir'
-                }
-            }
-            const googleSatelliteLayer = {
-                sourceId: googleSatelliteImageLayerSource.id
-            }
             const layers = {
                 // 'center': {
                 //     imageLayer,
@@ -119,22 +87,39 @@ export const RecipeActions = id => {
                 //     ]
                 // }
                 'top-right': {
-                    imageLayer: planetLayer,
+                    imageLayer: {
+                        sourceId: planetImageLayerSource.id,
+                        layerConfig: {
+                            dateRange: '2019-12_2020-05',
+                            proc: 'rgb'
+                        }
+                    },
                     featureLayers: [
                         {type: 'Aoi'},
-                        {type: 'Labels'}
+                        // {type: 'Labels'}
                     ]
                 },
                 'left': {
-                    imageLayer: googleSatelliteLayer,
+                    imageLayer: {
+                        sourceId: googleSatelliteImageLayerSource.id
+                    },
                     featureLayers: [
-                        {type: 'Aoi'}
+                        {type: 'Aoi'},
+                        // {type: 'Labels'}
                     ]
                 },
                 'bottom-right': {
-                    imageLayer: planetLayer3,
+                    imageLayer: {
+                        sourceId: recipeImageLayerSource.id,
+                        layerConfig: {
+                            bands: {
+                                selection: ['red', 'green', 'blue'] // TODO: Fix...
+                            }
+                        }
+                    },
                     featureLayers: [
-                        {type: 'Aoi'}
+                        {type: 'Aoi'},
+                        // {type: 'Labels'}
                     ]
                 }
             }

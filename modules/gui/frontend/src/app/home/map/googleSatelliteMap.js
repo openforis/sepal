@@ -6,7 +6,7 @@ import React from 'react'
 export class GoogleSatelliteMap extends React.Component {
     render() {
         const {map} = this.props
-        const layer = new GoogleSatelliteLayer({map, layerIndex: 0})
+        const layer = new GoogleSatelliteLayer({map})
         return (
             <MapAreaLayout
                 layer={layer}

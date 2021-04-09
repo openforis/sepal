@@ -30,5 +30,5 @@ export const PlanetMap = compose(
 PlanetMap.propTypes = {
     layerConfig: PropTypes.object.isRequired,
     map: PropTypes.object,
-    planetApiKey: PropTypes.string,
+    planetApiKey: PropTypes.string
 }

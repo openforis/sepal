@@ -47,7 +47,7 @@ class _MapAreaLayout extends React.Component {
                     type,
                     map,
                     recipe,
-                    layerIndex: i + 10 // + 1 to make space for imageLayer
+                    layerIndex: i + 1
                 })
                 if (layer) {
                     map.setLayer({id: type, layer})

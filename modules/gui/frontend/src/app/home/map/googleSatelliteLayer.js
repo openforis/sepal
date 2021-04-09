@@ -1,9 +1,9 @@
 import {of} from 'rxjs'
 
 export default class GoogleSatelliteLayer {
-    constructor({map, layerIndex}) {
+    constructor({map}) {
         this.map = map
-        this.layerIndex = layerIndex
+        this.layerIndex = 0
         this.type = 'GoogleSatelliteLayer'
     }
 

@@ -1,9 +1,9 @@
 import {of} from 'rxjs'
 
 export default class WMTSLayer {
-    constructor({map, layerIndex, urlTemplate}) {
+    constructor({map, urlTemplate}) {
         this.map = map
-        this.layerIndex = layerIndex
+        this.layerIndex = 0
         this.urlTemplate = urlTemplate
     }
 
@@ -17,6 +17,7 @@ export default class WMTSLayer {
             .replace('{x}', x)
             .replace('{y}', y)
             .replace('{z}', z)
+
         const layer = new google.maps.ImageMapType({
             getTileUrl,
             name: 'googleSatellite',

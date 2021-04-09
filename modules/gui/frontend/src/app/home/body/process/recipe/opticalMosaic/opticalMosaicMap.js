@@ -1,5 +1,7 @@
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
+import {PlanetMap} from '../../../../map/planetMap'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
+import PropTypes from 'prop-types'
 import React from 'react'
 
 export class OpticalMosaicMap extends React.Component {
@@ -17,4 +19,10 @@ export class OpticalMosaicMap extends React.Component {
             />
         )
     }
+}
+
+OpticalMosaicMap.propTypes = {
+    layerConfig: PropTypes.object.isRequired,
+    recipe: PropTypes.object.isRequired,
+    map: PropTypes.object
 }

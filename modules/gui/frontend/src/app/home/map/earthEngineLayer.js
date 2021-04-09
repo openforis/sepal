@@ -13,7 +13,6 @@ export default class EarthEngineLayer {
         }
         return new EarthEngineLayer({
             map,
-            layerIndex: 2,
             bounds: previewRequest.recipe.model.aoi.bounds,
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
@@ -21,7 +20,7 @@ export default class EarthEngineLayer {
         })
     }
 
-    constructor({map, layerIndex, toggleable, label, description, bounds, mapId$, props, progress$}) {
+    constructor({map, layerIndex = 0, toggleable, label, description, bounds, mapId$, props, progress$}) {
         this.map = map
         this.layerIndex = layerIndex
         this.toggleable = toggleable

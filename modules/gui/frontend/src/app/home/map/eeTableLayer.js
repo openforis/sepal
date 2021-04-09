@@ -5,7 +5,7 @@ import api from 'api'
 
 export const setEETableLayer = ({
     map,
-    layerSpec: {id, tableId, columnName, columnValue, buffer, layerIndex = 1},
+    layerSpec: {id, tableId, columnName, columnValue, buffer, layerIndex},
     destroy$,
     onInitialized,
 }) => {
