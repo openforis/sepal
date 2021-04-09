@@ -48,7 +48,6 @@ class _RecipeMap extends React.Component {
     loadRecipe$() {
         const {recipeId, loadedRecipes} = this.props
         const recipe = loadedRecipes[recipeId]
-        console.log({recipe})
         return recipe
             ? of(recipe)
             : api.recipe.load$(recipeId)
