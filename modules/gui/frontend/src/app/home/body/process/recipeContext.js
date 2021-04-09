@@ -1,5 +1,4 @@
 import {ActivationContext} from 'widget/activation/activationContext'
-import {Map} from '../../map/map'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {recipeActionBuilder} from './recipe'

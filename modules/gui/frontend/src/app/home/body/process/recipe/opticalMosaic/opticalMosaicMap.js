@@ -7,10 +7,11 @@ import React from 'react'
 export class OpticalMosaicMap extends React.Component {
     render() {
         const {recipe, layerConfig, map} = this.props
-        // TODO: Not enough to check for AOI. Will be re-rendered during the wizard after AOI is set
-        const initialized = recipe.aoi
+        // TODO: Not enough to check for AOI.
+        //  Will be re-rendered during the wizard after AOI is set
+        const initialized = recipe.model.aoi
         console.log('OpticalMosaicMap', {initialized})
-        const layer = map && initialized
+        const layer = map
             ? EarthEngineLayer.fromRecipe({recipe, layerConfig, map})
             : null
 
