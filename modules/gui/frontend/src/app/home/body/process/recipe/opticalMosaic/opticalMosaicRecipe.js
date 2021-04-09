@@ -64,6 +64,13 @@ export const RecipeActions = id => {
                     recipeId: id
                 }
             }
+            // const anotherRecipeImageLayerSource = {
+            //     id: guid(),
+            //     type: 'Recipe',
+            //     sourceConfig: {
+            //         recipeId: '5177f61a-8668-3ff2-a6d3-0faa4948d648'
+            //     }
+            // }
             const planetImageLayerSource = {
                 id: guid(),
                 type: 'Planet',
@@ -76,6 +83,7 @@ export const RecipeActions = id => {
             }
             const imageLayerSources = [
                 recipeImageLayerSource,
+                // anotherRecipeImageLayerSource,
                 planetImageLayerSource,
                 googleSatelliteImageLayerSource
             ]
@@ -99,6 +107,20 @@ export const RecipeActions = id => {
                         // {type: 'Labels'}
                     ]
                 },
+                // 'top-right': {
+                //     imageLayer: {
+                //         sourceId: anotherRecipeImageLayerSource.id,
+                //         layerConfig: {
+                //             bands: {
+                //                 selection: ['red', 'green', 'blue'] // TODO: Fix...
+                //             }
+                //         }
+                //     },
+                //     featureLayers: [
+                //         {type: 'Aoi'},
+                //         // {type: 'Labels'}
+                //     ]
+                // },
                 'left': {
                     imageLayer: {
                         sourceId: googleSatelliteImageLayerSource.id
