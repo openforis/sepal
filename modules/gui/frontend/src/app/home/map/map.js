@@ -185,8 +185,8 @@ class _Map extends React.Component {
     }
 
     renderOverylayMap() {
-        // return null
-        return <div className={styles.overlay}/>
+        return null
+        // return <div className={styles.overlay}/>
     }
 
     isMapInitialized() {
@@ -240,7 +240,7 @@ class _Map extends React.Component {
                 first(),
                 switchMap(() => api.gee.recipeBounds$(recipe)),
             ),
-            bounds => this.withFirstMap(map => map.fitBounds(bounds))
+            bounds => this.withFirstMap(map => bounds && map.fitBounds(bounds))
         )
     }
 

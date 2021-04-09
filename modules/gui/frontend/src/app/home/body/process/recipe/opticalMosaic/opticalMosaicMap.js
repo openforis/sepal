@@ -10,8 +10,7 @@ export class OpticalMosaicMap extends React.Component {
         // TODO: Not enough to check for AOI.
         //  Will be re-rendered during the wizard after AOI is set
         const initialized = recipe.model.aoi
-        console.log('OpticalMosaicMap', {initialized})
-        const layer = map
+        const layer = map && initialized
             ? EarthEngineLayer.fromRecipe({recipe, layerConfig, map})
             : null
 

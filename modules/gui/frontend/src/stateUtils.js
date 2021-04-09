@@ -44,7 +44,7 @@ export const resolve = (object, path, createTemplates = false) =>
                     // match array item by index
                     const index = parseInt(pathElement)
                     if (isNaN(index)) {
-                        throw Error('Cannot match array item with non-numeric index.')
+                        throw Error(`Cannot match array item with non-numeric index: path: ${path}, element: ${pathElement}`)
                     }
                     return value[index]
                 }
