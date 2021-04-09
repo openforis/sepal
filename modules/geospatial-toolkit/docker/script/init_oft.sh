@@ -18,11 +18,11 @@ apt-get update && apt-get install -y \
 	 libshp-dev \
 	 libtiff5-dev \
 	 make \
-	 python-h5py \
-	 python-saga \
-	 python-scipy \
-	 python-tk \
-	 python-qt4 \
+	 python3-h5py \
+	 python3-saga \
+	 python3-scipy \
+	 python3-tk \
+	 python3-pyqt5 \
 	 perl \
 	 spatialite-bin
 
