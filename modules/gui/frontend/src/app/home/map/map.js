@@ -123,7 +123,6 @@ class _Map extends React.Component {
             const subscriptions = [
                 zoomArea$.subscribe(zoomArea => this.setState({zoomArea}))
             ]
-            // maps[area] = {map, listeners, subscriptions}
 
             google.maps.event.addListenerOnce(googleMap, 'idle', () => {
                 this.setState(({maps}) => ({maps: {...maps, [area]: {map, listeners, subscriptions}}}))
@@ -151,8 +150,9 @@ class _Map extends React.Component {
     render() {
         const {layers, imageLayerSources} = this.props
         const {googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
-        const areas = _.map(Object.keys(layers), area => {
-            const {sourceId, layerConfig, layerIndex} = layers[area].imageLayer
+
+        const areas = _.map(layers, (layer, area) => {
+            const {sourceId, layerConfig, layerIndex} = layer.imageLayer
             const source = imageLayerSources.find(({id}) => id === sourceId)
             return ({
                 placement: area,
@@ -174,12 +174,19 @@ class _Map extends React.Component {
                 zoomArea,
                 areas
             }}>
-                <SplitContent areas={areas} mode='stack'/>
-                <div className={styles.content}>
-                    {this.isMapInitialized() ? this.renderRecipe() : null}
-                </div>
+                <SplitContent areas={areas} mode='stack'>
+                    {this.renderOverylayMap()}
+                    <div className={styles.content}>
+                        {this.isMapInitialized() ? this.renderRecipe() : null}
+                    </div>
+                </SplitContent>
             </MapContext.Provider>
         )
+    }
+
+    renderOverylayMap() {
+        return null
+        // return <div className={styles.overlay}/>
     }
 
     isMapInitialized() {
