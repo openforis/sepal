@@ -283,6 +283,14 @@ class _SplitContent extends React.PureComponent {
             }
         }
 
+        const hold$ = merge(
+            fromEvent(ref.current, 'mousedown'),
+            fromEvent(ref.current, 'touchstart')
+        )
+        const release$ = merge(
+            fromEvent(ref.current, 'mouseup'),
+            fromEvent(ref.current, 'touchend')
+        )
         const pan$ = fromEvent(handle, 'panstart panmove panend')
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
@@ -321,6 +329,8 @@ class _SplitContent extends React.PureComponent {
         )
 
         const dragging$ = merge(
+            hold$.pipe(mapTo(true)),
+            release$.pipe(mapTo(false)),
             panStart$.pipe(mapTo(true)),
             panEnd$.pipe(mapTo(false)),
         )
