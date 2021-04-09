@@ -192,7 +192,7 @@ class _Map extends React.Component {
     isMapInitialized() {
         const {layers} = this.props
         const {maps} = this.state
-        return !_.isEmpty(maps) && _.isEqual(Object.keys(maps), Object.keys(layers))
+        return !_.isEmpty(maps) && _.isEqual(new Set(Object.keys(maps)), new Set(Object.keys(layers)))
     }
 
     renderRecipe() {
