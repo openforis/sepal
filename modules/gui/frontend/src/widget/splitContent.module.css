@@ -35,6 +35,7 @@
     left: 0;
     right: 0;
     pointer-events: none;
+    z-index: 0;
 }
 
 .container.dragging .areas:after {
@@ -74,6 +75,7 @@
     flex-direction: column;
     pointer-events: none;
     overflow: hidden;
+    z-index: 0;
 }
 
 .area.full {
@@ -113,6 +115,15 @@
 }
 
 /* handle */
+
+.handles {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+}
 
 .container.initialized .handle {
     visibility: visible;
@@ -213,4 +224,17 @@
 .dragging.x .handle.axis.vertical,
 .dragging.y .handle.axis.horizontal {
     --color: var(--dragging-color);
+}
+
+/* overlay */
+
+.overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    display: flex;
+    flex-grow: 1;
 }

@@ -23,7 +23,7 @@ const resize$ = new Subject()
 const SplitContext = React.createContext()
 
 class _SplitContent extends React.PureComponent {
-    container = React.createRef()
+    areas = React.createRef()
     centerHandle = React.createRef()
     verticalHandle = React.createRef()
     horizontalHandle = React.createRef()
@@ -50,12 +50,12 @@ class _SplitContent extends React.PureComponent {
     }
 
     render() {
-        const {position: {x, y}, dragging, initialized, className} = this.state
+        const {className, children} = this.props
+        const {position: {x, y}, dragging, initialized} = this.state
         return (
             <ElementResizeDetector onResize={size => resize$.next(size)}>
-                <SplitContext.Provider value={this.container.current}>
+                <SplitContext.Provider value={this.areas.current}>
                     <div
-                        ref={this.container}
                         className={[
                             styles.container,
                             dragging.x || dragging.y ? styles.dragging : null,
@@ -68,12 +68,17 @@ class _SplitContent extends React.PureComponent {
                             '--x': `${x}px`,
                             '--y': `${y}px`
                         }}>
-                        <div className={styles.areas}>
+                        <div className={styles.areas} ref={this.areas}>
                             {this.renderAreas()}
                         </div>
-                        {this.renderCenterHandle()}
-                        {this.renderVerticalHandle()}
-                        {this.renderHorizontalHandle()}
+                        <div className={styles.handles}>
+                            {this.renderCenterHandle()}
+                            {this.renderVerticalHandle()}
+                            {this.renderHorizontalHandle()}
+                        </div>
+                        <div className={[styles.overlay].join(' ')}>
+                            {children}
+                        </div>
                     </div>
                 </SplitContext.Provider>
             </ElementResizeDetector>
@@ -98,14 +103,6 @@ class _SplitContent extends React.PureComponent {
                 ]).join(' ')}>
                 {initialized ? content : null}
             </div>
-            // <div
-            //     key={placement}
-            //     className={_.flatten([
-            //         mode === 'stack' ? styles.area : styles.view,
-            //         placement.split('-').map(placement => styles[placement])
-            //     ]).join(' ')}>
-            //     {initialized ? content : null}
-            // </div>
         )
     }
 
@@ -384,6 +381,8 @@ SplitContent.propTypes = {
             view: PropTypes.any
         })
     ),
+    children: PropTypes.any,
+    className: PropTypes.string,
     mode: PropTypes.oneOf(['stack', 'grid'])
 }
 
@@ -396,9 +395,9 @@ export class SplitOverlay extends React.Component {
         const {area, children} = this.props
         return (
             <SplitContext.Consumer>
-                {container => {
+                {areas => {
                     return (
-                        <Portal type='container' container={container}>
+                        <Portal type='container' container={areas}>
                             <div className={_.flatten([
                                 styles.area,
                                 styles.partial,
@@ -407,14 +406,6 @@ export class SplitOverlay extends React.Component {
                                 {children}
                             </div>
                         </Portal>
-                        // <Portal type='container' container={container}>
-                        //     <div className={_.flatten([
-                        //         styles.view,
-                        //         area.split('-').map(area => styles[area])
-                        //     ]).join(' ')}>
-                        //         {children}
-                        //     </div>
-                        // </Portal>
                     )
                 }}
             </SplitContext.Consumer>
