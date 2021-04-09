@@ -91,7 +91,10 @@ const saveToLocalStorage$ = (() => {
 })()
 
 export const recipePath = (recipeId, path) =>
-    ['process.tabs', {id: recipeId}, path]
+    ['process.loadedRecipes', recipeId, path]
+
+export const tabPath = id =>
+    ['process.tabs', {id}]
 
 export const recipeActionBuilder = id => {
     if (!id) {
@@ -123,7 +126,7 @@ const updateRecipeList = recipe =>
         })
         .dispatch()
 
-const initializedRecipe = recipe => ({
+const initializeRecipe = recipe => ({
     ...recipe,
     ui: {initialized: true}
 })
@@ -161,11 +164,15 @@ export const loadRecipes$ = () =>
 
 export const loadRecipe$ = recipeId =>
     api.recipe.load$(recipeId).pipe(
-        map(recipe =>
-            actionBuilder('LOAD_RECIPE')
-                .set(recipePath(select('process.selectedTabId')), initializedRecipe(recipe))
+        map(recipe => {
+            const initializedRecipe = initializeRecipe(recipe)
+            const {id, placeholder, title, type} = initializedRecipe
+            return actionBuilder('LOAD_RECIPE')
+                .set(tabPath(select('process.selectedTabId')), {id, placeholder, title, type})
                 .set('process.selectedTabId', recipe.id)
+                .set(recipePath(recipeId), initializedRecipe)
                 .dispatch()
+        }
         )
     )
 
@@ -189,7 +196,7 @@ export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
         }),
         map(recipe =>
             actionBuilder('DUPLICATE_RECIPE', {duplicate: recipe})
-                .set(recipePath(destinationRecipeId), initializedRecipe(recipe))
+                .set(recipePath(destinationRecipeId), initializeRecipe(recipe))
                 .dispatch()
         )
     )
@@ -200,6 +207,7 @@ export const removeRecipe$ = recipeId =>
             removeAllRevisions(recipeId)
             actionBuilder('REMOVE_RECIPE', {recipeId})
                 .del(['process.recipes', {id: recipeId}])
+                .del(['process.loadedRecipes', {id: recipeId}])
                 .dispatch()
         })
     )
@@ -216,22 +224,20 @@ export const addRecipe = recipe => {
 export const isRecipeOpen = recipeId =>
     select('process.tabs').findIndex(recipe => recipe.id === recipeId) > -1
 
-// [TODO] - to be cleaned up
-
-let prevTabs = []
+let prevRecipes = []
 
 const findPrevRecipe = recipe =>
-    prevTabs.find(prevRecipe => prevRecipe.id === recipe.id) || {}
+    prevRecipes.find(prevRecipe => prevRecipe.id === recipe.id) || {}
 
 const persistentProps = recipe =>
-    _.pick(recipe, ['model', 'map'])
+    _.pick(recipe, ['model', 'layers'])
 
 const isToBeSaved = (prevRecipe, recipe) =>
     persistentProps(prevRecipe) && !_.isEqual(persistentProps(prevRecipe), persistentProps(recipe))
-// persistentProps(prevRecipe) && !_.isEqual(_.pick(prevRecipe, persistentProps), _.pick(recipe, persistentProps))
 
-subscribe('process.tabs', recipes => {
-    if (recipes && (prevTabs.length === 0 || prevTabs !== recipes)) {
+subscribe('process.loadedRecipes', loadedRecipes => {
+    const recipes = loadedRecipes && Object.values(loadedRecipes)
+    if (recipes && (prevRecipes.length === 0 || prevRecipes !== recipes)) {
         const recipesToSave = recipes
             .filter(recipe =>
                 (select('process.recipes') || []).find(saved =>
@@ -245,7 +251,7 @@ subscribe('process.tabs', recipes => {
                 saveToLocalStorage$.next(recipe)
             })
         }
-        prevTabs = recipes
+        prevRecipes = recipes
     }
 })
 
@@ -269,11 +275,14 @@ const removeAllRevisions = recipeId =>
 export const revertToRevision$ = (recipeId, revision) =>
     uncompressRecipe$(loadRevision(recipeId, revision)).pipe(
         map(recipe => {
-            prevTabs = prevTabs.filter(tab => tab.id !== recipeId)
+            prevRecipes = prevRecipes.filter(tab => tab.id !== recipeId)
             closeTab(recipeId, 'process')
             const selectedTabId = select('process.selectedTabId')
+            const initializedRecipe = initializeRecipe(recipe)
+            const {id, placeholder, title, type} = initializedRecipe
             actionBuilder('REVERT_RECIPE')
-                .set(recipePath(selectedTabId), initializedRecipe(recipe))
+                .set(tabPath(selectedTabId), {id, placeholder, title, type})
+                .set(recipePath(selectedTabId), initializedRecipe)
                 .set('process.selectedTabId', recipeId)
                 .dispatch()
             saveToBackend$.next(recipe)

@@ -9,11 +9,11 @@ import actionBuilder from 'action-builder'
 
 const Context = React.createContext()
 
-export const RecipeContext = ({rootStatePath = 'process.tabs', recipeId, children}) =>
+export const RecipeContext = ({rootStatePath = 'process.loadedRecipes', recipeId, children}) =>
     recipeId
         ? (
             <Context.Provider value={{
-                statePath: toPathList([rootStatePath, {id: recipeId}])
+                statePath: toPathList([rootStatePath, recipeId])
             }}>
                 <ActivationContext id={`recipe-${recipeId}`}>
                     {children}
