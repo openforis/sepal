@@ -35,10 +35,9 @@ class MapLayout extends React.Component {
 
 class MapToolbar extends React.Component {
     render() {
-        const {statePath, map, zoomArea, labelLayerIndex, toggleLinked, linked, setAreas, areas, children} = this.props
+        const {map, zoomArea, toggleLinked, linked, setAreas, areas, children} = this.props
         return (
             <React.Fragment>
-                {/*<LayersMenu statePath={statePath} labelLayerIndex={labelLayerIndex}/>*/}
                 <Toolbar
                     className={styles.mapToolbar}
                     horizontal
@@ -89,7 +88,6 @@ class MapToolbar extends React.Component {
 }
 
 MapToolbar.propTypes = {
-    labelLayerIndex: PropTypes.any.isRequired,
     statePath: PropTypes.any.isRequired,
     children: PropTypes.any
 }

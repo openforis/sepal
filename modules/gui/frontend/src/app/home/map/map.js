@@ -97,12 +97,12 @@ class _Map extends React.Component {
         this.allMaps(({map}) => map.setVisibility(visible))
     }
 
-    renderMap(source, layerConfig, layerIndex, area) {
+    renderMap(source, layerConfig, area) {
         const {maps} = this.state
         const map = maps[area] && maps[area].map
         return (
             <MapAreaContext.Provider value={{area, map, refCallback: this.refCallback}}>
-                <MapArea source={source} layerConfig={layerConfig} layerIndex={layerIndex} map={map}/>
+                <MapArea source={source} layerConfig={layerConfig} map={map}/>
             </MapAreaContext.Provider>
         )
     }
@@ -152,11 +152,11 @@ class _Map extends React.Component {
         const {googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
 
         const areas = _.map(layers, (layer, area) => {
-            const {sourceId, layerConfig, layerIndex} = layer.imageLayer
+            const {sourceId, layerConfig} = layer.imageLayer
             const source = imageLayerSources.find(({id}) => id === sourceId)
             return ({
                 placement: area,
-                content: this.renderMap(source, layerConfig, layerIndex, area)
+                content: this.renderMap(source, layerConfig, area)
             })
         })
 
@@ -185,8 +185,8 @@ class _Map extends React.Component {
     }
 
     renderOverylayMap() {
-        return null
-        // return <div className={styles.overlay}/>
+        // return null
+        return <div className={styles.overlay}/>
     }
 
     isMapInitialized() {
@@ -201,7 +201,7 @@ class _Map extends React.Component {
             <SectionLayout>
                 <Content>
                     <div className={className}>
-                        <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
+                        <MapToolbar statePath={[statePath, 'ui']}/>
                         <MapScale/>
                         {children}
                     </div>
