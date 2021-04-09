@@ -1,5 +1,4 @@
 import {GoogleSatelliteMap} from './googleSatelliteMap'
-import {MapAreaLayout} from './mapAreaLayout'
 import {PlanetMap} from './planetMap'
 import {RecipeMap} from 'app/home/body/process/recipe/recipeMap'
 import PropTypes from 'prop-types'

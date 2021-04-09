@@ -28,7 +28,7 @@ class _CCDCSlice extends React.Component {
     }
 
     render() {
-        const {recipeId, recipeContext: {statePath}, initialized} = this.props
+        const {recipeContext: {statePath}, initialized} = this.props
         return (
             <div>
                 <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
