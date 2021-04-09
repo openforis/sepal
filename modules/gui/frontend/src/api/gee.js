@@ -69,6 +69,10 @@ export default {
     nextReferenceDataPoints$: recipe =>
         postJson$('/api/gee/nextReferenceDataPoints',
             {body: recipe}
+        ).pipe(toResponse),
+    getAoiBounds$: ({aoi}) =>
+        postJson$('/api/gee/aoi/bounds',
+            {body: aoi}
         ).pipe(toResponse)
 }
 

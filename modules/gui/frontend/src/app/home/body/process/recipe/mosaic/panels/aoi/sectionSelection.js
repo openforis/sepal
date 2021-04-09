@@ -35,8 +35,8 @@ class _SectionSelection extends React.Component {
     }
 
     componentDidUpdate() {
-        const {map} = this.props
-        removeAoiLayer(map)
+        // const {map} = this.props
+        // removeAoiLayer(map)
     }
 }
 

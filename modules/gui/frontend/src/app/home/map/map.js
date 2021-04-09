@@ -1,16 +1,17 @@
-import {Content, SectionLayout} from '../../../widget/sectionLayout'
+import {BehaviorSubject, ReplaySubject, Subject} from 'rxjs'
+import {Content, SectionLayout} from 'widget/sectionLayout'
 import {MapArea} from './mapArea'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
-import {ReplaySubject, Subject} from 'rxjs'
 import {SplitContent} from 'widget/splitContent'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {debounceTime, distinctUntilChanged, finalize} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, filter, finalize, first, switchMap} from 'rxjs/operators'
+import {getBounds$} from './aoiLayer'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
 import {mapBoundsTag, mapTag} from 'tag'
-import {selectFrom} from '../../../stateUtils'
+import {selectFrom} from 'stateUtils'
 import {withMapsContext} from './maps'
 import {withRecipe} from '../body/process/recipeContext'
 import MapScale from './mapScale'
@@ -25,17 +26,18 @@ const log = getLogger('map')
 
 const mapRecipeToProps = recipe => ({
     layers: selectFrom(recipe, 'layers'),
-    imageLayerSources: selectFrom(recipe, 'ui.imageLayerSources')
+    imageLayerSources: selectFrom(recipe, 'ui.imageLayerSources'),
+    aoi: selectFrom(recipe, 'model.aoi')
 })
 
 class _Map extends React.Component {
     updateBounds$ = new Subject()
     linked$ = new ReplaySubject()
+    mapInitialized$ = new BehaviorSubject()
 
     state = {
         maps: {},
         areas: null,
-        selectedArea: null,
         mapId: null,
         googleMapsApiKey: null,
         norwayPlanetApiKey: null,
@@ -57,12 +59,12 @@ class _Map extends React.Component {
         })
     }
 
-    // aMap(callback) {
-    //     const {maps} = this
-    //     const area = _.head(_.keys(maps))
-    //     const map = maps[area]
-    //     callback(map, area)
-    // }
+    withFirstMap(callback) {
+        const {maps} = this.state
+        const area = _.head(_.keys(maps))
+        const {map} = maps[area]
+        return callback(map, area)
+    }
 
     removeArea(area) {
         const {maps} = this.state
@@ -148,7 +150,7 @@ class _Map extends React.Component {
 
     render() {
         const {layers, imageLayerSources} = this.props
-        const {maps, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
+        const {googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
         const areas = _.map(Object.keys(layers), area => {
             const {sourceId, layerConfig} = layers[area].imageLayer
             const source = imageLayerSources.find(({id}) => id === sourceId)
@@ -162,7 +164,6 @@ class _Map extends React.Component {
         const toggleLinked = this.toggleLinked
         // TODO: Maybe overkill. Requires proper cleanup of removed map areas too.
         //  Thinking is that the this.setState() is async, and we might not have got all at the same time
-        const mapsInitialized = !_.isEmpty(maps) && _.isEqual(Object.keys(maps), Object.keys(layers))
         return (
             <MapContext.Provider value={{
                 map: this.mapDelegate(),
@@ -176,10 +177,16 @@ class _Map extends React.Component {
             }}>
                 <SplitContent areas={areas} mode='stack'/>
                 <div className={styles.content}>
-                    {mapsInitialized ? this.renderRecipe() : null}
+                    {this.isMapInitialized() ? this.renderRecipe() : null}
                 </div>
             </MapContext.Provider>
         )
+    }
+
+    isMapInitialized() {
+        const {layers} = this.props
+        const {maps} = this.state
+        return !_.isEmpty(maps) && _.isEqual(Object.keys(maps), Object.keys(layers))
     }
 
     renderRecipe() {
@@ -207,7 +214,7 @@ class _Map extends React.Component {
     }
 
     componentDidMount() {
-        const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
+        const {stream, mapsContext: {google, createMapContext}, aoi, onEnable, onDisable} = this.props
         const {mapId, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked} = createMapContext()
 
         this.setLinked(getProcessTabsInfo().single)
@@ -221,6 +228,25 @@ class _Map extends React.Component {
             onEnable(() => this.setVisibility(true))
             onDisable(() => this.setVisibility(false))
         })
+        if (aoi) {
+            stream('LOAD_BOUNDS',
+                this.mapInitialized$.pipe(
+                    filter(initialized => initialized),
+                    first(),
+                    switchMap(() => {
+                        console.log('Getting bounds')
+                        return getBounds$({aoi, google})
+                    }),
+                ),
+                bounds => this.withFirstMap(map => map.fitBounds(bounds))
+            )
+        }
+    }
+
+    componentDidUpdate() {
+        if (this.isMapInitialized()) {
+            this.mapInitialized$.next(true)
+        }
     }
 
     componentWillUnmount() {

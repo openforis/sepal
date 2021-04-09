@@ -1,6 +1,7 @@
 import {EETableLayer, setEETableLayer} from './eeTableLayer'
 import {PolygonLayer, setPolygonLayer} from './polygonLayer'
-import api from '../../../api'
+import {of} from 'rxjs'
+import api from 'api'
 
 export const countryEETable = 'users/wiell/SepalResources/countries'
 
@@ -10,6 +11,9 @@ export const removeAoiLayer = map => {
 
 export const createAoiLayer = ({map, recipe, layerIndex}) => {
     const aoi = recipe.model.aoi
+    if (!aoi) {
+        return null
+    }
     const aoiType = aoi.type
     const color = '#FFFFFF50'
     const fillColor = '#FFFFFF08'
@@ -102,4 +106,54 @@ export const setAoiLayer = ({map, aoi, fill, destroy$, onInitialized, layerIndex
     default:
         removeAoiLayer(map)
     }
+}
+
+export const getBounds$ = ({aoi, google}) => {
+    switch(aoi.type) {
+    case 'COUNTRY': return eeTableBounds$({
+        tableId: countryEETable,
+        columnName: 'id',
+        columnValue: aoi.areaCode || aoi.countryCode,
+        buffer: aoi.buffer,
+    })
+    case 'EE_TABLE': return eeTableBounds$({
+        tableId: aoi.id,
+        columnName: aoi.keyColumn,
+        columnValue: aoi.key,
+        buffer: aoi.buffer
+    })
+    case 'POLYGON': return polygonBounds$({
+        path: aoi.path,
+        google
+    })
+    default: throw Error(`Unsupported AOI type: ${aoi.type}`)
+    }
+}
+
+const eeTableBounds$ = aoi => {
+    return api.gee.getAoiBounds$({aoi})
+}
+
+const polygonBounds$ = ({path, google}) => {
+    const polygon = new google.maps.Polygon({
+        paths: path.map(([lng, lat]) =>
+            new google.maps.LatLng(lat, lng)
+        )
+    })
+    const googleBounds = new google.maps.LatLngBounds()
+    polygon.getPaths().getArray().forEach(path =>
+        path.getArray().forEach(latLng =>
+            googleBounds.extend(latLng)
+        ))
+    const bounds = fromGoogleBounds(googleBounds)
+    return of(bounds)
+}
+
+const fromGoogleBounds = googleBounds => {
+    const sw = googleBounds.getSouthWest()
+    const ne = googleBounds.getNorthEast()
+    return [
+        [sw.lng(), sw.lat()],
+        [ne.lng(), ne.lat()]
+    ]
 }
