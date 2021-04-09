@@ -38,6 +38,9 @@ export default {
     recipeGeometry$: recipe =>
         postJson$('/api/gee/recipe/geometry', {body: {recipe}})
             .pipe(toResponse),
+    recipeBounds$: recipe =>
+        postJson$('/api/gee/recipe/bounds', {body: {recipe}})
+            .pipe(toResponse),
     loadEETableColumns$: tableId =>
         get$('/api/gee/table/columns',
             {query: {tableId}}
@@ -69,10 +72,6 @@ export default {
     nextReferenceDataPoints$: recipe =>
         postJson$('/api/gee/nextReferenceDataPoints',
             {body: recipe}
-        ).pipe(toResponse),
-    getAoiBounds$: ({aoi}) =>
-        postJson$('/api/gee/aoi/bounds',
-            {body: aoi}
         ).pipe(toResponse)
 }
 

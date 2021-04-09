@@ -7,7 +7,6 @@ import {SplitContent} from 'widget/splitContent'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {debounceTime, distinctUntilChanged, filter, finalize, first, switchMap} from 'rxjs/operators'
-import {getBounds$} from './aoiLayer'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
 import {mapBoundsTag, mapTag} from 'tag'
@@ -19,6 +18,7 @@ import MapToolbar from './mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
+import api from '../../../api'
 import styles from './map.module.css'
 import withSubscriptions from 'subscription'
 
@@ -27,7 +27,7 @@ const log = getLogger('map')
 const mapRecipeToProps = recipe => ({
     layers: selectFrom(recipe, 'layers'),
     imageLayerSources: selectFrom(recipe, 'ui.imageLayerSources'),
-    aoi: selectFrom(recipe, 'model.aoi')
+    recipe
 })
 
 class _Map extends React.Component {
@@ -213,7 +213,7 @@ class _Map extends React.Component {
     }
 
     componentDidMount() {
-        const {stream, mapsContext: {google, createMapContext}, aoi, onEnable, onDisable} = this.props
+        const {stream, mapsContext: {createMapContext}, recipe, onEnable, onDisable} = this.props
         const {mapId, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked} = createMapContext()
 
         this.setLinked(getProcessTabsInfo().single)
@@ -227,16 +227,14 @@ class _Map extends React.Component {
             onEnable(() => this.setVisibility(true))
             onDisable(() => this.setVisibility(false))
         })
-        if (aoi) {
-            stream('LOAD_BOUNDS',
-                this.mapInitialized$.pipe(
-                    filter(initialized => initialized),
-                    first(),
-                    switchMap(() => getBounds$({aoi, google})),
-                ),
-                bounds => this.withFirstMap(map => map.fitBounds(bounds))
-            )
-        }
+        stream('LOAD_BOUNDS',
+            this.mapInitialized$.pipe(
+                filter(initialized => initialized),
+                first(),
+                switchMap(() => api.gee.recipeBounds$(recipe)),
+            ),
+            bounds => this.withFirstMap(map => map.fitBounds(bounds))
+        )
     }
 
     componentDidUpdate() {

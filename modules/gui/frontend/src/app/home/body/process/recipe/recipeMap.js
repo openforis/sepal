@@ -47,6 +47,7 @@ export const RecipeMap = compose(
     connect(mapStateToProps),
 )
 
+// TODO: Don't load this every time - pick it up from Redux state cache
 const loadRecipe$ = recipeId => api.recipe.load$(recipeId)
 
 RecipeMap.propTypes = {

@@ -157,10 +157,9 @@ class _Maps extends React.Component {
 
     render() {
         const {children} = this.props
-        const {initialized, google} = this.state
+        const {initialized} = this.state
         return (
             <MapsContext.Provider value={{
-                ...google,
                 createGoogleMap: this.createGoogleMap.bind(this),
                 createSepalMap: this.createSepalMap.bind(this),
                 createMapContext: this.createMapContext.bind(this)
