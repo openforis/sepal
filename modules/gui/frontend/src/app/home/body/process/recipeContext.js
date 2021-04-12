@@ -1,6 +1,7 @@
 import {ActivationContext} from 'widget/activation/activationContext'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {recipeAccess} from './recipeAccess'
 import {recipeActionBuilder} from './recipe'
 import {toPathList} from 'stateUtils'
 import {withContext} from 'context'
@@ -33,16 +34,29 @@ export const withRecipe = mapRecipeToProps =>
             if (!_.isEmpty(recipe)) {
                 return {
                     recipeActionBuilder: recipeActionBuilder(recipe.id),
+                    recipeId: recipe.id,
                     ...mapRecipeToProps(recipe, ownProps)
                 }
             } else {
                 return ownProps
             }
         }
+        class HigherOrderComponent extends React.Component {
+            render() {
+                return React.createElement(WrappedComponent, {...this.props})
+            }
+
+            componentDidMount() {
+                const {recipeId, usingRecipe} = this.props
+                usingRecipe(recipeId)
+
+            }
+        }
         return compose(
-            WrappedComponent,
+            HigherOrderComponent,
             connect(mapStateToProps),
-            withRecipeContext()
+            withRecipeContext(),
+            recipeAccess()
         )
     }
 

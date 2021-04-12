@@ -3,6 +3,7 @@ import {compose} from 'compose'
 import {defaultModel} from './timeSeriesRecipe'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
+import {recipeAccess} from '../../recipeAccess'
 import {selectFrom} from 'stateUtils'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import MapScale from 'app/home/map/mapScale'
@@ -10,7 +11,6 @@ import MapToolbar from 'app/home/map/mapToolbar'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import TimeSeriesToolbar from './panels/timeSeriesToolbar'
-import api from 'api'
 import styles from './timeSeries.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -53,10 +53,10 @@ class _TimeSeries extends React.Component {
     }
 
     initClassification() {
-        const {stream, classificationLegend, classificationRecipeId} = this.props
+        const {stream, classificationLegend, classificationRecipeId, loadRecipe$} = this.props
         if (classificationRecipeId && !classificationLegend && !stream('LOAD_CLASSIFICATION_RECIPE').active) {
             stream('LOAD_CLASSIFICATION_RECIPE',
-                api.recipe.load$(classificationRecipeId),
+                loadRecipe$(classificationRecipeId),
                 classification => {
                     this.recipeActions.setClassification({
                         classificationLegend: classification.model.legend,
@@ -73,7 +73,8 @@ class _TimeSeries extends React.Component {
 
 const TimeSeries = compose(
     _TimeSeries,
-    recipe({defaultModel, mapRecipeToProps})
+    recipe({defaultModel, mapRecipeToProps}),
+    recipeAccess()
 )
 
 export default () => ({

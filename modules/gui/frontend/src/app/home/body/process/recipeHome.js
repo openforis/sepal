@@ -5,17 +5,22 @@ import {StaticMap} from '../../map/staticMap'
 import {closeTab} from 'widget/tabs/tabs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {duplicateRecipe$, isRecipeOpen, loadRecipe$, removeRecipe$, selectRecipe} from './recipe'
+import {duplicateRecipe$, initializeRecipe, isRecipeOpen, openRecipe, removeRecipe$, selectRecipe} from './recipe'
+import {map, tap} from 'rxjs/operators'
 import {msg} from 'translate'
+import {of} from 'rxjs'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
+import actionBuilder from 'action-builder'
+import api from 'api'
 import styles from './recipeHome.module.css'
 
 const mapStateToProps = () => {
     const recipes = select('process.recipes')
     return {
-        recipes: recipes ? recipes : null
+        recipes: recipes ? recipes : null,
+        loadedRecipes: select('process.loadedRecipes') || {}
     }
 }
 
@@ -31,7 +36,7 @@ class _RecipeHome extends React.Component {
                                 recipeId={recipeId}
                                 trigger={recipes && !recipes.length}/>
                             <RecipeList.Data
-                                onSelect={recipeId => this.openRecipe(recipeId)}
+                                onSelect={recipeId => this.openRecipeId(recipeId)}
                                 onDuplicate={recipeId => this.duplicateRecipe(recipeId)}
                                 onRemove={recipeId => this.removeRecipe(recipeId)}
                             />
@@ -48,15 +53,30 @@ class _RecipeHome extends React.Component {
         )
     }
 
-    openRecipe(recipeId) {
+    openRecipeId(recipeId) {
         const {stream} = this.props
         if (isRecipeOpen(recipeId)) {
             selectRecipe(recipeId)
         } else {
             stream('LOAD_RECIPE',
-                loadRecipe$(recipeId)
+                this.loadRecipe$(recipeId),
+                recipe => openRecipe(recipe)
             )
         }
+    }
+
+    loadRecipe$(recipeId) {
+        const {loadedRecipes} = this.props
+        return Object.keys(loadedRecipes).includes(recipeId)
+            ? of(loadedRecipes[recipeId])
+            : api.recipe.load$(recipeId).pipe(
+                map(recipe => initializeRecipe(recipe)),
+                tap(recipe =>
+                    actionBuilder('CACHE_RECIPE', recipe)
+                        .set(['process.loadedRecipes', recipe.id], recipe)
+                        .dispatch()
+                )
+            )
     }
 
     duplicateRecipe(recipeIdToDuplicate) {

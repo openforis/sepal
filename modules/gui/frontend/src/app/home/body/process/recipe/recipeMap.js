@@ -1,11 +1,10 @@
 import {OpticalMosaicMap} from './opticalMosaic/opticalMosaicMap'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {of} from 'rxjs'
+import {recipeAccess} from '../recipeAccess'
 import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
 import React from 'react'
-import api from 'api'
 
 const mapStateToProps = state => {
     return ({
@@ -38,25 +37,18 @@ class _RecipeMap extends React.Component {
     }
 
     componentDidMount() {
-        const {stream} = this.props
+        const {stream, recipeId, loadRecipe$} = this.props
         stream('LOAD_RECIPE',
-            this.loadRecipe$(),
+            loadRecipe$(recipeId),
             recipe => this.setState({recipe})
         )
-    }
-
-    loadRecipe$() {
-        const {recipeId, loadedRecipes} = this.props
-        const recipe = loadedRecipes[recipeId]
-        return recipe
-            ? of(recipe)
-            : api.recipe.load$(recipeId)
     }
 }
 
 export const RecipeMap = compose(
     _RecipeMap,
     connect(mapStateToProps),
+    recipeAccess()
 )
 
 RecipeMap.propTypes = {

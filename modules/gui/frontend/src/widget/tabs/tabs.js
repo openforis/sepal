@@ -10,7 +10,6 @@ import {connect, select} from 'store'
 import {delay, filter} from 'rxjs/operators'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
-import {recipePath} from 'app/home/body/process/recipe'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -37,7 +36,6 @@ export const closeTab = (id, statePath, nextId) => {
     close$.next({id, statePath, nextId})
     actionBuilder('CLOSING_TAB')
         .set([statePath, 'tabs', {id}, 'ui.closing'], true)
-        .del(recipePath(id))
         .dispatch()
 }
 
