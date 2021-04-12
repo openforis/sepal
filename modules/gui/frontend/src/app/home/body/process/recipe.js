@@ -205,7 +205,9 @@ export const removeRecipe$ = recipeId =>
 export const addRecipe = recipe => {
     const tab = addTab('process')
     recipe.id = tab.id
+    const {id, placeholder, title, type} = recipe
     return actionBuilder('SELECT_RECIPE')
+        .set(tabPath(recipe.id), {id, placeholder, title, type})
         .set(recipePath(recipe.id), recipe)
         .set('process.selectedTabId', recipe.id)
         .dispatch()
