@@ -5,6 +5,7 @@ import {map, tap} from 'rxjs/operators'
 import {of} from 'rxjs'
 import {selectFrom} from 'stateUtils'
 import React from 'react'
+import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
 import guid from 'guid'
@@ -38,13 +39,13 @@ export const recipeAccess = () =>
                 Object.keys(componentIdsByRecipeId)
                     .forEach(recipeId => {
                         const componentIds = new Set(
-                            Array.from((componentIdsByRecipeId[recipeId] || new Set([])))
-                                .filter(componentId => componentId !== this.id)
+                            componentIdsForRecipeId(recipeId)
+                                .filter(componentId => componentId !== this.componentId)
                         )
-                        if (componentIds.length) {
-                            updatedComponentIdsByRecipeId[recipeId] = componentIds
-                        } else {
+                        if (_.isEmpty(componentIds)) {
                             this.removeCachedRecipe(recipeId)
+                        } else {
+                            updatedComponentIdsByRecipeId[recipeId] = componentIds
                         }
                     })
                 componentIdsByRecipeId = updatedComponentIdsByRecipeId
@@ -53,7 +54,10 @@ export const recipeAccess = () =>
             usingRecipe(recipeId) {
                 componentIdsByRecipeId = {
                     ...componentIdsByRecipeId,
-                    [recipeId]: new Set(componentIdsByRecipeId[recipeId] || [])
+                    [recipeId]: new Set([
+                        ...componentIdsForRecipeId(recipeId),
+                        this.componentId
+                    ])
                 }
             }
 
@@ -69,10 +73,13 @@ export const recipeAccess = () =>
             }
 
             cacheRecipe(recipe) {
-                const prevComponentIds = componentIdsByRecipeId[recipe.id] || []
+                const prevComponentIds = componentIdsForRecipeId(recipe.id)
                 componentIdsByRecipeId = {
                     ...componentIdsByRecipeId,
-                    [recipe.id]: [...prevComponentIds, this.componentId]
+                    [recipe.id]: new Set([
+                        ...prevComponentIds,
+                        this.componentId
+                    ])
                 }
                 actionBuilder('CACHE_RECIPE', recipe)
                     .set(['process.loadedRecipes', recipe.id], recipe)
@@ -91,3 +98,7 @@ export const recipeAccess = () =>
             connect(mapStateToProps)
         )
     }
+
+const componentIdsForRecipeId = recipeId => Array.from(
+    componentIdsByRecipeId[recipeId] || new Set([])
+)
