@@ -1,7 +1,6 @@
 import {compose} from 'compose'
 import {withMapsContext} from './maps'
 import React from 'react'
-import _ from 'lodash'
 import styles from './map.module.css'
 
 class _StaticMap extends React.Component {
@@ -21,6 +20,7 @@ class _StaticMap extends React.Component {
 
     componentDidMount() {
         const {mapsContext: {createGoogleMap}} = this.props
+        console.log(this.map.current)
         createGoogleMap(this.map.current)
     }
 }

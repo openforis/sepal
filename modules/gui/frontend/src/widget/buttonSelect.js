@@ -42,7 +42,7 @@ class ButtonSelect extends React.Component {
     }
 
     renderButton() {
-        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement} = this.props
+        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement, width} = this.props
         return (
             <Button
                 ref={this.input}
@@ -52,6 +52,7 @@ class ButtonSelect extends React.Component {
                 icon={icon}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
+                width={width}
                 onClick={() => this.toggleOptions()}
                 disabled={disabled}
             >
@@ -61,10 +62,10 @@ class ButtonSelect extends React.Component {
     }
 
     renderContent() {
-        const {label, icon} = this.props
+        const {label, icon, width} = this.props
         const {selectedOption} = this.state
         return (
-            <div className={styles.content}>
+            <div className={[styles.content, width === 'fill' ? styles.fill : ''].join(' ')}>
                 {icon && <Icon name={icon}/>}
                 <div>
                     {(selectedOption && selectedOption.buttonLabel) || label}
@@ -220,7 +221,7 @@ ButtonSelect.propTypes = {
     disabled: PropTypes.any,
     icon: PropTypes.string,
     input: PropTypes.any,
-    label: PropTypes.string,
+    label: PropTypes.any,
     look: PropTypes.string,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
@@ -228,6 +229,7 @@ ButtonSelect.propTypes = {
     shape: PropTypes.string,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
+    width: PropTypes.string,
     onSelect: PropTypes.func
 }
 

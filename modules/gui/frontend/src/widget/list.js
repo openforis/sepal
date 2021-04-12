@@ -44,7 +44,7 @@ export const ScrollableList = compose(
 ScrollableList.propTypes = {
     options: PropTypes.arrayOf(
         PropTypes.shape({
-            label: PropTypes.oneOfType([PropTypes.number, PropTypes.string, PropTypes.array]),
+            label: PropTypes.any,
             value: PropTypes.any
         })
     ).isRequired,

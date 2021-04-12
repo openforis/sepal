@@ -1,12 +1,18 @@
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
-import {PlanetMap} from '../../../../map/planetMap'
+import {Widget} from 'widget/widget'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+const defaultLayerConfig = {
+    bands: {
+        selection: ['red', 'green', 'blue'] // TODO: Fix...
+    }
+}
+
 export class OpticalMosaicMap extends React.Component {
     render() {
-        const {recipe, layerConfig, map} = this.props
+        const {recipe, layerConfig = defaultLayerConfig, map} = this.props
         // TODO: Not enough to check for AOI.
         //  Will be re-rendered during the wizard after AOI is set
         const initialized = recipe.model.aoi
@@ -16,16 +22,21 @@ export class OpticalMosaicMap extends React.Component {
 
         return (
             <MapAreaLayout
-                form={null}
                 layer={layer}
+                form={this.renderImageLayerForm()}
                 map={map}
             />
         )
     }
+
+    renderImageLayerForm() {
+        // TODO: Implement...
+        return <Widget>Image layer form goes here</Widget>
+    }
 }
 
 OpticalMosaicMap.propTypes = {
-    layerConfig: PropTypes.object.isRequired,
+    layerConfig: PropTypes.object,
     recipe: PropTypes.object.isRequired,
     map: PropTypes.object
 }

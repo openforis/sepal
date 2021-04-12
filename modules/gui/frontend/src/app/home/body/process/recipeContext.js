@@ -49,7 +49,6 @@ export const withRecipe = mapRecipeToProps =>
             componentDidMount() {
                 const {recipeId, usingRecipe} = this.props
                 usingRecipe(recipeId)
-
             }
         }
         return compose(

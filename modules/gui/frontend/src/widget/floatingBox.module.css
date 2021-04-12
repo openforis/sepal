@@ -5,7 +5,7 @@
     left: calc(var(--left) * 1px);
     right: calc(var(--right) * 1px);
     width: calc(var(--width) * 1px);
-    z-index: 2;
+    z-index: 9999999;
 }
 
 .box.above {

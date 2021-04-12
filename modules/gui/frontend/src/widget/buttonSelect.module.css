@@ -17,6 +17,11 @@
     flex-direction: row;
 }
 
+.fill {
+    justify-content: space-between;
+    flex-grow: 1;
+}
+
 .content > *:not(:first-child) {
     margin-left: .5rem;
 }

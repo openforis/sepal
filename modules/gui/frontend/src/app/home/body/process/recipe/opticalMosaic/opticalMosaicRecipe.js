@@ -60,6 +60,7 @@ export const RecipeActions = id => {
             const recipeImageLayerSource = {
                 id: guid(),
                 type: 'Recipe',
+                description: 'This recipe',
                 sourceConfig: {
                     recipeId: id
                 }
@@ -74,11 +75,13 @@ export const RecipeActions = id => {
             const planetImageLayerSource = {
                 id: guid(),
                 type: 'Planet',
+                description: 'Planet composite',
                 sourceConfig: {}
             }
             const googleSatelliteImageLayerSource = {
                 id: guid(),
                 type: 'GoogleSatellite',
+                description: 'Google High-res Satellite',
                 sourceConfig: {}
             }
             const imageLayerSources = [
@@ -86,6 +89,21 @@ export const RecipeActions = id => {
                 // anotherRecipeImageLayerSource,
                 planetImageLayerSource,
                 googleSatelliteImageLayerSource
+            ]
+
+            const aoiLayerSource = {
+                id: guid(),
+                type: 'Aoi',
+                description: 'Area of Interest'
+            }
+            const labelsLayerSource = {
+                id: guid(),
+                type: 'Labels',
+                description: 'Map labels, roads and points of interest'
+            }
+            const featureLayerSources = [
+                aoiLayerSource,
+                labelsLayerSource
             ]
             const layers = {
                 // 'center': {
@@ -96,15 +114,10 @@ export const RecipeActions = id => {
                 // }
                 'top-right': {
                     imageLayer: {
-                        sourceId: planetImageLayerSource.id,
-                        layerConfig: {
-                            dateRange: '2019-12_2020-05',
-                            proc: 'rgb'
-                        }
+                        sourceId: planetImageLayerSource.id
                     },
                     featureLayers: [
-                        {type: 'Aoi'},
-                        // {type: 'Labels'}
+                        {sourceId: aoiLayerSource.id}
                     ]
                 },
                 // 'top-right': {
@@ -126,28 +139,24 @@ export const RecipeActions = id => {
                         sourceId: googleSatelliteImageLayerSource.id
                     },
                     featureLayers: [
-                        {type: 'Aoi'},
-                        // {type: 'Labels'}
+                        {sourceId: aoiLayerSource.id},
+                        {sourceId: labelsLayerSource.id},
                     ]
                 },
                 'bottom-right': {
                     imageLayer: {
-                        sourceId: recipeImageLayerSource.id,
-                        layerConfig: {
-                            bands: {
-                                selection: ['red', 'green', 'blue'] // TODO: Fix...
-                            }
-                        }
+                        sourceId: recipeImageLayerSource.id
                     },
                     featureLayers: [
-                        {type: 'Aoi'},
-                        // {type: 'Labels'}
+                        {sourceId: aoiLayerSource.id},
+                        {sourceId: labelsLayerSource.id},
                     ]
                 }
             }
             setAll('INITIALIZE_LAYER_SOURCES',
                 {
                     'ui.imageLayerSources': imageLayerSources,
+                    'ui.featureLayerSources': featureLayerSources,
                     layers,
                 },
                 {imageLayerSources}

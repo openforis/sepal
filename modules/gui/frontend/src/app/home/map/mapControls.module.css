@@ -13,3 +13,12 @@
     margin: 2rem;
     pointer-events: all;
 }
+
+.imageLayerSource {
+    flex-grow: 1;
+    background-color: blue
+}
+
+.title {
+    margin-bottom: 0.25rem;
+}

@@ -52,7 +52,7 @@ export const RecipeMap = compose(
 )
 
 RecipeMap.propTypes = {
-    layerConfig: PropTypes.object.isRequired,
     recipeId: PropTypes.string.isRequired,
+    layerConfig: PropTypes.object,
     map: PropTypes.object
 }
