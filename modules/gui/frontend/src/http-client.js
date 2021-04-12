@@ -8,47 +8,50 @@ import base64 from 'base-64'
 
 const DEFAULT_RETRIES = 4
 
-export const get$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) => {
-    return execute$(url, 'GET', {
+export const get$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
+    execute$(url, 'GET', {
         retries,
         query,
         body,
         headers,
-        validStatuses, ...args
+        validStatuses,
+        ...args
     })
-}
 
 export const post$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'POST', {
         retries,
         query,
         body,
-        headers,
-        validStatuses, ...args
+        headers: {
+            ...headers,
+            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+        },
+        validStatuses,
+        ...args
     })
 
 export const postForm$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
-    post$(
-        url, {
-            retries,
-            query,
-            body: toQueryString(body),
-            headers: {
-                ...headers,
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            validStatuses,
-            args
-        })
+    execute$(url, 'POST', {
+        retries,
+        query,
+        body: toQueryString(body),
+        headers: {
+            ...headers,
+            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+        },
+        validStatuses,
+        ...args
+    })
 
 export const postJson$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'POST', {
         retries,
-        body: body && JSON.stringify(body),
         query,
+        body: body && JSON.stringify(body),
         headers: {
             ...headers,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json; charset=utf-8'
         },
         validStatuses,
         ...args
@@ -58,7 +61,8 @@ export const delete$ = (url, {retries = DEFAULT_RETRIES, headers, validStatuses,
     execute$(url, 'DELETE', {
         retries,
         headers,
-        validStatuses, ...args
+        validStatuses,
+        ...args
     })
 
 export default {get$, post$, postJson$, delete$}
