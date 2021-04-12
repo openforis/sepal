@@ -54,6 +54,7 @@ R -e "pacman::p_load(\
         'classInt',\
         'cli',\
         'clipr',\
+        'collapsibleTree',\
         'colorspace',\
         'colourpicker',\
         'corrplot',\
@@ -259,11 +260,13 @@ R -e "pacman::p_load(\
         'Taxonstand',\
         'testit',\
         'testthat',\
+        'textclean',\
         'tibble',\
         'tictoc',\
         'tidyr',\
         'tidyselect',\
         'tidyverse',\
+        'tigris',\
         'tikzDevice',\
         'tint',\
         'tinytex',\
