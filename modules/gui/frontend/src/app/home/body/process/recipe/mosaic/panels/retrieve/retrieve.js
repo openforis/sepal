@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
@@ -11,10 +12,12 @@ import styles from './retrieve.module.css'
 
 const fields = {
     bands: new Form.Field()
-        .predicate(bands => bands && bands.length, 'process.mosaic.panel.retrieve.form.bands.atLeastOne'),
-    scale: new Form.Field(),
+        .predicate(bands => bands && bands.length, 'process.retrieve.form.bands.atLeastOne'),
+    scale: new Form.Field()
+        .notBlank()
+        .number(),
     destination: new Form.Field()
-        .notEmpty('process.mosaic.panel.retrieve.form.destination.required')
+        .notEmpty('process.retrieve.form.destination.required')
 }
 
 const mapRecipeToProps = () => ({
@@ -22,6 +25,10 @@ const mapRecipeToProps = () => ({
 })
 
 class Retrieve extends React.Component {
+    state = {
+        customScale: false
+    }
+
     render() {
         const {onRetrieve} = this.props
         return (
@@ -32,42 +39,78 @@ class Retrieve extends React.Component {
                 onApply={values => onRetrieve && onRetrieve(values)}>
                 <Panel.Header
                     icon='cloud-download-alt'
-                    title={msg('process.mosaic.panel.retrieve.title')}/>
+                    title={msg('process.retrieve.title')}/>
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
                 <Form.PanelButtons
-                    applyLabel={msg('process.mosaic.panel.retrieve.apply')}/>
+                    applyLabel={msg('process.retrieve.apply')}/>
             </RecipeFormPanel>
         )
     }
 
     renderContent() {
-        const {bandOptions, single, toSepal, toEE, user, inputs: {bands, scale, destination}} = this.props
+        const {toSepal, toEE} = this.props
+        const {customScale} = this.state
+        return (
+            <Layout>
+                {this.renderBandOptions()}
+                {customScale
+                    ? this.renderCustomScale()
+                    : this.renderPresetScale()
+                }
+
+                {toEE && toSepal
+                    ? this.renderDestination()
+                    : null
+                }
+
+            </Layout>
+        )
+    }
+
+    renderDestination() {
+        const {toSepal, toEE, user, inputs: {destination}} = this.props
         const destinationOptions = [
             {
                 value: 'SEPAL',
-                label: msg('process.mosaic.panel.retrieve.form.destination.SEPAL')
+                label: msg('process.retrieve.form.destination.SEPAL')
             },
             {
                 value: 'GEE',
-                label: msg('process.mosaic.panel.retrieve.form.destination.GEE')
+                label: msg('process.retrieve.form.destination.GEE')
             }
         ]
             .filter(({value}) => user.googleTokens || value !== 'GEE')
             .filter(({value}) => toSepal || value !== 'SEPAL')
             .filter(({value}) => toEE || value !== 'GEE')
-
         return (
-            <Layout>
-                <Form.Buttons
-                    label={msg('process.mosaic.panel.retrieve.form.bands.label')}
-                    input={bands}
-                    multiple={!single}
-                    options={bandOptions}/>
+            <Form.Buttons
+                label={msg('process.retrieve.form.destination.label')}
+                input={destination}
+                multiple={false}
+                options={destinationOptions}/>
+        )
+    }
+
+    renderBandOptions() {
+        const {bandOptions, single, inputs: {bands}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.retrieve.form.bands.label')}
+                input={bands}
+                multiple={!single}
+                options={bandOptions}/>
+        )
+    }
+
+    renderPresetScale() {
+        const {inputs: {scale}} = this.props
+        return (
+            <div>
                 <Form.Slider
-                    label={msg('process.radarMosaic.panel.retrieve.form.scale.label')}
-                    info={scale => msg('process.radarMosaic.panel.retrieve.form.scale.info', {scale})}
+                    label={msg('process.retrieve.form.scale.label')}
+                    info={scale => msg('process.retrieve.form.scale.info', {scale})}
                     input={scale}
                     minValue={10}
                     maxValue={100}
@@ -76,28 +119,50 @@ class Retrieve extends React.Component {
                     snap
                     range='none'
                 />
-                {toEE && toSepal
-                    ? <Form.Buttons
-                        label={msg('process.mosaic.panel.retrieve.form.destination.label')}
-                        input={destination}
-                        multiple={false}
-                        options={destinationOptions}/>
-                    : null
-                }
-
-            </Layout>
+                <div className={styles.scaleChange}>
+                    <Button
+                        shape={'none'}
+                        label={'Custom scale'}
+                        onClick={() => this.setState({customScale: true})}
+                    />
+                </div>
+            </div>
         )
     }
 
-    componentDidUpdate() {
-        const {defaultScale, toEE, toSepal, user, inputs: {destination, scale}} = this.props
-        if (!user.googleTokens && toSepal && !destination.value && destination.value !== 'SEPAL') {
-            destination.set('SEPAL')
-        } else if (user.googleTokens && toEE && !destination.value && destination.value !== 'GEE') {
-            destination.set('GEE')
-        }
+    renderCustomScale() {
+        const {inputs: {scale}} = this.props
+        return (
+            <div>
+                <Form.Input
+                    label={msg('process.retrieve.form.scale.label')}
+                    input={scale}
+                    placeholder={msg('process.retrieve.form.scale.label')}
+                />
+                <div className={styles.scaleChange}>
+                    <Button
+                        shape={'none'}
+                        label={'Preset scale'}
+                        onClick={() => this.setState({customScale: false})}
+                    />
+                </div>
+            </div>
+        )
+    }
+
+    componentDidMount() {
+        const {defaultScale, inputs: {scale}} = this.props
         if (!scale.value) {
             scale.set(defaultScale)
+        }
+    }
+
+    componentDidUpdate() {
+        const {toEE, toSepal, user, inputs: {destination}} = this.props
+        if (toSepal && !destination.value) {
+            destination.set('SEPAL')
+        } else if (user.googleTokens && toEE && !destination.value) {
+            destination.set('GEE')
         }
     }
 }

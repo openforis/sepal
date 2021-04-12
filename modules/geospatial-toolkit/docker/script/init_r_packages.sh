@@ -9,7 +9,7 @@ echo "********************"
 
 #echo "options(Ncpus = `nproc`)" > /root/.Rprofile
 
-apt-get install -y\
+apt-get update -y && apt-get install -y\
  r-base\
  r-base-dev
 
@@ -31,7 +31,6 @@ apt-get install -y \
 
 R -e "install.packages('devtools', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 R -e "install.packages('pacman', dependencies=TRUE, repos='http://cran.rstudio.com/')"
-R -e "devtools::install_github('appelmar/strucchange')"
 R -e "install.packages('XML', repos = 'http://www.omegahat.net/R')" # CRAN version require R > 4.0
 # jreiche/bayts is a dependency of Early Warning System for Canopy Disturbances in Ecuador (SATA)
 R -e "pacman::p_load(\
@@ -55,6 +54,7 @@ R -e "pacman::p_load(\
         'classInt',\
         'cli',\
         'clipr',\
+        'collapsibleTree',\
         'colorspace',\
         'colourpicker',\
         'corrplot',\
@@ -252,7 +252,6 @@ R -e "pacman::p_load(\
         'stats4',\
         'stringi',\
         'stringr',\
-        'strucchange',\
         'styler',\
         'summarytools',\
         'survival',\
@@ -261,11 +260,13 @@ R -e "pacman::p_load(\
         'Taxonstand',\
         'testit',\
         'testthat',\
+        'textclean',\
         'tibble',\
         'tictoc',\
         'tidyr',\
         'tidyselect',\
         'tidyverse',\
+        'tigris',\
         'tikzDevice',\
         'tint',\
         'tinytex',\

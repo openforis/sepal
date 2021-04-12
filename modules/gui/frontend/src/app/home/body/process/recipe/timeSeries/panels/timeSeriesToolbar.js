@@ -58,7 +58,7 @@ class TimeSeriesToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'
-                        tooltip={msg('process.timeSeries.panel.retrieve.tooltip')}
+                        tooltip={msg('process.retrieve.tooltip')}
                         disabled={!initialized}/>
                 </Toolbar>
                 <Toolbar

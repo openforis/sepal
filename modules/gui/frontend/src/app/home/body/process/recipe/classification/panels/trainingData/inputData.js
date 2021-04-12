@@ -32,7 +32,7 @@ export const toReferenceData$ = inputs => {
                         'class': legendValue
                     }
                 })
-                .filter(row => _.isFinite(row['class']) && row.x >= 0 && row.y >= 0)
+                .filter(row => _.isFinite(row['class']) && _.isFinite(row.x) && _.isFinite(row.y))
             referenceData$.next({referenceData, counts})
             referenceData$.complete()
         } catch (e) {

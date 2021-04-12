@@ -21,7 +21,7 @@ const fields = {
     advanced: new Form.Field(),
     type: new Form.Field(),
     numberOfTrees: new Form.Field()
-        .skip((value, {type}) => type !== 'RANDOM_FOREST')
+        .skip((value, {type}) => !['RANDOM_FOREST', 'GRADIENT_TREE_BOOST'].includes(type))
         .notBlank()
         .int()
         .min(1),
@@ -41,13 +41,31 @@ const fields = {
         .greaterThan(0)
         .max(1),
     maxNodes: new Form.Field()
-        .skip((value, {type}) => !['RANDOM_FOREST', 'CART'].includes(type))
+        .skip((value, {type}) => !['RANDOM_FOREST', 'GRADIENT_TREE_BOOST', 'CART'].includes(type))
         .int()
-        .min(2),
+        .min(2)
+        .max(2147483647),
     seed: new Form.Field()
-        .skip((value, {type}) => type !== 'RANDOM_FOREST')
+        .skip((value, {type}) => !['RANDOM_FOREST', 'GRADIENT_TREE_BOOST'].includes(type))
         .notBlank()
         .int(),
+
+    shrinkage: new Form.Field()
+        .skip((value, {type}) => type !== 'GRADIENT_TREE_BOOST')
+        .notBlank()
+        .number()
+        .greaterThan(0)
+        .max(1),
+    samplingRate: new Form.Field()
+        .skip((value, {type}) => type !== 'GRADIENT_TREE_BOOST')
+        .notBlank()
+        .number()
+        .greaterThan(0)
+        .max(1),
+    loss: new Form.Field()
+        .skip((value, {type}) => type !== 'GRADIENT_TREE_BOOST')
+        .notBlank(),
+
     lambda: new Form.Field()
         .skip((value, {type}) => type !== 'NAIVE_BAYES')
         .notBlank()
@@ -136,6 +154,8 @@ class Classifier extends React.Component {
             switch (type.value) {
             case 'RANDOM_FOREST':
                 return renderRandomForest()
+            case 'GRADIENT_TREE_BOOST':
+                return renderGradientTreeBoost()
             case 'CART':
                 return renderCart()
             case 'NAIVE_BAYES':
@@ -151,6 +171,11 @@ class Classifier extends React.Component {
             }
         }
         const renderRandomForest = () =>
+            <div className={styles.twoColumns}>
+                {this.renderNumberOfTrees()}
+            </div>
+
+        const renderGradientTreeBoost = () =>
             <div className={styles.twoColumns}>
                 {this.renderNumberOfTrees()}
             </div>
@@ -190,6 +215,8 @@ class Classifier extends React.Component {
             switch (type.value) {
             case 'RANDOM_FOREST':
                 return renderRandomForest()
+            case 'GRADIENT_TREE_BOOST':
+                return renderGradientTreeBoost()
             case 'CART':
                 return renderCart()
             case 'NAIVE_BAYES':
@@ -214,6 +241,18 @@ class Classifier extends React.Component {
                 {this.renderMaxNodes()}
                 {this.renderSeed()}
             </div>
+
+        const renderGradientTreeBoost = () =>
+            <React.Fragment>
+                <div className={styles.twoColumns}>
+                    {this.renderNumberOfTrees()}
+                    {this.renderShrinkage()}
+                    {this.renderSamplingRate()}
+                    {this.renderMaxNodes()}
+                </div>
+                {this.renderLoss()}
+                {this.renderSeed()}
+            </React.Fragment>
 
         const renderCart = () =>
             <div className={styles.twoColumns}>
@@ -264,6 +303,7 @@ class Classifier extends React.Component {
         const {inputs: {type}} = this.props
         const options = [
             {value: 'RANDOM_FOREST', label: msg('process.classification.panel.classifier.form.randomForest.label')},
+            {value: 'GRADIENT_TREE_BOOST', label: msg('process.classification.panel.classifier.form.gradientTreeBoost.label')},
             {value: 'CART', label: msg('process.classification.panel.classifier.form.cart.label')},
             {value: 'NAIVE_BAYES', label: msg('process.classification.panel.classifier.form.naiveBayes.label')},
             {value: 'SVM', label: msg('process.classification.panel.classifier.form.svm.label')},
@@ -284,7 +324,7 @@ class Classifier extends React.Component {
 
     renderNumberOfTrees() {
         const {inputs: {type, numberOfTrees}} = this.props
-        if (type.value !== 'RANDOM_FOREST')
+        if (!['RANDOM_FOREST', 'GRADIENT_TREE_BOOST'].includes(type.value))
             return
 
         return (
@@ -348,7 +388,7 @@ class Classifier extends React.Component {
 
     renderMaxNodes() {
         const {inputs: {type, maxNodes}} = this.props
-        if (!['RANDOM_FOREST', 'CART'].includes(type.value))
+        if (!['RANDOM_FOREST', 'GRADIENT_TREE_BOOST', 'CART'].includes(type.value))
             return
 
         return (
@@ -364,7 +404,7 @@ class Classifier extends React.Component {
 
     renderSeed() {
         const {inputs: {type, seed}} = this.props
-        if (type.value !== 'RANDOM_FOREST')
+        if (!['RANDOM_FOREST', 'GRADIENT_TREE_BOOST'].includes(type.value))
             return
 
         return (
@@ -374,6 +414,66 @@ class Classifier extends React.Component {
                 placeholder={msg('process.classification.panel.classifier.form.randomForest.config.seed.placeholder')}
                 input={seed}
                 errorMessage
+            />
+        )
+    }
+
+    renderShrinkage() {
+        const {inputs: {type, shrinkage}} = this.props
+        if (type.value !== 'GRADIENT_TREE_BOOST')
+            return
+
+        return (
+            <Form.Input
+                label={msg('process.classification.panel.classifier.form.gradientTreeBoost.config.shrinkage.label')}
+                tooltip={msg('process.classification.panel.classifier.form.gradientTreeBoost.config.shrinkage.tooltip')}
+                placeholder={msg('process.classification.panel.classifier.form.gradientTreeBoost.config.shrinkage.placeholder')}
+                input={shrinkage}
+                errorMessage
+            />
+        )
+    }
+
+    renderSamplingRate() {
+        const {inputs: {type, samplingRate}} = this.props
+        if (type.value !== 'GRADIENT_TREE_BOOST')
+            return
+
+        return (
+            <Form.Input
+                label={msg('process.classification.panel.classifier.form.gradientTreeBoost.config.samplingRate.label')}
+                tooltip={msg('process.classification.panel.classifier.form.gradientTreeBoost.config.samplingRate.tooltip')}
+                placeholder={msg('process.classification.panel.classifier.form.gradientTreeBoost.config.samplingRate.placeholder')}
+                input={samplingRate}
+                errorMessage
+            />
+        )
+    }
+
+    renderLoss() {
+        const {inputs: {type, loss}} = this.props
+        if (type.value !== 'GRADIENT_TREE_BOOST')
+            return
+
+        const options = [
+            {
+                value: 'LeastSquares',
+                label: msg('process.classification.panel.classifier.form.gradientTreeBoost.config.loss.options.LeastSquares.label')
+            },
+            {
+                value: 'LeastAbsoluteDeviation',
+                label: msg('process.classification.panel.classifier.form.gradientTreeBoost.config.loss.options.LeastAbsoluteDeviation.label')
+            },
+            {
+                value: 'Huber',
+                label: msg('process.classification.panel.classifier.form.gradientTreeBoost.config.loss.options.Huber.label')
+            }
+        ]
+        return (
+            <Form.Buttons
+                label={msg('process.classification.panel.classifier.form.gradientTreeBoost.config.loss.label')}
+                input={loss}
+                options={options}
             />
         )
     }
@@ -683,6 +783,9 @@ const valuesToModel = values => ({
     bagFraction: toFloat(values.bagFraction),
     maxNodes: toInt(values.maxNodes),
     seed: toInt(values.seed),
+    shrinkage: toFloat(values.shrinkage) || 0.05,
+    samplingRate: toFloat(values.samplingRate) || 0.7,
+    loss: values.loss || 'LeastSquares',
     lambda: toFloat(values.lambda),
     decisionProcedure: values.decisionProcedure,
     svmType: values.svmType,
@@ -696,6 +799,32 @@ const valuesToModel = values => ({
     oneClass: toInt(values.oneClass),
     metric: values.metric,
     decisionTree: values.decisionTree
+})
+
+const modelToValues = model => ({
+    type: model.type,
+    numberOfTrees: model.numberOfTrees,
+    variablesPerSplit: model.variablesPerSplit,
+    minLeafPopulation: model.minLeafPopulation,
+    bagFraction: model.bagFraction,
+    maxNodes: model.maxNodes,
+    seed: model.seed,
+    shrinkage: model.shrinkage || 0.05,
+    samplingRate: model.samplingRate || 0.7,
+    loss: model.loss || 'LeastSquares',
+    lambda: model.lambda,
+    decisionProcedure: model.decisionProcedure,
+    svmType: model.svmType,
+    kernelType: model.kernelType,
+    shrinking: model.shrinking,
+    degree: model.degree,
+    gamma: model.gamma,
+    coef0: model.coef0,
+    cost: model.cost,
+    nu: model.nu,
+    oneClass: model.oneClass,
+    metric: model.metric,
+    decisionTree: model.decisionTree
 })
 
 const LegendEntry = ({entry: {value, color, label}}) =>
@@ -719,6 +848,6 @@ const toFloat = input => {
 
 export default compose(
     Classifier,
-    recipeFormPanel({id: 'classifier', fields, valuesToModel, mapRecipeToProps})
+    recipeFormPanel({id: 'classifier', fields, valuesToModel, modelToValues, mapRecipeToProps})
 )
 

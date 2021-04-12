@@ -58,6 +58,9 @@ RUN chmod u+x /script/init_biota.sh && sync && /script/init_biota.sh
 ADD script/init_gwb.sh /script/
 RUN chmod u+x /script/init_gwb.sh && sync && /script/init_gwb.sh
 
+ADD script/init_azure_cli.sh /script/
+RUN chmod u+x /script/init_azure_cli.sh && sync && /script/init_azure_cli.sh
+
 ADD script/init_post.sh /script/
 RUN chmod u+x /script/init_post.sh && sync && /script/init_post.sh
 
