@@ -14,7 +14,7 @@ import styles from './mapControls.module.css'
 const mapRecipeToProps = recipe => ({
     imageLayerSources: selectFrom(recipe, 'ui.imageLayerSources'),
     featureLayerSources: selectFrom(recipe, 'ui.featureLayerSources'),
-    layers: selectFrom(recipe, 'layers')
+    areas: selectFrom(recipe, 'layers.areas')
 })
 
 class _MapAreaMenu extends React.Component {
@@ -31,8 +31,8 @@ class _MapAreaMenu extends React.Component {
     }
 
     renderFeatureLayers() {
-        const {area, featureLayerSources, layers} = this.props
-        const {featureLayers} = layers[area]
+        const {area, featureLayerSources, areas} = this.props
+        const {featureLayers} = areas[area]
         const selectedSourceIds = featureLayers.map(({sourceId}) => sourceId)
         return featureLayerSources.map(({id, type, description}) =>
             <Menu.Toggle
@@ -51,8 +51,8 @@ class _MapAreaMenu extends React.Component {
     }
 
     renderImageLayerSource() {
-        const {imageLayerSources, layers, area} = this.props
-        const {imageLayer} = layers[area]
+        const {imageLayerSources, areas, area} = this.props
+        const {imageLayer} = areas[area]
         const imageLayerSourceOptions = imageLayerSources.map(({id, type, description}) => ({
             value: id,
             label: (
@@ -82,11 +82,11 @@ class _MapAreaMenu extends React.Component {
         const {recipeId, area} = this.props
         if (shown) {
             actionBuilder('ADD_FEATURE_LAYER', {sourceId, shown, area})
-                .push([recipePath(recipeId), 'layers', area, 'featureLayers'], {sourceId})
+                .push([recipePath(recipeId), 'layers.areas', area, 'featureLayers'], {sourceId})
                 .dispatch()
         } else {
             actionBuilder('REMOVE_FEATURE_LAYER', {sourceId, area})
-                .del([recipePath(recipeId), 'layers', area, 'featureLayers', {sourceId}])
+                .del([recipePath(recipeId), 'layers.areas', area, 'featureLayers', {sourceId}])
                 .dispatch()
         }
     }
@@ -94,7 +94,7 @@ class _MapAreaMenu extends React.Component {
     selectImageLayer(sourceId) {
         const {recipeId, area} = this.props
         actionBuilder('SELECT_IMAGE_LAYER', {sourceId, area})
-            .set(recipePath(recipeId, ['layers', area, 'test.imageLayer']), {sourceId})
+            .set(recipePath(recipeId, ['layers.areas', area, 'imageLayer']), {sourceId})
             .dispatch()
     }
 }
@@ -115,7 +115,6 @@ export class MapControls extends React.Component {
                         shape='pill'
                         icon='bars'
                         tooltip={<MapAreaMenu area={area} form={form}/>}
-                        // onClick={() => log.debug('options', area)}
                     />
                 </div>
             </div>

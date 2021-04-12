@@ -19,6 +19,7 @@ class _MapAreaLayout extends React.Component {
                 <div
                     className={[styles.split, styles[area]].join(' ')}
                     data-area={area}
+                    data-test={`foo-bar-${area}`}
                     ref={refCallback}
                 />
                 <SplitOverlay area={area}>
@@ -40,7 +41,7 @@ class _MapAreaLayout extends React.Component {
             map.removeLayer(imageLayerId)
         }
         const featureLayerSources = selectFrom(recipe, 'ui.featureLayerSources') || []
-        const selectedFeatureLayerSourceIds = recipe.layers[area].featureLayers.map(({sourceId}) => sourceId)
+        const selectedFeatureLayerSourceIds = recipe.layers.areas[area].featureLayers.map(({sourceId}) => sourceId)
         featureLayerSources.forEach((featureLayerSource, i) => {
             const isSelected = selectedFeatureLayerSourceIds.includes(featureLayerSource.id)
 

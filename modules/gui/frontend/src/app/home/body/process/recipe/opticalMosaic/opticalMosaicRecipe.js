@@ -105,7 +105,7 @@ export const RecipeActions = id => {
                 aoiLayerSource,
                 labelsLayerSource
             ]
-            const layers = {
+            const areas = {
                 // 'center': {
                 //     imageLayer,
                 //     featureLayers: [
@@ -152,6 +152,11 @@ export const RecipeActions = id => {
                         {sourceId: labelsLayerSource.id},
                     ]
                 }
+            }
+            const layers = {
+                areas,
+                mode: 'stack'
+                // mode: 'grid'
             }
             setAll('INITIALIZE_LAYER_SOURCES',
                 {

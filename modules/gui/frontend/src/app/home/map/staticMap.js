@@ -20,7 +20,6 @@ class _StaticMap extends React.Component {
 
     componentDidMount() {
         const {mapsContext: {createGoogleMap}} = this.props
-        console.log(this.map.current)
         createGoogleMap(this.map.current)
     }
 }

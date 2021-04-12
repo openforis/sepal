@@ -143,6 +143,7 @@ class _Map extends React.Component {
     refCallback(element) {
         if (element) { // Hot-reload can cause it to be null
             const area = element.dataset.area
+            console.log('refCallback', element, area)
             this.createArea(area, element)
         }
     }
@@ -151,7 +152,7 @@ class _Map extends React.Component {
         const {layers, imageLayerSources} = this.props
         const {googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
 
-        const areas = _.map(layers, (layer, area) => {
+        const areas = _.map(layers.areas, (layer, area) => {
             const {sourceId, layerConfig} = layer.imageLayer
             const source = imageLayerSources.find(({id}) => id === sourceId)
             return ({
@@ -174,7 +175,7 @@ class _Map extends React.Component {
                 zoomArea,
                 areas
             }}>
-                <SplitContent areas={areas} mode='stack'>
+                <SplitContent areas={areas} mode={layers.mode}>
                     {this.renderOverylayMap()}
                     <div className={styles.content}>
                         {this.isMapInitialized() ? this.renderRecipe() : null}
@@ -192,7 +193,7 @@ class _Map extends React.Component {
     isMapInitialized() {
         const {layers} = this.props
         const {maps} = this.state
-        return !_.isEmpty(maps) && _.isEqual(new Set(Object.keys(maps)), new Set(Object.keys(layers)))
+        return !_.isEmpty(maps) && _.isEqual(new Set(Object.keys(maps)), new Set(Object.keys(layers.areas)))
     }
 
     renderRecipe() {
