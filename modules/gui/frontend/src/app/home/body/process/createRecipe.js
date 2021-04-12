@@ -39,13 +39,14 @@ const createRecipe = (recipeId, type, tabPlaceholder) => {
 const setTabType = (recipeId, type, tabPlaceholder) => {
     const placeholder = `${tabPlaceholder}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`
     const recipe = {
+        id: recipeId,
         type,
         placeholder,
         ui: {unsaved: true}
     }
     return actionBuilder('SET_TAB_TYPE')
         .merge(['process.tabs', {id: recipeId}], {placeholder, type})
-        .merge(['process.loadedRecipes', {id: recipeId}], recipe)
+        .merge(['process.loadedRecipes', recipeId], recipe)
         .dispatch()
 }
 

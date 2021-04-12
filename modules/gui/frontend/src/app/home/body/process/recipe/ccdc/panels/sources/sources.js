@@ -7,10 +7,10 @@ import {compose} from 'compose'
 import {connect, select} from 'store'
 import {groupedBandOptions, groupedDataSetOptions, toSources} from 'sources'
 import {msg} from 'translate'
+import {recipeAccess} from '../../../../recipeAccess'
 import {selectFrom} from 'stateUtils'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import api from 'api'
 import styles from './sources.module.css'
 
 const fields = {
@@ -121,11 +121,11 @@ class Sources extends React.Component {
     }
 
     loadClassification(recipeId) {
-        const {stream} = this.props
+        const {stream, loadRecipe$} = this.props
         this.deselectClassification()
         if (recipeId) {
             stream('LOAD_CLASSIFICATION_RECIPE',
-                api.recipe.load$(recipeId),
+                loadRecipe$(recipeId),
                 classification => this.setState({
                     classificationLegend: classification.model.legend,
                     classifierType: classification.model.classifier.type
@@ -170,5 +170,6 @@ const modelToValues = ({dataSets, classification, breakpointBands}) => ({
 export default compose(
     Sources,
     connect(mapStateToProps),
-    recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel})
+    recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel}),
+    recipeAccess()
 )

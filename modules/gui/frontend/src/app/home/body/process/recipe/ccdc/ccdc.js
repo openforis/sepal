@@ -2,6 +2,7 @@ import {RecipeActions, defaultModel} from './ccdcRecipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
+import {recipeAccess} from '../../recipeAccess'
 import {selectFrom} from 'stateUtils'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import CCDCToolbar from './panels/ccdcToolbar'
@@ -53,10 +54,10 @@ class _CCDC extends React.Component {
     }
 
     initClassification() {
-        const {stream, classificationLegend, classificationRecipeId} = this.props
+        const {stream, classificationLegend, classificationRecipeId, loadRecipe$} = this.props
         if (classificationRecipeId && !classificationLegend && !stream('LOAD_CLASSIFICATION_RECIPE').active) {
             stream('LOAD_CLASSIFICATION_RECIPE',
-                api.recipe.load$(classificationRecipeId),
+                loadRecipe$(classificationRecipeId),
                 classification => {
                     this.recipeActions.setClassification({
                         classificationLegend: classification.model.legend,
@@ -73,7 +74,8 @@ class _CCDC extends React.Component {
 
 const CCDC = compose(
     _CCDC,
-    recipe({defaultModel, mapRecipeToProps})
+    recipe({defaultModel, mapRecipeToProps}),
+    recipeAccess()
 )
 
 export default () => ({

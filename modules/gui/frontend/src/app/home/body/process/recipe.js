@@ -1,5 +1,6 @@
 import {Subject} from 'rxjs'
 import {addTab, closeTab} from 'widget/tabs/tabs'
+import {compose} from 'compose'
 import {connect, select, subscribe} from 'store'
 import {debounceTime, groupBy, map, mergeMap, switchMap} from 'rxjs/operators'
 import {downloadObjectZip$} from 'widget/download'
@@ -126,11 +127,6 @@ const updateRecipeList = recipe =>
         })
         .dispatch()
 
-const initializeRecipe = recipe => ({
-    ...recipe,
-    ui: {initialized: true}
-})
-
 const isInitialized = recipe =>
     selectFrom(recipe, 'ui.initialized')
 
@@ -162,19 +158,13 @@ export const loadRecipes$ = () =>
             .dispatch())
     )
 
-export const loadRecipe$ = recipeId =>
-    api.recipe.load$(recipeId).pipe(
-        map(recipe => {
-            const initializedRecipe = initializeRecipe(recipe)
-            const {id, placeholder, title, type} = initializedRecipe
-            return actionBuilder('LOAD_RECIPE')
-                .set(tabPath(select('process.selectedTabId')), {id, placeholder, title, type})
-                .set('process.selectedTabId', recipe.id)
-                .set(recipePath(recipeId), initializedRecipe)
-                .dispatch()
-        }
-        )
-    )
+export const openRecipe = recipe => {
+    const {id, placeholder, title, type} = recipe
+    actionBuilder('OPEN_RECIPE')
+        .set(tabPath(select('process.selectedTabId')), {id, placeholder, title, type})
+        .set('process.selectedTabId', id)
+        .dispatch()
+}
 
 export const selectRecipe = recipeId =>
     actionBuilder('SELECT_RECIPE')
@@ -215,7 +205,9 @@ export const removeRecipe$ = recipeId =>
 export const addRecipe = recipe => {
     const tab = addTab('process')
     recipe.id = tab.id
+    const {id, placeholder, title, type} = recipe
     return actionBuilder('SELECT_RECIPE')
+        .set(tabPath(recipe.id), {id, placeholder, title, type})
         .set(recipePath(recipe.id), recipe)
         .set('process.selectedTabId', recipe.id)
         .dispatch()
@@ -315,7 +307,10 @@ export const recipe = RecipeState =>
         const mapStateToProps = (state, ownProps) => ({
             recipePath: recipePath(ownProps.recipeId)
         })
-        return connect(mapStateToProps)(RecipeComponent)
+        return compose(
+            RecipeComponent,
+            connect(mapStateToProps)
+        )
     }
 
 export const withRecipePath = () =>
@@ -346,6 +341,7 @@ export const initValues = ({getModel, getValues, modelToValues, onInitialized}) 
             }
 
             render() {
+                console.log('render recipe')
                 const {model, values} = this.state
                 return this.state.initialized || !model
                     ? React.createElement(WrappedComponent, {
@@ -372,3 +368,8 @@ export const initValues = ({getModel, getValues, modelToValues, onInitialized}) 
                 })
             }
         }
+
+export const initializeRecipe = recipe => ({
+    ...recipe,
+    ui: {initialized: true}
+})

@@ -5,9 +5,9 @@ import {connect, select} from 'store'
 import {getAvailableBands} from 'sources'
 import {map, switchMap, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
+import {recipeAccess} from '../../../../recipeAccess'
 import PropTypes from 'prop-types'
 import React from 'react'
-import api from 'api'
 
 const mapStateToProps = () => {
     return {
@@ -43,12 +43,12 @@ class RecipeSection extends React.Component {
     }
 
     selectRecipe(recipeId) {
-        const {inputs: {recipe}} = this.props
+        const {inputs: {recipe}, loadRecipe$: load$} = this.props
         recipe.set(null)
         this.recipeChanged$.next()
-        const loadRecipe$ = api.recipe.load$(recipeId).pipe(
+        const loadRecipe$ = load$(recipeId).pipe(
             switchMap(loadedRecipe => loadedRecipe.model.sources.classification
-                ? api.recipe.load$(loadedRecipe.model.sources.classification).pipe(
+                ? load$(loadedRecipe.model.sources.classification).pipe(
                     map(classification => ({loadedRecipe, classification}))
                 )
                 : of({loadedRecipe})
@@ -97,5 +97,6 @@ RecipeSection.propTypes = {
 
 export default compose(
     RecipeSection,
-    connect(mapStateToProps)
+    connect(mapStateToProps),
+    recipeAccess()
 )

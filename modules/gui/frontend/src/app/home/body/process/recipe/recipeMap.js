@@ -1,13 +1,16 @@
 import {OpticalMosaicMap} from './opticalMosaic/opticalMosaicMap'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {recipeAccess} from '../recipeAccess'
+import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
 import React from 'react'
-import api from 'api'
 
-const mapStateToProps = () => ({
-
-})
+const mapStateToProps = state => {
+    return ({
+        loadedRecipes: selectFrom(state, 'process.loadedRecipes') || {}
+    })
+}
 
 class _RecipeMap extends React.Component {
     state = {}
@@ -34,7 +37,7 @@ class _RecipeMap extends React.Component {
     }
 
     componentDidMount() {
-        const {stream, recipeId} = this.props
+        const {stream, recipeId, loadRecipe$} = this.props
         stream('LOAD_RECIPE',
             loadRecipe$(recipeId),
             recipe => this.setState({recipe})
@@ -45,10 +48,8 @@ class _RecipeMap extends React.Component {
 export const RecipeMap = compose(
     _RecipeMap,
     connect(mapStateToProps),
+    recipeAccess()
 )
-
-// TODO: Don't load this every time - pick it up from Redux state cache
-const loadRecipe$ = recipeId => api.recipe.load$(recipeId)
 
 RecipeMap.propTypes = {
     layerConfig: PropTypes.object.isRequired,
