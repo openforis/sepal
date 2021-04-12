@@ -172,8 +172,7 @@ export const loadRecipe$ = recipeId =>
                 .set('process.selectedTabId', recipe.id)
                 .set(recipePath(recipeId), initializedRecipe)
                 .dispatch()
-        }
-        )
+        })
     )
 
 export const selectRecipe = recipeId =>

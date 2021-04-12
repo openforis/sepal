@@ -5,6 +5,7 @@ import {recipeActionBuilder} from './recipe'
 import {toPathList} from 'stateUtils'
 import {withContext} from 'context'
 import React from 'react'
+import _ from 'lodash'
 import actionBuilder from 'action-builder'
 
 const Context = React.createContext()
@@ -29,9 +30,13 @@ export const withRecipe = mapRecipeToProps =>
         const mapStateToProps = (state, ownProps) => {
             const {recipeContext: {statePath}} = ownProps
             const recipe = {...select(statePath)}
-            return {
-                recipeActionBuilder: recipeActionBuilder(recipe.id),
-                ...mapRecipeToProps(recipe, ownProps)
+            if (!_.isEmpty(recipe)) {
+                return {
+                    recipeActionBuilder: recipeActionBuilder(recipe.id),
+                    ...mapRecipeToProps(recipe, ownProps)
+                }
+            } else {
+                return ownProps
             }
         }
         return compose(
