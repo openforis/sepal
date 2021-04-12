@@ -24,8 +24,8 @@ export const post$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, val
         query,
         body,
         headers: {
-            ...headers,
-            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+            ...headers
         },
         validStatuses,
         ...args
@@ -37,8 +37,8 @@ export const postForm$ = (url, {retries = DEFAULT_RETRIES, query, body, headers,
         query,
         body: toQueryString(body),
         headers: {
-            ...headers,
-            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+            ...headers
         },
         validStatuses,
         ...args
@@ -50,8 +50,8 @@ export const postJson$ = (url, {retries = DEFAULT_RETRIES, query, body, headers,
         query,
         body: body && JSON.stringify(body),
         headers: {
-            ...headers,
-            'Content-Type': 'application/json; charset=utf-8'
+            'Content-Type': 'application/json; charset=utf-8',
+            ...headers
         },
         validStatuses,
         ...args
