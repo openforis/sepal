@@ -98,6 +98,10 @@
     right: var(--area-right);
 }
 
+.area.hide {
+    display: none;
+}
+
 .area.top {
     --area-bottom: calc(var(--bottom) + var(--half-margin-size));
 }
@@ -123,6 +127,10 @@
     left: 0;
     right: 0;
     z-index: 1;
+}
+
+.handles.hide {
+    display: none;
 }
 
 .container.initialized .handle {

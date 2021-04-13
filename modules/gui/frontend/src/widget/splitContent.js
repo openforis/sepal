@@ -50,7 +50,7 @@ class _SplitContent extends React.PureComponent {
     }
 
     render() {
-        const {className, children} = this.props
+        const {className} = this.props
         const {position: {x, y}, dragging, initialized} = this.state
         return (
             <ElementResizeDetector onResize={size => resize$.next(size)}>
@@ -68,17 +68,9 @@ class _SplitContent extends React.PureComponent {
                             '--x': `${x}px`,
                             '--y': `${y}px`
                         }}>
-                        <div className={styles.areas} ref={this.areas}>
-                            {this.renderAreas()}
-                        </div>
-                        <div className={styles.handles}>
-                            {this.renderCenterHandle()}
-                            {this.renderVerticalHandle()}
-                            {this.renderHorizontalHandle()}
-                        </div>
-                        <div className={[styles.overlay].join(' ')}>
-                            {children}
-                        </div>
+                        {this.renderAreas()}
+                        {this.renderHandles()}
+                        {this.renderOverlay()}
                     </div>
                 </SplitContext.Provider>
             </ElementResizeDetector>
@@ -87,21 +79,42 @@ class _SplitContent extends React.PureComponent {
 
     renderAreas() {
         const {areas} = this.props
-        return areas.map(area => this.renderArea(area))
+        return (
+            <div className={styles.areas} ref={this.areas}>
+                {areas.map(area => this.renderArea(area))}
+            </div>
+        )
     }
 
     renderArea({placement, content}) {
-        const {mode} = this.props
+        const {mode, maximize} = this.props
         const {initialized} = this.state
+        const show = !maximize || maximize === placement
         return (
             <div
                 key={placement}
                 className={_.flatten([
                     styles.area,
-                    mode === 'stack' ? styles.full : styles.partial,
-                    placement.split('-').map(placement => styles[placement])
+                    show ? mode === 'stack' ? styles.full : styles.partial : styles.hide,
+                    maximize
+                        ? 'center'
+                        : placement.split('-').map(placement => styles[placement])
                 ]).join(' ')}>
                 {initialized ? content : null}
+            </div>
+        )
+    }
+
+    renderHandles() {
+        const {maximize} = this.props
+        return (
+            <div className={[
+                styles.handles,
+                maximize ? styles.hide : null
+            ].join(' ')}>
+                {this.renderCenterHandle()}
+                {this.renderVerticalHandle()}
+                {this.renderHorizontalHandle()}
             </div>
         )
     }
@@ -157,6 +170,15 @@ class _SplitContent extends React.PureComponent {
             : null
     }
 
+    renderOverlay() {
+        const {children} = this.props
+        return (
+            <div className={[styles.overlay].join(' ')}>
+                {children}
+            </div>
+        )
+    }
+
     getInterferingPlacements(placements) {
         const {areas} = this.props
         return _.chain(areas)
@@ -166,6 +188,8 @@ class _SplitContent extends React.PureComponent {
     }
 
     static getDerivedStateFromProps(props) {
+        const {areas} = props
+
         const hasSplit = (areas, nonSplitPlacements) =>
             _.some(areas, ({placement}) =>
                 !nonSplitPlacements.includes(placement)
@@ -195,7 +219,7 @@ class _SplitContent extends React.PureComponent {
         }
 
         return {
-            handle: calculateSplit(props.areas)
+            handle: calculateSplit(areas)
         }
     }
 
@@ -383,6 +407,7 @@ SplitContent.propTypes = {
     ),
     children: PropTypes.any,
     className: PropTypes.string,
+    maximize: PropTypes.string,
     mode: PropTypes.oneOf(['stack', 'grid'])
 }
 
