@@ -324,23 +324,23 @@ class _Map extends React.Component {
 
     mapDelegate() {
         const {maps: mapByArea} = this.state
-        const maps = Object.values(mapByArea)
-            .map(({map}) => map)
-
+        const maps = Object.values(mapByArea).map(({map}) => map)
         const map = maps[0]
 
+        const isInizialized = () => map.isLayerInitialized('Aoi')
+        
         return {
-            isMinZoom: () => map.isMinZoom(),
-            isMaxZoom: () => map.isMaxZoom(),
+            canZoomIn: () => isInizialized() && !map.isMaxZoom(),
             zoomIn: () => map.zoomIn(),
+            canZoomOut: () => isInizialized() && !map.isMinZoom(),
             zoomOut: () => map.zoomOut(),
+            canZoomArea: () => isInizialized(),
+            toggleZoomArea: () => this.zoomArea(!this.isZoomArea()),
             isZoomArea: () => this.isZoomArea(),
-            zoomArea: () => this.zoomArea(true),
-            cancelZoomArea: () => this.zoomArea(false),
+            canFit: () => isInizialized(),
+            fit: () => map.fitLayer('Aoi'),
             getZoom: () => map.getZoom(),
             getBounds: () => map.getBounds(),
-            canFit: () => map.isLayerInitialized('Aoi'),
-            fit: () => map.fitLayer('Aoi')
         }
     }
 }

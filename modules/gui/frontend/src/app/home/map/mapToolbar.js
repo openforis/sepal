@@ -43,19 +43,19 @@ class MapToolbar extends React.Component {
                     horizontal
                     placement='top-right'>
                     <Toolbar.ToolbarButton
-                        disabled={map.isMaxZoom()}
+                        disabled={!map.canZoomIn()}
                         onClick={() => map.zoomIn()}
                         icon={'plus'}
                         tooltip={msg('process.mosaic.mapToolbar.zoomIn.tooltip')}/>
                     <Toolbar.ToolbarButton
-                        disabled={map.isMinZoom()}
+                        disabled={!map.canZoomOut()}
                         onClick={() => map.zoomOut()}
                         icon={'minus'}
                         tooltip={msg('process.mosaic.mapToolbar.zoomOut.tooltip')}/>
                     <Toolbar.ToolbarButton
+                        disabled={!map.canZoomArea()}
                         selected={map.isZoomArea()}
-                        disabled={map.isMaxZoom()}
-                        onClick={() => map.isZoomArea() ? map.cancelZoomArea() : map.zoomArea()}
+                        onClick={() => map.toggleZoomArea()}
                         icon={'search'}
                         tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
                     <Toolbar.ToolbarButton
