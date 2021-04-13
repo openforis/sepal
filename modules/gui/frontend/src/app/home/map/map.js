@@ -107,7 +107,7 @@ class _Map extends React.Component {
                     data-area={area}
                     ref={this.refCallback}
                 />
-                <MapAreaContext.Provider value={{area, map}}>
+                <MapAreaContext.Provider value={{area}}>
                     <MapArea source={source} layerConfig={layerConfig} map={map}/>
                 </MapAreaContext.Provider>
             </React.Fragment>
