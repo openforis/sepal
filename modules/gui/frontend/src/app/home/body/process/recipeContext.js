@@ -26,7 +26,7 @@ export const RecipeContext = ({rootStatePath = 'process.loadedRecipes', recipeId
 
 const withRecipeContext = withContext(Context, 'recipeContext')
 
-export const withRecipe = mapRecipeToProps =>
+export const withRecipe = (mapRecipeToProps = () => ({})) =>
     WrappedComponent => {
         const mapStateToProps = (state, ownProps) => {
             const {recipeContext: {statePath}} = ownProps

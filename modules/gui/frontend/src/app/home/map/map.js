@@ -150,7 +150,6 @@ class _Map extends React.Component {
     refCallback(element) {
         if (element) { // Hot-reload can cause it to be null
             const area = element.dataset.area
-            console.log('refCallback', element)
             this.createArea(area, element)
         }
     }
