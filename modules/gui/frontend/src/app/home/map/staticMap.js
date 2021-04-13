@@ -1,7 +1,7 @@
 import {compose} from 'compose'
 import {withMapsContext} from './maps'
 import React from 'react'
-import styles from './map.module.css'
+import styles from './staticMap.module.css'
 
 class _StaticMap extends React.Component {
     map = React.createRef()

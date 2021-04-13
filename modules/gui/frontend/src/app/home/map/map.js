@@ -101,9 +101,16 @@ class _Map extends React.Component {
         const {maps} = this.state
         const map = maps[area] && maps[area].map
         return (
-            <MapAreaContext.Provider value={{area, map, refCallback: this.refCallback}}>
-                <MapArea source={source} layerConfig={layerConfig} map={map}/>
-            </MapAreaContext.Provider>
+            <React.Fragment>
+                <div
+                    className={styles.map}
+                    data-area={area}
+                    ref={this.refCallback}
+                />
+                <MapAreaContext.Provider value={{area, map}}>
+                    <MapArea source={source} layerConfig={layerConfig} map={map}/>
+                </MapAreaContext.Provider>
+            </React.Fragment>
         )
     }
 
@@ -143,7 +150,7 @@ class _Map extends React.Component {
     refCallback(element) {
         if (element) { // Hot-reload can cause it to be null
             const area = element.dataset.area
-            console.log('refCallback', element, area)
+            console.log('refCallback', element)
             this.createArea(area, element)
         }
     }

@@ -7,21 +7,14 @@ import {withMapAreaContext} from './mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './mapAreaLayout.module.css'
 
 const mapRecipeToProps = recipe => ({recipe})
 
 class _MapAreaLayout extends React.Component {
     render() {
-        const {mapAreaContext: {area, refCallback}, form} = this.props
+        const {mapAreaContext: {area}, form} = this.props
         return (
             <React.Fragment>
-                <div
-                    className={[styles.split, styles[area]].join(' ')}
-                    data-area={area}
-                    data-test={`foo-bar-${area}`}
-                    ref={refCallback}
-                />
                 <SplitOverlay area={area}>
                     <MapControls area={area} form={form}/>
                 </SplitOverlay>
