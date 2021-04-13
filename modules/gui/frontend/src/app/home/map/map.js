@@ -34,6 +34,7 @@ class _Map extends React.Component {
     updateBounds$ = new Subject()
     linked$ = new ReplaySubject()
     mapInitialized$ = new BehaviorSubject()
+    mouseDown$ = new Subject()
 
     state = {
         maps: {},
@@ -43,6 +44,7 @@ class _Map extends React.Component {
         norwayPlanetApiKey: null,
         metersPerPixel: null,
         zoomArea: null,
+        selectedZoomArea: null,
         linked: null
     }
 
@@ -50,6 +52,8 @@ class _Map extends React.Component {
         super()
         this.toggleLinked = this.toggleLinked.bind(this)
         this.refCallback = this.refCallback.bind(this)
+        this.mapDelegate = this.mapDelegate.bind(this)
+        this.onMouseDown = this.onMouseDown.bind(this)
     }
 
     allMaps(callback) {
@@ -80,11 +84,7 @@ class _Map extends React.Component {
 
     synchronizeOut(area, map) {
         const {center, zoom} = map.getView()
-        this.allMaps(({map, area: currentArea}) => {
-            if (currentArea !== area) {
-                map.setView({center, zoom})
-            }
-        })
+        this.allMaps(({map}) => map.setView({center, zoom}))
         this.updateScale(map.getMetersPerPixel())
         this.updateBounds$.next({center, zoom})
     }
@@ -97,6 +97,21 @@ class _Map extends React.Component {
         this.allMaps(({map}) => map.setVisibility(visible))
     }
 
+    zoomArea(zoomArea) {
+        this.setState({zoomArea, selectedZoomArea: null}, () => {
+            this.allMaps(({map}) => zoomArea ? map.zoomArea() : map.cancelZoomArea())
+        })
+    }
+
+    isZoomArea() {
+        const {zoomArea} = this.state
+        return zoomArea
+    }
+
+    onMouseDown(area) {
+        this.mouseDown$.next(area)
+    }
+
     renderMap(source, layerConfig, area) {
         const {maps} = this.state
         const map = maps[area] && maps[area].map
@@ -106,6 +121,7 @@ class _Map extends React.Component {
                     className={styles.map}
                     data-area={area}
                     ref={this.refCallback}
+                    onMouseDown={() => this.mouseDown$.next(area)}
                 />
                 <MapAreaContext.Provider value={{area}}>
                     <MapArea source={source} layerConfig={layerConfig} map={map}/>
@@ -126,9 +142,20 @@ class _Map extends React.Component {
                 googleMap.addListener('zoom_changed', () => this.synchronizeOut(area, map))
             ]
 
-            const zoomArea$ = map.getZoomArea$()
             const subscriptions = [
-                zoomArea$.subscribe(zoomArea => this.setState({zoomArea}))
+                this.mouseDown$.subscribe(mouseDownArea => {
+                    const {zoomArea} = this.state
+                    if (zoomArea) {
+                        if (mouseDownArea == area) {
+                            this.setState({selectedZoomArea: area})
+                        } else {
+                            map.cancelZoomArea()
+                        }
+                    }
+                }),
+                map.getZoomArea$().subscribe(() =>
+                    this.zoomArea(false)
+                )
             ]
 
             google.maps.event.addListenerOnce(googleMap, 'idle', () => {
@@ -150,14 +177,13 @@ class _Map extends React.Component {
     refCallback(element) {
         if (element) { // Hot-reload can cause it to be null
             const area = element.dataset.area
-            console.log('refCallback', element)
             this.createArea(area, element)
         }
     }
 
     render() {
         const {layers, imageLayerSources} = this.props
-        const {googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
+        const {googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, selectedZoomArea} = this.state
 
         const areas = _.map(layers.areas, (layer, area) => {
             const {sourceId, layerConfig} = layer.imageLayer
@@ -179,22 +205,15 @@ class _Map extends React.Component {
                 toggleLinked,
                 linked,
                 metersPerPixel,
-                zoomArea,
                 areas
             }}>
-                <SplitContent areas={areas} mode={layers.mode}>
-                    {this.renderOverylayMap()}
+                <SplitContent areas={areas} mode={layers.mode} maximize={layers.mode === 'stack' ? selectedZoomArea : null}>
                     <div className={styles.content}>
                         {this.isMapInitialized() ? this.renderRecipe() : null}
                     </div>
                 </SplitContent>
             </MapContext.Provider>
         )
-    }
-
-    renderOverylayMap() {
-        return null
-        // return <div className={styles.overlay}/>
     }
 
     isMapInitialized() {
@@ -311,38 +330,17 @@ class _Map extends React.Component {
         const map = maps[0]
 
         return {
-            isMinZoom() {
-                return map.isMinZoom()
-            },
-            isMaxZoom() {
-                return map.isMaxZoom()
-            },
-            zoomIn() {
-                return map.zoomIn()
-            },
-            zoomOut() {
-                return map.zoomOut()
-            },
-            zoomArea() {
-                // TODO: Different for non-grid layouts
-                return map.zoomArea()
-            },
-            cancelZoomArea() {
-                // TODO: Different for non-grid layouts
-                return map.cancelZoomArea()
-            },
-            getZoom() {
-                return map.getZoom()
-            },
-            getBounds() {
-                return map.getBounds()
-            },
-            canFit() {
-                return map.isLayerInitialized('Aoi')
-            },
-            fit() {
-                return map.fitLayer('Aoi')
-            }
+            isMinZoom: () => map.isMinZoom(),
+            isMaxZoom: () => map.isMaxZoom(),
+            zoomIn: () => map.zoomIn(),
+            zoomOut: () => map.zoomOut(),
+            isZoomArea: () => this.isZoomArea(),
+            zoomArea: () => this.zoomArea(true),
+            cancelZoomArea: () => this.zoomArea(false),
+            getZoom: () => map.getZoom(),
+            getBounds: () => map.getBounds(),
+            canFit: () => map.isLayerInitialized('Aoi'),
+            fit: () => map.fitLayer('Aoi')
         }
     }
 }

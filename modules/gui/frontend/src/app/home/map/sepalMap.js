@@ -119,25 +119,28 @@ export class SepalMap {
 
     zoomArea() {
         const {google, googleMap} = this
-        this.zoomArea$.next(true)
         this.drawingManager = new google.maps.drawing.DrawingManager({
             drawingMode: google.maps.drawing.OverlayType.RECTANGLE,
             drawingControl: false,
             rectangleOptions: this.drawingOptions
         })
-        const drawingListener = e => {
+        const zoomAreaComplete = e => {
             const rectangle = e.overlay
             rectangle.setMap(null)
             googleMap.fitBounds(rectangle.bounds)
             this.cancelZoomArea()
+            this.zoomArea$.next()
         }
-        google.maps.event.addListener(this.drawingManager, 'overlaycomplete', drawingListener)
+        google.maps.event.addListener(this.drawingManager, 'overlaycomplete', zoomAreaComplete)
         this.drawingManager.setMap(googleMap)
 
     }
 
+    getZoomArea$() {
+        return this.zoomArea$
+    }
+
     cancelZoomArea() {
-        this.zoomArea$.next(false)
         this.disableDrawingMode()
     }
 
@@ -148,10 +151,6 @@ export class SepalMap {
             google.maps.event.clearListeners(this.drawingManager, 'overlaycomplete')
             this.drawingPolygon = null
         }
-    }
-
-    getZoomArea$() {
-        return this.zoomArea$
     }
 
     // Bounds

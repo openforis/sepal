@@ -35,7 +35,7 @@ class MapLayout extends React.Component {
 
 class MapToolbar extends React.Component {
     render() {
-        const {map, zoomArea, toggleLinked, linked, setAreas, areas, children} = this.props
+        const {map, toggleLinked, linked, areas, children} = this.props
         return (
             <React.Fragment>
                 <Toolbar
@@ -52,12 +52,12 @@ class MapToolbar extends React.Component {
                         onClick={() => map.zoomOut()}
                         icon={'minus'}
                         tooltip={msg('process.mosaic.mapToolbar.zoomOut.tooltip')}/>
-                    {/*<Toolbar.ToolbarButton*/}
-                    {/*    selected={zoomArea}*/}
-                    {/*    disabled={map.isMaxZoom()}*/}
-                    {/*    onClick={() => zoomArea ? map.cancelZoomArea() : map.zoomArea()}*/}
-                    {/*    icon={'search'}*/}
-                    {/*    tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>*/}
+                    <Toolbar.ToolbarButton
+                        selected={map.isZoomArea()}
+                        disabled={map.isMaxZoom()}
+                        onClick={() => map.isZoomArea() ? map.cancelZoomArea() : map.zoomArea()}
+                        icon={'search'}
+                        tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
                     <Toolbar.ToolbarButton
                         onClick={() => toggleLinked()}
                         selected={linked}
