@@ -41,13 +41,13 @@
 
     - name: Create docker-registry certificate dir
       file:
-        path: "/etc/docker/certs.d/localhost"
+        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
         state: directory
 
     - name: Copy docker-registry certificate
       copy:
         src: "{{ config_home }}/certificates/docker-registry.crt"
-        dest: "/etc/docker/certs.d/localhost/ca.crt"
+        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
 
     - name: Install docker
       command: "amazon-linux-extras install docker"

@@ -4,7 +4,8 @@ set -e
 VERSION=$1
 CONFIG_HOME=$2
 #VERSION=$1
-#REGION=$2
+#REGION=$3
+REGION=eu-central-1
 #CONFIG_HOME=$3
 PRIVATE_KEY=$CONFIG_HOME/certificates/aws.pem
 LOCAL_IP_ADDRESS=`curl -s api.ipify.org`
