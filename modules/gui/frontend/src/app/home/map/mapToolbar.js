@@ -59,15 +59,15 @@ class MapToolbar extends React.Component {
                         icon={'search'}
                         tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
                     <Toolbar.ToolbarButton
-                        onClick={() => toggleLinked()}
-                        selected={linked}
-                        icon='link'
-                        tooltip={msg(linked ? 'process.mosaic.mapToolbar.unlink.tooltip' : 'process.mosaic.mapToolbar.link.tooltip')}/>
-                    <Toolbar.ToolbarButton
                         disabled={!map.canFit()}
                         onClick={() => map.fit()}
                         icon={'bullseye'}
                         tooltip={msg('process.mosaic.mapToolbar.centerMap.tooltip')}/>
+                    <Toolbar.ToolbarButton
+                        onClick={() => toggleLinked()}
+                        selected={linked}
+                        icon='link'
+                        tooltip={msg(linked ? 'process.mosaic.mapToolbar.unlink.tooltip' : 'process.mosaic.mapToolbar.link.tooltip')}/>
                     <Toolbar.ToolbarButton
                         selected={areas.length !== 1}
                         icon={'th-large'}
