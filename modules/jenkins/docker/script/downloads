@@ -20,7 +20,7 @@ source "$SDKMAN_DIR/bin/sdkman-init.sh"
 yes | sdk install java 11.0.9.hs-adpt
 sdk install groovy
 sdk install maven
-sdk install gradle
+sdk install gradle 6.1 # Gradle 7 requires updates to build scripts
 echo 'source "$SDKMAN_DIR/bin/sdkman-init.sh"' >> /etc/profile
 echo "JAVA_HOME=\"/usr/local/lib/sdkman/candidates/java/current\"" >> /etc/environment
 
