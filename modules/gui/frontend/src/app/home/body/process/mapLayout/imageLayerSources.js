@@ -42,7 +42,10 @@ export class _ImageLayerSources extends React.Component {
                     removeMessage={msg('map.layout.layer.remove.message')}
                     removeTooltip={msg('map.layout.layer.remove.tooltip')}
                     drag$={drag$}
-                    dragValue={source.id}
+                    dragValue={{
+                        imageLayer: {sourceId: source.id},
+                        featureLayers: []
+                    }}
                     // onRemove={() => this.removeSource(source.id)}
                 />
             )

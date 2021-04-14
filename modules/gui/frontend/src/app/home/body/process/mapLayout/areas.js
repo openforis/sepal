@@ -6,6 +6,7 @@ import {assignArea, removeArea, validAreas} from './layerAreas'
 import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, mapTo} from 'rxjs/operators'
 import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -14,10 +15,9 @@ import styles from './areas.module.css'
 import withSubscription from 'subscription'
 
 const mapRecipeToProps = recipe => {
-    const map = recipe.map || {}
     return {
-        layers: map.layers || [],
-        areas: map.areas || {}
+        sources: selectFrom(recipe, 'ui.imageLayerSources'),
+        areas: selectFrom(recipe, 'layers.areas')
     }
 }
 
@@ -34,15 +34,15 @@ class _Areas extends React.Component {
     }
 
     areaRefs = {
-        center: React.createRef(),
-        top: React.createRef(),
-        topRight: React.createRef(),
-        right: React.createRef(),
-        bottomRight: React.createRef(),
-        bottom: React.createRef(),
-        bottomLeft: React.createRef(),
-        left: React.createRef(),
-        topLeft: React.createRef(),
+        'center': React.createRef(),
+        'top': React.createRef(),
+        'top-right': React.createRef(),
+        'right': React.createRef(),
+        'bottom-right': React.createRef(),
+        'bottom': React.createRef(),
+        'bottom-left': React.createRef(),
+        'left': React.createRef(),
+        'top-left': React.createRef(),
     }
 
     areaDrag$ = new Subject()
@@ -105,10 +105,10 @@ class _Areas extends React.Component {
                 </div>
                 <div className={styles.layoutWrapper}>
                     <div className={[styles.layout, styles.corners].join(' ')}>
-                        {this.renderArea(areas, current, 'topLeft')}
-                        {this.renderArea(areas, current, 'topRight')}
-                        {this.renderArea(areas, current, 'bottomLeft')}
-                        {this.renderArea(areas, current, 'bottomRight')}
+                        {this.renderArea(areas, current, 'top-left')}
+                        {this.renderArea(areas, current, 'top-right')}
+                        {this.renderArea(areas, current, 'bottom-left')}
+                        {this.renderArea(areas, current, 'bottom-right')}
                     </div>
                 </div>
             </React.Fragment>
@@ -118,7 +118,9 @@ class _Areas extends React.Component {
     renderArea(areas, current, area) {
         const {dragging, closestArea} = this.state
         const highlighted = !current && dragging && area === closestArea
-        const value = areas[area]
+        const sourceId = areas[area]
+            ? areas[area].imageLayer.sourceId
+            : null
         return (
             <div
                 ref={current ? this.areaRefs[area] : null}
@@ -126,28 +128,25 @@ class _Areas extends React.Component {
                 className={[
                     styles.area,
                     highlighted ? styles.highlighted : null,
-                    value ? styles.assigned : null
+                    sourceId ? styles.assigned : null
                 ].join(' ')}>
-                {this.renderLayerInfo(area, value)}
+                {this.renderSourceInfo(area, sourceId)}
             </div>
         )
     }
-
-    renderLayerInfo(area, layerId) {
-        const {layers} = this.props
-        const layer = layers.find(layer => layer.id === layerId)
-        return layer && layer.id
+    renderSourceInfo(area, sourceId) {
+        const {sources} = this.props
+        const source = sources.find(source => source.id === sourceId)
+        return source
             ? (
                 <div className={styles.areaContent}>
                     <SuperButton
-                        title={layer.type}
-                        description={layer.id.substr(-8)}
-                        editTooltip={msg('map.layout.area.edit.tooltip')}
+                        title={source.type}
+                        description={source.description}
                         removeMessage={msg('map.layout.area.remove.message')}
                         removeTooltip={msg('map.layout.area.remove.tooltip')}
                         drag$={this.areaDrag$}
                         dragValue={area}
-                        onEdit={() => null}
                         onRemove={() => this.removeArea(area)}
                     />
                 </div>
@@ -156,10 +155,6 @@ class _Areas extends React.Component {
     }
 
     componentDidMount() {
-        const {areas, recipeActionBuilder} = this.props
-        recipeActionBuilder('SAVE_AREAS')
-            .set('map.areas', areas)
-            .dispatch()
         this.initializeDragDrop()
     }
 
@@ -190,7 +185,7 @@ class _Areas extends React.Component {
             filter(({dragging}) => dragging === false),
             mapTo()
         )
-        
+
         withSubscription(
             layerDragStart$.subscribe(
                 value => this.onLayerDragStart(value)
@@ -244,8 +239,8 @@ class _Areas extends React.Component {
             const nextAreas = assignArea({
                 areas: currentAreas,
                 area: closestArea,
-                value: dragValue}
-            )
+                value: dragValue
+            })
             this.setState({
                 closestArea,
                 nextAreas
@@ -266,8 +261,8 @@ class _Areas extends React.Component {
 
     updateAreas(areas) {
         const {recipeActionBuilder} = this.props
-        recipeActionBuilder('UPDATE_AREAS')
-            .set('map.areas', areas)
+        recipeActionBuilder('UPDATE_LAYER_AREAS')
+            .set('layers.areas', areas)
             .dispatch()
     }
 
@@ -288,6 +283,7 @@ class _Areas extends React.Component {
     calculateDropTargetCenters(areas) {
         const centers = {}
         const valid = validAreas(areas)
+        console.log({valid})
         valid.forEach(area => {
             const areaElement = this.areaRefs[area].current
             const {top, right, bottom, left} = areaElement.getBoundingClientRect()
@@ -302,7 +298,7 @@ class _Areas extends React.Component {
     removeArea(area) {
         const {areas, recipeActionBuilder} = this.props
         recipeActionBuilder('REMOVE_AREA')
-            .set('map.areas', removeArea({areas, area}))
+            .set('layers.areas', removeArea({areas, area}))
             .dispatch()
     }
 }
@@ -315,7 +311,7 @@ export const Areas = compose(
 
 Areas.propTypes = {
     areas: PropTypes.shape({
-        area: PropTypes.oneOf(['center', 'top', 'topRight', 'right', 'bottomRight', 'bottom', 'bottomLeft', 'left', 'topLeft']),
+        area: PropTypes.oneOf(['center', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-left', 'left', 'top-left']),
         value: PropTypes.any
     }),
     layerDrag$: PropTypes.object
