@@ -50,11 +50,11 @@ class _SplitContent extends React.PureComponent {
     }
 
     render() {
-        const {className} = this.props
+        const {className, maximize, mode} = this.props
         const {position: {x, y}, dragging, initialized} = this.state
         return (
             <ElementResizeDetector onResize={size => resize$.next(size)}>
-                <SplitContext.Provider value={this.areas.current}>
+                <SplitContext.Provider value={{areas: this.areas.current, mode, maximize}}>
                     <div
                         className={[
                             styles.container,
@@ -89,16 +89,15 @@ class _SplitContent extends React.PureComponent {
     renderArea({placement, content}) {
         const {mode, maximize} = this.props
         const {initialized} = this.state
-        const show = !maximize || maximize === placement
+        const single = mode === 'stack' && maximize
+        const hidden = single && maximize !== placement
         return (
             <div
                 key={placement}
                 className={_.flatten([
                     styles.area,
-                    show ? mode === 'stack' ? styles.full : styles.partial : styles.hide,
-                    maximize
-                        ? 'center'
-                        : placement.split('-').map(placement => styles[placement])
+                    hidden ? styles.hide : mode === 'stack' ? styles.full : styles.partial,
+                    single ? styles.center : placement.split('-').map(placement => styles[placement])
                 ]).join(' ')}>
                 {initialized ? content : null}
             </div>
@@ -420,13 +419,15 @@ export class SplitOverlay extends React.Component {
         const {area, children} = this.props
         return (
             <SplitContext.Consumer>
-                {areas => {
+                {({areas, mode, maximize}) => {
+                    const single = mode === 'stack' && maximize
+                    const hidden = single && maximize !== area
                     return (
                         <Portal type='container' container={areas}>
                             <div className={_.flatten([
                                 styles.area,
-                                styles.partial,
-                                area.split('-').map(area => styles[area])
+                                hidden ? styles.hide : styles.partial,
+                                single ? styles.center : area.split('-').map(area => styles[area])
                             ]).join(' ')}>
                                 {children}
                             </div>
