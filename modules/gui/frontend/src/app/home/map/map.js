@@ -149,12 +149,18 @@ class _Map extends React.Component {
 
             const subscriptions = [
                 this.mouseDown$.subscribe(mouseDownArea => {
-                    const {zoomArea} = this.state
+                    const {zoomArea, selectedZoomArea} = this.state
                     if (zoomArea) {
-                        if (mouseDownArea == area) {
-                            this.setState({selectedZoomArea: area})
+                        if (selectedZoomArea) {
+                            if (mouseDownArea === area && selectedZoomArea !== area) {
+                                this.zoomArea(false)
+                            }
                         } else {
-                            map.cancelZoomArea()
+                            if (mouseDownArea === area) {
+                                this.setState({selectedZoomArea: area})
+                            } else {
+                                map.cancelZoomArea()
+                            }
                         }
                     }
                 }),
