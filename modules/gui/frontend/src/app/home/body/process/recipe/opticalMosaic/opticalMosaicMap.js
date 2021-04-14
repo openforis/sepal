@@ -1,6 +1,7 @@
 import {Buttons} from 'widget/buttons'
 import {Layout} from 'widget/layout'
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
+import {SceneSelectionType} from './opticalMosaicRecipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -18,27 +19,25 @@ const defaultLayerConfig = {
 }
 
 export class _OpticalMosaicMap extends React.Component {
-    bandCombinationOptions = [
-        {value: 'red, green, blue', label: 'RED, GREEN, BLUE'},
-        {value: 'nir, red, green', label: 'NIR, RED, GREEN'},
-        {value: 'nir, swir1, red', label: 'NIR, SWIR1, RED'},
-        {value: 'swir2, nir, red', label: 'SWIR2, NIR, RED'},
-        {value: 'swir2, swir1, red', label: 'SWIR2, SWIR1, RED'},
-        {value: 'swir2, nir, green', label: 'SWIR2, NIR, GREEN'},
-        {value: 'brightness, greenness, wetness', label: 'Brightness, Greenness, Wetness'}
+    bandCombinations = [
+        ['red', 'green', 'blue'],
+        ['nir', 'red', 'green'],
+        ['nir', 'swir1', 'red'],
+        ['swir2', 'nir', 'red'],
+        ['swir2', 'swir1', 'red'],
+        ['swir2', 'nir', 'green'],
+        ['brightness', 'greenness', 'wetness']
     ]
 
-    metadataOptions = [
-        {value: 'unixTimeDays', label: msg('bands.unixTimeDays')},
-        {value: 'dayOfYear', label: msg('bands.dayOfYear')},
-        {value: 'daysFromTarget', label: msg('bands.daysFromTarget')}
+    metadata = [
+        'unixTimeDays',
+        'dayOfYear',
+        'daysFromTarget'
     ]
+
     render() {
         const {recipe, layerConfig, map} = this.props
-        // TODO: recipe.ui.initialized
-        //  If manual scene selection, one scene must be selected
-        const initialized = recipe.model.aoi
-        const layer = map && initialized
+        const layer = map && recipe.ui.initialized && this.hasScenes()
             ? EarthEngineLayer.fromRecipe({recipe, layerConfig, map})
             : null
 
@@ -49,6 +48,14 @@ export class _OpticalMosaicMap extends React.Component {
                 map={map}
             />
         )
+    }
+
+    hasScenes() {
+        const {recipe} = this.props
+        const type = selectFrom(recipe, 'model.sceneSelectionOptions.type')
+        const scenes = selectFrom(recipe, 'model.scenes') || {}
+        return type !== SceneSelectionType.SELECT || Object.values(scenes)
+            .find(scenes => scenes.length)
     }
 
     renderImageLayerForm() {
@@ -80,19 +87,27 @@ export class _OpticalMosaicMap extends React.Component {
         const {recipe, layerConfig} = this.props
         const compositeOptions = selectFrom(recipe, 'model.compositeOptions')
         const median = compositeOptions.compose === 'MEDIAN'
+        const bandCombinationOptions = this.bandCombinations.map(bands => ({
+            value: bands.join(', '),
+            label: bands.map(band => msg(['bands', band])).join(', ')
+        }))
+        const metadataOptions = this.metadata.map(band => ({
+            value: band,
+            label: msg(['bands', band])
+        }))
         const options = median
-            ? this.bandCombinationOptions
+            ? bandCombinationOptions
             : [
-                {label: msg('process.mosaic.bands.combinations'), options: this.bandCombinationOptions},
-                {label: msg('process.mosaic.bands.metadata'), options: this.metadataOptions}
+                {label: msg('process.mosaic.bands.combinations'), options: bandCombinationOptions},
+                {label: msg('process.mosaic.bands.metadata'), options: metadataOptions}
             ]
-        const label = [
-            ...this.bandCombinationOptions,
-            ...this.metadataOptions
-        ].find(({value}) => layerConfig.bands.selection.join(', ') === value).label
+        const selectedOption = [
+            ...bandCombinationOptions,
+            ...metadataOptions
+        ].find(({value}) => layerConfig.bands.selection.join(', ') === value)
         return (
             <ButtonSelect
-                label={label}
+                label={selectedOption.label}
                 options={options}
                 chromeless
                 alignment={'left'}
@@ -109,7 +124,8 @@ export class _OpticalMosaicMap extends React.Component {
         const surfaceReflectance = compositeOptions.corrections.includes('SR')
         return sources.LANDSAT
             && !surfaceReflectance
-            && ['red, green, blue', 'nir, red, green'].includes(selection && selection.join(', ')) // TODO: Fix
+            && selection
+            && ['red, green, blue', 'nir, red, green'].includes(selection.join(', '))
     }
 
     togglePanSharpen(enabled) {
