@@ -71,6 +71,7 @@ class _SplitContent extends React.PureComponent {
                         {this.renderAreas()}
                         {this.renderHandles()}
                         {this.renderOverlay()}
+                        {this.renderContent()}
                     </div>
                 </SplitContext.Provider>
             </ElementResizeDetector>
@@ -170,9 +171,20 @@ class _SplitContent extends React.PureComponent {
     }
 
     renderOverlay() {
+        const {overlay} = this.props
+        return overlay
+            ? (
+                <div className={styles.overlay}>
+                    {overlay}
+                </div>
+            )
+            : null
+    }
+
+    renderContent() {
         const {children} = this.props
         return (
-            <div className={[styles.overlay].join(' ')}>
+            <div className={styles.content}>
                 {children}
             </div>
         )
@@ -407,7 +419,8 @@ SplitContent.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     maximize: PropTypes.string,
-    mode: PropTypes.oneOf(['stack', 'grid'])
+    mode: PropTypes.oneOf(['stack', 'grid']),
+    overlay: PropTypes.any
 }
 
 SplitContent.defaultProps = {

@@ -75,7 +75,6 @@
     flex-direction: column;
     pointer-events: none;
     overflow: hidden;
-    z-index: 0;
 }
 
 .area.full {
@@ -167,7 +166,6 @@
         transparent 10px,
         transparent 20px
     ); */
-    z-index: 1;
 }
 
 .handle.axis:before {
@@ -236,7 +234,8 @@
 
 /* overlay */
 
-.overlay {
+.overlay,
+.content {
     position: absolute;
     top: 0;
     bottom: 0;
