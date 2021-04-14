@@ -10,6 +10,7 @@ import {debounceTime, distinctUntilChanged, filter, finalize, first, switchMap} 
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
 import {mapBoundsTag, mapTag} from 'tag'
+import {recipePath} from '../body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import {withMapsContext} from './maps'
 import {withRecipe} from '../body/process/recipeContext'
@@ -18,7 +19,8 @@ import MapToolbar from './mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import api from '../../../api'
+import actionBuilder from '../../../action-builder'
+import api from 'api'
 import styles from './map.module.css'
 import withSubscriptions from 'subscription'
 
@@ -115,6 +117,7 @@ class _Map extends React.Component {
     renderMap(source, layerConfig, area) {
         const {maps} = this.state
         const map = maps[area] && maps[area].map
+        const updateLayerConfig = layerConfig => this.updateLayerConfig(layerConfig, area)
         return (
             <React.Fragment>
                 <div
@@ -123,11 +126,21 @@ class _Map extends React.Component {
                     ref={this.refCallback}
                     onMouseDown={() => this.mouseDown$.next(area)}
                 />
-                <MapAreaContext.Provider value={{area}}>
+                <MapAreaContext.Provider value={{area, updateLayerConfig}}>
                     <MapArea source={source} layerConfig={layerConfig} map={map}/>
                 </MapAreaContext.Provider>
             </React.Fragment>
         )
+    }
+
+    updateLayerConfig(layerConfig, area) {
+        const {recipe} = this.props
+        actionBuilder('UPDATE_LAYER_CONFIG', layerConfig)
+            .set(
+                [recipePath(recipe.id), 'layers.areas', area, 'imageLayer.layerConfig'],
+                layerConfig
+            )
+            .dispatch()
     }
 
     createArea(area, element) {
@@ -328,7 +341,7 @@ class _Map extends React.Component {
         const map = maps[0]
 
         const isInizialized = () => map.isLayerInitialized('Aoi')
-        
+
         return {
             canZoomIn: () => isInizialized() && !map.isMaxZoom(),
             zoomIn: () => map.zoomIn(),

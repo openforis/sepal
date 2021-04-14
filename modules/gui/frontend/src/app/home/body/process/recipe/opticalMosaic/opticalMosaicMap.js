@@ -3,14 +3,12 @@ import {Layout} from 'widget/layout'
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {recipePath} from '../../recipe'
 import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import ButtonSelect from 'widget/buttonSelect'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
 
 const defaultLayerConfig = {
     bands: {
@@ -115,23 +113,13 @@ export class _OpticalMosaicMap extends React.Component {
     }
 
     togglePanSharpen(enabled) {
-        const {layerConfig: {bands: {selection}}} = this.props
-        this.updateLayerConfig({bands: {selection, panSharpen: enabled && this.canPanSharpen()}})
+        const {layerConfig: {bands: {selection}}, mapAreaContext: {updateLayerConfig}} = this.props
+        updateLayerConfig({bands: {selection, panSharpen: enabled && this.canPanSharpen()}})
     }
 
     selectBands(bands) {
-        const {layerConfig: {bands: {panSharpen}}} = this.props
-        this.updateLayerConfig({bands: {selection: bands.split(', '), panSharpen}})
-    }
-
-    updateLayerConfig(layerConfig) {
-        const {recipe, mapAreaContext: {area}} = this.props
-        actionBuilder('UPDATE_LAYER_CONFIG', layerConfig)
-            .set(
-                [recipePath(recipe.id), 'layers.areas', area, 'imageLayer.layerConfig'],
-                layerConfig
-            )
-            .dispatch()
+        const {layerConfig: {bands: {panSharpen}}, mapAreaContext: {updateLayerConfig}} = this.props
+        updateLayerConfig({bands: {selection: bands.split(', '), panSharpen}})
     }
 
 }
