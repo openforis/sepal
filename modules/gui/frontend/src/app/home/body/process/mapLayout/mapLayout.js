@@ -1,10 +1,9 @@
 import {AddLayer} from './addLayer'
 import {Areas} from './areas'
-import {Layers} from './layers'
+import {ImageLayerSources} from './imageLayerSources'
 import {Panel} from 'widget/panel/panel'
 import {SelectRecipe} from './selectRecipe'
 import {Subject} from 'rxjs'
-import {Toolbar} from 'widget/toolbar/toolbar'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
@@ -66,7 +65,7 @@ class _MapLayoutPanel extends React.Component {
         return (
             <div className={styles.content}>
                 <Areas layerDrag$={this.layerDrag$}/>
-                <Layers drag$={this.layerDrag$}/>
+                <ImageLayerSources drag$={this.layerDrag$}/>
             </div>
         )
     }
@@ -81,7 +80,7 @@ const policy = () => ({
     _: 'allow'
 })
 
-const MapLayoutPanel = compose(
+export const MapLayoutPanel = compose(
     _MapLayoutPanel,
     withRecipe(mapRecipeToProps),
     activatable({id: 'mapLayout', policy}),
@@ -89,16 +88,3 @@ const MapLayoutPanel = compose(
 )
 
 MapLayout.propTypes = {}
-
-export class MapLayoutButton extends React.Component {
-    render() {
-        return (
-            <Toolbar.ActivationButton
-                id='mapLayout'
-                icon='layer-group'
-                tooltip={msg('process.mosaic.mapToolbar.layers.tooltip')}
-                disabled={false}
-            />
-        )
-    }
-}

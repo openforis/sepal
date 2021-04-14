@@ -1,7 +1,4 @@
-import {Button} from 'widget/button'
-import {ButtonGroup} from 'widget/buttonGroup'
-import {LayersMenu} from './layersMenu'
-import {Layout} from 'widget/layout'
+import {MapLayout} from '../body/process/mapLayout/mapLayout'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -11,33 +8,12 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './mapToolbar.module.css'
 
-class MapLayout extends React.Component {
-    render() {
-        return (
-            <Layout type='vertical'>
-                <ButtonGroup>
-                    <Button
-                        // chromeless
-                        look='highlight'
-                        icon='square'
-                        onClick={console.log}
-                    />
-                    <Button
-                        look='transparent'
-                        icon='th-large'
-                        onClick={console.log}
-                    />
-                </ButtonGroup>
-            </Layout>
-        )
-    }
-}
-
 class MapToolbar extends React.Component {
     render() {
         const {map, children} = this.props
         return (
             <React.Fragment>
+                <MapLayout/>
                 <Toolbar
                     className={styles.mapToolbar}
                     horizontal
@@ -69,7 +45,7 @@ class MapToolbar extends React.Component {
                         icon='link'
                         tooltip={msg(map.isLinked() ? 'process.mosaic.mapToolbar.unlink.tooltip' : 'process.mosaic.mapToolbar.link.tooltip')}/>
                     <Toolbar.ActivationButton
-                        id='layersMenu'
+                        id='mapLayout'
                         icon='layer-group'
                         tooltip={msg('process.mosaic.mapToolbar.layers.tooltip')}/>
                     {children}
