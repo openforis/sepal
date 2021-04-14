@@ -21,6 +21,7 @@ R -e "pacman::p_load(\
         'rPython',\
         'RStoolbox',\
         'sf',\
+        'tigris',\
         'XLConnect',\
         'xlsx',\
         'vtree',\

@@ -268,7 +268,6 @@ R -e "pacman::p_load(\
         'tidyr',\
         'tidyselect',\
         'tidyverse',\
-        'tigris',\
         'tikzDevice',\
         'tint',\
         'tinytex',\
