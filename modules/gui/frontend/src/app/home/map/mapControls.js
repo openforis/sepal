@@ -12,7 +12,10 @@ import actionBuilder from '../../../action-builder'
 import styles from './mapControls.module.css'
 
 const mapRecipeToProps = recipe => ({
-    imageLayerSources: selectFrom(recipe, 'ui.imageLayerSources'),
+    imageLayerSources: [
+        ...selectFrom(recipe, 'ui.imageLayerSources') || [],
+        ...selectFrom(recipe, 'layers.additionalImageLayerSources') || []
+    ],
     featureLayerSources: selectFrom(recipe, 'ui.featureLayerSources'),
     areas: selectFrom(recipe, 'layers.areas')
 })
