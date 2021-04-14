@@ -73,6 +73,7 @@ class _Map extends React.Component {
     }
 
     removeArea(area) {
+        log.debug(`${mapTag(this.state.mapId)} removing area ${area}`)
         const {maps} = this.state
         const {map, listeners, subscriptions} = maps[area]
         const {google} = map.getGoogle()
@@ -82,6 +83,11 @@ class _Map extends React.Component {
         _.forEach(subscriptions, subscription =>
             subscription.unsubscribe()
         )
+        this.setState(({maps}) => {
+            const updatedMaps = {...maps}
+            delete updatedMaps[area]
+            return ({maps: updatedMaps})
+        })
     }
 
     synchronizeOut(area, map) {
@@ -281,7 +287,13 @@ class _Map extends React.Component {
         )
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
+        const {layers: {areas: prevAreas}} = prevProps
+        const {layers: {areas}} = this.props
+        Object.keys(prevAreas)
+            .filter(area => !Object.keys(areas).includes(area))
+            .map(area => this.removeArea(area))
+
         if (this.isMapInitialized()) {
             this.mapInitialized$.next(true)
         }
