@@ -19,7 +19,7 @@ import MapToolbar from './mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import actionBuilder from '../../../action-builder'
+import actionBuilder from 'action-builder'
 import api from 'api'
 import styles from './map.module.css'
 import withSubscriptions from 'subscription'
@@ -68,8 +68,10 @@ class _Map extends React.Component {
     withFirstMap(callback) {
         const {maps} = this.state
         const area = _.head(_.keys(maps))
-        const {map} = maps[area]
-        return callback(map, area)
+        const {map = null} = maps[area] || {}
+        return map
+            ? callback(map, area)
+            : null
     }
 
     removeArea(area) {
@@ -150,6 +152,7 @@ class _Map extends React.Component {
             log.debug(`${mapTag(this.state.mapId)} creating area ${area}`)
             const {mapsContext: {createSepalMap}} = this.props
             const map = createSepalMap(element)
+            this.withFirstMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
             const {google, googleMap} = map.getGoogle()
             const listeners = [
                 googleMap.addListener('center_changed', () => this.synchronizeOut(area, map)),
