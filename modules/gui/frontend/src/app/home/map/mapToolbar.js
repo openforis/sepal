@@ -35,7 +35,7 @@ class MapLayout extends React.Component {
 
 class MapToolbar extends React.Component {
     render() {
-        const {map, toggleLinked, linked, areas, children} = this.props
+        const {map, children} = this.props
         return (
             <React.Fragment>
                 <Toolbar
@@ -64,24 +64,17 @@ class MapToolbar extends React.Component {
                         icon={'bullseye'}
                         tooltip={msg('process.mosaic.mapToolbar.centerMap.tooltip')}/>
                     <Toolbar.ToolbarButton
-                        onClick={() => toggleLinked()}
-                        selected={linked}
+                        onClick={() => map.toggleLinked()}
+                        selected={map.isLinked()}
                         icon='link'
-                        tooltip={msg(linked ? 'process.mosaic.mapToolbar.unlink.tooltip' : 'process.mosaic.mapToolbar.link.tooltip')}/>
-                    <Toolbar.ToolbarButton
-                        selected={areas.length !== 1}
-                        icon={'th-large'}
-                        tooltip={<MapLayout/>}
-                        tooltipDelay={0}
-                        tooltipPlacement='bottom'
-                    />
+                        tooltip={msg(map.isLinked() ? 'process.mosaic.mapToolbar.unlink.tooltip' : 'process.mosaic.mapToolbar.link.tooltip')}/>
                     <Toolbar.ActivationButton
                         id='layersMenu'
                         icon='layer-group'
                         tooltip={msg('process.mosaic.mapToolbar.layers.tooltip')}/>
                     {children}
                 </Toolbar>
-                {/*<Keybinding disabled={!zoomArea} keymap={{Escape: () => map.cancelZoomArea()}}/>*/}
+                <Keybinding disabled={!map.isZoomArea()} keymap={{Escape: () => map.cancelZoomArea()}}/>
             </React.Fragment>
         )
     }

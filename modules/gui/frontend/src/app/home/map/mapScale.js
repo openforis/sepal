@@ -6,11 +6,13 @@ import styles from './mapScale.module.css'
 
 class MapToolbar extends React.Component {
     render() {
-        const {metersPerPixel} = this.props
-        return metersPerPixel
+        const {map} = this.props
+        const scale = map.getScale()
+
+        return scale
             ? (
                 <div className={styles.container}>
-                    {format.number({value: metersPerPixel, unit: 'm/px'})}
+                    {format.number({value: scale, unit: 'm/px'})}
                 </div>
             )
             : null

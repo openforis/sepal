@@ -44,7 +44,6 @@ class _Map extends React.Component {
         mapId: null,
         googleMapsApiKey: null,
         norwayPlanetApiKey: null,
-        metersPerPixel: null,
         zoomArea: null,
         selectedZoomArea: null,
         linked: null
@@ -52,7 +51,6 @@ class _Map extends React.Component {
 
     constructor() {
         super()
-        this.toggleLinked = this.toggleLinked.bind(this)
         this.refCallback = this.refCallback.bind(this)
         this.mapDelegate = this.mapDelegate.bind(this)
         this.onMouseDown = this.onMouseDown.bind(this)
@@ -87,7 +85,6 @@ class _Map extends React.Component {
     synchronizeOut(area, map) {
         const {center, zoom} = map.getView()
         this.allMaps(({map}) => map.setView({center, zoom}))
-        this.updateScale(map.getMetersPerPixel())
         this.updateBounds$.next({center, zoom})
     }
 
@@ -146,7 +143,7 @@ class _Map extends React.Component {
     createArea(area, element) {
         const {maps} = this.state
         if (!maps[area]) {
-            log.debug('Creating new area', area)
+            log.debug(`${mapTag(this.state.mapId)} creating area ${area}`)
             const {mapsContext: {createSepalMap}} = this.props
             const map = createSepalMap(element)
             const {google, googleMap} = map.getGoogle()
@@ -187,6 +184,11 @@ class _Map extends React.Component {
         this.setLinked(linked)
     }
 
+    isLinked() {
+        const {linked} = this.state
+        return linked
+    }
+
     refCallback(element) {
         if (element) { // Hot-reload can cause it to be null
             const area = element.dataset.area
@@ -196,7 +198,7 @@ class _Map extends React.Component {
 
     render() {
         const {layers, imageLayerSources} = this.props
-        const {googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, selectedZoomArea} = this.state
+        const {googleMapsApiKey, norwayPlanetApiKey, selectedZoomArea} = this.state
 
         const areas = _.map(layers.areas, (layer, area) => {
             const {sourceId, layerConfig} = layer.imageLayer
@@ -207,18 +209,13 @@ class _Map extends React.Component {
             })
         })
 
-        const toggleLinked = this.toggleLinked
         // TODO: Maybe overkill. Requires proper cleanup of removed map areas too.
-        //  Thinking is that the this.setState() is async, and we might not have got all at the same time
+        //       Thinking is that the this.setState() is async, and we might not have got all at the same time
         return (
             <MapContext.Provider value={{
                 map: this.mapDelegate(),
                 googleMapsApiKey,
-                norwayPlanetApiKey,
-                toggleLinked,
-                linked,
-                metersPerPixel,
-                areas
+                norwayPlanetApiKey
             }}>
                 <SplitContent areas={areas} mode={layers.mode} maximize={layers.mode === 'stack' ? selectedZoomArea : null}>
                     <div className={styles.content}>
@@ -248,10 +245,6 @@ class _Map extends React.Component {
                 </Content>
             </SectionLayout>
         )
-    }
-
-    updateScale(metersPerPixel) {
-        this.setState({metersPerPixel})
     }
 
     updateLinked() {
@@ -343,17 +336,21 @@ class _Map extends React.Component {
         const isInizialized = () => map.isLayerInitialized('Aoi')
 
         return {
+            toggleLinked: () => this.toggleLinked(),
+            isLinked: () => this.isLinked(),
             canZoomIn: () => isInizialized() && !map.isMaxZoom(),
             zoomIn: () => map.zoomIn(),
             canZoomOut: () => isInizialized() && !map.isMinZoom(),
             zoomOut: () => map.zoomOut(),
             canZoomArea: () => isInizialized(),
             toggleZoomArea: () => this.zoomArea(!this.isZoomArea()),
+            cancelZoomArea: () => this.zoomArea(false),
             isZoomArea: () => this.isZoomArea(),
             canFit: () => isInizialized(),
             fit: () => map.fitLayer('Aoi'),
             getZoom: () => map.getZoom(),
             getBounds: () => map.getBounds(),
+            getScale: () => map.getMetersPerPixel()
         }
     }
 }
