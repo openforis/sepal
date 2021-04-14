@@ -277,7 +277,7 @@ export class SepalMap {
     setVisibility(visible) {
         log.debug(`Visibility ${visible ? 'on' : 'off'}`)
         _.forEach(this.layerById, (layer, id) =>
-            layer.hide(visible ? this.isHiddenLayer(id) : true)
+            layer.hide && layer.hide(visible ? this.isHiddenLayer(id) : true)
         )
     }
 

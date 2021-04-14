@@ -35,6 +35,10 @@ export default class LabelsLayer {
         this.map.removeFromMap(this.layerIndex)
     }
 
+    hide(hidden) {
+        // No-op
+    }
+
     initialize$() {
         return of(this)
     }
