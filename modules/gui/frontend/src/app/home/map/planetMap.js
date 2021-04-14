@@ -1,36 +1,145 @@
+import {Buttons} from 'widget/buttons'
+import {Layout} from 'widget/layout'
 import {MapAreaLayout} from './mapAreaLayout'
-import {compose} from '../../../compose'
+import {compose} from 'compose'
+import {connect} from 'store'
+import {get$} from 'http-client'
+import {map} from 'rxjs/operators'
+import {withMapAreaContext} from './mapAreaContext'
 import {withMapContext} from './mapContext'
+import ButtonSelect from 'widget/buttonSelect'
 import PropTypes from 'prop-types'
 import React from 'react'
 import WMTSLayer from './wmtsLayer'
+import _ from 'lodash'
+import moment from 'moment'
 
 const defaultLayerConfig = {
-    dateRange: '2019-12_2020-05',
-    proc: 'rgb'
+    bands: 'rgb'
 }
 
 class _PlanetMap extends React.Component {
+    state = {}
+
     render() {
-        const {layerConfig: {dateRange, proc} = defaultLayerConfig, map, planetApiKey, mapContext: {norwayPlanetApiKey}} = this.props
-        const layer = new WMTSLayer({
-            map,
-            urlTemplate: `https://tiles0.planet.com/basemaps/v1/planet-tiles/planet_medres_normalized_analytic_${dateRange}_mosaic/gmap/{z}/{x}/{y}.png?api_key=${planetApiKey || norwayPlanetApiKey}&proc=${proc}&color=auto`
-        })
+        const {map} = this.props
         return (
             <MapAreaLayout
-                form={null}
-                layer={layer}
+                layer={this.createLayer()}
+                form={this.renderForm()}
                 map={map}
             />
+        )
+    }
+
+    createLayer() {
+        const {layerConfig: {bands, urlTemplate} = defaultLayerConfig, map} = this.props
+        return urlTemplate
+            ? new WMTSLayer({map, urlTemplate: `${urlTemplate}&proc=${bands}`})
+            : null
+    }
+
+    renderForm() {
+        return (
+            <Layout>
+                {this.renderMosaics()}
+                {this.renderBands()}
+            </Layout>
+        )
+    }
+
+    renderBands() {
+        const {layerConfig: {bands}} = this.props
+        return (
+            <Buttons
+                label={'Pan sharpen'}
+                selected={bands}
+                onChange={bands => this.setBands(bands)}
+                options={[
+                    {value: 'rgb', label: 'RGB'},
+                    {value: 'cir', label: 'CIR'}
+                ]}/>
+        )
+    }
+
+    renderMosaics() {
+        const {layerConfig: {urlTemplate}} = this.props
+        const {mosaics = []} = this.state
+
+        const mosaicOptions = mosaics.map(({startDate, endDate, urlTemplate}) => {
+            const start = moment(startDate, 'YYYY-MM-DD')
+            const end = moment(endDate, 'YYYY-MM-DD')
+            const months = end.diff(start, 'months')
+            const duration = moment.duration(months, 'months').humanize()
+            const date = start.format('MMM YYYY')
+            return ({
+                value: urlTemplate,
+                label: `${date} (${duration})`
+            })
+        })
+        const selectedOption = mosaicOptions.find(({value}) => value === urlTemplate)
+        return (
+            <ButtonSelect
+                options={mosaicOptions}
+                label={selectedOption && selectedOption.label}
+                disabled={!mosaics.length}
+                onSelect={({value}) => this.selectUrlTemplate(value)}
+            />
+        )
+    }
+
+    componentDidMount() {
+        const {stream} = this.props
+        const {mosaics} = this.state
+        if (!mosaics) {
+            stream('LOAD_PLANET_MOSAICS',
+                this.loadMosaics$(),
+                mosaics => {
+                    this.selectUrlTemplate(mosaics[mosaics.length - 1].urlTemplate)
+                    this.setState({mosaics})
+                }
+            )
+        }
+    }
+
+    setBands(bands) {
+        const {layerConfig: {urlTemplate}, mapAreaContext: {updateLayerConfig}} = this.props
+        updateLayerConfig({bands, urlTemplate})
+    }
+
+    selectUrlTemplate(urlTemplate) {
+        const {layerConfig: {bands}, mapAreaContext: {updateLayerConfig}} = this.props
+        updateLayerConfig({bands, urlTemplate})
+    }
+
+    loadMosaics$() {
+        const {planetApiKey, mapContext: {norwayPlanetApiKey}} = this.props
+        return get$(
+            'https://api.planet.com/basemaps/v1/mosaics',
+            {username: planetApiKey || norwayPlanetApiKey}
+        ).pipe(
+            map(({response: {mosaics}}) => _.orderBy(
+                mosaics.map(({first_acquired, last_acquired, _links: {tiles}}) => ({
+                    startDate: first_acquired.substring(0, 10),
+                    endDate: last_acquired.substring(0, 10),
+                    urlTemplate: tiles
+                })),
+                ['startDate', 'endDate']
+            ))
         )
     }
 }
 
 export const PlanetMap = compose(
     _PlanetMap,
-    withMapContext()
+    withMapContext(),
+    withMapAreaContext(),
+    connect()
 )
+
+PlanetMap.defaultProps = {
+    layerConfig: defaultLayerConfig
+}
 
 PlanetMap.propTypes = {
     layerConfig: PropTypes.object,

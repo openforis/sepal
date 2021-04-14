@@ -10,7 +10,6 @@ import {v4 as uuid} from 'uuid'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
 import api from 'api'
 
 const log = getLogger('maps')

@@ -23,7 +23,6 @@ class _OpticalMosaic extends React.Component {
         const {recipeId} = props
         const recipeActions = RecipeActions(recipeId)
         recipeActions.setSceneAreasShown(true).dispatch()
-        recipeActions.setBands('red, green, blue').dispatch()
         recipeActions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
         recipeActions.initializeLayers()
     }

@@ -52,10 +52,6 @@ export const RecipeActions = id => {
             .build()
 
     return {
-
-        // image layer source: {id: asdf, type: recipe, recipeId: recipeId}
-        // feature layer sources: [{id: qwer, type: aoi}, {id: zxcv, type: sceneAreas}]
-        // set layout: {center: {sourceId: asdf}}
         initializeLayers() {
             const recipeImageLayerSource = {
                 id: guid(),
@@ -169,17 +165,6 @@ export const RecipeActions = id => {
         },
         setSceneAreasShown(shown) {
             return set('SET_SCENE_AREAS_SHOWN', 'ui.sceneAreasShown', shown, {shown})
-        },
-        setBands(bands) {
-            // this is also available in mosaicRecipe
-            return setAll('SET_BANDS', {
-                'ui.bands.selection': bands
-            }, {bands})
-        },
-        setPanSharpen(enabled) {
-            return setAll('SET_PAN_SHARPEN', {
-                'ui.bands.panSharpen': enabled
-            }, {enabled})
         },
         setSceneAreas(sceneAreas) {
             return set('SET_SCENE_AREAS', 'ui.sceneAreas', sceneAreas, {sceneAreas})

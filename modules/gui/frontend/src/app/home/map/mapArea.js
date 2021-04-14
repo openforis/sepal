@@ -17,6 +17,7 @@ export class MapArea extends React.Component {
         case 'Planet': return (
             <PlanetMap
                 layerConfig={layerConfig}
+                planetApiKey={sourceConfig.planetApiKey}
                 map={map}/>
         )
         case 'GoogleSatellite': return (
