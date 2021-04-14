@@ -53,7 +53,6 @@ class _Map extends React.Component {
         super()
         this.refCallback = this.refCallback.bind(this)
         this.mapDelegate = this.mapDelegate.bind(this)
-        this.onMouseDown = this.onMouseDown.bind(this)
     }
 
     allMaps(callback) {
@@ -105,10 +104,6 @@ class _Map extends React.Component {
     isZoomArea() {
         const {zoomArea} = this.state
         return zoomArea
-    }
-
-    onMouseDown(area) {
-        this.mouseDown$.next(area)
     }
 
     renderMap(source, layerConfig, area) {
