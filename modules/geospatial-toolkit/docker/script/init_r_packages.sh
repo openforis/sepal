@@ -179,6 +179,7 @@ R -e "pacman::p_load(\
         'pillar',\
         'pkgconfig',\
         'pkgKitten',\
+        'plotly',\
         'plyr',\
         'png',\
         'PracTools',\
@@ -242,6 +243,7 @@ R -e "pacman::p_load(\
         'shinydashboard',\
         'shinyFiles',\
         'shinyjs',\
+        'skimr',\
         'snow',\
         'sourcetools',\
         'sp',\
