@@ -1,6 +1,7 @@
 import {Buttons} from 'widget/buttons'
 import {Layout} from 'widget/layout'
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
+import {SceneSelectionType} from './opticalMosaicRecipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -36,10 +37,7 @@ export class _OpticalMosaicMap extends React.Component {
 
     render() {
         const {recipe, layerConfig, map} = this.props
-        // TODO: recipe.ui.initialized
-        //  If manual scene selection, one scene must be selected
-        const initialized = recipe.model.aoi
-        const layer = map && initialized
+        const layer = map && recipe.ui.initialized && this.hasScenes()
             ? EarthEngineLayer.fromRecipe({recipe, layerConfig, map})
             : null
 
@@ -50,6 +48,14 @@ export class _OpticalMosaicMap extends React.Component {
                 map={map}
             />
         )
+    }
+
+    hasScenes() {
+        const {recipe} = this.props
+        const type = selectFrom(recipe, 'model.sceneSelectionOptions.type')
+        const scenes = selectFrom(recipe, 'model.scenes') || {}
+        return type !== SceneSelectionType.SELECT || Object.values(scenes)
+            .find(scenes => scenes.length)
     }
 
     renderImageLayerForm() {
