@@ -1,4 +1,4 @@
-import {AddLayer} from './addLayer'
+import {AddImageLayerSource} from './addImageLayerSource'
 import {Areas} from './areas'
 import {ImageLayerSources} from './imageLayerSources'
 import {Panel} from 'widget/panel/panel'
@@ -23,7 +23,7 @@ export class MapLayout extends React.Component {
         return (
             <React.Fragment>
                 <MapLayoutPanel/>
-                <AddLayer/>
+                <AddImageLayerSource/>
                 <SelectRecipe/>
             </React.Fragment>
         )
@@ -31,7 +31,7 @@ export class MapLayout extends React.Component {
 }
 
 class _MapLayoutPanel extends React.Component {
-    layerDrag$ = new Subject()
+    sourceDrag$ = new Subject()
 
     render() {
         const {activatable: {deactivate}} = this.props
@@ -54,7 +54,7 @@ class _MapLayoutPanel extends React.Component {
                         <Panel.Buttons.Close onClick={close}/>
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
-                        <Panel.Buttons.Add onClick={() => this.addLayer()}/>
+                        <Panel.Buttons.Add onClick={() => this.addImageLayerSource()}/>
                     </Panel.Buttons.Extra>
                 </Panel.Buttons>
             </Panel>
@@ -64,15 +64,15 @@ class _MapLayoutPanel extends React.Component {
     renderContent() {
         return (
             <div className={styles.content}>
-                <Areas layerDrag$={this.layerDrag$}/>
-                <ImageLayerSources drag$={this.layerDrag$}/>
+                <Areas sourceDrag$={this.sourceDrag$}/>
+                <ImageLayerSources drag$={this.sourceDrag$}/>
             </div>
         )
     }
 
-    addLayer() {
-        const {activator: {activatables: {addLayer}}} = this.props
-        addLayer.activate()
+    addImageLayerSource() {
+        const {activator: {activatables: {addImageLayerSource}}} = this.props
+        addImageLayerSource.activate()
     }
 }
 
@@ -84,7 +84,7 @@ export const MapLayoutPanel = compose(
     _MapLayoutPanel,
     withRecipe(mapRecipeToProps),
     activatable({id: 'mapLayout', policy}),
-    activator('addLayer')
+    activator('addImageLayerSource')
 )
 
 MapLayout.propTypes = {}

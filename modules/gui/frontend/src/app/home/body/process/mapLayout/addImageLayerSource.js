@@ -4,21 +4,21 @@ import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import React from 'react'
-import styles from './addLayer.module.css'
+import styles from './addImageLayerSource.module.css'
 
-export class AddLayer extends React.Component {
+export class AddImageLayerSource extends React.Component {
     render() {
         return (
             <React.Fragment>
-                <AddLayerPanel/>
-                {/* <SelectRecipe/> */}
-                {/* <FooRecipe/> */}
+                <AddImageLayerSourcePanel/>
             </React.Fragment>
         )
     }
 }
 
-class _AddLayerPanel extends React.Component {
+// TODO: Use messages - and come up with consistent labels/titles/descriptions
+
+class _AddImageLayerSourcePanel extends React.Component {
     render() {
         const {activatable: {deactivate}} = this.props
         return (
@@ -37,23 +37,20 @@ class _AddLayerPanel extends React.Component {
     }
 
     renderOptions() {
+        // TODO: Implement addPlanet()
         return (
             <React.Fragment>
                 <SuperButton
                     title='Sepal recipe'
-                    description='Add layer from Sepal recipe'
+                    description='Add from Sepal recipe'
                     onClick={() => this.addSepalRecipe()}/>
                 <SuperButton
                     title='Google Earth Engine Asset'
-                    description='Add a Google Earth Engine Asset layer'
-                    onClick={() => this.addAsset()}/>
-                <SuperButton
-                    title='Google Map Satellite'
-                    description='Add Google Map high-resolution satellite layer'
+                    description='Add a Google Earth Engine Asset'
                     onClick={() => this.addAsset()}/>
                 <SuperButton
                     title='Planet'
-                    description='Add layer from Planet'
+                    description='Add a Planet API Key'
                     onClick={() => this.addAsset()}/>
             </React.Fragment>
         )
@@ -75,8 +72,8 @@ const policy = () => ({
     selectRecipe: 'allow-then-deactivate'
 })
 
-const AddLayerPanel = compose(
-    _AddLayerPanel,
-    activatable({id: 'addLayer', policy}),
+const AddImageLayerSourcePanel = compose(
+    _AddImageLayerSourcePanel,
+    activatable({id: 'addImageLayerSource', policy}),
     activator('mapLayout', 'selectRecipe')
 )

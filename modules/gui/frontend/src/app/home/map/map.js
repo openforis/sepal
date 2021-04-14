@@ -28,7 +28,10 @@ const log = getLogger('map')
 
 const mapRecipeToProps = recipe => ({
     layers: selectFrom(recipe, 'layers'),
-    imageLayerSources: selectFrom(recipe, 'ui.imageLayerSources'),
+    imageLayerSources: [
+        ...selectFrom(recipe, 'ui.imageLayerSources') || [],
+        ...selectFrom(recipe, 'layers.additionalImageLayerSources') || []
+    ],
     recipe
 })
 
@@ -339,11 +342,11 @@ class _Map extends React.Component {
         return {
             toggleLinked: () => this.toggleLinked(),
             isLinked: () => this.isLinked(),
-            canZoomIn: () => isInizialized() && !map.isMaxZoom(),
+            canZoomIn: () => !map.isMaxZoom(),
             zoomIn: () => map.zoomIn(),
-            canZoomOut: () => isInizialized() && !map.isMinZoom(),
+            canZoomOut: () => !map.isMinZoom(),
             zoomOut: () => map.zoomOut(),
-            canZoomArea: () => isInizialized(),
+            canZoomArea: () => !map.isMaxZoom(),
             toggleZoomArea: () => this.zoomArea(!this.isZoomArea()),
             cancelZoomArea: () => this.zoomArea(false),
             isZoomArea: () => this.isZoomArea(),

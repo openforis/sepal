@@ -39,11 +39,14 @@ class _SelectRecipe extends React.Component {
 
     selectRecipe(recipeId) {
         const {recipeActionBuilder, activatable: {deactivate}} = this.props
-        recipeActionBuilder('ADD_LAYER')
-            .push('map.layers', {
+        recipeActionBuilder('ADD_IMAGE_LAYER_SOURCE')
+            .push('layers.additionalImageLayerSources', {
                 id: uuid(),
-                type: 'SEPAL_RECIPE',
-                recipeId
+                type: 'Recipe',
+                description: 'Another recipe', // TODO: Load the recipe
+                sourceConfig: {
+                    recipeId
+                }
             })
             .dispatch()
         deactivate()

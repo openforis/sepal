@@ -16,7 +16,6 @@ export const assignArea = ({areas, area, value}) => {
     assertValidState(areas)
     const newMask = maskByArea[area]
     const nextState = {[area]: value}
-    console.log({area, value})
     Object.keys(areas)
         .map(area => ({value: areas[area], mask: maskByArea[area]}))
         .map(({value, mask}) => ({value, mask: updateMask(mask, newMask)}))

@@ -36,7 +36,8 @@ class _RecipeMap extends React.Component {
 
     componentDidMount() {
         const {stream, recipeId, recipe, loadRecipe$} = this.props
-        if (!recipe) {
+        console.log('componentDidMount', {recipeId, recipe})
+        if (!recipe || !stream('LOAD_RECIPE').active) {
             stream('LOAD_RECIPE',
                 loadRecipe$(recipeId),
                 recipe => this.setState({recipe})

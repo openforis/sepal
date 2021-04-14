@@ -16,7 +16,10 @@ import withSubscription from 'subscription'
 
 const mapRecipeToProps = recipe => {
     return {
-        sources: selectFrom(recipe, 'ui.imageLayerSources'),
+        sources: [
+            ...selectFrom(recipe, 'ui.imageLayerSources') || [],
+            ...selectFrom(recipe, 'layers.additionalImageLayerSources') || []
+        ],
         areas: selectFrom(recipe, 'layers.areas')
     }
 }
@@ -159,20 +162,18 @@ class _Areas extends React.Component {
     }
 
     initializeDragDrop() {
-        const {layerDrag$} = this.props
+        const {sourceDrag$} = this.props
         const {areaDrag$} = this
 
-        const drag$ = merge(layerDrag$, areaDrag$)
+        const drag$ = merge(sourceDrag$, areaDrag$)
 
-        const layerDragStart$ = layerDrag$.pipe(
+        const sourceDragStart$ = sourceDrag$.pipe(
             filter(({dragging}) => dragging === true),
-            map(({value}) => value),
-            map(layerId => layerId)
+            map(({value}) => value)
         )
         const areaDragStart$ = areaDrag$.pipe(
             filter(({dragging}) => dragging === true),
-            map(({value}) => value),
-            map(area => area)
+            map(({value}) => value)
         )
 
         const dragMove$ = drag$.pipe(
@@ -187,8 +188,8 @@ class _Areas extends React.Component {
         )
 
         withSubscription(
-            layerDragStart$.subscribe(
-                value => this.onLayerDragStart(value)
+            sourceDragStart$.subscribe(
+                value => this.onSourceDragStart(value)
             ),
             areaDragStart$.subscribe(
                 area => this.onAreaDragStart(area)
@@ -202,12 +203,12 @@ class _Areas extends React.Component {
         )
     }
 
-    onLayerDragStart(layerId) {
+    onSourceDragStart(sourceId) {
         const {areas} = this.props
         this.onDragStart({
             dragging: true,
             dragMode: 'adding',
-            dragValue: layerId,
+            dragValue: sourceId,
             currentAreas: areas
         })
     }
@@ -283,7 +284,6 @@ class _Areas extends React.Component {
     calculateDropTargetCenters(areas) {
         const centers = {}
         const valid = validAreas(areas)
-        console.log({valid})
         valid.forEach(area => {
             const areaElement = this.areaRefs[area].current
             const {top, right, bottom, left} = areaElement.getBoundingClientRect()
@@ -314,5 +314,5 @@ Areas.propTypes = {
         area: PropTypes.oneOf(['center', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-left', 'left', 'top-left']),
         value: PropTypes.any
     }),
-    layerDrag$: PropTypes.object
+    sourceDrag$: PropTypes.object
 }

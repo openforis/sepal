@@ -13,25 +13,27 @@ import styles from './imageLayerSources.module.css'
 
 const mapRecipeToProps = recipe => {
     return {
-        sources: selectFrom(recipe, 'ui.imageLayerSources')
+        sources: selectFrom(recipe, 'ui.imageLayerSources'),
+        additionalSources: selectFrom(recipe, 'layers.additionalImageLayerSources') || []
     }
 }
 
 export class _ImageLayerSources extends React.Component {
     render() {
-        const {sources} = this.props
+        const {sources, additionalSources} = this.props
         return (
             <ScrollableContainer>
                 <Scrollable>
                     <Padding noHorizontal>
-                        {sources.map(source => this.renderSource(source))}
+                        {sources.map(source => this.renderSource({source, removable: false}))}
+                        {additionalSources.map(source => this.renderSource({source, removable: true}))}
                     </Padding>
                 </Scrollable>
             </ScrollableContainer>
         )
     }
 
-    renderSource(source) {
+    renderSource({source, removable}) {
         const {drag$} = this.props
         return source && source.id
             ? (
@@ -46,36 +48,31 @@ export class _ImageLayerSources extends React.Component {
                         imageLayer: {sourceId: source.id},
                         featureLayers: []
                     }}
-                    // onRemove={() => this.removeSource(source.id)}
+                    onRemove={removable
+                        ? () => this.removeSource(source.id)
+                        : null}
                 />
             )
             : null
     }
 
-    // componentDidMount() {
-    //     const {layers, recipeActionBuilder} = this.props
-    //     recipeActionBuilder('SAVE_LAYERS')
-    //         .set('map.layers', layers)
-    //         .dispatch()
-    // }
-
-    // removeSource(sourceId) {
-    //     const {areas, recipeActionBuilder} = this.props
-    //     const removeAreaByLayer = (areas, layerId) => {
-    //         const area = _.chain(areas)
-    //             .pickBy(areaLayerId => areaLayerId === layerId)
-    //             .keys()
-    //             .first()
-    //             .value()
-    //         return area
-    //             ? removeAreaByLayer(removeArea({areas, area}), layerId)
-    //             : areas
-    //     }
-    //     recipeActionBuilder('REMOVE_LAYER')
-    //         .del(['map.layers', {id: sourceId}])
-    //         .set('map.areas', removeAreaByLayer(areas, sourceId))
-    //         .dispatch()
-    // }
+    removeSource(sourceId) {
+        const {areas, recipeActionBuilder} = this.props
+        const removeAreaBySource = (areas, sourceId) => {
+            const area = _.chain(areas)
+                .pickBy(({imageLayer: {sourceId: areaSourceId}}) => areaSourceId === sourceId)
+                .keys()
+                .first()
+                .value()
+            return area
+                ? removeAreaBySource(removeArea({areas, area}), sourceId)
+                : areas
+        }
+        recipeActionBuilder('REMOVE_LAYER')
+            .del(['ui.imageLayerSources', {id: sourceId}])
+            .set('layers.areas', removeAreaBySource(areas, sourceId))
+            .dispatch()
+    }
 }
 
 export const ImageLayerSources = compose(
