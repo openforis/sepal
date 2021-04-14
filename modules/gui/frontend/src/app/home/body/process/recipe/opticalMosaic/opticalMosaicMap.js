@@ -1,9 +1,11 @@
+import {Buttons} from 'widget/buttons'
+import {Layout} from 'widget/layout'
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {recipePath} from '../../recipe'
+import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
-import {withRecipe} from '../../recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import PropTypes from 'prop-types'
@@ -12,11 +14,26 @@ import actionBuilder from 'action-builder'
 
 const defaultLayerConfig = {
     bands: {
-        selection: ['red', 'green', 'blue'] // TODO: Fix...
+        selection: ['red', 'green', 'blue']
     }
 }
 
 export class _OpticalMosaicMap extends React.Component {
+    bandCombinationOptions = [
+        {value: 'red, green, blue', label: 'RED, GREEN, BLUE'},
+        {value: 'nir, red, green', label: 'NIR, RED, GREEN'},
+        {value: 'nir, swir1, red', label: 'NIR, SWIR1, RED'},
+        {value: 'swir2, nir, red', label: 'SWIR2, NIR, RED'},
+        {value: 'swir2, swir1, red', label: 'SWIR2, SWIR1, RED'},
+        {value: 'swir2, nir, green', label: 'SWIR2, NIR, GREEN'},
+        {value: 'brightness, greenness, wetness', label: 'Brightness, Greenness, Wetness'}
+    ]
+
+    metadataOptions = [
+        {value: 'unixTimeDays', label: msg('bands.unixTimeDays')},
+        {value: 'dayOfYear', label: msg('bands.dayOfYear')},
+        {value: 'daysFromTarget', label: msg('bands.daysFromTarget')}
+    ]
     render() {
         const {recipe, layerConfig, map} = this.props
         // TODO: recipe.ui.initialized
@@ -36,53 +53,91 @@ export class _OpticalMosaicMap extends React.Component {
     }
 
     renderImageLayerForm() {
-        const {layerConfig} = this.props
-        const options = [
-            {
-                label: msg('process.mosaic.bands.combinations'),
-                options: [
-                    {value: 'red, green, blue', label: 'RED, GREEN, BLUE'},
-                    {value: 'nir, red, green', label: 'NIR, RED, GREEN'},
-                    {value: 'nir, swir1, red', label: 'NIR, SWIR1, RED'},
-                    {value: 'swir2, nir, red', label: 'SWIR2, NIR, RED'},
-                    {value: 'swir2, swir1, red', label: 'SWIR2, SWIR1, RED'},
-                    {value: 'swir2, nir, green', label: 'SWIR2, NIR, GREEN'},
-                    {value: 'brightness, greenness, wetness', label: 'Brightness, Greenness, Wetness'}
-                ]
-            },
-            {
-                label: msg('process.mosaic.bands.metadata'),
-                options: [
-                    {value: 'unixTimeDays', label: msg('bands.unixTimeDays')},
-                    {value: 'dayOfYear', label: msg('bands.dayOfYear')},
-                    {value: 'daysFromTarget', label: msg('bands.daysFromTarget')}
-                ]
-            }
-        ]
-        return <ButtonSelect
-            label={layerConfig.bands.selection.join(', ')} // TODO: Fix...
-            options={options}
-            chromeless
-            alignment={'left'}
-            width={'fill'}
-            onSelect={({value}) => this.selectBands(value)}
-        />
+        return (
+            <Layout>
+                {this.renderBandSelection()}
+                {this.canPanSharpen()
+                    ? this.renderPanSharpen()
+                    : null}
+            </Layout>
+        )
+    }
+
+    renderPanSharpen() {
+        const {layerConfig: {bands: {panSharpen = false}}} = this.props
+        return (
+            <Buttons
+                label={'Pan sharpen'}
+                selected={panSharpen}
+                onChange={({value}) => this.togglePanSharpen(value && this.canPanSharpen())}
+                options={[
+                    {value: true, label: 'Yes'},
+                    {value: false, label: 'No'}
+                ]}/>
+        )
+    }
+
+    renderBandSelection() {
+        const {recipe, layerConfig} = this.props
+        const compositeOptions = selectFrom(recipe, 'model.compositeOptions')
+        const median = compositeOptions.compose === 'MEDIAN'
+        const options = median
+            ? this.bandCombinationOptions
+            : [
+                {label: msg('process.mosaic.bands.combinations'), options: this.bandCombinationOptions},
+                {label: msg('process.mosaic.bands.metadata'), options: this.metadataOptions}
+            ]
+        const label = [
+            ...this.bandCombinationOptions,
+            ...this.metadataOptions
+        ].find(({value}) => layerConfig.bands.selection.join(', ') === value).label
+        return (
+            <ButtonSelect
+                label={label}
+                options={options}
+                chromeless
+                alignment={'left'}
+                width={'fill'}
+                onSelect={({value}) => this.selectBands(value)}
+            />
+        )
+    }
+
+    canPanSharpen() {
+        const {recipe, layerConfig: {bands: {selection}}} = this.props
+        const compositeOptions = selectFrom(recipe, 'model.compositeOptions')
+        const sources = selectFrom(recipe, 'model.sources')
+        const surfaceReflectance = compositeOptions.corrections.includes('SR')
+        return sources.LANDSAT
+            && !surfaceReflectance
+            && ['red, green, blue', 'nir, red, green'].includes(selection && selection.join(', ')) // TODO: Fix
+    }
+
+    togglePanSharpen(enabled) {
+        const {recipe, mapAreaContext: {area}} = this.props
+        actionBuilder('TOGGLE_PAN_SHARPEN', {enabled})
+            .set(
+                [recipePath(recipe.id), 'layers.areas', area, 'imageLayer.layerConfig.bands.panSharpen'],
+                enabled
+            )
+            .dispatch()
     }
 
     selectBands(bands) {
-        const {recipeId, mapAreaContext: {area}} = this.props
+        // TODO: Too much details here - someone else should do this
+        const {recipe, mapAreaContext: {area}} = this.props
         actionBuilder('SELECT_BANDS', {bands})
             .set(
-                [recipePath(recipeId), 'layers.areas', area, 'imageLayer.layerConfig.bands.selection'],
+                [recipePath(recipe.id), 'layers.areas', area, 'imageLayer.layerConfig.bands.selection'],
                 bands.split(', ')
             )
             .dispatch()
     }
+
 }
 
 export const OpticalMosaicMap = compose(
     _OpticalMosaicMap,
-    withRecipe(),
     withMapAreaContext()
 )
 

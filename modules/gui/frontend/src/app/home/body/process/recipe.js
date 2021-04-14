@@ -341,7 +341,6 @@ export const initValues = ({getModel, getValues, modelToValues, onInitialized}) 
             }
 
             render() {
-                console.log('render recipe')
                 const {model, values} = this.state
                 return this.state.initialized || !model
                     ? React.createElement(WrappedComponent, {

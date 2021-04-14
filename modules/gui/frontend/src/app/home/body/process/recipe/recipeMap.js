@@ -6,25 +6,23 @@ import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-const mapStateToProps = state => {
-    return ({
-        loadedRecipes: selectFrom(state, 'process.loadedRecipes') || {}
+const mapStateToProps = (state, {recipeId}) =>
+    ({
+        recipe: selectFrom(state, ['process.loadedRecipes', recipeId]) || {}
     })
-}
 
 class _RecipeMap extends React.Component {
     state = {}
 
     render() {
-        const {recipe} = this.state
-        return recipe
+        return this.getRecipe()
             ? this.renderRecipeMap()
             : null
     }
 
     renderRecipeMap() {
         const {layerConfig, map} = this.props
-        const {recipe} = this.state
+        const recipe = this.getRecipe()
         switch(recipe.type) {
         case 'MOSAIC': return (
             <OpticalMosaicMap
@@ -37,11 +35,17 @@ class _RecipeMap extends React.Component {
     }
 
     componentDidMount() {
-        const {stream, recipeId, loadRecipe$} = this.props
-        stream('LOAD_RECIPE',
-            loadRecipe$(recipeId),
-            recipe => this.setState({recipe})
-        )
+        const {stream, recipeId, recipe, loadRecipe$} = this.props
+        if (!recipe) {
+            stream('LOAD_RECIPE',
+                loadRecipe$(recipeId),
+                recipe => this.setState({recipe})
+            )
+        }
+    }
+
+    getRecipe() {
+        return this.props.recipe || this.state.recipe
     }
 }
 
