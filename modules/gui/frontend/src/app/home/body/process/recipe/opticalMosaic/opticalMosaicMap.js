@@ -14,7 +14,8 @@ import actionBuilder from 'action-builder'
 
 const defaultLayerConfig = {
     bands: {
-        selection: ['red', 'green', 'blue']
+        selection: ['red', 'green', 'blue'],
+        panSharpen: false
     }
 }
 
@@ -69,7 +70,7 @@ export class _OpticalMosaicMap extends React.Component {
             <Buttons
                 label={'Pan sharpen'}
                 selected={panSharpen}
-                onChange={({value}) => this.togglePanSharpen(value && this.canPanSharpen())}
+                onChange={enabled => this.togglePanSharpen(enabled)}
                 options={[
                     {value: true, label: 'Yes'},
                     {value: false, label: 'No'}
@@ -114,22 +115,21 @@ export class _OpticalMosaicMap extends React.Component {
     }
 
     togglePanSharpen(enabled) {
-        const {recipe, mapAreaContext: {area}} = this.props
-        actionBuilder('TOGGLE_PAN_SHARPEN', {enabled})
-            .set(
-                [recipePath(recipe.id), 'layers.areas', area, 'imageLayer.layerConfig.bands.panSharpen'],
-                enabled
-            )
-            .dispatch()
+        const {layerConfig: {bands: {selection}}} = this.props
+        this.updateLayerConfig({bands: {selection, panSharpen: enabled && this.canPanSharpen()}})
     }
 
     selectBands(bands) {
-        // TODO: Too much details here - someone else should do this
+        const {layerConfig: {bands: {panSharpen}}} = this.props
+        this.updateLayerConfig({bands: {selection: bands.split(', '), panSharpen}})
+    }
+
+    updateLayerConfig(layerConfig) {
         const {recipe, mapAreaContext: {area}} = this.props
-        actionBuilder('SELECT_BANDS', {bands})
+        actionBuilder('UPDATE_LAYER_CONFIG', layerConfig)
             .set(
-                [recipePath(recipe.id), 'layers.areas', area, 'imageLayer.layerConfig.bands.selection'],
-                bands.split(', ')
+                [recipePath(recipe.id), 'layers.areas', area, 'imageLayer.layerConfig'],
+                layerConfig
             )
             .dispatch()
     }
