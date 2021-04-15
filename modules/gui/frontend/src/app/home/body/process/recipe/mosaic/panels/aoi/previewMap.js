@@ -6,13 +6,15 @@ import {updateFeatureLayers} from 'app/home/map/featureLayers'
 import {withMapsContext} from 'app/home/map/maps'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
+import _ from 'lodash'
 import styles from './previewMap.module.css'
 
 const log = getLogger('previewMap')
 
 const mapRecipeToProps = recipe => ({
     recipe,
-    selectedLayers: selectFrom(recipe, 'layers.overlay.featureLayers')
+    selectedLayers: selectFrom(recipe, 'layers.overlay.featureLayers'),
+    bounds: selectFrom(recipe, 'ui.overlay.bounds')
 })
 
 class _PreviewMap extends React.Component {
@@ -23,7 +25,6 @@ class _PreviewMap extends React.Component {
     constructor() {
         super()
         this.refCallback = this.refCallback.bind(this)
-        this.onAdd = this.onAdd.bind(this)
     }
 
     render() {
@@ -51,18 +52,17 @@ class _PreviewMap extends React.Component {
         }
     }
 
-    componentDidUpdate() {
-        const {recipe, selectedLayers} = this.props
+    componentDidUpdate(prevProps) {
+        const {bounds: prevBounds} = prevProps
+        const {recipe, selectedLayers, bounds} = this.props
         const {map} = this.state
-        const {onAdd} = this
         if (map) {
-            updateFeatureLayers({map, recipe, selectedLayers, onAdd})
-        }
-    }
+            updateFeatureLayers({map, recipe, selectedLayers})
 
-    onAdd(layerId) {
-        const {map} = this.state
-        map.fitLayer(layerId)
+            if (bounds && !_.isEqual(bounds, prevBounds)) {
+                map.fitBounds(bounds)
+            }
+        }
     }
 }
 

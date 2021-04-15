@@ -9,14 +9,25 @@ export const removeAoiLayer = map => {
     map.removeLayer('aoi')
 }
 
+const color = '#FFFFFF50'
+const fillColor = '#FFFFFF08'
+
+export const countryToEETable = aoi => ({
+    type: 'EE_TABLE',
+    id: countryEETable,
+    keyColumn: 'id',
+    key: aoi.areaCode || aoi.countryCode,
+    buffer: aoi.buffer,
+    color,
+    fillColor
+})
+
 export const createAoiLayer = ({map, recipe, layerConfig = {}, layerIndex}) => {
     const aoi = layerConfig.aoi || recipe.model.aoi
     if (!aoi) {
         return null
     }
     const aoiType = aoi.type
-    const color = '#FFFFFF50'
-    const fillColor = '#FFFFFF08'
     switch (aoiType) {
     case 'COUNTRY':
         return new EETableLayer({

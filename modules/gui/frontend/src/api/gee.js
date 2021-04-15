@@ -41,6 +41,9 @@ export default {
     recipeBounds$: recipe =>
         postJson$('/api/gee/recipe/bounds', {body: {recipe}})
             .pipe(toResponse),
+    aoiBounds$: aoi =>
+        postJson$('/api/gee/aoi/bounds', {body: {aoi}})
+            .pipe(toResponse),
     loadEETableColumns$: tableId =>
         get$('/api/gee/table/columns',
             {query: {tableId}}

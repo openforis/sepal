@@ -24,12 +24,14 @@ class _Aoi extends React.Component {
     }
 
     loadBounds() {
-        const {stream, recipe, value, mapContext: {map}} = this.props
+        const {stream, recipe, value, mapContext: {map}, recipeActionBuilder} = this.props
         if (value) {
             stream('LOAD_BOUNDS',
                 api.gee.recipeBounds$(recipe),
                 bounds => {
-                    // set recipe.ui.bounds
+                    recipeActionBuilder('SET_BOUNDS', {bounds})
+                        .set('ui.bounds', bounds)
+                        .dispatch(0)
                     map.fitBounds(bounds)
                 }
             )

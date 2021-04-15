@@ -258,12 +258,12 @@ export class SepalMap {
         return this.hiddenLayerById[id]
     }
 
-    fitLayer(id) {
-        const layer = this.getLayer(id)
-        if (layer && layer.bounds) {
-            this.fitBounds(layer.bounds)
-        }
-    }
+    // fitLayer(id) {
+    //     const layer = this.getLayer(id)
+    //     if (layer && layer.bounds) {
+    //         this.fitBounds(layer.bounds)
+    //     }
+    // }
 
     isLayerInitialized(id) {
         const layer = this.getLayer(id)

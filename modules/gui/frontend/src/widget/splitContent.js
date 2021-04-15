@@ -4,13 +4,14 @@ import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, mapTo, scan, switchMap} from 'rxjs/operators'
 import {getLogger} from 'log'
 import Hammer from 'hammerjs'
+import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './splitContent.module.css'
 import withSubscriptions from 'subscription'
+
 const log = getLogger('splitContent')
-import Portal from 'widget/portal'
 
 const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
 

@@ -4,7 +4,7 @@ import {PreviewMap} from './previewMap'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {countryEETable} from 'app/home/map/aoiLayer'
+import {countryEETable, countryToEETable} from 'app/home/map/aoiLayer'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -187,7 +187,7 @@ class _CountrySection extends React.Component {
     }
 
     setOverlay() {
-        const {inputs: {country, area, buffer}} = this.props
+        const {stream, inputs: {country, area, buffer}} = this.props
         const aoi = {
             type: 'COUNTRY',
             countryCode: country.value,
@@ -204,7 +204,18 @@ class _CountrySection extends React.Component {
                 }
             ]
         }
-        if (!_.isEqual(overlay, prevOverlay)) {
+        if (!_.isEqual(overlay, prevOverlay) && !stream('LOAD_BOUNDS').active) {
+            recipeActionBuilder('DELETE_MAP_OVERLAY_BOUNDS')
+                .del('ui.overlay.bounds')
+                .dispatch()
+            stream('LOAD_BOUNDS',
+                api.gee.aoiBounds$(countryToEETable(aoi)),
+                bounds => {
+                    recipeActionBuilder('SET_MAP_OVERLAY_BOUNDS')
+                        .set('ui.overlay.bounds', bounds)
+                        .dispatch()
+                }
+            )
             recipeActionBuilder('SET_MAP_OVERLAY')
                 .set('layers.overlay', overlay)
                 .dispatch()

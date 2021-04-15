@@ -78,6 +78,7 @@
 }
 
 .area.full {
+    z-index: 0;
     top: 0;
     bottom: 0;
     left: 0;
@@ -91,6 +92,7 @@
 }
 
 .area.partial {
+    z-index: 1;
     top: var(--area-top);
     bottom: var(--area-bottom);
     left: var(--area-left);

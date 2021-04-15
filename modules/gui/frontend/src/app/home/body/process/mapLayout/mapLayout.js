@@ -12,12 +12,6 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 import styles from './mapLayout.module.css'
 
-const mapRecipeToProps = recipe => {
-    return {
-        recipeId: recipe.id
-    }
-}
-
 export class MapLayout extends React.Component {
     render() {
         return (
@@ -82,7 +76,7 @@ const policy = () => ({
 
 export const MapLayoutPanel = compose(
     _MapLayoutPanel,
-    withRecipe(mapRecipeToProps),
+    withRecipe(),
     activatable({id: 'mapLayout', policy}),
     activator('addImageLayerSource')
 )

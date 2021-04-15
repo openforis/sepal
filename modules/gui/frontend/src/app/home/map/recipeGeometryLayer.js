@@ -25,11 +25,10 @@ class RecipeGeometryLayer extends EarthEngineLayer {
         if (this.token)
             return of(this)
         return this.mapId$.pipe(
-            map(({token, mapId, urlTemplate, bounds}) => {
+            map(({token, mapId, urlTemplate}) => {
                 this.token = token
                 this.mapId = mapId
                 this.urlTemplate = urlTemplate
-                this.bounds = bounds
                 return this
             })
         )
