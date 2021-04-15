@@ -19,7 +19,7 @@ import MapToolbar from './mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import actionBuilder from '../../../action-builder'
+import actionBuilder from 'action-builder'
 import api from 'api'
 import styles from './map.module.css'
 import withSubscriptions from 'subscription'
@@ -68,11 +68,14 @@ class _Map extends React.Component {
     withFirstMap(callback) {
         const {maps} = this.state
         const area = _.head(_.keys(maps))
-        const {map} = maps[area]
-        return callback(map, area)
+        const {map = null} = maps[area] || {}
+        return map
+            ? callback(map, area)
+            : null
     }
 
     removeArea(area) {
+        log.debug(`${mapTag(this.state.mapId)} removing area ${area}`)
         const {maps} = this.state
         const {map, listeners, subscriptions} = maps[area]
         const {google} = map.getGoogle()
@@ -82,6 +85,11 @@ class _Map extends React.Component {
         _.forEach(subscriptions, subscription =>
             subscription.unsubscribe()
         )
+        this.setState(({maps}) => {
+            const updatedMaps = {...maps}
+            delete updatedMaps[area]
+            return ({maps: updatedMaps})
+        })
     }
 
     synchronizeOut(area, map) {
@@ -144,6 +152,7 @@ class _Map extends React.Component {
             log.debug(`${mapTag(this.state.mapId)} creating area ${area}`)
             const {mapsContext: {createSepalMap}} = this.props
             const map = createSepalMap(element)
+            this.withFirstMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
             const {google, googleMap} = map.getGoogle()
             const listeners = [
                 googleMap.addListener('center_changed', () => this.synchronizeOut(area, map)),
@@ -281,7 +290,13 @@ class _Map extends React.Component {
         )
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
+        const {layers: {areas: prevAreas}} = prevProps
+        const {layers: {areas}} = this.props
+        Object.keys(prevAreas)
+            .filter(area => !Object.keys(areas).includes(area))
+            .map(area => this.removeArea(area))
+
         if (this.isMapInitialized()) {
             this.mapInitialized$.next(true)
         }
