@@ -11,6 +11,13 @@ import styles from './previewMap.module.css'
 
 const log = getLogger('previewMap')
 
+const PREVIEW_MAP_OPTIONS = {
+    minZoom: 1,
+    zoom: 1,
+    gestureHandling: 'none',
+    draggableCursor: 'default'
+}
+
 const mapRecipeToProps = recipe => ({
     recipe,
     selectedLayers: selectFrom(recipe, 'layers.overlay.featureLayers'),
@@ -44,7 +51,7 @@ class _PreviewMap extends React.Component {
         if (!map) {
             log.debug('creating map')
             const {mapsContext: {createSepalMap}} = this.props
-            const map = createSepalMap(element, {minZoom: 1, zoom: 1})
+            const map = createSepalMap(element, PREVIEW_MAP_OPTIONS)
             const {google, googleMap} = map.getGoogle()
             google.maps.event.addListenerOnce(googleMap, 'idle', () => {
                 this.setState({map})
