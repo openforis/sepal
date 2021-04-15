@@ -38,7 +38,12 @@ class _SplitContent extends React.PureComponent {
             x: undefined,
             y: undefined
         },
-        handle: {
+        enabled: {
+            vertical: false,
+            horizontal: false,
+            center: false
+        },
+        init: {
             vertical: false,
             horizontal: false,
             center: false
@@ -52,17 +57,17 @@ class _SplitContent extends React.PureComponent {
 
     render() {
         const {className, maximize, mode} = this.props
-        const {position: {x, y}, dragging, initialized} = this.state
+        const {position: {x, y}, dragging} = this.state
         return (
             <ElementResizeDetector onResize={size => resize$.next(size)}>
-                <SplitContext.Provider value={{areas: this.areas.current, mode, maximize}}>
+                <SplitContext.Provider value={{container: this.areas.current, mode, maximize}}>
                     <div
                         className={[
                             styles.container,
                             dragging.x || dragging.y ? styles.dragging : null,
                             dragging.x ? styles.x : null,
                             dragging.y ? styles.y : null,
-                            initialized ? styles.initialized : null,
+                            styles.initialized,
                             className
                         ].join(' ')}
                         style={{
@@ -121,7 +126,7 @@ class _SplitContent extends React.PureComponent {
     }
 
     renderCenterHandle() {
-        const {handle: {center}} = this.state
+        const {enabled: {center}} = this.state
         return center
             ? (
                 <div
@@ -136,7 +141,7 @@ class _SplitContent extends React.PureComponent {
     }
 
     renderVerticalHandle() {
-        const {handle: {vertical}} = this.state
+        const {enabled: {vertical}} = this.state
         const placements = this.getInterferingPlacements(['top', 'bottom'])
         return vertical
             ? (
@@ -154,7 +159,7 @@ class _SplitContent extends React.PureComponent {
     }
 
     renderHorizontalHandle() {
-        const {handle: {horizontal}} = this.state
+        const {enabled: {horizontal}} = this.state
         const placements = this.getInterferingPlacements(['left', 'right'])
         return horizontal
             ? (
@@ -231,56 +236,75 @@ class _SplitContent extends React.PureComponent {
         }
 
         return {
-            handle: calculateSplit(areas)
+            enabled: calculateSplit(areas)
         }
     }
 
-    initialize() {
-        const directionConstraint = () => {
-            if (!this.horizontalHandle.current) {
-                return 'y'
+    updateHandles() {
+        const {enabled, init} = this.state
+
+        if (enabled.center) {
+            if (!init.center && this.centerHandle.current) {
+                this.setState(({init}) => ({init: {...init, center: true}}), () => {
+                    const directionConstraint = () => {
+                        // if (!this.horizontalHandle.current) {
+                        //     return 'y'
+                        // }
+                        // if (!this.verticalHandle.current) {
+                        //     return 'x'
+                        // }
+                        return null
+                    }
+                    this.initializeHandle({
+                        ref: this.centerHandle,
+                        lockDirection: directionConstraint()
+                    })
+                })
             }
-            if (!this.verticalHandle.current) {
-                return 'x'
-            }
-            return null
+        } else {
+            init.center && this.setState(({init}) => ({init: {...init, center: false}}))
         }
 
-        this.initializeHandle({
-            ref: this.centerHandle,
-            lockDirection: directionConstraint()
-        })
-        this.initializeHandle({
-            ref: this.horizontalHandle,
-            direction: 'y',
-            lockDirection: 'x'
-        })
-        this.initializeHandle({
-            ref: this.verticalHandle,
-            direction: 'x',
-            lockDirection: 'y'
-        })
+        if (enabled.vertical) {
+            if (!init.vertical && this.verticalHandle.current) {
+                this.setState(({init}) => ({init: {...init, vertical: true}}), () => {
+                    this.initializeHandle({
+                        ref: this.verticalHandle,
+                        direction: 'x',
+                        lockDirection: 'y'
+                    })
+                })
+            }
+        } else {
+            init.vertical && this.setState(({init}) => ({init: {...init, vertical: false}}))
+        }
+
+        if (enabled.horizontal) {
+            if (!init.horizontal && this.horizontalHandle.current) {
+                this.setState(({init}) => ({init: {...init, horizontal: true}}), () => {
+                    this.initializeHandle({
+                        ref: this.horizontalHandle,
+                        direction: 'y',
+                        lockDirection: 'x'
+                    })
+                })
+            }
+        } else {
+            init.horizontal && this.setState(({init}) => ({init: {...init, horizontal: false}}))
+        }
     }
 
     componentDidMount() {
         this.initializeResizeDetector()
-        this.initialize()
+        this.updateHandles()
     }
 
-    componentDidUpdate(prevProps) {
-        const {areas: prevAreas} = prevProps
-        const {areas} = this.props
-        const currentPlacements = _.pick(areas, 'placement')
-        const previousPlacements = _.pick(prevAreas, 'placement')
-        if (!_.isEmpty(_.xor(currentPlacements, previousPlacements))) {
-            log.debug('areas have changed:', {previousPlacements, currentPlacements})
-            this.initialize()
-        }
+    componentDidUpdate() {
+        this.updateHandles()
     }
 
     initializeResizeDetector() {
         const {addSubscription} = this.props
-
         addSubscription(
             resize$.subscribe(size =>
                 this.setState({
@@ -433,11 +457,11 @@ export class SplitOverlay extends React.Component {
         const {area, children} = this.props
         return (
             <SplitContext.Consumer>
-                {({areas, mode, maximize}) => {
+                {({container, mode, maximize}) => {
                     const single = mode === 'stack' && maximize
                     const hidden = single && maximize !== area
                     return (
-                        <Portal type='container' container={areas}>
+                        <Portal type='container' container={container}>
                             <div className={_.flatten([
                                 styles.area,
                                 hidden ? styles.hide : styles.partial,

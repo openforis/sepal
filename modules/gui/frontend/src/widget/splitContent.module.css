@@ -3,8 +3,9 @@
     --half-center-handle-size: 15px;
     --half-axis-handle-size: 1px;
     --handle-comfort-margin: -.25rem;
-    --idle-color: var(--wireframe-color);
-    --dragging-color: #a0a0a0;
+    /* --idle-color: var(--wireframe-color); */
+    --idle-color: #808080;
+    --dragging-color: #c0c0c0;
     --color: var(--idle-color);
 
     /* --x and --y are injected */
@@ -78,7 +79,6 @@
 }
 
 .area.full {
-    z-index: 0;
     top: 0;
     bottom: 0;
     left: 0;
@@ -89,14 +89,15 @@
         var(--area-bottom)
         var(--area-left)
     );
+    z-index: 0;
 }
 
 .area.partial {
-    z-index: 1;
     top: var(--area-top);
     bottom: var(--area-bottom);
     left: var(--area-left);
     right: var(--area-right);
+    z-index: 1;
 }
 
 .area.hide {
@@ -236,7 +237,7 @@
 
 /* overlay */
 
-.overlay,
+/* .overlay, */
 .content {
     position: absolute;
     top: 0;
