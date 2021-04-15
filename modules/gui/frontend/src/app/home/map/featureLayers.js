@@ -26,8 +26,11 @@ const addFeatureLayer = ({map, source, recipe, layerConfig, layerIndex, onAdd}) 
     })
     if (layer) {
         const id = source.type
-        map.setLayer({id, layer})
-        onAdd && onAdd(id)
+        map.setLayer({
+            id,
+            layer,
+            onInitialized: layer => onAdd && onAdd(id, layer)
+        })
     }
 }
 
