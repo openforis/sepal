@@ -70,7 +70,7 @@ class _Maps extends React.Component {
         return of({norwayPlanetApiKey})
     }
 
-    createGoogleMap(mapElement) {
+    createGoogleMap(mapElement, options = {}) {
         const {google: {google}} = this.state
         const mapOptions = {
             zoom: 3,
@@ -85,7 +85,8 @@ class _Maps extends React.Component {
             rotateControl: false,
             fullscreenControl: false,
             backgroundColor: '#131314',
-            gestureHandling: 'greedy'
+            gestureHandling: 'greedy',
+            ...options
         }
 
         // https://developers.google.com/maps/documentation/javascript/style-reference
@@ -106,9 +107,9 @@ class _Maps extends React.Component {
         return googleMap
     }
 
-    createSepalMap(mapElement) {
+    createSepalMap(mapElement, options) {
         const {google: {google}} = this.state
-        const googleMap = this.createGoogleMap(mapElement)
+        const googleMap = this.createGoogleMap(mapElement, options)
         return new SepalMap(google, googleMap)
     }
 

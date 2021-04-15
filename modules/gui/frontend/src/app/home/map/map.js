@@ -12,7 +12,7 @@ import {getProcessTabsInfo} from '../body/process/process'
 import {mapBoundsTag, mapTag} from 'tag'
 import {recipePath} from '../body/process/recipe'
 import {selectFrom} from 'stateUtils'
-import {updateFeatureLayers} from './featureLayers'
+// import {updateFeatureLayers} from './featureLayers'
 import {withMapsContext} from './maps'
 import {withRecipe} from '../body/process/recipeContext'
 import MapScale from './mapScale'
@@ -50,13 +50,13 @@ class _Map extends React.Component {
         zoomArea: null,
         selectedZoomArea: null,
         linked: null,
-        overlayMap: null
+        // overlayMap: null
     }
 
     constructor() {
         super()
         this.mapAreaRefCallback = this.mapAreaRefCallback.bind(this)
-        this.mapOverlayRefCallback = this.mapOverlayRefCallback.bind(this)
+        // this.mapOverlayRefCallback = this.mapOverlayRefCallback.bind(this)
         this.mapDelegate = this.mapDelegate.bind(this)
     }
 
@@ -139,17 +139,17 @@ class _Map extends React.Component {
     }
 
     mapAreaRefCallback(element) {
-        if (element) { // Hot-reload can cause it to be null
+        if (element) {
             const area = element.dataset.area
             this.createArea(area, element)
         }
     }
 
-    mapOverlayRefCallback(element) {
-        if (element) { // Hot-reload can cause it to be null
-            this.createOverlay(element)
-        }
-    }
+    // mapOverlayRefCallback(element) {
+    //     if (element) {
+    //         this.createOverlay(element)
+    //     }
+    // }
 
     updateLayerConfig(layerConfig, area) {
         const {recipe} = this.props
@@ -242,7 +242,7 @@ class _Map extends React.Component {
                     areas={areas}
                     mode={layers.mode}
                     maximize={layers.mode === 'stack' ? selectedZoomArea : null}
-                    overlay={this.getOverlay()}
+                    // overlay={this.getOverlay()}
                 >
                     <div className={styles.content}>
                         {this.isMapInitialized() ? this.renderRecipe() : null}
@@ -252,47 +252,42 @@ class _Map extends React.Component {
         )
     }
 
-    getOverlay() {
-        const {recipe} = this.props
-        const overlay = selectFrom(recipe, 'layers.overlay')
-        this.updateOverlayFeatureLayers()
-        return overlay
-            ? (
-                <div
-                    className={styles.map}
-                    ref={this.mapOverlayRefCallback}
-                />
-            )
-            : null
-    }
+    // getOverlay() {
+    //     const {recipe} = this.props
+    //     const overlay = selectFrom(recipe, 'layers.overlay')
+    //     this.updateOverlayFeatureLayers()
+    //     return overlay
+    //         ? <div className={styles.map} ref={this.mapOverlayRefCallback}/>
+    //         : null
+    // }
 
-    updateOverlayFeatureLayers() {
-        const {recipe} = this.props
-        const {overlayMap} = this.state
-        if (!overlayMap) {
-            return null
-        }
-        const selectedLayers = selectFrom(recipe, 'layers.overlay.featureLayers')
-        updateFeatureLayers({
-            map: overlayMap,
-            recipe,
-            selectedLayers,
-            onAdd: layerId => overlayMap.fitLayer(layerId)
-        })
-    }
+    // updateOverlayFeatureLayers() {
+    //     const {recipe} = this.props
+    //     const {overlayMap} = this.state
+    //     if (!overlayMap) {
+    //         return null
+    //     }
+    //     const selectedLayers = selectFrom(recipe, 'layers.overlay.featureLayers')
+    //     updateFeatureLayers({
+    //         map: overlayMap,
+    //         recipe,
+    //         selectedLayers,
+    //         onAdd: layerId => overlayMap.fitLayer(layerId)
+    //     })
+    // }
 
-    createOverlay(element) {
-        const {overlayMap} = this.state
-        if (!overlayMap) {
-            log.debug(`${mapTag(this.state.mapId)} creating overlay`)
-            const {mapsContext: {createSepalMap}} = this.props
-            const map = createSepalMap(element)
-            const {google, googleMap} = map.getGoogle()
-            google.maps.event.addListenerOnce(googleMap, 'idle', () => {
-                this.setState({overlayMap: map})
-            })
-        }
-    }
+    // createOverlay(element) {
+    //     const {overlayMap} = this.state
+    //     if (!overlayMap) {
+    //         log.debug(`${mapTag(this.state.mapId)} creating overlay`)
+    //         const {mapsContext: {createSepalMap}} = this.props
+    //         const map = createSepalMap(element)
+    //         const {google, googleMap} = map.getGoogle()
+    //         google.maps.event.addListenerOnce(googleMap, 'idle', () => {
+    //             this.setState({overlayMap: map})
+    //         })
+    //     }
+    // }
 
     isMapInitialized() {
         const {layers} = this.props
@@ -334,7 +329,8 @@ class _Map extends React.Component {
 
     componentDidUpdate(prevProps) {
         const {layers: {areas: prevAreas}} = prevProps
-        const {layers: {overlay, areas}} = this.props
+        const {layers: {areas}} = this.props
+        // const {layers: {overlay, areas}} = this.props
         Object.keys(prevAreas)
             .filter(area => !Object.keys(areas).includes(area))
             .map(area => this.removeArea(area))
@@ -342,12 +338,12 @@ class _Map extends React.Component {
         if (this.isMapInitialized()) {
             this.mapInitialized$.next(true)
         }
-        if (!overlay) {
-            this.setState(({overlayMap}) => overlayMap
-                ? {overlayMap: null}
-                : null
-            )
-        }
+        // if (!overlay) {
+        //     this.setState(({overlayMap}) => overlayMap
+        //         ? {overlayMap: null}
+        //         : null
+        //     )
+        // }
     }
 
     componentWillUnmount() {

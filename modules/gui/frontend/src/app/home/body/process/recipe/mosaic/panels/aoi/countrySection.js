@@ -1,5 +1,6 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
+import {PreviewMap} from './previewMap'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -137,6 +138,7 @@ class _CountrySection extends React.Component {
                     snap
                     range='none'
                 />
+                <PreviewMap/>
             </Layout>
         )
     }
