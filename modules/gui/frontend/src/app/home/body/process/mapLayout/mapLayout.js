@@ -1,5 +1,6 @@
 import {AddImageLayerSource} from './addImageLayerSource'
 import {Areas} from './areas'
+import {Buttons} from 'widget/buttons'
 import {ImageLayerSources} from './imageLayerSources'
 import {Panel} from 'widget/panel/panel'
 import {SelectRecipe} from './selectRecipe'
@@ -8,6 +9,7 @@ import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 import styles from './mapLayout.module.css'
@@ -24,8 +26,18 @@ export class MapLayout extends React.Component {
     }
 }
 
+const mapRecipeToProps = recipe => ({
+    recipe,
+    mode: selectFrom(recipe, 'layers.mode')
+})
+
 class _MapLayoutPanel extends React.Component {
     sourceDrag$ = new Subject()
+
+    constructor() {
+        super()
+        this.setMode = this.setMode.bind(this)
+    }
 
     render() {
         const {activatable: {deactivate}} = this.props
@@ -36,7 +48,9 @@ class _MapLayoutPanel extends React.Component {
                 type='modal'>
                 <Panel.Header
                     icon='layer-group'
-                    title={msg('map.layout.title')}/>
+                    title={msg('map.layout.title')}
+                    label={this.renderModeButtons()}
+                />
                 <Panel.Content
                     scrollable={false}
                     noVerticalPadding
@@ -55,6 +69,20 @@ class _MapLayoutPanel extends React.Component {
         )
     }
 
+    renderModeButtons() {
+        const {mode} = this.props
+        return (
+            <Buttons
+                selected={mode}
+                options={[
+                    {value: 'grid', label: 'Grid'},
+                    {value: 'stack', label: 'Stack'}
+                ]}
+                onChange={this.setMode}
+            />
+        )
+    }
+
     renderContent() {
         return (
             <div className={styles.content}>
@@ -62,6 +90,13 @@ class _MapLayoutPanel extends React.Component {
                 <ImageLayerSources drag$={this.sourceDrag$}/>
             </div>
         )
+    }
+
+    setMode(mode) {
+        const {recipeActionBuilder} = this.props
+        recipeActionBuilder('SET_SPLIT_MODE')
+            .set('layers.mode', mode)
+            .dispatch()
     }
 
     addImageLayerSource() {
@@ -76,7 +111,7 @@ const policy = () => ({
 
 export const MapLayoutPanel = compose(
     _MapLayoutPanel,
-    withRecipe(),
+    withRecipe(mapRecipeToProps),
     activatable({id: 'mapLayout', policy}),
     activator('addImageLayerSource')
 )
