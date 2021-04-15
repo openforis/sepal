@@ -9,12 +9,12 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import styles from './imageLayerSources.module.css'
 
 const mapRecipeToProps = recipe => {
     return {
         sources: selectFrom(recipe, 'ui.imageLayerSources'),
-        additionalSources: selectFrom(recipe, 'layers.additionalImageLayerSources') || []
+        additionalSources: selectFrom(recipe, 'layers.additionalImageLayerSources') || [],
+        areas: selectFrom(recipe, 'layers.areas') || [],
     }
 }
 
@@ -68,8 +68,8 @@ export class _ImageLayerSources extends React.Component {
                 ? removeAreaBySource(removeArea({areas, area}), sourceId)
                 : areas
         }
-        recipeActionBuilder('REMOVE_LAYER')
-            .del(['ui.imageLayerSources', {id: sourceId}])
+        recipeActionBuilder('REMOVE_IMAGE_LAYER_SOURCE')
+            .del(['layers.additionalImageLayerSources', {id: sourceId}])
             .set('layers.areas', removeAreaBySource(areas, sourceId))
             .dispatch()
     }
