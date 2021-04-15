@@ -6,12 +6,13 @@ import {MapContext} from './mapContext'
 import {SplitContent} from 'widget/splitContent'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {debounceTime, distinctUntilChanged, filter, finalize, first, switchMap} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, finalize} from 'rxjs/operators'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
 import {mapBoundsTag, mapTag} from 'tag'
 import {recipePath} from '../body/process/recipe'
 import {selectFrom} from 'stateUtils'
+import {updateFeatureLayers} from './featureLayers'
 import {withMapsContext} from './maps'
 import {withRecipe} from '../body/process/recipeContext'
 import MapScale from './mapScale'
@@ -20,7 +21,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
-import api from 'api'
 import styles from './map.module.css'
 import withSubscriptions from 'subscription'
 
@@ -50,12 +50,13 @@ class _Map extends React.Component {
         zoomArea: null,
         selectedZoomArea: null,
         linked: null,
-        overlay: null
+        overlayMap: null
     }
 
     constructor() {
         super()
-        // this.refCallback = this.refCallback.bind(this)
+        this.mapAreaRefCallback = this.mapAreaRefCallback.bind(this)
+        this.mapOverlayRefCallback = this.mapOverlayRefCallback.bind(this)
         this.mapDelegate = this.mapDelegate.bind(this)
     }
 
@@ -126,9 +127,8 @@ class _Map extends React.Component {
             <React.Fragment>
                 <div
                     className={styles.map}
-                    // data-area={area}
-                    // ref={this.refCallback}
-                    ref={element => element && this.createArea(area, element)}
+                    data-area={area}
+                    ref={this.mapAreaRefCallback}
                     onMouseDown={() => this.mouseDown$.next(area)}
                 />
                 <MapAreaContext.Provider value={{area, updateLayerConfig}}>
@@ -138,12 +138,18 @@ class _Map extends React.Component {
         )
     }
 
-    // refCallback(element) {
-    //     if (element) { // Hot-reload can cause it to be null
-    //         const area = element.dataset.area
-    //         this.createArea(area, element)
-    //     }
-    // }
+    mapAreaRefCallback(element) {
+        if (element) { // Hot-reload can cause it to be null
+            const area = element.dataset.area
+            this.createArea(area, element)
+        }
+    }
+
+    mapOverlayRefCallback(element) {
+        if (element) { // Hot-reload can cause it to be null
+            this.createOverlay(element)
+        }
+    }
 
     updateLayerConfig(layerConfig, area) {
         const {recipe} = this.props
@@ -236,7 +242,7 @@ class _Map extends React.Component {
                     areas={areas}
                     mode={layers.mode}
                     maximize={layers.mode === 'stack' ? selectedZoomArea : null}
-                    // overlay={this.getOverlay()}
+                    overlay={this.getOverlay()}
                 >
                     <div className={styles.content}>
                         {this.isMapInitialized() ? this.renderRecipe() : null}
@@ -247,25 +253,43 @@ class _Map extends React.Component {
     }
 
     getOverlay() {
-        return (
-            <React.Fragment>
+        const {recipe} = this.props
+        const overlay = selectFrom(recipe, 'layers.overlay')
+        this.updateOverlayFeatureLayers()
+        return overlay
+            ? (
                 <div
                     className={styles.map}
-                    ref={element => element && this.createOverlay(element)}
+                    ref={this.mapOverlayRefCallback}
                 />
-            </React.Fragment>
-        )
+            )
+            : null
+    }
+
+    updateOverlayFeatureLayers() {
+        const {recipe} = this.props
+        const {overlayMap} = this.state
+        if (!overlayMap) {
+            return null
+        }
+        const selectedLayers = selectFrom(recipe, 'layers.overlay.featureLayers')
+        updateFeatureLayers({
+            map: overlayMap,
+            recipe,
+            selectedLayers,
+            onAdd: layerId => overlayMap.fitLayer(layerId)
+        })
     }
 
     createOverlay(element) {
-        const {overlay} = this.state
-        if (!overlay) {
+        const {overlayMap} = this.state
+        if (!overlayMap) {
             log.debug(`${mapTag(this.state.mapId)} creating overlay`)
             const {mapsContext: {createSepalMap}} = this.props
             const map = createSepalMap(element)
             const {google, googleMap} = map.getGoogle()
             google.maps.event.addListenerOnce(googleMap, 'idle', () => {
-                this.setState({overlay: map})
+                this.setState({overlayMap: map})
             })
         }
     }
@@ -291,13 +315,8 @@ class _Map extends React.Component {
         )
     }
 
-    updateLinked() {
-        const {linked} = this.state
-        this.linked$.next(linked)
-    }
-
     componentDidMount() {
-        const {stream, mapsContext: {createMapContext}, recipe, onEnable, onDisable} = this.props
+        const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
         const {mapId, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked} = createMapContext()
 
         this.setLinked(getProcessTabsInfo().single)
@@ -311,25 +330,23 @@ class _Map extends React.Component {
             onEnable(() => this.setVisibility(true))
             onDisable(() => this.setVisibility(false))
         })
-        stream('LOAD_BOUNDS',
-            this.mapInitialized$.pipe(
-                filter(initialized => initialized),
-                first(),
-                switchMap(() => api.gee.recipeBounds$(recipe)),
-            ),
-            bounds => this.withFirstMap(map => bounds && map.fitBounds(bounds))
-        )
     }
 
     componentDidUpdate(prevProps) {
         const {layers: {areas: prevAreas}} = prevProps
-        const {layers: {areas}} = this.props
+        const {layers: {overlay, areas}} = this.props
         Object.keys(prevAreas)
             .filter(area => !Object.keys(areas).includes(area))
             .map(area => this.removeArea(area))
 
         if (this.isMapInitialized()) {
             this.mapInitialized$.next(true)
+        }
+        if (!overlay) {
+            this.setState(({overlayMap}) => overlayMap
+                ? {overlayMap: null}
+                : null
+            )
         }
     }
 
@@ -383,7 +400,7 @@ class _Map extends React.Component {
         const maps = Object.values(mapByArea).map(({map}) => map)
         const map = maps[0]
 
-        const isInizialized = () => map.isLayerInitialized('Aoi')
+        const isInitialized = () => map.isLayerInitialized('Aoi')
 
         return {
             toggleLinked: () => this.toggleLinked(),
@@ -396,7 +413,7 @@ class _Map extends React.Component {
             toggleZoomArea: () => this.zoomArea(!this.isZoomArea()),
             cancelZoomArea: () => this.zoomArea(false),
             isZoomArea: () => this.isZoomArea(),
-            canFit: () => isInizialized(),
+            canFit: () => isInitialized(),
             fit: () => map.fitLayer('Aoi'),
             getZoom: () => map.getZoom(),
             getBounds: () => map.getBounds(),

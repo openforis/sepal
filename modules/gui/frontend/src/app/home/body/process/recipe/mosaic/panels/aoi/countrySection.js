@@ -3,16 +3,22 @@ import {Layout} from 'widget/layout'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {countryEETable, setAoiLayer} from 'app/home/map/aoiLayer'
+import {countryEETable} from 'app/home/map/aoiLayer'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
-import {withMap} from 'app/home/map/mapContext'
+import {selectFrom} from 'stateUtils'
+import {withRecipe} from '../../../../recipeContext'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
+
+const mapRecipeToProps = recipe => ({
+    overlay: selectFrom(recipe, 'layers.overlay'),
+    featureLayerSources: selectFrom(recipe, 'ui.featureLayerSources'),
+})
 
 const loadCountries$ = () => {
     return api.gee.queryEETable$({
@@ -148,6 +154,8 @@ class _CountrySection extends React.Component {
         this.update()
         if (country.value)
             this.loadCountryAreas(country.value)
+
+        this.setOverlay()
     }
 
     componentDidUpdate(prevProps) {
@@ -156,7 +164,7 @@ class _CountrySection extends React.Component {
     }
 
     update() {
-        const {map, countries, stream, inputs: {country, area, buffer}, layerIndex} = this.props
+        const {countries, stream, inputs: {country, area, buffer}} = this.props
         if (!countries && !stream('LOAD_COUNTRIES').active && !stream('LOAD_COUNTRIES').failed) {
             this.props.stream('LOAD_COUNTRIES',
                 loadCountries$(),
@@ -167,28 +175,52 @@ class _CountrySection extends React.Component {
                 })
             )
         }
-        setAoiLayer({
-            map,
-            aoi: {
-                type: 'COUNTRY',
-                countryCode: country.value,
-                areaCode: area.value,
-                buffer: buffer.value
-            },
-            // destroy$: componentWillUnmount$,
-            onInitialized: () => map.fitLayer('aoi'),
-            layerIndex
-        })
+
+        if (country.value || area.value) {
+            this.setOverlay()
+        }
         if (!_.isFinite(buffer.value)) {
             buffer.set(0)
         }
+    }
+
+    setOverlay() {
+        const {inputs: {country, area, buffer}} = this.props
+        const aoi = {
+            type: 'COUNTRY',
+            countryCode: country.value,
+            areaCode: area.value,
+            buffer: buffer.value
+        }
+        const {overlay: prevOverlay, featureLayerSources, recipeActionBuilder} = this.props
+        const aoiLayerSource = featureLayerSources.find(({type}) => type === 'Aoi')
+        const overlay = {
+            featureLayers: [
+                {
+                    sourceId: aoiLayerSource.id,
+                    layerConfig: {aoi}
+                }
+            ]
+        }
+        if (!_.isEqual(overlay, prevOverlay)) {
+            recipeActionBuilder('SET_MAP_OVERLAY')
+                .set('layers.overlay', overlay)
+                .dispatch()
+        }
+    }
+
+    componentWillUnmount() {
+        const {recipeActionBuilder} = this.props
+        recipeActionBuilder('REMOVE_MAP_OVERLAY')
+            .del('layers.overlay')
+            .dispatch()
     }
 }
 
 export const CountrySection = compose(
     _CountrySection,
     connect(mapStateToProps),
-    withMap()
+    withRecipe(mapRecipeToProps)
 )
 
 CountrySection.propTypes = {

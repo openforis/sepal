@@ -102,50 +102,13 @@ export const RecipeActions = id => {
                 labelsLayerSource
             ]
             const areas = {
-                // 'center': {
-                //     imageLayer,
-                //     featureLayers: [
-                //         {type: 'Aoi'}
-                //     ]
-                // }
-                'top-right': {
-                    imageLayer: {
-                        sourceId: planetImageLayerSource.id
-                    },
-                    featureLayers: [
-                        {sourceId: aoiLayerSource.id}
-                    ]
-                },
-                // 'top-right': {
-                //     imageLayer: {
-                //         sourceId: anotherRecipeImageLayerSource.id,
-                //         layerConfig: {
-                //             bands: {
-                //                 selection: ['red', 'green', 'blue'] // TODO: Fix...
-                //             }
-                //         }
-                //     },
-                //     featureLayers: [
-                //         {type: 'Aoi'},
-                //         // {type: 'Labels'}
-                //     ]
-                // },
-                'left': {
-                    imageLayer: {
-                        sourceId: googleSatelliteImageLayerSource.id
-                    },
-                    featureLayers: [
-                        {sourceId: aoiLayerSource.id},
-                        {sourceId: labelsLayerSource.id},
-                    ]
-                },
-                'bottom-right': {
+                'center': {
                     imageLayer: {
                         sourceId: recipeImageLayerSource.id
                     },
                     featureLayers: [
                         {sourceId: aoiLayerSource.id},
-                        {sourceId: labelsLayerSource.id},
+                        {sourceId: labelsLayerSource.id}
                     ]
                 }
             }

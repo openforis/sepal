@@ -1,5 +1,6 @@
 import {EETableLayer, setEETableLayer} from './eeTableLayer'
 import {PolygonLayer, setPolygonLayer} from './polygonLayer'
+import React from 'react'
 import api from 'api'
 
 export const countryEETable = 'users/wiell/SepalResources/countries'
@@ -8,8 +9,8 @@ export const removeAoiLayer = map => {
     map.removeLayer('aoi')
 }
 
-export const createAoiLayer = ({map, recipe, layerIndex}) => {
-    const aoi = recipe.model.aoi
+export const createAoiLayer = ({map, recipe, layerConfig = {}, layerIndex}) => {
+    const aoi = layerConfig.aoi || recipe.model.aoi
     if (!aoi) {
         return null
     }

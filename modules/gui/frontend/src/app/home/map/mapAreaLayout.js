@@ -1,8 +1,8 @@
 import {MapControls} from './mapControls'
 import {SplitOverlay} from 'widget/splitContent'
 import {compose} from 'compose'
-import {createFeatureLayer} from './featureLayerFactory'
-import {selectFrom} from 'stateUtils'
+import {selectFrom} from '../../../stateUtils'
+import {updateFeatureLayers} from './featureLayers'
 import {withMapAreaContext} from './mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
@@ -33,37 +33,16 @@ class _MapAreaLayout extends React.Component {
         } else {
             map.removeLayer(imageLayerId)
         }
-        const featureLayerSources = selectFrom(recipe, 'ui.featureLayerSources') || []
-        const selectedFeatureLayerSourceIds = recipe.layers.areas[area].featureLayers.map(({sourceId}) => sourceId)
-        featureLayerSources.forEach((featureLayerSource, i) => {
-            const isSelected = selectedFeatureLayerSourceIds.includes(featureLayerSource.id)
-
-            if (isSelected) {
-                this.addFeatureLayer(featureLayerSource, i + 1)
-            } else {
-                map.removeLayer(featureLayerSource.type)
-            }
-        })
+        const selectedLayers = selectFrom(recipe, ['layers.areas', area, 'featureLayers'])
+        updateFeatureLayers({map, recipe, selectedLayers})
     }
 
-    addFeatureLayer(featureLayerSource, layerIndex) {
-        const {map, recipe} = this.props
-        const layer = createFeatureLayer({
-            featureLayerSource,
-            map,
-            recipe,
-            layerIndex
-        })
-        if (layer) {
-            map.setLayer({id: featureLayerSource.type, layer})
-        }
-    }
 }
 
 export const MapAreaLayout = compose(
     _MapAreaLayout,
     withRecipe(mapRecipeToProps),
-    withMapAreaContext(),
+    withMapAreaContext()
 )
 
 MapAreaLayout.propTypes = {

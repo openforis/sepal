@@ -1,3 +1,4 @@
+import {Aoi} from '../aoi'
 import {Map} from 'app/home/map/map'
 import {RecipeActions, defaultModel} from './opticalMosaicRecipe'
 import {compose} from 'compose'
@@ -7,9 +8,9 @@ import {selectFrom} from 'stateUtils'
 import AutoSelectScenes from './autoSelectScenes'
 import MosaicToolbar from './panels/opticalMosaicToolbar'
 import React from 'react'
-import SceneAreas from './sceneAreas'
 import SceneDeselection from './sceneDeselection'
 import SceneSelection from './sceneSelection'
+import _ from 'lodash'
 import styles from './opticalMosaic.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -28,10 +29,11 @@ class _OpticalMosaic extends React.Component {
     }
 
     render() {
-        const {initialized} = this.props
+        const {initialized, aoi} = this.props
         return (
             <Map className={styles.mosaic}>
                 <MosaicToolbar/>
+                <Aoi value={aoi}/>
                 {initialized
                     ? <React.Fragment>
                         {/*<SceneAreas/>*/}
