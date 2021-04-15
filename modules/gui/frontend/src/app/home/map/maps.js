@@ -86,6 +86,7 @@ class _Maps extends React.Component {
             fullscreenControl: false,
             backgroundColor: '#131314',
             gestureHandling: 'greedy',
+            draggableCursor: 'crosshair',
             ...options
         }
 

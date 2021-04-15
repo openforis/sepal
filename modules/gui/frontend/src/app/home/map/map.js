@@ -102,6 +102,17 @@ class _Map extends React.Component {
         this.allMaps(({map}) => map.setView({center, zoom}))
     }
 
+    synchronizeCursor(area, latLng) {
+        const {layers: {mode}} = this.props
+        this.allMaps(({area: otherArea, map}) => {
+            if (mode === 'grid') {
+                otherArea !== area ? map.setCursor(latLng) : null
+            } else {
+                map.setCursor(null)
+            }
+        })
+    }
+
     setVisibility(visible) {
         this.allMaps(({map}) => map.setVisibility(visible))
     }
@@ -160,8 +171,10 @@ class _Map extends React.Component {
             const {mapsContext: {createSepalMap}} = this.props
             const map = createSepalMap(element)
             this.withFirstMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
-            const {google, googleMap} = map.getGoogle()
+            const {googleMap} = map.getGoogle()
             const listeners = [
+                googleMap.addListener('mouseout', () => this.synchronizeCursor(area, null)),
+                googleMap.addListener('mousemove', ({latLng}) => this.synchronizeCursor(area, latLng)),
                 googleMap.addListener('center_changed', () => this.synchronizeOut(area, map)),
                 googleMap.addListener('zoom_changed', () => this.synchronizeOut(area, map))
             ]
@@ -364,16 +377,31 @@ class _Map extends React.Component {
             isZoomArea: () => this.isZoomArea(),
             canFit: () => isInitialized(),
             fit: () => map.fitBounds(bounds),
+            setZoom: zoom => map.setZoom(zoom),
             getZoom: () => map.getZoom(),
             getBounds: () => map.getBounds(),
             getScale: () => map.getMetersPerPixel(),
 
-            setLayer: (...args) => map.setLayer(...args),
-            getGoogle: (...args) => map.getGoogle(...args),
-            addToMap: (...args) => map.addToMap(...args),
-            removeFromMap: (...args) => map.removeFromMap(...args),
-            fitBounds: (...args) => map.fitBounds(...args),
-            setZoom: (...args) => map.setZoom(...args),
+            setLayer: (...args) => {
+                log.warn('should we call map.setLayer?')
+                map.setLayer(...args)
+            },
+            getGoogle: (...args) => {
+                log.warn('should we call map.getGoogle?')
+                map.getGoogle(...args)
+            },
+            addToMap: (...args) => {
+                log.warn('should we call map.addToMap?')
+                map.addToMap(...args)
+            },
+            removeFromMap: (...args) => {
+                log.warn('should we call map.removeToMap?')
+                map.removeFromMap(...args)
+            },
+            fitBounds: (...args) => {
+                log.warn('should we call map.fitBounds?')
+                map.fitBounds(...args)
+            }
         }
     }
 }
