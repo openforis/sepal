@@ -114,7 +114,7 @@ export class MapControls extends React.Component {
             <div className={styles.container}>
                 <div className={styles.content}>
                     <Button
-                        look='transparent'
+                        look='default'
                         shape='pill'
                         icon='bars'
                         tooltip={<MapAreaMenu area={area} form={form}/>}
