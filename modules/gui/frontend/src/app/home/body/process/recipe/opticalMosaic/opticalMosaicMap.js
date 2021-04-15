@@ -10,6 +10,7 @@ import ButtonSelect from 'widget/buttonSelect'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 
 const defaultLayerConfig = {
     bands: {
@@ -38,7 +39,7 @@ export class _OpticalMosaicMap extends React.Component {
     render() {
         const {recipe, layerConfig, map} = this.props
         const layer = map && recipe.ui.initialized && this.hasScenes()
-            ? EarthEngineLayer.fromRecipe({recipe, layerConfig, map})
+            ? EarthEngineLayer.fromRecipe({recipe: _.omit(recipe, ['ui', 'layers']), layerConfig, map})
             : null
 
         return (
