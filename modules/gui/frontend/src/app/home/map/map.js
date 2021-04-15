@@ -49,12 +49,13 @@ class _Map extends React.Component {
         norwayPlanetApiKey: null,
         zoomArea: null,
         selectedZoomArea: null,
-        linked: null
+        linked: null,
+        overlay: null
     }
 
     constructor() {
         super()
-        this.refCallback = this.refCallback.bind(this)
+        // this.refCallback = this.refCallback.bind(this)
         this.mapDelegate = this.mapDelegate.bind(this)
     }
 
@@ -125,8 +126,9 @@ class _Map extends React.Component {
             <React.Fragment>
                 <div
                     className={styles.map}
-                    data-area={area}
-                    ref={this.refCallback}
+                    // data-area={area}
+                    // ref={this.refCallback}
+                    ref={element => element && this.createArea(area, element)}
                     onMouseDown={() => this.mouseDown$.next(area)}
                 />
                 <MapAreaContext.Provider value={{area, updateLayerConfig}}>
@@ -135,6 +137,13 @@ class _Map extends React.Component {
             </React.Fragment>
         )
     }
+
+    // refCallback(element) {
+    //     if (element) { // Hot-reload can cause it to be null
+    //         const area = element.dataset.area
+    //         this.createArea(area, element)
+    //     }
+    // }
 
     updateLayerConfig(layerConfig, area) {
         const {recipe} = this.props
@@ -202,13 +211,6 @@ class _Map extends React.Component {
         return linked
     }
 
-    refCallback(element) {
-        if (element) { // Hot-reload can cause it to be null
-            const area = element.dataset.area
-            this.createArea(area, element)
-        }
-    }
-
     render() {
         const {layers, imageLayerSources} = this.props
         const {googleMapsApiKey, norwayPlanetApiKey, selectedZoomArea} = this.state
@@ -230,13 +232,42 @@ class _Map extends React.Component {
                 googleMapsApiKey,
                 norwayPlanetApiKey
             }}>
-                <SplitContent areas={areas} mode={layers.mode} maximize={layers.mode === 'stack' ? selectedZoomArea : null}>
+                <SplitContent
+                    areas={areas}
+                    mode={layers.mode}
+                    maximize={layers.mode === 'stack' ? selectedZoomArea : null}
+                    // overlay={this.getOverlay()}
+                >
                     <div className={styles.content}>
                         {this.isMapInitialized() ? this.renderRecipe() : null}
                     </div>
                 </SplitContent>
             </MapContext.Provider>
         )
+    }
+
+    getOverlay() {
+        return (
+            <React.Fragment>
+                <div
+                    className={styles.map}
+                    ref={element => element && this.createOverlay(element)}
+                />
+            </React.Fragment>
+        )
+    }
+
+    createOverlay(element) {
+        const {overlay} = this.state
+        if (!overlay) {
+            log.debug(`${mapTag(this.state.mapId)} creating overlay`)
+            const {mapsContext: {createSepalMap}} = this.props
+            const map = createSepalMap(element)
+            const {google, googleMap} = map.getGoogle()
+            google.maps.event.addListenerOnce(googleMap, 'idle', () => {
+                this.setState({overlay: map})
+            })
+        }
     }
 
     isMapInitialized() {
@@ -369,7 +400,15 @@ class _Map extends React.Component {
             fit: () => map.fitLayer('Aoi'),
             getZoom: () => map.getZoom(),
             getBounds: () => map.getBounds(),
-            getScale: () => map.getMetersPerPixel()
+            getScale: () => map.getMetersPerPixel(),
+
+            setLayer: (...args) => map.setLayer(...args),
+            getGoogle: (...args) => map.getGoogle(...args),
+            addToMap: (...args) => map.addToMap(...args),
+            removeFromMap: (...args) => map.removeFromMap(...args),
+            fitLayer: (...args) => map.fitLayer(...args),
+            fitBounds: (...args) => map.fitBounds(...args),
+            setZoom: (...args) => map.setZoom(...args),
         }
     }
 }
