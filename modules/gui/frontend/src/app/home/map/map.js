@@ -188,9 +188,11 @@ class _Map extends React.Component {
                 )
             ]
 
-            google.maps.event.addListenerOnce(googleMap, 'idle', () => {
-                this.setState(({maps}) => ({maps: {...maps, [area]: {map, listeners, subscriptions}}}))
-            })
+            this.setState(({maps}) => ({maps: {...maps, [area]: {map, listeners, subscriptions}}}))
+            // google.maps.event.addListenerOnce(googleMap, 'idle', () => {
+            //     console.log('idle', area)
+            //     this.setState(({maps}) => ({maps: {...maps, [area]: {map, listeners, subscriptions}}}))
+            // })
         }
     }
 
@@ -235,7 +237,6 @@ class _Map extends React.Component {
                     mode={layers.mode}
                     maximize={layers.mode === 'stack' ? selectedZoomArea : null}>
                     <div className={styles.content}>
-                        {/*{this.renderRecipe()}*/}
                         {this.isMapInitialized() ? this.renderRecipe() : null}
                     </div>
                 </SplitContent>
@@ -246,9 +247,7 @@ class _Map extends React.Component {
     isMapInitialized() {
         const {layers} = this.props
         const {maps} = this.state
-        const initialized = !_.isEmpty(maps) && _.isEqual(new Set(Object.keys(maps)), new Set(Object.keys(layers.areas)))
-        // console.log({initialized, maps: Object.keys(maps), areas: layers && layers.areas && Object.keys(layers.areas)})
-        return initialized
+        return !_.isEmpty(maps) && _.isEqual(new Set(Object.keys(maps)), new Set(Object.keys(layers.areas)))
     }
 
     renderRecipe() {
