@@ -1,5 +1,5 @@
 import {MapControls} from './mapControls'
-import {SplitOverlay} from 'widget/splitContent'
+import {SplitOverlay} from 'widget/split/splitOverlay'
 import {compose} from 'compose'
 import {selectFrom} from '../../../stateUtils'
 import {updateFeatureLayers} from './featureLayers'

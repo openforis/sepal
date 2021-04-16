@@ -3,7 +3,7 @@ import {Content, SectionLayout} from 'widget/sectionLayout'
 import {MapArea} from './mapArea'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
-import {SplitContent} from 'widget/splitContent'
+import {SplitView} from 'widget/split/splitView'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {debounceTime, distinctUntilChanged, finalize} from 'rxjs/operators'
@@ -245,14 +245,14 @@ class _Map extends React.Component {
                 googleMapsApiKey,
                 norwayPlanetApiKey
             }}>
-                <SplitContent
+                <SplitView
                     areas={areas}
                     mode={layers.mode}
                     maximize={layers.mode === 'stack' ? selectedZoomArea : null}>
                     <div className={styles.content}>
                         {this.isMapInitialized() ? this.renderRecipe() : null}
                     </div>
-                </SplitContent>
+                </SplitView>
             </MapContext.Provider>
         )
     }

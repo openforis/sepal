@@ -1,17 +1,17 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
+import {SplitContext} from './splitContext'
 import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
 import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, mapTo, scan, switchMap} from 'rxjs/operators'
 import {getLogger} from 'log'
 import Hammer from 'hammerjs'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import styles from './splitContent.module.css'
+import styles from './splitView.module.css'
 import withSubscriptions from 'subscription'
 
-const log = getLogger('splitContent')
+const log = getLogger('splitView')
 
 const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
 
@@ -21,9 +21,7 @@ const SMOOTHING_FACTOR = .2
 
 const resize$ = new Subject()
 
-const SplitContext = React.createContext()
-
-class _SplitContent extends React.PureComponent {
+class _SplitView extends React.PureComponent {
     areas = React.createRef()
     centerHandle = React.createRef()
     verticalHandle = React.createRef()
@@ -427,12 +425,12 @@ class _SplitContent extends React.PureComponent {
     }
 }
 
-export const SplitContent = compose(
-    _SplitContent,
+export const SplitView = compose(
+    _SplitView,
     withSubscriptions()
 )
 
-SplitContent.propTypes = {
+SplitView.propTypes = {
     areas: PropTypes.arrayOf(
         PropTypes.shape({
             content: PropTypes.any.isRequired,
@@ -448,36 +446,6 @@ SplitContent.propTypes = {
     overlay: PropTypes.any
 }
 
-SplitContent.defaultProps = {
+SplitView.defaultProps = {
     mode: 'stack'
-}
-
-export class SplitOverlay extends React.Component {
-    render() {
-        const {area, children} = this.props
-        return (
-            <SplitContext.Consumer>
-                {({container, mode, maximize}) => {
-                    const single = mode === 'stack' && maximize
-                    const hidden = single && maximize !== area
-                    return (
-                        <Portal type='container' container={container}>
-                            <div className={_.flatten([
-                                styles.area,
-                                hidden ? styles.hide : styles.partial,
-                                single ? styles.center : area.split('-').map(area => styles[area])
-                            ]).join(' ')}>
-                                {children}
-                            </div>
-                        </Portal>
-                    )
-                }}
-            </SplitContext.Consumer>
-        )
-    }
-}
-
-SplitOverlay.propTypes = {
-    area: PropTypes.string,
-    children: PropTypes.any
 }
