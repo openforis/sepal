@@ -7,9 +7,6 @@ const worker$ = ({tableId, columnName, columnValue, buffer, color = '#FFFFFF50',
     const {map} = require('rx/operators')
     const _ = require('lodash')
 
-    const log = require('sepal/log').getLogger('ee')
-    log.fatal(fillColor)
-
     const bufferMeters = (buffer && _.toNumber(buffer)) * 1000
     const table = bufferMeters
         ? filterTable({tableId, columnName, columnValue})
