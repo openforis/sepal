@@ -7,6 +7,7 @@ import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
+import _ from 'lodash'
 import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
 import withForwardedRef from 'ref'
@@ -161,9 +162,16 @@ class _Button extends React.Component {
     }
 
     renderTooltip(contents) {
-        const {tooltip, tooltipPlacement, tooltipDisabled, tooltipDelay} = this.props
+        const {tooltip, tooltipRaw, tooltipPlacement, tooltipDisabled, tooltipDelay} = this.props
+        const overlayInnerStyle = tooltipRaw ? {padding: 0} : null
         return this.active() && tooltip && !tooltipDisabled ? (
-            <Tooltip msg={tooltip} placement={tooltipPlacement} delay={tooltipDelay} clickTrigger={!this.linked()}>
+            <Tooltip
+                msg={tooltip}
+                placement={tooltipPlacement}
+                delay={tooltipDelay}
+                clickTrigger={!this.linked()}
+                overlayInnerStyle={overlayInnerStyle}
+            >
                 {contents}
             </Tooltip>
         ) : contents
@@ -346,6 +354,7 @@ Button.propTypes = {
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
     tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
+    tooltipRaw: PropTypes.any,
     type: PropTypes.oneOf(['button', 'submit', 'reset']),
     width: PropTypes.oneOf(['fit', 'fill']),
     onClick: PropTypes.func,
