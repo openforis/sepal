@@ -23,20 +23,37 @@ class _Panel extends React.Component {
     }
 
     render() {
-        return this.renderContainer(
-            this.renderContent()
+        const {type} = this.props
+        switch (type) {
+        case 'normal':
+            return this.renderNormal()
+        case 'modal':
+            return this.renderModal()
+        default:
+            return this.renderPortal(type)
+        }
+    }
+
+    renderNormal() {
+        return this.renderContent()
+    }
+
+    renderModal() {
+        return (
+            <Modal>
+                {this.renderContent()}
+            </Modal>
         )
     }
 
-    renderContainer(content) {
-        const {type} = this.props
-        return type === 'modal'
-            ? <Modal>{content}</Modal>
-            : <Portal>
+    renderPortal(type) {
+        return (
+            <Portal>
                 <div className={type === 'center' ? styles.centerWrapper : null}>
-                    {content}
+                    {this.renderContent()}
                 </div>
             </Portal>
+        )
     }
 
     renderContent() {
@@ -63,7 +80,7 @@ export const Panel = compose(
 Panel.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    type: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline'])
+    type: PropTypes.oneOf(['normal', 'modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline'])
 }
 
 Panel.Header = PanelHeader
