@@ -177,10 +177,7 @@ class _CountrySection extends React.Component {
                 })
             )
         }
-
-        if (country.value || area.value) {
-            this.setOverlay()
-        }
+        this.setOverlay()
         if (!_.isFinite(buffer.value)) {
             buffer.set(0)
         }
@@ -188,6 +185,9 @@ class _CountrySection extends React.Component {
 
     setOverlay() {
         const {stream, inputs: {country, area, buffer}} = this.props
+        if (!country.value && !area.value) {
+            return
+        }
         const aoi = {
             type: 'COUNTRY',
             countryCode: country.value,
