@@ -1,6 +1,6 @@
 import {BehaviorSubject, ReplaySubject, Subject} from 'rxjs'
 import {Content, SectionLayout} from 'widget/sectionLayout'
-import {MapArea} from './mapArea'
+import {ImageLayerSource} from './imageLayerSource'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
 import {SplitView} from 'widget/split/splitView'
@@ -141,7 +141,7 @@ class _Map extends React.Component {
                     onMouseDown={() => this.mouseDown$.next(area)}
                 />
                 <MapAreaContext.Provider value={{area, updateLayerConfig}}>
-                    <MapArea source={source} layerConfig={layerConfig} map={map}/>
+                    <ImageLayerSource source={source} layerConfig={layerConfig} map={map} output={'LAYER'}/>
                 </MapAreaContext.Provider>
             </React.Fragment>
         )

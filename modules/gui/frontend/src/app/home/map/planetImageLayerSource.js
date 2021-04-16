@@ -18,7 +18,24 @@ const defaultLayerConfig = {
     bands: 'rgb'
 }
 
-class _PlanetMap extends React.Component {
+export class PlanetImageLayerSource extends React.Component {
+    render() {
+        const {output} = this.props
+        switch (output) {
+        case 'LAYER':
+            return <Layer {...this.props}/>
+        case 'DESCRIPTION':
+            return <Description {...this.props}/>
+        default:
+            throw Error(`Unsupported output type: ${output}`)
+        }
+    }
+}
+
+const Description = ({description}) =>
+    <React.Fragment>{description}</React.Fragment>
+
+class _Layer extends React.Component {
     state = {}
 
     render() {
@@ -130,18 +147,19 @@ class _PlanetMap extends React.Component {
     }
 }
 
-export const PlanetMap = compose(
-    _PlanetMap,
+const Layer = compose(
+    _Layer,
     withMapContext(),
     withMapAreaContext(),
     connect()
 )
 
-PlanetMap.defaultProps = {
+PlanetImageLayerSource.defaultProps = {
     layerConfig: defaultLayerConfig
 }
 
-PlanetMap.propTypes = {
+PlanetImageLayerSource.propTypes = {
+    output: PropTypes.oneOf(['LAYER', 'DESCRIPTION']).isRequired,
     layerConfig: PropTypes.object,
     map: PropTypes.object,
     planetApiKey: PropTypes.string

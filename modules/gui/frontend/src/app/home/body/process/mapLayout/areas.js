@@ -1,4 +1,5 @@
 import {HoverDetector} from 'widget/hover'
+import {ImageLayerSource} from '../../../map/imageLayerSource'
 import {Padding} from 'widget/padding'
 import {Subject, merge} from 'rxjs'
 import {SuperButton} from 'widget/superButton'
@@ -144,8 +145,8 @@ class _Areas extends React.Component {
             ? (
                 <div className={styles.areaContent}>
                     <SuperButton
-                        title={source.type}
-                        description={source.description}
+                        title={msg(`imageLayerSources.${source.type}`)}
+                        description={<ImageLayerSource source={source} output={'DESCRIPTION'}/>}
                         removeMessage={msg('map.layout.area.remove.message')}
                         removeTooltip={msg('map.layout.area.remove.tooltip')}
                         drag$={this.areaDrag$}

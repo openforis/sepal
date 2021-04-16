@@ -73,7 +73,6 @@ class _CountrySection extends React.Component {
     constructor(props) {
         super(props)
         this.aoiChanged$ = new Subject()
-        this.update()
     }
 
     loadCountryAreas(countryId) {
@@ -153,16 +152,16 @@ class _CountrySection extends React.Component {
                         this.loadCountryAreas(countryId)
                     })
                 ))
-        this.update()
-        if (country.value)
+        if (country.value) {
             this.loadCountryAreas(country.value)
-
-        this.setOverlay()
+        }
+        this.update()
     }
 
     componentDidUpdate(prevProps) {
-        if (!prevProps || prevProps.inputs !== this.props.inputs)
+        if (!prevProps || prevProps.inputs !== this.props.inputs) {
             this.update(prevProps)
+        }
     }
 
     update() {
@@ -177,10 +176,7 @@ class _CountrySection extends React.Component {
                 })
             )
         }
-
-        if (country.value || area.value) {
-            this.setOverlay()
-        }
+        this.setOverlay()
         if (!_.isFinite(buffer.value)) {
             buffer.set(0)
         }
@@ -188,6 +184,9 @@ class _CountrySection extends React.Component {
 
     setOverlay() {
         const {stream, inputs: {country, area, buffer}} = this.props
+        if (!country.value && !area.value) {
+            return
+        }
         const aoi = {
             type: 'COUNTRY',
             countryCode: country.value,

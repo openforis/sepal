@@ -51,8 +51,6 @@ class Aoi extends React.Component {
         this.state = {canceled: false}
         const {recipeId, map} = props
         this.preview = MosaicPreview(recipeId)
-        this.initialBounds = map.getBounds()
-        this.initialZoom = map.getZoom()
     }
 
     render() {
@@ -82,10 +80,7 @@ class Aoi extends React.Component {
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement='bottom-right'
-                onApply={(values, model) => this.onApply(values, model)}
-                onCancel={() => this.onCancel()}
-            >
+                placement='bottom-right'>
                 <PanelSections
                     inputs={inputs}
                     sections={sections}
@@ -104,29 +99,6 @@ class Aoi extends React.Component {
     componentDidUpdate() {
         const {inputs, allowWholeEETable = ''} = this.props
         inputs.allowWholeEETable.set(allowWholeEETable)
-    }
-
-    onApply(values, model) {
-        this.preview.show()
-        this.updateLayer(model)
-    }
-
-    onCancel() {
-        const {model, map} = this.props
-        map.fitBounds(this.initialBounds)
-        map.setZoom(this.initialZoom)
-        this.preview.show()
-        this.updateLayer(model)
-    }
-
-    updateLayer(model) {
-        const {map} = this.props
-        setAoiLayer({
-            map,
-            aoi: model,
-            fill: false,
-            layerIndex: 1
-        })
     }
 }
 

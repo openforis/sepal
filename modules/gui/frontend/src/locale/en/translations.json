@@ -356,6 +356,11 @@
             "title": "Map layout"
         }
     },
+    "imageLayerSources": {
+        "Recipe": "Recipe",
+        "Planet": "Planet",
+        "GoogleSatellite": "Google Satellite"
+    },
     "notifications": {
         "error": {
             "connectionError": "Failed to connect to server. Either your internet connection failed, or server is unavailable at the moment.",
