@@ -340,6 +340,23 @@
             "error": "Failed to load layer"
         },
         "layout": {
+            "addImageLayerSource": {
+                "title": "Add Layer",
+                "types": {
+                    "Asset": {
+                        "description": "Add an Earth Engine asset"
+                    },
+                    "Planet": {
+                        "description": "Add a Planet account",
+                        "form": {
+                            "description": "Description"
+                        }
+                    } ,
+                    "Recipe": {
+                        "description": "Add a Sepal recipe"
+                    }
+                }
+            },
             "area": {
                 "edit.tooltip": "Edit area properties",
                 "remove": {
@@ -353,14 +370,19 @@
                     "tooltip": "Remove layer"
                 }
             },
-            "title": "Map layout",
             "mode": {
-                "grid": "Grid",
-                "stack": "Stack"
-            }
+                "grid": {
+                    "label": "Grid"
+                },
+                "stack": {
+                    "label": "Stack"
+                }
+            },
+            "title": "Layers"
         }
     },
     "imageLayerSources": {
+        "Asset": "EE Asset",
         "Recipe": "Recipe",
         "Planet": "Planet",
         "GoogleSatellite": "Google Satellite"
@@ -1434,26 +1456,6 @@
                 },
                 "layers": {
                     "tooltip": "Select layers to show"
-                },
-                "layersMenu": {
-                    "baseLayer": "Base layer",
-                    "GOOGLE_SATELLITE": {
-                        "description": "Google Maps high-resolution satellite layer",
-                        "label": "Google Satellite"
-                    },
-                    "labels": {
-                        "description": "Show map labels, roads and points of interest",
-                        "label": "Show Labels"
-                    },
-                    "overlay": "Overlays",
-                    "PLANET": {
-                        "description": "Planet composites",
-                        "label": "Planet"
-                    },
-                    "SEPAL": {
-                        "description": "Minimal dark Sepal default layer",
-                        "label": "Sepal"
-                    }
                 },
                 "link": {
                     "tooltip": "Link this map to all other linked maps"

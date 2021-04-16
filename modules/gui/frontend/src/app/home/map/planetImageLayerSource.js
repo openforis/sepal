@@ -52,7 +52,9 @@ class _Layer extends React.Component {
     createLayer() {
         const {layerConfig: {bands, urlTemplate} = defaultLayerConfig, map} = this.props
         return urlTemplate
-            ? new WMTSLayer({map, urlTemplate: `${urlTemplate}&proc=${bands}`})
+            ? this.selectedHasCir()
+                ? new WMTSLayer({map, urlTemplate: `${urlTemplate}&proc=${bands}`})
+                : new WMTSLayer({map, urlTemplate: `${urlTemplate}`})
             : null
     }
 
@@ -60,7 +62,7 @@ class _Layer extends React.Component {
         return (
             <Layout>
                 {this.renderMosaics()}
-                {this.renderBands()}
+                {this.selectedHasCir() ? this.renderBands() : null}
             </Layout>
         )
     }
@@ -69,7 +71,7 @@ class _Layer extends React.Component {
         const {layerConfig: {bands}} = this.props
         return (
             <Buttons
-                label={'Pan sharpen'}
+                label={'Bands'}
                 selected={bands}
                 onChange={bands => this.setBands(bands)}
                 options={[
@@ -79,9 +81,18 @@ class _Layer extends React.Component {
         )
     }
 
+    selectedHasCir() {
+        const {layerConfig: {urlTemplate}} = this.props
+        const apiKey = this.getApiKey()
+        const {[apiKey]: mosaics = []} = this.state
+        const {hasCir = false} = mosaics.find(({urlTemplate: t}) => t === urlTemplate) || {}
+        return hasCir
+    }
+
     renderMosaics() {
         const {layerConfig: {urlTemplate}} = this.props
-        const {mosaics = []} = this.state
+        const apiKey = this.getApiKey()
+        const {[apiKey]: mosaics = []} = this.state
 
         const mosaicOptions = mosaics.map(({startDate, endDate, urlTemplate}) => {
             const start = moment(startDate, 'YYYY-MM-DD')
@@ -106,14 +117,31 @@ class _Layer extends React.Component {
     }
 
     componentDidMount() {
+        this.update()
+    }
+
+    componentDidUpdate(prevProps) {
+        const prevApiKey = this.getApiKey(prevProps)
+        const apiKey = this.getApiKey()
+        if (apiKey !== prevApiKey) {
+            const {[apiKey]: mosaics} = this.state
+            if (mosaics) {
+                this.selectUrlTemplate(mosaics[0].urlTemplate)
+            }
+        }
+        this.update()
+    }
+
+    update() {
         const {stream} = this.props
-        const {mosaics} = this.state
-        if (!mosaics) {
-            stream('LOAD_PLANET_MOSAICS',
+        const apiKey = this.getApiKey()
+        const {[apiKey]: mosaics} = this.state
+        if (!mosaics && !stream(`LOAD_PLANET_MOSAICS_${apiKey}`).active) {
+            stream(`LOAD_PLANET_MOSAICS_${apiKey}`,
                 this.loadMosaics$(),
                 mosaics => {
-                    this.selectUrlTemplate(mosaics[mosaics.length - 1].urlTemplate)
-                    this.setState({mosaics})
+                    this.selectUrlTemplate(mosaics[0].urlTemplate)
+                    this.setState({[apiKey]: mosaics})
                 }
             )
         }
@@ -130,20 +158,25 @@ class _Layer extends React.Component {
     }
 
     loadMosaics$() {
-        const {planetApiKey, mapContext: {norwayPlanetApiKey}} = this.props
         return get$(
             'https://api.planet.com/basemaps/v1/mosaics',
-            {username: planetApiKey || norwayPlanetApiKey}
+            {username: this.getApiKey()}
         ).pipe(
             map(({response: {mosaics}}) => _.orderBy(
-                mosaics.map(({first_acquired, last_acquired, _links: {tiles}}) => ({
+                mosaics.map(({first_acquired, last_acquired, item_types, _links: {tiles}}) => ({
                     startDate: first_acquired.substring(0, 10),
                     endDate: last_acquired.substring(0, 10),
-                    urlTemplate: tiles
+                    urlTemplate: tiles,
+                    hasCir: item_types.includes('PSScene4Band')
                 })),
-                ['startDate', 'endDate']
+                ['startDate', 'endDate'], ['desc', 'desc']
             ))
         )
+    }
+
+    getApiKey(props) {
+        const {planetApiKey, mapContext: {norwayPlanetApiKey}} = props || this.props
+        return planetApiKey || norwayPlanetApiKey
     }
 }
 

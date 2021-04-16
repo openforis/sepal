@@ -3,6 +3,7 @@ import {RecipeList} from '../recipeList/recipeList'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {msg} from '../../../../../translate'
 import {v4 as uuid} from 'uuid'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
@@ -20,7 +21,7 @@ class _SelectRecipe extends React.Component {
         return (
             <RecipeList>
                 <Panel type='modal' className={styles.panel}>
-                    <Panel.Header title='Add Sepal recipe'/>
+                    <Panel.Header title={msg('map.layout.addImageLayerSource.types.Recipe.description')}/>
                     <Panel.Content scrollable={false}>
                         <RecipeList.Data onSelect={recipeId => this.selectRecipe(recipeId)}/>
                     </Panel.Content>
@@ -39,11 +40,10 @@ class _SelectRecipe extends React.Component {
 
     selectRecipe(recipeId) {
         const {recipeActionBuilder, activatable: {deactivate}} = this.props
-        recipeActionBuilder('ADD_IMAGE_LAYER_SOURCE')
+        recipeActionBuilder('ADD_RECIPE_IMAGE_LAYER_SOURCE')
             .push('layers.additionalImageLayerSources', {
                 id: uuid(),
                 type: 'Recipe',
-                description: 'Another recipe', // TODO: Load the recipe
                 sourceConfig: {
                     recipeId
                 }
@@ -59,7 +59,7 @@ const policy = () => ({
 
 export const SelectRecipe = compose(
     _SelectRecipe,
-    withRecipe(() => ({})),
+    withRecipe(),
     activatable({id: 'selectRecipe', policy}),
     connect(mapStateToProps)
 )

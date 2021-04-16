@@ -3,6 +3,7 @@ import {SuperButton} from 'widget/superButton'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
+import {msg} from 'translate'
 import React from 'react'
 import styles from './addImageLayerSource.module.css'
 
@@ -23,11 +24,11 @@ class _AddImageLayerSourcePanel extends React.Component {
         const {activatable: {deactivate}} = this.props
         return (
             <Panel type='modal' className={styles.panel}>
-                <Panel.Header title='Add layer'/>
+                <Panel.Header title={msg('map.layout.addImageLayerSource.title')}/>
                 <Panel.Content>
                     {this.renderOptions()}
                 </Panel.Content>
-                <Panel.Buttons>
+                <Panel.Buttons onEscape={deactivate}>
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close onClick={deactivate}/>
                     </Panel.Buttons.Main>
@@ -41,39 +42,47 @@ class _AddImageLayerSourcePanel extends React.Component {
         return (
             <React.Fragment>
                 <SuperButton
-                    title='Sepal recipe'
-                    description='Add from Sepal recipe'
-                    onClick={() => this.addSepalRecipe()}/>
+                    title={msg('imageLayerSources.Recipe')}
+                    description={msg('map.layout.addImageLayerSource.types.Recipe.description')}
+                    onClick={() => this.selectRecipe()}/>
                 <SuperButton
-                    title='Google Earth Engine Asset'
-                    description='Add a Google Earth Engine Asset'
-                    onClick={() => this.addAsset()}/>
+                    title={msg('imageLayerSources.Asset')}
+                    description={msg('map.layout.addImageLayerSource.types.Asset.description')}
+                    onClick={() => this.selectAsset()}/>
                 <SuperButton
-                    title='Planet'
-                    description='Add a Planet API Key'
-                    onClick={() => this.addAsset()}/>
+                    title={msg('imageLayerSources.Planet')}
+                    description={msg('map.layout.addImageLayerSource.types.Planet.description')}
+                    onClick={() => this.selectPlanet()}/>
             </React.Fragment>
         )
     }
 
-    addSepalRecipe() {
+    selectRecipe() {
         const {activator: {activatables: {selectRecipe}}} = this.props
         selectRecipe.activate()
     }
 
-    addAsset() {
-        // console.log('Add asset')
+    selectAsset() {
+        const {activator: {activatables: {selectAsset}}} = this.props
+        selectAsset.activate()
+    }
+
+    selectPlanet() {
+        const {activator: {activatables: {selectPlanet}}} = this.props
+        selectPlanet.activate()
     }
 }
 
 const policy = () => ({
     _: 'allow',
     mapLayout: 'allow',
-    selectRecipe: 'allow-then-deactivate'
+    selectRecipe: 'allow-then-deactivate',
+    selectAsset: 'allow-then-deactivate',
+    selectPlanet: 'allow-then-deactivate'
 })
 
 const AddImageLayerSourcePanel = compose(
     _AddImageLayerSourcePanel,
     activatable({id: 'addImageLayerSource', policy}),
-    activator('mapLayout', 'selectRecipe')
+    activator('mapLayout', 'selectRecipe', 'selectAsset', 'selectPlanet')
 )

@@ -3,6 +3,7 @@ import {Areas} from './areas'
 import {Buttons} from 'widget/buttons'
 import {ImageLayerSources} from './imageLayerSources'
 import {Panel} from 'widget/panel/panel'
+import {SelectPlanet} from './selectPlanet'
 import {SelectRecipe} from './selectRecipe'
 import {Subject} from 'rxjs'
 import {activatable} from 'widget/activation/activatable'
@@ -21,6 +22,7 @@ export class MapLayout extends React.Component {
                 <MapLayoutPanel/>
                 <AddImageLayerSource/>
                 <SelectRecipe/>
+                <SelectPlanet/>
             </React.Fragment>
         )
     }
@@ -75,8 +77,8 @@ class _MapLayoutPanel extends React.Component {
             <Buttons
                 selected={mode}
                 options={[
-                    {value: 'grid', label: msg('map.layout.mode.grid')},
-                    {value: 'stack', label: msg('map.layout.mode.stack')}
+                    {value: 'grid', label: msg('map.layout.mode.grid.label')},
+                    {value: 'stack', label: msg('map.layout.mode.stack.label')}
                 ]}
                 onChange={this.setMode}
             />
