@@ -2,6 +2,7 @@ import {Buttons} from 'widget/buttons'
 import {Layout} from 'widget/layout'
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {SceneSelectionType} from './opticalMosaicRecipe'
+import {Widget} from '../../../../../../widget/widget'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -121,14 +122,16 @@ class _Layer extends React.Component {
             ...metadataOptions
         ].find(({value}) => layerConfig.bands.selection.join(', ') === value)
         return (
-            <ButtonSelect
-                label={selectedOption.label}
-                options={options}
-                chromeless
-                alignment={'left'}
-                width={'fill'}
-                onSelect={({value}) => this.selectBands(value)}
-            />
+            <Widget label={'Bands'}>
+                <ButtonSelect
+                    label={selectedOption.label}
+                    options={options}
+                    chromeless
+                    alignment={'left'}
+                    width={'fill'}
+                    onSelect={({value}) => this.selectBands(value)}
+                />
+            </Widget>
         )
     }
 

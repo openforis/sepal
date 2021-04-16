@@ -30,18 +30,11 @@ class _MapAreaMenu extends React.Component {
     render() {
         return (
             <Panel className={styles.panel} type='normal'>
-                <Panel.Header icon='bars' title='Map area options'/> {/* TODO: replace with msg */}
+                {this.renderImageLayerSource()}
                 <Panel.Content>
                     <Layout>
-                        <Widget label='Layer'>
-                            {this.renderImageLayerSource()}
-                        </Widget>
-                        <Widget label='Layer options'>
-                            {this.renderImageLayerForm()}
-                        </Widget>
-                        <Widget label='Layer features'>
-                            {this.renderFeatureLayers()}
-                        </Widget>
+                        {this.renderImageLayerForm()}
+                        {this.renderFeatureLayers()}
                     </Layout>
                 </Panel.Content>
             </Panel>
@@ -56,7 +49,7 @@ class _MapAreaMenu extends React.Component {
             return ({
                 value: id,
                 label: (
-                    <div style={{textAlign: 'left'}}>
+                    <div>
                         <Item
                             title={<div className={styles.title}>{msg(`imageLayerSources.${type}`)}</div>}
                             description={<ImageLayerSource source={source} output={'DESCRIPTION'}/>}
@@ -68,7 +61,7 @@ class _MapAreaMenu extends React.Component {
         const imageLayerSource = imageLayerSourceOptions.find(({value}) => value === imageLayer.sourceId).label
         return (
             <ButtonSelect
-                // className={styles.imageLayerSource}
+                className={styles.imageLayerSource}
                 label={imageLayerSource}
                 options={imageLayerSourceOptions}
                 chromeless
@@ -89,27 +82,24 @@ class _MapAreaMenu extends React.Component {
         const {featureLayers} = areas[area]
         const selectedSourceIds = featureLayers.map(({sourceId}) => sourceId)
 
-        // const options = featureLayerSources.map(({id, type, description}) => ({value: id, label: type}))
-
-        // return (
-        //     <Buttons
-        //         selected={selectedSourceIds}
-        //         onChange={value => console.log('onChange', value)}
-        //         options={options}
-        //     />
-        // )
-        return featureLayerSources.map(({id, type, description}) =>
-            <Menu.Toggle
-                key={id}
-                label={type}
-                description={description}
-                selected={selectedSourceIds.includes(id)}
-                onChange={shown => this.toggleFeatureLayer({sourceId: id, shown})}
+        const options = featureLayerSources.map(({id, type, description}) => ({
+            value: id,
+            label: type, // TODO: Use message source
+            tooltip: description
+        }))
+        return (
+            <Buttons
+                selected={[]}
+                options={options}
+                onChange={sourceId =>
+                    sourceId && this.toggleFeatureLayer({sourceId, shown: !selectedSourceIds.includes(sourceId)})
+                }
             />
         )
     }
 
     toggleFeatureLayer({sourceId, shown}) {
+        console.log({sourceId, shown})
         const {recipeId, area} = this.props
         if (shown) {
             actionBuilder('ADD_FEATURE_LAYER', {sourceId, shown, area})

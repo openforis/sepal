@@ -66,7 +66,7 @@ class _SelectPlanet extends React.Component {
                     input={planetApiKey}
                     spellCheck={false}
                     onChangeDebounced={apiKey => this.validateApiKey(apiKey)}
-                    busyMessage={this.props.stream('LOAD_ASSET_METADATA').active && msg('widget.loading')}
+                    busyMessage={this.props.stream('VALIDATE_API_KEY').active && msg('widget.loading')}
                     errorMessage
                 />
                 <div/>

@@ -19,8 +19,7 @@
 }
 
 .imageLayerSource {
-    flex-grow: 1;
-    background-color: blue
+    border-bottom: var(--wireframe);
 }
 
 .title {
