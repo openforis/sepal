@@ -6,11 +6,12 @@ import React from 'react'
 import _ from 'lodash'
 import styles from './splitView.module.css'
 
-const log = getLogger('splitView')
+const log = getLogger('splitOverlay')
 
 export class SplitOverlay extends React.Component {
     render() {
         const {area, children} = this.props
+        // log.debug('rendering area', area)
         return (
             <SplitContext.Consumer>
                 {({container, mode, maximize}) => {

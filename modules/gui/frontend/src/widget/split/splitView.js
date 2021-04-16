@@ -1,10 +1,11 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {SplitContext} from './splitContext'
-import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
+import {SplitHandleCenter} from './splitHandleCenter'
+import {SplitHandleHorizontal} from './splitHandleHorizontal'
+import {SplitHandleVertical} from './splitHandleVertical'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {distinctUntilChanged, filter, map, mapTo, scan, switchMap} from 'rxjs/operators'
 import {getLogger} from 'log'
-import Hammer from 'hammerjs'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -12,12 +13,6 @@ import styles from './splitView.module.css'
 import withSubscriptions from 'subscription'
 
 const log = getLogger('splitView')
-
-const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
-
-const lerp = rate => (value, target) => value + (target - value) * Math.min(rate, 1)
-
-const SMOOTHING_FACTOR = .2
 
 const resize$ = new Subject()
 
@@ -37,14 +32,9 @@ class _SplitView extends React.PureComponent {
             y: undefined
         },
         enabled: {
+            center: false,
             vertical: false,
             horizontal: false,
-            center: false
-        },
-        init: {
-            vertical: false,
-            horizontal: false,
-            center: false
         },
         dragging: {
             x: false,
@@ -53,9 +43,16 @@ class _SplitView extends React.PureComponent {
         initialized: false
     }
 
+    constructor() {
+        super()
+        this.onDragging = this.onDragging.bind(this)
+        this.onPosition = this.onPosition.bind(this)
+    }
+
     render() {
         const {className, maximize, mode} = this.props
         const {position: {x, y}, dragging} = this.state
+        log.debug(dragging)
         return (
             <ElementResizeDetector onResize={size => resize$.next(size)}>
                 <SplitContext.Provider value={{container: this.areas.current, mode, maximize}}>
@@ -74,7 +71,6 @@ class _SplitView extends React.PureComponent {
                         }}>
                         {this.renderAreas()}
                         {this.renderHandles()}
-                        {this.renderOverlay()}
                         {this.renderContent()}
                     </div>
                 </SplitContext.Provider>
@@ -110,79 +106,64 @@ class _SplitView extends React.PureComponent {
     }
 
     renderHandles() {
-        const {maximize} = this.props
+        const {areas, maximize} = this.props
+        const {enabled: {center, vertical, horizontal}} = this.state
+        const placements = _.map(areas, area => area.placement)
         return (
             <div className={[
                 styles.handles,
                 maximize ? styles.hide : null
             ].join(' ')}>
-                {this.renderCenterHandle()}
-                {this.renderVerticalHandle()}
-                {this.renderHorizontalHandle()}
+                {center ? this.renderCenterHandle() : null}
+                {vertical ? this.renderVerticalHandle(placements) : null}
+                {horizontal ? this.renderHorizontalHandle(placements) : null}
             </div>
         )
     }
 
     renderCenterHandle() {
-        const {enabled: {center}} = this.state
-        return center
-            ? (
-                <div
-                    ref={this.centerHandle}
-                    className={[
-                        styles.handle,
-                        styles.center
-                    ].join(' ')}
-                />
-            )
-            : null
+        const {position, size} = this.state
+        return (
+            <SplitHandleCenter
+                position={position}
+                size={size}
+                onDragging={this.onDragging}
+                onPosition={this.onPosition}
+            />
+        )
     }
 
-    renderVerticalHandle() {
-        const {enabled: {vertical}} = this.state
-        const placements = this.getInterferingPlacements(['top', 'bottom'])
-        return vertical
-            ? (
-                <div
-                    ref={this.verticalHandle}
-                    className={_.flatten([
-                        styles.handle,
-                        styles.axis,
-                        styles.vertical,
-                        placements.map(placement => styles[placement]),
-                    ]).join(' ')}
-                />
-            )
-            : null
+    renderVerticalHandle(placements) {
+        const {position, size} = this.state
+        return (
+            <SplitHandleVertical
+                placements={placements}
+                position={position}
+                size={size}
+                onDragging={this.onDragging}
+                onPosition={this.onPosition}
+            />
+        )
     }
 
-    renderHorizontalHandle() {
-        const {enabled: {horizontal}} = this.state
-        const placements = this.getInterferingPlacements(['left', 'right'])
-        return horizontal
-            ? (
-                <div
-                    ref={this.horizontalHandle}
-                    className={_.flatten([
-                        styles.handle,
-                        styles.axis,
-                        styles.horizontal,
-                        placements.map(placement => styles[placement]),
-                    ]).join(' ')}
-                />
-            )
-            : null
+    renderHorizontalHandle(placements) {
+        const {position, size} = this.state
+        return (
+            <SplitHandleHorizontal
+                placements={placements}
+                position={position}
+                size={size}
+                onDragging={this.onDragging}
+                onPosition={this.onPosition}
+            />)
     }
 
-    renderOverlay() {
-        const {overlay} = this.props
-        return overlay
-            ? (
-                <div className={styles.overlay}>
-                    {overlay}
-                </div>
-            )
-            : null
+    onDragging(dragging) {
+        this.setState({dragging})
+    }
+
+    onPosition(position) {
+        this.setState({position})
     }
 
     renderContent() {
@@ -192,14 +173,6 @@ class _SplitView extends React.PureComponent {
                 {children}
             </div>
         )
-    }
-
-    getInterferingPlacements(placements) {
-        const {areas} = this.props
-        return _.chain(areas)
-            .map(area => area.placement)
-            .intersection(placements)
-            .value()
     }
 
     static getDerivedStateFromProps(props) {
@@ -238,67 +211,8 @@ class _SplitView extends React.PureComponent {
         }
     }
 
-    updateHandles() {
-        const {enabled, init} = this.state
-
-        if (enabled.center) {
-            if (!init.center && this.centerHandle.current) {
-                this.setState(({init}) => ({init: {...init, center: true}}), () => {
-                    const directionConstraint = () => {
-                        // if (!this.horizontalHandle.current) {
-                        //     return 'y'
-                        // }
-                        // if (!this.verticalHandle.current) {
-                        //     return 'x'
-                        // }
-                        return null
-                    }
-                    this.initializeHandle({
-                        ref: this.centerHandle,
-                        lockDirection: directionConstraint()
-                    })
-                })
-            }
-        } else {
-            init.center && this.setState(({init}) => ({init: {...init, center: false}}))
-        }
-
-        if (enabled.vertical) {
-            if (!init.vertical && this.verticalHandle.current) {
-                this.setState(({init}) => ({init: {...init, vertical: true}}), () => {
-                    this.initializeHandle({
-                        ref: this.verticalHandle,
-                        direction: 'x',
-                        lockDirection: 'y'
-                    })
-                })
-            }
-        } else {
-            init.vertical && this.setState(({init}) => ({init: {...init, vertical: false}}))
-        }
-
-        if (enabled.horizontal) {
-            if (!init.horizontal && this.horizontalHandle.current) {
-                this.setState(({init}) => ({init: {...init, horizontal: true}}), () => {
-                    this.initializeHandle({
-                        ref: this.horizontalHandle,
-                        direction: 'y',
-                        lockDirection: 'x'
-                    })
-                })
-            }
-        } else {
-            init.horizontal && this.setState(({init}) => ({init: {...init, horizontal: false}}))
-        }
-    }
-
     componentDidMount() {
         this.initializeResizeDetector()
-        this.updateHandles()
-    }
-
-    componentDidUpdate() {
-        this.updateHandles()
     }
 
     initializeResizeDetector() {
@@ -315,113 +229,6 @@ class _SplitView extends React.PureComponent {
                 })
             )
         )
-    }
-
-    initializeHandle({ref, direction, lockDirection}) {
-        const {addSubscription} = this.props
-
-        if (!ref.current) {
-            return
-        }
-
-        const handle = new Hammer(ref.current)
-        handle.get('pan').set({
-            direction: Hammer.DIRECTION_ALL,
-            threshold: 0
-        })
-
-        const dragLerp = (current, target) => {
-            const customLerp = lerp(SMOOTHING_FACTOR)
-            return {
-                x: customLerp(current.x, target.x),
-                y: customLerp(current.y, target.y),
-            }
-        }
-
-        const hold$ = merge(
-            fromEvent(ref.current, 'mousedown'),
-            fromEvent(ref.current, 'touchstart')
-        )
-        const release$ = merge(
-            fromEvent(ref.current, 'mouseup'),
-            fromEvent(ref.current, 'touchend')
-        )
-        const pan$ = fromEvent(handle, 'panstart panmove panend')
-        const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
-        const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
-        const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
-        const animationFrame$ = interval(0, animationFrameScheduler)
-
-        const dragPosition$ =
-            panStart$.pipe(
-                switchMap(() => {
-                    const {position: {x, y}} = this.state
-                    return panMove$.pipe(
-                        map(event =>
-                            this.clampPosition({
-                                x: lockDirection === 'x' ? x : x + event.deltaX,
-                                y: lockDirection === 'y' ? y : y + event.deltaY
-                            })
-                        ),
-                        distinctUntilChanged(_.isEqual),
-                    )
-                })
-            )
-
-        const handlePosition$ = dragPosition$.pipe(
-            switchMap(targetPosition => {
-                const {position} = this.state
-                return animationFrame$.pipe(
-                    map(() => targetPosition),
-                    scan(dragLerp, position),
-                    map(({x, y}) => ({
-                        x: Math.round(x),
-                        y: Math.round(y)
-                    })),
-                    distinctUntilChanged(_.isEqual)
-                )
-            })
-        )
-
-        const dragging$ = merge(
-            hold$.pipe(mapTo(true)),
-            release$.pipe(mapTo(false)),
-            panStart$.pipe(mapTo(true)),
-            panEnd$.pipe(mapTo(false)),
-        )
-
-        addSubscription(
-            handlePosition$.subscribe(position =>
-                this.setState({position})
-            ),
-            dragging$.subscribe(dragging =>
-                this.setState({
-                    dragging: {
-                        x: dragging && direction !== 'y',
-                        y: dragging && direction !== 'x'
-                    }
-                })
-            )
-        )
-    }
-
-    clampPosition({x, y}) {
-        const {size: {height, width}} = this.state
-        const margin = 30
-        return {
-            x: Math.round(
-                clamp(x, {
-                    min: margin,
-                    max: width - margin
-                })
-            ),
-            y: Math.round(
-                clamp(y, {
-                    min: margin,
-                    max: height - margin
-                })
-            )
-        }
     }
 }
 
@@ -442,8 +249,7 @@ SplitView.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     maximize: PropTypes.string,
-    mode: PropTypes.oneOf(['stack', 'grid']),
-    overlay: PropTypes.any
+    mode: PropTypes.oneOf(['stack', 'grid'])
 }
 
 SplitView.defaultProps = {

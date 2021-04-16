@@ -1,24 +1,18 @@
 .container {
+    /* --y is injected */
+    /* --x is injected */
     --half-margin-size: 1px;
-    --half-center-handle-size: 15px;
-    --half-axis-handle-size: 1px;
-    --handle-comfort-margin: -.25rem;
-    /* --idle-color: var(--wireframe-color); */
-    --idle-color: #808080;
-    --dragging-color: #c0c0c0;
-    --color: var(--idle-color);
-
-    /* --x and --y are injected */
-
     --top: var(--y);
     --right: calc(100% - var(--x));
     --bottom: calc(100% - var(--y));
     --left: var(--x);
 
-    --vertical-handle-top: 0;
-    --vertical-handle-bottom: 0;
-    --horizontal-handle-left: 0;
-    --horizontal-handle-right: 0;
+    --half-center-handle-size: 15px;
+    --half-axis-handle-size: 1px;
+    --handle-comfort-margin: -.25rem;
+    --idle-color: #808080;
+    --dragging-color: #c0c0c0;
+    --color: var(--idle-color);
 
     position: relative;
     width: 100%;
@@ -135,14 +129,14 @@
     display: none;
 }
 
-.container.initialized .handle {
-    visibility: visible;
-}
-
 .handle {
+    --vertical-handle-top: 0;
+    --vertical-handle-bottom: 0;
+    --horizontal-handle-left: 0;
+    --horizontal-handle-right: 0;
+
     position: absolute;
     pointer-events: all;
-    visibility: hidden;
 }
 
 /* center handle */
@@ -235,9 +229,8 @@
     --color: var(--dragging-color);
 }
 
-/* overlay */
+/* content */
 
-/* .overlay, */
 .content {
     position: absolute;
     top: 0;
