@@ -216,7 +216,6 @@ class _EETableSection extends React.Component {
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: () => map.fitLayer('aoi'),
             layerIndex
         })
     }

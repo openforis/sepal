@@ -22,7 +22,7 @@ export class SepalMap {
             scale: 1,
             anchor: new google.maps.Point(15, 15),
         }
-            
+
         this.marker = new google.maps.Marker({
             clickable: false,
             draggable: false,
