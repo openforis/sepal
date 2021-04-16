@@ -1,7 +1,9 @@
 import {Button} from 'widget/button'
+import {ImageLayerSource} from './imageLayerSource'
 import {Item} from 'widget/item'
 import {Menu} from 'widget/menu/menu'
 import {compose} from 'compose'
+import {msg} from '../../../translate'
 import {recipePath} from '../body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from '../body/process/recipeContext'
@@ -56,17 +58,20 @@ class _MapAreaMenu extends React.Component {
     renderImageLayerSource() {
         const {imageLayerSources, areas, area} = this.props
         const {imageLayer} = areas[area]
-        const imageLayerSourceOptions = imageLayerSources.map(({id, type, description}) => ({
-            value: id,
-            label: (
-                <div style={{textAlign: 'left'}}>
-                    <Item
-                        title={<div className={styles.title}>{type}</div>}
-                        description={description}
-                    />
-                </div>
-            )
-        }))
+        const imageLayerSourceOptions = imageLayerSources.map(source => {
+            const {id, type} = source
+            return ({
+                value: id,
+                label: (
+                    <div style={{textAlign: 'left'}}>
+                        <Item
+                            title={<div className={styles.title}>{msg(`imageLayerSources.${type}`)}</div>}
+                            description={<ImageLayerSource source={source} output={'DESCRIPTION'}/>}
+                        />
+                    </div>
+                )
+            })
+        })
         const imageLayerSource = imageLayerSourceOptions.find(({value}) => value === imageLayer.sourceId).label
         return (
             <ButtonSelect

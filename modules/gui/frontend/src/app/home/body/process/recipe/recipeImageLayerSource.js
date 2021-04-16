@@ -1,4 +1,4 @@
-import {OpticalMosaicMap} from './opticalMosaic/opticalMosaicMap'
+import {OpticalMosaicImageLayerSource} from './opticalMosaic/opticalMosaicImageLayerSource'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {recipeAccess} from '../recipeAccess'
@@ -11,7 +11,7 @@ const mapStateToProps = (state, {recipeId}) =>
         recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
     })
 
-class _RecipeMap extends React.Component {
+class _RecipeImageLayerSource extends React.Component {
     state = {}
 
     render() {
@@ -22,13 +22,14 @@ class _RecipeMap extends React.Component {
     }
 
     renderRecipeMap() {
-        const {recipe, layerConfig, map} = this.props
+        const {recipe, layerConfig, map, output} = this.props
         switch(recipe.type) {
         case 'MOSAIC': return (
-            <OpticalMosaicMap
+            <OpticalMosaicImageLayerSource
                 recipe={recipe}
                 layerConfig={layerConfig}
-                map={map}/>
+                map={map}
+                output={output}/>
         )
         default: throw Error(`Unsupported recipe type: ${recipe.type}`)
         }
@@ -54,13 +55,14 @@ class _RecipeMap extends React.Component {
     }
 }
 
-export const RecipeMap = compose(
-    _RecipeMap,
+export const RecipeImageLayerSource = compose(
+    _RecipeImageLayerSource,
     connect(mapStateToProps),
     recipeAccess()
 )
 
-RecipeMap.propTypes = {
+RecipeImageLayerSource.propTypes = {
+    output: PropTypes.oneOf(['LAYER', 'DESCRIPTION']).isRequired,
     recipeId: PropTypes.string.isRequired,
     layerConfig: PropTypes.object,
     map: PropTypes.object

@@ -130,7 +130,12 @@ const updateRecipeList = recipe =>
 const isInitialized = recipe =>
     selectFrom(recipe, 'ui.initialized')
 
-export const saveRecipe = recipe => {
+export const saveRecipe = tab => {
+    const recipe = {
+        ...select(recipePath(tab.id)),
+        title: tab.title
+    }
+    console.log({recipe})
     if (isInitialized(recipe)) {
         actionBuilder('SET_RECIPE_SAVED', recipe.id)
             .del(recipePath(recipe.id, 'ui.unsaved'))

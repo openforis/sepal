@@ -56,7 +56,6 @@ export const RecipeActions = id => {
             const recipeImageLayerSource = {
                 id: guid(),
                 type: 'Recipe',
-                description: 'This recipe',
                 sourceConfig: {
                     recipeId: id
                 }
@@ -71,13 +70,13 @@ export const RecipeActions = id => {
             const planetImageLayerSource = {
                 id: guid(),
                 type: 'Planet',
-                description: 'Planet composite',
-                sourceConfig: {}
+                sourceConfig: {
+                    description: 'NICFI Planet composites'
+                }
             }
             const googleSatelliteImageLayerSource = {
                 id: guid(),
                 type: 'GoogleSatellite',
-                description: 'Google High-res Satellite',
                 sourceConfig: {}
             }
             const imageLayerSources = [

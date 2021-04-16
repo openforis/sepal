@@ -1,3 +1,4 @@
+import {ImageLayerSource} from '../../../map/imageLayerSource'
 import {Padding} from 'widget/padding'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {SuperButton} from 'widget/superButton'
@@ -39,8 +40,8 @@ export class _ImageLayerSources extends React.Component {
             ? (
                 <SuperButton
                     key={source.id}
-                    title={source.type} // TODO: Use message key
-                    description={source.description}
+                    title={msg(`imageLayerSources.${source.type}`)}
+                    description={<ImageLayerSource source={source} output={'DESCRIPTION'}/>}
                     removeMessage={msg('map.layout.layer.remove.message')}
                     removeTooltip={msg('map.layout.layer.remove.tooltip')}
                     drag$={drag$}
