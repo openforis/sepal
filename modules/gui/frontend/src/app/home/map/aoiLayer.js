@@ -6,7 +6,7 @@ import api from 'api'
 export const countryEETable = 'users/wiell/SepalResources/countries'
 
 export const removeAoiLayer = map => {
-    map.removeLayer('aoi')
+    map.removeLayer('Aoi')
 }
 
 const color = '#FFFFFF50'
@@ -72,7 +72,7 @@ export const createAoiLayer = ({map, recipe, layerConfig = {}, layerIndex}) => {
 }
 
 export const setAoiLayer = ({map, aoi, fill, destroy$, onInitialized, layerIndex = 1}) => {
-    const layerId = 'aoi'
+    const layerId = 'Aoi'
     switch (aoi && aoi.type) {
     case 'COUNTRY':
         return setEETableLayer({

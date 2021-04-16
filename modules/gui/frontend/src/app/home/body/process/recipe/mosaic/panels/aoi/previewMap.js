@@ -52,20 +52,20 @@ class _PreviewMap extends React.Component {
             log.debug('creating map')
             const {mapsContext: {createSepalMap}} = this.props
             const map = createSepalMap(element, PREVIEW_MAP_OPTIONS)
-            const {google, googleMap} = map.getGoogle()
-            google.maps.event.addListenerOnce(googleMap, 'idle', () => {
-                this.setState({map})
-            })
+            this.setState({map})
+            // const {google, googleMap} = map.getGoogle()
+            // google.maps.event.addListenerOnce(googleMap, 'idle', () => {
+            //     this.setState({map})
+            // })
         }
     }
 
     componentDidUpdate(prevProps) {
         const {bounds: prevBounds} = prevProps
-        const {recipe, selectedLayers, bounds} = this.props
+        const {recipe, selectedLayers, bounds, componentWillUnmount$} = this.props
         const {map} = this.state
         if (map) {
-            updateFeatureLayers({map, recipe, selectedLayers})
-
+            updateFeatureLayers({map, recipe, selectedLayers, destroy$: componentWillUnmount$})
             if (bounds && !_.isEqual(bounds, prevBounds)) {
                 map.fitBounds(bounds)
             }

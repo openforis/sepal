@@ -2,21 +2,21 @@ import {createAoiLayer} from 'app/home/map/aoiLayer'
 import {selectFrom} from '../../../stateUtils'
 import LabelsLayer from 'app/home/map/labelsLayer'
 
-export const updateFeatureLayers = ({recipe, map, onAdd, selectedLayers = []}) => {
+export const updateFeatureLayers = ({recipe, map, onAdd, selectedLayers = [], destroy$}) => {
     const sources = selectFrom(recipe, 'ui.featureLayerSources') || []
     const sourceIds = selectedLayers.map(({sourceId}) => sourceId)
     sources.forEach((source, i) => {
         const isSelected = sourceIds.includes(source.id)
         if (isSelected) {
             const {layerConfig} = selectedLayers.find(({sourceId}) => source.id === sourceId)
-            addFeatureLayer({map, source, recipe, layerConfig, layerIndex: i + 1, onAdd})
+            addFeatureLayer({map, source, recipe, layerConfig, layerIndex: i + 1, onAdd, destroy$})
         } else {
             map.removeLayer(source.type)
         }
     })
 }
 
-const addFeatureLayer = ({map, source, recipe, layerConfig, layerIndex, onAdd}) => {
+const addFeatureLayer = ({map, source, recipe, layerConfig, layerIndex, onAdd, destroy$}) => {
     const layer = createFeatureLayer({
         source,
         map,
@@ -29,6 +29,7 @@ const addFeatureLayer = ({map, source, recipe, layerConfig, layerIndex, onAdd}) 
         map.setLayer({
             id,
             layer,
+            destroy$,
             onInitialized: layer => onAdd && onAdd(id, layer)
         })
     }
