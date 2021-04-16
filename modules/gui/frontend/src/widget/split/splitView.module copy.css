@@ -99,19 +99,19 @@
 }
 
 .area.top {
-    --area-bottom: var(--bottom);
+    --area-bottom: calc(var(--bottom) + var(--half-margin-size));
 }
 
 .area.bottom {
-    --area-top: var(--top);
+    --area-top: calc(var(--top) + var(--half-margin-size));
 }
 
 .area.left {
-    --area-right: var(--right);
+    --area-right: calc(var(--right) + var(--half-margin-size));
 }
 
 .area.right {
-    --area-left: var(--left);
+    --area-left: calc(var(--left) + var(--half-margin-size));
 }
 
 /* handle */
@@ -144,36 +144,25 @@
 .handle.center {
     top: calc(var(--top) - var(--half-center-handle-size));
     left: calc(var(--left) - var(--half-center-handle-size));
-    width: calc(2 * var(--half-center-handle-size) + 1px);
-    height: calc(2 * var(--half-center-handle-size) + 1px);
-    /* border: calc(2 * var(--half-axis-handle-size)) solid var(--color); */
+    width: calc(2 * var(--half-center-handle-size));
+    height: calc(2 * var(--half-center-handle-size));
+    border: calc(2 * var(--half-axis-handle-size)) solid var(--color);
     border-radius: var(--half-center-handle-size);
     cursor: move;
     z-index: 2;
-    background: radial-gradient(
-        circle,
-        transparent,
-        transparent calc(var(--half-center-handle-size) - 2 * var(--half-axis-handle-size) - 1px),
-        var(--color) calc(var(--half-center-handle-size) - 2 * var(--half-axis-handle-size) - 1px),
-        var(--color) calc(var(--half-center-handle-size) - 1 * var(--half-axis-handle-size) - 1px),
-        black calc(var(--half-center-handle-size) - 1 * var(--half-axis-handle-size) - 1px),
-        black calc(var(--half-center-handle-size) - 1 * var(--half-axis-handle-size)),
-        var(--color) calc(var(--half-center-handle-size))
-    );
 }
 
 /* axis handle */
 
 .handle.axis {
-    --background-angle: 0deg;
-    background: linear-gradient(
-        var(--background-angle),
-        var(--color), 
-        var(--color) calc(1 * var(--half-axis-handle-size)), 
-        black calc(1 * var(--half-axis-handle-size)),
-        black calc(1 * var(--half-axis-handle-size) + 1px), 
-        var(--color) calc(1 * var(--half-axis-handle-size) + 1px)
-    );
+    background-color: var(--color);
+    /* background: repeating-linear-gradient(
+        45deg,
+        var(--color),
+        var(--color) 10px,
+        transparent 10px,
+        transparent 20px
+    ); */
 }
 
 .handle.axis:before {
@@ -184,11 +173,10 @@
 /* vertical axis handle */
 
 .handle.axis.vertical {
-    --background-angle: 90deg;
     top: var(--vertical-handle-top);
     bottom: var(--vertical-handle-bottom);
     left: calc(var(--left) - var(--half-axis-handle-size));
-    width: calc(2 * var(--half-axis-handle-size) + 1px);
+    width: calc(2 * var(--half-axis-handle-size));
     cursor: ew-resize;
 }
 
@@ -210,9 +198,8 @@
 /* horizontal axis handle */
 
 .handle.axis.horizontal {
-    --background-angle: 0deg;
     top: calc(var(--top) - var(--half-axis-handle-size));
-    height: calc(2 * var(--half-axis-handle-size) + 1px);
+    height: calc(2 * var(--half-axis-handle-size));
     left: var(--horizontal-handle-left);
     right: var(--horizontal-handle-right);
     cursor: ns-resize;
