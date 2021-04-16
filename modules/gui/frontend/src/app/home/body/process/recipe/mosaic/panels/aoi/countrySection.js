@@ -73,7 +73,6 @@ class _CountrySection extends React.Component {
     constructor(props) {
         super(props)
         this.aoiChanged$ = new Subject()
-        this.update()
     }
 
     loadCountryAreas(countryId) {
@@ -153,16 +152,16 @@ class _CountrySection extends React.Component {
                         this.loadCountryAreas(countryId)
                     })
                 ))
-        this.update()
-        if (country.value)
+        if (country.value) {
             this.loadCountryAreas(country.value)
-
-        this.setOverlay()
+        }
+        this.update()
     }
 
     componentDidUpdate(prevProps) {
-        if (!prevProps || prevProps.inputs !== this.props.inputs)
+        if (!prevProps || prevProps.inputs !== this.props.inputs) {
             this.update(prevProps)
+        }
     }
 
     update() {

@@ -1,13 +1,16 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
+import {PreviewMap} from './previewMap'
 import {RecipeActions} from '../../mosaicRecipe'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
+import {connect, select} from '../../../../../../../../store'
+import {countryEETable, countryToEETable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import Notifications from '../../../../../../../../widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -15,9 +18,10 @@ import api from 'api'
 
 const mapRecipeToProps = recipe => {
     return {
-        recipeId: recipe.id,
         columns: selectFrom(recipe, 'ui.eeTable.columns'),
-        rows: selectFrom(recipe, 'ui.eeTable.rows')
+        rows: selectFrom(recipe, 'ui.eeTable.rows'),
+        overlay: selectFrom(recipe, 'layers.overlay'),
+        featureLayerSources: selectFrom(recipe, 'ui.featureLayerSources'),
     }
 }
 
@@ -56,6 +60,7 @@ class _EETableSection extends React.Component {
                 />
                 {allowWholeEETable ? this.renderFilterOptions() : null}
                 {this.renderColumnValueRowInputs()}
+                <PreviewMap/>
             </Layout>
         )
     }
@@ -191,33 +196,69 @@ class _EETableSection extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {inputs: {eeTableRowSelection, buffer}} = this.props
+        const {inputs: {eeTableRowSelection}} = this.props
         if (!prevProps || prevProps.inputs !== this.props.inputs) {
             this.update()
         }
         if (!eeTableRowSelection.value) {
             eeTableRowSelection.set('FILTER')
         }
+    }
+
+    update() {
+        const {inputs: {buffer}} = this.props
+        this.setOverlay()
         if (!_.isFinite(buffer.value)) {
             buffer.set(0)
         }
     }
 
-    update() {
-        const {map, inputs: {eeTable, eeTableColumn, eeTableRow, buffer}, componentWillUnmount$, layerIndex} = this.props
-        setAoiLayer({
-            map,
-            aoi: {
-                type: 'EE_TABLE',
-                id: eeTable.value,
-                keyColumn: eeTableColumn.value,
-                key: eeTableRow.value,
-                buffer: buffer.value
-            },
-            fill: true,
-            destroy$: componentWillUnmount$,
-            layerIndex
-        })
+    setOverlay() {
+        const {stream, inputs: {eeTable, eeTableColumn, eeTableRow, buffer}} = this.props
+        if (!eeTableRow.value) {
+            return
+        }
+
+        const aoi = {
+            type: 'EE_TABLE',
+            id: eeTable.value,
+            keyColumn: eeTableColumn.value,
+            key: eeTableRow.value,
+            buffer: buffer.value
+        }
+        const {overlay: prevOverlay, featureLayerSources, recipeActionBuilder} = this.props
+        const aoiLayerSource = featureLayerSources.find(({type}) => type === 'Aoi')
+        const overlay = {
+            featureLayers: [
+                {
+                    sourceId: aoiLayerSource.id,
+                    layerConfig: {aoi}
+                }
+            ]
+        }
+        if (!_.isEqual(overlay, prevOverlay) && !stream('LOAD_BOUNDS').active) {
+            recipeActionBuilder('DELETE_MAP_OVERLAY_BOUNDS')
+                .del('ui.overlay.bounds')
+                .dispatch()
+            stream('LOAD_BOUNDS',
+                api.gee.aoiBounds$(aoi),
+                bounds => {
+                    recipeActionBuilder('SET_MAP_OVERLAY_BOUNDS')
+                        .set('ui.overlay.bounds', bounds)
+                        .dispatch()
+                }
+            )
+            recipeActionBuilder('SET_MAP_OVERLAY')
+                .set('layers.overlay', overlay)
+                .dispatch()
+        }
+    }
+
+    componentWillUnmount() {
+        const {recipeActionBuilder} = this.props
+        recipeActionBuilder('REMOVE_MAP_OVERLAY')
+            .del('layers.overlay')
+            .dispatch()
     }
 }
 
