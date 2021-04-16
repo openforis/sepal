@@ -52,7 +52,6 @@ class _SplitView extends React.PureComponent {
     render() {
         const {className, maximize, mode} = this.props
         const {position: {x, y}, dragging} = this.state
-        log.debug(dragging)
         return (
             <ElementResizeDetector onResize={size => resize$.next(size)}>
                 <SplitContext.Provider value={{container: this.areas.current, mode, maximize}}>

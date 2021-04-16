@@ -353,7 +353,11 @@
                     "tooltip": "Remove layer"
                 }
             },
-            "title": "Map layout"
+            "title": "Map layout",
+            "mode": {
+                "grid": "Grid",
+                "stack": "Stack"
+            }
         }
     },
     "imageLayerSources": {
