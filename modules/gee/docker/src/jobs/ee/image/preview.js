@@ -12,8 +12,7 @@ const worker$ = ({recipe, bands}) => {
                 visParams.hsv
                     ? ee.getMap$(hsvToRgb(image, visParams))
                     : ee.getMap$(image, visParams))
-            )
-        )
+        ))
     )
 }
 

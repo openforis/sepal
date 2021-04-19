@@ -19,6 +19,22 @@ export default class EarthEngineLayer {
         })
     }
 
+    static fromAsset({asset, layerConfig, map}) {
+        const previewRequest = {
+            recipe: {
+                type: 'ASSET',
+                id: asset
+            },
+            ...layerConfig
+        }
+        return new EarthEngineLayer({
+            map,
+            mapId$: api.gee.preview$(previewRequest),
+            props: {asset},
+            progress$: new Subject()
+        })
+    }
+
     constructor({map, layerIndex = 0, toggleable, label, description, mapId$, props, progress$}) {
         this.map = map
         this.layerIndex = layerIndex

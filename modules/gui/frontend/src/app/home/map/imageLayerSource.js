@@ -1,3 +1,4 @@
+import {AssetImageLayerSource} from './assetImageLayerSource'
 import {GoogleSatelliteImageLayerSource} from './googleSatelliteImageLayerSource'
 import {PlanetImageLayerSource} from './planetImageLayerSource'
 import {RecipeImageLayerSource} from 'app/home/body/process/recipe/recipeImageLayerSource'
@@ -11,6 +12,13 @@ export class ImageLayerSource extends React.Component {
         case 'Recipe': return (
             <RecipeImageLayerSource
                 recipeId={sourceConfig.recipeId}
+                layerConfig={layerConfig}
+                map={map}
+                output={output}/>
+        )
+        case 'Asset': return (
+            <AssetImageLayerSource
+                asset={sourceConfig.asset}
                 layerConfig={layerConfig}
                 map={map}
                 output={output}/>
