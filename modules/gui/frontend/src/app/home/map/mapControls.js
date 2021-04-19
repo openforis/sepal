@@ -89,6 +89,7 @@ class _MapAreaMenu extends React.Component {
         }))
         return (
             <Buttons
+                alignment='fill'
                 selected={[]}
                 options={options}
                 onChange={sourceId =>
