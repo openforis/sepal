@@ -8,9 +8,9 @@ import {selectFrom} from 'stateUtils'
 import AutoSelectScenes from './autoSelectScenes'
 import MosaicToolbar from './panels/opticalMosaicToolbar'
 import React from 'react'
+import SceneAreas from './sceneAreas'
 import SceneDeselection from './sceneDeselection'
 import SceneSelection from './sceneSelection'
-import _ from 'lodash'
 import styles from './opticalMosaic.module.css'
 
 const mapRecipeToProps = recipe => ({

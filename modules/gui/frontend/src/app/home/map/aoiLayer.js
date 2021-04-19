@@ -1,7 +1,6 @@
-import {EETableLayer, setEETableLayer} from './eeTableLayer'
-import {PolygonLayer, setPolygonLayer} from './polygonLayer'
+import {EETableLayer} from './eeTableLayer'
+import {PolygonLayer} from './polygonLayer'
 import React from 'react'
-import api from 'api'
 
 export const countryEETable = 'users/wiell/SepalResources/countries'
 
@@ -22,7 +21,7 @@ export const countryToEETable = aoi => ({
     fillColor
 })
 
-export const createAoiLayer = ({map, recipe, layerConfig = {}, layerIndex}) => {
+export const AoiLayer = ({id, layerConfig = {}, layerIndex, map, recipe}) => {
     const aoi = layerConfig.aoi || recipe.model.aoi
     if (!aoi) {
         return null
@@ -30,91 +29,46 @@ export const createAoiLayer = ({map, recipe, layerConfig = {}, layerIndex}) => {
     const aoiType = aoi.type
     switch (aoiType) {
     case 'COUNTRY':
-        return new EETableLayer({
-            map,
-            mapId$: api.gee.eeTableMap$({
-                tableId: countryEETable,
-                columnName: 'id',
-                columnValue: aoi.areaCode || aoi.countryCode,
-                buffer: aoi.buffer,
-                color,
-                fillColor
-            }),
-            layerIndex,
-            watchedProps: aoi
-        })
+        return <EETableLayer
+            id={id}
+            map={map}
+            tableId={countryEETable}
+            columnName='id'
+            columnValue={aoi.areaCode || aoi.countryCode}
+            buffer={aoi.buffer}
+            color={color}
+            fillColor={fillColor}
+            layerIndex={layerIndex}
+            watchedProps={aoi}
+        />
     case 'EE_TABLE':
-        return new EETableLayer({
-            map,
-            mapId$: api.gee.eeTableMap$({
-                tableId: aoi.id,
-                columnName: aoi.keyColumn,
-                columnValue: aoi.key,
-                buffer: aoi.buffer,
-                color,
-                fillColor
-            }),
-            layerIndex,
-            watchedProps: aoi
-        })
+        return <EETableLayer
+            id={id}
+            map={map}
+            tableId={aoi.id}
+            columnName={aoi.keyColumn}
+            columnValue={aoi.key}
+            buffer={aoi.buffer}
+            color={color}
+            fillColor={fillColor}
+            layerIndex={layerIndex}
+            watchedProps={aoi}
+        />
     case 'POLYGON':
-        return new PolygonLayer({
-            map,
-            path: aoi.path,
-            fill: false, // TODO: Should fill sometimes
-            color,
-            fillColor
-        })
+        return <PolygonLayer
+            id={id}
+            map={map}
+            path={aoi.path}
+            fill={false} // TODO: Should fill sometimes
+            color={color}
+            fillColor={fillColor}
+        />
 
     default:
         throw Error(`Unsupported AOI type: ${aoiType}`)
     }
 }
 
-export const setAoiLayer = ({map, aoi, fill, destroy$, onInitialized, layerIndex = 1}) => {
-    const layerId = 'Aoi'
-    switch (aoi && aoi.type) {
-    case 'COUNTRY':
-        return setEETableLayer({
-            map,
-            layerSpec: {
-                id: layerId,
-                tableId: countryEETable,
-                columnName: 'id',
-                columnValue: aoi.areaCode || aoi.countryCode,
-                buffer: aoi.buffer,
-                layerIndex
-            },
-            destroy$,
-            onInitialized
-        })
-    case 'EE_TABLE':
-        return setEETableLayer({
-            map,
-            layerSpec: {
-                id: layerId,
-                tableId: aoi.id,
-                columnName: aoi.keyColumn,
-                columnValue: aoi.key,
-                buffer: aoi.buffer,
-                layerIndex
-            },
-            destroy$,
-            onInitialized
-        })
-    case 'POLYGON':
-        return setPolygonLayer({
-            map,
-            layerSpec: {
-                id: layerId,
-                path: aoi.path
-            },
-            fill,
-            destroy$,
-            onInitialized
-        })
-
-    default:
-        removeAoiLayer(map)
-    }
+// TODO: Remove
+export const setAoiLayer = () => {
 }

@@ -1,44 +1,54 @@
-import {createAoiLayer} from 'app/home/map/aoiLayer'
-import {selectFrom} from '../../../stateUtils'
-import LabelsLayer from 'app/home/map/labelsLayer'
+import {AoiLayer} from 'app/home/map/aoiLayer'
+import {LabelsLayer} from 'app/home/map/labelsLayer'
+import {compose} from 'compose'
+import {selectFrom} from 'stateUtils'
+import {withMapContext} from './mapContext'
+import {withRecipe} from '../body/process/recipeContext'
+import PropTypes from 'prop-types'
+import React from 'react'
 
-export const updateFeatureLayers = ({recipe, map, onAdd, selectedLayers = [], destroy$}) => {
-    const sources = selectFrom(recipe, 'ui.featureLayerSources') || []
-    const sourceIds = selectedLayers.map(({sourceId}) => sourceId)
-    sources.forEach((source, i) => {
-        const isSelected = sourceIds.includes(source.id)
-        if (isSelected) {
-            const {layerConfig} = selectedLayers.find(({sourceId}) => source.id === sourceId)
-            addFeatureLayer({map, source, recipe, layerConfig, layerIndex: i + 1, onAdd, destroy$})
-        } else {
-            map.removeLayer(source.type)
-        }
-    })
-}
-
-const addFeatureLayer = ({map, source, recipe, layerConfig, layerIndex, onAdd, destroy$}) => {
-    const layer = createFeatureLayer({
-        source,
-        map,
-        recipe,
-        layerConfig,
-        layerIndex
-    })
-    if (layer) {
-        const id = source.type
-        map.setLayer({
-            id,
-            layer,
-            destroy$,
-            onInitialized: layer => onAdd && onAdd(id, layer)
+const mapRecipeToProps = recipe => ({
+    sources: selectFrom(recipe, 'ui.featureLayerSources') || [],
+})
+const _FeatureLayers = ({sources, selectedLayers, map}) =>
+    map
+        ? selectedLayers.map((layer, i) => {
+            const source = sources.find(({id}) => id === layer.sourceId)
+            return (
+                <FeatureLayer
+                    key={i}
+                    id={source.type}
+                    source={source}
+                    layerConfig={layer.layerConfig}
+                    layerIndex={i + 1}
+                    map={map}
+                />
+            )
         })
-    }
+        : null
+
+export const FeatureLayers = compose(
+    _FeatureLayers,
+    withRecipe(mapRecipeToProps),
+    withMapContext()
+)
+
+FeatureLayers.propTypes = {
+    map: PropTypes.any,
+    selectedLayers: PropTypes.any
 }
 
-const createFeatureLayer = ({source, map, recipe, layerConfig, layerIndex}) => {
+const _FeatureLayer = ({source, map, recipe, layerConfig, layerIndex}) => {
+    const id = source.type
     switch(source.type) {
-    case 'Labels': return new LabelsLayer({map, layerIndex})
-    case 'Aoi': return createAoiLayer({map, recipe, layerConfig, layerIndex})
+    case 'Labels': return <LabelsLayer id={id} layerIndex={layerIndex} map={map}/>
+    case 'Aoi': return <AoiLayer id={source.type} layerConfig={layerConfig} layerIndex={layerIndex} recipe={recipe} map={map}/>
     default: throw Error(`Unsupported feature layer type: ${source.type}`)
     }
 }
+
+export const FeatureLayer = compose(
+    _FeatureLayer,
+    withRecipe(recipe => ({recipe}))
+)
+

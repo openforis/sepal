@@ -1,8 +1,8 @@
+import {FeatureLayers} from 'app/home/map/featureLayers'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {getLogger} from 'log'
 import {selectFrom} from 'stateUtils'
-import {updateFeatureLayers} from 'app/home/map/featureLayers'
 import {withMapsContext} from 'app/home/map/maps'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
@@ -20,7 +20,7 @@ const PREVIEW_MAP_OPTIONS = {
 
 const mapRecipeToProps = recipe => ({
     recipe,
-    selectedLayers: selectFrom(recipe, 'layers.overlay.featureLayers'),
+    selectedLayers: selectFrom(recipe, 'layers.overlay.featureLayers') || [],
     bounds: selectFrom(recipe, 'ui.overlay.bounds')
 })
 
@@ -35,8 +35,15 @@ class _PreviewMap extends React.Component {
     }
 
     render() {
+        const {selectedLayers} = this.props
+        const {map} = this.state
         return (
-            <div className={styles.map} ref={this.refCallback}/>
+            <React.Fragment>
+                <div className={styles.map} ref={this.refCallback}/>
+                {map && selectedLayers.length
+                    ? <FeatureLayers selectedLayers={selectedLayers} map={map}/>
+                    : null}
+            </React.Fragment>
         )
     }
 
@@ -62,13 +69,10 @@ class _PreviewMap extends React.Component {
 
     componentDidUpdate(prevProps) {
         const {bounds: prevBounds} = prevProps
-        const {recipe, selectedLayers, bounds, componentWillUnmount$} = this.props
+        const {bounds} = this.props
         const {map} = this.state
-        if (map) {
-            updateFeatureLayers({map, recipe, selectedLayers, destroy$: componentWillUnmount$})
-            if (bounds && !_.isEqual(bounds, prevBounds)) {
-                map.fitBounds(bounds)
-            }
+        if (map && bounds && !_.isEqual(bounds, prevBounds)) {
+            map.fitBounds(bounds)
         }
     }
 }

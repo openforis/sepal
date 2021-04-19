@@ -1,25 +1,55 @@
-import {NEVER, of} from 'rxjs'
-import actionBuilder from 'action-builder'
+import {EETableLayer} from './eeTableLayer'
+import {compose} from 'compose'
+import {connect} from 'store'
+import {of} from 'rxjs'
+import PropTypes from 'prop-types'
+import React from 'react'
 
-export default class LabelsLayer {
-    static showLabelsAction({map, layerIndex = 2, shown, statePath}) {
-        return actionBuilder('SET_LABELS_SHOWN', {shown})
-            .set([statePath, 'labelsShown'], shown)
-            .sideEffect(() => {
-                const layer = shown ? new LabelsLayer({map, layerIndex}) : null
-                map.setLayer({id: 'labels', layer, destroy$: NEVER})
-            })
-            .build()
+class _LabelsLayer extends React.Component {
+    render() {
+        return null
     }
 
+    componentDidMount() {
+        this.setLayer()
+    }
+
+    componentDidUpdate() {
+        this.setLayer()
+    }
+
+    componentWillUnmount() {
+        const {id, map} = this.props
+        map.removeLayer(id)
+    }
+
+    setLayer() {
+        const {id, layerIndex, map, componentWillUnmount$} = this.props
+        const layer = new Layer({map, layerIndex})
+        map.setLayer({
+            id,
+            layer,
+            destroy$: componentWillUnmount$
+        })
+    }
+}
+
+export const LabelsLayer = compose(
+    _LabelsLayer,
+    connect()
+)
+
+LabelsLayer.propTypes = {
+    id: PropTypes.string.isRequired,
+    layerIndex: PropTypes.number,
+    map: PropTypes.any
+}
+
+class Layer {
     constructor({map, layerIndex}) {
         this.map = map
         const {google} = map.getGoogle()
         this.layer = new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
-        this.bounds = new google.maps.LatLngBounds(
-            new google.maps.LatLng(90, -180),
-            new google.maps.LatLng(-90, 180)
-        )
         this.layerIndex = layerIndex
     }
 
@@ -35,7 +65,7 @@ export default class LabelsLayer {
         this.map.removeFromMap(this.layerIndex)
     }
 
-    hide(hidden) {
+    hide(_hidden) {
         // No-op
     }
 

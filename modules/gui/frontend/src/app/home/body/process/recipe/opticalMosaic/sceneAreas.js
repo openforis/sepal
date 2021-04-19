@@ -12,7 +12,6 @@ import {select} from 'store'
 import {selectFrom} from 'stateUtils'
 import {takeUntil} from 'rxjs/operators'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import MapStatus from 'widget/mapStatus'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -26,7 +25,6 @@ const mapRecipeToProps = (recipe, ownProps) => {
     return {
         recipeId: recipe.id,
         initialized: selectFrom(recipe, 'ui.initialized'),
-        sceneAreasShown: selectFrom(recipe, 'ui.sceneAreasShown'),
         sceneAreas: selectFrom(recipe, 'ui.sceneAreas'),
         aoi: selectFrom(recipe, 'model.aoi'),
         source: getSource(recipe),
@@ -50,11 +48,10 @@ class SceneAreas extends React.Component {
     }
 
     render() {
-        const {sceneAreasShown, stream} = this.props
+        const {stream} = this.props
         return (
             <React.Fragment>
-                {stream('LOAD_SCENE_AREAS').completed && sceneAreasShown && this.state.show ? this.renderSceneAreas() : null}
-                {stream('LOAD_SCENE_AREAS').dispatching && <MapStatus message={msg('process.mosaic.sceneAreas.loading')}/>}
+                {stream('LOAD_SCENE_AREAS').completed && this.state.show ? this.renderSceneAreas() : null}
             </React.Fragment>
         )
     }
