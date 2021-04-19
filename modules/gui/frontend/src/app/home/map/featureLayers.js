@@ -1,8 +1,8 @@
 import {AoiLayer} from 'app/home/map/aoiLayer'
 import {LabelsLayer} from 'app/home/map/labelsLayer'
+import {SceneAreasLayer} from '../body/process/recipe/opticalMosaic/sceneAreasLayer'
 import {compose} from 'compose'
 import {selectFrom} from 'stateUtils'
-import {withMapContext} from './mapContext'
 import {withRecipe} from '../body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -15,22 +15,25 @@ const _FeatureLayers = ({sources, selectedLayers, map}) =>
         ? selectedLayers.map((layer, i) => {
             const source = sources.find(({id}) => id === layer.sourceId)
             return (
-                <FeatureLayer
-                    key={i}
-                    id={source.type}
-                    source={source}
-                    layerConfig={layer.layerConfig}
-                    layerIndex={i + 1}
-                    map={map}
-                />
+                source
+                    ? (
+                        <FeatureLayer
+                            key={i}
+                            id={source.type}
+                            source={source}
+                            layerConfig={layer.layerConfig}
+                            layerIndex={i + 1}
+                            map={map}
+                        />
+                    )
+                    : null
             )
         })
         : null
 
 export const FeatureLayers = compose(
     _FeatureLayers,
-    withRecipe(mapRecipeToProps),
-    withMapContext()
+    withRecipe(mapRecipeToProps)
 )
 
 FeatureLayers.propTypes = {
@@ -43,6 +46,7 @@ const _FeatureLayer = ({source, map, recipe, layerConfig, layerIndex}) => {
     switch(source.type) {
     case 'Labels': return <LabelsLayer id={id} layerIndex={layerIndex} map={map}/>
     case 'Aoi': return <AoiLayer id={source.type} layerConfig={layerConfig} layerIndex={layerIndex} recipe={recipe} map={map}/>
+    case 'SceneAreas': return <SceneAreasLayer map={map}/>
     default: throw Error(`Unsupported feature layer type: ${source.type}`)
     }
 }

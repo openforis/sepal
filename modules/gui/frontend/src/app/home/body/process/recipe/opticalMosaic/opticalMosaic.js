@@ -1,6 +1,7 @@
 import {Aoi} from '../aoi'
 import {Map} from 'app/home/map/map'
 import {RecipeActions, defaultModel} from './opticalMosaicRecipe'
+import {SceneAreas} from './sceneAreas'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
@@ -8,7 +9,6 @@ import {selectFrom} from 'stateUtils'
 import AutoSelectScenes from './autoSelectScenes'
 import MosaicToolbar from './panels/opticalMosaicToolbar'
 import React from 'react'
-import SceneAreas from './sceneAreas'
 import SceneDeselection from './sceneDeselection'
 import SceneSelection from './sceneSelection'
 import styles from './opticalMosaic.module.css'
@@ -23,7 +23,6 @@ class _OpticalMosaic extends React.Component {
         super(props)
         const {recipeId} = props
         const recipeActions = RecipeActions(recipeId)
-        recipeActions.setSceneAreasShown(true).dispatch()
         recipeActions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
         recipeActions.initializeLayers()
     }
@@ -36,7 +35,7 @@ class _OpticalMosaic extends React.Component {
                 <Aoi value={aoi}/>
                 {initialized
                     ? <React.Fragment>
-                        {/*<SceneAreas/>*/}
+                        <SceneAreas/>
                         <AutoSelectScenes/>
                         <SceneSelection/>
                         <SceneDeselection/>

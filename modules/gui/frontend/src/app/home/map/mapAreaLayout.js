@@ -9,7 +9,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 const mapRecipeToProps = recipe => ({
-    areas: selectFrom(recipe, ['layers.areas']) || []
+    areas: selectFrom(recipe, ['layers.areas'])
 })
 
 class _MapAreaLayout extends React.Component {

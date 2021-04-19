@@ -128,7 +128,7 @@ class _Map extends React.Component {
         return zoomArea
     }
 
-    renderMap(source, layerConfig, area) {
+    renderImageLayerSource(source, layerConfig, area) {
         const {maps} = this.state
         const map = maps[area] && maps[area].map
         const updateLayerConfig = layerConfig => this.updateLayerConfig(layerConfig, area)
@@ -233,7 +233,7 @@ class _Map extends React.Component {
             const source = imageLayerSources.find(({id}) => id === sourceId)
             return ({
                 placement: area,
-                content: this.renderMap(source, layerConfig, area)
+                content: this.renderImageLayerSource(source, layerConfig, area)
             })
         })
 
@@ -387,6 +387,7 @@ class _Map extends React.Component {
                 map.setLayer(...args)
             },
             getGoogle: (...args) => {
+                console.log('mapDelegate')
                 log.warn('should we call map.getGoogle?')
                 map.getGoogle(...args)
             },

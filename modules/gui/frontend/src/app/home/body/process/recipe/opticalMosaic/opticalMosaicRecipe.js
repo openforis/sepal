@@ -125,9 +125,6 @@ export const RecipeActions = id => {
                 {imageLayerSources}
             ).dispatch()
         },
-        setSceneAreasShown(shown) {
-            return set('SET_SCENE_AREAS_SHOWN', 'ui.sceneAreasShown', shown, {shown})
-        },
         setSceneAreas(sceneAreas) {
             return set('SET_SCENE_AREAS', 'ui.sceneAreas', sceneAreas, {sceneAreas})
         },

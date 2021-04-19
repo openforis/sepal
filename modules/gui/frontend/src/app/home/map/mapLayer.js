@@ -1,5 +1,4 @@
 import {compose} from 'compose'
-import {withMap} from './mapContext'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -8,12 +7,43 @@ import _ from 'lodash'
 class _MapLayer extends React.Component {
     state = {
         shown: false,
-        projection: null
+        projection: null,
+        overlay: null
     }
 
-    constructor(props) {
-        super(props)
-        const {map} = props
+    render() {
+        const {shown, projection, overlay} = this.state
+        const {className, children} = this.props
+        if (!overlay) {
+            return null
+        }
+        const mapPanes = overlay.getPanes()
+        const content = (
+            <div className={className}>
+                <ProjectionContext.Provider value={{projection}}>
+                    {children}
+                </ProjectionContext.Provider>
+            </div>
+        )
+        return shown && mapPanes
+            ? <Portal type='container' content={content} container={mapPanes.overlayMouseTarget}/>
+            : null
+    }
+
+    componentDidMount() {
+        this.initOverlay()
+    }
+
+    componentDidUpdate() {
+        this.initOverlay()
+    }
+
+    initOverlay() {
+        const {overlay: initializedOverlay} = this.state
+        const {map} = this.props
+        if (initializedOverlay || !map.getGoogle()) {
+            return
+        }
         const {google, googleMap} = map.getGoogle()
 
         class ReactOverlayView extends google.maps.OverlayView {
@@ -46,34 +76,21 @@ class _MapLayer extends React.Component {
             }
         }
 
-        this.overlay = new ReactOverlayView(this)
-        this.overlay.setMap(googleMap)
-    }
-
-    render() {
-        const {shown, projection} = this.state
-        const {className, children} = this.props
-        const mapPanes = this.overlay.getPanes()
-        const content = (
-            <div className={className}>
-                <ProjectionContext.Provider value={{projection}}>
-                    {children}
-                </ProjectionContext.Provider>
-            </div>
-        )
-        return shown && mapPanes
-            ? <Portal type='container' content={content} container={mapPanes.overlayMouseTarget}/>
-            : null
+        const overlay = new ReactOverlayView(this)
+        overlay.setMap(googleMap)
+        this.setState({overlay})
     }
 
     componentWillUnmount() {
-        this.overlay.setMap(null)
+        const {overlay} = this.state
+        if (overlay) {
+            overlay.setMap(null)
+        }
     }
 }
 
 export const MapLayer = compose(
-    _MapLayer,
-    withMap()
+    _MapLayer
 )
 
 MapLayer.propTypes = {
@@ -114,8 +131,7 @@ class _MapObject extends React.Component {
 
 export const MapObject = compose(
     _MapObject,
-    // connect(state => ({projectionChange: state.map.projectionChange})),
-    withMap()
+    // connect(state => ({projectionChange: state.map.projectionChange}))
 )
 
 MapObject.propTypes = {
