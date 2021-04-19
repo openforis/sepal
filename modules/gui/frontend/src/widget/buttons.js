@@ -14,29 +14,22 @@ export class Buttons extends React.Component {
             : selected === value
     }
 
-    selectSingle(value) {
-        const {onChange} = this.props
-        onChange && onChange(value)
-        return value
-    }
-
     toggleMultiple(value) {
-        const {selected, onChange} = this.props
+        const {selected} = this.props
         const prevValue = Array.isArray(selected) ? selected : []
         const nextValue = this.isSelected(value)
             ? prevValue.filter(v => v !== value)
             : [...prevValue, value]
-        onChange && onChange(nextValue)
         return nextValue
     }
 
     select(value) {
         const {selected, multiple, onChange} = this.props
         const prevValue = selected
-        const nextValue = multiple ? this.toggleMultiple(value) : this.selectSingle(value)
-        if (prevValue !== nextValue)
+        const nextValue = multiple ? this.toggleMultiple(value) : value
+        if (prevValue !== nextValue) {
             onChange && onChange(nextValue)
-
+        }
     }
 
     renderButton({value, label, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected}) {
