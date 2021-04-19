@@ -3,9 +3,7 @@ import {Buttons} from 'widget/buttons'
 import {ImageLayerSource} from './imageLayerSource'
 import {Item} from 'widget/item'
 import {Layout} from 'widget/layout'
-import {Menu} from 'widget/menu/menu'
 import {Panel} from 'widget/panel/panel'
-import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {msg} from '../../../translate'
 import {recipePath} from '../body/process/recipe'
@@ -70,6 +68,19 @@ class _MapAreaMenu extends React.Component {
                 onSelect={({value}) => this.selectImageLayer(value)}
             />
         )
+        // return (
+        //     <ButtonSelect
+        //         className={styles.imageLayerSource}
+        //         label={imageLayerSource}
+        //         options={imageLayerSourceOptions}
+        //         disabled={!imageLayerSourceOptions.length}
+        //         value={imageLayer.sourceId}
+        //         optionConverter={({description}) => description}
+        //         onChange={option => {
+        //             console.log(option)
+        //         }}
+        //     />
+
     }
 
     renderImageLayerForm() {
@@ -87,30 +98,38 @@ class _MapAreaMenu extends React.Component {
             label: type, // TODO: Use message source
             tooltip: description
         }))
+
         return (
             <Buttons
                 alignment='fill'
-                selected={[]}
+                multiple
+                selected={selectedSourceIds}
                 options={options}
-                onChange={sourceId =>
-                    sourceId && this.toggleFeatureLayer({sourceId, shown: !selectedSourceIds.includes(sourceId)})
+                onChange={sourceIds =>
+                    this.setFeatureLayers(sourceIds.map(sourceId => ({sourceId})))
                 }
             />
         )
     }
 
-    toggleFeatureLayer({sourceId, shown}) {
-        console.log({sourceId, shown})
+    // toggleFeatureLayer({sourceId, shown}) {
+    //     const {recipeId, area} = this.props
+    //     if (shown) {
+    //         actionBuilder('ADD_FEATURE_LAYER', {sourceId, shown, area})
+    //             .push([recipePath(recipeId), 'layers.areas', area, 'featureLayers'], {sourceId})
+    //             .dispatch()
+    //     } else {
+    //         actionBuilder('REMOVE_FEATURE_LAYER', {sourceId, area})
+    //             .del([recipePath(recipeId), 'layers.areas', area, 'featureLayers', {sourceId}])
+    //             .dispatch()
+    //     }
+    // }
+
+    setFeatureLayers(sourceIds) {
         const {recipeId, area} = this.props
-        if (shown) {
-            actionBuilder('ADD_FEATURE_LAYER', {sourceId, shown, area})
-                .push([recipePath(recipeId), 'layers.areas', area, 'featureLayers'], {sourceId})
-                .dispatch()
-        } else {
-            actionBuilder('REMOVE_FEATURE_LAYER', {sourceId, area})
-                .del([recipePath(recipeId), 'layers.areas', area, 'featureLayers', {sourceId}])
-                .dispatch()
-        }
+        actionBuilder('SET_FEATURE_LAYERS', {sourceIds, area})
+            .set([recipePath(recipeId), 'layers.areas', area, 'featureLayers'], sourceIds)
+            .dispatch()
     }
 
     selectImageLayer(sourceId) {
