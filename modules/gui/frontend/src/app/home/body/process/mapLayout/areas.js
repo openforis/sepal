@@ -1,29 +1,19 @@
 import {HoverDetector} from 'widget/hover'
-import {ImageLayerSource} from '../../../map/imageLayerSource'
 import {Padding} from 'widget/padding'
 import {Subject, merge} from 'rxjs'
 import {SuperButton} from 'widget/superButton'
 import {assignArea, removeArea, validAreas} from './layerAreas'
 import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, mapTo} from 'rxjs/operators'
+import {getImageLayerSource} from 'app/home/map/imageLayerSource/imageLayerSource'
 import {msg} from 'translate'
-import {selectFrom} from 'stateUtils'
+import {withLayers} from '../withLayers'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './areas.module.css'
 import withSubscription from 'subscription'
-
-const mapRecipeToProps = recipe => {
-    return {
-        sources: [
-            ...selectFrom(recipe, 'ui.imageLayerSources') || [],
-            ...selectFrom(recipe, 'layers.additionalImageLayerSources') || []
-        ],
-        areas: selectFrom(recipe, 'layers.areas')
-    }
-}
 
 class _Areas extends React.Component {
     state = {
@@ -70,7 +60,7 @@ class _Areas extends React.Component {
     }
 
     renderCurrentAreas() {
-        const {areas} = this.props
+        const {layers: {areas}} = this.props
         const {nextAreas, dragging, hovering} = this.state
         const hidden = !!(dragging && hovering && nextAreas)
         return (
@@ -138,15 +128,17 @@ class _Areas extends React.Component {
             </div>
         )
     }
+
     renderSourceInfo(area, sourceId) {
-        const {sources} = this.props
-        const source = sources.find(source => source.id === sourceId)
+        const {recipe, imageLayerSources} = this.props
+        const source = imageLayerSources.find(source => source.id === sourceId)
+        const {description} = getImageLayerSource({recipe, source})
         return source
             ? (
                 <div className={styles.areaContent}>
                     <SuperButton
                         title={msg(`imageLayerSources.${source.type}`)}
-                        description={<ImageLayerSource source={source} output={'DESCRIPTION'}/>}
+                        description={description}
                         removeMessage={msg('map.layout.area.remove.message')}
                         removeTooltip={msg('map.layout.area.remove.tooltip')}
                         drag$={this.areaDrag$}
@@ -205,7 +197,7 @@ class _Areas extends React.Component {
     }
 
     onSourceDragStart(sourceId) {
-        const {areas} = this.props
+        const {layers: {areas}} = this.props
         this.onDragStart({
             dragging: true,
             dragMode: 'adding',
@@ -215,7 +207,7 @@ class _Areas extends React.Component {
     }
 
     onAreaDragStart(area) {
-        const {areas} = this.props
+        const {layers: {areas}} = this.props
         this.onDragStart({
             dragging: true,
             dragMode: 'moving',
@@ -297,7 +289,7 @@ class _Areas extends React.Component {
     }
 
     removeArea(area) {
-        const {areas, recipeActionBuilder} = this.props
+        const {layers: {areas}, recipeActionBuilder} = this.props
         recipeActionBuilder('REMOVE_AREA')
             .set('layers.areas', removeArea({areas, area}))
             .dispatch()
@@ -306,14 +298,15 @@ class _Areas extends React.Component {
 
 export const Areas = compose(
     _Areas,
-    withRecipe(mapRecipeToProps),
+    withLayers(),
+    withRecipe(recipe => ({recipe})),
     withSubscription()
 )
 
 Areas.propTypes = {
-    areas: PropTypes.shape({
-        area: PropTypes.oneOf(['center', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-left', 'left', 'top-left']),
-        value: PropTypes.any
-    }),
+    // areas: PropTypes.shape({
+    //     area: PropTypes.oneOf(['center', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-left', 'left', 'top-left']),
+    //     value: PropTypes.any
+    // }),
     sourceDrag$: PropTypes.object
 }

@@ -20,21 +20,7 @@ const defaultLayerConfig = {
     }
 }
 
-export class OpticalMosaicImageLayerSource extends React.Component {
-    render() {
-        const {output} = this.props
-        switch (output) {
-        case 'LAYER': return <Layer {...this.props}/>
-        case 'DESCRIPTION': return <Description {...this.props}/>
-        default: throw Error(`Unsupported output type: ${output}`)
-        }
-    }
-}
-
-const Description = ({recipe: {title, placeholder}}) =>
-    <React.Fragment>{title || placeholder}</React.Fragment>
-
-class _Layer extends React.Component {
+class _OpticalMosaicImageLayerSource extends React.Component {
     bandCombinations = [
         ['red', 'green', 'blue'],
         ['nir', 'red', 'green'],
@@ -158,8 +144,8 @@ class _Layer extends React.Component {
 
 }
 
-const Layer = compose(
-    _Layer,
+export const OpticalMosaicImageLayerSource = compose(
+    _OpticalMosaicImageLayerSource,
     withMapAreaContext()
 )
 
@@ -168,7 +154,6 @@ OpticalMosaicImageLayerSource.defaultProps = {
 }
 
 OpticalMosaicImageLayerSource.propTypes = {
-    output: PropTypes.oneOf(['LAYER', 'DESCRIPTION']).isRequired,
     recipe: PropTypes.object.isRequired,
     layerConfig: PropTypes.object,
     map: PropTypes.object

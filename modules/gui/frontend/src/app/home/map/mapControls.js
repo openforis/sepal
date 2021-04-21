@@ -1,28 +1,19 @@
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
-import {ImageLayerSource} from './imageLayerSource'
 import {Item} from 'widget/item'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
+import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {msg} from '../../../translate'
 import {recipePath} from '../body/process/recipe'
-import {selectFrom} from 'stateUtils'
+import {withLayers} from '../body/process/withLayers'
 import {withRecipe} from '../body/process/recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from '../../../action-builder'
 import styles from './mapControls.module.css'
-
-const mapRecipeToProps = recipe => ({
-    imageLayerSources: [
-        ...selectFrom(recipe, 'ui.imageLayerSources') || [],
-        ...selectFrom(recipe, 'layers.additionalImageLayerSources') || []
-    ],
-    featureLayerSources: selectFrom(recipe, 'ui.featureLayerSources'),
-    areas: selectFrom(recipe, 'layers.areas')
-})
 
 class _MapAreaMenu extends React.Component {
     render() {
@@ -40,17 +31,18 @@ class _MapAreaMenu extends React.Component {
     }
 
     renderImageLayerSource() {
-        const {imageLayerSources, areas, area} = this.props
+        const {imageLayerSources, layers: {areas}, area, recipe} = this.props
         const {imageLayer} = areas[area]
         const imageLayerSourceOptions = imageLayerSources.map(source => {
             const {id, type} = source
+            const {description} = getImageLayerSource({recipe, source})
             return ({
                 value: id,
                 label: (
                     <div>
                         <Item
                             title={<div className={styles.title}>{msg(`imageLayerSources.${type}`)}</div>}
-                            description={<ImageLayerSource source={source} output={'DESCRIPTION'}/>}
+                            description={description}
                         />
                     </div>
                 )
@@ -89,7 +81,7 @@ class _MapAreaMenu extends React.Component {
     }
 
     renderFeatureLayers() {
-        const {area, featureLayerSources, areas} = this.props
+        const {area, featureLayerSources, layers: {areas}} = this.props
         const {featureLayers} = areas[area]
         const selectedSourceIds = featureLayers.map(({sourceId}) => sourceId)
 
@@ -112,19 +104,6 @@ class _MapAreaMenu extends React.Component {
         )
     }
 
-    // toggleFeatureLayer({sourceId, shown}) {
-    //     const {recipeId, area} = this.props
-    //     if (shown) {
-    //         actionBuilder('ADD_FEATURE_LAYER', {sourceId, shown, area})
-    //             .push([recipePath(recipeId), 'layers.areas', area, 'featureLayers'], {sourceId})
-    //             .dispatch()
-    //     } else {
-    //         actionBuilder('REMOVE_FEATURE_LAYER', {sourceId, area})
-    //             .del([recipePath(recipeId), 'layers.areas', area, 'featureLayers', {sourceId}])
-    //             .dispatch()
-    //     }
-    // }
-
     setFeatureLayers(sourceIds) {
         const {recipeId, area} = this.props
         actionBuilder('SET_FEATURE_LAYERS', {sourceIds, area})
@@ -142,7 +121,8 @@ class _MapAreaMenu extends React.Component {
 
 const MapAreaMenu = compose(
     _MapAreaMenu,
-    withRecipe(mapRecipeToProps)
+    withLayers(),
+    withRecipe(recipe => ({recipe}))
 )
 
 export class MapControls extends React.Component {

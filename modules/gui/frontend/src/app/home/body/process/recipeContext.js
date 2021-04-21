@@ -42,13 +42,14 @@ export const withRecipe = (mapRecipeToProps = () => ({})) =>
             }
         }
         class HigherOrderComponent extends React.Component {
-            render() {
-                return React.createElement(WrappedComponent, {...this.props})
+            constructor(props) {
+                super(props)
+                const {recipeId, usingRecipe} = props
+                usingRecipe(recipeId)
             }
 
-            componentDidMount() {
-                const {recipeId, usingRecipe} = this.props
-                usingRecipe(recipeId)
+            render() {
+                return React.createElement(WrappedComponent, {...this.props})
             }
         }
         return compose(
