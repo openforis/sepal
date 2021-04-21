@@ -3,6 +3,7 @@ import {Areas} from './areas'
 import {Buttons} from 'widget/buttons'
 import {ImageLayerSources} from './imageLayerSources'
 import {Panel} from 'widget/panel/panel'
+import {SelectAsset} from './selectAsset'
 import {SelectPlanet} from './selectPlanet'
 import {SelectRecipe} from './selectRecipe'
 import {Subject} from 'rxjs'
@@ -22,6 +23,7 @@ export class MapLayout extends React.Component {
                 <MapLayoutPanel/>
                 <AddImageLayerSource/>
                 <SelectRecipe/>
+                <SelectAsset/>
                 <SelectPlanet/>
             </React.Fragment>
         )

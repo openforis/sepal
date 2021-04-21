@@ -1,0 +1,43 @@
+.panel {
+    width: 40rem;
+}
+
+.name {
+    grid-area: name;
+}
+
+.gammaOrPalette {
+    grid-area: gammaOrPalette;
+    /*min-width: 15rem;*/
+}
+
+.min {
+    grid-area: min;
+}
+
+.max {
+    grid-area: max;
+}
+
+.inverted {
+    grid-area: inverted;
+    align-self: center;
+    justify-self: center;
+}
+
+.histogram {
+    grid-area: histogram;
+    height: 7rem;
+    background-color: hsla(0, 0%, 50%, .1);
+}
+
+.bandForm {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-areas:
+        'name       empty      gammaOrPalette'
+        'min        inverted   max'
+        'histogram  histogram  histogram';
+    grid-column-gap: 1.5rem;
+    grid-row-gap: 1rem;
+}

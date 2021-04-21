@@ -1,3 +1,4 @@
+import {AssetImageLayerSource} from './assetImageLayerSource'
 import {GoogleSatelliteImageLayerSource} from './googleSatelliteImageLayerSource'
 import {OpticalMosaicImageLayerSource} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicImageLayerSource'
 import {PlanetImageLayerSource} from './planetImageLayerSource'
@@ -41,6 +42,16 @@ const getGoogleSatelliteImageLayerSource = ({map}) => ({
     )
 })
 
+const getAssetImageLayerSource = (source, layerConfig, map) => ({
+    description: source.sourceConfig.asset,
+    component: (
+        <AssetImageLayerSource
+            source={source}
+            layerConfig={layerConfig}
+            map={map}/>
+    )
+})
+
 export const getImageLayerSource = ({source, recipe, layerConfig, map}) => {
     if (!source) {
         return {}
@@ -49,6 +60,8 @@ export const getImageLayerSource = ({source, recipe, layerConfig, map}) => {
     switch(type) {
     case 'Recipe':
         return getRecipeImageLayerSource({recipe, layerConfig, map})
+    case 'Asset':
+        return getAssetImageLayerSource()
     case 'Planet':
         return getPlanetImageLayerSource({source, layerConfig, map})
     case 'GoogleSatellite':

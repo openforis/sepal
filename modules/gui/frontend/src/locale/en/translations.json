@@ -379,6 +379,35 @@
                 }
             },
             "title": "Layers"
+        },
+        "visParams":  {
+            "title": "Custom visualization parameters",
+            "type": {
+                "single": {
+                    "label": "Single band"
+                },
+                "rgb": {
+                    "label": "RGB"
+                },
+                "hsv": {
+                    "label": "HSV"
+                }
+            },
+            "form": {
+                "gamma": {
+                    "label": "Gamma",
+                    "info": "Value: {gamma}"
+                },
+                "min": {
+                    "label": "Min"
+                },
+                "max": {
+                    "label": "Max"
+                },
+                "inverted": {
+                    "label": "Inverted"
+                }
+            }
         }
     },
     "imageLayerSources": {
