@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
-import {Item} from 'widget/item'
+import {Combo} from 'widget/combo'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
@@ -9,9 +9,9 @@ import {msg} from '../../../translate'
 import {recipePath} from '../body/process/recipe'
 import {withLayers} from '../body/process/withLayers'
 import {withRecipe} from '../body/process/recipeContext'
-import ButtonSelect from 'widget/buttonSelect'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import actionBuilder from '../../../action-builder'
 import styles from './mapControls.module.css'
 
@@ -19,9 +19,9 @@ class _MapAreaMenu extends React.Component {
     render() {
         return (
             <Panel className={styles.panel} type='normal'>
-                {this.renderImageLayerSource()}
                 <Panel.Content>
                     <Layout>
+                        {this.renderImageLayerSource()}
                         {this.renderImageLayerForm()}
                         {this.renderFeatureLayers()}
                     </Layout>
@@ -33,46 +33,32 @@ class _MapAreaMenu extends React.Component {
     renderImageLayerSource() {
         const {imageLayerSources, layers: {areas}, area, recipe} = this.props
         const {imageLayer} = areas[area]
+
         const imageLayerSourceOptions = imageLayerSources.map(source => {
             const {id, type} = source
             const {description} = getImageLayerSource({recipe, source})
             return ({
                 value: id,
-                label: (
-                    <div>
-                        <Item
-                            title={<div className={styles.title}>{msg(`imageLayerSources.${type}`)}</div>}
-                            description={description}
-                        />
-                    </div>
-                )
+                type,
+                label: description
             })
         })
-        const imageLayerSource = imageLayerSourceOptions.find(({value}) => value === imageLayer.sourceId).label
+
+        const groupedImageLayerSourceOptions = _(imageLayerSourceOptions)
+            .groupBy(item => item.type)
+            .map((options, group) => ({label: group, options}))
+            .value()
+
+        const {label, type} = imageLayerSourceOptions.find(({value}) => value === imageLayer.sourceId)
         return (
-            <ButtonSelect
-                className={styles.imageLayerSource}
-                label={imageLayerSource}
-                options={imageLayerSourceOptions}
-                chromeless
-                alignment={'left'}
-                width={'fill'}
-                onSelect={({value}) => this.selectImageLayer(value)}
+            <Combo
+                label={msg(`imageLayerSources.${type}`)}
+                placeholder={label}
+                options={groupedImageLayerSourceOptions}
+                value={imageLayer.sourceId}
+                onChange={({value}) => this.selectImageLayer(value)}
             />
         )
-        // return (
-        //     <ButtonSelect
-        //         className={styles.imageLayerSource}
-        //         label={imageLayerSource}
-        //         options={imageLayerSourceOptions}
-        //         disabled={!imageLayerSourceOptions.length}
-        //         value={imageLayer.sourceId}
-        //         optionConverter={({description}) => description}
-        //         onChange={option => {
-        //             console.log(option)
-        //         }}
-        //     />
-
     }
 
     renderImageLayerForm() {
