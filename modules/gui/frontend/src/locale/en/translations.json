@@ -410,6 +410,20 @@
             }
         }
     },
+    "featureLayerSources": {
+        "Aoi": {
+            "type": "AOI",
+            "description": "Area of Interest"
+        },
+        "Labels": {
+            "type": "Labels",
+            "description": "Map labels, roads and points of interest"
+        },
+        "SceneAreas": {
+            "type": "Scene Areas",
+            "description": "Select scenes to use in mosaic"
+        }
+    },
     "imageLayerSources": {
         "Asset": "EE Asset",
         "Recipe": "Recipe",

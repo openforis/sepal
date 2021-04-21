@@ -6,7 +6,7 @@ import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
-import {msg} from '../../../translate'
+import {msg} from 'translate'
 import {recipePath} from '../body/process/recipe'
 import {withLayers} from '../body/process/withLayers'
 import {withRecipe} from '../body/process/recipeContext'
@@ -41,10 +41,10 @@ class _MapAreaMenu extends React.Component {
                 value: id,
                 type,
                 label: description,
-                searchableText: `${type} ${description}`,
+                searchableText: `${msg(`imageLayerSources.${type}`)} ${description}`,
                 render: () =>
                     <div className={styles.imageLayerSourceOption}>
-                        <Item title={type} description={description}/>
+                        <Item title={msg(`imageLayerSources.${type}`)} description={description}/>
                     </div>
             })
         })
@@ -54,7 +54,6 @@ class _MapAreaMenu extends React.Component {
             <Combo
                 label={msg(`imageLayerSources.${type}`)}
                 placeholder={label}
-                // options={groupedImageLayerSourceOptions}
                 options={imageLayerSourceOptions}
                 value={imageLayer.sourceId}
                 onChange={({value}) => this.selectImageLayer(value)}
@@ -74,7 +73,7 @@ class _MapAreaMenu extends React.Component {
 
         const options = featureLayerSources.map(({id, type, description}) => ({
             value: id,
-            label: type, // TODO: Use message source
+            label: msg(`featureLayerSources.${type}.type`),
             tooltip: description
         }))
 

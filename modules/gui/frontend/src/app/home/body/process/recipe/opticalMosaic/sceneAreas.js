@@ -113,7 +113,7 @@ class _SceneAreas extends React.Component {
         const source = {
             id: guid(),
             type: 'SceneAreas',
-            description: 'Scene areas' // TODO: Use messages
+            description: msg('featureLayerSources.SceneAreas.description')
         }
         const layer = {sourceId: source.id}
         Object.keys(areas)
