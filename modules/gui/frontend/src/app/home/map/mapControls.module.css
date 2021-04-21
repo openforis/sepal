@@ -17,3 +17,8 @@
     margin: 2rem;
     pointer-events: all;
 }
+
+.imageLayerSourceOption {
+    text-align: left;
+    line-height: 1.4;
+}

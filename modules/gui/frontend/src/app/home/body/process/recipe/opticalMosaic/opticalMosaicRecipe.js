@@ -54,45 +54,45 @@ export const RecipeActions = id => {
     return {
         initializeLayers() {
             const recipeImageLayerSource = {
-                id: guid(),
+                id: 'this-recipe',
                 type: 'Recipe',
                 sourceConfig: {
                     recipeId: id
                 }
             }
-            // const anotherRecipeImageLayerSource = {
-            //     id: guid(),
-            //     type: 'Recipe',
-            //     sourceConfig: {
-            //         recipeId: '5177f61a-8668-3ff2-a6d3-0faa4948d648'
-            //     }
-            // }
+            const assetImageLayerSource = {
+                id: 'test-asset',
+                type: 'Asset',
+                sourceConfig: {
+                    asset: 'users/wiell/ccdc_slice_ayeyarwadi_2020-01-01'
+                }
+            }
             const planetImageLayerSource = {
-                id: guid(),
+                id: 'planet-nicfi',
                 type: 'Planet',
                 sourceConfig: {
                     description: 'NICFI Planet composites'
                 }
             }
             const googleSatelliteImageLayerSource = {
-                id: guid(),
+                id: 'google-satellite',
                 type: 'GoogleSatellite',
                 sourceConfig: {}
             }
             const imageLayerSources = [
                 recipeImageLayerSource,
-                // anotherRecipeImageLayerSource,
+                assetImageLayerSource,
                 planetImageLayerSource,
                 googleSatelliteImageLayerSource
             ]
 
             const aoiLayerSource = {
-                id: guid(),
+                id: 'aoi',
                 type: 'Aoi',
                 description: 'Area of Interest'
             }
             const labelsLayerSource = {
-                id: guid(),
+                id: 'labels',
                 type: 'Labels',
                 description: 'Map labels, roads and points of interest'
             }
@@ -103,7 +103,8 @@ export const RecipeActions = id => {
             const areas = {
                 'center': {
                     imageLayer: {
-                        sourceId: recipeImageLayerSource.id
+                        // sourceId: recipeImageLayerSource.id
+                        sourceId: assetImageLayerSource.id
                     },
                     featureLayers: [
                         {sourceId: aoiLayerSource.id},

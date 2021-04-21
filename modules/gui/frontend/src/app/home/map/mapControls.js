@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import {Combo} from 'widget/combo'
+import {Item} from '../../../widget/item'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
@@ -40,21 +41,27 @@ class _MapAreaMenu extends React.Component {
             return ({
                 value: id,
                 type,
-                label: description
+                label: description,
+                render: () =>
+                    <div className={styles.imageLayerSourceOption}>
+                        <Item title={type} description={description}/>
+                    </div>
+                // label: <Item title={type} description={description}/>
             })
         })
 
-        const groupedImageLayerSourceOptions = _(imageLayerSourceOptions)
-            .groupBy(item => item.type)
-            .map((options, group) => ({label: group, options}))
-            .value()
+        // const groupedImageLayerSourceOptions = _(imageLayerSourceOptions)
+        //     .groupBy(item => item.type)
+        //     .map((options, group) => ({label: group, options}))
+        //     .value()
 
         const {label, type} = imageLayerSourceOptions.find(({value}) => value === imageLayer.sourceId)
         return (
             <Combo
                 label={msg(`imageLayerSources.${type}`)}
                 placeholder={label}
-                options={groupedImageLayerSourceOptions}
+                // options={groupedImageLayerSourceOptions}
+                options={imageLayerSourceOptions}
                 value={imageLayer.sourceId}
                 onChange={({value}) => this.selectImageLayer(value)}
             />
