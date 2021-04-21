@@ -1,9 +1,11 @@
 import {Form, form} from 'widget/form/form'
-import {Layout} from '../../../widget/layout'
+import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import ButtonSelect from 'widget/buttonSelect'
+import Icon from 'widget/icon'
 import React from 'react'
 import styles from './visParamsPanel.module.css'
 
@@ -46,6 +48,18 @@ class _VisParamsPanel extends React.Component {
                     {this.renderContent()}
                 </Panel.Content>
                 <Panel.Buttons onEscape={deactivate}>
+                    <ButtonSelect
+                        label={'Stretch'}
+                        icon='chart-area'
+                        placement='above'
+                        tooltipPlacement='bottom'
+                        options={[
+                            {value: '100', label: '100%'},
+                            {value: '98', label: '98%'},
+                            {value: '90', label: '90%'},
+                        ]}
+                        onSelect={option => console.log('Selected')}
+                    />
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Cancel onClick={deactivate}/>
                         <Panel.Buttons.Save onClick={() => this.save()}/>
@@ -173,7 +187,7 @@ class BandForm extends React.Component {
                 <Form.Buttons
                     input={inverted}
                     options={[
-                        {value: 'inverted', label: msg('map.visParams.form.inverted.label')}
+                        {value: 'inverted', label: <Icon name='exchange-alt'/>}
                     ]}
                     multiple
                     className={styles.inverted}

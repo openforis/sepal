@@ -27,7 +27,7 @@
 
 .histogram {
     grid-area: histogram;
-    height: 7rem;
+    height: 5rem;
     background-color: hsla(0, 0%, 50%, .1);
 }
 
