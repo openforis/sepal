@@ -12,8 +12,7 @@ import {withLayers} from '../body/process/withLayers'
 import {withRecipe} from '../body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
-import actionBuilder from '../../../action-builder'
+import actionBuilder from 'action-builder'
 import styles from './mapControls.module.css'
 
 class _MapAreaMenu extends React.Component {
@@ -42,18 +41,13 @@ class _MapAreaMenu extends React.Component {
                 value: id,
                 type,
                 label: description,
+                searchableText: `${type} ${description}`,
                 render: () =>
                     <div className={styles.imageLayerSourceOption}>
                         <Item title={type} description={description}/>
                     </div>
-                // label: <Item title={type} description={description}/>
             })
         })
-
-        // const groupedImageLayerSourceOptions = _(imageLayerSourceOptions)
-        //     .groupBy(item => item.type)
-        //     .map((options, group) => ({label: group, options}))
-        //     .value()
 
         const {label, type} = imageLayerSourceOptions.find(({value}) => value === imageLayer.sourceId)
         return (
