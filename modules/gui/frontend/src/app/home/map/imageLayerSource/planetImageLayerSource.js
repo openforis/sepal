@@ -1,4 +1,6 @@
 import {Buttons} from 'widget/buttons'
+import {Combo} from 'widget/combo'
+import {Item} from 'widget/item'
 import {Layout} from 'widget/layout'
 import {MapAreaLayout} from '../mapAreaLayout'
 import {compose} from 'compose'
@@ -7,12 +9,12 @@ import {get$} from 'http-client'
 import {map} from 'rxjs/operators'
 import {withMapAreaContext} from '../mapAreaContext'
 import {withMapContext} from '../mapContext'
-import ButtonSelect from 'widget/buttonSelect'
 import PropTypes from 'prop-types'
 import React from 'react'
 import WMTSLayer from '../wmtsLayer'
 import _ from 'lodash'
 import moment from 'moment'
+import styles from '../mapControls.module.css'
 
 const defaultLayerConfig = {
     bands: 'rgb'
@@ -77,24 +79,31 @@ class _PlanetImageLayerSource extends React.Component {
         const apiKey = this.getApiKey()
         const {[apiKey]: mosaics = []} = this.state
 
-        const mosaicOptions = mosaics.map(({startDate, endDate, urlTemplate}) => {
+        const options = mosaics.map(({startDate, endDate, urlTemplate}) => {
             const start = moment(startDate, 'YYYY-MM-DD')
             const end = moment(endDate, 'YYYY-MM-DD')
             const months = end.diff(start, 'months')
             const duration = moment.duration(months, 'months').humanize()
-            const date = start.format('MMM YYYY')
+            const date = start.format('MMMM YYYY')
             return ({
                 value: urlTemplate,
-                label: `${date} (${duration})`
+                label: `${date} - ${duration}`,
+                searchableText: `${date} ${duration}`,
+                render: () =>
+                    <div className={styles.imageLayerSourceOption}>
+                        <Item title={duration} description={date}/>
+                    </div>
             })
         })
-        const selectedOption = mosaicOptions.find(({value}) => value === urlTemplate)
+        const selectedOption = options.find(({value}) => value === urlTemplate) || {}
         return (
-            <ButtonSelect
-                options={mosaicOptions}
-                label={selectedOption && selectedOption.label}
+            <Combo
+                label={'Composite'}
+                options={options}
+                placeholder={selectedOption.label}
+                value={selectedOption.value}
                 disabled={!mosaics.length}
-                onSelect={({value}) => this.selectUrlTemplate(value)}
+                onChange={({value}) => this.selectUrlTemplate(value)}
             />
         )
     }
