@@ -15,6 +15,7 @@
 }
 
 .map::before {
+    pointer-events: none;
     content: '';
     position: absolute;
     z-index: 1;
