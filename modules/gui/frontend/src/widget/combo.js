@@ -347,7 +347,7 @@ Combo.propTypes = {
     errorMessage: PropTypes.any,
     inputClassName: PropTypes.string,
     keyboard: PropTypes.any,
-    label: PropTypes.string,
+    label: PropTypes.any,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,
