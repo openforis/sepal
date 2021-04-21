@@ -17,11 +17,3 @@
     margin: 2rem;
     pointer-events: all;
 }
-
-.imageLayerSource {
-    border-bottom: var(--wireframe);
-}
-
-.title {
-    margin-bottom: 0.25rem;
-}

@@ -1,6 +1,5 @@
 import {BehaviorSubject, ReplaySubject, Subject} from 'rxjs'
 import {Content, SectionLayout} from 'widget/sectionLayout'
-import {ImageLayerSource} from './imageLayerSource'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
 import {SplitView} from 'widget/split/splitView'
@@ -8,11 +7,13 @@ import {VisParamsPanel} from './visParamsPanel'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {debounceTime, distinctUntilChanged, finalize} from 'rxjs/operators'
+import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
 import {mapBoundsTag, mapTag} from 'tag'
 import {recipePath} from '../body/process/recipe'
 import {selectFrom} from 'stateUtils'
+import {withLayers} from '../body/process/withLayers'
 import {withMapsContext} from './maps'
 import {withRecipe} from '../body/process/recipeContext'
 import MapScale from './mapScale'
@@ -27,11 +28,6 @@ import withSubscriptions from 'subscription'
 const log = getLogger('map')
 
 const mapRecipeToProps = recipe => ({
-    layers: selectFrom(recipe, 'layers'),
-    imageLayerSources: [
-        ...selectFrom(recipe, 'ui.imageLayerSources') || [],
-        ...selectFrom(recipe, 'layers.additionalImageLayerSources') || []
-    ],
     bounds: selectFrom(recipe, 'ui.bounds'),
     recipe
 })
@@ -130,9 +126,13 @@ class _Map extends React.Component {
     }
 
     renderImageLayerSource(source, layerConfig, area) {
+        const {recipe} = this.props
         const {maps} = this.state
         const map = maps[area] && maps[area].map
         const updateLayerConfig = layerConfig => this.updateLayerConfig(layerConfig, area)
+
+        const {component} = getImageLayerSource({recipe, source, layerConfig, map})
+        
         return (
             <React.Fragment>
                 <div
@@ -142,7 +142,7 @@ class _Map extends React.Component {
                     onMouseDown={() => this.mouseDown$.next(area)}
                 />
                 <MapAreaContext.Provider value={{area, updateLayerConfig}}>
-                    <ImageLayerSource source={source} layerConfig={layerConfig} map={map} output={'LAYER'}/>
+                    {component}
                 </MapAreaContext.Provider>
             </React.Fragment>
         )
@@ -389,7 +389,6 @@ class _Map extends React.Component {
                 map.setLayer(...args)
             },
             getGoogle: (...args) => {
-                console.log('mapDelegate')
                 log.warn('should we call map.getGoogle?')
                 map.getGoogle(...args)
             },
@@ -413,6 +412,8 @@ export const Map = compose(
     _Map,
     connect(),
     withMapsContext(),
+    // withRecipe(),
+    withLayers(),
     withRecipe(mapRecipeToProps),
     withSubscriptions()
 )

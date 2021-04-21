@@ -1,16 +1,16 @@
 import {Buttons} from 'widget/buttons'
 import {Layout} from 'widget/layout'
-import {MapAreaLayout} from './mapAreaLayout'
+import {MapAreaLayout} from '../mapAreaLayout'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {get$} from 'http-client'
 import {map} from 'rxjs/operators'
-import {withMapAreaContext} from './mapAreaContext'
-import {withMapContext} from './mapContext'
+import {withMapAreaContext} from '../mapAreaContext'
+import {withMapContext} from '../mapContext'
 import ButtonSelect from 'widget/buttonSelect'
 import PropTypes from 'prop-types'
 import React from 'react'
-import WMTSLayer from './wmtsLayer'
+import WMTSLayer from '../wmtsLayer'
 import _ from 'lodash'
 import moment from 'moment'
 
@@ -18,24 +18,7 @@ const defaultLayerConfig = {
     bands: 'rgb'
 }
 
-export class PlanetImageLayerSource extends React.Component {
-    render() {
-        const {output} = this.props
-        switch (output) {
-        case 'LAYER':
-            return <Layer {...this.props}/>
-        case 'DESCRIPTION':
-            return <Description {...this.props}/>
-        default:
-            throw Error(`Unsupported output type: ${output}`)
-        }
-    }
-}
-
-const Description = ({description}) =>
-    <React.Fragment>{description}</React.Fragment>
-
-class _Layer extends React.Component {
+class _PlanetImageLayerSource extends React.Component {
     state = {}
 
     render() {
@@ -180,8 +163,8 @@ class _Layer extends React.Component {
     }
 }
 
-const Layer = compose(
-    _Layer,
+export const PlanetImageLayerSource = compose(
+    _PlanetImageLayerSource,
     withMapContext(),
     withMapAreaContext(),
     connect()
@@ -192,7 +175,6 @@ PlanetImageLayerSource.defaultProps = {
 }
 
 PlanetImageLayerSource.propTypes = {
-    output: PropTypes.oneOf(['LAYER', 'DESCRIPTION']).isRequired,
     layerConfig: PropTypes.object,
     map: PropTypes.object,
     planetApiKey: PropTypes.string

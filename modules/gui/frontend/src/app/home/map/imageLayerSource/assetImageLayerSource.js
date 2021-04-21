@@ -2,10 +2,10 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Combo} from 'widget/combo'
 import {Layout} from 'widget/layout'
-import {MapAreaLayout} from './mapAreaLayout'
+import {MapAreaLayout} from '../mapAreaLayout'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
-import EarthEngineLayer from './earthEngineLayer'
+import EarthEngineLayer from '../earthEngineLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './assetImageLayerSource.module.css'
@@ -14,19 +14,6 @@ class _AssetImageLayerSource extends React.Component {
     state = {}
 
     render() {
-        const {output} = this.props
-        switch(output) {
-        case 'DESCRIPTION': return this.renderDescription()
-        case 'LAYER': return this.renderLayer()
-        default: throw Error(`Unsupported output type: ${output}`)
-        }
-    }
-
-    renderDescription() {
-        return <div>{this.getAsset()}</div>
-    }
-
-    renderLayer() {
         const {layerConfig, map} = this.props
         const asset = this.getAsset()
         const layer = map
@@ -101,7 +88,6 @@ export const AssetImageLayerSource = compose(
 )
 
 AssetImageLayerSource.propTypes = {
-    output: PropTypes.oneOf(['LAYER', 'DESCRIPTION']).isRequired,
     source: PropTypes.any.isRequired,
     layerConfig: PropTypes.object,
     map: PropTypes.object

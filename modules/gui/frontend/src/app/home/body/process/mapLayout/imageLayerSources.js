@@ -1,33 +1,25 @@
-import {ImageLayerSource} from '../../../map/imageLayerSource'
 import {Padding} from 'widget/padding'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {SuperButton} from 'widget/superButton'
 import {compose} from 'compose'
+import {getImageLayerSource} from 'app/home/map/imageLayerSource/imageLayerSource'
 import {msg} from 'translate'
 import {removeArea} from './layerAreas'
-import {selectFrom} from 'stateUtils'
+import {withLayers} from '../withLayers'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 
-const mapRecipeToProps = recipe => {
-    return {
-        sources: selectFrom(recipe, 'ui.imageLayerSources'),
-        additionalSources: selectFrom(recipe, 'layers.additionalImageLayerSources') || [],
-        areas: selectFrom(recipe, 'layers.areas') || [],
-    }
-}
-
 export class _ImageLayerSources extends React.Component {
     render() {
-        const {sources, additionalSources} = this.props
+        const {standardImageLayerSources, additionalImageLayerSources} = this.props
         return (
             <ScrollableContainer>
                 <Scrollable>
                     <Padding noHorizontal>
-                        {sources.map(source => this.renderSource({source, removable: false}))}
-                        {additionalSources.map(source => this.renderSource({source, removable: true}))}
+                        {standardImageLayerSources.map(source => this.renderSource({source, removable: false}))}
+                        {additionalImageLayerSources.map(source => this.renderSource({source, removable: true}))}
                     </Padding>
                 </Scrollable>
             </ScrollableContainer>
@@ -35,13 +27,14 @@ export class _ImageLayerSources extends React.Component {
     }
 
     renderSource({source, removable}) {
-        const {drag$} = this.props
+        const {drag$, recipe} = this.props
+        const {description} = getImageLayerSource({recipe, source})
         return source && source.id
             ? (
                 <SuperButton
                     key={source.id}
                     title={msg(`imageLayerSources.${source.type}`)}
-                    description={<ImageLayerSource source={source} output={'DESCRIPTION'}/>}
+                    description={description}
                     removeMessage={msg('map.layout.layer.remove.message')}
                     removeTooltip={msg('map.layout.layer.remove.tooltip')}
                     drag$={drag$}
@@ -58,7 +51,7 @@ export class _ImageLayerSources extends React.Component {
     }
 
     removeSource(sourceId) {
-        const {areas, recipeActionBuilder} = this.props
+        const {layers: {areas}, recipeActionBuilder} = this.props
         const removeAreaBySource = (areas, sourceId) => {
             const area = _.chain(areas)
                 .pickBy(({imageLayer: {sourceId: areaSourceId}}) => areaSourceId === sourceId)
@@ -78,7 +71,8 @@ export class _ImageLayerSources extends React.Component {
 
 export const ImageLayerSources = compose(
     _ImageLayerSources,
-    withRecipe(mapRecipeToProps)
+    withLayers(),
+    withRecipe(recipe => ({recipe}))
 )
 
 ImageLayerSources.propTypes = {
