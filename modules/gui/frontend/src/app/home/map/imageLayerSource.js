@@ -7,7 +7,8 @@ import React from 'react'
 
 export class ImageLayerSource extends React.Component {
     render() {
-        const {source: {type, sourceConfig}, layerConfig, map, output} = this.props
+        const {source, layerConfig, map, output} = this.props
+        const {type, sourceConfig} = source
         switch(type) {
         case 'Recipe': return (
             <RecipeImageLayerSource
@@ -18,7 +19,7 @@ export class ImageLayerSource extends React.Component {
         )
         case 'Asset': return (
             <AssetImageLayerSource
-                asset={sourceConfig.asset}
+                source={source}
                 layerConfig={layerConfig}
                 map={map}
                 output={output}/>
