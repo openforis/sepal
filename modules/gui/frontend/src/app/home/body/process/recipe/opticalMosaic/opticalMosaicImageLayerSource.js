@@ -1,13 +1,12 @@
 import {Buttons} from 'widget/buttons'
+import {Combo} from '../../../../../../widget/combo'
 import {Layout} from 'widget/layout'
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {SceneSelectionType} from './opticalMosaicRecipe'
-import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
-import ButtonSelect from 'widget/buttonSelect'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -108,16 +107,13 @@ class _OpticalMosaicImageLayerSource extends React.Component {
             ...metadataOptions
         ].find(({value}) => layerConfig.bands.selection.join(', ') === value)
         return (
-            <Widget label={'Bands'}>
-                <ButtonSelect
-                    label={selectedOption.label}
-                    options={options}
-                    chromeless
-                    alignment={'left'}
-                    width={'fill'}
-                    onSelect={({value}) => this.selectBands(value)}
-                />
-            </Widget>
+            <Combo
+                label={'Bands'}
+                placeholder={selectedOption.label}
+                options={options}
+                value={selectedOption.value}
+                onChange={({value}) => this.selectBands(value)}
+            />
         )
     }
 
