@@ -55,7 +55,7 @@ export const RecipeActions = id => {
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
-    const title = msg(['process.retrieve.task'], {name})
+    const title = msg(['process.retrieve.form.task.SEPAL'], {name})
     const task = {
         'operation': 'timeseries.download',
         'params': {

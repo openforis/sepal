@@ -96,7 +96,7 @@ export const loadCCDCObservations$ = ({recipe, latLng, bands}) =>
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
-    const title = msg(['process.retrieve.task'], {name})
+    const title = msg(['process.retrieve.form.task.GEE'], {name})
     const task = {
         'operation': 'ccdc.asset_export',
         'params': {
