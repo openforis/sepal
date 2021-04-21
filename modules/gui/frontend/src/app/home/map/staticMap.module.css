@@ -13,3 +13,13 @@
     left: 0;
     right: 0;
 }
+
+.map::before {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    bottom: 0;
+    width: 100%;
+    height: var(--map-overlay-height);
+    background-color: hsla(0, 0%, 0%, .4);
+}
