@@ -42,7 +42,7 @@ const getGoogleSatelliteImageLayerSource = ({map}) => ({
     )
 })
 
-const getAssetImageLayerSource = (source, layerConfig, map) => ({
+const getAssetImageLayerSource = ({source, layerConfig, map}) => ({
     description: source.sourceConfig.asset,
     component: (
         <AssetImageLayerSource
@@ -61,7 +61,7 @@ export const getImageLayerSource = ({source, recipe, layerConfig, map}) => {
     case 'Recipe':
         return getRecipeImageLayerSource({recipe, layerConfig, map})
     case 'Asset':
-        return getAssetImageLayerSource()
+        return getAssetImageLayerSource({source, layerConfig, map})
     case 'Planet':
         return getPlanetImageLayerSource({source, layerConfig, map})
     case 'GoogleSatellite':
