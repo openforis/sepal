@@ -24,7 +24,9 @@ export class SplitOverlay extends React.Component {
                                 hidden ? styles.hide : styles.partial,
                                 single ? styles.center : area.split('-').map(area => styles[area])
                             ]).join(' ')}>
-                                {children}
+                                <div className={styles.overlayContent}>
+                                    {children}
+                                </div>
                             </div>
                         </Portal>
                     )

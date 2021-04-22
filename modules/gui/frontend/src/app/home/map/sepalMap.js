@@ -195,13 +195,14 @@ export class SepalMap {
         )
     }
 
-    fitBounds(bounds, padding = 0) {
+    fitBounds(bounds) {
+        const PADDING = 50 // compensate for attribution masking
         const {googleMap} = this
         const nextBounds = this.toGoogleBounds(bounds)
         const currentBounds = googleMap.getBounds()
         const boundsChanged = !currentBounds || !currentBounds.equals(nextBounds)
         if (boundsChanged) {
-            googleMap.fitBounds(nextBounds, padding)
+            googleMap.fitBounds(nextBounds, PADDING)
         }
     }
 
@@ -280,13 +281,6 @@ export class SepalMap {
     isHiddenLayer(id) {
         return this.hiddenLayerById[id]
     }
-
-    // fitLayer(id) {
-    //     const layer = this.getLayer(id)
-    //     if (layer && layer.bounds) {
-    //         this.fitBounds(layer.bounds)
-    //     }
-    // }
 
     isLayerInitialized(id) {
         const layer = this.getLayer(id)

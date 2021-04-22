@@ -1,6 +1,7 @@
 .container {
     /* --y is injected */
     /* --x is injected */
+    --attribution-mask-size: 2rem;
     --half-margin-size: 1px;
     --top: var(--y);
     --right: calc(100% - var(--x));
@@ -64,12 +65,14 @@
     --area-bottom: 0;
     --area-left: 0;
     --area-right: 0;
+    --clip-offset: 0rem;
     position: absolute;
     user-select: none;
     display: flex;
     flex-direction: column;
     pointer-events: none;
     overflow: hidden;
+    margin: calc(var(--attribution-mask-size) * -1);
 }
 
 .area.full {
@@ -84,6 +87,7 @@
         var(--area-left)
     );
     z-index: 0;
+    --clip-offset: var(--attribution-mask-size);
 }
 
 .area.partial {
@@ -92,10 +96,24 @@
     left: var(--area-left);
     right: var(--area-right);
     z-index: 1;
+    clip-path: inset(
+        var(--attribution-mask-size)
+        var(--attribution-mask-size)
+        var(--attribution-mask-size)
+        var(--attribution-mask-size)
+    );
 }
 
 .area.partial.overlay {
     z-index: 2;
+}
+
+.overlayContent {
+    position: absolute;
+    top: var(--attribution-mask-size);
+    bottom: var(--attribution-mask-size);
+    left: var(--attribution-mask-size);
+    right: var(--attribution-mask-size);
 }
 
 .area.hide {
@@ -103,19 +121,19 @@
 }
 
 .area.top {
-    --area-bottom: var(--bottom);
+    --area-bottom: calc(var(--bottom) - var(--clip-offset));
 }
 
 .area.bottom {
-    --area-top: var(--top);
+    --area-top: calc(var(--top) - var(--clip-offset));
 }
 
 .area.left {
-    --area-right: var(--right);
+    --area-right: calc(var(--right) - var(--clip-offset));
 }
 
 .area.right {
-    --area-left: var(--left);
+    --area-left: calc(var(--left) - var(--clip-offset));
 }
 
 /* handle */

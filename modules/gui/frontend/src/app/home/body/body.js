@@ -35,7 +35,7 @@ class Body extends React.Component {
         return (
             <div className={className}>
                 <div className={styles.sections}>
-                    <Section path='/process' captureMouseEvents={false} staticMap={false}>
+                    <Section path='/process' captureMouseEvents={false}>
                         <Process/>
                     </Section>
                     <Section path='/browse'>
