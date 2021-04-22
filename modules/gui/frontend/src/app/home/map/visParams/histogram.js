@@ -137,13 +137,13 @@ class Handles extends React.Component {
 
     onMinPosition(minPosition) {
         const {max, onMinMaxChange} = this.props
-        const min = _.toNumber(this.positionToValue(minPosition).toPrecision(3))
+        const min = this.positionToValue(minPosition)
         onMinMaxChange({min, max: Math.max(min, max)})
     }
 
     onMaxPosition(maxPosition) {
         const {min, onMinMaxChange} = this.props
-        const max = _.toNumber(this.positionToValue(maxPosition).toPrecision(3))
+        const max = this.positionToValue(maxPosition)
         onMinMaxChange({min: Math.min(min, max), max})
     }
 
@@ -151,7 +151,11 @@ class Handles extends React.Component {
         const {width} = this.props
         const {histogramMin, histogramMax} = this.state
         const widthFactor = (histogramMax - histogramMin) / width
-        return histogramMin + position * widthFactor
+
+        const value = _.toNumber((histogramMin + position * widthFactor).toPrecision(3))
+        return histogramMax - histogramMin > 1000
+            ? value.toFixed(0)
+            : value
     }
 }
 
