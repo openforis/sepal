@@ -1,0 +1,63 @@
+
+.histogram {
+    position: relative;
+    display: flex;
+    height: 5rem;
+    width: 100%;
+    background-color: hsla(0, 0%, 50%, .1);
+    justify-content: center;
+}
+
+.graph {
+    pointer-events: none;
+    position: relative;
+    display: flex;
+    flex-grow: 1;
+    margin-left: 1.2rem;
+    margin-right: 1.2rem;
+}
+
+.spinner {
+    align-self: center;
+}
+
+.handles {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.cropArea {
+    background-color: hsla(0, 0%, 10%, .75);
+    display: flex;
+}
+
+.leftCropArea {
+    justify-content: flex-end;
+}
+
+.rightCropArea {
+    justify-content: flex-start;
+}
+
+.spacer {
+    width: var(--width);
+}
+
+.handle {
+    align-self: center;
+    width: 1rem;
+    line-height: .4rem;
+    padding: 0.2rem;
+    cursor: ew-resize;
+    margin: -.7rem .15rem 0 .15rem;
+    color: rgb(40%, 40%, 40%);
+}
+
+.handle::after {
+    content: '.. .. .. ..';
+}

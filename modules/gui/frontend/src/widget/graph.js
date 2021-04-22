@@ -23,8 +23,9 @@ export class Graph extends React.Component {
     }
 
     render() {
+        const {className} = this.props
         return (
-            <div className={styles.wrapper}>
+            <div className={[styles.wrapper, className].join(' ')}>
                 <div ref={this.graphRef} className={styles.graph}/>
             </div>
         )
