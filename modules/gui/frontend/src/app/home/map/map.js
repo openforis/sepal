@@ -3,7 +3,7 @@ import {Content, SectionLayout} from 'widget/sectionLayout'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
 import {SplitView} from 'widget/split/splitView'
-import {VisParamsPanel} from './visParamsPanel'
+import {VisParamsPanel} from './visParams/visParamsPanel'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {debounceTime, distinctUntilChanged, finalize} from 'rxjs/operators'
@@ -132,7 +132,7 @@ class _Map extends React.Component {
         const updateLayerConfig = layerConfig => this.updateLayerConfig(layerConfig, area)
 
         const {component} = getImageLayerSource({recipe, source, layerConfig, map})
-        
+
         return (
             <React.Fragment>
                 <div

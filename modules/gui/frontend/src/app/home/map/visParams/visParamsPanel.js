@@ -1,5 +1,5 @@
 import {Form, form} from 'widget/form/form'
-import {Graph} from 'widget/graph'
+import {Histogram} from './histogram'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
@@ -9,6 +9,7 @@ import ButtonSelect from 'widget/buttonSelect'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import React from 'react'
+import _ from 'lodash'
 import api from 'api'
 import styles from './visParamsPanel.module.css'
 
@@ -94,7 +95,6 @@ class _VisParamsPanel extends React.Component {
 
     renderContent() {
         const {inputs} = this.props
-        const {bands} = this.state
         if (inputs.type.value === 'single') {
             return (
                 <Layout>
@@ -145,10 +145,14 @@ class _VisParamsPanel extends React.Component {
         return (
             <Histogram
                 histogram={histograms[name.value]}
-                min={min.value}
-                max={max.value}
+                min={isNumeric(min.value) ? _.toNumber(min.value) : undefined}
+                max={isNumeric(max.value) ? _.toNumber(max.value) : undefined}
                 inverted={inverted.value}
                 loading={stream(`LOAD_HISTOGRAM_${name.value}`).active}
+                onMinMaxChange={minMax => {
+                    min.set(minMax.min)
+                    max.set(minMax.max)
+                }}
             />
         )
     }
@@ -277,44 +281,6 @@ class BandForm extends React.Component {
     }
 }
 
-class Histogram extends React.Component {
-    render() {
-        const {loading, histogram} = this.props
-        if (loading) {
-            return this.renderLoading()
-        } else if (histogram) {
-            return this.renderHistogram()
-        } else {
-            return <div className={styles.histogram}/>
-        }
-    }
-
-    renderLoading() {
-        return (
-            <div className={styles.histogram}>
-                <Icon name='spinner' className={styles.spinner}/>
-            </div>
-        )
-    }
-
-    renderHistogram() {
-        const {histogram} = this.props
-        console.log(histogram)
-        const data = histogram
-        return (
-            <div className={styles.histogram}>
-                <Graph
-                    data={data}
-                    drawGrid={false}
-                    axes={{
-                        x: {drawAxis: false},
-                        y: {drawAxis: false}
-                    }}
-                    legend='never'
-                    highlightCircleSize={0}
-                    fillGraph={true}
-                />
-            </div>
-        )
-    }
+function isNumeric(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n)
 }

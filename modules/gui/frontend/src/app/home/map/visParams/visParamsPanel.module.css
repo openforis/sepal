@@ -25,18 +25,6 @@
     justify-self: center;
 }
 
-.histogram {
-    display: flex;
-    height: 5rem;
-    background-color: hsla(0, 0%, 50%, .1);
-    pointer-events: none;
-    justify-content: center;
-}
-
-.spinner {
-    align-self: center;
-}
-
 .bandForm {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
