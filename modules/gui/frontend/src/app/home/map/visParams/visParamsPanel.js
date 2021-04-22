@@ -1,5 +1,5 @@
 import {Form, form} from 'widget/form/form'
-import {Histogram} from './histogram'
+import {Histogram, stretch} from './histogram'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
@@ -45,7 +45,9 @@ class _VisParamsPanel extends React.Component {
     }
 
     render() {
-        const {activatable: {deactivate}} = this.props
+        const {activatable: {deactivate}, inputs: {name1, name2, name3}} = this.props
+        const {histograms} = this.state
+        const hasNoHistogram = !histograms[name1.value] && !histograms[name2.value] && !histograms[name3.value]
         return (
             <Panel type='modal' className={styles.panel}>
                 <Panel.Header
@@ -62,12 +64,17 @@ class _VisParamsPanel extends React.Component {
                         icon='chart-area'
                         placement='above'
                         tooltipPlacement='bottom'
+                        disabled={hasNoHistogram}
                         options={[
                             {value: '100', label: '100%'},
+                            {value: '99.99', label: '99.99%'},
+                            {value: '99.9', label: '99.9%'},
+                            {value: '99', label: '99%'},
                             {value: '98', label: '98%'},
+                            {value: '95', label: '95%'},
                             {value: '90', label: '90%'},
                         ]}
-                        onSelect={option => console.log('Selected')}
+                        onSelect={({value}) => this.stretchHistograms(value)}
                     />
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Cancel onClick={deactivate}/>
@@ -155,6 +162,23 @@ class _VisParamsPanel extends React.Component {
                 }}
             />
         )
+    }
+
+    stretchHistograms(percent) {
+        this.stretchHistogram(percent, 0)
+        this.stretchHistogram(percent, 1)
+        this.stretchHistogram(percent, 2)
+    }
+
+    stretchHistogram(percent, i) {
+        const {histograms} = this.state
+        const inputs = this.bandInputs(i)
+        const histogram = histograms[inputs.name.value]
+        if (histogram) {
+            const {min, max} = stretch(histogram, percent)
+            inputs.min.set(min)
+            inputs.max.set(max)
+        }
     }
 
     componentDidMount() {

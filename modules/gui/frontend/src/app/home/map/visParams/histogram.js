@@ -10,6 +10,8 @@ import _ from 'lodash'
 import styles from './histogram.module.css'
 import withSubscriptions from 'subscription'
 
+const DEFAULT_STRETCH = 99.99
+
 export class Histogram extends React.Component {
     state = {
         width: null
@@ -35,7 +37,7 @@ export class Histogram extends React.Component {
     }
 
     renderHistogram() {
-        const {onMinMaxChange, histogram, min, max} = this.props
+        const {histogram, min, max, onMinMaxChange} = this.props
         const {width} = this.state
         return (
             <div className={styles.histogram}>
@@ -59,9 +61,23 @@ export class Histogram extends React.Component {
                         }
                     </div>
                 </ElementResizeDetector>
-                <Handles histogram={histogram} min={min} max={max} width={width} onMinMaxChange={onMinMaxChange}/>
+                <Handles
+                    histogram={histogram}
+                    min={min}
+                    max={max}
+                    width={width}
+                    onMinMaxChange={onMinMaxChange}
+                />
             </div>
         )
+    }
+
+    componentDidUpdate(prevProps) {
+        const {histogram: prevHistogram} = prevProps
+        const {histogram, min, max, onMinMaxChange} = this.props
+        if (histogram && (!_.isFinite(min) || !_.isFinite(max) || prevHistogram !== histogram)) {
+            onMinMaxChange(stretch(histogram, DEFAULT_STRETCH))
+        }
     }
 }
 
@@ -120,19 +136,13 @@ class Handles extends React.Component {
     }
 
     componentDidUpdate() {
-        const {histogram, min, max, onMinMaxChange} = this.props
-        const histogramMin = histogram[0][0]
-        const histogramLastValue = histogram[histogram.length - 1][0]
-        const bucketWidth = (histogramLastValue - histogramMin) / (histogram.length - 1)
-        const histogramMax = histogramLastValue + bucketWidth
+        const {histogram} = this.props
+        const {histogramMin, histogramMax} = histogramMinMax(histogram)
         this.setState(({histogramMin: prevMin, histogramMax: prevMax}) =>
             prevMin !== histogramMin || prevMax !== histogramMax
                 ? {histogramMin, histogramMax}
                 : null
         )
-        if (!_.isFinite(min) || !_.isFinite(max)) {
-            onMinMaxChange({min: histogramMin, max: histogramMax})
-        }
     }
 
     onMinPosition(minPosition) {
@@ -247,3 +257,29 @@ const Handle = compose(
     withSubscriptions()
 )
 
+const histogramMinMax = histogram => {
+    const histogramMin = histogram[0][0]
+    const histogramLastValue = histogram[histogram.length - 1][0]
+    const bucketWidth = (histogramLastValue - histogramMin) / (histogram.length - 1)
+    const histogramMax = histogramLastValue + bucketWidth
+    return {histogramMin, histogramMax}
+}
+
+export const stretch = (histogram, percent) => {
+    const total = histogram.reduce((acc, [_value, count]) => acc + count, 0)
+    const threshold = total * (1 - (percent / 100))
+    const inMinStretch = _.last(
+        histogram
+            .reduce((acc, [value, count]) => [...acc, [value, (acc.length ? acc[acc.length - 1][1] : 0) + count]], [])
+            .filter(([_value, total]) => total < threshold)
+    )
+    const min = inMinStretch ? inMinStretch[0] : histogram[0][0]
+    const inMaxStretch = _.last(
+        histogram
+            .slice().reverse() // Immutably reverse
+            .reduce((acc, [value, count]) => [...acc, [value, (acc.length ? acc[acc.length - 1][1] : 0) + count]], [])
+            .filter(([_value, total]) => total < threshold)
+    )
+    const max = inMaxStretch ? inMaxStretch[0] : histogram[histogram.length - 1][0]
+    return {min, max}
+}
