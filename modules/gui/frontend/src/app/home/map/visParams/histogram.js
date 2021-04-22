@@ -1,10 +1,11 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Graph} from 'widget/graph'
-import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
+import {animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
 import {compose} from 'compose'
-import {distinctUntilChanged, filter, map, scan, switchMap} from 'rxjs/operators'
+import {distinctUntilChanged, filter, map, mapTo, scan, switchMap} from 'rxjs/operators'
 import Hammer from 'hammerjs'
 import Icon from 'widget/icon'
+import Portal from '../../../../widget/portal'
 import React from 'react'
 import _ from 'lodash'
 import styles from './histogram.module.css'
@@ -14,7 +15,13 @@ const DEFAULT_STRETCH = 99.99
 
 export class Histogram extends React.Component {
     state = {
-        width: null
+        width: null,
+        dragging: false
+    }
+
+    constructor(params) {
+        super(params)
+        this.onDragging = this.onDragging.bind(this)
     }
 
     render() {
@@ -67,9 +74,25 @@ export class Histogram extends React.Component {
                     max={max}
                     width={width}
                     onMinMaxChange={onMinMaxChange}
+                    onDragging={this.onDragging}
                 />
+                {this.renderOverlay()}
             </div>
         )
+    }
+
+    onDragging(dragging) {
+        this.setState({dragging})
+    }
+
+    renderOverlay() {
+        const {dragging} = this.state
+        return dragging
+            ? (
+                <Portal type='global'>
+                    <div className={styles.cursorOverlay}/>
+                </Portal>
+            ) : null
     }
 
     componentDidUpdate(prevProps) {
@@ -89,8 +112,8 @@ class Handles extends React.Component {
 
     constructor(props) {
         super(props)
-        this.onMaxPosition = this.onMaxPosition.bind(this)
         this.onMinPosition = this.onMinPosition.bind(this)
+        this.onMaxPosition = this.onMaxPosition.bind(this)
     }
 
     render() {
@@ -103,7 +126,7 @@ class Handles extends React.Component {
     }
 
     renderHandles() {
-        const {min, max, width} = this.props
+        const {min, max, width, onDragging} = this.props
         const {histogramMin, histogramMax} = this.state
         const widthFactor = width / (histogramMax - histogramMin)
         const leftWidth = Math.max(0, min - histogramMin) * widthFactor
@@ -118,6 +141,7 @@ class Handles extends React.Component {
                     <Handle
                         position={leftPosition}
                         width={width}
+                        onDragging={onDragging}
                         onPosition={this.onMinPosition}
                     />
                 </div>
@@ -125,6 +149,7 @@ class Handles extends React.Component {
                     <Handle
                         position={rightPosition}
                         width={width}
+                        onDragging={onDragging}
                         onPosition={this.onMaxPosition}
                     />
                     <div className={styles.spacer} style={{'--width': `${rightWidth}px`}}/>
@@ -187,7 +212,7 @@ class _Handle extends React.Component {
     }
 
     initializeHandle() {
-        const {onPosition, addSubscription} = this.props
+        const {onDragging, onPosition, addSubscription} = this.props
         const ref = this.ref.current
         if (!ref) {
             return
@@ -204,9 +229,19 @@ class _Handle extends React.Component {
             return lerp(current, target)
         }
 
+        const hold$ = merge(
+            fromEvent(ref, 'mousedown'),
+            fromEvent(ref, 'touchstart')
+        )
+        const release$ = merge(
+            fromEvent(ref, 'mouseup'),
+            fromEvent(ref, 'touchend')
+        )
+
         const pan$ = fromEvent(handle, 'panstart panmove panend')
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
+        const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
         const animationFrame$ = interval(0, animationFrameScheduler)
 
         const dragPosition$ =
@@ -234,9 +269,19 @@ class _Handle extends React.Component {
             })
         )
 
+        const dragging$ = merge(
+            hold$.pipe(mapTo(true)),
+            release$.pipe(mapTo(false)),
+            panStart$.pipe(mapTo(true)),
+            panEnd$.pipe(mapTo(false)),
+        )
+
         addSubscription(
             handlePosition$.subscribe(position =>
                 onPosition(position)
+            ),
+            dragging$.subscribe(dragging =>
+                onDragging(dragging)
             )
         )
     }
@@ -267,7 +312,7 @@ const histogramMinMax = histogram => {
 
 export const stretch = (histogram, percent) => {
     const total = histogram.reduce((acc, [_value, count]) => acc + count, 0)
-    const threshold = total * (1 - (percent / 100))
+    const threshold = total * (1 - (percent / 100)) / 2
     const inMinStretch = _.last(
         histogram
             .reduce((acc, [value, count]) => [...acc, [value, (acc.length ? acc[acc.length - 1][1] : 0) + count]], [])
