@@ -94,12 +94,18 @@
     z-index: 1;
 }
 
+.area.partial.overlay {
+    z-index: 2;
+}
+
 .area.hide {
     display: none;
 }
 
 .area.top {
     --area-bottom: var(--bottom);
+    clip-path: inset(2rem 0 2rem 0);
+    margin: -2rem 0;
 }
 
 .area.bottom {
@@ -253,8 +259,4 @@
     z-index: 1;
     display: flex;
     flex-grow: 1;
-}
-
-.overlay {
-    z-index: 2;
 }
