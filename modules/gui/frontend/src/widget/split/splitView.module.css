@@ -104,8 +104,6 @@
 
 .area.top {
     --area-bottom: var(--bottom);
-    clip-path: inset(2rem 0 2rem 0);
-    margin: -2rem 0;
 }
 
 .area.bottom {
