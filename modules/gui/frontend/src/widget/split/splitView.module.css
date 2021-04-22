@@ -94,6 +94,10 @@
     z-index: 1;
 }
 
+.area.partial.overlay {
+    z-index: 2;
+}
+
 .area.hide {
     display: none;
 }

@@ -11,7 +11,6 @@ const log = getLogger('splitOverlay')
 export class SplitOverlay extends React.Component {
     render() {
         const {area, children} = this.props
-        // log.debug('rendering area', area)
         return (
             <SplitContext.Consumer>
                 {({container, mode, maximize}) => {
@@ -21,6 +20,7 @@ export class SplitOverlay extends React.Component {
                         <Portal type='container' container={container}>
                             <div className={_.flatten([
                                 styles.area,
+                                styles.overlay,
                                 hidden ? styles.hide : styles.partial,
                                 single ? styles.center : area.split('-').map(area => styles[area])
                             ]).join(' ')}>
