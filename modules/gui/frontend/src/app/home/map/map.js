@@ -89,7 +89,7 @@ class _Map extends React.Component {
         })
     }
 
-    synchronizeOut(area, map) {
+    synchronizeOut(map) {
         const {center, zoom} = map.getView()
         this.allMaps(({map}) => map.setView({center, zoom}))
         this.updateBounds$.next({center, zoom})
@@ -176,8 +176,8 @@ class _Map extends React.Component {
             const listeners = [
                 googleMap.addListener('mouseout', () => this.synchronizeCursor(area, null)),
                 googleMap.addListener('mousemove', ({latLng}) => this.synchronizeCursor(area, latLng)),
-                googleMap.addListener('center_changed', () => this.synchronizeOut(area, map)),
-                googleMap.addListener('zoom_changed', () => this.synchronizeOut(area, map))
+                googleMap.addListener('center_changed', () => this.synchronizeOut(map)),
+                googleMap.addListener('zoom_changed', () => this.synchronizeOut(map))
             ]
 
             const subscriptions = [
