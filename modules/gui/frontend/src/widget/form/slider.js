@@ -1,6 +1,6 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Widget} from 'widget/widget'
-import {animationFrameScheduler, combineLatest, fromEvent, interval, merge} from 'rxjs'
+import {animationFrameScheduler, combineLatest, fromEvent, interval, merge, of} from 'rxjs'
 import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, mapTo, scan, switchMap, withLatestFrom} from 'rxjs/operators'
 import Hammer from 'hammerjs'
@@ -269,6 +269,7 @@ class _SliderDynamics extends React.Component {
         )
 
         const handleDragging$ = merge(
+            of(false),
             panStart$.pipe(mapTo(true)),
             panEnd$.pipe(mapTo(false)),
         )
