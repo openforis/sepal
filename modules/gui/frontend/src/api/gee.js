@@ -5,7 +5,10 @@ export default {
     preview$: ({recipe, ...params}) =>
         postJson$('/api/gee/preview', {body: {recipe, ...params}, retries: 0}),
     bands$: ({asset, recipe, ...params}) =>
-        postJson$('/api/gee/bands', {body: {asset, recipe, ...params}, retries: 0})
+        postJson$('/api/gee/bands', {body: {asset, recipe, ...params}})
+            .pipe(toResponse),
+    histogram$: ({recipe, band, ...params}) =>
+        postJson$('/api/gee/image/histogram', {body: {recipe, band, ...params}})
             .pipe(toResponse),
     imageMetadata$: ({asset, recipe}) =>
         postJson$('/api/gee/imageMetadata', {body: {asset, recipe}, retries: 0})

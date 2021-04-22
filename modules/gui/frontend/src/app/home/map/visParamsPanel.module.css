@@ -26,9 +26,15 @@
 }
 
 .histogram {
-    grid-area: histogram;
+    display: flex;
     height: 5rem;
     background-color: hsla(0, 0%, 50%, .1);
+    pointer-events: none;
+    justify-content: center;
+}
+
+.spinner {
+    align-self: center;
 }
 
 .bandForm {
@@ -36,8 +42,7 @@
     grid-template-columns: 1fr auto 1fr;
     grid-template-areas:
         'name       empty      gammaOrPalette'
-        'min        inverted   max'
-        'histogram  histogram  histogram';
+        'min        inverted   max';
     grid-column-gap: 1.5rem;
     grid-row-gap: 1rem;
 }

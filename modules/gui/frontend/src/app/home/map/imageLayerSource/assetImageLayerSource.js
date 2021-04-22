@@ -5,7 +5,9 @@ import {Layout} from 'widget/layout'
 import {MapAreaLayout} from '../mapAreaLayout'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
+import {msg} from '../../../../translate'
 import EarthEngineLayer from '../earthEngineLayer'
+import Notifications from '../../../../widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './assetImageLayerSource.module.css'
@@ -73,7 +75,11 @@ class _AssetImageLayerSource extends React.Component {
 
     addVisParams() {
         const {source, activator: {activatables: {visParams}}} = this.props
-        visParams.activate({source})
+        const recipe = {
+            type: 'ASSET',
+            id: source.sourceConfig.asset
+        }
+        visParams.activate({recipe})
     }
 
     getAsset() {

@@ -382,6 +382,10 @@
         },
         "visParams":  {
             "title": "Custom visualization parameters",
+            "bands": {
+                "loading": "Loading bands...",
+                "loadError": "Failed to load image bands"
+            },
             "type": {
                 "single": {
                     "label": "Single band"
