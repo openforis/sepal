@@ -1,12 +1,76 @@
-.palette {
-    align-items: flex-start;
+.container {
+    position: relative;
 }
 
-.color input {
-    width: 2rem;
-    height: 2rem;
+.widget {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+
+.palette {
+    flex-grow: 1;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.palette.visible {
+    visibility: visible;
+}
+
+.palette.hidden {
+    visibility: hidden;
+}
+
+.label {
+    display: flex;
+    justify-content: space-between;
+    flex-grow: 1;
+}
+
+.buttons {
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+
+.colorContainer {
+    position: relative;
+}
+
+.color {
+    width: 1.6rem;
+    height: 1.6rem;
     margin: 0;
     cursor: pointer;
     padding: 0;
     border: none;
+    background-color: var(--color);
+    border: var(--wireframe);
+}
+
+.colorInput {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    visibility: hidden;
+}
+
+.presetOption {
+    text-align: left;
+    line-height: 1.4;
+}
+
+.presetOptionPalette {
+    --palette: '';
+    flex-grow: 1;
+    width: 14.5rem;
+    height: 1rem;
+    color: green !important;
+    background: linear-gradient(90deg, var(--palette)) !important;
 }
