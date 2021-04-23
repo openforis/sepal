@@ -1,0 +1,12 @@
+.palette {
+    align-items: flex-start;
+}
+
+.color input {
+    width: 2rem;
+    height: 2rem;
+    margin: 0;
+    cursor: pointer;
+    padding: 0;
+    border: none;
+}
