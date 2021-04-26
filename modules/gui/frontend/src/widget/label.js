@@ -1,3 +1,4 @@
+import {ButtonGroup} from './buttonGroup'
 import Icon from './icon'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -15,8 +16,8 @@ export default class Label extends React.Component {
                 disabled ? styles.disabled : null,
                 className
             ].join(' ')}>
-                {this.renderTooltip()}
-                {this.renderError()}
+                {this.renderLeft()}
+                {this.renderRight()}
             </label>
         )
     }
@@ -26,7 +27,7 @@ export default class Label extends React.Component {
         return children ? children : msg
     }
 
-    renderTooltip() {
+    renderLeft() {
         const {tooltip, tooltipPlacement} = this.props
         return (
             <Tooltip msg={tooltip} placement={tooltipPlacement}>
@@ -47,8 +48,8 @@ export default class Label extends React.Component {
             : null
     }
 
-    renderError() {
-        const {error} = this.props
+    renderRight() {
+        const {error, buttons} = this.props
         return error
             ? (
                 <Icon
@@ -61,12 +62,17 @@ export default class Label extends React.Component {
                     pulse
                 />
             )
-            : null
+            : (
+                <ButtonGroup spacing='tight'>
+                    {buttons}
+                </ButtonGroup>
+            )
     }
 }
 
 Label.propTypes = {
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
+    buttons: PropTypes.arrayOf(PropTypes.node),
     children: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
