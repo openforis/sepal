@@ -1,8 +1,10 @@
 import {Button} from 'widget/button'
+import {ButtonGroup} from './buttonGroup'
 import {Layout} from 'widget/layout'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
+import Icon from './icon'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -83,13 +85,13 @@ class _Input extends React.Component {
     }
 
     renderContent() {
-        const {leftComponent, rightComponent} = this.props
-        return leftComponent || rightComponent
+        const {buttons} = this.props
+        return this.isSearchInput() || buttons
             ? (
                 <Layout type='horizontal-nowrap' spacing='none'>
                     {this.renderLeftComponent()}
                     {this.renderInput()}
-                    {this.renderRightComponent()}
+                    {this.renderbuttons()}
                 </Layout>
             )
             : this.renderInput()
@@ -151,32 +153,36 @@ class _Input extends React.Component {
     }
 
     renderLeftComponent() {
-        const {leftComponent} = this.props
-        return leftComponent
+        return this.isSearchInput()
             ? (
-                <div className={[styles.extraComponent, styles.left].join(' ')}>
-                    {leftComponent}
+                <div className={[styles.search, styles.dim].join(' ')}>
+                    <Icon name='search'/>
                 </div>
             )
             : null
     }
 
-    renderRightComponent() {
-        const {value, rightComponent} = this.props
+    renderbuttons() {
+        const {value, additionalButtons, buttons} = this.props
         return value && this.isSearchInput()
             ? this.renderClearButton()
-            : rightComponent
+            : additionalButtons || buttons
                 ? (
-                    <div className={[styles.extraComponent, styles.right].join(' ')}>
-                        {rightComponent}
-                    </div>
+                    <ButtonGroup layout='horizontal-nowrap'>
+                        <ButtonGroup layout='horizontal-nowrap'>
+                            {additionalButtons}
+                        </ButtonGroup>
+                        <ButtonGroup layout='horizontal-nowrap' className={styles.dim}>
+                            {buttons}
+                        </ButtonGroup>
+                    </ButtonGroup>
                 )
                 : null
     }
 
     renderClearButton() {
         return (
-            <div className={[styles.extraComponent, styles.right].join(' ')}>
+            <ButtonGroup layout='horizontal-nowrap'>
                 <Button
                     chromeless
                     shape='none'
@@ -186,7 +192,7 @@ class _Input extends React.Component {
                     onClick={() => this.props.onChange({target: {value: ''}})}
                     // [TODO] change signature from event to value
                 />
-            </div>
+            </ButtonGroup>
         )
     }
 
@@ -202,23 +208,23 @@ export const Input = compose(
 )
 
 Input.propTypes = {
+    additionalButtons: PropTypes.arrayOf(PropTypes.node),
     autoCapitalize: PropTypes.any,
     autoComplete: PropTypes.any,
     autoCorrect: PropTypes.any,
     autoFocus: PropTypes.any,
     border: PropTypes.any,
     busyMessage: PropTypes.any,
+    buttons: PropTypes.arrayOf(PropTypes.node),
     className: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.string,
     fadeOverflow: PropTypes.any,
     label: PropTypes.string,
-    leftComponent: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
     maxLength: PropTypes.number,
     name: PropTypes.string,
     placeholder: PropTypes.any,
     readOnly: PropTypes.any,
-    rightComponent: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
     spellCheck: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.string,

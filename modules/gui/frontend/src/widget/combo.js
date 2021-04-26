@@ -1,5 +1,4 @@
 import {Button} from 'widget/button'
-import {ButtonGroup} from 'widget/buttonGroup'
 import {Form} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {ScrollableList} from 'widget/list'
@@ -78,7 +77,7 @@ class _Combo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, standalone, readOnly, inputClassName, onBlur} = this.props
+        const {placeholder, autoFocus, standalone, readOnly, inputClassName, additionalButtons = [], onBlur} = this.props
         const {focused, filter, selectedOption, showOptions} = this.state
         const showOptionsKeyBinding = showOptions ? undefined : () => this.showOptions()
         const keymap = {
@@ -101,12 +100,15 @@ class _Combo extends React.Component {
                         selectedOption && !showOptions ? styles.fakePlaceholder : null,
                         inputClassName
                     ].join(' ')}
-                    type='search'
                     value={filter}
                     placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
                     disabled={!this.isActive()}
                     readOnly={readOnly || isMobile()}
-                    rightComponent={this.renderButtons()}
+                    buttons={[
+                        this.renderClearButton(),
+                        this.renderToggleOptionsButton()
+                    ]}
+                    additionalButtons={additionalButtons}
                     onChange={e => this.setFilter(e.target.value)}
                     onFocus={() => this.setState({focused: true})}
                     onBlur={e => {
@@ -119,23 +121,13 @@ class _Combo extends React.Component {
         )
     }
 
-    renderButtons() {
-        const {additionalButtons = []} = this.props
-        return (
-            <ButtonGroup layout='horizontal-nowrap'>
-                {additionalButtons}
-                {this.renderClearButton()}
-                {this.renderToggleOptionsButton()}
-            </ButtonGroup>
-        )
-    }
-
     renderClearButton() {
         const {allowClear} = this.props
         const {selectedOption} = this.state
         return allowClear && selectedOption
             ? (
                 <Button
+                    key='clear'
                     chromeless
                     shape='none'
                     air='none'
@@ -156,6 +148,7 @@ class _Combo extends React.Component {
         }
         return (
             <Button
+                key='toggle'
                 chromeless
                 shape='none'
                 air='none'

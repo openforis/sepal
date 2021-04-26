@@ -2,24 +2,12 @@
     position: relative;
 }
 
-.input .extraComponent {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+.dim:not(:hover) {
     opacity: .5;
 }
 
-.input .extraComponent.left {
-    padding-left: .25rem;
-    padding-right: .5rem;
-}
-
-.input .extraComponent.right {
+.search {
     padding-right: .25rem;
-}
-
-.input:hover .extraComponent {
-    opacity: 1;
 }
 
 .inputWrapper {

@@ -40,7 +40,6 @@ class _SearchBox extends React.Component {
                         placeholder={placeholder}
                         autoFocus
                         border={false}
-                        leftComponent={<Icon name='search'/>}
                         onChange={e => this.setValue(e.target.value)}
                     />
                 </Shape>
