@@ -317,7 +317,7 @@ class BandForm extends React.Component {
     }
 
     renderBand() {
-        const {onBandSelected, bands, label, inputs: {name, inverted}} = this.props
+        const {onBandSelected, bands, label, inputs: {name}} = this.props
         const options = (bands || []).map(band => ({value: band, label: band}))
         return (
             <Form.Combo

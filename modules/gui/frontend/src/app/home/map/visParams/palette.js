@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {Combo} from 'widget/combo'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
@@ -381,7 +382,7 @@ class ColorInput extends React.Component {
     renderColorButtons() {
         const {onEdit, onInsert, onRemove} = this.props
         return (
-            <Button className={styles.buttons}>
+            <ButtonGroup className={styles.buttons}>
                 <Button
                     icon='plus'
                     chromeless
@@ -406,7 +407,7 @@ class ColorInput extends React.Component {
                     size='small'
                     onClick={() => onRemove()}
                 />
-            </Button>)
+            </ButtonGroup>)
     }
 
     initRef(element) {
