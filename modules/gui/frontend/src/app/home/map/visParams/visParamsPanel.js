@@ -280,7 +280,7 @@ class BandForm extends React.Component {
             <Form.Buttons
                 key={'inverted'}
                 input={inverted}
-                chromeless={!(inverted.value || []).length}
+                look='transparent'
                 shape={'pill'}
                 air={'less'}
                 size={'x-small'}
