@@ -4,6 +4,7 @@ import {Combo} from 'widget/combo'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {Widget} from 'widget/widget'
+import {msg} from 'translate'
 import Color from 'color'
 import Label from 'widget/label'
 import React from 'react'
@@ -22,7 +23,7 @@ export class Palette extends React.Component {
         const {className} = this.props
         return (
             <Widget
-                label={'Palette'}
+                label={msg('map.visParams.form.palette.label')}
                 labelButtons={this.labelButtons()}
                 layout={'vertical'}
                 className={className}>
@@ -71,7 +72,7 @@ export class Palette extends React.Component {
             {label: 'crameri', options: toOptions([
                 {label: 'acton', value: ['#2E214D', '#4B3B66', '#6E5480', '#926390', '#B26795', '#D17BA5', '#D495B8', '#D4ADC9', '#DBC9DC', '#E6E6F0']},
                 {label: 'bamako', value: ['#00404D', '#134B42', '#265737', '#3A652A', '#52741C', '#71870B', '#969206', '#C5AE32', '#E7CD68', '#FFE599']},
-                {label: 'berin', value: ['#9EB0FF', '#5BA4DB', '#2D7597', '#1A4256', '#11191E', '#280D01', '#501803', '#8A3F2A', '#C4756A', '#FFADAD']},
+                {label: 'berlin', value: ['#9EB0FF', '#5BA4DB', '#2D7597', '#1A4256', '#11191E', '#280D01', '#501803', '#8A3F2A', '#C4756A', '#FFADAD']},
                 {label: 'bilbao', value: ['#FFFFFF', '#DCDBD9', '#C5C0AF', '#B9AF8B', '#AE946D', '#A67A60', '#9E6155', '#8D4341', '#6E2222', '#4D0001']},
                 {label: 'broc', value: ['#2C1A4C', '#284477', '#4B76A0', '#8BA7C2', '#CED9E5', '#E8E8D2', '#C5C58F', '#8D8D56', '#555527', '#262600']},
                 {label: 'buda', value: ['#B301B3', '#B32B9E', '#B94892', '#C2618A', '#CA7982', '#D1917B', '#D7AA75', '#DDC36F', '#E5DF68', '#FFFF66']},
@@ -181,7 +182,7 @@ export class Palette extends React.Component {
         return (
             <React.Fragment>
                 <Combo
-                    placeholder={'Select a pre-set palette...'}
+                    placeholder={msg('map.visParams.form.palette.preset.placeholder')}
                     options={options}
                     additionalButtons={[
                         <Button
@@ -191,7 +192,9 @@ export class Palette extends React.Component {
                             shape={'pill'}
                             air={'less'}
                             size={'x-small'}
-                            tooltip={'Pre-sets from https://github.com/gee-community/ee-palettes.'}
+                            tooltip={msg('map.visParams.form.palette.preset.attribution', {
+                                url: 'https://github.com/gee-community/ee-palettes'
+                            })}
                             linkUrl={'https://github.com/gee-community/ee-palettes'}
                         />
                     ]}
@@ -209,7 +212,8 @@ export class Palette extends React.Component {
         return (
             <Input
                 className={styles.widget}
-                value={text || ''}
+                value={text}
+                placeholder={msg('map.visParams.form.palette.text.placeholder')}
                 onChange={({target: {value}}) => this.updateText(value)}
             />
         )
@@ -259,16 +263,19 @@ export class Palette extends React.Component {
                 chromeless
                 shape='circle'
                 size='small'
+                disabled={show !== 'palette'}
+                tooltip={msg('map.visParams.form.palette.add.tooltip')}
                 onClick={() => this.addColor()}
             />,
             show === 'palette'
                 ? (
                     <Button
                         key={'text'}
-                        icon='hashtag'
+                        icon='font'
                         chromeless
                         shape='circle'
                         size='small'
+                        tooltip={msg('map.visParams.form.palette.text.tooltip')}
                         onClick={() => this.showText()}
                     />
                 )
@@ -279,6 +286,7 @@ export class Palette extends React.Component {
                         chromeless
                         shape='circle'
                         size='small'
+                        tooltip={msg('map.visParams.form.palette.palette.tooltip')}
                         onClick={() => this.showPalette()}
                     />
                 )
@@ -347,7 +355,7 @@ export class Palette extends React.Component {
         const text = colors
             .map(({color}) => color)
             .join(', ')
-        this.setState({text})
+        this.setState({text, edit: null})
     }
 
     applyPreset(colors) {
@@ -418,6 +426,7 @@ class ColorInput extends React.Component {
                     chromeless
                     shape='circle'
                     size='small'
+                    tooltip={msg('map.visParams.form.palette.color.insert.tooltip')}
                     onClick={() => onInsert()}
                 />
                 <Button
@@ -425,6 +434,7 @@ class ColorInput extends React.Component {
                     chromeless
                     shape='circle'
                     size='small'
+                    tooltip={msg('map.visParams.form.palette.color.edit.tooltip')}
                     onClick={() => {
                         onEdit()
                         this.element.click()
@@ -435,6 +445,7 @@ class ColorInput extends React.Component {
                     chromeless
                     shape='circle'
                     size='small'
+                    tooltip={msg('map.visParams.form.palette.color.remove.tooltip')}
                     onClick={() => onRemove()}
                 />
             </ButtonGroup>)

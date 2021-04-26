@@ -60,7 +60,7 @@ class _VisParamsPanel extends React.Component {
                 </Panel.Content>
                 <Panel.Buttons onEscape={deactivate}>
                     <ButtonSelect
-                        label={'Stretch'}
+                        label={msg('map.visParams.stretch.label')}
                         icon='chart-area'
                         placement='above'
                         tooltipPlacement='bottom'
@@ -105,29 +105,29 @@ class _VisParamsPanel extends React.Component {
         if (inputs.type.value === 'single') {
             return (
                 <Layout>
-                    {this.renderBandForm(0, 'Bands')}
+                    {this.renderBandForm(0, msg('map.visParams.form.band.band.label'))}
                     {this.renderHistogram(0)}
                 </Layout>
             )
         } else if (inputs.type.value === 'rgb') {
             return (
                 <Layout>
-                    {this.renderBandForm(0, 'Red channel')}
+                    {this.renderBandForm(0, msg('map.visParams.form.band.redChannel.label'))}
                     {this.renderHistogram(0)}
-                    {this.renderBandForm(1, 'Green channel')}
+                    {this.renderBandForm(1, msg('map.visParams.form.band.greenChannel.label'))}
                     {this.renderHistogram(1)}
-                    {this.renderBandForm(2, 'Blue channel')}
+                    {this.renderBandForm(2, msg('map.visParams.form.band.blueChannel.label'))}
                     {this.renderHistogram(2)}
                 </Layout>
             )
         } else {
             return (
                 <Layout>
-                    {this.renderBandForm(0, 'Hue')}
+                    {this.renderBandForm(0, msg('map.visParams.form.band.hue.label'))}
                     {this.renderHistogram(0)}
-                    {this.renderBandForm(1, 'Saturation')}
+                    {this.renderBandForm(1, msg('map.visParams.form.band.saturation.label'))}
                     {this.renderHistogram(1)}
-                    {this.renderBandForm(2, 'Value')}
+                    {this.renderBandForm(2, msg('map.visParams.form.band.value.label'))}
                     {this.renderHistogram(2)}
                 </Layout>
             )
@@ -285,7 +285,7 @@ class BandForm extends React.Component {
                 air={'less'}
                 size={'x-small'}
                 options={[
-                    {value: 'inverted', label: 'REV', tooltip: 'Reverse the band'}
+                    {value: 'inverted', label: 'REV', tooltip: msg('map.visParams.form.band.reverse.tooltip')}
                 ]}
                 multiple
             />
@@ -323,7 +323,7 @@ class BandForm extends React.Component {
             <Form.Combo
                 label={label}
                 className={styles.band}
-                placeholder={'Select band...'}
+                placeholder={msg('map.visParams.form.band.select.placeholder')}
                 input={name}
                 options={options}
                 disabled={!bands}
