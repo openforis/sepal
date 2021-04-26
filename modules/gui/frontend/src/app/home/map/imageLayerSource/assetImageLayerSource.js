@@ -34,26 +34,29 @@ class _AssetImageLayerSource extends React.Component {
     // TODO: Parts of this should be reusable. All recipe layer sources should render the bands
 
     renderImageLayerForm() {
-        const bandsLabel = (
-            <Layout type={'horizontal-nowrap'} className={styles.bandsLabel}>
-                <div>Bands</div>
-                <ButtonGroup spacing='tight'>
+        return (
+            <Combo
+                label={'Bands'}
+                labelButtons={[
                     <Button
+                        key='add'
                         icon='plus'
                         chromeless
                         shape='circle'
                         size='small'
                         onClick={() => this.addVisParams()}
-                    />
+                    />,
                     <Button
+                        key='clone'
                         icon='clone'
                         // icon='edit'
                         chromeless
                         shape='circle'
                         size='small'
                         onClick={() => console.log('remove')}
-                    />
+                    />,
                     <Button
+                        key='remove'
                         icon='trash'
                         chromeless
                         shape='circle'
@@ -61,12 +64,7 @@ class _AssetImageLayerSource extends React.Component {
                         disabled
                         onClick={() => console.log('remove')}
                     />
-                </ButtonGroup>
-            </Layout>
-        )
-        return (
-            <Combo
-                label={bandsLabel}
+                ]}
                 placeholder={'Select bands to visualize...'}
                 options={[]}
             />

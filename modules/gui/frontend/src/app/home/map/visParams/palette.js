@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {Combo} from 'widget/combo'
 import {Input} from 'widget/input'
 import {Item} from '../../../../widget/item'
@@ -216,7 +217,33 @@ export class Palette extends React.Component {
         )
         return (
             <Widget
-                label={this.renderPaletteLabel()}
+                label='Palette' // TODO: use msg
+                labelButtons={[
+                    <Button
+                        key='add'
+                        icon='plus'
+                        chromeless
+                        shape='circle'
+                        size='small'
+                        onClick={() => this.addColor()}
+                    />,
+                    <Button
+                        key='edit'
+                        icon='pen'
+                        chromeless
+                        shape='circle'
+                        size='small'
+                        onClick={() => this.showEdit()}
+                    />,
+                    <Button
+                        key='presets'
+                        icon='angle-down'
+                        chromeless
+                        shape='circle'
+                        size='small'
+                        onClick={() => this.showPresets()}
+                    />
+                ]}
                 layout='horizontal'
                 className={[styles.palette, show === 'palette' ? styles.visible : styles.hidden].join(' ')}>
                 <div className={styles.palette}>
@@ -224,42 +251,6 @@ export class Palette extends React.Component {
                 </div>
             </Widget>
         )
-    }
-
-    renderPaletteLabel() {
-        return (
-            <div className={styles.label}>
-                <div>Palette</div>
-                {this.renderLabelButtons()}
-            </div>
-        )
-    }
-
-    renderLabelButtons() {
-        return (
-            <div className={styles.buttons}>
-                <Button
-                    icon='plus'
-                    chromeless
-                    shape='circle'
-                    size='small'
-                    onClick={() => this.addColor()}
-                />
-                <Button
-                    icon='pen'
-                    chromeless
-                    shape='circle'
-                    size='small'
-                    onClick={() => this.showEdit()}
-                />
-                <Button
-                    icon='angle-down'
-                    chromeless
-                    shape='circle'
-                    size='small'
-                    onClick={() => this.showPresets()}
-                />
-            </div>)
     }
 
     addColor() {
@@ -355,7 +346,7 @@ class ColorInput extends React.Component {
     renderColorButtons() {
         const {onInsert, onRemove} = this.props
         return (
-            <div className={styles.buttons}>
+            <ButtonGroup>
                 <Button
                     icon='plus'
                     chromeless
@@ -370,7 +361,7 @@ class ColorInput extends React.Component {
                     size='small'
                     onClick={() => onRemove()}
                 />
-            </div>)
+            </ButtonGroup>
+        )
     }
-
 }
