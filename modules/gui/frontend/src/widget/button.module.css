@@ -4,6 +4,7 @@
 }
 
 .button {
+    --x-small-font-size: .7rem;
     --small-font-size: .8rem;
     --normal-font-size: .9rem;
     --large-font-size: 1.0rem;
@@ -29,6 +30,12 @@
     align-items: center;
 }
 
+.button.width-fill span {
+    display: inline-block;
+    display: flex;
+    flex-grow: 1;
+}
+
 /* alignment */
 
 .alignment-left {
@@ -44,6 +51,10 @@
 }
 
 /* size */
+
+.size-x-small {
+    --font-size: var(--x-small-font-size);
+}
 
 .size-small {
     --font-size: var(--small-font-size);
@@ -74,7 +85,7 @@
 
 .shape-pill {
     border-radius: 500px;
-    min-width: 3.5rem;
+    /*min-width: 3.5rem;*/
     padding: calc(var(--size) * var(--vertical-padding-factor)) calc(var(--size) * var(--horizontal-padding-factor));
 }
 
@@ -97,6 +108,7 @@
 
 .width-fill {
     width: 100%;
+    flex-grow: 1;
 }
 
 /* air */
@@ -126,8 +138,9 @@
     position: relative;
 }
 
-.button > .contents {
+.button.width-fill > .contents {
     display: flex;
+    flex-grow: 1;
 }
 
 /* spacing between icon and label */

@@ -4,13 +4,14 @@ import React from 'react'
 
 export const FormCombo = (
     {
-        input, options, alignment, allowClear, autoFocus, busyMessage, className, disabled, errorMessage,
-        inputClassName, keyboard, label, optionsClassName, optionTooltipPlacement, placeholder, placement, readOnly,
-        standalone, tooltip, tooltipPlacement, onCancel, onChange
+        input, options, additionalButtons, alignment, allowClear, autoFocus, busyMessage, className, disabled,
+        errorMessage, inputClassName, keyboard, label, optionsClassName, optionTooltipPlacement, placeholder, placement,
+        readOnly, standalone, tooltip, tooltipPlacement, onCancel, onChange
     }) =>
     <Combo
         value={input.value}
         options={options}
+        additionalButtons={additionalButtons}
         alignment={alignment}
         allowClear={allowClear}
         autoFocus={autoFocus}
@@ -39,6 +40,7 @@ export const FormCombo = (
 FormCombo.propTypes = {
     input: PropTypes.any.isRequired,
     options: PropTypes.any.isRequired,
+    additionalButtons: PropTypes.array,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,

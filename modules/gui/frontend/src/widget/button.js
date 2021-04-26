@@ -7,7 +7,6 @@ import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
-import _ from 'lodash'
 import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
 import withForwardedRef from 'ref'
@@ -347,7 +346,7 @@ Button.propTypes = {
     route: PropTypes.string,
     shape: PropTypes.oneOf(['rectangle', 'pill', 'circle', 'none']),
     shown: PropTypes.any,
-    size: PropTypes.oneOf(['small', 'normal', 'large', 'x-large', 'xx-large']),
+    size: PropTypes.oneOf(['x-small', 'small', 'normal', 'large', 'x-large', 'xx-large']),
     stopPropagation: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.any,
