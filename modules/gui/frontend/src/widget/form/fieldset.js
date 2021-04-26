@@ -7,7 +7,7 @@ import React from 'react'
 
 class _FormFieldSet extends React.Component {
     render() {
-        const {form, className, layout, spacing, disabled, label,
+        const {form, className, layout, spacing, disabled, label, labelButtons,
             tooltip, tooltipPlacement, errorMessage, busyMessage, children} = this.props
         return (
             <Widget
@@ -16,6 +16,7 @@ class _FormFieldSet extends React.Component {
                 spacing={spacing}
                 disabled={disabled}
                 label={label}
+                labelButtons={labelButtons}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 errorMessage={errorMessage && getErrorMessage(form, errorMessage)}
@@ -38,6 +39,7 @@ FormFieldSet.propTypes = {
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,
     label: PropTypes.any,
+    labelButtons: PropTypes.any,
     layout: PropTypes.any,
     spacing: PropTypes.any,
     tooltip: PropTypes.any,

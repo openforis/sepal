@@ -46,7 +46,7 @@ class _Combo extends React.Component {
     }
 
     render() {
-        const {errorMessage, busyMessage, standalone, disabled, className, label, tooltip, tooltipPlacement, onCancel} = this.props
+        const {errorMessage, busyMessage, standalone, disabled, className, label, labelButtons, tooltip, tooltipPlacement, onCancel} = this.props
         const {showOptions} = this.state
         const onClick = e => {
             if (this.isActive()) {
@@ -61,6 +61,7 @@ class _Combo extends React.Component {
             <Form.FieldSet
                 className={[styles.container, className].join(' ')}
                 label={label}
+                labelButtons={labelButtons}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 disabled={disabled}
@@ -348,6 +349,7 @@ Combo.propTypes = {
     inputClassName: PropTypes.string,
     keyboard: PropTypes.any,
     label: PropTypes.any,
+    labelButtons: PropTypes.any,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,
