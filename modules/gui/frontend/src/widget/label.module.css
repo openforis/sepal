@@ -4,6 +4,7 @@
     --large-font-size: .9rem;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     margin: 0;
     margin-bottom: .5rem;
     font-size: var(--font-size);
@@ -42,4 +43,9 @@
 
 .label .info:hover {
     color: #e0e0e0;
+}
+
+.error {
+    color: var(--error-color);
+    margin-right: .25rem;
 }

@@ -101,30 +101,11 @@
     }
 }
 
-label {
-    --label-color: #b0b0b0;
-    --label-background-color: transparent;
-    display: block;
-    margin: 0;
-    margin-bottom: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    color: var(--label-color);
-    background-color: var(--label-background-color);
-}
-
-label .info {
-    cursor: help;
-}
-
-fieldset label {
-    font-size: .7rem;
-    font-weight: normal;
-}
-
 .messageContainer {
-    position: relative;
+    position: absolute;
+    bottom: 0;
     width: 100%;
+    /* height: 0; */
 }
 
 .message {
@@ -136,6 +117,7 @@ fieldset label {
     color: var(--message-color);
     font-size: .8rem;
     font-weight: 400;
+    /* background-color: rgba(255,0,0,.1); */
 }
 
 .message.error {

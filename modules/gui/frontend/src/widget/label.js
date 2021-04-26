@@ -5,12 +5,7 @@ import Tooltip from './tooltip'
 import styles from './label.module.css'
 
 export default class Label extends React.Component {
-    renderContents() {
-        const {msg, children} = this.props
-        return children ? children : msg
-    }
-
-    renderLabel(contents) {
+    render() {
         const {className, size, alignment, disabled} = this.props
         return (
             <label className={[
@@ -20,24 +15,53 @@ export default class Label extends React.Component {
                 disabled ? styles.disabled : null,
                 className
             ].join(' ')}>
-                {contents}
-                {disabled ? null : this.renderTooltip()}
+                {this.renderTooltip()}
+                {this.renderError()}
             </label>
         )
     }
 
-    renderTooltip() {
-        const {tooltip, tooltipPlacement} = this.props
-        return tooltip
-            ? (
-                <Tooltip msg={tooltip} placement={tooltipPlacement}>
-                    <span><Icon className={styles.info} name='question-circle'/></span>
-                </Tooltip>
-            ) : null
+    renderContents() {
+        const {msg, children} = this.props
+        return children ? children : msg
     }
 
-    render() {
-        return this.renderLabel(this.renderContents())
+    renderTooltip() {
+        const {tooltip, tooltipPlacement} = this.props
+        return (
+            <Tooltip msg={tooltip} placement={tooltipPlacement}>
+                <div>
+                    {this.renderContents()}
+                    {this.renderTooltipIcon()}
+                </div>
+            </Tooltip>
+        )
+    }
+
+    renderTooltipIcon() {
+        const {tooltip} = this.props
+        return tooltip
+            ? (
+                <Icon className={styles.info} name='question-circle'/>
+            )
+            : null
+    }
+
+    renderError() {
+        const {error} = this.props
+        return error
+            ? (
+                <Icon
+                    className={styles.error}
+                    name='exclamation-triangle'
+                    variant='error'
+                    tooltip={error}
+                    tooltipPlacement='left'
+                    tooltipDelay={0}
+                    pulse
+                />
+            )
+            : null
     }
 }
 
@@ -46,6 +70,7 @@ Label.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
+    error: PropTypes.any,
     msg: PropTypes.any,
     size: PropTypes.oneOf(['normal', 'large']),
     tooltip: PropTypes.any,

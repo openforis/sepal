@@ -31,7 +31,7 @@ export class Widget extends React.Component {
                     ].join(' ')}>
                     {children}
                 </Layout>
-                {this.renderMessage()}
+                {/* {this.renderMessage()} */}
             </div>
         )
     }
@@ -45,7 +45,7 @@ export class Widget extends React.Component {
                 : 'normal'
     }
     renderLabel() {
-        const {label, tooltip, tooltipPlacement, alignment} = this.props
+        const {label, tooltip, tooltipPlacement, alignment, errorMessage} = this.props
         return label
             ? (
                 <Label
@@ -54,29 +54,30 @@ export class Widget extends React.Component {
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
                     tabIndex={-1}
+                    error={errorMessage}
                 />
             )
             : null
     }
 
-    renderMessage() {
-        const {errorMessage, busyMessage} = this.props
-        const messageStyle = errorMessage
-            ? styles.error
-            : busyMessage
-                ? styles.busy
-                : null
-        const message = this.getMessage()
-        return message
-            ? (
-                <div className={styles.messageContainer}>
-                    <div className={[styles.message, messageStyle].join(' ')}>
-                        {message}
-                    </div>
-                </div>
-            )
-            : null
-    }
+    // renderMessage() {
+    //     const {errorMessage, busyMessage} = this.props
+    //     const messageStyle = errorMessage
+    //         ? styles.error
+    //         : busyMessage
+    //             ? styles.busy
+    //             : null
+    //     const message = this.getMessage()
+    //     return message
+    //         ? (
+    //             <div className={styles.messageContainer}>
+    //                 <div className={[styles.message, messageStyle].join(' ')}>
+    //                     {message}
+    //                 </div>
+    //             </div>
+    //         )
+    //         : null
+    // }
 
     getMessage() {
         return this.getErrorMessage() || this.getBusyMessage()
