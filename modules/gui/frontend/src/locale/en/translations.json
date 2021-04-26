@@ -381,7 +381,7 @@
             "title": "Layers"
         },
         "visParams":  {
-            "title": "Custom visualization parameters",
+            "title": "Visualization parameters",
             "bands": {
                 "loading": "Loading bands...",
                 "loadError": "Failed to load image bands"
@@ -402,11 +402,8 @@
                     "label": "Gamma",
                     "info": "Value: {gamma}"
                 },
-                "min": {
-                    "label": "Min"
-                },
-                "max": {
-                    "label": "Max"
+                "range": {
+                    "label": "range"
                 },
                 "inverted": {
                     "label": "Inverted"

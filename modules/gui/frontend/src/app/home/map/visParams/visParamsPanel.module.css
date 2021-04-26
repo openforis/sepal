@@ -1,36 +1,31 @@
 .panel {
-    width: 40rem;
+    /*width: 40rem;*/
+    width: fit-content;
+
 }
 
-.name {
-    grid-area: name;
+.band {
+    width: 17rem;
 }
 
-.gammaOrPalette {
-    grid-area: gammaOrPalette;
-    /*min-width: 15rem;*/
+.min input {
+    text-align: right;
 }
 
-.min {
-    grid-area: min;
+.minMax {
+    width: 5rem;
 }
 
-.max {
-    grid-area: max;
+.gamma {
+    width: 3.5rem;
+}
+
+.gamma input {
+    text-align: right;
 }
 
 .inverted {
     grid-area: inverted;
     align-self: center;
     justify-self: center;
-}
-
-.bandForm {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    grid-template-areas:
-        'name       empty      gammaOrPalette'
-        'min        inverted   max';
-    grid-column-gap: 1.5rem;
-    grid-row-gap: 1rem;
 }

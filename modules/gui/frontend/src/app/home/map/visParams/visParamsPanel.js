@@ -3,11 +3,12 @@ import {Histogram, stretch} from './histogram'
 import {Layout} from 'widget/layout'
 import {Palette} from './palette'
 import {Panel} from 'widget/panel/panel'
+import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import ButtonSelect from 'widget/buttonSelect'
-import Icon from 'widget/icon'
+import Label from 'widget/label'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
@@ -258,16 +259,36 @@ export const VisParamsPanel = compose(
 class BandForm extends React.Component {
     render() {
         const {type} = this.props
+        const singleBand = type === 'single'
         return (
-            <div className={styles.bandForm}>
-                {this.renderBand()}
-                {type === 'single'
-                    ? this.renderPalette()
-                    : this.renderGamma()}
-                {this.renderMin()}
-                {this.renderInverted()}
-                {this.renderMax()}
-            </div>
+            <Layout type={'vertical'}>
+                <Layout type={'horizontal'}>
+                    {this.renderBand()}
+                    <Layout type={'horizontal-nowrap'}>
+                        {this.renderRange()}
+                        {singleBand ? null : this.renderGamma()}
+                    </Layout>
+                </Layout>
+                {singleBand ? this.renderPalette() : null}
+            </Layout>
+        )
+    }
+
+    renderInverted() {
+        const {inputs: {inverted}} = this.props
+        return (
+            <Form.Buttons
+                key={'inverted'}
+                input={inverted}
+                chromeless={!(inverted.value || []).length}
+                shape={'pill'}
+                air={'less'}
+                size={'x-small'}
+                options={[
+                    {value: 'inverted', label: 'REV'}
+                ]}
+                multiple
+            />
         )
     }
 
@@ -276,54 +297,38 @@ class BandForm extends React.Component {
         return <Palette input={palette} className={styles.gammaOrPalette}/>
     }
 
-    renderInverted() {
-        const {inputs: {inverted}} = this.props
+    renderRange() {
+        const {inputs: {min, max}} = this.props
         return (
-            <Form.Buttons
-                input={inverted}
-                options={[
-                    {value: 'inverted', label: <Icon name='exchange-alt'/>}
-                ]}
-                multiple
-                className={styles.inverted}
-            />
-        )
-    }
-
-    renderMax() {
-        const {inputs: {max}} = this.props
-        return (
-            <Form.Input
-                label={msg('map.visParams.form.max.label')}
-                input={max}
-                className={styles.max}
-            />
-        )
-    }
-
-    renderMin() {
-        const {inputs: {min}} = this.props
-        return (
-            <Form.Input
-                label={msg('map.visParams.form.min.label')}
-                input={min}
-                className={styles.min}
-            />
+            <Widget
+                layout={'horizontal-nowrap'}
+                label={msg('map.visParams.form.range.label')}>
+                <Form.Input
+                    input={min}
+                    className={[styles.minMax, styles.min].join(' ')}
+                />
+                <Label msg={<>&hellip;</>}/>
+                <Form.Input
+                    input={max}
+                    className={styles.minMax}
+                />
+            </Widget>
         )
     }
 
     renderBand() {
-        const {onBandSelected, bands, label, inputs: {name}} = this.props
+        const {onBandSelected, bands, label, inputs: {name, inverted}} = this.props
         const options = (bands || []).map(band => ({value: band, label: band}))
         return (
             <Form.Combo
-                className={styles.name}
                 label={label}
+                className={styles.band}
                 placeholder={'Select band...'}
                 input={name}
                 options={options}
                 disabled={!bands}
                 busyMessage={!bands && msg('map.visParams.bands.loading')}
+                additionalButtons={[this.renderInverted()]}
                 onChange={({value}) => onBandSelected(value)}
             />
         )
@@ -332,18 +337,11 @@ class BandForm extends React.Component {
     renderGamma() {
         const {inputs: {gamma}} = this.props
         return (
-            <div className={styles.gammaOrPalette}>
-                <Form.Slider
-                    label={msg('map.visParams.form.gamma.label')}
-                    input={gamma}
-                    minValue={0}
-                    maxValue={5}
-                    decimals={1}
-                    ticks={[0, 0.5, 1, 1.5, 3, 5]}
-                    scale='log'
-                    info={gamma => msg('map.visParams.form.gamma.info', {gamma})}
-                />
-            </div>
+            <Widget
+                label={msg('map.visParams.form.gamma.label')}
+                className={styles.gamma}>
+                <Form.Input input={gamma}/>
+            </Widget>
         )
     }
 }

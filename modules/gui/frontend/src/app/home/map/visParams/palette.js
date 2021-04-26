@@ -1,29 +1,36 @@
 import {Button} from 'widget/button'
-import {ButtonGroup} from 'widget/buttonGroup'
 import {Combo} from 'widget/combo'
 import {Input} from 'widget/input'
-import {Item} from '../../../../widget/item'
+import {Layout} from 'widget/layout'
 import {Widget} from 'widget/widget'
 import Color from 'color'
+import Label from 'widget/label'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
+import guid from 'guid'
 import styles from './palette.module.css'
 
 export class Palette extends React.Component {
     state = {
         text: null,
+        edit: null,
         show: 'palette'
     }
 
     render() {
         const {className} = this.props
-        const {show} = this.state
         return (
-            <div className={[className, styles.container].join(' ')}>
-                {this.renderPalette()}
-                {show === 'edit' ? this.renderText() : null}
-                {show === 'presets' ? this.renderPresets() : null}
-            </div>
+            <Widget
+                label={'Palette'}
+                labelButtons={this.labelButtons()}
+                layout={'vertical'}
+                className={className}>
+                <Layout>
+                    {this.renderPalette()}
+                    {this.renderText()}
+                    {this.renderPresets()}
+                </Layout>
+            </Widget>
         )
     }
 
@@ -31,19 +38,13 @@ export class Palette extends React.Component {
         const toOptions = options => options.map(({label, value}) => ({
             label, value, render: () => {
                 return (
-                    <div className={styles.presetOption}>
-                        <Item
-                            title={label}
-                            description={
-                                <div
-                                    className={styles.presetOptionPalette}
-                                    style={{'--palette': value.join(', ')}}
-                                />
-                            }/>
+                    <div
+                        className={styles.presetOption}
+                        style={{'--palette': value.join(', ')}}>
+                        <Label msg={label} className={styles.presetLabel}/>
                     </div>
                 )
             }
-            // <div className={styles.presetOption} style={{'--palette': value.join(' ')}}>test</div>
         }))
         const options = [
             {label: 'cmocean', options: toOptions([
@@ -178,148 +179,182 @@ export class Palette extends React.Component {
         ]
         return (
             <Combo
-                className={styles.widget}
-                label={'Palette'}
-                placeholder={'Select a preset palette...'}
+                className={styles.preset}
+                placeholder={'Select a pre-set palette...'}
                 options={options}
-                // onBlur={({target: {value}}) => this.hidePresets(value)}
                 onChange={({value}) => this.applyPreset(value)}
-                autoFocus
             />
         )
     }
 
     renderText() {
-        const {text} = this.state
+        const {show, text} = this.state
+        if (show !== 'text') {
+            return null
+        }
         return (
             <Input
                 className={styles.widget}
-                label={'Palette'}
-                value={text}
-                autoFocus
+                value={text || ''}
                 onChange={({target: {value}}) => this.updateText(value)}
-                onBlur={({target: {value}}) => this.hideText(value)}
             />
         )
     }
 
     renderPalette() {
+        const {edit, show} = this.state
+        if (show !== 'palette') {
+            return null
+        }
         const {input} = this.props
-        const {show} = this.state
-        const colorInputs = (input.value || []).map((color, i) =>
+        const colorInputs = (input.value || []).map(({color, id}, i) =>
             <ColorInput
-                key={`${color}-${i}`}
+                key={id}
                 color={color}
                 onInsert={() => this.insertColor(i)}
-                onRemove={() => this.removeColor(i)}
-                onChange={color => this.updateColor(color, i)}
+                onRemove={() => this.removeColor(id)}
+                onBlur={() => {
+                    this.setState({edit: null})
+                }}
+                onChange={color => {
+                    this.updateColor(color, id)
+                }}
+                onEdit={() => this.setState({edit: id})}
+                edit={!!edit}
             />
         )
         return (
-            <Widget
-                label='Palette' // TODO: use msg
-                labelButtons={[
-                    <Button
-                        key='add'
-                        icon='plus'
-                        chromeless
-                        shape='circle'
-                        size='small'
-                        onClick={() => this.addColor()}
-                    />,
-                    <Button
-                        key='edit'
-                        icon='pen'
-                        chromeless
-                        shape='circle'
-                        size='small'
-                        onClick={() => this.showEdit()}
-                    />,
-                    <Button
-                        key='presets'
-                        icon='angle-down'
-                        chromeless
-                        shape='circle'
-                        size='small'
-                        onClick={() => this.showPresets()}
-                    />
-                ]}
-                layout='horizontal'
-                className={[styles.palette, show === 'palette' ? styles.visible : styles.hidden].join(' ')}>
-                <div className={styles.palette}>
-                    {colorInputs}
-                </div>
-            </Widget>
+            <div className={styles.palette}>
+                {colorInputs}
+            </div>
         )
+    }
+
+    labelButtons() {
+        const {show} = this.state
+        return [
+            <Button
+                key={'add'}
+                icon='plus'
+                chromeless
+                shape='circle'
+                size='small'
+                onClick={() => this.addColor()}
+            />,
+            show === 'palette'
+                ? (
+                    <Button
+                        key={'text'}
+                        icon='hashtag'
+                        chromeless
+                        shape='circle'
+                        size='small'
+                        onClick={() => this.show('text')}
+                    />
+                )
+                : (
+                    <Button
+                        key={'palette'}
+                        icon='palette'
+                        chromeless
+                        shape='circle'
+                        size='small'
+                        onClick={() => this.show('palette')}
+                    />
+                )
+        ]
+    }
+
+    show(value) {
+        this.setState({show: value})
+    }
+
+    createColor(color, edit) {
+        return {
+            id: guid(),
+            color,
+            edit,
+        }
     }
 
     addColor() {
         const {input} = this.props
         const palette = input.value || []
-        input.set([...palette, '#000000'])
+        const color = this.createColor('#000000')
+        this.setColors([...palette, color])
+        this.setState({edit: color.id})
     }
 
     insertColor(index) {
         const {input} = this.props
         const palette = input.value || []
-        input.set([...palette.slice(0, index), '#000000', ...palette.slice(index)])
+        const color = this.createColor('#000000')
+        this.setColors([...palette.slice(0, index), color, ...palette.slice(index)])
+        this.setState({edit: color.id})
     }
 
-    removeColor(index) {
+    removeColor(idToRemove) {
         const {input} = this.props
         const palette = input.value || []
-        input.set(palette.filter((color, i) => i !== index))
+        this.setColors(palette.filter(({id}) => id !== idToRemove))
     }
 
-    updateColor(color, index) {
+    updateColor(color, idToUpdate) {
         const {input} = this.props
         const palette = input.value || []
-        input.set(palette.map((prevColor, i) =>
-            i === index ? color : prevColor
-        ))
+        this.setColors(
+            palette.map(colorEntry => ({
+                ...colorEntry,
+                color: colorEntry.id === idToUpdate ? color : colorEntry.color
+            }))
+        )
+        this.setState({edit: null})
     }
 
-    showEdit() {
+    setColors(colors) {
         const {input} = this.props
-        const palette = input.value || []
-        this.setState({show: 'edit', text: palette.join(', ')})
-    }
-
-    showPresets() {
-        this.setState({show: 'presets'})
+        input.set(colors)
+        const text = colors
+            .map(({color}) => color)
+            .join(', ')
+        this.setState({text})
     }
 
     applyPreset(colors) {
-        const {input} = this.props
-        input.set(colors)
-        this.setState({show: 'palette'})
-    }
-
-    hidePresets() {
-        this.setState({show: 'palette'})
+        this.setColors(colors.map(color => this.createColor(color)))
     }
 
     updateText(value) {
-        this.setState({text: value})
-    }
-
-    hideText(value) {
         const {input} = this.props
+        this.setState({text: value})
         if (value) {
-            input.set(value
+            const colors = value
                 .split(',')
-                .map(color => Color(color.trim()).hex()))
+                .map(color => {
+                    try {
+                        return this.createColor(Color(color.trim()).hex())
+                    } catch(_error) {
+                        return null // Malformatted color
+                    }
+                })
+                .filter(color => color)
+            input.set(colors)
+        } else {
+            input.set([])
         }
-        this.setState({show: 'palette', text: null})
-
     }
 }
 
 class ColorInput extends React.Component {
-    ref = React.createRef()
+    element = null
+
+    constructor(props) {
+        super(props)
+        this.initRef = this.initRef.bind(this)
+    }
 
     render() {
-        const {color, onChange} = this.props
+        const {color, onBlur, onChange} = this.props
         return (
             <Tooltip
                 msg={this.renderColorButtons()}
@@ -329,14 +364,14 @@ class ColorInput extends React.Component {
                     <div
                         className={styles.color}
                         style={{'--color': Color(color).hex()}}
-                        onClick={() => this.ref.current.click()}
                     />
                     <input
                         type='color'
                         className={styles.colorInput}
                         value={Color(color).hex()}
                         onChange={({target: {value}}) => onChange(value)}
-                        ref={this.ref}
+                        onBlur={() => onBlur()}
+                        ref={this.initRef}
                     />
                 </div>
             </Tooltip>
@@ -344,9 +379,9 @@ class ColorInput extends React.Component {
     }
 
     renderColorButtons() {
-        const {onInsert, onRemove} = this.props
+        const {onEdit, onInsert, onRemove} = this.props
         return (
-            <ButtonGroup>
+            <Button className={styles.buttons}>
                 <Button
                     icon='plus'
                     chromeless
@@ -355,13 +390,32 @@ class ColorInput extends React.Component {
                     onClick={() => onInsert()}
                 />
                 <Button
+                    icon='pen'
+                    chromeless
+                    shape='circle'
+                    size='small'
+                    onClick={() => {
+                        onEdit()
+                        this.element.click()
+                    }}
+                />
+                <Button
                     icon='trash'
                     chromeless
                     shape='circle'
                     size='small'
                     onClick={() => onRemove()}
                 />
-            </ButtonGroup>
-        )
+            </Button>)
+    }
+
+    initRef(element) {
+        this.element = element
+        const {edit} = this.props
+        if (edit) {
+            setTimeout(
+                () => this.element && this.element.click()
+            )
+        }
     }
 }
