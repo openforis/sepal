@@ -40,7 +40,7 @@ export const FormCombo = (
 FormCombo.propTypes = {
     input: PropTypes.any.isRequired,
     options: PropTypes.any.isRequired,
-    additionalButtons: PropTypes.array,
+    additionalButtons: PropTypes.any,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,

@@ -346,7 +346,7 @@ export const Combo = compose(
 
 Combo.propTypes = {
     options: PropTypes.any.isRequired,
-    additionalButtons: PropTypes.array,
+    additionalButtons: PropTypes.arrayOf(PropTypes.node),
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,

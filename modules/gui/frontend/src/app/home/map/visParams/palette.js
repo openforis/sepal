@@ -382,7 +382,7 @@ class ColorInput extends React.Component {
     renderColorButtons() {
         const {onEdit, onInsert, onRemove} = this.props
         return (
-            <ButtonGroup className={styles.buttons}>
+            <ButtonGroup layouy='horizontal-nowrap'>
                 <Button
                     icon='plus'
                     chromeless

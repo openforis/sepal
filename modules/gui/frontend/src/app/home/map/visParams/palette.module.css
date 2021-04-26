@@ -6,11 +6,6 @@
     display: flex;
 }
 
-.buttons {
-    display: flex;
-    flex-wrap: nowrap;
-}
-
 .colorContainer {
     position: relative;
 }
