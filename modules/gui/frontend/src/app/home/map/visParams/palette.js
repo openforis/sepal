@@ -179,12 +179,25 @@ export class Palette extends React.Component {
             ])},
         ]
         return (
-            <Combo
-                className={styles.preset}
-                placeholder={'Select a pre-set palette...'}
-                options={options}
-                onChange={({value}) => this.applyPreset(value)}
-            />
+            <React.Fragment>
+                <Combo
+                    placeholder={'Select a pre-set palette...'}
+                    options={options}
+                    additionalButtons={[
+                        <Button
+                            key={'attribution'}
+                            icon='external-link-alt'
+                            look='transparent'
+                            shape={'pill'}
+                            air={'less'}
+                            size={'x-small'}
+                            tooltip={'Pre-sets from https://github.com/gee-community/ee-palettes.'}
+                            linkUrl={'https://github.com/gee-community/ee-palettes'}
+                        />
+                    ]}
+                    onChange={({value}) => this.applyPreset(value)}
+                />
+            </React.Fragment>
         )
     }
 
@@ -221,7 +234,7 @@ export class Palette extends React.Component {
                     this.updateColor(color, id)
                 }}
                 onEdit={() => this.setState({edit: id})}
-                edit={!!edit}
+                edit={edit === id}
             />
         )
         const noColors =
