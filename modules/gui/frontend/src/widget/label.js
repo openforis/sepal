@@ -62,11 +62,13 @@ export default class Label extends React.Component {
                     pulse
                 />
             )
-            : (
-                <ButtonGroup spacing='tight'>
-                    {buttons}
-                </ButtonGroup>
-            )
+            : buttons
+                ? (
+                    <ButtonGroup spacing='tight'>
+                        {buttons}
+                    </ButtonGroup>
+                )
+                : null
     }
 }
 
