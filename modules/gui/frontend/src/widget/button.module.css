@@ -85,7 +85,7 @@
 
 .shape-pill {
     border-radius: 500px;
-    /*min-width: 3.5rem;*/
+    min-width: calc(4 * var(--size));
     padding: calc(var(--size) * var(--vertical-padding-factor)) calc(var(--size) * var(--horizontal-padding-factor));
 }
 
