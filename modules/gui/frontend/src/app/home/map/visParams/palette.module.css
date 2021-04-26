@@ -1,3 +1,7 @@
+.paletteRow {
+    min-height: 2.5rem;
+}
+
 .palette  {
     display: flex;
 }

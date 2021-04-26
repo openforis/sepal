@@ -26,11 +26,11 @@ export class Palette extends React.Component {
                 labelButtons={this.labelButtons()}
                 layout={'vertical'}
                 className={className}>
-                <Layout>
+                <Layout className={styles.paletteRow}>
                     {this.renderPalette()}
                     {this.renderText()}
-                    {this.renderPresets()}
                 </Layout>
+                {this.renderPresets()}
             </Widget>
         )
     }
