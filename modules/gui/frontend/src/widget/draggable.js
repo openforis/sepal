@@ -26,7 +26,7 @@ class _Draggable extends React.Component {
 
     componentDidMount() {
         const {addSubscription} = this.props
-        const draggable = this.ref.current
+        const draggable = this.draggableRef.current
         const hammer = new Hammer(draggable)
         hammer.get('pan').set({direction: Hammer.DIRECTION_ALL})
         const pan$ = fromEvent(hammer, 'panstart panmove panend')
@@ -80,5 +80,8 @@ const Draggable = compose(
 export default Draggable
 
 Draggable.propTypes = {
-    children: PropTypes.any.isRequired
+    children: PropTypes.any.isRequired,
+    onDrag: PropTypes.func,
+    onEnd: PropTypes.func,
+    onStart: PropTypes.func
 }
