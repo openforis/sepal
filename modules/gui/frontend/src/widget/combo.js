@@ -120,8 +120,10 @@ class _Combo extends React.Component {
     }
 
     renderButtons() {
+        const {additionalButtons = []} = this.props
         return (
             <ButtonGroup layout='horizontal-nowrap'>
+                {additionalButtons}
                 {this.renderClearButton()}
                 {this.renderToggleOptionsButton()}
             </ButtonGroup>
@@ -292,11 +294,15 @@ class _Combo extends React.Component {
         const {options} = this.props
         const {filter} = this.state
         const matcher = this.matcher(filter)
+        const filterGroup = group => {
+            const filtered = {...group, options: getFilteredOptions(group.options)}
+            return filtered.options.length ? filtered : null
+        }
         const getFilteredOptions = options =>
             _.compact(
                 options.map(option =>
                     option.options
-                        ? {...option, options: getFilteredOptions(option.options)}
+                        ? filterGroup(option)
                         : matcher.test(option.searchableText || option.label)
                             ? option
                             : null
@@ -315,7 +321,7 @@ class _Combo extends React.Component {
 
         const getInputOption = () => {
             const {value} = this.props
-            return flattenedOptions && flattenedOptions.find(option => option.value === value)
+            return flattenedOptions && flattenedOptions.find(option => !option.group && option.value === value)
         }
 
         const getSelectedOption = selectedOption => {
@@ -323,11 +329,12 @@ class _Combo extends React.Component {
             return validatedSelectedOption || getInputOption()
         }
 
-        this.updateState(prevState => ({
-            filteredOptions,
-            flattenedOptions,
-            selectedOption: getSelectedOption.bind(this)(prevState.selectedOption)
-        }))
+        this.updateState(prevState =>
+            ({
+                filteredOptions,
+                flattenedOptions,
+                selectedOption: getSelectedOption.bind(this)(prevState.selectedOption)
+            }))
     }
 }
 
@@ -339,6 +346,7 @@ export const Combo = compose(
 
 Combo.propTypes = {
     options: PropTypes.any.isRequired,
+    additionalButtons: PropTypes.array,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
