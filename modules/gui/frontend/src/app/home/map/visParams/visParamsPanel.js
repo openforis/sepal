@@ -285,7 +285,7 @@ class BandForm extends React.Component {
                 air={'less'}
                 size={'x-small'}
                 options={[
-                    {value: 'inverted', label: 'REV'}
+                    {value: 'inverted', label: 'REV', tooltip: 'Reverse the band'}
                 ]}
                 multiple
             />

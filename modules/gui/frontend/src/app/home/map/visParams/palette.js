@@ -3,6 +3,7 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {Combo} from 'widget/combo'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
+import {NoData} from '../../../../widget/noData'
 import {Widget} from 'widget/widget'
 import Color from 'color'
 import Label from 'widget/label'
@@ -224,9 +225,15 @@ export class Palette extends React.Component {
                 edit={!!edit}
             />
         )
+        const noColors =
+            <div className={styles.noData}>
+                Empty palette, using gray scale.
+            </div>
         return (
             <div className={styles.palette}>
-                {colorInputs}
+                {colorInputs.length
+                    ? colorInputs
+                    : noColors}
             </div>
         )
     }
@@ -250,7 +257,7 @@ export class Palette extends React.Component {
                         chromeless
                         shape='circle'
                         size='small'
-                        onClick={() => this.show('text')}
+                        onClick={() => this.showText()}
                     />
                 )
                 : (
@@ -260,14 +267,20 @@ export class Palette extends React.Component {
                         chromeless
                         shape='circle'
                         size='small'
-                        onClick={() => this.show('palette')}
+                        onClick={() => this.showPalette()}
                     />
                 )
         ]
     }
 
-    show(value) {
-        this.setState({show: value})
+    showText() {
+        const {input} = this.props
+        this.setText(input.value || [])
+        this.setState({show: 'text'})
+    }
+
+    showPalette() {
+        this.setState({show: 'palette'})
     }
 
     createColor(color, edit) {
@@ -315,6 +328,10 @@ export class Palette extends React.Component {
     setColors(colors) {
         const {input} = this.props
         input.set(colors)
+        this.setText(colors)
+    }
+
+    setText(colors) {
         const text = colors
             .map(({color}) => color)
             .join(', ')
@@ -330,6 +347,7 @@ export class Palette extends React.Component {
         this.setState({text: value})
         if (value) {
             const colors = value
+                .replace(/[^\w,#]/g, '')
                 .split(',')
                 .map(color => {
                     try {
