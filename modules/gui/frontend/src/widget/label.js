@@ -9,7 +9,7 @@ export default class Label extends React.Component {
     render() {
         const {className, size, alignment, disabled} = this.props
         return (
-            <label className={[
+            <div className={[
                 styles.label,
                 styles[size],
                 styles[alignment],
@@ -18,7 +18,7 @@ export default class Label extends React.Component {
             ].join(' ')}>
                 {this.renderLeft()}
                 {this.renderRight()}
-            </label>
+            </div>
         )
     }
 
