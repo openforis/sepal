@@ -1,11 +1,11 @@
 const {job} = require('root/jobs/job')
 
-const worker$ = ({recipe, bands}) => {
+const worker$ = ({recipe, bands, visParams}) => {
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('ee')
     const {switchMap} = require('rx/operators')
 
-    const {getImage$, getVisParams$} = ImageFactory(recipe, bands)
+    const {getImage$, getVisParams$} = ImageFactory(recipe, bands, visParams)
     return getImage$().pipe(
         switchMap(image => getVisParams$(image).pipe(
             switchMap(visParams =>

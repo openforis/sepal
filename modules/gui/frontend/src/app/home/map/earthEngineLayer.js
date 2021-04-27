@@ -30,7 +30,7 @@ export default class EarthEngineLayer {
         return new EarthEngineLayer({
             map,
             mapId$: api.gee.preview$(previewRequest),
-            props: {asset},
+            props: {asset, layerConfig},
             progress$: new Subject()
         })
     }

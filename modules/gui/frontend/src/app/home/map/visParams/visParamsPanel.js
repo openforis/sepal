@@ -7,12 +7,14 @@ import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
 import Label from 'widget/label'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
+import guid from 'guid'
 import styles from './visParamsPanel.module.css'
 
 const fields = {
@@ -226,13 +228,18 @@ class _VisParamsPanel extends React.Component {
         )
         if (visParams) {
             inputs.type.set(visParams.type)
-            inputs.palette.set(visParams.palette)
-            const initBand = ({name, min, max, inverted, gamma}, i) => {
+            visParams.palette
+                ? inputs.palette.set(visParams.palette.map(color => ({id: guid(), color})))
+                : []
+            inputs['gamma1'].set(visParams.gamma ? visParams.gamma[0] : 1)
+            inputs['gamma2'].set(visParams.gamma ? visParams.gamma[1] : 1)
+            inputs['gamma3'].set(visParams.gamma ? visParams.gamma[2] : 1)
+            const initBand = (name, i) => {
+                this.initHistogram(name)
                 inputs[`name${i + 1}`].set(name)
-                inputs[`min${i + 1}`].set(min)
-                inputs[`max${i + 1}`].set(max)
-                inputs[`inverted${i + 1}`].set(inverted)
-                inputs[`gamma${i + 1}`].set(gamma)
+                inputs[`min${i + 1}`].set(visParams.min[i])
+                inputs[`max${i + 1}`].set(visParams.max[i])
+                inputs[`inverted${i + 1}`].set(visParams.inverted[i])
             }
             visParams.bands.forEach(initBand)
         } else {
@@ -273,10 +280,31 @@ class _VisParamsPanel extends React.Component {
     }
 
     save() {
-        const {activatable: {deactivate}} = this.props
-        // TODO: Implement...
-        console.log('Save')
+        const {recipeActionBuilder, activatable: {imageLayerSourceId, deactivate}, inputs} = this.props
+        const type = inputs.type.value
+        const singleBand = type === 'single'
+        const values = name => singleBand
+            ? [inputs[`${name}1`].value]
+            : [inputs[`${name}1`].value, inputs[`${name}2`].value, inputs[`${name}3`].value]
+        const bands = values('name')
+        const inverted = values('inverted').map(inverted => !!inverted)
+        const min = values('min')
+        const max = values('max')
+        const gamma = values('gamma')
+        const palette = inputs.palette.value ? inputs.palette.value.map(({color}) => color) : []
+        const visParams = singleBand
+            ? {type, bands, inverted, min, max, palette, custom: true}
+            : {type, bands, inverted, min, max, gamma, custom: true}
+        const template = {bands}
+        recipeActionBuilder('SAVE_VIS_PARAMS', {visParams})
+            .set(['layers.customVisParams', imageLayerSourceId, template], visParams)
+            .dispatch()
+        this.selectVisParams(visParams)
         deactivate()
+    }
+
+    selectVisParams(visParams) {
+        // TODO: Do this somehow. updateLayerConfig is not reachable here - we're not in a map area
     }
 }
 
@@ -287,7 +315,8 @@ const policy = () => ({
 export const VisParamsPanel = compose(
     _VisParamsPanel,
     form({fields}),
-    activatable({id: 'visParams', policy}),
+    withRecipe(),
+    activatable({id: 'visParams', policy})
 )
 
 class BandForm extends React.Component {
@@ -328,15 +357,16 @@ class BandForm extends React.Component {
 
     renderPalette() {
         const {inputs: {palette}} = this.props
-        return <Palette input={palette} className={styles.gammaOrPalette}/>
+        return <Palette input={palette}/>
     }
 
     renderRange() {
         const {inputs: {min, max}} = this.props
         return (
-            <Widget
+            <Form.FieldSet
                 layout={'horizontal-nowrap'}
-                label={msg('map.visParams.form.range.label')}>
+                label={msg('map.visParams.form.range.label')}
+                errorMessage={[min, max]}>
                 <Form.Input
                     input={min}
                     className={[styles.minMax, styles.min].join(' ')}
@@ -348,7 +378,7 @@ class BandForm extends React.Component {
                     className={styles.minMax}
                     errorMessage
                 />
-            </Widget>
+            </Form.FieldSet>
         )
     }
 

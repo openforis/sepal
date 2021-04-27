@@ -5,7 +5,7 @@ import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, mapTo, scan, switchMap} from 'rxjs/operators'
 import Hammer from 'hammerjs'
 import Icon from 'widget/icon'
-import Portal from '../../../../widget/portal'
+import Portal from 'widget/portal'
 import React from 'react'
 import _ from 'lodash'
 import styles from './histogram.module.css'
@@ -288,7 +288,7 @@ class _Handle extends React.Component {
 
     clampPosition(position) {
         const {width} = this.props
-        const margin = 0 // TODO: Look at this
+        const margin = 0
         return Math.round(
             clamp(position, {
                 min: margin,
