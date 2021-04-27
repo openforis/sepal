@@ -125,7 +125,7 @@
 }
 
 .area.bottom {
-    --area-top: calc(var(--top) - var(--clip-offset));
+    --area-top: calc(var(--top) + var(--clip-offset));
 }
 
 .area.left {
@@ -133,7 +133,7 @@
 }
 
 .area.right {
-    --area-left: calc(var(--left) - var(--clip-offset));
+    --area-left: calc(var(--left) + var(--clip-offset));
 }
 
 /* handle */
