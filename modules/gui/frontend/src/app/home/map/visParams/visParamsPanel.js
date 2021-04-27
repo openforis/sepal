@@ -1,5 +1,5 @@
 import {Form, form} from 'widget/form/form'
-import {Histogram, stretch} from './histogram'
+import {Histogram, histogramStretch} from './histogram'
 import {Layout} from 'widget/layout'
 import {Palette} from './palette'
 import {Panel} from 'widget/panel/panel'
@@ -192,7 +192,7 @@ class _VisParamsPanel extends React.Component {
                 type={type.value}
                 inputs={this.bandInputs(i)}
                 label={label}
-                onBandSelected={name => this.initHistogram(name)}/>
+                onBandSelected={name => this.initHistogram(name, {stretch: true})}/>
         )
     }
 
@@ -238,7 +238,7 @@ class _VisParamsPanel extends React.Component {
         const inputs = this.bandInputs(i)
         const histogram = histograms[inputs.name.value]
         if (histogram) {
-            const {min, max} = stretch(histogram, percent)
+            const {min, max} = histogramStretch(histogram.data, percent)
             inputs.min.set(min)
             inputs.max.set(max)
         }
@@ -260,11 +260,11 @@ class _VisParamsPanel extends React.Component {
             inputs['gamma2'].set(visParams.gamma ? visParams.gamma[1] : 1)
             inputs['gamma3'].set(visParams.gamma ? visParams.gamma[2] : 1)
             const initBand = (name, i) => {
-                this.initHistogram(name)
+                this.initHistogram(name, {stretch: false})
                 inputs[`name${i + 1}`].set(name)
                 inputs[`min${i + 1}`].set(visParams.min[i])
                 inputs[`max${i + 1}`].set(visParams.max[i])
-                inputs[`inverted${i + 1}`].set(visParams.inverted[i])
+                inputs[`inverted${i + 1}`].set([visParams.inverted[i]])
             }
             visParams.bands.forEach(initBand)
         } else {
@@ -275,19 +275,22 @@ class _VisParamsPanel extends React.Component {
         }
     }
 
-    initHistogram(name) {
+    initHistogram(name, {stretch}) {
         const {stream, activatable: {recipe}} = this.props
         const {histograms} = this.state
         const histogram = histograms[name]
-        if (!histogram) {
+        const updateHistogram = (data, stretch) => this.setState(({histograms}) =>
+            ({histograms: {
+                ...histograms,
+                [name]: {data, stretch}
+            }})
+        )
+        if (histogram) {
+            updateHistogram(histogram.data, true)
+        } else {
             stream((`LOAD_HISTOGRAM_${name}`),
                 api.gee.histogram$({recipe, band: name}),
-                histogram => this.setState(({histograms}) =>
-                    ({histograms: {
-                        ...histograms,
-                        [name]: histogram
-                    }})
-                )
+                data => updateHistogram(data, stretch)
             )
         }
     }
@@ -325,7 +328,7 @@ class _VisParamsPanel extends React.Component {
         const type = inputs.type.value
         const singleBand = type === 'single'
         const bands = this.values('name')
-        const inverted = this.values('inverted').map(inverted => !!inverted)
+        const inverted = this.values('inverted').map(inverted => inverted ? inverted[0] : false)
         const min = this.values('min')
         const max = this.values('max')
         const gamma = this.values('gamma')
@@ -394,7 +397,7 @@ class BandForm extends React.Component {
                 air={'less'}
                 size={'x-small'}
                 options={[
-                    {value: 'inverted', label: 'REV', tooltip: msg('map.visParams.form.band.reverse.tooltip')}
+                    {value: true, label: 'REV', tooltip: msg('map.visParams.form.band.reverse.tooltip')}
                 ]}
                 multiple
             />

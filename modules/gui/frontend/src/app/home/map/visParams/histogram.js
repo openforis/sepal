@@ -11,7 +11,7 @@ import _ from 'lodash'
 import styles from './histogram.module.css'
 import withSubscriptions from 'subscription'
 
-const DEFAULT_STRETCH = 99.99
+const DEFAULT_STRETCH = 99.9
 
 export class Histogram extends React.Component {
     state = {
@@ -44,7 +44,7 @@ export class Histogram extends React.Component {
     }
 
     renderHistogram() {
-        const {histogram, min, max, onMinMaxChange} = this.props
+        const {histogram: {data} = {}, min, max, onMinMaxChange} = this.props
         const {width} = this.state
         return (
             <div className={styles.histogram}>
@@ -53,7 +53,7 @@ export class Histogram extends React.Component {
                         {width
                             ? (
                                 <Graph
-                                    data={histogram}
+                                    data={data}
                                     drawGrid={false}
                                     axes={{
                                         x: {drawAxis: false},
@@ -69,7 +69,7 @@ export class Histogram extends React.Component {
                     </div>
                 </ElementResizeDetector>
                 <Handles
-                    histogram={histogram}
+                    histogram={data}
                     min={min}
                     max={max}
                     width={width}
@@ -96,10 +96,10 @@ export class Histogram extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {histogram: prevHistogram} = prevProps
-        const {histogram, min, max, onMinMaxChange} = this.props
-        if (histogram && (!_.isFinite(min) || !_.isFinite(max) || prevHistogram !== histogram)) {
-            onMinMaxChange(stretch(histogram, DEFAULT_STRETCH))
+        const {histogram: {data: prevData} = {}} = prevProps
+        const {histogram: {data, stretch} = {}, min, max, onMinMaxChange} = this.props
+        if (stretch && data && (!_.isFinite(min) || !_.isFinite(max) || prevData !== data)) {
+            onMinMaxChange(histogramStretch(data, DEFAULT_STRETCH))
         }
     }
 }
@@ -310,21 +310,21 @@ const histogramMinMax = histogram => {
     return {histogramMin, histogramMax}
 }
 
-export const stretch = (histogram, percent) => {
-    const total = histogram.reduce((acc, [_value, count]) => acc + count, 0)
+export const histogramStretch = (data, percent) => {
+    const total = data.reduce((acc, [_value, count]) => acc + count, 0)
     const threshold = total * (1 - (percent / 100)) / 2
     const inMinStretch = _.last(
-        histogram
+        data
             .reduce((acc, [value, count]) => [...acc, [value, (acc.length ? acc[acc.length - 1][1] : 0) + count]], [])
             .filter(([_value, total]) => total < threshold)
     )
-    const min = inMinStretch ? inMinStretch[0] : histogram[0][0]
+    const min = inMinStretch ? inMinStretch[0] : data[0][0]
     const inMaxStretch = _.last(
-        histogram
+        data
             .slice().reverse() // Immutably reverse
             .reduce((acc, [value, count]) => [...acc, [value, (acc.length ? acc[acc.length - 1][1] : 0) + count]], [])
             .filter(([_value, total]) => total < threshold)
     )
-    const max = inMaxStretch ? inMaxStretch[0] : histogram[histogram.length - 1][0]
+    const max = inMaxStretch ? inMaxStretch[0] : data[data.length - 1][0]
     return {min, max}
 }
