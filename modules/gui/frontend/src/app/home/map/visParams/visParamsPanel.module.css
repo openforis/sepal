@@ -8,8 +8,8 @@
     width: 17rem;
 }
 
-.min input {
-    text-align: right;
+.minMax.max input {
+    text-align: left;
 }
 
 .minMax {

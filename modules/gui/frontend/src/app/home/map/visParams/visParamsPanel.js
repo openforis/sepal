@@ -305,12 +305,14 @@ class BandForm extends React.Component {
                 label={msg('map.visParams.form.range.label')}>
                 <Form.Input
                     input={min}
+                    type='number'
                     className={[styles.minMax, styles.min].join(' ')}
                 />
                 <Label msg={<>&hellip;</>}/>
                 <Form.Input
                     input={max}
-                    className={styles.minMax}
+                    type='number'
+                    className={[styles.minMax, styles.max].join(' ')}
                 />
             </Widget>
         )
