@@ -1,5 +1,4 @@
 import {Layout} from 'widget/layout'
-import {msg} from 'translate'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -7,8 +6,7 @@ import styles from './widget.module.css'
 
 export class Widget extends React.Component {
     render() {
-        const {layout, spacing, border, disabled, className, onClick, children} = this.props
-        // const error = messageType === 'error' && !(message === undefined || message === false)
+        const {layout, spacing, border, disabled, className, onClick} = this.props
         const widgetState = this.getWidgetState()
         return (
             <div
@@ -29,12 +27,39 @@ export class Widget extends React.Component {
                         styles[widgetState],
                         border ? styles.border : null
                     ].join(' ')}>
-                    {children}
+                    {this.renderContent()}
                 </Layout>
-                {/* {this.renderMessage()} */}
             </div>
         )
     }
+
+    // no busy message
+    renderContent() {
+        const {children} = this.props
+        return children
+    }
+
+    // render busy message in place of original content
+    // renderContent() {
+    //     const {children} = this.props
+    //     return (
+    //         <div>
+    //             <div className={styles.content}>
+    //                 {children}
+    //             </div>
+    //             {this.renderBusyMessage()}
+    //         </div>
+    //     )
+    // }
+
+    // renderBusyMessage() {
+    //     const {busyMessage} = this.props
+    //     return busyMessage ? (
+    //         <div className={styles.busyMessage}>
+    //             {busyMessage}
+    //         </div>
+    //     ) : null
+    // }
 
     getWidgetState() {
         const {errorMessage, busyMessage} = this.props
@@ -59,38 +84,6 @@ export class Widget extends React.Component {
                 />
             )
             : null
-    }
-
-    // renderMessage() {
-    //     const {errorMessage, busyMessage} = this.props
-    //     const messageStyle = errorMessage
-    //         ? styles.error
-    //         : busyMessage
-    //             ? styles.busy
-    //             : null
-    //     const message = this.getMessage()
-    //     return message
-    //         ? (
-    //             <div className={styles.messageContainer}>
-    //                 <div className={[styles.message, messageStyle].join(' ')}>
-    //                     {message}
-    //                 </div>
-    //             </div>
-    //         )
-    //         : null
-    // }
-
-    getMessage() {
-        return this.getErrorMessage() || this.getBusyMessage()
-    }
-
-    getErrorMessage() {
-        const {errorMessage} = this.props
-        if (errorMessage) {
-            return errorMessage === true
-                ? msg('widget.error')
-                : errorMessage
-        }
     }
 
     getBusyMessage() {
