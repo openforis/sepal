@@ -41,15 +41,18 @@ export class Graph extends React.Component {
 
     update(prevProps = {}) {
         const {data, highlights} = this.props
-        const {data: prevData} = prevProps
+        // const {data: prevData} = prevProps
         const options = this.getOptions(this.props)
-        const prevOptions = this.getOptions(prevProps)
-        if (prevData)
-            Object.assign(prevData, data)
-        if (prevOptions)
-            Object.assign(prevOptions, options)
-        const updatedData = prevData || data
-        const newState = {data: updatedData, options: prevOptions || options}
+        // const prevOptions = this.getOptions(prevProps)
+        // TODO: Verify this with CCDC and CCDC Slice charts
+        // if (prevData)
+        //     Object.assign(prevData, data)
+        // if (prevOptions)
+        //     Object.assign(prevOptions, options)
+        // const updatedData = prevData || data
+        // const newState = {data: updatedData, options: prevOptions || options}
+        const updatedData = data
+        const newState = {data: updatedData, options}
         this.setState(newState)
         const underlayCallback = createUnderlayCallback(highlights)
         if (!this.graph) {

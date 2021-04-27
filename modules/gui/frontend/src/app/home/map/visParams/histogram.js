@@ -97,8 +97,8 @@ export class Histogram extends React.Component {
 
     componentDidUpdate(prevProps) {
         const {histogram: {data: prevData} = {}} = prevProps
-        const {histogram: {data, stretch} = {}, min, max, onMinMaxChange} = this.props
-        if (stretch && data && (!_.isFinite(min) || !_.isFinite(max) || prevData !== data)) {
+        const {histogram: {data, stretch} = {}, onMinMaxChange} = this.props
+        if (stretch && data && prevData !== data) {
             onMinMaxChange(histogramStretch(data, DEFAULT_STRETCH))
         }
     }

@@ -11,7 +11,6 @@ import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
 import Confirm from 'widget/confirm'
-import Label from 'widget/label'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
@@ -29,7 +28,7 @@ const fields = {
         .skip((value, {name1}) => !name1)
         .notBlank()
         .number()
-        .predicate((min1, {max1}) => min1 < max1, msg('map.visParams.form.min.notSmallerThanMax')),
+        .predicate((min1, {max1}) => min1 < max1, 'map.visParams.form.min.notSmallerThanMax'),
     max1: new Form.Field()
         .skip((value, {name1}) => !name1)
         .notBlank()
@@ -48,7 +47,7 @@ const fields = {
         .skip((value, {type}) => type === 'single')
         .notBlank()
         .number()
-        .predicate((min2, {max2}) => min2 < max2, msg('map.visParams.form.min.notSmallerThanMax')),
+        .predicate((min2, {max2}) => min2 < max2, 'map.visParams.form.min.notSmallerThanMax'),
     max2: new Form.Field()
         .skip((value, {name2}) => !name2)
         .skip((value, {type}) => type === 'single')
@@ -67,7 +66,7 @@ const fields = {
         .skip((value, {type}) => type === 'single')
         .notBlank()
         .number()
-        .predicate((min3, {max3}) => min3 < max3, msg('map.visParams.form.min.notSmallerThanMax')),
+        .predicate((min3, {max3}) => min3 < max3, 'map.visParams.form.min.notSmallerThanMax'),
     max3: new Form.Field()
         .skip((value, {name3}) => !name3)
         .skip((value, {type}) => type === 'single')
@@ -207,13 +206,12 @@ class _VisParamsPanel extends React.Component {
     renderHistogram(i) {
         const {stream} = this.props
         const {histograms} = this.state
-        const {name, min, max, inverted} = this.bandInputs(i)
+        const {name, min, max} = this.bandInputs(i)
         return (
             <Histogram
                 histogram={histograms[name.value]}
                 min={isNumeric(min.value) ? _.toNumber(min.value) : undefined}
                 max={isNumeric(max.value) ? _.toNumber(max.value) : undefined}
-                inverted={inverted.value}
                 loading={stream(`LOAD_HISTOGRAM_${name.value}`).active}
                 onMinMaxChange={minMax => {
                     min.set(minMax.min)
