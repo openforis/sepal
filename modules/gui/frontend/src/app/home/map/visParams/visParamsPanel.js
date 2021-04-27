@@ -412,24 +412,22 @@ class BandForm extends React.Component {
     renderRange() {
         const {inputs: {min, max}} = this.props
         return (
-            <Form.FieldSet
-                layout={'horizontal-nowrap'}
-                label={msg('map.visParams.form.range.label')}
-                errorMessage={[min, max]}>
+            <Layout type='horizontal'>
                 <Form.Input
                     input={min}
                     type='number'
-                    className={[styles.minMax, styles.min].join(' ')}
+                    label={msg('map.visParams.form.min.label')}
+                    className={styles.minMax}
                     errorMessage
                 />
-                <Label msg={<>&hellip;</>}/>
                 <Form.Input
                     input={max}
                     type='number'
-                    className={[styles.minMax, styles.max].join(' ')}
+                    label={msg('map.visParams.form.max.label')}
+                    className={styles.minMax}
                     errorMessage
                 />
-            </Form.FieldSet>
+            </Layout>
         )
     }
 

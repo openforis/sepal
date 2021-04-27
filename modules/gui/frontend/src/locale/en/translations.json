@@ -433,8 +433,11 @@
             "placeholder": "Enter comma-separated list of colors..."
           }
         },
-        "range": {
-          "label": "range"
+        "min": {
+            "label": "min"
+        },
+        "max": {
+            "label": "max"
         }
       },
       "stretch": {
