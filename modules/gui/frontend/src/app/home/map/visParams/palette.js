@@ -187,8 +187,8 @@ export class Palette extends React.Component {
                     additionalButtons={[
                         <Button
                             key={'attribution'}
+                            chromeless
                             icon='external-link-alt'
-                            look='transparent'
                             shape={'pill'}
                             air={'less'}
                             size={'x-small'}
