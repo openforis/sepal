@@ -1,16 +1,22 @@
 import {Button} from 'widget/button'
-import {ButtonGroup} from 'widget/buttonGroup'
 import {Combo} from 'widget/combo'
-import {Layout} from 'widget/layout'
 import {MapAreaLayout} from '../mapAreaLayout'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
-import {msg} from '../../../../translate'
+import {selectFrom} from 'stateUtils'
+import {withMapAreaContext} from '../mapAreaContext'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from '../earthEngineLayer'
-import Notifications from '../../../../widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './assetImageLayerSource.module.css'
+import _ from 'lodash'
+
+const mapRecipeToProps = (recipe, ownProps) => {
+    const {source} = ownProps
+    return {
+        visParamsSet: selectFrom(recipe, ['layers.customVisParams', source.id]) || []
+    }
+}
 
 class _AssetImageLayerSource extends React.Component {
     state = {}
@@ -34,6 +40,14 @@ class _AssetImageLayerSource extends React.Component {
     // TODO: Parts of this should be reusable. All recipe layer sources should render the bands
 
     renderImageLayerForm() {
+        const {visParamsSet, layerConfig: {visParams = {}} = {}} = this.props
+
+        const options = visParamsSet.map(visParams => ({
+            value: visParams.bands.join(', '),
+            label: visParams.bands.join(', '),
+            visParams
+        }))
+        const selectedOption = options.find(({visParams: option}) => _.isEqual(visParams, option))
         return (
             <Combo
                 label={'Bands'}
@@ -45,15 +59,19 @@ class _AssetImageLayerSource extends React.Component {
                         shape='circle'
                         size='small'
                         onClick={() => this.addVisParams()}
-                    />,
+                    />
+                ]}
+                additionalButtons={[
+                    // TODO: If selected option is custom - edit button, otherwise clone button
                     <Button
-                        key='clone'
-                        icon='clone'
-                        // icon='edit'
+                        key='edit'
+                        // icon='clone'
+                        icon='edit'
                         chromeless
                         shape='circle'
                         size='small'
-                        onClick={() => console.log('remove')}
+                        disabled={!selectedOption}
+                        onClick={() => this.editVisParams(selectedOption.visParams)}
                     />,
                     <Button
                         key='remove'
@@ -61,14 +79,22 @@ class _AssetImageLayerSource extends React.Component {
                         chromeless
                         shape='circle'
                         size='small'
-                        disabled
-                        onClick={() => console.log('remove')}
+                        // disabled={!selectedOption || !selectedOption.custom}
+                        disabled={!selectedOption}
+                        onClick={() => this.removeVisParams(selectedOption.visParams)}
                     />
                 ]}
                 placeholder={'Select bands to visualize...'}
-                options={[]}
+                options={options}
+                value={selectedOption && selectedOption.value}
+                onChange={({visParams}) => this.selectVisParams(visParams)}
             />
         )
+    }
+
+    selectVisParams(visParams) {
+        const {mapAreaContext: {updateLayerConfig}} = this.props
+        updateLayerConfig({visParams})
     }
 
     addVisParams() {
@@ -77,7 +103,24 @@ class _AssetImageLayerSource extends React.Component {
             type: 'ASSET',
             id: source.sourceConfig.asset
         }
-        visParams.activate({recipe})
+        visParams.activate({recipe, imageLayerSourceId: source.id})
+    }
+
+    editVisParams(value) {
+        const {source, activator: {activatables: {visParams}}} = this.props
+        const recipe = {
+            type: 'ASSET',
+            id: source.sourceConfig.asset
+        }
+        visParams.activate({recipe, imageLayerSourceId: source.id, visParams: value})
+    }
+
+    removeVisParams(value) {
+        const {source, recipeActionBuilder} = this.props
+        const template = {bands: value.bands}
+        recipeActionBuilder('REMOVE_VIS_PARAMS', {visParams: value})
+            .del(['layers.customVisParams', source.id, template])
+            .dispatch()
     }
 
     getAsset() {
@@ -88,7 +131,9 @@ class _AssetImageLayerSource extends React.Component {
 
 export const AssetImageLayerSource = compose(
     _AssetImageLayerSource,
-    activator('visParams')
+    withRecipe(mapRecipeToProps),
+    activator('visParams'),
+    withMapAreaContext()
 )
 
 AssetImageLayerSource.propTypes = {

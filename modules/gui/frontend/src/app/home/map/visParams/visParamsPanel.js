@@ -7,35 +7,67 @@ import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
 import Label from 'widget/label'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
+import guid from 'guid'
 import styles from './visParamsPanel.module.css'
 
 const fields = {
-    type: new Form.Field(),
+    type: new Form.Field()
+        .notBlank(),
     palette: new Form.Field(),
-
-    name1: new Form.Field(),
-    min1: new Form.Field(),
-    max1: new Form.Field(),
+    name1: new Form.Field()
+        .notBlank(),
+    min1: new Form.Field()
+        .notBlank()
+        .number(),
+    max1: new Form.Field()
+        .notBlank()
+        .number(),
     inverted1: new Form.Field(),
-    gamma1: new Form.Field(),
+    gamma1: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank()
+        .number(),
 
-    name2: new Form.Field(),
-    min2: new Form.Field(),
-    max2: new Form.Field(),
+    name2: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank(),
+    min2: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank()
+        .number(),
+    max2: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank()
+        .number(),
     inverted2: new Form.Field(),
-    gamma2: new Form.Field(),
+    gamma2: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank()
+        .number(),
 
-    name3: new Form.Field(),
-    min3: new Form.Field(),
-    max3: new Form.Field(),
+    name3: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank(),
+    min3: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank()
+        .number(),
+    max3: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank()
+        .number(),
     inverted3: new Form.Field(),
-    gamma3: new Form.Field(),
+    gamma3: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank()
+        .number(),
 }
 
 class _VisParamsPanel extends React.Component {
@@ -45,9 +77,10 @@ class _VisParamsPanel extends React.Component {
     }
 
     render() {
-        const {activatable: {deactivate}, inputs: {name1, name2, name3}} = this.props
+        const {activatable: {deactivate}, form, inputs: {name1, name2, name3}} = this.props
         const {histograms} = this.state
         const hasNoHistogram = !histograms[name1.value] && !histograms[name2.value] && !histograms[name3.value]
+        const invalid = form.isInvalid()
         return (
             <Panel type='modal' className={styles.panel}>
                 <Panel.Header
@@ -58,7 +91,7 @@ class _VisParamsPanel extends React.Component {
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-                <Panel.Buttons onEscape={deactivate}>
+                <Panel.Buttons onEscape={deactivate} onEnter={() => invalid || this.save()}>
                     <ButtonSelect
                         label={msg('map.visParams.stretch.label')}
                         icon='chart-area'
@@ -78,7 +111,10 @@ class _VisParamsPanel extends React.Component {
                     />
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Cancel onClick={deactivate}/>
-                        <Panel.Buttons.Save onClick={() => this.save()}/>
+                        <Panel.Buttons.Save
+                            disabled={invalid}
+                            onClick={() => this.save()}
+                        />
                     </Panel.Buttons.Main>
                 </Panel.Buttons>
             </Panel>
@@ -192,13 +228,18 @@ class _VisParamsPanel extends React.Component {
         )
         if (visParams) {
             inputs.type.set(visParams.type)
-            inputs.palette.set(visParams.palette)
-            const initBand = ({name, min, max, inverted, gamma}, i) => {
+            visParams.palette
+                ? inputs.palette.set(visParams.palette.map(color => ({id: guid(), color})))
+                : []
+            inputs['gamma1'].set(visParams.gamma ? visParams.gamma[0] : 1)
+            inputs['gamma2'].set(visParams.gamma ? visParams.gamma[1] : 1)
+            inputs['gamma3'].set(visParams.gamma ? visParams.gamma[2] : 1)
+            const initBand = (name, i) => {
+                this.initHistogram(name)
                 inputs[`name${i + 1}`].set(name)
-                inputs[`min${i + 1}`].set(min)
-                inputs[`max${i + 1}`].set(max)
-                inputs[`inverted${i + 1}`].set(inverted)
-                inputs[`gamma${i + 1}`].set(gamma)
+                inputs[`min${i + 1}`].set(visParams.min[i])
+                inputs[`max${i + 1}`].set(visParams.max[i])
+                inputs[`inverted${i + 1}`].set(visParams.inverted[i])
             }
             visParams.bands.forEach(initBand)
         } else {
@@ -239,10 +280,31 @@ class _VisParamsPanel extends React.Component {
     }
 
     save() {
-        const {activatable: {deactivate}} = this.props
-        // TODO: Implement...
-        console.log('Save')
+        const {recipeActionBuilder, activatable: {imageLayerSourceId, deactivate}, inputs} = this.props
+        const type = inputs.type.value
+        const singleBand = type === 'single'
+        const values = name => singleBand
+            ? [inputs[`${name}1`].value]
+            : [inputs[`${name}1`].value, inputs[`${name}2`].value, inputs[`${name}3`].value]
+        const bands = values('name')
+        const inverted = values('inverted').map(inverted => !!inverted)
+        const min = values('min')
+        const max = values('max')
+        const gamma = values('gamma')
+        const palette = inputs.palette.value ? inputs.palette.value.map(({color}) => color) : []
+        const visParams = singleBand
+            ? {type, bands, inverted, min, max, palette, custom: true}
+            : {type, bands, inverted, min, max, gamma, custom: true}
+        const template = {bands}
+        recipeActionBuilder('SAVE_VIS_PARAMS', {visParams})
+            .set(['layers.customVisParams', imageLayerSourceId, template], visParams)
+            .dispatch()
+        this.selectVisParams(visParams)
         deactivate()
+    }
+
+    selectVisParams(visParams) {
+        // TODO: Do this somehow. updateLayerConfig is not reachable here - we're not in a map area
     }
 }
 
@@ -253,7 +315,8 @@ const policy = () => ({
 export const VisParamsPanel = compose(
     _VisParamsPanel,
     form({fields}),
-    activatable({id: 'visParams', policy}),
+    withRecipe(),
+    activatable({id: 'visParams', policy})
 )
 
 class BandForm extends React.Component {
@@ -292,27 +355,30 @@ class BandForm extends React.Component {
 
     renderPalette() {
         const {inputs: {palette}} = this.props
-        return <Palette input={palette} className={styles.gammaOrPalette}/>
+        return <Palette input={palette}/>
     }
 
     renderRange() {
         const {inputs: {min, max}} = this.props
         return (
-            <Widget
-                layout='horizontal-nowrap'
-                label={msg('map.visParams.form.range.label')}>
+            <Form.FieldSet
+                layout={'horizontal-nowrap'}
+                label={msg('map.visParams.form.range.label')}
+                errorMessage={[min, max]}>
                 <Form.Input
                     input={min}
                     type='number'
                     className={[styles.minMax, styles.min].join(' ')}
+                    errorMessage
                 />
                 <Label msg={<>&hellip;</>}/>
                 <Form.Input
                     input={max}
                     type='number'
                     className={[styles.minMax, styles.max].join(' ')}
+                    errorMessage
                 />
-            </Widget>
+            </Form.FieldSet>
         )
     }
 
@@ -329,6 +395,7 @@ class BandForm extends React.Component {
                 disabled={!bands}
                 busyMessage={!bands && msg('map.visParams.bands.loading')}
                 additionalButtons={[this.renderInverted()]}
+                errorMessage
                 onChange={({value}) => onBandSelected(value)}
             />
         )
@@ -340,7 +407,10 @@ class BandForm extends React.Component {
             <Widget
                 label={msg('map.visParams.form.gamma.label')}
                 className={styles.gamma}>
-                <Form.Input input={gamma}/>
+                <Form.Input
+                    input={gamma}
+                    errorMessage
+                />
             </Widget>
         )
     }
