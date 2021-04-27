@@ -335,9 +335,9 @@ class _VisParamsPanel extends React.Component {
         const singleBand = type === 'single'
         const bands = this.values('name')
         const inverted = this.values('inverted').map(inverted => inverted ? inverted[0] : false)
-        const min = this.values('min')
-        const max = this.values('max')
-        const gamma = this.values('gamma')
+        const min = this.values('min').map(value => toNumber(value))
+        const max = this.values('max').map(value => toNumber(value))
+        const gamma = this.values('gamma').map(value => toNumber(value))
         const palette = inputs.palette.value ? inputs.palette.value.map(({color}) => color) : []
         const id = prevVisParams ? prevVisParams.id : guid()
         const visParams = singleBand
@@ -470,6 +470,10 @@ class BandForm extends React.Component {
     }
 }
 
-function isNumeric(n) {
-    return !isNaN(parseFloat(n)) && isFinite(n)
+const toNumber = value => {
+    value = _.isString(value) ? value : _.toString(value)
+    const parsed = parseFloat(value)
+    return _.isFinite(parsed) ? parsed : null
 }
+
+const isNumeric = n => !isNaN(parseFloat(n)) && isFinite(n)
