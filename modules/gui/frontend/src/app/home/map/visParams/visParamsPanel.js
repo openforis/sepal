@@ -16,26 +16,56 @@ import api from 'api'
 import styles from './visParamsPanel.module.css'
 
 const fields = {
-    type: new Form.Field(),
+    type: new Form.Field()
+        .notBlank(),
     palette: new Form.Field(),
-
-    name1: new Form.Field(),
-    min1: new Form.Field(),
-    max1: new Form.Field(),
+    name1: new Form.Field()
+        .notBlank(),
+    min1: new Form.Field()
+        .notBlank()
+        .number(),
+    max1: new Form.Field()
+        .notBlank()
+        .number(),
     inverted1: new Form.Field(),
-    gamma1: new Form.Field(),
+    gamma1: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank()
+        .number(),
 
-    name2: new Form.Field(),
-    min2: new Form.Field(),
-    max2: new Form.Field(),
+    name2: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank(),
+    min2: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank()
+        .number(),
+    max2: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank()
+        .number(),
     inverted2: new Form.Field(),
-    gamma2: new Form.Field(),
+    gamma2: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank()
+        .number(),
 
-    name3: new Form.Field(),
-    min3: new Form.Field(),
-    max3: new Form.Field(),
+    name3: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank(),
+    min3: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank()
+        .number(),
+    max3: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank()
+        .number(),
     inverted3: new Form.Field(),
-    gamma3: new Form.Field(),
+    gamma3: new Form.Field()
+        .skip((value, {type}) => type === 'single')
+        .notBlank()
+        .number(),
 }
 
 class _VisParamsPanel extends React.Component {
@@ -45,9 +75,10 @@ class _VisParamsPanel extends React.Component {
     }
 
     render() {
-        const {activatable: {deactivate}, inputs: {name1, name2, name3}} = this.props
+        const {activatable: {deactivate}, form, inputs: {name1, name2, name3}} = this.props
         const {histograms} = this.state
         const hasNoHistogram = !histograms[name1.value] && !histograms[name2.value] && !histograms[name3.value]
+        const invalid = form.isInvalid()
         return (
             <Panel type='modal' className={styles.panel}>
                 <Panel.Header
@@ -58,7 +89,7 @@ class _VisParamsPanel extends React.Component {
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-                <Panel.Buttons onEscape={deactivate}>
+                <Panel.Buttons onEscape={deactivate} onEnter={() => invalid || this.save()}>
                     <ButtonSelect
                         label={msg('map.visParams.stretch.label')}
                         icon='chart-area'
@@ -78,7 +109,10 @@ class _VisParamsPanel extends React.Component {
                     />
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Cancel onClick={deactivate}/>
-                        <Panel.Buttons.Save onClick={() => this.save()}/>
+                        <Panel.Buttons.Save
+                            disabled={invalid}
+                            onClick={() => this.save()}
+                        />
                     </Panel.Buttons.Main>
                 </Panel.Buttons>
             </Panel>
@@ -306,11 +340,13 @@ class BandForm extends React.Component {
                 <Form.Input
                     input={min}
                     className={[styles.minMax, styles.min].join(' ')}
+                    errorMessage
                 />
                 <Label msg={<>&hellip;</>}/>
                 <Form.Input
                     input={max}
                     className={styles.minMax}
+                    errorMessage
                 />
             </Widget>
         )
@@ -329,6 +365,7 @@ class BandForm extends React.Component {
                 disabled={!bands}
                 busyMessage={!bands && msg('map.visParams.bands.loading')}
                 additionalButtons={[this.renderInverted()]}
+                errorMessage
                 onChange={({value}) => onBandSelected(value)}
             />
         )
@@ -340,7 +377,10 @@ class BandForm extends React.Component {
             <Widget
                 label={msg('map.visParams.form.gamma.label')}
                 className={styles.gamma}>
-                <Form.Input input={gamma}/>
+                <Form.Input
+                    input={gamma}
+                    errorMessage
+                />
             </Widget>
         )
     }
