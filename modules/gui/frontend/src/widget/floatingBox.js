@@ -18,7 +18,7 @@ class FloatingBox extends React.Component {
     }
 
     render() {
-        const {className, placement, alignment, autoWidth, forwardedRef, children} = this.props
+        const {className, placement, alignment, autoWidth, forwardedRef, onClick, children} = this.props
         const {dimensions: {height, width, top, bottom, left, right}} = this.state
         const style = {
             '--left': alignment === 'left' ? left : 'auto',
@@ -30,12 +30,14 @@ class FloatingBox extends React.Component {
             '--below-top': bottom
         }
         return (
-            <Portal type='global'>
-                <div
-                    ref={forwardedRef}
-                    className={[styles.box, styles[placement], styles[alignment], className].join(' ')}
-                    style={style}>
-                    {children}
+            <Portal type='global' onClick={onClick}>
+                <div className={styles.container}>
+                    <div
+                        ref={forwardedRef}
+                        className={[styles.box, styles[placement], styles[alignment], className].join(' ')}
+                        style={style}>
+                        {children}
+                    </div>
                 </div>
             </Portal>
         )
@@ -85,7 +87,8 @@ FloatingBox.propTypes = {
     autoWidth: PropTypes.any,
     className: PropTypes.string,
     element: PropTypes.object,
-    placement: PropTypes.oneOf(['above', 'below'])
+    placement: PropTypes.oneOf(['above', 'below']),
+    onClick: PropTypes.func
 }
 
 FloatingBox.defaultProps = {

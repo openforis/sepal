@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {ScrollableList} from 'widget/list'
-import {Subject, fromEvent} from 'rxjs'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {delay} from 'rxjs/operators'
@@ -28,6 +28,11 @@ class ButtonSelect extends React.Component {
         flattenedOptions: [],
         selectedOption: null,
         selected: false
+    }
+
+    constructor() {
+        super()
+        this.handleBlur = this.handleBlur.bind(this)
     }
 
     render() {
@@ -91,7 +96,7 @@ class ButtonSelect extends React.Component {
                 alignment={alignment}
                 placement={placement}
                 autoWidth
-            >
+                onClick={this.handleBlur}>
                 <ScrollableList
                     ref={this.list}
                     className={optionsClassName || styles.options}
@@ -158,23 +163,16 @@ class ButtonSelect extends React.Component {
         )
     }
 
-    handleBlur() {
-        const {addSubscription} = this.props
-        const click$ = fromEvent(document, 'click')
+    handleBlur(e) {
         const isInputClick = e => this.input.current && this.input.current.contains(e.target)
         const isListClick = e => this.list.current && this.list.current.contains && this.list.current.contains(e.target)
-        addSubscription(
-            click$.subscribe(e => {
-                if (!isInputClick(e) && !isListClick(e)) {
-                    this.hideOptions()
-                }
-            })
-        )
+        if (!isInputClick(e) && !isListClick(e)) {
+            this.hideOptions()
+        }
     }
 
     componentDidMount() {
         this.handleSelect()
-        this.handleBlur()
     }
 
     static getDerivedStateFromProps(props, state) {

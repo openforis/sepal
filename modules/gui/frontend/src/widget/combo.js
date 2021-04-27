@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {ScrollableList} from 'widget/list'
-import {Subject, fromEvent} from 'rxjs'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {delay} from 'rxjs/operators'
@@ -37,6 +37,11 @@ class _Combo extends React.Component {
         selectedOption: null,
         selected: false,
         focused: false
+    }
+
+    constructor() {
+        super()
+        this.handleBlur = this.handleBlur.bind(this)
     }
 
     isActive() {
@@ -170,7 +175,8 @@ class _Combo extends React.Component {
         return (
             <FloatingBox
                 element={this.inputContainer.current}
-                placement={placement}>
+                placement={placement}
+                onClick={this.handleBlur}>
                 <ScrollableList
                     ref={this.list}
                     air='more'
@@ -249,25 +255,19 @@ class _Combo extends React.Component {
         )
     }
 
-    handleBlur() {
-        const {onCancel, addSubscription} = this.props
-        const click$ = fromEvent(document, 'click')
+    handleBlur(e) {
+        const {onCancel} = this.props
         const isInputClick = e => this.inputContainer.current && this.inputContainer.current.contains(e.target)
         const isListClick = e => this.list.current && this.list.current.contains && this.list.current.contains(e.target)
-        addSubscription(
-            click$.subscribe(e => {
-                if (!isInputClick(e) && !isListClick(e)) {
-                    this.setFilter()
-                    onCancel && onCancel(e)
-                }
-            })
-        )
+        if (!isInputClick(e) && !isListClick(e)) {
+            this.setFilter()
+            onCancel && onCancel(e)
+        }
     }
 
     componentDidMount() {
         this.setFilter()
         this.handleSelect()
-        this.handleBlur()
     }
 
     shouldComponentUpdate() {

@@ -1,9 +1,11 @@
 import {compose} from 'compose'
+import {fromEvent} from 'rxjs'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import styles from './portal.module.css'
+import withSubscriptions from 'subscription'
 
 const DEFAULT_PORTAL_CONTAINER_ID = 'defaultPortalContainer'
 
@@ -35,6 +37,10 @@ PortalContainer.propTypes = {
 }
 
 class Portal extends React.Component {
+    state = {
+        portalContainer: null
+    }
+
     getPortalContainer() {
         const {type, container, portalContext} = this.props
         if (type === 'context') {
@@ -60,13 +66,19 @@ class Portal extends React.Component {
     }
 
     render() {
-        const portalContainer = this.getPortalContainer()
+        const {portalContainer} = this.state
         return portalContainer
-            ? ReactDOM.createPortal(
-                this.renderContent(),
-                portalContainer
-            )
+            ? ReactDOM.createPortal(this.renderContent(), portalContainer)
             : null
+    }
+
+    componentDidMount() {
+        const {onClick, addSubscription} = this.props
+        const portalContainer = this.getPortalContainer()
+        this.setState({portalContainer})
+        addSubscription(
+            fromEvent(portalContainer, 'click').subscribe(onClick)
+        )
     }
 }
 
@@ -78,10 +90,12 @@ Portal.propTypes = {
     type: PropTypes.oneOf(['global', 'context', 'container']).isRequired,
     children: PropTypes.any,
     container: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-    content: PropTypes.any
+    content: PropTypes.any,
+    onClick: PropTypes.func
 }
 
 export default compose(
     Portal,
-    withPortalContext()
+    withPortalContext(),
+    withSubscriptions()
 )
