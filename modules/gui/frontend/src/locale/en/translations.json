@@ -434,10 +434,11 @@
           }
         },
         "min": {
-            "label": "min"
+          "label": "min",
+          "notSmallerThanMax": "Must be less than max"
         },
         "max": {
-            "label": "max"
+          "label": "max"
         }
       },
       "stretch": {

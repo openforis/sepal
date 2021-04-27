@@ -26,9 +26,12 @@ const fields = {
     name1: new Form.Field()
         .notBlank(),
     min1: new Form.Field()
+        .skip((value, {name1}) => !name1)
         .notBlank()
-        .number(),
+        .number()
+        .predicate((min1, {max1}) => min1 < max1, msg('map.visParams.form.min.notSmallerThanMax')),
     max1: new Form.Field()
+        .skip((value, {name1}) => !name1)
         .notBlank()
         .number(),
     inverted1: new Form.Field(),
@@ -41,10 +44,13 @@ const fields = {
         .skip((value, {type}) => type === 'single')
         .notBlank(),
     min2: new Form.Field()
+        .skip((value, {name2}) => !name2)
         .skip((value, {type}) => type === 'single')
         .notBlank()
-        .number(),
+        .number()
+        .predicate((min2, {max2}) => min2 < max2, msg('map.visParams.form.min.notSmallerThanMax')),
     max2: new Form.Field()
+        .skip((value, {name2}) => !name2)
         .skip((value, {type}) => type === 'single')
         .notBlank()
         .number(),
@@ -53,15 +59,17 @@ const fields = {
         .skip((value, {type}) => type === 'single')
         .notBlank()
         .number(),
-
     name3: new Form.Field()
         .skip((value, {type}) => type === 'single')
         .notBlank(),
     min3: new Form.Field()
+        .skip((value, {name3}) => !name3)
         .skip((value, {type}) => type === 'single')
         .notBlank()
-        .number(),
+        .number()
+        .predicate((min3, {max3}) => min3 < max3, msg('map.visParams.form.min.notSmallerThanMax')),
     max3: new Form.Field()
+        .skip((value, {name3}) => !name3)
         .skip((value, {type}) => type === 'single')
         .notBlank()
         .number(),
