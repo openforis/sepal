@@ -54,6 +54,7 @@ export class Histogram extends React.Component {
                             ? (
                                 <Graph
                                     data={data}
+                                    dimensions={width}
                                     drawGrid={false}
                                     axes={{
                                         x: {drawAxis: false},

@@ -40,7 +40,8 @@ export class Graph extends React.Component {
     }
 
     update(prevProps = {}) {
-        const {data, highlights} = this.props
+        const {data, highlights, dimensions} = this.props
+        const {dimensions: prevDimentions} = prevProps
         // const {data: prevData} = prevProps
         const options = this.getOptions(this.props)
         // const prevOptions = this.getOptions(prevProps)
@@ -55,7 +56,7 @@ export class Graph extends React.Component {
         const newState = {data: updatedData, options}
         this.setState(newState)
         const underlayCallback = createUnderlayCallback(highlights)
-        if (!this.graph) {
+        if (!this.graph || !_.isEqual(dimensions, prevDimentions)) {
             this.graph = new Dygraph(this.graphRef.current, data, {...options, underlayCallback})
         } else {
             this.graph.updateOptions({file: [...updatedData], underlayCallback})
