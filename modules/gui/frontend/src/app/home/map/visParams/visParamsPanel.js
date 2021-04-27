@@ -444,7 +444,6 @@ class BandForm extends React.Component {
                 disabled={!bands}
                 busyMessage={!bands && msg('map.visParams.bands.loading')}
                 additionalButtons={[this.renderInverted()]}
-                errorMessage
                 onChange={({value}) => onBandSelected(value)}
             />
         )
