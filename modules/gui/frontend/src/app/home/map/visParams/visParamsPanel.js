@@ -264,10 +264,8 @@ class BandForm extends React.Component {
             <Layout type={'vertical'}>
                 <Layout type={'horizontal'}>
                     {this.renderBand()}
-                    <Layout type={'horizontal-nowrap'}>
-                        {this.renderRange()}
-                        {singleBand ? null : this.renderGamma()}
-                    </Layout>
+                    {this.renderRange()}
+                    {singleBand ? null : this.renderGamma()}
                 </Layout>
                 {singleBand ? this.renderPalette() : null}
             </Layout>
@@ -301,7 +299,7 @@ class BandForm extends React.Component {
         const {inputs: {min, max}} = this.props
         return (
             <Widget
-                layout={'horizontal-nowrap'}
+                layout='horizontal-nowrap'
                 label={msg('map.visParams.form.range.label')}>
                 <Form.Input
                     input={min}
