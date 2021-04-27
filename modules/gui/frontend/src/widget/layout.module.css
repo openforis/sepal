@@ -63,3 +63,7 @@
 .layout.horizontal > .content > * {
     margin-right: var(--horizontal-spacing);
 }
+
+.layout.horizontal .layout.horizontal > .content > *:last-child {
+    margin-right: 0;
+}
