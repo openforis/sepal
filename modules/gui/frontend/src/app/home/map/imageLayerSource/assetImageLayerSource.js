@@ -9,7 +9,7 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from '../earthEngineLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import SafetyButton from 'widget/safetyButton'
 
 const mapRecipeToProps = (recipe, ownProps) => {
     const {source} = ownProps
@@ -47,7 +47,7 @@ class _AssetImageLayerSource extends React.Component {
             label: visParams.bands.join(', '),
             visParams
         }))
-        const selectedOption = options.find(({visParams: option}) => _.isEqual(visParams, option))
+        const selectedOption = visParams && options.find(({visParams: {id}}) => visParams.id === id)
         return (
             <Combo
                 label={'Bands'}
@@ -59,9 +59,7 @@ class _AssetImageLayerSource extends React.Component {
                         shape='circle'
                         size='small'
                         onClick={() => this.addVisParams()}
-                    />
-                ]}
-                additionalButtons={[
+                    />,
                     // TODO: If selected option is custom - edit button, otherwise clone button
                     <Button
                         key='edit'
@@ -73,16 +71,18 @@ class _AssetImageLayerSource extends React.Component {
                         disabled={!selectedOption}
                         onClick={() => this.editVisParams(selectedOption.visParams)}
                     />,
-                    <Button
+                    <SafetyButton
                         key='remove'
                         icon='trash'
                         chromeless
                         shape='circle'
                         size='small'
+                        message={'Are you sure you want to remove these visualiation parameters?'}
                         // disabled={!selectedOption || !selectedOption.custom}
-                        disabled={!selectedOption}
-                        onClick={() => this.removeVisParams(selectedOption.visParams)}
+                        onConfirm={() => this.removeVisParams(selectedOption.visParams)}
                     />
+                ]}
+                additionalButtons={[
                 ]}
                 placeholder={'Select bands to visualize...'}
                 options={options}
@@ -98,28 +98,29 @@ class _AssetImageLayerSource extends React.Component {
     }
 
     addVisParams() {
-        const {source, activator: {activatables: {visParams}}} = this.props
+        const {source, activator: {activatables}, mapAreaContext: {area}} = this.props
+        const visParamsPanel = activatables[`visParams-${area}`]
         const recipe = {
             type: 'ASSET',
             id: source.sourceConfig.asset
         }
-        visParams.activate({recipe, imageLayerSourceId: source.id})
+        visParamsPanel.activate({recipe, imageLayerSourceId: source.id})
     }
 
-    editVisParams(value) {
-        const {source, activator: {activatables: {visParams}}} = this.props
+    editVisParams(visParams) {
+        const {source, activator: {activatables}, mapAreaContext: {area}} = this.props
+        const visParamsPanel = activatables[`visParams-${area}`]
         const recipe = {
             type: 'ASSET',
             id: source.sourceConfig.asset
         }
-        visParams.activate({recipe, imageLayerSourceId: source.id, visParams: value})
+        visParamsPanel.activate({recipe, imageLayerSourceId: source.id, visParams})
     }
 
-    removeVisParams(value) {
+    removeVisParams(visParams) {
         const {source, recipeActionBuilder} = this.props
-        const template = {bands: value.bands}
-        recipeActionBuilder('REMOVE_VIS_PARAMS', {visParams: value})
-            .del(['layers.customVisParams', source.id, template])
+        recipeActionBuilder('REMOVE_VIS_PARAMS', {visParams})
+            .del(['layers.customVisParams', source.id, {id: visParams.id}])
             .dispatch()
     }
 
@@ -132,7 +133,7 @@ class _AssetImageLayerSource extends React.Component {
 export const AssetImageLayerSource = compose(
     _AssetImageLayerSource,
     withRecipe(mapRecipeToProps),
-    activator('visParams'),
+    activator(), // TODO: Allow function to be passed, to dynamically select activatable(s)
     withMapAreaContext()
 )
 

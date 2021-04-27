@@ -142,6 +142,7 @@ class _Map extends React.Component {
                     onMouseDown={() => this.mouseDown$.next(area)}
                 />
                 <MapAreaContext.Provider value={{area, updateLayerConfig}}>
+                    <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
                     {component}
                 </MapAreaContext.Provider>
             </React.Fragment>
@@ -254,7 +255,6 @@ class _Map extends React.Component {
                         {this.isMapInitialized() ? this.renderRecipe() : null}
                     </div>
                 </SplitView>
-                <VisParamsPanel/>
             </MapContext.Provider>
         )
     }

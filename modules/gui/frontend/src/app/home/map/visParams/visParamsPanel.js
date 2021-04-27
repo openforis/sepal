@@ -7,8 +7,10 @@ import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
+import Confirm from 'widget/confirm'
 import Label from 'widget/label'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -70,13 +72,24 @@ const fields = {
         .number(),
 }
 
+const mapRecipeToProps = (recipe, {activatable: {imageLayerSourceId}}) => ({
+    visParamsSets: selectFrom(recipe, ['layers.customVisParams', imageLayerSourceId]) || []
+})
 class _VisParamsPanel extends React.Component {
     state = {
         bands: null,
-        histograms: {}
+        histograms: {},
+        askConfirmation: false
     }
 
     render() {
+        const {askConfirmation} = this.state
+        return askConfirmation
+            ? this.renderConfirm()
+            : this.renderPanel()
+    }
+
+    renderPanel() {
         const {activatable: {deactivate}, form, inputs: {name1, name2, name3}} = this.props
         const {histograms} = this.state
         const hasNoHistogram = !histograms[name1.value] && !histograms[name2.value] && !histograms[name3.value]
@@ -91,7 +104,7 @@ class _VisParamsPanel extends React.Component {
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-                <Panel.Buttons onEscape={deactivate} onEnter={() => invalid || this.save()}>
+                <Panel.Buttons onEscape={deactivate} onEnter={() => invalid || this.check()}>
                     <ButtonSelect
                         label={msg('map.visParams.stretch.label')}
                         icon='chart-area'
@@ -113,7 +126,7 @@ class _VisParamsPanel extends React.Component {
                         <Panel.Buttons.Cancel onClick={deactivate}/>
                         <Panel.Buttons.Save
                             disabled={invalid}
-                            onClick={() => this.save()}
+                            onClick={() => this.check()}
                         />
                     </Panel.Buttons.Main>
                 </Panel.Buttons>
@@ -202,6 +215,18 @@ class _VisParamsPanel extends React.Component {
         )
     }
 
+    renderConfirm() {
+        return (
+            <Confirm
+                message={'You already have saved visualization parameters with these bands. Do you want to override the old visualization parameters with these?'}
+                label={'Replace'}
+                onConfirm={() => {
+                    this.save()
+                }}
+                onCancel={() => this.setState({askConfirmation: false})}/>
+        )
+    }
+
     stretchHistograms(percent) {
         this.stretchHistogram(percent, 0)
         this.stretchHistogram(percent, 1)
@@ -279,32 +304,52 @@ class _VisParamsPanel extends React.Component {
         }
     }
 
+    check() {
+        if (this.overridingVisParams()) {
+            this.setState({askConfirmation: true})
+        } else {
+            this.save()
+        }
+    }
+
+    overridingVisParams() {
+        const {visParamsSets, activatable: {visParams = {}}} = this.props
+        const selectedBands = this.values('name')
+        return visParamsSets.find(({id, bands}) =>
+            id !== visParams.id && _.isEqual(bands, selectedBands)
+        )
+    }
+
     save() {
-        const {recipeActionBuilder, activatable: {imageLayerSourceId, deactivate}, inputs} = this.props
+        const {recipeActionBuilder, activatable: {imageLayerSourceId, visParams: prevVisParams, deactivate}, inputs, updateLayerConfig} = this.props
         const type = inputs.type.value
         const singleBand = type === 'single'
-        const values = name => singleBand
-            ? [inputs[`${name}1`].value]
-            : [inputs[`${name}1`].value, inputs[`${name}2`].value, inputs[`${name}3`].value]
-        const bands = values('name')
-        const inverted = values('inverted').map(inverted => !!inverted)
-        const min = values('min')
-        const max = values('max')
-        const gamma = values('gamma')
+        const bands = this.values('name')
+        const inverted = this.values('inverted').map(inverted => !!inverted)
+        const min = this.values('min')
+        const max = this.values('max')
+        const gamma = this.values('gamma')
         const palette = inputs.palette.value ? inputs.palette.value.map(({color}) => color) : []
+        const id = prevVisParams ? prevVisParams.id : guid()
         const visParams = singleBand
-            ? {type, bands, inverted, min, max, palette, custom: true}
-            : {type, bands, inverted, min, max, gamma, custom: true}
-        const template = {bands}
+            ? {id, type, bands, inverted, min, max, palette, custom: true}
+            : {id, type, bands, inverted, min, max, gamma, custom: true}
+        const toDelete = this.overridingVisParams() || {}
         recipeActionBuilder('SAVE_VIS_PARAMS', {visParams})
-            .set(['layers.customVisParams', imageLayerSourceId, template], visParams)
+            .del(['layers.customVisParams', imageLayerSourceId, {id: toDelete.id}])
+            .set(['layers.customVisParams', imageLayerSourceId, {id}], visParams)
             .dispatch()
-        this.selectVisParams(visParams)
+        updateLayerConfig({visParams})
         deactivate()
     }
 
-    selectVisParams(visParams) {
-        // TODO: Do this somehow. updateLayerConfig is not reachable here - we're not in a map area
+    values(name) {
+        const {inputs} = this.props
+        const type = inputs.type.value
+        const singleBand = type === 'single'
+        return singleBand
+            ? [inputs[`${name}1`].value]
+            : [inputs[`${name}1`].value, inputs[`${name}2`].value, inputs[`${name}3`].value]
     }
 }
 
@@ -315,8 +360,11 @@ const policy = () => ({
 export const VisParamsPanel = compose(
     _VisParamsPanel,
     form({fields}),
-    withRecipe(),
-    activatable({id: 'visParams', policy})
+    withRecipe(mapRecipeToProps),
+    activatable({
+        id: ({area}) => `visParams-${area}`,
+        policy
+    })
 )
 
 class BandForm extends React.Component {
