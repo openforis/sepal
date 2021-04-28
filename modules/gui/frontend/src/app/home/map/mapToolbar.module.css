@@ -16,9 +16,3 @@
 
     margin-right: 6rem;
 }
-
-@media only screen and (max-width: 500px) {
-    .mapToolbar {
-        margin-right: 3rem;
-    }
-}

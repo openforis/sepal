@@ -1,5 +1,4 @@
 .toolbar {
-    --button-spacing: .5rem;
     --button-panel-margin: .5rem;
     --icon-size: 1.1rem;
     
@@ -14,7 +13,7 @@
 }
 
 .toolbar.horizontal * + * {
-    margin-left: var(--button-spacing);
+    margin-left: var(--toolbar-button-spacing);
 }
 
 .toolbar.vertical {
@@ -23,7 +22,7 @@
 }
 
 .toolbar.vertical * + * {
-    margin-top: var(--button-spacing);
+    margin-top: var(--toolbar-button-spacing);
 }
 
 .toolbar.top-right {
