@@ -1,9 +1,9 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Item} from 'widget/item'
-import {Subject, animationFrameScheduler, fromEvent, interval, timer} from 'rxjs'
+import {Subject, animationFrameScheduler, fromEvent, interval, merge, of, timer} from 'rxjs'
 import {compose} from 'compose'
-import {debounceTime, distinctUntilChanged, filter, map, switchMap, takeUntil} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, filter, map, mapTo, switchMap, takeUntil} from 'rxjs/operators'
 import Hammer from 'hammerjs'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -263,19 +263,33 @@ class _SuperButton extends React.Component {
     initializeDraggable() {
         const {addSubscription} = this.props
         const draggable = this.ref.current
-        const hammer = new Hammer(draggable)
-        hammer.get('pan').set({direction: Hammer.DIRECTION_ALL})
-        const pan$ = fromEvent(hammer, 'panstart panmove panend')
-        const filterPanEvent = type => pan$.pipe(filter(e => e.type === type))
-        const dragStart$ = filterPanEvent('panstart')
-        const move$ = filterPanEvent('panmove')
-        const dragEnd$ = filterPanEvent('panend')
+        
+        const handle = new Hammer(draggable)
+
+        handle.get('pan').set({
+            direction: Hammer.DIRECTION_ALL,
+            threshold: 0
+        })
+
+        const hold$ = merge(
+            fromEvent(draggable, 'mousedown'),
+            fromEvent(draggable, 'touchstart')
+        )
+        const release$ = merge(
+            fromEvent(draggable, 'mouseup'),
+            fromEvent(draggable, 'touchend')
+        )
+        const pan$ = fromEvent(handle, 'panstart panmove panend')
+        const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
+        const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
+        const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
         const animationFrame$ = interval(0, animationFrameScheduler)
-        const dragMove$ = dragStart$.pipe(
+
+        const dragMove$ = panStart$.pipe(
             switchMap(() =>
                 animationFrame$.pipe(
                     switchMap(() =>
-                        move$.pipe(
+                        panMove$.pipe(
                             map(e => e.center)
                         )),
                     debounceTime(10),
@@ -283,11 +297,17 @@ class _SuperButton extends React.Component {
                 )
             )
         )
+
+        const dragging$ = merge(
+            hold$.pipe(mapTo(true)),
+            release$.pipe(mapTo(false)),
+            panStart$.pipe(mapTo(true)),
+            panEnd$.pipe(mapTo(false)),
+        )
         
         addSubscription(
-            dragStart$.subscribe(() => this.onDragStart()),
+            dragging$.subscribe(dragging => dragging ? this.onDragStart() : this.onDragEnd()),
             dragMove$.subscribe(coords => this.onDragMove(coords)),
-            dragEnd$.subscribe(() => this.onDragEnd())
         )
     }
 
