@@ -40,8 +40,8 @@ class _Button extends React.Component {
     }
 
     nonInteractive() {
-        const {tooltip} = this.props
-        return !this.active() || !(this.linked() || tooltip)
+        const {tooltip, tooltipPanel} = this.props
+        return !this.active() || !(this.linked() || tooltip || tooltipPanel)
     }
 
     classNames() {
@@ -161,13 +161,15 @@ class _Button extends React.Component {
     }
 
     renderTooltip(contents) {
-        const {tooltip, tooltipRaw, tooltipPlacement, tooltipDisabled, tooltipDelay} = this.props
-        const overlayInnerStyle = tooltipRaw ? {padding: 0} : null
-        return this.active() && tooltip && !tooltipDisabled ? (
+        const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay} = this.props
+        const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
+        const message = tooltipPanel || tooltip
+        return this.active() && message && !tooltipDisabled ? (
             <Tooltip
-                msg={tooltip}
+                msg={message}
                 placement={tooltipPlacement}
                 delay={tooltipDelay}
+                hoverTrigger={!tooltipPanel}
                 clickTrigger={!this.linked()}
                 overlayInnerStyle={overlayInnerStyle}
             >
@@ -352,8 +354,8 @@ Button.propTypes = {
     tooltip: PropTypes.any,
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
+    tooltipPanel: PropTypes.any,
     tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
-    tooltipRaw: PropTypes.any,
     type: PropTypes.oneOf(['button', 'submit', 'reset']),
     width: PropTypes.oneOf(['fit', 'fill']),
     onClick: PropTypes.func,
