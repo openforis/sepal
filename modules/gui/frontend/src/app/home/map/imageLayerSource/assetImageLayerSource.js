@@ -33,7 +33,7 @@ export class AssetImageLayerSource extends React.Component {
 
     createLayer() {
         const {layerConfig, map, source: {sourceConfig: {asset}}} = this.props
-        return map
+        return map && layerConfig && layerConfig.visParams
             ? EarthEngineLayer.fromAsset({asset, layerConfig, map})
             : null
     }

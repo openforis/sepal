@@ -22,7 +22,7 @@ class _VisualizationSelector extends React.Component {
 
     render() {
         const {selectedVisParams} = this.props
-        const selectedId = selectedVisParams.id || selectedVisParams.bands.join(',')
+        const selectedId = selectedVisParams && (selectedVisParams.id || selectedVisParams.bands.join(','))
         const options = this.getOptions()
         const selectedOption = this.flattenOptions(options)
             .find(option => option.value === selectedId)
