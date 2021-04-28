@@ -1,15 +1,15 @@
 const {job} = require('root/jobs/job')
 
-const worker$ = ({recipe, bands, visParams}) => {
+const worker$ = ({recipe, visParams, panSharpen, bands}) => {
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('ee')
     const {switchMap} = require('rx/operators')
     if (visParams) {
-        const {getImage$} = ImageFactory(recipe, visParams.bands)
+        const {getImage$} = ImageFactory(recipe, {selection: visParams.bands, panSharpen})
         const getMap$ = (image, {type, bands, min, max, inverted, gamma, palette}) => {
             const range = () => ({
-                min: bands.map((_, i) => inverted[i] ? max[i] : min[i]),
-                max: bands.map((_, i) => inverted[i] ? min[i] : max[i]),
+                min: bands.map((_, i) => inverted && inverted[i] ? max[i] : min[i]),
+                max: bands.map((_, i) => inverted && inverted[i] ? min[i] : max[i]),
             })
 
             const toHsv = image => {
