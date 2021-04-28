@@ -2,6 +2,7 @@ import {Button} from 'widget/button'
 import {Combo} from 'widget/combo'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
+import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from '../mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -20,26 +21,19 @@ class _VisualizationSelector extends React.Component {
     state = {}
 
     render() {
-        const {userDefinedVisualizations, presetOptions, selectedVisParams} = this.props
-        const userDefinedOptions = userDefinedVisualizations.map(visParams => ({
-            value: visParams.id,
-            label: visParams.bands.join(', '),
-            visParams
-        }))
-        const options = [
-            {label: 'User defined', options: userDefinedOptions},
-            ...presetOptions
-        ]
-        const selectedOption = options
-            .map(option => option.options || [option])
-            .flat()
-            .find(option => option.visParams.id === selectedVisParams.id)
+        const {selectedVisParams} = this.props
+        const selectedId = selectedVisParams.id || selectedVisParams.bands.join(',')
+        const options = this.getOptions()
+        const selectedOption = this.flattenOptions(options)
+            .find(option => option.value === selectedId)
+        const editMode = selectedOption && selectedOption.visParams.userDefined ? 'edit' : 'clone'
         return (
             <Combo
                 label={'Bands'}
                 labelButtons={[
                     <Button
                         key='add'
+                        tooltip={msg('map.visualizationSelector.add.tooltip')}
                         icon='plus'
                         chromeless
                         shape='circle'
@@ -49,7 +43,8 @@ class _VisualizationSelector extends React.Component {
                     // TODO: If selected option is custom - edit button, otherwise clone button
                     <Button
                         key='edit'
-                        icon={selectedOption && selectedOption.visParams.userDefined ? 'edit' : 'clone'}
+                        tooltip={msg(`map.visualizationSelector.${editMode}.tooltip`)}
+                        icon={editMode}
                         chromeless
                         shape='circle'
                         size='small'
@@ -58,12 +53,13 @@ class _VisualizationSelector extends React.Component {
                     />,
                     <SafetyButton
                         key='remove'
+                        tooltip={msg('map.visualizationSelector.remove.tooltip')}
                         icon='trash'
                         chromeless
                         shape='circle'
                         size='small'
                         message={'Are you sure you want to remove these visualization parameters?'}
-                        // disabled={!selectedOption || !selectedOption.custom}
+                        disabled={!selectedOption || editMode === 'clone'}
                         onConfirm={() => this.removeVisParams(selectedOption.visParams)}
                     />
                 ]}
@@ -74,6 +70,26 @@ class _VisualizationSelector extends React.Component {
             />
         )
     }
+
+    getOptions() {
+        const {userDefinedVisualizations, presetOptions} = this.props
+        const userDefinedOptions = userDefinedVisualizations.map(visParams => ({
+            value: visParams.id,
+            label: visParams.bands.join(', '),
+            visParams
+        }))
+        return [
+            {label: msg('map.visualizationSelector.userDefined.label'), options: userDefinedOptions},
+            ...presetOptions
+        ]
+    }
+
+    flattenOptions(options) {
+        return options
+            .map(option => option.options || [option])
+            .flat()
+    }
+
     selectVisParams(visParams) {
         const {mapAreaContext: {updateLayerConfig}} = this.props
         updateLayerConfig({visParams})
