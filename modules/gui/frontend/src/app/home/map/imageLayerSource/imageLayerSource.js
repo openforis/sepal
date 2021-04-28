@@ -4,7 +4,7 @@ import {OpticalMosaicImageLayerSource} from 'app/home/body/process/recipe/optica
 import {PlanetImageLayerSource} from './planetImageLayerSource'
 import React from 'react'
 
-const getRecipeImageLayerSource = ({recipe, layerConfig, map}) => {
+const getRecipeImageLayerSource = ({recipe, source, layerConfig, map}) => {
     if (!recipe) {
         return {}
     }
@@ -16,6 +16,7 @@ const getRecipeImageLayerSource = ({recipe, layerConfig, map}) => {
             component: (
                 <OpticalMosaicImageLayerSource
                     recipe={recipe}
+                    source={source}
                     layerConfig={layerConfig}
                     map={map}/>
             )
@@ -59,7 +60,7 @@ export const getImageLayerSource = ({source, recipe, layerConfig, map}) => {
     const {type} = source
     switch(type) {
     case 'Recipe':
-        return getRecipeImageLayerSource({recipe, layerConfig, map})
+        return getRecipeImageLayerSource({recipe, source, layerConfig, map})
     case 'Asset':
         return getAssetImageLayerSource({source, layerConfig, map})
     case 'Planet':

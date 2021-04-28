@@ -80,7 +80,7 @@ const fields = {
 }
 
 const mapRecipeToProps = (recipe, {activatable: {imageLayerSourceId}}) => ({
-    visParamsSets: selectFrom(recipe, ['layers.customVisParams', imageLayerSourceId]) || []
+    visParamsSets: selectFrom(recipe, ['layers.userDefinedVisualizations', imageLayerSourceId]) || []
 })
 class _VisParamsPanel extends React.Component {
     state = {
@@ -346,8 +346,8 @@ class _VisParamsPanel extends React.Component {
             : {id, type, bands, inverted, min, max, gamma, custom: true}
         const toDelete = this.overridingVisParams() || {}
         recipeActionBuilder('SAVE_VIS_PARAMS', {visParams})
-            .del(['layers.customVisParams', imageLayerSourceId, {id: toDelete.id}])
-            .set(['layers.customVisParams', imageLayerSourceId, {id}], visParams)
+            .del(['layers.userDefinedVisualizations', imageLayerSourceId, {id: toDelete.id}])
+            .set(['layers.userDefinedVisualizations', imageLayerSourceId, {id}], visParams)
             .dispatch()
         updateLayerConfig({visParams})
         deactivate()
