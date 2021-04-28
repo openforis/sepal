@@ -35,46 +35,46 @@ const fields = {
         .number(),
     inverted1: new Form.Field(),
     gamma1: new Form.Field()
-        .skip((value, {type}) => type === 'single')
+        .skip((value, {type}) => isSingleBand(type))
         .notBlank()
         .number(),
 
     name2: new Form.Field()
-        .skip((value, {type}) => type === 'single')
+        .skip((value, {type}) => isSingleBand(type))
         .notBlank(),
     min2: new Form.Field()
         .skip((value, {name2}) => !name2)
-        .skip((value, {type}) => type === 'single')
+        .skip((value, {type}) => isSingleBand(type))
         .notBlank()
         .number()
         .predicate((min2, {max2}) => min2 < max2, 'map.visParams.form.min.notSmallerThanMax'),
     max2: new Form.Field()
         .skip((value, {name2}) => !name2)
-        .skip((value, {type}) => type === 'single')
+        .skip((value, {type}) => isSingleBand(type))
         .notBlank()
         .number(),
     inverted2: new Form.Field(),
     gamma2: new Form.Field()
-        .skip((value, {type}) => type === 'single')
+        .skip((value, {type}) => isSingleBand(type))
         .notBlank()
         .number(),
     name3: new Form.Field()
-        .skip((value, {type}) => type === 'single')
+        .skip((value, {type}) => isSingleBand(type))
         .notBlank(),
     min3: new Form.Field()
         .skip((value, {name3}) => !name3)
-        .skip((value, {type}) => type === 'single')
+        .skip((value, {type}) => isSingleBand(type))
         .notBlank()
         .number()
         .predicate((min3, {max3}) => min3 < max3, 'map.visParams.form.min.notSmallerThanMax'),
     max3: new Form.Field()
         .skip((value, {name3}) => !name3)
-        .skip((value, {type}) => type === 'single')
+        .skip((value, {type}) => isSingleBand(type))
         .notBlank()
         .number(),
     inverted3: new Form.Field(),
     gamma3: new Form.Field()
-        .skip((value, {type}) => type === 'single')
+        .skip((value, {type}) => isSingleBand(type))
         .notBlank()
         .number(),
 }
@@ -147,7 +147,8 @@ class _VisParamsPanel extends React.Component {
             <Form.Buttons
                 input={type}
                 options={[
-                    {value: 'single', label: msg('map.visParams.type.single.label')},
+                    // {value: 'categorical', label: 'cat', tooltip: 'Categorical image values in a single band'},
+                    {value: 'continuous', label: msg('map.visParams.type.single.label')},
                     {value: 'rgb', label: msg('map.visParams.type.rgb.label')},
                     {value: 'hsv', label: msg('map.visParams.type.hsv.label')},
                 ]}
@@ -158,7 +159,7 @@ class _VisParamsPanel extends React.Component {
 
     renderContent() {
         const {inputs} = this.props
-        if (inputs.type.value === 'single') {
+        if (isSingleBand(inputs.type.value)) {
             return (
                 <Layout>
                     {this.renderBandForm(0, msg('map.visParams.form.band.band.label'))}
@@ -274,7 +275,7 @@ class _VisParamsPanel extends React.Component {
             }
             visParams.bands.forEach(initBand)
         } else {
-            inputs.type.set('single')
+            inputs.type.set('continuous')
             inputs.gamma1.set(1)
             inputs.gamma2.set(1)
             inputs.gamma3.set(1)
@@ -332,7 +333,7 @@ class _VisParamsPanel extends React.Component {
     save() {
         const {recipeActionBuilder, activatable: {imageLayerSourceId, visParams: prevVisParams, deactivate}, inputs, updateLayerConfig} = this.props
         const type = inputs.type.value
-        const singleBand = type === 'single'
+        const singleBand = isSingleBand(type)
         const bands = this.values('name')
         const inverted = this.values('inverted').map(inverted => inverted ? inverted[0] : false)
         const min = this.values('min').map(value => toNumber(value))
@@ -355,7 +356,7 @@ class _VisParamsPanel extends React.Component {
     values(name) {
         const {inputs} = this.props
         const type = inputs.type.value
-        const singleBand = type === 'single'
+        const singleBand = isSingleBand(type)
         return singleBand
             ? [inputs[`${name}1`].value]
             : [inputs[`${name}1`].value, inputs[`${name}2`].value, inputs[`${name}3`].value]
@@ -379,7 +380,7 @@ export const VisParamsPanel = compose(
 class BandForm extends React.Component {
     render() {
         const {type} = this.props
-        const singleBand = type === 'single'
+        const singleBand = isSingleBand(type)
         return (
             <Layout type={'vertical'}>
                 <Layout type={'horizontal'}>
@@ -469,6 +470,9 @@ class BandForm extends React.Component {
         )
     }
 }
+
+const isSingleBand = type =>
+    ['continuous', 'categorical'].includes(type)
 
 const toNumber = value => {
     value = _.isString(value) ? value : _.toString(value)
