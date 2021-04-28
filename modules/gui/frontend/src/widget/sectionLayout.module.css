@@ -39,6 +39,7 @@
     --app-menu-padding: .5rem;
     --toolbar-edge-margin: .5rem;
     --toolbar-button-size: 2.5rem;
+    --toolbar-button-spacing: .5rem;
     --toolbar-clearance: calc(var(--toolbar-edge-margin) + var(--toolbar-button-size));
     --edgePadding-top: 0rem;
     --edgePadding-right: 0rem;
