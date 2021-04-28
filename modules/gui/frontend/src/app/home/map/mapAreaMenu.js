@@ -121,8 +121,7 @@ export class MapAreaMenu extends React.Component {
                         look='default'
                         shape='pill'
                         icon='bars'
-                        tooltip={<MapAreaMenuPanel area={area} form={form}/>}
-                        tooltipRaw
+                        tooltipPanel={<MapAreaMenuPanel area={area} form={form}/>}
                     />
                 </div>
             </div>
