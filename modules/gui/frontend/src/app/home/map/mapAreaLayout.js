@@ -1,5 +1,5 @@
 import {FeatureLayers} from './featureLayers'
-import {MapControls} from './mapControls'
+import {MapAreaMenu} from './mapAreaMenu'
 import {SplitOverlay} from 'widget/split/splitOverlay'
 import {compose} from 'compose'
 import {selectFrom} from 'stateUtils'
@@ -19,7 +19,7 @@ class _MapAreaLayout extends React.Component {
         return (
             <React.Fragment>
                 <SplitOverlay area={area}>
-                    <MapControls area={area} form={form}/>
+                    <MapAreaMenu area={area} form={form}/>
                     <FeatureLayers selectedLayers={selectedLayers} map={map}/>
                 </SplitOverlay>
             </React.Fragment>

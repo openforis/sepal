@@ -13,9 +13,9 @@ import {withRecipe} from '../body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
-import styles from './mapControls.module.css'
+import styles from './mapAreaMenu.module.css'
 
-class _MapAreaMenu extends React.Component {
+class _MapAreaMenuPanel extends React.Component {
     render() {
         return (
             <Panel className={styles.panel} type='normal'>
@@ -105,13 +105,13 @@ class _MapAreaMenu extends React.Component {
     }
 }
 
-const MapAreaMenu = compose(
-    _MapAreaMenu,
+const MapAreaMenuPanel = compose(
+    _MapAreaMenuPanel,
     withLayers(),
     withRecipe(recipe => ({recipe}))
 )
 
-export class MapControls extends React.Component {
+export class MapAreaMenu extends React.Component {
     render() {
         const {area, form} = this.props
         return (
@@ -121,7 +121,7 @@ export class MapControls extends React.Component {
                         look='default'
                         shape='pill'
                         icon='bars'
-                        tooltip={<MapAreaMenu area={area} form={form}/>}
+                        tooltip={<MapAreaMenuPanel area={area} form={form}/>}
                         tooltipRaw
                     />
                 </div>
@@ -130,7 +130,7 @@ export class MapControls extends React.Component {
     }
 }
 
-MapControls.propTypes = {
+MapAreaMenu.propTypes = {
     area: PropTypes.string,
     form: PropTypes.object
 }
