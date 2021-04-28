@@ -102,8 +102,8 @@ export const RecipeActions = id => {
             const areas = {
                 'center': {
                     imageLayer: {
-                        sourceId: recipeImageLayerSource.id
-                        // sourceId: assetImageLayerSource.id
+                        // sourceId: recipeImageLayerSource.id
+                        sourceId: assetImageLayerSource.id
                     },
                     featureLayers: [
                         // {sourceId: aoiLayerSource.id},

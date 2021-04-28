@@ -1,7 +1,7 @@
 const {job} = require('root/jobs/job')
 
 const MAX_BUCKETS = Math.pow(2, 8)
-const MAX_PIXELS = 1e6
+const MAX_PIXELS = 1e5
 
 const worker$ = ({recipe, band}) => {
     const ImageFactory = require('sepal/ee/imageFactory')
