@@ -22,7 +22,7 @@ class _VisualizationSelector extends React.Component {
     render() {
         const {userDefinedVisualizations, presetOptions, selectedVisParams} = this.props
         const userDefinedOptions = userDefinedVisualizations.map(visParams => ({
-            value: visParams.bands.join(','),
+            value: visParams.id,
             label: visParams.bands.join(', '),
             visParams
         }))
@@ -49,8 +49,7 @@ class _VisualizationSelector extends React.Component {
                     // TODO: If selected option is custom - edit button, otherwise clone button
                     <Button
                         key='edit'
-                        // icon='clone'
-                        icon='edit'
+                        icon={selectedOption && selectedOption.visParams.userDefined ? 'edit' : 'clone'}
                         chromeless
                         shape='circle'
                         size='small'
