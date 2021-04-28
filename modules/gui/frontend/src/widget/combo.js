@@ -279,8 +279,13 @@ class _Combo extends React.Component {
     }
 
     matcher(filter) {
-        // match beginning of multiple words in order (e.g. "u k" matches "United Kingdom")
-        return RegExp(filter.split(/\s/).map(part => `${escapeStringRegexp(part)}`).join('.*'), 'i')
+        // match beginning of multiple words in any order (e.g. both "u k" and "k u" match "United Kingdom")
+        const parts = filter
+            .trim()
+            .split(/\s+/)
+            .map(part => part ? `(?=.*\\b${escapeStringRegexp(part)})` : '')
+            .join('')
+        return RegExp(`^${parts}.*$`, 'i')
     }
 
     updateOptions() {
