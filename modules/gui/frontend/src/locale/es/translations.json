@@ -328,7 +328,7 @@
 			},
 			"validating-link": "Validación del enlace..."
 		},
-		"signup": "Registrarse en",
+		"signup": "Regístrate",
 		"tagline": "Sistema de observación de la tierra, acceso a los datos, procesamiento y análisis para la vigilancia de la tierra.",
 		"title": "Sepal",
 		"validate-token": {
@@ -1522,18 +1522,18 @@
 							"eeTableRowSelection": {
 								"FILTER": "Filtro",
 								"INCLUDE_ALL": "Incluir todo",
-								"label": "Líneas"
+								"label": "Filas"
 							},
 							"row": {
 								"label": "Valor",
 								"placeholder": {
 									"loaded": "Selecciona un valor...",
-									"loading": "Cargando líneas...",
+									"loading": "Cargando fila...",
 									"noColumn": "Selecciona primero una columna",
 									"noEETable": "Indica primero un ID de tabla EE",
 									"noRows": "No hay filas en la tabla EE"
 								},
-								"required": "Debe seleccionarse una línea"
+								"required": "Debe seleccionarse una fila"
 							},
 							"title": "Selecciona de la tabla EE"
 						},
@@ -1555,7 +1555,7 @@
 							"fusionTableRowSelection": {
 								"FILTER": "Filtro",
 								"INCLUDE_ALL": "Incluir todo",
-								"label": "Líneas"
+								"label": "Filas"
 							},
 							"row": {
 								"label": "Valor",
@@ -1564,9 +1564,9 @@
 									"loading": "Cargando filas...",
 									"noColumn": "Selecciona primero una columna",
 									"noFusionTable": "Indica primero el ID de la tabla de fusión",
-									"noRows": "Ninguna línea en la Tabla de Fusión"
+									"noRows": "Ninguna fila en la Tabla de Fusión"
 								},
-								"required": "Debes seleccionar una línea"
+								"required": "Debes seleccionar una fila"
 							},
 							"title": "Seleccionar de la tabla de fusión"
 						},
