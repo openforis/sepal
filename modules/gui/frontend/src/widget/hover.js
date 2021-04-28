@@ -11,6 +11,7 @@ const {Provider, Consumer} = React.createContext()
 
 const windowTouchStart$ = fromEvent(window, 'touchstart')
 const windowTouchEnd$ = fromEvent(window, 'touchend')
+const windowTouchMove$ = fromEvent(window, 'touchmove')
 
 class _HoverDetector extends React.Component {
     state = {
@@ -32,6 +33,14 @@ class _HoverDetector extends React.Component {
             ),
             mouseLeave$.pipe(
                 mapTo(false)
+            ),
+            windowTouchMove$.pipe(
+                map(e => {
+                    const touch = e.touches[0]
+                    const elementFromTouch = document.elementFromPoint(touch.clientX, touch.clientY)
+                    const hover = element.contains(elementFromTouch)
+                    return hover
+                })
             ),
             windowTouchStart$.pipe( // Cancel hover when touching outside of element
                 switchMap(e =>
