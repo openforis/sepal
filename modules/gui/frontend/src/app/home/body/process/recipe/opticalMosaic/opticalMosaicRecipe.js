@@ -3,7 +3,6 @@ import {recipeActionBuilder} from '../../recipe'
 import {selectFrom} from 'stateUtils'
 import _ from 'lodash'
 import api from 'api'
-import guid from 'guid'
 import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -107,8 +106,8 @@ export const RecipeActions = id => {
                         // sourceId: assetImageLayerSource.id
                     },
                     featureLayers: [
-                        {sourceId: aoiLayerSource.id},
-                        {sourceId: labelsLayerSource.id}
+                        // {sourceId: aoiLayerSource.id},
+                        // {sourceId: labelsLayerSource.id}
                     ]
                 }
             }

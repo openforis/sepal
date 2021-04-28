@@ -80,7 +80,7 @@ const fields = {
 }
 
 const mapRecipeToProps = (recipe, {activatable: {imageLayerSourceId}}) => ({
-    visParamsSets: selectFrom(recipe, ['layers.customVisParams', imageLayerSourceId]) || []
+    visParamsSets: selectFrom(recipe, ['layers.userDefinedVisualizations', imageLayerSourceId]) || []
 })
 class _VisParamsPanel extends React.Component {
     state = {
@@ -271,7 +271,7 @@ class _VisParamsPanel extends React.Component {
                 inputs[`name${i + 1}`].set(name)
                 inputs[`min${i + 1}`].set(visParams.min[i])
                 inputs[`max${i + 1}`].set(visParams.max[i])
-                inputs[`inverted${i + 1}`].set([visParams.inverted[i]])
+                inputs[`inverted${i + 1}`].set([visParams.inverted && visParams.inverted[i]])
             }
             visParams.bands.forEach(initBand)
         } else {
@@ -340,14 +340,14 @@ class _VisParamsPanel extends React.Component {
         const max = this.values('max').map(value => toNumber(value))
         const gamma = this.values('gamma').map(value => toNumber(value))
         const palette = inputs.palette.value ? inputs.palette.value.map(({color}) => color) : []
-        const id = prevVisParams ? prevVisParams.id : guid()
+        const id = prevVisParams && prevVisParams.id ? prevVisParams.id : guid()
         const visParams = singleBand
-            ? {id, type, bands, inverted, min, max, palette, custom: true}
-            : {id, type, bands, inverted, min, max, gamma, custom: true}
+            ? {id, type, bands, inverted, min, max, palette, userDefined: true}
+            : {id, type, bands, inverted, min, max, gamma, userDefined: true}
         const toDelete = this.overridingVisParams() || {}
         recipeActionBuilder('SAVE_VIS_PARAMS', {visParams})
-            .del(['layers.customVisParams', imageLayerSourceId, {id: toDelete.id}])
-            .set(['layers.customVisParams', imageLayerSourceId, {id}], visParams)
+            .del(['layers.userDefinedVisualizations', imageLayerSourceId, {id: toDelete.id}])
+            .set(['layers.userDefinedVisualizations', imageLayerSourceId, {id}], visParams)
             .dispatch()
         updateLayerConfig({visParams})
         deactivate()

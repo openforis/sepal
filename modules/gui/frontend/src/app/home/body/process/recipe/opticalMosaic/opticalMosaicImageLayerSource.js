@@ -1,8 +1,8 @@
 import {Buttons} from 'widget/buttons'
-import {Combo} from 'widget/combo'
 import {Layout} from 'widget/layout'
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {SceneSelectionType} from './opticalMosaicRecipe'
+import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -19,14 +19,10 @@ const defaultLayerConfig = {
 
 class _OpticalMosaicImageLayerSource extends React.Component {
     render() {
-        const {recipe, layerConfig, map} = this.props
-        const layer = map && recipe.ui.initialized && this.hasScenes()
-            ? EarthEngineLayer.fromRecipe({recipe: _.omit(recipe, ['ui', 'layers']), layerConfig, map})
-            : null
-
+        const {map} = this.props
         return (
             <MapAreaLayout
-                layer={layer}
+                layer={this.createLayer()}
                 form={this.renderImageLayerForm()}
                 map={map}
             />
@@ -59,8 +55,9 @@ class _OpticalMosaicImageLayerSource extends React.Component {
     }
 
     renderBandSelection() {
-        const {layerConfig: {visParams}} = this.props
+        const {recipe, source, layerConfig = {}} = this.props
         const visParamsToOption = visParams => ({
+            id: visParams.bands.join(','),
             value: visParams.bands.join(','),
             label: visParams.bands.map(band => msg(['bands', band])).join(', '),
             visParams
@@ -80,25 +77,25 @@ class _OpticalMosaicImageLayerSource extends React.Component {
         const options = this.median()
             ? [bandCombinationOptions, indexOptions]
             : [bandCombinationOptions, indexOptions, metadataOptions]
-        const selectedBands = visParams && visParams.bands || []
-        const selectedOption = [
-            ...bandCombinationOptions.options,
-            ...indexOptions.options,
-            ...metadataOptions.options
-        ].find(({value}) => selectedBands.join(',') === value) || bandCombinationOptions.options[0]
         return (
-            <Combo
-                label={msg('process.mosaic.bands.label')}
-                placeholder={selectedOption.label}
-                options={options}
-                value={selectedOption.value}
-                onChange={({visParams}) => this.selectVisualization(visParams)}
+            <VisualizationSelector
+                source={source}
+                recipe={recipe}
+                presetOptions={options}
+                selectedVisParams={layerConfig.visParams}
             />
         )
     }
 
     componentDidMount() {
         this.selectVisualization(visualizations[this.reflectance()][0])
+    }
+
+    createLayer() {
+        const {recipe, layerConfig, map} = this.props
+        return map && recipe.ui.initialized && this.hasScenes()
+            ? EarthEngineLayer.fromRecipe({recipe: _.omit(recipe, ['ui', 'layers']), layerConfig, map})
+            : null
     }
 
     hasScenes() {
@@ -152,6 +149,7 @@ OpticalMosaicImageLayerSource.defaultProps = {
 
 OpticalMosaicImageLayerSource.propTypes = {
     recipe: PropTypes.object.isRequired,
+    source: PropTypes.object.isRequired,
     layerConfig: PropTypes.object,
     map: PropTypes.object
 }
