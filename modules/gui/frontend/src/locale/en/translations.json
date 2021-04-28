@@ -82,7 +82,22 @@
     "thermal2": "Thermal 2",
     "unixTimeDays": "Date",
     "waterVapor": "Water vapor",
-    "wetness": "Wetness"
+    "wetness": "Wetness",
+    "ndvi": "NDVI",
+    "ndmi": "NDMI",
+    "ndwi": "NDWI",
+    "mndwi": "MNDWI",
+    "ndfi": "NDFI",
+    "evi": "EVI",
+    "evi2": "EVI2",
+    "savi": "SAVI",
+    "nbr": "NBR",
+    "ui": "UI",
+    "ndbi": "NDBI",
+    "ibi": "IBI",
+    "nbi": "NBI",
+    "ebbi": "EBBI",
+    "bui": "BUI"
   },
   "body": {
     "loading-apps": "Loading apps...",
@@ -1534,6 +1549,8 @@
     "mosaic": {
       "bands": {
         "combinations": "Combinations",
+        "indexes": "Indexes",
+        "label": "Bands",
         "metadata": "Metadata",
         "panSharpen": "Pan sharpen",
         "placeholder": "Select preview bands"
