@@ -122,7 +122,7 @@ class _SuperButton extends React.Component {
                 className={styles.inline}
             >
                 {this.renderInlineComponents()}
-                {/* {this.renderDragButton()} */}
+                {this.renderDragButton()}
                 {this.renderInfoButton()}
                 {this.renderEditButton()}
                 {this.renderDuplicateButton()}
@@ -146,7 +146,8 @@ class _SuperButton extends React.Component {
             className
         ]).join(' ')
         return (
-            <div className={classNames} ref={this.ref}>
+            // <div className={classNames} ref={this.ref}>
+            <div className={classNames}>
                 <div className={styles.main}>
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
                     {this.renderContent()}
@@ -268,7 +269,7 @@ class _SuperButton extends React.Component {
 
         handle.get('pan').set({
             direction: Hammer.DIRECTION_ALL,
-            threshold: 0
+            // threshold: 0
         })
 
         const hold$ = merge(
