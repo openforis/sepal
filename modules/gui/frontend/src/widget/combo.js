@@ -283,7 +283,8 @@ class _Combo extends React.Component {
         const parts = filter
             .trim()
             .split(/\s+/)
-            .map(part => part ? `(?=.*\\b${escapeStringRegexp(part)})` : '')
+            // .map(part => part ? `(?=.*\\b${escapeStringRegexp(part)})` : '')
+            .map(part => part ? `(?=.*${escapeStringRegexp(part)})` : '')
             .join('')
         return RegExp(`^${parts}.*$`, 'i')
     }
