@@ -41,9 +41,15 @@ const formatProperties = properties => {
 
 const toVisualizationProperties = (visualizations = [], bands) => {
     const filteredVisualizations = visualizations
+        .map(visParams => Object.keys(visParams).includes('name')
+            ? visParams
+            : {...visParams, name: visParams.bands.join(', ')}
+        )
         .filter(visParams => visParams.bands.every(band => bands.selection.includes(band)))
+
+    const uniqueVisualizations = _.uniqBy(filteredVisualizations, 'name')
     const result = {}
-    filteredVisualizations.forEach((visParams, i) => {
+    uniqueVisualizations.forEach((visParams, i) => {
         Object.keys(visParams).forEach(key => {
             const value = visParams[key]
             result[`visualization_${i}_${key}`] = _.isArray(value) ? value.join(',') : value
