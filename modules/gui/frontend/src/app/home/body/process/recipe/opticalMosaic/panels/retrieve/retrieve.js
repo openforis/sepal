@@ -44,7 +44,7 @@ class Retrieve extends React.Component {
         const options = groupedBandOptions({
             sources,
             corrections,
-            order: ['dataSets']
+            order: ['dataSets', 'indexes']
         })
         return compose === 'MEDIAN'
             ? options
