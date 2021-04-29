@@ -12,6 +12,7 @@ import {msg} from 'translate'
 import {recipePath} from '../body/process/recipe'
 import {withLayers} from '../body/process/withLayers'
 import {withRecipe} from '../body/process/recipeContext'
+import BlurDetector from 'widget/blurDetector'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -21,16 +22,18 @@ class _MapAreaMenuPanel extends React.Component {
     render() {
         const {activatable: {deactivate}} = this.props
         return (
-            <Panel className={styles.panel} type='normal'>
-                <Panel.Content>
-                    <Layout>
-                        {this.renderImageLayerSource()}
-                        {this.renderImageLayerForm()}
-                        {this.renderFeatureLayers()}
-                    </Layout>
-                </Panel.Content>
-                <Panel.Buttons onEscape={deactivate} shown={false}/>
-            </Panel>
+            <BlurDetector onBlur={deactivate}>
+                <Panel className={styles.panel} type='normal'>
+                    <Panel.Content>
+                        <Layout>
+                            {this.renderImageLayerSource()}
+                            {this.renderImageLayerForm()}
+                            {this.renderFeatureLayers()}
+                        </Layout>
+                    </Panel.Content>
+                    <Panel.Buttons onEscape={deactivate} shown={false}/>
+                </Panel>
+            </BlurDetector>
         )
     }
 
