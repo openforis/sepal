@@ -16,4 +16,11 @@
 .content {
     margin: 1.5rem;
     pointer-events: all;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.content > * + * {
+    margin-top: 1rem;
 }

@@ -1,9 +1,11 @@
+import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import {Combo} from 'widget/combo'
 import {Item} from '../../../widget/item'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
+import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {msg} from 'translate'
@@ -17,6 +19,7 @@ import styles from './mapAreaMenu.module.css'
 
 class _MapAreaMenuPanel extends React.Component {
     render() {
+        const {activatable: {deactivate}} = this.props
         return (
             <Panel className={styles.panel} type='normal'>
                 <Panel.Content>
@@ -26,6 +29,7 @@ class _MapAreaMenuPanel extends React.Component {
                         {this.renderFeatureLayers()}
                     </Layout>
                 </Panel.Content>
+                <Panel.Buttons onEscape={deactivate} shown={false}></Panel.Buttons>
             </Panel>
         )
     }
@@ -105,10 +109,19 @@ class _MapAreaMenuPanel extends React.Component {
     }
 }
 
-const MapAreaMenuPanel = compose(
+const policy = () => ({
+    _: 'allow-then-deactivate'
+})
+
+export const MapAreaMenuPanel = compose(
     _MapAreaMenuPanel,
     withLayers(),
-    withRecipe(recipe => ({recipe}))
+    withRecipe(recipe => ({recipe})),
+    activatable({
+        id: ({area}) => `mapAreaMenu-${area}`,
+        policy
+    })
+
 )
 
 export class MapAreaMenu extends React.Component {
@@ -117,12 +130,21 @@ export class MapAreaMenu extends React.Component {
         return (
             <div className={styles.container}>
                 <div className={styles.content}>
-                    <Button
-                        look='default'
-                        shape='pill'
-                        icon='bars'
-                        tooltipPanel={<MapAreaMenuPanel area={area} form={form}/>}
-                    />
+                    <MapAreaMenuPanel area={area} form={form}/>
+                    <Activator id={`mapAreaMenu-${area}`}>
+                        {activator => {
+                            const {activate, deactivate, active, canActivate} = activator
+                            return (
+                                <Button
+                                    look='default'
+                                    shape='pill'
+                                    icon='bars'
+                                    disabled={!canActivate && !active}
+                                    onClick={() => active ? deactivate() : activate()}
+                                />
+                            )
+                        }}
+                    </Activator>
                 </div>
             </div>
         )
