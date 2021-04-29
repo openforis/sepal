@@ -1,6 +1,7 @@
 import {msg} from 'translate'
 import {recipeActionBuilder} from '../../recipe'
 import {selectFrom} from 'stateUtils'
+import {visualizations} from './visualizations'
 import _ from 'lodash'
 import api from 'api'
 import moment from 'moment'
@@ -186,6 +187,12 @@ const submitRetrieveRecipeTask = recipe => {
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
+    const allVisualizations = [
+        ...visualizations[reflectance(recipe)],
+        ...visualizations.indexes,
+        ...(median(recipe) ? visualizations.metadata : []),
+        ...Object.values((recipe.layers.userDefinedVisualizations['this-recipe'] || {}))
+    ]
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':
@@ -195,6 +202,7 @@ const submitRetrieveRecipeTask = recipe => {
                 image: {
                     recipe: _.omit(recipe, ['ui']),
                     bands: {selection: bands},
+                    visualizations: allVisualizations,
                     scale
                 }
             }
@@ -202,6 +210,15 @@ const submitRetrieveRecipeTask = recipe => {
     return api.tasks.submit$(task).subscribe()
 }
 
+const reflectance = recipe => {
+    const corrections = selectFrom(recipe, 'model.compositeOptions.corrections')
+    return corrections.includes('SR') ? 'SR' : 'TOA'
+}
+
+const median = recipe => {
+    const compositeOptions = selectFrom(recipe, 'model.compositeOptions')
+    return compositeOptions.compose === 'MEDIAN'
+}
 export const inDateRange = (date, dates) => {
     date = moment(date, DATE_FORMAT)
     if (date.isBefore(fromDate(dates)) || date.isSameOrAfter(toDate(dates)))
