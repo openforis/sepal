@@ -188,10 +188,10 @@ const submitRetrieveRecipeTask = recipe => {
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
     const allVisualizations = [
+        ...Object.values((recipe.layers.userDefinedVisualizations['this-recipe'] || {})),
         ...visualizations[reflectance(recipe)],
         ...visualizations.indexes,
-        ...(median(recipe) ? visualizations.metadata : []),
-        ...Object.values((recipe.layers.userDefinedVisualizations['this-recipe'] || {}))
+        ...(median(recipe) ? visualizations.metadata : [])
     ]
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
