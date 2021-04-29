@@ -46,10 +46,7 @@ class _MapAreaMenuPanel extends React.Component {
                 type,
                 label: description,
                 searchableText: `${msg(`imageLayerSources.${type}`)} ${description}`,
-                render: () =>
-                    <div className={styles.imageLayerSourceOption}>
-                        <Item title={msg(`imageLayerSources.${type}`)} description={description}/>
-                    </div>
+                render: () => <Item title={msg(`imageLayerSources.${type}`)} description={description}/>
             })
         })
 
