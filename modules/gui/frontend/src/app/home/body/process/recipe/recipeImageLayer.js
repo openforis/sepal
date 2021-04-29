@@ -1,4 +1,4 @@
-import {OpticalMosaicImageLayerSource} from './opticalMosaic/opticalMosaicImageLayerSource'
+import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
@@ -23,7 +23,7 @@ class _RecipeImageLayer extends React.Component {
         const {recipe, source, layerConfig, map} = this.props
         switch(recipe.type) {
         case 'MOSAIC': return (
-            <OpticalMosaicImageLayerSource
+            <OpticalMosaicImageLayer
                 recipe={recipe}
                 source={source}
                 layerConfig={layerConfig}

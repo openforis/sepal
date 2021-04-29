@@ -17,7 +17,7 @@ const defaultLayerConfig = {
     panSharpen: false
 }
 
-class _OpticalMosaicImageLayerSource extends React.Component {
+class _OpticalMosaicImageLayer extends React.Component {
     render() {
         const {map} = this.props
         return (
@@ -137,16 +137,16 @@ class _OpticalMosaicImageLayerSource extends React.Component {
     }
 }
 
-export const OpticalMosaicImageLayerSource = compose(
-    _OpticalMosaicImageLayerSource,
+export const OpticalMosaicImageLayer = compose(
+    _OpticalMosaicImageLayer,
     withMapAreaContext()
 )
 
-OpticalMosaicImageLayerSource.defaultProps = {
+OpticalMosaicImageLayer.defaultProps = {
     layerConfig: defaultLayerConfig
 }
 
-OpticalMosaicImageLayerSource.propTypes = {
+OpticalMosaicImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,
     source: PropTypes.object.isRequired,
     layerConfig: PropTypes.object,
