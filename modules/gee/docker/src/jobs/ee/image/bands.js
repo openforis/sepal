@@ -14,14 +14,8 @@ const worker$ = ({asset, recipe}) => {
     }
 
     function recipeBands() {
-        const {switchMap} = require('rx/operators')
-
-        const {getImage$} = ImageFactory(recipe)
-        return getImage$().pipe(
-            switchMap(image =>
-                ee.getInfo$(image.bandNames(), 'recipe band names')
-            )
-        )
+        const {getBands$} = ImageFactory(recipe)
+        return getBands$()
     }
 }
 

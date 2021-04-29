@@ -164,11 +164,12 @@ class Handles extends React.Component {
     componentDidUpdate() {
         const {histogram} = this.props
         const {histogramMin, histogramMax} = histogramMinMax(histogram)
-        this.setState(({histogramMin: prevMin, histogramMax: prevMax}) =>
-            prevMin !== histogramMin || prevMax !== histogramMax
+        this.setState(({histogramMin: prevMin, histogramMax: prevMax}) => {
+            console.log({prevMin, histogramMin, prevMax, histogramMax})
+            return _.isFinite(histogramMin) && _.isFinite(histogramMax) && (prevMin !== histogramMin || prevMax !== histogramMax)
                 ? {histogramMin, histogramMax}
                 : null
-        )
+        })
     }
 
     onMinPosition(minPosition) {

@@ -8,7 +8,7 @@ const worker$ = ({recipe, band}) => {
     const ee = require('ee')
     const {switchMap} = require('rx/operators')
 
-    const {getImage$} = ImageFactory(recipe)
+    const {getImage$} = ImageFactory(recipe, {selection: [band]})
 
     const histogram = image =>
         image.select(band).reduceRegion({

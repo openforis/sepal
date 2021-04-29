@@ -396,7 +396,7 @@
       "title": "Layers"
     },
     "visParams": {
-      "title": "Visualization parameters",
+      "title": "Visualization",
       "bands": {
         "loading": "Loading bands...",
         "loadError": "Failed to load image bands"
