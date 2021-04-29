@@ -1,34 +1,35 @@
-import {AssetImageLayerSource} from './assetImageLayerSource'
-import {GoogleSatelliteImageLayerSource} from './googleSatelliteImageLayerSource'
-import {OpticalMosaicImageLayerSource} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicImageLayerSource'
-import {PlanetImageLayerSource} from './planetImageLayerSource'
+import {AssetImageLayer} from './assetImageLayer'
+import {GoogleSatelliteImageLayer} from './googleSatelliteImageLayer'
+import {PlanetImageLayer} from './planetImageLayer'
+import {RecipeImageLayer} from 'app/home/body/process/recipe/recipeImageLayer'
+import {RecipeImageLayerSource} from 'app/home/body/process/recipe/recipeImageLayerSource'
 import React from 'react'
 
-const getRecipeImageLayerSource = ({recipe, source, layerConfig, map}) => {
+const getRecipeImageLayerSource = ({recipe, source, layerConfig = {}, map}) => {
     if (!recipe) {
         return {}
     }
-    const {type, title, placeholder} = recipe
-    switch(type) {
-    case 'MOSAIC':
-        return ({
-            description: title || placeholder,
-            component: (
-                <OpticalMosaicImageLayerSource
-                    recipe={recipe}
-                    source={source}
-                    layerConfig={layerConfig}
-                    map={map}/>
-            )
-        })
-    default: throw Error(`Unsupported recipe type: ${type}`)
+    return {
+        description: source.sourceConfig.description,
+        sourceComponent: (
+            <RecipeImageLayerSource
+                key={source.id}
+                source={source}
+                map={map}/>
+        ),
+        layerComponent: (
+            <RecipeImageLayer
+                source={source}
+                layerConfig={layerConfig}
+                map={map}/>
+        )
     }
 }
 
 const getPlanetImageLayerSource = ({source: {sourceConfig}, layerConfig, map}) => ({
     description: sourceConfig.description,
-    component: (
-        <PlanetImageLayerSource
+    layerComponent: (
+        <PlanetImageLayer
             layerConfig={layerConfig}
             planetApiKey={sourceConfig.planetApiKey}
             description={sourceConfig.description}
@@ -38,15 +39,15 @@ const getPlanetImageLayerSource = ({source: {sourceConfig}, layerConfig, map}) =
 
 const getGoogleSatelliteImageLayerSource = ({map}) => ({
     description: 'Google high-res satellite imagery',
-    component: (
-        <GoogleSatelliteImageLayerSource map={map}/>
+    layerComponent: (
+        <GoogleSatelliteImageLayer map={map}/>
     )
 })
 
 const getAssetImageLayerSource = ({source, layerConfig, map}) => ({
     description: source.sourceConfig.asset,
-    component: (
-        <AssetImageLayerSource
+    layerComponent: (
+        <AssetImageLayer
             source={source}
             layerConfig={layerConfig}
             map={map}/>

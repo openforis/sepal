@@ -172,18 +172,18 @@ class _PlanetImageLayerSource extends React.Component {
     }
 }
 
-export const PlanetImageLayerSource = compose(
+export const PlanetImageLayer = compose(
     _PlanetImageLayerSource,
     withMapContext(),
     withMapAreaContext(),
     connect()
 )
 
-PlanetImageLayerSource.defaultProps = {
+PlanetImageLayer.defaultProps = {
     layerConfig: defaultLayerConfig
 }
 
-PlanetImageLayerSource.propTypes = {
+PlanetImageLayer.propTypes = {
     layerConfig: PropTypes.object,
     map: PropTypes.object,
     planetApiKey: PropTypes.string

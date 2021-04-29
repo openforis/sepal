@@ -29,7 +29,7 @@ class _MapAreaMenuPanel extends React.Component {
                         {this.renderFeatureLayers()}
                     </Layout>
                 </Panel.Content>
-                <Panel.Buttons onEscape={deactivate} shown={false}></Panel.Buttons>
+                <Panel.Buttons onEscape={deactivate} shown={false}/>
             </Panel>
         )
     }

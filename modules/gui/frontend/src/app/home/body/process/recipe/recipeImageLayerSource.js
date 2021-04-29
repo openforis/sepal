@@ -1,36 +1,19 @@
-import {OpticalMosaicImageLayerSource} from './opticalMosaic/opticalMosaicImageLayerSource'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {recipeAccess} from '../recipeAccess'
 import {selectFrom} from 'stateUtils'
+import {withRecipe} from '../recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-const mapStateToProps = (state, {recipeId}) => ({
+const mapStateToProps = (state, {source: {sourceConfig: {recipeId}}}) => ({
     recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
 })
 
+// TODO: Not mounted unless showing layer. Cannot deal with description here
 class _RecipeImageLayerSource extends React.Component {
-    state = {}
-
     render() {
-        const {recipe} = this.props
-        return recipe
-            ? this.renderRecipeMap()
-            : null
-    }
-
-    renderRecipeMap() {
-        const {recipe, layerConfig, map} = this.props
-        switch(recipe.type) {
-        case 'MOSAIC': return (
-            <OpticalMosaicImageLayerSource
-                recipe={recipe}
-                layerConfig={layerConfig}
-                map={map}/>
-        )
-        default: throw Error(`Unsupported recipe type: ${recipe.type}`)
-        }
+        return null
     }
 
     componentDidMount() {
@@ -38,29 +21,47 @@ class _RecipeImageLayerSource extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {recipeId: prevRecipeId} = prevProps
-        const {recipeId} = this.props
-        if (recipeId !== prevRecipeId) {
+        const {recipe: prevRecipe} = prevProps
+        const {stream, recipe} = this.props
+        if (!stream('LOAD_RECIPE').active && (!recipe || recipe.id !== prevRecipe.id)) {
             this.loadRecipe()
+        }
+        if (recipe && toDescription(recipe) !== toDescription(prevRecipe)) {
+            this.updateRecipeDescription(recipe)
         }
     }
 
     loadRecipe() {
-        const {stream, recipeId, loadRecipe$} = this.props
+        const {stream, source: {sourceConfig: {recipeId}}, loadRecipe$} = this.props
         stream('LOAD_RECIPE',
-            loadRecipe$(recipeId)
+            loadRecipe$(recipeId),
+            recipe => this.updateRecipeDescription(recipe)
+            // TODO: Handle errors
         )
+    }
+
+    updateRecipeDescription(recipe) {
+        const {recipeId, source, recipeActionBuilder} = this.props
+        const description = toDescription(recipe)
+        if (recipeId !== source.sourceConfig.recipeId) {
+            console.log({source})
+            recipeActionBuilder('UPDATE_RECIPE_IMAGE_LAYER__SOURCE_DESCRIPTION', {description})
+                .set(['layers.additionalImageLayerSources', {id: source.id}, 'sourceConfig.description'], description)
+                .dispatch()
+        }
     }
 }
 
 export const RecipeImageLayerSource = compose(
     _RecipeImageLayerSource,
     connect(mapStateToProps),
+    withRecipe(),
     recipeAccess()
 )
 
 RecipeImageLayerSource.propTypes = {
-    recipeId: PropTypes.string.isRequired,
-    layerConfig: PropTypes.object,
-    map: PropTypes.object
+    source: PropTypes.object.isRequired
 }
+
+const toDescription = recipe =>
+    recipe && (recipe.title || recipe.placeholder)

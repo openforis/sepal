@@ -131,7 +131,7 @@ class _Map extends React.Component {
         const map = maps[area] && maps[area].map
         const updateLayerConfig = layerConfig => this.updateLayerConfig(layerConfig, area)
 
-        const {component} = getImageLayerSource({recipe, source, layerConfig, map})
+        const {layerComponent} = getImageLayerSource({recipe, source, layerConfig, map})
 
         return (
             <React.Fragment>
@@ -143,7 +143,7 @@ class _Map extends React.Component {
                 />
                 <MapAreaContext.Provider value={{area, updateLayerConfig}}>
                     <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
-                    {component}
+                    {layerComponent}
                 </MapAreaContext.Provider>
             </React.Fragment>
         )
@@ -159,7 +159,7 @@ class _Map extends React.Component {
     updateLayerConfig(layerConfig, area) {
         const {recipe} = this.props
         actionBuilder('UPDATE_LAYER_CONFIG', layerConfig)
-            .set(
+            .assign(
                 [recipePath(recipe.id), 'layers.areas', area, 'imageLayer.layerConfig'],
                 layerConfig
             )
@@ -227,7 +227,7 @@ class _Map extends React.Component {
     }
 
     render() {
-        const {layers, imageLayerSources} = this.props
+        const {recipe, layers, imageLayerSources} = this.props
         const {googleMapsApiKey, norwayPlanetApiKey, selectedZoomArea} = this.state
 
         const areas = _.map(layers.areas, (layer, area) => {
@@ -239,14 +239,18 @@ class _Map extends React.Component {
             })
         })
 
-        // TODO: Maybe overkill. Requires proper cleanup of removed map areas too.
-        //       Thinking is that the this.setState() is async, and we might not have got all at the same time
+        const imageLayerSourceComponents = imageLayerSources
+            .map(source =>
+                getImageLayerSource({recipe, source}).sourceComponent
+            )
+            .filter(mapComponent => mapComponent)
         return (
             <MapContext.Provider value={{
                 map: this.mapDelegate(),
                 googleMapsApiKey,
                 norwayPlanetApiKey
             }}>
+                {imageLayerSourceComponents}
                 <SplitView
                     areas={areas}
                     mode={layers.mode}
@@ -412,7 +416,6 @@ export const Map = compose(
     _Map,
     connect(),
     withMapsContext(),
-    // withRecipe(),
     withLayers(),
     withRecipe(mapRecipeToProps),
     withSubscriptions()

@@ -3,7 +3,7 @@ import GoogleSatelliteLayer from '../googleSatelliteLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-export class GoogleSatelliteImageLayerSource extends React.Component {
+export class GoogleSatelliteImageLayer extends React.Component {
     render() {
         const {map} = this.props
         const layer = new GoogleSatelliteLayer({map})
@@ -16,6 +16,6 @@ export class GoogleSatelliteImageLayerSource extends React.Component {
     }
 }
 
-GoogleSatelliteImageLayerSource.propTypes = {
+GoogleSatelliteImageLayer.propTypes = {
     map: PropTypes.object
 }

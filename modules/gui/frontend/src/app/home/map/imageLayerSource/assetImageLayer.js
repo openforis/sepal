@@ -4,7 +4,7 @@ import EarthEngineLayer from '../earthEngineLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-export class AssetImageLayerSource extends React.Component {
+export class AssetImageLayer extends React.Component {
     render() {
         const {map} = this.props
         return (
@@ -39,7 +39,7 @@ export class AssetImageLayerSource extends React.Component {
     }
 }
 
-AssetImageLayerSource.propTypes = {
+AssetImageLayer.propTypes = {
     source: PropTypes.any.isRequired,
     layerConfig: PropTypes.object,
     map: PropTypes.object

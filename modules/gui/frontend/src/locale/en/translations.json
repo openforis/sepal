@@ -368,7 +368,8 @@
             }
           },
           "Recipe": {
-            "description": "Add a Sepal recipe"
+            "description": "Add a Sepal recipe",
+            "currentDescription": "This recipe"
           }
         }
       },

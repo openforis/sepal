@@ -56,7 +56,8 @@ export const RecipeActions = id => {
                 id: 'this-recipe',
                 type: 'Recipe',
                 sourceConfig: {
-                    recipeId: id
+                    recipeId: id,
+                    description: msg('map.layout.addImageLayerSource.types.Recipe.currentDescription'),
                 }
             }
             const assetImageLayerSource = {
