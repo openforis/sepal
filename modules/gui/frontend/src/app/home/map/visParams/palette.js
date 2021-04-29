@@ -4,6 +4,7 @@ import {Combo} from 'widget/combo'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {Widget} from 'widget/widget'
+import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import Color from 'color'
 import Label from 'widget/label'
@@ -398,7 +399,8 @@ class ColorInput extends React.Component {
             <Tooltip
                 msg={this.renderColorButtons()}
                 delay={0}
-                placement={'bottom'}>
+                placement={'bottom'}
+                clickTrigger={isMobile()}>
                 <div className={styles.colorContainer}>
                     <div
                         className={styles.color}
