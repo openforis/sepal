@@ -48,15 +48,15 @@ class _MapAreaMenuPanel extends React.Component {
                 value: id,
                 type,
                 label: description,
-                searchableText: `${msg(`imageLayerSources.${type}`)} ${description}`,
-                render: () => <Item title={msg(`imageLayerSources.${type}`)} description={description}/>
+                searchableText: `${msg(`imageLayerSources.${type}.label`)} ${description}`,
+                render: () => <Item title={msg(`imageLayerSources.${type}.label`)} description={description}/>
             })
         })
 
         const {label, type} = imageLayerSourceOptions.find(({value}) => value === imageLayer.sourceId)
         return (
             <Combo
-                label={msg(`imageLayerSources.${type}`)}
+                label={msg(`imageLayerSources.${type}.label`)}
                 placeholder={label}
                 options={imageLayerSourceOptions}
                 value={imageLayer.sourceId}

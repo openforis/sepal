@@ -3,6 +3,7 @@ import {Map} from 'app/home/map/map'
 import {RecipeActions, defaultModel} from './opticalMosaicRecipe'
 import {SceneAreas} from './sceneAreas'
 import {compose} from 'compose'
+import {initializeLayers} from '../recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
@@ -24,7 +25,7 @@ class _OpticalMosaic extends React.Component {
         const {recipeId} = props
         const recipeActions = RecipeActions(recipeId)
         recipeActions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
-        recipeActions.initializeLayers()
+        initializeLayers(recipeId)
     }
 
     render() {

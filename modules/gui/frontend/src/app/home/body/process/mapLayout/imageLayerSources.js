@@ -33,7 +33,7 @@ export class _ImageLayerSources extends React.Component {
             ? (
                 <SuperButton
                     key={source.id}
-                    title={msg(`imageLayerSources.${source.type}`)}
+                    title={msg(`imageLayerSources.${source.type}.label`)}
                     description={description}
                     removeMessage={msg('map.layout.layer.remove.message')}
                     removeTooltip={msg('map.layout.layer.remove.tooltip')}

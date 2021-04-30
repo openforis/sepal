@@ -375,8 +375,7 @@
             }
           },
           "Recipe": {
-            "description": "Add a Sepal recipe",
-            "currentDescription": "This recipe"
+            "description": "Add a Sepal recipe"
           }
         }
       },
@@ -502,10 +501,22 @@
     }
   },
   "imageLayerSources": {
-    "Asset": "EE Asset",
-    "Recipe": "Recipe",
-    "Planet": "Planet",
-    "GoogleSatellite": "Google Satellite"
+    "Asset": {
+      "label": "EE Asset",
+      "description": "Earth Engine Asset"
+    },
+    "Recipe": {
+      "label": "Recipe",
+      "thisRecipeDescription": "This recipe"
+    },
+    "Planet": {
+      "label": "Planet",
+      "nicfiDescription": "NICFI Planet composites"
+    },
+    "GoogleSatellite": {
+      "label": "Google Satellite",
+      "description":"Google hi-res satellite imagery"
+    }
   },
   "notifications": {
     "error": {

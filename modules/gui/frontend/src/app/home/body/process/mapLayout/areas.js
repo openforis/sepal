@@ -137,7 +137,7 @@ class _Areas extends React.Component {
             ? (
                 <div className={styles.areaContent}>
                     <SuperButton
-                        title={msg(`imageLayerSources.${source.type}`)}
+                        title={msg(`imageLayerSources.${source.type}.label`)}
                         description={description}
                         removeMessage={msg('map.layout.area.remove.message')}
                         removeTooltip={msg('map.layout.area.remove.tooltip')}

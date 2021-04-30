@@ -39,15 +39,15 @@ class _AddImageLayerSourcePanel extends React.Component {
         return (
             <React.Fragment>
                 <SuperButton
-                    title={msg('imageLayerSources.Recipe')}
+                    title={msg('imageLayerSources.Recipe.label')}
                     description={msg('map.layout.addImageLayerSource.types.Recipe.description')}
                     onClick={() => this.selectRecipe()}/>
                 <SuperButton
-                    title={msg('imageLayerSources.Asset')}
+                    title={msg('imageLayerSources.Asset.label')}
                     description={msg('map.layout.addImageLayerSource.types.Asset.description')}
                     onClick={() => this.selectAsset()}/>
                 <SuperButton
-                    title={msg('imageLayerSources.Planet')}
+                    title={msg('imageLayerSources.Planet.label')}
                     description={msg('map.layout.addImageLayerSource.types.Planet.description')}
                     onClick={() => this.selectPlanet()}/>
             </React.Fragment>

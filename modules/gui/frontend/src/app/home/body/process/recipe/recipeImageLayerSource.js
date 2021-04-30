@@ -1,6 +1,12 @@
 import {compose} from 'compose'
 import {connect} from 'store'
+import {createAoiFeatureLayerSource} from 'app/home/map/aoiFeatureLayerSource'
+import {createGoogleSatelliteImageLayerSource} from 'app/home/map/imageLayerSource/googleSatelliteImageLayerSource'
+import {createLabelsFeatureLayerSource} from 'app/home/map/labelsFeatureLayerSource'
+import {createNicfiPlanetImageLayerSource} from 'app/home/map/imageLayerSource/planetImageLayerSource'
+import {msg} from 'translate'
 import {recipeAccess} from '../recipeAccess'
+import {recipeActionBuilder} from '../recipe'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from '../recipeContext'
 import PropTypes from 'prop-types'
@@ -60,6 +66,54 @@ export const RecipeImageLayerSource = compose(
 RecipeImageLayerSource.propTypes = {
     source: PropTypes.object.isRequired
 }
+
+export const initializeLayers = recipeId => {
+    const recipeImageLayerSource = createCurrentRecipeImageLayerSource(recipeId)
+    const planetImageLayerSource = createNicfiPlanetImageLayerSource()
+    const googleSatelliteImageLayerSource = createGoogleSatelliteImageLayerSource()
+    const imageLayerSources = [
+        recipeImageLayerSource,
+        planetImageLayerSource,
+        googleSatelliteImageLayerSource
+    ]
+
+    const aoiLayerSource = createAoiFeatureLayerSource()
+    const labelsLayerSource = createLabelsFeatureLayerSource()
+    const featureLayerSources = [
+        aoiLayerSource,
+        labelsLayerSource
+    ]
+    const layers = {
+        areas: {
+            'center': {
+                imageLayer: {
+                    sourceId: recipeImageLayerSource.id
+                },
+                featureLayers: [
+                    {sourceId: aoiLayerSource.id}
+                ]
+            }
+        },
+        mode: 'stack'
+    }
+    const actionBuilder = recipeActionBuilder(recipeId)
+    actionBuilder('INITIALIZE_LAYER_SOURCES')
+        .setAll({
+            'ui.imageLayerSources': imageLayerSources,
+            'ui.featureLayerSources': featureLayerSources,
+            layers,
+        })
+        .dispatch()
+}
+
+const createCurrentRecipeImageLayerSource = recipeId => ({
+    id: 'this-recipe',
+    type: 'Recipe',
+    sourceConfig: {
+        recipeId,
+        description: msg('imageLayerSources.Recipe.thisRecipeDescription'),
+    }
+})
 
 const toDescription = recipe =>
     recipe && (recipe.title || recipe.placeholder)
