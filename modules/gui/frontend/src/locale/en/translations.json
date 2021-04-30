@@ -359,12 +359,18 @@
         "title": "Add Layer",
         "types": {
           "Asset": {
-            "description": "Add an Earth Engine asset"
+            "description": "Add an Earth Engine asset",
+            "form": {
+              "asset.label": "Earth Engine Asset",
+              "loadError": "Unable to read asset"
+            }
           },
           "Planet": {
             "description": "Add a Planet account",
             "form": {
-              "description": "Description"
+              "description.label": "Description",
+              "apiKey.label": "Planet API Key",
+              "invalidApiKey": "Invalid Planet API Key"
             }
           },
           "Recipe": {

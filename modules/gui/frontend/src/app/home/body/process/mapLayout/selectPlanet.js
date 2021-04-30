@@ -55,13 +55,13 @@ class _SelectPlanet extends React.Component {
         return (
             <Layout>
                 <Form.Input
-                    label={msg('map.layout.addImageLayerSource.types.Planet.form.description')}
+                    label={msg('map.layout.addImageLayerSource.types.Planet.form.description.label')}
                     input={description}
                     autoFocus
                     errorMessage
                 />
                 <Form.Input
-                    label={'Planet API Key'}
+                    label={msg('map.layout.addImageLayerSource.types.Planet.form.apiKey.label')}
                     input={planetApiKey}
                     spellCheck={false}
                     onChangeDebounced={apiKey => this.validateApiKey(apiKey)}
@@ -81,7 +81,7 @@ class _SelectPlanet extends React.Component {
                 () => this.setState({validatedApiKey: apiKey}),
                 () => {
                     this.props.inputs.planetApiKey.setInvalid(
-                        'Invalid Planet API Key' // TODO: Use message
+                        msg('map.layout.addImageLayerSource.types.Planet.form.invalidApiKey')
                     )
                 }
             )

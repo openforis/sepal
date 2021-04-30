@@ -17,8 +17,6 @@ export class AddImageLayerSource extends React.Component {
     }
 }
 
-// TODO: Use messages - and come up with consistent labels/titles/descriptions
-
 class _AddImageLayerSourcePanel extends React.Component {
     render() {
         const {activatable: {deactivate}} = this.props
@@ -38,7 +36,6 @@ class _AddImageLayerSourcePanel extends React.Component {
     }
 
     renderOptions() {
-        // TODO: Implement addPlanet()
         return (
             <React.Fragment>
                 <SuperButton

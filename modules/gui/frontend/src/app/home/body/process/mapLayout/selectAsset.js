@@ -47,7 +47,7 @@ class _SelectAsset extends React.Component {
         return (
             <Layout>
                 <Form.Input
-                    label={'Earth Engine Asset'}
+                    label={'map.layout.addImageLayerSource.types.Asset.form.asset.label'}
                     input={asset}
                     spellCheck={false}
                     onChangeDebounced={asset => this.validateAsset(asset)}
@@ -67,7 +67,7 @@ class _SelectAsset extends React.Component {
                 () => this.setState({validatedAsset: asset}),
                 () => {
                     this.props.inputs.asset.setInvalid(
-                        'Unable to read asset' // TODO: Use message
+                        msg('map.layout.addImageLayerSource.types.Asset.form.loadError')
                     )
                 }
             )
