@@ -61,13 +61,6 @@ export const RecipeActions = id => {
                     description: msg('map.layout.addImageLayerSource.types.Recipe.currentDescription'),
                 }
             }
-            const assetImageLayerSource = {
-                id: 'test-asset',
-                type: 'Asset',
-                sourceConfig: {
-                    asset: 'users/wiell/ccdc_slice_ayeyarwadi_2020-01-01'
-                }
-            }
             const planetImageLayerSource = {
                 id: 'planet-nicfi',
                 type: 'Planet',
@@ -82,7 +75,6 @@ export const RecipeActions = id => {
             }
             const imageLayerSources = [
                 recipeImageLayerSource,
-                // assetImageLayerSource,
                 planetImageLayerSource,
                 googleSatelliteImageLayerSource
             ]
@@ -105,7 +97,6 @@ export const RecipeActions = id => {
                 'center': {
                     imageLayer: {
                         sourceId: recipeImageLayerSource.id
-                        // sourceId: assetImageLayerSource.id
                     },
                     featureLayers: [
                         // {sourceId: aoiLayerSource.id},

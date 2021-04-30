@@ -10,7 +10,6 @@ const mapStateToProps = (state, {source: {sourceConfig: {recipeId}}}) => ({
     recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
 })
 
-// TODO: Not mounted unless showing layer. Cannot deal with description here
 class _RecipeImageLayerSource extends React.Component {
     render() {
         return null
@@ -44,7 +43,6 @@ class _RecipeImageLayerSource extends React.Component {
         const {recipeId, source, recipeActionBuilder} = this.props
         const description = toDescription(recipe)
         if (recipeId !== source.sourceConfig.recipeId) {
-            console.log({source})
             recipeActionBuilder('UPDATE_RECIPE_IMAGE_LAYER__SOURCE_DESCRIPTION', {description})
                 .set(['layers.additionalImageLayerSources', {id: source.id}, 'sourceConfig.description'], description)
                 .dispatch()

@@ -47,7 +47,7 @@ class _SelectAsset extends React.Component {
         return (
             <Layout>
                 <Form.Input
-                    label={'map.layout.addImageLayerSource.types.Asset.form.asset.label'}
+                    label={msg('map.layout.addImageLayerSource.types.Asset.form.asset.label')}
                     input={asset}
                     spellCheck={false}
                     onChangeDebounced={asset => this.validateAsset(asset)}

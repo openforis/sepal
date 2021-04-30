@@ -363,7 +363,8 @@
             "form": {
               "asset.label": "Earth Engine Asset",
               "loadError": "Unable to read asset"
-            }
+            },
+            "presets": "Pre-sets"
           },
           "Planet": {
             "description": "Add a Planet account",

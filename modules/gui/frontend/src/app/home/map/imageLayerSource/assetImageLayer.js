@@ -1,5 +1,6 @@
 import {MapAreaLayout} from '../mapAreaLayout'
 import {VisualizationSelector} from './visualizationSelector'
+import {msg} from 'translate'
 import EarthEngineLayer from '../earthEngineLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -22,10 +23,20 @@ export class AssetImageLayer extends React.Component {
             type: 'ASSET',
             id: source.sourceConfig.asset
         }
+        const visParamsToOption = visParams => ({
+            value: visParams.bands.join(','),
+            label: visParams.bands.map(band => msg(['bands', band])).join(', '),
+            visParams
+        })
+        const options = [{
+            label: msg('map.layout.addImageLayerSource.types.Asset.presets'),
+            options: source.sourceConfig.visualizations.map(visParamsToOption)
+        }]
         return (
             <VisualizationSelector
                 source={source}
                 recipe={recipe}
+                presetOptions={options}
                 selectedVisParams={layerConfig.visParams}
             />
         )

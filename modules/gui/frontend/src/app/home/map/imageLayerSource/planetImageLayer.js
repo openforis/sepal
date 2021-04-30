@@ -14,7 +14,7 @@ import React from 'react'
 import WMTSLayer from '../wmtsLayer'
 import _ from 'lodash'
 import moment from 'moment'
-import styles from './planetImageLayerSource.module.css'
+import styles from './planetImageLayer.module.css'
 
 const defaultLayerConfig = {
     bands: 'rgb'
