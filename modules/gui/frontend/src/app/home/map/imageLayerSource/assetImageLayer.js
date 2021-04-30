@@ -24,7 +24,7 @@ export class AssetImageLayer extends React.Component {
             id: source.sourceConfig.asset
         }
         const visParamsToOption = visParams => ({
-            value: visParams.bands.join(','),
+            value: visParams.id,
             label: visParams.bands.map(band => msg(['bands', band])).join(', '),
             visParams
         })
