@@ -141,8 +141,10 @@ class _Areas extends React.Component {
                         description={description}
                         removeMessage={msg('map.layout.area.remove.message')}
                         removeTooltip={msg('map.layout.area.remove.tooltip')}
+                        unsafeRemove
                         drag$={this.areaDrag$}
                         dragValue={area}
+                        removeDisabled={area === 'center'}
                         onRemove={() => this.removeArea(area)}
                     />
                 </div>
