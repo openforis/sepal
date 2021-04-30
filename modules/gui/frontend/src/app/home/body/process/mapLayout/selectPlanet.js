@@ -69,7 +69,6 @@ class _SelectPlanet extends React.Component {
                     busyMessage={this.props.stream('VALIDATE_API_KEY').active && msg('widget.loading')}
                     errorMessage
                 />
-                <div/>
             </Layout>
         )
     }

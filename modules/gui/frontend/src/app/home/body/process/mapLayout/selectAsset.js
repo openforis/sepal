@@ -54,7 +54,6 @@ class _SelectAsset extends React.Component {
                     busyMessage={this.props.stream('VALIDATE_ASSET').active && msg('widget.loading')}
                     errorMessage
                 />
-                <div/>
             </Layout>
         )
     }
