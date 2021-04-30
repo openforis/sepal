@@ -3,7 +3,6 @@ import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {delay} from 'rxjs/operators'
 import {msg} from 'translate'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -354,12 +353,13 @@ class List extends React.Component {
     initializeAutoCenter() {
         const {addSubscription, scrollable} = this.props
         addSubscription(
-            // [HACK] Add delay to fix bug where iOS doesn't capture next tap event
-            autoCenter$.pipe(delay(250)).subscribe(
-                reset => reset
+            autoCenter$
+                // [HACK] Add delay to fix bug where iOS doesn't capture next tap event
+                // .pipe(delay(250))
+                .subscribe(reset => reset
                     ? scrollable.reset(() => this.centerSelectedOption())
                     : this.centerSelectedOption()
-            )
+                )
         )
         this.highlightSelectedOption()
     }
