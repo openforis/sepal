@@ -11,7 +11,6 @@ import {takeUntil} from 'rxjs/operators'
 import {v4 as uuid} from 'uuid'
 import {withRecipe} from '../recipeContext'
 import React from 'react'
-import api from 'api'
 import styles from './selectPlanet.module.css'
 
 const mapStateToProps = () => {
@@ -30,7 +29,7 @@ class _SelectPlanet extends React.Component {
     apiKeyChanged$ = new Subject()
 
     render() {
-        const {form, activatable: {deactivate}} = this.props
+        const {activatable: {deactivate}} = this.props
         const {validatedApiKey} = this.state
         return (
             <Panel type='modal' className={styles.panel}>
