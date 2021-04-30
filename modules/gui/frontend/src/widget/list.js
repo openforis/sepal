@@ -117,16 +117,6 @@ class List extends React.Component {
         )
     }
 
-    updateState(state, callback) {
-        const updatedState = (prevState, state) =>
-            _.isEqual(_.pick(prevState, _.keys(state)), state) ? null : state
-        this.setState(
-            prevState =>
-                updatedState(prevState, _.isFunction(state) ? state(prevState) : state),
-            callback
-        )
-    }
-
     renderOptions(options) {
         const {noResults} = this.props
         return options.length
