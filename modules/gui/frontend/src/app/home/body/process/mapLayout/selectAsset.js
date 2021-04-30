@@ -50,6 +50,7 @@ class _SelectAsset extends React.Component {
                     label={msg('map.layout.addImageLayerSource.types.Asset.form.asset.label')}
                     input={asset}
                     spellCheck={false}
+                    autoFocus
                     onChangeDebounced={asset => this.validateAsset(asset)}
                     busyMessage={this.props.stream('VALIDATE_ASSET').active && msg('widget.loading')}
                     errorMessage
