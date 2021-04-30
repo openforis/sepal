@@ -384,7 +384,7 @@ class List extends React.Component {
     componentDidUpdate() {
         const {options} = this.props
         const {highlightedOption} = this.state
-        if (!_.find(options, highlightedOption)) {
+        if (highlightedOption && !_.find(options, ({value}) => value === highlightedOption.value)) {
             this.highlightSelectedOption()
         }
     }
