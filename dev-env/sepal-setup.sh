@@ -52,7 +52,7 @@ template $TEMPLATE_DIR/user/user-server.properties /etc/sepal/module.d/user/user
 
 
 mkdir -p /etc/sepal/module.d/google-earth-engine
-sudo cp /etc/sepal/conf.d/certificates/gee-service-account.pem /etc/sepal/module.d/google-earth-engine/gee-service-account.pem
+sudo cp /etc/sepal/conf.d/certificates/gee-oauth.json /etc/sepal/module.d/google-earth-engine/gee-oauth.json
 sudo chown -R sepal: /etc/sepal/module.d/google-earth-engine
 
 
