@@ -16,6 +16,7 @@ const RETRIES = 5
 
 const IS_FILE = 'mimeType != "application/vnd.google-apps.folder"'
 const IS_FOLDER = 'mimeType = "application/vnd.google-apps.folder"'
+const OWNED_BY_ME = '"me" in owners'
 const IS_NOT_THRASHED = 'trashed = false'
 
 const and = (...conditions) =>
@@ -79,7 +80,7 @@ const drive$ = (message, op) => {
 const getFilesByFolder$ = ({id, pageToken} = {}) =>
     drive$(`Get files for id: ${id}`, drive =>
         drive.files.list({
-            q: and(isParent(id), IS_FILE, IS_NOT_THRASHED),
+            q: and(isParent(id), IS_FILE, IS_NOT_THRASHED, OWNED_BY_ME),
             fields: 'files(id, name, size), nextPageToken',
             spaces: 'drive',
             pageToken
@@ -113,7 +114,7 @@ const createFolderByName$ = ({name, parentId}) =>
 const getFolderByName$ = ({name, parentId}) =>
     drive$(`Get folder by name: ${name}`, drive =>
         drive.files.list({
-            q: and(isParent(parentId), isName(name), IS_FOLDER, IS_NOT_THRASHED),
+            q: and(isParent(parentId), isName(name), IS_FOLDER, IS_NOT_THRASHED, OWNED_BY_ME),
             fields: 'files(id, name), nextPageToken',
             spaces: 'drive'
         })
@@ -122,7 +123,7 @@ const getFolderByName$ = ({name, parentId}) =>
             files.length
                 ? of({id: files[0].id}) // handling the first match only
                 : throwError(
-                new NotFoundException(`Directory "${name}" not found ${parentId ? `in parent ${parentId}` : ''}`)
+                    new NotFoundException(`Directory "${name}" not found ${parentId ? `in parent ${parentId}` : ''}`)
                 )
         )
     )
@@ -189,11 +190,11 @@ const getFolderByPath$ = ({path, create} = {}) =>
             catchError(error =>
                 error instanceof NotFoundException
                     ? throwError(
-                    new NotFoundException(error, {
-                        userMessage: {
-                            message: `Path not found: '${path}'`
-                        }
-                    })
+                        new NotFoundException(error, {
+                            userMessage: {
+                                message: `Path not found: '${path}'`
+                            }
+                        })
                     )
                     : throwError(error)
             )
