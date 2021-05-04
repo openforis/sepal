@@ -8,6 +8,13 @@ SEPAL_GROUPS=(all dev)
 SEPAL_DEFAULT_GROUP=dev
 LOG_DIR=/var/log/sepal
 
+init () {
+  cd $SEPAL
+  ./gradlew clean build -x test
+  cd $SEPAL/lib/js/shared && rm -rf package-lock.json node-modules && npm install
+  cd $SEPAL
+}
+
 is_module () {
     local NAME=$1
     printf '%s\n' ${SEPAL_MODULES[@]} | grep -qP "^$NAME$"
@@ -78,7 +85,7 @@ message () {
 }
 
 module_status () {
-    local MODULE=$1    
+    local MODULE=$1
     if is_running $MODULE; then
         message "STARTED" $MODULE GREEN
     else
@@ -110,7 +117,7 @@ group_processes_terminated () {
 }
 
 module_stop () {
-    local MODULE=$1    
+    local MODULE=$1
     local PID=$(gpidof $MODULE)
     if [[ -z "$PID" ]]; then
         message "STOPPED" $MODULE RED
@@ -122,7 +129,7 @@ module_stop () {
 }
 
 module_kill () {
-    local MODULE=$1    
+    local MODULE=$1
     local PID=$(gpidof $MODULE)
     if [[ -z "$PID" ]]; then
         message "STOPPED" $MODULE RED
@@ -213,7 +220,7 @@ do_with_modules () {
 
     NAMES+=" -"
     for NAME in $NAMES; do
-        if [[ $NAME == $ARGS_START ]]; then 
+        if [[ $NAME == $ARGS_START ]]; then
             IS_ARG=true
         elif [[ $NAME == $ARGS_STOP ]]; then
             IS_ARG=false
@@ -300,24 +307,24 @@ tail() {
 
 log() {
     local MODULE=$1
-    do_with_modules "module_log" $MODULE 
+    do_with_modules "module_log" $MODULE
 }
 
 startlog () {
     local MODULE=$1
-    do_with_modules "module_start module_log" $MODULE 
+    do_with_modules "module_start module_log" $MODULE
 }
 
 restartlog () {
     local MODULE=$1
-    do_with_modules "module_stop module_start module_log" $MODULE 
+    do_with_modules "module_stop module_start module_log" $MODULE
 }
 
 run () {
     local MODULE=$1
     shift
     local ARGS=$@
-    case $MODULE in 
+    case $MODULE in
     api-gateway)
         $SEPAL/gradlew \
         -p $SEPAL \
@@ -383,6 +390,7 @@ usage () {
     echo "Usage: $0 <command> [<arguments>]"
     echo ""
     echo "Commands:"
+    echo "   init                         first build of SEPAL"
     echo "   build                        build SEPAL"
     echo "   build-debug                  build SEPAL w/debug enabled"
     echo "   clean       [<module>...]    clean module(s)/group(s)"
@@ -413,6 +421,10 @@ no_one_argument () {
 [ -z "$1" ] && usage
 
 case "$1" in
+    init)
+      shift
+      init $@
+      ;;
     clean)
         shift
         clean $@
