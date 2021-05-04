@@ -1,4 +1,5 @@
 FROM debian:buster
+# Version 2021-04-30
 RUN apt-get update && apt-get install -y \
   curl \
   git \
@@ -12,4 +13,5 @@ RUN pip3 install \
   boto \
   boto3
 RUN ansible-galaxy collection install community.aws
+ADD boto.conf /root/.boto
 ENV SEPAL_HOME=/usr/local/lib/sepal
