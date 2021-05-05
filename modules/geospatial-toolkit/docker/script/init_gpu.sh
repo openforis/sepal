@@ -14,6 +14,14 @@ apt-get update -y
 apt-get -y install cuda-11-2
 echo -n "/usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.1">/etc/OpenCL/vendors/nvidia.icd
 
+wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
+apt install -y ./nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
+apt-get update
+
+wget https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/libnvinfer7_7.1.3-1+cuda11.0_amd64.deb
+apt install -y ./libnvinfer7_7.1.3-1+cuda11.0_amd64.deb
+apt-get update
+
 # Ensure the driver version is the same as the host'lsb_release -a
 # To check which driver version to install, execute on host: nvidia-smi
 # To check which driver versions are available, execute in container: apt-cache policy nvidia-driver-460
