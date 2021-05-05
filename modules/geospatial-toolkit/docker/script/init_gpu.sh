@@ -21,7 +21,7 @@ apt-get install -y nvidia-driver-460=460.73.01-0ubuntu1
 apt-get install -y libcusolver-11-0 libcusolver-dev-11-0
 pip3 install tensorflow
 
-readlink -f /usr/local/cuda-11.0/lib64/libcusolver.so.10 > 001_cuda-11.0.conf
+readlink -f /usr/local/cuda-11.0/lib64/libcusolver.so.10 > /etc/ld.so.conf.d/001_cuda-11.0.conf
 ldconfig
 
 cd /usr/local/src/
