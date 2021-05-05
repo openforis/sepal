@@ -1,7 +1,6 @@
 import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
 import {CreateRecipe} from './createRecipe'
 import {RecipeList} from './recipeList/recipeList'
-import {StaticMap} from '../../map/staticMap'
 import {closeTab} from 'widget/tabs/tabs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
