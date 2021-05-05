@@ -1,11 +1,18 @@
 import {MapAreaLayout} from '../mapAreaLayout'
+import {Subject} from 'rxjs'
 import {VisualizationSelector} from './visualizationSelector'
+import {compose} from 'compose'
 import {msg} from 'translate'
+import {setActive, setComplete} from '../progress'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from '../earthEngineLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
+import withSubscriptions from 'subscription'
 
-export class AssetImageLayer extends React.Component {
+class _AssetImageLayer extends React.Component {
+    progress$ = new Subject()
+
     render() {
         const {map} = this.props
         return (
@@ -26,8 +33,6 @@ export class AssetImageLayer extends React.Component {
 
         const visParamsToOption = visParams => ({
             value: visParams.id,
-            // TODO: Cannot expect that the band has a message
-            // label: visParams.bands.map(band => msg(['bands', band])).join(', '),
             label: visParams.bands.join(', '),
             visParams
         })
@@ -46,13 +51,49 @@ export class AssetImageLayer extends React.Component {
         )
     }
 
+    componentDidMount() {
+        const {addSubscription} = this.props
+        addSubscription(this.progress$.subscribe(
+            ({complete}) => complete
+                ? this.setComplete('tiles')
+                : this.setActive('tiles')
+        ))
+    }
+
+    componentWillUnmount() {
+        this.setComplete('initialize')
+        this.setComplete('tiles')
+    }
+
+    setActive(name) {
+        const {recipeActionBuilder, componentId} = this.props
+        setActive(`${name}-${componentId}`, recipeActionBuilder)
+    }
+
+    setComplete(name) {
+        const {recipeActionBuilder, componentId} = this.props
+        setComplete(`${name}-${componentId}`, recipeActionBuilder)
+    }
+
     createLayer() {
         const {layerConfig, map, source: {sourceConfig: {asset}}} = this.props
         return map && layerConfig && layerConfig.visParams
-            ? EarthEngineLayer.fromAsset({asset, layerConfig, map})
+            ? EarthEngineLayer.fromAsset({
+                asset,
+                layerConfig,
+                map,
+                progress$: this.progress$,
+                onInitialize: () => this.setActive('initialize'),
+                onInitialized: () => this.setComplete('initialize')})
             : null
     }
 }
+
+export const AssetImageLayer = compose(
+    _AssetImageLayer,
+    withSubscriptions(),
+    withRecipe()
+)
 
 AssetImageLayer.propTypes = {
     source: PropTypes.any.isRequired,

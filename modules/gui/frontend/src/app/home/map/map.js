@@ -2,6 +2,7 @@ import {BehaviorSubject, ReplaySubject, Subject} from 'rxjs'
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
+import {Progress} from './progress'
 import {SplitView} from 'widget/split/splitView'
 import {VisParamsPanel} from './visParams/visParamsPanel'
 import {compose} from 'compose'
@@ -255,6 +256,7 @@ class _Map extends React.Component {
                         {this.isMapInitialized() ? this.renderRecipe() : null}
                     </div>
                 </SplitView>
+                <Progress/>
             </MapContext.Provider>
         )
     }

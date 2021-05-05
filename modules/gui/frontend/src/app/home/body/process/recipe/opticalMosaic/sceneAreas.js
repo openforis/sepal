@@ -9,6 +9,7 @@ import {compose} from 'compose'
 import {msg} from 'translate'
 import {objectEquals} from 'collections'
 import {selectFrom} from 'stateUtils'
+import {setActive, setComplete} from 'app/home/map/progress'
 import {takeUntil} from 'rxjs/operators'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import Notifications from 'widget/notifications'
@@ -50,19 +51,19 @@ class _SceneAreas extends React.Component {
     }
 
     componentWillUnmount() {
+        const {recipeActionBuilder, componentId} = this.props
         this.toggleLayer(false)
+        setComplete(`loadSceneAreas-${componentId}`, recipeActionBuilder)
     }
 
     loadSceneAreas(aoi, source) {
-        const {stream, recipeId} = this.props
-        this.loadSceneArea$.next()
-        const recipeActions = RecipeActions(recipeId)
-        recipeActions.setSceneAreas(null).dispatch()
+        const {stream} = this.props
+        this.setActive()
         stream('LOAD_SCENE_AREAS',
             api.gee.sceneAreas$({aoi, source}).pipe(
                 takeUntil(this.loadSceneArea$)
             ),
-            sceneAreas => recipeActions.setSceneAreas(sceneAreas).dispatch(),
+            sceneAreas => this.setComplete(sceneAreas),
             e => Notifications.error({
                 title: msg('gee.error.title'),
                 message: msg('process.mosaic.sceneAreas.error'),
@@ -82,6 +83,20 @@ class _SceneAreas extends React.Component {
             })
 
         )
+    }
+
+    setActive() {
+        const {recipeId, recipeActionBuilder, componentId} = this.props
+        this.loadSceneArea$.next()
+        const recipeActions = RecipeActions(recipeId)
+        recipeActions.setSceneAreas(null).dispatch()
+        setActive(`loadSceneAreas-${componentId}`, recipeActionBuilder)
+    }
+
+    setComplete(sceneAreas) {
+        const {recipeId, recipeActionBuilder, componentId} = this.props
+        RecipeActions(recipeId).setSceneAreas(sceneAreas).dispatch()
+        setComplete(`loadSceneAreas-${componentId}`, recipeActionBuilder)
     }
 
     toggleLayer(include) {
