@@ -14,6 +14,16 @@ apt-get update -y
 apt-get -y install cuda-11-2
 echo -n "/usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.1">/etc/OpenCL/vendors/nvidia.icd
 
+# Ensure the driver version is the same as the host'lsb_release -a
+# To check which driver version to install, execute on host: nvidia-smi
+# To check which driver versions are available, execute in container: apt-cache policy nvidia-driver-460
+apt-get install -y nvidia-driver-460=460.73.01-0ubuntu1
+apt-get install -y libcusolver-11-0 libcusolver-dev-11-0
+pip3 install tensorflow
+
+readlink -f /usr/local/cuda-11.0/lib64/libcusolver.so.10 > 001_cuda-11.0.conf
+ldconfig
+
 cd /usr/local/src/
 git clone https://github.com/pyopencl/pyopencl --branch v2021.1.1
 cd pyopencl
