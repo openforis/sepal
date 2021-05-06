@@ -131,6 +131,8 @@ class _Map extends React.Component {
         const {maps} = this.state
         const map = maps[area] && maps[area].map
         const updateLayerConfig = layerConfig => this.updateLayerConfig(layerConfig, area)
+        const includeAreaFeatureLayerSource = featureLayerSource => this.includeAreaFeatureLayerSource(featureLayerSource, area)
+        const excludeAreaFeatureLayerSource = featureLayerSource => this.excludeAreaFeatureLayerSource(featureLayerSource, area)
 
         const {layerComponent} = getImageLayerSource({recipe, source, layerConfig, map})
 
@@ -142,7 +144,12 @@ class _Map extends React.Component {
                     ref={this.mapAreaRefCallback}
                     onMouseDown={() => this.mouseDown$.next(area)}
                 />
-                <MapAreaContext.Provider value={{area, updateLayerConfig}}>
+                <MapAreaContext.Provider value={{
+                    area,
+                    updateLayerConfig,
+                    includeAreaFeatureLayerSource,
+                    excludeAreaFeatureLayerSource
+                }}>
                     <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
                     {layerComponent}
                 </MapAreaContext.Provider>
@@ -163,6 +170,25 @@ class _Map extends React.Component {
             .assign(
                 [recipePath(recipe.id), 'layers.areas', area, 'imageLayer.layerConfig'],
                 layerConfig
+            )
+            .dispatch()
+    }
+
+    includeAreaFeatureLayerSource(featureLayerSource, area) {
+        const {recipe} = this.props
+        actionBuilder('INCLUDE_AREA_FEATURE_LAYER_SOURCE', featureLayerSource)
+            .set(
+                [recipePath(recipe.id), 'layers.areas', area, 'featureLayerSources', {id: featureLayerSource.id}],
+                featureLayerSource
+            )
+            .dispatch()
+    }
+
+    excludeAreaFeatureLayerSource(featureLayerSource, area) {
+        const {recipe} = this.props
+        actionBuilder('EXCLUDE_AREA_FEATURE_LAYER_SOURCE', featureLayerSource)
+            .del(
+                [recipePath(recipe.id), 'layers.areas', area, 'featureLayerSources', {id: featureLayerSource.id}]
             )
             .dispatch()
     }

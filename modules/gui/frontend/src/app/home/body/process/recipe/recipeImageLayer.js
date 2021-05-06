@@ -2,8 +2,10 @@ import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {createLegendFeatureLayerSource} from 'app/home/map/legendFeatureLayerSource'
 import {selectFrom} from 'stateUtils'
 import {setActive, setComplete} from 'app/home/map/progress'
+import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import {withRecipe} from '../recipeContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import PropTypes from 'prop-types'
@@ -41,12 +43,31 @@ class _RecipeImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {addSubscription} = this.props
+        const {addSubscription, layerConfig: {visParams: {type} = {}} = {}} = this.props
         addSubscription(this.progress$.subscribe(
             ({complete}) => complete
                 ? this.setComplete('tiles')
                 : this.setActive('tiles')
         ))
+        this.toggleLegend(type)
+    }
+
+    componentDidUpdate(prevProps) {
+        const {layerConfig: {visParams: {type: prevType} = {}} = {}} = prevProps
+        const {layerConfig: {visParams: {type} = {}} = {}} = this.props
+        if (type !== prevType) {
+            this.toggleLegend(type)
+        }
+    }
+
+    toggleLegend(type) {
+        const {mapAreaContext: {includeAreaFeatureLayerSource, excludeAreaFeatureLayerSource} = {}} = this.props
+        if (includeAreaFeatureLayerSource) {
+            const source = createLegendFeatureLayerSource()
+            type === 'continuous'
+                ? includeAreaFeatureLayerSource(source)
+                : excludeAreaFeatureLayerSource(source)
+        }
     }
 
     componentWillUnmount() {
@@ -87,7 +108,8 @@ export const RecipeImageLayer = compose(
     _RecipeImageLayer,
     connect(mapStateToProps),
     withRecipe(),
-    withSubscriptions()
+    withSubscriptions(),
+    withMapAreaContext()
 )
 
 RecipeImageLayer.propTypes = {

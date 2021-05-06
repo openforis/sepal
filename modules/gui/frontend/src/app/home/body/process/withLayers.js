@@ -1,23 +1,41 @@
+import {compose} from 'compose'
 import {selectFrom} from 'stateUtils'
+import {withMapAreaContext} from 'app/home/map/mapAreaContext'
+import {withRecipe} from './recipeContext'
 import React from 'react'
-import _ from 'lodash'
+
+const mapRecipeToProps = recipe => ({
+    layers: selectFrom(recipe, 'layers'),
+    standardImageLayerSources: selectFrom(recipe, 'ui.imageLayerSources') || [],
+    recipeFeatureLayerSources: selectFrom(recipe, 'ui.featureLayerSources') || []
+})
 
 export const withLayers = () =>
-    WrappedComponent =>
+    WrappedComponent => {
         class HigherOrderComponent extends React.Component {
             render() {
-                const {recipe} = this.props
-                const standardImageLayerSources = selectFrom(recipe, 'ui.imageLayerSources') || []
-                const additionalImageLayerSources = selectFrom(recipe, 'layers.additionalImageLayerSources') || []
-                const featureLayerSources = selectFrom(recipe, 'ui.featureLayerSources')
-                const layers = selectFrom(recipe, 'layers')
+                const {
+                    layers,
+                    standardImageLayerSources,
+                    recipeFeatureLayerSources,
+                    mapAreaContext: {area} = {}
+                } = this.props
+                const {additionalImageLayerSources = [], areas = {}} = layers
+                const {featureLayerSources: areaFeatureLayerSources = []} = areas[area] || {}
                 const layerProps = {
                     standardImageLayerSources,
                     additionalImageLayerSources,
                     imageLayerSources: [...standardImageLayerSources, ...additionalImageLayerSources],
-                    featureLayerSources,
+                    featureLayerSources: [...recipeFeatureLayerSources, ...areaFeatureLayerSources],
                     layers
                 }
                 return React.createElement(WrappedComponent, {...this.props, ...layerProps})
             }
         }
+
+        return compose(
+            HigherOrderComponent,
+            withRecipe(mapRecipeToProps),
+            withMapAreaContext(),
+        )
+    }
