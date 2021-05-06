@@ -17,5 +17,6 @@ function template {
 template /config/requirements.txt /tmp/requirements.txt
 
 pip3 install --upgrade pip
+pip3 install --ignore-installed scikit-learn
 pip3 install -r /tmp/requirements.txt
 pip3 install git+git://github.com/diku-dk/bfast.git@0.6
