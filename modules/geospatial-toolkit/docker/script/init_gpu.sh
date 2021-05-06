@@ -6,33 +6,26 @@ echo "***************************"
 echo "*** Installing GPU libs ***"
 echo "***************************"
 
+# Based on https://www.tensorflow.org/install/gpu, but with CUDA 11.2
+# Trying with cuda-toolkit instead of cuda, to prevent wrong nvidia-driver to be installed.
+# That version must match the version on the host machine.
+
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
 mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600
 apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
 add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /"
+apt-get update -y
 
 wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
 apt install -y ./nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
-
-wget https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/libnvinfer7_7.1.3-1+cuda11.0_amd64.deb
-apt install -y ./libnvinfer7_7.1.3-1+cuda11.0_amd64.deb
 apt-get update -y
 
+# Install development and runtime libraries (~4GB)
 apt-get install -y --no-install-recommends \
-  cuda-11-2 \
-  libcusolver-11-0 \
-  libcusolver-dev-11-0
-
-echo -n "/usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.1">/etc/OpenCL/vendors/nvidia.icd
-
-# Ensure the driver version is the same as the host
-# To check which driver version to install, execute on host: nvidia-smi
-# To check which driver versions are available, execute in container: apt-cache policy nvidia-driver-460
-apt-get remove -y nvidia-driver-465
-apt-get install -y nvidia-driver-460=460.73.01-0ubuntu1
-
-echo '/usr/local/cuda-11.0/lib64' > /etc/ld.so.conf.d/001_cuda-11.0.conf
-ldconfig
+  nvidia-driver-460=460.73.01-0ubuntu1 \
+  cuda-toolkit-11-2 \
+  libcudnn8=8.1.1.33-1+cuda11.2 \
+  libcudnn8-dev=8.1.1.33-1+cuda11.2
 
 pip3 install tensorflow
 
