@@ -23,13 +23,13 @@ apt-get update -y
 # Install development and runtime libraries (~4GB)
 apt-get install -y --no-install-recommends \
   nvidia-driver-460=460.73.01-0ubuntu1 \
+  cuda-toolkit-11-0 \
   cuda-toolkit-11-2 \
   libcudnn8=8.1.1.33-1+cuda11.2 \
   libcudnn8-dev=8.1.1.33-1+cuda11.2
 
 echo -n "/usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.1">/etc/OpenCL/vendors/nvidia.icd
 
-pip3 install tensorflow
 
 cd /usr/local/src/
 git clone https://github.com/pyopencl/pyopencl --branch v2021.1.1
@@ -50,4 +50,7 @@ printf '%s\n' \
 pip3 install pybind11
 pip3 install mako
 su -c "make install"
+
+pip3 install --upgrade pip
 pip3 install numpy --upgrade --force-reinstall
+pip3 install tensorflow==2.4.1
