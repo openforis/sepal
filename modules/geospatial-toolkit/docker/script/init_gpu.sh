@@ -27,6 +27,8 @@ apt-get install -y --no-install-recommends \
   libcudnn8=8.1.1.33-1+cuda11.2 \
   libcudnn8-dev=8.1.1.33-1+cuda11.2
 
+echo -n "/usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.1">/etc/OpenCL/vendors/nvidia.icd
+
 pip3 install tensorflow
 
 cd /usr/local/src/
