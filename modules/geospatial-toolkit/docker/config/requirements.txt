@@ -1,7 +1,6 @@
 # version 2020-02-03
 ########  geospatial data analysis  ########
 scikit-image
-scikit-learn
 scipy
 shapely
 shapely-geojson
@@ -16,6 +15,7 @@ pandas
 dask[complete]
 planet
 sphinx
+tensorflow-probability
 
 ########  Google Earthengine  ########
 oauth2client
