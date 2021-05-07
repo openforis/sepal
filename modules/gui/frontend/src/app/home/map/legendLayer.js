@@ -14,16 +14,21 @@ const mapRecipeToProps = recipe => ({
 class _LegendLayer extends React.Component {
     render() {
         const {mapAreaContext: {area}, areas} = this.props
-        const {min, max, palette} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
-        return this.renderLegend({min: min[0], max: max[0], palette})
+        const {min, max, palette, inverted} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
+        return this.renderLegend({min: min[0], max: max[0], palette, inverted: inverted && inverted.length && inverted[0] === true})
     }
 
-    renderLegend({min, max, palette}) {
+    renderLegend({min, max, palette, inverted}) {
         return (
             <div className={styles.container}>
                 <div className={styles.legend}>
                     <Value value={min}/>
-                    <div className={styles.palette} style={{'--palette': palette}}/>
+                    <div
+                        className={styles.palette}
+                        style={{'--palette': inverted
+                            ? palette.slice().reverse()
+                            : palette}}
+                    />
                     <Value value={max}/>
                 </div>
             </div>
