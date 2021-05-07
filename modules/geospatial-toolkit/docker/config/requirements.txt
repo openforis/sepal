@@ -36,7 +36,8 @@ python-dateutil
 pytesmo
 Wand
 PyPDF2 # more recent version are avaiable (PyPDF4)
-rasterio
+rasterio==1.1.5
+openpyxl
 
 ########  web api  ########
 falcon
