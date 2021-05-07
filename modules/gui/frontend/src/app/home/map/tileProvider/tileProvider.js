@@ -20,7 +20,6 @@ export class TileProvider {
     }
 
     renderTile({doc, element, blob}) {
-        super.renderTile({doc, element, blob})
         element.innerHTML = `<img src="${(window.URL || window.webkitURL).createObjectURL(blob)}"/>`
     }
 
