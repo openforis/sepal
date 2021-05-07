@@ -1,26 +1,38 @@
-.legend {
+.container {
     position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     display: flex;
-    bottom: 3.5rem;
-    right: 5rem;
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 99999;
+}
+
+.legend {
+    display: flex;
     background-color: hsla(0, 0%, 0%, .35);
-    padding: .5rem;
-    border: 1px solid var(--wireframe-color);
-    border-radius: .25rem;;
+    padding: .35rem;
+    border-radius: .25rem;
+    width: 100%;
+    max-width: 40rem;
+    margin: 0 3rem;
+    align-items: center;
 
 }
 
-.labels {
+.value {
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    margin-right: .5rem;
-    text-align: right;
+    margin: 0 .5rem;
+    font-size: .8rem;
+    line-height: .8rem;
 }
 
 .palette {
+    flex-grow: 1;
     --palette: '';
-    width: 1rem;
-    height: 8rem;
-    background: linear-gradient(0deg, var(--palette));
+    height: 1rem;
+    min-width: 2rem;
+    background: linear-gradient(90deg, var(--palette));
 }

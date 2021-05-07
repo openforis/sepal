@@ -4,7 +4,8 @@ import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from './mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
-import styles from 'widget/legend.module.css'
+import format from 'format'
+import styles from './legendLayer.module.css'
 
 const mapRecipeToProps = recipe => ({
     areas: selectFrom(recipe, 'layers.areas') || {}
@@ -19,16 +20,21 @@ class _LegendLayer extends React.Component {
 
     renderLegend({min, max, palette}) {
         return (
-            <div className={styles.legend}>
-                <div className={styles.labels}>
-                    <div>{max}</div>
-                    <div>{min}</div>
+            <div className={styles.container}>
+                <div className={styles.legend}>
+                    <Value value={min}/>
+                    <div className={styles.palette} style={{'--palette': palette}}/>
+                    <Value value={max}/>
                 </div>
-                <div className={styles.palette} style={{'--palette': palette}}/>
             </div>
         )
     }
 }
+
+const Value = ({value}) =>
+    <div className={styles.value}>
+        {format.number({value, precisionDigits: 3})}
+    </div>
 
 export const LegendLayer = compose(
     _LegendLayer,
