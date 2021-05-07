@@ -32,7 +32,7 @@
 .palette {
     flex-grow: 1;
     --palette: '';
-    height: 1rem;
+    height: .5rem;
     min-width: 2rem;
     background: linear-gradient(90deg, var(--palette));
 }
