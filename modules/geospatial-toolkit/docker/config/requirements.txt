@@ -15,6 +15,7 @@ pandas
 dask[complete]
 planet
 sphinx
+tensorflow-probability
 
 ########  Google Earthengine  ########
 oauth2client
