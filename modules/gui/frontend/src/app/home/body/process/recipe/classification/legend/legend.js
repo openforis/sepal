@@ -1,3 +1,4 @@
+import {Button} from '../../../../../../../widget/button'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {MosaicPreview} from '../../mosaic/mosaicPreview'
@@ -6,6 +7,7 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import Icon from '../../../../../../../widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
@@ -36,6 +38,8 @@ const mapRecipeToProps = recipe => {
 }
 
 class Legend extends React.Component {
+    state = {colorMode: 'palette'}
+
     constructor(props) {
         super(props)
         const {recipeId} = props
@@ -44,6 +48,18 @@ class Legend extends React.Component {
 
     render() {
         const {dataCollectionEvents} = this.props
+        const {colorMode} = this.state
+        const title = (
+            <div className={styles.title}>
+                <div>{msg('process.classification.panel.legend.title')}</div>
+                <Button
+                    chromeless
+                    size='small'
+                    icon={colorMode === 'palette' ? 'font' : 'palette'}
+                    onClick={() => this.toggleColorMode()}
+                />
+            </div>
+        )
         return (
             <RecipeFormPanel
                 placement='bottom-right'
@@ -52,7 +68,8 @@ class Legend extends React.Component {
                 onClose={() => this.preview.show()}>
                 <Panel.Header
                     icon='list'
-                    title={msg('process.classification.panel.legend.title')}/>
+                    title={title}
+                />
 
                 <Panel.Content>
                     {this.renderContent()}
@@ -67,6 +84,7 @@ class Legend extends React.Component {
 
     renderContent() {
         const {hasTrainingData, inputs: {entries}} = this.props
+        const {colorMode} = this.state
         const duplicates = findDuplicates((entries.value || []))
         return (
             <Layout>
@@ -74,6 +92,7 @@ class Legend extends React.Component {
                     <Layout key={entry.id} type={'horizontal-nowrap'}>
                         <Entry
                             entry={entry}
+                            mode={colorMode}
                             duplicate={duplicates.find(duplicate => duplicate.id === entry.id) || {}}
                             hasTrainingData={hasTrainingData}
                             onChange={entry => this.updateEntry(entry)}
@@ -90,6 +109,10 @@ class Legend extends React.Component {
 
     componentDidMount() {
         this.preview.hide()
+    }
+
+    toggleColorMode() {
+        this.setState(({colorMode}) => ({colorMode: colorMode === 'palette' ? 'text' : 'palette'}))
     }
 
     updateEntry(updatedEntry) {
@@ -126,17 +149,30 @@ class Legend extends React.Component {
 
 class _Entry extends React.Component {
     render() {
-        const {entry, hasTrainingData, inputs: {value, color, label}} = this.props
+        const {entry, mode, hasTrainingData, inputs: {value, color, label}} = this.props
         return (
             <Layout type={'horizontal-nowrap'}>
-                <Form.Input
-                    className={styles.color}
-                    type='color'
-                    input={color}
-                    errorMessage
-                    autoComplete={false}
-                    onChange={e => this.notifyChange({color: e.target.value})}
-                />
+                {mode === 'palette'
+                    ? (
+                        <Form.Input
+                            className={styles.color}
+                            type='color'
+                            input={color}
+                            errorMessage
+                            autoComplete={false}
+                            onChange={e => this.notifyChange({color: e.target.value})}
+                        />
+                    )
+                    : (
+                        <Form.Input
+                            className={styles.colorText}
+                            input={color}
+                            errorMessage
+                            autoComplete={false}
+                            onChange={e => this.notifyChange({color: e.target.value})}
+                        />
+                    )}
+
                 <Form.Input
                     className={styles.value}
                     maxLength={2}

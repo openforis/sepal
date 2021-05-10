@@ -3,6 +3,14 @@
     max-width: 27rem;
 }
 
+.title {
+    display: flex;
+    flex-grow: 1;
+    justify-content: space-between;
+    align-items: center;
+;
+}
+
 .value {
     width: 2rem;
 }
@@ -17,4 +25,9 @@
     height: 1.5rem;
     cursor: pointer;
     padding: 0;
+}
+
+
+.colorText input {
+    width: 5rem;
 }
