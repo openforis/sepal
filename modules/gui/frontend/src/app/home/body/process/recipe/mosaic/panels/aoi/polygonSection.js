@@ -34,7 +34,6 @@ class _PolygonSection extends React.Component {
     }
 
     disableDrawingMode() {
-        console.log('disabling drawing mode')
         const {map} = this.props
         map.disableDrawingMode()
     }
