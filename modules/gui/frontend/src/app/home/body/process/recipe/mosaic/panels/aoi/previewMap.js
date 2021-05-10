@@ -20,7 +20,7 @@ const PREVIEW_MAP_OPTIONS = {
 
 const mapRecipeToProps = recipe => ({
     recipe,
-    selectedLayers: selectFrom(recipe, 'layers.overlay.featureLayers') || [],
+    featureLayers: selectFrom(recipe, 'layers.overlay.featureLayers') || [],
     bounds: selectFrom(recipe, 'ui.overlay.bounds')
 })
 
@@ -35,13 +35,13 @@ class _PreviewMap extends React.Component {
     }
 
     render() {
-        const {selectedLayers} = this.props
+        const {featureLayers} = this.props
         const {map} = this.state
         return (
             <React.Fragment>
                 <div className={styles.map} ref={this.refCallback}/>
-                {map && selectedLayers.length
-                    ? <FeatureLayers selectedLayers={selectedLayers} map={map}/>
+                {map && featureLayers.length
+                    ? <FeatureLayers selectedLayers={featureLayers} map={map}/>
                     : null}
             </React.Fragment>
         )

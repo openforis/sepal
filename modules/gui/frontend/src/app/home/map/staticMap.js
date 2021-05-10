@@ -10,7 +10,7 @@ class _StaticMap extends React.Component {
         const {children} = this.props
         return (
             <React.Fragment>
-                <div ref={this.map} className={styles.map}/>
+                <div className={styles.map} ref={this.map}/>
                 <div className={styles.content}>
                     {children}
                 </div>

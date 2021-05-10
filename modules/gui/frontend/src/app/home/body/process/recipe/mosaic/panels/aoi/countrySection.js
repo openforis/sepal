@@ -165,7 +165,7 @@ class _CountrySection extends React.Component {
     }
 
     update() {
-        const {countries, stream, inputs: {country, area, buffer}} = this.props
+        const {countries, stream, inputs: {buffer}} = this.props
         if (!countries && !stream('LOAD_COUNTRIES').active && !stream('LOAD_COUNTRIES').failed) {
             this.props.stream('LOAD_COUNTRIES',
                 loadCountries$(),
@@ -207,7 +207,7 @@ class _CountrySection extends React.Component {
             recipeActionBuilder('DELETE_MAP_OVERLAY_BOUNDS')
                 .del('ui.overlay.bounds')
                 .dispatch()
-            stream('LOAD_BOUNDS',
+            stream('LOAD_MAP_OVERLAY_BOUNDS',
                 api.gee.aoiBounds$(countryToEETable(aoi)),
                 bounds => {
                     recipeActionBuilder('SET_MAP_OVERLAY_BOUNDS')
