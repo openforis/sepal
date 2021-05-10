@@ -3,24 +3,31 @@ import {Combo} from 'widget/combo'
 import {Item} from 'widget/item'
 import {Layout} from 'widget/layout'
 import {MapAreaLayout} from '../mapAreaLayout'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {get$} from 'http-client'
 import {map} from 'rxjs/operators'
+import {setActive, setComplete} from '../progress'
 import {withMapAreaContext} from '../mapAreaContext'
 import {withMapContext} from '../mapContext'
+import {withRecipe} from '../../body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import WMTSLayer from '../wmtsLayer'
 import _ from 'lodash'
 import moment from 'moment'
 import styles from './planetImageLayer.module.css'
+import withSubscriptions from 'subscription'
 
 const defaultLayerConfig = {
     bands: 'rgb'
 }
 
+const CONCURRENCY = 10
+
 class _PlanetImageLayerSource extends React.Component {
+    progress$ = new Subject()
     state = {}
 
     render() {
@@ -36,10 +43,11 @@ class _PlanetImageLayerSource extends React.Component {
 
     createLayer() {
         const {layerConfig: {bands, urlTemplate} = defaultLayerConfig, map} = this.props
+        const concurrency = CONCURRENCY
         return urlTemplate
             ? this.selectedHasCir()
-                ? new WMTSLayer({map, urlTemplate: `${urlTemplate}&proc=${bands}`})
-                : new WMTSLayer({map, urlTemplate: `${urlTemplate}`})
+                ? new WMTSLayer({map, urlTemplate: `${urlTemplate}&proc=${bands}`, concurrency, progress$: this.progress$})
+                : new WMTSLayer({map, concurrency, urlTemplate: `${urlTemplate}`})
             : null
     }
 
@@ -108,7 +116,23 @@ class _PlanetImageLayerSource extends React.Component {
         )
     }
 
+    setActive(name) {
+        const {recipeActionBuilder, componentId} = this.props
+        setActive(`${name}-${componentId}`, recipeActionBuilder)
+    }
+
+    setComplete(name) {
+        const {recipeActionBuilder, componentId} = this.props
+        setComplete(`${name}-${componentId}`, recipeActionBuilder)
+    }
+
     componentDidMount() {
+        const {addSubscription} = this.props
+        addSubscription(this.progress$.subscribe(
+            ({complete}) => complete
+                ? this.setComplete('tiles')
+                : this.setActive('tiles')
+        ))
         this.update()
     }
 
@@ -122,6 +146,10 @@ class _PlanetImageLayerSource extends React.Component {
             }
         }
         this.update()
+    }
+
+    componentWillUnmount() {
+        this.setComplete('tiles')
     }
 
     update() {
@@ -176,7 +204,9 @@ export const PlanetImageLayer = compose(
     _PlanetImageLayerSource,
     withMapContext(),
     withMapAreaContext(),
-    connect()
+    connect(),
+    withRecipe(),
+    withSubscriptions()
 )
 
 PlanetImageLayer.defaultProps = {

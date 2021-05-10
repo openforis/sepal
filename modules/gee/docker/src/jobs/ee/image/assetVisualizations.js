@@ -3,16 +3,35 @@ const {job} = require('root/jobs/job')
 const worker$ = ({asset}) => {
     const ee = require('ee')
     const {map} = require('rx/operators')
-    const log = require('sepal/log').getLogger('ee')
     const {v4: guid} = require('uuid')
+
+    const extractLandcover = image => {
+        const properties = image.toDictionary()
+
+        const getList = key => properties
+            .select(
+                image.propertyNames().map(name => ee.String(name).match(`^landcover_class_${key}`)).flatten()
+            )
+            .values()
+
+        const valuesList = getList('values')
+        const palette = getList('palette').flatten()
+        const labels = getList('names').flatten()
+
+        return valuesList.map(values => ({
+            type: 'categorical',
+            bands: image.bandNames().get(0), // No way to know which band is the categorical. Take first.
+            labels,
+            values,
+            palette
+        }))
+    }
 
     const extractVisualization = (image, i) => {
         const properties = image
             .toDictionary()
             .select(
-                image.propertyNames().map(function (name) {
-                    return ee.String(name).match('^visualization_\\d+_.*')
-                }).flatten()
+                image.propertyNames().map(name => ee.String(name).match('^visualization_\\d+_.*')).flatten()
             )
 
         const indexProperties = properties
@@ -37,9 +56,7 @@ const worker$ = ({asset}) => {
         const properties = image
             .toDictionary()
             .select(
-                image.propertyNames().map(function (name) {
-                    return ee.String(name).match('^visualization_\\d+_.*')
-                }).flatten()
+                image.propertyNames().map(name => ee.String(name).match('^visualization_\\d+_.*')).flatten()
             )
         const indexes = properties
             .keys()
@@ -54,35 +71,88 @@ const worker$ = ({asset}) => {
 
     const formatVisualization = visualization => {
         const visParams = {id: guid()}
-        const set = (key, transform) => {
+        const set = (key, transform = value => value) => {
             if (Object.keys(visualization).includes(key)) {
-                try {
-                    visParams[key] = transform(visualization[key])
-                } catch(error) {
-                    log.warn(`Failed to parse visualization parameter '${key}' from $${asset}: ${error}`)
-                }
+                const value = transform(visualization[key])
+                const transformedValue = transform(
+                    typeof value === 'string'
+                        ? value.trim()
+                        : value
+                )
+                visParams[key] = transformedValue
+                return transformedValue
+            } else {
+                return null
             }
         }
 
-        ['name', 'type'].forEach(key => set(key, value =>
-            value.trim())
-        );
-        ['bands', 'palette', 'labels'].forEach(key => set(key, value =>
-            value.split(',').map(value => value.trim()))
-        );
+        const toList = value => {
+            if (value === undefined || value === null) {
+                return []
+            } else if ((Array.isArray(value))) {
+                return value
+            } else if (typeof value === 'number') {
+                return [value]
+            } else if (typeof value === 'string') {
+                return value.split(',').map(s => s.trim())
+            }
+        }
+
+        const toNumberList = value =>
+            toList(value).map(value =>
+                typeof value === 'string'
+                    ? parseFloat(value)
+                    : value
+            )
+
+        const adjustSize = (list, size) => {
+            if (!list || !list.length) {
+                return null
+            } else if (list.length > size) {
+                return list.slice(0, size)
+            } else if (list.length < size) {
+                const neededElements = size - list.length
+                const additionalElements = Array(neededElements).fill(list[list.length - 1])
+                return list.concat(additionalElements)
+            } else {
+                return list
+            }
+        }
+
+        const bands = set('bands', toList)
+        const numberOfBands = bands.length
+        visParams.type = visualization.type || (numberOfBands > 1 ? 'rgb' : 'continuous')
+
+        set('name');
+        ['palette', 'labels'].forEach(key => set(key, toList));
         ['min', 'max', 'gamma', 'values'].forEach(key => set(key, value =>
-            value.split(',').map(value => parseFloat(value.trim())))
+            adjustSize(
+                toNumberList(value),
+                numberOfBands
+            )
+        ))
+        if (Object.keys(visualization).includes('values')) {
+            visParams.values = toNumberList(visualization.values)
+        }
+        set('inverted', value =>
+            toList(value).map(inverted => inverted === 'true' || inverted === true)
         )
+        const log = require('sepal/log').getLogger('ee')
+
+        log.error(visualization, visParams)
         return visParams
     }
 
     const formatVisualizations = visualizations =>
         visualizations.map(formatVisualization)
 
-    return ee.getInfo$(extractVisualizations(ee.Image(asset)), 'asset visualizations').pipe(
+    const image = ee.Image(asset)
+    return ee.getInfo$(
+        extractVisualizations(image).cat(extractLandcover(image)),
+        'asset visualizations'
+    ).pipe(
         map(formatVisualizations)
     )
-
 }
 
 module.exports = job({

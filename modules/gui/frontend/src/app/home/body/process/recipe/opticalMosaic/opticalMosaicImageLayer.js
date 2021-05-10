@@ -8,10 +8,8 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {visualizations} from './visualizations'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
-import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
 
 const defaultLayerConfig = {
     panSharpen: false
@@ -19,13 +17,15 @@ const defaultLayerConfig = {
 
 class _OpticalMosaicImageLayer extends React.Component {
     render() {
-        const {map} = this.props
+        const {layer, map} = this.props
         return (
-            <MapAreaLayout
-                layer={this.createLayer()}
-                form={this.renderImageLayerForm()}
-                map={map}
-            />
+            <React.Fragment>
+                <MapAreaLayout
+                    layer={this.hasScenes() ? layer : null}
+                    form={this.renderImageLayerForm()}
+                    map={map}
+                />
+            </React.Fragment>
         )
     }
 
@@ -90,13 +90,6 @@ class _OpticalMosaicImageLayer extends React.Component {
         this.selectVisualization(visualizations[this.reflectance()][0])
     }
 
-    createLayer() {
-        const {recipe, layerConfig, map} = this.props
-        return map && recipe.ui.initialized && this.hasScenes()
-            ? EarthEngineLayer.fromRecipe({recipe: _.omit(recipe, ['ui', 'layers']), layerConfig, map})
-            : null
-    }
-
     hasScenes() {
         const {recipe} = this.props
         const type = selectFrom(recipe, 'model.sceneSelectionOptions.type')
@@ -121,9 +114,9 @@ class _OpticalMosaicImageLayer extends React.Component {
         const {recipe, layerConfig: {visParams}} = this.props
         const sources = selectFrom(recipe, 'model.sources')
         return sources.LANDSAT
-            && this.reflectance() === 'TOA'
-            && visParams
-            && ['red,green,blue', 'nir,red,green'].includes(visParams.bands.join(','))
+        && this.reflectance() === 'TOA'
+        && visParams
+        && ['red,green,blue', 'nir,red,green'].includes(visParams.bands.join(','))
     }
 
     togglePanSharpen(enabled) {
@@ -149,6 +142,7 @@ OpticalMosaicImageLayer.defaultProps = {
 OpticalMosaicImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,
     source: PropTypes.object.isRequired,
+    layer: PropTypes.object,
     layerConfig: PropTypes.object,
     map: PropTypes.object
 }

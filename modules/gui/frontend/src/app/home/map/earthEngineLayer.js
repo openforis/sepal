@@ -1,12 +1,13 @@
 import {EarthEngineTileProvider} from './tileProvider/earthEngineTileProvider'
 import {Subject, of} from 'rxjs'
 import {TileLayer} from './googleMaps/googleMapsLayer'
+import {WMTSTileProvider} from './tileProvider/wmtsTileProvider'
 import {mapTo, tap} from 'rxjs/operators'
 import _ from 'lodash'
 import api from 'api'
 
 export default class EarthEngineLayer {
-    static fromRecipe({recipe, layerConfig, map}) {
+    static fromRecipe({recipe, layerConfig, map, progress$, onInitialize, onInitialized}) {
         const previewRequest = {
             recipe: _.omit(recipe, ['ui']),
             ...layerConfig
@@ -15,11 +16,13 @@ export default class EarthEngineLayer {
             map,
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
-            progress$: new Subject()
+            progress$: progress$ || new Subject(),
+            onInitialize,
+            onInitialized
         })
     }
 
-    static fromAsset({asset, layerConfig, map}) {
+    static fromAsset({asset, layerConfig, map, progress$, onInitialize, onInitialized}) {
         const previewRequest = {
             recipe: {
                 type: 'ASSET',
@@ -31,11 +34,13 @@ export default class EarthEngineLayer {
             map,
             mapId$: api.gee.preview$(previewRequest),
             props: {asset, layerConfig},
-            progress$: new Subject()
+            progress$: progress$ || new Subject(),
+            onInitialize,
+            onInitialized
         })
     }
 
-    constructor({map, layerIndex = 0, toggleable, label, description, mapId$, props, progress$}) {
+    constructor({map, layerIndex = 0, toggleable, label, description, mapId$, props, progress$, onInitialize, onInitialized}) {
         this.map = map
         this.layerIndex = layerIndex
         this.toggleable = toggleable
@@ -44,6 +49,8 @@ export default class EarthEngineLayer {
         this.mapId$ = mapId$
         this.props = props
         this.progress$ = progress$
+        this.onInitialize = onInitialize
+        this.onInitialized = onInitialized
     }
 
     equals(o) {
@@ -51,8 +58,8 @@ export default class EarthEngineLayer {
     }
 
     addToMap() {
-        const {map, layerIndex, mapId, token, urlTemplate, progress$} = this
-        const tileProvider = new EarthEngineTileProvider({mapId, token, urlTemplate})
+        const {map, layerIndex, urlTemplate, progress$} = this
+        const tileProvider = new EarthEngineTileProvider({urlTemplate})
         this.layer = TileLayer({map, tileProvider, layerIndex, progress$})
         this.layer.add()
     }
@@ -66,6 +73,7 @@ export default class EarthEngineLayer {
     }
 
     initialize$() {
+        this.onInitialize && this.onInitialize()
         return this.mapId
             ? of(this)
             : this.mapId$.pipe(
@@ -74,6 +82,7 @@ export default class EarthEngineLayer {
                     this.mapId = mapId
                     this.urlTemplate = urlTemplate
                     this.visParams = visParams
+                    this.onInitialized && this.onInitialized()
                 }),
                 mapTo(this)
             )

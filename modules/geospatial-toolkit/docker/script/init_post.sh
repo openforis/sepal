@@ -16,6 +16,7 @@ printf '%s\n' \
     'SHELL="/bin/bash"' \
     'SEPAL="true"' \
     'PROJ_LIB="/usr/share/proj"' \
+    'LD_LIBRARY_PATH="/usr/local/cuda-11.2/lib64:/usr/local/cuda-11.0/lib64 ' \
     >> /etc/environment
 
 # Remove redundant files

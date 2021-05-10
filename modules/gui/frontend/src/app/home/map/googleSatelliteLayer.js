@@ -1,10 +1,13 @@
+import {GoogleSatelliteTileProvider} from './tileProvider/googleSatelliteTileProvider'
+import {TileLayer} from './googleMaps/googleMapsLayer'
 import {of} from 'rxjs'
 
 export default class GoogleSatelliteLayer {
-    constructor({map}) {
+    constructor({map, progress$}) {
         this.map = map
         this.layerIndex = 0
         this.type = 'GoogleSatelliteLayer'
+        this.progress$ = progress$
     }
 
     equals(o) {
@@ -12,16 +15,10 @@ export default class GoogleSatelliteLayer {
     }
 
     addToMap() {
-        const {google} = this.map.getGoogle()
-        const subdomain = 'mt0'
-        const getTileUrl = ({x, y}, z) => `http://${subdomain}.google.com/vt/lyrs=s&x=${x}&y=${y}&z=${z}`
-        const layer = new google.maps.ImageMapType({
-            getTileUrl,
-            name: 'googleSatellite',
-            minZoom: 3,
-            maxZoom: 17,
-        })
-        this.map.addToMap(this.layerIndex, layer)
+        const {map, layerIndex, progress$} = this
+        const tileProvider = new GoogleSatelliteTileProvider()
+        this.layer = TileLayer({map, tileProvider, layerIndex, progress$})
+        this.layer.add()
     }
 
     removeFromMap() {

@@ -4,13 +4,44 @@ const worker$ = ({recipe, visParams, panSharpen, bands}) => {
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('ee')
     const {switchMap} = require('rx/operators')
+    const {sequence} = require('sepal/utils/array')
+    const log = require('sepal/log').getLogger('ee')
+
     if (visParams) {
         const {getImage$} = ImageFactory(recipe, {selection: visParams.bands, panSharpen})
-        const getMap$ = (image, {type, bands, min, max, inverted, gamma, palette}) => {
+        const getMap$ = (image, visualization) => {
+            const {type, bands, min, max, inverted, gamma, palette} = visualization
             const range = () => ({
                 min: bands.map((_, i) => inverted && inverted[i] ? max[i] : min[i]),
                 max: bands.map((_, i) => inverted && inverted[i] ? min[i] : max[i]),
             })
+
+            const toInt = value => typeof value === 'string' ? parseInt(value) : value
+
+            const toCategoricalVisParams = () => {
+                const values = visualization.values
+                    ? visualization.values.map(toInt)
+                    : min && max && sequence(min[0], max[0])
+                if (!values) {
+                    throw Error('A categorical visualization must contain either values or min and max')
+                }
+                if (!palette || palette.length !== values.length) {
+                    log.fatal(palette, values, visualization.values)
+                    throw Error('Visualization must contain a palette with the same number of colors as categorical values')
+                }
+
+                const minValue = values[0]
+                const maxValue = values[values.length - 1]
+                const paddedPalette = sequence(minValue, maxValue).map(() => '#000000')
+                values.forEach((value, i) => {
+                    paddedPalette[value - minValue] = palette[i]
+                })
+                return {
+                    min: minValue,
+                    max: maxValue,
+                    palette: paddedPalette
+                }
+            }
 
             const toHsv = image => {
                 const stretchImage = (image, min, max) => {
@@ -35,14 +66,12 @@ const worker$ = ({recipe, visParams, panSharpen, bands}) => {
             //   Should not support inverted
             //   Use sldStyle instead of palette
             switch (type) {
-            case 'continuous':
-                return ee.getMap$(image.select(bands), {bands, ...range(), gamma, palette})
-            case 'rgb':
-                return ee.getMap$(image.select(bands), {bands, ...range(), gamma, palette})
+            case 'categorical':
+                return ee.getMap$(image.select(bands), toCategoricalVisParams())
             case 'hsv':
                 return ee.getMap$(toHsv(image.select(bands)))
             default:
-                throw Error(`Unsupported type: ${type}`)
+                return ee.getMap$(image.select(bands), {bands, ...range(), gamma, palette})
             }
         }
 

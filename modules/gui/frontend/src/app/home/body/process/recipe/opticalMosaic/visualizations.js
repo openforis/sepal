@@ -107,21 +107,21 @@ export const visualizations = {
             palette: ['00FF00', 'FF0000']
         }
     ],
-    indexes: [ // TODO: Tweak min/max/palette
-        {type: 'continuous', bands: ['ndvi'], min: [-10000], max: [10000], palette: ['red', 'white', 'green']},
-        {type: 'continuous', bands: ['ndmi'], min: [-10000], max: [10000], palette: ['red', 'white', 'green']},
-        {type: 'continuous', bands: ['ndwi'], min: [-10000], max: [10000], palette: ['green', 'white', 'blue']},
-        {type: 'continuous', bands: ['mndwi'], min: [-10000], max: [10000], palette: ['green', 'white', 'blue']},
-        {type: 'continuous', bands: ['ndfi'], min: [-10000], max: [10000], palette: ['red', 'white', 'green']},
-        {type: 'continuous', bands: ['evi'], min: [-10000], max: [10000], palette: ['red', 'white', 'green']},
-        {type: 'continuous', bands: ['evi2'], min: [-10000], max: [10000], palette: ['red', 'white', 'green']},
-        {type: 'continuous', bands: ['savi'], min: [-10000], max: [10000], palette: ['red', 'white', 'green']},
-        {type: 'continuous', bands: ['nbr'], min: [-10000], max: [10000], palette: ['green', 'white', 'blue']},
-        {type: 'continuous', bands: ['ui'], min: [-10000], max: [10000], palette: ['green', 'white', 'blue']},
-        {type: 'continuous', bands: ['ndbi'], min: [-10000], max: [10000], palette: ['green', 'white', 'blue']},
-        {type: 'continuous', bands: ['ibi'], min: [-10000], max: [10000], palette: ['green', 'white', 'blue']},
-        {type: 'continuous', bands: ['nbi'], min: [-10000], max: [10000], palette: ['green', 'white', 'blue']},
-        {type: 'continuous', bands: ['ebbi'], min: [-10000], max: [10000], palette: ['green', 'white', 'blue']},
-        {type: 'continuous', bands: ['bui'], min: [-10000], max: [10000], palette: ['green', 'white', 'blue']},
+    indexes: [
+        {type: 'continuous', bands: ['ndvi'], min: [-10000], max: [10000], palette: ['#112040', '#1c67a0', '#6db6b3', '#fffccc', '#abac21', '#177228', '#172313']},
+        {type: 'continuous', bands: ['ndmi'], min: [-10000], max: [10000], palette: ['#FD3000', '#FF8410', '#FCC228', '#B3C120', '#4DA910', '#1E7D83', '#0034F5']},
+        {type: 'continuous', bands: ['ndwi'], min: [-10000], max: [10000], palette: ['#F7ECE5', '#C4CA39', '#37B200', '#00834B', '#114E81', '#2C1C5D', '#040404']},
+        {type: 'continuous', bands: ['mndwi'], min: [-10000], max: [10000], palette: ['#F7ECE5', '#C4CA39', '#37B200', '#00834B', '#114E81', '#2C1C5D', '#040404']},
+        {type: 'continuous', bands: ['ndfi'], min: [-10000], max: [10000], palette: ['#ED4744', '#F78579', '#F9BAB2', '#EDEAE6', '#B7D2A7', '#7DB461', '#39970E']},
+        {type: 'continuous', bands: ['evi'], min: [-10000], max: [10000], palette: ['#112040', '#1c67a0', '#6db6b3', '#fffccc', '#abac21', '#177228', '#172313']},
+        {type: 'continuous', bands: ['evi2'], min: [-10000], max: [10000], palette: ['#112040', '#1c67a0', '#6db6b3', '#fffccc', '#abac21', '#177228', '#172313']},
+        {type: 'continuous', bands: ['savi'], min: [-10000], max: [10000], palette: ['#112040', '#1c67a0', '#6db6b3', '#fffccc', '#abac21', '#177228', '#172313']},
+        {type: 'continuous', bands: ['nbr'], min: [-10000], max: [10000], palette: ['#0034F5', '#1E7D83', '#4DA910', '#B3C120', '#FCC228', '#FF8410', '#FD3000']},
+        {type: 'continuous', bands: ['ui'], min: [-10000], max: [0], palette: ['#0034F5', '#1E7D83', '#4DA910', '#B3C120', '#FCC228', '#FF8410', '#FD3000']},
+        {type: 'continuous', bands: ['ndbi'], min: [-6000], max: [2000], palette: ['#0034F5', '#1E7D83', '#4DA910', '#B3C120', '#FCC228', '#FF8410', '#FD3000']},
+        {type: 'continuous', bands: ['ibi'], min: [-32800], max: [32800], palette: ['#FD3000', '#FF8410', '#FCC228', '#B3C120', '#4DA910', '#1E7D83', '#0034F5']},
+        {type: 'continuous', bands: ['nbi'], min: [-0], max: [2000], palette: ['#0034F5', '#1E7D83', '#4DA910', '#B3C120', '#FCC228', '#FF8410', '#FD3000']},
+        {type: 'continuous', bands: ['ebbi'], min: [-500], max: [100], palette: ['#0034F5', '#1E7D83', '#4DA910', '#B3C120', '#FCC228', '#FF8410', '#FD3000']},
+        {type: 'continuous', bands: ['bui'], min: [-15000], max: [0], palette: ['#0034F5', '#1E7D83', '#4DA910', '#B3C120', '#FCC228', '#FF8410', '#FD3000']},
     ]
 }

@@ -61,15 +61,15 @@ class GoogleMapsLayer {
     }
 
     getTile({x, y}, zoom, doc) {
-        const tileRequest = this._toTileRequest({x, y, zoom, minZoom: this.minZoom, doc})
-        const tileElement = tileRequest.element
-        this.tileElementById[tileElement.id] = tileElement
-        if (tileRequest.outOfBounds)
-            return tileElement
+        const request = this._toTileRequest({x, y, zoom, minZoom: this.minZoom, doc})
+        const element = request.element
+        this.tileElementById[element.id] = element
+        if (request.outOfBounds)
+            return element
 
-        const tile$ = this.tileProvider.loadTile$(tileRequest)
-        tile$.subscribe(blob => renderImageBlob(tileElement, blob))
-        return tileElement
+        const tile$ = this.tileProvider.loadTile$(request)
+        tile$.subscribe(blob => this.tileProvider.renderTile({doc, element, blob}))
+        return element
     }
 
     releaseTile(tileElement) {
@@ -96,7 +96,7 @@ class GoogleMapsLayer {
         if (x < 0) {
             x += maxCoord
         }
-        const element = doc.createElement('div')
+        const element = this.tileProvider.createElement(doc)
         element.style.opacity = this.opacity
         const id = [this.tileProvider.id, zoom, x, y, guid()].join('/')
         element.id = id
@@ -105,6 +105,3 @@ class GoogleMapsLayer {
     }
 
 }
-
-const renderImageBlob = (element, blob) =>
-    element.innerHTML = `<img src="${(window.URL || window.webkitURL).createObjectURL(blob)}"/>`
