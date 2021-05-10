@@ -12,7 +12,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import java.util.zip.GZIPInputStream
-import java.util.zip.InflaterInputStream
 
 import static groovy.json.JsonOutput.toJson
 
@@ -27,7 +26,7 @@ class ProcessingRecipeEndpoint {
     void registerWith(Controller controller) {
         controller.with {
             post('/processing-recipes/{id}') {
-                def contents = request.inputStream.text
+                def contents = new GZIPInputStream(request.inputStream).text
                 component.submit(new SaveRecipe(new Recipe(
                         id: params.id,
                         name: params.name,
