@@ -6,8 +6,12 @@
     right: 0;
 }
 
-.overlay {
-    background-color: rgba(255,0,0,.2);
+.map {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     display: flex;
     flex-grow: 1;
     pointer-events: all;
@@ -21,11 +25,14 @@
     bottom: 0;
     width: 100%;
     height: var(--map-overlay-height);
-    background-color: hsla(0, 0%, 0%, .4);
 }
 
-.map {
-    display: flex;
-    flex-grow: 1;
-    pointer-events: all;
+.overlay {
+    --clip-top: calc(var(--height) - var(--map-overlay-height));
+    clip-path: inset(var(--clip-top) 0 0 0);
+    opacity: .75;
+}
+
+.overlay.active {
+    --clip-top: 0;
 }

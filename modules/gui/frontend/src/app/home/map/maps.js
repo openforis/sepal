@@ -70,7 +70,28 @@ class _Maps extends React.Component {
         return of({norwayPlanetApiKey})
     }
 
-    createGoogleMap(mapElement, options = {}) {
+    getStyleOptions(style = 'sepalStyle') {
+        // https://developers.google.com/maps/documentation/javascript/style-reference
+        switch (style) {
+        case 'sepalStyle':
+            return [
+                {stylers: [{visibility: 'simplified'}]},
+                {stylers: [{color: '#131314'}]},
+                {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
+                {featureType: 'poi', stylers: [{visibility: 'off'}]},
+                {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
+                {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
+            ]
+        case 'overlayStyle':
+            return [
+                {stylers: [{visibility: 'off'}]}
+            ]
+        default:
+            throw Error(`Unsupported map style ${style}`)
+        }
+    }
+
+    createGoogleMap(mapElement, options = {}, style = 'sepalStyle') {
         const {google: {google}} = this.state
         const mapOptions = {
             zoom: 3,
@@ -90,27 +111,17 @@ class _Maps extends React.Component {
             ...options
         }
 
-        // https://developers.google.com/maps/documentation/javascript/style-reference
-        const sepalStyle = new google.maps.StyledMapType([
-            {stylers: [{visibility: 'simplified'}]},
-            {stylers: [{color: '#131314'}]},
-            {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
-            {featureType: 'poi', stylers: [{visibility: 'off'}]},
-            {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
-            {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
-        ], {name: 'map'})
-
         const googleMap = new google.maps.Map(mapElement, mapOptions)
 
-        googleMap.mapTypes.set('sepalStyle', sepalStyle)
-        googleMap.setMapTypeId('sepalStyle')
+        googleMap.mapTypes.set('style', new google.maps.StyledMapType(this.getStyleOptions(style), {name: 'map'}))
+        googleMap.setMapTypeId('style')
 
         return googleMap
     }
 
-    createSepalMap(mapElement, options) {
+    createSepalMap(mapElement, options, style) {
         const {google: {google}} = this.state
-        const googleMap = this.createGoogleMap(mapElement, options)
+        const googleMap = this.createGoogleMap(mapElement, options, style)
         return new SepalMap(google, googleMap)
     }
 
@@ -120,7 +131,7 @@ class _Maps extends React.Component {
 
         const bounds$ = merge(
             this.bounds$.pipe(
-                debounceTime(250),
+                debounceTime(50),
                 distinctUntilChanged(),
                 filter(({mapId: id}) => mapId !== id),
                 map(({bounds}) => bounds)
