@@ -11,12 +11,13 @@ export default {
             query: {type, name},
             body: gzippedContents,
             headers: {'Content-Type': 'application/octet-stream'}
+            // headers: {'Content-Type': 'application/json; charset=utf-8'}
         }).pipe(toResponse),
 
     delete$: recipeId =>
         delete$(`/api/processing-recipes/${recipeId}`)
             .pipe(toResponse),
-        
+
     load$: recipeId =>
         get$(`/api/processing-recipes/${recipeId}`)
             .pipe(toResponse),

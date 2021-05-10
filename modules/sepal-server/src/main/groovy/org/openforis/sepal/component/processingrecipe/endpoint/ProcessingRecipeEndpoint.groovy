@@ -26,7 +26,7 @@ class ProcessingRecipeEndpoint {
     void registerWith(Controller controller) {
         controller.with {
             post('/processing-recipes/{id}') {
-                def contents = new GZIPInputStream(request.inputStream).text
+                def contents = new GZIPInputStream(request.inputStream).getText('UTF-8')
                 component.submit(new SaveRecipe(new Recipe(
                         id: params.id,
                         name: params.name,

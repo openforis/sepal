@@ -4,16 +4,19 @@ import {from} from 'rxjs'
 export const gzip$ = content =>
     from(new Promise((resolve, reject) => {
         const deflate = new AsyncGzip()
-        deflate.ondata = (error, data, final) =>
+        deflate.ondata = (error, data) =>
             error
                 ? reject(error)
                 : resolve(data)
         const encode = new EncodeUTF8(
-            (data, final) => deflate.push(data, final)
+            data => deflate.push(data, true)
         )
-        encode.push(typeof content === 'string'
-            ? content
-            : JSON.stringify(content), true)
+        encode.push(
+            typeof content === 'string'
+                ? content
+                : JSON.stringify(content),
+            true
+        )
     }))
 
 export const ungzip$ = compressed =>
