@@ -1,4 +1,4 @@
-import {Button} from '../../../../../../../widget/button'
+import {Button} from 'widget/button'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {MosaicPreview} from '../../mosaic/mosaicPreview'
@@ -7,7 +7,6 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import Icon from '../../../../../../../widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
