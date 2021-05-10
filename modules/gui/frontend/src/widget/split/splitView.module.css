@@ -67,15 +67,17 @@
     --area-right: 0;
     --clip-offset: 0rem;
     position: absolute;
-    user-select: none;
     display: flex;
     flex-direction: column;
-    pointer-events: none;
     overflow: hidden;
     margin: calc(var(--attribution-mask-size) * -1);
+    z-index: 0;
+    user-select: none;
+    pointer-events: none;
 }
 
 .area.full {
+    --clip-offset: var(--attribution-mask-size);
     top: 0;
     bottom: 0;
     left: 0;
@@ -87,7 +89,11 @@
         var(--area-left)
     );
     z-index: 0;
-    --clip-offset: var(--attribution-mask-size);
+}
+
+.area.overlay {
+    --attribution-mask-size: 0rem;
+    z-index: 1;
 }
 
 .area.partial {
@@ -108,14 +114,6 @@
     z-index: 2;
 }
 
-.overlayContent {
-    position: absolute;
-    top: var(--attribution-mask-size);
-    bottom: var(--attribution-mask-size);
-    left: var(--attribution-mask-size);
-    right: var(--attribution-mask-size);
-}
-
 .area.hide {
     display: none;
 }
@@ -134,6 +132,38 @@
 
 .area.right {
     --area-left: calc(var(--left) + var(--clip-offset));
+}
+
+/* areaOverlay */
+
+.areaOverlay {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    user-select: none;
+    pointer-events: none;
+}
+
+.areaOverlay.top {
+    bottom: var(--bottom);
+}
+
+.areaOverlay.bottom {
+    top: var(--top);
+}
+
+.areaOverlay.left {
+    right: var(--right);
+}
+
+.areaOverlay.right {
+    left: var(--left);
 }
 
 /* handle */
