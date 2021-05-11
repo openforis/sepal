@@ -4,7 +4,9 @@ import {connect, select, subscribe} from 'store'
 import {debounceTime, groupBy, map, mergeMap, switchMap} from 'rxjs/operators'
 import {downloadObjectZip$} from 'widget/download'
 import {gzip$, ungzip$} from 'gzip'
+import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder, {scopedActionBuilder} from 'action-builder'
@@ -30,7 +32,9 @@ const saveToBackend$ = (() => {
                 ))
             )
         )
-    ).subscribe()
+    ).subscribe({
+        error: error => Notifications.error({timeout: 0, message: msg('process.saveRecipe.error'), error})
+    })
 
     return save$
 })()
