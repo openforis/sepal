@@ -11,7 +11,7 @@ class Terminal {
             if (result != 0) {
                 throw new IllegalStateException("Failed to execute '${commands.join(' ')}' in ${workingDir}. " +
                         "exitCode: $result, " +
-                        "stderr: '$process.err.text'",
+                        "stderr: '${process.err.getText('UTF-8')}'",
                 )
             }
             return process.text

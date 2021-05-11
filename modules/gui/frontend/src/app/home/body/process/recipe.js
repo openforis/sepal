@@ -252,7 +252,7 @@ subscribe('process.loadedRecipes', loadedRecipes => {
     }
 })
 
-const uncompressRecipe$ = compressedRecipe => ungzip$(compressedRecipe, {to: 'string'})
+const uncompressRecipe$ = compressedRecipe => JSON.parse(ungzip$(compressedRecipe))
 
 export const getRevisions = recipeId =>
     _(localStorage)
