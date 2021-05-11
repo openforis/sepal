@@ -31,11 +31,10 @@ class Body extends React.Component {
 
     renderSections() {
         const {className} = this.props
-        // const map = React.createElement(Map)
         return (
             <div className={className}>
                 <div className={styles.sections}>
-                    <Section path='/process' captureMouseEvents={false}>
+                    <Section path='/process' captureMouseEvents={false} staticMap={false}>
                         <Process/>
                     </Section>
                     <Section path='/browse'>

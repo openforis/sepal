@@ -1,5 +1,6 @@
 import {BehaviorSubject, ReplaySubject, Subject} from 'rxjs'
 import {Content, SectionLayout} from 'widget/sectionLayout'
+import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
 import {Progress} from './progress'
@@ -48,11 +49,14 @@ class _Map extends React.Component {
         zoomArea: null,
         selectedZoomArea: null,
         linked: null,
+        overlay: null,
+        overlayActive: false,
+        drawPolygon: false
     }
 
     constructor() {
         super()
-        this.mapAreaRefCallback = this.mapAreaRefCallback.bind(this)
+        // this.mapAreaRefCallback = this.mapAreaRefCallback.bind(this)
         this.mapDelegate = this.mapDelegate.bind(this)
     }
 
@@ -91,13 +95,17 @@ class _Map extends React.Component {
     }
 
     synchronizeOut(map) {
+        const {overlay} = this.state
         const {center, zoom} = map.getView()
         this.allMaps(({map}) => map.setView({center, zoom}))
+        overlay && overlay.map.setView({center, zoom})
         this.updateBounds$.next({center, zoom})
     }
 
     synchronizeIn({center, zoom}) {
+        const {overlay} = this.state
         this.allMaps(({map}) => map.setView({center, zoom}))
+        overlay && overlay.map.setView({center, zoom})
     }
 
     synchronizeCursor(area, latLng) {
@@ -136,12 +144,22 @@ class _Map extends React.Component {
 
         const {layerComponent} = getImageLayerSource({recipe, source, layerConfig, map})
 
+        const refCallback = element => {
+            if (element) {
+                if (!maps[area]) {
+                    this.createArea(area, element, ({map, listeners, subscriptions}) => {
+                        this.setState(({maps}) => ({maps: {...maps, [area]: {map, listeners, subscriptions}}}))
+                    })
+                }
+            }
+        }
+
         return (
             <React.Fragment>
                 <div
                     className={styles.map}
-                    data-area={area}
-                    ref={this.mapAreaRefCallback}
+                    // data-area={area}
+                    ref={refCallback}
                     onMouseDown={() => this.mouseDown$.next(area)}
                 />
                 <MapAreaContext.Provider value={{
@@ -155,13 +173,6 @@ class _Map extends React.Component {
                 </MapAreaContext.Provider>
             </React.Fragment>
         )
-    }
-
-    mapAreaRefCallback(element) {
-        if (element) {
-            const area = element.dataset.area
-            this.createArea(area, element)
-        }
     }
 
     updateLayerConfig(layerConfig, area) {
@@ -193,45 +204,61 @@ class _Map extends React.Component {
             .dispatch()
     }
 
-    createArea(area, element) {
-        const {maps} = this.state
-        if (!maps[area]) {
-            log.debug(`${mapTag(this.state.mapId)} creating area ${area}`)
-            const {mapsContext: {createSepalMap}} = this.props
-            const map = createSepalMap(element)
-            this.withFirstMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
-            const {googleMap} = map.getGoogle()
-            const listeners = [
-                googleMap.addListener('mouseout', () => this.synchronizeCursor(area, null)),
-                googleMap.addListener('mousemove', ({latLng}) => this.synchronizeCursor(area, latLng)),
-                googleMap.addListener('center_changed', () => this.synchronizeOut(map)),
-                googleMap.addListener('zoom_changed', () => this.synchronizeOut(map))
-            ]
+    createArea(area, element, callback) {
+        const {mapsContext: {createSepalMap}} = this.props
 
-            const subscriptions = [
-                this.mouseDown$.subscribe(mouseDownArea => {
-                    const {zoomArea, selectedZoomArea} = this.state
-                    if (zoomArea) {
-                        if (selectedZoomArea) {
-                            if (mouseDownArea === area && selectedZoomArea !== area) {
-                                this.zoomArea(false)
-                            }
+        log.debug(`${mapTag(this.state.mapId)} creating area ${area}`)
+
+        const isOverlay = area === 'overlay'
+        // const options = isOverlay ? {gestureHandling: 'none'} : null
+        const options = isOverlay ? {
+            backgroundColor: 'hsla(0, 0%, 0%, 0)',
+            gestureHandling: 'none'
+        } : null
+        const style = isOverlay ? 'overlayStyle' : 'sepalStyle'
+        const map = createSepalMap(element, options, style)
+
+        this.withFirstMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
+        
+        const {googleMap} = map.getGoogle()
+
+        const listeners = [
+            googleMap.addListener('mouseout', () => this.synchronizeCursor(area, null)),
+            googleMap.addListener('mousemove', ({latLng}) => this.synchronizeCursor(area, latLng)),
+            googleMap.addListener('center_changed', () => this.synchronizeOut(map)),
+            googleMap.addListener('zoom_changed', () => this.synchronizeOut(map))
+        ]
+
+        const subscriptions = [
+            this.mouseDown$.subscribe(mouseDownArea => {
+                const {zoomArea, selectedZoomArea, drawPolygon} = this.state
+                if (zoomArea) {
+                    if (selectedZoomArea) {
+                        if (mouseDownArea === area && selectedZoomArea !== area) {
+                            this.zoomArea(false)
+                        }
+                    } else {
+                        if (mouseDownArea === area) {
+                            this.setState({selectedZoomArea: area})
                         } else {
-                            if (mouseDownArea === area) {
-                                this.setState({selectedZoomArea: area})
-                            } else {
-                                map.cancelZoomArea()
-                            }
+                            map.cancelZoomArea()
                         }
                     }
-                }),
-                map.getZoomArea$().subscribe(() =>
-                    this.zoomArea(false)
-                )
-            ]
+                }
 
-            this.setState(({maps}) => ({maps: {...maps, [area]: {map, listeners, subscriptions}}}))
-        }
+                if (drawPolygon) {
+                    if (mouseDownArea !== area) {
+                        map.redrawPolygon()
+                    }
+                }
+
+            }),
+            map.getZoomArea$().subscribe(() =>
+                this.zoomArea(false)
+            )
+        ]
+
+        callback({map, listeners, subscriptions})
     }
 
     setLinked(linked) {
@@ -253,7 +280,37 @@ class _Map extends React.Component {
         const {recipe, layers, imageLayerSources} = this.props
         const {googleMapsApiKey, norwayPlanetApiKey, selectedZoomArea} = this.state
 
-        const areas = _.map(layers.areas, (layer, area) => {
+        const imageLayerSourceComponents = imageLayerSources
+            .map(source =>
+                getImageLayerSource({recipe, source}).sourceComponent
+            )
+            .filter(mapComponent => mapComponent)
+        return (
+            <ElementResizeDetector onResize={size => this.setState({size})}>
+                <MapContext.Provider value={{
+                    map: this.mapDelegate(),
+                    googleMapsApiKey,
+                    norwayPlanetApiKey
+                }}>
+                    {imageLayerSourceComponents}
+                    <SplitView
+                        areas={this.renderAreas()}
+                        overlay={this.renderOverlay()}
+                        mode={layers.mode}
+                        maximize={layers.mode === 'stack' ? selectedZoomArea : null}>
+                        <div className={styles.content}>
+                            {this.isMapInitialized() ? this.renderRecipe() : null}
+                        </div>
+                    </SplitView>
+                    <Progress/>
+                </MapContext.Provider>
+            </ElementResizeDetector>
+        )
+    }
+
+    renderAreas() {
+        const {layers, imageLayerSources} = this.props
+        return _.map(layers.areas, (layer, area) => {
             const {sourceId, layerConfig} = layer.imageLayer
             const source = imageLayerSources.find(({id}) => id === sourceId)
             return ({
@@ -261,30 +318,31 @@ class _Map extends React.Component {
                 content: this.renderImageLayerSource(source, layerConfig, area)
             })
         })
+    }
 
-        const imageLayerSourceComponents = imageLayerSources
-            .map(source =>
-                getImageLayerSource({recipe, source}).sourceComponent
-            )
-            .filter(mapComponent => mapComponent)
-        return (
-            <MapContext.Provider value={{
-                map: this.mapDelegate(),
-                googleMapsApiKey,
-                norwayPlanetApiKey
-            }}>
-                {imageLayerSourceComponents}
-                <SplitView
-                    areas={areas}
-                    mode={layers.mode}
-                    maximize={layers.mode === 'stack' ? selectedZoomArea : null}>
-                    <div className={styles.content}>
-                        {this.isMapInitialized() ? this.renderRecipe() : null}
-                    </div>
-                </SplitView>
-                <Progress/>
-            </MapContext.Provider>
-        )
+    renderOverlay() {
+        const {overlay, overlayActive, size} = this.state
+
+        const refCallback = element => {
+            if (element && !overlay) {
+                this.createArea('overlay', element, ({map, listeners, subscriptions}) => {
+                    this.setState({overlay: {map, listeners, subscriptions}})
+                })
+            }
+        }
+
+        return size ? (
+            <div
+                className={[
+                    styles.map,
+                    styles.overlay,
+                    overlayActive ? styles.active : null
+                ].join(' ')}
+                style={{'--height': `${size.height}px`}}
+                ref={refCallback}
+                onMouseDown={() => this.mouseDown$.next('overlay')}
+            />
+        ) : null
     }
 
     isMapInitialized() {
@@ -381,6 +439,41 @@ class _Map extends React.Component {
         )
     }
 
+    drawPolygon(id, callback) {
+        const {layers: {mode}} = this.props
+        const {overlay: {map}} = this.state
+        if (mode === 'stack') {
+            this.setState({drawPolygon: {id, callback}, overlayActive: true},
+                () => {
+                    map.interactive(true)
+                    map.disableDrawingMode()
+                    map.drawPolygon(id, callback)
+                }
+            )
+        } else {
+            this.setState({drawPolygon: true},
+                () => this.allMaps(({map}) => map.drawPolygon(id, callback))
+            )
+        }
+    }
+
+    disableDrawingMode() {
+        const {layers: {mode}} = this.props
+        const {overlay: {map}} = this.state
+        if (mode === 'stack') {
+            this.setState({drawPolygon: false, overlayActive: false},
+                () => {
+                    map.disableDrawingMode()
+                    map.interactive(false)
+                }
+            )
+        } else {
+            this.setState({drawPolygon: false},
+                () => this.allMaps(({map}) => map.disableDrawingMode())
+            )
+        }
+    }
+
     mapDelegate() {
         const {bounds} = this.props
         const {maps: mapByArea} = this.state
@@ -406,6 +499,8 @@ class _Map extends React.Component {
             getZoom: () => map.getZoom(),
             getBounds: () => map.getBounds(),
             getScale: () => map.getMetersPerPixel(),
+            drawPolygon: (id, callback) => this.drawPolygon(id, callback),
+            disableDrawingMode: () => this.disableDrawingMode(),
 
             setLayer: (...args) => {
                 log.warn('should we call map.setLayer?')

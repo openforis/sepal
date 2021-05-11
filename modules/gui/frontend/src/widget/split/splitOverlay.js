@@ -16,20 +16,16 @@ export class SplitOverlay extends React.Component {
                 {({container, mode, maximize}) => {
                     const single = mode === 'stack' && maximize
                     const hidden = single && maximize !== area
-                    return (
+                    return !hidden ? (
                         <Portal type='container' container={container}>
                             <div className={_.flatten([
-                                styles.area,
-                                styles.overlay,
-                                hidden ? styles.hide : styles.partial,
+                                styles.areaOverlay,
                                 single ? styles.center : area.split('-').map(area => styles[area])
                             ]).join(' ')}>
-                                <div className={styles.overlayContent}>
-                                    {children}
-                                </div>
+                                {children}
                             </div>
                         </Portal>
-                    )
+                    ) : null
                 }}
             </SplitContext.Consumer>
         )

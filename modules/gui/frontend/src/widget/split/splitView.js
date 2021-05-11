@@ -82,6 +82,7 @@ class _SplitView extends React.PureComponent {
         return (
             <div className={styles.areas} ref={this.areas}>
                 {areas.map(area => this.renderArea(area))}
+                {this.renderOverlay()}
             </div>
         )
     }
@@ -100,6 +101,21 @@ class _SplitView extends React.PureComponent {
                     single ? styles.center : placement.split('-').map(placement => styles[placement])
                 ]).join(' ')}>
                 {initialized ? content : null}
+            </div>
+        )
+    }
+
+    renderOverlay() {
+        const {overlay} = this.props
+        const {initialized} = this.state
+        return (
+            <div
+                className={[
+                    styles.area,
+                    styles.full,
+                    styles.overlay
+                ].join(' ')}>
+                {initialized ? overlay : null}
             </div>
         )
     }
@@ -248,7 +264,8 @@ SplitView.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     maximize: PropTypes.string,
-    mode: PropTypes.oneOf(['stack', 'grid'])
+    mode: PropTypes.oneOf(['stack', 'grid']),
+    overlay: PropTypes.any
 }
 
 SplitView.defaultProps = {

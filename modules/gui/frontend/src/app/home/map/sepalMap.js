@@ -172,7 +172,42 @@ export class SepalMap {
         if (this.drawingManager) {
             this.drawingManager.setMap(null)
             google.maps.event.clearListeners(this.drawingManager, 'overlaycomplete')
-            this.drawingPolygon = null
+        }
+    }
+
+    // Polygon
+
+    drawPolygon(id, callback) {
+        this.drawingPolygon = {id, callback}
+        this.redrawPolygon()
+    }
+
+    redrawPolygon() {
+        const {google, googleMap} = this
+        if (this.drawingPolygon) {
+            this.disableDrawingMode()
+            const {id, callback} = this.drawingPolygon
+            this.drawingManager = new google.maps.drawing.DrawingManager({
+                drawingMode: google.maps.drawing.OverlayType.POLYGON,
+                drawingControl: false,
+                drawingControlOptions: {
+                    position: google.maps.ControlPosition.TOP_CENTER,
+                    drawingModes: ['polygon']
+                },
+                circleOptions: this.drawingOptions,
+                polygonOptions: this.drawingOptions,
+                rectangleOptions: this.drawingOptions
+            })
+            const drawingListener = e => {
+                const polygon = e.overlay
+                polygon.setMap(null)
+                const toPolygonPath = polygon => polygon.getPaths().getArray()[0].getArray().map(latLng =>
+                    [latLng.lng(), latLng.lat()]
+                )
+                callback(toPolygonPath(polygon))
+            }
+            google.maps.event.addListener(this.drawingManager, 'overlaycomplete', drawingListener)
+            this.drawingManager.setMap(googleMap)
         }
     }
 
@@ -298,32 +333,6 @@ export class SepalMap {
         )
     }
 
-    drawPolygon(id, callback) {
-        const {google, googleMap} = this
-        this.drawingPolygon = {id, callback}
-        this.drawingManager = this.drawingManager || new google.maps.drawing.DrawingManager({
-            drawingMode: google.maps.drawing.OverlayType.POLYGON,
-            drawingControl: false,
-            drawingControlOptions: {
-                position: google.maps.ControlPosition.TOP_CENTER,
-                drawingModes: ['polygon']
-            },
-            circleOptions: this.drawingOptions,
-            polygonOptions: this.drawingOptions,
-            rectangleOptions: this.drawingOptions
-        })
-        const drawingListener = e => {
-            const polygon = e.overlay
-            polygon.setMap(null)
-            const toPolygonPath = polygon => polygon.getPaths().getArray()[0].getArray().map(latLng =>
-                [latLng.lng(), latLng.lat()]
-            )
-            callback(toPolygonPath(polygon))
-        }
-        google.maps.event.addListener(this.drawingManager, 'overlaycomplete', drawingListener)
-        this.drawingManager.setMap(googleMap)
-    }
-
     onOneClick(listener) {
         const {google, googleMap} = this
         googleMap.setOptions({draggableCursor: 'pointer'})
@@ -367,5 +376,10 @@ export class SepalMap {
                 .map(({layer}) => layer)
         ]
         instances.forEach(instance => google.maps.event.clearListeners(instance, 'click'))
+    }
+
+    interactive(enabled) {
+        const {googleMap} = this
+        googleMap.setOptions({gestureHandling: enabled ? 'greedy' : 'none'})
     }
 }
