@@ -1238,7 +1238,8 @@
                     "type": {
                         "COLLECTED": {
                             "label": "Collected reference data",
-                            "title": "COLLECTED"
+                            "title": "COLLECTED",
+                            "description": "Manually collected training data"
                         },
                         "CSV_UPLOAD": {
                             "label": "CSV file",
