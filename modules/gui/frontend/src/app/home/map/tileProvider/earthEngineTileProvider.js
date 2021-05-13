@@ -108,7 +108,7 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
                         if (alpha) {
                             const bandValues = toBandValues([red, green, blue], this.visParams)
                             if (bandValues.length) {
-                                this.cursorValue$.next(bandValues)
+                                return this.cursorValue$.next(bandValues)
                             }
                         }
                     }
