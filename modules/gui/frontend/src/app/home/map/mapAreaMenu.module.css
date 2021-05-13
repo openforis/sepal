@@ -14,7 +14,7 @@
 }
 
 .content {
-    margin: 2rem;
+    margin: 3rem;
     pointer-events: all;
     display: flex;
     flex-direction: column;

@@ -1,54 +1,55 @@
 import {EarthEngineTileProvider} from './tileProvider/earthEngineTileProvider'
 import {Subject, of} from 'rxjs'
 import {TileLayer} from './googleMaps/googleMapsLayer'
-import {WMTSTileProvider} from './tileProvider/wmtsTileProvider'
 import {mapTo, tap} from 'rxjs/operators'
 import _ from 'lodash'
 import api from 'api'
 
 export default class EarthEngineLayer {
-    static fromRecipe({recipe, layerConfig, map, progress$, onInitialize, onInitialized}) {
-        const previewRequest = {
-            recipe: _.omit(recipe, ['ui']),
-            ...layerConfig
-        }
+    static create({previewRequest, visParams, map, progress$, cursorValue$, boundsChanged$, dragging$, cursor$, onInitialize, onInitialized}) {
         return new EarthEngineLayer({
             map,
+            visParams,
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
-            progress$: progress$ || new Subject(),
+            progress$,
+            cursorValue$,
+            boundsChanged$,
+            dragging$,
+            cursor$,
             onInitialize,
             onInitialized
         })
     }
 
-    static fromAsset({asset, layerConfig, map, progress$, onInitialize, onInitialized}) {
-        const previewRequest = {
-            recipe: {
-                type: 'ASSET',
-                id: asset
-            },
-            ...layerConfig
-        }
-        return new EarthEngineLayer({
-            map,
-            mapId$: api.gee.preview$(previewRequest),
-            props: {asset, layerConfig},
-            progress$: progress$ || new Subject(),
-            onInitialize,
-            onInitialized
-        })
-    }
-
-    constructor({map, layerIndex = 0, toggleable, label, description, mapId$, props, progress$, onInitialize, onInitialized}) {
+    constructor({
+        map,
+        visParams,
+        layerIndex = 0,
+        label,
+        description,
+        mapId$,
+        props,
+        progress$,
+        cursorValue$,
+        boundsChanged$,
+        dragging$,
+        cursor$,
+        onInitialize,
+        onInitialized
+    }) {
+        this.visParams = visParams
         this.map = map
         this.layerIndex = layerIndex
-        this.toggleable = toggleable
         this.label = label
         this.description = description
         this.mapId$ = mapId$
         this.props = props
         this.progress$ = progress$
+        this.cursorValue$ = cursorValue$
+        this.boundsChanged$ = boundsChanged$
+        this.dragging$ = dragging$
+        this.cursor$ = cursor$ || new Subject()
         this.onInitialize = onInitialize
         this.onInitialized = onInitialized
     }
@@ -58,10 +59,23 @@ export default class EarthEngineLayer {
     }
 
     addToMap() {
-        const {map, layerIndex, urlTemplate, progress$} = this
-        const tileProvider = new EarthEngineTileProvider({urlTemplate})
+        const {map, layerIndex, progress$} = this
+        const tileProvider = this.createTileProvider()
         this.layer = TileLayer({map, tileProvider, layerIndex, progress$})
         this.layer.add()
+    }
+
+    createTileProvider() {
+        const {urlTemplate} = this
+        this.tileProvider = new EarthEngineTileProvider({
+            urlTemplate,
+            visParams: this.visParams,
+            cursorValue$: this.cursorValue$,
+            boundsChanged$: this.boundsChanged$,
+            dragging$: this.dragging$,
+            cursor$: this.cursor$
+        })
+        return this.tileProvider
     }
 
     removeFromMap() {
@@ -72,16 +86,19 @@ export default class EarthEngineLayer {
         this.layer && this.layer.hide(hidden)
     }
 
+    close() {
+        this.tileProvider && this.tileProvider.close()
+    }
+
     initialize$() {
         this.onInitialize && this.onInitialize()
         return this.mapId
             ? of(this)
             : this.mapId$.pipe(
-                tap(({response: {token, mapId, urlTemplate, visParams}}) => {
+                tap(({response: {token, mapId, urlTemplate}}) => {
                     this.token = token
                     this.mapId = mapId
                     this.urlTemplate = urlTemplate
-                    this.visParams = visParams
                     this.onInitialized && this.onInitialized()
                 }),
                 mapTo(this)

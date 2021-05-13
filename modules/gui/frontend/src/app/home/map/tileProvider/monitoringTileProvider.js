@@ -24,11 +24,11 @@ export class MonitoringTileProvider extends DelegatingTileProvider {
         )
     }
 
-    releaseTile(requestId) {
-        if (!this.requests[requestId]) {
-            super.releaseTile(requestId)
+    releaseTile(element) {
+        if (!this.requests[element.id]) {
             this.pending$.next(this.pending$.value - 1)
         }
-        delete this.requests[requestId]
+        delete this.requests[element.id]
+        super.releaseTile(element)
     }
 }

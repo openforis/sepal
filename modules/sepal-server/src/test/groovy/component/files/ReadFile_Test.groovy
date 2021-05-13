@@ -12,7 +12,7 @@ class ReadFile_Test extends AbstractFilesTest {
         def fileContent = readFile('file.txt')
 
         then:
-        fileContent == new File(file.path).text
+        fileContent == new File(file.path).getText('UTF-8')
     }
 
     def 'When reading non-existing file, exception is thrown'() {

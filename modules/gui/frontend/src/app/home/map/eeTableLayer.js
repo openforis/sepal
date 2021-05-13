@@ -1,3 +1,4 @@
+import {EarthEngineTableTileProvider} from './tileProvider/earthEngineTableTileProvider'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {map} from 'rxjs/operators'
@@ -70,6 +71,11 @@ EETableLayer.propTypes = {
 class Layer extends EarthEngineLayer {
     constructor({map, mapId$, layerIndex, watchedProps}) {
         super({map, layerIndex, mapId$, props: watchedProps})
+    }
+
+    createTileProvider() {
+        const {urlTemplate} = this
+        return new EarthEngineTableTileProvider({urlTemplate})
     }
 
     initialize$() {

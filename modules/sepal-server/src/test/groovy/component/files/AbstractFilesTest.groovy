@@ -32,7 +32,7 @@ abstract class AbstractFilesTest extends Specification {
     }
 
     final String readFile(String path, String username = testUsername) {
-        component.submit(new ReadFile(username: username, path: path)).text
+        component.submit(new ReadFile(username: username, path: path)).getText('UTF-8')
     }
 
     final File createUserHome(String username) {

@@ -2166,6 +2166,7 @@
       "title": "Revisions"
     },
     "saveRecipe": {
+      "error": "Sorry, but something went wrong when trying to save your recipe. If you close the window/tab, you will lose any changes you've made since last successful save. To make sure you have some record the data within this recipe, you might want to export it. Go to the top right recipe menu and select 'Export recipe'.",
       "form": {
         "name": {
           "label": "Name",

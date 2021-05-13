@@ -6,7 +6,7 @@ import {RecipeImageLayer} from 'app/home/body/process/recipe/recipeImageLayer'
 import {RecipeImageLayerSource} from 'app/home/body/process/recipe/recipeImageLayerSource'
 import React from 'react'
 
-const getRecipeImageLayerSource = ({recipe, source, layerConfig = {}, map}) => {
+const getRecipeImageLayerSource = ({recipe, source, layerConfig = {}, map, boundsChanged$, dragging$, cursor$}) => {
     if (!recipe) {
         return {}
     }
@@ -22,7 +22,11 @@ const getRecipeImageLayerSource = ({recipe, source, layerConfig = {}, map}) => {
             <RecipeImageLayer
                 source={source}
                 layerConfig={layerConfig}
-                map={map}/>
+                map={map}
+                boundsChanged$={boundsChanged$}
+                dragging$={dragging$}
+                cursor$={cursor$}
+            />
         )
     }
 }
@@ -45,32 +49,39 @@ const getGoogleSatelliteImageLayerSource = ({map}) => ({
     )
 })
 
-const getAssetImageLayerSource = ({source, layerConfig, map}) => ({
-    description: source.sourceConfig.asset,
-    sourceComponent: (
-        <AssetImageLayerSource
-            key={source.id}
-            source={source}
-            map={map}/>
-    ),
-    layerComponent: (
-        <AssetImageLayer
-            source={source}
-            layerConfig={layerConfig}
-            map={map}/>
-    )
-})
+const getAssetImageLayerSource = ({source, layerConfig, map, boundsChanged$, dragging$, cursor$}) => {
+    return ({
+        description: source.sourceConfig.asset,
+        sourceComponent: (
+            <AssetImageLayerSource
+                key={source.id}
+                source={source}
+                map={map}
+            />
+        ),
+        layerComponent: (
+            <AssetImageLayer
+                source={source}
+                layerConfig={layerConfig}
+                map={map}
+                boundsChanged$={boundsChanged$}
+                dragging$={dragging$}
+                cursor$={cursor$}
+            />
+        )
+    })
+}
 
-export const getImageLayerSource = ({source, recipe, layerConfig, map}) => {
+export const getImageLayerSource = ({source, recipe, layerConfig, map, boundsChanged$, dragging$, cursor$}) => {
     if (!source) {
         return {}
     }
     const {type} = source
     switch(type) {
     case 'Recipe':
-        return getRecipeImageLayerSource({recipe, source, layerConfig, map})
+        return getRecipeImageLayerSource({recipe, source, layerConfig, map, boundsChanged$, dragging$, cursor$})
     case 'Asset':
-        return getAssetImageLayerSource({source, layerConfig, map})
+        return getAssetImageLayerSource({source, layerConfig, map, boundsChanged$, dragging$, cursor$})
     case 'Planet':
         return getPlanetImageLayerSource({source, layerConfig, map})
     case 'GoogleSatellite':

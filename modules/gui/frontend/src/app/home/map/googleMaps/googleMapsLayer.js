@@ -74,7 +74,7 @@ class GoogleMapsLayer {
 
     releaseTile(tileElement) {
         delete this.tileElementById[tileElement.id]
-        this.tileProvider.releaseTile(tileElement.id)
+        this.tileProvider.releaseTile(tileElement)
     }
 
     setOpacity(opacity) {
@@ -96,10 +96,9 @@ class GoogleMapsLayer {
         if (x < 0) {
             x += maxCoord
         }
-        const element = this.tileProvider.createElement(doc)
-        element.style.opacity = this.opacity
         const id = [this.tileProvider.id, zoom, x, y, guid()].join('/')
-        element.id = id
+        const element = this.tileProvider.createElement(id, doc)
+        element.style.opacity = this.opacity
         const outOfBounds = zoom < minZoom || y < 0 || y >= maxCoord
         return {id, x, y, zoom, element, outOfBounds}
     }

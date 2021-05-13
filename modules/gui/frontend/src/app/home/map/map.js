@@ -8,7 +8,7 @@ import {SplitView} from 'widget/split/splitView'
 import {VisParamsPanel} from './visParams/visParamsPanel'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {debounceTime, distinctUntilChanged, finalize} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, finalize, share} from 'rxjs/operators'
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
@@ -39,6 +39,9 @@ class _Map extends React.Component {
     linked$ = new ReplaySubject()
     mapInitialized$ = new BehaviorSubject()
     mouseDown$ = new Subject()
+    dragging$ = new Subject(false)
+    boundsChanged$ = new Subject()
+    cursor$ = new Subject()
 
     state = {
         maps: {},
@@ -56,8 +59,10 @@ class _Map extends React.Component {
 
     constructor() {
         super()
-        // this.mapAreaRefCallback = this.mapAreaRefCallback.bind(this)
         this.mapDelegate = this.mapDelegate.bind(this)
+        document.addEventListener('mousemove', ({clientX: x, clientY: y}) =>
+            this.cursor$.next({x, y})
+        )
     }
 
     allMaps(callback) {
@@ -100,6 +105,7 @@ class _Map extends React.Component {
         this.allMaps(({map}) => map.setView({center, zoom}))
         overlay && overlay.map.setView({center, zoom})
         this.updateBounds$.next({center, zoom})
+        this.boundsChanged$.next()
     }
 
     synchronizeIn({center, zoom}) {
@@ -141,8 +147,15 @@ class _Map extends React.Component {
         const updateLayerConfig = layerConfig => this.updateLayerConfig(layerConfig, area)
         const includeAreaFeatureLayerSource = featureLayerSource => this.includeAreaFeatureLayerSource(featureLayerSource, area)
         const excludeAreaFeatureLayerSource = featureLayerSource => this.excludeAreaFeatureLayerSource(featureLayerSource, area)
-
-        const {layerComponent} = getImageLayerSource({recipe, source, layerConfig, map})
+        const {layerComponent} = getImageLayerSource({
+            recipe,
+            source,
+            layerConfig,
+            map,
+            boundsChanged$: this.boundsChanged$.pipe(share()),
+            dragging$: this.dragging$.pipe(share()),
+            cursor$: this.cursor$.pipe(share())
+        })
 
         const refCallback = element => {
             if (element) {
@@ -219,14 +232,16 @@ class _Map extends React.Component {
         const map = createSepalMap(element, options, style)
 
         this.withFirstMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
-        
+
         const {googleMap} = map.getGoogle()
 
         const listeners = [
             googleMap.addListener('mouseout', () => this.synchronizeCursor(area, null)),
             googleMap.addListener('mousemove', ({latLng}) => this.synchronizeCursor(area, latLng)),
             googleMap.addListener('center_changed', () => this.synchronizeOut(map)),
-            googleMap.addListener('zoom_changed', () => this.synchronizeOut(map))
+            googleMap.addListener('zoom_changed', () => this.synchronizeOut(map)),
+            googleMap.addListener('dragstart', () => this.dragging$.next(true)),
+            googleMap.addListener('dragend', () => this.dragging$.next(false))
         ]
 
         const subscriptions = [
@@ -410,6 +425,7 @@ class _Map extends React.Component {
                         log.debug(`${mapTag(this.state.mapId)} received ${mapBoundsTag(bounds)}`)
                         this.synchronizeIn(bounds)
                     }
+                    this.bounds$.next(bounds)
                 }
             ),
             this.updateBounds$.pipe(
