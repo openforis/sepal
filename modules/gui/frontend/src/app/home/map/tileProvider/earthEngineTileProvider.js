@@ -1,7 +1,8 @@
 import {Subject, combineLatest, concat, of, pipe} from 'rxjs'
 import {WMTSTileProvider} from './wmtsTileProvider'
-import {debounceTime, distinctUntilChanged, filter, finalize, last, map, switchMap, takeUntil, windowTime} from 'rxjs/operators'
+import {filter, finalize, last, map, switchMap, takeUntil, windowTime} from 'rxjs/operators'
 import {toBandValues} from '../cursorValue'
+import _ from 'lodash'
 import ee from '@google/earthengine'
 
 const CONCURRENCY = 4
@@ -89,10 +90,32 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
         const {top, left} = this.offsets[id]
         const offsetX = x - left
         const offsetY = y - top
-        const data = element.getContext('2d').getImageData(offsetX, offsetY, 1, 1).data
+        const ctx = element.getContext('2d')
+        const data = ctx.getImageData(offsetX, offsetY, 1, 1).data
         const [red, green, blue, alpha] = data
         if (alpha) {
-            this.cursorValue$.next(toBandValues([red, green, blue], this.visParams))
+            const bandValues = toBandValues([red, green, blue], this.visParams)
+            if (bandValues.length) {
+                this.cursorValue$.next(bandValues)
+            } else {
+                // Might not have a value for this pixels due to anti-aliasing.
+                // Try with a pixel around this
+                const offsets = [-1, 1]
+                for (let i = 0; i < 2; i++) {
+                    for (let j = 0; j < 2; j++) {
+                        const data = ctx.getImageData(offsetX + offsets[i], offsetY + offsets[j], 1, 1).data
+                        const [red, green, blue, alpha] = data
+                        if (alpha) {
+                            const bandValues = toBandValues([red, green, blue], this.visParams)
+                            if (bandValues.length) {
+                                this.cursorValue$.next(bandValues)
+                            }
+                        }
+                    }
+                }
+                this.cursorValue$.next([])
+            }
+            this.cursorValue$.next(bandValues)
         } else {
             this.cursorValue$.next([])
         }

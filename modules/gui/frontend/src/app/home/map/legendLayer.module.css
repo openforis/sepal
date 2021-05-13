@@ -39,14 +39,37 @@
 }
 
 .cursorValue {
-    /*--left: '';*/
+    /*--left: ''; injected */
+    --width: 5rem;
     position: absolute;
+    /*top: -4rem;*/
     top: -2rem;
-    left: var(--left);
+    left: calc(var(--left) - var(--width) / 2);
     width: 5rem;
-    background-color: var(--panel-default-background-color);
     padding: .5rem;
     font-size: .8rem;
     line-height: .8rem;
     text-align: center;
+
+    background-color: #373737;
+    border-radius: 6px;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.17);
+    /*min-height: 34px;*/
+
+}
+
+.arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-color: transparent;
+    border-style: solid;
+
+    left: 50%;
+
+    bottom: -4px;
+    margin-left: -5px;
+    border-width: 5px 5px 0;
+    border-top-color: #373737;
+    /*border-top-color: red;*/
 }

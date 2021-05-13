@@ -81,10 +81,6 @@ const toContinuous = (rgb, visParams) => {
             .filter(({value}) => _.isFinite(value)),
         'value'
     )
-    if (!segments.length) {
-        // TODO: Remove
-        console.log('no segments', rgb, paletteRgbValueArray)
-    }
     return segments.length
         ? [_.minBy(segments, 'error').value]
         : []

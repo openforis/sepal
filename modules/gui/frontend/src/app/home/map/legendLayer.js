@@ -39,7 +39,7 @@ class _LegendLayer extends React.Component {
         const cursorValues = value.map(v =>
             <CursorValue
                 key={v}
-                value={v}
+                value={Math.min(max, Math.max(min, v))}
                 min={min}
                 max={max}
                 paletteWidth={paletteWidth}
@@ -67,11 +67,19 @@ class _LegendLayer extends React.Component {
 const CursorValue = ({value, min, max, paletteWidth}) => {
     const factor = (value - min) / (max - min)
     const left = paletteWidth * factor
+    const prefix = value <= min
+        ? <>&#8805; </>
+        : value >= max
+            ? <>&#8804; </>
+            : ''
+    const formatted = format.number({value, precisionDigits: 3})
     return (
         <div
             className={styles.cursorValue}
             style={{'--left': `${left}px`}}>
-            {format.number({value, precisionDigits: 3})}
+            {prefix}
+            {formatted}
+            <div className={styles.arrow}/>
         </div>
     )
 }
