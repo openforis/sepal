@@ -42,8 +42,7 @@
     /*--left: ''; injected */
     --width: 5rem;
     position: absolute;
-    /*top: -4rem;*/
-    top: -2rem;
+    top: -1.85rem;
     left: calc(var(--left) - var(--width) / 2);
     width: 5rem;
     padding: .5rem;

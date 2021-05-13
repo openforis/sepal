@@ -1,6 +1,9 @@
-import {ElementResizeDetector} from '../../../widget/elementResizeDetector'
+import * as PropTypes from 'prop-types'
+import {ElementResizeDetector} from 'widget/elementResizeDetector'
+import {Subject, animationFrameScheduler, interval, of} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {distinctUntilChanged, map, scan, switchMap} from 'rxjs/operators'
 import {selectFrom} from 'stateUtils'
 import {withCursorValue} from './cursorValue'
 import {withMapAreaContext} from './mapAreaContext'
@@ -36,9 +39,9 @@ class _LegendLayer extends React.Component {
 
     renderLegend({min, max, palette, inverted}) {
         const {value, paletteWidth} = this.state
-        const cursorValues = value.map(v =>
+        const cursorValues = value.map((v, i) =>
             <CursorValue
-                key={v}
+                key={i}
                 value={Math.min(max, Math.max(min, v))}
                 min={min}
                 max={max}
@@ -64,25 +67,87 @@ class _LegendLayer extends React.Component {
     }
 }
 
-const CursorValue = ({value, min, max, paletteWidth}) => {
-    const factor = (value - min) / (max - min)
-    const left = paletteWidth * factor
-    const prefix = value <= min
-        ? <>&#8805; </>
-        : value >= max
-            ? <>&#8804; </>
-            : ''
-    const formatted = format.number({value, precisionDigits: 3})
-    return (
-        <div
-            className={styles.cursorValue}
-            style={{'--left': `${left}px`}}>
-            {prefix}
-            {formatted}
-            <div className={styles.arrow}/>
-        </div>
-    )
+class _CursorValue extends React.Component {
+    state = {
+        position: null
+    }
+    targetPosition$ = new Subject()
+
+    render() {
+        const {value, min, max} = this.props
+        const {position} = this.state
+        const prefix = value <= min
+            ? <>&#8805; </>
+            : value >= max
+                ? <>&#8804; </>
+                : ''
+        const formatted = format.number({value, precisionDigits: 3})
+        return (
+            <div
+                className={styles.cursorValue}
+                style={{'--left': `${position}px`}}>
+                {prefix}
+                {formatted}
+                <div className={styles.arrow}/>
+            </div>
+        )
+    }
+
+    componentDidMount() {
+        const {addSubscription} = this.props
+        const animationFrame$ = interval(0, animationFrameScheduler)
+
+        addSubscription(
+            this.targetPosition$.pipe(
+                switchMap(targetPosition => {
+                    const {position} = this.state
+                    if (position === null) {
+                        return of(targetPosition)
+                    }
+                    return animationFrame$.pipe(
+                        map(() => targetPosition),
+                        scan(lerp(.1), position),
+                        map(position => Math.round(position)),
+                        distinctUntilChanged()
+                    )
+                })
+            ).subscribe(position =>
+                this.setPosition(position)
+            )
+        )
+    }
+
+    componentDidUpdate() {
+        const {value, min, max, paletteWidth} = this.props
+        const {position} = this.state
+        const factor = (value - min) / (max - min)
+        const nextPosition = Math.round(paletteWidth * factor)
+        if (position !== nextPosition) {
+            this.targetPosition$.next(nextPosition)
+        }
+    }
+
+    setPosition(position) {
+        position = Math.round(position)
+        if (position !== this.state.position) {
+            this.setState({position})
+        }
+    }
 }
+
+const CursorValue = compose(
+    _CursorValue,
+    withSubscriptions()
+)
+
+CursorValue.propTypes = {
+    max: PropTypes.any,
+    min: PropTypes.any,
+    paletteWidth: PropTypes.any,
+    value: PropTypes.any
+}
+
+const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * (rate * speed)
 
 const Value = ({value}) =>
     <div className={styles.value}>
