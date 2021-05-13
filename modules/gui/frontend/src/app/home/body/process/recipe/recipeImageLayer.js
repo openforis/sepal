@@ -1,3 +1,4 @@
+import {CursorValue} from 'app/home/map/cursorValue'
 import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
@@ -19,11 +20,16 @@ const mapStateToProps = (state, {source: {sourceConfig: {recipeId}}}) => ({
 
 class _RecipeImageLayer extends React.Component {
     progress$ = new Subject()
+    cursorValue$ = new Subject()
 
     render() {
         const {recipe} = this.props
         return recipe
-            ? this.renderRecipeMap()
+            ? (
+                <CursorValue value$={this.cursorValue$}>
+                    {this.renderRecipeMap()}
+                </CursorValue>
+            )
             : null
     }
 
@@ -50,6 +56,7 @@ class _RecipeImageLayer extends React.Component {
                 : this.setActive('tiles')
         ))
         this.toggleLegend(type)
+
     }
 
     componentDidUpdate(prevProps) {
@@ -73,24 +80,39 @@ class _RecipeImageLayer extends React.Component {
     componentWillUnmount() {
         this.setComplete('initialize')
         this.setComplete('tiles')
+        this.layer && this.layer.close()
     }
 
     maybeCreateLayer() {
         const {recipe, layerConfig, map} = this.props
-        return map && recipe.ui.initialized
-            ? this.createLayer(recipe, layerConfig, map)
+        return map && recipe.ui.initialized && layerConfig && layerConfig.visParams
+            ? this.createLayer()
             : null
     }
 
-    createLayer(recipe, layerConfig, map) {
-        return EarthEngineLayer.fromRecipe({
+    createLayer() {
+        const {recipe, layerConfig, map, boundsChanged$, dragging$, cursor$} = this.props
+        const {props: prevPreviewRequest} = this.layer || {}
+        const previewRequest = {
             recipe: _.omit(recipe, ['ui', 'layers']),
-            layerConfig,
-            map,
-            progress$: this.progress$,
-            onInitialize: () => this.setActive('initialize'),
-            onInitialized: () => this.setComplete('initialize')
-        })
+            ...layerConfig
+        }
+        if (!_.isEqual(previewRequest, prevPreviewRequest)) {
+            this.layer && this.layer.close()
+            this.layer = EarthEngineLayer.create({
+                previewRequest,
+                visParams: layerConfig.visParams,
+                map,
+                progress$: this.progress$,
+                cursorValue$: this.cursorValue$,
+                boundsChanged$,
+                dragging$,
+                cursor$,
+                onInitialize: () => this.setActive('initialize'),
+                onInitialized: () => this.setComplete('initialize')
+            })
+        }
+        return this.layer
     }
 
     setActive(name) {

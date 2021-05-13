@@ -30,9 +30,23 @@
 }
 
 .palette {
-    flex-grow: 1;
     --palette: '';
+    position: relative;
+    flex-grow: 1;
     height: .5rem;
     min-width: 2rem;
     background: linear-gradient(90deg, var(--palette));
+}
+
+.cursorValue {
+    /*--left: '';*/
+    position: absolute;
+    top: -2rem;
+    left: var(--left);
+    width: 5rem;
+    background-color: var(--panel-default-background-color);
+    padding: .5rem;
+    font-size: .8rem;
+    line-height: .8rem;
+    text-align: center;
 }

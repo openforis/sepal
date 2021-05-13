@@ -116,7 +116,7 @@ const policy = () => ({
 export const MapLayoutPanel = compose(
     _MapLayoutPanel,
     withRecipe(mapRecipeToProps),
-    activatable({id: 'mapLayout', policy}),
+    activatable({id: 'mapLayout', policy, alwaysAllow: true}),
     activator('addImageLayerSource')
 )
 

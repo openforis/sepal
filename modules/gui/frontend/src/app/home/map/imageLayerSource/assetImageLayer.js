@@ -1,3 +1,4 @@
+import {CursorValue} from '../cursorValue'
 import {MapAreaLayout} from '../mapAreaLayout'
 import {Subject} from 'rxjs'
 import {VisualizationSelector} from './visualizationSelector'
@@ -10,19 +11,23 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from '../earthEngineLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import withSubscriptions from 'subscription'
 
 class _AssetImageLayer extends React.Component {
      progress$ = new Subject()
+     cursorValue$ = new Subject()
 
      render() {
          const {map} = this.props
          return (
-             <MapAreaLayout
-                 layer={this.createLayer()}
-                 form={this.renderImageLayerForm()}
-                 map={map}
-             />
+             <CursorValue value$={this.cursorValue$}>
+                 <MapAreaLayout
+                     layer={this.maybeCreateLayer()}
+                     form={this.renderImageLayerForm()}
+                     map={map}
+                 />
+             </CursorValue>
          )
      }
 
@@ -84,6 +89,7 @@ class _AssetImageLayer extends React.Component {
      componentWillUnmount() {
          this.setComplete('initialize')
          this.setComplete('tiles')
+         this.layer && this.layer.close()
      }
 
      setActive(name) {
@@ -96,17 +102,39 @@ class _AssetImageLayer extends React.Component {
          setComplete(`${name}-${componentId}`, recipeActionBuilder)
      }
 
-     createLayer() {
-         const {layerConfig, map, source: {sourceConfig: {asset}}} = this.props
+     maybeCreateLayer() {
+         const {layerConfig, map} = this.props
          return map && layerConfig && layerConfig.visParams
-             ? EarthEngineLayer.fromAsset({
-                 asset,
-                 layerConfig,
-                 map,
-                 progress$: this.progress$,
-                 onInitialize: () => this.setActive('initialize'),
-                 onInitialized: () => this.setComplete('initialize')})
+             ? this.createLayer()
              : null
+     }
+
+     createLayer() {
+         const {layerConfig, map, source: {sourceConfig: {asset}}, boundsChanged$, dragging$, cursor$} = this.props
+         const {props: prevPreviewRequest} = this.layer || {}
+         const previewRequest = {
+             recipe: {
+                 type: 'ASSET',
+                 id: asset
+             },
+             ...layerConfig
+         }
+         if (!_.isEqual(previewRequest, prevPreviewRequest)) {
+             this.layer && this.layer.close()
+             this.layer = EarthEngineLayer.create({
+                 previewRequest,
+                 visParams: layerConfig.visParams,
+                 map,
+                 cursorValue$: this.cursorValue$,
+                 progress$: this.progress$,
+                 boundsChanged$,
+                 dragging$,
+                 cursor$,
+                 onInitialize: () => this.setActive('initialize'),
+                 onInitialized: () => this.setComplete('initialize')
+             })
+         }
+         return this.layer
      }
 }
 

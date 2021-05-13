@@ -18,8 +18,8 @@ export class DelegatingTileProvider extends TileProvider {
         return this.nextTileProvider.loadTile$(tileRequest)
     }
 
-    createElement(doc) {
-        return this.nextTileProvider.createElement(doc)
+    createElement(id, doc) {
+        return this.nextTileProvider.createElement(id, doc)
     }
 
     renderTile({doc, element, blob}) {
