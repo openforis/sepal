@@ -4,6 +4,7 @@ import {Layout} from 'widget/layout'
 import {MosaicPreview} from '../../mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -36,7 +37,7 @@ const mapRecipeToProps = recipe => {
     })
 }
 
-class Legend extends React.Component {
+class _Legend extends React.Component {
     state = {colorMode: 'palette'}
 
     constructor(props) {
@@ -60,24 +61,30 @@ class Legend extends React.Component {
             </div>
         )
         return (
-            <RecipeFormPanel
-                placement='bottom-right'
-                className={styles.panel}
-                onApply={() => setTimeout(() => dataCollectionEvents.updateAll())}
-                onClose={() => this.preview.show()}>
-                <Panel.Header
-                    icon='list'
-                    title={title}
-                />
+            <React.Fragment>
+                <RecipeFormPanel
+                    placement='bottom-right'
+                    className={styles.panel}
+                    onApply={() => setTimeout(() => dataCollectionEvents.updateAll())}
+                    onClose={() => this.preview.show()}>
+                    <Panel.Header
+                        icon='list'
+                        title={title}
+                    />
 
-                <Panel.Content>
-                    {this.renderContent()}
-                </Panel.Content>
+                    <Panel.Content>
+                        {this.renderContent()}
+                    </Panel.Content>
 
-                <Form.PanelButtons>
-                    <Panel.Buttons.Add onClick={() => this.addEntry()}/>
-                </Form.PanelButtons>
-            </RecipeFormPanel>
+                    <Form.PanelButtons>
+                        <Panel.Buttons.Add onClick={() => this.addEntry()}/>
+                        <Button
+                            icon='file-import'
+                            label={msg('process.classification.panel.legend.import.title')}
+                            onClick={() => this.importLegend()}/>
+                    </Form.PanelButtons>
+                </RecipeFormPanel>
+            </React.Fragment>
         )
     }
 
@@ -108,6 +115,12 @@ class Legend extends React.Component {
 
     componentDidMount() {
         this.preview.hide()
+    }
+
+    importLegend() {
+        const {activatable: {deactivate}, activator: {activatables: {legendImport}}} = this.props
+        legendImport.activate()
+        deactivate()
     }
 
     toggleColorMode() {
@@ -144,6 +157,18 @@ class Legend extends React.Component {
             [...entries.value, entry]
         )
     }
+}
+const additionalPolicy = () => ({legendImport: 'allow'})
+
+export const Legend = compose(
+    _Legend,
+    recipeFormPanel({id: 'legend', fields: legendFields, mapRecipeToProps, additionalPolicy}),
+    activator('legendImport')
+)
+
+Legend.propTypes = {
+    dataCollectionEvents: PropTypes.object.isRequired,
+    recipeId: PropTypes.string,
 }
 
 class _Entry extends React.Component {
@@ -235,16 +260,6 @@ const entryFields = {
 }
 
 const Entry = compose(_Entry, form({fields: entryFields}))
-
-Legend.propTypes = {
-    dataCollectionEvents: PropTypes.object.isRequired,
-    recipeId: PropTypes.string,
-}
-
-export default compose(
-    Legend,
-    recipeFormPanel({id: 'legend', fields: legendFields, mapRecipeToProps})
-)
 
 const
     COLORS = [
