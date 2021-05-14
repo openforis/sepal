@@ -1136,7 +1136,56 @@
                 "legend": {
                     "button": "LEG",
                     "title": "Legend",
-                    "tooltip": "Setup legend for classification"
+                    "tooltip": "Setup legend for classification",
+                    "import": {
+                        "title": "Import",
+                        "file": {
+                            "label": "CSV file"
+                        },
+                        "colorColumnType": {
+                            "label": "Color column format",
+                            "tooltip": "Specify if the color is in a single column, or if red, green, blue, alpha are in separate column.",
+                            "single": "Single column",
+                            "multiple": "Multiple columns"
+                        },
+                        "column": {
+                            "valueColumn": {
+                                "label": "Value",
+                                "placeholder": "Select value column...",
+                                "tooltip": "Column with class values"
+                            },
+                            "labelColumn": {
+                                "label": "Label",
+                                "placeholder": "Select class label column...",
+                                "tooltip": "Column with class labels"
+                            },
+                            "colorColumn": {
+                                "label": "Color",
+                                "placeholder": "Select color column...",
+                                "tooltip": "Column with class colors"
+                            },
+                            "redColumn": {
+                                "label": "Red",
+                                "placeholder": "Select red column...",
+                                "tooltip": "Column with red color channel values"
+                            },
+                            "greenColumn": {
+                                "label": "Green",
+                                "placeholder": "Select green column...",
+                                "tooltip": "Column with green color channel values"
+                            },
+                            "blueColumn": {
+                                "label": "Blue",
+                                "placeholder": "Select blue column...",
+                                "tooltip": "Column with blue color channel values"
+                            },
+                            "alphaColumn": {
+                                "label": "Alpha",
+                                "placeholder": "Select alpha column...",
+                                "tooltip": "Column with alpha color channel values"
+                            }
+                        }
+                    }
                 },
                 "trainingData": {
                     "button": "TRN",
