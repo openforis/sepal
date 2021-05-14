@@ -1302,7 +1302,51 @@
         "legend": {
           "button": "LEG",
           "title": "Legend",
-          "tooltip": "Setup legend for classification"
+          "tooltip": "Setup legend for classification",
+          "import": {
+            "title": "Import",
+            "file": {
+              "label": "CSV file"
+            },
+            "colorColumnType": {
+              "label": "Color column format",
+              "tooltip": "Specify if the color is in a single column, or if red, green, blue are in separate column.",
+              "single": "Single column",
+              "multiple": "Multiple columns"
+            },
+            "column": {
+              "valueColumn": {
+                "label": "Value",
+                "placeholder": "Select...",
+                "tooltip": "Column with class values"
+              },
+              "labelColumn": {
+                "label": "Label",
+                "placeholder": "Select...",
+                "tooltip": "Column with class labels"
+              },
+              "colorColumn": {
+                "label": "Color",
+                "placeholder": "Select...",
+                "tooltip": "Column with class colors"
+              },
+              "redColumn": {
+                "label": "Red",
+                "placeholder": "Select...",
+                "tooltip": "Column with red color channel values"
+              },
+              "greenColumn": {
+                "label": "Green",
+                "placeholder": "Select...",
+                "tooltip": "Column with green color channel values"
+              },
+              "blueColumn": {
+                "label": "Blue",
+                "placeholder": "Select...",
+                "tooltip": "Column with blue color channel values"
+              }
+            }
+          }
         },
         "trainingData": {
           "button": "TRN",
