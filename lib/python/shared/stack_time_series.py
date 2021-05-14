@@ -162,7 +162,7 @@ def get_dates(chunks):
 def get_tif_files(directory):
     return [
         tif_name
-        for tif_name in listdir(directory)
+        for tif_name in sorted(listdir(directory))
         if tif_name.endswith('.tif')
     ]
 
@@ -170,7 +170,7 @@ def get_tif_files(directory):
 def extract_chunk_bands(chunk_dir):
     tif_names = [
         tif_name
-        for tif_name in listdir(chunk_dir)
+        for tif_name in sorted(listdir(chunk_dir))
         if tif_name.endswith('.tif')
     ]
     for tif_name in tif_names:
