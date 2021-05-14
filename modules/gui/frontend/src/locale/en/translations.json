@@ -1144,45 +1144,40 @@
                         },
                         "colorColumnType": {
                             "label": "Color column format",
-                            "tooltip": "Specify if the color is in a single column, or if red, green, blue, alpha are in separate column.",
+                            "tooltip": "Specify if the color is in a single column, or if red, green, blue are in separate column.",
                             "single": "Single column",
                             "multiple": "Multiple columns"
                         },
                         "column": {
                             "valueColumn": {
                                 "label": "Value",
-                                "placeholder": "Select value column...",
+                                "placeholder": "Select...",
                                 "tooltip": "Column with class values"
                             },
                             "labelColumn": {
                                 "label": "Label",
-                                "placeholder": "Select class label column...",
+                                "placeholder": "Select...",
                                 "tooltip": "Column with class labels"
                             },
                             "colorColumn": {
                                 "label": "Color",
-                                "placeholder": "Select color column...",
+                                "placeholder": "Select...",
                                 "tooltip": "Column with class colors"
                             },
                             "redColumn": {
                                 "label": "Red",
-                                "placeholder": "Select red column...",
+                                "placeholder": "Select...",
                                 "tooltip": "Column with red color channel values"
                             },
                             "greenColumn": {
                                 "label": "Green",
-                                "placeholder": "Select green column...",
+                                "placeholder": "Select...",
                                 "tooltip": "Column with green color channel values"
                             },
                             "blueColumn": {
                                 "label": "Blue",
-                                "placeholder": "Select blue column...",
+                                "placeholder": "Select...",
                                 "tooltip": "Column with blue color channel values"
-                            },
-                            "alphaColumn": {
-                                "label": "Alpha",
-                                "placeholder": "Select alpha column...",
-                                "tooltip": "Column with alpha color channel values"
                             }
                         }
                     }

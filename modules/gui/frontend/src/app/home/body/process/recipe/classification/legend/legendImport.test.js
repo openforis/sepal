@@ -29,8 +29,7 @@ test('getValidMappings(${columns}, ${rows}) === ${result}')
                 colorColumn: ['color'],
                 redColumn: ['class', 'red', 'green', 'blue', 'alpha'],
                 greenColumn: ['class', 'red', 'green', 'blue', 'alpha'],
-                blueColumn: ['class', 'red', 'green', 'blue', 'alpha'],
-                alphaColumn: ['class', 'red', 'green', 'blue', 'alpha']
+                blueColumn: ['class', 'red', 'green', 'blue', 'alpha']
             }
         },
         {
@@ -45,8 +44,7 @@ test('getValidMappings(${columns}, ${rows}) === ${result}')
                 colorColumn: ['color'],
                 redColumn: ['class', 'red', 'green', 'blue', 'alpha'],
                 greenColumn: ['class', 'red', 'green', 'blue', 'alpha'],
-                blueColumn: ['class', 'red', 'green', 'blue', 'alpha'],
-                alphaColumn: ['class', 'red', 'green', 'blue', 'alpha']
+                blueColumn: ['class', 'red', 'green', 'blue', 'alpha']
             }
         },
         { // Duplicates
@@ -61,8 +59,7 @@ test('getValidMappings(${columns}, ${rows}) === ${result}')
                 colorColumn: [],
                 redColumn: ['class', 'red', 'green', 'blue', 'alpha'],
                 greenColumn: ['class', 'red', 'green', 'blue', 'alpha'],
-                blueColumn: ['class', 'red', 'green', 'blue', 'alpha'],
-                alphaColumn: ['class', 'red', 'green', 'blue', 'alpha']
+                blueColumn: ['class', 'red', 'green', 'blue', 'alpha']
             }
         },
         {
@@ -77,8 +74,7 @@ test('getValidMappings(${columns}, ${rows}) === ${result}')
                 colorColumn: [],
                 redColumn: ['Value', 'Red', 'Green', 'Blue', 'Alpha'],
                 greenColumn: ['Value', 'Red', 'Green', 'Blue', 'Alpha'],
-                blueColumn: ['Value', 'Red', 'Green', 'Blue', 'Alpha'],
-                alphaColumn: ['Value', 'Red', 'Green', 'Blue', 'Alpha']
+                blueColumn: ['Value', 'Red', 'Green', 'Blue', 'Alpha']
             }
         }
     )
@@ -97,8 +93,7 @@ test('getDefaults(${columns}, ${rows}, ${validMappings}) === ${result}')
                 colorColumn: ['color'],
                 redColumn: ['class', 'red', 'green', 'blue', 'alpha'],
                 greenColumn: ['class', 'red', 'green', 'blue', 'alpha'],
-                blueColumn: ['class', 'red', 'green', 'blue', 'alpha'],
-                alphaColumn: ['class', 'red', 'green', 'blue', 'alpha']
+                blueColumn: ['class', 'red', 'green', 'blue', 'alpha']
             },
             result: {
                 valueColumn: 'class',
@@ -107,8 +102,7 @@ test('getDefaults(${columns}, ${rows}, ${validMappings}) === ${result}')
                 colorColumn: 'color',
                 redColumn: 'red',
                 greenColumn: 'green',
-                blueColumn: 'blue',
-                alphaColumn: 'alpha'
+                blueColumn: 'blue'
             }
         },
         {
@@ -122,8 +116,7 @@ test('getDefaults(${columns}, ${rows}, ${validMappings}) === ${result}')
                 colorColumn: ['color'],
                 redColumn: ['class', 'red', 'green', 'blue', 'alpha'],
                 greenColumn: ['class', 'red', 'green', 'blue', 'alpha'],
-                blueColumn: ['class', 'red', 'green', 'blue', 'alpha'],
-                alphaColumn: ['class', 'red', 'green', 'blue', 'alpha']
+                blueColumn: ['class', 'red', 'green', 'blue', 'alpha']
             },
             result: {
                 valueColumn: 'class',
@@ -132,8 +125,7 @@ test('getDefaults(${columns}, ${rows}, ${validMappings}) === ${result}')
                 colorColumn: 'color',
                 redColumn: 'red',
                 greenColumn: 'green',
-                blueColumn: 'blue',
-                alphaColumn: 'alpha'
+                blueColumn: 'blue'
             }
         },
         {
@@ -147,8 +139,7 @@ test('getDefaults(${columns}, ${rows}, ${validMappings}) === ${result}')
                 colorColumn: [],
                 redColumn: ['Value', 'Red', 'Green', 'Blue', 'Alpha'],
                 greenColumn: ['Value', 'Red', 'Green', 'Blue', 'Alpha'],
-                blueColumn: ['Value', 'Red', 'Green', 'Blue', 'Alpha'],
-                alphaColumn: ['Value', 'Red', 'Green', 'Blue', 'Alpha']
+                blueColumn: ['Value', 'Red', 'Green', 'Blue', 'Alpha']
             },
             result: {
                 valueColumn: 'Value',
@@ -156,8 +147,7 @@ test('getDefaults(${columns}, ${rows}, ${validMappings}) === ${result}')
                 colorColumnType: 'multiple',
                 redColumn: 'Red',
                 greenColumn: 'Green',
-                blueColumn: 'Blue',
-                alphaColumn: 'Alpha'
+                blueColumn: 'Blue'
             }
         }
     )

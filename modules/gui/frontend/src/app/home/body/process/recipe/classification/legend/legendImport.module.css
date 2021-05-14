@@ -8,5 +8,5 @@
 }
 
 .field {
-    width: 14rem;
+    max-width: 10rem;
 }

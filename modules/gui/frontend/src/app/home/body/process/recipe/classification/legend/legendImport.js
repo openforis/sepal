@@ -37,9 +37,7 @@ const fields = {
         .notBlank(),
     blueColumn: new Form.Field()
         .skip((v, {colorColumnType}) => colorColumnType !== 'multiple')
-        .notBlank(),
-    alphaColumn: new Form.Field()
-        .skip((v, {colorColumnType}) => colorColumnType !== 'multiple')
+        .notBlank()
 }
 
 class _LegendImport extends React.Component {
@@ -87,16 +85,11 @@ class _LegendImport extends React.Component {
                 {colorColumnType.value === 'single'
                     ? this.renderMapping('colorColumn')
                     : (
-                        <React.Fragment>
-                            <Layout type='horizontal'>
-                                {this.renderMapping('redColumn')}
-                                {this.renderMapping('greenColumn')}
-                            </Layout>
-                            <Layout type='horizontal'>
-                                {this.renderMapping('blueColumn')}
-                                {this.renderMapping('alphaColumn')}
-                            </Layout>
-                        </React.Fragment>
+                        <Layout type='horizontal-nowrap'>
+                            {this.renderMapping('redColumn')}
+                            {this.renderMapping('greenColumn')}
+                            {this.renderMapping('blueColumn')}
+                        </Layout>
                     )}
                 <Layout type='horizontal'>
                     {this.renderMapping('valueColumn')}
@@ -170,7 +163,7 @@ class _LegendImport extends React.Component {
 
     selectedColumn(field, column) {
         const {inputs} = this.props;
-        ['valueColumn', 'labelColumn', 'colorColumn', 'redColumn', 'blueColumn', 'greenColumn', 'alphaColumn']
+        ['valueColumn', 'labelColumn', 'colorColumn', 'redColumn', 'blueColumn', 'greenColumn']
             .filter(f => f !== field)
             .forEach(f => {
                 if (inputs[f].value === column) {
@@ -285,7 +278,7 @@ export const getValidMappings = (columns, rows) => {
     const colorChannel = columns.filter(column =>
         toInts(column).length === rows.length
     )
-    return ({valueColumn, labelColumn, colorColumn, redColumn: colorChannel, greenColumn: colorChannel, blueColumn: colorChannel, alphaColumn: colorChannel})
+    return ({valueColumn, labelColumn, colorColumn, redColumn: colorChannel, greenColumn: colorChannel, blueColumn: colorChannel})
 }
 
 export const getDefaults = (columns, rows, validMappings) => {
@@ -340,10 +333,6 @@ export const getDefaults = (columns, rows, validMappings) => {
         : null
     selectedColumn(blueColumn)
 
-    const alphaColumn = mappings.alphaColumn.length
-        ? firstContaining(mappings.alphaColumn, ['alpha'])
-        : null
-    selectedColumn(alphaColumn)
     return _.transform({
         valueColumn,
         labelColumn,
@@ -351,8 +340,7 @@ export const getDefaults = (columns, rows, validMappings) => {
         colorColumn,
         redColumn,
         greenColumn,
-        blueColumn,
-        alphaColumn
+        blueColumn
     }, (defaults, value, key) => {
         if (value) {
             defaults[key] = value
