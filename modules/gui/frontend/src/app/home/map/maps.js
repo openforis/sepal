@@ -57,7 +57,7 @@ class _Maps extends React.Component {
     initGoogleMaps$(googleMapsApiKey) {
         const loader = new Loader(googleMapsApiKey, {
             version: GOOGLE_MAPS_VERSION,
-            libraries: ['drawing']
+            libraries: ['drawing', 'places']
         })
         return from(loader.load()).pipe(
             switchMap(google =>
