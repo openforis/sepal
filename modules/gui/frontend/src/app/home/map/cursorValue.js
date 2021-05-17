@@ -13,15 +13,40 @@ export const CursorValue = ({value$, children}) =>
 export const withCursorValue = withContext(CursorValueContext)
 
 export const toBandValues = (rgb, visParams) => {
+    const inverted = visParams.inverted || visParams.bands.map(() => false)
+    const min = inverted
+        .map((inverted, i) => inverted ? visParams.max[i] : visParams.min[i])
+    const max = inverted
+        .map((inverted, i) => inverted ? visParams.min[i] : visParams.max[i])
     const {type} = visParams
     switch(type) {
-    case 'continuous': return toContinuous(rgb, visParams)
+    case 'continuous': return toContinuous(rgb, {...visParams, min, max})
+    case 'rgb': return toRgb(rgb, {...visParams, min, max})
+    case 'hsv': return toHsv(rgb, {...visParams, min, max})
     default: return []
     }
 }
 
-const toContinuous = (rgb, visParams) => {
+const toRgb = (rgb, visParams) => {
+    const {min, max, gamma} = visParams
+    return rgb
+        .map((c, i) => 255 * Math.pow(c / 255, gamma[i]))
+        .map((c, i) => min[i] + c * (max[i] - min[i]) / 255)
+        .map(v => parseFloat(v.toPrecision(3)))
+}
 
+const toHsv = (rgb, {min, max, gamma}) => {
+    const correctedRgb = rgb.map((c, i) => 255 * Math.pow(c / 255, gamma[i]))
+    const hsv = Color.rgb(correctedRgb).hsv().color
+    const normalizedHsv = [hsv[0] / 360, hsv[1] / 100, hsv[2] / 100]
+    return normalizedHsv
+        .map((v, i) =>
+            min[i] + normalizedHsv[i] * (max[i] - min[i])
+        )
+        .map(v => parseFloat(v.toPrecision(3)))
+}
+
+const toContinuous = (rgb, visParams) => {
     const toSegment = (fromRgbValue, toRgbValue) => {
         const buffer = 5 // Sampled color can be off by 1
         const inRange = rgb.every((c, i) =>
@@ -31,7 +56,7 @@ const toContinuous = (rgb, visParams) => {
             return {value: []}
         }
 
-        const foo = fromRgbValue.rgb.map((from, i) => {
+        const channels = fromRgbValue.rgb.map((from, i) => {
             const c = rgb[i]
             const to = toRgbValue.rgb[i]
             const factor = from === to
@@ -47,14 +72,14 @@ const toContinuous = (rgb, visParams) => {
         })
 
         // Picking factor from channel with largest color diff - most accurate
-        const reference = _.maxBy(foo, 'diff')
-        const factor = reference.factor
+        const referenceChannel = _.maxBy(channels, 'diff')
+        const factor = referenceChannel.factor
 
         // An error in color
         // What color would we get if we used the reference factor?
         // Error is the difference in color
         const error = _.sum(
-            foo.map(({c, from, to}) => {
+            channels.map(({c, from, to}) => {
                 const calculatedC = Math.round(from + factor * (to - from))
                 return Math.abs(calculatedC - c)
             })
@@ -65,7 +90,6 @@ const toContinuous = (rgb, visParams) => {
         const preciseValue = fromValue + factor * (toValue - fromValue)
         const value = parseFloat(preciseValue.toPrecision(3))
         return {value, error}
-
     }
 
     const {palette, min: minList, max: maxList} = visParams

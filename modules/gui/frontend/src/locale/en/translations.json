@@ -499,6 +499,14 @@
       "type": "Legend",
       "description": "Map legend"
     },
+    "Palette": {
+      "type": "Palette",
+      "description": "Palette applied to image"
+    },
+    "Values": {
+      "type": "Values",
+      "description": "Show band values"
+    },
     "SceneAreas": {
       "type": "Scene Areas",
       "description": "Select scenes to use in mosaic"

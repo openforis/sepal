@@ -1,0 +1,50 @@
+import {normalize} from './visParams'
+import _ from 'lodash'
+
+/* eslint-disable no-undef */
+
+const test = name => {
+    const nameTemplate = _.template(name)
+    return ({
+        assert: assertion => ({
+            where: (...data) =>
+                data.forEach(data => {
+                    const args = {}
+                    Object.keys(data).forEach(key => args[key] =
+                            JSON.stringify(data[key])
+                    )
+                    it(nameTemplate(args), () => assertion(data))
+                }
+                )
+        })
+    })
+}
+
+test('normalize(${visParams}) === ${result}')
+    .assert(({visParams, result}) => expect(normalize(visParams)).toEqual(result))
+    .where(
+        {
+            visParams: {type: 'continuous', bands: ['index'], min: [3], max: [7], palette: ['#000000', '#FFFFFF'], inverted: [false]},
+            result: {type: 'continuous', bands: ['index'], min: [3], max: [7], palette: ['#000000', '#FFFFFF'], inverted: [false]}
+        },
+        { // To array
+            visParams: {type: 'continuous', bands: 'index', min: 3, max: 7, palette: ['#000000', '#FFFFFF'], inverted: false},
+            result: {type: 'continuous', bands: ['index'], min: [3], max: [7], palette: ['#000000', '#FFFFFF'], inverted: [false]}
+        },
+        { // Split comma separated strings
+            visParams: {type: 'rgb', bands: 'a,b,c', min: '1,2,3', max: '4,5,6', gamma: '1, 2, 3', inverted: 'false, true, false'},
+            result: {type: 'rgb', bands: ['a', 'b', 'c'], min: [1, 2, 3], max: [4, 5, 6], gamma: [1, 2, 3], inverted: [false, true, false]}
+        },
+        { // Repeat values
+            visParams: {type: 'rgb', bands: ['a', 'b', 'c'], min: [1], max: [4], gamma: [1], inverted: [false]},
+            result: {type: 'rgb', bands: ['a', 'b', 'c'], min: [1, 1, 1], max: [4, 4, 4], gamma: [1, 1, 1], inverted: [false, false, false]}
+        },
+        { // Crop array
+            visParams: {type: 'continuous', bands: ['index'], min: [1, 2, 3], max: [4, 5, 6], palette: ['#000000', '#FFFFFF'], inverted: [false, true, false]},
+            result: {type: 'continuous', bands: ['index'], min: [1], max: [4], palette: ['#000000', '#FFFFFF'], inverted: [false]}
+        },
+        { // Add missing gamma and inverted
+            visParams: {type: 'rgb', bands: ['a', 'b', 'c'], min: [1, 1, 1], max: [4, 4, 4]},
+            result: {type: 'rgb', bands: ['a', 'b', 'c'], min: [1, 1, 1], max: [4, 4, 4], gamma: [1, 1, 1], inverted: [false, false, false]}
+        },
+    )

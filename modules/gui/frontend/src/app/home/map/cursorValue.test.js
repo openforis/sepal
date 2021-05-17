@@ -48,4 +48,31 @@ test('toBandValues(${rgb}, ${visParams}) === ${result}')
             visParams: {type: 'continuous', bands: ['index'], min: [3], max: [7], palette: ['rgb(0, 0, 0)', 'rgb(127,127,127)', 'rgb(255, 255, 255)']},
             result: [5]
         },
+
+        {
+            rgb: [0, 127, 255],
+            visParams: {type: 'rgb', bands: ['b1', 'b2', 'b3'], min: [-3, -3, -3], max: [3, 3, 3], gamma: [1, 1, 1]},
+            result: [-3, -0.0118, 3]
+        },
+        {
+            rgb: [0, 127, 255],
+            visParams: {type: 'rgb', bands: ['b1', 'b2', 'b3'], min: [-3, -3, -3], max: [3, 3, 3], gamma: [1, 1, 1], inverted: [true, true, true]},
+            result: [3, 0.0118, -3]
+        },
+        {
+            rgb: [0, 180, 255],
+            visParams: {type: 'rgb', bands: ['b1', 'b2', 'b3'], min: [-3, -3, -3], max: [3, 3, 3], gamma: [2, 2, 2]},
+            result: [-3, -0.0104, 3]
+        },
+
+        {
+            rgb: [255, 128, 128],
+            visParams: {type: 'hsv', bands: ['b1', 'b2', 'b3'], min: [-3, -3, -3], max: [3, 3, 3], gamma: [1, 1, 1]},
+            result: [-3, -0.0118, 3]
+        },
+        {
+            rgb: [255, 180, 180],
+            visParams: {type: 'hsv', bands: ['b1', 'b2', 'b3'], min: [-3, -3, -3], max: [3, 3, 3], gamma: [2, 2, 2]},
+            result: [-3, 0.0104, 3]
+        },
     )
