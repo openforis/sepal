@@ -13,12 +13,19 @@ const mapStateToProps = state => ({
 })
 
 class FloatingBox extends React.Component {
+    ref = React.createRef()
+
     state = {
         dimensions: {}
     }
 
+    constructor() {
+        super()
+        this.onClick = this.onClick.bind(this)
+    }
+
     render() {
-        const {className, placement, alignment, autoWidth, forwardedRef, onClick, children} = this.props
+        const {className, placement, alignment, autoWidth, children} = this.props
         const {dimensions: {height, width, top, bottom, left, right}} = this.state
         const style = {
             '--left': alignment === 'left' ? left : 'auto',
@@ -30,10 +37,11 @@ class FloatingBox extends React.Component {
             '--below-top': bottom
         }
         return (
-            <Portal type='global' onClick={onClick}>
+            // <Portal type='container' onClick={this.onClick}>
+            <Portal type='global' onClick={this.onClick}>
                 <div className={styles.container}>
                     <div
-                        ref={forwardedRef}
+                        ref={this.getRef()}
                         className={[styles.box, styles[placement], styles[alignment], className].join(' ')}
                         style={style}>
                         {children}
@@ -41,6 +49,21 @@ class FloatingBox extends React.Component {
                 </div>
             </Portal>
         )
+    }
+
+    getRef() {
+        const {forwardedRef} = this.props
+        return forwardedRef || this.ref
+    }
+
+    onClick(e) {
+        const {onBlur, onClick} = this.props
+        const ref = this.getRef()
+        const isListClick = ref.current && ref.current.contains(e.target)
+        if (!isListClick) {
+            onBlur && onBlur(e)
+        }
+        onClick && onClick(e)
     }
 
     updateState(state, callback) {
@@ -88,6 +111,7 @@ FloatingBox.propTypes = {
     className: PropTypes.string,
     element: PropTypes.object,
     placement: PropTypes.oneOf(['above', 'below']),
+    onBlur: PropTypes.func,
     onClick: PropTypes.func
 }
 
