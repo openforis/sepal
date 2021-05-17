@@ -499,13 +499,17 @@
       "type": "Legend",
       "description": "Map legend"
     },
+    "Classification": {
+      "type": "Classification",
+      "description": "Map legend. It highlights the class of the pixel under the mouse cursor."
+    },
     "Palette": {
       "type": "Palette",
-      "description": "Palette applied to image"
+      "description": "Palette applied to image. It displays an approximate value for the pixel under the mouse cursor."
     },
     "Values": {
       "type": "Values",
-      "description": "Show band values"
+      "description": "Display approximate band values for the pixel under the mouse cursor."
     },
     "SceneAreas": {
       "type": "Scene Areas",

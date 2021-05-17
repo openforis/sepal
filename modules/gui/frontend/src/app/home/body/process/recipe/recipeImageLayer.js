@@ -81,7 +81,7 @@ class _RecipeImageLayer extends React.Component {
                 excludeAreaFeatureLayerSource(legendSource)
                 excludeAreaFeatureLayerSource(valuesSource)
                 return
-            case 'classification':
+            case 'categorical':
                 includeAreaFeatureLayerSource(legendSource)
                 excludeAreaFeatureLayerSource(paletteSource)
                 excludeAreaFeatureLayerSource(valuesSource)

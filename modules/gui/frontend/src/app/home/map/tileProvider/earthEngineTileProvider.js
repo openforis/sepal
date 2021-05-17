@@ -2,7 +2,6 @@ import {Subject, combineLatest, concat, of, pipe} from 'rxjs'
 import {WMTSTileProvider} from './wmtsTileProvider'
 import {filter, finalize, last, map, switchMap, takeUntil, windowTime} from 'rxjs/operators'
 import {toBandValues} from '../cursorValue'
-import _ from 'lodash'
 import ee from '@google/earthengine'
 
 const CONCURRENCY = 4

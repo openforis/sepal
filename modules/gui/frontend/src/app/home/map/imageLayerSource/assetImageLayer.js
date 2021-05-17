@@ -4,6 +4,8 @@ import {Subject} from 'rxjs'
 import {VisualizationSelector} from './visualizationSelector'
 import {compose} from 'compose'
 import {createLegendFeatureLayerSource} from 'app/home/map/legendFeatureLayerSource'
+import {createPaletteFeatureLayerSource} from '../paletteFeatureLayerSource'
+import {createValuesFeatureLayerSource} from '../valuesFeatureLayerSource'
 import {msg} from 'translate'
 import {setActive, setComplete} from '../progress'
 import {withMapAreaContext} from '../mapAreaContext'
@@ -79,10 +81,27 @@ class _AssetImageLayer extends React.Component {
      toggleLegend(type) {
          const {mapAreaContext: {includeAreaFeatureLayerSource, excludeAreaFeatureLayerSource} = {}} = this.props
          if (includeAreaFeatureLayerSource) {
-             const source = createLegendFeatureLayerSource()
-             type === 'continuous'
-                 ? includeAreaFeatureLayerSource(source)
-                 : excludeAreaFeatureLayerSource(source)
+             const legendSource = createLegendFeatureLayerSource()
+             const paletteSource = createPaletteFeatureLayerSource()
+             const valuesSource = createValuesFeatureLayerSource()
+             switch(type) {
+             case 'continuous':
+                 includeAreaFeatureLayerSource(paletteSource)
+                 excludeAreaFeatureLayerSource(legendSource)
+                 excludeAreaFeatureLayerSource(valuesSource)
+                 return
+             case 'categorical':
+                 includeAreaFeatureLayerSource(legendSource)
+                 excludeAreaFeatureLayerSource(paletteSource)
+                 excludeAreaFeatureLayerSource(valuesSource)
+                 return
+             case 'rgb':
+             case 'hsv':
+                 includeAreaFeatureLayerSource(valuesSource)
+                 excludeAreaFeatureLayerSource(legendSource)
+                 excludeAreaFeatureLayerSource(paletteSource)
+                 return
+             }
          }
      }
 

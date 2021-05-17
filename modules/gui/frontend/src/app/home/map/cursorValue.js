@@ -21,6 +21,7 @@ export const toBandValues = (rgb, visParams) => {
     const {type} = visParams
     switch(type) {
     case 'continuous': return toContinuous(rgb, {...visParams, min, max})
+    case 'categorical': return toCategorical(rgb, visParams)
     case 'rgb': return toRgb(rgb, {...visParams, min, max})
     case 'hsv': return toHsv(rgb, {...visParams, min, max})
     default: return []
@@ -46,15 +47,21 @@ const toHsv = (rgb, {min, max, gamma}) => {
         .map(v => parseFloat(v.toPrecision(3)))
 }
 
+const toCategorical = (rgb, visParams) => {
+    const continuous = toContinuous(rgb, visParams)
+    if (continuous.length && visParams.values) {
+        return [_.minBy(visParams.values, value => Math.abs(value - continuous[0]))]
+    } else {
+        return []
+    }
+}
+
 const toContinuous = (rgb, visParams) => {
     const toSegment = (fromRgbValue, toRgbValue) => {
-        const buffer = 5 // Sampled color can be off by 1
+        const buffer = 5 // Sampled color can be off a bit
         const inRange = rgb.every((c, i) =>
             (fromRgbValue.rgb[i] - buffer <= c && toRgbValue.rgb[i] + buffer >= c) || (fromRgbValue.rgb[i] + buffer >= c && toRgbValue.rgb[i] - buffer <= c)
         )
-        if (!inRange) {
-            return {value: []}
-        }
 
         const channels = fromRgbValue.rgb.map((from, i) => {
             const c = rgb[i]
@@ -89,7 +96,7 @@ const toContinuous = (rgb, visParams) => {
         const toValue = toRgbValue.value
         const preciseValue = fromValue + factor * (toValue - fromValue)
         const value = parseFloat(preciseValue.toPrecision(3))
-        return {value, error}
+        return {value, inRange, error}
     }
 
     const {palette, min: minList, max: maxList} = visParams
@@ -102,6 +109,7 @@ const toContinuous = (rgb, visParams) => {
     const segments = _.uniqBy(
         _.tail(palette)
             .map((_color, i) => toSegment(paletteRgbValueArray[i], paletteRgbValueArray[i + 1]))
+            .filter(({inRange}) => inRange)
             .filter(({value}) => _.isFinite(value)),
         'value'
     )

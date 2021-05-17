@@ -31,6 +31,14 @@ test('normalize(${visParams}) === ${result}')
             visParams: {type: 'continuous', bands: 'index', min: 3, max: 7, palette: ['#000000', '#FFFFFF'], inverted: false},
             result: {type: 'continuous', bands: ['index'], min: [3], max: [7], palette: ['#000000', '#FFFFFF'], inverted: [false]}
         },
+        { // Convert palette to hex
+            visParams: {type: 'continuous', bands: ['index'], min: [3], max: [7], palette: ['black', 'white'], inverted: [false]},
+            result: {type: 'continuous', bands: ['index'], min: [3], max: [7], palette: ['#000000', '#FFFFFF'], inverted: [false]}
+        },
+        { // Add missing has to hex color
+            visParams: {type: 'continuous', bands: ['index'], min: [3], max: [7], palette: ['000000', 'FFFFFF'], inverted: [false]},
+            result: {type: 'continuous', bands: ['index'], min: [3], max: [7], palette: ['#000000', '#FFFFFF'], inverted: [false]}
+        },
         { // Split comma separated strings
             visParams: {type: 'rgb', bands: 'a,b,c', min: '1,2,3', max: '4,5,6', gamma: '1, 2, 3', inverted: 'false, true, false'},
             result: {type: 'rgb', bands: ['a', 'b', 'c'], min: [1, 2, 3], max: [4, 5, 6], gamma: [1, 2, 3], inverted: [false, true, false]}
@@ -46,5 +54,9 @@ test('normalize(${visParams}) === ${result}')
         { // Add missing gamma and inverted
             visParams: {type: 'rgb', bands: ['a', 'b', 'c'], min: [1, 1, 1], max: [4, 4, 4]},
             result: {type: 'rgb', bands: ['a', 'b', 'c'], min: [1, 1, 1], max: [4, 4, 4], gamma: [1, 1, 1], inverted: [false, false, false]}
+        },
+        { // Add min, max
+            visParams: {type: 'categorical', bands: ['a'], values: [5, 200, 1000], palette: ['#FF0000', '#00FF00', '#0000FF']},
+            result: {type: 'categorical', bands: ['a'], min: [5], max: [1000], values: [5, 200, 1000], palette: ['#FF0000', '#00FF00', '#0000FF']}
         },
     )

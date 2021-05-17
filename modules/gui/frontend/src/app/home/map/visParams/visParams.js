@@ -1,3 +1,4 @@
+import Color from 'color'
 import _ from 'lodash'
 
 export const normalize = visParams => {
@@ -51,14 +52,38 @@ export const normalize = visParams => {
         normalized.inverted = false
     }
 
-    ['bands', 'min', 'max', 'palette', 'gamma', 'inverted']
+    ['bands', 'min', 'max', 'palette', 'values', 'gamma', 'inverted']
         .map(key => normalized[key] = toArray(key));
-    ['min', 'max', 'gamma']
+    ['min', 'max', 'values', 'gamma']
         .map(key => normalized[key] = toNumbers(key));
     ['inverted']
         .map(key => normalized[key] = toBooleans(key));
     ['min', 'max', 'gamma', 'inverted']
         .map(key => normalized[key] = size(key))
+
+    if (normalized.type === 'categorical') {
+        normalized.min = [_.min(normalized.values)]
+        normalized.max = [_.max(normalized.values)]
+    }
+
+    if (normalized.type === 'continuous' && !normalized.palette) {
+        normalized.palette = ['#000000', '#FFFFFF']
+    }
+
+    if (['categorical', 'continuous'].includes(normalized.type)) {
+        normalized.palette = normalized.palette.map(color => {
+            try {
+                return Color(color).hex()
+            } catch (e) {
+                if (/[0-9A-Fa-f]{6}/.test(color)) {
+                    return Color(`#${color}`).hex()
+                } else {
+                    throw e
+                }
+            }
+        }
+        )
+    }
 
     Object.keys(normalized).forEach(key => {
         if (_.isNil(normalized[key])) {
