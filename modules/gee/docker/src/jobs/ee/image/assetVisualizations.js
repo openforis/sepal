@@ -137,9 +137,6 @@ const worker$ = ({asset}) => {
         set('inverted', value =>
             toList(value).map(inverted => inverted === 'true' || inverted === true)
         )
-        const log = require('sepal/log').getLogger('ee')
-
-        log.error(visualization, visParams)
         return visParams
     }
 
