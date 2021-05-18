@@ -12,9 +12,11 @@ const worker$ = ({asset, recipe}) => {
     return image$.pipe(
         switchMap(image => ee.getInfo$(image, 'get image metadata')),
         map(({bands, properties}) => {
+            const dataTypes = {}
+            bands.forEach(({id, data_type: {precision, min, max}}) => dataTypes[id] = {precision, min, max})
             return {
                 bands: bands.map(({id}) => id),
-                dataTypes: bands.map(({data_type: {precision, min, max}}) => ({precision, min, max})),
+                dataTypes,
                 properties
             }
         })

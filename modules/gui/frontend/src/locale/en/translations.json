@@ -523,7 +523,8 @@
     },
     "Recipe": {
       "label": "Recipe",
-      "thisRecipeDescription": "This recipe"
+      "thisRecipeDescription": "This recipe",
+      "loadError": "Failed to load recipe: {error}"
     },
     "Planet": {
       "label": "Planet",

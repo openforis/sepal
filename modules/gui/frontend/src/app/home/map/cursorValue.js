@@ -12,7 +12,8 @@ export const CursorValue = ({value$, children}) =>
 
 export const withCursorValue = withContext(CursorValueContext)
 
-export const toBandValues = (rgb, visParams) => {
+export const toBandValues = (rgb, visParams, dataTypes = {}
+) => {
     const inverted = visParams.inverted || visParams.bands.map(() => false)
     const min = inverted
         .map((inverted, i) => inverted ? visParams.max[i] : visParams.min[i])
@@ -20,23 +21,28 @@ export const toBandValues = (rgb, visParams) => {
         .map((inverted, i) => inverted ? visParams.min[i] : visParams.max[i])
     const {type} = visParams
     switch(type) {
-    case 'continuous': return toContinuous(rgb, {...visParams, min, max})
-    case 'categorical': return toCategorical(rgb, visParams)
-    case 'rgb': return toRgb(rgb, {...visParams, min, max})
-    case 'hsv': return toHsv(rgb, {...visParams, min, max})
+    case 'continuous': return toContinuous(rgb, {...visParams, min, max}, dataTypes)
+    case 'categorical': return toCategorical(rgb, visParams, dataTypes)
+    case 'rgb': return toRgb(rgb, {...visParams, min, max}, dataTypes)
+    case 'hsv': return toHsv(rgb, {...visParams, min, max}, dataTypes)
     default: return []
     }
 }
 
-const toRgb = (rgb, visParams) => {
+const toRgb = (rgb, visParams, dataTypes) => {
     const {min, max, gamma} = visParams
     return rgb
         .map((c, i) => 255 * Math.pow(c / 255, gamma[i]))
         .map((c, i) => min[i] + c * (max[i] - min[i]) / 255)
-        .map(v => parseFloat(v.toPrecision(3)))
+        .map((v, i) => {
+            return dataTypes && dataTypes[visParams.bands[i]].precision === 'int'
+                ? parseInt(v.toPrecision(3))
+                : parseFloat(v.toPrecision(3))
+        }
+        )
 }
 
-const toHsv = (rgb, {min, max, gamma}) => {
+const toHsv = (rgb, {bands, min, max, gamma}, dataTypes) => {
     const correctedRgb = rgb.map((c, i) => 255 * Math.pow(c / 255, gamma[i]))
     const hsv = Color.rgb(correctedRgb).hsv().color
     const normalizedHsv = [hsv[0] / 360, hsv[1] / 100, hsv[2] / 100]
@@ -44,11 +50,16 @@ const toHsv = (rgb, {min, max, gamma}) => {
         .map((v, i) =>
             min[i] + normalizedHsv[i] * (max[i] - min[i])
         )
-        .map(v => parseFloat(v.toPrecision(3)))
+        .map((v, i) => {
+            return dataTypes && dataTypes[bands[i]].precision === 'int'
+                ? parseInt(v.toPrecision(3))
+                : parseFloat(v.toPrecision(3))
+        }
+        )
 }
 
-const toCategorical = (rgb, visParams) => {
-    const continuous = toContinuous(rgb, visParams)
+const toCategorical = (rgb, visParams, dataTypes) => {
+    const continuous = toContinuous(rgb, visParams, dataTypes)
     if (continuous.length && visParams.values) {
         return [_.minBy(visParams.values, value => Math.abs(value - continuous[0]))]
     } else {
@@ -56,7 +67,7 @@ const toCategorical = (rgb, visParams) => {
     }
 }
 
-const toContinuous = (rgb, visParams) => {
+const toContinuous = (rgb, visParams, dataTypes) => {
     const toSegment = (fromRgbValue, toRgbValue) => {
         const buffer = 5 // Sampled color can be off a bit
         const inRange = rgb.every((c, i) =>
@@ -95,7 +106,9 @@ const toContinuous = (rgb, visParams) => {
         const fromValue = fromRgbValue.value
         const toValue = toRgbValue.value
         const preciseValue = fromValue + factor * (toValue - fromValue)
-        const value = parseFloat(preciseValue.toPrecision(3))
+        const value = dataTypes && dataTypes[visParams.bands[0]].precision === 'int'
+            ? parseInt(preciseValue.toPrecision(3))
+            : parseFloat(preciseValue.toPrecision(3))
         return {value, inRange, error}
     }
 

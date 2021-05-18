@@ -85,5 +85,5 @@ test('toVisualizations(${properties}) === ${result}')
         {
             properties: {},
             result: []
-        },
+        }
     )

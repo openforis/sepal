@@ -11,13 +11,14 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
     elements = {}
     offsets = {}
 
-    constructor({urlTemplate, visParams, cursorValue$, boundsChanged$, dragging$, cursor$}) {
+    constructor({urlTemplate, dataTypes, visParams, cursorValue$, boundsChanged$, dragging$, cursor$}) {
         super({
             type: 'EarthEngine',
             urlTemplate,
             concurrency: CONCURRENCY,
             tileSize: TILE_SIZE
         })
+        this.dataTypes = dataTypes
         this.visParams = visParams
         this.cursorValue$ = cursorValue$
         this.subscriptions = [
@@ -93,7 +94,7 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
         const data = ctx.getImageData(offsetX, offsetY, 1, 1).data
         const [red, green, blue, alpha] = data
         if (alpha) {
-            const bandValues = toBandValues([red, green, blue], this.visParams)
+            const bandValues = toBandValues([red, green, blue], this.visParams, this.dataTypes)
             if (bandValues.length) {
                 this.cursorValue$.next(bandValues)
             } else {
@@ -105,7 +106,7 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
                         const data = ctx.getImageData(offsetX + offsets[i], offsetY + offsets[j], 1, 1).data
                         const [red, green, blue, alpha] = data
                         if (alpha) {
-                            const bandValues = toBandValues([red, green, blue], this.visParams)
+                            const bandValues = toBandValues([red, green, blue], this.visParams, this.dataTypes)
                             if (bandValues.length) {
                                 return this.cursorValue$.next(bandValues)
                             }

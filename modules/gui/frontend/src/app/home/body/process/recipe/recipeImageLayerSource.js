@@ -9,6 +9,7 @@ import {recipeAccess} from '../recipeAccess'
 import {recipeActionBuilder} from '../recipe'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from '../recipeContext'
+import Notifications from '../../../../../widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -32,7 +33,7 @@ class _RecipeImageLayerSource extends React.Component {
             this.loadRecipe()
         }
         if (recipe && toDescription(recipe) !== toDescription(prevRecipe)) {
-            this.updateRecipeDescription(recipe)
+            this.updateSourceConfig(recipe)
         }
     }
 
@@ -40,16 +41,16 @@ class _RecipeImageLayerSource extends React.Component {
         const {stream, source: {sourceConfig: {recipeId}}, loadRecipe$} = this.props
         stream('LOAD_RECIPE',
             loadRecipe$(recipeId),
-            recipe => this.updateRecipeDescription(recipe)
-            // TODO: Handle errors
+            recipe => this.updateSourceConfig(recipe),
+            error => Notifications.error({message: msg('imageLayerSources.Recipe.loadError', {error}), error})
         )
     }
 
-    updateRecipeDescription(recipe) {
+    updateSourceConfig(recipe) {
         const {recipeId, source, recipeActionBuilder} = this.props
         const description = toDescription(recipe)
         if (recipeId !== source.sourceConfig.recipeId) {
-            recipeActionBuilder('UPDATE_RECIPE_IMAGE_LAYER__SOURCE_DESCRIPTION', {description})
+            recipeActionBuilder('UPDATE_RECIPE_IMAGE_LAYER_SOURCE', {description})
                 .set(['layers.additionalImageLayerSources', {id: source.id}, 'sourceConfig.description'], description)
                 .dispatch()
         }

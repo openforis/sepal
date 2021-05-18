@@ -44,20 +44,31 @@ export const normalize = visParams => {
         }
     }
 
+    ['bands', 'min', 'max', 'palette', 'values', 'gamma', 'inverted']
+        .map(key => normalized[key] = toArray(key))
+
+    if (!normalized.type) {
+        normalized.type = normalized.bands.length > 1
+            ? 'rgb'
+            : normalized.values
+                ? 'categorical'
+                : 'continuous'
+    }
+
     if (['rgb', 'hsv'].includes(normalized.type) && _.isNil(normalized.gamma)) {
-        normalized.gamma = 1
+        normalized.gamma = [1]
     }
 
     if (['rgb', 'hsv', 'continuous'].includes(normalized.type) && _.isNil(normalized.inverted)) {
-        normalized.inverted = false
+        normalized.inverted = [false]
     }
 
-    ['bands', 'min', 'max', 'palette', 'values', 'gamma', 'inverted']
-        .map(key => normalized[key] = toArray(key));
     ['min', 'max', 'values', 'gamma']
         .map(key => normalized[key] = toNumbers(key));
+
     ['inverted']
         .map(key => normalized[key] = toBooleans(key));
+
     ['min', 'max', 'gamma', 'inverted']
         .map(key => normalized[key] = size(key))
 
@@ -81,8 +92,7 @@ export const normalize = visParams => {
                     throw e
                 }
             }
-        }
-        )
+        })
     }
 
     Object.keys(normalized).forEach(key => {
