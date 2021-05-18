@@ -48,8 +48,6 @@ class _LegendImport extends React.Component {
     }
 
     render() {
-        const {form, activatable: {deactivate}} = this.props
-        const invalid = form.isInvalid()
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -192,10 +190,6 @@ class _LegendImport extends React.Component {
             }
         )
     }
-
-    save() {
-        console.log('save')
-    }
 }
 
 const policy = () => ({_: 'allow'})
@@ -209,16 +203,23 @@ const valuesToModel = ({
     redColumn,
     greenColumn,
     blueColumn
-}) => {
-    return {entries: rows.map(row => ({
-        id: guid(),
-        color: colorColumnType === 'single'
-            ? Color(row[colorColumn]).hex()
-            : Color.rgb([row[redColumn], row[greenColumn], row[blueColumn]]).hex(),
-        value: row[valueColumn],
-        label: row[labelColumn]
-    }))}
-}
+}) => ({
+    entries: rows.map(row =>
+        ({
+            id: guid(),
+            color: colorColumnType === 'single'
+                ? Color(trim(row[colorColumn])).hex()
+                : Color.rgb([
+                    trim(row[redColumn]),
+                    trim(row[greenColumn]),
+                    trim(row[blueColumn])
+                ]).hex(),
+            value: trim(row[valueColumn]),
+            label: trim(row[labelColumn])
+        }))
+})
+
+const trim = value => _.isString(value) ? value.trim() : value
 
 const modelToValues = () => ({})
 
@@ -258,7 +259,7 @@ export const getValidMappings = (columns, rows) => {
         _.uniq(rows
             .map(row => _.isNaN(row[column])
                 ? null
-                : row[column].toString().trim()
+                : _.isNil(row[column]) ? null : row[column].toString().trim()
             )
             .filter(value => value)
         ).length === rows.length
