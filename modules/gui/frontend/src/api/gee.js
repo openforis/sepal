@@ -10,8 +10,8 @@ export default {
     loadAssetVisualizations$: ({asset, ...params}) =>
         postJson$('/api/gee/image/assetVisualizations', {body: {asset, ...params}})
             .pipe(toResponse),
-    histogram$: ({recipe, band, ...params}) =>
-        postJson$('/api/gee/image/histogram', {body: {recipe, band, ...params}})
+    histogram$: ({recipe, band, aoi, ...params}) =>
+        postJson$('/api/gee/image/histogram', {body: {recipe, band, aoi, ...params}})
             .pipe(toResponse),
     imageMetadata$: ({asset, recipe}) =>
         postJson$('/api/gee/imageMetadata', {body: {asset, recipe}, retries: 0})

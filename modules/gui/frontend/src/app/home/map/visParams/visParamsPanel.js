@@ -80,8 +80,10 @@ const fields = {
 }
 
 const mapRecipeToProps = (recipe, {activatable: {imageLayerSourceId}}) => ({
-    visParamsSets: selectFrom(recipe, ['layers.userDefinedVisualizations', imageLayerSourceId]) || []
+    visParamsSets: selectFrom(recipe, ['layers.userDefinedVisualizations', imageLayerSourceId]) || [],
+    aoi: selectFrom(recipe, 'model.aoi')
 })
+
 class _VisParamsPanel extends React.Component {
     state = {
         bands: null,
@@ -283,7 +285,7 @@ class _VisParamsPanel extends React.Component {
     }
 
     initHistogram(name, {stretch}) {
-        const {stream, activatable: {recipe}} = this.props
+        const {stream, activatable: {recipe}, aoi} = this.props
         const {histograms} = this.state
         const histogram = histograms[name]
         const updateHistogram = (data, stretch) => this.setState(({histograms}) =>
@@ -296,7 +298,7 @@ class _VisParamsPanel extends React.Component {
             updateHistogram(histogram.data, true)
         } else {
             stream((`LOAD_HISTOGRAM_${name}`),
-                api.gee.histogram$({recipe, band: name}),
+                api.gee.histogram$({recipe, aoi, band: name}),
                 data => updateHistogram(data, stretch)
             )
         }
