@@ -499,6 +499,18 @@
       "type": "Legend",
       "description": "Map legend"
     },
+    "Classification": {
+      "type": "Classification",
+      "description": "Map legend. It highlights the class of the pixel under the mouse cursor."
+    },
+    "Palette": {
+      "type": "Palette",
+      "description": "Palette applied to image. It displays an approximate value for the pixel under the mouse cursor."
+    },
+    "Values": {
+      "type": "Values",
+      "description": "Display approximate band values for the pixel under the mouse cursor."
+    },
     "SceneAreas": {
       "type": "Scene Areas",
       "description": "Select scenes to use in mosaic"
@@ -1319,7 +1331,51 @@
         "legend": {
           "button": "LEG",
           "title": "Legend",
-          "tooltip": "Setup legend for classification"
+          "tooltip": "Setup legend for classification",
+          "import": {
+            "title": "Import",
+            "file": {
+              "label": "CSV file"
+            },
+            "colorColumnType": {
+              "label": "Color column format",
+              "tooltip": "Specify if the color is in a single column, or if red, green, blue are in separate column.",
+              "single": "Single column",
+              "multiple": "Multiple columns"
+            },
+            "column": {
+              "valueColumn": {
+                "label": "Value",
+                "placeholder": "Select...",
+                "tooltip": "Column with class values"
+              },
+              "labelColumn": {
+                "label": "Label",
+                "placeholder": "Select...",
+                "tooltip": "Column with class labels"
+              },
+              "colorColumn": {
+                "label": "Color",
+                "placeholder": "Select...",
+                "tooltip": "Column with class colors"
+              },
+              "redColumn": {
+                "label": "Red",
+                "placeholder": "Select...",
+                "tooltip": "Column with red color channel values"
+              },
+              "greenColumn": {
+                "label": "Green",
+                "placeholder": "Select...",
+                "tooltip": "Column with green color channel values"
+              },
+              "blueColumn": {
+                "label": "Blue",
+                "placeholder": "Select...",
+                "tooltip": "Column with blue color channel values"
+              }
+            }
+          }
         },
         "trainingData": {
           "button": "TRN",

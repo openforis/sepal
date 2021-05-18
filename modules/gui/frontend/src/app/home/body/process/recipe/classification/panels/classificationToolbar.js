@@ -1,4 +1,7 @@
+import {Legend} from '../legend/legend'
+import {LegendImport} from '../legend/legendImport'
 import {RecipeActions} from '../classificationRecipe'
+import {RecipeFormPanel} from '../../../recipeFormPanel'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -8,7 +11,6 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import AuxiliaryImagery from './auxiliaryImagery/auxiliaryImagery'
 import Classifier from './classifier/classifier'
 import InputImagery from './inputImagery/inputImagery'
-import Legend from '../legend/legend'
 import PanelWizard from 'widget/panelWizard'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -34,6 +36,7 @@ class ClassificationToolbar extends React.Component {
                 <Retrieve/>
                 <InputImagery/>
                 <Legend dataCollectionEvents={dataCollectionEvents}/>
+                <LegendImport/>
                 <TrainingData dataCollectionEvents={dataCollectionEvents}/>
                 <AuxiliaryImagery/>
                 <Classifier/>

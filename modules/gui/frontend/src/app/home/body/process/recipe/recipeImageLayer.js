@@ -4,6 +4,8 @@ import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {createLegendFeatureLayerSource} from 'app/home/map/legendFeatureLayerSource'
+import {createPaletteFeatureLayerSource} from 'app/home/map/paletteFeatureLayerSource'
+import {createValuesFeatureLayerSource} from 'app/home/map/valuesFeatureLayerSource'
 import {selectFrom} from 'stateUtils'
 import {setActive, setComplete} from 'app/home/map/progress'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
@@ -70,10 +72,27 @@ class _RecipeImageLayer extends React.Component {
     toggleLegend(type) {
         const {mapAreaContext: {includeAreaFeatureLayerSource, excludeAreaFeatureLayerSource} = {}} = this.props
         if (includeAreaFeatureLayerSource) {
-            const source = createLegendFeatureLayerSource()
-            type === 'continuous'
-                ? includeAreaFeatureLayerSource(source)
-                : excludeAreaFeatureLayerSource(source)
+            const legendSource = createLegendFeatureLayerSource()
+            const paletteSource = createPaletteFeatureLayerSource()
+            const valuesSource = createValuesFeatureLayerSource()
+            switch(type) {
+            case 'continuous':
+                includeAreaFeatureLayerSource(paletteSource)
+                excludeAreaFeatureLayerSource(legendSource)
+                excludeAreaFeatureLayerSource(valuesSource)
+                return
+            case 'categorical':
+                includeAreaFeatureLayerSource(legendSource)
+                excludeAreaFeatureLayerSource(paletteSource)
+                excludeAreaFeatureLayerSource(valuesSource)
+                return
+            case 'rgb':
+            case 'hsv':
+                includeAreaFeatureLayerSource(valuesSource)
+                excludeAreaFeatureLayerSource(legendSource)
+                excludeAreaFeatureLayerSource(paletteSource)
+                return
+            }
         }
     }
 

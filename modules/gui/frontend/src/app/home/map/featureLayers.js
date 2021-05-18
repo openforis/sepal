@@ -1,7 +1,9 @@
 import {AoiLayer} from 'app/home/map/aoiLayer'
 import {LabelsLayer} from 'app/home/map/labelsLayer'
 import {LegendLayer} from './legendLayer'
+import {PaletteLayer} from './paletteLayer'
 import {SceneAreasLayer} from 'app/home/body/process/recipe/opticalMosaic/sceneAreasLayer'
+import {ValuesLayer} from './valuesLayer'
 import {compose} from 'compose'
 import {withLayers} from 'app/home/body/process/withLayers'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -45,6 +47,8 @@ const _FeatureLayer = ({source, map, recipe, layerConfig, layerIndex}) => {
     switch(source.type) {
     case 'Labels': return <LabelsLayer id={id} layerIndex={layerIndex} map={map}/>
     case 'Legend': return <LegendLayer/>
+    case 'Palette': return <PaletteLayer/>
+    case 'Values': return <ValuesLayer/>
     case 'Aoi': return <AoiLayer id={source.type} layerConfig={layerConfig} layerIndex={layerIndex} recipe={recipe} map={map}/>
     case 'SceneAreas': return <SceneAreasLayer map={map}/>
     default: throw Error(`Unsupported feature layer type: ${source.type}`)

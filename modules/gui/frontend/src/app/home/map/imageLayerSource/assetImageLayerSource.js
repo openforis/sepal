@@ -1,5 +1,6 @@
 import {compose} from 'compose'
 import {connect} from 'store'
+import {normalize} from 'app/home/map/visParams/visParams'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from '../../body/process/recipeContext'
 import PropTypes from 'prop-types'
@@ -23,7 +24,7 @@ class _AssetImageLayerSource extends React.Component {
         const {stream, source: {sourceConfig: {asset}}} = this.props
         stream('LOAD_RECIPE',
             api.gee.loadAssetVisualizations$({asset}),
-            visualizations => this.updateVisualizations(visualizations)
+            visualizations => this.updateVisualizations((visualizations || []).map(normalize))
             // TODO: Handle errors
         )
     }

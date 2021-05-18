@@ -9,14 +9,15 @@ import {withCursorValue} from './cursorValue'
 import {withMapAreaContext} from './mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
-import styles from './legendLayer.module.css'
+import format from 'format'
+import styles from './paletteLayer.module.css'
 import withSubscriptions from 'subscription'
 
 const mapRecipeToProps = recipe => ({
     areas: selectFrom(recipe, 'layers.areas') || {}
 })
 
-class _LegendLayer extends React.Component {
+class _PaletteLayer extends React.Component {
     state = {
         value: [],
         paletteWidth: null
@@ -32,32 +33,34 @@ class _LegendLayer extends React.Component {
 
     render() {
         const {mapAreaContext: {area}, areas} = this.props
-        const {labels, values, palette} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
+        const {min, max, palette, inverted} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
+        return this.renderPalette({min: min[0], max: max[0], palette, inverted: inverted && inverted.length && inverted[0] === true})
+    }
+
+    renderPalette({min, max, palette, inverted}) {
         const {value, paletteWidth} = this.state
-        const cursorValues = values
-            ? value.map((v, i) =>
-                <CursorValue
-                    key={i}
-                    value={v}
-                    values={values}
-                    labels={labels}
-                    paletteWidth={paletteWidth}
-                />
-            )
-            : null
-        const colors = palette.map(color =>
-            <div
-                key={color}
-                style={{'--color': color}}
-                className={styles.color}
+        const cursorValues = value.map((v, i) =>
+            <CursorValue
+                key={i}
+                value={Math.min(max, Math.max(min, v))}
+                min={min}
+                max={max}
+                paletteWidth={paletteWidth}
             />
         )
         return (
             <div className={styles.container}>
                 <div className={styles.legend}>
-                    {colors}
-                    <ElementResizeDetector onResize={({width}) => this.setState({paletteWidth: width})}/>
-                    {cursorValues}
+                    <Value value={min}/>
+                    <div
+                        className={styles.palette}
+                        style={{'--palette': inverted
+                            ? palette.slice().reverse()
+                            : palette}}>
+                        <ElementResizeDetector onResize={({width}) => this.setState({paletteWidth: width})}/>
+                        {cursorValues}
+                    </div>
+                    <Value value={max}/>
                 </div>
             </div>
         )
@@ -71,15 +74,20 @@ class _CursorValue extends React.Component {
     targetPosition$ = new Subject()
 
     render() {
-        const {value, values, labels} = this.props
+        const {value, min, max} = this.props
         const {position} = this.state
-        const label = labels[values.findIndex(v => v === value)]
+        const prefix = value <= min
+            ? <>&#8805; </>
+            : value >= max
+                ? <>&#8804; </>
+                : ''
+        const formatted = format.number({value, precisionDigits: 3})
         return (
             <div
                 className={styles.cursorValue}
                 style={{'--left': `${position}px`}}>
-                <div className={styles.label}>{label}</div>
-                <div className={styles.value}>({value})</div>
+                {prefix}
+                {formatted}
                 <div className={styles.arrow}/>
             </div>
         )
@@ -110,11 +118,10 @@ class _CursorValue extends React.Component {
     }
 
     componentDidUpdate() {
-        const {value, values, paletteWidth} = this.props
+        const {value, min, max, paletteWidth} = this.props
         const {position} = this.state
-        const i = values.findIndex(v => v === value)
-        const valueWidth = paletteWidth / values.length
-        const nextPosition = Math.round(valueWidth * i + valueWidth / 2)
+        const factor = (value - min) / (max - min)
+        const nextPosition = Math.round(paletteWidth * factor)
         if (position !== nextPosition) {
             this.targetPosition$.next(nextPosition)
         }
@@ -134,16 +141,21 @@ const CursorValue = compose(
 )
 
 CursorValue.propTypes = {
-    labels: PropTypes.any,
+    max: PropTypes.any,
+    min: PropTypes.any,
     paletteWidth: PropTypes.any,
-    value: PropTypes.any,
-    values: PropTypes.any,
+    value: PropTypes.any
 }
 
 const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * (rate * speed)
 
-export const LegendLayer = compose(
-    _LegendLayer,
+const Value = ({value}) =>
+    <div className={styles.value}>
+        {format.number({value, precisionDigits: 3})}
+    </div>
+
+export const PaletteLayer = compose(
+    _PaletteLayer,
     connect(),
     withMapAreaContext(),
     withRecipe(mapRecipeToProps),
@@ -151,4 +163,4 @@ export const LegendLayer = compose(
     withSubscriptions()
 )
 
-LegendLayer.propTypes = {}
+PaletteLayer.propTypes = {}
