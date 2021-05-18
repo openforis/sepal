@@ -366,7 +366,21 @@
 		"info": "{start} - {stop - 1} / {count}"
 	},
 	"process": {
-		"ccdc": {
+        "mapZoom": {
+            "fit": {
+                "tooltip": "Acercamiento a la zona de interés"
+            },
+            "zoomArea": {
+                "tooltip": "Acercar a la zona"
+            },
+            "zoomIn": {
+                "tooltip": "Acercar"
+            },
+            "zoomOut": {
+                "tooltip": "Alejar"
+            }
+        },
+    "ccdc": {
 			"chartPixel": {
 				"cancel.tooltip": "Anulación de los gráficos de series temporales",
 				"loadFailed": "No se ha podido cargar el gráfico: {error}",

@@ -1,4 +1,5 @@
 import {MapLayout} from '../body/process/mapLayout/mapLayout'
+import {MapZoomButton, MapZoomPanel} from './mapZoom'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -14,31 +15,12 @@ class MapToolbar extends React.Component {
         return (
             <React.Fragment>
                 <MapLayout/>
+                <MapZoomPanel/>
                 <Toolbar
                     className={styles.mapToolbar}
                     horizontal
                     placement='top-right'>
-                    <Toolbar.ToolbarButton
-                        disabled={!map.canZoomIn()}
-                        onClick={() => map.zoomIn()}
-                        icon={'plus'}
-                        tooltip={msg('process.mosaic.mapToolbar.zoomIn.tooltip')}/>
-                    <Toolbar.ToolbarButton
-                        disabled={!map.canZoomOut()}
-                        onClick={() => map.zoomOut()}
-                        icon={'minus'}
-                        tooltip={msg('process.mosaic.mapToolbar.zoomOut.tooltip')}/>
-                    <Toolbar.ToolbarButton
-                        disabled={!map.canZoomArea()}
-                        selected={map.isZoomArea()}
-                        onClick={() => map.toggleZoomArea()}
-                        icon={'search'}
-                        tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
-                    <Toolbar.ToolbarButton
-                        disabled={!map.canFit()}
-                        onClick={() => map.fit()}
-                        icon={'bullseye'}
-                        tooltip={msg('process.mosaic.mapToolbar.centerMap.tooltip')}/>
+                    <MapZoomButton/>
                     <Toolbar.ToolbarButton
                         onClick={() => map.toggleLinked()}
                         selected={map.isLinked()}

@@ -140,6 +140,14 @@ class _Map extends React.Component {
         return zoomArea
     }
 
+    setMarker(options) {
+        this.allMaps(({map}) => map.setMarker(options))
+    }
+
+    setRectangle(options) {
+        this.allMaps(({map}) => map.setRectangle(options))
+    }
+
     renderImageLayerSource(source, layerConfig, area) {
         const {recipe} = this.props
         const {maps} = this.state
@@ -513,10 +521,14 @@ class _Map extends React.Component {
             fit: () => map.fitBounds(bounds),
             setZoom: zoom => map.setZoom(zoom),
             getZoom: () => map.getZoom(),
+            setView: ({center, zoom}) => map.setView({center, zoom}),
+            fitBounds: bounds => map.fitBounds(bounds),
             getBounds: () => map.getBounds(),
             getScale: () => map.getMetersPerPixel(),
             drawPolygon: (id, callback) => this.drawPolygon(id, callback),
             disableDrawingMode: () => this.disableDrawingMode(),
+            setMarker: options => this.setMarker(options),
+            setRectangle: options => this.setRectangle(options),
 
             setLayer: (...args) => {
                 log.warn('should we call map.setLayer?')
@@ -524,7 +536,7 @@ class _Map extends React.Component {
             },
             getGoogle: (...args) => {
                 log.warn('should we call map.getGoogle?')
-                map.getGoogle(...args)
+                return map.getGoogle(...args)
             },
             addToMap: (...args) => {
                 log.warn('should we call map.addToMap?')
@@ -534,10 +546,6 @@ class _Map extends React.Component {
                 log.warn('should we call map.removeToMap?')
                 map.removeFromMap(...args)
             },
-            fitBounds: (...args) => {
-                log.warn('should we call map.fitBounds?')
-                map.fitBounds(...args)
-            }
         }
     }
 }

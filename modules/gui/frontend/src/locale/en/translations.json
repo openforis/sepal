@@ -532,6 +532,23 @@
     "info": "{start} - {stop - 1} / {count}"
   },
   "process": {
+    "mapZoom": {
+        "fit": {
+            "tooltip": "Zoom to area of interest"
+        },
+        "zoomArea": {
+            "tooltip": "Zoom to area"
+        },
+        "zoomIn": {
+            "tooltip": "Zoom in"
+        },
+        "zoomOut": {
+            "tooltip": "Zoom out"
+        },
+        "search": {
+            "placeholder": "geo search"
+        }
+    },
     "ccdc": {
       "chartPixel": {
         "cancel.tooltip": "Cancel time-series charting",
