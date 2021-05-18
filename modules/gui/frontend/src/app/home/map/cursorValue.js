@@ -35,7 +35,7 @@ const toRgb = (rgb, visParams, dataTypes) => {
         .map((c, i) => min[i] + c * (max[i] - min[i]) / 255)
         .map((v, i) => {
             return dataTypes && dataTypes[visParams.bands[i]].precision === 'int'
-                ? parseInt(v.toPrecision(3))
+                ? Math.round(parseFloat(v.toPrecision(3)))
                 : parseFloat(v.toPrecision(3))
         }
         )
@@ -51,7 +51,7 @@ const toHsv = (rgb, {bands, min, max, gamma}, dataTypes) => {
         )
         .map((v, i) => {
             return dataTypes && dataTypes[bands[i]].precision === 'int'
-                ? parseInt(v.toPrecision(3))
+                ? Math.round(parseFloat(v.toPrecision(3)))
                 : parseFloat(v.toPrecision(3))
         }
         )
@@ -106,7 +106,7 @@ const toContinuous = (rgb, visParams, dataTypes) => {
         const toValue = toRgbValue.value
         const preciseValue = fromValue + factor * (toValue - fromValue)
         const value = dataTypes && dataTypes[visParams.bands[0]].precision === 'int'
-            ? parseInt(preciseValue.toPrecision(3))
+            ? Math.round(parseFloat(preciseValue.toPrecision(3)))
             : parseFloat(preciseValue.toPrecision(3))
         return {value, inRange, error}
     }
@@ -125,6 +125,7 @@ const toContinuous = (rgb, visParams, dataTypes) => {
             .filter(({value}) => _.isFinite(value)),
         'value'
     )
+
     return segments.length
         ? [_.minBy(segments, 'error').value]
         : []
