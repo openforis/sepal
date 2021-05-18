@@ -12,8 +12,7 @@ export const CursorValue = ({value$, children}) =>
 
 export const withCursorValue = withContext(CursorValueContext)
 
-export const toBandValues = (rgb, visParams, dataTypes = {}
-) => {
+export const toBandValues = (rgb, visParams, dataTypes) => {
     const inverted = visParams.inverted || visParams.bands.map(() => false)
     const min = inverted
         .map((inverted, i) => inverted ? visParams.max[i] : visParams.min[i])
