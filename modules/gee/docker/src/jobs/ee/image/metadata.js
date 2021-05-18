@@ -2,7 +2,7 @@ const {job} = require('root/jobs/job')
 
 const worker$ = ({asset, recipe}) => {
     const {of} = require('rx')
-    const {switchMap} = require('rx/operators')
+    const {map, switchMap} = require('rx/operators')
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('ee')
 
@@ -10,12 +10,13 @@ const worker$ = ({asset, recipe}) => {
         ? of(ee.Image(asset))
         : ImageFactory(recipe).getImage$()
     return image$.pipe(
-        switchMap(image => {
-            return ee.getInfo$(
-                image.toDictionary()
-                    .set('bands', image.bandNames()),
-                'get image metadata'
-            )
+        switchMap(image => ee.getInfo$(image, 'get image metadata')),
+        map(({bands, properties}) => {
+            return {
+                bands: bands.map(({id}) => id),
+                dataTypes: bands.map(({data_type: {precision, min, max}}) => ({precision, min, max})),
+                properties
+            }
         })
     )
 }

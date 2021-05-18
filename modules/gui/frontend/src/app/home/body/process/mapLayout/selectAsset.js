@@ -51,7 +51,7 @@ class _SelectAsset extends React.Component {
                     input={asset}
                     spellCheck={false}
                     autoFocus
-                    onChangeDebounced={asset => this.validateAsset(asset)}
+                    onChangeDebounced={asset => this.loadMetadata(asset)}
                     busyMessage={this.props.stream('VALIDATE_ASSET').active && msg('widget.loading')}
                     errorMessage
                 />
@@ -59,13 +59,14 @@ class _SelectAsset extends React.Component {
         )
     }
 
-    validateAsset(asset) {
+    loadMetadata(asset) {
         this.assetChanged$.next()
         this.setState({validatedAsset: null},
             this.props.stream('VALIDATE_ASSET',
                 api.gee.imageMetadata$({asset}).pipe(
-                    takeUntil(this.assetChanged$)),
-                () => this.setState({validatedAsset: asset}),
+                    takeUntil(this.assetChanged$)
+                ),
+                metadata => this.setState({validatedAsset: asset, metadata}),
                 () => {
                     this.props.inputs.asset.setInvalid(
                         msg('map.layout.addImageLayerSource.types.Asset.form.loadError')
@@ -76,7 +77,7 @@ class _SelectAsset extends React.Component {
     }
 
     add() {
-        const {validatedAsset: asset} = this.state
+        const {validatedAsset: asset, metadata} = this.state
         const {recipeActionBuilder, activatable: {deactivate}} = this.props
         recipeActionBuilder('ADD_ASSET_IMAGE_LAYER_SOURCE')
             .push('layers.additionalImageLayerSources', {
@@ -84,7 +85,8 @@ class _SelectAsset extends React.Component {
                 type: 'Asset',
                 sourceConfig: {
                     description: asset,
-                    asset
+                    asset,
+                    metadata
                 }
             })
             .dispatch()
