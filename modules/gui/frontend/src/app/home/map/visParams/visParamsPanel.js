@@ -341,7 +341,9 @@ class _VisParamsPanel extends React.Component {
         const min = this.values('min').map(value => toNumber(value))
         const max = this.values('max').map(value => toNumber(value))
         const gamma = this.values('gamma').map(value => toNumber(value))
-        const palette = inputs.palette.value ? inputs.palette.value.map(({color}) => color) : []
+        const palette = inputs.palette.value
+            ? inputs.palette.value.map(({color}) => color)
+            : ['#000000', '#FFFFFF']
         const id = prevVisParams && prevVisParams.id ? prevVisParams.id : guid()
         const visParams = singleBand
             ? {id, type, bands, inverted, min, max, palette, userDefined: true}

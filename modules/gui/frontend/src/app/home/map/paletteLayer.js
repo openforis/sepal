@@ -9,6 +9,7 @@ import {withCursorValue} from './cursorValue'
 import {withMapAreaContext} from './mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
+import _ from 'lodash'
 import format from 'format'
 import styles from './paletteLayer.module.css'
 import withSubscriptions from 'subscription'
@@ -34,7 +35,12 @@ class _PaletteLayer extends React.Component {
     render() {
         const {mapAreaContext: {area}, areas} = this.props
         const {min, max, palette, inverted} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
-        return this.renderPalette({min: min[0], max: max[0], palette, inverted: inverted && inverted.length && inverted[0] === true})
+        return this.renderPalette({
+            min: min[0],
+            max: max[0],
+            palette,
+            inverted: inverted && inverted.length && inverted[0] === true
+        })
     }
 
     renderPalette({min, max, palette, inverted}) {
