@@ -48,7 +48,7 @@ export const normalize = visParams => {
         normalized.gamma = 1
     }
 
-    if (['rgb', 'hsv'].includes(normalized.type) && _.isNil(normalized.inverted)) {
+    if (['rgb', 'hsv', 'continuous'].includes(normalized.type) && _.isNil(normalized.inverted)) {
         normalized.inverted = false
     }
 

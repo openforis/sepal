@@ -1,5 +1,4 @@
 import {AssetImageLayer} from './assetImageLayer'
-import {AssetImageLayerSource} from './assetImageLayerSource'
 import {GoogleSatelliteImageLayer} from './googleSatelliteImageLayer'
 import {PlanetImageLayer} from './planetImageLayer'
 import {RecipeImageLayer} from 'app/home/body/process/recipe/recipeImageLayer'
@@ -52,13 +51,6 @@ const getGoogleSatelliteImageLayerSource = ({map}) => ({
 const getAssetImageLayerSource = ({source, layerConfig, map, boundsChanged$, dragging$, cursor$}) => {
     return ({
         description: source.sourceConfig.asset,
-        sourceComponent: (
-            <AssetImageLayerSource
-                key={source.id}
-                source={source}
-                map={map}
-            />
-        ),
         layerComponent: (
             <AssetImageLayer
                 source={source}

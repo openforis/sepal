@@ -6,10 +6,12 @@ import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {takeUntil} from 'rxjs/operators'
+import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualizationParser'
 import {v4 as uuid} from 'uuid'
 import {withRecipe} from '../recipeContext'
 import React from 'react'
 import api from 'api'
+import guid from 'guid'
 import styles from './selectAsset.module.css'
 
 const fields = {
@@ -79,6 +81,8 @@ class _SelectAsset extends React.Component {
     add() {
         const {validatedAsset: asset, metadata} = this.state
         const {recipeActionBuilder, activatable: {deactivate}} = this.props
+        const visualizations = toVisualizations(metadata.properties)
+            .map(visualization => ({...visualization, id: guid()}))
         recipeActionBuilder('ADD_ASSET_IMAGE_LAYER_SOURCE')
             .push('layers.additionalImageLayerSources', {
                 id: uuid(),
@@ -86,7 +90,8 @@ class _SelectAsset extends React.Component {
                 sourceConfig: {
                     description: asset,
                     asset,
-                    metadata
+                    metadata,
+                    visualizations
                 }
             })
             .dispatch()
