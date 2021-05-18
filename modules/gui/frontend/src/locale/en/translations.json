@@ -220,6 +220,7 @@
       "browse": "Files",
       "collapse": "Automatically hide and show menu",
       "expand": "Always show menu",
+      "help": "Open Sepal documentation in a new tab/window",
       "logout": "Logout from Sepal",
       "process": "Process",
       "tasks": "Tasks",
