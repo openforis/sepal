@@ -6,6 +6,7 @@ const worker$ = ({recipe, visParams, panSharpen, bands}) => {
     const {switchMap} = require('rx/operators')
     const {sequence} = require('sepal/utils/array')
     const log = require('sepal/log').getLogger('ee')
+    const _ = require('lodash')
 
     if (visParams) {
         const {getImage$} = ImageFactory(recipe, {selection: visParams.bands, panSharpen})
@@ -62,16 +63,13 @@ const worker$ = ({recipe, visParams, panSharpen, bands}) => {
                 ).hsvToRgb().float()
             }
 
-            // TODO: Handle categorical images
-            //   Should not support inverted
-            //   Use sldStyle instead of palette
             switch (type) {
             case 'categorical':
-                return ee.getMap$(image.select(bands), toCategoricalVisParams())
+                return ee.getMap$(image.select(_.uniq(bands)), toCategoricalVisParams())
             case 'hsv':
-                return ee.getMap$(toHsv(image.select(bands)))
+                return ee.getMap$(toHsv(image.select(_.uniq(bands))))
             default:
-                return ee.getMap$(image.select(bands), {bands, ...range(), gamma, palette})
+                return ee.getMap$(image.select(_.uniq(bands)), {bands, ...range(), gamma, palette})
             }
         }
 
