@@ -299,7 +299,9 @@ class _VisParamsPanel extends React.Component {
         } else {
             stream((`LOAD_HISTOGRAM_${name}`),
                 api.gee.histogram$({recipe, aoi, band: name}),
-                data => updateHistogram(data, stretch)
+                data => data
+                    ? updateHistogram(data, stretch)
+                    : Notifications.warning({message: msg('map.visParams.form.histogram.noData')})
             )
         }
     }

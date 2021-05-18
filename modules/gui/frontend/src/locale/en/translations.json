@@ -425,6 +425,9 @@
           "label": "Gamma",
           "info": "Value: {gamma}"
         },
+        "histogram": {
+          "noData": "The band contain no data."
+        },
         "inverted": {
           "label": "Inverted"
         },
