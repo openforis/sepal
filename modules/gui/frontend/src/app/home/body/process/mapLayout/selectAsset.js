@@ -81,7 +81,7 @@ class _SelectAsset extends React.Component {
     add() {
         const {validatedAsset: asset, metadata} = this.state
         const {recipeActionBuilder, activatable: {deactivate}} = this.props
-        const visualizations = toVisualizations(metadata.properties)
+        const visualizations = toVisualizations(metadata.properties, metadata.bands)
             .map(visualization => ({...visualization, id: guid()}))
         recipeActionBuilder('ADD_ASSET_IMAGE_LAYER_SOURCE')
             .push('layers.additionalImageLayerSources', {

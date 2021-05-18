@@ -44,7 +44,7 @@ export const normalize = visParams => {
         }
     }
 
-    ['bands', 'min', 'max', 'palette', 'values', 'gamma', 'inverted']
+    ['bands', 'min', 'max', 'palette', 'labels', 'values', 'gamma', 'inverted']
         .map(key => normalized[key] = toArray(key))
 
     if (!normalized.type) {

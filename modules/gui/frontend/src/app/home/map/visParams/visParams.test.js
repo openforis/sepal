@@ -56,8 +56,8 @@ test('normalize(${visParams}) === ${result}')
             result: {type: 'rgb', bands: ['a', 'b', 'c'], min: [1, 1, 1], max: [4, 4, 4], gamma: [1, 1, 1], inverted: [false, false, false]}
         },
         { // Add min, max
-            visParams: {type: 'categorical', bands: ['a'], values: [5, 200, 1000], palette: ['#FF0000', '#00FF00', '#0000FF']},
-            result: {type: 'categorical', bands: ['a'], min: [5], max: [1000], values: [5, 200, 1000], palette: ['#FF0000', '#00FF00', '#0000FF']}
+            visParams: {type: 'categorical', bands: ['a'], values: [5, 200, 1000], labels: 'foo, bar, baz', palette: ['#FF0000', '#00FF00', '#0000FF']},
+            result: {type: 'categorical', bands: ['a'], min: [5], max: [1000], values: [5, 200, 1000], labels: ['foo', 'bar', 'baz'], palette: ['#FF0000', '#00FF00', '#0000FF']}
         },
         { // Add type rgb when multiple bands
             visParams: {bands: ['a', 'b', 'c'], min: [1, 2, 3], max: [4, 5, 6], gamma: [1, 2, 3], inverted: [false, true, false]},

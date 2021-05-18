@@ -20,8 +20,8 @@ const test = name => {
     })
 }
 
-test('toVisualizations(${properties}) === ${result}')
-    .assert(({properties, result}) => expect(toVisualizations(properties)).toEqual(result))
+test('toVisualizations(${properties}, ${bands}) === ${result}')
+    .assert(({properties, bands, result}) => expect(toVisualizations(properties, bands)).toEqual(result))
     .where(
         {
             properties: {
@@ -33,6 +33,7 @@ test('toVisualizations(${properties}) === ${result}')
                 visualization_0_max: 1,
                 visualization_0_gamma: 2,
             },
+            bands: ['red', 'green', 'blue'],
             result: [
                 {
                     type: 'rgb',
@@ -61,6 +62,7 @@ test('toVisualizations(${properties}) === ${result}')
                 visualization_0_max: 1,
                 visualization_0_gamma: 2,
             },
+            bands: ['red', 'green', 'blue'],
             result: [
                 {
                     type: 'rgb',
@@ -84,6 +86,26 @@ test('toVisualizations(${properties}) === ${result}')
         },
         {
             properties: {},
+            bands: ['foo'],
             result: []
-        }
+        },
+        {
+            properties: {
+                landcover_class_names: 'foo,bar,baz',
+                landcover_class_values: '5,13,17',
+                landcover_class_palette: 'red,green,blue'
+            },
+            bands: ['a', 'b', 'c'],
+            result: [
+                {
+                    type: 'categorical',
+                    bands: ['a'],
+                    min: [5],
+                    max: [17],
+                    values: [5, 13, 17],
+                    labels: ['foo', 'bar', 'baz'],
+                    palette: ['#FF0000', '#008000', '#0000FF']
+                }
+            ]
+        },
     )
