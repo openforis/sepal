@@ -9,10 +9,10 @@ const worker$ = ({recipe, band}) => {
     const {switchMap} = require('rx/operators')
 
     const {getImage$} = ImageFactory(recipe, {selection: [band]})
-
     const histogram = image =>
         image.select(band).reduceRegion({
             reducer: ee.Reducer.autoHistogram(MAX_BUCKETS),
+            geometry: image.select(band).geometry(),
             scale: 1,
             bestEffort: true,
             maxPixels: MAX_PIXELS
