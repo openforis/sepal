@@ -10,6 +10,7 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
+import guid from 'guid'
 
 export class _ImageLayerSources extends React.Component {
     render() {
@@ -39,6 +40,7 @@ export class _ImageLayerSources extends React.Component {
                     removeTooltip={msg('map.layout.layer.remove.tooltip')}
                     drag$={drag$}
                     dragValue={{
+                        id: guid(),
                         imageLayer: {sourceId: source.id},
                         featureLayers: []
                     }}
