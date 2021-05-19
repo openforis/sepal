@@ -106,18 +106,20 @@ export const RecipeActions = id => {
     }
 }
 
+export const getAllVisualizations = recipe => [
+    ...Object.values((recipe.layers.userDefinedVisualizations['this-recipe'] || {})),
+    ...visualizations[reflectance(recipe)],
+    ...visualizations.indexes,
+    ...(median(recipe) ? visualizations.metadata : [])
+]
+
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
-    const allVisualizations = [
-        ...Object.values((recipe.layers.userDefinedVisualizations['this-recipe'] || {})),
-        ...visualizations[reflectance(recipe)],
-        ...visualizations.indexes,
-        ...(median(recipe) ? visualizations.metadata : [])
-    ]
+    const allVisualizations = getAllVisualizations(recipe)
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':

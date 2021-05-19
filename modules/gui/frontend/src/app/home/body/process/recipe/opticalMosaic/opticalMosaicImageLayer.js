@@ -1,7 +1,7 @@
 import {Buttons} from 'widget/buttons'
 import {Layout} from 'widget/layout'
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
-import {SceneSelectionType} from './opticalMosaicRecipe'
+import {SceneSelectionType, getAllVisualizations} from './opticalMosaicRecipe'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -96,8 +96,10 @@ class _OpticalMosaicImageLayer extends React.Component {
 
     componentDidUpdate(prevProps) {
         const {layerConfig: {visParams: prevVisParams}} = prevProps
+        const {recipe} = this.props
         if (prevVisParams) {
-            const visParams = visualizations[this.reflectance()].find(({bands}) => _.isEqual(bands, prevVisParams.bands))
+            const allVisualizations = getAllVisualizations(recipe)
+            const visParams = allVisualizations.find(({bands}) => _.isEqual(bands, prevVisParams.bands))
             if (visParams && !_.isEqual(visParams, prevVisParams)) {
                 this.selectVisualization(visParams)
             }
