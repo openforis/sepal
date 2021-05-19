@@ -14,7 +14,7 @@ import api from 'api'
 
 const log = getLogger('maps')
 
-const GOOGLE_MAPS_VERSION = '3.42'
+const GOOGLE_MAPS_VERSION = '3.44'
 
 export const MapsContext = React.createContext()
 
