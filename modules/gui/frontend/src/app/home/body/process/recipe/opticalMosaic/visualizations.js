@@ -43,8 +43,14 @@ export const visualizations = {
         normalize({
             type: 'rgb',
             bands: ['brightness', 'greenness', 'wetness'],
-            min: [1000, -1000, -1800],
-            max: [7000, 1800, 3200],
+            min: [1400, -1200, -1000],
+            max: [5200, 2100, 1100],
+        }),
+        normalize({
+            type: 'rgb',
+            bands: ['fifth', 'sixth', 'fourth'],
+            min: [-300, -600, -800],
+            max: [500, -200, -500],
         })
     ],
     SR: [
@@ -89,8 +95,14 @@ export const visualizations = {
         normalize({
             type: 'rgb',
             bands: ['brightness', 'greenness', 'wetness'],
-            min: [1000, -1000, -1800],
-            max: [7000, 1800, 3200],
+            min: [900, -900, -1500],
+            max: [5000, 2500, 900],
+        }),
+        normalize({
+            type: 'rgb',
+            bands: ['fifth', 'sixth', 'fourth'],
+            min: [-100, -400, -200],
+            max: [800, -50, 50],
         })
     ],
     metadata: [
