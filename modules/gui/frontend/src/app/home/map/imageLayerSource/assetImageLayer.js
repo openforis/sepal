@@ -7,6 +7,7 @@ import {createLegendFeatureLayerSource} from 'app/home/map/legendFeatureLayerSou
 import {createPaletteFeatureLayerSource} from '../paletteFeatureLayerSource'
 import {createValuesFeatureLayerSource} from '../valuesFeatureLayerSource'
 import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import {setActive, setComplete} from '../progress'
 import {withMapAreaContext} from '../mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -128,7 +129,9 @@ class _AssetImageLayer extends React.Component {
      }
 
      createLayer() {
-         const {layerConfig, map, source: {sourceConfig: {asset, metadata: {dataTypes}}}, boundsChanged$, dragging$, cursor$} = this.props
+         const {layerConfig, map, source, boundsChanged$, dragging$, cursor$} = this.props
+         const asset = selectFrom(source, 'sourceConfig.asset')
+         const dataTypes = selectFrom(source, 'sourceConfig.metadata.dataTypes') || {}
          const {props: prevPreviewRequest} = this.layer || {}
          const previewRequest = {
              recipe: {
