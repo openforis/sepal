@@ -21,6 +21,10 @@ class _Input extends React.Component {
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
+        this.onFocus = this.onFocus.bind(this)
+        this.onBlur = this.onBlur.bind(this)
+        this.onChange = this.onChange.bind(this)
+        this.onClear = this.onClear.bind(this)
     }
 
     componentDidMount() {
@@ -100,11 +104,10 @@ class _Input extends React.Component {
     renderInput() {
         const {
             type, name, placeholder, maxLength, tabIndex,
-            autoFocus, autoComplete, autoCorrect, autoCapitalize, spellCheck, disabled, readOnly, transform,
-            onBlur, onChange, onFocus
+            autoFocus, autoComplete, autoCorrect, autoCapitalize,
+            spellCheck, disabled, readOnly, value
         } = this.props
         const {focused} = this.state
-        const {value} = this.props
         return (
             // [HACK] input is wrapped in a div for fixing Firefox input width in flex
             <Keybinding keymap={{' ': null}} disabled={!focused} priority>
@@ -125,31 +128,40 @@ class _Input extends React.Component {
                         spellCheck={spellCheck ? 'true' : 'false'}
                         disabled={disabled}
                         readOnly={readOnly ? 'readonly' : ''}
-                        onFocus={e => {
-                            this.setState({focused: true})
-                            onFocus && onFocus(e)
-                        }}
-                        onBlur={e => {
-                            this.setState({focused: false})
-                            onBlur && onBlur(e)
-                        }}
-                        onChange={e => {
-                            const value = transform
-                                ? transform(e.target.value)
-                                : e.target.value
-
-                            if (this.isSelectionAllowed()) {
-                                const start = e.target.selectionStart
-                                const end = e.target.selectionEnd
-                                this.setState({start, end})
-                            }
-                            e.target.value = value
-                            onChange && onChange(e)
-                        }}
+                        onFocus={this.onFocus}
+                        onBlur={this.onBlur}
+                        onChange={this.onChange}
                     />
                 </div>
             </Keybinding>
         )
+    }
+
+    onFocus(e) {
+        const {onFocus} = this.props
+        this.setState({focused: true})
+        onFocus && onFocus(e)
+    }
+
+    onBlur(e) {
+        const {onBlur} = this.props
+        this.setState({focused: false})
+        onBlur && onBlur(e)
+    }
+
+    onChange(e) {
+        const {transform, onChange} = this.props
+        const value = transform
+            ? transform(e.target.value)
+            : e.target.value
+
+        if (this.isSelectionAllowed()) {
+            const start = e.target.selectionStart
+            const end = e.target.selectionEnd
+            this.setState({start, end})
+        }
+        e.target.value = value
+        onChange && onChange(e)
     }
 
     renderLeftComponent() {
@@ -189,11 +201,18 @@ class _Input extends React.Component {
                     air='none'
                     icon='times'
                     iconFixedWidth
-                    onClick={() => this.props.onChange({target: {value: ''}})}
+                    onClick={this.onClear}
                     // [TODO] change signature from event to value
                 />
             </ButtonGroup>
         )
+    }
+
+    onClear() {
+        const {onChange} = this.props
+        const {ref} = this
+        onChange({target: {value: ''}})
+        ref.current.focus()
     }
 
     isSearchInput() {
