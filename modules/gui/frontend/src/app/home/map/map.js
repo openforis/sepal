@@ -8,7 +8,7 @@ import {SplitView} from 'widget/split/splitView'
 import {VisParamsPanel} from './visParams/visParamsPanel'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {debounceTime, distinctUntilChanged, finalize, first, map as rxMap, share, switchMap} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, finalize, first, merge, map as rxMap, share, switchMap, tap} from 'rxjs/operators'
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
@@ -206,26 +206,64 @@ class _Map extends React.Component {
             share(),
             switchMap(({screenPixel, mapPixel, cursorArea, mode, latLng}) => {
                 if (cursorArea === area || mode === 'stack') {
-                    console.log('same area')
                     return of({...screenPixel})
                 } else {
                     return this.splitPosition$.pipe(
                         rxMap(splitPosition => {
                             if (splitPosition) {
                                 const areaPixel = map.latLngToPixel(latLng)
-                                const offset = mapPixel.x + splitPosition.x - screenPixel.x
-                                console.log({
-                                    areaPixel: areaPixel.x,
-                                    mapPixel: mapPixel.x,
-                                    screenPixel: screenPixel.x,
-                                    splitPosition: splitPosition.x,
-                                    offset
-                                })
-                                return {
-                                    x: areaPixel.x - offset,
-                                    y: screenPixel.y,
-                                    area
+                                const toPixel = (fromArea, toArea) => {
+                                    const fromLeft = ['top', 'top-left', 'left', 'bottom-left', 'bottom'].includes(fromArea)
+                                    const fromRight = ['right', 'top-right', 'bottom-right'].includes(fromArea)
+                                    const fromTop = ['top', 'top-left', 'left', 'top-right', 'right'].includes(fromArea)
+                                    const fromBottom = ['bottom', 'bottom-left', 'bottom-right'].includes(fromArea)
+                                    const toLeft = ['top', 'top-left', 'left', 'bottom-left', 'bottom'].includes(toArea)
+                                    const toRight = ['right', 'top-right', 'bottom-right'].includes(toArea)
+                                    const toTop = ['top', 'top-left', 'left', 'top-right', 'right'].includes(toArea)
+                                    const toBottom = ['bottom', 'bottom-left', 'bottom-right'].includes(toArea)
+
+                                    const valueForDirection = (axis, direction) => {
+                                        switch(direction) {
+                                        case 0: return screenPixel[axis]
+                                        case -1: return areaPixel[axis] - (mapPixel[axis] + splitPosition[axis] - screenPixel[axis])
+                                        case 1: return areaPixel[axis] - (mapPixel[axis] - splitPosition[axis] - screenPixel[axis])
+                                        }
+                                    }
+
+                                    const toValue = (axis, fromStart, fromEnd, toStart, toEnd) => {
+                                        if (fromStart && toEnd) {
+                                            return valueForDirection(axis, 1)
+                                        } else if (fromEnd && toStart) {
+                                            return valueForDirection(axis, -1)
+                                        } else {
+                                            console.log('same in ', axis)
+                                            return valueForDirection(axis, 0)
+                                        }
+                                    }
+
+                                    return {
+                                        x: toValue('x', fromLeft, fromRight, toLeft, toRight),
+                                        y: toValue('y', fromTop, fromBottom, toTop, toBottom)
+                                    }
                                 }
+                                // const offset = mapPixel.x + splitPosition.x - screenPixel.x // right -> left
+                                // const offset = mapPixel.x - splitPosition.x - screenPixel.x // left -> right
+                                // console.log({
+                                //     areaPixel: areaPixel.x,
+                                //     mapPixel: mapPixel.x,
+                                //     screenPixel: screenPixel.x,
+                                //     splitPosition: splitPosition.x,
+                                //     offset, area, cursorArea
+                                // })
+                                // return {
+                                //     x: Math.round(areaPixel.x - offset),
+                                //     y: screenPixel.y,
+                                //     area
+                                // }
+                                const pixel = toPixel(cursorArea, area)
+                                return {...pixel, area}
+                            } else {
+                                console.log('no split position')
                             }
                         }),
                         first()
@@ -286,6 +324,7 @@ class _Map extends React.Component {
             googleMap.addListener('mouseout', () => this.synchronizeCursor(area, null)),
             googleMap.addListener('mousemove', ({latLng, domEvent}) => this.synchronizeCursor(area, latLng, domEvent)),
             googleMap.addListener('center_changed', () => this.synchronizeOut(map)),
+            // googleMap.addListener('bounds_changed', () => this.synchronizeOut(map)),
             googleMap.addListener('zoom_changed', () => this.synchronizeOut(map)),
             googleMap.addListener('dragstart', () => this.dragging$.next(true)),
             googleMap.addListener('dragend', () => this.dragging$.next(false))
