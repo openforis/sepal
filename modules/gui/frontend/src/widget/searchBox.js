@@ -94,7 +94,7 @@ class _SearchBox extends React.Component {
     }
 
     hideOptions() {
-        this.hideOptions$.next(false)
+        this.showOptions$.next(false)
     }
 
     selectOption(option) {
