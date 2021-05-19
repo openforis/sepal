@@ -15,7 +15,7 @@ export class ActivationButton extends React.Component {
                         selected={active}
                         icon={icon}
                         label={label}
-                        tooltip={tooltip}
+                        tooltip={active ? null : tooltip}
                         className={[styles.activationButton, styles.panelButton, active ? styles.selected : null].join(' ')}
                         onClick={e => {
                             active ? deactivate() : activate()
