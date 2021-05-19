@@ -100,7 +100,9 @@ class _OpticalMosaicImageLayer extends React.Component {
         if (prevVisParams) {
             const allVisualizations = getAllVisualizations(recipe)
             const visParams = allVisualizations.find(({bands}) => _.isEqual(bands, prevVisParams.bands))
-            if (visParams && !_.isEqual(visParams, prevVisParams)) {
+            if (!visParams) {
+                this.selectVisualization(visualizations[this.reflectance()][0])
+            } else if (!_.isEqual(visParams, prevVisParams)) {
                 this.selectVisualization(visParams)
             }
         }
