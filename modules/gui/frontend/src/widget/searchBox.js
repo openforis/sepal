@@ -1,9 +1,9 @@
 import {Input} from 'widget/input'
 import {ScrollableList} from 'widget/list'
 import {Shape} from 'widget/shape'
-import {Subject, merge} from 'rxjs'
+import {Subject, merge, timer} from 'rxjs'
 import {compose} from 'compose'
-import {debounceTime, distinctUntilChanged, filter} from 'rxjs/operators'
+import {debounceTime, delay, distinctUntilChanged, filter, mapTo, switchMapTo, takeUntil} from 'rxjs/operators'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -20,6 +20,8 @@ class _SearchBox extends React.Component {
 
     search$ = new Subject()
     select$ = new Subject()
+    showOptions$ = new Subject()
+    hideOptions$ = new Subject()
 
     state = {
         value: '',
@@ -89,11 +91,11 @@ class _SearchBox extends React.Component {
     }
 
     showOptions() {
-        this.setState({showOptions: true})
+        this.showOptions$.next()
     }
 
     hideOptions() {
-        this.setState({showOptions: false})
+        this.hideOptions$.next()
     }
 
     selectOption(option) {
@@ -110,7 +112,16 @@ class _SearchBox extends React.Component {
 
     componentDidMount() {
         const {onSearchValue, onSearchValues, debounce, addSubscription} = this.props
-        const search$ = this.search$
+        const {search$, showOptions$, hideOptions$} = this
+        
+        const delayedShowOptions$ = showOptions$.pipe(
+            switchMapTo(
+                timer(250).pipe(
+                    takeUntil(hideOptions$)
+                )
+            )
+        )
+
         const debouncedSearch$ = merge(
             search$.pipe(
                 filter(value => !value) // skip debouncing when empty
@@ -121,7 +132,14 @@ class _SearchBox extends React.Component {
         ).pipe(
             distinctUntilChanged()
         )
+
         addSubscription(
+            merge(
+                delayedShowOptions$.pipe(mapTo(true)),
+                hideOptions$.pipe(mapTo(false))
+            ).subscribe(
+                showOptions => this.setState({showOptions})
+            ),
             debouncedSearch$.subscribe(
                 value => {
                     onSearchValue && onSearchValue(value)
