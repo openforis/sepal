@@ -1,4 +1,4 @@
-import {BehaviorSubject, ReplaySubject, Subject} from 'rxjs'
+import {BehaviorSubject, ReplaySubject, Subject, of} from 'rxjs'
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {MapAreaContext} from './mapAreaContext'
@@ -8,7 +8,7 @@ import {SplitView} from 'widget/split/splitView'
 import {VisParamsPanel} from './visParams/visParamsPanel'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {debounceTime, distinctUntilChanged, finalize, share} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, finalize, first, map as rxMap, share, switchMap} from 'rxjs/operators'
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
@@ -41,6 +41,7 @@ class _Map extends React.Component {
     mouseDown$ = new Subject()
     dragging$ = new Subject(false)
     boundsChanged$ = new Subject()
+    splitPosition$ = new BehaviorSubject()
     cursor$ = new Subject()
 
     state = {
@@ -60,9 +61,6 @@ class _Map extends React.Component {
     constructor() {
         super()
         this.mapDelegate = this.mapDelegate.bind(this)
-        document.addEventListener('mousemove', ({clientX: x, clientY: y}) =>
-            this.cursor$.next({x, y})
-        )
     }
 
     allMaps(callback) {
@@ -114,11 +112,20 @@ class _Map extends React.Component {
         overlay && overlay.map.setView({center, zoom})
     }
 
-    synchronizeCursor(area, latLng) {
+    synchronizeCursor(cursorArea, latLng, event) {
         const {layers: {mode}} = this.props
+        if (event) {
+            this.cursor$.next({
+                screenPixel: {x: event.clientX, y: event.clientY},
+                mapPixel: {x: event.layerX, y: event.layerY},
+                cursorArea,
+                latLng,
+                mode
+            })
+        }
         this.allMaps(({area: otherArea, map}) => {
-            if (mode === 'grid') {
-                otherArea !== area ? map.setCursor(latLng) : null
+            if (mode === 'grid' && otherArea !== cursorArea) {
+                map.setCursor(latLng)
             } else {
                 map.setCursor(null)
             }
@@ -162,7 +169,7 @@ class _Map extends React.Component {
             map,
             boundsChanged$: this.boundsChanged$.pipe(share()),
             dragging$: this.dragging$.pipe(share()),
-            cursor$: this.cursor$.pipe(share())
+            cursor$: this.areaCursor$(area, map)
         })
 
         const refCallback = element => {
@@ -174,7 +181,6 @@ class _Map extends React.Component {
                 }
             }
         }
-
         return (
             <React.Fragment>
                 <div
@@ -192,6 +198,41 @@ class _Map extends React.Component {
                     {layerComponent}
                 </MapAreaContext.Provider>
             </React.Fragment>
+        )
+    }
+
+    areaCursor$(area, map) {
+        return this.cursor$.pipe(
+            share(),
+            switchMap(({screenPixel, mapPixel, cursorArea, mode, latLng}) => {
+                if (cursorArea === area || mode === 'stack') {
+                    console.log('same area')
+                    return of({...screenPixel})
+                } else {
+                    return this.splitPosition$.pipe(
+                        rxMap(splitPosition => {
+                            if (splitPosition) {
+                                const areaPixel = map.latLngToPixel(latLng)
+                                const offset = mapPixel.x + splitPosition.x - screenPixel.x
+                                console.log({
+                                    areaPixel: areaPixel.x,
+                                    mapPixel: mapPixel.x,
+                                    screenPixel: screenPixel.x,
+                                    splitPosition: splitPosition.x,
+                                    offset
+                                })
+                                return {
+                                    x: areaPixel.x - offset,
+                                    y: screenPixel.y,
+                                    area
+                                }
+                            }
+                        }),
+                        first()
+                    )
+                }
+
+            })
         )
     }
 
@@ -243,7 +284,7 @@ class _Map extends React.Component {
 
         const listeners = [
             googleMap.addListener('mouseout', () => this.synchronizeCursor(area, null)),
-            googleMap.addListener('mousemove', ({latLng}) => this.synchronizeCursor(area, latLng)),
+            googleMap.addListener('mousemove', ({latLng, domEvent}) => this.synchronizeCursor(area, latLng, domEvent)),
             googleMap.addListener('center_changed', () => this.synchronizeOut(map)),
             googleMap.addListener('zoom_changed', () => this.synchronizeOut(map)),
             googleMap.addListener('dragstart', () => this.dragging$.next(true)),
@@ -318,7 +359,8 @@ class _Map extends React.Component {
                         areas={this.renderAreas()}
                         overlay={this.renderOverlay()}
                         mode={layers.mode}
-                        maximize={layers.mode === 'stack' ? selectedZoomArea : null}>
+                        maximize={layers.mode === 'stack' ? selectedZoomArea : null}
+                        position$={this.splitPosition$}>
                         <div className={styles.content}>
                             {this.isMapInitialized() ? this.renderRecipe() : null}
                         </div>

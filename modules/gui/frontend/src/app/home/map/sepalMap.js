@@ -29,6 +29,11 @@ export class SepalMap {
             icon: svgMarker
         })
         this.marker.setMap(googleMap)
+
+        this.overlay = new google.maps.OverlayView()
+        this.overlay.draw = () => {}
+        this.overlay.setMap(googleMap)
+
     }
 
     layerById = {}
@@ -68,6 +73,11 @@ export class SepalMap {
 
     setCursor(latLng) {
         this.marker.setPosition(latLng)
+    }
+
+    latLngToPixel(latLng) {
+        // return this.overlay.getProjection().fromLatLngToDivPixel(latLng)
+        return this.overlay.getProjection().fromLatLngToContainerPixel(latLng)
     }
 
     // View
@@ -225,7 +235,7 @@ export class SepalMap {
         const {google, googleMap} = this
         if (this.drawingPolygon) {
             this.disableDrawingMode()
-            const {id, callback} = this.drawingPolygon
+            const {callback} = this.drawingPolygon
             this.drawingManager = new google.maps.drawing.DrawingManager({
                 drawingMode: google.maps.drawing.OverlayType.POLYGON,
                 drawingControl: false,

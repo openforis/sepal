@@ -5,7 +5,6 @@ import {SplitHandleHorizontal} from './splitHandleHorizontal'
 import {SplitHandleVertical} from './splitHandleVertical'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {getLogger} from 'log'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -176,7 +175,11 @@ class _SplitView extends React.PureComponent {
     }
 
     onPosition(position) {
+        const {position$} = this.props
         this.setState({position})
+        if (position$) {
+            position$.next(position)
+        }
     }
 
     renderContent() {
@@ -264,7 +267,8 @@ SplitView.propTypes = {
     className: PropTypes.string,
     maximize: PropTypes.string,
     mode: PropTypes.oneOf(['stack', 'grid']),
-    overlay: PropTypes.any
+    overlay: PropTypes.any,
+    position$: PropTypes.any
 }
 
 SplitView.defaultProps = {

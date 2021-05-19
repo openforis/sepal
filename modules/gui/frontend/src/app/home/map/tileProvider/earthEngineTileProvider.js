@@ -29,7 +29,7 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
                 () => this.calculateTileOffsets()
             ),
             cursor$.pipe(
-                lastInWindow(100)
+                // lastInWindow(100) // TODO: Re-enable this
             ).subscribe(
                 cursor => this.cursorColor(cursor)
             ),
@@ -92,6 +92,9 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
         const offsetY = y - top
         const ctx = element.getContext('2d')
         const data = ctx.getImageData(offsetX, offsetY, 1, 1).data
+        // TODO: Remove this
+        ctx.fillStyle = '#FF0000'
+        ctx.fillRect(offsetX, offsetY, 1, 1)
         const [red, green, blue, alpha] = data
         if (alpha) {
             const bandValues = toBandValues([red, green, blue], this.visParams, this.dataTypes)
