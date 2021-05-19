@@ -36,7 +36,6 @@ class FloatingBox extends React.Component {
             '--below-top': bottom
         }
         return (
-            // <Portal type='container' onClick={this.onClick}>
             <Portal type='global' onClick={this.onClick}>
                 <div className={styles.container}>
                     <div

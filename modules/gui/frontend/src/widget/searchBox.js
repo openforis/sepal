@@ -1,9 +1,9 @@
 import {Input} from 'widget/input'
 import {ScrollableList} from 'widget/list'
 import {Shape} from 'widget/shape'
-import {Subject, merge, timer} from 'rxjs'
+import {Subject, merge} from 'rxjs'
 import {compose} from 'compose'
-import {debounceTime, delay, distinctUntilChanged, filter, mapTo, switchMapTo, takeUntil} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, filter} from 'rxjs/operators'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -21,7 +21,6 @@ class _SearchBox extends React.Component {
     search$ = new Subject()
     select$ = new Subject()
     showOptions$ = new Subject()
-    hideOptions$ = new Subject()
 
     state = {
         value: '',
@@ -91,11 +90,11 @@ class _SearchBox extends React.Component {
     }
 
     showOptions() {
-        this.showOptions$.next()
+        this.showOptions$.next(true)
     }
 
     hideOptions() {
-        this.hideOptions$.next()
+        this.hideOptions$.next(false)
     }
 
     selectOption(option) {
@@ -112,14 +111,17 @@ class _SearchBox extends React.Component {
 
     componentDidMount() {
         const {onSearchValue, onSearchValues, debounce, addSubscription} = this.props
-        const {search$, showOptions$, hideOptions$} = this
+        const {search$, showOptions$} = this
         
-        const delayedShowOptions$ = showOptions$.pipe(
-            switchMapTo(
-                timer(250).pipe(
-                    takeUntil(hideOptions$)
-                )
+        const debouncedShowOptions$ = merge(
+            showOptions$.pipe(
+                filter(show => !show)
+            ),
+            showOptions$.pipe(
+                debounceTime(250),
             )
+        ).pipe(
+            distinctUntilChanged()
         )
 
         const debouncedSearch$ = merge(
@@ -134,10 +136,7 @@ class _SearchBox extends React.Component {
         )
 
         addSubscription(
-            merge(
-                delayedShowOptions$.pipe(mapTo(true)),
-                hideOptions$.pipe(mapTo(false))
-            ).subscribe(
+            debouncedShowOptions$.subscribe(
                 showOptions => this.setState({showOptions})
             ),
             debouncedSearch$.subscribe(
