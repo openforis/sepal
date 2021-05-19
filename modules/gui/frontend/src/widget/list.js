@@ -88,8 +88,6 @@ class List extends React.Component {
         const keymap = {
             Escape: onCancel ? onCancel : null,
             Enter: () => this.selectHighlighted(),
-            ArrowLeft: () => this.highlightPrevious(),
-            ArrowRight: () => this.highlightNext(),
             ArrowUp: () => this.highlightPrevious(),
             ArrowDown: () => this.highlightNext(),
             Home: () => this.highlightFirst(),
@@ -126,7 +124,7 @@ class List extends React.Component {
 
     renderOption(option, index) {
         return option.value !== undefined && !option.disabled
-            ? this.renderSelectableOption(option)
+            ? this.renderSelectableOption(option, index)
             : option.group
                 ? this.renderGroup(option, index)
                 : this.renderNonSelectableOption(option, index)
@@ -135,7 +133,7 @@ class List extends React.Component {
     renderGroup(option, index) {
         const {alignment, air} = this.props
         return (
-            <li key={index}>
+            <li key={option.key || index}>
                 <Button
                     chromeless
                     look='transparent'
@@ -153,7 +151,7 @@ class List extends React.Component {
     renderNonSelectableOption(option, index) {
         const {alignment, air} = this.props
         return (
-            <li key={option.value || index}>
+            <li key={option.key || option.value || index}>
                 <Button
                     chromeless
                     look='transparent'
@@ -167,7 +165,7 @@ class List extends React.Component {
         )
     }
 
-    renderSelectableOption(option) {
+    renderSelectableOption(option, index) {
         const {selectedOption, tooltipPlacement, alignment, air} = this.props
         const {overrideHover} = this.state
         const selected = this.isSelected(option)
@@ -182,7 +180,7 @@ class List extends React.Component {
                 : null
         return (
             <li
-                key={option.value}
+                key={option.key || option.value || index}
                 data-option-value={option.value}
                 ref={ref}>
                 <Button
