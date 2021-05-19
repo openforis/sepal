@@ -107,7 +107,7 @@ export const RecipeActions = id => {
 }
 
 export const getAllVisualizations = recipe => [
-    ...Object.values((recipe.layers.userDefinedVisualizations['this-recipe'] || {})),
+    ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
     ...visualizations[reflectance(recipe)],
     ...visualizations.indexes,
     ...(median(recipe) ? visualizations.metadata : [])
