@@ -48,6 +48,10 @@ test('coords.parse(\'${params.query}\') === ${JSON.stringify(result)}')
         {params: {query: '112.34, 23.45'}, result: [{lat: 23.45, lng: 112.34}]},
         {params: {query: '-112.34, -23.45'}, result: [{lat: -23.45, lng: -112.34}]},
 
+        // non-ambiguous (symmetrical)
+        {params: {query: '56.78, 56.78'}, result: [{lat: 56.78, lng: 56.78}]},
+        {params: {query: '-56.78, -56.78'}, result: [{lat: -56.78, lng: -56.78}]},
+
         // conflicting
         {params: {query: '12.34 N 23.45 S'}, result: []},
         {params: {query: '12.34 E 23.45 W'}, result: []},

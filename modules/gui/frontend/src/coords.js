@@ -60,7 +60,7 @@ export const parseCoordinates = string => {
             })
         }
 
-        return results
+        return _.uniqBy(results, formatCoordinates)
     }
 
     return []
