@@ -65,7 +65,7 @@ class _SearchBox extends React.Component {
     }
 
     renderOptions() {
-        const {placement, options, optionsClassName, optionTooltipPlacement, alignment, onSelect} = this.props
+        const {placement, options, optionsClassName, optionTooltipPlacement, alignment} = this.props
         return options && options.length
             ? (
                 <FloatingBox

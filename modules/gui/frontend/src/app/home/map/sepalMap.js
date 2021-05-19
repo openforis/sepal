@@ -187,7 +187,7 @@ export class SepalMap {
         marker.setMap(googleMap)
     }
 
-    setRectangle(options, onClick) {
+    setRectangle(options) {
         const {google, googleMap} = this
         const rectangle = new google.maps.Rectangle({
             ...this.drawingOptions,
@@ -206,15 +206,12 @@ export class SepalMap {
             },
             title: options.title
         })
-        closeMarker.addListener('click', onClick)
+        closeMarker.addListener('click', () => {
+            closeMarker.setMap(null)
+            rectangle.setMap(null)
+        })
         rectangle.setMap(googleMap)
         closeMarker.setMap(googleMap)
-        return {
-            close: () => {
-                closeMarker.setMap(null)
-                rectangle.setMap(null)
-            }
-        }
     }
 
     // Polygon
