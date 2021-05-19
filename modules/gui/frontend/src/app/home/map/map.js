@@ -67,24 +67,24 @@ class _Map extends React.Component {
 
     allMaps(callback) {
         const {maps} = this.state
-        _.forEach(maps, ({map, listeners, subscriptions}, area) => {
-            callback({area, map, listeners, subscriptions})
+        _.forEach(maps, ({area, map, listeners, subscriptions}, id) => {
+            callback({id, area, map, listeners, subscriptions})
         })
     }
 
     withFirstMap(callback) {
         const {maps} = this.state
-        const area = _.head(_.keys(maps))
-        const {map = null} = maps[area] || {}
+        const id = _.head(_.keys(maps))
+        const {map = null} = maps[id] || {}
         return map
-            ? callback(map, area)
+            ? callback(map)
             : null
     }
 
-    removeArea(area) {
-        log.debug(`${mapTag(this.state.mapId)} removing area ${area}`)
+    removeMap(id) {
+        log.debug(`${mapTag(this.state.mapId)} removing map for layer ${id}`)
         const {maps} = this.state
-        const {map, listeners, subscriptions} = maps[area]
+        const {map, listeners, subscriptions} = maps[id]
         const {google} = map.getGoogle()
         _.forEach(listeners, listener =>
             google.maps.event.removeListener(listener)
@@ -94,7 +94,7 @@ class _Map extends React.Component {
         )
         this.setState(({maps}) => {
             const updatedMaps = {...maps}
-            delete updatedMaps[area]
+            delete updatedMaps[id]
             return ({maps: updatedMaps})
         })
     }
@@ -148,10 +148,10 @@ class _Map extends React.Component {
         this.allMaps(({map}) => map.setRectangle(options))
     }
 
-    renderImageLayerSource(source, layerConfig, area) {
+    renderImageLayer(id, source, layerConfig, area) {
         const {recipe} = this.props
         const {maps} = this.state
-        const map = maps[area] && maps[area].map
+        const map = maps[id] && maps[id].map
         const updateLayerConfig = layerConfig => this.updateLayerConfig(layerConfig, area)
         const includeAreaFeatureLayerSource = featureLayerSource => this.includeAreaFeatureLayerSource(featureLayerSource, area)
         const excludeAreaFeatureLayerSource = featureLayerSource => this.excludeAreaFeatureLayerSource(featureLayerSource, area)
@@ -167,9 +167,9 @@ class _Map extends React.Component {
 
         const refCallback = element => {
             if (element) {
-                if (!maps[area]) {
-                    this.createArea(area, element, ({map, listeners, subscriptions}) => {
-                        this.setState(({maps}) => ({maps: {...maps, [area]: {map, listeners, subscriptions}}}))
+                if (!maps[id]) {
+                    this.createMap(area, element, ({map, listeners, subscriptions}) => {
+                        this.setState(({maps}) => ({maps: {...maps, [id]: {area, map, listeners, subscriptions}}}))
                     })
                 }
             }
@@ -179,7 +179,6 @@ class _Map extends React.Component {
             <React.Fragment>
                 <div
                     className={styles.map}
-                    // data-area={area}
                     ref={refCallback}
                     onMouseDown={() => this.mouseDown$.next(area)}
                 />
@@ -225,13 +224,12 @@ class _Map extends React.Component {
             .dispatch()
     }
 
-    createArea(area, element, callback) {
+    createMap(area, element, callback) {
         const {mapsContext: {createSepalMap}} = this.props
 
         log.debug(`${mapTag(this.state.mapId)} creating area ${area}`)
 
         const isOverlay = area === 'overlay'
-        // const options = isOverlay ? {gestureHandling: 'none'} : null
         const options = isOverlay ? {
             backgroundColor: 'hsla(0, 0%, 0%, 0)',
             gestureHandling: 'none'
@@ -337,8 +335,9 @@ class _Map extends React.Component {
             const {sourceId, layerConfig} = layer.imageLayer
             const source = imageLayerSources.find(({id}) => id === sourceId)
             return ({
+                key: layer.id,
                 placement: area,
-                content: this.renderImageLayerSource(source, layerConfig, area)
+                content: this.renderImageLayer(layer.id, source, layerConfig, area)
             })
         })
     }
@@ -348,7 +347,7 @@ class _Map extends React.Component {
 
         const refCallback = element => {
             if (element && !overlay) {
-                this.createArea('overlay', element, ({map, listeners, subscriptions}) => {
+                this.createMap('overlay', element, ({map, listeners, subscriptions}) => {
                     this.setState({overlay: {map, listeners, subscriptions}})
                 })
             }
@@ -408,9 +407,9 @@ class _Map extends React.Component {
     componentDidUpdate(prevProps) {
         const {layers: {areas: prevAreas}} = prevProps
         const {layers: {areas}} = this.props
-        Object.keys(prevAreas)
-            .filter(area => !Object.keys(areas).includes(area))
-            .map(area => this.removeArea(area))
+        Object.values(prevAreas)
+            .filter(({id}) => !Object.values(areas).map(({id}) => id).includes(id))
+            .map(({id}) => this.removeMap(id))
 
         if (this.isMapInitialized()) {
             this.mapInitialized$.next(true)
@@ -418,8 +417,8 @@ class _Map extends React.Component {
     }
 
     componentWillUnmount() {
-        this.allMaps(({area}) => {
-            this.removeArea(area)
+        this.allMaps(({id}) => {
+            this.removeMap(id)
         })
     }
 
@@ -500,8 +499,8 @@ class _Map extends React.Component {
 
     mapDelegate() {
         const {bounds} = this.props
-        const {maps: mapByArea} = this.state
-        const maps = Object.values(mapByArea).map(({map}) => map)
+        const {maps: mapById} = this.state
+        const maps = Object.values(mapById).map(({map}) => map)
         const map = maps[0]
 
         const isInitialized = () => bounds

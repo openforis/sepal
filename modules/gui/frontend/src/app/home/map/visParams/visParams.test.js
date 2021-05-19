@@ -56,7 +56,19 @@ test('normalize(${visParams}) === ${result}')
             result: {type: 'rgb', bands: ['a', 'b', 'c'], min: [1, 1, 1], max: [4, 4, 4], gamma: [1, 1, 1], inverted: [false, false, false]}
         },
         { // Add min, max
-            visParams: {type: 'categorical', bands: ['a'], values: [5, 200, 1000], palette: ['#FF0000', '#00FF00', '#0000FF']},
+            visParams: {type: 'categorical', bands: ['a'], values: [5, 200, 1000], labels: 'foo, bar, baz', palette: ['#FF0000', '#00FF00', '#0000FF']},
+            result: {type: 'categorical', bands: ['a'], min: [5], max: [1000], values: [5, 200, 1000], labels: ['foo', 'bar', 'baz'], palette: ['#FF0000', '#00FF00', '#0000FF']}
+        },
+        { // Add type rgb when multiple bands
+            visParams: {bands: ['a', 'b', 'c'], min: [1, 2, 3], max: [4, 5, 6], gamma: [1, 2, 3], inverted: [false, true, false]},
+            result: {type: 'rgb', bands: ['a', 'b', 'c'], min: [1, 2, 3], max: [4, 5, 6], gamma: [1, 2, 3], inverted: [false, true, false]}
+        },
+        { // Add type continuous when single band and no values
+            visParams: {bands: ['index'], min: [3], max: [7], palette: ['#000000', '#FFFFFF'], inverted: [false]},
+            result: {type: 'continuous', bands: ['index'], min: [3], max: [7], palette: ['#000000', '#FFFFFF'], inverted: [false]}
+        },
+        { // Add type categorical when single band and values
+            visParams: {bands: ['a'], min: [5], max: [1000], values: [5, 200, 1000], palette: ['#FF0000', '#00FF00', '#0000FF']},
             result: {type: 'categorical', bands: ['a'], min: [5], max: [1000], values: [5, 200, 1000], palette: ['#FF0000', '#00FF00', '#0000FF']}
         },
     )

@@ -16,16 +16,17 @@ import styles from './opticalMosaic.module.css'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
-    aoi: selectFrom(recipe, 'model.aoi')
+    aoi: selectFrom(recipe, 'model.aoi'),
+    layers: selectFrom(recipe, 'layers')
 })
 
 class _OpticalMosaic extends React.Component {
     constructor(props) {
         super(props)
-        const {recipeId} = props
+        const {layers, recipeId} = props
         const recipeActions = RecipeActions(recipeId)
         recipeActions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
-        initializeLayers(recipeId)
+        initializeLayers(recipeId, layers)
     }
 
     render() {

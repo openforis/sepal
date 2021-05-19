@@ -269,13 +269,15 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'thermal', 'brightness', 'greenness', 'wetness'
+                'aerosol', 'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2', 'brightness', 'greenness', 'wetness'
+                'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         }
     },
@@ -288,13 +290,15 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal', 'brightness', 'greenness', 'wetness'
+                'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'pan', 'thermal', 'thermal2', 'brightness', 'greenness', 'wetness'
+                'pan', 'thermal', 'thermal2',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         }
     },
@@ -308,13 +312,15 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal', 'brightness', 'greenness', 'wetness'
+                'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal', 'brightness', 'greenness', 'wetness'
+                'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         }
     },
@@ -327,13 +333,15 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'thermal', 'brightness', 'greenness', 'wetness'
+                'aerosol', 'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2', 'brightness', 'greenness', 'wetness'
+                'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         }
     },
@@ -346,13 +354,15 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal', 'brightness', 'greenness', 'wetness'
+                'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'pan', 'thermal', 'thermal2', 'brightness', 'greenness', 'wetness'
+                'pan', 'thermal', 'thermal2',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         }
     },
@@ -366,13 +376,15 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal', 'brightness', 'greenness', 'wetness'
+                'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal', 'brightness', 'greenness', 'wetness'
+                'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         }
     },
@@ -386,14 +398,16 @@ const dataSetById = {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
                 'redEdge1', 'redEdge2', 'redEdge3', 'redEdge4',
-                'aerosol', 'waterVapor', 'cirrus', 'brightness', 'greenness', 'wetness'
+                'aerosol', 'waterVapor', 'cirrus',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
                 'redEdge1', 'redEdge2', 'redEdge3', 'redEdge4',
-                'aerosol', 'waterVapor', 'brightness', 'greenness', 'wetness'
+                'aerosol', 'waterVapor',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         }
     },
@@ -552,6 +566,9 @@ const getBandOption = band => {
             brightness: {mosaicMultiplier: 10000, timeSeriesMultiplier: 10000, ...option('brightness')},
             greenness: {mosaicMultiplier: 10000, timeSeriesMultiplier: 10000, ...option('greenness')},
             wetness: {mosaicMultiplier: 10000, timeSeriesMultiplier: 10000, ...option('wetness')},
+            fourth: {mosaicMultiplier: 10000, timeSeriesMultiplier: 10000, ...option('fourth')},
+            fifth: {mosaicMultiplier: 10000, timeSeriesMultiplier: 10000, ...option('fifth')},
+            sixth: {mosaicMultiplier: 10000, timeSeriesMultiplier: 10000, ...option('sixth')},
             VV: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VV', label: 'VV'},
             VH: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VH', label: 'VH'},
             ratio_VV_VH: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'ratio_VV_VH', label: 'VV/VH'},
@@ -668,6 +685,12 @@ const groupedBands = [
     },
     {
         bands: ['brightness', 'greenness', 'wetness'],
+        mosaicMultiplier: 10000,
+        timeSeriesMultiplier: 10000,
+        type: 'opticalBands'
+    },
+    {
+        bands: ['fourth', 'fifth', 'sixth'],
         mosaicMultiplier: 10000,
         timeSeriesMultiplier: 10000,
         type: 'opticalBands'

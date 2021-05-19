@@ -6,6 +6,7 @@ import {connect} from 'store'
 import {createLegendFeatureLayerSource} from 'app/home/map/legendFeatureLayerSource'
 import {createPaletteFeatureLayerSource} from 'app/home/map/paletteFeatureLayerSource'
 import {createValuesFeatureLayerSource} from 'app/home/map/valuesFeatureLayerSource'
+import {dataTypes} from 'app/home/body/process/recipe/opticalMosaic/dataTypes'
 import {selectFrom} from 'stateUtils'
 import {setActive, setComplete} from 'app/home/map/progress'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
@@ -120,6 +121,7 @@ class _RecipeImageLayer extends React.Component {
             this.layer && this.layer.close()
             this.layer = EarthEngineLayer.create({
                 previewRequest,
+                dataTypes,
                 visParams: layerConfig.visParams,
                 map,
                 progress$: this.progress$,

@@ -12,8 +12,6 @@ import _ from 'lodash'
 import styles from './splitView.module.css'
 import withSubscriptions from 'subscription'
 
-const log = getLogger('splitView')
-
 const resize$ = new Subject()
 
 class _SplitView extends React.PureComponent {
@@ -87,14 +85,14 @@ class _SplitView extends React.PureComponent {
         )
     }
 
-    renderArea({placement, content}) {
+    renderArea({key, placement, content}) {
         const {mode, maximize} = this.props
         const {initialized} = this.state
         const single = mode === 'stack' && maximize
         const hidden = single && maximize !== placement
         return (
             <div
-                key={placement}
+                key={key}
                 className={_.flatten([
                     styles.area,
                     hidden ? styles.hide : mode === 'stack' ? styles.full : styles.partial,
@@ -256,6 +254,7 @@ SplitView.propTypes = {
     areas: PropTypes.arrayOf(
         PropTypes.shape({
             content: PropTypes.any.isRequired,
+            key: PropTypes.any.isRequired,
             placement: PropTypes.oneOf(['center', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-left', 'left', 'top-left']).isRequired,
             className: PropTypes.string,
             view: PropTypes.any

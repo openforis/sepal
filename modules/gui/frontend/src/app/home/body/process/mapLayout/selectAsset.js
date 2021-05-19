@@ -6,10 +6,12 @@ import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {takeUntil} from 'rxjs/operators'
+import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualizationParser'
 import {v4 as uuid} from 'uuid'
 import {withRecipe} from '../recipeContext'
 import React from 'react'
 import api from 'api'
+import guid from 'guid'
 import styles from './selectAsset.module.css'
 
 const fields = {
@@ -51,7 +53,7 @@ class _SelectAsset extends React.Component {
                     input={asset}
                     spellCheck={false}
                     autoFocus
-                    onChangeDebounced={asset => this.validateAsset(asset)}
+                    onChangeDebounced={asset => this.loadMetadata(asset)}
                     busyMessage={this.props.stream('VALIDATE_ASSET').active && msg('widget.loading')}
                     errorMessage
                 />
@@ -59,13 +61,14 @@ class _SelectAsset extends React.Component {
         )
     }
 
-    validateAsset(asset) {
+    loadMetadata(asset) {
         this.assetChanged$.next()
         this.setState({validatedAsset: null},
             this.props.stream('VALIDATE_ASSET',
                 api.gee.imageMetadata$({asset}).pipe(
-                    takeUntil(this.assetChanged$)),
-                () => this.setState({validatedAsset: asset}),
+                    takeUntil(this.assetChanged$)
+                ),
+                metadata => this.setState({validatedAsset: asset, metadata}),
                 () => {
                     this.props.inputs.asset.setInvalid(
                         msg('map.layout.addImageLayerSource.types.Asset.form.loadError')
@@ -76,15 +79,19 @@ class _SelectAsset extends React.Component {
     }
 
     add() {
-        const {validatedAsset: asset} = this.state
+        const {validatedAsset: asset, metadata} = this.state
         const {recipeActionBuilder, activatable: {deactivate}} = this.props
+        const visualizations = toVisualizations(metadata.properties, metadata.bands)
+            .map(visualization => ({...visualization, id: guid()}))
         recipeActionBuilder('ADD_ASSET_IMAGE_LAYER_SOURCE')
             .push('layers.additionalImageLayerSources', {
                 id: uuid(),
                 type: 'Asset',
                 sourceConfig: {
                     description: asset,
-                    asset
+                    asset,
+                    metadata,
+                    visualizations
                 }
             })
             .dispatch()

@@ -1,7 +1,7 @@
 import {Buttons} from 'widget/buttons'
 import {Layout} from 'widget/layout'
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
-import {SceneSelectionType} from './opticalMosaicRecipe'
+import {SceneSelectionType, getAllVisualizations} from './opticalMosaicRecipe'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -10,6 +10,7 @@ import {visualizations} from './visualizations'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 
 const defaultLayerConfig = {
     panSharpen: false
@@ -87,7 +88,24 @@ class _OpticalMosaicImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        this.selectVisualization(visualizations[this.reflectance()][0])
+        const {layerConfig: {visParams}} = this.props
+        if (!visParams) {
+            this.selectVisualization(visualizations[this.reflectance()][0])
+        }
+    }
+
+    componentDidUpdate(prevProps) {
+        const {layerConfig: {visParams: prevVisParams}} = prevProps
+        const {recipe} = this.props
+        if (prevVisParams) {
+            const allVisualizations = getAllVisualizations(recipe)
+            const visParams = allVisualizations.find(({bands}) => _.isEqual(bands, prevVisParams.bands))
+            if (!visParams) {
+                this.selectVisualization(visualizations[this.reflectance()][0])
+            } else if (!_.isEqual(visParams, prevVisParams)) {
+                this.selectVisualization(visParams)
+            }
+        }
     }
 
     hasScenes() {

@@ -80,8 +80,10 @@ const fields = {
 }
 
 const mapRecipeToProps = (recipe, {activatable: {imageLayerSourceId}}) => ({
-    visParamsSets: selectFrom(recipe, ['layers.userDefinedVisualizations', imageLayerSourceId]) || []
+    visParamsSets: selectFrom(recipe, ['layers.userDefinedVisualizations', imageLayerSourceId]) || [],
+    aoi: selectFrom(recipe, 'model.aoi')
 })
+
 class _VisParamsPanel extends React.Component {
     state = {
         bands: null,
@@ -283,7 +285,7 @@ class _VisParamsPanel extends React.Component {
     }
 
     initHistogram(name, {stretch}) {
-        const {stream, activatable: {recipe}} = this.props
+        const {stream, activatable: {recipe}, aoi} = this.props
         const {histograms} = this.state
         const histogram = histograms[name]
         const updateHistogram = (data, stretch) => this.setState(({histograms}) =>
@@ -296,8 +298,10 @@ class _VisParamsPanel extends React.Component {
             updateHistogram(histogram.data, true)
         } else {
             stream((`LOAD_HISTOGRAM_${name}`),
-                api.gee.histogram$({recipe, band: name}),
-                data => updateHistogram(data, stretch)
+                api.gee.histogram$({recipe, aoi, band: name}),
+                data => data
+                    ? updateHistogram(data, stretch)
+                    : Notifications.warning({message: msg('map.visParams.form.histogram.noData')})
             )
         }
     }
@@ -339,7 +343,9 @@ class _VisParamsPanel extends React.Component {
         const min = this.values('min').map(value => toNumber(value))
         const max = this.values('max').map(value => toNumber(value))
         const gamma = this.values('gamma').map(value => toNumber(value))
-        const palette = inputs.palette.value ? inputs.palette.value.map(({color}) => color) : []
+        const palette = inputs.palette.value
+            ? inputs.palette.value.map(({color}) => color)
+            : ['#000000', '#FFFFFF']
         const id = prevVisParams && prevVisParams.id ? prevVisParams.id : guid()
         const visParams = singleBand
             ? {id, type, bands, inverted, min, max, palette, userDefined: true}

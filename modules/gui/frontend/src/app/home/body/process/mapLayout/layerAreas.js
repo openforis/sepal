@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import guid from 'guid'
 
 export const validAreas = areas => {
     assertValidState(areas)
@@ -54,7 +55,11 @@ export const removeArea = ({areas, area}) => {
     }
 
     if (area === 'center') {
-        return {}
+        return {center: {
+            id: guid(),
+            imageLayer: {},
+            featureLayers: []
+        }}
     } else {
         const replacements = replacementMap[area]
         return _.reduce(

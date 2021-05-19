@@ -39,7 +39,6 @@ class _AssetImageLayer extends React.Component {
              type: 'ASSET',
              id: source.sourceConfig.asset
          }
-
          const visParamsToOption = visParams => ({
              value: visParams.id,
              label: visParams.bands.join(', '),
@@ -129,7 +128,7 @@ class _AssetImageLayer extends React.Component {
      }
 
      createLayer() {
-         const {layerConfig, map, source: {sourceConfig: {asset}}, boundsChanged$, dragging$, cursor$} = this.props
+         const {layerConfig, map, source: {sourceConfig: {asset, metadata: {dataTypes}}}, boundsChanged$, dragging$, cursor$} = this.props
          const {props: prevPreviewRequest} = this.layer || {}
          const previewRequest = {
              recipe: {
@@ -143,6 +142,7 @@ class _AssetImageLayer extends React.Component {
              this.layer = EarthEngineLayer.create({
                  previewRequest,
                  visParams: layerConfig.visParams,
+                 dataTypes,
                  map,
                  cursorValue$: this.cursorValue$,
                  progress$: this.progress$,

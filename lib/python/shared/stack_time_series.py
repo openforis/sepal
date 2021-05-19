@@ -20,7 +20,7 @@ nodata_value = 0
 
 
 def stack_time_series(directory):
-    chunk_dirs = glob(join(directory, 'chunk-*'))
+    chunk_dirs = sorted(glob(join(directory, 'chunk-*')))
     if not chunk_dirs:
         print('    Skipping. No chunk-* directories')
         return
@@ -113,11 +113,11 @@ def create_tile_stack(metadata, chunks, tile):
             chunk_dir = chunk['chunk_dir']
             chunk_name = chunk_file_pattern.search(basename(chunk_dir))[1]
             tile_name = tile_dir_pattern.search(basename(tile_dir))[1]
-            matches = glob(join(chunk_dir, '*{0}-{1}.tif'.format(chunk_name, tile_name)))
+            matches = sorted(glob(join(chunk_dir, '*{0}-{1}.tif'.format(chunk_name, tile_name))))
             if matches:
                 chunk_file = matches[0]
             else:
-                chunk_file = glob(join(chunk_dir, '*{}.tif'.format(chunk_name)))[0]
+                chunk_file = sorted(glob(join(chunk_dir, '*{}.tif'.format(chunk_name)))[0])
             ET.SubElement(source, 'SourceFilename', {
                 'relativeToVRT': '1',
                 'shared': '0'
@@ -212,7 +212,7 @@ def create_tile_dir(tile_dir):
 
 
 def create_stack(directory, dates):
-    tile_dirs = glob(join(directory, 'tile-*'))
+    tile_dirs = sorted(glob(join(directory, 'tile-*')))
     tile_stacks = [join(tile_dir, 'stack.vrt') for tile_dir in tile_dirs]
     stack_file = join(directory, 'stack.vrt')
     gdal.SetConfigOption('VRT_SHARED_SOURCE', '0')

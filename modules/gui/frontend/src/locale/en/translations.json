@@ -67,6 +67,8 @@
     "cirrus": "Cirrus",
     "dayOfYear": "Day of year",
     "daysFromTarget": "Days from target",
+    "fifth": "Fifth",
+    "fourth": "Fourth",
     "green": "Green",
     "greenness": "Greenness",
     "nir": "NIR",
@@ -76,6 +78,7 @@
     "redEdge2": "Red edge 2",
     "redEdge3": "Red edge 3",
     "redEdge4": "Red edge 4",
+    "sixth": "Sixth",
     "swir1": "SWIR 1",
     "swir2": "SWIR 2",
     "thermal": "Thermal",
@@ -220,6 +223,7 @@
       "browse": "Files",
       "collapse": "Automatically hide and show menu",
       "expand": "Always show menu",
+      "help": "Open Sepal documentation in a new tab/window",
       "logout": "Logout from Sepal",
       "process": "Process",
       "tasks": "Tasks",
@@ -424,6 +428,9 @@
           "label": "Gamma",
           "info": "Value: {gamma}"
         },
+        "histogram": {
+          "noData": "The band contain no data."
+        },
         "inverted": {
           "label": "Inverted"
         },
@@ -523,7 +530,8 @@
     },
     "Recipe": {
       "label": "Recipe",
-      "thisRecipeDescription": "This recipe"
+      "thisRecipeDescription": "This recipe",
+      "loadError": "Failed to load recipe: {error}"
     },
     "Planet": {
       "label": "Planet",
