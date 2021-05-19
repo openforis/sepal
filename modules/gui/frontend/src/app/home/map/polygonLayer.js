@@ -63,7 +63,8 @@ class Layer {
         this.fill = fill
         this.layer = new google.maps.Polygon({
             paths: path.map(([lng, lat]) =>
-                new google.maps.LatLng(lat, lng)), ...polygonOptions(fill)
+                new google.maps.LatLng(lat, lng)), ...polygonOptions(fill),
+            clickable: false
         })
         const googleBounds = new google.maps.LatLngBounds()
         this.layer.getPaths().getArray().forEach(path =>
