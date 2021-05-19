@@ -144,7 +144,6 @@ class _Areas extends React.Component {
                         unsafeRemove
                         drag$={this.areaDrag$}
                         dragValue={area}
-                        removeDisabled={area === 'center'}
                         onRemove={() => this.removeArea(area)}
                     />
                 </div>

@@ -54,7 +54,10 @@ export const removeArea = ({areas, area}) => {
     }
 
     if (area === 'center') {
-        return {}
+        return {center: {
+            imageLayer: {},
+            featureLayers: []
+        }}
     } else {
         const replacements = replacementMap[area]
         return _.reduce(
