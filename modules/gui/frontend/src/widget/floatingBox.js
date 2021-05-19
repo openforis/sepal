@@ -13,14 +13,13 @@ const mapStateToProps = state => ({
 })
 
 class FloatingBox extends React.Component {
-    ref = React.createRef()
-
     state = {
         dimensions: {}
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
+        this.ref = props.forwardedRef || React.createRef()
         this.onClick = this.onClick.bind(this)
     }
 
@@ -41,7 +40,7 @@ class FloatingBox extends React.Component {
             <Portal type='global' onClick={this.onClick}>
                 <div className={styles.container}>
                     <div
-                        ref={this.getRef()}
+                        ref={this.ref}
                         className={[styles.box, styles[placement], styles[alignment], className].join(' ')}
                         style={style}>
                         {children}
@@ -51,14 +50,9 @@ class FloatingBox extends React.Component {
         )
     }
 
-    getRef() {
-        const {forwardedRef} = this.props
-        return forwardedRef || this.ref
-    }
-
     onClick(e) {
         const {onBlur, onClick} = this.props
-        const ref = this.getRef()
+        const {ref} = this
         const isListClick = ref.current && ref.current.contains(e.target)
         if (!isListClick) {
             onBlur && onBlur(e)
