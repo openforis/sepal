@@ -1,36 +1,33 @@
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {Combo} from 'widget/combo'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {SearchBox} from 'widget/searchBox'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
+import {formatCoordinates, parseCoordinates} from 'coords'
 import {msg} from 'translate'
 import {withMap} from './mapContext'
-import BlurDetector from 'widget/blurDetector'
-import PropTypes from 'prop-types'
-import React, {createRef} from 'react'
+import React from 'react'
 import styles from './mapZoom.module.css'
 
 class _MapZoomPanel extends React.Component {
     state = {
-        searchResults: []
+        coordinateResults: [],
+        placeResults: []
     }
 
     constructor() {
         super()
         this.search = this.search.bind(this)
-        // this.bindSearchBox = this.bindSearchBox.bind(this)
     }
 
     render() {
         const {map, activatable: {deactivate}} = this.props
-        const {searchResults} = this.state
+        const {coordinateResults, placeResults} = this.state
         return (
-            // <BlurDetector onBlur={deactivate}>
             <Panel className={styles.panel} type='top-right'>
                 <Panel.Content>
                     <Layout spacing='compact'>
@@ -69,14 +66,16 @@ class _MapZoomPanel extends React.Component {
                             placeholder={msg('process.mapZoom.search.placeholder')}
                             className={styles.search}
                             onSearchValue={this.search}
-                            options={searchResults}
-                            onSelect={({value: placeId}) => this.select(placeId)}
+                            options={[
+                                ...coordinateResults,
+                                ...placeResults
+                            ]}
+                            onSelect={({value: location}) => this.select(location)}
                         />
                     </Layout>
                 </Panel.Content>
                 <Panel.Buttons onEscape={deactivate} shown={false}/>
             </Panel>
-            // </BlurDetector>
         )
     }
 
@@ -88,54 +87,91 @@ class _MapZoomPanel extends React.Component {
     }
 
     search(query) {
+        this.searchCoordinates(query)
+        this.searchPlace(query)
+    }
+
+    searchCoordinates(query) {
+        const {map} = this.props
+        const {google} = map.getGoogle()
+        if (query) {
+            const candidates = parseCoordinates(query)
+            const coordinateResults = candidates.map(candidate => ({
+                label: (
+                    <div className={styles.coordinates}>
+                        <div>Latitude: {candidate.lat}</div>
+                        <div>Longitude: {candidate.lng}</div>
+                    </div>
+                ),
+                value: {
+                    coords: new google.maps.LatLng(candidate.lat, candidate.lng)
+                },
+                key: formatCoordinates(candidate)
+            }))
+            this.setState({coordinateResults})
+        } else {
+            this.setState({coordinateResults: []})
+        }
+    }
+
+    searchPlace(query) {
         if (query) {
             const request = {
                 input: query
             }
             this.autoComplete.getPlacePredictions(request, results => {
                 if (results) {
-                    const searchResults = results.map(({description, place_id}) => ({
+                    const placeResults = results.map(({description, place_id}) => ({
                         label: description,
-                        value: place_id
+                        value: {placeId: place_id},
+                        key: place_id
                     }))
-                    this.setState({searchResults})
-                } else {
-                    this.geoCoder.geocode({address: query}, result => {
-                        console.log(result)
-                        // result && map.fitBounds(result[0].geometry.bounds)
-                    })
+                    this.setState({placeResults})
                 }
             })
         } else {
-            this.setState({searchResults: null})
+            this.setState({placeResults: []})
         }
     }
 
-    select(placeId) {
-        const {map} = this.props
-        this.geoCoder.geocode({placeId}, results => {
-            if (results && results.length) {
-                const result = results[0]
-                // console.log(result)
-                if (result.geometry) {
-                    const bounds = result.geometry.bounds
-                    const location = result.geometry.location
-                    const address = result.formatted_address
-                    if (bounds) {
-                        map.fitBounds(bounds)
-                        map.setRectangle({
-                            bounds,
-                            title: address
-                        })
-                    } else if (location) {
-                        map.setView({center: location, zoom: 5})
-                        map.setMarker({
-                            position: location,
-                            title: address
-                        })
+    select({placeId, coords}) {
+        if (placeId) {
+            this.geoCoder.geocode({placeId}, results => {
+                if (results && results.length) {
+                    const result = results[0]
+                    // console.log(result)
+                    if (result.geometry) {
+                        const bounds = result.geometry.bounds
+                        const location = result.geometry.location
+                        const address = result.formatted_address
+                        if (bounds) {
+                            this.selectArea({bounds, title: address})
+                        } else if (location) {
+                            this.selectPoint({location, title: address})
+                        }
                     }
                 }
-            }
+            })
+        } else if (coords) {
+            this.selectPoint({location: coords, title: 'point'})
+        }
+    }
+
+    selectArea({bounds, title}) {
+        const {map} = this.props
+        map.fitBounds(bounds)
+        map.setRectangle({
+            bounds,
+            title
+        })
+    }
+
+    selectPoint({location, title}) {
+        const {map} = this.props
+        map.setView({center: location, zoom: 5})
+        map.setMarker({
+            position: location,
+            title
         })
     }
 }
