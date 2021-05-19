@@ -87,7 +87,10 @@ class _OpticalMosaicImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        this.selectVisualization(visualizations[this.reflectance()][0])
+        const {layerConfig: {visParams}} = this.props
+        if (!visParams) {
+            this.selectVisualization(visualizations[this.reflectance()][0])
+        }
     }
 
     hasScenes() {
