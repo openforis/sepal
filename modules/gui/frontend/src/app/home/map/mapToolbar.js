@@ -1,5 +1,5 @@
 import {MapLayout} from '../body/process/mapLayout/mapLayout'
-import {MapZoomButton, MapZoomPanel} from './mapZoom'
+import {MapZoomPanel} from './mapZoom'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -20,7 +20,10 @@ class MapToolbar extends React.Component {
                     className={styles.mapToolbar}
                     horizontal
                     placement='top-right'>
-                    <MapZoomButton/>
+                    <Toolbar.ActivationButton
+                        id='mapZoom'
+                        icon={'search'}
+                        tooltip='zoom'/>
                     <Toolbar.ToolbarButton
                         onClick={() => map.toggleLinked()}
                         selected={map.isLinked()}

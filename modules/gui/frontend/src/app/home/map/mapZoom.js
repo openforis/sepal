@@ -168,7 +168,7 @@ class _MapZoomPanel extends React.Component {
 
     selectPoint({location, title}) {
         const {map} = this.props
-        map.setView({center: location, zoom: 5})
+        map.setView({center: location, zoom: 11})
         map.setMarker({
             position: location,
             title
@@ -189,24 +189,3 @@ export const MapZoomPanel = compose(
     })
 
 )
-
-export class MapZoomButton extends React.Component {
-    render() {
-        return (
-            <Activator id={'mapZoom'}>
-                {activator => {
-                    const {activate, deactivate, active, canActivate} = activator
-                    return (
-                        <Toolbar.ToolbarButton
-                            icon={'search'}
-                            tooltip={active ? null : 'zoom'}
-                            selected={active}
-                            disabled={!canActivate && !active}
-                            onClick={() => active ? deactivate() : activate()}
-                        />
-                    )
-                }}
-            </Activator>
-        )
-    }
-}
