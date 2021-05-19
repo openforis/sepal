@@ -10,6 +10,7 @@ import {visualizations} from './visualizations'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 
 const defaultLayerConfig = {
     panSharpen: false
@@ -90,6 +91,16 @@ class _OpticalMosaicImageLayer extends React.Component {
         const {layerConfig: {visParams}} = this.props
         if (!visParams) {
             this.selectVisualization(visualizations[this.reflectance()][0])
+        }
+    }
+
+    componentDidUpdate(prevProps) {
+        const {layerConfig: {visParams: prevVisParams}} = prevProps
+        if (prevVisParams) {
+            const visParams = visualizations[this.reflectance()].find(({bands}) => _.isEqual(bands, prevVisParams.bands))
+            if (visParams && !_.isEqual(visParams, prevVisParams)) {
+                this.selectVisualization(visParams)
+            }
         }
     }
 
