@@ -28,6 +28,11 @@ test('coords.parse(\'${params.query}\') === ${JSON.stringify(result)}')
         // sign or direction, not both
         {params: {query: '+10 N 20 E'}, result: []},
 
+        // zero
+        {params: {query: '0 S 0 W'}, result: [{lat: 0, lng: 0}]},
+        {params: {query: '+0 +0'}, result: [{lat: 0, lng: 0}]},
+        {params: {query: '-0 -0'}, result: [{lat: 0, lng: 0}]},
+
         // separators (combination of optional comma and spaces)
         {params: {query: '10 N 20 E'}, result: [{lat: 10, lng: 20}]},
         {params: {query: '10 N, 20 E'}, result: [{lat: 10, lng: 20}]},

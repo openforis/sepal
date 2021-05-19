@@ -26,14 +26,17 @@ const isLongitudeCompatible = coord =>
     isUnsignedLongitudeCompatible(coord) || isSignedLongitudeCompatible(coord)
 
 const toLatitude = ({sign, value, dir}) =>
-    (sign == '-' ? -1 : 1) * parseFloat(value) * (dir === 'S' ? -1 : 1)
+    value === '0'
+        ? 0
+        : (sign == '-' ? -1 : 1) * value * (dir === 'S' ? -1 : 1)
 
 const toLongitude = ({sign, value, dir}) =>
-    (sign == '-' ? -1 : 1) * parseFloat(value) * (dir === 'W' ? -1 : 1)
+    value === '0'
+        ? 0
+        : (sign == '-' ? -1 : 1) * value * (dir === 'W' ? -1 : 1)
 
 export const parseCoordinates = string => {
     const parts = string.trim().toUpperCase().match(regexp)
-    // console.log('*************', parts)
 
     if (parts) {
         const coord1 = {
