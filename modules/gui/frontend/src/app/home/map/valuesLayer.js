@@ -31,17 +31,19 @@ class _ValuesLayer extends React.Component {
         const {mapAreaContext: {area}, areas} = this.props
         const {value} = this.state
         const {bands, min, max} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
-        return (
-            <div className={styles.container}>
-                {[0, 1, 2].map(i => this.renderBand({
-                    key: i,
-                    band: bands[i],
-                    min: min[i],
-                    max: max[i],
-                    value: value && value[i]
-                }))}
-            </div>
-        )
+        return bands ?
+            (
+                <div className={styles.container}>
+                    {[0, 1, 2].map(i => this.renderBand({
+                        key: i,
+                        band: bands[i],
+                        min: min[i],
+                        max: max[i],
+                        value: value && value[i]
+                    }))}
+                </div>
+            )
+            : null
     }
 
     renderBand({key, band, min, max, value}) {
@@ -64,7 +66,7 @@ class _ValuesLayer extends React.Component {
                     )
                     : (
                         <div className={styles.value}>
-                            n/a
+                        n/a
                         </div>
                     )
                 }

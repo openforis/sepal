@@ -35,12 +35,14 @@ class _PaletteLayer extends React.Component {
     render() {
         const {mapAreaContext: {area}, areas} = this.props
         const {min, max, palette, inverted} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
-        return this.renderPalette({
-            min: min[0],
-            max: max[0],
-            palette,
-            inverted: inverted && inverted.length && inverted[0] === true
-        })
+        return palette
+            ? this.renderPalette({
+                min: min[0],
+                max: max[0],
+                palette,
+                inverted: inverted && inverted.length && inverted[0] === true
+            })
+            : null
     }
 
     renderPalette({min, max, palette, inverted}) {
