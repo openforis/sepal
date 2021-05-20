@@ -1,6 +1,6 @@
-import {Subject, combineLatest, concat, of, pipe} from 'rxjs'
 import {WMTSTileProvider} from './wmtsTileProvider'
-import {filter, finalize, last, map, switchMap, takeUntil, windowTime} from 'rxjs/operators'
+import {combineLatest} from 'rxjs'
+import {filter, map} from 'rxjs/operators'
 import {toBandValues} from '../cursorValue'
 import ee from '@google/earthengine'
 
@@ -28,11 +28,9 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
             ).subscribe(
                 () => this.calculateTileOffsets()
             ),
-            cursor$.pipe(
-                // lastInWindow(100) // TODO: Re-enable this
-            ).subscribe(
+            cursor$.subscribe(
                 cursor => this.cursorColor(cursor)
-            ),
+            )
         ]
     }
 
@@ -92,9 +90,6 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
         const offsetY = y - top
         const ctx = element.getContext('2d')
         const data = ctx.getImageData(offsetX, offsetY, 1, 1).data
-        // TODO: Remove this
-        ctx.fillStyle = '#FF0000'
-        ctx.fillRect(offsetX, offsetY, 1, 1)
         const [red, green, blue, alpha] = data
         if (alpha) {
             const bandValues = toBandValues([red, green, blue], this.visParams, this.dataTypes)
@@ -134,16 +129,4 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
         this.elements = {}
         this.offsets = {}
     }
-}
-
-const EMPTY_WINDOW = Symbol('NO_MESSAGE_IN_WINDOW')
-const lastInWindow = time => {
-    const cancel$ = new Subject()
-    return pipe(
-        finalize(() => cancel$.next(true)),
-        windowTime(time),
-        switchMap(window$ => concat(of(EMPTY_WINDOW), window$).pipe(last())),
-        filter(value => value !== EMPTY_WINDOW),
-        takeUntil(cancel$)
-    )
 }

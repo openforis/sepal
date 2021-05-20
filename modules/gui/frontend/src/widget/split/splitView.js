@@ -171,7 +171,9 @@ class _SplitView extends React.PureComponent {
     }
 
     onDragging(dragging) {
+        const {dragging$} = this.props
         this.setState({dragging})
+        dragging$.next(dragging.x || dragging.y)
     }
 
     onPosition(position) {
@@ -266,10 +268,11 @@ SplitView.propTypes = {
     ),
     children: PropTypes.any,
     className: PropTypes.string,
+    dragging$: PropTypes.any,
     maximize: PropTypes.string,
     mode: PropTypes.oneOf(['stack', 'grid']),
     overlay: PropTypes.any,
-    position$: PropTypes.any
+    position$: PropTypes.any,
 }
 
 SplitView.defaultProps = {
