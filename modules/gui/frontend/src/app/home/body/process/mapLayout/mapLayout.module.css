@@ -20,7 +20,8 @@
 @media screen and (max-width: 500px) {
     .content {
         height: 50rem;
+        max-height: calc(100vh - 20rem);
         grid-template-columns: 1fr;
-        grid-template-rows: 50% 50%;
+        grid-template-rows: 1fr 1fr;
     }
 }
