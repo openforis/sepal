@@ -1,8 +1,10 @@
+
 .container {
     display: flex;
     flex-grow: 1;
     position: relative;
     user-select: none;
+    overflow: hidden;
 }
 
 .container.moving {
@@ -58,6 +60,11 @@
     align-items: center;
     justify-content: center;
     padding: .5rem;
+    overflow: hidden;
+}
+
+.area * {
+    overflow: hidden;
 }
 
 .hovering .area.highlighted {

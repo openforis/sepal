@@ -122,7 +122,6 @@ class _SuperButton extends React.Component {
                 className={styles.inline}
             >
                 {this.renderInlineComponents()}
-                {this.renderDragButton()}
                 {this.renderInfoButton()}
                 {this.renderEditButton()}
                 {this.renderDuplicateButton()}
@@ -146,8 +145,10 @@ class _SuperButton extends React.Component {
             className
         ]).join(' ')
         return (
-            // <div className={classNames} ref={this.ref}>
             <div className={classNames}>
+                {this.isDraggable()
+                    ? <div ref={this.ref} className={styles.handle}/>
+                    : null}
                 <div className={styles.main}>
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
                     {this.renderContent()}
@@ -232,7 +233,7 @@ class _SuperButton extends React.Component {
             : null
     }
 
-    renderDragButton() {
+    renderDragButton() { // TODO: renderDragHandle instead
         const {dragTooltip, tooltipPlacement} = this.props
         return this.isDraggable()
             ? (
@@ -264,7 +265,7 @@ class _SuperButton extends React.Component {
     initializeDraggable() {
         const {addSubscription} = this.props
         const draggable = this.ref.current
-        
+
         const handle = new Hammer(draggable)
 
         handle.get('pan').set({
@@ -305,7 +306,7 @@ class _SuperButton extends React.Component {
             panStart$.pipe(mapTo(true)),
             panEnd$.pipe(mapTo(false)),
         )
-        
+
         addSubscription(
             dragging$.subscribe(dragging => dragging ? this.onDragStart() : this.onDragEnd()),
             dragMove$.subscribe(coords => this.onDragMove(coords)),

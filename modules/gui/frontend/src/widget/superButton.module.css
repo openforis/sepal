@@ -78,8 +78,27 @@ to prevent click-through from click-hold buttons */
 }
 
 .draggable {
-    cursor: grab;
+    cursor: unset;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
 }
+
+
+.handle {
+    align-self: center;
+    width: 1rem;
+    line-height: .4rem;
+    cursor: grab;
+    padding-left: 0.15rem;
+    margin: -.5rem 0 0 0;
+    color: rgb(40%, 40%, 40%);
+}
+
+.handle::after {
+    content: '.. .. .. .. .. .. ..';
+}
+
 
 .dragging {
     opacity: .25;

@@ -19,6 +19,7 @@
 
 @media screen and (max-width: 500px) {
     .content {
+        height: 50rem;
         grid-template-columns: 1fr;
         grid-template-rows: 50% 50%;
     }
