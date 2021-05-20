@@ -428,14 +428,12 @@ class BandForm extends React.Component {
             <Layout type='horizontal'>
                 <Form.Input
                     input={min}
-                    type='number'
                     label={msg('map.visParams.form.min.label')}
                     className={styles.minMax}
                     errorMessage
                 />
                 <Form.Input
                     input={max}
-                    type='number'
                     label={msg('map.visParams.form.max.label')}
                     className={styles.minMax}
                     errorMessage
