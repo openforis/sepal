@@ -104,7 +104,6 @@ class _Map extends React.Component {
         this.allMaps(({map}) => map.setView({center, zoom}))
         overlay && overlay.map.setView({center, zoom})
         this.updateBounds$.next({center, zoom})
-        this.boundsChanged$.next()
     }
 
     synchronizeIn({center, zoom}) {
@@ -321,7 +320,8 @@ class _Map extends React.Component {
         const listeners = [
             googleMap.addListener('mouseout', () => this.synchronizeCursor(id, null)),
             googleMap.addListener('mousemove', ({latLng, domEvent}) => this.synchronizeCursor(id, latLng, domEvent)),
-            googleMap.addListener('bounds_changed', () => this.synchronizeOut(map)),
+            googleMap.addListener('center_changed', () => this.synchronizeOut(map)),
+            googleMap.addListener('bounds_changed', () => this.boundsChanged$.next()),
             googleMap.addListener('zoom_changed', () => this.synchronizeOut(map)),
             googleMap.addListener('dragstart', () => this.draggingMap$.next(true)),
             googleMap.addListener('dragend', () => this.draggingMap$.next(false))
