@@ -218,19 +218,23 @@ export class SepalMap {
         }
     }
 
-    // Marker
+    // Markers
 
-    setMarker(options) {
+    setLocationMarker(options, onRemove) {
         const {google, googleMap} = this
         const marker = new google.maps.Marker({
             label: 'X',
             ...options
         })
-        marker.addListener('click', () => marker.setMap(null))
+        const remove = () => marker.setMap(null)
+        marker.addListener('click', onRemove || remove)
         marker.setMap(googleMap)
+        return {
+            remove
+        }
     }
 
-    setRectangle(options) {
+    setAreaMarker(options, onRemove) {
         const {google, googleMap} = this
         const rectangle = new google.maps.Rectangle({
             ...this.drawingOptions,
@@ -249,12 +253,16 @@ export class SepalMap {
             },
             title: options.title
         })
-        closeMarker.addListener('click', () => {
+        const remove = () => {
             closeMarker.setMap(null)
             rectangle.setMap(null)
-        })
+        }
+        closeMarker.addListener('click', onRemove || remove)
         rectangle.setMap(googleMap)
         closeMarker.setMap(googleMap)
+        return {
+            remove
+        }
     }
 
     // Polygon

@@ -147,29 +147,29 @@ class _MapZoomPanel extends React.Component {
                         if (bounds) {
                             this.selectArea({bounds, title: address})
                         } else if (location) {
-                            this.selectPoint({location, title: address})
+                            this.selectLocation({location, title: address})
                         }
                     }
                 }
             })
         } else if (coords) {
-            this.selectPoint({location: coords, title: 'point'})
+            this.selectLocation({location: coords, title: 'point'})
         }
     }
 
     selectArea({bounds, title}) {
         const {map} = this.props
         map.fitBounds(bounds)
-        map.setRectangle({
+        map.setAreaMarker({
             bounds,
             title
         })
     }
 
-    selectPoint({location, title}) {
+    selectLocation({location, title}) {
         const {map} = this.props
         map.setView({center: location, zoom: 11})
-        map.setMarker({
+        map.setLocationMarker({
             position: location,
             title
         })
@@ -187,5 +187,4 @@ export const MapZoomPanel = compose(
         id: 'mapZoom',
         policy
     })
-
 )

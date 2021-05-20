@@ -15,6 +15,7 @@ import {getProcessTabsInfo} from '../body/process/process'
 import {mapBoundsTag, mapTag} from 'tag'
 import {recipePath} from '../body/process/recipe'
 import {selectFrom} from 'stateUtils'
+import {v4 as uuid} from 'uuid'
 import {withLayers} from '../body/process/withLayers'
 import {withMapsContext} from './maps'
 import {withRecipe} from '../body/process/recipeContext'
@@ -59,24 +60,26 @@ class _Map extends React.Component {
         drawPolygon: false
     }
 
+    markers = {}
+
     constructor() {
         super()
         this.mapDelegate = this.mapDelegate.bind(this)
     }
 
-    allMaps(callback) {
+    withAllMaps(func) {
         const {maps} = this.state
-        _.forEach(maps, ({area, map, listeners, subscriptions}, id) => {
-            callback({id, area, map, listeners, subscriptions})
-        })
+        return _.map(maps, ({area, map, listeners, subscriptions}, id) =>
+            func({id, area, map, listeners, subscriptions})
+        )
     }
 
-    withFirstMap(callback) {
+    withFirstMap(func) {
         const {maps} = this.state
         const id = _.head(_.keys(maps))
         const {map = null} = maps[id] || {}
         return map
-            ? callback(map)
+            ? func(map)
             : null
     }
 
@@ -101,14 +104,14 @@ class _Map extends React.Component {
     synchronizeOut(map) {
         const {overlay} = this.state
         const {center, zoom} = map.getView()
-        this.allMaps(({map}) => map.setView({center, zoom}))
+        this.withAllMaps(({map}) => map.setView({center, zoom}))
         overlay && overlay.map.setView({center, zoom})
         this.updateBounds$.next({center, zoom})
     }
 
     synchronizeIn({center, zoom}) {
         const {overlay} = this.state
-        this.allMaps(({map}) => map.setView({center, zoom}))
+        this.withAllMaps(({map}) => map.setView({center, zoom}))
         overlay && overlay.map.setView({center, zoom})
     }
 
@@ -124,7 +127,7 @@ class _Map extends React.Component {
                 mode
             })
         }
-        this.allMaps(({id, map}) => {
+        this.withAllMaps(({id, map}) => {
             const otherArea = this.getArea(id)
             if (mode === 'grid' && otherArea !== cursorArea) {
                 map.setCursor(latLng)
@@ -135,12 +138,12 @@ class _Map extends React.Component {
     }
 
     setVisibility(visible) {
-        this.allMaps(({map}) => map.setVisibility(visible))
+        this.withAllMaps(({map}) => map.setVisibility(visible))
     }
 
     zoomArea(zoomArea) {
         this.setState({zoomArea, selectedZoomArea: null}, () => {
-            this.allMaps(({map}) => zoomArea ? map.zoomArea() : map.cancelZoomArea())
+            this.withAllMaps(({map}) => zoomArea ? map.zoomArea() : map.cancelZoomArea())
         })
     }
 
@@ -149,12 +152,26 @@ class _Map extends React.Component {
         return zoomArea
     }
 
-    setMarker(options) {
-        this.allMaps(({map}) => map.setMarker(options))
+    setLocationMarker(options) {
+        const id = uuid()
+        this.markers[id] = this.withAllMaps(
+            ({map}) => map.setLocationMarker(options, () => this.removeMarker(id))
+        )
     }
 
-    setRectangle(options) {
-        this.allMaps(({map}) => map.setRectangle(options))
+    setAreaMarker(options) {
+        const id = uuid()
+        this.markers[id] = this.withAllMaps(
+            ({map}) => map.setAreaMarker(options, () => this.removeMarker(id))
+        )
+    }
+
+    removeMarker(id) {
+        const markers = this.markers[id]
+        if (markers) {
+            markers.forEach(marker => marker.remove())
+            delete this.markers[id]
+        }
     }
 
     renderImageLayer(id, source, layerConfig, area) {
@@ -496,7 +513,7 @@ class _Map extends React.Component {
     }
 
     componentWillUnmount() {
-        this.allMaps(({id}) => {
+        this.withAllMaps(({id}) => {
             this.removeMap(id)
         })
     }
@@ -554,7 +571,7 @@ class _Map extends React.Component {
             )
         } else {
             this.setState({drawPolygon: true},
-                () => this.allMaps(({map}) => map.drawPolygon(id, callback))
+                () => this.withAllMaps(({map}) => map.drawPolygon(id, callback))
             )
         }
     }
@@ -571,7 +588,7 @@ class _Map extends React.Component {
             )
         } else {
             this.setState({drawPolygon: false},
-                () => this.allMaps(({map}) => map.disableDrawingMode())
+                () => this.withAllMaps(({map}) => map.disableDrawingMode())
             )
         }
     }
@@ -605,8 +622,8 @@ class _Map extends React.Component {
             getScale: () => map.getMetersPerPixel(),
             drawPolygon: (id, callback) => this.drawPolygon(id, callback),
             disableDrawingMode: () => this.disableDrawingMode(),
-            setMarker: options => this.setMarker(options),
-            setRectangle: options => this.setRectangle(options),
+            setLocationMarker: options => this.setLocationMarker(options),
+            setAreaMarker: options => this.setAreaMarker(options),
 
             setLayer: (...args) => {
                 log.warn('should we call map.setLayer?')
