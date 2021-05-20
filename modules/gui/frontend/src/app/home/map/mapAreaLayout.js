@@ -15,15 +15,16 @@ const mapRecipeToProps = recipe => ({
 class _MapAreaLayout extends React.Component {
     render() {
         const {mapAreaContext: {area}, form, map, areas} = this.props
-        const selectedLayers = areas[area].featureLayers
-        return (
-            <React.Fragment>
-                <SplitOverlay area={area}>
-                    <MapAreaMenu area={area} form={form}/>
-                    <FeatureLayers selectedLayers={selectedLayers} map={map}/>
-                </SplitOverlay>
-            </React.Fragment>
-        )
+        return areas[area]
+            ? (
+                <React.Fragment>
+                    <SplitOverlay area={area}>
+                        <MapAreaMenu area={area} form={form}/>
+                        <FeatureLayers selectedLayers={areas[area].featureLayers} map={map}/>
+                    </SplitOverlay>
+                </React.Fragment>
+            )
+            : null
     }
 
     componentDidUpdate() {
