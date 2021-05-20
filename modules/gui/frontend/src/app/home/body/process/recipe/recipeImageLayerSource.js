@@ -9,9 +9,10 @@ import {recipeAccess} from '../recipeAccess'
 import {recipeActionBuilder} from '../recipe'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from '../recipeContext'
-import Notifications from '../../../../../widget/notifications'
+import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
+import guid from 'guid'
 
 const mapStateToProps = (state, {source: {sourceConfig: {recipeId}}}) => ({
     recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
@@ -87,6 +88,7 @@ export const initializeLayers = (recipeId, savedLayers) => {
     const layers = savedLayers || {
         areas: {
             'center': {
+                id: guid(),
                 imageLayer: {
                     sourceId: recipeImageLayerSource.id
                 },
