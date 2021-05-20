@@ -177,9 +177,7 @@ class _SplitView extends React.PureComponent {
     onPosition(position) {
         const {position$} = this.props
         this.setState({position})
-        if (position$) {
-            position$.next(position)
-        }
+        position$.next(position)
     }
 
     renderContent() {
@@ -232,17 +230,20 @@ class _SplitView extends React.PureComponent {
     }
 
     initializeResizeDetector() {
-        const {addSubscription} = this.props
+        const {addSubscription, position$} = this.props
         addSubscription(
-            resize$.subscribe(size =>
+            resize$.subscribe(size => {
+                const position = {
+                    x: size.width / 2,
+                    y: size.height / 2
+                }
+                position$.next(position)
                 this.setState({
                     size,
-                    position: {
-                        x: size.width / 2,
-                        y: size.height / 2
-                    },
+                    position,
                     initialized: true
                 })
+            }
             )
         )
     }
