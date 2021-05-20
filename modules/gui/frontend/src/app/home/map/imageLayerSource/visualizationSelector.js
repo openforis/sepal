@@ -9,6 +9,7 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import SafetyButton from 'widget/safetyButton'
+import guid from '../../../../guid'
 
 const mapRecipeToProps = (recipe, ownProps) => {
     const {source} = ownProps
@@ -40,7 +41,6 @@ class _VisualizationSelector extends React.Component {
                         size='small'
                         onClick={() => this.addVisParams()}
                     />,
-                    // TODO: If selected option is custom - edit button, otherwise clone button
                     <Button
                         key='edit'
                         tooltip={msg(`map.visualizationSelector.${editMode}.tooltip`)}
@@ -49,7 +49,7 @@ class _VisualizationSelector extends React.Component {
                         shape='circle'
                         size='small'
                         disabled={!selectedOption}
-                        onClick={() => this.editVisParams(selectedOption.visParams)}
+                        onClick={() => this.editVisParams(selectedOption.visParams, editMode)}
                     />,
                     <SafetyButton
                         key='remove'
@@ -101,9 +101,12 @@ class _VisualizationSelector extends React.Component {
         visParamsPanel.activate({recipe, imageLayerSourceId: source.id})
     }
 
-    editVisParams(visParams) {
+    editVisParams(visParamsToEdit, editMode) {
         const {recipe, source, activator: {activatables}, mapAreaContext: {area}} = this.props
         const visParamsPanel = activatables[`visParams-${area}`]
+        const visParams = editMode === 'clone'
+            ? {...visParamsToEdit, id: guid()}
+            : visParamsToEdit
         visParamsPanel.activate({recipe, imageLayerSourceId: source.id, visParams})
     }
 

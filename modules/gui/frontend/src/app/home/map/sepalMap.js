@@ -110,7 +110,8 @@ export class SepalMap {
 
     latLngToPixel(latLng) {
         // return this.overlay.getProjection().fromLatLngToDivPixel(latLng)
-        return this.overlay.getProjection().fromLatLngToContainerPixel(latLng)
+        const projection = this.overlay.getProjection()
+        return projection ? projection.fromLatLngToContainerPixel(latLng) : {}
     }
 
     // View
