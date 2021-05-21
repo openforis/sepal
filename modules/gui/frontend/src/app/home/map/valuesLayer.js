@@ -83,8 +83,8 @@ class _ValuesLayer extends React.Component {
             defaultValue: 'N/A'
         })
         return (
-            <Shape shape='pill' size='small'>
-                <Item key={key} title={band}>
+            <Shape key={key} shape='pill' size='small'>
+                <Item title={band}>
                     <pre className={[styles.value, clamping ? styles.clamping : null].join(' ')}>
                         {clampingIndicator}
                         {description}
