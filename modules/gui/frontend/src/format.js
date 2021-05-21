@@ -53,17 +53,24 @@ const fileSize = (size, {scale, precisionDigits} = {}) =>
 // precisionDigits: the total number of digits of the output value (e.g. 34.56 = 4 digits)
 // prefix: the prefix to be prepended to the output value (e.g. '$')
 // unit: the suffix to be appended to the output magnitude (e.g. 'bytes')
-const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, prefix = '', suffix = '', unit = ''}) => {
+const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, prefix = '', suffix = '', unit = '', padding = false}) => {
     const negative = value < 0
     value = Math.abs(value)
     const modulo3 = n => ((n % 3) + 3) % 3 // safe for negative numbers too
     const unitPadding = unit.length ? ' ' : ''
+
+    const pad = value => {
+        const length = 1 + prefix.length + (precisionDigits + 1) + unitPadding.length + 1 + unit.length + suffix.length
+        return padding ? value.padStart(length, ' ') : value
+    }
+
     const formattedValue = (normalizedValue, magnitude, decimals) =>
         (negative ? '-' : '') + prefix + normalizedValue.toFixed(decimals) + unitPadding + magnitudes[magnitude] + unit + suffix
+
     const magnitudes = ['p', 'n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
     // handle case when value is zero
     if (value === 0) {
-        return `${prefix}0${unitPadding}${unit}${suffix}`
+        return pad(`${prefix}0${unitPadding}${unit}${suffix}`)
     }
     // handle unsupported precision
     if (precisionDigits < 3) {
@@ -85,11 +92,11 @@ const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, pref
     if (magnitude > magnitudes.length - 1) {
         throw Error('Out of range.')
     } else if (magnitude < minMagnitude) {
-        return formattedValue(normalizedValue / Math.pow(10, 3 * (minMagnitude - magnitude)), minMagnitude, precisionDigits - 1)
+        return pad(formattedValue(normalizedValue / Math.pow(10, 3 * (minMagnitude - magnitude)), minMagnitude, precisionDigits - 1))
     } else {
         return normalizedValue < 1000
-            ? formattedValue(normalizedValue, magnitude, shiftRight)
-            : formattedValue(normalizedValue / 1000, magnitude + 1, precisionDigits - 1)
+            ? pad(formattedValue(normalizedValue, magnitude, shiftRight))
+            : pad(formattedValue(normalizedValue / 1000, magnitude + 1, precisionDigits - 1))
     }
 }
 
