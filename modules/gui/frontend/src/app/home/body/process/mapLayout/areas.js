@@ -141,10 +141,10 @@ class _Areas extends React.Component {
                         description={description}
                         removeMessage={msg('map.layout.area.remove.message')}
                         removeTooltip={msg('map.layout.area.remove.tooltip')}
-                        unsafeRemove
                         drag$={this.areaDrag$}
                         dragValue={area}
-                        onRemove={() => this.removeArea(area)}
+                        // unsafeRemove
+                        // onRemove={() => this.removeArea(area)}
                     />
                 </div>
             )
@@ -244,13 +244,15 @@ class _Areas extends React.Component {
     }
 
     onDragEnd() {
-        const {hovering, nextAreas} = this.state
+        const {dragMode, hovering, currentAreas, nextAreas} = this.state
         this.setState({
             dragging: false,
             dragValue: null
         })
         if (hovering) {
             this.updateAreas(nextAreas)
+        } else if (dragMode === 'moving') {
+            this.updateAreas(currentAreas)
         }
     }
 
