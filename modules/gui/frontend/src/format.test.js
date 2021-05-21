@@ -18,6 +18,9 @@ const test = name => {
 test('format.number(${JSON.stringify(params)}) === ${result}')
     .assert(({params, result}) => expect(format.number(params)).toEqual(result))
     .where(
+        {params: {value: null}, result: ''},
+        {params: {value: null, defaultValue: 'n/a'}, result: 'n/a'},
+        {params: {value: null, defaultValue: 'n/a', padding: true}, result: '   n/a'},
         {params: {value: 0}, result: '0'},
         {params: {value: 1000000}, result: '1.00M'},
         {params: {value: 100000}, result: '100k'},
