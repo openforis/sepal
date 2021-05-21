@@ -1,3 +1,6 @@
+import {Item} from 'widget/item'
+import {Layout} from 'widget/layout'
+import {Shape} from 'widget/shape'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
@@ -34,43 +37,41 @@ class _ValuesLayer extends React.Component {
         return bands ?
             (
                 <div className={styles.container}>
-                    {[0, 1, 2].map(i => this.renderBand({
-                        key: i,
-                        band: bands[i],
-                        min: min[i],
-                        max: max[i],
-                        value: value && value[i]
-                    }))}
+                    <Layout type='horizontal-nowrap' spacing='none' className={styles.bands}>
+                        {[0, 1, 2].map(i => this.renderBand({
+                            key: i,
+                            band: bands[i],
+                            min: min[i],
+                            max: max[i],
+                            value: value && value[i]
+                        }))}
+                    </Layout>
                 </div>
             )
             : null
     }
 
     renderBand({key, band, min, max, value}) {
+        const clamping = value < min || value > max
         const clampedValue = Math.min(max, Math.max(min, value))
-        const prefix = clampedValue === min
-            ? <>&#8804; </>
-            : clampedValue === max
-                ? <>&#8805; </>
-                : ''
-        const formatted = format.number({value: clampedValue, precisionDigits: 3})
+        const clampingIndicator = clamping
+            ? value < min ? '<' : '>'
+            : ' '
+        const description = format.number({
+            value: _.isFinite(value) ? clampedValue : null,
+            precisionDigits: 3,
+            padding: true,
+            defaultValue: 'N/A'
+        })
         return (
-            <div key={key} className={styles.band}>
-                <div className={styles.name}>{band}</div>
-                {_.isFinite(value)
-                    ? (
-                        <div className={styles.value}>
-                            {prefix}
-                            {formatted}
-                        </div>
-                    )
-                    : (
-                        <div className={styles.value}>
-                        n/a
-                        </div>
-                    )
-                }
-            </div>
+            <Shape shape='pill' size='small'>
+                <Item key={key} title={band}>
+                    <pre className={[styles.value, clamping ? styles.clamping : null].join(' ')}>
+                        {clampingIndicator}
+                        {description}
+                    </pre>
+                </Item>
+            </Shape>
         )
     }
 }
