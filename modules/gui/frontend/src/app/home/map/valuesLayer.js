@@ -51,12 +51,31 @@ class _ValuesLayer extends React.Component {
             : null
     }
 
-    renderBand({key, band, min, max, value}) {
-        const clamping = value < min || value > max
+    clamp({value, min, max}) {
         const clampedValue = Math.min(max, Math.max(min, value))
-        const clampingIndicator = clamping
-            ? value < min ? '<' : '>'
-            : ' '
+        if (clampedValue === min) {
+            return {clampedValue, clamping: -1}
+        }
+        if (clampedValue === max) {
+            return {clampedValue, clamping: 1}
+        }
+        return {clampedValue, clamping: 0}
+    }
+
+    clampingIndicator(clamping) {
+        switch(clamping) {
+        case -1:
+            return '<'
+        case 1:
+            return '>'
+        default:
+            return ' '
+        }
+    }
+
+    renderBand({key, band, min, max, value}) {
+        const {clampedValue, clamping} = this.clamp({value, min, max})
+        const clampingIndicator = this.clampingIndicator(clamping)
         const description = format.number({
             value: _.isFinite(value) ? clampedValue : null,
             precisionDigits: 3,
