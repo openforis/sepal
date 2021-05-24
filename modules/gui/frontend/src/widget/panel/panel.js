@@ -4,6 +4,7 @@ import {PanelContent} from './panelContent'
 import {PanelHeader} from './panelHeader'
 import {compose} from 'compose'
 import {connect} from 'store'
+import BlurDetector from 'widget/blurDetector'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -57,17 +58,17 @@ class _Panel extends React.Component {
     }
 
     renderContent() {
-        const {className, type, children} = this.props
+        const {onBlur, className, type, children} = this.props
         const {enabled} = this.state
         return (
-            <div className={[
+            <BlurDetector onBlur={onBlur} className={[
                 styles.panel,
                 styles[type],
                 enabled ? null : styles.disabled,
                 className
             ].join(' ')}>
                 {children}
-            </div>
+            </BlurDetector>
         )
     }
 }
@@ -80,7 +81,8 @@ export const Panel = compose(
 Panel.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    type: PropTypes.oneOf(['normal', 'modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline'])
+    type: PropTypes.oneOf(['normal', 'modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']),
+    onBlur: PropTypes.func
 }
 
 Panel.Header = PanelHeader
