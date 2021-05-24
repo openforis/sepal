@@ -31,8 +31,9 @@ class BlurDetector extends React.Component {
     onEvent(e) {
         const {onBlur} = this.props
         const inside = this.element.current.contains(e.target)
-        if (!inside)
-            onBlur()
+        if (!inside) {
+            onBlur && onBlur()
+        }
     }
 }
 
@@ -43,6 +44,6 @@ export default compose(
 
 BlurDetector.propTypes = {
     children: PropTypes.any.isRequired,
-    onBlur: PropTypes.func.isRequired,
-    className: PropTypes.string
+    className: PropTypes.string,
+    onBlur: PropTypes.func
 }
