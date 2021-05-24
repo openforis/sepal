@@ -5,10 +5,7 @@ import styles from './modal.module.css'
 
 export const Modal = ({onClick, children}) =>
     <Portal type='global' center>
-        <div className={styles.modal} onClick={e => {
-            e.stopPropagation()
-            onClick && onClick()
-        }}>
+        <div className={styles.modal} onClick={onClick}>
             {children}
         </div>
     </Portal>
