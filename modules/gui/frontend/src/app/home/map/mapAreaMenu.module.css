@@ -14,8 +14,8 @@
 }
 
 .content {
-    margin: 3rem 0;
-    padding: 1rem;
+    margin: 2.5rem 0;
+    padding: .5rem;
     pointer-events: all;
     display: flex;
     flex-direction: column;
