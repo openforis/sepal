@@ -1,3 +1,4 @@
+import {ClassificationImageLayer} from './classification/classificationImageLayer'
 import {CursorValue} from 'app/home/map/cursorValue'
 import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
 import {Subject} from 'rxjs'
@@ -41,6 +42,14 @@ class _RecipeImageLayer extends React.Component {
         switch(recipe.type) {
         case 'MOSAIC': return (
             <OpticalMosaicImageLayer
+                recipe={recipe}
+                source={source}
+                layerConfig={layerConfig}
+                layer={this.maybeCreateLayer()}
+                map={map}/>
+        )
+        case 'CLASSIFICATION': return (
+            <ClassificationImageLayer
                 recipe={recipe}
                 source={source}
                 layerConfig={layerConfig}

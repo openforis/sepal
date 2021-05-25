@@ -471,11 +471,11 @@ class _Map extends React.Component {
     }
 
     renderRecipe() {
-        const {className, recipeContext: {statePath}, children} = this.props
+        const {recipeContext: {statePath}, children} = this.props
         return (
             <SectionLayout>
                 <Content>
-                    <div className={className}>
+                    <div className={styles.recipe}>
                         <MapToolbar statePath={[statePath, 'ui']}/>
                         <MapScale/>
                         {children}
@@ -657,8 +657,7 @@ export const Map = compose(
 )
 
 Map.propTypes = {
-    children: PropTypes.any,
-    className: PropTypes.string
+    children: PropTypes.any
 }
 
 const EMPTY_WINDOW = Symbol('NO_MESSAGE_IN_WINDOW')
