@@ -96,7 +96,7 @@ class ButtonSelect extends React.Component {
                 alignment={alignment}
                 placement={placement}
                 autoWidth
-                onClick={this.handleBlur}>
+                onBlur={this.handleBlur}>
                 <ScrollableList
                     ref={this.list}
                     className={optionsClassName || styles.options}

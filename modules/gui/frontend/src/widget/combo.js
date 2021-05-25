@@ -176,7 +176,7 @@ class _Combo extends React.Component {
             <FloatingBox
                 element={this.inputContainer.current}
                 placement={placement}
-                onClick={this.handleBlur}>
+                onBlur={this.handleBlur}>
                 <ScrollableList
                     ref={this.list}
                     air='more'

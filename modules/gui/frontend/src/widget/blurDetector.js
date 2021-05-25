@@ -32,7 +32,7 @@ class BlurDetector extends React.Component {
         const {onBlur} = this.props
         const inside = this.element.current.contains(e.target)
         if (!inside) {
-            onBlur && onBlur()
+            onBlur && onBlur(e)
         }
     }
 }

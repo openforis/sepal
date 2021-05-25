@@ -5,6 +5,7 @@
     left: 0;
     right: 0;
     z-index: 9999;
+    pointer-events: none;
 }
 
 .box {
@@ -15,6 +16,10 @@
     right: calc(var(--right) * 1px);
     width: calc(var(--width) * 1px);
     z-index: 9999;
+}
+
+.box > * {
+    margin: auto;
 }
 
 .box.above {

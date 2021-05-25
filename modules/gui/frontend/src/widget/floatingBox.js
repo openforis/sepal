@@ -1,6 +1,7 @@
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
+import BlurDetector from 'widget/blurDetector'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -14,21 +15,20 @@ const mapStateToProps = state => ({
 
 class FloatingBox extends React.Component {
     state = {
-        dimensions: {}
+        box: {}
     }
 
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
-        this.onClick = this.onClick.bind(this)
     }
 
     render() {
-        const {className, placement, alignment, autoWidth, children} = this.props
-        const {dimensions: {height, width, top, bottom, left, right}} = this.state
+        const {className, placement, alignment, autoWidth, children, dimensions: {height, width}, onBlur} = this.props
+        const {box: {top, bottom, left, right}} = this.state
         const style = {
-            '--left': alignment === 'left' ? left : 'auto',
-            '--right': alignment === 'right' ? width - right : 'auto',
+            '--left': ['center', 'left'].includes(alignment) ? left : 'auto',
+            '--right': ['center', 'right'].includes(alignment) ? width - right : 'auto',
             '--width': autoWidth ? null : right - left,
             '--above-height': top,
             '--above-bottom': height - top - 2,
@@ -36,27 +36,17 @@ class FloatingBox extends React.Component {
             '--below-top': bottom
         }
         return (
-            <Portal type='global' onClick={this.onClick}>
-                <div className={styles.container}>
+            <Portal type='global'>
+                <BlurDetector className={styles.container} onBlur={onBlur}>
                     <div
                         ref={this.ref}
                         className={[styles.box, styles[placement], styles[alignment], className].join(' ')}
                         style={style}>
                         {children}
                     </div>
-                </div>
+                </BlurDetector>
             </Portal>
         )
-    }
-
-    onClick(e) {
-        const {onBlur, onClick} = this.props
-        const {ref} = this
-        const isListClick = ref.current && ref.current.contains(e.target)
-        if (!isListClick) {
-            onBlur && onBlur(e)
-        }
-        onClick && onClick(e)
     }
 
     updateState(state, callback) {
@@ -70,9 +60,8 @@ class FloatingBox extends React.Component {
     }
 
     updateDimensions() {
-        const {dimensions: {height, width}} = this.props
         const {top, bottom, left, right} = this.getBoundingBox()
-        this.updateState({dimensions: {height, width, top, bottom, left, right}})
+        this.updateState({box: {top, bottom, left, right}})
     }
 
     getBoundingBox() {
@@ -99,13 +88,12 @@ export default compose(
 
 FloatingBox.propTypes = {
     children: PropTypes.any.isRequired,
-    alignment: PropTypes.oneOf(['left', 'right']),
+    alignment: PropTypes.oneOf(['left', 'center', 'right']),
     autoWidth: PropTypes.any,
     className: PropTypes.string,
     element: PropTypes.object,
     placement: PropTypes.oneOf(['above', 'below']),
-    onBlur: PropTypes.func,
-    onClick: PropTypes.func
+    onBlur: PropTypes.func
 }
 
 FloatingBox.defaultProps = {
