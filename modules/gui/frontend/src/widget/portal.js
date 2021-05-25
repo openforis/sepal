@@ -1,5 +1,4 @@
 import {compose} from 'compose'
-import {fromEvent} from 'rxjs'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -73,12 +72,8 @@ class Portal extends React.Component {
     }
 
     componentDidMount() {
-        const {onClick, addSubscription} = this.props
         const portalContainer = this.getPortalContainer()
         this.setState({portalContainer})
-        addSubscription(
-            fromEvent(portalContainer, 'click').subscribe(onClick)
-        )
     }
 }
 
@@ -90,8 +85,7 @@ Portal.propTypes = {
     type: PropTypes.oneOf(['global', 'context', 'container']).isRequired,
     children: PropTypes.any,
     container: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-    content: PropTypes.any,
-    onClick: PropTypes.func
+    content: PropTypes.any
 }
 
 export default compose(
