@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Item} from 'widget/item'
-import {Subject, animationFrameScheduler, fromEvent, interval, merge, of, timer} from 'rxjs'
+import {Subject, animationFrameScheduler, fromEvent, interval, merge, timer} from 'rxjs'
 import {compose} from 'compose'
 import {debounceTime, distinctUntilChanged, filter, map, mapTo, switchMap, takeUntil} from 'rxjs/operators'
 import Hammer from 'hammerjs'
@@ -229,24 +229,6 @@ class _SuperButton extends React.Component {
                     tooltipPlacement={tooltipPlacement}
                     disabled={infoDisabled}
                     onClick={() => onInfo()}/>
-            )
-            : null
-    }
-
-    renderDragButton() { // TODO: renderDragHandle instead
-        const {dragTooltip, tooltipPlacement} = this.props
-        return this.isDraggable()
-            ? (
-                <Button
-                    ref={this.ref}
-                    chromeless
-                    shape='circle'
-                    size='large'
-                    icon='arrows-alt'
-                    additionalClassName={styles.dragHandle}
-                    tooltip={dragTooltip}
-                    tooltipPlacement={tooltipPlacement}
-                    onClick={() => null}/>
             )
             : null
     }

@@ -41,7 +41,7 @@ class _PreviewMap extends React.Component {
             <React.Fragment>
                 <div className={styles.map} ref={this.refCallback}/>
                 {map && featureLayers.length
-                    ? <FeatureLayers selectedLayers={featureLayers} map={map}/>
+                    ? <FeatureLayers featureLayers={featureLayers || []} map={map}/>
                     : null}
             </React.Fragment>
         )

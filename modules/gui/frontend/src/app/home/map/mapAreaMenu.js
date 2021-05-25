@@ -79,7 +79,9 @@ class _MapAreaMenuPanel extends React.Component {
     renderFeatureLayers() {
         const {area, featureLayerSources, layers: {areas}} = this.props
         const {featureLayers} = areas[area]
-        const selectedSourceIds = featureLayers.map(({sourceId}) => sourceId)
+        const selectedSourceIds = featureLayers
+            .filter(({disabled}) => disabled !== true)
+            .map(({sourceId}) => sourceId)
 
         const options = featureLayerSources.map(({id, type, description}) => ({
             value: id,
@@ -100,10 +102,17 @@ class _MapAreaMenuPanel extends React.Component {
         )
     }
 
-    setFeatureLayers(sourceIds) {
-        const {recipeId, area} = this.props
-        actionBuilder('SET_FEATURE_LAYERS', {sourceIds, area})
-            .set([recipePath(recipeId), 'layers.areas', area, 'featureLayers'], sourceIds)
+    setFeatureLayers(enabledSourceIds) {
+        console.log('setFeatureLayers')
+        const {recipeId, area, featureLayerSources} = this.props
+        actionBuilder('SET_FEATURE_LAYERS', {sourceIds: enabledSourceIds, area})
+            .set(
+                [recipePath(recipeId), 'layers.areas', area, 'featureLayers'],
+                featureLayerSources.map(({id}) => ({
+                    sourceId: id,
+                    disabled: !enabledSourceIds.map(({sourceId}) => sourceId).includes(id)
+                }))
+            )
             .dispatch()
     }
 

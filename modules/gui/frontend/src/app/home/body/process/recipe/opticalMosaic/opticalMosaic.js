@@ -12,7 +12,6 @@ import MosaicToolbar from './panels/opticalMosaicToolbar'
 import React from 'react'
 import SceneDeselection from './sceneDeselection'
 import SceneSelection from './sceneSelection'
-import styles from './opticalMosaic.module.css'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
@@ -32,7 +31,7 @@ class _OpticalMosaic extends React.Component {
     render() {
         const {initialized, aoi} = this.props
         return (
-            <Map className={styles.mosaic}>
+            <Map>
                 <MosaicToolbar/>
                 <Aoi value={aoi}/>
                 {initialized

@@ -16,6 +16,9 @@ export default {
     imageMetadata$: ({asset, recipe}) =>
         postJson$('/api/gee/imageMetadata', {body: {asset, recipe}, retries: 0})
             .pipe(toResponse),
+    distinctBandValues$: ({recipe, band, aoi}) =>
+        postJson$('/api/gee/image/distinctBandValues', {body: {recipe, band, aoi}, retries: 0})
+            .pipe(toResponse),
     sampleImage$: ({asset, count, scale, classBand}) =>
         get$('/api/gee/image/sample',
             {query: {asset, count, scale, classBand}, retries: 0}

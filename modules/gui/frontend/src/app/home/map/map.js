@@ -1,6 +1,7 @@
 import {BehaviorSubject, ReplaySubject, Subject, combineLatest, concat, of, pipe} from 'rxjs'
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
+import {LegendImport} from './legendImport'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
 import {Progress} from './progress'
@@ -216,6 +217,7 @@ class _Map extends React.Component {
                     includeAreaFeatureLayerSource,
                     excludeAreaFeatureLayerSource
                 }}>
+                    <LegendImport/>
                     <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
                     {layerComponent}
                 </MapAreaContext.Provider>
@@ -469,11 +471,11 @@ class _Map extends React.Component {
     }
 
     renderRecipe() {
-        const {className, recipeContext: {statePath}, children} = this.props
+        const {recipeContext: {statePath}, children} = this.props
         return (
             <SectionLayout>
                 <Content>
-                    <div className={className}>
+                    <div className={styles.recipe}>
                         <MapToolbar statePath={[statePath, 'ui']}/>
                         <MapScale/>
                         {children}
@@ -655,8 +657,7 @@ export const Map = compose(
 )
 
 Map.propTypes = {
-    children: PropTypes.any,
-    className: PropTypes.string
+    children: PropTypes.any
 }
 
 const EMPTY_WINDOW = Symbol('NO_MESSAGE_IN_WINDOW')

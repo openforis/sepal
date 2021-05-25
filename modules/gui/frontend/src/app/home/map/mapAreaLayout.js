@@ -3,10 +3,12 @@ import {MapAreaMenu} from './mapAreaMenu'
 import {SplitOverlay} from 'widget/split/splitOverlay'
 import {compose} from 'compose'
 import {selectFrom} from 'stateUtils'
+import {withLayers} from '../body/process/withLayers'
 import {withMapAreaContext} from './mapAreaContext'
 import {withRecipe} from '../body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 
 const mapRecipeToProps = recipe => ({
     areas: selectFrom(recipe, ['layers.areas'])
@@ -19,10 +21,13 @@ class _MapAreaLayout extends React.Component {
             <React.Fragment>
                 <SplitOverlay area={area}>
                     <MapAreaMenu area={area} form={form}/>
-                    <FeatureLayers selectedLayers={areas[area].featureLayers} map={map}/>
+                    <FeatureLayers featureLayers={areas[area].featureLayers} map={map}/>
                 </SplitOverlay>
             </React.Fragment>
         )
+    }
+    componentDidMount() {
+        this.updateFeatureLayers()
     }
 
     componentDidUpdate() {
@@ -30,6 +35,7 @@ class _MapAreaLayout extends React.Component {
         if (!map) {
             return
         }
+        this.updateFeatureLayers()
         const imageLayerId = 'imageLayer'
         if (layer) {
             map.setLayer({id: imageLayerId, layer})
@@ -38,12 +44,27 @@ class _MapAreaLayout extends React.Component {
         }
     }
 
+    updateFeatureLayers() {
+        const {recipeActionBuilder, featureLayerSources, mapAreaContext: {area}, areas} = this.props
+        const featureLayers = areas[area].featureLayers
+        const nextFeatureLayers = featureLayerSources.map(({id, defaultEnabled}) =>
+            featureLayers.find(({sourceId}) => sourceId === id)
+                || {sourceId: id, disabled: !defaultEnabled}
+        )
+        if (!_.isEqual(featureLayers, nextFeatureLayers)) {
+            console.log(area, featureLayers, nextFeatureLayers)
+            recipeActionBuilder('SET_FEATURE_LAYERS', {sourceIds: nextFeatureLayers, area})
+                .set(['layers.areas', area, 'featureLayers'], nextFeatureLayers)
+                .dispatch()
+        }
+    }
 }
 
 export const MapAreaLayout = compose(
     _MapAreaLayout,
     withRecipe(mapRecipeToProps),
     withMapAreaContext(),
+    withLayers()
 )
 
 MapAreaLayout.propTypes = {

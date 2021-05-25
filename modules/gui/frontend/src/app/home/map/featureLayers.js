@@ -9,28 +9,30 @@ import {withLayers} from 'app/home/body/process/withLayers'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
+import ReferenceDataLayer from '../body/process/recipe/classification/referenceDataLayer'
 
-const _FeatureLayers = ({featureLayerSources, selectedLayers, map}) => {
-    return map
-        ? selectedLayers.map((layer, i) => {
-            const source = featureLayerSources.find(({id}) => id === layer.sourceId)
-            return (
-                source
-                    ? (
-                        <FeatureLayer
-                            key={i}
-                            id={source.type}
-                            source={source}
-                            layerConfig={layer.layerConfig}
-                            layerIndex={i + 1}
-                            map={map}
-                        />
-                    )
-                    : null
-            )
-        })
+const _FeatureLayers = ({featureLayerSources, featureLayers, map}) =>
+    map
+        ? featureLayers
+            .filter(({disabled}) => disabled !== true)
+            .map((layer, i) => {
+                const source = featureLayerSources.find(({id}) => id === layer.sourceId)
+                return (
+                    source
+                        ? (
+                            <FeatureLayer
+                                key={i}
+                                id={source.type}
+                                source={source}
+                                layerConfig={layer.layerConfig}
+                                layerIndex={i + 1}
+                                map={map}
+                            />
+                        )
+                        : null
+                )
+            })
         : null
-}
 
 export const FeatureLayers = compose(
     _FeatureLayers,
@@ -38,8 +40,8 @@ export const FeatureLayers = compose(
 )
 
 FeatureLayers.propTypes = {
+    featureLayers: PropTypes.any,
     map: PropTypes.any,
-    selectedLayers: PropTypes.any
 }
 
 const _FeatureLayer = ({source, map, recipe, layerConfig, layerIndex}) => {
@@ -51,6 +53,7 @@ const _FeatureLayer = ({source, map, recipe, layerConfig, layerIndex}) => {
     case 'Values': return <ValuesLayer/>
     case 'Aoi': return <AoiLayer id={source.type} layerConfig={layerConfig} layerIndex={layerIndex} recipe={recipe} map={map}/>
     case 'SceneAreas': return <SceneAreasLayer map={map}/>
+    case 'ReferenceDataLayer': return <ReferenceDataLayer map={map}/>
     default: throw Error(`Unsupported feature layer type: ${source.type}`)
     }
 }

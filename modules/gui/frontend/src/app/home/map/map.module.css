@@ -36,3 +36,9 @@
 .overlay.active {
     --clip-top: 0;
 }
+
+.recipe {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}

@@ -31,21 +31,6 @@
     right: 0;
     bottom: 0;
     left: 0;
-    visibility: hidden;
-}
-
-.presetOption {
-    --palette: '';
-    display: flex;
-    align-items: flex-start;
-    flex-grow: 1;
-    height: 4rem;
-    color: green !important;
-    background: linear-gradient(90deg, var(--palette)) !important;
-}
-
-.presetLabel {
-    background-color: black;
-    color: #ccc;
-    padding: 0.25rem .5rem;
+    pointer-events: none;
+    opacity: 0;
 }
