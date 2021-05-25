@@ -4,6 +4,7 @@ import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {SceneSelectionType, getAllVisualizations} from './opticalMosaicRecipe'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
 import {compose} from 'compose'
+import {dataTypes} from './dataTypes'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {visualizations} from './visualizations'
@@ -164,3 +165,5 @@ OpticalMosaicImageLayer.propTypes = {
     layerConfig: PropTypes.object,
     map: PropTypes.object
 }
+
+export const opticalMosaicDataTypes = () => dataTypes

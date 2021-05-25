@@ -103,7 +103,6 @@ class _MapAreaMenuPanel extends React.Component {
     }
 
     setFeatureLayers(enabledSourceIds) {
-        console.log('setFeatureLayers')
         const {recipeId, area, featureLayerSources} = this.props
         actionBuilder('SET_FEATURE_LAYERS', {sourceIds: enabledSourceIds, area})
             .set(

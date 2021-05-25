@@ -606,6 +606,10 @@
       "type": "Palette",
       "description": "Palette applied to image. It displays an approximate value for the pixel under the mouse cursor."
     },
+    "ReferenceData": {
+      "type": "Reference data",
+      "description": "Show reference data markers"
+    },
     "Values": {
       "type": "Values",
       "description": "Display approximate band values for the pixel under the mouse cursor."

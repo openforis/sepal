@@ -1,13 +1,12 @@
-import {ClassificationImageLayer} from './classification/classificationImageLayer'
+import {ClassificationImageLayer, classificationDataTypes} from './classification/classificationImageLayer'
 import {CursorValue} from 'app/home/map/cursorValue'
-import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
+import {OpticalMosaicImageLayer, opticalMosaicDataTypes} from './opticalMosaic/opticalMosaicImageLayer'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {createLegendFeatureLayerSource} from 'app/home/map/legendFeatureLayerSource'
 import {createPaletteFeatureLayerSource} from 'app/home/map/paletteFeatureLayerSource'
 import {createValuesFeatureLayerSource} from 'app/home/map/valuesFeatureLayerSource'
-import {dataTypes} from 'app/home/body/process/recipe/opticalMosaic/dataTypes'
 import {selectFrom} from 'stateUtils'
 import {setActive, setComplete} from 'app/home/map/progress'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
@@ -45,7 +44,7 @@ class _RecipeImageLayer extends React.Component {
                 recipe={recipe}
                 source={source}
                 layerConfig={layerConfig}
-                layer={this.maybeCreateLayer()}
+                layer={this.maybeCreateLayer(opticalMosaicDataTypes(recipe))}
                 map={map}/>
         )
         case 'CLASSIFICATION': return (
@@ -53,7 +52,7 @@ class _RecipeImageLayer extends React.Component {
                 recipe={recipe}
                 source={source}
                 layerConfig={layerConfig}
-                layer={this.maybeCreateLayer()}
+                layer={this.maybeCreateLayer(classificationDataTypes(recipe))}
                 map={map}/>
         )
         default: throw Error(`Unsupported recipe type: ${recipe.type}`)
@@ -112,14 +111,14 @@ class _RecipeImageLayer extends React.Component {
         this.layer && this.layer.close()
     }
 
-    maybeCreateLayer() {
+    maybeCreateLayer(dataTypes) {
         const {recipe, layerConfig, map} = this.props
         return map && recipe.ui.initialized && layerConfig && layerConfig.visParams
-            ? this.createLayer()
+            ? this.createLayer(dataTypes)
             : null
     }
 
-    createLayer() {
+    createLayer(dataTypes) {
         const {recipe, layerConfig, map, boundsChanged$, dragging$, cursor$} = this.props
         const {props: prevPreviewRequest} = this.layer || {}
         const previewRequest = {

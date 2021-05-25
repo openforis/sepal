@@ -1,64 +1,53 @@
-import {DataCollectionEvents} from './dataCollectionEvents'
+import {Aoi} from '../aoi'
+import {DataCollectionEvents, DataCollectionEventsContext} from './dataCollectionEvents'
+import {Map} from 'app/home/map/map'
 import {compose} from 'compose'
 import {getDefaultModel} from './classificationRecipe'
+import {initializeLayers} from '../recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
-import BandSelection from './bandSelection'
-import ClassificationPreview from './classificationPreview'
 import ClassificationToolbar from './panels/classificationToolbar'
 import CollectPanel from './panels/collect/collectPanel'
-import MapScale from 'app/home/map/mapScale'
-import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
-import ReferenceDataLayer from './referenceDataLayer'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
     images: selectFrom(recipe, 'model.inputImagery.images'),
-    trainingData: selectFrom(recipe, 'model.trainingData')
+    layers: selectFrom(recipe, 'layers')
 })
 
 class _Classification extends React.Component {
     dataCollectionEvents = new DataCollectionEvents()
 
+    constructor(props) {
+        super(props)
+        const {layers, recipeId} = props
+        initializeLayers(recipeId, layers, [
+            {
+                id: 'referenceData',
+                type: 'ReferenceData',
+                description: msg('featureLayerSources.ReferenceData.description'),
+                defaultEnabled: true
+            }
+        ])
+    }
+
     render() {
-        const {recipeContext: {statePath}, initialized} = this.props
+        const {initialized, images} = this.props
         return (
-            <React.Fragment>
-                <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
-                <MapScale/>
-                <ClassificationToolbar dataCollectionEvents={this.dataCollectionEvents}/>
-
-                {initialized
-                    ? <React.Fragment>
-                        <ClassificationPreview/>
-                        <ReferenceDataLayer dataCollectionEvents={this.dataCollectionEvents}/>
-                        <CollectPanel dataCollectionEvents={this.dataCollectionEvents}/>
-                        <BandSelection/>
-                    </React.Fragment>
-                    : null}
-            </React.Fragment>
+            <DataCollectionEventsContext.Provider value={{dataCollectionEvents: this.dataCollectionEvents}}>
+                <Map>
+                    <ClassificationToolbar dataCollectionEvents={this.dataCollectionEvents}/>
+                    <Aoi value={images && images.length && images[0]}/>
+                    {initialized
+                        ? (
+                            <CollectPanel dataCollectionEvents={this.dataCollectionEvents}/>
+                        )
+                        : null}
+                </Map>
+            </DataCollectionEventsContext.Provider>
         )
-    }
-
-    componentDidMount() {
-        this.setAoiLayer()
-    }
-
-    componentDidUpdate() {
-        this.setAoiLayer()
-    }
-
-    setAoiLayer() {
-        const {images, map, componentWillUnmount$} = this.props
-        setRecipeGeometryLayer({
-            map,
-            layerSpec: {id: 'aoi', layerIndex: 1, recipe: images && images.length > 0 ? images[0] : null},
-            destroy$: componentWillUnmount$,
-            onInitialized: () => map.fitLayer('aoi')
-        })
     }
 }
 

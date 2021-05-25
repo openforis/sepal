@@ -9,7 +9,7 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import SafetyButton from 'widget/safetyButton'
-import guid from '../../../../guid'
+import guid from 'guid'
 
 const mapRecipeToProps = (recipe, ownProps) => {
     const {source} = ownProps

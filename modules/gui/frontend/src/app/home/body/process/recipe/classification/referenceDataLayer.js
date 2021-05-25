@@ -3,8 +3,9 @@ import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {withDataCollectionEventsContext} from './dataCollectionEvents'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import MarkerClustererLayer from '../../../../map/markerClustererLayer'
+import MarkerClustererLayer from 'app/home/map/markerClustererLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -217,5 +218,6 @@ ReferenceDataLayer.propTypes = {
 export default compose(
     ReferenceDataLayer,
     withRecipe(mapRecipeToProps),
+    withDataCollectionEventsContext(),
     activator('collect')
 )

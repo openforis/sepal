@@ -39,6 +39,11 @@ const mapRecipeToProps = recipe => ({
 })
 
 class InputImage extends React.Component {
+    constructor(props) {
+        super(props)
+        this.updateImageLayerSources = this.updateImageLayerSources.bind(this)
+    }
+
     render() {
         const {inputs} = this.props
 
@@ -59,7 +64,8 @@ class InputImage extends React.Component {
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement='modal'>
+                placement='modal'
+                onApply={this.updateImageLayerSources}>
                 <PanelSections
                     inputs={inputs}
                     sections={sections}
@@ -97,7 +103,26 @@ class InputImage extends React.Component {
         inputs.imageId.set(imageId)
     }
 
-    umberOfSamplesValue
+    updateImageLayerSources(values) {
+        // console.log({foo})
+        // const model = {
+        //     imageId: values.imageId,
+        //     type: values.section,
+        //     bands: values.bands,
+        //     bandSetSpecs: values.bandSetSpecs
+        // }
+        // switch (values.section) {
+        // case 'RECIPE_REF':
+        //     return {...model, id: values.recipe}
+        // case 'ASSET':
+        //     return {...model, id: values.asset}
+        // default:
+        //     return null
+        // }
+        // recipeActionBuilder('UPDATE_INPUT_IMAGE_LAYER_SOURCE', {description})
+        //     .set(['layers.additionalImageLayerSources', {id: source.id}, 'sourceConfig.description'], description)
+        //     .dispatch()
+    }
 
     addImage() {
         const {onAdd, activatable: {deactivate}} = this.props

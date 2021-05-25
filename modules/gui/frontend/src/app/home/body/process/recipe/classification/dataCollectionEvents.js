@@ -1,3 +1,6 @@
+import {withContext} from 'context'
+import React from 'react'
+
 export class DataCollectionEvents {
     listeners = []
 
@@ -29,3 +32,7 @@ export class DataCollectionEvents {
         this.listeners.push({onSelect, onDeselect, onAdd, onUpdate, onRemove, onUpdateAll})
     }
 }
+
+export const DataCollectionEventsContext = React.createContext()
+
+export const withDataCollectionEventsContext = withContext(DataCollectionEventsContext)

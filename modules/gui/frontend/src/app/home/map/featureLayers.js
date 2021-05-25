@@ -53,7 +53,7 @@ const _FeatureLayer = ({source, map, recipe, layerConfig, layerIndex}) => {
     case 'Values': return <ValuesLayer/>
     case 'Aoi': return <AoiLayer id={source.type} layerConfig={layerConfig} layerIndex={layerIndex} recipe={recipe} map={map}/>
     case 'SceneAreas': return <SceneAreasLayer map={map}/>
-    case 'ReferenceDataLayer': return <ReferenceDataLayer map={map}/>
+    case 'ReferenceData': return <ReferenceDataLayer map={map}/>
     default: throw Error(`Unsupported feature layer type: ${source.type}`)
     }
 }

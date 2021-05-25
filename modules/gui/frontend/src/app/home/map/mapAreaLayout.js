@@ -52,7 +52,6 @@ class _MapAreaLayout extends React.Component {
                 || {sourceId: id, disabled: !defaultEnabled}
         )
         if (!_.isEqual(featureLayers, nextFeatureLayers)) {
-            console.log(area, featureLayers, nextFeatureLayers)
             recipeActionBuilder('SET_FEATURE_LAYERS', {sourceIds: nextFeatureLayers, area})
                 .set(['layers.areas', area, 'featureLayers'], nextFeatureLayers)
                 .dispatch()
