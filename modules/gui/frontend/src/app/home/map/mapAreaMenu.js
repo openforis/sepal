@@ -12,6 +12,7 @@ import {msg} from 'translate'
 import {recipePath} from '../body/process/recipe'
 import {withLayers} from '../body/process/withLayers'
 import {withRecipe} from '../body/process/recipeContext'
+import FloatingBox from 'widget/floatingBox'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -19,18 +20,26 @@ import styles from './mapAreaMenu.module.css'
 
 class _MapAreaMenuPanel extends React.Component {
     render() {
-        const {activatable: {deactivate}} = this.props
+        const {element, activatable: {deactivate}} = this.props
         return (
-            <Panel className={styles.panel} type='normal' onBlur={deactivate}>
-                <Panel.Content>
-                    <Layout>
-                        {this.renderImageLayerSource()}
-                        {this.renderImageLayerForm()}
-                        {this.renderFeatureLayers()}
-                    </Layout>
-                </Panel.Content>
-                <Panel.Buttons onEscape={deactivate} shown={false}/>
-            </Panel>
+            <FloatingBox
+                element={element}
+                alignment='center'
+                placement='above'
+                onBlur={deactivate}
+            >
+                <Panel className={styles.panel} type='normal'>
+                    <Panel.Content>
+                        <Layout>
+                            {this.renderImageLayerSource()}
+                            {this.renderImageLayerForm()}
+                            {this.renderFeatureLayers()}
+                        </Layout>
+                    </Panel.Content>
+                    <Panel.Buttons onEscape={deactivate} shown={false}/>
+                </Panel>
+            </FloatingBox>
+
         )
     }
 
@@ -122,28 +131,43 @@ export const MapAreaMenuPanel = compose(
 )
 
 export class MapAreaMenu extends React.Component {
+    ref = React.createRef()
+
     render() {
-        const {area, form} = this.props
         return (
             <div className={styles.container}>
-                <div className={styles.content}>
-                    <MapAreaMenuPanel area={area} form={form}/>
-                    <Activator id={`mapAreaMenu-${area}`}>
-                        {activator => {
-                            const {activate, deactivate, active, canActivate} = activator
-                            return (
-                                <Button
-                                    look='default'
-                                    shape='pill'
-                                    icon='bars'
-                                    disabled={!canActivate && !active}
-                                    onClick={() => active ? deactivate() : activate()}
-                                />
-                            )
-                        }}
-                    </Activator>
+                <div className={styles.content} ref={this.ref}>
+                    {this.renderPanel()}
+                    {this.renderButton()}
                 </div>
             </div>
+        )
+    }
+
+    renderButton() {
+        const {area} = this.props
+        return (
+            <Activator id={`mapAreaMenu-${area}`}>
+                {activator => {
+                    const {activate, deactivate, active, canActivate} = activator
+                    return (
+                        <Button
+                            look='default'
+                            shape='pill'
+                            icon='bars'
+                            disabled={!canActivate && !active}
+                            onClick={() => active ? deactivate() : activate()}
+                        />
+                    )
+                }}
+            </Activator>
+        )
+    }
+
+    renderPanel() {
+        const {area, form} = this.props
+        return (
+            <MapAreaMenuPanel area={area} form={form} element={this.ref.current}/>
         )
     }
 }

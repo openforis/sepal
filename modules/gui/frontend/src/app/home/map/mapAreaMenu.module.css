@@ -14,10 +14,12 @@
 }
 
 .content {
-    margin: 3rem;
+    margin: 3rem 0;
+    padding: 1rem;
     pointer-events: all;
     display: flex;
     flex-direction: column;
+    flex-grow: 1;
     align-items: center;
 }
 
