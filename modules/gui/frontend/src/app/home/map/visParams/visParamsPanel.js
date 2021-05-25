@@ -520,16 +520,17 @@ class _VisParamsPanel extends React.Component {
     toCategoricalVisParams(id) {
         const {inputs: {name1}} = this.props
         const {legendEntries} = this.state
+        const sortedEntries = _.sortBy(legendEntries, 'value')
         return {
             id,
             type: 'categorical',
             bands: [name1.value],
             inverted: [false],
-            min: _.min(legendEntries.map(({value}) => value)),
-            max: _.max(legendEntries.map(({value}) => value)),
-            values: legendEntries.map(({value}) => value),
-            labels: legendEntries.map(({label}) => label),
-            palette: legendEntries.map(({color}) => color),
+            min: _.min(sortedEntries.map(({value}) => value)),
+            max: _.max(sortedEntries.map(({value}) => value)),
+            values: sortedEntries.map(({value}) => value),
+            labels: sortedEntries.map(({label}) => label),
+            palette: sortedEntries.map(({color}) => color),
             userDefined: true
         }
     }
