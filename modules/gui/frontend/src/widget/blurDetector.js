@@ -20,7 +20,7 @@ class BlurDetector extends React.Component {
         const {addSubscription} = this.props
         addSubscription(
             merge(
-                fromEvent(document, 'click'),
+                fromEvent(document, 'mousedown'),
                 fromEvent(document, 'focus'),
             ).subscribe(
                 e => this.onEvent(e)
