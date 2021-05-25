@@ -5,11 +5,12 @@ import SafetyButton from './safetyButton'
 
 export default class RemoveButton extends React.Component {
     renderSafe() {
-        const {tooltip, tooltipPlacement, message, onRemove, disabled} = this.props
+        const {tooltip, tooltipPlacement, message, size, onRemove, disabled} = this.props
         return (
             <SafetyButton
                 chromeless={true}
                 shape='circle'
+                size={size}
                 icon='trash'
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
@@ -46,6 +47,7 @@ RemoveButton.propTypes = {
     onRemove: PropTypes.func.isRequired,
     disabled: PropTypes.any,
     message: PropTypes.string,
+    size: PropTypes.oneOf(['x-small', 'small', 'normal', 'large', 'x-large', 'xx-large']),
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     unsafe: PropTypes.any

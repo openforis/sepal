@@ -1,12 +1,13 @@
 import {FileSelect} from 'widget/fileSelect'
-import {Form} from 'widget/form/form'
+import {Form, form} from 'widget/form/form'
 import {FormCombo} from 'widget/form/combo'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {RecipeFormPanel, recipeFormPanel} from '../../../recipeFormPanel'
+import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {parseCsvFile$} from 'csv'
+import {withRecipe} from '../body/process/recipeContext'
 import Color from 'color'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
@@ -48,20 +49,27 @@ class _LegendImport extends React.Component {
     }
 
     render() {
+        const {activatable: {deactivate}, form} = this.props
+        const invalid = form.isInvalid()
         return (
-            <RecipeFormPanel
-                className={styles.panel}
-                placement='modal'>
+            <Panel type='modal' className={styles.panel}>
                 <Panel.Header
                     icon='file-import'
-                    title={msg('process.classification.panel.legend.import.title')}
+                    title={msg('map.legendBuilder.import.title')}
                 />
-
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-                <Form.PanelButtons/>
-            </RecipeFormPanel>
+                <Panel.Buttons onEscape={deactivate} onEnter={() => invalid || this.save()}>
+                    <Panel.Buttons.Main>
+                        <Panel.Buttons.Cancel onClick={deactivate}/>
+                        <Panel.Buttons.Apply
+                            disabled={invalid}
+                            onClick={() => this.save()}
+                        />
+                    </Panel.Buttons.Main>
+                </Panel.Buttons>
+            </Panel>
         )
     }
 
@@ -101,12 +109,12 @@ class _LegendImport extends React.Component {
         const {inputs: {colorColumnType}} = this.props
         return (
             <Form.Buttons
-                label={msg('process.classification.panel.legend.import.colorColumnType.label')}
-                tooltip={msg('process.classification.panel.legend.import.colorColumnType.tooltip')}
+                label={msg('map.legendBuilder.import.colorColumnType.label')}
+                tooltip={msg('map.legendBuilder.import.colorColumnType.tooltip')}
                 input={colorColumnType}
                 options={[
-                    {value: 'single', label: msg('process.classification.panel.legend.import.colorColumnType.single')},
-                    {value: 'multiple', label: msg('process.classification.panel.legend.import.colorColumnType.multiple')},
+                    {value: 'single', label: msg('map.legendBuilder.import.colorColumnType.single')},
+                    {value: 'multiple', label: msg('map.legendBuilder.import.colorColumnType.multiple')},
                 ]}
             />
         )
@@ -121,9 +129,9 @@ class _LegendImport extends React.Component {
                 className={styles.field}
                 input={inputs[name]}
                 options={options}
-                label={msg(['process.classification.panel.legend.import.column', name, 'label'])}
-                placeholder={msg(['process.classification.panel.legend.import.column', name, 'placeholder'])}
-                tooltip={msg(['process.classification.panel.legend.import.column', name, 'tooltip'])}
+                label={msg(['map.legendBuilder.import.column', name, 'label'])}
+                placeholder={msg(['map.legendBuilder.import.column', name, 'placeholder'])}
+                tooltip={msg(['map.legendBuilder.import.column', name, 'tooltip'])}
                 onChange={({value}) => this.selectedColumn(name, value)}
             />
         )
@@ -133,7 +141,7 @@ class _LegendImport extends React.Component {
         const {stream, inputs: {name}} = this.props
         return (
             <Layout spacing={'compact'}>
-                <Label>{msg('process.classification.panel.legend.import.file.label')}</Label>
+                <Label>{msg('map.legendBuilder.import.file.label')}</Label>
                 <FileSelect
                     single
                     onSelect={file => this.onSelectFile(file)}>
@@ -190,49 +198,51 @@ class _LegendImport extends React.Component {
             }
         )
     }
+
+    save() {
+        const {inputs, recipeActionBuilder, activatable: {deactivate}} = this.props
+        const {
+            rows,
+            valueColumn,
+            labelColumn,
+            colorColumnType,
+            colorColumn,
+            redColumn,
+            greenColumn,
+            blueColumn
+        } = inputs
+        const entries = rows.value.map(row => ({
+            id: guid(),
+            color: colorColumnType.value === 'single'
+                ? Color(trim(row[colorColumn.value])).hex()
+                : Color.rgb([
+                    trim(row[redColumn.value]),
+                    trim(row[greenColumn.value]),
+                    trim(row[blueColumn.value])
+                ]).hex(),
+            value: trim(row[valueColumn.value]),
+            label: trim(row[labelColumn.value])
+        }))
+        recipeActionBuilder('SET_IMPORTED_LEGEND_ENTRIES', {entries})
+            .set('ui.importedLegendEntries', entries)
+            .dispatch()
+        deactivate()
+    }
 }
 
 const policy = () => ({_: 'allow'})
 
-const valuesToModel = ({
-    rows,
-    valueColumn,
-    labelColumn,
-    colorColumnType,
-    colorColumn,
-    redColumn,
-    greenColumn,
-    blueColumn
-}) => ({
-    entries: rows.map(row =>
-        ({
-            id: guid(),
-            color: colorColumnType === 'single'
-                ? Color(trim(row[colorColumn])).hex()
-                : Color.rgb([
-                    trim(row[redColumn]),
-                    trim(row[greenColumn]),
-                    trim(row[blueColumn])
-                ]).hex(),
-            value: trim(row[valueColumn]),
-            label: trim(row[labelColumn])
-        }))
-})
-
 const trim = value => _.isString(value) ? value.trim() : value
-
-const modelToValues = () => ({})
 
 export const LegendImport = compose(
     _LegendImport,
-    recipeFormPanel({
+    activatable({
         id: 'legendImport',
-        path: () => 'legend',
-        fields,
-        valuesToModel,
-        modelToValues,
         policy,
-    })
+        alwaysAllow: true
+    }),
+    withRecipe(),
+    form({fields}),
 )
 
 export const getValidMappings = (columns, rows) => {

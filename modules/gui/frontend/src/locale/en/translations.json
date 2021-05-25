@@ -355,6 +355,91 @@
     }
   },
   "map": {
+    "legendBuilder": {
+      "addEntry": {
+        "tooltip": "Add legend entry"
+      },
+      "colors": {
+        "colorPicker": {
+          "tooltip": "Show and edit legend colors using color pickers"
+        },
+        "edit": {
+          "tooltip": "Change color"
+        },
+        "swap": {
+          "tooltip": "Swap this color with another in the legend"
+        },
+        "text": {
+          "tooltip": "Show and edit legend colors as text"
+        }
+      },
+      "entry": {
+        "error": {
+          "duplicateColor": "There are more then one entry with this color",
+          "duplicateLabel": "There are more then one entry with this label",
+          "duplicateValue": "There are more then one entry with this value",
+          "invalidColor": "Invalid color"
+        },
+        "confirmation": "Are you sure you want to remove this legend entry?"
+      },
+      "import": {
+        "title": "Import",
+        "file": {
+          "label": "CSV file"
+        },
+        "colorColumnType": {
+          "label": "Color column format",
+          "tooltip": "Specify if the color is in a single column, or if red, green, blue are in separate column.",
+          "single": "Single column",
+          "multiple": "Multiple columns"
+        },
+        "column": {
+          "valueColumn": {
+            "label": "Value",
+            "placeholder": "Select...",
+            "tooltip": "Column with class values"
+          },
+          "labelColumn": {
+            "label": "Label",
+            "placeholder": "Select...",
+            "tooltip": "Column with class labels"
+          },
+          "colorColumn": {
+            "label": "Color",
+            "placeholder": "Select...",
+            "tooltip": "Column with class colors"
+          },
+          "redColumn": {
+            "label": "Red",
+            "placeholder": "Select...",
+            "tooltip": "Column with red color channel values"
+          },
+          "greenColumn": {
+            "label": "Green",
+            "placeholder": "Select...",
+            "tooltip": "Column with green color channel values"
+          },
+          "blueColumn": {
+            "label": "Blue",
+            "placeholder": "Select...",
+            "tooltip": "Column with blue color channel values"
+          }
+        }
+      },
+      "label": "Legend",
+      "load": {
+        "label": "Load...",
+        "options": {
+          "importFromCsv": {
+            "label": "Import from CSV..."
+          },
+          "imageValues": {
+            "label": "Distinct values from image band",
+            "loadError": "Failed to load distinct values from image band"
+          }
+        }
+      }
+    },
     "layer": {
       "error": "Failed to load layer"
     },
@@ -474,14 +559,21 @@
         "label": "Stretch"
       },
       "type": {
-        "single": {
-          "label": "Single band"
+        "categorical": {
+          "label": "Categorical",
+          "tooltip": "Single band with categorical values"
+        },
+        "continuous": {
+          "label": "Continuous",
+          "tooltip": "Single band with continuous values"
         },
         "rgb": {
-          "label": "RGB"
+          "label": "RGB",
+          "tooltip": "Three bands mapping to red, green, and blue color channels"
         },
         "hsv": {
-          "label": "HSV"
+          "label": "HSV",
+          "tooltip": "Three bands mapping to hue, saturation, and value"
         }
       }
     },
@@ -1339,51 +1431,7 @@
         "legend": {
           "button": "LEG",
           "title": "Legend",
-          "tooltip": "Setup legend for classification",
-          "import": {
-            "title": "Import",
-            "file": {
-              "label": "CSV file"
-            },
-            "colorColumnType": {
-              "label": "Color column format",
-              "tooltip": "Specify if the color is in a single column, or if red, green, blue are in separate column.",
-              "single": "Single column",
-              "multiple": "Multiple columns"
-            },
-            "column": {
-              "valueColumn": {
-                "label": "Value",
-                "placeholder": "Select...",
-                "tooltip": "Column with class values"
-              },
-              "labelColumn": {
-                "label": "Label",
-                "placeholder": "Select...",
-                "tooltip": "Column with class labels"
-              },
-              "colorColumn": {
-                "label": "Color",
-                "placeholder": "Select...",
-                "tooltip": "Column with class colors"
-              },
-              "redColumn": {
-                "label": "Red",
-                "placeholder": "Select...",
-                "tooltip": "Column with red color channel values"
-              },
-              "greenColumn": {
-                "label": "Green",
-                "placeholder": "Select...",
-                "tooltip": "Column with green color channel values"
-              },
-              "blueColumn": {
-                "label": "Blue",
-                "placeholder": "Select...",
-                "tooltip": "Column with blue color channel values"
-              }
-            }
-          }
+          "tooltip": "Setup legend for classification"
         },
         "trainingData": {
           "button": "TRN",

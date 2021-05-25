@@ -1,16 +1,19 @@
 import {Form, form} from 'widget/form/form'
 import {Histogram, histogramStretch} from './histogram'
 import {Layout} from 'widget/layout'
+import {LegendBuilder} from '../legendBuilder'
 import {Palette} from './palette'
 import {Panel} from 'widget/panel/panel'
 import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
+import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
 import Confirm from 'widget/confirm'
+import Icon from '../../../../widget/icon'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
@@ -26,69 +29,80 @@ const fields = {
         .notBlank(),
     min1: new Form.Field()
         .skip((value, {name1}) => !name1)
+        .skip((value, {type}) => type === 'categorical')
         .notBlank()
         .number()
         .predicate((min1, {max1}) => min1 < max1, 'map.visParams.form.min.notSmallerThanMax'),
     max1: new Form.Field()
         .skip((value, {name1}) => !name1)
+        .skip((value, {type}) => type === 'categorical')
         .notBlank()
         .number(),
     inverted1: new Form.Field(),
     gamma1: new Form.Field()
-        .skip((value, {type}) => isSingleBand(type))
+        .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
         .notBlank()
         .number(),
 
     name2: new Form.Field()
-        .skip((value, {type}) => isSingleBand(type))
+        .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
         .notBlank(),
     min2: new Form.Field()
         .skip((value, {name2}) => !name2)
-        .skip((value, {type}) => isSingleBand(type))
+        .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
         .notBlank()
         .number()
         .predicate((min2, {max2}) => min2 < max2, 'map.visParams.form.min.notSmallerThanMax'),
     max2: new Form.Field()
         .skip((value, {name2}) => !name2)
-        .skip((value, {type}) => isSingleBand(type))
+        .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
         .notBlank()
         .number(),
     inverted2: new Form.Field(),
     gamma2: new Form.Field()
-        .skip((value, {type}) => isSingleBand(type))
+        .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
         .notBlank()
         .number(),
     name3: new Form.Field()
-        .skip((value, {type}) => isSingleBand(type))
+        .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
         .notBlank(),
     min3: new Form.Field()
         .skip((value, {name3}) => !name3)
-        .skip((value, {type}) => isSingleBand(type))
+        .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
         .notBlank()
         .number()
         .predicate((min3, {max3}) => min3 < max3, 'map.visParams.form.min.notSmallerThanMax'),
     max3: new Form.Field()
         .skip((value, {name3}) => !name3)
-        .skip((value, {type}) => isSingleBand(type))
+        .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
         .notBlank()
         .number(),
     inverted3: new Form.Field(),
     gamma3: new Form.Field()
-        .skip((value, {type}) => isSingleBand(type))
+        .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
         .notBlank()
         .number(),
 }
 
 const mapRecipeToProps = (recipe, {activatable: {imageLayerSourceId}}) => ({
     visParamsSets: selectFrom(recipe, ['layers.userDefinedVisualizations', imageLayerSourceId]) || [],
-    aoi: selectFrom(recipe, 'model.aoi')
+    aoi: selectFrom(recipe, 'model.aoi'),
+    importedLegendEntries: selectFrom(recipe, 'ui.importedLegendEntries')
 })
 
 class _VisParamsPanel extends React.Component {
     state = {
         bands: null,
         histograms: {},
-        askConfirmation: false
+        askConfirmation: false,
+        legendEntries: [],
+        invalidLegendEntries: false,
+    }
+
+    constructor(props) {
+        super(props)
+        this.importLegend = this.importLegend.bind(this)
+        this.loadDistinctBandValues = this.loadDistinctBandValues.bind(this)
     }
 
     render() {
@@ -99,10 +113,9 @@ class _VisParamsPanel extends React.Component {
     }
 
     renderPanel() {
-        const {activatable: {deactivate}, form, inputs: {name1, name2, name3}} = this.props
-        const {histograms} = this.state
-        const hasNoHistogram = !histograms[name1.value] && !histograms[name2.value] && !histograms[name3.value]
-        const invalid = form.isInvalid()
+        const {activatable: {deactivate}, form, inputs: {type}} = this.props
+        const {legendEntries, invalidLegendEntries} = this.state
+        const invalid = form.isInvalid() || (type.value === 'categorical' && (invalidLegendEntries || !legendEntries.length))
         return (
             <Panel type='modal' className={styles.panel}>
                 <Panel.Header
@@ -114,26 +127,12 @@ class _VisParamsPanel extends React.Component {
                     {this.renderContent()}
                 </Panel.Content>
                 <Panel.Buttons onEscape={deactivate} onEnter={() => invalid || this.check()}>
-                    <ButtonSelect
-                        label={msg('map.visParams.stretch.label')}
-                        icon='chart-area'
-                        placement='above'
-                        tooltipPlacement='bottom'
-                        disabled={hasNoHistogram}
-                        options={[
-                            {value: '100', label: '100%'},
-                            {value: '99.99', label: '99.99%'},
-                            {value: '99.9', label: '99.9%'},
-                            {value: '99', label: '99%'},
-                            {value: '98', label: '98%'},
-                            {value: '95', label: '95%'},
-                            {value: '90', label: '90%'},
-                        ]}
-                        onSelect={({value}) => this.stretchHistograms(value)}
-                    />
+                    {type.value === 'categorical'
+                        ? this.renderLegendBuilderButtons(this.importLegend, this.loadDistinctBandValues)
+                        : this.renderStretchButton()}
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Cancel onClick={deactivate}/>
-                        <Panel.Buttons.Save
+                        <Panel.Buttons.Apply
                             disabled={invalid}
                             onClick={() => this.check()}
                         />
@@ -143,31 +142,103 @@ class _VisParamsPanel extends React.Component {
         )
     }
 
+    renderLegendBuilderButtons() {
+        const {stream, inputs: {name1}} = this.props
+        const options = [
+            {
+                value: 'import',
+                label: msg('map.legendBuilder.load.options.importFromCsv.label'),
+                onSelect: this.importLegend
+            },
+            {
+                value: 'imageValues',
+                label: msg('map.legendBuilder.load.options.imageValues.label'),
+                disabled: !name1.value,
+                onSelect: this.loadDistinctBandValues
+            },
+        ]
+        return (
+            <React.Fragment>
+                <ButtonSelect
+                    label={msg('map.legendBuilder.load.label')}
+                    icon='file-import'
+                    placement='above'
+                    tooltipPlacement='bottom'
+                    options={options}
+                    disabled={stream('LOAD_DISTINCT_IMAGE_VALUES').active}
+                    onSelect={option => option && _.find(options, ({value}) => value === option.value).onSelect()}
+                />
+            </React.Fragment>
+        )
+    }
+
+    renderStretchButton() {
+        const {inputs: {name1, name2, name3}} = this.props
+        const {histograms} = this.state
+        const hasNoHistogram = !histograms[name1.value] && !histograms[name2.value] && !histograms[name3.value]
+        return (
+            <ButtonSelect
+                label={msg('map.visParams.stretch.label')}
+                icon='chart-area'
+                placement='above'
+                tooltipPlacement='bottom'
+                disabled={hasNoHistogram}
+                options={[
+                    {value: '100', label: '100%'},
+                    {value: '99.99', label: '99.99%'},
+                    {value: '99.9', label: '99.9%'},
+                    {value: '99', label: '99%'},
+                    {value: '98', label: '98%'},
+                    {value: '95', label: '95%'},
+                    {value: '90', label: '90%'},
+                ]}
+                onSelect={({value}) => this.stretchHistograms(value)}
+            />
+        )
+    }
+
     renderTypeButtons() {
         const {inputs: {type}} = this.props
         return (
             <Form.Buttons
                 input={type}
+                alignment='right'
                 options={[
-                    // {value: 'categorical', label: 'cat', tooltip: 'Categorical image values in a single band'},
-                    {value: 'continuous', label: msg('map.visParams.type.single.label')},
-                    {value: 'rgb', label: msg('map.visParams.type.rgb.label')},
-                    {value: 'hsv', label: msg('map.visParams.type.hsv.label')},
+                    {value: 'continuous', label: msg('map.visParams.type.continuous.label'), tooltip: msg('map.visParams.type.continuous.tooltip')},
+                    {value: 'categorical', label: msg('map.visParams.type.categorical.label'), tooltip: msg('map.visParams.type.categorical.tooltip')},
+                    {value: 'rgb', label: msg('map.visParams.type.rgb.label'), tooltip: msg('map.visParams.type.rgb.tooltip')},
+                    {value: 'hsv', label: msg('map.visParams.type.hsv.label'), tooltip: msg('map.visParams.type.hsv.tooltip')},
                 ]}
-                onChange={this.setMode}
+                onChange={nextType => this.onTypeChanged(nextType)}
             />
         )
     }
 
+    onTypeChanged(nextType) {
+        const {inputs} = this.props
+        const {type, name1, name2, name3} = inputs
+        const prevType = type.value
+        const minMaxDefined = i => !_.isNil(inputs[`min${i}`]) && _.isNil(inputs[`max${i}`])
+        if (prevType === 'categorical' && nextType !== 'categorical') {
+            this.analyzeBand(name1.value, {type: nextType, stretch: !minMaxDefined(1)})
+            if (type !== 'continuous') {
+                this.analyzeBand(name2.value, {type: nextType, stretch: !minMaxDefined(1)})
+                this.analyzeBand(name3.value, {type: nextType, stretch: !minMaxDefined(1)})
+            }
+        }
+    }
+
     renderContent() {
         const {inputs} = this.props
-        if (isSingleBand(inputs.type.value)) {
+        if (inputs.type.value === 'continuous') {
             return (
                 <Layout>
                     {this.renderBandForm(0, msg('map.visParams.form.band.band.label'))}
                     {this.renderHistogram(0)}
                 </Layout>
             )
+        } else if (inputs.type.value === 'categorical') {
+            return this.renderLegendBuilder()
         } else if (inputs.type.value === 'rgb') {
             return (
                 <Layout>
@@ -193,6 +264,34 @@ class _VisParamsPanel extends React.Component {
         }
     }
 
+    renderLegendBuilder() {
+        const {stream} = this.props
+        const {bands, legendEntries} = this.state
+        const loading = stream('LOAD_DISTINCT_IMAGE_VALUES').active
+        return (
+            <Layout>
+                <Band
+                    label={msg('map.visParams.form.band.band.label')}
+                    inputs={this.bandInputs(0)}
+                    bands={bands}
+                />
+                {loading
+                    ? (
+                        <Widget label={msg('map.legendBuilder.label')}>
+                            <Icon name='spinner' className={styles.spinner}/>
+                        </Widget>
+                    )
+                    : (
+                        <LegendBuilder
+                            entries={legendEntries}
+                            onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
+                        />
+                    )
+                }
+            </Layout>
+        )
+    }
+
     renderBandForm(i, label) {
         const {inputs: {type}} = this.props
         const {bands} = this.state
@@ -202,7 +301,7 @@ class _VisParamsPanel extends React.Component {
                 type={type.value}
                 inputs={this.bandInputs(i)}
                 label={label}
-                onBandSelected={name => this.initHistogram(name, {stretch: true})}/>
+                onBandSelected={name => this.analyzeBand(name, {type: type.value, stretch: true})}/>
         )
     }
 
@@ -262,20 +361,33 @@ class _VisParamsPanel extends React.Component {
         )
         if (visParams) {
             inputs.type.set(visParams.type)
-            visParams.palette
-                ? inputs.palette.set(visParams.palette.map(color => ({id: guid(), color})))
-                : []
+            visParams.palette && inputs.palette.set(visParams.palette.map(color => ({id: guid(), color})))
             inputs['gamma1'].set(visParams.gamma ? visParams.gamma[0] : 1)
             inputs['gamma2'].set(visParams.gamma ? visParams.gamma[1] : 1)
             inputs['gamma3'].set(visParams.gamma ? visParams.gamma[2] : 1)
             const initBand = (name, i) => {
-                this.initHistogram(name, {stretch: false})
                 inputs[`name${i + 1}`].set(name)
                 inputs[`min${i + 1}`].set(visParams.min[i])
                 inputs[`max${i + 1}`].set(visParams.max[i])
                 inputs[`inverted${i + 1}`].set([visParams.inverted && visParams.inverted[i]])
+                this.analyzeBand(name, {type: visParams.type, stretch: false})
             }
             visParams.bands.forEach(initBand)
+            if (visParams.type === 'categorical') {
+                const legendEntries = visParams.values
+                    ? visParams.values.map((value, i) => ({
+                        id: guid(),
+                        value,
+                        color: visParams.palette && visParams.palette.length > i
+                            ? visParams.palette[i]
+                            : null,
+                        label: visParams.labels && visParams.labels.length > i
+                            ? visParams.labels[i]
+                            : null,
+                    }))
+                    : []
+                this.setState({legendEntries})
+            }
         } else {
             inputs.type.set('continuous')
             inputs.gamma1.set(1)
@@ -284,15 +396,37 @@ class _VisParamsPanel extends React.Component {
         }
     }
 
+    componentDidUpdate() {
+        const {importedLegendEntries, recipeActionBuilder} = this.props
+        if (importedLegendEntries) {
+            recipeActionBuilder('CLEAR_IMPORTED_LEGEND_ENTRIES', {importedLegendEntries})
+                .del('ui.importedLegendEntries')
+                .dispatch()
+            this.setState({legendEntries: importedLegendEntries})
+        }
+    }
+
+    updateLegendEntries(legendEntries, invalidLegendEntries) {
+        this.setState({legendEntries, invalidLegendEntries})
+    }
+
+    analyzeBand(name, {type, stretch}) {
+        if (name && type !== 'categorical') {
+            this.initHistogram(name, {stretch})
+        }
+    }
+
     initHistogram(name, {stretch}) {
         const {stream, activatable: {recipe}, aoi} = this.props
         const {histograms} = this.state
         const histogram = histograms[name]
         const updateHistogram = (data, stretch) => this.setState(({histograms}) =>
-            ({histograms: {
-                ...histograms,
-                [name]: {data, stretch}
-            }})
+            ({
+                histograms: {
+                    ...histograms,
+                    [name]: {data, stretch}
+                }
+            })
         )
         if (histogram) {
             updateHistogram(histogram.data, true)
@@ -334,10 +468,32 @@ class _VisParamsPanel extends React.Component {
         )
     }
 
+    importLegend() {
+        const {activator: {activatables: {legendImport}}} = this.props
+        legendImport.activate()
+    }
+
+    loadDistinctBandValues() {
+        const {activatable: {recipe}, aoi, stream, inputs: {name1}} = this.props
+        const toEntries = values => values.map(value => ({
+            id: guid(),
+            value,
+            label: value,
+            color: '#000000'
+        }))
+
+        if (!stream('LOAD_DISTINCT_IMAGE_VALUES').active) {
+            stream('LOAD_DISTINCT_IMAGE_VALUES',
+                api.gee.distinctBandValues$({recipe, band: name1.value, aoi}),
+                values => this.setState({legendEntries: toEntries(values)}),
+                error => Notifications.error({message: msg('map.legendBuilder.load.options.imageValues.loadError'), error})
+            )
+        }
+    }
+
     save() {
         const {recipeActionBuilder, activatable: {imageLayerSourceId, visParams: prevVisParams, deactivate}, inputs, updateLayerConfig} = this.props
         const type = inputs.type.value
-        const singleBand = isSingleBand(type)
         const bands = this.values('name')
         const inverted = this.values('inverted').map(inverted => inverted ? inverted[0] : false)
         const min = this.values('min').map(value => toNumber(value))
@@ -347,9 +503,11 @@ class _VisParamsPanel extends React.Component {
             ? inputs.palette.value.map(({color}) => color)
             : ['#000000', '#FFFFFF']
         const id = prevVisParams && prevVisParams.id ? prevVisParams.id : guid()
-        const visParams = singleBand
+        const visParams = type === 'continuous'
             ? {id, type, bands, inverted, min, max, palette, userDefined: true}
-            : {id, type, bands, inverted, min, max, gamma, userDefined: true}
+            : type === 'categorical'
+                ? this.toCategoricalVisParams(id)
+                : {id, type, bands, inverted, min, max, gamma, userDefined: true}
         const toDelete = this.overridingVisParams() || {}
         recipeActionBuilder('SAVE_VIS_PARAMS', {visParams})
             .del(['layers.userDefinedVisualizations', imageLayerSourceId, {id: toDelete.id}])
@@ -357,6 +515,23 @@ class _VisParamsPanel extends React.Component {
             .dispatch()
         updateLayerConfig({visParams})
         deactivate()
+    }
+
+    toCategoricalVisParams(id) {
+        const {inputs: {name1}} = this.props
+        const {legendEntries} = this.state
+        return {
+            id,
+            type: 'categorical',
+            bands: [name1.value],
+            inverted: [false],
+            min: _.min(legendEntries.map(({value}) => value)),
+            max: _.max(legendEntries.map(({value}) => value)),
+            values: legendEntries.map(({value}) => value),
+            labels: legendEntries.map(({label}) => label),
+            palette: legendEntries.map(({color}) => color),
+            userDefined: true
+        }
     }
 
     values(name) {
@@ -380,40 +555,22 @@ export const VisParamsPanel = compose(
     activatable({
         id: ({area}) => `visParams-${area}`,
         policy
-    })
+    }),
+    activator('legendImport')
 )
 
 class BandForm extends React.Component {
     render() {
-        const {type} = this.props
-        const singleBand = isSingleBand(type)
+        const {type, bands, label, onBandSelected = () => {}, inputs} = this.props
         return (
             <Layout type={'vertical'}>
                 <Layout type={'horizontal'}>
-                    {this.renderBand()}
+                    <Band label={label} bands={bands} inputs={inputs} onBandSelected={onBandSelected} invertable/>
                     {this.renderRange()}
-                    {singleBand ? null : this.renderGamma()}
+                    {type === 'continuous' ? null : this.renderGamma()}
                 </Layout>
-                {singleBand ? this.renderPalette() : null}
+                {type === 'continuous' ? this.renderPalette() : null}
             </Layout>
-        )
-    }
-
-    renderInverted() {
-        const {inputs: {inverted}} = this.props
-        return (
-            <Form.Buttons
-                key={'inverted'}
-                input={inverted}
-                look='transparent'
-                shape={'pill'}
-                air={'less'}
-                size={'x-small'}
-                options={[
-                    {value: true, label: 'REV', tooltip: msg('map.visParams.form.band.reverse.tooltip')}
-                ]}
-                multiple
-            />
         )
     }
 
@@ -442,24 +599,6 @@ class BandForm extends React.Component {
         )
     }
 
-    renderBand() {
-        const {onBandSelected, bands, label, inputs: {name}} = this.props
-        const options = (bands || []).map(band => ({value: band, label: band}))
-        return (
-            <Form.Combo
-                label={label}
-                className={styles.band}
-                placeholder={msg('map.visParams.form.band.select.placeholder')}
-                input={name}
-                options={options}
-                disabled={!bands}
-                busyMessage={!bands && msg('map.visParams.bands.loading')}
-                additionalButtons={[this.renderInverted()]}
-                onChange={({value}) => onBandSelected(value)}
-            />
-        )
-    }
-
     renderGamma() {
         const {inputs: {gamma}} = this.props
         return (
@@ -473,6 +612,38 @@ class BandForm extends React.Component {
             </Widget>
         )
     }
+}
+
+const Band = ({invertable, onBandSelected, bands, label, inputs: {name, inverted}}) => {
+    const options = (bands || []).map(band => ({value: band, label: band}))
+    const invertedWidget = (
+        <Form.Buttons
+            key={'inverted'}
+            input={inverted}
+            look='transparent'
+            shape={'pill'}
+            air={'less'}
+            size={'x-small'}
+            options={[
+                {value: true, label: 'REV', tooltip: msg('map.visParams.form.band.reverse.tooltip')}
+            ]}
+            multiple
+        />
+    )
+
+    return (
+        <Form.Combo
+            label={label}
+            className={styles.band}
+            placeholder={msg('map.visParams.form.band.select.placeholder')}
+            input={name}
+            options={options}
+            disabled={!bands}
+            busyMessage={!bands && msg('map.visParams.bands.loading')}
+            additionalButtons={invertable ? [invertedWidget] : []}
+            onChange={({value}) => onBandSelected && onBandSelected(value)}
+        />
+    )
 }
 
 const isSingleBand = type =>

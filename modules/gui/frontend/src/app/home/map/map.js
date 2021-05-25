@@ -1,6 +1,7 @@
 import {BehaviorSubject, ReplaySubject, Subject, combineLatest, concat, of, pipe} from 'rxjs'
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
+import {LegendImport} from './legendImport'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
 import {Progress} from './progress'
@@ -216,6 +217,7 @@ class _Map extends React.Component {
                     includeAreaFeatureLayerSource,
                     excludeAreaFeatureLayerSource
                 }}>
+                    <LegendImport/>
                     <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
                     {layerComponent}
                 </MapAreaContext.Provider>

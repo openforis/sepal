@@ -34,7 +34,7 @@ class _LegendLayer extends React.Component {
         const {mapAreaContext: {area}, areas} = this.props
         const {labels, values, palette} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
         const {value, paletteWidth} = this.state
-        const cursorValues = values
+        const cursorValues = value
             ? value.map((v, i) =>
                 <CursorValue
                     key={i}
