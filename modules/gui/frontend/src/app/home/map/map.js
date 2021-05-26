@@ -503,7 +503,7 @@ class _Map extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {layers: {areas: prevAreas}} = prevProps
+        const prevAreas = selectFrom(prevProps, 'layers.areas') || {}
         const {layers: {areas}} = this.props
         Object.values(prevAreas)
             .filter(({id}) => !Object.values(areas).map(({id}) => id).includes(id))

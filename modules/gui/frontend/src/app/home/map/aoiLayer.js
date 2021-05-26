@@ -1,5 +1,6 @@
 import {EETableLayer} from './eeTableLayer'
 import {PolygonLayer} from './polygonLayer'
+import {RecipeGeometryLayer} from './recipeGeometryLayer'
 import React from 'react'
 
 export const countryEETable = 'users/wiell/SepalResources/countries'
@@ -22,12 +23,8 @@ export const countryToEETable = aoi => ({
 })
 
 export const AoiLayer = ({id, layerConfig = {}, layerIndex, map, recipe}) => {
-    const aoi = layerConfig.aoi || recipe.model.aoi
-    if (!aoi) {
-        return null
-    }
-    const aoiType = aoi.type
-    switch (aoiType) {
+    const aoi = layerConfig.aoi || recipe.model.aoi || {}
+    switch (aoi.type) {
     case 'COUNTRY':
         return <EETableLayer
             id={id}
@@ -59,13 +56,19 @@ export const AoiLayer = ({id, layerConfig = {}, layerIndex, map, recipe}) => {
             id={id}
             map={map}
             path={aoi.path}
-            fill={false} // TODO: Should fill sometimes
+            fill={false}
             color={color}
             fillColor={fillColor}
         />
-
     default:
-        throw Error(`Unsupported AOI type: ${aoiType}`)
+        return <RecipeGeometryLayer
+            id={id}
+            map={map}
+            color={color}
+            fillColor={fillColor}
+            layerIndex={layerIndex}
+            recipe={recipe}
+        />
     }
 }
 

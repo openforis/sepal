@@ -30,8 +30,10 @@ const fields = {
         .notEmpty('process.classification.panel.inputImagery.form.bands.required'),
     bandSetSpecs: new Form.Field()
         .predicate((bandSetSpecs, {bands}) =>
-            bandSetSpecs.find(spec => !BandSetSpec.isEmpty(spec, bands)),
-        'process.classification.panel.inputImagery.form.bandSetSpecs.required')
+            bandSetSpecs && bandSetSpecs.find(spec => !BandSetSpec.isEmpty(spec, bands)),
+        'process.classification.panel.inputImagery.form.bandSetSpecs.required'),
+    metadata: new Form.Field(),
+    visualizations: new Form.Field()
 }
 
 const mapRecipeToProps = recipe => ({
@@ -46,20 +48,23 @@ class InputImage extends React.Component {
 
     render() {
         const {inputs} = this.props
-
-        const sections = [{
-            component: <SectionSelection section={inputs.section}/>
-        }, {
-            value: 'RECIPE_REF',
-            label: msg('process.classification.panel.inputImagery.recipe.title'),
-            title: msg('SEPAL RECIPE'),
-            component: <ImageForm ${...this.props} inputComponent={RecipeSection} input={inputs.recipe}/>
-        }, {
-            value: 'ASSET',
-            label: msg('process.classification.panel.inputImagery.asset.title'),
-            title: msg('EARTH ENGINE ASSET'),
-            component: <ImageForm ${...this.props} inputComponent={AssetSection} input={inputs.asset}/>
-        }]
+        const sections = [
+            {
+                component: <SectionSelection section={inputs.section}/>
+            },
+            {
+                value: 'RECIPE_REF',
+                label: msg('process.classification.panel.inputImagery.recipe.title'),
+                title: msg('SEPAL RECIPE'),
+                component: <ImageForm ${...this.props} inputComponent={RecipeSection} input={inputs.recipe}/>
+            },
+            {
+                value: 'ASSET',
+                label: msg('process.classification.panel.inputImagery.asset.title'),
+                title: msg('EARTH ENGINE ASSET'),
+                component: <ImageForm ${...this.props} inputComponent={AssetSection} input={inputs.asset}/>
+            }
+        ]
 
         return (
             <RecipeFormPanel
@@ -93,35 +98,56 @@ class InputImage extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {bandSetSpecs}} = this.props
-        if (!bandSetSpecs.value)
-            bandSetSpecs.set([{id: guid(), type: 'IMAGE_BANDS', class: 'IMAGE_BANDS'}])
+        this.initBandSetSpecs()
     }
 
     componentDidUpdate() {
         const {inputs, activatable: {imageId}} = this.props
         inputs.imageId.set(imageId)
+        this.initBandSetSpecs()
     }
 
-    updateImageLayerSources(values) {
-        // console.log({foo})
-        // const model = {
-        //     imageId: values.imageId,
-        //     type: values.section,
-        //     bands: values.bands,
-        //     bandSetSpecs: values.bandSetSpecs
-        // }
-        // switch (values.section) {
-        // case 'RECIPE_REF':
-        //     return {...model, id: values.recipe}
-        // case 'ASSET':
-        //     return {...model, id: values.asset}
-        // default:
-        //     return null
-        // }
-        // recipeActionBuilder('UPDATE_INPUT_IMAGE_LAYER_SOURCE', {description})
-        //     .set(['layers.additionalImageLayerSources', {id: source.id}, 'sourceConfig.description'], description)
-        //     .dispatch()
+    initBandSetSpecs() {
+        const {inputs: {bandSetSpecs}} = this.props
+        if (!bandSetSpecs.value) {
+            bandSetSpecs.set([{id: guid(), type: 'IMAGE_BANDS', class: 'IMAGE_BANDS'}])
+        }
+    }
+
+    updateImageLayerSources({section, asset, recipe: recipeId, metadata, visualizations}) {
+        const {recipeActionBuilder} = this.props
+
+        const toImageLayerSource = () => {
+            switch (section) {
+            case 'RECIPE_REF':
+                return {
+                    id: recipeId,
+                    type: 'Recipe',
+                    sourceConfig: {
+                        recipeId
+                    }
+                }
+            case 'ASSET':
+                return {
+                    id: asset,
+                    type: 'Asset',
+                    sourceConfig: {
+                        description: asset,
+                        asset,
+                        metadata,
+                        visualizations
+                    }
+                }
+            default:
+                throw Error(`Unexpected section: ${section}`)
+            }
+        }
+
+        const source = toImageLayerSource()
+
+        recipeActionBuilder('UPDATE_INPUT_IMAGE_LAYER_SOURCE', {source})
+            .set(['layers.additionalImageLayerSources', {id: source.id}], source)
+            .dispatch()
     }
 
     addImage() {
@@ -167,7 +193,6 @@ class InputImage extends React.Component {
                 throw Error(`Unsupported type: ${JSON.stringify(option)}`)
             }
         }
-
         return bandSetSpecs.set(getSpecs())
     }
 

@@ -44,8 +44,8 @@ export default {
                 })
             }
         }).pipe(toResponse),
-    recipeGeometry$: recipe =>
-        postJson$('/api/gee/recipe/geometry', {body: {recipe}})
+    recipeGeometry$: ({recipe, color, fillColor}) =>
+        postJson$('/api/gee/recipe/geometry', {body: {recipe, color, fillColor}})
             .pipe(toResponse),
     recipeBounds$: recipe =>
         postJson$('/api/gee/recipe/bounds', {body: {recipe}})

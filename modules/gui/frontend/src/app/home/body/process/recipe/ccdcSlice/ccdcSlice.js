@@ -4,7 +4,7 @@ import {connect} from 'store'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
+// import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
 import BandSelection from './bandSelection'
 import CCDCSlicePreview from './ccdcSlicePreview'
 import CCDCSliceToolbar from './panels/ccdcSliceToolbar'
@@ -57,12 +57,12 @@ class _CCDCSlice extends React.Component {
     setAoiLayer(fitLayer) {
         const {map, recipe, componentWillUnmount$} = this.props
         if (recipe.model.source.id) {
-            setRecipeGeometryLayer({
-                map,
-                layerSpec: {id: 'aoi', layerIndex: 1, recipe},
-                destroy$: componentWillUnmount$,
-                onInitialized: () => fitLayer && map.fitLayer('aoi')
-            })
+            // setRecipeGeometryLayer({
+            //     map,
+            //     layerSpec: {id: 'aoi', layerIndex: 1, recipe},
+            //     destroy$: componentWillUnmount$,
+            //     onInitialized: () => fitLayer && map.fitLayer('aoi')
+            // })
         }
     }
 }

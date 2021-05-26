@@ -81,9 +81,7 @@ export default class PanelSections extends React.Component {
         if (this.isSelectionSection())
             Object.keys(inputs)
                 .filter(name => name !== selected.name)
-                .forEach(name => {
-                    return inputs[name] && inputs[name].set('')
-                })
+                .forEach(name => inputs[name] && inputs[name].set(''))
     }
 
     isSelectionSection() {
