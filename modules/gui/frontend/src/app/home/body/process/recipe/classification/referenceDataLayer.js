@@ -3,7 +3,7 @@ import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withDataCollectionEventsContext} from './dataCollectionEvents'
+import {withDataCollectionContext} from './dataCollectionManager'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import MarkerClustererLayer from 'app/home/map/markerClustererLayer'
 import PropTypes from 'prop-types'
@@ -22,14 +22,14 @@ const mapRecipeToProps = recipe => ({
 class ReferenceDataLayer extends React.Component {
     constructor(props) {
         super(props)
-        const {recipeId, map, dataCollectionEvents} = props
+        const {recipeId, map, dataCollectionManager} = props
         this.layer = new MarkerClustererLayer({
             map,
             id: 'referenceData',
             label: msg('process.classification.layers.referenceData.label'),
             description: msg('process.classification.layers.referenceData.description')
         })
-        dataCollectionEvents.addListener({
+        dataCollectionManager.addListener({
             onSelect: point => this.onSelect(this.toMarker(point)),
             onDeselect: point => this.onDeselect(point),
             onAdd: point => this.onAdd(point),
@@ -79,8 +79,8 @@ class ReferenceDataLayer extends React.Component {
     }
 
     addMapListener() {
-        const {map} = this.props
-        map.onClick(({lat: y, lng: x}) => this.onAdd({x, y}))
+        const {map, dataCollectionManager} = this.props
+        map.onClick(({lat: y, lng: x}) => dataCollectionManager.add({x, y}, this.props.prevPoint))
     }
 
     clearMapListeners() {
@@ -102,45 +102,21 @@ class ReferenceDataLayer extends React.Component {
     }
 
     onSelect(marker) {
-        const {prevPoint} = this.props
-        if (prevPoint) {
-            if (_.isEqual([prevPoint.x, prevPoint.y], [marker.x, marker.y])) {
-                return
-            }
-            if (isClassified(marker)) {
-                this.layer.deselectMarker(prevPoint)
-            } else {
-                this.layer.removeMarker(marker)
-            }
-        }
         this.layer.selectMarker(marker)
-        this.recipeActions.setSelectedPoint({
-            x: marker.x,
-            y: marker.y,
-            dataSetId: marker.dataSetId,
-            'class': marker['class']
-        })
     }
 
     onDeselect(point) {
         this.layer.deselectMarker(this.toMarker(point))
-        this.recipeActions.setSelectedPoint(null)
         if (!isClassified(point)) {
             this.layer.removeMarker(this.toMarker(point))
         }
     }
 
     onAdd(point) {
-        const {prevPoint} = this.props
-        if (prevPoint) {
-            this.layer.deselectMarker(prevPoint)
-        }
-        this.layer.addMarker(this.toMarker(point))
+        const marker = this.toMarker(point)
+        this.layer.addMarker(marker)
         if (isClassified(point)) {
             this.incrementCount(point)
-            this.recipeActions.addSelectedPoint(point)
-        } else {
-            this.recipeActions.setSelectedPoint(point)
         }
     }
 
@@ -152,13 +128,11 @@ class ReferenceDataLayer extends React.Component {
         countPerClass[pointClass] = (countPerClass[pointClass] || 0) + 1
         this.updateCountPerClass(countPerClass)
         this.layer.updateMarker(this.toMarker(point))
-        this.recipeActions.updateSelectedPoint(point)
     }
 
     onRemove(point) {
         this.layer.removeMarker(this.toMarker(point))
         this.decrementCount(point)
-        this.recipeActions.removeSelectedPoint(point)
     }
 
     updateCountPerClass(countPerClass) {
@@ -180,7 +154,7 @@ class ReferenceDataLayer extends React.Component {
     }
 
     toMarker(point) {
-        const {legend} = this.props
+        const {legend, dataCollectionManager} = this.props
         const legendEntry = legend.entries.find(({value}) => `${value}` === `${point['class']}`)
         const additionalProps = legendEntry
             ? {
@@ -193,7 +167,7 @@ class ReferenceDataLayer extends React.Component {
             y: point.y,
             dataSetId: point.dataSetId,
             ...additionalProps,
-            onClick: marker => this.onSelect(marker)
+            onClick: marker => dataCollectionManager.select(marker, this.props.prevPoint)
         }
     }
 
@@ -211,13 +185,13 @@ class ReferenceDataLayer extends React.Component {
 const isClassified = marker => Object.keys(marker).includes('class') && _.isFinite(marker['class'])
 
 ReferenceDataLayer.propTypes = {
-    dataCollectionEvents: PropTypes.object.isRequired,
+    dataCollectionManager: PropTypes.object.isRequired,
     recipeId: PropTypes.string,
 }
 
 export default compose(
     ReferenceDataLayer,
     withRecipe(mapRecipeToProps),
-    withDataCollectionEventsContext(),
+    withDataCollectionContext(),
     activator('collect')
 )

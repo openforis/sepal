@@ -47,7 +47,7 @@ class _Legend extends React.Component {
     }
 
     render() {
-        const {dataCollectionEvents} = this.props
+        const {dataCollectionManager} = this.props
         const {colorMode} = this.state
         const title = (
             <div className={styles.title}>
@@ -65,7 +65,7 @@ class _Legend extends React.Component {
                 <RecipeFormPanel
                     placement='bottom-right'
                     className={styles.panel}
-                    onApply={() => setTimeout(() => dataCollectionEvents.updateAll())}
+                    onApply={() => setTimeout(() => dataCollectionManager.updateAll())}
                     onClose={() => this.preview.show()}>
                     <Panel.Header
                         icon='list'
@@ -167,7 +167,7 @@ export const Legend = compose(
 )
 
 Legend.propTypes = {
-    dataCollectionEvents: PropTypes.object.isRequired,
+    dataCollectionManager: PropTypes.object.isRequired,
     recipeId: PropTypes.string,
 }
 
