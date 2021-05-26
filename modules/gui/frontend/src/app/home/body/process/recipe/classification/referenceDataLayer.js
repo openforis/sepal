@@ -63,6 +63,8 @@ class ReferenceDataLayer extends React.Component {
 
     componentWillUnmount() {
         this.clearMapListeners()
+        const {map} = this.props
+        map.removeLayer(this.layer.id)
     }
 
     handleCollectingChange(prevCollecting) {
