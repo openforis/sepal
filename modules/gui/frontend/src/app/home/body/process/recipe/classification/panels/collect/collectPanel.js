@@ -220,7 +220,9 @@ class CollectPanel extends React.Component {
 
     moveMap(point) {
         const {map} = this.props
-        map.fitBounds([[point.x, point.y], [point.x, point.y]])
+        const {google} = map.getGoogle()
+        const center = new google.maps.LatLng(point.y, point.x)
+        map.setView({center, zoom: 16})
     }
 
     findNext() {
