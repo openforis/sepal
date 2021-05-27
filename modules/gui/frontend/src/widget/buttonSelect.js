@@ -88,14 +88,13 @@ class ButtonSelect extends React.Component {
     }
 
     renderOptions() {
-        const {alignment, placement, optionsClassName, optionTooltipPlacement} = this.props
+        const {placement, optionsClassName, optionTooltipPlacement} = this.props
         const {flattenedOptions, selectedOption, selected} = this.state
         return (
             <FloatingBox
                 element={this.input.current}
-                alignment={alignment}
                 placement={placement}
-                autoWidth
+                alignment='left'
                 onBlur={this.handleBlur}>
                 <ScrollableList
                     ref={this.list}
@@ -213,7 +212,6 @@ export default compose(
 
 ButtonSelect.propTypes = {
     options: PropTypes.any.isRequired,
-    alignment: PropTypes.oneOf(['left', 'right']),
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
@@ -232,6 +230,5 @@ ButtonSelect.propTypes = {
 }
 
 ButtonSelect.defaultProps = {
-    alignment: 'left',
     placement: 'below'
 }

@@ -176,6 +176,8 @@ class _Combo extends React.Component {
             <FloatingBox
                 element={this.inputContainer.current}
                 placement={placement}
+                alignment='fit'
+                // alignment='fit'
                 onBlur={this.handleBlur}>
                 <ScrollableList
                     ref={this.list}
@@ -346,7 +348,7 @@ export const Combo = compose(
 Combo.propTypes = {
     options: PropTypes.any.isRequired,
     additionalButtons: PropTypes.arrayOf(PropTypes.node),
-    alignment: PropTypes.oneOf(['left', 'center', 'right']),
+    alignment: PropTypes.oneOf(['left', 'center', 'right', 'fit']),
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
     busyMessage: PropTypes.any,

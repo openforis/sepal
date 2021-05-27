@@ -1,4 +1,5 @@
 import {compose} from 'compose'
+import {distinctUntilChanged, throttleTime} from 'rxjs/operators'
 import {fromEvent, merge} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -17,15 +18,18 @@ class BlurDetector extends React.Component {
     }
 
     componentDidMount() {
-        const {addSubscription} = this.props
-        addSubscription(
-            merge(
-                fromEvent(document, 'mousedown'),
-                fromEvent(document, 'focus'),
-            ).subscribe(
-                e => this.onEvent(e)
+        const {onBlur, addSubscription} = this.props
+        if (onBlur) {
+            addSubscription(
+                merge(
+                    fromEvent(document, 'mousedown'),
+                    fromEvent(document, 'touchstart'),
+                    fromEvent(document, 'focus'),
+                ).subscribe(
+                    e => this.onEvent(e)
+                )
             )
-        )
+        }
     }
 
     onEvent(e) {
