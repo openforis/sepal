@@ -2787,6 +2787,9 @@
     "page": "Page {pageNumber} of {pageCount}"
   },
   "widget": {
+    "assetInput": {
+      "loadError": "Unable to load asset"
+    },
     "comboBox": {
       "loading": "Loading..."
     },

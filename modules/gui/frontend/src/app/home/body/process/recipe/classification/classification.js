@@ -1,5 +1,5 @@
 import {Aoi} from '../aoi'
-import {DataCollectionEvents, DataCollectionEventsContext} from './dataCollectionEvents'
+import {DataCollectionContext, DataCollectionManager} from './dataCollectionManager'
 import {Map} from 'app/home/map/map'
 import {compose} from 'compose'
 import {getDefaultModel} from './classificationRecipe'
@@ -18,11 +18,11 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _Classification extends React.Component {
-    dataCollectionEvents = new DataCollectionEvents()
 
     constructor(props) {
         super(props)
         const {layers, recipeId} = props
+        this.dataCollectionManager = new DataCollectionManager(recipeId)
         initializeLayers(recipeId, layers, [
             {
                 id: 'referenceData',
@@ -36,17 +36,17 @@ class _Classification extends React.Component {
     render() {
         const {initialized, images} = this.props
         return (
-            <DataCollectionEventsContext.Provider value={{dataCollectionEvents: this.dataCollectionEvents}}>
+            <DataCollectionContext.Provider value={{dataCollectionManager: this.dataCollectionManager}}>
                 <Map>
-                    <ClassificationToolbar dataCollectionEvents={this.dataCollectionEvents}/>
+                    <ClassificationToolbar dataCollectionManager={this.dataCollectionManager}/>
                     <Aoi value={images && images.length && images[0]}/>
                     {initialized
                         ? (
-                            <CollectPanel dataCollectionEvents={this.dataCollectionEvents}/>
+                            <CollectPanel dataCollectionManager={this.dataCollectionManager}/>
                         )
                         : null}
                 </Map>
-            </DataCollectionEventsContext.Provider>
+            </DataCollectionContext.Provider>
         )
     }
 }

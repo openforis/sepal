@@ -85,6 +85,7 @@ export default class MarkerClustererLayer {
         })
         this.mapMarkers[markerKey(marker)] = mapMarker
         this.markerCluster.addMarker(mapMarker)
+        return mapMarker
     }
 
     updateMarker(marker) {

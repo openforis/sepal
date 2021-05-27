@@ -1,10 +1,10 @@
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
 import {compose} from 'compose'
+import {hasTrainingData, supportProbability, supportRegression} from './classificationRecipe'
 import {msg} from 'translate'
 import {normalize} from 'app/home/map/visParams/visParams'
 import {selectFrom} from 'stateUtils'
-import {supportProbability, supportRegression} from './classificationRecipe'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -20,7 +20,7 @@ class _ClassificationImageLayer extends React.Component {
         return (
             <React.Fragment>
                 <MapAreaLayout
-                    layer={layer}
+                    layer={this.canRender() ? layer : null}
                     form={this.renderImageLayerForm()}
                     map={map}
                 />
@@ -38,6 +38,12 @@ class _ClassificationImageLayer extends React.Component {
                 selectedVisParams={layerConfig.visParams}
             />
         )
+    }
+
+    canRender() {
+        const {recipe} = this.props
+        const inputImagery = selectFrom(recipe, ['model.inputImagery.images']) || []
+        return inputImagery.length && hasTrainingData(recipe)
     }
 
     visualizationOptions() {

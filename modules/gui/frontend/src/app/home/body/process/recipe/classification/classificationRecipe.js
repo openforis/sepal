@@ -1,5 +1,6 @@
 import {msg} from 'translate'
 import {recipeActionBuilder} from '../../recipe'
+import {removeImageLayerSource} from '../../mapLayout/imageLayerSources'
 import _ from 'lodash'
 import api from 'api'
 import guid from 'guid'
@@ -66,6 +67,7 @@ export const RecipeActions = id => {
             return set('SET_EE_TABLE_COLUMNS', 'ui.eeTable.columns', columns, {columns})
         },
         removeInputImage(imageToRemove) {
+            removeImageLayerSource({sourceId: imageToRemove.id, recipeId: id})
             actionBuilder('REMOVE_INPUT_IMAGE', {imageToRemove})
                 .del(['model.inputImagery.images', {id: imageToRemove.id}])
                 .del(['ui.inputImagery.images', {id: imageToRemove.id}])

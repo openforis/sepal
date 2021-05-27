@@ -4,7 +4,9 @@ import {SuperButton} from 'widget/superButton'
 import {compose} from 'compose'
 import {getImageLayerSource} from 'app/home/map/imageLayerSource/imageLayerSource'
 import {msg} from 'translate'
+import {recipeActionBuilder, recipePath} from 'app/home/body/process/recipe'
 import {removeArea} from './layerAreas'
+import {select} from 'store'
 import {withLayers} from '../withLayers'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
@@ -53,22 +55,43 @@ export class _ImageLayerSources extends React.Component {
     }
 
     removeSource(sourceId) {
-        const {layers: {areas}, recipeActionBuilder} = this.props
-        const removeAreaBySource = (areas, sourceId) => {
-            const area = _.chain(areas)
-                .pickBy(({imageLayer: {sourceId: areaSourceId}}) => areaSourceId === sourceId)
-                .keys()
-                .first()
-                .value()
-            return area
-                ? removeAreaBySource(removeArea({areas, area}), sourceId)
-                : areas
-        }
-        recipeActionBuilder('REMOVE_IMAGE_LAYER_SOURCE')
-            .del(['layers.additionalImageLayerSources', {id: sourceId}])
-            .set('layers.areas', removeAreaBySource(areas, sourceId))
-            .dispatch()
+        const {recipeId} = this.props
+        removeImageLayerSource({sourceId, recipeId})
+        // const {layers: {areas}, recipeActionBuilder} = this.props
+        // const removeAreaBySource = (areas, sourceId) => {
+        //     const area = _.chain(areas)
+        //         .pickBy(({imageLayer: {sourceId: areaSourceId}}) => areaSourceId === sourceId)
+        //         .keys()
+        //         .first()
+        //         .value()
+        //     return area
+        //         ? removeAreaBySource(removeArea({areas, area}), sourceId)
+        //         : areas
+        // }
+        // recipeActionBuilder('REMOVE_IMAGE_LAYER_SOURCE')
+        //     .del(['layers.additionalImageLayerSources', {id: sourceId}])
+        //     .set('layers.areas', removeAreaBySource(areas, sourceId))
+        //     .dispatch()
     }
+}
+
+export const removeImageLayerSource = ({sourceId, recipeId}) => {
+    const areas = select(recipePath(recipeId, 'layers.areas'))
+    const removeAreaBySource = (areas, sourceId) => {
+        const area = _.chain(areas)
+            .pickBy(({imageLayer: {sourceId: areaSourceId}}) => areaSourceId === sourceId)
+            .keys()
+            .first()
+            .value()
+        return area
+            ? removeAreaBySource(removeArea({areas, area}), sourceId)
+            : areas
+    }
+    const actionBuilder = recipeActionBuilder(recipeId)
+    actionBuilder('REMOVE_IMAGE_LAYER_SOURCE')
+        .del(['layers.additionalImageLayerSources', {id: sourceId}])
+        .set('layers.areas', removeAreaBySource(areas, sourceId))
+        .dispatch()
 }
 
 export const ImageLayerSources = compose(

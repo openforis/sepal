@@ -4,7 +4,7 @@
 }
 
 .inputComponent {
-    max-width: 20rem;
+    flex-grow: 1;
 }
 
 .loadingProgress {

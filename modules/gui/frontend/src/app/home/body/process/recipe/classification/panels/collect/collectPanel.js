@@ -8,7 +8,8 @@ import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {takeUntil} from 'rxjs/operators'
-import {withRecipe} from '../../../../recipeContext'
+import {withMap} from 'app/home/map/mapContext'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import Icon from 'widget/icon'
 import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
@@ -201,34 +202,36 @@ class CollectPanel extends React.Component {
     }
 
     deselectValue(point) {
-        const {dataCollectionEvents} = this.props
+        const {dataCollectionManager} = this.props
         this.remove()
         this.recipeActions.unsetLastValue()
-        setTimeout(() => dataCollectionEvents.add(point))
+        setTimeout(() => dataCollectionManager.add(point))
     }
 
     add(point) {
-        const {dataCollectionEvents} = this.props
-        dataCollectionEvents.update(point)
+        const {dataCollectionManager} = this.props
+        setTimeout(() => dataCollectionManager.update(point))
     }
 
     update(point, prevValue) {
-        const {dataCollectionEvents} = this.props
-        dataCollectionEvents.update(point, prevValue)
+        const {dataCollectionManager} = this.props
+        setTimeout(() => dataCollectionManager.update(point, prevValue))
     }
 
     moveMap(point) {
         const {map} = this.props
-        map.fitBounds([[point.x, point.y], [point.x, point.y]])
+        const {google} = map.getGoogle()
+        const center = new google.maps.LatLng(point.y, point.x)
+        map.setView({center, zoom: 16})
     }
 
     findNext() {
-        const {recipe, stream, nextPoint, dataCollectionEvents} = this.props
-        dataCollectionEvents.deselect(this.pointWithCurrentValue())
+        const {recipe, stream, nextPoint, dataCollectionManager} = this.props
+        dataCollectionManager.deselect(this.pointWithCurrentValue())
         if (nextPoint) {
             this.recipeActions.nextPointSelected()
             this.moveMap(nextPoint)
-            dataCollectionEvents.add(nextPoint)
+            dataCollectionManager.add(nextPoint)
         } else {
             stream('LOAD_NEXT_POINTS',
                 api.gee.nextReferenceDataPoints$(recipe).pipe(
@@ -244,7 +247,7 @@ class CollectPanel extends React.Component {
                     const [nextPoint, ...restOfPoints] = nextPoints
                     this.recipeActions.setNextPoints(restOfPoints)
                     this.moveMap(nextPoint)
-                    dataCollectionEvents.add(nextPoint)
+                    dataCollectionManager.add(nextPoint)
                 },
                 error => Notifications.error({
                     message: msg('process.classification.collect.findingNextPoint.error', {error})
@@ -254,36 +257,36 @@ class CollectPanel extends React.Component {
     }
 
     next() {
-        const {history, dataCollectionEvents} = this.props
+        const {history, dataCollectionManager} = this.props
         const historyIndex = this.getHistoryIndex()
         const updatedIndex = historyIndex + 1
         const point = history[updatedIndex]
         this.moveMap(point)
-        dataCollectionEvents.select(point)
+        dataCollectionManager.select(point)
     }
 
     previous() {
-        const {history, dataCollectionEvents} = this.props
+        const {history, dataCollectionManager} = this.props
         const historyIndex = this.getHistoryIndex()
         const updatedIndex = historyIndex === -1
             ? history.length - 1
             : historyIndex - 1
         const point = history[updatedIndex]
         this.moveMap(point)
-        dataCollectionEvents.select(point)
+        dataCollectionManager.select(point)
     }
 
     close() {
-        const {dataCollectionEvents, point} = this.props
+        const {dataCollectionManager, point} = this.props
         this.close$.next()
         if (point) {
-            dataCollectionEvents.deselect(this.pointWithCurrentValue())
+            dataCollectionManager.deselect(this.pointWithCurrentValue())
         }
     }
 
     remove() {
-        const {dataCollectionEvents} = this.props
-        dataCollectionEvents.remove(this.pointWithCurrentValue())
+        const {dataCollectionManager} = this.props
+        dataCollectionManager.remove(this.pointWithCurrentValue())
     }
 
     pointWithCurrentValue() {
@@ -294,11 +297,12 @@ class CollectPanel extends React.Component {
 }
 
 CollectPanel.propTypes = {
-    dataCollectionEvents: PropTypes.object.isRequired,
+    dataCollectionManager: PropTypes.object.isRequired,
     recipeId: PropTypes.string,
 }
 
 export default compose(
     CollectPanel,
-    withRecipe(mapRecipeToProps)
+    withRecipe(mapRecipeToProps),
+    withMap()
 )

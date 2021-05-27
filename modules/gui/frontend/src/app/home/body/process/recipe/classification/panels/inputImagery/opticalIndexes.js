@@ -55,5 +55,5 @@ const indexNames = [
 export const getAvailableIndexes = availableBands =>
     indexNames.filter(name => _.every(
         indexByName[name].requiredBands,
-        requiredBand => availableBands.includes(requiredBand)
+        requiredBand => availableBands && availableBands.includes(requiredBand)
     ))

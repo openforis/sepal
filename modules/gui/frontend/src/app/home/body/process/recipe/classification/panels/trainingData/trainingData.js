@@ -29,7 +29,7 @@ class TrainingData extends React.Component {
         this.recipeActions = RecipeActions(recipeId)
     }
     render() {
-        const {dataSets, dataCollectionEvents} = this.props
+        const {dataSets, dataCollectionManager} = this.props
         return (
             <React.Fragment>
                 <RecipeFormPanel
@@ -46,7 +46,7 @@ class TrainingData extends React.Component {
                         <Panel.Buttons.Add onClick={() => this.addDataSet()}/>
                     </Form.PanelButtons>
                 </RecipeFormPanel>
-                <TrainingDataSet dataCollectionEvents={dataCollectionEvents}/>
+                <TrainingDataSet dataCollectionManager={dataCollectionManager}/>
             </React.Fragment>
         )
     }
@@ -65,7 +65,7 @@ class TrainingData extends React.Component {
     }
 
     renderDataSet(dataSet) {
-        const {dataCollectionEvents} = this.props
+        const {dataCollectionManager} = this.props
         const name = dataSet.name
         if (!name)
             return null
@@ -82,7 +82,7 @@ class TrainingData extends React.Component {
                 onClick={disabled ? null : () => this.editDataSet(dataSet)}
                 onRemove={disabled ? null : () => {
                     this.removeDataSet(dataSet)
-                    setTimeout(() => dataCollectionEvents.updateAll())
+                    setTimeout(() => dataCollectionManager.updateAll())
                 }}
             />
         )
@@ -114,7 +114,7 @@ class TrainingData extends React.Component {
 }
 
 TrainingData.propTypes = {
-    dataCollectionEvents: PropTypes.object.isRequired
+    dataCollectionManager: PropTypes.object.isRequired
 }
 
 const additionalPolicy = () => ({'trainingDataSet': 'allow'})
