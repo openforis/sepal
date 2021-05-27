@@ -177,7 +177,6 @@ class _Combo extends React.Component {
                 element={this.inputContainer.current}
                 placement={placement}
                 alignment='fit'
-                // alignment='fit'
                 onBlur={this.handleBlur}>
                 <ScrollableList
                     ref={this.list}

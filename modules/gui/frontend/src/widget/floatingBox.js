@@ -30,7 +30,7 @@ class FloatingBox extends React.Component {
         const {className, placement, alignment, children, viewportDimensions: {height: viewportHeight}, onBlur} = this.props
         const {elementDimensions: {top: elementTop, bottom: elementBottom}, contentDimensions: {width: contentWidth}} = this.state
 
-        const {left, right} = this.getCorrectedVerticalPosition()
+        const {left, right} = this.getCorrectedHorizontalPosition()
 
         const style = {
             '--above-height': elementTop,
@@ -58,8 +58,8 @@ class FloatingBox extends React.Component {
         )
     }
 
-    getCorrectedVerticalPosition() {
-        const {left, right} = this.getVerticalPosition()
+    getCorrectedHorizontalPosition() {
+        const {left, right} = this.getHorizontalPosition()
         const margin = 5
 
         const leftOverflow = Math.max(margin, left) - left
@@ -83,7 +83,7 @@ class FloatingBox extends React.Component {
         }
     }
 
-    getVerticalPosition() {
+    getHorizontalPosition() {
         const {alignment, viewportDimensions: {width: viewportWidth}} = this.props
         const {elementDimensions: {left: elementLeft, right: elementRight}, contentDimensions: {width: contentWidth}} = this.state
 
