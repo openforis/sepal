@@ -1,3 +1,4 @@
+import {ElementResizeDetector} from './elementResizeDetector'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
@@ -10,31 +11,37 @@ import styles from './floatingBox.module.css'
 import withForwardedRef from 'ref'
 
 const mapStateToProps = state => ({
-    dimensions: selectFrom(state, 'dimensions') || []
+    viewportDimensions: selectFrom(state, 'dimensions') || []
 })
 
 class FloatingBox extends React.Component {
     state = {
-        box: {}
+        elementDimensions: {},
+        contentDimensions: {}
     }
 
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
+        this.onResize = this.onResize.bind(this)
     }
 
     render() {
-        const {className, placement, alignment, autoWidth, children, dimensions: {height, width}, onBlur} = this.props
-        const {box: {top, bottom, left, right}} = this.state
+        const {className, placement, alignment, children, viewportDimensions: {height: viewportHeight}, onBlur} = this.props
+        const {elementDimensions: {top: elementTop, bottom: elementBottom}, contentDimensions: {width: contentWidth}} = this.state
+
+        const {left, right} = this.getCorrectedVerticalPosition()
+
         const style = {
-            '--left': ['center', 'left'].includes(alignment) ? left : 'auto',
-            '--right': ['center', 'right'].includes(alignment) ? width - right : 'auto',
-            '--width': autoWidth ? null : right - left,
-            '--above-height': top,
-            '--above-bottom': height - top - 2,
-            '--below-height': height - bottom,
-            '--below-top': bottom
+            '--above-height': elementTop,
+            '--above-bottom': viewportHeight - elementTop - 2,
+            '--below-height': viewportHeight - elementBottom,
+            '--below-top': elementBottom,
+            '--left': left,
+            '--right': right,
+            '--width': contentWidth
         }
+
         return (
             <Portal type='global'>
                 <BlurDetector className={styles.container} onBlur={onBlur}>
@@ -42,11 +49,72 @@ class FloatingBox extends React.Component {
                         ref={this.ref}
                         className={[styles.box, styles[placement], styles[alignment], className].join(' ')}
                         style={style}>
-                        {children}
+                        <ElementResizeDetector onResize={this.onResize}>
+                            {children}
+                        </ElementResizeDetector>
                     </div>
                 </BlurDetector>
             </Portal>
         )
+    }
+
+    getCorrectedVerticalPosition() {
+        const {left, right} = this.getVerticalPosition()
+        const margin = 5
+
+        const leftOverflow = Math.max(margin, left) - left
+        const rightOverflow = Math.max(margin, right) - right
+
+        if (rightOverflow && !leftOverflow) {
+            return {
+                left: left - rightOverflow,
+                right: margin
+            }
+        }
+        if (leftOverflow && !rightOverflow) {
+            return {
+                left: margin,
+                right: right - leftOverflow
+            }
+        }
+        return {
+            left,
+            right
+        }
+    }
+
+    getVerticalPosition() {
+        const {alignment, viewportDimensions: {width: viewportWidth}} = this.props
+        const {elementDimensions: {left: elementLeft, right: elementRight}, contentDimensions: {width: contentWidth}} = this.state
+
+        const elementCenter = (elementRight + elementLeft) / 2
+        
+        switch (alignment) {
+        case 'fit':
+            return {
+                left: elementLeft,
+                right: viewportWidth - elementRight
+            }
+        case 'center':
+            return {
+                left: elementCenter - contentWidth / 2,
+                right: viewportWidth - elementCenter - contentWidth / 2
+            }
+        case 'left':
+            return {
+                left: elementLeft,
+                right: viewportWidth - elementLeft - contentWidth
+            }
+        case 'right':
+            return {
+                left: elementRight - contentWidth,
+                right: viewportWidth - elementRight
+            }
+        }
+    }
+
+    onResize(contentDimensions) {
+        this.setState({contentDimensions})
     }
 
     updateState(state, callback) {
@@ -61,7 +129,7 @@ class FloatingBox extends React.Component {
 
     updateDimensions() {
         const {top, bottom, left, right} = this.getBoundingBox()
-        this.updateState({box: {top, bottom, left, right}})
+        this.updateState({elementDimensions: {top, bottom, left, right}})
     }
 
     getBoundingBox() {
@@ -88,8 +156,7 @@ export default compose(
 
 FloatingBox.propTypes = {
     children: PropTypes.any.isRequired,
-    alignment: PropTypes.oneOf(['left', 'center', 'right']),
-    autoWidth: PropTypes.any,
+    alignment: PropTypes.oneOf(['fit', 'left', 'center', 'right']),
     className: PropTypes.string,
     element: PropTypes.object,
     placement: PropTypes.oneOf(['above', 'below']),

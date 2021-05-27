@@ -40,7 +40,6 @@ export default class PanelSections extends React.Component {
                 chromeless
                 shape='none'
                 placement='below'
-                alignment='left'
                 input={selected}
                 tooltipPlacement='bottom'
                 options={options}
