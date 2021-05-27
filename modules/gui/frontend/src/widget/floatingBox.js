@@ -1,4 +1,3 @@
-import {ElementResizeDetector} from './elementResizeDetector'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
@@ -9,6 +8,8 @@ import React from 'react'
 import _ from 'lodash'
 import styles from './floatingBox.module.css'
 import withForwardedRef from 'ref'
+
+const MARGIN = 5
 
 const mapStateToProps = state => ({
     viewportDimensions: selectFrom(state, 'dimensions') || []
@@ -27,19 +28,19 @@ class FloatingBox extends React.Component {
     }
 
     render() {
-        const {className, placement, alignment, children, viewportDimensions: {height: viewportHeight}, onBlur} = this.props
-        const {elementDimensions: {top: elementTop, bottom: elementBottom}, contentDimensions: {width: contentWidth}} = this.state
+        const {className, alignment, children, onBlur} = this.props
+        const {contentDimensions: {width}} = this.state
 
         const {left, right} = this.getCorrectedHorizontalPosition()
+        const {top, bottom, height, placement} = this.getCorrectedVerticalPosition()
 
         const style = {
-            '--above-height': elementTop,
-            '--above-bottom': viewportHeight - elementTop - 2,
-            '--below-height': viewportHeight - elementBottom,
-            '--below-top': elementBottom,
+            '--top': top,
+            '--bottom': bottom,
+            '--height': height,
             '--left': left,
             '--right': right,
-            '--width': contentWidth
+            '--width': width
         }
 
         return (
@@ -49,31 +50,80 @@ class FloatingBox extends React.Component {
                         ref={this.ref}
                         className={[styles.box, styles[placement], styles[alignment], className].join(' ')}
                         style={style}>
-                        <ElementResizeDetector onResize={this.onResize}>
-                            {children}
-                        </ElementResizeDetector>
+                        {children}
                     </div>
                 </BlurDetector>
             </Portal>
         )
     }
 
+    getPlacement() {
+        const {placement} = this.props
+        switch (placement) {
+        case 'above-below':
+            return {preferred: 'above', alternate: 'below'}
+        case 'below-above':
+            return {preferred: 'below', alternate: 'above'}
+        default:
+            return {preferred: placement}
+        }
+    }
+
+    getCorrectedVerticalPosition() {
+        const {preferred, alternate} = this.getPlacement()
+        const {top, bottom, height, placement} = this.getVerticalPosition(preferred)
+        
+        const topOverflow = Math.max(MARGIN, top) - top
+        const bottomOverflow = Math.max(MARGIN, bottom) - bottom
+
+        if (alternate && (topOverflow || bottomOverflow)) {
+            return this.getVerticalPosition(alternate)
+        }
+
+        return {top, bottom, height, placement}
+    }
+
+    getVerticalPosition(placement) {
+        const {viewportDimensions: {height: viewportHeight}} = this.props
+        const {elementDimensions: {top: elementTop, bottom: elementBottom}, contentDimensions: {height: contentHeight}} = this.state
+
+        if (placement === 'above') {
+            const maxHeight = elementTop
+            const height = Math.min(maxHeight, contentHeight)
+            return {
+                top: elementTop - contentHeight,
+                bottom: viewportHeight - elementTop,
+                height,
+                placement
+            }
+        }
+        if (placement === 'below') {
+            const maxHeight = viewportHeight - elementBottom
+            const height = Math.min(maxHeight, contentHeight)
+            return {
+                top: elementBottom,
+                bottom: viewportHeight - elementBottom - contentHeight,
+                height,
+                placement
+            }
+        }
+    }
+
     getCorrectedHorizontalPosition() {
         const {left, right} = this.getHorizontalPosition()
-        const margin = 5
 
-        const leftOverflow = Math.max(margin, left) - left
-        const rightOverflow = Math.max(margin, right) - right
+        const leftOverflow = Math.max(MARGIN, left) - left
+        const rightOverflow = Math.max(MARGIN, right) - right
 
         if (rightOverflow && !leftOverflow) {
             return {
                 left: left - rightOverflow,
-                right: margin
+                right: MARGIN
             }
         }
         if (leftOverflow && !rightOverflow) {
             return {
-                left: margin,
+                left: MARGIN,
                 right: right - leftOverflow
             }
         }
@@ -128,15 +178,29 @@ class FloatingBox extends React.Component {
     }
 
     updateDimensions() {
-        const {top, bottom, left, right} = this.getBoundingBox()
-        this.updateState({elementDimensions: {top, bottom, left, right}})
+        const elementDimensions = this.getElementDimensions()
+        const contentDimensions = this.getContentDimensions()
+        this.updateState({elementDimensions, contentDimensions})
     }
 
-    getBoundingBox() {
+    getElementDimensions() {
         const {element} = this.props
-        return element
-            ? element.getBoundingClientRect()
-            : {}
+        return this.getDimensions(element)
+    }
+
+    getContentDimensions() {
+        const {ref} = this
+        return this.getDimensions(ref.current)
+    }
+
+    getDimensions(element) {
+        if (element) {
+            const {top, bottom, left, right} = element.getBoundingClientRect()
+            const width = right - left
+            const height = bottom - top
+            return {top, bottom, left, right, width, height}
+        }
+        return {}
     }
 
     componentDidMount() {
@@ -159,7 +223,7 @@ FloatingBox.propTypes = {
     alignment: PropTypes.oneOf(['fit', 'left', 'center', 'right']),
     className: PropTypes.string,
     element: PropTypes.object,
-    placement: PropTypes.oneOf(['above', 'below']),
+    placement: PropTypes.oneOf(['above', 'below', 'above-below', 'below-above']),
     onBlur: PropTypes.func
 }
 
