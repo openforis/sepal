@@ -3,6 +3,7 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {PalettePreSets} from './palettePreSets'
+import {Scrollable, ScrollableContainer} from '../../../../widget/scrollable'
 import {Widget} from 'widget/widget'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -83,11 +84,13 @@ export class Palette extends React.Component {
                 Empty palette, using gray scale.
             </div>
         return (
-            <div className={styles.palette}>
-                {colorInputs.length
-                    ? colorInputs
-                    : noColors}
-            </div>
+            <ScrollableContainer>
+                <Scrollable direction='x' className={styles.palette}>
+                    {colorInputs.length
+                        ? colorInputs
+                        : noColors}
+                </Scrollable>
+            </ScrollableContainer>
         )
     }
 
