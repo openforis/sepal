@@ -1,9 +1,7 @@
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
+import {allVisualizations, hasTrainingData, preSetVisualizationOptions, supportProbability} from './classificationRecipe'
 import {compose} from 'compose'
-import {hasTrainingData, supportProbability, supportRegression} from './classificationRecipe'
-import {msg} from 'translate'
-import {normalize} from 'app/home/map/visParams/visParams'
 import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import PropTypes from 'prop-types'
@@ -34,10 +32,17 @@ class _ClassificationImageLayer extends React.Component {
             <VisualizationSelector
                 source={source}
                 recipe={recipe}
-                presetOptions={this.visualizationOptions()}
+                presetOptions={this.hasLegend()
+                    ? preSetVisualizationOptions(recipe)
+                    : []}
                 selectedVisParams={layerConfig.visParams}
             />
         )
+    }
+
+    hasLegend() {
+        const {recipe} = this.props
+        return !_.isEmpty(selectFrom(recipe, 'model.legend.entries'))
     }
 
     canRender() {
@@ -46,69 +51,10 @@ class _ClassificationImageLayer extends React.Component {
         return inputImagery.length && hasTrainingData(recipe)
     }
 
-    visualizationOptions() {
-        const {recipe} = this.props
-        const legend = selectFrom(recipe, 'model.legend') || {}
-        const classifierType = selectFrom(recipe, 'model.classifier.type')
-        const entries = _.sortBy(legend.entries, 'value')
-        const min = entries[0].value
-        const max = _.last(entries).value
-        const probabilityPalette = ['#000000', '#480000', '#710101', '#BA0000', '#FF0000', '#FFA500', '#FFFF00',
-            '#79C900', '#006400']
-        return [
-            {
-                value: 'class',
-                label: msg('process.classification.bands.class'),
-                visParams: normalize({
-                    type: 'categorical',
-                    bands: ['class'],
-                    min,
-                    max,
-                    values: entries.map(({value}) => value),
-                    labels: entries.map(({label}) => label),
-                    palette: entries.map(({color}) => color),
-                })
-            },
-            supportRegression(classifierType) && {
-                value: 'regression',
-                label: msg('process.classification.bands.regression'),
-                visParams: normalize({
-                    type: 'continuous',
-                    bands: ['regression'],
-                    min,
-                    max,
-                    palette: entries.map(({color}) => color),
-                })
-            },
-            supportProbability(classifierType) && {
-                value: 'class_probability',
-                label: msg('process.classification.bands.classProbability'),
-                visParams: normalize({
-                    type: 'continuous',
-                    bands: ['class_probability'],
-                    min: 0,
-                    max: 100,
-                    palette: probabilityPalette
-                })
-            },
-            ...legend.entries.map(({value, label}) => supportProbability(classifierType) && {
-                value: `probability_${value}`,
-                label: msg('process.classification.bands.probability', {class: label}),
-                visParams: normalize({
-                    type: 'continuous',
-                    bands: [`probability_${value}`],
-                    min: 0,
-                    max: 100,
-                    palette: probabilityPalette
-                })
-            })
-        ].filter(option => option)
-    }
-
     componentDidMount() {
-        const {layerConfig: {visParams}} = this.props
-        if (!visParams) {
-            this.selectVisualization(this.visualizationOptions()[0].visParams)
+        const {recipe, layerConfig: {visParams}} = this.props
+        if (!visParams && this.hasLegend()) {
+            this.selectVisualization(preSetVisualizationOptions(recipe)[0].visParams)
         }
     }
 
@@ -116,13 +62,9 @@ class _ClassificationImageLayer extends React.Component {
         const {layerConfig: {visParams: prevVisParams}} = prevProps
         const {recipe} = this.props
         if (prevVisParams) {
-            const allVisualizations = [
-                ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
-                ...this.visualizationOptions().map(({visParams}) => visParams)
-            ]
-            const visParams = allVisualizations.find(({bands}) => _.isEqual(bands, prevVisParams.bands))
+            const visParams = allVisualizations(recipe).find(({bands}) => _.isEqual(bands, prevVisParams.bands))
             if (!visParams) {
-                this.selectVisualization(this.visualizationOptions()[0].visParams)
+                this.selectVisualization(preSetVisualizationOptions(recipe)[0].visParams)
             } else if (!_.isEqual(visParams, prevVisParams)) {
                 this.selectVisualization(visParams)
             }
@@ -153,7 +95,10 @@ ClassificationImageLayer.propTypes = {
 }
 
 export const classificationDataTypes = recipe => {
-    const legend = selectFrom(recipe, 'model.legend') || {}
+    if (!recipe.ui.initialized) {
+        return []
+    }
+    const legend = selectFrom(recipe, 'model.legend')
     const classifierType = selectFrom(recipe, 'model.classifier.type')
     const entries = _.sortBy(legend.entries, 'value')
     const min = entries[0].value

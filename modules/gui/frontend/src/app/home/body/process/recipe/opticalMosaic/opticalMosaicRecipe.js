@@ -119,7 +119,7 @@ const submitRetrieveRecipeTask = recipe => {
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
-    const allVisualizations = getAllVisualizations(recipe)
+    const visualizations = getAllVisualizations(recipe)
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':
@@ -129,7 +129,7 @@ const submitRetrieveRecipeTask = recipe => {
                 image: {
                     recipe: _.omit(recipe, ['ui']),
                     bands: {selection: bands},
-                    visualizations: allVisualizations,
+                    visualizations,
                     scale
                 }
             }
