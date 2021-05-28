@@ -1,17 +1,20 @@
 import {compose} from 'compose'
-import {distinctUntilChanged, throttleTime} from 'rxjs/operators'
 import {fromEvent, merge} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
+import withForwardedRef from 'ref'
 import withSubscriptions from 'subscription'
 
 class BlurDetector extends React.Component {
-    element = React.createRef()
+    constructor(props) {
+        super(props)
+        this.ref = props.forwardedRef || React.createRef()
+    }
 
     render() {
-        const {className, children} = this.props
+        const {className, style, children} = this.props
         return (
-            <div ref={this.element} className={className}>
+            <div ref={this.ref} className={className} style={style}>
                 {children}
             </div>
         )
@@ -34,7 +37,7 @@ class BlurDetector extends React.Component {
 
     onEvent(e) {
         const {onBlur} = this.props
-        const inside = this.element.current.contains(e.target)
+        const inside = this.ref.current.contains(e.target)
         if (!inside) {
             onBlur && onBlur(e)
         }
@@ -43,11 +46,13 @@ class BlurDetector extends React.Component {
 
 export default compose(
     BlurDetector,
-    withSubscriptions()
+    withSubscriptions(),
+    withForwardedRef()
 )
 
 BlurDetector.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
+    style: PropTypes.object,
     onBlur: PropTypes.func
 }

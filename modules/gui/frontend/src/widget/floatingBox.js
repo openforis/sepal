@@ -45,13 +45,11 @@ class FloatingBox extends React.Component {
 
         return (
             <Portal type='global'>
-                <BlurDetector className={styles.container} onBlur={onBlur}>
-                    <div
-                        ref={this.ref}
-                        className={[styles.box, styles[placement], styles[alignment], className].join(' ')}
-                        style={style}>
-                        {children}
-                    </div>
+                <BlurDetector onBlur={onBlur}
+                    ref={this.ref}
+                    className={[styles.box, styles[placement], styles[alignment], className].join(' ')}
+                    style={style}>
+                    {children}
                 </BlurDetector>
             </Portal>
         )
@@ -88,22 +86,18 @@ class FloatingBox extends React.Component {
         const {elementDimensions: {top: elementTop, bottom: elementBottom}, contentDimensions: {height: contentHeight}} = this.state
 
         if (placement === 'above') {
-            const maxHeight = elementTop
-            const height = Math.min(maxHeight, contentHeight)
             return {
                 top: elementTop - contentHeight,
                 bottom: viewportHeight - elementTop,
-                height,
+                height: elementTop,
                 placement
             }
         }
         if (placement === 'below') {
-            const maxHeight = viewportHeight - elementBottom
-            const height = Math.min(maxHeight, contentHeight)
             return {
                 top: elementBottom,
                 bottom: viewportHeight - elementBottom - contentHeight,
-                height,
+                height: viewportHeight - elementBottom,
                 placement
             }
         }
