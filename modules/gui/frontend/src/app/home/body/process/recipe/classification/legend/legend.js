@@ -6,6 +6,7 @@ import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {setInitialized} from '../../../recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -104,7 +105,7 @@ class _Legend extends React.Component {
     }
 
     save() {
-        const {dataCollectionManager, recipeActionBuilder, activatable: {deactivate}} = this.props
+        const {recipeId, dataCollectionManager, recipeActionBuilder, activatable: {deactivate}} = this.props
         const {legendEntries} = this.state
         recipeActionBuilder('SAVE_LEGEND_ENTRIES', {legendEntries})
             .set('model.legend.entries', legendEntries)
@@ -112,6 +113,7 @@ class _Legend extends React.Component {
         setTimeout(() => // Ensure model is updated before updating data collection manager
             dataCollectionManager.updateAll()
         )
+        setInitialized(recipeId)
         deactivate()
     }
 }

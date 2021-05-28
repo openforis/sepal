@@ -4,7 +4,6 @@ import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import AuxiliaryImagery from './auxiliaryImagery/auxiliaryImagery'
 import Classifier from './classifier/classifier'
@@ -28,8 +27,7 @@ class ClassificationToolbar extends React.Component {
         return (
             <PanelWizard
                 panels={['inputImagery', 'legend']}
-                initialized={initialized}
-                onDone={() => setInitialized(recipeId)}>
+                initialized={initialized}>
                 <Retrieve/>
                 <InputImagery/>
                 <Legend dataCollectionManager={dataCollectionManager}/>

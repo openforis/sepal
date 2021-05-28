@@ -30,13 +30,13 @@ class _RecipeImageLayer extends React.Component {
         return recipe
             ? (
                 <CursorValue value$={this.cursorValue$}>
-                    {this.renderRecipeMap()}
+                    {this.renderRecipeLayer()}
                 </CursorValue>
             )
             : null
     }
 
-    renderRecipeMap() {
+    renderRecipeLayer() {
         const {recipe, source, layerConfig, map} = this.props
         switch(recipe.type) {
         case 'MOSAIC': return (
