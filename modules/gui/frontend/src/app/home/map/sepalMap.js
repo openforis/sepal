@@ -49,10 +49,12 @@ export class SepalMap {
              0.00,104.20 32.51,104.20 32.51,104.20
              32.51,104.20 32.51,32.51 32.51,32.51 Z`,
             fillColor: 'white',
-            fillOpacity: 0.6,
-            strokeWeight: 0,
+            fillOpacity: 1,
+            strokeColor: 'black',
+            strokeOpacity: 1,
+            strokeWeight: 0.5,
             rotation: 0,
-            scale: 0.04,
+            scale: 0.045,
             anchor: new google.maps.Point(234, 234),
         }
 
