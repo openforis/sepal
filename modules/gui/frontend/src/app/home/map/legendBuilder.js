@@ -28,7 +28,7 @@ export class LegendBuilder extends React.Component {
     }
 
     render() {
-        const {entries} = this.props
+        const {entries, locked} = this.props
         const {show} = this.state
         return (
             <Widget label={msg('map.legendBuilder.label')} labelButtons={this.labelButtons()}>
@@ -42,10 +42,12 @@ export class LegendBuilder extends React.Component {
                                 onChange={this.updateEntry}
                                 onValidate={this.updateValidation}
                                 onSwap={color => this.swap(color, entry.color)}
+                                locked={locked}
                             />
                             <RemoveButton
                                 message={msg('map.legendBuilder.entry.confirmation')}
                                 size='small'
+                                disabled={locked}
                                 onRemove={() => this.removeEntry(entry)}/>
                         </Layout>
                     )}
@@ -198,7 +200,7 @@ class _Entry extends React.Component {
     state = {invalid: true}
 
     render() {
-        const {form, entry, entries, mode, hasTrainingData, inputs: {value, color, label}, onSwap} = this.props
+        const {form, entry, entries, mode, locked, inputs: {value, color, label}, onSwap} = this.props
         const otherColors = entries
             .filter(({id}) => entry.id !== id)
             .map(({color}) => color)
@@ -212,6 +214,7 @@ class _Entry extends React.Component {
                             onChange={color => this.notifyChange({color})}
                             onSwap={color => onSwap(color)}
                             invalid={!!form.errors.colorUnique}
+                            disabled={locked}
                         />
                     )
                     : (
@@ -220,6 +223,7 @@ class _Entry extends React.Component {
                             input={color}
                             errorMessage={[color, 'colorUnique']}
                             autoComplete={false}
+                            disabled={locked}
                             onChange={e => this.notifyChange({color: e.target.value})}
                         />
                     )}
@@ -229,7 +233,7 @@ class _Entry extends React.Component {
                     input={value}
                     errorMessage={[value, 'valueUnique']}
                     autoComplete={false}
-                    disabled={hasTrainingData}
+                    disabled={locked}
                     onChange={e => this.notifyChange({value: e.target.value})}
                 />
 
@@ -299,31 +303,43 @@ class ColorInput extends React.Component {
     colorInputRef = React.createRef()
 
     render() {
-        const {input, invalid, onChange} = this.props
+        const {input, invalid, disabled, onChange} = this.props
         const {swap} = this.state
         return (
             <div className={styles.colorContainer}>
-                <input
-                    type='color'
-                    className={styles.colorInput}
-                    value={input.value}
-                    onChange={({target: {value}}) => {
-                        input.set(value)
-                        onChange(value)
-                    }}
-                    ref={this.colorInputRef}
-                />
-                <Tooltip
-                    msg={this.renderTooltip()}
-                    delay={0}
-                    placement='top'
-                    clickTrigger={isMobile()}
-                    onVisibleChange={visible => swap && !visible && this.setState({swap: false})}>
-                    <div
-                        className={[styles.color, invalid ? styles.invalid : ''].join(' ')}
-                        style={{'--color': input.value}}
-                    />
-                </Tooltip>
+                {disabled
+                    ? (
+                        <div
+                            className={[styles.color, invalid ? styles.invalid : ''].join(' ')}
+                            style={{'--color': input.value}}
+                        />
+                    )
+                    : (
+                        <React.Fragment>
+                            <input
+                                type='color'
+                                className={styles.colorInput}
+                                value={input.value}
+                                onChange={({target: {value}}) => {
+                                    input.set(value)
+                                    onChange(value)
+                                }}
+                                ref={this.colorInputRef}
+                            />
+                            <Tooltip
+                                msg={this.renderTooltip()}
+                                delay={0}
+                                placement='top'
+                                clickTrigger={isMobile()}
+                                onVisibleChange={visible => swap && !visible && this.setState({swap: false})}>
+                                <div
+                                    className={[styles.color, invalid ? styles.invalid : ''].join(' ')}
+                                    style={{'--color': input.value}}
+                                />
+                            </Tooltip>
+                        </React.Fragment>
+                    )
+                }
             </div>
         )
     }
