@@ -73,7 +73,6 @@
 .fullLegendColor {
     height: 1.7rem;
     background-color: var(--color);
-    margin-bottom: -.2rem;
     opacity: 1;
 }
 
