@@ -487,7 +487,7 @@ class _VisParamsPanel extends React.Component {
             stream('LOAD_DISTINCT_IMAGE_VALUES',
                 api.gee.distinctBandValues$({recipe, band: name1.value, aoi}),
                 values => this.setState({legendEntries: toEntries(values)}),
-                error => Notifications.error({message: msg('map.legendBuilder.load.options.imageValues.loadError'), error})
+                () => Notifications.error({message: msg('map.legendBuilder.load.options.imageValues.loadError')})
             )
         }
     }

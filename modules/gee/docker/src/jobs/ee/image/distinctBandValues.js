@@ -1,12 +1,12 @@
 const {job} = require('root/jobs/job')
 
 const MAX_PIXELS = 1e5
-const MAX_VALUE_COUNT = 1000
+const MAX_VALUE_COUNT = 256
 
 const worker$ = ({recipe, band, aoi}) => {
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('ee')
-    const {switchMap} = require('rx/operators')
+    const {switchMap, tap} = require('rx/operators')
     const {toGeometry} = require('sepal/ee/aoi')
 
     const {getImage$} = ImageFactory(recipe, {selection: [band]})
@@ -45,12 +45,11 @@ const worker$ = ({recipe, band, aoi}) => {
     }
 
     return getImage$().pipe(
-        switchMap(image => {
-            const values = ee.getInfo$(distinctValues(image), 'recipe histogram')
-            if (values.length === MAX_VALUE_COUNT) {
+        switchMap(image => ee.getInfo$(distinctValues(image), 'recipe histogram')),
+        tap(values => {
+            if (values.length >= MAX_VALUE_COUNT) {
                 throw Error('Too many distinct values in image. Is this really a categorical image?')
             }
-            return values
         })
     )
 }
