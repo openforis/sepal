@@ -2,31 +2,3 @@
     min-height: 20rem;
     max-width: 27rem;
 }
-
-.title {
-    display: flex;
-    flex-grow: 1;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.value {
-    width: 2rem;
-}
-
-.value input {
-    padding: 0;
-    text-align: right;
-}
-
-.color input {
-    width: 1.5rem;
-    height: 1.5rem;
-    cursor: pointer;
-    padding: 0;
-}
-
-
-.colorText input {
-    width: 5rem;
-}

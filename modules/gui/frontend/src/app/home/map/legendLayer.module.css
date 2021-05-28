@@ -18,6 +18,7 @@
     border-radius: .25rem;
     max-width: 40rem;
     flex-grow: 1;
+    pointer-events: all;
 }
 
 .color {
@@ -59,3 +60,26 @@
     border-width: 5px 5px 0;
     border-top-color: #373737;
 }
+
+.fullLegend {
+    max-height: 90vh;
+    display: grid;
+    grid-template-columns: 1.7rem auto 1fr;
+    grid-column-gap: 1rem;
+    grid-row-gap: 1rem;
+    align-items: center;
+}
+
+.fullLegendColor {
+    height: 1.7rem;
+    background-color: var(--color);
+    margin-bottom: -.2rem;
+    opacity: 1;
+}
+
+.fullLegendValue {
+}
+
+.fullLegendLabel {
+}
+

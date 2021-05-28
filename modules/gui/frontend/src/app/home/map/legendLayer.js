@@ -1,14 +1,18 @@
 import * as PropTypes from 'prop-types'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
+import {Scrollable, ScrollableContainer} from '../../../widget/scrollable'
 import {Subject, animationFrameScheduler, interval, of} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {distinctUntilChanged, map, scan, switchMap} from 'rxjs/operators'
+import {isMobile} from '../../../widget/userAgent'
 import {selectFrom} from 'stateUtils'
 import {withCursorValue} from './cursorValue'
 import {withMapAreaContext} from './mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
+import Tooltip from '../../../widget/tooltip'
+import _ from 'lodash'
 import styles from './legendLayer.module.css'
 import withSubscriptions from 'subscription'
 
@@ -57,12 +61,37 @@ class _LegendLayer extends React.Component {
         )
         return (
             <div className={styles.container}>
-                <div className={styles.legend}>
-                    {colors}
-                    <ElementResizeDetector onResize={({width}) => this.setState({paletteWidth: width})}/>
-                    {cursorValues}
-                </div>
+                <Tooltip
+                    msg={this.renderFullLegend()}
+                    placement='top'
+                    clickTrigger={isMobile()}>
+                    <div className={styles.legend}>
+                        {colors}
+                        <ElementResizeDetector onResize={({width}) => this.setState({paletteWidth: width})}/>
+                        {cursorValues}
+                    </div>
+                </Tooltip>
             </div>
+        )
+    }
+
+    renderFullLegend() {
+        const {mapAreaContext: {area}, areas} = this.props
+        const {labels, values, palette} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
+        return (
+            <ScrollableContainer>
+                <Scrollable direction='y'>
+                    <div className={styles.fullLegend}>
+                        {_.range(0, values.length).map(i =>
+                            <React.Fragment key={values[i]}>
+                                <div className={styles.fullLegendColor} style={{'--color': palette[i]}}/>
+                                <div className={styles.fullLegendValue}>{values[i]}</div>
+                                <div className={styles.fullLegendLabel}>{labels[i]}</div>
+                            </React.Fragment>
+                        )}
+                    </div>
+                </Scrollable>
+            </ScrollableContainer>
         )
     }
 }
