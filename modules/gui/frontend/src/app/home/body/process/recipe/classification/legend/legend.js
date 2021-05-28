@@ -1,17 +1,22 @@
 import {Button} from 'widget/button'
+import {Form} from 'widget/form/form'
 import {LegendBuilder} from 'app/home/map/legendBuilder'
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
+import {RecipeFormPanel, recipeFormPanel} from '../../../recipeFormPanel'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {setInitialized} from '../../../recipe'
-import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './legend.module.css'
+
+const fields = {
+    invalidEntries: new Form.Field(),
+    entries: new Form.Field()
+        .predicate((entries, {invalidEntries}) => !invalidEntries && entries.length)
+}
 
 const mapRecipeToProps = recipe => {
     const dataSets = selectFrom(recipe, 'model.trainingData').dataSets || []
@@ -23,57 +28,37 @@ const mapRecipeToProps = recipe => {
 }
 
 class _Legend extends React.Component {
-    state = {
-        bands: null,
-        histograms: {},
-        askConfirmation: false,
-        legendEntries: [],
-        invalidLegendEntries: false,
-    }
-
     render() {
-        const {activatable: {deactivate}} = this.props
-        const {legendEntries, invalidLegendEntries} = this.state
-        const invalid = invalidLegendEntries || !legendEntries.length
+        const {dataCollectionManager} = this.props
         return (
-            <React.Fragment>
-                <Panel
-                    type='bottom-right'
-                    className={styles.panel}>
-                    <Panel.Header
-                        icon='list'
-                        title={msg('process.classification.panel.legend.title')}
-                    />
+            <RecipeFormPanel
+                placement='bottom-right'
+                className={styles.panel}
+                onApply={() => setTimeout(() => setTimeout(() => dataCollectionManager.updateAll()))}>
+                <Panel.Header
+                    icon='list'
+                    title={msg('process.classification.panel.legend.title')}
+                />
 
-                    <Panel.Content>
-                        {this.renderContent()}
-                    </Panel.Content>
+                <Panel.Content>
+                    {this.renderContent()}
+                </Panel.Content>
 
-                    <Panel.Buttons onEscape={deactivate} onEnter={() => invalid || this.save()}>
-                        <Button
-                            icon='file-import'
-                            label={msg('map.legendBuilder.load.options.importFromCsv.label')}
-                            onClick={() => this.importLegend()}/>
-
-                        <Panel.Buttons.Main>
-                            <Panel.Buttons.Cancel onClick={deactivate}/>
-                            <Panel.Buttons.Apply
-                                disabled={invalid}
-                                onClick={() => this.save()}
-                            />
-                        </Panel.Buttons.Main>
-                    </Panel.Buttons>
-                </Panel>
-            </React.Fragment>
+                <Form.PanelButtons>
+                    <Button
+                        icon='file-import'
+                        label={msg('map.legendBuilder.load.options.importFromCsv.label')}
+                        onClick={() => this.importLegend()}/>
+                </Form.PanelButtons>
+            </RecipeFormPanel>
         )
     }
 
     renderContent() {
-        const {hasTrainingData} = this.props
-        const {legendEntries} = this.state
+        const {hasTrainingData, inputs: {entries}} = this.props
         return (
             <LegendBuilder
-                entries={legendEntries}
+                entries={entries.value}
                 locked={hasTrainingData}
                 onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
             />
@@ -81,51 +66,39 @@ class _Legend extends React.Component {
     }
 
     componentDidMount() {
-        const {legendEntries} = this.props
-        this.setState({legendEntries})
+        const {legendEntries, inputs} = this.props
+        inputs.entries.set(legendEntries)
     }
 
     componentDidUpdate() {
-        const {importedLegendEntries, recipeActionBuilder} = this.props
+        const {inputs, importedLegendEntries, recipeActionBuilder} = this.props
         if (importedLegendEntries) {
             recipeActionBuilder('CLEAR_IMPORTED_LEGEND_ENTRIES', {importedLegendEntries})
                 .del('ui.importedLegendEntries')
                 .dispatch()
-            this.setState({legendEntries: importedLegendEntries})
+            inputs.entries.set(importedLegendEntries)
         }
     }
 
     updateLegendEntries(legendEntries, invalidLegendEntries) {
-        this.setState({legendEntries, invalidLegendEntries})
+        const {inputs} = this.props
+        inputs.entries.set(legendEntries)
+        inputs.invalidEntries.set(invalidLegendEntries)
     }
 
     importLegend() {
         const {activator: {activatables: {legendImport}}} = this.props
         legendImport.activate()
     }
-
-    save() {
-        const {recipeId, dataCollectionManager, recipeActionBuilder, activatable: {deactivate}} = this.props
-        const {legendEntries} = this.state
-        recipeActionBuilder('SAVE_LEGEND_ENTRIES', {legendEntries})
-            .set('model.legend.entries', legendEntries)
-            .dispatch()
-        setTimeout(() => // Ensure model is updated before updating data collection manager
-            dataCollectionManager.updateAll()
-        )
-        setInitialized(recipeId)
-        deactivate()
-    }
 }
-const policy = () => ({
+const additionalPolicy = () => ({
     _: 'disallow',
     legendImport: 'allow'
 })
 
 export const Legend = compose(
     _Legend,
-    withRecipe(mapRecipeToProps),
-    activatable({id: 'legend', policy}),
+    recipeFormPanel({id: 'legend', fields, mapRecipeToProps, additionalPolicy}),
     activator('legendImport')
 )
 
