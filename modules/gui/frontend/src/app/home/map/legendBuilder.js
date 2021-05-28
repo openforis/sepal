@@ -17,7 +17,8 @@ import styles from './legendBuilder.module.css'
 
 export class LegendBuilder extends React.Component {
     state = {
-        show: 'palette'
+        show: 'palette',
+        invalidEntries: {}
     }
 
     constructor(props) {
@@ -62,7 +63,7 @@ export class LegendBuilder extends React.Component {
         const mappedColors = pickColors(entries.length, colors)
         onChange(entries.map((entry, i) => ({
             ...entry, color: mappedColors[i]
-        })))
+        })), this.hasInvalidEntries())
     }
 
     swap(color1, color2) {
@@ -76,7 +77,7 @@ export class LegendBuilder extends React.Component {
 
         onChange(entries.map(entry =>
             updatedEntries.find(({id}) => id === entry.id) || entry
-        ))
+        ), this.hasInvalidEntries())
     }
 
     labelButtons() {
@@ -133,7 +134,7 @@ export class LegendBuilder extends React.Component {
         const value = max ? max.value + 1 : 1
         const color = '#000000'
         const label = ''
-        onChange([...entries, {id, value, color, label}])
+        onChange([...entries, {id, value, color, label}], this.hasInvalidEntries())
     }
 
     updateEntry(updatedEntry) {
@@ -142,17 +143,27 @@ export class LegendBuilder extends React.Component {
             entry.id === updatedEntry.id
                 ? updatedEntry
                 : entry
-        ))
+        ), this.hasInvalidEntries())
     }
 
     updateValidation(entry, invalid) {
         const {entries, onChange} = this.props
-        onChange(entries, invalid)
+        this.setState(({invalidEntries}) => {
+            return invalid
+                ? {invalidEntries: {...invalidEntries, ...{[entry.id]: invalid}}}
+                : {invalidEntries: _.omit(invalidEntries, entry.id)}
+        }, () => onChange(entries, this.hasInvalidEntries()))
+
+    }
+
+    hasInvalidEntries() {
+        const {invalidEntries} = this.state
+        return !!Object.keys(invalidEntries).length
     }
 
     removeEntry(entry) {
         const {entries, onChange} = this.props
-        onChange(entries.filter(({id}) => id !== entry.id))
+        onChange(entries.filter(({id}) => id !== entry.id), this.hasInvalidEntries())
     }
 }
 
@@ -303,43 +314,31 @@ class ColorInput extends React.Component {
     colorInputRef = React.createRef()
 
     render() {
-        const {input, invalid, disabled, onChange} = this.props
+        const {input, invalid, onChange} = this.props
         const {swap} = this.state
         return (
             <div className={styles.colorContainer}>
-                {disabled
-                    ? (
-                        <div
-                            className={[styles.color, invalid ? styles.invalid : ''].join(' ')}
-                            style={{'--color': input.value}}
-                        />
-                    )
-                    : (
-                        <React.Fragment>
-                            <input
-                                type='color'
-                                className={styles.colorInput}
-                                value={input.value}
-                                onChange={({target: {value}}) => {
-                                    input.set(value)
-                                    onChange(value)
-                                }}
-                                ref={this.colorInputRef}
-                            />
-                            <Tooltip
-                                msg={this.renderTooltip()}
-                                delay={0}
-                                placement='top'
-                                clickTrigger={isMobile()}
-                                onVisibleChange={visible => swap && !visible && this.setState({swap: false})}>
-                                <div
-                                    className={[styles.color, invalid ? styles.invalid : ''].join(' ')}
-                                    style={{'--color': input.value}}
-                                />
-                            </Tooltip>
-                        </React.Fragment>
-                    )
-                }
+                <input
+                    type='color'
+                    className={styles.colorInput}
+                    value={input.value}
+                    onChange={({target: {value}}) => {
+                        input.set(value)
+                        onChange(value)
+                    }}
+                    ref={this.colorInputRef}
+                />
+                <Tooltip
+                    msg={this.renderTooltip()}
+                    delay={0}
+                    placement='top'
+                    clickTrigger={isMobile()}
+                    onVisibleChange={visible => swap && !visible && this.setState({swap: false})}>
+                    <div
+                        className={[styles.color, invalid ? styles.invalid : ''].join(' ')}
+                        style={{'--color': input.value}}
+                    />
+                </Tooltip>
             </div>
         )
     }
