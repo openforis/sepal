@@ -9,6 +9,7 @@ import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {normalize} from './visParams'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
@@ -503,11 +504,13 @@ class _VisParamsPanel extends React.Component {
             ? inputs.palette.value.map(({color}) => color)
             : ['#000000', '#FFFFFF']
         const id = prevVisParams && prevVisParams.id ? prevVisParams.id : guid()
-        const visParams = type === 'continuous'
-            ? {id, type, bands, inverted, min, max, palette, userDefined: true}
-            : type === 'categorical'
-                ? this.toCategoricalVisParams(id)
-                : {id, type, bands, inverted, min, max, gamma, userDefined: true}
+        const visParams = normalize(
+            type === 'continuous'
+                ? {id, type, bands, inverted, min, max, palette, userDefined: true}
+                : type === 'categorical'
+                    ? this.toCategoricalVisParams(id)
+                    : {id, type, bands, inverted, min, max, gamma, userDefined: true}
+        )
         const toDelete = this.overridingVisParams() || {}
         recipeActionBuilder('SAVE_VIS_PARAMS', {visParams})
             .del(['layers.userDefinedVisualizations', imageLayerSourceId, {id: toDelete.id}])

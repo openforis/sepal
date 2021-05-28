@@ -5,7 +5,7 @@ import {Subject, animationFrameScheduler, interval, of} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {distinctUntilChanged, map, scan, switchMap} from 'rxjs/operators'
-import {isMobile} from '../../../widget/userAgent'
+import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
 import {withCursorValue} from './cursorValue'
 import {withMapAreaContext} from './mapAreaContext'
@@ -41,8 +41,9 @@ class _LegendLayer extends React.Component {
             return null
         }
         const {value, paletteWidth} = this.state
-        const cursorValues = value
-            ? value.map((v, i) =>
+        const cursorValues = _.isNil(value)
+            ? null
+            : value.map((v, i) =>
                 <CursorValue
                     key={i}
                     value={v}
@@ -51,7 +52,6 @@ class _LegendLayer extends React.Component {
                     paletteWidth={paletteWidth}
                 />
             )
-            : null
         const colors = palette.map(color =>
             <div
                 key={color}

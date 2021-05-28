@@ -53,8 +53,7 @@ const toHsv = (rgb, {bands, min, max, gamma}, dataTypes) => {
             return dataTypes && dataTypes[bands[i]].precision === 'int'
                 ? Math.round(parseFloat(v.toPrecision(3)))
                 : parseFloat(v.toPrecision(3))
-        }
-        )
+        })
 }
 
 const toCategorical = (rgb, visParams, dataTypes) => {
