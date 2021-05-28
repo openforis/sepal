@@ -32,23 +32,25 @@ export class LegendBuilder extends React.Component {
         const {show} = this.state
         return (
             <Widget label={msg('map.legendBuilder.label')} labelButtons={this.labelButtons()}>
-                {entries.map(entry =>
-                    <Layout key={entry.id} type={'horizontal-nowrap'}>
-                        <Entry
-                            mode={show}
-                            entry={entry}
-                            entries={entries}
-                            onChange={this.updateEntry}
-                            onValidate={this.updateValidation}
-                            onSwap={color => this.swap(color, entry.color)}
-                        />
-                        <RemoveButton
-                            message={msg('map.legendBuilder.entry.confirmation')}
-                            size='small'
-                            onRemove={() => this.removeEntry(entry)}/>
-                    </Layout>
-                )}
-                <PalettePreSets onSelect={this.applyPreset} count={entries.length}/>
+                <Layout type='vertical' spacing='compact'>
+                    {entries.map(entry =>
+                        <Layout key={entry.id} type={'horizontal-nowrap'}>
+                            <Entry
+                                mode={show}
+                                entry={entry}
+                                entries={entries}
+                                onChange={this.updateEntry}
+                                onValidate={this.updateValidation}
+                                onSwap={color => this.swap(color, entry.color)}
+                            />
+                            <RemoveButton
+                                message={msg('map.legendBuilder.entry.confirmation')}
+                                size='small'
+                                onRemove={() => this.removeEntry(entry)}/>
+                        </Layout>
+                    )}
+                    <PalettePreSets onSelect={this.applyPreset} count={entries.length}/>
+                </Layout>
             </Widget>
         )
     }
