@@ -3,7 +3,6 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {PalettePreSets, pickColors} from './visParams/palettePreSets'
-import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -12,12 +11,11 @@ import React from 'react'
 import RemoveButton from 'widget/removeButton'
 import Tooltip from 'widget/tooltip'
 import _ from 'lodash'
-import guid from 'guid'
 import styles from './legendBuilder.module.css'
 
 export class LegendBuilder extends React.Component {
     state = {
-        show: 'palette'
+        invalidEntries: {}
     }
 
     constructor(props) {
@@ -28,33 +26,50 @@ export class LegendBuilder extends React.Component {
     }
 
     render() {
-        const {entries, locked} = this.props
-        const {show} = this.state
+        const {entries} = this.props
+        return entries.length
+            ? this.renderEntries()
+            : this.renderNoEntries()
+    }
+
+    renderNoEntries() {
         return (
-            <Widget label={msg('map.legendBuilder.label')} labelButtons={this.labelButtons()}>
-                <Layout type='vertical' spacing='compact'>
-                    {entries.map(entry =>
-                        <Layout key={entry.id} type={'horizontal-nowrap'}>
-                            <Entry
-                                mode={show}
-                                entry={entry}
-                                entries={entries}
-                                onChange={this.updateEntry}
-                                onValidate={this.updateValidation}
-                                onSwap={color => this.swap(color, entry.color)}
-                                locked={locked}
-                            />
-                            <RemoveButton
-                                message={msg('map.legendBuilder.entry.confirmation')}
-                                size='small'
-                                disabled={locked}
-                                onRemove={() => this.removeEntry(entry)}/>
-                        </Layout>
-                    )}
-                    <PalettePreSets onSelect={this.applyPreset} count={entries.length}/>
-                </Layout>
-            </Widget>
+            <div className={styles.noEntries}>
+                {msg('map.legendBuilder.noEntries')}
+            </div>
         )
+    }
+
+    renderEntries() {
+        const {entries} = this.props
+        return (
+            <div className={styles.entries}>
+                <Layout type='vertical' spacing='compact'>
+                    {entries.map(entry => this.renderEntry(entry))}
+                </Layout>
+                <PalettePreSets onSelect={this.applyPreset} count={entries.length} className={styles.palettePreSets}/>
+            </div>
+        )
+    }
+
+    renderEntry(entry) {
+        const {colorMode, entries, locked} = this.props
+        return <Layout key={entry.id} type={'horizontal-nowrap'}>
+            <Entry
+                mode={colorMode}
+                entry={entry}
+                entries={entries}
+                onChange={this.updateEntry}
+                onValidate={this.updateValidation}
+                onSwap={color => this.swap(color, entry.color)}
+                locked={locked}
+            />
+            <RemoveButton
+                message={msg('map.legendBuilder.entry.confirmation')}
+                size='small'
+                disabled={locked}
+                onRemove={() => this.removeEntry(entry)}/>
+        </Layout>
     }
 
     applyPreset(colors) {
@@ -62,7 +77,7 @@ export class LegendBuilder extends React.Component {
         const mappedColors = pickColors(entries.length, colors)
         onChange(entries.map((entry, i) => ({
             ...entry, color: mappedColors[i]
-        })))
+        })), this.hasInvalidEntries())
     }
 
     swap(color1, color2) {
@@ -76,64 +91,7 @@ export class LegendBuilder extends React.Component {
 
         onChange(entries.map(entry =>
             updatedEntries.find(({id}) => id === entry.id) || entry
-        ))
-    }
-
-    labelButtons() {
-        const {show} = this.state
-        return [
-            <Button
-                key={'add'}
-                icon='plus'
-                chromeless
-                shape='circle'
-                size='small'
-                disabled={show !== 'palette'}
-                tooltip={msg('map.legendBuilder.addEntry.tooltip')}
-                onClick={() => this.addEntry()}
-            />,
-            show === 'palette'
-                ? (
-                    <Button
-                        key={'text'}
-                        icon='font'
-                        chromeless
-                        shape='circle'
-                        size='small'
-                        tooltip={msg('map.legendBuilder.colors.text.tooltip')}
-                        onClick={() => this.showText()}
-                    />
-                )
-                : (
-                    <Button
-                        key={'palette'}
-                        icon='palette'
-                        chromeless
-                        shape='circle'
-                        size='small'
-                        tooltip={msg('map.legendBuilder.colors.colorPicker.tooltip')}
-                        onClick={() => this.showPalette()}
-                    />
-                )
-        ]
-    }
-
-    showText() {
-        this.setState({show: 'text'})
-    }
-
-    showPalette() {
-        this.setState({show: 'palette'})
-    }
-
-    addEntry() {
-        const {entries, onChange} = this.props
-        const id = guid()
-        const max = _.maxBy(entries, 'value')
-        const value = max ? max.value + 1 : 1
-        const color = '#000000'
-        const label = ''
-        onChange([...entries, {id, value, color, label}])
+        ), this.hasInvalidEntries())
     }
 
     updateEntry(updatedEntry) {
@@ -142,17 +100,27 @@ export class LegendBuilder extends React.Component {
             entry.id === updatedEntry.id
                 ? updatedEntry
                 : entry
-        ))
+        ), this.hasInvalidEntries())
     }
 
     updateValidation(entry, invalid) {
         const {entries, onChange} = this.props
-        onChange(entries, invalid)
+        this.setState(({invalidEntries}) => {
+            return invalid
+                ? {invalidEntries: {...invalidEntries, ...{[entry.id]: invalid}}}
+                : {invalidEntries: _.omit(invalidEntries, entry.id)}
+        }, () => onChange(entries, this.hasInvalidEntries()))
+
+    }
+
+    hasInvalidEntries() {
+        const {invalidEntries} = this.state
+        return !!Object.keys(invalidEntries).length
     }
 
     removeEntry(entry) {
         const {entries, onChange} = this.props
-        onChange(entries.filter(({id}) => id !== entry.id))
+        onChange(entries.filter(({id}) => id !== entry.id), this.hasInvalidEntries())
     }
 }
 
@@ -240,7 +208,7 @@ class _Entry extends React.Component {
                 <Form.Input
                     className={styles.label}
                     input={label}
-                    placeholder={'Class label'}
+                    placeholder={msg('map.legendBuilder.entry.classLabel.placeholder')}
                     autoFocus={!entry.label}
                     errorMessage={[label, 'labelUnique']}
                     autoComplete={false}
@@ -303,43 +271,31 @@ class ColorInput extends React.Component {
     colorInputRef = React.createRef()
 
     render() {
-        const {input, invalid, disabled, onChange} = this.props
+        const {input, invalid, onChange} = this.props
         const {swap} = this.state
         return (
             <div className={styles.colorContainer}>
-                {disabled
-                    ? (
-                        <div
-                            className={[styles.color, invalid ? styles.invalid : ''].join(' ')}
-                            style={{'--color': input.value}}
-                        />
-                    )
-                    : (
-                        <React.Fragment>
-                            <input
-                                type='color'
-                                className={styles.colorInput}
-                                value={input.value}
-                                onChange={({target: {value}}) => {
-                                    input.set(value)
-                                    onChange(value)
-                                }}
-                                ref={this.colorInputRef}
-                            />
-                            <Tooltip
-                                msg={this.renderTooltip()}
-                                delay={0}
-                                placement='top'
-                                clickTrigger={isMobile()}
-                                onVisibleChange={visible => swap && !visible && this.setState({swap: false})}>
-                                <div
-                                    className={[styles.color, invalid ? styles.invalid : ''].join(' ')}
-                                    style={{'--color': input.value}}
-                                />
-                            </Tooltip>
-                        </React.Fragment>
-                    )
-                }
+                <input
+                    type='color'
+                    className={styles.colorInput}
+                    value={input.value}
+                    onChange={({target: {value}}) => {
+                        input.set(value)
+                        onChange(value)
+                    }}
+                    ref={this.colorInputRef}
+                />
+                <Tooltip
+                    msg={this.renderTooltip()}
+                    delay={0}
+                    placement='top'
+                    clickTrigger={isMobile()}
+                    onVisibleChange={visible => swap && !visible && this.setState({swap: false})}>
+                    <div
+                        className={[styles.color, invalid ? styles.invalid : ''].join(' ')}
+                        style={{'--color': input.value}}
+                    />
+                </Tooltip>
             </div>
         )
     }
@@ -395,3 +351,27 @@ class ColorInput extends React.Component {
         )
     }
 }
+
+const COLORS = [
+    '#FFB300',  // Vivid Yellow
+    '#803E75',  // Strong Purple
+    '#FF6800',  // Vivid Orange
+    '#A6BDD7',  // Very Light Blue
+    '#C10020',  // Vivid Red
+    '#CEA262',  // Grayish Yellow
+    '#817066',  // Medium Gray
+    '#007D34',  // Vivid Green
+    '#F6768E',  // Strong Purplish Pink
+    '#00538A',  // Strong Blue
+    '#FF7A5C',  // Strong Yellowish Pink
+    '#53377A',  // Strong Violet
+    '#FF8E00',  // Vivid Orange Yellow
+    '#B32851',  // Strong Purplish Red
+    '#F4C800',  // Vivid Greenish Yellow
+    '#7F180D',  // Strong Reddish Brown
+    '#93AA00',  // Vivid Yellowish Green
+    '#593315',  // Deep Yellowish Brown
+    '#F13A13',  // Vivid Reddish Orange
+    '#232C16'  // Dark Olive Green
+]
+export const defaultColor = i => i < COLORS.length ? COLORS[i] : COLORS[COLORS.length - 1]

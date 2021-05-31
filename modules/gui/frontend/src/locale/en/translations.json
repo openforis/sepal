@@ -380,7 +380,10 @@
           "duplicateValue": "There are more then one entry with this value",
           "invalidColor": "Invalid color"
         },
-        "confirmation": "Are you sure you want to remove this legend entry?"
+        "confirmation": "Are you sure you want to remove this legend entry?",
+        "classLabel": {
+          "placeholder": "Label..."
+        }
       },
       "import": {
         "title": "Import",
@@ -438,7 +441,8 @@
             "loadError": "Failed to load distinct values from image band"
           }
         }
-      }
+      },
+      "noEntries": "No entries in the legend. Add at least one."
     },
     "layer": {
       "error": "Failed to load layer"
@@ -1092,6 +1096,9 @@
       "create": "Classification",
       "description": "Classify imagery from SEPAL or Google Earth Engine. Include imagery from multiple points in time to do change detection.",
       "layers": {
+        "imageLayer": {
+          "preSets": "Pre-sets"
+        },
         "referenceData": {
           "description": "Reference data points used to create classification",
           "label": "Reference data"
@@ -1435,7 +1442,8 @@
         "legend": {
           "button": "LEG",
           "title": "Legend",
-          "tooltip": "Setup legend for classification"
+          "tooltip": "Setup legend for classification",
+          "import": "Import..."
         },
         "trainingData": {
           "button": "TRN",

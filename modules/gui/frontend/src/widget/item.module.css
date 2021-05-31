@@ -42,6 +42,7 @@
     font-size: .9rem;
     white-space: normal;
     word-wrap: break-word;
+    text-align: left;
 }
 
 .timestamp {

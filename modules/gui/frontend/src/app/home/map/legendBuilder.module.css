@@ -10,6 +10,25 @@
     align-items: center;
 }
 
+.noEntries {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    color: gray;
+}
+
+.entries {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-grow: 1;
+}
+
+.palettePreSets {
+    margin-top: 1.5rem;
+}
+
 .entry {
     flex-grow: 1;
 }

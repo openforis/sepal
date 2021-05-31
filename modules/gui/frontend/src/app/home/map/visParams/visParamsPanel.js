@@ -1,7 +1,8 @@
+import {Button} from '../../../../widget/button'
 import {Form, form} from 'widget/form/form'
 import {Histogram, histogramStretch} from './histogram'
 import {Layout} from 'widget/layout'
-import {LegendBuilder} from '../legendBuilder'
+import {LegendBuilder, defaultColor} from '../legendBuilder'
 import {Palette} from './palette'
 import {Panel} from 'widget/panel/panel'
 import {Widget} from 'widget/widget'
@@ -98,6 +99,7 @@ class _VisParamsPanel extends React.Component {
         askConfirmation: false,
         legendEntries: [],
         invalidLegendEntries: false,
+        colorMode: 'palette'
     }
 
     constructor(props) {
@@ -129,7 +131,7 @@ class _VisParamsPanel extends React.Component {
                 </Panel.Content>
                 <Panel.Buttons onEscape={deactivate} onEnter={() => invalid || this.check()}>
                     {type.value === 'categorical'
-                        ? this.renderLegendBuilderButtons(this.importLegend, this.loadDistinctBandValues)
+                        ? this.renderLegendBuilderButtons()
                         : this.renderStretchButton()}
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Cancel onClick={deactivate}/>
@@ -160,6 +162,7 @@ class _VisParamsPanel extends React.Component {
         ]
         return (
             <React.Fragment>
+                <Panel.Buttons.Add onClick={() => this.addLegendEntry()}/>
                 <ButtonSelect
                     label={msg('map.legendBuilder.load.label')}
                     icon='file-import'
@@ -267,7 +270,7 @@ class _VisParamsPanel extends React.Component {
 
     renderLegendBuilder() {
         const {stream} = this.props
-        const {bands, legendEntries} = this.state
+        const {bands, colorMode, legendEntries} = this.state
         const loading = stream('LOAD_DISTINCT_IMAGE_VALUES').active
         return (
             <Layout>
@@ -283,14 +286,33 @@ class _VisParamsPanel extends React.Component {
                         </Widget>
                     )
                     : (
-                        <LegendBuilder
-                            entries={legendEntries}
-                            onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
-                        />
+                        <Widget label={msg('map.legendBuilder.label')} labelButtons={this.renderLabelButtons()}>
+                            <LegendBuilder
+                                entries={legendEntries}
+                                colorMode={colorMode}
+                                onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
+                            />
+                        </Widget>
                     )
                 }
             </Layout>
         )
+    }
+
+    renderLabelButtons() {
+        const {colorMode} = this.state
+        return [
+            <Button
+                key={'colorMode'}
+                chromeless
+                size='small'
+                icon={colorMode === 'palette' ? 'font' : 'palette'}
+                tooltip={msg(colorMode === 'palette'
+                    ? 'map.legendBuilder.colors.text.tooltip'
+                    : 'map.legendBuilder.colors.colorPicker.tooltip')}
+                onClick={() => this.toggleColorMode()}
+            />
+        ]
     }
 
     renderBandForm(i, label) {
@@ -334,6 +356,10 @@ class _VisParamsPanel extends React.Component {
                 }}
                 onCancel={() => this.setState({askConfirmation: false})}/>
         )
+    }
+
+    toggleColorMode() {
+        this.setState(({colorMode}) => ({colorMode: colorMode === 'palette' ? 'text' : 'palette'}))
     }
 
     stretchHistograms(percent) {
@@ -405,6 +431,20 @@ class _VisParamsPanel extends React.Component {
                 .dispatch()
             this.setState({legendEntries: importedLegendEntries})
         }
+    }
+
+    addLegendEntry() {
+        this.setState(({legendEntries}) => {
+            const max = _.maxBy(legendEntries, 'value')
+            return {
+                legendEntries: [...legendEntries, {
+                    id: guid(),
+                    value: max ? max.value + 1 : 1,
+                    color: defaultColor(legendEntries.length),
+                    label: ''
+                }]
+            }
+        })
     }
 
     updateLegendEntries(legendEntries, invalidLegendEntries) {
