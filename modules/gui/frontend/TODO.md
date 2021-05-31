@@ -1,3 +1,9 @@
+combo flashing
+slow map scale
+safari map overlay
+
+
+
 mobile
 	visParams color tooltip not triggering
 	layers panel - drag and drop in iOS

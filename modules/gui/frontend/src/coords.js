@@ -72,22 +72,30 @@ export const parseCoordinates = string => {
     return []
 }
 
-const formatValue = ({value, positive, negative}) => {
+const formatValue = ({value, digits}) =>
+    digits
+        ? value.toFixed(digits)
+        : value
+
+const formatCoordinate = ({value, positive, negative, digits}) => {
     switch(Math.sign(value)) {
     case 1:
-        return `${value} ${positive}`
+        return `${formatValue({value, digits})} ${positive}`
     case -1:
-        return `${value} ${negative}`
+        return `${formatValue({value, digits})} ${negative}`
     default:
         return '0'
     }
 }
 
-const formatLatitude = lat =>
-    formatValue({value: lat, positive: 'N', negative: 'S'})
+const formatLatitude = (lat, digits) =>
+    formatCoordinate({value: lat, positive: 'N', negative: 'S', digits})
 
-const formatLongitude = lng =>
-    formatValue({value: lng, positive: 'E', negative: 'W'})
+const formatLongitude = (lng, digits) =>
+    formatCoordinate({value: lng, positive: 'E', negative: 'W', digits})
 
-export const formatCoordinates = ({lat, lng}) =>
-    `${formatLatitude(lat)}, ${formatLongitude(lng)}`
+export const formatCoordinates = ({lat, lng}, digits) =>
+    _.compact([
+        _.isFinite(lat) ? formatLatitude(lat, digits) : null,
+        _.isFinite(lng) ? formatLongitude(lng, digits) : null
+    ]).join(', ')

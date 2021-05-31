@@ -2,15 +2,5 @@
     position: absolute;
     top: .5rem;
     right: .5rem;
-    width: calc(2 * var(--toolbar-button-size) + var(--toolbar-button-spacing));
-    font-size: .8rem;
-    line-height: .8rem;
-    background-color: hsla(0, 0%, 0%, .35);
-    color: #ccc;
-    padding: .35rem;
-    border-radius: .25rem;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
+    pointer-events: all;
 }

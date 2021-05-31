@@ -78,8 +78,11 @@ test('coords.parse(\'${params.query}\') === ${JSON.stringify(result)}')
         {params: {query: '23.45, 12.34'}, result: [{lat: 23.45, lng: 12.34}, {lat: 12.34, lng: 23.45}]},
     )
 
-test('coords.formatCoordinates(${JSON.stringify(params.coords)}) === ${JSON.stringify(result)}')
-    .assert(({params, result}) => expect(formatCoordinates(params.coords)).toEqual(result))
+test('coords.formatCoordinates(${JSON.stringify(params.coords, params.digits)}) === ${JSON.stringify(result)}')
+    .assert(({params, result}) => expect(formatCoordinates(params.coords, params.digits)).toEqual(result))
     .where(
         {params: {coords: {lat: 10, lng: 20}}, result: '10 N, 20 E'},
+        {params: {coords: {lat: 10.123456789, lng: 20.987654321}}, result: '10.123456789 N, 20.987654321 E'},
+        {params: {coords: {lat: 10.123456789, lng: 20.987654321}, digits: 3}, result: '10.123 N, 20.988 E'},
+        {params: {coords: {lat: 10, lng: 0}, digits: 3}, result: '10.000 N, 0'},
     )

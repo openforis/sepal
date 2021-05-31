@@ -177,15 +177,6 @@ export class SepalMap {
         return googleMap.getZoom() === googleMap.minZoom
     }
 
-    getMetersPerPixel() {
-        const {googleMap} = this
-        const latitude = googleMap.getCenter().lat()
-        const zoom = googleMap.getZoom()
-        return Math.round(
-            156543.03392 * Math.cos(latitude * Math.PI / 180) / Math.pow(2, zoom)
-        )
-    }
-
     zoomArea() {
         const {google, googleMap} = this
         this.drawingManager = new google.maps.drawing.DrawingManager({
@@ -220,6 +211,59 @@ export class SepalMap {
             google.maps.event.clearListeners(this.drawingManager, 'overlaycomplete')
         }
     }
+
+    // Bounds
+
+    fromGoogleBounds(googleBounds) {
+        const sw = googleBounds.getSouthWest()
+        const ne = googleBounds.getNorthEast()
+        return [
+            [sw.lng(), sw.lat()],
+            [ne.lng(), ne.lat()]
+        ]
+    }
+
+    toGoogleBounds(bounds) {
+        const {google} = this
+        return new google.maps.LatLngBounds(
+            {lng: bounds[0][0], lat: bounds[0][1]},
+            {lng: bounds[1][0], lat: bounds[1][1]}
+        )
+    }
+
+    fitBounds(bounds) {
+        const {google} = this
+        const PADDING = 50 // compensate for attribution masking
+        const {googleMap} = this
+        const nextBounds = bounds instanceof google.maps.LatLngBounds
+            ? bounds
+            : this.toGoogleBounds(bounds)
+        const currentBounds = googleMap.getBounds()
+        const boundsChanged = !currentBounds || !currentBounds.equals(nextBounds)
+        if (boundsChanged) {
+            googleMap.fitBounds(nextBounds, PADDING)
+        }
+    }
+
+    getBounds() {
+        const {googleMap} = this
+        return this.fromGoogleBounds(googleMap.getBounds())
+    }
+
+    // Map scale
+
+    // getMetersPerPixel() {
+    //     const {googleMap} = this
+    //     const latitude = googleMap.getCenter().lat()
+    //     const zoom = googleMap.getZoom()
+    //     return Math.round(
+    //         156543.03392 * Math.cos(latitude * Math.PI / 180) / Math.pow(2, zoom)
+    //     )
+    // }
+
+    // updateMapScale() {
+    //     this.mapScale$.next(this.getMetersPerPixel)
+    // }
 
     // Markers
 
@@ -302,44 +346,6 @@ export class SepalMap {
             google.maps.event.addListener(this.drawingManager, 'overlaycomplete', drawingListener)
             this.drawingManager.setMap(googleMap)
         }
-    }
-
-    // Bounds
-
-    fromGoogleBounds(googleBounds) {
-        const sw = googleBounds.getSouthWest()
-        const ne = googleBounds.getNorthEast()
-        return [
-            [sw.lng(), sw.lat()],
-            [ne.lng(), ne.lat()]
-        ]
-    }
-
-    toGoogleBounds(bounds) {
-        const {google} = this
-        return new google.maps.LatLngBounds(
-            {lng: bounds[0][0], lat: bounds[0][1]},
-            {lng: bounds[1][0], lat: bounds[1][1]}
-        )
-    }
-
-    fitBounds(bounds) {
-        const {google} = this
-        const PADDING = 50 // compensate for attribution masking
-        const {googleMap} = this
-        const nextBounds = bounds instanceof google.maps.LatLngBounds
-            ? bounds
-            : this.toGoogleBounds(bounds)
-        const currentBounds = googleMap.getBounds()
-        const boundsChanged = !currentBounds || !currentBounds.equals(nextBounds)
-        if (boundsChanged) {
-            googleMap.fitBounds(nextBounds, PADDING)
-        }
-    }
-
-    getBounds() {
-        const {googleMap} = this
-        return this.fromGoogleBounds(googleMap.getBounds())
     }
 
     // Layers
