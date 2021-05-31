@@ -355,7 +355,7 @@ Button.propTypes = {
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
     tooltipPanel: PropTypes.any,
-    tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
+    tooltipPlacement: PropTypes.any,
     type: PropTypes.oneOf(['button', 'submit', 'reset']),
     width: PropTypes.oneOf(['fit', 'fill']),
     onClick: PropTypes.func,
