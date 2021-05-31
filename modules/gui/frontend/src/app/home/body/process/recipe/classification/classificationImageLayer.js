@@ -2,6 +2,7 @@ import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
 import {allVisualizations, hasTrainingData, preSetVisualizationOptions, supportProbability} from './classificationRecipe'
 import {compose} from 'compose'
+import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import PropTypes from 'prop-types'
@@ -28,13 +29,17 @@ class _ClassificationImageLayer extends React.Component {
 
     renderImageLayerForm() {
         const {recipe, source, layerConfig = {}} = this.props
+        const options = this.hasLegend()
+            ? [{
+                label: msg('process.classification.layers.imageLayer.preSets'),
+                options: preSetVisualizationOptions(recipe)
+            }]
+            : []
         return (
             <VisualizationSelector
                 source={source}
                 recipe={recipe}
-                presetOptions={this.hasLegend()
-                    ? preSetVisualizationOptions(recipe)
-                    : []}
+                presetOptions={options}
                 selectedVisParams={layerConfig.visParams}
             />
         )
@@ -62,12 +67,17 @@ class _ClassificationImageLayer extends React.Component {
         const {layerConfig: {visParams: prevVisParams}} = prevProps
         const {recipe} = this.props
         if (prevVisParams) {
-            const visParams = allVisualizations(recipe).find(({bands}) => _.isEqual(bands, prevVisParams.bands))
+            const visParams = allVisualizations(recipe).find(({id, bands}) =>
+                _.isEqual([id, bands], [prevVisParams.id, prevVisParams.bands])
+            )
             if (!visParams) {
                 this.selectVisualization(preSetVisualizationOptions(recipe)[0].visParams)
             } else if (!_.isEqual(visParams, prevVisParams)) {
                 this.selectVisualization(visParams)
             }
+        } else {
+            const visualizations = allVisualizations(recipe)
+            visualizations.length && this.selectVisualization(allVisualizations(recipe)[0])
         }
     }
 

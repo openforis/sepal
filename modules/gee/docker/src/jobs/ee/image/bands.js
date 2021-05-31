@@ -3,6 +3,8 @@ const {job} = require('root/jobs/job')
 const worker$ = ({asset, recipe}) => {
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('ee')
+    const {switchMap} = require('rx/operators')
+
     if (asset) {
         return assetBands()
     } else {
@@ -14,8 +16,12 @@ const worker$ = ({asset, recipe}) => {
     }
 
     function recipeBands() {
-        const {getBands$} = ImageFactory(recipe)
-        return getBands$()
+        const {getBands$, getImage$} = ImageFactory(recipe)
+        return getBands$
+            ? getBands$()
+            : getImage$().pipe(
+                switchMap(image => ee.getInfo$(image.bandNames(), 'image band names'))
+            )
     }
 }
 

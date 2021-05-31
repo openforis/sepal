@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
-import {LegendBuilder} from 'app/home/map/legendBuilder'
+import {LegendBuilder, defaultColor} from 'app/home/map/legendBuilder'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from '../../../recipeFormPanel'
 import {activator} from 'widget/activation/activator'
@@ -10,12 +10,14 @@ import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
+import guid from 'guid'
 import styles from './legend.module.css'
 
 const fields = {
-    invalidEntries: new Form.Field(),
+    invalidEntries: new Form.Field()
+        .predicate(invalid => !invalid, 'invalid'),
     entries: new Form.Field()
-        .predicate((entries, {invalidEntries}) => !invalidEntries && entries.length)
+        .predicate((entries, {invalidEntries}) => !invalidEntries && entries.length, 'invalid')
 }
 
 const mapRecipeToProps = recipe => {
@@ -28,8 +30,25 @@ const mapRecipeToProps = recipe => {
 }
 
 class _Legend extends React.Component {
+    state = {colorMode: 'palette'}
+
     render() {
         const {dataCollectionManager} = this.props
+        const {colorMode} = this.state
+        const title = (
+            <div className={styles.title}>
+                <div>{msg('process.classification.panel.legend.title')}</div>
+                <Button
+                    chromeless
+                    size='small'
+                    icon={colorMode === 'palette' ? 'font' : 'palette'}
+                    tooltip={msg(colorMode === 'palette'
+                        ? 'map.legendBuilder.colors.text.tooltip'
+                        : 'map.legendBuilder.colors.colorPicker.tooltip')}
+                    onClick={() => this.toggleColorMode()}
+                />
+            </div>
+        )
         return (
             <RecipeFormPanel
                 placement='bottom-right'
@@ -37,7 +56,8 @@ class _Legend extends React.Component {
                 onApply={() => setTimeout(() => setTimeout(() => dataCollectionManager.updateAll()))}>
                 <Panel.Header
                     icon='list'
-                    title={msg('process.classification.panel.legend.title')}
+                    title={title}
+
                 />
 
                 <Panel.Content>
@@ -45,9 +65,10 @@ class _Legend extends React.Component {
                 </Panel.Content>
 
                 <Form.PanelButtons>
+                    <Panel.Buttons.Add onClick={() => this.addEntry()}/>
                     <Button
                         icon='file-import'
-                        label={msg('map.legendBuilder.load.options.importFromCsv.label')}
+                        label={msg('process.classification.panel.legend.import')}
                         onClick={() => this.importLegend()}/>
                 </Form.PanelButtons>
             </RecipeFormPanel>
@@ -56,10 +77,12 @@ class _Legend extends React.Component {
 
     renderContent() {
         const {hasTrainingData, inputs: {entries}} = this.props
+        const {colorMode} = this.state
         return (
             <LegendBuilder
                 entries={entries.value}
                 locked={hasTrainingData}
+                colorMode={colorMode}
                 onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
             />
         )
@@ -80,6 +103,20 @@ class _Legend extends React.Component {
         }
     }
 
+    addEntry() {
+        const {inputs: {entries}} = this.props
+        const id = guid()
+        const max = _.maxBy(entries.value, 'value')
+        const value = max ? max.value + 1 : 1
+        const color = defaultColor(entries.value.length)
+        const label = ''
+        entries.set([...entries.value, {id, value, color, label}])
+    }
+
+    toggleColorMode() {
+        this.setState(({colorMode}) => ({colorMode: colorMode === 'palette' ? 'text' : 'palette'}))
+    }
+
     updateLegendEntries(legendEntries, invalidLegendEntries) {
         const {inputs} = this.props
         inputs.entries.set(legendEntries)
@@ -91,6 +128,11 @@ class _Legend extends React.Component {
         legendImport.activate()
     }
 }
+
+const valuesToModel = ({entries}) => ({
+    entries: _.sortBy(entries, 'value')
+})
+
 const additionalPolicy = () => ({
     _: 'disallow',
     legendImport: 'allow'
@@ -98,7 +140,7 @@ const additionalPolicy = () => ({
 
 export const Legend = compose(
     _Legend,
-    recipeFormPanel({id: 'legend', fields, mapRecipeToProps, additionalPolicy}),
+    recipeFormPanel({id: 'legend', fields, mapRecipeToProps, additionalPolicy, valuesToModel}),
     activator('legendImport')
 )
 

@@ -210,8 +210,11 @@ export const allVisualizations = recipe => [
 
 export const preSetVisualizationOptions = recipe => {
     const legend = selectFrom(recipe, 'model.legend') || {}
-    const classifierType = selectFrom(recipe, 'model.classifier.type')
     const entries = _.sortBy(legend.entries, 'value')
+    if (!entries.length) {
+        return []
+    }
+    const classifierType = selectFrom(recipe, 'model.classifier.type')
     const min = entries[0].value
     const max = _.last(entries).value
     const probabilityPalette = ['#000000', '#480000', '#710101', '#BA0000', '#FF0000', '#FFA500', '#FFFF00',

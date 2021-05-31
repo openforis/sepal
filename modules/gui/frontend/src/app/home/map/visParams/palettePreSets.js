@@ -35,13 +35,14 @@ export const pickColors = (count, colors) => {
         })
 }
 
-export const PalettePreSets = ({onSelect, count}) => {
+export const PalettePreSets = ({onSelect, count, className}) => {
     const allOptions = [
         ...options,
         ...(count ? colorBrewerOptions(count) : [])
     ]
     return (
         <Combo
+            className={className}
             placeholder={msg('map.visParams.form.palette.preset.placeholder')}
             placement='above'
             options={allOptions}
