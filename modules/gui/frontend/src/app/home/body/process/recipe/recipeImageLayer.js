@@ -1,6 +1,7 @@
 import {ClassificationImageLayer, classificationDataTypes} from './classification/classificationImageLayer'
 import {CursorValue} from 'app/home/map/cursorValue'
 import {OpticalMosaicImageLayer, opticalMosaicDataTypes} from './opticalMosaic/opticalMosaicImageLayer'
+import {RadarMosaicImageLayer, radarMosaicDataTypes} from './radarMosaic/radarMosaicImageLayer'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -45,6 +46,14 @@ class _RecipeImageLayer extends React.Component {
                 source={source}
                 layerConfig={layerConfig}
                 layer={this.maybeCreateLayer(opticalMosaicDataTypes(recipe))}
+                map={map}/>
+        )
+        case 'RADAR_MOSAIC': return (
+            <RadarMosaicImageLayer
+                recipe={recipe}
+                source={source}
+                layerConfig={layerConfig}
+                layer={this.maybeCreateLayer(radarMosaicDataTypes(recipe))}
                 map={map}/>
         )
         case 'CLASSIFICATION': return (
