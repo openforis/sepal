@@ -1,4 +1,5 @@
 import {Button} from '../../../../widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {Histogram, histogramStretch} from './histogram'
 import {Layout} from 'widget/layout'
@@ -161,7 +162,7 @@ class _VisParamsPanel extends React.Component {
             },
         ]
         return (
-            <React.Fragment>
+            <ButtonGroup>
                 <Panel.Buttons.Add onClick={() => this.addLegendEntry()}/>
                 <ButtonSelect
                     label={msg('map.legendBuilder.load.label')}
@@ -172,7 +173,7 @@ class _VisParamsPanel extends React.Component {
                     disabled={stream('LOAD_DISTINCT_IMAGE_VALUES').active}
                     onSelect={option => option && _.find(options, ({value}) => value === option.value).onSelect()}
                 />
-            </React.Fragment>
+            </ButtonGroup>
         )
     }
 
