@@ -66,6 +66,14 @@ class _Map extends React.Component {
     constructor() {
         super()
         this.mapDelegate = this.mapDelegate.bind(this)
+
+        this.toggleLinked = this.toggleLinked.bind(this)
+        this.toggleZoomArea = this.toggleZoomArea.bind(this)
+        this.cancelZoomArea = this.cancelZoomArea.bind(this)
+        this.drawPolygon = this.drawPolygon.bind(this)
+        this.disableDrawingMode = this.disableDrawingMode.bind(this)
+        this.setLocationMarker = this.setLocationMarker.bind(this)
+        this.setAreaMarker = this.setAreaMarker.bind(this)
     }
 
     withAllMaps(func) {
@@ -151,6 +159,14 @@ class _Map extends React.Component {
     isZoomArea() {
         const {zoomArea} = this.state
         return zoomArea
+    }
+
+    toggleZoomArea() {
+        this.zoomArea(!this.isZoomArea())
+    }
+
+    cancelZoomArea() {
+        this.zoomArea(false)
     }
 
     setLocationMarker(options) {
@@ -604,15 +620,15 @@ class _Map extends React.Component {
         const isInitialized = () => bounds
 
         return {
-            toggleLinked: () => this.toggleLinked(),
+            toggleLinked: this.toggleLinked,
             isLinked: () => this.isLinked(),
             canZoomIn: () => !map.isMaxZoom(),
             zoomIn: () => map.zoomIn(),
             canZoomOut: () => !map.isMinZoom(),
             zoomOut: () => map.zoomOut(),
             canZoomArea: () => !map.isMaxZoom(),
-            toggleZoomArea: () => this.zoomArea(!this.isZoomArea()),
-            cancelZoomArea: () => this.zoomArea(false),
+            toggleZoomArea: this.toggleZoomArea,
+            cancelZoomArea: this.cancelZoomArea,
             isZoomArea: () => this.isZoomArea(),
             canFit: () => isInitialized(),
             fit: () => map.fitBounds(bounds),
@@ -621,10 +637,13 @@ class _Map extends React.Component {
             setView: ({center, zoom}) => map.setView({center, zoom}),
             fitBounds: bounds => map.fitBounds(bounds),
             getBounds: () => map.getBounds(),
-            drawPolygon: (id, callback) => this.drawPolygon(id, callback),
-            disableDrawingMode: () => this.disableDrawingMode(),
-            setLocationMarker: options => this.setLocationMarker(options),
-            setAreaMarker: options => this.setAreaMarker(options),
+            
+            // getScale: () => map.getMetersPerPixel(),
+
+            drawPolygon: this.drawPolygon,
+            disableDrawingMode: this.disableDrawingMode,
+            setLocationMarker: this.setLocationMarker,
+            setAreaMarker: this.setAreaMarker,
 
             setLayer: (...args) => {
                 log.warn('should we call map.setLayer?')
