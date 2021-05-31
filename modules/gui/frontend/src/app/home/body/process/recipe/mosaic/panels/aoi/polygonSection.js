@@ -77,14 +77,16 @@ class _PolygonSection extends React.Component {
             recipeActionBuilder('DELETE_MAP_OVERLAY_BOUNDS')
                 .del('ui.overlay.bounds')
                 .dispatch()
-            stream('LOAD_MAP_OVERLAY_BOUNDS',
-                api.gee.aoiBounds$(aoi),
-                bounds => {
-                    recipeActionBuilder('SET_MAP_OVERLAY_BOUNDS')
-                        .set('ui.overlay.bounds', bounds)
-                        .dispatch()
-                }
-            )
+            if (aoi.path) {
+                stream('LOAD_MAP_OVERLAY_BOUNDS',
+                    api.gee.aoiBounds$(aoi),
+                    bounds => {
+                        recipeActionBuilder('SET_MAP_OVERLAY_BOUNDS')
+                            .set('ui.overlay.bounds', bounds)
+                            .dispatch()
+                    }
+                )
+            }
             recipeActionBuilder('SET_MAP_OVERLAY')
                 .set('layers.overlay', overlay)
                 .dispatch()
