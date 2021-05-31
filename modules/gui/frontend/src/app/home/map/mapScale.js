@@ -1,27 +1,51 @@
+import {Button} from 'widget/button'
 import {compose} from 'compose'
-import {withMap} from './mapContext'
+import {formatCoordinates} from 'coords'
+import {withMapsContext} from './maps'
 import React from 'react'
+import clipboard from 'clipboard'
 import format from 'format'
 import styles from './mapScale.module.css'
 
-class MapToolbar extends React.Component {
+class _MapScale extends React.Component {
     render() {
-        const {map} = this.props
-        const scale = map.getScale()
-
+        const {mapsContext: {center, zoom, scale}} = this.props
         return scale
             ? (
                 <div className={styles.container}>
-                    {format.number({value: scale, unit: 'm/px'})}
+                    <Button
+                        look='transparent'
+                        shape='pill'
+                        size='small'
+                        tooltip={
+                            this.tooltip(center)
+                        }
+                        tooltipPlacement='bottomLeft'>
+                        {format.number({value: scale, unit: 'm/px'})}
+                    </Button>
                 </div>
             )
             : null
     }
+
+    tooltip(center) {
+        return (
+            <Button
+                chromeless
+                look='highlight'
+                icon='globe'
+                label={formatCoordinates(center, 5)}
+                onClick={() =>
+                    clipboard.copy(formatCoordinates(center))
+                }
+            />
+        )
+    }
 }
 
-MapToolbar.propTypes = {}
-
-export default compose(
-    MapToolbar,
-    withMap()
+export const MapScale = compose(
+    _MapScale,
+    withMapsContext()
 )
+
+MapScale.propTypes = {}

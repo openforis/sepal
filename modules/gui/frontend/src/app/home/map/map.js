@@ -4,6 +4,7 @@ import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {LegendImport} from './legendImport'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
+import {MapScale} from './mapScale'
 import {Progress} from './progress'
 import {SplitView} from 'widget/split/splitView'
 import {VisParamsPanel} from './visParams/visParamsPanel'
@@ -20,7 +21,6 @@ import {v4 as uuid} from 'uuid'
 import {withLayers} from '../body/process/withLayers'
 import {withMapsContext} from './maps'
 import {withRecipe} from '../body/process/recipeContext'
-import MapScale from './mapScale'
 import MapToolbar from './mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -621,7 +621,6 @@ class _Map extends React.Component {
             setView: ({center, zoom}) => map.setView({center, zoom}),
             fitBounds: bounds => map.fitBounds(bounds),
             getBounds: () => map.getBounds(),
-            getScale: () => map.getMetersPerPixel(),
             drawPolygon: (id, callback) => this.drawPolygon(id, callback),
             disableDrawingMode: () => this.disableDrawingMode(),
             setLocationMarker: options => this.setLocationMarker(options),

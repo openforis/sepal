@@ -22,7 +22,10 @@ export const withMapsContext = withContext(MapsContext, 'mapsContext')
 
 class _Maps extends React.Component {
     state = {
-        mapsContext: null
+        mapsContext: null,
+        center: {},
+        zoom: null,
+        scale: null
     }
 
     currentBounds = null
@@ -36,6 +39,9 @@ class _Maps extends React.Component {
             this.initMaps$(),
             mapsContext => this.setState(mapsContext)
         )
+        this.createGoogleMap = this.createGoogleMap.bind(this)
+        this.createSepalMap = this.createSepalMap.bind(this)
+        this.createMapContext = this.createMapContext.bind(this)
     }
 
     initMaps$() {
@@ -161,6 +167,14 @@ class _Maps extends React.Component {
                 log.debug(`Bounds update from ${mapTag(mapId)} accepted`)
                 this.bounds$.next({mapId, bounds})
                 this.currentBounds = bounds
+                const scale = Math.round(
+                    156543.03392 * Math.cos(center.lat() * Math.PI / 180) / Math.pow(2, zoom)
+                )
+                this.setState({
+                    center: center ? {lat: center.lat(), lng: center.lng()} : {},
+                    zoom,
+                    scale
+                })
             }
         }
 
@@ -169,12 +183,15 @@ class _Maps extends React.Component {
 
     render() {
         const {children} = this.props
-        const {initialized} = this.state
+        const {initialized, bounds, center, zoom, scale} = this.state
         return (
             <MapsContext.Provider value={{
-                createGoogleMap: this.createGoogleMap.bind(this),
-                createSepalMap: this.createSepalMap.bind(this),
-                createMapContext: this.createMapContext.bind(this)
+                createGoogleMap: this.createGoogleMap,
+                createSepalMap: this.createSepalMap,
+                createMapContext: this.createMapContext,
+                center,
+                zoom,
+                scale
             }}>
                 {children(initialized)}
             </MapsContext.Provider>
