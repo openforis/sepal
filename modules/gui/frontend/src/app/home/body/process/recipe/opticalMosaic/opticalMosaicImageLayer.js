@@ -3,6 +3,7 @@ import {Layout} from 'widget/layout'
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {SceneSelectionType, getAllVisualizations} from './opticalMosaicRecipe'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
+import {allVisualizations} from '../classification/classificationRecipe'
 import {compose} from 'compose'
 import {dataTypes} from './dataTypes'
 import {msg} from 'translate'
@@ -89,9 +90,9 @@ class _OpticalMosaicImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {layerConfig: {visParams}} = this.props
+        const {recipe, layerConfig: {visParams}} = this.props
         if (!visParams) {
-            this.selectVisualization(visualizations[this.reflectance()][0])
+            this.selectVisualization(allVisualizations(recipe)[0])
         }
     }
 
@@ -104,7 +105,7 @@ class _OpticalMosaicImageLayer extends React.Component {
                 _.isEqual([id, bands], [prevVisParams.id, prevVisParams.bands])
             )
             if (!visParams) {
-                this.selectVisualization(visualizations[this.reflectance()][0])
+                this.selectVisualization(allVisualizations[0])
             } else if (!_.isEqual(visParams, prevVisParams)) {
                 this.selectVisualization(visParams)
             }
