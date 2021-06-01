@@ -64,7 +64,7 @@ class _RecipeImageLayer extends React.Component {
                 layer={this.maybeCreateLayer(classificationDataTypes(recipe))}
                 map={map}/>
         )
-        default: throw Error(`Unsupported recipe type: ${recipe.type}`)
+        default: return null
         }
     }
 

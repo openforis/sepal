@@ -12,14 +12,14 @@ import React from 'react'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),
-    layers: selectFrom(recipe, 'layers')
+    savedLayers: selectFrom(recipe, 'layers')
 })
 
 class _RadarMosaic extends React.Component {
     constructor(props) {
         super(props)
-        const {layers, recipeId} = props
-        initializeLayers(recipeId, layers)
+        const {savedLayers, recipeId} = props
+        initializeLayers({recipeId, savedLayers})
     }
 
     render() {

@@ -74,6 +74,8 @@ class _Map extends React.Component {
         this.disableDrawingMode = this.disableDrawingMode.bind(this)
         this.setLocationMarker = this.setLocationMarker.bind(this)
         this.setAreaMarker = this.setAreaMarker.bind(this)
+        this.addClickListenerOnce = this.addClickListenerOnce.bind(this)
+        this.removeListener = this.removeListener.bind(this)
     }
 
     withAllMaps(func) {
@@ -154,6 +156,19 @@ class _Map extends React.Component {
         this.setState({zoomArea, selectedZoomArea: null}, () => {
             this.withAllMaps(({map}) => zoomArea ? map.zoomArea() : map.cancelZoomArea())
         })
+    }
+
+    addClickListenerOnce(listener) {
+        const listeners = this.withAllMaps(({map}) => map.addClickListener(e => {
+            listener(e)
+            removableListener.remove()
+        }))
+        const removableListener = {remove: () => listeners.map(listener => listener.remove())}
+        return removableListener
+    }
+
+    removeListener(listener) {
+        listener && listener.remove()
     }
 
     isZoomArea() {
@@ -637,7 +652,10 @@ class _Map extends React.Component {
             setView: ({center, zoom}) => map.setView({center, zoom}),
             fitBounds: bounds => map.fitBounds(bounds),
             getBounds: () => map.getBounds(),
-            
+
+            addClickListenerOnce: this.addClickListenerOnce,
+            removeListener: this.removeListener,
+
             // getScale: () => map.getMetersPerPixel(),
 
             drawPolygon: this.drawPolygon,
