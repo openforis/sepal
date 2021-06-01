@@ -45,47 +45,47 @@ class BandSelection extends React.PureComponent {
         timeScan: true,
         pointInTime: false
     }, {
-        value: 'VV_median, VH_median, VV_stdDev',
+        value: 'VV_med, VH_med, VV_std',
         bandLabels: [
             <span>VV<sub>med</sub></span>,
             <span>VH<sub>med</sub></span>,
             <span>VV<sub>sd</sub></span>
         ],
-        searchableText: 'VV_median VH_median VV_stdDev median stdDev sd',
+        searchableText: 'VV_med VH_med VV_std median stdDev sd',
         timeScan: true,
         pointInTime: false
     }, {
-        value: 'VV_median, VH_median, ratio_VV_median_VH_median',
+        value: 'VV_med, VH_med, ratio_VV_med_VH_med',
         bandLabels: [
             <span>VV<sub>med</sub></span>,
             <span>VH<sub>med</sub></span>,
             <span>VV<sub>med</sub>/VH<sub>med</sub></span>
         ],
-        searchableText: 'VV_median VH_median ratio_VV_median_VH_median median',
+        searchableText: 'VV_med VH_med ratio_VV_med_VH_med median',
         timeScan: true,
         pointInTime: false
     }, {
-        value: 'VV_max, VV_min, VV_stdDev',
+        value: 'VV_max, VV_min, VV_std',
         bandLabels: [
             <span>VV<sub>max</sub></span>,
             <span>VV<sub>min</sub></span>,
             <span>VV<sub>sd</sub></span>
         ],
-        searchableText: 'VV_max VV_min VV_stdDev max min stdDev sd',
+        searchableText: 'VV_max VV_min VV_std max min stdDev sd',
         timeScan: true,
         pointInTime: false
     }, {
-        value: 'VV_min, VH_min, VV_stdDev',
+        value: 'VV_min, VH_min, VV_std',
         bandLabels: [
             <span>VV<sub>min</sub></span>,
             <span>VH<sub>min</sub></span>,
             <span>VV<sub>sd</sub></span>
         ],
-        searchableText: 'VV_min VH_min VV_stdDev min stdDev sd',
+        searchableText: 'VV_min VH_min VV_std min stdDev sd',
         timeScan: true,
         pointInTime: false
     }, {
-        value: 'VV_phase, VV_amplitude, VV_residuals',
+        value: 'VV_phase, VV_amp, VV_res',
         bandLabels: [
             <span>VV<sub>phase, amp, residuals</sub> (HSV)</span>
         ],
@@ -93,7 +93,7 @@ class BandSelection extends React.PureComponent {
         timeScan: true,
         pointInTime: false
     }, {
-        value: 'VH_phase, VH_amplitude, VH_residuals',
+        value: 'VH_phase, VH_amp, VH_res',
         bandLabels: [
             <span>VH<sub>phase, amp, residuals</sub> (HSV)</span>
         ],

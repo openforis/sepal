@@ -56,8 +56,8 @@ def create(
             (VV and/or VH), and fit each image in the collection. The resulting collection will get a property named
             'harmonics', containing an ee.Image with the coefficients.
 
-            If VV is included, 'VV_constant', 'VV_t', 'VV_phase', 'VV_amplitude', and 'VV_residuals' bands are added
-            to the harmonics image, and 'VV_fitted', and 'VV_residuals' bands are added to each image in the collection
+            If VV is included, 'VV_const', 'VVt', 'VV_phase', 'VV_amp', and 'VV_res' bands are added
+            to the harmonics image, and 'VVfit', and 'VV_res' bands are added to each image in the collection
             If VH is included, the same bands are added with a 'VH_' prefix.
 
     Returns:
@@ -73,8 +73,8 @@ def create(
             unixTimeDays - days since unix epoch.
 
         If harmonics_dependents is a non-empty list, the following bands are also included:
-            VV_fitted, VH_fitted - the fitted value for the time of the image.
-            VV_residuals, VH_residuals - the difference between the dependent and the fitted value.
+            VVfit, VHfit - the fitted value for the time of the image.
+            VV_res, VH_res - the difference between the dependent and the fitted value.
     """
     if harmonics_dependents is None:
         harmonics_dependents = []
