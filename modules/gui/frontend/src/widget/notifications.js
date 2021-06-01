@@ -23,11 +23,11 @@ const autoDismiss$ = publish$
         filter(notification => notification.timeout),
         mergeMap(notification =>
             timer(0, 1000).pipe(
-                scan(acc => acc - 1, notification.timeout + 1),
-                takeWhile(countDown => countDown >= 0),
-                map(countDown => ({
+                scan(timeout => timeout - 1, notification.timeout + 1),
+                takeWhile(timeout => timeout >= 0),
+                map(timeout => ({
                     id: notification.id,
-                    countDown
+                    timeout
                 }))
             )
         )
@@ -36,7 +36,7 @@ const autoDismiss$ = publish$
 const dismiss$ = merge(
     manualDismiss$,
     autoDismiss$.pipe(
-        filter(({countDown}) => countDown === 0),
+        filter(({timeout}) => timeout === 0),
         map(({id}) => id)
     )
 )
@@ -82,7 +82,7 @@ const mapStateToProps = () => ({
 
 class _Notifications extends React.Component {
     state = {
-        countDownById: {}
+        timeoutById: {}
     }
 
     renderTitle(title) {
@@ -119,8 +119,8 @@ class _Notifications extends React.Component {
     }
 
     renderDismissMessage(id) {
-        const {countDownById} = this.state
-        const timeout = countDownById[id] || 0
+        const {timeoutById} = this.state
+        const timeout = timeoutById[id] || 0
         const message = timeout
             ? msg('widget.notification.dismissOrWait', {timeout})
             : msg('widget.notification.dismiss')
@@ -193,19 +193,19 @@ class _Notifications extends React.Component {
                 actionBuilder('DISMISS_NOTIFICATION')
                     .assign([PATH, {id}], {dismissing: true})
                     .dispatch()
-                this.setState(({countDownById}) => {
-                    delete countDownById[id]
-                    return {countDownById}
+                this.setState(({timeoutById}) => {
+                    delete timeoutById[id]
+                    return {timeoutById}
                 })
             }),
-            autoDismiss$.subscribe(({id, countDown}) => {
-                this.setState(({countDownById}) => {
-                    if (countDown > 0) {
-                        countDownById[id] = countDown
+            autoDismiss$.subscribe(({id, timeout}) => {
+                this.setState(({timeoutById}) => {
+                    if (timeout > 0) {
+                        timeoutById[id] = timeout
                     } else {
-                        delete countDownById[id]
+                        delete timeoutById[id]
                     }
-                    return {countDownById}
+                    return {timeoutById}
                 })
             }),
             remove$.subscribe(id =>
