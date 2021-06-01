@@ -14,23 +14,25 @@ import React from 'react'
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
     images: selectFrom(recipe, 'model.inputImagery.images'),
-    layers: selectFrom(recipe, 'layers')
+    savedLayers: selectFrom(recipe, 'layers')
 })
 
 class _Classification extends React.Component {
 
     constructor(props) {
         super(props)
-        const {layers, recipeId} = props
+        const {savedLayers, recipeId} = props
         this.dataCollectionManager = new DataCollectionManager(recipeId)
-        initializeLayers(recipeId, layers, [
-            {
+        initializeLayers({
+            recipeId,
+            savedLayers,
+            additionalFeatureLayerSources: [{
                 id: 'referenceData',
                 type: 'ReferenceData',
                 description: msg('featureLayerSources.ReferenceData.description'),
                 defaultEnabled: true
-            }
-        ])
+            }]
+        })
     }
 
     render() {

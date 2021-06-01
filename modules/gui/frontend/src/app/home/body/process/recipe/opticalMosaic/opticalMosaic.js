@@ -16,16 +16,16 @@ import SceneSelection from './sceneSelection'
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
     aoi: selectFrom(recipe, 'model.aoi'),
-    layers: selectFrom(recipe, 'layers')
+    savedLayers: selectFrom(recipe, 'layers')
 })
 
 class _OpticalMosaic extends React.Component {
     constructor(props) {
         super(props)
-        const {layers, recipeId} = props
+        const {savedLayers, recipeId} = props
         const recipeActions = RecipeActions(recipeId)
         recipeActions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
-        initializeLayers(recipeId, layers)
+        initializeLayers({recipeId, savedLayers})
     }
 
     render() {

@@ -2,14 +2,13 @@ import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {withMap} from 'app/home/map/mapContext'
-import GoogleSatelliteLayer from 'app/home/map/googleSatelliteLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 
 class ChartPixelButton extends React.Component {
-    constructor(props) {
-        super(props)
-        this.state = {}
+    state = {
+        isSelecting: false,
+        clickListener: null
     }
 
     render() {
@@ -27,34 +26,25 @@ class ChartPixelButton extends React.Component {
     }
 
     startSelecting() {
-        const {map, showGoogleSatellite, onPixelSelected} = this.props
-        this.setState({isSelecting: true})
-        map.onOneClick(latLng => {
-            if (showGoogleSatellite) {
-                map.removeLayer('googleSatellite')
-            }
+        const {map, onPixelSelected} = this.props
+        const clickListener = map.addClickListenerOnce(latLng => {
             this.setState({isSelecting: false})
             onPixelSelected(latLng)
         })
-        if (showGoogleSatellite) {
-            map.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer({map, layerIndex: 1})})
-        }
+
+        this.setState({isSelecting: true, clickListener})
     }
 
     cancelSelecting() {
-        const {map, showGoogleSatellite} = this.props
-        this.setState({isSelecting: false})
-        if (showGoogleSatellite) {
-            map.removeLayer('googleSatellite')
-        }
-        map.clearClickListeners()
+        const {clickListener} = this.state
+        clickListener && clickListener.remove()
+        this.setState({isSelecting: false, clickListener: null})
     }
 }
 
 ChartPixelButton.propTypes = {
     onPixelSelected: PropTypes.func.isRequired,
-    disabled: PropTypes.any,
-    showGoogleSatellite: PropTypes.any,
+    disabled: PropTypes.any
 }
 
 export default compose(

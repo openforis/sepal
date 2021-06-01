@@ -20,6 +20,7 @@ const mapRecipeToProps = recipe => ({
 })
 
 class ReferenceDataLayer extends React.Component {
+    state = {clickListener: null}
     constructor(props) {
         super(props)
         const {recipeId, map, dataCollectionManager} = props
@@ -82,12 +83,16 @@ class ReferenceDataLayer extends React.Component {
 
     addMapListener() {
         const {map, dataCollectionManager} = this.props
-        map.onClick(({lat: y, lng: x}) => dataCollectionManager.add({x, y}, this.props.prevPoint))
+        const clickListener = map.addClickListener(
+            ({lat, lng}) => dataCollectionManager.add({x: lng, y: lat}, this.props.prevPoint)
+        )
+        this.setState({clickListener})
     }
 
     clearMapListeners() {
-        const {map} = this.props
-        map.clearClickListeners()
+        const {clickListener} = this.state
+        clickListener && clickListener.remove()
+        this.setState({clickListener: null})
     }
 
     updateAllMarkers() {

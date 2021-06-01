@@ -104,6 +104,18 @@ export class SepalMap {
         }
     }
 
+    addClickListener(listener) {
+        const {google, googleMap} = this
+        const listenerId = googleMap.addListener('click', ({latLng: {lat, lng}}) => listener({lat: lat(), lng: lng()}))
+        googleMap.setOptions({draggableCursor: 'crosshair'})
+        return {
+            remove: () => {
+                googleMap.setOptions({draggableCursor: 'pointer'})
+                return google.maps.event.removeListener(listenerId)
+            }
+        }
+    }
+
     // Cursor
 
     setCursor(latLng) {
@@ -433,51 +445,6 @@ export class SepalMap {
         _.forEach(this.layerById, (layer, id) =>
             layer.hide && layer.hide(visible ? this.isHiddenLayer(id) : true)
         )
-    }
-
-    onOneClick(listener) {
-        const {google, googleMap} = this
-        googleMap.setOptions({draggableCursor: 'pointer'})
-        const instances = [
-            googleMap,
-            ...Object.values(this.layerById)
-                .filter(instance => instance.type === 'PolygonLayer')
-                .map(({layer}) => layer)
-        ]
-        instances.forEach(instance => {
-            google.maps.event.addListener(instance, 'click', ({latLng}) => {
-                listener({lat: latLng.lat(), lng: latLng.lng()})
-                this.clearClickListeners()
-            })
-        })
-    }
-
-    onClick(listener) {
-        const {google, googleMap} = this
-        googleMap.setOptions({draggableCursor: 'pointer'})
-        const instances = [
-            googleMap,
-            ...Object.values(this.layerById)
-                .filter(instance => instance.type === 'PolygonLayer')
-                .map(({layer}) => layer)
-        ]
-        instances.forEach(instance => {
-            google.maps.event.addListener(instance, 'click', ({latLng}) => {
-                listener({lat: latLng.lat(), lng: latLng.lng()})
-            })
-        })
-    }
-
-    clearClickListeners() {
-        const {google, googleMap} = this
-        googleMap.setOptions({draggableCursor: null})
-        const instances = [
-            googleMap,
-            ...Object.values(this.layerById)
-                .filter(({type}) => type === 'PolygonLayer')
-                .map(({layer}) => layer)
-        ]
-        instances.forEach(instance => google.maps.event.clearListeners(instance, 'click'))
     }
 
     interactive(enabled) {
