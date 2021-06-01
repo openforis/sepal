@@ -117,7 +117,7 @@ def create_tile_stack(metadata, chunks, tile):
             if matches:
                 chunk_file = matches[0]
             else:
-                chunk_file = sorted(glob(join(chunk_dir, '*{}.tif'.format(chunk_name)))[0])
+                chunk_file = sorted(glob(join(chunk_dir, '*{}.tif'.format(chunk_name))))[0]
             ET.SubElement(source, 'SourceFilename', {
                 'relativeToVRT': '1',
                 'shared': '0'
