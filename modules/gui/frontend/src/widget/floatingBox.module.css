@@ -12,13 +12,14 @@
 .box.above {
     bottom: calc(var(--bottom) * 1px);
     max-height: calc(var(--height) * 1px);
-    /* bottom: calc(var(--bottom) * 1px + var(--element-clearance));
-    max-height: calc(var(--height) * 1px - var(--element-clearance) - var(--edge-clearance)); */
 }
 
 .box.below {
     top: calc(var(--top) * 1px);
     max-height: calc(var(--height) * 1px);
-    /* top: calc(var(--top) * 1px + var(--element-clearance));
-    max-height: calc(var(--height) * 1px - var(--element-clearance) - var(--edge-clearance)); */
+}
+
+.box > * {
+    max-width: calc(100vw - 2 * var(--edge-clearance));
+    max-height: calc(100vh - 2 * var(--edge-clearance));
 }
