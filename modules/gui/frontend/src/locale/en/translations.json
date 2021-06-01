@@ -355,6 +355,10 @@
     }
   },
   "map": {
+    "info": {
+        "center": "Center",
+        "bounds": "Bounds"
+    },
     "legendBuilder": {
       "addEntry": {
         "tooltip": "Add legend entry"

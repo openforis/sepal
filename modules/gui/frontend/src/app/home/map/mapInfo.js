@@ -4,6 +4,7 @@ import {Layout} from 'widget/layout'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {formatCoordinates} from 'coords'
+import {msg} from 'translate'
 import {withMapsContext} from './maps'
 import React from 'react'
 import clipboard from 'clipboard'
@@ -37,7 +38,7 @@ class _MapInfo extends React.Component {
         const {mapsContext: {center, bounds: [sw, ne]}} = this.props
         return (
             <Layout type='vertical'>
-                <Widget label='Center' spacing='compact'>
+                <Widget label={msg('map.info.center')} spacing='compact'>
                     <div>{formatCoordinates(center, 5)}</div>
                     <ButtonGroup>
                         <Button
@@ -54,7 +55,7 @@ class _MapInfo extends React.Component {
                         />
                     </ButtonGroup>
                 </Widget>
-                <Widget label='View' spacing='compact'>
+                <Widget label={msg('map.info.bounds')} spacing='compact'>
                     <div>
                         <div>{formatCoordinates(sw, 5)}</div>
                         <div>{formatCoordinates(ne, 5)}</div>
