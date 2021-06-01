@@ -28,13 +28,13 @@ class _Maps extends React.Component {
         scale: null
     }
 
-    currentBounds = null
+    currentView = null
     linkedMaps = new Set()
 
     constructor(props) {
         super(props)
         const {stream} = props
-        this.bounds$ = new Subject()
+        this.view$ = new Subject()
         stream('INIT_MAPS',
             this.initMaps$(),
             mapsContext => this.setState(mapsContext)
@@ -131,18 +131,24 @@ class _Maps extends React.Component {
         return new SepalMap(google, googleMap)
     }
 
+    getScale({center, zoom}) {
+        return Math.round(
+            156543.03392 * Math.cos(center.lat() * Math.PI / 180) / Math.pow(2, zoom)
+        )
+    }
+
     createMapContext(mapId = uuid()) {
         const {google: {googleMapsApiKey}, norwayPlanet: {norwayPlanetApiKey}} = this.state
-        const requestedBounds$ = new Subject()
+        const requestedView$ = new Subject()
 
-        const bounds$ = merge(
-            this.bounds$.pipe(
+        const view$ = merge(
+            this.view$.pipe(
                 debounceTime(50),
                 distinctUntilChanged(),
                 filter(({mapId: id}) => mapId !== id),
-                map(({bounds}) => bounds)
+                map(({view}) => view)
             ),
-            requestedBounds$
+            requestedView$
         )
 
         const notifyLinked = linked => {
@@ -152,38 +158,37 @@ class _Maps extends React.Component {
                 this.linkedMaps.delete(mapId)
             }
             log.debug(`Linked maps: ${this.linkedMaps.size}`)
-            if (linked && this.linkedMaps.size > 1 && this.currentBounds) {
-                requestedBounds$.next(this.currentBounds)
+            if (linked && this.linkedMaps.size > 1 && this.currentView) {
+                requestedView$.next(this.currentView)
             }
         }
 
-        const updateBounds = bounds => {
-            const {currentBounds} = this
-            const {center, zoom} = bounds
+        const updateView = view => {
+            const {currentView} = this
+            const {center, zoom, bounds} = view
 
-            if (currentBounds && currentBounds.center.equals(center) && currentBounds.zoom === zoom) {
-                log.debug(`Bounds update from ${mapTag(mapId)} ignored`)
+            if (currentView && currentView.center.equals(center) && currentView.zoom === zoom) {
+                log.debug(`View update from ${mapTag(mapId)} ignored`)
             } else {
-                log.debug(`Bounds update from ${mapTag(mapId)} accepted`)
-                this.bounds$.next({mapId, bounds})
-                this.currentBounds = bounds
-                const scale = Math.round(
-                    156543.03392 * Math.cos(center.lat() * Math.PI / 180) / Math.pow(2, zoom)
-                )
+                log.debug(`View update from ${mapTag(mapId)} accepted`)
+                this.view$.next({mapId, view})
+                this.currentView = view
+                const scale = this.getScale({center, zoom})
                 this.setState({
                     center: center ? {lat: center.lat(), lng: center.lng()} : {},
                     zoom,
+                    bounds,
                     scale
                 })
             }
         }
 
-        return {mapId, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked}
+        return {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView, notifyLinked}
     }
 
     render() {
         const {children} = this.props
-        const {initialized, bounds, center, zoom, scale} = this.state
+        const {initialized, center, zoom, bounds, scale} = this.state
         return (
             <MapsContext.Provider value={{
                 createGoogleMap: this.createGoogleMap,
@@ -191,6 +196,7 @@ class _Maps extends React.Component {
                 createMapContext: this.createMapContext,
                 center,
                 zoom,
+                bounds,
                 scale
             }}>
                 {children(initialized)}

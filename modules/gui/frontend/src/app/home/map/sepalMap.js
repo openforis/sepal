@@ -121,7 +121,8 @@ export class SepalMap {
     getView() {
         const center = this.getCenter()
         const zoom = this.getZoom()
-        return {center, zoom}
+        const bounds = this.getBounds()
+        return {center, zoom, bounds}
     }
 
     setView({center, zoom}) {
@@ -249,21 +250,6 @@ export class SepalMap {
         const {googleMap} = this
         return this.fromGoogleBounds(googleMap.getBounds())
     }
-
-    // Map scale
-
-    // getMetersPerPixel() {
-    //     const {googleMap} = this
-    //     const latitude = googleMap.getCenter().lat()
-    //     const zoom = googleMap.getZoom()
-    //     return Math.round(
-    //         156543.03392 * Math.cos(latitude * Math.PI / 180) / Math.pow(2, zoom)
-    //     )
-    // }
-
-    // updateMapScale() {
-    //     this.mapScale$.next(this.getMetersPerPixel)
-    // }
 
     // Markers
 

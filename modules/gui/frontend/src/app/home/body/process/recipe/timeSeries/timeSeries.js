@@ -1,4 +1,4 @@
-import {MapScale} from 'app/home/map/mapScale'
+import {MapInfo} from 'app/home/map/mapInfo'
 import {RecipeActions} from './timeSeriesRecipe'
 import {compose} from 'compose'
 import {defaultModel} from './timeSeriesRecipe'
@@ -30,7 +30,7 @@ class _TimeSeries extends React.Component {
         return (
             <div className={styles.timeSeries}>
                 <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={2}/>
-                <MapScale/>
+                <MapInfo/>
                 <TimeSeriesToolbar/>
             </div>
         )

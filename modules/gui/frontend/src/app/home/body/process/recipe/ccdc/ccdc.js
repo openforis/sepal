@@ -1,6 +1,6 @@
 import {Aoi} from '../aoi'
 import {Map} from '../../../../map/map'
-import {MapScale} from 'app/home/map/mapScale'
+import {MapInfo} from 'app/home/map/mapInfo'
 import {RecipeActions, defaultModel} from './ccdcRecipe'
 import {SceneAreas} from '../opticalMosaic/sceneAreas'
 import {compose} from 'compose'

@@ -5,7 +5,7 @@ import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
 // import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
-import {MapScale} from 'app/home/map/mapScale'
+import {MapInfo} from 'app/home/map/mapInfo'
 import BandSelection from './bandSelection'
 import CCDCSlicePreview from './ccdcSlicePreview'
 import CCDCSliceToolbar from './panels/ccdcSliceToolbar'
@@ -32,7 +32,7 @@ class _CCDCSlice extends React.Component {
         return (
             <div>
                 <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
-                <MapScale/>
+                <MapInfo/>
                 <CCDCSliceToolbar/>
                 {initialized
                     ? <React.Fragment>

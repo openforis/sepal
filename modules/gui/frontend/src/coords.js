@@ -94,8 +94,19 @@ const formatLatitude = (lat, digits) =>
 const formatLongitude = (lng, digits) =>
     formatCoordinate({value: lng, positive: 'E', negative: 'W', digits})
 
-export const formatCoordinates = ({lat, lng}, digits) =>
+const formatCoordinatePair = (lng, lat, digits) =>
     _.compact([
         _.isFinite(lat) ? formatLatitude(lat, digits) : null,
         _.isFinite(lng) ? formatLongitude(lng, digits) : null
     ]).join(', ')
+
+const formatCoordinatesArray = ([lng, lat], digits) =>
+    formatCoordinatePair(lng, lat, digits)
+    
+const formatCoordinatesObject = ({lat, lng}, digits) =>
+    formatCoordinatePair(lng, lat, digits)
+
+export const formatCoordinates = (coords, digits) =>
+    _.isArray(coords)
+        ? formatCoordinatesArray(coords, digits)
+        : formatCoordinatesObject(coords, digits)

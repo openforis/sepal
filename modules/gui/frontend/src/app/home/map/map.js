@@ -4,7 +4,7 @@ import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {LegendImport} from './legendImport'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
-import {MapScale} from './mapScale'
+import {MapInfo} from './mapInfo'
 import {Progress} from './progress'
 import {SplitView} from 'widget/split/splitView'
 import {VisParamsPanel} from './visParams/visParamsPanel'
@@ -14,7 +14,7 @@ import {debounceTime, distinctUntilChanged, filter, finalize, first, last, map a
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
-import {mapBoundsTag, mapTag} from 'tag'
+import {mapTag, mapViewTag} from 'tag'
 import {recipePath} from '../body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import {v4 as uuid} from 'uuid'
@@ -37,12 +37,12 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _Map extends React.Component {
-    updateBounds$ = new Subject()
+    updateView$ = new Subject()
     linked$ = new ReplaySubject()
     mapInitialized$ = new BehaviorSubject()
     mouseDown$ = new Subject()
     draggingMap$ = new BehaviorSubject(false)
-    boundsChanged$ = new Subject()
+    viewChanged$ = new Subject()
     splitPosition$ = new BehaviorSubject()
     draggingSplit$ = new BehaviorSubject(false)
     cursor$ = new Subject()
@@ -112,10 +112,10 @@ class _Map extends React.Component {
 
     synchronizeOut(map) {
         const {overlay} = this.state
-        const {center, zoom} = map.getView()
-        this.withAllMaps(({map}) => map.setView({center, zoom}))
-        overlay && overlay.map.setView({center, zoom})
-        this.updateBounds$.next({center, zoom})
+        const {center, zoom, bounds} = map.getView()
+        this.withAllMaps(({map}) => map.setView({center, zoom, bounds}))
+        overlay && overlay.map.setView({center, zoom, bounds})
+        this.updateView$.next({center, zoom, bounds})
     }
 
     synchronizeIn({center, zoom}) {
@@ -203,7 +203,7 @@ class _Map extends React.Component {
             source,
             layerConfig,
             map,
-            boundsChanged$: this.boundsChanged$.pipe(share()),
+            boundsChanged$: this.viewChanged$.pipe(share()),
             dragging$: combineLatest([this.draggingMap$, this.draggingSplit$]).pipe(
                 share(),
                 rxMap(([draggingMap, draggingSplit]) => draggingMap || draggingSplit)
@@ -356,7 +356,7 @@ class _Map extends React.Component {
             googleMap.addListener('mouseout', () => this.synchronizeCursor(id, null)),
             googleMap.addListener('mousemove', ({latLng, domEvent}) => this.synchronizeCursor(id, latLng, domEvent)),
             googleMap.addListener('center_changed', () => this.synchronizeOut(map)),
-            googleMap.addListener('bounds_changed', () => this.boundsChanged$.next()),
+            googleMap.addListener('bounds_changed', () => this.viewChanged$.next()),
             googleMap.addListener('zoom_changed', () => this.synchronizeOut(map)),
             googleMap.addListener('dragstart', () => this.draggingMap$.next(true)),
             googleMap.addListener('dragend', () => this.draggingMap$.next(false))
@@ -493,7 +493,7 @@ class _Map extends React.Component {
                 <Content>
                     <div className={styles.recipe}>
                         <MapToolbar statePath={[statePath, 'ui']}/>
-                        <MapScale/>
+                        <MapInfo/>
                         {children}
                     </div>
                 </Content>
@@ -503,7 +503,7 @@ class _Map extends React.Component {
 
     componentDidMount() {
         const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
-        const {mapId, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked} = createMapContext()
+        const {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView, notifyLinked} = createMapContext()
 
         this.setLinked(getProcessTabsInfo().single)
 
@@ -512,7 +512,7 @@ class _Map extends React.Component {
             googleMapsApiKey,
             norwayPlanetApiKey
         }, () => {
-            this.subscribe({bounds$, updateBounds, notifyLinked})
+            this.subscribe({view$, updateView, notifyLinked})
             onEnable(() => this.setVisibility(true))
             onDisable(() => this.setVisibility(false))
         })
@@ -536,30 +536,30 @@ class _Map extends React.Component {
         })
     }
 
-    subscribe({bounds$, updateBounds, notifyLinked}) {
+    subscribe({view$, updateView, notifyLinked}) {
         const {addSubscription} = this.props
         addSubscription(
-            bounds$.subscribe(
-                bounds => {
+            view$.subscribe(
+                view => {
                     const {linked} = this.state
-                    if (bounds && linked) {
-                        log.debug(`${mapTag(this.state.mapId)} received ${mapBoundsTag(bounds)}`)
-                        this.synchronizeIn(bounds)
+                    if (view && linked) {
+                        log.debug(`${mapTag(this.state.mapId)} received ${mapViewTag(view)}`)
+                        this.synchronizeIn(view)
                     }
-                    this.bounds$.next(bounds)
+                    this.view$.next(view)
                 }
             ),
-            this.updateBounds$.pipe(
+            this.updateView$.pipe(
                 debounceTime(50),
                 distinctUntilChanged()
             ).subscribe(
-                ({center, zoom}) => {
+                ({center, zoom, bounds}) => {
                     const {linked} = this.state
                     if (linked) {
                         if (center && zoom) {
-                            const bounds = {center, zoom}
-                            log.debug(`${mapTag(this.state.mapId)} reporting ${mapBoundsTag(bounds)}`)
-                            updateBounds(bounds)
+                            const view = {center, zoom, bounds}
+                            log.debug(`${mapTag(this.state.mapId)} reporting ${mapViewTag(view)}`)
+                            updateView(view)
                         }
                     }
                 }
