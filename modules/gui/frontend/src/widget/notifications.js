@@ -189,11 +189,15 @@ class _Notifications extends React.Component {
                     .pushUnique(PATH, notification, 'group')
                     .dispatch()
             ),
-            dismiss$.subscribe(notificationId =>
+            dismiss$.subscribe(id => {
                 actionBuilder('DISMISS_NOTIFICATION')
-                    .assign([PATH, {id: notificationId}], {dismissing: true})
+                    .assign([PATH, {id}], {dismissing: true})
                     .dispatch()
-            ),
+                this.setState(({countDownById}) => {
+                    delete countDownById[id]
+                    return {countDownById}
+                })
+            }),
             autoDismiss$.subscribe(({id, countDown}) => {
                 this.setState(({countDownById}) => {
                     if (countDown > 0) {
@@ -204,9 +208,9 @@ class _Notifications extends React.Component {
                     return {countDownById}
                 })
             }),
-            remove$.subscribe(notificationId =>
+            remove$.subscribe(id =>
                 actionBuilder('REMOVE_NOTIFICATION')
-                    .del([PATH, {id: notificationId}])
+                    .del([PATH, {id}])
                     .dispatch()
             )
         )
