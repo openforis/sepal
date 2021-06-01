@@ -1,7 +1,7 @@
 import {Subject, merge, timer} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {delay, filter, map, mergeMap} from 'rxjs/operators'
+import {delay, filter, map, mergeMap, scan, takeWhile} from 'rxjs/operators'
 import {simplehash as hash} from 'hash'
 import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'
@@ -17,16 +17,30 @@ const DISMISS_ANIMATION_DURATION_MS = 250
 
 const publish$ = new Subject()
 const manualDismiss$ = new Subject()
+
 const autoDismiss$ = publish$
     .pipe(
         filter(notification => notification.timeout),
         mergeMap(notification =>
-            timer(notification.timeout * 1000).pipe(
-                map(() => notification.id)
+            timer(0, 1000).pipe(
+                scan(acc => acc - 1, notification.timeout + 1),
+                takeWhile(countDown => countDown >= 0),
+                map(countDown => ({
+                    id: notification.id,
+                    countDown
+                }))
             )
         )
     )
-const dismiss$ = merge(manualDismiss$, autoDismiss$)
+
+const dismiss$ = merge(
+    manualDismiss$,
+    autoDismiss$.pipe(
+        filter(({countDown}) => countDown === 0),
+        map(({id}) => id)
+    )
+)
+
 const remove$ = dismiss$.pipe(delay(DISMISS_ANIMATION_DURATION_MS))
 
 const group = ({group = false, id, ...notification}) =>
@@ -67,6 +81,10 @@ const mapStateToProps = () => ({
 })
 
 class _Notifications extends React.Component {
+    state = {
+        countDownById: {}
+    }
+
     renderTitle(title) {
         return (
             <div className={styles.title}>
@@ -100,7 +118,9 @@ class _Notifications extends React.Component {
         )
     }
 
-    renderDismissMessage(timeout) {
+    renderDismissMessage(id) {
+        const {countDownById} = this.state
+        const timeout = countDownById[id] || 0
         const message = timeout
             ? msg('widget.notification.dismissOrWait', {timeout})
             : msg('widget.notification.dismiss')
@@ -141,7 +161,7 @@ class _Notifications extends React.Component {
                     {message ? this.renderMessage(message) : null}
                     {error ? this.renderError(error) : null}
                     {content ? this.renderContent(content, dismiss) : null}
-                    {this.renderDismissMessage(timeout)}
+                    {this.renderDismissMessage(id)}
                     {this.renderAutoDismissIndicator(timeout)}
                 </div>
             )
@@ -174,6 +194,16 @@ class _Notifications extends React.Component {
                     .assign([PATH, {id: notificationId}], {dismissing: true})
                     .dispatch()
             ),
+            autoDismiss$.subscribe(({id, countDown}) => {
+                this.setState(({countDownById}) => {
+                    if (countDown > 0) {
+                        countDownById[id] = countDown
+                    } else {
+                        delete countDownById[id]
+                    }
+                    return {countDownById}
+                })
+            }),
             remove$.subscribe(notificationId =>
                 actionBuilder('REMOVE_NOTIFICATION')
                     .del([PATH, {id: notificationId}])
