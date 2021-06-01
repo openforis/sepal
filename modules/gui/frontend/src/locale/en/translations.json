@@ -2829,7 +2829,7 @@
     "loading": "Loading...",
     "notification": {
       "dismiss": "Click to dismiss",
-      "dismissOrWait": "Click to dismiss or wait {timeout} seconds",
+      "dismissOrWait": "Click to dismiss or wait {timeout} {timeout, plural, one {second} other {seconds}}",
       "error": {
         "title": "Error"
       },

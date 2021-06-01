@@ -2545,7 +2545,7 @@
 		"loading": "Cargando...",
 		"notification": {
 			"dismiss": "Clic para descartar",
-			"dismissOrWait": "Clic para descartar o esperar {timeout} segundos",
+			"dismissOrWait": "Clic para descartar o esperar {timeout} {timeout, plural, one {segundo} other {segundos}}",
 			"error": {
 				"title": "Error"
 			},

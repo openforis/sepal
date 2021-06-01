@@ -20,15 +20,12 @@ const manualDismiss$ = new Subject()
 
 const autoDismiss$ = publish$
     .pipe(
-        filter(notification => notification.timeout),
-        mergeMap(notification =>
+        filter(({timeout}) => timeout),
+        mergeMap(({id, timeout}) =>
             timer(0, 1000).pipe(
-                scan(timeout => timeout - 1, notification.timeout + 1),
+                scan(timeout => timeout - 1, timeout + 1),
                 takeWhile(timeout => timeout >= 0),
-                map(timeout => ({
-                    id: notification.id,
-                    timeout
-                }))
+                map(timeout => ({id, timeout}))
             )
         )
     )

@@ -2545,7 +2545,7 @@
 		"loading": "Chargement...",
 		"notification": {
 			"dismiss": "Cliquer pour ignorer",
-			"dismissOrWait": "Cliquer pour ignorer ou attendre {timeout} secondes",
+			"dismissOrWait": "Cliquer pour ignorer ou attendre {timeout} {timeout, plural, one {second} other {secondes}}",
 			"error": {
 				"title": "Erreur"
 			},
