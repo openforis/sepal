@@ -357,7 +357,8 @@
   "map": {
     "info": {
         "center": "Center",
-        "bounds": "Bounds"
+        "bounds": "Bounds",
+        "coordinatesCopied": "Coordinates copied to the clipboard"
     },
     "legendBuilder": {
       "addEntry": {

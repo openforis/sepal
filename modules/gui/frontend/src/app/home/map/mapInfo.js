@@ -6,6 +6,7 @@ import {compose} from 'compose'
 import {formatCoordinates} from 'coords'
 import {msg} from 'translate'
 import {withMapsContext} from './maps'
+import Notifications from 'widget/notifications'
 import React from 'react'
 import clipboard from 'clipboard'
 import format from 'format'
@@ -91,18 +92,28 @@ class _MapInfo extends React.Component {
 
     copyPlainCenterCoordinates() {
         clipboard.copy(this.getCenter())
+        this.notify()
     }
 
     copyEECenterCoordinates() {
         clipboard.copy(`ee.Geometry.Point(${this.getCenter()})`)
+        this.notify()
     }
 
     copyPlainBoundsCoordinates() {
         clipboard.copy(this.getBounds())
+        this.notify()
     }
 
     copyEEBoundsCoordinates() {
         clipboard.copy(`ee.Geometry.Rectangle(${this.getBounds()})`)
+        this.notify()
+    }
+
+    notify() {
+        Notifications.info({
+            message: msg('map.info.coordinatesCopied')
+        })
     }
 }
 
