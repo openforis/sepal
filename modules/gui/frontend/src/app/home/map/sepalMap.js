@@ -246,7 +246,8 @@ export class SepalMap {
 
     fitBounds(bounds) {
         const {google} = this
-        const PADDING = 50 // compensate for attribution masking
+        // const PADDING = 50 // compensate for attribution masking
+        const PADDING = 0 // compensate for attribution masking
         const {googleMap} = this
         const nextBounds = bounds instanceof google.maps.LatLngBounds
             ? bounds

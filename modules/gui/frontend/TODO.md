@@ -1,6 +1,10 @@
+√ map area menu width
+√ slow map scale
+√ map scale copy bounds EE format (Rectangle, Point) lng/lat
+
 combo flashing
-slow map scale
 safari map overlay
+
 
 
 

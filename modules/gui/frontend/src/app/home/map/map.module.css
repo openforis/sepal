@@ -28,13 +28,12 @@
 }
 
 .overlay {
-    --clip-top: calc(var(--height) - var(--map-overlay-height));
-    clip-path: inset(var(--clip-top) 0 0 0);
-    opacity: .75;
+    display: none;
 }
 
 .overlay.active {
-    --clip-top: 0;
+    display: block;
+    opacity: .75;
 }
 
 .recipe {
