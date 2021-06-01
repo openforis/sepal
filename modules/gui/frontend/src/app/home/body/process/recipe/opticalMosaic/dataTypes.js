@@ -40,5 +40,7 @@ export const dataTypes = {
     ibi: intFullRange,
     nbi: intFullRange,
     ebbi: intFullRange,
-    bui: intFullRange
+    bui: intFullRange,
+    dayOfYear: {precision: 'int', min: 0, max: 366},
+    daysFromTarget: {precision: 'int', min: 0, max: 183}
 }

@@ -1,3 +1,4 @@
+import {selectFrom} from '../../../stateUtils'
 import {withContext} from 'context'
 import Color from 'color'
 import React from 'react'
@@ -34,7 +35,7 @@ const toRgb = (rgb, visParams, dataTypes) => {
         .map((c, i) => 255 * Math.pow(c / 255, gamma[i]))
         .map((c, i) => min[i] + c * (max[i] - min[i]) / 255)
         .map((v, i) => {
-            return dataTypes && dataTypes[visParams.bands[i]].precision === 'int'
+            return selectFrom(dataTypes, [visParams.bands[i], 'precision']) === 'int'
                 ? Math.round(parseFloat(v.toPrecision(3)))
                 : parseFloat(v.toPrecision(3))
         }
@@ -50,7 +51,7 @@ const toHsv = (rgb, {bands, min, max, gamma}, dataTypes) => {
             min[i] + normalizedHsv[i] * (max[i] - min[i])
         )
         .map((v, i) => {
-            return dataTypes && dataTypes[bands[i]].precision === 'int'
+            return selectFrom(dataTypes, [bands[i], 'precision']) === 'int'
                 ? Math.round(parseFloat(v.toPrecision(3)))
                 : parseFloat(v.toPrecision(3))
         })
@@ -104,7 +105,7 @@ const toContinuous = (rgb, visParams, dataTypes) => {
         const fromValue = fromRgbValue.value
         const toValue = toRgbValue.value
         const preciseValue = fromValue + factor * (toValue - fromValue)
-        const value = dataTypes && dataTypes[visParams.bands[0]].precision === 'int'
+        const value = selectFrom(dataTypes, [visParams.bands[0], 'precision']) === 'int'
             ? Math.round(parseFloat(preciseValue.toPrecision(3)))
             : parseFloat(preciseValue.toPrecision(3))
         return {value, inRange, error}

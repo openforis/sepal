@@ -59,7 +59,7 @@ class _ClassificationImageLayer extends React.Component {
     componentDidMount() {
         const {recipe, layerConfig: {visParams}} = this.props
         if (!visParams && this.hasLegend()) {
-            this.selectVisualization(preSetVisualizationOptions(recipe)[0].visParams)
+            this.selectVisualization(allVisualizations(recipe)[0])
         }
     }
 
@@ -71,7 +71,7 @@ class _ClassificationImageLayer extends React.Component {
                 _.isEqual([id, bands], [prevVisParams.id, prevVisParams.bands])
             )
             if (!visParams) {
-                this.selectVisualization(preSetVisualizationOptions(recipe)[0].visParams)
+                this.selectVisualization(allVisualizations(recipe)[0])
             } else if (!_.isEqual(visParams, prevVisParams)) {
                 this.selectVisualization(visParams)
             }
