@@ -2,7 +2,7 @@
     /* --y is injected */
     /* --x is injected */
     /* --attribution-mask-size: 2rem; */
-    --attribution-mask-size: 0;
+    --attribution-mask-size: 0rem;
 
     --half-margin-size: 1px;
     --top: var(--y);
