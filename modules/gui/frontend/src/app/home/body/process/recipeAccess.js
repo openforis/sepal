@@ -27,10 +27,12 @@ export const recipeAccess = () =>
             }
 
             render() {
+                const {loadedRecipes} = this.props
                 return React.createElement(WrappedComponent, {
                     ...this.props,
                     usingRecipe: recipeId => this.usingRecipe(recipeId),
-                    loadRecipe$: recipeId => this.loadRecipe$(recipeId)
+                    loadRecipe$: recipeId => this.loadRecipe$(recipeId),
+                    loadedRecipes
                 })
             }
 

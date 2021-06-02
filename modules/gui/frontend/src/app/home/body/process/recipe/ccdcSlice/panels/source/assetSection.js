@@ -1,14 +1,14 @@
+import {AssetInput} from 'widget/assetInput'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
-import {takeUntil} from 'rxjs/operators'
+import {toVisualizations} from '../../../../../../map/imageLayerSource/assetVisualizationParser'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import api from 'api'
 
 const J_DAYS = 0
 const FRACTIONAL_YEARS = 1
@@ -18,22 +18,21 @@ class AssetSection extends React.Component {
     constructor(props) {
         super(props)
         this.assetChanged$ = new Subject()
+        this.onLoading = this.onLoading.bind(this)
+        this.onLoaded = this.onLoaded.bind(this)
     }
 
     render() {
-        const {inputs: {asset, bands, dateFormat}} = this.props
+        const {inputs: {asset, dateFormat}} = this.props
         return (
             <Layout>
-                <Form.Input
-                    label={msg('process.ccdcSlice.panel.source.form.asset.label')}
-                    autoFocus
+                <AssetInput
                     input={asset}
+                    label={msg('process.ccdcSlice.panel.source.form.asset.label')}
                     placeholder={msg('process.ccdcSlice.panel.source.form.asset.placeholder')}
-                    spellCheck={false}
-                    onChange={() => bands.set(null)}
-                    onChangeDebounced={asset => asset && this.loadMetadata(asset)}
-                    errorMessage
-                    busyMessage={this.props.stream('LOAD_ASSET_METADATA').active && msg('widget.loading')}
+                    autoFocus
+                    onLoading={this.onLoading}
+                    onLoaded={this.onLoaded}
                 />
                 <Form.Buttons
                     label={msg('process.ccdc.panel.dates.form.dateFormat.label')}
@@ -62,39 +61,30 @@ class AssetSection extends React.Component {
         )
     }
 
-    loadMetadata(asset) {
-        this.assetChanged$.next()
-        this.props.stream('LOAD_ASSET_METADATA',
-            api.gee.imageMetadata$({asset}).pipe(
-                takeUntil(this.assetChanged$)),
-            metadata => this.updateMetadata(metadata),
-            error => {
-                this.props.inputs.asset.setInvalid(
-                    error.response
-                        ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                        : msg('asset.failedToLoad')
-                )
-            }
-        )
+    onLoading() {
+        const {inputs: {bands, visualizations}} = this.props
+        bands.set(null)
+        visualizations.set(null)
     }
 
-    updateMetadata(metadata) {
+    onLoaded({metadata, visualizations}) {
+        const {inputs} = this.props
+        const {bands, properties: {dateFormat, startDate, endDate}} = metadata
         const assetBands = _.intersection(...['coefs', 'magnitude', 'rmse']
-            .map(postfix => metadata.bands
+            .map(postfix => bands
                 .map(assetBand => assetBand.match(`(.*)_${postfix}`))
                 .map(match => match && match[1])
                 .filter(band => band)
             )
         )
-        const {inputs: {asset, bands, dateFormat, startDate, endDate, surfaceReflectance}} = this.props
         if (assetBands) {
-            bands.set(assetBands)
-            dateFormat.set(metadata.dateFormat)
-            startDate.set(metadata.startDate)
-            endDate.set(metadata.endDate)
-            surfaceReflectance.set(metadata.surfaceReflectance)
+            inputs.bands.set(assetBands)
+            inputs.dateFormat.set(dateFormat)
+            inputs.startDate.set(startDate)
+            inputs.endDate.set(endDate)
+            inputs.visualizations.set(visualizations)
         } else {
-            asset.setInvalid(msg('process.ccdcSlice.panel.source.form.asset.notCCDC'))
+            inputs.asset.setInvalid(msg('process.ccdcSlice.panel.source.form.asset.notCCDC'))
         }
     }
 }

@@ -1,3 +1,4 @@
+import {CCDCSliceImageLayer, ccdcSliceDataTypes} from './ccdcSlice/ccdcSliceImageLayer'
 import {ClassificationImageLayer, classificationDataTypes} from './classification/classificationImageLayer'
 import {CursorValue} from 'app/home/map/cursorValue'
 import {OpticalMosaicImageLayer, opticalMosaicDataTypes} from './opticalMosaic/opticalMosaicImageLayer'
@@ -62,6 +63,14 @@ class _RecipeImageLayer extends React.Component {
                 source={source}
                 layerConfig={layerConfig}
                 layer={this.maybeCreateLayer(classificationDataTypes(recipe))}
+                map={map}/>
+        )
+        case 'CCDC_SLICE': return (
+            <CCDCSliceImageLayer
+                recipe={recipe}
+                source={source}
+                layerConfig={layerConfig}
+                layer={this.maybeCreateLayer(ccdcSliceDataTypes(recipe))}
                 map={map}/>
         )
         default: return null

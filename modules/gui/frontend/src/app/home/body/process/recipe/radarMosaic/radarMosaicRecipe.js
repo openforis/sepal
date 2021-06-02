@@ -48,9 +48,9 @@ export const RecipeActions = id => {
 }
 
 export const getAllVisualizations = recipe => {
-    const type = selectFrom(recipe, 'model.dates').targetDate
-        ? 'POINT_IN_TIME'
-        : 'TIME_SCAN'
+    const type = (selectFrom(recipe, 'model.dates') || {}).fromDate
+        ? 'TIME_SCAN'
+        : 'POINT_IN_TIME'
     return [
         ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
         ...visualizations[type],

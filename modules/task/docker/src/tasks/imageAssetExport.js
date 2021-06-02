@@ -2,6 +2,7 @@ const ImageFactory = require('sepal/ee/imageFactory')
 const {switchMap} = require('rx/operators')
 const {exportImageToAsset$} = require('../jobs/export/toAsset')
 const _ = require('lodash')
+const {toVisualizationProperties} = require('../ee/visualizations')
 
 module.exports = {
     submit$: (id, {image: {recipe, bands, scale, pyramidingPolicy, properties, visualizations}}) => {
@@ -37,23 +38,4 @@ const formatProperties = properties => {
         formatted[key] = _.isString(value) || _.isNumber(value) ? value : JSON.stringify(value)
     })
     return formatted
-}
-
-const toVisualizationProperties = (visualizations = [], bands) => {
-    const filteredVisualizations = visualizations
-        .map(visParams => Object.keys(visParams).includes('name')
-            ? visParams
-            : {...visParams, name: visParams.bands.join(', ')}
-        )
-        .filter(visParams => visParams.bands.every(band => bands.selection.includes(band)))
-
-    const uniqueVisualizations = _.uniqBy(filteredVisualizations, 'name')
-    const result = {}
-    uniqueVisualizations.forEach((visParams, i) => {
-        Object.keys(visParams).forEach(key => {
-            const value = visParams[key]
-            result[`visualization_${i}_${key}`] = _.isArray(value) ? value.join(',') : value
-        })
-    })
-    return result
 }

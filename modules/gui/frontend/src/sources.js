@@ -426,8 +426,8 @@ const dataSetById = {
             bands: [
                 'VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VV_std', 'VV_cv',
                 'VH_min', 'VH_mean', 'VH_med', 'VH_max', 'VH_std', 'VH_cv',
-                'VV_const', 'VVt', 'VV_phase', 'VV_amp', 'VV_res',
-                'VH_const', 'VHt', 'VH_phase', 'VH_amp', 'VH_res'
+                'VV_const', 'VV_t', 'VV_phase', 'VV_amp', 'VV_res',
+                'VH_const', 'VH_t', 'VH_phase', 'VH_amp', 'VH_res'
             ]
         }
     }
@@ -610,7 +610,7 @@ const getBandOption = band => {
                 value: 'VV_const',
                 label: <span>VV<sub>const</sub></span>
             },
-            VVt: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VVt', label: <span>VV<sub>t</sub></span>},
+            VV_t: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VV_t', label: <span>VV<sub>t</sub></span>},
             VV_phase: {
                 mosaicMultiplier: 1000,
                 timeSeriesMultiplier: 1000,
@@ -635,7 +635,7 @@ const getBandOption = band => {
                 value: 'VH_const',
                 label: <span>VH<sub>const</sub></span>
             },
-            VHt: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VHt', label: <span>VH<sub>t</sub></span>},
+            VH_t: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VH_t', label: <span>VH<sub>t</sub></span>},
             VH_phase: {
                 mosaicMultiplier: 1000,
                 timeSeriesMultiplier: 1000,
@@ -709,13 +709,13 @@ const groupedBands = [
         type: 'radarBands'
     },
     {
-        bands: ['VV_const', 'VVt', 'VV_phase', 'VV_amp', 'VV_res'],
+        bands: ['VV_const', 'VV_t', 'VV_phase', 'VV_amp', 'VV_res'],
         mosaicMultiplier: 1000,
         timeSeriesMultiplier: 1000,
         type: 'radarBands'
     },
     {
-        bands: ['VH_const', 'VHt', 'VH_phase', 'VH_amp', 'VH_res'],
+        bands: ['VH_const', 'VH_t', 'VH_phase', 'VH_amp', 'VH_res'],
         mosaicMultiplier: 1000,
         timeSeriesMultiplier: 1000,
         type: 'radarBands'
