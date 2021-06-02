@@ -28,7 +28,7 @@ class _CCDCSliceImageLayer extends React.Component {
     renderImageLayerForm() {
         const {sourceDetails: {visualizations = []} = {}, recipe, source, layerConfig = {}} = this.props
         const visParamsToOption = visParams => ({
-            value: visParams.id || visParams.bands.join(', '),
+            value: visParams.id || visParams.bands.join(','),
             label: visParams.bands.join(', '),
             visParams
         })

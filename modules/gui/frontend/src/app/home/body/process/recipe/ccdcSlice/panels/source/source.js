@@ -17,7 +17,10 @@ const fields = {
         .notBlank('process.ccdcSlice.panel.source.form.asset.required'),
     recipe: new Form.Field()
         .skip((value, {section}) => section !== 'RECIPE_REF')
-        .notBlank('process.ccdcSlice.panel.source.form.recipe.required')
+        .notBlank('process.ccdcSlice.panel.source.form.recipe.required'),
+    dateFormat: new Form.Field()
+        .skip((value, {section}) => section !== 'ASSET')
+        .notBlank()
 }
 
 class Source extends React.Component {
@@ -62,9 +65,10 @@ class Source extends React.Component {
     }
 }
 
-const modelToValues = ({id, type}) => {
+const modelToValues = ({id, type, dateFormat}) => {
     const values = {
         section: type || 'SELECTION',
+        dateFormat
     }
     switch (type) {
     case 'RECIPE_REF':
@@ -76,10 +80,11 @@ const modelToValues = ({id, type}) => {
     }
 }
 
-const valuesToModel = ({section, asset, recipe, bands}) => {
+const valuesToModel = ({type, section, asset, recipe, bands, dateFormat}) => {
     const model = {
         type: section,
-        bands
+        bands,
+        dateFormat: type === 'RECIPE_REF' ? null : dateFormat
     }
     switch (section) {
     case 'RECIPE_REF':
