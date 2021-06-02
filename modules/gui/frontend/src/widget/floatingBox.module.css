@@ -5,7 +5,7 @@
     position: absolute;
     left: calc(var(--left) * 1px);
     right: calc(var(--right) * 1px);
-    width: calc(var(--width) * 1px);
+    /* width: calc(var(--width) * 1px); */
     z-index: 2;
 }
 
@@ -19,7 +19,6 @@
     max-height: calc(var(--height) * 1px);
 }
 
-.box > * {
+.box:not(.horizontalOverflow) > * {
     max-width: calc(100vw - 2 * var(--edge-clearance));
-    max-height: calc(100vh - 2 * var(--edge-clearance));
 }
