@@ -10,6 +10,7 @@ import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualization
 import {withRecipe} from '../../recipeContext'
 import Notifications from 'widget/notifications'
 import React from 'react'
+import _ from 'lodash'
 import api from 'api'
 import guid from 'guid'
 
@@ -93,9 +94,12 @@ export const withSourceDetails = () =>
                     visualizations: toVisualizations(metadata.properties, metadata.bands)
                         .map(visualization => ({...visualization, id: guid()}))
                 }
-                recipeActionBuilder('UPDATE_RECIPE_SOURCE_DETAILS', {sourceDetails})
+                const dateFormat = metadata.properties.dateFormat
+                const builder = recipeActionBuilder('UPDATE_RECIPE_SOURCE_DETAILS', {sourceDetails})
                     .set('ui.sourceDetails', sourceDetails)
-                    .dispatch()
+                _.isNil(dateFormat)
+                    ? builder.dispatch()
+                    : builder.set('model.source.dateFormat', dateFormat).dispatch()
             }
 
             updateRecipeSourceDetails({loadedRecipe, classification = {}}) {
@@ -105,8 +109,10 @@ export const withSourceDetails = () =>
                     id: loadedRecipe.id,
                     classificationId: classification.id,
                 }
+                const dateFormat = loadedRecipe.model.ccdcOptions.dateFormat
                 recipeActionBuilder('UPDATE_RECIPE_SOURCE_DETAILS', {sourceDetails})
                     .set('ui.sourceDetails', sourceDetails)
+                    .set('model.source.dateFormat', dateFormat)
                     .dispatch()
             }
 

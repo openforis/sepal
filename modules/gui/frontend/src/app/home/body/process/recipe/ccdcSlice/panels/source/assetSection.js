@@ -67,9 +67,9 @@ class AssetSection extends React.Component {
         visualizations.set(null)
     }
 
-    onLoaded({metadata, visualizations}) {
+    onLoaded({metadata}) {
         const {inputs} = this.props
-        const {bands, properties: {dateFormat, startDate, endDate}} = metadata
+        const {bands, properties: {dateFormat}} = metadata
         const assetBands = _.intersection(...['coefs', 'magnitude', 'rmse']
             .map(postfix => bands
                 .map(assetBand => assetBand.match(`(.*)_${postfix}`))
@@ -80,9 +80,6 @@ class AssetSection extends React.Component {
         if (assetBands) {
             inputs.bands.set(assetBands)
             inputs.dateFormat.set(dateFormat)
-            inputs.startDate.set(startDate)
-            inputs.endDate.set(endDate)
-            inputs.visualizations.set(visualizations)
         } else {
             inputs.asset.setInvalid(msg('process.ccdcSlice.panel.source.form.asset.notCCDC'))
         }
