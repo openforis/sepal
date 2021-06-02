@@ -85,4 +85,7 @@ test('coords.formatCoordinates(${JSON.stringify(params.coords, params.digits)}) 
         {params: {coords: {lat: 10.123456789, lng: 20.987654321}}, result: '10.123456789 N, 20.987654321 E'},
         {params: {coords: {lat: 10.123456789, lng: 20.987654321}, digits: 3}, result: '10.123 N, 20.988 E'},
         {params: {coords: {lat: 10, lng: 0}, digits: 3}, result: '10.000 N, 0'},
+        {params: {coords: {lat: 10}, digits: 1}, result: '10.0 N'},
+        {params: {coords: {lng: 20}, digits: 1}, result: '20.0 E'},
+        {params: {coords: [20.987654321, 10.123456789], digits: 3}, result: '10.123 N, 20.988 E'},
     )
