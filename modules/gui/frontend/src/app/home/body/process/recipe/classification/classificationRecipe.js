@@ -194,7 +194,7 @@ const submitRetrieveRecipeTask = recipe => {
                 image: {
                     recipe: _.omit(recipe, ['ui']),
                     bands: {selection: bands},
-                    visualizations: allVisualizations(recipe),
+                    visualizations: getAllVisualizations(recipe),
                     scale,
                     pyramidingPolicy
                 }
@@ -203,7 +203,7 @@ const submitRetrieveRecipeTask = recipe => {
     return api.tasks.submit$(task).subscribe()
 }
 
-export const allVisualizations = recipe => [
+export const getAllVisualizations = recipe => [
     ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
     ...preSetVisualizationOptions(recipe).map(({visParams}) => visParams)
 ]

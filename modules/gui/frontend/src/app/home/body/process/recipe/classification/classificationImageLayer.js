@@ -1,7 +1,7 @@
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
-import {allVisualizations, hasTrainingData, preSetVisualizationOptions, supportProbability} from './classificationRecipe'
 import {compose} from 'compose'
+import {getAllVisualizations, hasTrainingData, preSetVisualizationOptions, supportProbability} from './classificationRecipe'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
@@ -59,25 +59,25 @@ class _ClassificationImageLayer extends React.Component {
     componentDidMount() {
         const {recipe, layerConfig: {visParams}} = this.props
         if (!visParams && this.hasLegend()) {
-            this.selectVisualization(allVisualizations(recipe)[0])
+            this.selectVisualization(getAllVisualizations(recipe)[0])
         }
     }
 
     componentDidUpdate(prevProps) {
         const {layerConfig: {visParams: prevVisParams}} = prevProps
         const {recipe} = this.props
+        const allVisualizations = getAllVisualizations(recipe)
         if (prevVisParams) {
-            const visParams = allVisualizations(recipe).find(({id, bands}) =>
+            const visParams = allVisualizations.find(({id, bands}) =>
                 _.isEqual([id, bands], [prevVisParams.id, prevVisParams.bands])
             )
             if (!visParams) {
-                this.selectVisualization(allVisualizations(recipe)[0])
+                this.selectVisualization(getAllVisualizations(recipe)[0])
             } else if (!_.isEqual(visParams, prevVisParams)) {
                 this.selectVisualization(visParams)
             }
         } else {
-            const visualizations = allVisualizations(recipe)
-            visualizations.length && this.selectVisualization(allVisualizations(recipe)[0])
+            allVisualizations.length && this.selectVisualization(allVisualizations[0])
         }
     }
 

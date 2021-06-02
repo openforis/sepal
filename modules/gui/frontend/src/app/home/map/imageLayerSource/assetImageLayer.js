@@ -6,6 +6,7 @@ import {compose} from 'compose'
 import {createLegendFeatureLayerSource} from 'app/home/map/legendFeatureLayerSource'
 import {createPaletteFeatureLayerSource} from '../paletteFeatureLayerSource'
 import {createValuesFeatureLayerSource} from '../valuesFeatureLayerSource'
+import {getAllVisualizations} from '../../body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setActive, setComplete} from '../progress'
@@ -95,9 +96,9 @@ class _AssetImageLayer extends React.Component {
 
     selectFirstVisualization() {
         const {source, userDefinedVisualizations, layerConfig: {visParams} = {}, mapAreaContext: {updateLayerConfig}} = this.props
-        const visualizations = [...userDefinedVisualizations, ...(selectFrom(source, 'sourceConfig.visualizations') || [])]
-        if (visualizations.length && (!visParams || !visualizations.find(({id}) => id === visParams.id))) {
-            const firstVisParams = visualizations[0]
+        const allVisualizations = [...userDefinedVisualizations, ...(selectFrom(source, 'sourceConfig.visualizations') || [])]
+        if (allVisualizations.length && (!visParams || !allVisualizations.find(({id}) => id === visParams.id))) {
+            const firstVisParams = allVisualizations[0]
             updateLayerConfig({visParams: firstVisParams})
             return firstVisParams
         } else {
