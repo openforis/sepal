@@ -8,6 +8,7 @@ import {compose} from 'compose'
 import {formatCoordinates, parseCoordinates} from 'coords'
 import {msg} from 'translate'
 import {withMap} from './mapContext'
+import Keybinding from 'widget/keybinding'
 import React from 'react'
 import styles from './mapZoom.module.css'
 
@@ -26,54 +27,56 @@ class _MapZoomPanel extends React.Component {
         const {map, activatable: {deactivate}} = this.props
         const {coordinateResults, placeResults} = this.state
         return (
-            <Panel className={styles.panel} type='top-right'>
-                <Panel.Content>
-                    <Layout spacing='compact'>
-                        <ButtonGroup alignment='fill'>
-                            <Button
-                                disabled={!map.canZoomIn()}
-                                onClick={() => map.zoomIn()}
-                                icon={'plus'}
-                                tooltip={msg('process.mapZoom.zoomIn.tooltip')}
-                                tooltipPlacement='bottom'
+            <Keybinding keymap={{'Plus': () => map.zoomIn(), 'Minus': () => map.zoomOut()}}>
+                <Panel className={styles.panel} type='top-right'>
+                    <Panel.Content>
+                        <Layout spacing='compact'>
+                            <ButtonGroup alignment='fill'>
+                                <Button
+                                    disabled={!map.canZoomIn()}
+                                    onClick={() => map.zoomIn()}
+                                    icon={'plus'}
+                                    tooltip={msg('process.mapZoom.zoomIn.tooltip')}
+                                    tooltipPlacement='bottom'
+                                />
+                                <Button
+                                    disabled={!map.canZoomOut()}
+                                    onClick={() => map.zoomOut()}
+                                    icon={'minus'}
+                                    tooltip={msg('process.mapZoom.zoomOut.tooltip')}
+                                    tooltipPlacement='bottom'
+                                />
+                                <Button
+                                    look={map.isZoomArea() ? 'highlight' : 'default'}
+                                    disabled={!map.canZoomArea()}
+                                    onClick={() => map.toggleZoomArea()}
+                                    icon={'crop-alt'}
+                                    tooltip={msg('process.mapZoom.zoomArea.tooltip')}
+                                    tooltipPlacement='bottom'
+                                />
+                                <Button
+                                    disabled={!map.canFit()}
+                                    onClick={() => map.fit()}
+                                    icon={'bullseye'}
+                                    tooltip={msg('process.mapZoom.fit.tooltip')}
+                                    tooltipPlacement='bottom'
+                                />
+                            </ButtonGroup>
+                            <SearchBox
+                                placeholder={msg('process.mapZoom.search.placeholder')}
+                                className={styles.search}
+                                onSearchValue={this.search}
+                                options={[
+                                    ...coordinateResults,
+                                    ...placeResults
+                                ]}
+                                onSelect={({value: location}) => this.select(location)}
                             />
-                            <Button
-                                disabled={!map.canZoomOut()}
-                                onClick={() => map.zoomOut()}
-                                icon={'minus'}
-                                tooltip={msg('process.mapZoom.zoomOut.tooltip')}
-                                tooltipPlacement='bottom'
-                            />
-                            <Button
-                                look={map.isZoomArea() ? 'highlight' : 'default'}
-                                disabled={!map.canZoomArea()}
-                                onClick={() => map.toggleZoomArea()}
-                                icon={'crop-alt'}
-                                tooltip={msg('process.mapZoom.zoomArea.tooltip')}
-                                tooltipPlacement='bottom'
-                            />
-                            <Button
-                                disabled={!map.canFit()}
-                                onClick={() => map.fit()}
-                                icon={'bullseye'}
-                                tooltip={msg('process.mapZoom.fit.tooltip')}
-                                tooltipPlacement='bottom'
-                            />
-                        </ButtonGroup>
-                        <SearchBox
-                            placeholder={msg('process.mapZoom.search.placeholder')}
-                            className={styles.search}
-                            onSearchValue={this.search}
-                            options={[
-                                ...coordinateResults,
-                                ...placeResults
-                            ]}
-                            onSelect={({value: location}) => this.select(location)}
-                        />
-                    </Layout>
-                </Panel.Content>
-                <Panel.Buttons onEscape={deactivate} shown={false}/>
-            </Panel>
+                        </Layout>
+                    </Panel.Content>
+                    <Panel.Buttons onEscape={deactivate} shown={false}/>
+                </Panel>
+            </Keybinding>
         )
     }
 
