@@ -38,7 +38,7 @@ export const getRequestExecutor = concurrency => {
         const activeRequestCountByTileProviderId = getCount(tileProviderId) - 1
         setCount(tileProviderId, activeRequestCountByTileProviderId)
         log.debug(`Finished ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
-        finished$.next({currentRequest, replacementRequest})
+        finished$.next({tileProviderId, currentRequest, replacementRequest})
     }
 
     const getMostRecentByTileProviderId = (tileProviderId, excludeCount) => {
@@ -86,9 +86,7 @@ export const getRequestExecutor = concurrency => {
                     if (replacementRequest) {
                         finishInfo.currentRequest = currentRequest
                         finishInfo.replacementRequest = replacementRequest
-                        log.debug(`Cancelled ${requestTag({tileProviderId, requestId})} for replacement with ${requestTag(replacementRequest)}`)
-                    } else {
-                        log.debug(`Cancelled ${requestTag({tileProviderId, requestId})}`)
+                        log.debug(`Replacing ${requestTag({tileProviderId, requestId})} with ${requestTag(replacementRequest)}`)
                     }
                 })
             )),
