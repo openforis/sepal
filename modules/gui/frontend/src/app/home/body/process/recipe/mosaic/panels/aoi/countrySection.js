@@ -122,6 +122,7 @@ class _CountrySection extends React.Component {
                     placeholder={areaPlaceholder}
                     busyMessage={loadCountryAreas.active && msg('widget.loading')}
                     disabled={loadCountryAreas.failed || !countryAreas || countryAreas.length === 0}
+                    autoFocus
                     onChange={() => this.aoiChanged$.next()}
                     allowClear
                 />
