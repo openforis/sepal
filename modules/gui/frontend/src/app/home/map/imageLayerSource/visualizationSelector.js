@@ -23,10 +23,10 @@ class _VisualizationSelector extends React.Component {
 
     render() {
         const {selectedVisParams} = this.props
-        const selectedId = selectedVisParams && (selectedVisParams.id || selectedVisParams.bands.join(','))
+        const selectedValue = selectedVisParams && (selectedVisParams.id || selectedVisParams.bands.join(','))
         const options = this.getOptions()
         const selectedOption = this.flattenOptions(options)
-            .find(option => option.value === selectedId)
+            .find(option => option.value === selectedValue)
         const editMode = selectedOption && selectedOption.visParams.userDefined ? 'edit' : 'clone'
         return (
             <Combo
@@ -121,7 +121,7 @@ class _VisualizationSelector extends React.Component {
 export const VisualizationSelector = compose(
     _VisualizationSelector,
     withRecipe(mapRecipeToProps),
-    activator(), // TODO: Allow function to be passed, to dynamically select activatable(s)
+    activator(),
     withMapAreaContext()
 )
 
