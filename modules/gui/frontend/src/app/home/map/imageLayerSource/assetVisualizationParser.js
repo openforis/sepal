@@ -44,24 +44,3 @@ const parseLandcoverClass = (properties, bands) => {
 export const toVisualizations = (properties, bands) =>
     parseVisualization(properties).concat(parseLandcoverClass(properties, bands))
 
-/*
-    const extractLandcover = properties => {
-    const getList = key => properties
-        .select(
-            image.propertyNames().map(name => ee.String(name).match(`^landcover_class_${key}`)).flatten()
-        )
-        .values()
-
-    const valuesList = getList('values')
-    const palette = getList('palette').flatten()
-    const labels = getList('names').flatten()
-
-    return valuesList.map(values => ({
-        type: 'categorical',
-        bands: image.bandNames().get(0), // No way to know which band is the categorical. Take first.
-        labels,
-        values,
-        palette
-    }))
-}
-*/

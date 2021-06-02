@@ -1079,6 +1079,14 @@
         "loading": "Loading tiles: {pending}",
         "tilesFailed": "{failed} failed"
       },
+      "source": {
+        "asset": {
+          "loadError": "Failed to load asset"
+        },
+        "recipe": {
+          "loadError": "Failed to load recipe"
+        }
+      },
       "tabPlaceholder": "CCDC_slice"
     },
     "classification": {

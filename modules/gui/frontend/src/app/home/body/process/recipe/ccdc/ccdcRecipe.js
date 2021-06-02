@@ -1,5 +1,9 @@
 import {msg} from 'translate'
+import {getAllVisualizations as opticalMosaicVisualizations} from '../opticalMosaic/opticalMosaicRecipe'
+import {getAllVisualizations as radarMosaicVisualizations} from '../radarMosaic/radarMosaicRecipe'
 import {recipeActionBuilder} from '../../recipe'
+import {selectFrom} from 'stateUtils'
+import {toHarmonicVisualization} from './harmonicVisualizations'
 import _ from 'lodash'
 import api from 'api'
 import moment from 'moment'
@@ -86,6 +90,53 @@ export const RecipeActions = id => {
     }
 }
 
+export const getAllVisualizations = recipe => {
+    return _.isEmpty(selectFrom(recipe, ['model.sources.dataSets.SENTINEL_1']))
+        ? allOpticalMosaicVisualizations(recipe)
+        : allRadarMosaicVisualizations(recipe)
+}
+
+const allOpticalMosaicVisualizations = recipe => {
+    const opticalMosaicRecipe = {
+        model: {
+            sources: selectFrom(recipe, 'model.sources.dataSets'),
+            compositeOptions: selectFrom(recipe, 'model.options')
+        }
+    }
+    const baseVisualizations = opticalMosaicVisualizations(opticalMosaicRecipe)
+        .map(visParams => ({...visParams, baseBands: [...new Set(visParams.bands)]}))
+    const harmonicVisualizations = baseVisualizations
+        .filter(({bands}) => bands.length === 1)
+        .map(({bands}) => bands[0])
+        .map(toHarmonicVisualization)
+    return [
+        ...baseVisualizations,
+        ...harmonicVisualizations
+    ]
+}
+
+const RADAR_BAND_SCALE = 100
+const allRadarMosaicVisualizations = recipe => {
+    const radarMosaicRecipe = {
+        model: {
+            options: selectFrom(recipe, 'model.options')
+        }
+    }
+    const visualizations = [
+        ...radarMosaicVisualizations(radarMosaicRecipe)
+            .map(visParams => ({
+                ...visParams,
+                min: visParams.min.map(min => min * RADAR_BAND_SCALE),
+                max: visParams.max.map(max => max * RADAR_BAND_SCALE),
+                baseBands: [...new Set(visParams.bands)]
+            })),
+        toHarmonicVisualization('VV'),
+        toHarmonicVisualization('VH'),
+        toHarmonicVisualization('ratio_VV_VH'),
+    ]
+    return visualizations
+}
+
 export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
     api.gee.loadCCDCSegments$({recipe, latLng, bands})
 
@@ -97,6 +148,7 @@ export const loadCCDCObservations$ = ({recipe, latLng, bands}) =>
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const title = msg(['process.retrieve.form.task.GEE'], {name})
+    const visualizations = getAllVisualizations(recipe)
     const task = {
         'operation': 'ccdc.asset_export',
         'params': {
@@ -104,6 +156,7 @@ const submitRetrieveRecipeTask = recipe => {
             description: name,
             recipe: _.omit(recipe, ['ui']),
             bands: recipe.ui.retrieveOptions.bands,
+            visualizations,
             scale: recipe.ui.retrieveOptions.scale
         }
     }

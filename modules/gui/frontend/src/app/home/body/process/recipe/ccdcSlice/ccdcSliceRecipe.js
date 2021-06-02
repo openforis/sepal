@@ -1,3 +1,5 @@
+import {getAllVisualizations} from '../ccdc/ccdcRecipe'
+import {getAvailableBands} from '../../../../../../sources'
 import {msg} from 'translate'
 import {recipeActionBuilder} from '../../recipe'
 import _ from 'lodash'
@@ -38,7 +40,38 @@ export const RecipeActions = id => {
                 })
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .build()
-        }
+        },
+        updateRecipeSourceDetails(loadedRecipe, classification) {
+            const corrections = loadedRecipe.model.options.corrections
+            const bands = getAvailableBands({
+                sources: loadedRecipe.model.sources.dataSets,
+                corrections,
+                timeScan: false,
+                classification: classification
+                    ? {
+                        classifierType: classification.model.classifier.type,
+                        classificationLegend: classification.model.legend,
+                        include: ['regression', 'probabilities']
+                    }
+                    : {}
+            })
+            const source = {
+                type: 'RECIPE_REF',
+                bands,
+                dateFormat: loadedRecipe.model.ccdcOptions.dateFormat,
+                startDate: loadedRecipe.model.dates.startDate,
+                endDate: loadedRecipe.model.dates.endDate,
+                visualizations: getAllVisualizations(loadedRecipe)
+            }
+            return actionBuilder('UPDATE_SOURCE_RECIPE', {source})
+                .set('ui.sourceDetails', source)
+                .dispatch()
+        },
+        // removeSourceRecipe() {
+        //     return actionBuilder('UPDATE_SOURCE_RECIPE', {source})
+        //         .set('ui.sourceDetails', source)
+        //         .dispatch()
+        // }
     }
 }
 

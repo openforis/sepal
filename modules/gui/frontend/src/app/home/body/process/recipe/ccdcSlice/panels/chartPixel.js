@@ -8,6 +8,7 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {takeUntil} from 'rxjs/operators'
 import {withRecipe} from '../../../recipeContext'
+import {withSourceDetails} from '../withSourceDetails'
 import Icon from 'widget/icon'
 import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
@@ -131,10 +132,10 @@ class ChartPixel extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        const {sourceDetails: {bands}, stream, recipe, latLng, inputs: {selectedBand}} = this.props
 
         if (!selectedBand.value)
-            selectedBand.set(recipe.model.source.bands[0])
+            selectedBand.set(bands[0])
 
         if (latLng && selectedBand.value && !_.isEqual(
             [recipe.model, latLng, selectedBand.value],
@@ -171,5 +172,6 @@ ChartPixel.propTypes = {}
 export default compose(
     ChartPixel,
     withRecipe(mapRecipeToProps),
-    form({fields})
+    form({fields}),
+    withSourceDetails()
 )

@@ -1,75 +1,46 @@
-import {RecipeActions, defaultModel} from './ccdcSliceRecipe'
+import {Aoi} from '../aoi'
+import {Map} from 'app/home/map/map'
+import {RecipeActions} from './ccdcSliceRecipe'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {defaultModel} from './ccdcSliceRecipe'
+import {initializeLayers} from '../recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-// import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
-import {MapInfo} from 'app/home/map/mapInfo'
-import BandSelection from './bandSelection'
-import CCDCSlicePreview from './ccdcSlicePreview'
+import {withSourceDetails} from './withSourceDetails'
 import CCDCSliceToolbar from './panels/ccdcSliceToolbar'
-import MapToolbar from 'app/home/map/mapToolbar'
+import ChartPixel from './panels/chartPixel'
+import PanelWizard from '../../../../../../widget/panelWizard'
 import React from 'react'
-import _ from 'lodash'
-
-const mapStateToProps = _state => ({})
 
 const mapRecipeToProps = recipe => ({
-    initialized: selectFrom(recipe, 'ui.initialized'),
-    aoi: selectFrom(recipe, 'model.aoi'),
-    recipe: _.omit(recipe, 'ui')
+    source: selectFrom(recipe, 'model.source'),
+    savedLayers: selectFrom(recipe, 'layers')
 })
 
-class _CCDCSlice extends React.Component {
+class _CcdcSlice extends React.Component {
     constructor(props) {
         super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
+        const {savedLayers, recipeId} = props
+        initializeLayers({recipeId, savedLayers})
+        this.recipeActions = RecipeActions(recipeId)
     }
 
     render() {
-        const {recipeContext: {statePath}, initialized} = this.props
+        const {source, sourceDetails} = this.props
         return (
-            <div>
-                <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
-                <MapInfo/>
-                <CCDCSliceToolbar/>
-                {initialized
-                    ? <React.Fragment>
-                        <CCDCSlicePreview/>
-                        <BandSelection/>
-                    </React.Fragment>
-                    : null}
-            </div>
+            <Map>
+                <CCDCSliceToolbar sourceDetails={sourceDetails}/>
+                <Aoi value={source.type && source}/>
+            </Map>
         )
     }
 
-    componentDidMount() {
-        this.setAoiLayer(true)
-    }
-
-    componentDidUpdate(prevProps, _prevState, _snapshot) {
-        const prevSource = prevProps.recipe.model.source.id
-        const source = this.props.recipe.model.source.id
-        this.setAoiLayer(prevSource !== source)
-    }
-
-    setAoiLayer(fitLayer) {
-        const {map, recipe, componentWillUnmount$} = this.props
-        if (recipe.model.source.id) {
-            // setRecipeGeometryLayer({
-            //     map,
-            //     layerSpec: {id: 'aoi', layerIndex: 1, recipe},
-            //     destroy$: componentWillUnmount$,
-            //     onInitialized: () => fitLayer && map.fitLayer('aoi')
-            // })
-        }
-    }
 }
 
 const CcdcSlice = compose(
-    _CCDCSlice,
-    connect(mapStateToProps),
+    _CcdcSlice,
+    withSourceDetails(),
     recipe({defaultModel, mapRecipeToProps})
 )
 

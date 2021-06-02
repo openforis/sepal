@@ -7,9 +7,8 @@ const worker$ = ({recipe, visParams, panSharpen, bands}) => {
     const {sequence} = require('sepal/utils/array')
     const log = require('sepal/log').getLogger('ee')
     const _ = require('lodash')
-
     if (visParams) {
-        const {getImage$} = ImageFactory(recipe, {selection: visParams.bands, panSharpen})
+        const {getImage$} = ImageFactory(recipe, {selection: visParams.bands, baseBands: visParams.baseBands, panSharpen})
         const getMap$ = (image, visualization) => {
             const {type, bands, min, max, inverted, gamma, palette} = visualization
             const range = () => ({

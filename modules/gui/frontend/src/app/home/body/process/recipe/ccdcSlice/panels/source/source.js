@@ -17,15 +17,7 @@ const fields = {
         .notBlank('process.ccdcSlice.panel.source.form.asset.required'),
     recipe: new Form.Field()
         .skip((value, {section}) => section !== 'RECIPE_REF')
-        .notBlank('process.ccdcSlice.panel.source.form.recipe.required'),
-    bands: new Form.Field()
-        .notEmpty('process.ccdcSlice.panel.source.form.bands.required'),
-    dateFormat: new Form.Field()
-        .skip((value, {section}) => section !== 'ASSET')
-        .notBlank(),
-    startDate: new Form.Field(),
-    endDate: new Form.Field(),
-    surfaceReflectance: new Form.Field()
+        .notBlank('process.ccdcSlice.panel.source.form.recipe.required')
 }
 
 class Source extends React.Component {
@@ -70,14 +62,9 @@ class Source extends React.Component {
     }
 }
 
-const modelToValues = ({id, type, bands, dateFormat, startDate, endDate, surfaceReflectance}) => {
+const modelToValues = ({id, type}) => {
     const values = {
         section: type || 'SELECTION',
-        bands,
-        dateFormat,
-        startDate,
-        endDate,
-        surfaceReflectance
     }
     switch (type) {
     case 'RECIPE_REF':
@@ -89,14 +76,10 @@ const modelToValues = ({id, type, bands, dateFormat, startDate, endDate, surface
     }
 }
 
-const valuesToModel = ({section, asset, recipe, bands, dateFormat, startDate, endDate, surfaceReflectance}) => {
+const valuesToModel = ({section, asset, recipe, bands}) => {
     const model = {
         type: section,
-        bands,
-        dateFormat,
-        startDate,
-        endDate,
-        surfaceReflectance
+        bands
     }
     switch (section) {
     case 'RECIPE_REF':

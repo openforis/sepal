@@ -4,8 +4,8 @@ def params(bands):
 
     Args:
         bands: The bands to get visualization params for. Must be one of the following:
-            VV, VV_min, VV_mean, VV_med, VV_max, VV_std, VV_cv, VVfit, VV_res,
-            VH, VH_min, VH_mean, VH_med, VH_max, VH_std, VH_cv, VHfit, VH_res,
+            VV, VV_min, VV_mean, VV_med, VV_max, VV_std, VV_cv, VV_fit, VV_res,
+            VH, VH_min, VH_mean, VH_med, VH_max, VH_std, VH_cv, VH_fit, VH_res,
             ratio_VV_VH, ratio_VV_med_VH_med, NDCV
             constant, t, phase, amplitude, residuals,
             dayOfYear, daysFromTarget.
@@ -23,9 +23,9 @@ def params(bands):
         'VV_max': {'range': [-17, 10]},
         'VV_std': {'range': [0, 5]},
         'VV_cv': {'range': [-6, 28]},
-        'VVfit': {'range': [-22, 0]},
+        'VV_fit': {'range': [-22, 0]},
         'VV_res': {'range': [0, 2.4], 'stretch': [1, 0.5]},
-        'VVt': {'range': [-4, 4]},
+        'VV_t': {'range': [-4, 4]},
         'VV_phase': {'range': [-3.14, 3.14]},
         'VV_amp': {'range': [0.5, 5]},
         'VH': {'range': [-25, -5]},
@@ -34,9 +34,9 @@ def params(bands):
         'VH_med': {'range': [-25, -5]},
         'VH_max': {'range': [-26, 2]},
         'VH_std': {'range': [0, 6]},
-        'VHfit': {'range': [-20, 2]},
+        'VH_fit': {'range': [-20, 2]},
         'VH_res': {'range': [0, 2.4], 'stretch': [1, 0.5]},
-        'VHt': {'range': [-4, 4]},
+        'VH_t': {'range': [-4, 4]},
         'VH_phase': {'range': [-3.14, 3.14]},
         'VH_amp': {'range': [0.5, 5]},
         'VH_cv': {'range': [0, 35]},
@@ -62,9 +62,9 @@ def hsv_params(bands):
     Args:
         bands: The bands to get visualization params for. Must be one of the following:
             VV, VV_min, VV_mean, VV_med, VV_max, VV_std, VV_cv,
-            VVfit, VV_res, VV_const, VVt, VV_phase, VV_amp, VV_res,
+            VV_fit, VV_res, VV_const, VV_t, VV_phase, VV_amp, VV_res,
             VH, VH_min, VH_mean, VH_med, VH_max, VH_std, VH_cv,
-            VHfit, VH_res, VH_const, VHt, VH_phase, VH_amp, VH_res,
+            VH_fit, VH_res, VH_const, VH_t, VH_phase, VH_amp, VH_res,
             ratio_VV_VH, ratio_VV_med_VH_med, NDCV
             dayOfYear, daysFromTarget.
 

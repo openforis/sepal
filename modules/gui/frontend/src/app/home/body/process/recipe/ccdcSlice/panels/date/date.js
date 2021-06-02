@@ -4,7 +4,8 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {selectFrom} from '../../../../../../../../stateUtils'
+import {selectFrom} from 'stateUtils'
+import {withSourceDetails} from '../../withSourceDetails'
 import React from 'react'
 import moment from 'moment'
 import styles from './date.module.css'
@@ -42,7 +43,7 @@ class Date extends React.Component {
     }
 
     renderContent() {
-        const {startDate, endDate, inputs: {date}} = this.props
+        const {sourceDetails: {startDate, endDate}, inputs: {date}} = this.props
         return (
             <Form.FieldSet
                 layout='horizontal'
@@ -53,7 +54,7 @@ class Date extends React.Component {
                     tooltipPlacement='top'
                     input={date}
                     startDate='1982-08-22'
-                    endDate={moment()}
+                    endDate={moment().add(1, 'year')}
                 />
 
                 {startDate && endDate
@@ -66,7 +67,15 @@ class Date extends React.Component {
     }
 
     componentDidMount() {
-        const {startDate, endDate, inputs: {date}} = this.props
+        this.defaultDate()
+    }
+
+    componentDidUpdate() {
+        this.defaultDate()
+    }
+
+    defaultDate() {
+        const {sourceDetails: {startDate, endDate}, inputs: {date}} = this.props
         if (!date.value && startDate && endDate) {
             const middle = moment((
                 moment(startDate, DATE_FORMAT).valueOf()
@@ -81,5 +90,6 @@ Date.propTypes = {}
 
 export default compose(
     Date,
-    recipeFormPanel({id: 'date', fields, mapRecipeToProps})
+    recipeFormPanel({id: 'date', fields, mapRecipeToProps}),
+    withSourceDetails()
 )
