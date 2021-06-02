@@ -673,6 +673,7 @@ const Band = ({invertable, onBandSelected, bands, label, inputs: {name, inverted
                 {value: true, label: 'REV', tooltip: msg('map.visParams.form.band.reverse.tooltip')}
             ]}
             multiple
+            tabIndex={-1}
         />
     )
 

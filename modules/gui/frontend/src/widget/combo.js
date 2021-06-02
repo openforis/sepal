@@ -83,7 +83,7 @@ class _Combo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, standalone, readOnly, inputClassName, additionalButtons = [], onBlur} = this.props
+        const {placeholder, autoFocus, standalone, readOnly, inputClassName, additionalButtons = []} = this.props
         const {focused, filter, selectedOption, showOptions} = this.state
         const showOptionsKeyBinding = showOptions ? undefined : () => this.showOptions()
         const keymap = {
@@ -147,6 +147,7 @@ class _Combo extends React.Component {
                     air='none'
                     icon='times'
                     iconFixedWidth
+                    tabIndex={-1}
                     onClick={() => this.select$.next()}
                 />
             )
@@ -169,6 +170,7 @@ class _Combo extends React.Component {
                 icon={icon[placement]}
                 iconFlipVertical={showOptions}
                 iconFixedWidth
+                tabIndex={-1}
                 disabled={!this.isActive()}
                 onClick={() => showOptions
                     ? this.hideOptions()

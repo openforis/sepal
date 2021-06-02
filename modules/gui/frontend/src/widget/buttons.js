@@ -33,7 +33,7 @@ export class Buttons extends React.Component {
     }
 
     renderButton({value, label, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected}) {
-        const {chromeless, air, disabled: allDisabled, look, shape, size} = this.props
+        const {chromeless, air, disabled: allDisabled, look, shape, size, tabIndex} = this.props
         const selected = !allDisabled && (alwaysSelected || (!neverSelected && this.isSelected(value)))
         return chromeless
             ? (
@@ -48,6 +48,7 @@ export class Buttons extends React.Component {
                     content={selected ? 'smallcaps-highlight' : 'smallcaps'}
                     tooltip={tooltip}
                     tooltipPlacement='bottom'
+                    tabIndex={tabIndex}
                     onClick={() => this.select(value)}/>
             )
             : (
@@ -62,6 +63,7 @@ export class Buttons extends React.Component {
                     content='smallcaps'
                     tooltip={tooltip}
                     tooltipPlacement='bottom'
+                    tabIndex={tabIndex}
                     onClick={() => this.select(value)}/>
             )
 
@@ -121,7 +123,8 @@ Buttons.propTypes = {
     selected: PropTypes.any,
     shape: PropTypes.string,
     size: PropTypes.string,
+    tabIndex: PropTypes.number,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
-    onChange: PropTypes.any,
+    onChange: PropTypes.any
 }

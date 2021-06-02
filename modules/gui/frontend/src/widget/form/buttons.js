@@ -6,7 +6,7 @@ import _ from 'lodash'
 export class FormButtons extends React.Component {
     render() {
         let {chromeless, look, shape, size, air, className, input, label, multiple, options, tooltip, tooltipPlacement,
-            layout, alignment, spacing, disabled, onChange
+            layout, alignment, spacing, disabled, tabIndex, onChange
         } = this.props
         return (
             <Buttons
@@ -29,7 +29,9 @@ export class FormButtons extends React.Component {
                 layout={layout}
                 alignment={alignment}
                 spacing={spacing}
-                disabled={disabled}/>
+                disabled={disabled}
+                tabIndex={tabIndex}
+            />
         )
     }
 
