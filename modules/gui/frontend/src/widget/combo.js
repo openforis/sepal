@@ -41,6 +41,7 @@ class _Combo extends React.Component {
 
     constructor() {
         super()
+        this.onBlur = this.onBlur.bind(this)
         this.handleBlur = this.handleBlur.bind(this)
     }
 
@@ -116,14 +117,22 @@ class _Combo extends React.Component {
                     additionalButtons={additionalButtons}
                     onChange={e => this.setFilter(e.target.value)}
                     onFocus={() => this.setState({focused: true})}
-                    onBlur={e => {
-                        onBlur && onBlur(e)
-                        this.setState({focused: false})
-                    }}
+                    onBlur={this.onBlur}
                 />
                 <AutoFocus ref={this.input} enabled={autoFocus}/>
             </Keybinding>
         )
+    }
+
+    onBlur(e) {
+        const {onBlur} = this.props
+        const {showOptions} = this.state
+        if (showOptions) {
+            this.input.current.focus()
+        } else {
+            onBlur && onBlur(e)
+            this.setState({focused: false})
+        }
     }
 
     renderClearButton() {
@@ -257,9 +266,11 @@ class _Combo extends React.Component {
     }
 
     handleBlur(e) {
+        console.log('handleBlur')
         const {onCancel} = this.props
         const isInputClick = e => this.inputContainer.current && this.inputContainer.current.contains(e.target)
         const isListClick = e => this.list.current && this.list.current.contains && this.list.current.contains(e.target)
+        console.log({isInputClick, isListClick})
         if (!isInputClick(e) && !isListClick(e)) {
             this.setFilter()
             onCancel && onCancel(e)
