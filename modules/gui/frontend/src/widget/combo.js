@@ -98,28 +98,29 @@ class _Combo extends React.Component {
             <Keybinding
                 disabled={!this.isActive() || !focused}
                 keymap={keymap}>
-                <Input
-                    ref={this.input}
-                    className={[
-                        styles.input,
-                        standalone ? styles.standalone : null,
-                        selectedOption && !showOptions ? styles.fakePlaceholder : null,
-                        inputClassName
-                    ].join(' ')}
-                    value={filter}
-                    placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
-                    disabled={!this.isActive()}
-                    readOnly={readOnly || isMobile()}
-                    buttons={[
-                        this.renderClearButton(),
-                        this.renderToggleOptionsButton()
-                    ]}
-                    additionalButtons={additionalButtons}
-                    onChange={e => this.setFilter(e.target.value)}
-                    onFocus={() => this.setState({focused: true})}
-                    onBlur={this.onBlur}
-                />
-                <AutoFocus ref={this.input} enabled={autoFocus}/>
+                <AutoFocus element={this.input.current} enabled={autoFocus}>
+                    <Input
+                        ref={this.input}
+                        className={[
+                            styles.input,
+                            standalone ? styles.standalone : null,
+                            selectedOption && !showOptions ? styles.fakePlaceholder : null,
+                            inputClassName
+                        ].join(' ')}
+                        value={filter}
+                        placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
+                        disabled={!this.isActive()}
+                        readOnly={readOnly || isMobile()}
+                        buttons={[
+                            this.renderClearButton(),
+                            this.renderToggleOptionsButton()
+                        ]}
+                        additionalButtons={additionalButtons}
+                        onChange={e => this.setFilter(e.target.value)}
+                        onFocus={() => this.setState({focused: true})}
+                        onBlur={this.onBlur}
+                    />
+                </AutoFocus>
             </Keybinding>
         )
     }
@@ -268,11 +269,9 @@ class _Combo extends React.Component {
     }
 
     handleBlur(e) {
-        console.log('handleBlur')
         const {onCancel} = this.props
         const isInputClick = e => this.inputContainer.current && this.inputContainer.current.contains(e.target)
         const isListClick = e => this.list.current && this.list.current.contains && this.list.current.contains(e.target)
-        console.log({isInputClick, isListClick})
         if (!isInputClick(e) && !isListClick(e)) {
             this.setFilter()
             onCancel && onCancel(e)
