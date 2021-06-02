@@ -70,8 +70,8 @@ class _RadarMosaicImageLayer extends React.Component {
     componentDidUpdate(prevProps) {
         const {layerConfig: {visParams: prevVisParams}} = prevProps
         const {recipe} = this.props
+        const allVisualizations = getAllVisualizations(recipe)
         if (prevVisParams) {
-            const allVisualizations = getAllVisualizations(recipe)
             const visParams = allVisualizations.find(({id, bands}) =>
                 _.isEqual([id, bands], [prevVisParams.id, prevVisParams.bands])
             )
@@ -80,6 +80,8 @@ class _RadarMosaicImageLayer extends React.Component {
             } else if (!_.isEqual(visParams, prevVisParams)) {
                 this.selectVisualization(visParams)
             }
+        } else {
+            this.selectVisualization(allVisualizations[0])
         }
     }
 
