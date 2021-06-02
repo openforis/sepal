@@ -1,9 +1,16 @@
+import {compose} from 'compose'
+import {connect} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-export default class AutoFocus extends React.Component {
+class AutoFocus extends React.Component {
     state = {
         completed: false
+    }
+
+    constructor(props) {
+        super(props)
+        props.onEnable(() => this.reset())
     }
 
     render() {
@@ -39,6 +46,10 @@ export default class AutoFocus extends React.Component {
     completed() {
         this.setState({completed: true})
     }
+
+    reset() {
+        this.setState({completed: false})
+    }
 }
 
 AutoFocus.propTypes = {
@@ -46,6 +57,11 @@ AutoFocus.propTypes = {
     element: PropTypes.object,
     enabled: PropTypes.any
 }
+
+export default compose(
+    AutoFocus,
+    connect()
+)
 
 // import {compose} from 'compose'
 // import Portal from 'widget/portal'
