@@ -30,7 +30,7 @@ class _VisualizationSelector extends React.Component {
         const editMode = selectedOption && selectedOption.visParams.userDefined ? 'edit' : 'clone'
         return (
             <Combo
-                label={'Bands'}
+                label={'map.visualizationSelector.label'}
                 labelButtons={[
                     <Button
                         key='add'

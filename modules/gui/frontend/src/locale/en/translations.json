@@ -587,6 +587,7 @@
       }
     },
     "visualizationSelector": {
+      "label": "Bands",
       "userDefined.label": "User defined",
       "add.tooltip": "Add visualization",
       "edit.tooltip": "Edit selected visualization",
