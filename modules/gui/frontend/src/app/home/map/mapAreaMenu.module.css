@@ -1,6 +1,5 @@
 .panel {
     width: 25rem;
-    max-width: 100vw;
 }
 
 .container {
@@ -14,15 +13,11 @@
     align-items: flex-end;
 }
 
-.content {
+.button {
     margin: 2.5rem 0;
     padding: .5rem;
     pointer-events: all;
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-
-.content > * + * {
-    margin-top: 1rem;
 }

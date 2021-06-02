@@ -145,10 +145,8 @@ export class MapAreaMenu extends React.Component {
     render() {
         return (
             <div className={styles.container}>
-                <div className={styles.content} ref={this.ref}>
-                    {this.renderPanel()}
-                    {this.renderButton()}
-                </div>
+                {this.renderPanel()}
+                {this.renderButton()}
             </div>
         )
     }
@@ -160,13 +158,15 @@ export class MapAreaMenu extends React.Component {
                 {activator => {
                     const {activate, deactivate, active, canActivate} = activator
                     return (
-                        <Button
-                            look='default'
-                            shape='pill'
-                            icon='bars'
-                            disabled={!canActivate && !active}
-                            onClick={() => active ? deactivate() : activate()}
-                        />
+                        <div className={styles.button} ref={this.ref}>
+                            <Button
+                                look='default'
+                                shape='pill'
+                                icon='bars'
+                                disabled={!canActivate && !active}
+                                onClick={() => active ? deactivate() : activate()}
+                            />
+                        </div>
                     )
                 }}
             </Activator>
