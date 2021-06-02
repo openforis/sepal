@@ -16,7 +16,7 @@
     right: 0;
     height: var(--height);
     background-color: hsla(0, 0%, 50%, 1);
-    animation: progress 1000ms linear infinite alternate;
+    animation: progress 2000ms linear infinite alternate;
 }
 
 @keyframes progress {
