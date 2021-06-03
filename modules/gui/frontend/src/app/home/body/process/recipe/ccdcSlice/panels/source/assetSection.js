@@ -5,7 +5,6 @@ import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
-import {toVisualizations} from '../../../../../../map/imageLayerSource/assetVisualizationParser'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -18,7 +17,6 @@ class AssetSection extends React.Component {
     constructor(props) {
         super(props)
         this.assetChanged$ = new Subject()
-        this.onLoading = this.onLoading.bind(this)
         this.onLoaded = this.onLoaded.bind(this)
     }
 
@@ -31,7 +29,6 @@ class AssetSection extends React.Component {
                     label={msg('process.ccdcSlice.panel.source.form.asset.label')}
                     placeholder={msg('process.ccdcSlice.panel.source.form.asset.placeholder')}
                     autoFocus
-                    onLoading={this.onLoading}
                     onLoaded={this.onLoaded}
                 />
                 <Form.Buttons
@@ -61,12 +58,6 @@ class AssetSection extends React.Component {
         )
     }
 
-    onLoading() {
-        const {inputs: {bands, visualizations}} = this.props
-        bands.set(null)
-        visualizations.set(null)
-    }
-
     onLoaded({metadata}) {
         const {inputs} = this.props
         const {bands, properties: {dateFormat}} = metadata
@@ -77,11 +68,11 @@ class AssetSection extends React.Component {
                 .filter(band => band)
             )
         )
-        if (assetBands) {
-            inputs.bands.set(assetBands)
-            inputs.dateFormat.set(dateFormat)
+        if (assetBands.length) {
+            dateFormat && inputs.dateFormat.set(dateFormat)
         } else {
-            inputs.asset.setInvalid(msg('process.ccdcSlice.panel.source.form.asset.notCCDC'))
+            console.log({bands, assetBands})
+            inputs.asset.setInvalid(msg('process.ccdcSlice.panel.source.asset.notCcdc'))
         }
     }
 }

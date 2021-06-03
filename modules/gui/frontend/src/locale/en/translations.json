@@ -1053,7 +1053,8 @@
         "source": {
           "asset": {
             "label": "Earth Engine CCDC Asset",
-            "title": "Earth Engine CCDC Asset"
+            "title": "Earth Engine CCDC Asset",
+            "notCcdc": "Asset does not contain CCDC segments"
           },
           "button": "SRC",
           "form": {
