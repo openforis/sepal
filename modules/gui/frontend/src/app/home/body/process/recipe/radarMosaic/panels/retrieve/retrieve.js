@@ -1,7 +1,6 @@
 import {RecipeActions} from '../../radarMosaicRecipe'
 import {compose} from 'compose'
 import {groupedBandOptions} from 'sources'
-import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from '../../../../recipeContext'
 import React from 'react'
@@ -14,7 +13,7 @@ const mapRecipeToProps = recipe => {
     })
 }
 
-const option = band => ({value: band, label: msg(['bands', band])})
+const option = band => ({value: band, label: band})
 
 class Retrieve extends React.Component {
     metadataOptions = {options: [

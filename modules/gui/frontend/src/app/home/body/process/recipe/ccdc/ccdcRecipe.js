@@ -106,7 +106,7 @@ const allOpticalMosaicVisualizations = recipe => {
     const baseVisualizations = opticalMosaicVisualizations(opticalMosaicRecipe)
         .map(visParams => ({...visParams, baseBands: [...new Set(visParams.bands)]}))
     const harmonicVisualizations = baseVisualizations
-        .filter(({bands}) => bands.length === 1)
+        .filter(({type}) => type === 'continuous')
         .map(({bands}) => bands[0])
         .map(toHarmonicVisualization)
     return [

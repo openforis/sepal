@@ -9,7 +9,7 @@ const worker$ = ({recipe, band, aoi}) => {
     const {switchMap} = require('rx/operators')
     const {toGeometry} = require('sepal/ee/aoi')
 
-    const {getImage$, histogramMaxPixels = MAX_PIXELS} = ImageFactory(recipe, {selection: [band]})
+    const {getImage$, histogramMaxPixels} = ImageFactory(recipe, {selection: [band]})
     const histogram = image => {
         const geometry = aoi
             ? toGeometry(aoi)
@@ -19,7 +19,7 @@ const worker$ = ({recipe, band, aoi}) => {
             geometry,
             scale: 1,
             bestEffort: true,
-            maxPixels: histogramMaxPixels
+            maxPixels: histogramMaxPixels || MAX_PIXELS
         }).get(band)
     }
 

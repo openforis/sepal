@@ -60,7 +60,7 @@ class _OpticalMosaicImageLayer extends React.Component {
         const {recipe, source, layerConfig = {}} = this.props
         const visParamsToOption = visParams => ({
             value: visParams.bands.join(','),
-            label: visParams.bands.map(band => msg(['bands', band])).join(', '),
+            label: visParams.bands.join(', '),
             visParams
         })
         const bandCombinationOptions = {

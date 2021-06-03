@@ -1,6 +1,7 @@
 import {Aoi} from '../aoi'
 import {DataCollectionContext, DataCollectionManager} from './dataCollectionManager'
 import {Map} from 'app/home/map/map'
+import {RecipeActions} from './classificationRecipe'
 import {compose} from 'compose'
 import {getDefaultModel} from './classificationRecipe'
 import {initializeLayers} from '../recipeImageLayerSource'
@@ -14,7 +15,8 @@ import React from 'react'
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
     images: selectFrom(recipe, 'model.inputImagery.images'),
-    savedLayers: selectFrom(recipe, 'layers')
+    savedLayers: selectFrom(recipe, 'layers'),
+    trainingDataSets: selectFrom(recipe, 'model.trainingData.dataSets')
 })
 
 class _Classification extends React.Component {
@@ -23,6 +25,7 @@ class _Classification extends React.Component {
         super(props)
         const {savedLayers, recipeId} = props
         this.dataCollectionManager = new DataCollectionManager(recipeId)
+        this.recipeActions = RecipeActions(recipeId)
         initializeLayers({
             recipeId,
             savedLayers,
@@ -50,6 +53,22 @@ class _Classification extends React.Component {
                 </Map>
             </DataCollectionContext.Provider>
         )
+    }
+
+    componentDidMount() {
+        const {trainingDataSets} = this.props
+        const referenceData = trainingDataSets
+            .filter(({type}) => type !== 'RECIPE')
+            .map(({dataSetId, referenceData}) =>
+                referenceData.map(point => ({...point, dataSetId}))
+            )
+            .flat()
+        const countPerClass = {}
+        referenceData.forEach(point => {
+            const pointClass = point['class']
+            countPerClass[pointClass] = (countPerClass[pointClass] || 0) + 1
+        })
+        this.recipeActions.setCountPerClass(countPerClass)
     }
 }
 

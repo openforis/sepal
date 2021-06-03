@@ -1,4 +1,3 @@
-import {EETableLayer} from './eeTableLayer'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {of} from 'rxjs'

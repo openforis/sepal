@@ -1,6 +1,5 @@
 import {Aoi} from '../aoi'
 import {Map} from '../../../../map/map'
-import {RecipeActions} from '../opticalMosaic/opticalMosaicRecipe'
 import {compose} from 'compose'
 import {defaultModel} from './radarMosaicRecipe'
 import {initializeLayers} from '../recipeImageLayerSource'

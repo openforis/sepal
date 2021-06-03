@@ -1,11 +1,13 @@
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
 import {compose} from 'compose'
+import {getAllVisualizations} from './ccdcSliceRecipe'
 import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
-import {withSourceDetails} from './withSourceDetails'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 
 const defaultLayerConfig = {
     panSharpen: false
@@ -26,12 +28,13 @@ class _CCDCSliceImageLayer extends React.Component {
     }
 
     renderImageLayerForm() {
-        const {sourceDetails: {visualizations = []} = {}, recipe, source, layerConfig = {}} = this.props
+        const {recipe, source, layerConfig = {}} = this.props
         const visParamsToOption = visParams => ({
             value: visParams.id || visParams.bands.join(','),
             label: visParams.bands.join(', '),
             visParams
         })
+        const visualizations = selectFrom(recipe, 'model.source.visualizations') || []
         const options = [{
             label: msg('process.classification.layers.imageLayer.preSets'),
             options: visualizations.map(visParamsToOption)
@@ -46,33 +49,30 @@ class _CCDCSliceImageLayer extends React.Component {
         )
     }
 
-    // TODO: Get preSet visualizations
-    //  To do that, we ask ccdcRecipe, passing the source. The source is a RECIPE_REF though, so no way to tell if
-    //  optical or radar. Try to use actual recipe instead, or do some workaround.
-    //  Right now, visualizations are loaded statically when selecting a recipe.
-    //  If recipe is updated, things might break...
-    // componentDidMount() {
-    //     const {recipe, layerConfig: {visParams}} = this.props
-    //     if (!visParams) {
-    //         this.selectVisualization(getAllVisualizations(recipe.model.source)[0])
-    //     }
-    // }
-    //
-    // componentDidUpdate(prevProps) {
-    //     const {layerConfig: {visParams: prevVisParams}} = prevProps
-    //     const {recipe} = this.props
-    //     if (prevVisParams) {
-    //         const allVisualizations = getAllVisualizations(recipe.model.source)
-    //         const visParams = allVisualizations.find(({id, bands}) =>
-    //             _.isEqual([id, bands], [prevVisParams.id, prevVisParams.bands])
-    //         )
-    //         if (!visParams) {
-    //             this.selectVisualization(allVisualizations[0])
-    //         } else if (!_.isEqual(visParams, prevVisParams)) {
-    //             this.selectVisualization(visParams)
-    //         }
-    //     }
-    // }
+    componentDidMount() {
+        const {recipe, layerConfig: {visParams}} = this.props
+        if (!visParams) {
+            this.selectVisualization(getAllVisualizations(recipe)[0])
+        }
+    }
+
+    componentDidUpdate(prevProps) {
+        const {layerConfig: {visParams: prevVisParams}} = prevProps
+        const {recipe} = this.props
+        const allVisualizations = getAllVisualizations(recipe)
+        if (prevVisParams) {
+            const visParams = allVisualizations.find(({id, bands}) =>
+                _.isEqual([id, bands], [prevVisParams.id, prevVisParams.bands])
+            )
+            if (!visParams) {
+                allVisualizations.length && this.selectVisualization(allVisualizations[0])
+            } else if (!_.isEqual(visParams, prevVisParams)) {
+                this.selectVisualization(visParams)
+            }
+        } else {
+            allVisualizations.length && this.selectVisualization(allVisualizations[0])
+        }
+    }
 
     selectVisualization(visParams) {
         const {layerConfig: {panSharpen}, mapAreaContext: {updateLayerConfig}} = this.props
@@ -82,8 +82,7 @@ class _CCDCSliceImageLayer extends React.Component {
 
 export const CCDCSliceImageLayer = compose(
     _CCDCSliceImageLayer,
-    withMapAreaContext(),
-    withSourceDetails()
+    withMapAreaContext()
 )
 
 CCDCSliceImageLayer.defaultProps = {

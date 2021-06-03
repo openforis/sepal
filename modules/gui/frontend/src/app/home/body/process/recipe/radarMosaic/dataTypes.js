@@ -1,5 +1,3 @@
-import React from 'react'
-
 const typeFloat = {precision: 'float'}
 
 export const dataTypes = () => ({
