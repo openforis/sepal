@@ -21,7 +21,7 @@ export class TileProvider {
         this.abstractMethodError('loadTile$')
     }
 
-    renderTile({doc, element, blob}) {
+    renderTile({element, blob}) {
         element.innerHTML = `<img src="${(window.URL || window.webkitURL).createObjectURL(blob)}"/>`
     }
 

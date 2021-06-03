@@ -71,7 +71,6 @@ class AssetSection extends React.Component {
         if (assetBands.length) {
             dateFormat && inputs.dateFormat.set(dateFormat)
         } else {
-            console.log({bands, assetBands})
             inputs.asset.setInvalid(msg('process.ccdcSlice.panel.source.asset.notCcdc'))
         }
     }

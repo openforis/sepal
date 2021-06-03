@@ -9,8 +9,6 @@ import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
 import CCDCSliceToolbar from './panels/ccdcSliceToolbar'
-import ChartPixel from './panels/chartPixel'
-import PanelWizard from '../../../../../../widget/panelWizard'
 import React from 'react'
 
 const mapRecipeToProps = recipe => ({

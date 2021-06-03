@@ -1,7 +1,6 @@
 import {RecipeActions} from '../../opticalMosaicRecipe'
 import {compose} from 'compose'
 import {groupedBandOptions, minScale} from 'sources'
-import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from '../../../../recipeContext'
 import React from 'react'

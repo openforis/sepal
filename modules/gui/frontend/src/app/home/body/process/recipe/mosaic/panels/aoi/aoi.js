@@ -49,7 +49,7 @@ class Aoi extends React.Component {
     constructor(props) {
         super(props)
         this.state = {canceled: false}
-        const {recipeId, map} = props
+        const {recipeId} = props
         this.preview = MosaicPreview(recipeId)
     }
 

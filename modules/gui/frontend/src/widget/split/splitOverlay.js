@@ -1,12 +1,9 @@
 import {SplitContext} from './splitContext'
-import {getLogger} from 'log'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './splitView.module.css'
-
-const log = getLogger('splitOverlay')
 
 export class SplitOverlay extends React.Component {
     render() {
