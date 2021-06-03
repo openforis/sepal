@@ -10,8 +10,11 @@ export class DataCollectionManager {
     }
 
     select(point, prevPoint) {
+        if (!isClassified(point)) {
+            return
+        }
         if (prevPoint) {
-            if (isClassified(point)) {
+            if (isClassified(prevPoint)) {
                 this.deselect(prevPoint)
             } else {
                 this.remove(prevPoint)
