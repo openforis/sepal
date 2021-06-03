@@ -106,10 +106,10 @@ ClassificationImageLayer.propTypes = {
 
 export const classificationDataTypes = recipe => {
     const legend = selectFrom(recipe, 'model.legend')
-    const entries = _.sortBy(legend.entries, 'value')
-    if (!recipe.ui.initialized || !entries.length) {
+    if (!recipe.ui.initialized || !legend.entries.length) {
         return []
     }
+    const entries = _.sortBy(legend.entries, 'value')
     const classifierType = selectFrom(recipe, 'model.classifier.type')
     const min = entries[0].value
     const max = _.last(entries).value
