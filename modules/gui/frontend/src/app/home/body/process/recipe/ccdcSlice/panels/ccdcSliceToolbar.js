@@ -16,8 +16,8 @@ import Source from './source/source'
 import styles from './ccdcSliceToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
-    recipeId: recipe.id,
     initialized: selectFrom(recipe, 'ui.initialized'),
+    bands: selectFrom(recipe, 'model.source.bands'),
 })
 
 class CcdcSliceToolbar extends React.Component {
@@ -27,7 +27,7 @@ class CcdcSliceToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized, sourceDetails: {bands}} = this.props
+        const {recipeId, initialized, bands} = this.props
 
         return (
             <PanelWizard

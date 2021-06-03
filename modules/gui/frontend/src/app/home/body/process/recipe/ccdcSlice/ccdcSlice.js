@@ -1,13 +1,13 @@
 import {Aoi} from '../aoi'
 import {Map} from 'app/home/map/map'
 import {RecipeActions} from './ccdcSliceRecipe'
+import {SourceSync} from './sourceSync'
 import {compose} from 'compose'
 import {defaultModel} from './ccdcSliceRecipe'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import {withSourceDetails} from './withSourceDetails'
 import CCDCSliceToolbar from './panels/ccdcSliceToolbar'
 import ChartPixel from './panels/chartPixel'
 import PanelWizard from '../../../../../../widget/panelWizard'
@@ -27,11 +27,12 @@ class _CcdcSlice extends React.Component {
     }
 
     render() {
-        const {source, sourceDetails} = this.props
+        const {source} = this.props
         return (
             <Map>
-                <CCDCSliceToolbar sourceDetails={sourceDetails}/>
+                <CCDCSliceToolbar/>
                 <Aoi value={source.type && source}/>
+                <SourceSync/>
             </Map>
         )
     }
@@ -40,7 +41,6 @@ class _CcdcSlice extends React.Component {
 
 const CcdcSlice = compose(
     _CcdcSlice,
-    withSourceDetails(),
     recipe({defaultModel, mapRecipeToProps})
 )
 

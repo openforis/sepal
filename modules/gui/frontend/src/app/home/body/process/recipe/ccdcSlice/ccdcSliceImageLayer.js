@@ -2,8 +2,8 @@ import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {selectFrom} from '../../../../../../stateUtils'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
-import {withSourceDetails} from './withSourceDetails'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -26,12 +26,13 @@ class _CCDCSliceImageLayer extends React.Component {
     }
 
     renderImageLayerForm() {
-        const {sourceDetails: {visualizations = []} = {}, recipe, source, layerConfig = {}} = this.props
+        const {recipe, source, layerConfig = {}} = this.props
         const visParamsToOption = visParams => ({
             value: visParams.id || visParams.bands.join(','),
             label: visParams.bands.join(', '),
             visParams
         })
+        const visualizations = selectFrom(recipe, 'model.source.visualizations') || []
         const options = [{
             label: msg('process.classification.layers.imageLayer.preSets'),
             options: visualizations.map(visParamsToOption)
@@ -82,8 +83,7 @@ class _CCDCSliceImageLayer extends React.Component {
 
 export const CCDCSliceImageLayer = compose(
     _CCDCSliceImageLayer,
-    withMapAreaContext(),
-    withSourceDetails()
+    withMapAreaContext()
 )
 
 CCDCSliceImageLayer.defaultProps = {

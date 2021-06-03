@@ -8,7 +8,6 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {takeUntil} from 'rxjs/operators'
 import {withRecipe} from '../../../recipeContext'
-import {withSourceDetails} from '../withSourceDetails'
 import Icon from 'widget/icon'
 import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
@@ -25,6 +24,7 @@ const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     latLng: selectFrom(recipe, 'ui.chartPixel'),
     dateFormat: selectFrom(recipe, 'model.source.dateFormat'),
+    bands: selectFrom(recipe, 'model.source.bands'),
     date: selectFrom(recipe, 'model.date.date'),
     harmonics: selectFrom(recipe, 'model.options.harmonics'),
     gapStrategy: selectFrom(recipe, 'model.options.gapStrategy'),
@@ -132,7 +132,7 @@ class ChartPixel extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {sourceDetails: {bands}, stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        const {bands, stream, recipe, latLng, inputs: {selectedBand}} = this.props
 
         if (!selectedBand.value)
             selectedBand.set(bands[0])
@@ -172,6 +172,5 @@ ChartPixel.propTypes = {}
 export default compose(
     ChartPixel,
     withRecipe(mapRecipeToProps),
-    form({fields}),
-    withSourceDetails()
+    form({fields})
 )
