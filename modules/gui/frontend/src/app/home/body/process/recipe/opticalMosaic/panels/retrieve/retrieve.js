@@ -13,7 +13,7 @@ const mapRecipeToProps = recipe => ({
     compositeOptions: selectFrom(recipe, 'model.compositeOptions')
 })
 
-const option = band => ({value: band, label: msg(['bands', band])})
+const option = band => ({value: band, label: band})
 
 class Retrieve extends React.Component {
     metadataOptions = {

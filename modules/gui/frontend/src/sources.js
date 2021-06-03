@@ -433,7 +433,7 @@ const dataSetById = {
     }
 }
 
-const option = band => ({value: band, label: msg(['bands', band])})
+const option = band => ({value: band, label: band})
 
 const requiredBandsByOpticalIndex = {
     ndvi: ['red', 'nir'],
