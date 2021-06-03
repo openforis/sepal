@@ -22,11 +22,15 @@ class _VisualizationSelector extends React.Component {
     state = {}
 
     render() {
-        const {selectedVisParams} = this.props
-        const selectedValue = selectedVisParams && (selectedVisParams.id || selectedVisParams.bands.join(','))
+        const {selectedVisParams, presetOptions} = this.props
         const options = this.getOptions()
-        const selectedOption = this.flattenOptions(options)
-            .find(option => option.value === selectedValue)
+        const idMatch = selectedVisParams && selectedVisParams.id &&
+            this.flattenOptions(options).find(option => option.value === selectedVisParams.id)
+        const selectedOption = idMatch || (selectedVisParams &&
+            this.flattenOptions(presetOptions).find(({visParams: {bands}}) =>
+                bands.join(',') === selectedVisParams.bands.join(',')
+            )
+        )
         const editMode = selectedOption && selectedOption.visParams.userDefined ? 'edit' : 'clone'
         return (
             <Combo

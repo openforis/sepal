@@ -52,7 +52,7 @@ class _SourceSync extends React.Component {
             : this.initAsset(prevSource)
     }
 
-    initAsset(prevSource) {
+    initAsset(prevSource = {}) {
         const {stream, source = {}} = this.props
         if (source.id && source.id === prevSource.id || stream('LOAD').active) {
             return

@@ -1,7 +1,6 @@
-import {getAllVisualizations} from '../ccdc/ccdcRecipe'
-import {getAvailableBands} from '../../../../../../sources'
 import {msg} from 'translate'
 import {recipeActionBuilder} from '../../recipe'
+import {selectFrom} from 'stateUtils'
 import _ from 'lodash'
 import api from 'api'
 
@@ -40,43 +39,19 @@ export const RecipeActions = id => {
                 })
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .build()
-        },
-        updateRecipeSourceDetails(loadedRecipe, classification) {
-            const corrections = loadedRecipe.model.options.corrections
-            const bands = getAvailableBands({
-                sources: loadedRecipe.model.sources.dataSets,
-                corrections,
-                timeScan: false,
-                classification: classification
-                    ? {
-                        classifierType: classification.model.classifier.type,
-                        classificationLegend: classification.model.legend,
-                        include: ['regression', 'probabilities']
-                    }
-                    : {}
-            })
-            const source = {
-                type: 'RECIPE_REF',
-                bands,
-                dateFormat: loadedRecipe.model.ccdcOptions.dateFormat,
-                startDate: loadedRecipe.model.dates.startDate,
-                endDate: loadedRecipe.model.dates.endDate,
-                visualizations: getAllVisualizations(loadedRecipe)
-            }
-            return actionBuilder('UPDATE_SOURCE_RECIPE', {source})
-                .set('ui.sourceDetails', source)
-                .dispatch()
-        },
-        // removeSourceRecipe() {
-        //     return actionBuilder('UPDATE_SOURCE_RECIPE', {source})
-        //         .set('ui.sourceDetails', source)
-        //         .dispatch()
-        // }
+        }
     }
 }
 
 export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
     api.gee.loadCCDCSegments$({recipe: recipe.model.source, latLng, bands})
+
+export const getAllVisualizations = recipe => {
+    return [
+        ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
+        ...selectFrom(recipe, 'model.source.visualizations') || []
+    ]
+}
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
@@ -109,7 +84,12 @@ const submitRetrieveRecipeTask = recipe => {
             {
                 title: taskTitle,
                 description: name,
-                image: {recipe: _.omit(recipe, ['ui']), bands: {selection: bands, baseBands}, scale}
+                image: {
+                    recipe: _.omit(recipe, ['ui']),
+                    bands: {selection: bands, baseBands},
+                    visualizations: getAllVisualizations(recipe),
+                    scale
+                }
             }
     }
     return api.tasks.submit$(task).subscribe()
