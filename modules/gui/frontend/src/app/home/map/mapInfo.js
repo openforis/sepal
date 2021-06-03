@@ -8,6 +8,7 @@ import {msg} from 'translate'
 import {withMapsContext} from './maps'
 import Notifications from 'widget/notifications'
 import React from 'react'
+import Tooltip from 'widget/tooltip'
 import clipboard from 'clipboard'
 import format from 'format'
 import styles from './mapInfo.module.css'
@@ -22,14 +23,17 @@ class _MapInfo extends React.Component {
         return scale
             ? (
                 <div className={styles.container}>
-                    <Button
-                        look='transparent'
-                        shape='pill'
-                        size='small'
-                        tooltip={this.tooltip()}
-                        tooltipPlacement='bottomLeft'>
-                        {format.number({value: scale, unit: 'm/px'})}
-                    </Button>
+                    <Tooltip
+                        msg={this.tooltip()}
+                        placement='bottomLeft'
+                        clickTrigger={true}>
+                        <Button
+                            look='transparent'
+                            shape='pill'
+                            size='small'>
+                            {format.number({value: scale, unit: 'm/px'})}
+                        </Button>
+                    </Tooltip>
                 </div>
             )
             : null
