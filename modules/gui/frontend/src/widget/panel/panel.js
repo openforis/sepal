@@ -58,17 +58,17 @@ class _Panel extends React.Component {
     }
 
     renderContent() {
-        const {onBlur, className, type, children} = this.props
+        const {className, type, children} = this.props
         const {enabled} = this.state
         return (
-            <BlurDetector onBlur={onBlur} className={[
+            <div className={[
                 styles.panel,
                 styles[type],
                 enabled ? null : styles.disabled,
                 className
             ].join(' ')}>
                 {children}
-            </BlurDetector>
+            </div>
         )
     }
 }
@@ -81,8 +81,7 @@ export const Panel = compose(
 Panel.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    type: PropTypes.oneOf(['normal', 'modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']),
-    onBlur: PropTypes.func
+    type: PropTypes.oneOf(['normal', 'modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline'])
 }
 
 Panel.Header = PanelHeader
