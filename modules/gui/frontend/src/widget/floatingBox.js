@@ -28,7 +28,6 @@ class FloatingBox extends React.Component {
     }
 
     render() {
-        console.log(this.state)
         const {className, alignment, horizontalOverflow, children, onBlur} = this.props
         const {contentDimensions: {width}} = this.state
 
