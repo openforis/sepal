@@ -28,6 +28,7 @@ class FloatingBox extends React.Component {
     }
 
     render() {
+        console.log(this.state)
         const {className, alignment, horizontalOverflow, children, onBlur} = this.props
         const {contentDimensions: {width}} = this.state
 
@@ -198,7 +199,14 @@ class FloatingBox extends React.Component {
             const {top, bottom, left, right} = element.getBoundingClientRect()
             const width = right - left
             const height = bottom - top
-            return {top, bottom, left, right, width, height}
+            return {
+                top: Math.round(top),
+                bottom: Math.round(bottom),
+                left: Math.round(left),
+                right: Math.round(right),
+                width: Math.round(width),
+                height: Math.round(height)
+            }
         }
         return {}
     }
