@@ -47,23 +47,20 @@ FeatureLayers.propTypes = {
 class _FeatureLayer extends React.Component {
     render() {
         const {source, map, recipe, layerConfig, layerIndex} = this.props
-        // console.log(this.props)
         const id = source.type
         switch (source.type) {
-        case 'Labels':
-            return <LabelsLayer id={id} layerIndex={layerIndex} map={map}/>
-        case 'Legend':
-            return null
-        case 'Palette':
-            return null
-        case 'Values':
-            return null
-            // case 'Legend': return <LegendLayer/>
-            // case 'Palette': return <PaletteLayer/>
-            // case 'Values': return <ValuesLayer/>
+        case 'Labels':return <LabelsLayer id={id} layerIndex={layerIndex} map={map}/>
+        case 'Legend': return <LegendLayer/>
+        case 'Palette': return <PaletteLayer/>
+        case 'Values': return <ValuesLayer/>
         case 'Aoi':
-            return <AoiLayer id={source.type} layerConfig={layerConfig} layerIndex={layerIndex} recipe={recipe}
-                map={map}/>
+            return <AoiLayer
+                id={source.type}
+                layerConfig={layerConfig}
+                layerIndex={layerIndex}
+                recipe={recipe}
+                map={map}
+            />
         case 'SceneAreas':
             return <SceneAreasLayer map={map}/>
         case 'ReferenceData':
