@@ -31,7 +31,10 @@ class _ValuesLayer extends React.Component {
     }
 
     render() {
-        const {mapAreaContext: {area}, areas} = this.props
+        const {cursorValue$, mapAreaContext: {area}, areas} = this.props
+        if (!cursorValue$) {
+            return null
+        }
         const {value} = this.state
         const {bands, min, max} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
         return bands ?

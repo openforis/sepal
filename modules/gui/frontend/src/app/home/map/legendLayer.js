@@ -35,7 +35,10 @@ class _LegendLayer extends React.Component {
     }
 
     render() {
-        const {mapAreaContext: {area}, areas} = this.props
+        const {cursorValue$, mapAreaContext: {area}, areas} = this.props
+        if (!cursorValue$) {
+            return null
+        }
         const {labels, values, palette} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
         if (!values || !palette) {
             return null

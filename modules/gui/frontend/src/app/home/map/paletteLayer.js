@@ -81,7 +81,10 @@ class _CursorValue extends React.Component {
     targetPosition$ = new Subject()
 
     render() {
-        const {value, min, max} = this.props
+        const {cursorValue$, value, min, max} = this.props
+        if (!cursorValue$) {
+            return null
+        }
         const {position} = this.state
         const prefix = value <= min
             ? <>&#8805; </>
