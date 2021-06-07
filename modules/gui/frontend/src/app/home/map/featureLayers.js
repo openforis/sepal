@@ -44,17 +44,40 @@ FeatureLayers.propTypes = {
     map: PropTypes.any,
 }
 
-const _FeatureLayer = ({source, map, recipe, layerConfig, layerIndex}) => {
-    const id = source.type
-    switch(source.type) {
-    case 'Labels': return <LabelsLayer id={id} layerIndex={layerIndex} map={map}/>
-    case 'Legend': return <LegendLayer/>
-    case 'Palette': return <PaletteLayer/>
-    case 'Values': return <ValuesLayer/>
-    case 'Aoi': return <AoiLayer id={source.type} layerConfig={layerConfig} layerIndex={layerIndex} recipe={recipe} map={map}/>
-    case 'SceneAreas': return <SceneAreasLayer map={map}/>
-    case 'ReferenceData': return <ReferenceDataLayer map={map}/>
-    default: throw Error(`Unsupported feature layer type: ${source.type}`)
+class _FeatureLayer extends React.Component {
+    render() {
+        const {source, map, recipe, layerConfig, layerIndex} = this.props
+        // console.log(this.props)
+        const id = source.type
+        switch (source.type) {
+        case 'Labels':
+            return <LabelsLayer id={id} layerIndex={layerIndex} map={map}/>
+        case 'Legend':
+            return null
+        case 'Palette':
+            return null
+        case 'Values':
+            return null
+            // case 'Legend': return <LegendLayer/>
+            // case 'Palette': return <PaletteLayer/>
+            // case 'Values': return <ValuesLayer/>
+        case 'Aoi':
+            return <AoiLayer id={source.type} layerConfig={layerConfig} layerIndex={layerIndex} recipe={recipe}
+                map={map}/>
+        case 'SceneAreas':
+            return <SceneAreasLayer map={map}/>
+        case 'ReferenceData':
+            return <ReferenceDataLayer map={map}/>
+        default:
+            throw Error(`Unsupported feature layer type: ${source.type}`)
+        }
+    }
+
+    renderFeature(component) {
+        // TODO: Feature layer source should define the image layer types it supports
+        //   Legend, Palette, Values only support RecipeImageLayer and AssetImageLayer
+        //   Use both for populate the featureLayerSources buttons in the menu, and rendering here
+        return component
     }
 }
 
