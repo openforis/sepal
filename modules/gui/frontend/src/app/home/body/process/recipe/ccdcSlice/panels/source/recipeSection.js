@@ -3,7 +3,7 @@ import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
-import {recipeAccess} from '../../../../recipeAccess'
+import {recipeAccess} from 'app/home/body/process/recipeAccess'
 import PropTypes from 'prop-types'
 import React from 'react'
 

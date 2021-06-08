@@ -10,6 +10,7 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import styles from './retrieve.module.css'
 
 const fields = {
@@ -26,7 +27,8 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    assetBands: selectFrom(recipe, 'model.source.bands'),
+    baseBands: selectFrom(recipe, 'model.source.baseBands'),
+    segmentBands: selectFrom(recipe, 'model.source.segmentBands'),
     user: currentUser()
 })
 
@@ -75,88 +77,90 @@ class Retrieve extends React.Component {
     }
 
     renderBaseBands() {
-        const {assetBands, inputs: {baseBands}} = this.props
-        const bandOptions = assetBands.map(band => ({value: band, label: band}))
+        const {baseBands, inputs} = this.props
+        const bandOptions = baseBands.map(({name}) => ({value: name, label: name}))
 
         return (
             <Form.Buttons
                 label={msg('process.ccdcSlice.panel.retrieve.form.baseBands.label')}
-                input={baseBands}
+                input={inputs.baseBands}
                 multiple
                 options={bandOptions}/>
         )
     }
 
     renderBandTypes() {
-        const {inputs: {bandTypes}} = this.props
+        const {baseBands, inputs} = this.props
+        const bandTypes = _.uniq(baseBands.map(({bandTypes}) => bandTypes).flat())
         const bandTypeOptions = [
             {
-                value: 'VALUE',
+                value: 'value',
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.value.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.value.tooltip')
             },
             {
-                value: 'RMSE',
+                value: 'rmse',
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.rmse.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.rmse.tooltip')
             },
             {
-                value: 'MAGNITUDE',
+                value: 'magnitude',
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.magnitude.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.magnitude.tooltip')
             },
             {
-                value: 'INTERCEPT',
+                value: 'intercept',
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.intercept.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.intercept.tooltip')
             },
             {
-                value: 'SLOPE',
+                value: 'slope',
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.slope.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.slope.tooltip')
             },
             {
-                value: 'PHASE1',
+                value: 'phase_1',
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.phase1.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.phase1.tooltip')
             },
             {
-                value: 'PHASE2',
+                value: 'phase_2',
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.phase2.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.phase2.tooltip')
             },
             {
-                value: 'PHASE3',
+                value: 'phase_3',
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.phase3.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.phase3.tooltip')
             },
             {
-                value: 'AMPLITUDE1',
+                value: 'amplitude_1',
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.amplitude1.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.amplitude1.tooltip')
             },
             {
-                value: 'AMPLITUDE2',
+                value: 'amplitude_2',
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.amplitude2.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.amplitude2.tooltip')
             },
             {
-                value: 'AMPLITUDE3',
+                value: 'amplitude_3',
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.amplitude3.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.amplitude3.tooltip')
             }
-        ]
+        ].filter(({value}) => bandTypes.includes(value))
         return (
             <Form.Buttons
                 label={msg('process.ccdcSlice.panel.retrieve.form.bandTypes.label')}
-                input={bandTypes}
+                input={inputs.bandTypes}
                 multiple
                 options={bandTypeOptions}/>
         )
     }
 
     renderSegmentBands() {
-        const {inputs: {segmentBands}} = this.props
+        const {segmentBands, inputs} = this.props
+        const bands = segmentBands.map(({name}) => name)
         const options = [
             {
                 value: 'tStart',
@@ -183,16 +187,17 @@ class Retrieve extends React.Component {
                 label: msg('process.ccdcSlice.panel.retrieve.form.segmentBands.changeProb.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.segmentBands.changeProb.tooltip')
             }
-        ]
-
-        return (
-            <Form.Buttons
-                label={msg('process.ccdcSlice.panel.retrieve.form.segmentBands.label')}
-                tooltip={msg('process.ccdcSlice.panel.retrieve.form.segmentBands.tooltip')}
-                input={segmentBands}
-                multiple
-                options={options}/>
-        )
+        ].filter(({value}) => bands.includes(value))
+        return options.length
+            ? (
+                <Form.Buttons
+                    label={msg('process.ccdcSlice.panel.retrieve.form.segmentBands.label')}
+                    tooltip={msg('process.ccdcSlice.panel.retrieve.form.segmentBands.tooltip')}
+                    input={inputs.segmentBands}
+                    multiple
+                    options={options}/>
+            )
+            : null
     }
 
     renderScale() {

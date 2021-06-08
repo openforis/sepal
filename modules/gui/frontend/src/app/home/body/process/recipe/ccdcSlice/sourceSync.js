@@ -14,6 +14,8 @@ import _ from 'lodash'
 import api from 'api'
 import guid from 'guid'
 
+const baseBandPattern = /(.*)_(coefs|intercept|slope|phase_\d|amplitude_\d|rmse|magnitude)$/
+
 const mapRecipeToProps = (recipe, ownProps) => {
     return {
         ...ownProps,
@@ -61,7 +63,7 @@ class _SourceSync extends React.Component {
             api.gee.imageMetadata$({asset: source.id}).pipe(
                 takeUntil(this.cancel$)
             ),
-            metadata => this.updateAssetSourceDetails(source.id, metadata),
+            metadata => this.updateAssetSource(source.id, metadata),
             error => Notifications.error({message: msg('process.ccdcSlice.source.asset.loadError'), error})
         )
     }
@@ -114,16 +116,33 @@ class _SourceSync extends React.Component {
         )
     }
 
-    updateAssetSourceDetails(id, metadata) {
+    updateAssetSource(id, metadata) {
         const {recipeActionBuilder} = this.props
+        const bands = metadata.bands
+        const bandAndType = _.chain(bands)
+            .map(sourceBand => sourceBand.match(baseBandPattern))
+            .filter(match => match)
+            .map(([_, name, bandType]) => ({name, bandType: bandType === 'coefs' ? 'value' : bandType}))
+            .value()
+        const bandByName = _.groupBy(bandAndType, ({name}) => name)
+        const baseBands = _.chain(bandAndType)
+            .map(({name}) => name)
+            .uniq()
+            .map(name => ({name, bandTypes: bandByName[name].map(({bandType}) => bandType)}))
+            .value()
+        const segmentBands = bands
+            .filter(name => ['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb'].includes(name))
+            .map(name => ({name}))
         const sourceDetails = {
             type: 'ASSET',
             id,
-            bands: metadata.bands,
+            bands,
+            baseBands,
+            segmentBands,
             dateFormat: metadata.properties.dateFormat,
             startDate: metadata.properties.startDate,
             endDate: metadata.properties.endDate,
-            visualizations: toVisualizations(metadata.properties, metadata.bands)
+            visualizations: toVisualizations(metadata.properties, bands)
                 .map(visualization => ({...visualization, id: guid()}))
         }
         recipeActionBuilder('UPDATE_SOURCE', {sourceDetails})
@@ -143,7 +162,7 @@ class _SourceSync extends React.Component {
 
     recipeSource({ccdcRecipe, classificationRecipe}) {
         const corrections = ccdcRecipe.model.options.corrections
-        const bands = getAvailableBands({
+        const baseBands = getAvailableBands({
             sources: ccdcRecipe.model.sources.dataSets,
             corrections,
             timeScan: false,
@@ -155,11 +174,22 @@ class _SourceSync extends React.Component {
                     include: ['regression', 'probabilities']
                 }
                 : {}
-        })
+        }).map(name => ({
+            name,
+            bandTypes: ['value', 'rmse', 'magnitude', 'intercept', 'slope',
+                'phase_1', 'amplitude_1', 'phase_2', 'amplitude_2', 'phase_3', 'amplitude_3']
+        }))
+        const segmentBands = [{name: 'tStart'}, {name: 'tEnd'}, {name: 'tBreak'}, {name: 'numObs'}, {name: 'changeProb'}]
+        const bands = [
+            ...baseBands.map(({name, bandTypes}) => bandTypes.map(bandType => `${name}_${bandType === 'value' ? 'coefs' : bandType}`)),
+            segmentBands.map(({name}) => name)
+        ].flat()
         return {
             type: 'RECIPE_REF',
             id: ccdcRecipe.id,
             bands,
+            baseBands,
+            segmentBands,
             dateFormat: ccdcRecipe.model.ccdcOptions.dateFormat,
             startDate: ccdcRecipe.model.dates.startDate,
             endDate: ccdcRecipe.model.dates.endDate,

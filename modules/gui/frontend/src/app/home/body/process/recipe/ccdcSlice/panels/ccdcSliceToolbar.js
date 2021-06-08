@@ -17,7 +17,7 @@ import styles from './ccdcSliceToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
-    bands: selectFrom(recipe, 'model.source.bands'),
+    baseBands: selectFrom(recipe, 'model.source.baseBands'),
 })
 
 class CcdcSliceToolbar extends React.Component {
@@ -27,14 +27,14 @@ class CcdcSliceToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized, bands} = this.props
+        const {recipeId, initialized, baseBands} = this.props
 
         return (
             <PanelWizard
                 panels={['source', 'date']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
-                {initialized && bands ? <ChartPixel/> : null}
+                {initialized && baseBands ? <ChartPixel/> : null}
                 <Retrieve/>
                 <Source/>
                 <Date/>
@@ -45,14 +45,14 @@ class CcdcSliceToolbar extends React.Component {
                     placement='top-right'
                     className={styles.top}>
                     <ChartPixelButton
-                        disabled={!initialized || !bands}
+                        disabled={!initialized || !baseBands}
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}
                     />
                     <Toolbar.ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'
                         tooltip={msg('process.ccdcSlice.panel.retrieve.tooltip')}
-                        disabled={!initialized || !bands}/>
+                        disabled={!initialized || !baseBands}/>
                 </Toolbar>
                 <Toolbar
                     vertical
