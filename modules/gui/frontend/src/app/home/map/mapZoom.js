@@ -74,7 +74,7 @@ class _MapZoomPanel extends React.Component {
                             />
                         </Layout>
                     </Panel.Content>
-                    <Panel.Buttons onEscape={deactivate} shown={false}/>
+                    <Panel.Buttons onEscape={() => map.isZoomArea() ? map.cancelZoomArea() : deactivate()} shown={false}/>
                 </Panel>
             </Keybinding>
         )
@@ -86,6 +86,11 @@ class _MapZoomPanel extends React.Component {
         this.autoComplete = new google.maps.places.AutocompleteService()
         this.geoCoder = new google.maps.Geocoder()
     }
+
+    // componentWillUnmount() {
+    //     const {map} = this.props
+    //     map.cancelZoomArea()
+    // }
 
     search(query) {
         this.searchCoordinates(query)
