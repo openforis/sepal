@@ -95,10 +95,12 @@ class _AppListData extends React.Component {
     }
 
     renderSearch() {
+        const {searchValues} = this.props
         return (
             <Consumer>
                 {({setFilter}) => (
                     <SearchBox
+                        value={searchValues}
                         placeholder={msg('apps.filter.search.placeholder')}
                         onSearchValues={searchValues => setFilter(searchValues)}/>
                 )}
