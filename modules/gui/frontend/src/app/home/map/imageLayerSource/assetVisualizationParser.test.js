@@ -108,4 +108,25 @@ test('toVisualizations(${properties}, ${bands}) === ${result}')
                 }
             ]
         },
+        {
+            properties: {
+                visualization_0_type: 'categorical',
+                visualization_0_bands: 'class',
+                visualization_0_labels: 'a\\,label, b\\,label',
+                visualization_0_values: '1, 2',
+                visualization_0_palette: 'white,black',
+            },
+            bands: ['class'],
+            result: [
+                {
+                    type: 'categorical',
+                    bands: ['class'],
+                    min: [1],
+                    max: [2],
+                    labels: ['a,label', 'b,label'],
+                    values: [1, 2],
+                    palette: ['#FFFFFF', '#000000']
+                }
+            ]
+        },
     )
