@@ -10,24 +10,24 @@ import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
+import actionBuilder from 'action-builder'
 import styles from './appList.module.css'
 
 const mapStateToProps = () => ({
     apps: select('apps.list'),
     tags: select('apps.tags'),
-    tabs: select('apps.tabs')
+    tabs: select('apps.tabs'),
+    filterValues: select('apps.filterValues') || [],
+    tagFilter: select('apps.tagFilter')
 })
 
 class _AppList extends React.Component {
     state = {
-        app: null,
-        filterValues: [],
-        tagFilter: null
+        app: null
     }
 
     render() {
-        const {tags, onSelect} = this.props
-        const {filterValues, tagFilter} = this.state
+        const {filterValues, tagFilter, tags, onSelect} = this.props
         return (
             <Provider value={{
                 isLoading: this.isLoading.bind(this),
@@ -43,7 +43,7 @@ class _AppList extends React.Component {
                 <Pageable items={this.getApps()}>
                     <SectionLayout>
                         <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
-                            <AppListData onSelect={onSelect}/>
+                            <AppListData onSelect={onSelect} searchValues={filterValues.join(' ')}/>
                         </Content>
                         <BottomBar className={styles.bottomBar}>
                             <Pageable.Controls/>
@@ -81,15 +81,15 @@ class _AppList extends React.Component {
     }
 
     setFilter(filterValues) {
-        this.setState({
-            filterValues
-        })
+        actionBuilder('UPDATE_FILTER_VALUES', filterValues)
+            .set('apps.filterValues', filterValues)
+            .dispatch()
     }
 
     setTagFilter(tagFilter) {
-        this.setState({
-            tagFilter
-        })
+        actionBuilder('UPDATE_TAG_FILTER', tagFilter)
+            .set('apps.tagFilter', tagFilter)
+            .dispatch()
     }
 
     getApps() {
@@ -105,12 +105,12 @@ class _AppList extends React.Component {
     }
 
     appMatchesTagFilter(app) {
-        const {tagFilter} = this.state
+        const {tagFilter} = this.props
         return !tagFilter || app.tags.includes(tagFilter)
     }
-    
+
     appMatchesFilterValues(app) {
-        const {filterValues} = this.state
+        const {filterValues} = this.props
         const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
         const searchProperties = ['label', 'tagline']
         return filterValues
