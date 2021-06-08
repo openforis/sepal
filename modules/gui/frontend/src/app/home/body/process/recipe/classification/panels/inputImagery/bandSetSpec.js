@@ -42,7 +42,7 @@ const specClass = spec => {
 
 const ImageBands = {
     filter(spec, bands) {
-        const included = (spec.included || []).filter(band => bands.includes(band))
+        const included = (spec.included || []).filter(band => bands && bands.includes(band))
         return mutate(spec, 'included').set(included)
     },
 

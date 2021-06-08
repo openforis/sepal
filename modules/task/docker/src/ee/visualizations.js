@@ -13,10 +13,17 @@ const toVisualizationProperties = (visualizations = [], bands) => {
     uniqueVisualizations.forEach((visParams, i) => {
         Object.keys(visParams).forEach(key => {
             const value = visParams[key]
-            result[`visualization_${i}_${key}`] = _.isArray(value) ? value.join(',') : value
+            result[`visualization_${i}_${key}`] = _.isArray(value)
+                ? value.map(encode).join(',')
+                : encode(value)
         })
     })
     return result
 }
+
+const encode = value =>
+    _.isString(value)
+        ? value.replaceAll(',', '\\,')
+        : value
 
 module.exports = {toVisualizationProperties}

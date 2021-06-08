@@ -3,7 +3,7 @@ import {RecipeList} from '../recipeList/recipeList'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {msg} from '../../../../../translate'
+import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
@@ -25,7 +25,7 @@ class _SelectRecipe extends React.Component {
                     <Panel.Content scrollable={false}>
                         <RecipeList.Data onSelect={recipeId => this.selectRecipe(recipeId)}/>
                     </Panel.Content>
-                    <Panel.Buttons>
+                    <Panel.Buttons onEscape={deactivate}>
                         <Panel.Buttons.Main>
                             <Panel.Buttons.Close onClick={deactivate}/>
                         </Panel.Buttons.Main>
@@ -60,6 +60,6 @@ const policy = () => ({
 export const SelectRecipe = compose(
     _SelectRecipe,
     withRecipe(),
-    activatable({id: 'selectRecipe', policy}),
+    activatable({id: 'selectRecipe', policy, alwaysAllow: true}),
     connect(mapStateToProps)
 )

@@ -40,7 +40,7 @@
       ec2:
         key_name: "{{ region }}"
         group: Operations
-        instance_type: t3a.medium
+        instance_type: t3a.large
         image: "{{ ami }}"
         region: "{{ region }}"
         wait: true

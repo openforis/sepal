@@ -3,9 +3,6 @@ import {MapAreaLayout} from '../mapAreaLayout'
 import {Subject} from 'rxjs'
 import {VisualizationSelector} from './visualizationSelector'
 import {compose} from 'compose'
-import {createLegendFeatureLayerSource} from 'app/home/map/legendFeatureLayerSource'
-import {createPaletteFeatureLayerSource} from '../paletteFeatureLayerSource'
-import {createValuesFeatureLayerSource} from '../valuesFeatureLayerSource'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setActive, setComplete} from '../progress'
@@ -74,17 +71,7 @@ class _AssetImageLayer extends React.Component {
                 ? this.setComplete('tiles')
                 : this.setActive('tiles')
         ))
-        const visParams = this.selectFirstVisualization()
-        this.toggleLegend(visParams && visParams.type)
-    }
-
-    componentDidUpdate(prevProps) {
-        const {layerConfig: {visParams: {type: prevType} = {}} = {}} = prevProps
-        const visParams = this.selectFirstVisualization()
-        const type = visParams && visParams.type
-        if (type !== prevType) {
-            this.toggleLegend(type)
-        }
+        this.selectFirstVisualization()
     }
 
     componentWillUnmount() {
@@ -102,37 +89,6 @@ class _AssetImageLayer extends React.Component {
             return firstVisParams
         } else {
             return visParams
-        }
-    }
-
-    toggleLegend(type) {
-        const {mapAreaContext: {includeAreaFeatureLayerSource, excludeAreaFeatureLayerSource} = {}} = this.props
-        if (includeAreaFeatureLayerSource) {
-            const legendSource = createLegendFeatureLayerSource()
-            const paletteSource = createPaletteFeatureLayerSource()
-            const valuesSource = createValuesFeatureLayerSource()
-            switch (type) {
-            case 'continuous':
-                includeAreaFeatureLayerSource(paletteSource)
-                excludeAreaFeatureLayerSource(legendSource)
-                excludeAreaFeatureLayerSource(valuesSource)
-                return
-            case 'categorical':
-                includeAreaFeatureLayerSource(legendSource)
-                excludeAreaFeatureLayerSource(paletteSource)
-                excludeAreaFeatureLayerSource(valuesSource)
-                return
-            case 'rgb':
-            case 'hsv':
-                includeAreaFeatureLayerSource(valuesSource)
-                excludeAreaFeatureLayerSource(legendSource)
-                excludeAreaFeatureLayerSource(paletteSource)
-                return
-            default:
-                excludeAreaFeatureLayerSource(valuesSource)
-                excludeAreaFeatureLayerSource(legendSource)
-                excludeAreaFeatureLayerSource(paletteSource)
-            }
         }
     }
 

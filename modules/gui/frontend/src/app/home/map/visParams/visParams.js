@@ -4,13 +4,23 @@ import _ from 'lodash'
 export const normalize = visParams => {
     const normalized = {...visParams}
 
+    const decodeList = (key, list) => {
+        return list && key === 'labels'
+            ? list.map(v => _.isString(v)
+                ? v.replace(/\\,/g, ',')
+                : v
+            )
+            : list
+    }
+
     const toArray = key => {
         const value = normalized[key]
-        return _.isString(value)
-            ? value.split(',').map(s => s.trim())
+        const list = _.isString(value)
+            ? value.match(/(\\.|[^,])+/g).map(s => s.trim())
             : !_.isArray(value) && !_.isNil(value)
                 ? [value]
                 : value
+        return decodeList(key, list)
     }
 
     const toNumbers = key => normalized[key]

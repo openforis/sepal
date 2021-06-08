@@ -72,7 +72,6 @@ class _AddImageLayerSourcePanel extends React.Component {
 
 const policy = () => ({
     _: 'allow',
-    mapLayout: 'allow',
     selectRecipe: 'allow-then-deactivate',
     selectAsset: 'allow-then-deactivate',
     selectPlanet: 'allow-then-deactivate'
@@ -80,6 +79,6 @@ const policy = () => ({
 
 const AddImageLayerSourcePanel = compose(
     _AddImageLayerSourcePanel,
-    activatable({id: 'addImageLayerSource', policy}),
+    activatable({id: 'addImageLayerSource', policy, alwaysAllow: true}),
     activator('mapLayout', 'selectRecipe', 'selectAsset', 'selectPlanet')
 )

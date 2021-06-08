@@ -6,9 +6,6 @@ import {RadarMosaicImageLayer, radarMosaicDataTypes} from './radarMosaic/radarMo
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {createLegendFeatureLayerSource} from 'app/home/map/legendFeatureLayerSource'
-import {createPaletteFeatureLayerSource} from 'app/home/map/paletteFeatureLayerSource'
-import {createValuesFeatureLayerSource} from 'app/home/map/valuesFeatureLayerSource'
 import {selectFrom} from 'stateUtils'
 import {setActive, setComplete} from 'app/home/map/progress'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
@@ -78,49 +75,13 @@ class _RecipeImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {addSubscription, layerConfig: {visParams: {type} = {}} = {}} = this.props
+        const {addSubscription} = this.props
         addSubscription(this.progress$.subscribe(
             ({complete}) => complete
                 ? this.setComplete('tiles')
                 : this.setActive('tiles')
         ))
-        this.toggleLegend(type)
 
-    }
-
-    componentDidUpdate(prevProps) {
-        const {layerConfig: {visParams: {type: prevType} = {}} = {}} = prevProps
-        const {layerConfig: {visParams: {type} = {}} = {}} = this.props
-        if (type !== prevType) {
-            this.toggleLegend(type)
-        }
-    }
-
-    toggleLegend(type) {
-        const {mapAreaContext: {includeAreaFeatureLayerSource, excludeAreaFeatureLayerSource} = {}} = this.props
-        if (includeAreaFeatureLayerSource) {
-            const legendSource = createLegendFeatureLayerSource()
-            const paletteSource = createPaletteFeatureLayerSource()
-            const valuesSource = createValuesFeatureLayerSource()
-            switch(type) {
-            case 'continuous':
-                includeAreaFeatureLayerSource(paletteSource)
-                excludeAreaFeatureLayerSource(legendSource)
-                excludeAreaFeatureLayerSource(valuesSource)
-                return
-            case 'categorical':
-                includeAreaFeatureLayerSource(legendSource)
-                excludeAreaFeatureLayerSource(paletteSource)
-                excludeAreaFeatureLayerSource(valuesSource)
-                return
-            case 'rgb':
-            case 'hsv':
-                includeAreaFeatureLayerSource(valuesSource)
-                excludeAreaFeatureLayerSource(legendSource)
-                excludeAreaFeatureLayerSource(paletteSource)
-                return
-            }
-        }
     }
 
     componentWillUnmount() {

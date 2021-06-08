@@ -3,6 +3,10 @@ import {GoogleSatelliteImageLayer} from './googleSatelliteImageLayer'
 import {PlanetImageLayer} from './planetImageLayer'
 import {RecipeImageLayer} from 'app/home/body/process/recipe/recipeImageLayer'
 import {RecipeImageLayerSource} from 'app/home/body/process/recipe/recipeImageLayerSource'
+import {createLegendFeatureLayerSource} from '../legendFeatureLayerSource'
+import {createPaletteFeatureLayerSource} from '../paletteFeatureLayerSource'
+import {createValuesFeatureLayerSource} from '../valuesFeatureLayerSource'
+import {selectFrom} from 'stateUtils'
 import React from 'react'
 
 const getRecipeImageLayerSource = ({recipe, source, layerConfig = {}, map, boundsChanged$, dragging$, cursor$}) => {
@@ -26,7 +30,8 @@ const getRecipeImageLayerSource = ({recipe, source, layerConfig = {}, map, bound
                 dragging$={dragging$}
                 cursor$={cursor$}
             />
-        )
+        ),
+        getFeatureLayerSources: () => getAssetRecipeFeatureLayerSources(layerConfig)
     }
 }
 
@@ -60,8 +65,23 @@ const getAssetImageLayerSource = ({source, layerConfig, map, boundsChanged$, dra
                 dragging$={dragging$}
                 cursor$={cursor$}
             />
-        )
+        ),
+        getFeatureLayerSources: () => getAssetRecipeFeatureLayerSources(layerConfig)
     })
+}
+
+const getAssetRecipeFeatureLayerSources = layerConfig => {
+    const type = selectFrom(layerConfig, 'visParams.type')
+    switch(type) {
+    case 'continuous':
+        return [createPaletteFeatureLayerSource()]
+    case 'categorical':
+        return [createLegendFeatureLayerSource()]
+    case 'rgb':
+    case 'hsv':
+        return [createValuesFeatureLayerSource()]
+    default: return []
+    }
 }
 
 export const getImageLayerSource = ({source, recipe, layerConfig, map, boundsChanged$, dragging$, cursor$}) => {

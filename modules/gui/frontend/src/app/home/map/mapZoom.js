@@ -87,11 +87,6 @@ class _MapZoomPanel extends React.Component {
         this.geoCoder = new google.maps.Geocoder()
     }
 
-    // componentWillUnmount() {
-    //     const {map} = this.props
-    //     map.cancelZoomArea()
-    // }
-
     search(query) {
         this.searchCoordinates(query)
         this.searchPlace(query)

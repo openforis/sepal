@@ -96,5 +96,5 @@ export const SelectAsset = compose(
     _SelectAsset,
     form({fields}),
     withRecipe(),
-    activatable({id: 'selectAsset', policy})
+    activatable({id: 'selectAsset', policy, alwaysAllow: true})
 )

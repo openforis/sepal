@@ -119,6 +119,6 @@ export const SelectPlanet = compose(
     _SelectPlanet,
     form({fields}),
     withRecipe(),
-    activatable({id: 'selectPlanet', policy}),
+    activatable({id: 'selectPlanet', policy, alwaysAllow: true}),
     connect(mapStateToProps)
 )
