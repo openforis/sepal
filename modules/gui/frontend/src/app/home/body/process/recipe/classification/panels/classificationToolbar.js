@@ -1,7 +1,6 @@
 import {Legend} from '../legend/legend'
 import {LegendImport} from '../legend/legendImport'
 import {RecipeActions} from '../classificationRecipe'
-import {RecipeFormPanel} from '../../../recipeFormPanel'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
