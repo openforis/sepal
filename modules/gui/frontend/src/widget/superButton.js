@@ -3,8 +3,9 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {Item} from 'widget/item'
 import {Subject, animationFrameScheduler, fromEvent, interval, merge, timer} from 'rxjs'
 import {compose} from 'compose'
-import {debounceTime, distinctUntilChanged, filter, map, mapTo, switchMap, takeUntil} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, filter, map, switchMap, takeUntil} from 'rxjs/operators'
 import Hammer from 'hammerjs'
+import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
@@ -21,7 +22,8 @@ class _SuperButton extends React.Component {
 
     state = {
         expanded: false,
-        dragging: false
+        dragging: false,
+        coords: null
     }
 
     isExpandable() {
@@ -131,6 +133,19 @@ class _SuperButton extends React.Component {
     }
 
     render() {
+        return (
+            <React.Fragment>
+                {this.renderRealButton()}
+                {this.isDragging() ? this.renderGhostButton() : null}
+            </React.Fragment>
+        )
+    }
+
+    renderRealButton() {
+        return this.renderButton(true)
+    }
+
+    renderButton(real) {
         const {className} = this.props
         const classNames = _.flatten([
             styles.container,
@@ -146,17 +161,41 @@ class _SuperButton extends React.Component {
         ]).join(' ')
         return (
             <div className={classNames}>
-                {this.isDraggable()
-                    ? <div ref={this.ref} className={styles.handle}/>
-                    : null}
+                {this.isDraggable() ? this.renderDragHandle(real) : null}
                 <div className={styles.main}>
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
                     {this.renderContent()}
-                    {this.renderButtons()}
+                    {real && this.renderButtons()}
                 </div>
                 {this.renderChildren()}
             </div>
         )
+    }
+
+    renderDragHandle(real) {
+        return (
+            <div ref={real ? this.ref : null} className={styles.handle}/>
+        )
+    }
+
+    renderGhostButton() {
+        const {coords} = this.state
+        if (coords) {
+            return (
+                <Portal type='global'>
+                    <div className={styles.draggableContainer}>
+                        <div
+                            className={styles.draggableGhost}
+                            style={{
+                                '--x': coords.x,
+                                '--y': coords.y
+                            }}>
+                            {this.renderButton(false)}
+                        </div>
+                    </div>
+                </Portal>
+            )
+        }
     }
 
     renderInlineComponents() {
@@ -269,35 +308,53 @@ class _SuperButton extends React.Component {
         const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
         const animationFrame$ = interval(0, animationFrameScheduler)
 
-        const dragMove$ = panStart$.pipe(
-            switchMap(() =>
+        const dragStart$ = merge(hold$, panStart$).pipe(
+            filter(({pageX, pageY}) => pageX && pageY),
+            map(({pageX, pageY}) => {
+                const {x: clientX, y: clientY} = this.ref.current.getBoundingClientRect()
+                return {
+                    x: Math.round(pageX - clientX),
+                    y: Math.round(pageY - clientY)
+                }
+            })
+        )
+
+        const dragMove$ = dragStart$.pipe(
+            switchMap(offset =>
                 animationFrame$.pipe(
                     switchMap(() =>
                         panMove$.pipe(
                             map(e => e.center)
-                        )),
+                        )
+                    ),
                     debounceTime(10),
-                    distinctUntilChanged()
+                    distinctUntilChanged(),
+                    map(coords => ({
+                        x: coords.x - offset.x,
+                        y: coords.y - offset.y
+                    }))
                 )
             )
         )
-
-        const dragging$ = merge(
-            hold$.pipe(mapTo(true)),
-            release$.pipe(mapTo(false)),
-            panStart$.pipe(mapTo(true)),
-            panEnd$.pipe(mapTo(false)),
-        )
+        
+        const dragEnd$ = merge(release$, panEnd$)
 
         addSubscription(
-            dragging$.subscribe(dragging => dragging ? this.onDragStart() : this.onDragEnd()),
-            dragMove$.subscribe(coords => this.onDragMove(coords)),
+            dragStart$.subscribe(
+                () => this.onDragStart()
+            ),
+            dragMove$.subscribe(
+                coords => this.onDragMove(coords)
+            ),
+            dragEnd$.subscribe(
+                () => this.onDragEnd()
+            )
         )
     }
 
     onDragStart() {
         const {drag$, dragValue, onDragStart} = this.props
-        this.setState({dragging: true}, () => {
+        this.setState({dragging: true, coords: null}, () => {
             drag$ && drag$.next({dragging: true, value: dragValue})
             onDragStart && onDragStart(dragValue)
         })
@@ -307,11 +364,12 @@ class _SuperButton extends React.Component {
         const {drag$, onDrag} = this.props
         drag$ && drag$.next({coords})
         onDrag && onDrag(coords)
+        this.setState({coords})
     }
 
     onDragEnd() {
         const {drag$, onDragEnd} = this.props
-        this.setState({dragging: false}, () => {
+        this.setState({dragging: false, coords: null}, () => {
             drag$ && drag$.next({dragging: false})
             onDragEnd && onDragEnd()
         })

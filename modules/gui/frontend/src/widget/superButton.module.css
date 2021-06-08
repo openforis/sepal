@@ -101,7 +101,7 @@ to prevent click-through from click-hold buttons */
 
 
 .dragging {
-    opacity: .25;
+    opacity: .50;
 }
 
 .dragHandle {
@@ -110,4 +110,21 @@ to prevent click-through from click-hold buttons */
 
 .unclickable {
     cursor: default;
+}
+
+.draggableContainer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.draggableGhost {
+    position: absolute;
+    top: calc(var(--y) * 1px);
+    left: calc(var(--x) * 1px);
+    z-index: 1;
 }
