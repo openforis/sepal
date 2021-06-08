@@ -19,6 +19,7 @@
     max-width: 40rem;
     flex-grow: 1;
     pointer-events: all;
+    margin: 0 3rem;
 }
 
 .color {
