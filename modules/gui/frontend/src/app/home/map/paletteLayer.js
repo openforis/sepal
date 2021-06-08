@@ -32,7 +32,10 @@ class _PaletteLayer extends React.Component {
     }
 
     render() {
-        const {mapAreaContext: {area}, areas} = this.props
+        const {cursorValue$, mapAreaContext: {area}, areas} = this.props
+        if (!cursorValue$) {
+            return null
+        }
         const {min, max, palette, inverted} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
         return palette
             ? this.renderPalette({
@@ -81,10 +84,7 @@ class _CursorValue extends React.Component {
     targetPosition$ = new Subject()
 
     render() {
-        const {cursorValue$, value, min, max} = this.props
-        if (!cursorValue$) {
-            return null
-        }
+        const {value, min, max} = this.props
         const {position} = this.state
         const prefix = value <= min
             ? <>&#8805; </>
