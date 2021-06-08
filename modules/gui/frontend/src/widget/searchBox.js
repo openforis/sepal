@@ -110,9 +110,10 @@ class _SearchBox extends React.Component {
     }
 
     componentDidMount() {
-        const {onSearchValue, onSearchValues, debounce, addSubscription} = this.props
+        const {value, onSearchValue, onSearchValues, debounce, addSubscription} = this.props
         const {search$, showOptions$} = this
-        
+        this.setValue(value)
+
         const debouncedShowOptions$ = merge(
             showOptions$.pipe(
                 filter(show => !show)
