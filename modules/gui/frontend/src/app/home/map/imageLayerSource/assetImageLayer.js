@@ -71,6 +71,7 @@ class _AssetImageLayer extends React.Component {
                 ? this.setComplete('tiles')
                 : this.setActive('tiles')
         ))
+        this.selectFirstVisualization()
     }
 
     componentWillUnmount() {
