@@ -23,7 +23,8 @@ class _SuperButton extends React.Component {
     state = {
         expanded: false,
         dragging: false,
-        coords: null
+        coords: null,
+        dragHandleHover: false
     }
 
     isExpandable() {
@@ -146,6 +147,7 @@ class _SuperButton extends React.Component {
     }
 
     renderButton(real) {
+        const {dragHandleHover} = this.state
         const {className} = this.props
         const classNames = _.flatten([
             styles.container,
@@ -154,7 +156,7 @@ class _SuperButton extends React.Component {
             lookStyles.noTransitions,
             this.isSelected() === true ? [lookStyles.hover, styles.expanded] : null,
             this.isDisabled() ? lookStyles.nonInteractive : null,
-            this.isDraggable() ? styles.draggable : null,
+            this.isDraggable() ? [styles.draggable, dragHandleHover ? null : lookStyles.noHover] : null,
             this.isDragging() ? styles.dragging : null,
             this.isClickable() ? null : styles.unclickable,
             className
@@ -174,7 +176,12 @@ class _SuperButton extends React.Component {
 
     renderDragHandle(real) {
         return (
-            <div ref={real ? this.ref : null} className={styles.handle}/>
+            <div
+                ref={real ? this.ref : null}
+                className={styles.handle}
+                onMouseOver={() => this.setState({dragHandleHover: true})}
+                onMouseOut={() => this.setState({dragHandleHover: false})}
+            />
         )
     }
 
@@ -336,7 +343,7 @@ class _SuperButton extends React.Component {
                 )
             )
         )
-        
+
         const dragEnd$ = merge(release$, panEnd$)
 
         addSubscription(
