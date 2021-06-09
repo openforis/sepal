@@ -86,17 +86,24 @@ to prevent click-through from click-hold buttons */
 
 
 .handle {
-    align-self: center;
     width: 1rem;
-    line-height: .4rem;
+    height: 100%;
     cursor: grab;
-    padding-left: 0.15rem;
-    margin: -.5rem 0 0 0;
+    margin: 0;
     color: rgb(40%, 40%, 40%);
 }
 
-.handle::after {
-    content: '.. .. .. .. .. .. ..';
+.handle::before {
+    content: '.. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..';
+    position: absolute;
+    display: flex;
+    align-items: center;
+    width: 1rem;
+    top: .5rem;
+    bottom: .5rem;
+    left: .25rem;
+    overflow: hidden;
+    line-height: .4rem;
 }
 
 
