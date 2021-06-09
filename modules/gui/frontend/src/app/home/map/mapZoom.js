@@ -21,10 +21,11 @@ class _MapZoomPanel extends React.Component {
     constructor() {
         super()
         this.search = this.search.bind(this)
+        this.onEscape = this.onEscape.bind(this)
     }
 
     render() {
-        const {map, activatable: {deactivate}} = this.props
+        const {map} = this.props
         const {coordinateResults, placeResults} = this.state
         return (
             <Keybinding keymap={{'Plus': () => map.zoomIn(), 'Minus': () => map.zoomOut()}}>
@@ -74,10 +75,15 @@ class _MapZoomPanel extends React.Component {
                             />
                         </Layout>
                     </Panel.Content>
-                    <Panel.Buttons onEscape={() => map.isZoomArea() ? map.cancelZoomArea() : deactivate()} shown={false}/>
+                    <Panel.Buttons onEscape={this.onEscape} shown={false}/>
                 </Panel>
             </Keybinding>
         )
+    }
+
+    onEscape() {
+        const {map, activatable: {deactivate}} = this.props
+        map.isZoomArea() ? map.cancelZoomArea() : deactivate()
     }
 
     componentDidMount() {
