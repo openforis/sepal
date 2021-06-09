@@ -84,3 +84,7 @@
 .dragging .areaContent {
     pointer-events: none;
 }
+
+.dragGhost {
+    max-width: 30vw;;
+}

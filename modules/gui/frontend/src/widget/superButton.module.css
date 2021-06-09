@@ -134,4 +134,5 @@ to prevent click-through from click-hold buttons */
     top: calc(var(--y) * 1px);
     left: calc(var(--x) * 1px);
     z-index: 1;
+    width: fit-content;
 }

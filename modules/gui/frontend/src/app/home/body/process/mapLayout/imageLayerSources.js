@@ -13,6 +13,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import guid from 'guid'
+import styles from './areas.module.css'
 
 export class _ImageLayerSources extends React.Component {
     render() {
@@ -46,6 +47,7 @@ export class _ImageLayerSources extends React.Component {
                         imageLayer: {sourceId: source.id},
                         featureLayers: []
                     }}
+                    dragGhostClassName={styles.dragGhost}
                     onRemove={removable
                         ? () => this.removeSource(source.id)
                         : null}

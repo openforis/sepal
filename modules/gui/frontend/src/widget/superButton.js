@@ -187,12 +187,13 @@ class _SuperButton extends React.Component {
 
     renderGhostButton() {
         const {coords} = this.state
+        const {dragGhostClassName} = this.props
         if (coords) {
             return (
                 <Portal type='global'>
                     <div className={styles.draggableContainer}>
                         <div
-                            className={styles.draggableGhost}
+                            className={[styles.draggableGhost, dragGhostClassName].join(' ')}
                             style={{
                                 '--x': coords.x,
                                 '--y': coords.y
