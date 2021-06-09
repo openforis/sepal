@@ -319,16 +319,24 @@ class _SuperButton extends React.Component {
         const dragStart$ = merge(hold$, panStart$).pipe(
             filter(({pageX, pageY}) => pageX && pageY),
             map(({pageX, pageY}) => {
-                const {x: clientX, y: clientY} = this.ref.current.getBoundingClientRect()
-                return {
+                const {x: clientX, y: clientY} = draggable.getBoundingClientRect()
+                const offset = {
                     x: Math.round(pageX - clientX),
                     y: Math.round(pageY - clientY)
                 }
+                return {
+                    position: {
+                        x: pageX - offset.x - 1,
+                        y: pageY - offset.y - 1
+                    },
+                    offset
+                }
+                    
             })
         )
 
         const dragMove$ = dragStart$.pipe(
-            switchMap(offset =>
+            switchMap(({offset}) =>
                 animationFrame$.pipe(
                     switchMap(() =>
                         panMove$.pipe(
@@ -340,8 +348,8 @@ class _SuperButton extends React.Component {
                     map(coords => ({
                         coords,
                         position: {
-                            x: coords.x - offset.x,
-                            y: coords.y - offset.y
+                            x: coords.x - offset.x - 1,
+                            y: coords.y - offset.y - 1
                         }
                     }))
                 )
@@ -363,9 +371,9 @@ class _SuperButton extends React.Component {
         )
     }
 
-    onDragStart() {
+    onDragStart({position}) {
         const {drag$, dragValue, onDragStart} = this.props
-        this.setState({dragging: true, position: null}, () => {
+        this.setState({dragging: true, position}, () => {
             drag$ && drag$.next({dragging: true, value: dragValue})
             onDragStart && onDragStart(dragValue)
         })
@@ -375,7 +383,7 @@ class _SuperButton extends React.Component {
         const {drag$, onDrag} = this.props
         drag$ && drag$.next({coords})
         onDrag && onDrag(coords)
-        this.setState({coords})
+        this.setState({position})
     }
 
     onDragEnd() {
