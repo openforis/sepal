@@ -101,7 +101,7 @@ to prevent click-through from click-hold buttons */
 
 
 .dragging {
-    opacity: .50;
+    opacity: .70;
 }
 
 .dragHandle {
