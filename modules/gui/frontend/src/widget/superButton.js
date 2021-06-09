@@ -319,7 +319,7 @@ class _SuperButton extends React.Component {
         const dragStart$ = merge(hold$, panStart$).pipe(
             filter(({pageX, pageY}) => pageX && pageY),
             map(({pageX, pageY}) => {
-                const {x: clientX, y: clientY} = this.ref.current.getBoundingClientRect()
+                const {x: clientX, y: clientY} = draggable.getBoundingClientRect()
                 return {
                     x: Math.round(pageX - clientX),
                     y: Math.round(pageY - clientY)
