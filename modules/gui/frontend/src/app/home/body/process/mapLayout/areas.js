@@ -161,7 +161,7 @@ class _Areas extends React.Component {
     }
 
     initializeDragDrop() {
-        const {sourceDrag$} = this.props
+        const {sourceDrag$, addSubscription} = this.props
         const {areaDrag$} = this
 
         const drag$ = merge(sourceDrag$, areaDrag$)
@@ -186,7 +186,7 @@ class _Areas extends React.Component {
             mapTo()
         )
 
-        withSubscription(
+        addSubscription(
             sourceDragStart$.subscribe(
                 value => this.onSourceDragStart(value)
             ),
