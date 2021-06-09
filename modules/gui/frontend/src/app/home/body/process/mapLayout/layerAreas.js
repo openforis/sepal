@@ -1,3 +1,4 @@
+import {selectFrom} from 'stateUtils'
 import _ from 'lodash'
 import guid from 'guid'
 
@@ -6,11 +7,13 @@ export const validAreas = areas => {
     const size = _.size(areas)
     if (size > 1) {
         return ['center', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-left', 'left', 'top-left']
-    }
-    if (size > 0) {
+    } else if (size === 1 && !selectFrom(areas, 'center.imageLayer.sourceId')) {
+        return ['center']
+    } else if (size > 0) {
         return ['center', 'top', 'right', 'bottom', 'left']
+    } else {
+        return ['center']
     }
-    return ['center']
 }
 
 export const assignArea = ({areas, area, value}) => {

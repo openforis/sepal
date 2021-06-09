@@ -61,12 +61,18 @@ class _Areas extends React.Component {
 
     renderCurrentAreas() {
         const {layers: {areas}} = this.props
-        const {nextAreas, dragging, hovering} = this.state
+        const {nextAreas, dragMode, dragging, hovering, currentAreas} = this.state
         const hidden = !!(dragging && hovering && nextAreas)
         return (
-            <div className={hidden ? styles.hidden : null}>
-                {this.renderAreas(areas, true)}
-            </div>
+            <React.Fragment>
+                {currentAreas && !hidden && !hovering && dragging && dragMode === 'moving'
+                    ? this.renderAreas(currentAreas, false)
+                    : null
+                }
+                <div className={hidden || (!hovering && dragging && dragMode === 'moving') ? styles.hidden : null}>
+                    {this.renderAreas(areas, true)}
+                </div>
+            </React.Fragment>
         )
     }
 
@@ -143,8 +149,6 @@ class _Areas extends React.Component {
                         removeTooltip={msg('map.layout.area.remove.tooltip')}
                         drag$={this.areaDrag$}
                         dragValue={area}
-                        // unsafeRemove
-                        // onRemove={() => this.removeArea(area)}
                     />
                 </div>
             )
@@ -252,6 +256,8 @@ class _Areas extends React.Component {
         if (hovering) {
             this.updateAreas(nextAreas)
         } else if (dragMode === 'moving') {
+            // Moving an already added area. Not hovering -> dragged outside.
+            // This removes the area
             this.updateAreas(currentAreas)
         }
     }
