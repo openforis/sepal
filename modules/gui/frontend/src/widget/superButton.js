@@ -23,7 +23,7 @@ class _SuperButton extends React.Component {
     state = {
         expanded: false,
         dragging: false,
-        coords: null,
+        position: null,
         dragHandleHover: false
     }
 
@@ -186,17 +186,17 @@ class _SuperButton extends React.Component {
     }
 
     renderGhostButton() {
-        const {coords} = this.state
+        const {position} = this.state
         const {dragGhostClassName} = this.props
-        if (coords) {
+        if (position) {
             return (
                 <Portal type='global'>
                     <div className={styles.draggableContainer}>
                         <div
                             className={[styles.draggableGhost, dragGhostClassName].join(' ')}
                             style={{
-                                '--x': coords.x,
-                                '--y': coords.y
+                                '--x': position.x,
+                                '--y': position.y
                             }}>
                             {this.renderButton(false)}
                         </div>
@@ -338,8 +338,11 @@ class _SuperButton extends React.Component {
                     debounceTime(10),
                     distinctUntilChanged(),
                     map(coords => ({
-                        x: coords.x - offset.x,
-                        y: coords.y - offset.y
+                        coords,
+                        position: {
+                            x: coords.x - offset.x,
+                            y: coords.y - offset.y
+                        }
                     }))
                 )
             )
@@ -362,13 +365,13 @@ class _SuperButton extends React.Component {
 
     onDragStart() {
         const {drag$, dragValue, onDragStart} = this.props
-        this.setState({dragging: true, coords: null}, () => {
+        this.setState({dragging: true, position: null}, () => {
             drag$ && drag$.next({dragging: true, value: dragValue})
             onDragStart && onDragStart(dragValue)
         })
     }
 
-    onDragMove(coords) {
+    onDragMove({coords, position}) {
         const {drag$, onDrag} = this.props
         drag$ && drag$.next({coords})
         onDrag && onDrag(coords)
@@ -377,7 +380,7 @@ class _SuperButton extends React.Component {
 
     onDragEnd() {
         const {drag$, onDragEnd} = this.props
-        this.setState({dragging: false, coords: null}, () => {
+        this.setState({dragging: false, position: null}, () => {
             drag$ && drag$.next({dragging: false})
             onDragEnd && onDragEnd()
         })
