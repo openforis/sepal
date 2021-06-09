@@ -86,7 +86,7 @@ export const initializeLayers = ({recipeId, savedLayers, additionalFeatureLayerS
         labelsLayerSource,
         ...additionalFeatureLayerSources
     ]
-    const layers = savedLayers || {
+    const layers = (savedLayers && savedLayers.areas) || {
         areas: {
             'center': {
                 id: guid(),
