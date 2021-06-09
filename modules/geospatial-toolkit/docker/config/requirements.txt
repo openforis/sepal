@@ -29,7 +29,8 @@ sphinx-bootstrap-theme
 numpydoc
 
 ########  sepal modules  ########
-geemap==0.8.9
+# geemap==0.8.9
+git+git://github.com/giswqs/geemap.git
 Unidecode
 pyperclip
 python-dateutil
