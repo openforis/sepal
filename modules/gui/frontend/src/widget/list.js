@@ -22,7 +22,7 @@ class _ScrollableList extends React.Component {
                 <ScrollableContainer className={className}>
                     <Scrollable
                         className={styles.options}
-                        direction='xy'>
+                        direction='y'>
                         {scrollable =>
                             <List
                                 {...props}

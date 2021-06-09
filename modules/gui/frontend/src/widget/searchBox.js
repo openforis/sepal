@@ -66,12 +66,13 @@ class _SearchBox extends React.Component {
     }
 
     renderOptions() {
-        const {placement, options, optionsClassName, optionTooltipPlacement, alignment} = this.props
+        const {placement, options, optionsClassName, optionTooltipPlacement} = this.props
         return options && options.length
             ? (
                 <FloatingBox
                     element={this.containerRef.current}
                     placement={placement}
+                    alignment='fit'
                     onBlur={this.hideOptions}>
                     <ScrollableList
                         air='more'
@@ -82,7 +83,6 @@ class _SearchBox extends React.Component {
                         tooltipPlacement={optionTooltipPlacement}
                         autoHighlight
                         keyboard
-                        alignment={alignment}
                     />
                 </FloatingBox>
             )
@@ -175,5 +175,6 @@ SearchBox.propTypes = {
 }
 
 SearchBox.defaultProps = {
-    debounce: 250
+    debounce: 250,
+    value: ''
 }
