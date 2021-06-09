@@ -165,19 +165,20 @@ export class SepalMap {
 
     setZoom(zoom) {
         const {googleMap} = this
-        if (googleMap.getZoom() !== zoom) {
-            googleMap.setZoom(zoom)
+        const sanitizedZoom = Math.min(googleMap.maxZoom, Math.max(googleMap.minZoom, zoom))
+        if (googleMap.getZoom() !== sanitizedZoom) {
+            googleMap.setZoom(sanitizedZoom)
         }
     }
 
     zoomIn() {
         const {googleMap} = this
-        googleMap.setZoom(Math.min(googleMap.maxZoom, googleMap.getZoom() + 1))
+        this.setZoom(googleMap.getZoom() + 1)
     }
 
     zoomOut() {
         const {googleMap} = this
-        googleMap.setZoom(Math.max(googleMap.minZoom, googleMap.getZoom() - 1))
+        this.setZoom(googleMap.getZoom() - 1)
     }
 
     isMaxZoom() {
@@ -206,7 +207,6 @@ export class SepalMap {
         }
         google.maps.event.addListener(this.drawingManager, 'overlaycomplete', zoomAreaComplete)
         this.drawingManager.setMap(googleMap)
-
     }
 
     getZoomArea$() {
