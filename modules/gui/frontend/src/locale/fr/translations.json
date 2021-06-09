@@ -362,7 +362,7 @@
 		},
 		"legendBuilder": {
 			"addEntry": {
-				"tooltip": "Ajouter une entrée de légende",
+				"tooltip": "Ajouter une entrée de légende"
 			},
 			"colors": {
 				"colorPicker": {
