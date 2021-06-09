@@ -360,13 +360,22 @@ class _SuperButton extends React.Component {
 
         addSubscription(
             dragStart$.subscribe(
-                () => this.onDragStart()
+                ({position}) => {
+                    // console.log('dragStart')
+                    this.onDragStart({position})
+                }
             ),
             dragMove$.subscribe(
-                coords => this.onDragMove(coords)
+                ({coords, position}) => {
+                    // console.log('dragMove')
+                    this.onDragMove({coords, position})
+                }
             ),
             dragEnd$.subscribe(
-                () => this.onDragEnd()
+                () => {
+                    // console.log('dragEnd')
+                    this.onDragEnd()
+                }
             )
         )
     }
