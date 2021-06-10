@@ -7,7 +7,8 @@ import {compose} from 'compose'
 import {getRecipeType} from './recipeTypes'
 import {getTabsInfo} from 'widget/tabs/tabs'
 import {msg} from 'translate'
-import {saveRecipe} from './recipe'
+import {recipePath, saveRecipe} from './recipe'
+import {select} from '../../../../store'
 import CloseRecipe from './closeRecipe'
 import ProcessMenu from './processMenu'
 import React from 'react'
@@ -26,7 +27,7 @@ class Process extends React.Component {
                     isLandingTab={({type}) => !type}
                     tabActions={recipeId => this.renderMenu(recipeId)}
                     onTitleChanged={tab => saveRecipe(tab)}
-                    onClose={(recipe, close) => this.onCloseTab(recipe, close)}
+                    onClose={(tab, close) => this.onCloseTab(tab, close)}
                 >
                     {({id, type}) =>
                         <RecipeContext recipeId={id}>
@@ -69,8 +70,12 @@ class Process extends React.Component {
         )
     }
 
-    onCloseTab(recipe, close) {
+    onCloseTab(tab, close) {
         const {activator: {activatables: {closeRecipeDialog}}} = this.props
+        const recipe = {
+            ...select(recipePath(tab.id)),
+            title: tab.title
+        }
         const unsaved = recipe.ui && recipe.ui.unsaved && recipe.ui.initialized
         if (unsaved) {
             closeRecipeDialog.activate({recipe})
