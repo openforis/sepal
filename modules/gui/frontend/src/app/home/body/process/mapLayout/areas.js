@@ -149,7 +149,6 @@ class _Areas extends React.Component {
                         removeTooltip={msg('map.layout.area.remove.tooltip')}
                         drag$={this.areaDrag$}
                         dragValue={area}
-                        dragGhostClassName={styles.dragGhost}
                     />
                 </div>
             )

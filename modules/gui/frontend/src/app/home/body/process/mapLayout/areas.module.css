@@ -80,7 +80,3 @@
 .areaContent {
     pointer-events: all;
 }
-
-.dragGhost {
-    max-width: 30vw;;
-}
