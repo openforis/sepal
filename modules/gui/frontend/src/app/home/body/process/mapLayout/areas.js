@@ -254,7 +254,7 @@ class _Areas extends React.Component {
             dragValue: null
         })
         if (hovering) {
-            this.updateAreas(nextAreas)
+            nextAreas && this.updateAreas(nextAreas)
         } else if (dragMode === 'moving') {
             // Moving an already added area. Not hovering -> dragged outside.
             // This removes the area
