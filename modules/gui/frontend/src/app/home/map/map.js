@@ -352,7 +352,6 @@ class _Map extends React.Component {
 
     createMap(id, area, element, callback) {
         const {mapsContext: {createSepalMap}} = this.props
-
         log.debug(`${mapTag(this.state.mapId)} creating area ${area}`)
 
         const isOverlay = area === 'overlay'
@@ -380,14 +379,15 @@ class _Map extends React.Component {
         const subscriptions = [
             this.mouseDown$.subscribe(mouseDownArea => {
                 const {zoomArea, selectedZoomArea, drawPolygon} = this.state
+                const currentArea = this.getArea(id)
                 if (zoomArea) {
                     if (selectedZoomArea) {
-                        if (mouseDownArea === area && selectedZoomArea !== area) {
+                        if (mouseDownArea === currentArea && selectedZoomArea !== currentArea) {
                             this.zoomArea(false)
                         }
                     } else {
-                        if (mouseDownArea === area) {
-                            this.setState({selectedZoomArea: area})
+                        if (mouseDownArea === currentArea) {
+                            this.setState({selectedZoomArea: currentArea})
                         } else {
                             map.cancelZoomArea()
                         }
@@ -395,7 +395,7 @@ class _Map extends React.Component {
                 }
 
                 if (drawPolygon) {
-                    if (mouseDownArea !== area) {
+                    if (mouseDownArea !== currentArea) {
                         map.redrawPolygon()
                     }
                 }
