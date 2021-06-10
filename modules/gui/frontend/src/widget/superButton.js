@@ -17,7 +17,8 @@ import withSubscriptions from 'subscription'
 const EXPAND_DELAYED_TIMEOUT_MS = 1000
 
 class _SuperButton extends React.Component {
-    ref = React.createRef()
+    draggable = React.createRef()
+    draggableHandle = React.createRef()
     expand$ = new Subject()
 
     state = {
@@ -170,7 +171,7 @@ class _SuperButton extends React.Component {
             className
         ]).join(' ')
         return (
-            <div className={classNames}>
+            <div ref={this.draggable} className={classNames}>
                 {this.isDraggable() ? this.renderDragHandle(real) : null}
                 <div className={styles.main}>
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
@@ -185,7 +186,7 @@ class _SuperButton extends React.Component {
     renderDragHandle(real) {
         return (
             <div
-                ref={real ? this.ref : null}
+                ref={real ? this.draggableHandle : null}
                 className={styles.handle}
                 onMouseOver={() => this.setState({dragHandleHover: true})}
                 onMouseOut={() => this.setState({dragHandleHover: false})}
@@ -194,9 +195,9 @@ class _SuperButton extends React.Component {
     }
 
     renderGhostButton() {
-        const {position} = this.state
+        const {position, size} = this.state
         const {dragGhostClassName} = this.props
-        if (position) {
+        if (position && size) {
             return (
                 <Portal type='global'>
                     <div className={styles.draggableContainer}>
@@ -204,7 +205,9 @@ class _SuperButton extends React.Component {
                             className={[styles.draggableGhost, dragGhostClassName].join(' ')}
                             style={{
                                 '--x': position.x,
-                                '--y': position.y
+                                '--y': position.y,
+                                '--width': size.width,
+                                '--height': size.height
                             }}>
                             {this.renderButton(false)}
                         </div>
@@ -301,24 +304,25 @@ class _SuperButton extends React.Component {
 
     initializeDraggable() {
         const {addSubscription} = this.props
-        const draggable = this.ref.current
+        const draggable = this.draggable.current
+        const draggableHandle = this.draggableHandle.current
 
-        const handle = new Hammer(draggable)
+        const hammer = new Hammer(draggableHandle)
 
-        handle.get('pan').set({
+        hammer.get('pan').set({
             direction: Hammer.DIRECTION_ALL,
             // threshold: 0
         })
 
         const hold$ = merge(
-            fromEvent(draggable, 'mousedown'),
-            fromEvent(draggable, 'touchstart')
+            fromEvent(draggableHandle, 'mousedown'),
+            fromEvent(draggableHandle, 'touchstart')
         )
         const release$ = merge(
-            fromEvent(draggable, 'mouseup'),
-            fromEvent(draggable, 'touchend')
+            fromEvent(draggableHandle, 'mouseup'),
+            fromEvent(draggableHandle, 'touchend')
         )
-        const pan$ = fromEvent(handle, 'panstart panmove panend')
+        const pan$ = fromEvent(hammer, 'panstart panmove panend')
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
         const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
@@ -398,7 +402,7 @@ class _SuperButton extends React.Component {
 
     onDragEnd() {
         const {drag$, onDragEnd} = this.props
-        this.setState({dragging: false, position: null}, () => {
+        this.setState({dragging: false, position: null, size: null}, () => {
             drag$ && drag$.next({dragging: false})
             onDragEnd && onDragEnd()
         })

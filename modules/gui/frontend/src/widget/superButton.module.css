@@ -136,3 +136,8 @@ to prevent click-through from click-hold buttons */
     z-index: 1;
     width: fit-content;
 }
+
+.draggableGhost > * {
+    width: calc(var(--width) * 1px);
+    height: calc(var(--height) * 1px);
+}
