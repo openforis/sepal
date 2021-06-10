@@ -86,20 +86,22 @@ export const initializeLayers = ({recipeId, savedLayers, additionalFeatureLayerS
         labelsLayerSource,
         ...additionalFeatureLayerSources
     ]
-    const layers = savedLayers || {
-        areas: {
-            'center': {
-                id: guid(),
-                imageLayer: {
-                    sourceId: skipThis ? googleSatelliteImageLayerSource.id : recipeImageLayerSource.id
-                },
-                featureLayers: [
-                    {sourceId: aoiLayerSource.id}
-                ]
-            }
-        },
-        mode: 'stack'
-    }
+    const layers = savedLayers && savedLayers.areas
+        ? savedLayers
+        : {
+            areas: {
+                'center': {
+                    id: guid(),
+                    imageLayer: {
+                        sourceId: skipThis ? googleSatelliteImageLayerSource.id : recipeImageLayerSource.id
+                    },
+                    featureLayers: [
+                        {sourceId: aoiLayerSource.id}
+                    ]
+                }
+            },
+            mode: 'stack'
+        }
     const actionBuilder = recipeActionBuilder(recipeId)
     actionBuilder('INITIALIZE_LAYER_SOURCES')
         .setAll({
