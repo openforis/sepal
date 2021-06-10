@@ -24,9 +24,17 @@ class _SuperButton extends React.Component {
         expanded: false,
         dragging: false,
         position: null,
+        size: null,
         dragHandleHover: false
     }
 
+    constructor() {
+        super()
+        this.onDragStart = this.onDragStart.bind(this)
+        this.onDragMove = this.onDragMove.bind(this)
+        this.onDragEnd = this.onDragEnd.bind(this)
+    }
+    
     isExpandable() {
         const {clickToExpand, children} = this.props
         return clickToExpand && children
@@ -319,15 +327,23 @@ class _SuperButton extends React.Component {
         const dragStart$ = merge(hold$, panStart$).pipe(
             filter(({pageX, pageY}) => pageX && pageY),
             map(({pageX, pageY}) => {
-                const {x: clientX, y: clientY} = draggable.getBoundingClientRect()
+                const {x: clientX, y: clientY, width, height} = draggable.getBoundingClientRect()
                 const offset = {
                     x: Math.round(pageX - clientX),
                     y: Math.round(pageY - clientY)
                 }
                 return {
+                    coords: {
+                        x: pageX,
+                        y: pageY
+                    },
                     position: {
                         x: pageX - offset.x - 1,
                         y: pageY - offset.y - 1
+                    },
+                    size: {
+                        width,
+                        height
                     },
                     offset
                 }
@@ -359,31 +375,16 @@ class _SuperButton extends React.Component {
         const dragEnd$ = merge(release$, panEnd$)
 
         addSubscription(
-            dragStart$.subscribe(
-                ({position}) => {
-                    // console.log('dragStart')
-                    this.onDragStart({position})
-                }
-            ),
-            dragMove$.subscribe(
-                ({coords, position}) => {
-                    // console.log('dragMove')
-                    this.onDragMove({coords, position})
-                }
-            ),
-            dragEnd$.subscribe(
-                () => {
-                    // console.log('dragEnd')
-                    this.onDragEnd()
-                }
-            )
+            dragStart$.subscribe(this.onDragStart),
+            dragMove$.subscribe(this.onDragMove),
+            dragEnd$.subscribe(this.onDragEnd)
         )
     }
 
-    onDragStart({position}) {
+    onDragStart({coords, position, size}) {
         const {drag$, dragValue, onDragStart} = this.props
-        this.setState({dragging: true, position}, () => {
-            drag$ && drag$.next({dragging: true, value: dragValue})
+        this.setState({dragging: true, position, size}, () => {
+            drag$ && drag$.next({dragging: true, value: dragValue, coords})
             onDragStart && onDragStart(dragValue)
         })
     }
