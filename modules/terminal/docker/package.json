@@ -11,8 +11,8 @@
     "license": "ISC",
     "dependencies": {
         "express": "^4.17.1",
-        "express-ws": "^4.0.0",
-        "node-pty": "^0.9.0",
-        "rxjs": "^6.6.3"
+        "express-ws": "^5.0.2",
+        "node-pty": "^0.10.1",
+        "rxjs": "^7.1.0"
     }
 }
