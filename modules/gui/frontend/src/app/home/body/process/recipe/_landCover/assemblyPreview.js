@@ -4,7 +4,7 @@ import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
-import {withMapContext} from 'app/home/map/mapContext'
+import {withMap} from 'app/home/map/mapContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import Legend from './legend'
 import MapStatus from 'widget/mapStatus'
@@ -58,13 +58,13 @@ class AssemblyPreview extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {recipe, mapContext: {sepalMap}} = this.props
+        const {recipe, map} = this.props
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
         if (layerChanged) {
             this.updateLayer(previewRequest)
         }
-        sepalMap.hideLayer('preview', this.isHidden(recipe))
+        map.hideLayer('preview', this.isHidden(recipe))
     }
 
     render() {
@@ -105,16 +105,16 @@ class AssemblyPreview extends React.Component {
     }
 
     updateLayer(previewRequest) {
-        const {mapContext, componentWillUnmount$} = this.props
+        const {map, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
-            mapContext,
+            map,
             layerIndex: 1,
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
             progress$: this.progress$
         })
-        const changed = mapContext.sepalMap.setLayer({
+        const changed = map.setLayer({
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,
@@ -127,8 +127,8 @@ class AssemblyPreview extends React.Component {
     }
 
     reload() {
-        const {recipe, mapContext: {sepalMap}} = this.props
-        sepalMap.removeLayer('preview')
+        const {recipe, map} = this.props
+        map.removeLayer('preview')
         this.updateLayer(this.toPreviewRequest(recipe))
     }
 
@@ -201,6 +201,6 @@ AssemblyPreview.propTypes = {
 export default compose(
     AssemblyPreview,
     connect(mapStateToProps),
-    withMapContext(),
+    withMap(),
     withSubscriptions()
 )

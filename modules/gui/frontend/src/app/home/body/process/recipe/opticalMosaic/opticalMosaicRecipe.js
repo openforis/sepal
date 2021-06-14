@@ -1,6 +1,7 @@
 import {msg} from 'translate'
 import {recipeActionBuilder} from '../../recipe'
 import {selectFrom} from 'stateUtils'
+import {visualizations} from './visualizations'
 import _ from 'lodash'
 import api from 'api'
 import moment from 'moment'
@@ -51,20 +52,6 @@ export const RecipeActions = id => {
             .build()
 
     return {
-        setSceneAreasShown(shown) {
-            return set('SET_SCENE_AREAS_SHOWN', 'ui.sceneAreasShown', shown, {shown})
-        },
-        setBands(bands) {
-            // this is also available in mosaicRecipe
-            return setAll('SET_BANDS', {
-                'ui.bands.selection': bands
-            }, {bands})
-        },
-        setPanSharpen(enabled) {
-            return setAll('SET_PAN_SHARPEN', {
-                'ui.bands.panSharpen': enabled
-            }, {enabled})
-        },
         setSceneAreas(sceneAreas) {
             return set('SET_SCENE_AREAS', 'ui.sceneAreas', sceneAreas, {sceneAreas})
         },
@@ -119,12 +106,20 @@ export const RecipeActions = id => {
     }
 }
 
+export const getAllVisualizations = recipe => [
+    ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
+    ...visualizations[reflectance(recipe)],
+    ...visualizations.indexes,
+    ...(median(recipe) ? visualizations.metadata : [])
+]
+
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
+    const visualizations = getAllVisualizations(recipe)
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':
@@ -134,6 +129,7 @@ const submitRetrieveRecipeTask = recipe => {
                 image: {
                     recipe: _.omit(recipe, ['ui']),
                     bands: {selection: bands},
+                    visualizations,
                     scale
                 }
             }
@@ -141,6 +137,15 @@ const submitRetrieveRecipeTask = recipe => {
     return api.tasks.submit$(task).subscribe()
 }
 
+const reflectance = recipe => {
+    const corrections = selectFrom(recipe, 'model.compositeOptions.corrections')
+    return corrections.includes('SR') ? 'SR' : 'TOA'
+}
+
+const median = recipe => {
+    const compositeOptions = selectFrom(recipe, 'model.compositeOptions')
+    return compositeOptions.compose === 'MEDIAN'
+}
 export const inDateRange = (date, dates) => {
     date = moment(date, DATE_FORMAT)
     if (date.isBefore(fromDate(dates)) || date.isSameOrAfter(toDate(dates)))

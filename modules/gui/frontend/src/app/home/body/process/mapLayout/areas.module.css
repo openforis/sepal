@@ -1,8 +1,10 @@
+
 .container {
     display: flex;
     flex-grow: 1;
     position: relative;
     user-select: none;
+    overflow: hidden;
 }
 
 .container.moving {
@@ -36,7 +38,6 @@
 
 .center {
     grid-template-rows: 1fr;
-    grid-template-rows: 1fr;
 }
 
 .topBottom {
@@ -58,10 +59,18 @@
     align-items: center;
     justify-content: center;
     padding: .5rem;
+    overflow: hidden;
 }
 
+.area * {
+    overflow: hidden;
+}
 .hovering .area.highlighted {
     background-color: hsla(240, 100%, 60%, .75);
+}
+
+.hovering .area.highlighted .areaContent {
+    display: none;
 }
 
 .area.assigned {
@@ -70,8 +79,4 @@
 
 .areaContent {
     pointer-events: all;
-}
-
-.dragging .areaContent {
-    pointer-events: none;
 }

@@ -1,11 +1,11 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
+import {MapInfo} from 'app/home/map/mapInfo'
 import {RecipeState} from '../landCoverRecipe'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {withRecipePath} from 'app/home/body/process/recipe'
 import CompositesToolbar from './compositesToolbar'
-import MapScale from 'app/home/map/mapScale'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 import W from 'widget/workflow'
@@ -26,7 +26,7 @@ class LandCoverComposites extends React.Component {
             <W.Step>
                 <W.Content>
                     <MapToolbar statePath={[recipePath, 'ui']} labelLayerIndex={2}/>
-                    <MapScale/>
+                    <MapInfo/>
                     <CompositesToolbar recipeId={recipeId}/>
                 </W.Content>
                 <W.Bar>

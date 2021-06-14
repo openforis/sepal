@@ -96,13 +96,13 @@ const mapRecipeToProps = recipe => ({
 
 class TrainingDataSet extends React.Component {
     render() {
-        const {dataCollectionEvents, inputs} = this.props
+        const {dataCollectionManager, inputs} = this.props
 
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 placement='modal'
-                onApply={() => setTimeout(() => dataCollectionEvents.updateAll())}>
+                onApply={() => setTimeout(() => dataCollectionManager.updateAll())}>
                 <PanelSections
                     inputs={inputs}
                     sections={this.getSectionOptions()}
@@ -273,5 +273,5 @@ export default compose(
 )
 
 TrainingDataSet.propTypes = {
-    dataCollectionEvents: PropTypes.object.isRequired
+    dataCollectionManager: PropTypes.object.isRequired
 }

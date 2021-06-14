@@ -3,7 +3,6 @@ import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {delay} from 'rxjs/operators'
 import {msg} from 'translate'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -23,7 +22,7 @@ class _ScrollableList extends React.Component {
                 <ScrollableContainer className={className}>
                     <Scrollable
                         className={styles.options}
-                        direction='xy'>
+                        direction='y'>
                         {scrollable =>
                             <List
                                 {...props}
@@ -44,7 +43,7 @@ export const ScrollableList = compose(
 ScrollableList.propTypes = {
     options: PropTypes.arrayOf(
         PropTypes.shape({
-            label: PropTypes.oneOfType([PropTypes.number, PropTypes.string, PropTypes.array]),
+            label: PropTypes.any,
             value: PropTypes.any
         })
     ).isRequired,
@@ -89,8 +88,6 @@ class List extends React.Component {
         const keymap = {
             Escape: onCancel ? onCancel : null,
             Enter: () => this.selectHighlighted(),
-            ArrowLeft: () => this.highlightPrevious(),
-            ArrowRight: () => this.highlightNext(),
             ArrowUp: () => this.highlightPrevious(),
             ArrowDown: () => this.highlightNext(),
             Home: () => this.highlightFirst(),
@@ -118,16 +115,6 @@ class List extends React.Component {
         )
     }
 
-    updateState(state, callback) {
-        const updatedState = (prevState, state) =>
-            _.isEqual(_.pick(prevState, _.keys(state)), state) ? null : state
-        this.setState(
-            prevState =>
-                updatedState(prevState, _.isFunction(state) ? state(prevState) : state),
-            callback
-        )
-    }
-
     renderOptions(options) {
         const {noResults} = this.props
         return options.length
@@ -137,7 +124,7 @@ class List extends React.Component {
 
     renderOption(option, index) {
         return option.value !== undefined && !option.disabled
-            ? this.renderSelectableOption(option)
+            ? this.renderSelectableOption(option, index)
             : option.group
                 ? this.renderGroup(option, index)
                 : this.renderNonSelectableOption(option, index)
@@ -146,7 +133,7 @@ class List extends React.Component {
     renderGroup(option, index) {
         const {alignment, air} = this.props
         return (
-            <li key={index}>
+            <li key={option.key || index}>
                 <Button
                     chromeless
                     look='transparent'
@@ -164,7 +151,7 @@ class List extends React.Component {
     renderNonSelectableOption(option, index) {
         const {alignment, air} = this.props
         return (
-            <li key={option.value || index}>
+            <li key={option.key || option.value || index}>
                 <Button
                     chromeless
                     look='transparent'
@@ -178,7 +165,7 @@ class List extends React.Component {
         )
     }
 
-    renderSelectableOption(option) {
+    renderSelectableOption(option, index) {
         const {selectedOption, tooltipPlacement, alignment, air} = this.props
         const {overrideHover} = this.state
         const selected = this.isSelected(option)
@@ -193,7 +180,7 @@ class List extends React.Component {
                 : null
         return (
             <li
-                key={option.value}
+                key={option.key || option.value || index}
                 data-option-value={option.value}
                 ref={ref}>
                 <Button
@@ -354,12 +341,13 @@ class List extends React.Component {
     initializeAutoCenter() {
         const {addSubscription, scrollable} = this.props
         addSubscription(
-            // [HACK] Add delay to fix bug where iOS doesn't capture next tap event
-            autoCenter$.pipe(delay(250)).subscribe(
-                reset => reset
+            autoCenter$
+                // [HACK] Add delay to fix bug where iOS doesn't capture next tap event
+                // .pipe(delay(250))
+                .subscribe(reset => reset
                     ? scrollable.reset(() => this.centerSelectedOption())
                     : this.centerSelectedOption()
-            )
+                )
         )
         this.highlightSelectedOption()
     }
@@ -384,7 +372,7 @@ class List extends React.Component {
     componentDidUpdate() {
         const {options} = this.props
         const {highlightedOption} = this.state
-        if (!_.find(options, highlightedOption)) {
+        if (highlightedOption && !_.find(options, ({value}) => value === highlightedOption.value)) {
             this.highlightSelectedOption()
         }
     }

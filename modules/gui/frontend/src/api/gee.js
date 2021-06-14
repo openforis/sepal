@@ -5,10 +5,19 @@ export default {
     preview$: ({recipe, ...params}) =>
         postJson$('/api/gee/preview', {body: {recipe, ...params}, retries: 0}),
     bands$: ({asset, recipe, ...params}) =>
-        postJson$('/api/gee/bands', {body: {asset, recipe, ...params}, retries: 0})
+        postJson$('/api/gee/bands', {body: {asset, recipe, ...params}})
+            .pipe(toResponse),
+    loadAssetVisualizations$: ({asset, ...params}) =>
+        postJson$('/api/gee/image/assetVisualizations', {body: {asset, ...params}})
+            .pipe(toResponse),
+    histogram$: ({recipe, band, aoi, ...params}) =>
+        postJson$('/api/gee/image/histogram', {body: {recipe, band, aoi, ...params}})
             .pipe(toResponse),
     imageMetadata$: ({asset, recipe}) =>
         postJson$('/api/gee/imageMetadata', {body: {asset, recipe}, retries: 0})
+            .pipe(toResponse),
+    distinctBandValues$: ({recipe, band, aoi}) =>
+        postJson$('/api/gee/image/distinctBandValues', {body: {recipe, band, aoi}, retries: 0})
             .pipe(toResponse),
     sampleImage$: ({asset, count, scale, classBand}) =>
         get$('/api/gee/image/sample',
@@ -35,8 +44,14 @@ export default {
                 })
             }
         }).pipe(toResponse),
-    recipeGeometry$: recipe =>
-        postJson$('/api/gee/recipe/geometry', {body: {recipe}})
+    recipeGeometry$: ({recipe, color, fillColor}) =>
+        postJson$('/api/gee/recipe/geometry', {body: {recipe, color, fillColor}})
+            .pipe(toResponse),
+    recipeBounds$: recipe =>
+        postJson$('/api/gee/recipe/bounds', {body: {recipe}})
+            .pipe(toResponse),
+    aoiBounds$: aoi =>
+        postJson$('/api/gee/aoi/bounds', {body: {aoi}})
             .pipe(toResponse),
     loadEETableColumns$: tableId =>
         get$('/api/gee/table/columns',

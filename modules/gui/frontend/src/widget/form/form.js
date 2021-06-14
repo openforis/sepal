@@ -104,7 +104,10 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                         state.gotDirty[name] = state.gotDirty[name] || (state.dirty && !prevState.dirty)
                         state.gotClean[name] = state.gotClean[name] || (!state.dirty && prevState.dirty)
                         return state
-                    }, () => this.notifyOnChange(name, value))
+                    }, () => {
+                        this.validateField(name)
+                        this.notifyOnChange(name, value)
+                    })
                 }
                 return this
             }

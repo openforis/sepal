@@ -7,21 +7,20 @@ import guid from 'guid'
 export const TileLayer = ({
     layerIndex,
     tileProvider,
-    mapContext,
+    map,
     minZoom = 0,
     maxZoom = 20,
     progress$
 }) => {
-    const mapLayer = new GoogleMapsLayer(tileProvider, {mapContext, minZoom, maxZoom}, progress$)
+    const {google} = map.getGoogle()
+    const mapLayer = new GoogleMapsLayer(tileProvider, {google, minZoom, maxZoom}, progress$)
     return {
         add() {
-            mapContext.googleMap.overlayMapTypes.setAt(layerIndex, mapLayer)
+            map.addToMap(layerIndex, mapLayer)
         },
 
         remove() {
-            // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
-            mapContext.googleMap.overlayMapTypes.insertAt(layerIndex, null)
-            mapContext.googleMap.overlayMapTypes.removeAt(layerIndex + 1)
+            map.removeFromMap(layerIndex)
         },
 
         hide(hidden) {
@@ -32,7 +31,7 @@ export const TileLayer = ({
 
 class GoogleMapsLayer {
     constructor(tileProvider, {
-        mapContext,
+        google,
         name,
         minZoom = 0,
         maxZoom = 20,
@@ -50,7 +49,7 @@ class GoogleMapsLayer {
         this.name = name
         this.minZoom = minZoom
         this.maxZoom = maxZoom
-        this.tileSize = new mapContext.google.maps.Size(
+        this.tileSize = new google.maps.Size(
             tileProvider.tileSize || 256,
             tileProvider.tileSize || 256
         )
@@ -62,20 +61,20 @@ class GoogleMapsLayer {
     }
 
     getTile({x, y}, zoom, doc) {
-        const tileRequest = this._toTileRequest({x, y, zoom, minZoom: this.minZoom, doc})
-        const tileElement = tileRequest.element
-        this.tileElementById[tileElement.id] = tileElement
-        if (tileRequest.outOfBounds)
-            return tileElement
+        const request = this._toTileRequest({x, y, zoom, minZoom: this.minZoom, doc})
+        const element = request.element
+        this.tileElementById[element.id] = element
+        if (request.outOfBounds)
+            return element
 
-        const tile$ = this.tileProvider.loadTile$(tileRequest)
-        tile$.subscribe(blob => renderImageBlob(tileElement, blob))
-        return tileElement
+        const tile$ = this.tileProvider.loadTile$(request)
+        tile$.subscribe(blob => this.tileProvider.renderTile({doc, element, blob}))
+        return element
     }
 
     releaseTile(tileElement) {
         delete this.tileElementById[tileElement.id]
-        this.tileProvider.releaseTile(tileElement.id)
+        this.tileProvider.releaseTile(tileElement)
     }
 
     setOpacity(opacity) {
@@ -97,15 +96,11 @@ class GoogleMapsLayer {
         if (x < 0) {
             x += maxCoord
         }
-        const element = doc.createElement('div')
-        element.style.opacity = this.opacity
         const id = [this.tileProvider.id, zoom, x, y, guid()].join('/')
-        element.id = id
+        const element = this.tileProvider.createElement(id, doc)
+        element.style.opacity = this.opacity
         const outOfBounds = zoom < minZoom || y < 0 || y >= maxCoord
         return {id, x, y, zoom, element, outOfBounds}
     }
 
 }
-
-const renderImageBlob = (element, blob) =>
-    element.innerHTML = `<img src="${(window.URL || window.webkitURL).createObjectURL(blob)}"/>`

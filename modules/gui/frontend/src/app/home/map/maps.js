@@ -1,4 +1,5 @@
 import {Loader} from 'google-maps'
+import {SepalMap} from './sepalMap'
 import {Subject, from, merge, of, zip} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -9,12 +10,11 @@ import {v4 as uuid} from 'uuid'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
 import api from 'api'
 
 const log = getLogger('maps')
 
-const GOOGLE_MAPS_VERSION = '3.42'
+const GOOGLE_MAPS_VERSION = '3.44'
 
 export const MapsContext = React.createContext()
 
@@ -22,20 +22,26 @@ export const withMapsContext = withContext(MapsContext, 'mapsContext')
 
 class _Maps extends React.Component {
     state = {
-        mapsContext: null
+        mapsContext: null,
+        center: {},
+        zoom: null,
+        scale: null
     }
 
-    currentBounds = null
+    currentView = null
     linkedMaps = new Set()
 
     constructor(props) {
         super(props)
         const {stream} = props
-        this.bounds$ = new Subject()
+        this.view$ = new Subject()
         stream('INIT_MAPS',
             this.initMaps$(),
-            mapsContext => this.setState({mapsContext})
+            mapsContext => this.setState(mapsContext)
         )
+        this.createGoogleMap = this.createGoogleMap.bind(this)
+        this.createSepalMap = this.createSepalMap.bind(this)
+        this.createMapContext = this.createMapContext.bind(this)
     }
 
     initMaps$() {
@@ -47,10 +53,9 @@ class _Maps extends React.Component {
                 )
             ),
             map(([google, norwayPlanet]) => ({
-                ...google,
-                ...norwayPlanet,
-                createGoogleMap: this.createGoogleMap.bind(this),
-                createMapContext: this.createMapContext.bind(this)
+                google,
+                norwayPlanet,
+                initialized: true
             }))
         )
     }
@@ -58,7 +63,7 @@ class _Maps extends React.Component {
     initGoogleMaps$(googleMapsApiKey) {
         const loader = new Loader(googleMapsApiKey, {
             version: GOOGLE_MAPS_VERSION,
-            libraries: ['drawing']
+            libraries: ['drawing', 'places']
         })
         return from(loader.load()).pipe(
             switchMap(google =>
@@ -71,8 +76,29 @@ class _Maps extends React.Component {
         return of({norwayPlanetApiKey})
     }
 
-    createGoogleMap(mapElement) {
-        const {mapsContext: {google}} = this.state
+    getStyleOptions(style = 'sepalStyle') {
+        // https://developers.google.com/maps/documentation/javascript/style-reference
+        switch (style) {
+        case 'sepalStyle':
+            return [
+                {stylers: [{visibility: 'simplified'}]},
+                {stylers: [{color: '#131314'}]},
+                {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
+                {featureType: 'poi', stylers: [{visibility: 'off'}]},
+                {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
+                {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
+            ]
+        case 'overlayStyle':
+            return [
+                {stylers: [{visibility: 'off'}]}
+            ]
+        default:
+            throw Error(`Unsupported map style ${style}`)
+        }
+    }
+
+    createGoogleMap(mapElement, options = {}, style = 'sepalStyle') {
+        const {google: {google}} = this.state
         const mapOptions = {
             zoom: 3,
             minZoom: 3,
@@ -86,41 +112,43 @@ class _Maps extends React.Component {
             rotateControl: false,
             fullscreenControl: false,
             backgroundColor: '#131314',
-            gestureHandling: 'greedy'
+            gestureHandling: 'greedy',
+            draggableCursor: 'pointer',
+            ...options
         }
-    
-        // https://developers.google.com/maps/documentation/javascript/style-reference
-        const sepalStyle = new google.maps.StyledMapType([
-            {stylers: [{visibility: 'simplified'}]},
-            {stylers: [{color: '#131314'}]},
-            {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
-            {featureType: 'poi', stylers: [{visibility: 'off'}]},
-            {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
-            {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
-        ], {name: 'sepalMap'})
-    
+
         const googleMap = new google.maps.Map(mapElement, mapOptions)
-    
-        googleMap.mapTypes.set('sepalStyle', sepalStyle)
-        googleMap.setMapTypeId('sepalStyle')
-    
+
+        googleMap.mapTypes.set('style', new google.maps.StyledMapType(this.getStyleOptions(style), {name: 'map'}))
+        googleMap.setMapTypeId('style')
+
         return googleMap
     }
-    
-    createMapContext(mapElement) {
-        const {mapsContext: {google, googleMapsApiKey, norwayPlanetApiKey}} = this.state
-        const mapId = uuid()
-        const googleMap = this.createGoogleMap(mapElement)
-        const requestedBounds$ = new Subject()
 
-        const bounds$ = merge(
-            this.bounds$.pipe(
-                debounceTime(250),
+    createSepalMap(mapElement, options, style) {
+        const {google: {google}} = this.state
+        const googleMap = this.createGoogleMap(mapElement, options, style)
+        return new SepalMap(google, googleMap)
+    }
+
+    getScale({center, zoom}) {
+        return Math.round(
+            156543.03392 * Math.cos(center.lat() * Math.PI / 180) / Math.pow(2, zoom)
+        )
+    }
+
+    createMapContext(mapId = uuid()) {
+        const {google: {googleMapsApiKey}, norwayPlanet: {norwayPlanetApiKey}} = this.state
+        const requestedView$ = new Subject()
+
+        const view$ = merge(
+            this.view$.pipe(
+                debounceTime(50),
                 distinctUntilChanged(),
                 filter(({mapId: id}) => mapId !== id),
-                map(({bounds}) => bounds)
+                map(({view}) => view)
             ),
-            requestedBounds$
+            requestedView$
         )
 
         const notifyLinked = linked => {
@@ -130,33 +158,47 @@ class _Maps extends React.Component {
                 this.linkedMaps.delete(mapId)
             }
             log.debug(`Linked maps: ${this.linkedMaps.size}`)
-            if (linked && this.linkedMaps.size > 1 && this.currentBounds) {
-                requestedBounds$.next(this.currentBounds)
+            if (linked && this.linkedMaps.size > 1 && this.currentView) {
+                requestedView$.next(this.currentView)
             }
         }
 
-        const updateBounds = bounds => {
-            const {currentBounds} = this
-            const {center, zoom} = bounds
+        const updateView = view => {
+            const {currentView} = this
+            const {center, zoom, bounds} = view
 
-            if (currentBounds && currentBounds.center.equals(center) && currentBounds.zoom === zoom) {
-                log.debug(`Bounds update from ${mapTag(mapId)} ignored`)
+            if (currentView && currentView.center.equals(center) && currentView.zoom === zoom) {
+                log.debug(`View update from ${mapTag(mapId)} ignored`)
             } else {
-                log.debug(`Bounds update from ${mapTag(mapId)} accepted`)
-                this.bounds$.next({mapId, bounds})
-                this.currentBounds = bounds
+                log.debug(`View update from ${mapTag(mapId)} accepted`)
+                this.view$.next({mapId, view})
+                this.currentView = view
+                const scale = this.getScale({center, zoom})
+                this.setState({
+                    center: center ? {lat: center.lat(), lng: center.lng()} : {},
+                    zoom,
+                    bounds,
+                    scale
+                })
             }
         }
-        
-        return {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds, notifyLinked}
+
+        return {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView, notifyLinked}
     }
 
     render() {
         const {children} = this.props
-        const {mapsContext} = this.state
-        const initialized = !!mapsContext
+        const {initialized, center, zoom, bounds, scale} = this.state
         return (
-            <MapsContext.Provider value={mapsContext}>
+            <MapsContext.Provider value={{
+                createGoogleMap: this.createGoogleMap,
+                createSepalMap: this.createSepalMap,
+                createMapContext: this.createMapContext,
+                center,
+                zoom,
+                bounds,
+                scale
+            }}>
                 {children(initialized)}
             </MapsContext.Provider>
         )

@@ -24,6 +24,7 @@ const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     latLng: selectFrom(recipe, 'ui.chartPixel'),
     dateFormat: selectFrom(recipe, 'model.source.dateFormat'),
+    baseBands: selectFrom(recipe, 'model.source.baseBands'),
     date: selectFrom(recipe, 'model.date.date'),
     harmonics: selectFrom(recipe, 'model.options.harmonics'),
     gapStrategy: selectFrom(recipe, 'model.options.gapStrategy'),
@@ -89,8 +90,8 @@ class ChartPixel extends React.Component {
     }
 
     renderBandOptions() {
-        const {recipe: {model: {source: {bands: sourceBands}}}, inputs: {selectedBand}} = this.props
-        const options = sourceBands.map(band => ({value: band, label: band.toUpperCase()}))
+        const {recipe: {model: {source: {baseBands}}}, inputs: {selectedBand}} = this.props
+        const options = baseBands.map(({name}) => ({value: name, label: name}))
         return (
             <Form.Buttons
                 className={styles.buttons}
@@ -131,10 +132,10 @@ class ChartPixel extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        const {baseBands, stream, recipe, latLng, inputs: {selectedBand}} = this.props
 
         if (!selectedBand.value)
-            selectedBand.set(recipe.model.source.bands[0])
+            selectedBand.set(baseBands[0].name)
 
         if (latLng && selectedBand.value && !_.isEqual(
             [recipe.model, latLng, selectedBand.value],
@@ -143,8 +144,6 @@ class ChartPixel extends React.Component {
             this.cancel$.next(true)
             this.setState({segments: undefined})
             stream('LOAD_CCDC_SEGMENTS',
-                // of({"changeProb":[1,0],"ndwi_coefs":[[-439223.70821076905,215.1876193089946,-727.3541532507837,594.7438108806724,-254.00319350911434,-136.8030553791102,74.63840046922108,54.40544556317409],[-393456.56899727084,191.7092607629123,-431.3701345238819,573.4262362206015,-151.68302134139591,-233.6967490670943,-7.038562898709706,-110.03688339229556]],"ndwi_magnitude":[-1698.4496494625705,0],"ndwi_rmse":[553.0643088514388,912.1285119549182],"numObs":[24,30],"tBreak":[2016.2974832740765,0],"tEnd":[2016.2536778322813,2020.678045727812],"tStart":[2013.8443731335717,2016.2974832740765]}).pipe(
-                //     delay(100),
                 loadCCDCSegments$({recipe, latLng, bands: [selectedBand.value]}).pipe(
                     takeUntil(this.cancel$)
                 ),

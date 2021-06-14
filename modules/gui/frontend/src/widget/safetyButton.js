@@ -31,11 +31,12 @@ export default class SafetyButton extends React.Component {
     }
 
     render() {
-        const {skipConfirmation, onConfirm, onClick: _unused1, onClickHold: _unused2, ...otherProps} = this.props
+        const {size, skipConfirmation, onConfirm, onClick: _unused1, onClickHold: _unused2, ...otherProps} = this.props
         const {askConfirmation} = this.state
         return (
             <React.Fragment>
                 <Button
+                    size={size}
                     onClick={() => skipConfirmation ? onConfirm() : this.askConfirmation(true)}
                     onClickHold={() => onConfirm()}
                     {...otherProps}
@@ -50,6 +51,7 @@ SafetyButton.propTypes = {
     message: PropTypes.string.isRequired,
     onConfirm: PropTypes.func.isRequired,
     confirmLabel: PropTypes.string,
+    size: PropTypes.oneOf(['x-small', 'small', 'normal', 'large', 'x-large', 'xx-large']),
     skipConfirmation: PropTypes.bool,
     title: PropTypes.string
 }

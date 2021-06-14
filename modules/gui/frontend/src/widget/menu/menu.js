@@ -1,26 +1,33 @@
-import {Panel} from 'widget/panel/panel'
+import Icon from '../icon'
 import React from 'react'
 import _ from 'lodash'
 import styles from './menu.module.css'
 
-const {MenuItem} = require('./menuItem')
-const MenuContext = require('./menuContext')
-
-export const Menu = ({position, close, className, children}) =>
-    <Panel
-        type={position}
-        className={className}>
-        <MenuContext.Provider value={{close}}>
-            <ul className={styles.menu}>
-                {children}
-            </ul>
-        </MenuContext.Provider>
-    </Panel>
+export const Menu = ({children}) =>
+    <ul className={styles.menu}>
+        {children}
+    </ul>
 
 const Separator = () =>
     <div className={styles.separator}/>
-
 Menu.Separator = Separator
+
+const MenuItem = ({selected, label, description, right, onClick}) =>
+    <li className={styles.item} onClick={() => {onClick && onClick()}}>
+        <div className={styles.left}>
+            {selected
+                ? <Icon name={'check'}/>
+                : null
+            }
+        </div>
+        <div className={styles.center}>
+            <div className={styles.label}>{label}</div>
+            <div className={styles.description}>{description}</div>
+        </div>
+        <div className={styles.right}>
+            {right}
+        </div>
+    </li>
 
 Menu.Item = MenuItem
 
@@ -38,23 +45,20 @@ Menu.Toggle = Toggle
 
 const SelectContext = React.createContext()
 
-const Select = ({label, selected, children, onSelect}) => {
-    return (
-        <SelectContext.Provider value={{
-            selected,
-            select: selected => onSelect(selected)
-        }}>
-            <div className={styles.group}>
-                {label
-                    ? <li className={styles.groupLabel}>{label}</li>
-                    : null}
-                <ul>
-                    {children}
-                </ul>
-            </div>
-        </SelectContext.Provider>
-    )
-}
+const Select = ({label, selected, children, onSelect}) =>
+    <SelectContext.Provider value={{
+        selected,
+        select: selected => onSelect(selected)
+    }}>
+        <div className={styles.group}>
+            {label
+                ? <li className={styles.groupLabel}>{label}</li>
+                : null}
+            <ul>
+                {children}
+            </ul>
+        </div>
+    </SelectContext.Provider>
 
 Menu.Select = Select
 

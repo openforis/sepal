@@ -78,11 +78,37 @@ to prevent click-through from click-hold buttons */
 }
 
 .draggable {
-    cursor: grab;
+    cursor: unset;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
 }
 
+
+.handle {
+    width: 1rem;
+    height: 100%;
+    cursor: grab;
+    margin: 0;
+    color: rgb(40%, 40%, 40%);
+}
+
+.handle::before {
+    content: '.. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..';
+    position: absolute;
+    display: flex;
+    align-items: center;
+    width: 1rem;
+    top: .5rem;
+    bottom: .5rem;
+    left: .25rem;
+    overflow: hidden;
+    line-height: .4rem;
+}
+
+
 .dragging {
-    opacity: .25;
+    opacity: .70;
 }
 
 .dragHandle {
@@ -91,4 +117,27 @@ to prevent click-through from click-hold buttons */
 
 .unclickable {
     cursor: default;
+}
+
+.draggableContainer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.draggableGhost {
+    position: absolute;
+    top: calc(var(--y) * 1px);
+    left: calc(var(--x) * 1px);
+    z-index: 1;
+    width: fit-content;
+}
+
+.draggableGhost > * {
+    width: calc(var(--width) * 1px);
+    height: calc(var(--height) * 1px);
 }

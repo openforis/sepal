@@ -15,10 +15,13 @@ const test = name => {
     })
 }
 
-test('format.number({value: ${params.value}, scale: \'${params.scale}\'}) === ${result}')
+test('format.number(${JSON.stringify(params)}) === ${result}')
     .assert(({params, result}) => expect(format.number(params)).toEqual(result))
     .where(
-        // {params: {value: 0}, result: '0'},
+        {params: {value: null}, result: ''},
+        {params: {value: null, defaultValue: 'n/a'}, result: 'n/a'},
+        {params: {value: null, defaultValue: 'n/a', padding: true}, result: '   n/a'},
+        {params: {value: 0}, result: '0'},
         {params: {value: 1000000}, result: '1.00M'},
         {params: {value: 100000}, result: '100k'},
         {params: {value: 10000}, result: '10.0k'},
@@ -74,6 +77,32 @@ test('format.number({value: ${params.value}, scale: \'${params.scale}\'}) === ${
         {params: {value: 98765, minScale: 'M'}, result: '0.10M'},
         {params: {value: 987654, minScale: 'M'}, result: '0.99M'},
         {params: {value: 987654, unit: 'B', minScale: 'M'}, result: '0.99 MB'},
+        {params: {value: 0, padding: true}, result: '     0'},
+        {params: {value: 1000000, padding: true}, result: ' 1.00M'},
+        {params: {value: 100000, padding: true}, result: '  100k'},
+        {params: {value: 10000, padding: true}, result: ' 10.0k'},
+        {params: {value: 1000, padding: true}, result: ' 1.00k'},
+        {params: {value: 100, padding: true}, result: '   100'},
+        {params: {value: 10, padding: true}, result: '  10.0'},
+        {params: {value: 1, padding: true}, result: '  1.00'},
+        {params: {value: .1, padding: true}, result: '  0.10'},
+        {params: {value: .01, padding: true}, result: '  0.01'},
+        {params: {value: .001, padding: true}, result: '  0.00'},
+        {params: {value: .0001, padding: true}, result: '  0.00'},
+        {params: {value: .1, minScale: 'p', padding: true}, result: '  100m'},
+        {params: {value: .01, minScale: 'p', padding: true}, result: ' 10.0m'},
+        {params: {value: .001, minScale: 'p', padding: true}, result: ' 1.00m'},
+        {params: {value: .0001, minScale: 'p', padding: true}, result: '  100µ'},
+        {params: {value: .00001, minScale: 'p', padding: true}, result: ' 10.0µ'},
+        {params: {value: .000001, minScale: 'p', padding: true}, result: ' 1.00µ'},
+        {params: {value: 1000, padding: true, unit: 'B'}, result: ' 1.00 kB'},
+        {params: {value: -1000, padding: true, unit: 'B'}, result: '-1.00 kB'},
+        {params: {prefix: '£', value: 1000, padding: true}, result: ' £1.00k'},
+        {params: {prefix: '£', value: -1000, padding: true}, result: '-£1.00k'},
+        {params: {prefix: '£', value: 1000, padding: true, unit: 'B'}, result: ' £1.00 kB'},
+        {params: {prefix: '£', value: -1000, padding: true, unit: 'B'}, result: '-£1.00 kB'},
+        {params: {prefix: '£', value: 1000, padding: true, unit: 'B', suffix: '/hr'}, result: ' £1.00 kB/hr'},
+        {params: {prefix: '£', value: -1000, padding: true, unit: 'B', suffix: '/hr'}, result: '-£1.00 kB/hr'},
     )
 
 test('format.dollars({value: ${params.value}) === ${result}')

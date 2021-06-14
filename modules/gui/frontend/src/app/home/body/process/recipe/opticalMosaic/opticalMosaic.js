@@ -1,75 +1,54 @@
-import {Content, SectionLayout} from 'widget/sectionLayout'
+import {Aoi} from '../aoi'
+import {Map} from 'app/home/map/map'
 import {RecipeActions, defaultModel} from './opticalMosaicRecipe'
+import {SceneAreas} from './sceneAreas'
 import {compose} from 'compose'
+import {initializeLayers} from '../recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
 import AutoSelectScenes from './autoSelectScenes'
-import BandSelection from './bandSelection'
-import MapScale from 'app/home/map/mapScale'
-import MapToolbar from 'app/home/map/mapToolbar'
 import MosaicToolbar from './panels/opticalMosaicToolbar'
-import OpticalMosaicPreview from './opticalMosaicPreview'
 import React from 'react'
-import SceneAreas from './sceneAreas'
 import SceneDeselection from './sceneDeselection'
 import SceneSelection from './sceneSelection'
-import styles from './opticalMosaic.module.css'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
-    aoi: selectFrom(recipe, 'model.aoi')
+    aoi: selectFrom(recipe, 'model.aoi'),
+    savedLayers: selectFrom(recipe, 'layers')
 })
 
-class _Mosaic extends React.Component {
+class _OpticalMosaic extends React.Component {
     constructor(props) {
         super(props)
-        const {recipeId} = props
+        const {savedLayers, recipeId} = props
         const recipeActions = RecipeActions(recipeId)
-        recipeActions.setSceneAreasShown(true).dispatch()
-        recipeActions.setBands('red, green, blue').dispatch()
         recipeActions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
+        initializeLayers({recipeId, savedLayers})
     }
 
     render() {
-        const {recipeContext: {statePath}, initialized} = this.props
+        const {initialized, aoi} = this.props
         return (
-            <SectionLayout>
-                <Content>
-                    <div className={styles.mosaic}>
-                        <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
-                        <MapScale/>
-                        <MosaicToolbar/>
-                        {initialized
-                            ? <React.Fragment>
-                                <OpticalMosaicPreview/>
-                                <SceneAreas/>
-                                <AutoSelectScenes/>
-                                <SceneSelection/>
-                                <SceneDeselection/>
-                                <BandSelection/>
-                            </React.Fragment>
-                            : null}
-                    </div>
-                </Content>
-            </SectionLayout>
+            <Map>
+                <MosaicToolbar/>
+                <Aoi value={aoi}/>
+                {initialized
+                    ? <React.Fragment>
+                        <SceneAreas/>
+                        <AutoSelectScenes/>
+                        <SceneSelection/>
+                        <SceneDeselection/>
+                    </React.Fragment>
+                    : null}
+            </Map>
         )
-    }
-
-    componentDidMount() {
-        const {mapContext, aoi} = this.props
-        setAoiLayer({
-            mapContext,
-            aoi,
-            // destroy$: componentWillUnmount$, [TODO] check
-            onInitialized: () => mapContext.sepalMap.fitLayer('aoi')
-        })
     }
 }
 
-const Mosaic = compose(
-    _Mosaic,
+const OpticalMosaic = compose(
+    _OpticalMosaic,
     recipe({defaultModel, mapRecipeToProps})
 )
 
@@ -81,6 +60,6 @@ export default () => ({
         tabPlaceholder: msg('process.mosaic.tabPlaceholder'),
     },
     components: {
-        recipe: Mosaic
+        recipe: OpticalMosaic
     }
 })

@@ -1,5 +1,6 @@
 import {msg} from 'translate'
 import {recipeActionBuilder} from '../../recipe'
+import {selectFrom} from 'stateUtils'
 import _ from 'lodash'
 import api from 'api'
 
@@ -45,6 +46,13 @@ export const RecipeActions = id => {
 export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
     api.gee.loadCCDCSegments$({recipe: recipe.model.source, latLng, bands})
 
+export const getAllVisualizations = recipe => {
+    return [
+        ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
+        ...selectFrom(recipe, 'model.source.visualizations') || []
+    ]
+}
+
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const scale = recipe.ui.retrieveOptions.scale
@@ -52,31 +60,41 @@ const submitRetrieveRecipeTask = recipe => {
     const taskTitle = msg(['process.ccdcSlice.panel.retrieve.task', destination], {name})
     const {baseBands, bandTypes, segmentBands} = recipe.ui.retrieveOptions
     const bandTypeSuffixes = {
-        VALUE: '',
-        RMSE: '_rmse',
-        MAGNITUDE: '_magnitude',
-        INTERCEPT: '_intercept',
-        SLOPE: '_slope',
-        PHASE1: '_phase_1',
-        PHASE2: '_phase_2',
-        PHASE3: '_phase_3',
-        AMPLITUDE1: '_amplitude_1',
-        AMPLITUDE2: '_amplitude_2',
-        AMPLITUDE3: '_amplitude_3',
+        value: '',
+        rmse: '_rmse',
+        magnitude: '_magnitude',
+        intercept: '_intercept',
+        slope: '_slope',
+        phase_1: '_phase_1',
+        phase_2: '_phase_2',
+        phase_3: '_phase_3',
+        amplitude_1: '_amplitude_1',
+        amplitude_2: '_amplitude_2',
+        amplitude_3: '_amplitude_3',
     }
+    const allBands = [
+        ...recipe.model.source.bands,
+        ...recipe.model.source.baseBands.map(({name}) => name)
+    ]
     const bands = [
         ...baseBands
             .map(baseBand => bandTypes.map(bandType => `${baseBand}${bandTypeSuffixes[bandType]}`))
             .flat(),
+        ...baseBands.map(({name}) => name),
         ...segmentBands
-    ]
+    ].filter(band => allBands.includes(band))
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':
             {
                 title: taskTitle,
                 description: name,
-                image: {recipe: _.omit(recipe, ['ui']), bands: {selection: bands, baseBands}, scale}
+                image: {
+                    recipe: _.omit(recipe, ['ui']),
+                    bands: {selection: bands, baseBands},
+                    visualizations: getAllVisualizations(recipe),
+                    scale
+                }
             }
     }
     return api.tasks.submit$(task).subscribe()

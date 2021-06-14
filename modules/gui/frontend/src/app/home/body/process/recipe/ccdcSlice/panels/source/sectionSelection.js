@@ -1,8 +1,7 @@
 import {Form} from 'widget/form/form'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {removeAoiLayer} from 'app/home/map/aoiLayer'
-import {withMapContext} from 'app/home/map/mapContext'
+import {withMap} from 'app/home/map/mapContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -29,16 +28,11 @@ class _SectionSelection extends React.Component {
                 options={options}/>
         )
     }
-
-    componentDidUpdate() {
-        const {mapContext: {sepalMap}} = this.props
-        removeAoiLayer(sepalMap)
-    }
 }
 
 export const SectionSelection = compose(
     _SectionSelection,
-    withMapContext()
+    withMap()
 )
 
 SectionSelection.propTypes = {

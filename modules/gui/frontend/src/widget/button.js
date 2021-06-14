@@ -40,7 +40,8 @@ class _Button extends React.Component {
     }
 
     nonInteractive() {
-        return !this.active() || !this.linked()
+        const {tooltip, tooltipPanel} = this.props
+        return !this.active() || !(this.linked() || tooltip || tooltipPanel)
     }
 
     classNames() {
@@ -160,9 +161,18 @@ class _Button extends React.Component {
     }
 
     renderTooltip(contents) {
-        const {tooltip, tooltipPlacement, tooltipDisabled} = this.props
-        return this.active() && tooltip && !tooltipDisabled ? (
-            <Tooltip msg={tooltip} placement={tooltipPlacement}>
+        const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay} = this.props
+        const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
+        const message = tooltipPanel || tooltip
+        return this.active() && message && !tooltipDisabled ? (
+            <Tooltip
+                msg={message}
+                placement={tooltipPlacement}
+                delay={tooltipDelay}
+                hoverTrigger={!tooltipPanel}
+                clickTrigger={!this.linked()}
+                overlayInnerStyle={overlayInnerStyle}
+            >
                 {contents}
             </Tooltip>
         ) : contents
@@ -338,12 +348,14 @@ Button.propTypes = {
     route: PropTypes.string,
     shape: PropTypes.oneOf(['rectangle', 'pill', 'circle', 'none']),
     shown: PropTypes.any,
-    size: PropTypes.oneOf(['small', 'normal', 'large', 'x-large', 'xx-large']),
+    size: PropTypes.oneOf(['x-small', 'small', 'normal', 'large', 'x-large', 'xx-large']),
     stopPropagation: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.any,
+    tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
-    tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
+    tooltipPanel: PropTypes.any,
+    tooltipPlacement: PropTypes.any,
     type: PropTypes.oneOf(['button', 'submit', 'reset']),
     width: PropTypes.oneOf(['fit', 'fill']),
     onClick: PropTypes.func,

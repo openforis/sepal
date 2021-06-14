@@ -27,8 +27,15 @@ const fontAwesomeCollection = type => {
 
 export default class Icon extends React.Component {
     render() {
-        return this.renderTooltip(
-            this.renderIcon()
+        const {tooltip, tooltipPlacement, tooltipDelay, tooltipDisabled} = this.props
+        return (
+            <Tooltip
+                msg={tooltip}
+                placement={tooltipPlacement}
+                delay={tooltipDelay}
+                disabled={tooltipDisabled}>
+                {this.renderIcon()}
+            </Tooltip>
         )
     }
 
@@ -39,17 +46,6 @@ export default class Icon extends React.Component {
             pulse ? styles.pulse : null,
             className
         ].join(' ')
-    }
-
-    renderTooltip(contents) {
-        const {tooltip, tooltipPlacement, tooltipDisabled} = this.props
-        return tooltip && !tooltipDisabled
-            ? (
-                <Tooltip msg={tooltip} placement={tooltipPlacement}>
-                    {contents}
-                </Tooltip>
-            )
-            : contents
     }
 
     renderIcon() {
@@ -84,6 +80,7 @@ Icon.propTypes = {
     size: PropTypes.string,
     spin: PropTypes.any,
     tooltip: PropTypes.any,
+    tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
     tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
     type: PropTypes.oneOf(['solid', 'regular', 'brands']),

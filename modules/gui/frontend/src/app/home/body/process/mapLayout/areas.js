@@ -5,21 +5,15 @@ import {SuperButton} from 'widget/superButton'
 import {assignArea, removeArea, validAreas} from './layerAreas'
 import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, mapTo} from 'rxjs/operators'
+import {getImageLayerSource} from 'app/home/map/imageLayerSource/imageLayerSource'
 import {msg} from 'translate'
+import {withLayers} from '../withLayers'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './areas.module.css'
 import withSubscription from 'subscription'
-
-const mapRecipeToProps = recipe => {
-    const map = recipe.map || {}
-    return {
-        layers: map.layers || [],
-        areas: map.areas || {}
-    }
-}
 
 class _Areas extends React.Component {
     state = {
@@ -34,15 +28,15 @@ class _Areas extends React.Component {
     }
 
     areaRefs = {
-        center: React.createRef(),
-        top: React.createRef(),
-        topRight: React.createRef(),
-        right: React.createRef(),
-        bottomRight: React.createRef(),
-        bottom: React.createRef(),
-        bottomLeft: React.createRef(),
-        left: React.createRef(),
-        topLeft: React.createRef(),
+        'center': React.createRef(),
+        'top': React.createRef(),
+        'top-right': React.createRef(),
+        'right': React.createRef(),
+        'bottom-right': React.createRef(),
+        'bottom': React.createRef(),
+        'bottom-left': React.createRef(),
+        'left': React.createRef(),
+        'top-left': React.createRef(),
     }
 
     areaDrag$ = new Subject()
@@ -66,13 +60,19 @@ class _Areas extends React.Component {
     }
 
     renderCurrentAreas() {
-        const {areas} = this.props
-        const {nextAreas, dragging, hovering} = this.state
+        const {layers: {areas}} = this.props
+        const {nextAreas, dragMode, dragging, hovering, currentAreas} = this.state
         const hidden = !!(dragging && hovering && nextAreas)
         return (
-            <div className={hidden ? styles.hidden : null}>
-                {this.renderAreas(areas, true)}
-            </div>
+            <React.Fragment>
+                {currentAreas && !hidden && !hovering && dragging && dragMode === 'moving'
+                    ? this.renderAreas(currentAreas, false)
+                    : null
+                }
+                <div className={hidden || (!hovering && dragging && dragMode === 'moving') ? styles.hidden : null}>
+                    {this.renderAreas(areas, true)}
+                </div>
+            </React.Fragment>
         )
     }
 
@@ -105,10 +105,10 @@ class _Areas extends React.Component {
                 </div>
                 <div className={styles.layoutWrapper}>
                     <div className={[styles.layout, styles.corners].join(' ')}>
-                        {this.renderArea(areas, current, 'topLeft')}
-                        {this.renderArea(areas, current, 'topRight')}
-                        {this.renderArea(areas, current, 'bottomLeft')}
-                        {this.renderArea(areas, current, 'bottomRight')}
+                        {this.renderArea(areas, current, 'top-left')}
+                        {this.renderArea(areas, current, 'top-right')}
+                        {this.renderArea(areas, current, 'bottom-left')}
+                        {this.renderArea(areas, current, 'bottom-right')}
                     </div>
                 </div>
             </React.Fragment>
@@ -118,7 +118,9 @@ class _Areas extends React.Component {
     renderArea(areas, current, area) {
         const {dragging, closestArea} = this.state
         const highlighted = !current && dragging && area === closestArea
-        const value = areas[area]
+        const sourceId = areas[area]
+            ? areas[area].imageLayer.sourceId
+            : null
         return (
             <div
                 ref={current ? this.areaRefs[area] : null}
@@ -126,29 +128,27 @@ class _Areas extends React.Component {
                 className={[
                     styles.area,
                     highlighted ? styles.highlighted : null,
-                    value ? styles.assigned : null
+                    sourceId ? styles.assigned : null
                 ].join(' ')}>
-                {this.renderLayerInfo(area, value)}
+                {this.renderSourceInfo(area, sourceId)}
             </div>
         )
     }
 
-    renderLayerInfo(area, layerId) {
-        const {layers} = this.props
-        const layer = layers.find(layer => layer.id === layerId)
-        return layer && layer.id
+    renderSourceInfo(area, sourceId) {
+        const {recipe, imageLayerSources} = this.props
+        const source = imageLayerSources.find(source => source.id === sourceId)
+        const {description} = getImageLayerSource({recipe, source})
+        return source
             ? (
                 <div className={styles.areaContent}>
                     <SuperButton
-                        title={layer.type}
-                        description={layer.id.substr(-8)}
-                        editTooltip={msg('map.layout.area.edit.tooltip')}
+                        title={msg(`imageLayerSources.${source.type}.label`)}
+                        description={description}
                         removeMessage={msg('map.layout.area.remove.message')}
                         removeTooltip={msg('map.layout.area.remove.tooltip')}
                         drag$={this.areaDrag$}
                         dragValue={area}
-                        onEdit={() => null}
-                        onRemove={() => this.removeArea(area)}
                     />
                 </div>
             )
@@ -156,28 +156,22 @@ class _Areas extends React.Component {
     }
 
     componentDidMount() {
-        const {areas, recipeActionBuilder} = this.props
-        recipeActionBuilder('SAVE_AREAS')
-            .set('map.areas', areas)
-            .dispatch()
         this.initializeDragDrop()
     }
 
     initializeDragDrop() {
-        const {layerDrag$} = this.props
+        const {sourceDrag$, addSubscription} = this.props
         const {areaDrag$} = this
 
-        const drag$ = merge(layerDrag$, areaDrag$)
+        const drag$ = merge(sourceDrag$, areaDrag$)
 
-        const layerDragStart$ = layerDrag$.pipe(
+        const sourceDragStart$ = sourceDrag$.pipe(
             filter(({dragging}) => dragging === true),
-            map(({value}) => value),
-            map(layerId => layerId)
+            map(({value}) => value)
         )
         const areaDragStart$ = areaDrag$.pipe(
             filter(({dragging}) => dragging === true),
-            map(({value}) => value),
-            map(area => area)
+            map(({value}) => value)
         )
 
         const dragMove$ = drag$.pipe(
@@ -190,10 +184,10 @@ class _Areas extends React.Component {
             filter(({dragging}) => dragging === false),
             mapTo()
         )
-        
-        withSubscription(
-            layerDragStart$.subscribe(
-                value => this.onLayerDragStart(value)
+
+        addSubscription(
+            sourceDragStart$.subscribe(
+                value => this.onSourceDragStart(value)
             ),
             areaDragStart$.subscribe(
                 area => this.onAreaDragStart(area)
@@ -207,18 +201,18 @@ class _Areas extends React.Component {
         )
     }
 
-    onLayerDragStart(layerId) {
-        const {areas} = this.props
+    onSourceDragStart(sourceId) {
+        const {layers: {areas}} = this.props
         this.onDragStart({
             dragging: true,
             dragMode: 'adding',
-            dragValue: layerId,
+            dragValue: sourceId,
             currentAreas: areas
         })
     }
 
     onAreaDragStart(area) {
-        const {areas} = this.props
+        const {layers: {areas}} = this.props
         this.onDragStart({
             dragging: true,
             dragMode: 'moving',
@@ -244,8 +238,8 @@ class _Areas extends React.Component {
             const nextAreas = assignArea({
                 areas: currentAreas,
                 area: closestArea,
-                value: dragValue}
-            )
+                value: dragValue
+            })
             this.setState({
                 closestArea,
                 nextAreas
@@ -254,20 +248,24 @@ class _Areas extends React.Component {
     }
 
     onDragEnd() {
-        const {hovering, nextAreas} = this.state
+        const {dragMode, hovering, currentAreas, nextAreas} = this.state
         this.setState({
             dragging: false,
             dragValue: null
         })
         if (hovering) {
-            this.updateAreas(nextAreas)
+            nextAreas && this.updateAreas(nextAreas)
+        } else if (dragMode === 'moving') {
+            // Moving an already added area. Not hovering -> dragged outside.
+            // This removes the area
+            this.updateAreas(currentAreas)
         }
     }
 
     updateAreas(areas) {
         const {recipeActionBuilder} = this.props
-        recipeActionBuilder('UPDATE_AREAS')
-            .set('map.areas', areas)
+        recipeActionBuilder('UPDATE_LAYER_AREAS')
+            .set('layers.areas', areas)
             .dispatch()
     }
 
@@ -300,23 +298,24 @@ class _Areas extends React.Component {
     }
 
     removeArea(area) {
-        const {areas, recipeActionBuilder} = this.props
+        const {layers: {areas}, recipeActionBuilder} = this.props
         recipeActionBuilder('REMOVE_AREA')
-            .set('map.areas', removeArea({areas, area}))
+            .set('layers.areas', removeArea({areas, area}))
             .dispatch()
     }
 }
 
 export const Areas = compose(
     _Areas,
-    withRecipe(mapRecipeToProps),
+    withLayers(),
+    withRecipe(recipe => ({recipe})),
     withSubscription()
 )
 
 Areas.propTypes = {
-    areas: PropTypes.shape({
-        area: PropTypes.oneOf(['center', 'top', 'topRight', 'right', 'bottomRight', 'bottom', 'bottomLeft', 'left', 'topLeft']),
-        value: PropTypes.any
-    }),
-    layerDrag$: PropTypes.object
+    // areas: PropTypes.shape({
+    //     area: PropTypes.oneOf(['center', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-left', 'left', 'top-left']),
+    //     value: PropTypes.any
+    // }),
+    sourceDrag$: PropTypes.object
 }

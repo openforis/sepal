@@ -7,7 +7,7 @@ const mapStateToProps = () => ({
     dimensions: select('dimensions') || []
 })
 
-class ViewportResizeDetector extends React.Component {
+class _ViewportResizeDetector extends React.Component {
     componentDidUpdate() {
         const {dimensions, onChange} = this.props
         onChange && onChange(dimensions)
@@ -19,13 +19,27 @@ class ViewportResizeDetector extends React.Component {
     }
 }
 
+export const ViewportResizeDetector = compose(
+    _ViewportResizeDetector,
+    connect(mapStateToProps)
+)
+
 ViewportResizeDetector.propTypes = {
     children: PropTypes.any,
     dimensions: PropTypes.object,
     onChange: PropTypes.func
 }
 
-export default compose(
-    ViewportResizeDetector,
-    connect(mapStateToProps)
-)
+export const withViewportDimensions = () =>
+    WrappedComponent => {
+        class HigherOrderComponent extends React.Component {
+            render() {
+                return React.createElement(WrappedComponent, this.props)
+            }
+        }
+
+        return compose(
+            HigherOrderComponent,
+            connect(mapStateToProps)
+        )
+    }

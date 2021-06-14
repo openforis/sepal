@@ -1,5 +1,7 @@
 import {msg} from 'translate'
 import {recipeActionBuilder} from 'app/home/body/process/recipe'
+import {selectFrom} from 'stateUtils'
+import {visualizations} from './visualizations'
 import _ from 'lodash'
 import api from 'api'
 import moment from 'moment'
@@ -21,11 +23,6 @@ export const defaultModel = {
 
 export const RecipeActions = id => {
     const actionBuilder = recipeActionBuilder(id)
-
-    // const set = (name, prop, value, otherProps) =>
-    //     actionBuilder(name, otherProps)
-    //         .set(prop, value)
-    //         .build()
 
     const setAll = (name, values, otherProps) =>
         actionBuilder(name, otherProps)
@@ -50,19 +47,36 @@ export const RecipeActions = id => {
     }
 }
 
+export const getAllVisualizations = recipe => {
+    const type = (selectFrom(recipe, 'model.dates') || {}).fromDate
+        ? 'TIME_SCAN'
+        : 'POINT_IN_TIME'
+    return [
+        ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
+        ...visualizations[type],
+        ...(type === 'POINT_IN_TYPE' ? visualizations.metadata : [])
+    ]
+}
+
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
+    const visualizations = getAllVisualizations(recipe)
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':
             {
                 title: taskTitle,
                 description: name,
-                image: {recipe: _.omit(recipe, ['ui']), bands: {selection: bands}, scale}
+                image: {
+                    recipe: _.omit(recipe, ['ui']),
+                    bands: {selection: bands},
+                    visualizations,
+                    scale
+                }
             }
     }
     return api.tasks.submit$(task).subscribe()

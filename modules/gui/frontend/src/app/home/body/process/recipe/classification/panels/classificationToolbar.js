@@ -1,3 +1,4 @@
+import {Legend} from '../legend/legend'
 import {RecipeActions} from '../classificationRecipe'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
@@ -8,7 +9,6 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import AuxiliaryImagery from './auxiliaryImagery/auxiliaryImagery'
 import Classifier from './classifier/classifier'
 import InputImagery from './inputImagery/inputImagery'
-import Legend from '../legend/legend'
 import PanelWizard from 'widget/panelWizard'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -24,17 +24,16 @@ const mapRecipeToProps = recipe => ({
 
 class ClassificationToolbar extends React.Component {
     render() {
-        const {recipeId, collecting, dataCollectionEvents, initialized} = this.props
+        const {recipeId, collecting, dataCollectionManager, initialized} = this.props
         return (
             <PanelWizard
                 panels={['inputImagery', 'legend']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
-
                 <Retrieve/>
                 <InputImagery/>
-                <Legend dataCollectionEvents={dataCollectionEvents}/>
-                <TrainingData dataCollectionEvents={dataCollectionEvents}/>
+                <Legend dataCollectionManager={dataCollectionManager}/>
+                <TrainingData dataCollectionManager={dataCollectionManager}/>
                 <AuxiliaryImagery/>
                 <Classifier/>
 
@@ -92,7 +91,7 @@ class ClassificationToolbar extends React.Component {
 }
 
 ClassificationToolbar.propTypes = {
-    dataCollectionEvents: PropTypes.object.isRequired,
+    dataCollectionManager: PropTypes.object.isRequired,
     recipeId: PropTypes.string.isRequired,
 }
 

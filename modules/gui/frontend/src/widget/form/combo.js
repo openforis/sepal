@@ -4,20 +4,21 @@ import React from 'react'
 
 export const FormCombo = (
     {
-        input, options, alignment, allowClear, autoFocus, busyMessage, className, disabled, errorMessage,
-        inputClassName, keyboard, label, optionsClassName, optionTooltipPlacement, placeholder, placement, readOnly,
-        standalone, tooltip, tooltipPlacement, onCancel, onChange
+        input, options, additionalButtons, alignment, allowClear, autoFocus, busyMessage, className, disabled,
+        errorMessage, inputClassName, keyboard, label, optionsClassName, optionTooltipPlacement, placeholder, placement,
+        readOnly, standalone, tooltip, tooltipPlacement, onCancel, onChange
     }) =>
     <Combo
         value={input.value}
         options={options}
+        additionalButtons={additionalButtons}
         alignment={alignment}
         allowClear={allowClear}
         autoFocus={autoFocus}
         busyMessage={busyMessage}
         className={className}
         disabled={disabled}
-        errorMessage={errorMessage}
+        errorMessage={errorMessage || [input]}
         inputClassName={inputClassName}
         keyboard={keyboard}
         label={label}
@@ -39,7 +40,8 @@ export const FormCombo = (
 FormCombo.propTypes = {
     input: PropTypes.any.isRequired,
     options: PropTypes.any.isRequired,
-    alignment: PropTypes.oneOf(['left', 'center', 'right']),
+    additionalButtons: PropTypes.any,
+    alignment: PropTypes.any,
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
     busyMessage: PropTypes.any,
@@ -52,7 +54,7 @@ FormCombo.propTypes = {
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,
-    placement: PropTypes.oneOf(['above', 'below']),
+    placement: PropTypes.any,
     readOnly: PropTypes.any,
     standalone: PropTypes.any,
     tooltip: PropTypes.string,

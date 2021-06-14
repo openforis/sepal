@@ -1,50 +1,43 @@
+import {Aoi} from '../aoi'
+import {Map} from '../../../../map/map'
 import {RecipeActions} from './timeSeriesRecipe'
 import {compose} from 'compose'
 import {defaultModel} from './timeSeriesRecipe'
+import {initializeLayers} from '../recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
+import {recipeAccess} from '../../recipeAccess'
 import {selectFrom} from 'stateUtils'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
-import MapScale from 'app/home/map/mapScale'
-import MapToolbar from 'app/home/map/mapToolbar'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import TimeSeriesToolbar from './panels/timeSeriesToolbar'
-import api from 'api'
-import styles from './timeSeries.module.css'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),
     classificationRecipeId: selectFrom(recipe, 'model.sources.classification'),
     classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
+    savedLayers: selectFrom(recipe, 'layers')
 })
 
 class _TimeSeries extends React.Component {
     constructor(props) {
         super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
+        const {savedLayers, recipeId} = props
+        this.recipeActions = RecipeActions(recipeId)
+        initializeLayers({recipeId, savedLayers, skipThis: true})
     }
 
     render() {
-        const {recipeContext: {statePath}} = this.props
+        const {aoi} = this.props
         return (
-            <div className={styles.timeSeries}>
-                <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={2}/>
-                <MapScale/>
+            <Map>
                 <TimeSeriesToolbar/>
-            </div>
+                <Aoi value={aoi}/>
+            </Map>
         )
     }
 
     componentDidMount() {
-        const {mapContext, aoi, componentWillUnmount$} = this.props
-        setAoiLayer({
-            mapContext,
-            aoi,
-            destroy$: componentWillUnmount$,
-            onInitialized: () => mapContext.sepalMap.fitLayer('aoi'),
-            layerIndex: 1
-        })
         this.initClassification()
     }
 
@@ -53,10 +46,10 @@ class _TimeSeries extends React.Component {
     }
 
     initClassification() {
-        const {stream, classificationLegend, classificationRecipeId} = this.props
+        const {stream, classificationLegend, classificationRecipeId, loadRecipe$} = this.props
         if (classificationRecipeId && !classificationLegend && !stream('LOAD_CLASSIFICATION_RECIPE').active) {
             stream('LOAD_CLASSIFICATION_RECIPE',
-                api.recipe.load$(classificationRecipeId),
+                loadRecipe$(classificationRecipeId),
                 classification => {
                     this.recipeActions.setClassification({
                         classificationLegend: classification.model.legend,
@@ -73,7 +66,8 @@ class _TimeSeries extends React.Component {
 
 const TimeSeries = compose(
     _TimeSeries,
-    recipe({defaultModel, mapRecipeToProps})
+    recipe({defaultModel, mapRecipeToProps}),
+    recipeAccess()
 )
 
 export default () => ({

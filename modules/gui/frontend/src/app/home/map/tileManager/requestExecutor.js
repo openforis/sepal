@@ -38,41 +38,7 @@ export const getRequestExecutor = concurrency => {
         const activeRequestCountByTileProviderId = getCount(tileProviderId) - 1
         setCount(tileProviderId, activeRequestCountByTileProviderId)
         log.debug(`Finished ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
-        finished$.next({currentRequest, replacementRequest})
-    }
-
-    const getMostRecentByTileProviderId = (tileProviderId, excludeCount) => {
-        const mostRecent = _(state.activeRequests)
-            .pickBy(requestHandler => requestHandler.tileProviderId === tileProviderId)
-            .values()
-            .sortBy('timestamp')
-            .slice(excludeCount) // keep a minimum of excludeCount
-            .last() // get most recent of the remaining ones
-        return mostRecent
-    }
-
-    const tryCancelMostRecentByTileProviderId = (tileProviderId, replacementRequest, excludeCount) => {
-        const request = getMostRecentByTileProviderId(tileProviderId, excludeCount)
-        if (request) {
-            log.debug(`Cancelling lowest priority request handler for ${tileProviderTag(tileProviderId)}`)
-            request.cancel$.next(replacementRequest)
-            return true
-        }
-        log.debug(`No cancellable request for ${tileProviderTag(tileProviderId)}`)
-        return false
-    }
-
-    const getMaxActive = filter => {
-        const maxActive = _(state.activeRequestCount)
-            .toPairs()
-            .filter(([tileProviderId, _count]) => isHidden(tileProviderId) === filter.hidden)
-            .sortBy(([_tileProviderId, count]) => count)
-            .last()
-        if (maxActive) {
-            const [tileProviderId, count] = maxActive
-            return {tileProviderId, count}
-        }
-        return null
+        finished$.next({tileProviderId, currentRequest, replacementRequest})
     }
 
     const execute = (tileProvider, currentRequest) => {
@@ -86,9 +52,7 @@ export const getRequestExecutor = concurrency => {
                     if (replacementRequest) {
                         finishInfo.currentRequest = currentRequest
                         finishInfo.replacementRequest = replacementRequest
-                        log.debug(`Cancelled ${requestTag({tileProviderId, requestId})} for replacement with ${requestTag(replacementRequest)}`)
-                    } else {
-                        log.debug(`Cancelled ${requestTag({tileProviderId, requestId})}`)
+                        log.debug(`Replacing ${requestTag({tileProviderId, requestId})} with ${requestTag(replacementRequest)}`)
                     }
                 })
             )),
@@ -111,6 +75,40 @@ export const getRequestExecutor = concurrency => {
     const isHidden = tileProviderId =>
         !!(state.hidden[tileProviderId])
 
+    const getMaxActive = filter => {
+        const maxActive = _(state.activeRequestCount)
+            .toPairs()
+            .filter(([tileProviderId, _count]) => isHidden(tileProviderId) === filter.hidden)
+            .sortBy(([_tileProviderId, count]) => count)
+            .last()
+        if (maxActive) {
+            const [tileProviderId, count] = maxActive
+            return {tileProviderId, count}
+        }
+        return null
+    }
+    
+    const getMostRecentByTileProviderId = (tileProviderId, excludeCount) => {
+        const mostRecent = _(state.activeRequests)
+            .pickBy(requestHandler => requestHandler.tileProviderId === tileProviderId)
+            .values()
+            .sortBy('timestamp')
+            .slice(excludeCount) // keep a minimum of excludeCount
+            .last() // get most recent of the remaining ones
+        return mostRecent
+    }
+    
+    const tryCancelMostRecentByTileProviderId = (tileProviderId, replacementRequest, excludeCount) => {
+        const request = getMostRecentByTileProviderId(tileProviderId, excludeCount)
+        if (request) {
+            log.debug(`Cancelling lowest priority request handler for ${tileProviderTag(tileProviderId)}`)
+            request.cancel$.next(replacementRequest)
+            return true
+        }
+        log.debug(`No cancellable request for ${tileProviderTag(tileProviderId)}`)
+        return false
+    }
+    
     const tryCancelHidden = replacementRequest => {
         const maxActive = getMaxActive({hidden: true})
         if (maxActive) {

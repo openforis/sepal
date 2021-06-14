@@ -1,4 +1,5 @@
 .shape {
+    --x-small-font-size: .7rem;
     --small-font-size: .8rem;
     --normal-font-size: .9rem;
     --large-font-size: 1.0rem;
@@ -45,6 +46,10 @@
 }
 
 /* size */
+
+.shape.size-x-small {
+    --font-size: var(--x-small-font-size);
+}
 
 .shape.size-small {
     --font-size: var(--small-font-size);

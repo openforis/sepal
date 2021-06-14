@@ -1,6 +1,6 @@
+import {ViewportResizeDetector} from 'widget/viewportResizeDetector'
 import PropTypes from 'prop-types'
 import React from 'react'
-import ViewportResizeDetector from 'widget/viewportResizeDetector'
 
 export class Autofit extends React.Component {
     parent = React.createRef()

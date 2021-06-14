@@ -2,28 +2,32 @@ const ImageFactory = require('sepal/ee/imageFactory')
 const {switchMap} = require('rx/operators')
 const {exportImageToAsset$} = require('../jobs/export/toAsset')
 const _ = require('lodash')
+const {toVisualizationProperties} = require('../ee/visualizations')
 
 module.exports = {
-    submit$: (id, {image: {recipe, bands, scale, pyramidingPolicy, properties}}) => {
+    submit$: (id, {image: {recipe, bands, scale, pyramidingPolicy, properties, visualizations}}) => {
         const description = recipe.title || recipe.placeholder
-        return export$({description, recipe, bands, scale, pyramidingPolicy, properties})
+        return export$({description, recipe, bands, scale, pyramidingPolicy, properties, visualizations})
     }
 }
 
-const export$ = ({description, recipe, bands, scale, pyramidingPolicy, properties}) =>
+const export$ = ({description, recipe, bands, scale, pyramidingPolicy, properties, visualizations}) =>
     ImageFactory(recipe, bands).getImage$().pipe(
         switchMap(image => {
             const formattedProperties = formatProperties({...properties, scale})
-            const imageWithProperties = image.set(formattedProperties)
-                return exportImageToAsset$({
-                    image: imageWithProperties,
-                    description,
-                    scale,
-                    crs: 'EPSG:4326',
-                    maxPixels: 1e13,
-                    pyramidingPolicy
-                })
-            }
+            const visualizationProperties = toVisualizationProperties(visualizations, bands)
+            const imageWithProperties = image
+                .set(formattedProperties)
+                .set(visualizationProperties)
+            return exportImageToAsset$({
+                image: imageWithProperties,
+                description,
+                scale,
+                crs: 'EPSG:4326',
+                maxPixels: 1e13,
+                pyramidingPolicy
+            })
+        }
         )
     )
 

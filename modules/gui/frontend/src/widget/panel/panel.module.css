@@ -10,7 +10,7 @@
 .panel {
     --margin-left: calc(var(--menu-clearance) + .5rem);
     --margin-right: 3.5rem;
-    --margin-top: .5rem;
+    --margin-top: 3.5rem;
     --margin-bottom: .5rem;
     --header-padding: .5rem .8rem;
     --content-padding-vertical: 1rem;

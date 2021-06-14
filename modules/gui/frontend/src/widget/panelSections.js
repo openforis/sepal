@@ -18,7 +18,6 @@ export default class PanelSections extends React.Component {
                 {component
                     ? <Panel.Content>
                         {component}
-                        <div style={{height: '1rem'}}/> {/* [HACK] Make sure widget messages are shown */}
                     </Panel.Content>
                     : null
                 }
@@ -41,7 +40,6 @@ export default class PanelSections extends React.Component {
                 chromeless
                 shape='none'
                 placement='below'
-                alignment='left'
                 input={selected}
                 tooltipPlacement='bottom'
                 options={options}
@@ -82,9 +80,7 @@ export default class PanelSections extends React.Component {
         if (this.isSelectionSection())
             Object.keys(inputs)
                 .filter(name => name !== selected.name)
-                .forEach(name => {
-                    return inputs[name] && inputs[name].set('')
-                })
+                .forEach(name => inputs[name] && inputs[name].set(''))
     }
 
     isSelectionSection() {

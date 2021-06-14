@@ -1,121 +1,69 @@
 import {Button} from 'widget/button'
-import {MapLayer} from 'app/home/map/mapLayer'
-import {RecipeActions, SceneSelectionType, getSource} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {SceneAreaMarker} from './sceneAreaMarker'
-import {Subject, of} from 'rxjs'
-import {activator} from 'widget/activation/activator'
+import {
+    RecipeActions,
+    SceneSelectionType,
+    getSource
+} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {enabled} from 'widget/enableWhen'
 import {msg} from 'translate'
 import {objectEquals} from 'collections'
-import {select} from 'store'
 import {selectFrom} from 'stateUtils'
+import {setActive, setComplete} from 'app/home/map/progress'
 import {takeUntil} from 'rxjs/operators'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import MapStatus from 'widget/mapStatus'
 import Notifications from 'widget/notifications'
-import PropTypes from 'prop-types'
 import React from 'react'
 import api from 'api'
-import styles from './sceneAreas.module.css'
+import guid from 'guid'
 
-const mapRecipeToProps = (recipe, ownProps) => {
-    const {mapContext: {googleMap}} = ownProps
-    const sceneSelectionType = selectFrom(recipe, 'model.sceneSelectionOptions.type')
-    const manualSelection = sceneSelectionType === SceneSelectionType.SELECT
-    return {
-        recipeId: recipe.id,
-        initialized: selectFrom(recipe, 'ui.initialized'),
-        sceneAreasShown: selectFrom(recipe, 'ui.sceneAreasShown'),
-        sceneAreas: selectFrom(recipe, 'ui.sceneAreas'),
-        aoi: selectFrom(recipe, 'model.aoi'),
-        source: getSource(recipe),
-        selectedScenes: selectFrom(recipe, ['model.scenes']) || [],
-        loading: selectFrom(recipe, 'ui.autoSelectingScenes'),
-        zoom: select('map.zoom') || googleMap.getZoom(),
-        // zoom: googleMap.getZoom(),
-        manualSelection
-    }
-}
+const mapRecipeToProps = recipe => ({
+    manualSelection: selectFrom(recipe, 'model.sceneSelectionOptions.type') === SceneSelectionType.SELECT,
+    aoi: selectFrom(recipe, 'model.aoi'),
+    source: getSource(recipe),
+    sources: selectFrom(recipe, 'ui.featureLayerSources') || [],
+    areas: selectFrom(recipe, 'layers.areas') || {},
+    sceneAreas: selectFrom(recipe, 'ui.sceneAreas') || [],
+})
 
-class SceneAreas extends React.Component {
-    constructor(props) {
-        super(props)
-        const {aoi, source} = props
-        this.recipeActions = RecipeActions(props.recipeId)
-        this.state = {
-            show: true
-        }
-        this.loadSceneArea$ = new Subject()
-        this.loadSceneAreas(aoi, source)
-    }
+class _SceneAreas extends React.Component {
+    loadSceneArea$ = new Subject()
 
     render() {
-        const {sceneAreasShown, stream} = this.props
-        return (
-            <React.Fragment>
-                {stream('LOAD_SCENE_AREAS').completed && sceneAreasShown && this.state.show ? this.renderSceneAreas() : null}
-                {stream('LOAD_SCENE_AREAS').dispatching && <MapStatus message={msg('process.mosaic.sceneAreas.loading')}/>}
-            </React.Fragment>
-        )
+        return null
     }
 
-    renderSceneAreaMarker(sceneArea) {
-        const {recipeId, activator: {activatables: {sceneSelection}}, selectedScenes, zoom, loading} = this.props
-        const selectedSceneCount = (selectedScenes[sceneArea.id] || []).length
-        return (
-            <SceneAreaMarker
-                key={sceneArea.id}
-                recipeId={recipeId}
-                sceneAreaId={sceneArea.id}
-                // center={sceneArea.center}
-                polygon={sceneArea.polygon}
-                selectedSceneCount={selectedSceneCount}
-                zoom={zoom}
-                loading={loading}
-                sceneSelection={sceneSelection}
-            />
-        )
-    }
-
-    renderSceneAreas() {
-        const sceneAreas = this.props.sceneAreas
-        if (sceneAreas)
-            return (
-                <MapLayer className={styles.sceneAreas}>
-                    {sceneAreas.map(sceneArea => this.renderSceneAreaMarker(sceneArea))}
-                </MapLayer>
-            )
-        else
-            return null
+    componentDidMount() {
+        const {aoi, source, manualSelection} = this.props
+        if (manualSelection) {
+            this.loadSceneAreas(aoi, source)
+        }
+        this.toggleLayer(manualSelection)
     }
 
     componentDidUpdate(prevProps) {
-        const {aoi, source} = this.props
-        const loadSceneAreas = !objectEquals(this.props, prevProps, ['aoi', 'source'])
-        if (loadSceneAreas)
+        const {stream, sceneAreas, aoi, source, manualSelection} = this.props
+        const sceneAreasChanged = !objectEquals(this.props, prevProps, ['aoi', 'source'])
+        if (manualSelection && (sceneAreasChanged || (!sceneAreas.length && !stream('LOAD_SCENE_AREAS').active))) {
             this.loadSceneAreas(aoi, source)
-        this.setSceneAreaLayer()
+        }
+        this.toggleLayer(manualSelection)
     }
 
-    setSceneAreaLayer() {
-        const {mapContext: {sepalMap}, componentWillUnmount$} = this.props
-        const layer = new SceneAreaLayer(this)
-        sepalMap.setLayer({
-            id: 'sceneAreas',
-            layer,
-            destroy$: componentWillUnmount$
-        })
+    componentWillUnmount() {
+        const {recipeActionBuilder, componentId} = this.props
+        this.toggleLayer(false)
+        setComplete(`loadSceneAreas-${componentId}`, recipeActionBuilder)
     }
 
     loadSceneAreas(aoi, source) {
-        this.loadSceneArea$.next()
-        this.recipeActions.setSceneAreas(null).dispatch()
-        this.props.stream('LOAD_SCENE_AREAS',
+        const {stream} = this.props
+        this.setActive()
+        stream('LOAD_SCENE_AREAS',
             api.gee.sceneAreas$({aoi, source}).pipe(
                 takeUntil(this.loadSceneArea$)
             ),
-            sceneAreas => this.recipeActions.setSceneAreas(sceneAreas).dispatch(),
+            sceneAreas => this.setComplete(sceneAreas),
             e => Notifications.error({
                 title: msg('gee.error.title'),
                 message: msg('process.mosaic.sceneAreas.error'),
@@ -136,48 +84,67 @@ class SceneAreas extends React.Component {
 
         )
     }
+
+    setActive() {
+        const {recipeId, recipeActionBuilder, componentId} = this.props
+        this.loadSceneArea$.next()
+        const recipeActions = RecipeActions(recipeId)
+        recipeActions.setSceneAreas(null).dispatch()
+        setActive(`loadSceneAreas-${componentId}`, recipeActionBuilder)
+    }
+
+    setComplete(sceneAreas) {
+        const {recipeId, recipeActionBuilder, componentId} = this.props
+        RecipeActions(recipeId).setSceneAreas(sceneAreas).dispatch()
+        setComplete(`loadSceneAreas-${componentId}`, recipeActionBuilder)
+    }
+
+    toggleLayer(include) {
+        const {sources} = this.props
+        const included = !!sources.find(({type}) => type === 'SceneAreas')
+        if (include && !included) {
+            this.includeLayer()
+        } else if (!include && included) {
+            this.removeLayer()
+        }
+    }
+
+    removeLayer() {
+        const {areas, sources, recipeActionBuilder} = this.props
+        const source = sources.find(({type}) => type === 'SceneAreas') || {}
+        Object.keys(areas)
+            .reduce(
+                (actionBuilder, area) => actionBuilder
+                    .del(['layers.areas', area, 'featureLayers', {sourceId: source.id}]),
+                recipeActionBuilder('REMOVE_SCENE_AREA_FEATURE_LAYER')
+            )
+            .del(['ui.featureLayerSources', {type: 'SceneAreas'}])
+            .del('ui.sceneAreas')
+            .dispatch()
+    }
+
+    includeLayer() {
+        const {areas, recipeActionBuilder} = this.props
+        const source = {
+            id: guid(),
+            type: 'SceneAreas',
+            description: msg('featureLayerSources.SceneAreas.description')
+        }
+        const layer = {sourceId: source.id}
+        Object.keys(areas)
+            .reduce(
+                (actionBuilder, area) => actionBuilder
+                    .push(['layers.areas', area, 'featureLayers'], layer),
+                recipeActionBuilder('INCLUDE_SCENE_AREA_FEATURE_LAYER')
+            )
+            .push('ui.featureLayerSources', source)
+            .dispatch()
+    }
 }
 
-SceneAreas.propTypes = {
-    recipeId: PropTypes.string
-}
-
-export default compose(
-    SceneAreas,
-    enabled({when: ({manualSelection}) => manualSelection}),
-    activator('sceneSelection'),
+export const SceneAreas = compose(
+    _SceneAreas,
     withRecipe(mapRecipeToProps)
 )
 
-class SceneAreaLayer {
-    constructor(component) {
-        this.component = component
-        this.toggleable = true
-        this.label = msg('process.mosaic.sceneAreas.label')
-        this.description = msg('process.mosaic.sceneAreas.description')
-    }
-
-    equals(o) {
-        return o && this.component === o.component
-    }
-
-    addToMap() {
-        if (!this.component.state.show && !this.component.props.componentWillUnmount$.isStopped)
-            this.component.setState({show: true})
-    }
-
-    removeFromMap() {
-        if (this.component.state.show && !this.component.props.componentWillUnmount$.isStopped)
-            this.component.setState({show: false})
-    }
-
-    hide(hidden) {
-        hidden
-            ? this.removeFromMap()
-            : this.addToMap()
-    }
-
-    initialize$() {
-        return of(this)
-    }
-}
+SceneAreas.propTypes = {}

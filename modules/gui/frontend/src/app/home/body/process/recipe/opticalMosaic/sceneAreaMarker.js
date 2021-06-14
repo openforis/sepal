@@ -1,15 +1,15 @@
 import {MapObject} from 'app/home/map/mapLayer'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {compose} from 'compose'
-import {withMapContext} from 'app/home/map/mapContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './sceneAreas.module.css'
+import styles from './sceneAreasLayer.module.css'
 
 class _SceneAreaMarker extends React.Component {
     constructor(props) {
         super(props)
-        const {mapContext: {google}, recipeId, polygon} = props
+        const {map, recipeId, polygon} = props
+        const {google} = map.getGoogle()
         this.recipeActions = RecipeActions(recipeId)
         const gPolygon = new google.maps.Polygon({
             paths: polygon.map(([lat, lng]) =>
@@ -30,18 +30,22 @@ class _SceneAreaMarker extends React.Component {
     }
 
     renderSceneAreaCount(fontSize) {
-        const {zoom, selectedSceneCount} = this.props
+        const {map, selectedSceneCount} = this.props
+        const zoom = map.getZoom()
         return zoom > 4
             ? <text x={0} y={0} fontSize={fontSize} textAnchor='middle' dominantBaseline='middle'>{selectedSceneCount}</text>
             : null
     }
 
     render() {
-        const {mapContext: {googleMap}, zoom, loading} = this.props
+        const {map, loading} = this.props
+        const zoom = map.getZoom()
         const scale = Math.min(1, Math.pow(zoom, 2.5) / Math.pow(8, 2.5))
         const size = `${1.5 * 4 * scale}em`
+        const {googleMap} = map.getGoogle()
         return (
             <MapObject
+                map={map}
                 lat={this.center.lat()}
                 lng={this.center.lng()}
                 width={size}
@@ -73,8 +77,7 @@ class _SceneAreaMarker extends React.Component {
 }
 
 export const SceneAreaMarker = compose(
-    _SceneAreaMarker,
-    withMapContext()
+    _SceneAreaMarker
 )
 
 SceneAreaMarker.propTypes = {

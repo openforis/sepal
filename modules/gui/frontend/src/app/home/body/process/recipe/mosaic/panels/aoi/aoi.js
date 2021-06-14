@@ -6,8 +6,9 @@ import {PolygonSection} from './polygonSection'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {SectionSelection} from './sectionSelection'
 import {compose} from 'compose'
-import {countryEETable, setAoiLayer} from 'app/home/map/aoiLayer'
+import {countryEETable} from 'app/home/map/aoiLayer'
 import {msg} from 'translate'
+import {withMap} from 'app/home/map/mapContext'
 import PanelSections from 'widget/panelSections'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -48,10 +49,8 @@ class Aoi extends React.Component {
     constructor(props) {
         super(props)
         this.state = {canceled: false}
-        const {recipeId, mapContext: {sepalMap}} = props
+        const {recipeId} = props
         this.preview = MosaicPreview(recipeId)
-        this.initialBounds = sepalMap.getBounds()
-        this.initialZoom = sepalMap.getZoom()
     }
 
     render() {
@@ -81,10 +80,7 @@ class Aoi extends React.Component {
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement='bottom-right'
-                onApply={(values, model) => this.onApply(values, model)}
-                onCancel={() => this.onCancel()}
-            >
+                placement='bottom-right'>
                 <PanelSections
                     inputs={inputs}
                     sections={sections}
@@ -103,29 +99,6 @@ class Aoi extends React.Component {
     componentDidUpdate() {
         const {inputs, allowWholeEETable = ''} = this.props
         inputs.allowWholeEETable.set(allowWholeEETable)
-    }
-
-    onApply(values, model) {
-        this.preview.show()
-        this.updateLayer(model)
-    }
-
-    onCancel() {
-        const {model, mapContext: {sepalMap}} = this.props
-        sepalMap.fitBounds(this.initialBounds)
-        sepalMap.setZoom(this.initialZoom)
-        this.preview.show()
-        this.updateLayer(model)
-    }
-
-    updateLayer(model) {
-        const {mapContext} = this.props
-        setAoiLayer({
-            mapContext,
-            aoi: model,
-            fill: false,
-            layerIndex: 1
-        })
     }
 }
 
@@ -191,5 +164,6 @@ const modelToValues = (model = {}) => {
 
 export default compose(
     Aoi,
-    recipeFormPanel({id: 'aoi', fields, modelToValues, valuesToModel})
+    recipeFormPanel({id: 'aoi', fields, modelToValues, valuesToModel}),
+    withMap()
 )

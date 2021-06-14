@@ -1,8 +1,10 @@
 import {Button} from 'widget/button'
+import {ButtonGroup} from './buttonGroup'
 import {Layout} from 'widget/layout'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
+import Icon from './icon'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -19,6 +21,10 @@ class _Input extends React.Component {
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
+        this.onFocus = this.onFocus.bind(this)
+        this.onBlur = this.onBlur.bind(this)
+        this.onChange = this.onChange.bind(this)
+        this.onClear = this.onClear.bind(this)
     }
 
     componentDidMount() {
@@ -83,13 +89,13 @@ class _Input extends React.Component {
     }
 
     renderContent() {
-        const {leftComponent, rightComponent} = this.props
-        return leftComponent || rightComponent
+        const {buttons} = this.props
+        return this.isSearchInput() || buttons
             ? (
                 <Layout type='horizontal-nowrap' spacing='none'>
                     {this.renderLeftComponent()}
                     {this.renderInput()}
-                    {this.renderRightComponent()}
+                    {this.renderbuttons()}
                 </Layout>
             )
             : this.renderInput()
@@ -98,11 +104,10 @@ class _Input extends React.Component {
     renderInput() {
         const {
             type, name, placeholder, maxLength, tabIndex,
-            autoFocus, autoComplete, autoCorrect, autoCapitalize, spellCheck, disabled, readOnly, transform,
-            onBlur, onChange, onFocus
+            autoFocus, autoComplete, autoCorrect, autoCapitalize,
+            spellCheck, disabled, readOnly, value
         } = this.props
         const {focused} = this.state
-        const {value} = this.props
         return (
             // [HACK] input is wrapped in a div for fixing Firefox input width in flex
             <Keybinding keymap={{' ': null}} disabled={!focused} priority>
@@ -123,71 +128,91 @@ class _Input extends React.Component {
                         spellCheck={spellCheck ? 'true' : 'false'}
                         disabled={disabled}
                         readOnly={readOnly ? 'readonly' : ''}
-                        onFocus={e => {
-                            this.setState({focused: true})
-                            onFocus && onFocus(e)
-                        }}
-                        onBlur={e => {
-                            this.setState({focused: false})
-                            onBlur && onBlur(e)
-                        }}
-                        onChange={e => {
-                            const value = transform
-                                ? transform(e.target.value)
-                                : e.target.value
-
-                            if (this.isSelectionAllowed()) {
-                                const start = e.target.selectionStart
-                                const end = e.target.selectionEnd
-                                this.setState({start, end})
-                            }
-                            e.target.value = value
-                            onChange && onChange(e)
-                        }}
+                        onFocus={this.onFocus}
+                        onBlur={this.onBlur}
+                        onChange={this.onChange}
                     />
                 </div>
             </Keybinding>
         )
     }
 
+    onFocus(e) {
+        const {onFocus} = this.props
+        this.setState({focused: true})
+        onFocus && onFocus(e)
+    }
+
+    onBlur(e) {
+        const {onBlur} = this.props
+        this.setState({focused: false})
+        onBlur && onBlur(e)
+    }
+
+    onChange(e) {
+        const {transform, onChange} = this.props
+        const value = transform
+            ? transform(e.target.value)
+            : e.target.value
+
+        if (this.isSelectionAllowed()) {
+            const start = e.target.selectionStart
+            const end = e.target.selectionEnd
+            this.setState({start, end})
+        }
+        e.target.value = value
+        onChange && onChange(e)
+    }
+
     renderLeftComponent() {
-        const {leftComponent} = this.props
-        return leftComponent
+        return this.isSearchInput()
             ? (
-                <div className={[styles.extraComponent, styles.left].join(' ')}>
-                    {leftComponent}
+                <div className={[styles.search, styles.dim].join(' ')}>
+                    <Icon name='search'/>
                 </div>
             )
             : null
     }
 
-    renderRightComponent() {
-        const {value, rightComponent} = this.props
+    renderbuttons() {
+        const {value, additionalButtons, buttons} = this.props
         return value && this.isSearchInput()
             ? this.renderClearButton()
-            : rightComponent
+            : additionalButtons || buttons
                 ? (
-                    <div className={[styles.extraComponent, styles.right].join(' ')}>
-                        {rightComponent}
-                    </div>
+                    <ButtonGroup layout='horizontal-nowrap'>
+                        <ButtonGroup layout='horizontal-nowrap'>
+                            {additionalButtons}
+                        </ButtonGroup>
+                        <ButtonGroup layout='horizontal-nowrap' className={styles.dim}>
+                            {buttons}
+                        </ButtonGroup>
+                    </ButtonGroup>
                 )
                 : null
     }
 
     renderClearButton() {
         return (
-            <div className={[styles.extraComponent, styles.right].join(' ')}>
+            <ButtonGroup layout='horizontal-nowrap'>
                 <Button
                     chromeless
                     shape='none'
                     air='none'
                     icon='times'
                     iconFixedWidth
-                    onClick={() => this.props.onChange({target: {value: ''}})}
+                    onClick={this.onClear}
                     // [TODO] change signature from event to value
                 />
-            </div>
+            </ButtonGroup>
         )
+    }
+
+    onClear() {
+        const {onChange} = this.props
+        const {ref} = this
+        onChange({target: {value: ''}})
+        ref.current.focus()
     }
 
     isSearchInput() {
@@ -202,23 +227,23 @@ export const Input = compose(
 )
 
 Input.propTypes = {
+    additionalButtons: PropTypes.arrayOf(PropTypes.node),
     autoCapitalize: PropTypes.any,
     autoComplete: PropTypes.any,
     autoCorrect: PropTypes.any,
     autoFocus: PropTypes.any,
     border: PropTypes.any,
     busyMessage: PropTypes.any,
+    buttons: PropTypes.arrayOf(PropTypes.node),
     className: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.string,
     fadeOverflow: PropTypes.any,
     label: PropTypes.string,
-    leftComponent: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
     maxLength: PropTypes.number,
     name: PropTypes.string,
     placeholder: PropTypes.any,
     readOnly: PropTypes.any,
-    rightComponent: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
     spellCheck: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.string,

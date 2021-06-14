@@ -33,7 +33,7 @@ export default compose(
 // import {connect, select} from 'store'
 // import Workflow from 'widget/workflow'
 // import {RecipeState} from './landCoverRecipe'
-// import {sepalMap} from 'app/home/map/map'
+// import {map} from 'app/home/map/map'
 //
 // const mapStateToProps = (state, ownProps) => {
 //     const recipeState = ownProps.recipeState
@@ -66,8 +66,8 @@ export default compose(
 //             destroy$: componentWillUnmount$,
 //             onInitialized: () => {
 //                 if (this.props.tabCount === 1) {
-//                     sepalMap.setContext(recipeId)
-//                     sepalMap.fitLayer('aoi')
+//                     map.setContext(recipeId)
+//                     map.fitLayer('aoi')
 //                 }
 //             }
 //         })

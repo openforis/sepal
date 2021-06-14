@@ -19,8 +19,9 @@ export class PrioritizingTileProvider extends DelegatingTileProvider {
         return this.tileManager.loadTile$(tileRequest)
     }
 
-    releaseTile(requestId) {
-        this.tileManager.releaseTile(requestId)
+    releaseTile(element) {
+        this.tileManager.releaseTile(element.id)
+        super.releaseTile(element)
     }
 
     hide(hidden) {

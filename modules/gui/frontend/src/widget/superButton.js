@@ -1,10 +1,11 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Item} from 'widget/item'
-import {Subject, animationFrameScheduler, fromEvent, interval, timer} from 'rxjs'
+import {Subject, animationFrameScheduler, fromEvent, interval, merge, timer} from 'rxjs'
 import {compose} from 'compose'
 import {debounceTime, distinctUntilChanged, filter, map, switchMap, takeUntil} from 'rxjs/operators'
 import Hammer from 'hammerjs'
+import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
@@ -16,14 +17,25 @@ import withSubscriptions from 'subscription'
 const EXPAND_DELAYED_TIMEOUT_MS = 1000
 
 class _SuperButton extends React.Component {
-    ref = React.createRef()
+    draggable = React.createRef()
+    draggableHandle = React.createRef()
     expand$ = new Subject()
 
     state = {
         expanded: false,
-        dragging: false
+        dragging: false,
+        position: null,
+        size: null,
+        dragHandleHover: false
     }
 
+    constructor() {
+        super()
+        this.onDragStart = this.onDragStart.bind(this)
+        this.onDragMove = this.onDragMove.bind(this)
+        this.onDragEnd = this.onDragEnd.bind(this)
+    }
+    
     isExpandable() {
         const {clickToExpand, children} = this.props
         return clickToExpand && children
@@ -122,7 +134,6 @@ class _SuperButton extends React.Component {
                 className={styles.inline}
             >
                 {this.renderInlineComponents()}
-                {/* {this.renderDragButton()} */}
                 {this.renderInfoButton()}
                 {this.renderEditButton()}
                 {this.renderDuplicateButton()}
@@ -132,6 +143,20 @@ class _SuperButton extends React.Component {
     }
 
     render() {
+        return (
+            <React.Fragment>
+                {this.renderRealButton()}
+                {this.isDragging() ? this.renderGhostButton() : null}
+            </React.Fragment>
+        )
+    }
+
+    renderRealButton() {
+        return this.renderButton(true)
+    }
+
+    renderButton(real) {
+        const {dragHandleHover} = this.state
         const {className} = this.props
         const classNames = _.flatten([
             styles.container,
@@ -140,21 +165,56 @@ class _SuperButton extends React.Component {
             lookStyles.noTransitions,
             this.isSelected() === true ? [lookStyles.hover, styles.expanded] : null,
             this.isDisabled() ? lookStyles.nonInteractive : null,
-            this.isDraggable() ? styles.draggable : null,
+            this.isDraggable() ? [styles.draggable, dragHandleHover ? null : lookStyles.noHover] : null,
             this.isDragging() ? styles.dragging : null,
             this.isClickable() ? null : styles.unclickable,
             className
         ]).join(' ')
         return (
-            <div className={classNames} ref={this.ref}>
+            <div ref={this.draggable} className={classNames}>
+                {this.isDraggable() ? this.renderDragHandle(real) : null}
                 <div className={styles.main}>
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
                     {this.renderContent()}
-                    {this.renderButtons()}
+                    {real && this.renderButtons()}
                 </div>
                 {this.renderChildren()}
             </div>
         )
+    }
+
+    renderDragHandle(real) {
+        return (
+            <div
+                ref={real ? this.draggableHandle : null}
+                className={styles.handle}
+                onMouseOver={() => this.setState({dragHandleHover: true})}
+                onMouseOut={() => this.setState({dragHandleHover: false})}
+            />
+        )
+    }
+
+    renderGhostButton() {
+        const {position, size} = this.state
+        const {dragGhostClassName} = this.props
+        if (position && size) {
+            return (
+                <Portal type='global'>
+                    <div className={styles.draggableContainer}>
+                        <div
+                            className={[styles.draggableGhost, dragGhostClassName].join(' ')}
+                            style={{
+                                '--x': position.x,
+                                '--y': position.y,
+                                '--width': size.width,
+                                '--height': size.height
+                            }}>
+                            {this.renderButton(false)}
+                        </div>
+                    </div>
+                </Portal>
+            )
+        }
     }
 
     renderInlineComponents() {
@@ -231,24 +291,6 @@ class _SuperButton extends React.Component {
             : null
     }
 
-    renderDragButton() {
-        const {dragTooltip, tooltipPlacement} = this.props
-        return this.isDraggable()
-            ? (
-                <Button
-                    ref={this.ref}
-                    chromeless
-                    shape='circle'
-                    size='large'
-                    icon='arrows-alt'
-                    additionalClassName={styles.dragHandle}
-                    tooltip={dragTooltip}
-                    tooltipPlacement={tooltipPlacement}
-                    onClick={() => null}/>
-            )
-            : null
-    }
-
     renderChildren() {
         const {children} = this.props
         return children && this.isSelected() !== false
@@ -262,52 +304,105 @@ class _SuperButton extends React.Component {
 
     initializeDraggable() {
         const {addSubscription} = this.props
-        const draggable = this.ref.current
-        const hammer = new Hammer(draggable)
-        hammer.get('pan').set({direction: Hammer.DIRECTION_ALL})
+        const draggable = this.draggable.current
+        const draggableHandle = this.draggableHandle.current
+
+        const hammer = new Hammer(draggableHandle)
+
+        hammer.get('pan').set({
+            direction: Hammer.DIRECTION_ALL,
+            // threshold: 0
+        })
+
+        const hold$ = merge(
+            fromEvent(draggableHandle, 'mousedown'),
+            fromEvent(draggableHandle, 'touchstart')
+        )
+        const release$ = merge(
+            fromEvent(draggableHandle, 'mouseup'),
+            fromEvent(draggableHandle, 'touchend')
+        )
         const pan$ = fromEvent(hammer, 'panstart panmove panend')
-        const filterPanEvent = type => pan$.pipe(filter(e => e.type === type))
-        const dragStart$ = filterPanEvent('panstart')
-        const move$ = filterPanEvent('panmove')
-        const dragEnd$ = filterPanEvent('panend')
+        const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
+        const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
+        const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
         const animationFrame$ = interval(0, animationFrameScheduler)
+
+        const dragStart$ = merge(hold$, panStart$).pipe(
+            filter(({pageX, pageY}) => pageX && pageY),
+            map(({pageX, pageY}) => {
+                const {x: clientX, y: clientY, width, height} = draggable.getBoundingClientRect()
+                const offset = {
+                    x: Math.round(pageX - clientX),
+                    y: Math.round(pageY - clientY)
+                }
+                return {
+                    coords: {
+                        x: pageX,
+                        y: pageY
+                    },
+                    position: {
+                        x: pageX - offset.x - 1,
+                        y: pageY - offset.y - 1
+                    },
+                    size: {
+                        width,
+                        height
+                    },
+                    offset
+                }
+                    
+            })
+        )
+
         const dragMove$ = dragStart$.pipe(
-            switchMap(() =>
+            switchMap(({offset}) =>
                 animationFrame$.pipe(
                     switchMap(() =>
-                        move$.pipe(
+                        panMove$.pipe(
                             map(e => e.center)
-                        )),
+                        )
+                    ),
                     debounceTime(10),
-                    distinctUntilChanged()
+                    distinctUntilChanged(),
+                    map(coords => ({
+                        coords,
+                        position: {
+                            x: coords.x - offset.x - 1,
+                            y: coords.y - offset.y - 1
+                        }
+                    }))
                 )
             )
         )
-        
+
+        const dragEnd$ = merge(release$, panEnd$)
+
         addSubscription(
-            dragStart$.subscribe(() => this.onDragStart()),
-            dragMove$.subscribe(coords => this.onDragMove(coords)),
-            dragEnd$.subscribe(() => this.onDragEnd())
+            dragStart$.subscribe(this.onDragStart),
+            dragMove$.subscribe(this.onDragMove),
+            dragEnd$.subscribe(this.onDragEnd)
         )
     }
 
-    onDragStart() {
+    onDragStart({coords, position, size}) {
         const {drag$, dragValue, onDragStart} = this.props
-        this.setState({dragging: true}, () => {
-            drag$ && drag$.next({dragging: true, value: dragValue})
+        this.setState({dragging: true, position, size}, () => {
+            drag$ && drag$.next({dragging: true, value: dragValue, coords})
             onDragStart && onDragStart(dragValue)
         })
     }
 
-    onDragMove(coords) {
+    onDragMove({coords, position}) {
         const {drag$, onDrag} = this.props
         drag$ && drag$.next({coords})
         onDrag && onDrag(coords)
+        this.setState({position})
     }
 
     onDragEnd() {
         const {drag$, onDragEnd} = this.props
-        this.setState({dragging: false}, () => {
+        this.setState({dragging: false, position: null, size: null}, () => {
             drag$ && drag$.next({dragging: false})
             onDragEnd && onDragEnd()
         })

@@ -1,48 +1,83 @@
 import {compose} from 'compose'
+import {filter} from 'rxjs/operators'
 import {fromEvent, merge} from 'rxjs'
+import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
+import withForwardedRef from 'ref'
 import withSubscriptions from 'subscription'
 
+const BlurDetectorContext = React.createContext()
+
+const withBlurDetectorContext = withContext(BlurDetectorContext, 'blurDetectorContext')
+
 class BlurDetector extends React.Component {
-    element = React.createRef()
+    enabled = true
+
+    constructor(props) {
+        super(props)
+        this.ref = props.forwardedRef || React.createRef()
+    }
 
     render() {
-        const {className, children} = this.props
+        const {className, style, children} = this.props
         return (
-            <div ref={this.element} className={className}>
-                {children}
+            <div ref={this.ref} className={className} style={style}>
+                <BlurDetectorContext.Provider value={{enabled: enabled => this.enabled = enabled}}>
+                    {children}
+                </BlurDetectorContext.Provider>
             </div>
         )
     }
 
     componentDidMount() {
-        const {addSubscription} = this.props
-        addSubscription(
-            merge(
-                fromEvent(document, 'click'),
-                fromEvent(document, 'focus'),
-            ).subscribe(
-                e => this.onEvent(e)
+        const {onBlur, addSubscription} = this.props
+        this.setEnabled(false)
+        if (onBlur) {
+            addSubscription(
+                merge(
+                    fromEvent(document, 'mousedown'),
+                    fromEvent(document, 'touchstart'),
+                    fromEvent(document, 'focus'),
+                ).pipe(
+                    filter(() => this.enabled)
+                ).subscribe(
+                    e => this.onEvent(e)
+                )
             )
-        )
+        }
+    }
+
+    componentWillUnmount() {
+        this.setEnabled(true)
+    }
+
+    setEnabled(enabled) {
+        const {blurDetectorContext} = this.props
+        if (blurDetectorContext) {
+            blurDetectorContext.enabled(enabled)
+        }
     }
 
     onEvent(e) {
         const {onBlur} = this.props
-        const inside = this.element.current.contains(e.target)
-        if (!inside)
-            onBlur()
+        const inside = this.ref.current.contains(e.target)
+        if (!inside) {
+            onBlur && onBlur(e)
+        }
     }
 }
 
 export default compose(
     BlurDetector,
-    withSubscriptions()
+    withBlurDetectorContext(),
+    withSubscriptions(),
+    withForwardedRef(),
 )
 
 BlurDetector.propTypes = {
     children: PropTypes.any.isRequired,
-    onBlur: PropTypes.func.isRequired,
-    className: PropTypes.string
+    className: PropTypes.string,
+    style: PropTypes.object,
+    onBlur: PropTypes.func
 }

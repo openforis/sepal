@@ -269,13 +269,15 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'thermal', 'brightness', 'greenness', 'wetness'
+                'aerosol', 'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2', 'brightness', 'greenness', 'wetness'
+                'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         }
     },
@@ -288,13 +290,15 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal', 'brightness', 'greenness', 'wetness'
+                'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'pan', 'thermal', 'thermal2', 'brightness', 'greenness', 'wetness'
+                'pan', 'thermal', 'thermal2',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         }
     },
@@ -308,13 +312,15 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal', 'brightness', 'greenness', 'wetness'
+                'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal', 'brightness', 'greenness', 'wetness'
+                'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         }
     },
@@ -327,13 +333,15 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'thermal', 'brightness', 'greenness', 'wetness'
+                'aerosol', 'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2', 'brightness', 'greenness', 'wetness'
+                'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         }
     },
@@ -346,13 +354,15 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal', 'brightness', 'greenness', 'wetness'
+                'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'pan', 'thermal', 'thermal2', 'brightness', 'greenness', 'wetness'
+                'pan', 'thermal', 'thermal2',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         }
     },
@@ -366,13 +376,15 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal', 'brightness', 'greenness', 'wetness'
+                'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal', 'brightness', 'greenness', 'wetness'
+                'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         }
     },
@@ -386,14 +398,16 @@ const dataSetById = {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
                 'redEdge1', 'redEdge2', 'redEdge3', 'redEdge4',
-                'aerosol', 'waterVapor', 'cirrus', 'brightness', 'greenness', 'wetness'
+                'aerosol', 'waterVapor', 'cirrus',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
                 'redEdge1', 'redEdge2', 'redEdge3', 'redEdge4',
-                'aerosol', 'waterVapor', 'brightness', 'greenness', 'wetness'
+                'aerosol', 'waterVapor',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         }
     },
@@ -410,16 +424,16 @@ const dataSetById = {
         },
         timeScan: {
             bands: [
-                'VV_min', 'VV_mean', 'VV_median', 'VV_max', 'VV_stdDev', 'VV_CV',
-                'VH_min', 'VH_mean', 'VH_median', 'VH_max', 'VH_stdDev', 'VH_CV',
-                'VV_constant', 'VV_t', 'VV_phase', 'VV_amplitude', 'VV_residuals',
-                'VH_constant', 'VH_t', 'VH_phase', 'VH_amplitude', 'VH_residuals'
+                'VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VV_std', 'VV_cv',
+                'VH_min', 'VH_mean', 'VH_med', 'VH_max', 'VH_std', 'VH_cv',
+                'VV_const', 'VV_t', 'VV_phase', 'VV_amp', 'VV_res',
+                'VH_const', 'VH_t', 'VH_phase', 'VH_amp', 'VH_res'
             ]
         }
     }
 }
 
-const option = band => ({value: band, label: msg(['bands', band])})
+const option = band => ({value: band, label: band})
 
 const requiredBandsByOpticalIndex = {
     ndvi: ['red', 'nir'],
@@ -552,45 +566,48 @@ const getBandOption = band => {
             brightness: {mosaicMultiplier: 10000, timeSeriesMultiplier: 10000, ...option('brightness')},
             greenness: {mosaicMultiplier: 10000, timeSeriesMultiplier: 10000, ...option('greenness')},
             wetness: {mosaicMultiplier: 10000, timeSeriesMultiplier: 10000, ...option('wetness')},
+            fourth: {mosaicMultiplier: 10000, timeSeriesMultiplier: 10000, ...option('fourth')},
+            fifth: {mosaicMultiplier: 10000, timeSeriesMultiplier: 10000, ...option('fifth')},
+            sixth: {mosaicMultiplier: 10000, timeSeriesMultiplier: 10000, ...option('sixth')},
             VV: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VV', label: 'VV'},
             VH: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VH', label: 'VH'},
             ratio_VV_VH: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'ratio_VV_VH', label: 'VV/VH'},
             VV_min: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VV_min', label: <span>VV<sub>min</sub></span>},
             VV_mean: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VV_mean', label: <span>VV<sub>mean</sub></span>},
-            VV_median: {
+            VV_med: {
                 mosaicMultiplier: 1000,
                 timeSeriesMultiplier: 1000,
-                value: 'VV_median',
+                value: 'VV_med',
                 label: <span>VV<sub>med</sub></span>
             },
             VV_max: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VV_max', label: <span>VV<sub>max</sub></span>},
-            VV_stdDev: {
+            VV_std: {
                 mosaicMultiplier: 1000,
                 timeSeriesMultiplier: 1000,
-                value: 'VV_stdDev',
+                value: 'VV_std',
                 label: <span>VV<sub>sd</sub></span>
             },
-            VV_CV: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VV_CV', label: <span>VV<sub>cv</sub></span>},
+            VV_cv: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VV_cv', label: <span>VV<sub>cv</sub></span>},
             VH_min: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VH_min', label: <span>VH<sub>min</sub></span>},
             VH_mean: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VH_mean', label: <span>VH<sub>mean</sub></span>},
-            VH_median: {
+            VH_med: {
                 mosaicMultiplier: 1000,
                 timeSeriesMultiplier: 1000,
-                value: 'VH_median',
+                value: 'VH_med',
                 label: <span>VH<sub>med</sub></span>
             },
             VH_max: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VH_max', label: <span>VH<sub>max</sub></span>},
-            VH_stdDev: {
+            VH_std: {
                 mosaicMultiplier: 1000,
                 timeSeriesMultiplier: 1000,
-                value: 'VH_stdDev',
+                value: 'VH_std',
                 label: <span>VH<sub>sd</sub></span>
             },
-            VH_CV: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VH_CV', label: <span>VH<sub>cv</sub></span>},
-            VV_constant: {
+            VH_cv: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VH_cv', label: <span>VH<sub>cv</sub></span>},
+            VV_const: {
                 mosaicMultiplier: 1000,
                 timeSeriesMultiplier: 1000,
-                value: 'VV_constant',
+                value: 'VV_const',
                 label: <span>VV<sub>const</sub></span>
             },
             VV_t: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VV_t', label: <span>VV<sub>t</sub></span>},
@@ -600,22 +617,22 @@ const getBandOption = band => {
                 value: 'VV_phase',
                 label: <span>VV<sub>phase</sub></span>
             },
-            VV_amplitude: {
+            VV_amp: {
                 mosaicMultiplier: 1000,
                 timeSeriesMultiplier: 1000,
-                value: 'VV_amplitude',
+                value: 'VV_amp',
                 label: <span>VV<sub>amp</sub></span>
             },
-            VV_residuals: {
+            VV_res: {
                 mosaicMultiplier: 1000,
                 timeSeriesMultiplier: 1000,
-                value: 'VV_residuals',
+                value: 'VV_res',
                 label: <span>VV<sub>residuals</sub></span>
             },
-            VH_constant: {
+            VH_const: {
                 mosaicMultiplier: 1000,
                 timeSeriesMultiplier: 1000,
-                value: 'VH_constant',
+                value: 'VH_const',
                 label: <span>VH<sub>const</sub></span>
             },
             VH_t: {mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, value: 'VH_t', label: <span>VH<sub>t</sub></span>},
@@ -625,16 +642,16 @@ const getBandOption = band => {
                 value: 'VH_phase',
                 label: <span>VH<sub>phase</sub></span>
             },
-            VH_amplitude: {
+            VH_amp: {
                 mosaicMultiplier: 1000,
                 timeSeriesMultiplier: 1000,
-                value: 'VH_amplitude',
+                value: 'VH_amp',
                 label: <span>VH<sub>amp</sub></span>
             },
-            VH_residuals: {
+            VH_res: {
                 mosaicMultiplier: 1000,
                 timeSeriesMultiplier: 1000,
-                value: 'VH_residuals',
+                value: 'VH_res',
                 label: <span>VH<sub>residuals</sub></span>
             }
         }
@@ -672,27 +689,33 @@ const groupedBands = [
         timeSeriesMultiplier: 10000,
         type: 'opticalBands'
     },
+    {
+        bands: ['fourth', 'fifth', 'sixth'],
+        mosaicMultiplier: 10000,
+        timeSeriesMultiplier: 10000,
+        type: 'opticalBands'
+    },
     {bands: ['VV', 'VH', 'ratio_VV_VH'], mosaicMultiplier: 1000, timeSeriesMultiplier: 1000, type: 'radarBands'},
     {
-        bands: ['VV_min', 'VV_mean', 'VV_median', 'VV_max', 'VV_stdDev', 'VV_CV'],
+        bands: ['VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VV_std', 'VV_cv'],
         mosaicMultiplier: 1000,
         timeSeriesMultiplier: 1000,
         type: 'radarBands'
     },
     {
-        bands: ['VH_min', 'VH_mean', 'VH_median', 'VH_max', 'VH_stdDev', 'VH_CV'],
+        bands: ['VH_min', 'VH_mean', 'VH_med', 'VH_max', 'VH_std', 'VH_cv'],
         mosaicMultiplier: 1000,
         timeSeriesMultiplier: 1000,
         type: 'radarBands'
     },
     {
-        bands: ['VV_constant', 'VV_t', 'VV_phase', 'VV_amplitude', 'VV_residuals'],
+        bands: ['VV_const', 'VV_t', 'VV_phase', 'VV_amp', 'VV_res'],
         mosaicMultiplier: 1000,
         timeSeriesMultiplier: 1000,
         type: 'radarBands'
     },
     {
-        bands: ['VH_constant', 'VH_t', 'VH_phase', 'VH_amplitude', 'VH_residuals'],
+        bands: ['VH_const', 'VH_t', 'VH_phase', 'VH_amp', 'VH_res'],
         mosaicMultiplier: 1000,
         timeSeriesMultiplier: 1000,
         type: 'radarBands'

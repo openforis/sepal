@@ -1,0 +1,32 @@
+.panel {
+    /*width: 40rem;*/
+    width: fit-content;
+    /*max-height: 80%;*/
+}
+
+.band {
+    width: 17rem;
+}
+
+.minMax {
+    width: 5rem;
+}
+
+.gamma {
+    width: 3.5rem;
+}
+
+.gamma input {
+    text-align: right;
+}
+
+.inverted {
+    grid-area: inverted;
+    align-self: center;
+    justify-self: center;
+}
+
+.spinner {
+    align-self: center;
+    height: 5rem;
+}

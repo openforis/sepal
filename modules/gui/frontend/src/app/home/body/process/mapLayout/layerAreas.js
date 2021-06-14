@@ -1,15 +1,19 @@
+import {selectFrom} from 'stateUtils'
 import _ from 'lodash'
+import guid from 'guid'
 
 export const validAreas = areas => {
     assertValidState(areas)
     const size = _.size(areas)
     if (size > 1) {
-        return ['center', 'top', 'topRight', 'right', 'bottomRight', 'bottom', 'bottomLeft', 'left', 'topLeft']
-    }
-    if (size > 0) {
+        return ['center', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-left', 'left', 'top-left']
+    } else if (size === 1 && !selectFrom(areas, 'center.imageLayer.sourceId')) {
+        return ['center']
+    } else if (size > 0) {
         return ['center', 'top', 'right', 'bottom', 'left']
+    } else {
+        return ['center']
     }
-    return ['center']
 }
 
 export const assignArea = ({areas, area, value}) => {
@@ -29,32 +33,38 @@ export const removeArea = ({areas, area}) => {
     const replacementMap = {
         top: areas => areas.bottom
             ? {center: areas.bottom}
-            : {left: areas.bottomLeft, right: areas.bottomRight},
+            : {left: areas['bottom-left'], right: areas['bottom-right']},
         bottom: areas => areas.top
             ? {center: areas.top}
-            : {left: areas.topLeft, right: areas.topRight},
+            : {left: areas['top-left'], right: areas['top-right']},
         left: areas => areas.right
             ? {center: areas.right}
-            : {top: areas.topRight, bottom: areas.bottomRight},
+            : {top: areas['top-right'], bottom: areas['bottom-right']},
         right: areas => areas.left
             ? {center: areas.left}
-            : {top: areas.topLeft, bottom: areas.bottomLeft},
-        topLeft: areas => areas.right
-            ? {left: areas.bottomLeft}
-            : {top: areas.topRight},
-        topRight: areas => areas.left
-            ? {right: areas.bottomRight}
-            : {top: areas.topLeft},
-        bottomLeft: areas => areas.right
-            ? {left: areas.topLeft}
-            : {bottom: areas.bottomRight},
-        bottomRight: areas => areas.left
-            ? {right: areas.topRight}
-            : {bottom: areas.bottomLeft}
+            : {top: areas['top-left'], bottom: areas['bottom-left']},
+        'top-left': areas => areas.right
+            ? {left: areas['bottom-left']}
+            : {top: areas['top-right']},
+        'top-right': areas => areas.left
+            ? {right: areas['bottom-right']}
+            : {top: areas['top-left']},
+        'bottom-left': areas => areas.right
+            ? {left: areas['top-left']}
+            : {bottom: areas['bottom-right']},
+        'bottom-right': areas => areas.left
+            ? {right: areas['top-right']}
+            : {bottom: areas['bottom-left']}
     }
 
     if (area === 'center') {
-        return {}
+        return {
+            center: {
+                id: guid(),
+                imageLayer: {},
+                featureLayers: []
+            }
+        }
     } else {
         const replacements = replacementMap[area]
         return _.reduce(
@@ -66,39 +76,39 @@ export const removeArea = ({areas, area}) => {
 }
 
 const maskByArea = {
-    center: [
+    'center': [
         [1, 1],
         [1, 1]
     ],
-    top: [
+    'top': [
         [1, 1],
         [0, 0]
     ],
-    topRight: [
+    'top-right': [
         [0, 1],
         [0, 0]
     ],
-    right: [
+    'right': [
         [0, 1],
         [0, 1]
     ],
-    bottomRight: [
+    'bottom-right': [
         [0, 0],
         [0, 1]
     ],
-    bottom: [
+    'bottom': [
         [0, 0],
         [1, 1],
     ],
-    bottomLeft: [
+    'bottom-left': [
         [0, 0],
         [1, 0],
     ],
-    left: [
+    'left': [
         [1, 0],
         [1, 0]
     ],
-    topLeft: [
+    'top-left': [
         [1, 0],
         [0, 0],
     ],

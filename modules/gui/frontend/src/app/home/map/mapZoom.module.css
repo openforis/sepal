@@ -1,0 +1,16 @@
+.panel {
+    width: fit-content;
+    /* margin-top: 3rem; */
+}
+
+.search {
+    width: 12rem;
+}
+
+.coordinates {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: flex-start;
+}

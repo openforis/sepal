@@ -1,17 +1,14 @@
 import * as PropTypes from 'prop-types'
 import {BandSetSpec} from './bandSetSpec'
-import {CenteredProgress} from 'widget/progress'
 import {Layout} from 'widget/layout'
 import {SuperButton} from 'widget/superButton'
 import {compose} from 'compose'
-import {msg} from 'translate'
-import {mutate, selectFrom} from 'stateUtils'
+import {mutate} from 'stateUtils'
 import {withScrollable} from 'widget/scrollable'
 import BlurDetector from 'widget/blurDetector'
 import Label from 'widget/label'
 import React, {Component} from 'react'
 import _ from 'lodash'
-import api from 'api'
 import styles from './inputImage.module.css'
 
 class ImageForm extends Component {
@@ -46,24 +43,20 @@ class ImageForm extends Component {
     }
 
     render() {
-        const {stream, input, inputComponent, inputs: {bands}} = this.props
+        const {input, inputComponent, inputs: {bands}} = this.props
         return (
             <Layout>
                 <div ref={this.element} className={styles.inputComponent}>
                     {React.createElement(inputComponent, {
                         input,
-                        onChange: id => this.onImageSelection(id)
+                        onLoading: () => {
+                            bands.set(null)
+                        },
+                        onLoaded: ({id, bands, metadata, visualizations}) => this.onLoaded(id, bands, metadata, visualizations)
                     })}
                 </div>
                 <div>
-                    {stream('LOAD_IMAGE_BANDS').active
-                        ? <CenteredProgress
-                            title={msg('process.classification.panel.inputImagery.loadingBands')}
-                            className={styles.loadingProgress}/>
-                        : bands.value && bands.value.length
-                            ? this.renderBandSetSpecs()
-                            : null
-                    }
+                    {bands.value && this.renderBandSetSpecs()}
                 </div>
             </Layout>
         )
@@ -146,27 +139,18 @@ class ImageForm extends Component {
         bandSetSpecs.set(updated)
     }
 
-    onImageSelection(id) {
-        const {stream, form, input, inputs: {section, bands, bandSetSpecs}} = this.props
+    onLoaded(id, loadedBands, loadedMetadata, loadedVisualizations) {
+        const {form, inputs: {bands, bandSetSpecs, metadata, visualizations}} = this.props
         if (!id || !form.isDirty()) {
             return
         }
-        const image = {recipe: {type: section.value, id}}
-        bands.set([])
-        stream('LOAD_IMAGE_BANDS', api.gee.bands$(image),
-            loadedBands => {
-                const filteredSpecs = bandSetSpecs.value
-                    .map(spec => BandSetSpec.filter(spec, loadedBands))
-                    .filter((spec, i) => !BandSetSpec.isEmpty(spec, loadedBands) || i === 0)
-                bandSetSpecs.set(filteredSpecs)
-                bands.set(loadedBands)
-            },
-            error => {
-                const errorMessage = selectFrom(error, 'response.message')
-                    || msg('process.classification.panel.inputImagery.loadingBandsError')
-                input.setInvalid(errorMessage)
-            }
-        )
+        const filteredSpecs = bandSetSpecs.value
+            .map(spec => BandSetSpec.filter(spec, loadedBands))
+            .filter((spec, i) => !BandSetSpec.isEmpty(spec, loadedBands) || i === 0)
+        bandSetSpecs.set(filteredSpecs)
+        bands.set(loadedBands)
+        metadata.set(loadedMetadata)
+        visualizations.set(loadedVisualizations)
     }
 }
 

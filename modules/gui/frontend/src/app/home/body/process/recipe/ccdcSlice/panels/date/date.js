@@ -4,7 +4,7 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {selectFrom} from '../../../../../../../../stateUtils'
+import {selectFrom} from 'stateUtils'
 import React from 'react'
 import moment from 'moment'
 import styles from './date.module.css'
@@ -53,7 +53,7 @@ class Date extends React.Component {
                     tooltipPlacement='top'
                     input={date}
                     startDate='1982-08-22'
-                    endDate={moment()}
+                    endDate={moment().add(1, 'year')}
                 />
 
                 {startDate && endDate
@@ -66,6 +66,14 @@ class Date extends React.Component {
     }
 
     componentDidMount() {
+        this.defaultDate()
+    }
+
+    componentDidUpdate() {
+        this.defaultDate()
+    }
+
+    defaultDate() {
         const {startDate, endDate, inputs: {date}} = this.props
         if (!date.value && startDate && endDate) {
             const middle = moment((

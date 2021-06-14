@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {ScrollableList} from 'widget/list'
-import {Subject, fromEvent} from 'rxjs'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {delay} from 'rxjs/operators'
@@ -30,6 +30,11 @@ class ButtonSelect extends React.Component {
         selected: false
     }
 
+    constructor() {
+        super()
+        this.handleBlur = this.handleBlur.bind(this)
+    }
+
     render() {
         const {className} = this.props
         const {showOptions} = this.state
@@ -42,7 +47,7 @@ class ButtonSelect extends React.Component {
     }
 
     renderButton() {
-        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement} = this.props
+        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement, width} = this.props
         return (
             <Button
                 ref={this.input}
@@ -52,6 +57,7 @@ class ButtonSelect extends React.Component {
                 icon={icon}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
+                width={width}
                 onClick={() => this.toggleOptions()}
                 disabled={disabled}
             >
@@ -61,10 +67,10 @@ class ButtonSelect extends React.Component {
     }
 
     renderContent() {
-        const {label, icon} = this.props
+        const {label, icon, width} = this.props
         const {selectedOption} = this.state
         return (
-            <div className={styles.content}>
+            <div className={[styles.content, width === 'fill' ? styles.fill : ''].join(' ')}>
                 {icon && <Icon name={icon}/>}
                 <div>
                     {(selectedOption && selectedOption.buttonLabel) || label}
@@ -82,15 +88,14 @@ class ButtonSelect extends React.Component {
     }
 
     renderOptions() {
-        const {alignment, placement, optionsClassName, optionTooltipPlacement} = this.props
+        const {placement, optionsClassName, optionTooltipPlacement} = this.props
         const {flattenedOptions, selectedOption, selected} = this.state
         return (
             <FloatingBox
                 element={this.input.current}
-                alignment={alignment}
                 placement={placement}
-                autoWidth
-            >
+                alignment='left'
+                onBlur={this.handleBlur}>
                 <ScrollableList
                     ref={this.list}
                     className={optionsClassName || styles.options}
@@ -157,23 +162,16 @@ class ButtonSelect extends React.Component {
         )
     }
 
-    handleBlur() {
-        const {addSubscription} = this.props
-        const click$ = fromEvent(document, 'click')
+    handleBlur(e) {
         const isInputClick = e => this.input.current && this.input.current.contains(e.target)
         const isListClick = e => this.list.current && this.list.current.contains && this.list.current.contains(e.target)
-        addSubscription(
-            click$.subscribe(e => {
-                if (!isInputClick(e) && !isListClick(e)) {
-                    this.hideOptions()
-                }
-            })
-        )
+        if (!isInputClick(e) && !isListClick(e)) {
+            this.hideOptions()
+        }
     }
 
     componentDidMount() {
         this.handleSelect()
-        this.handleBlur()
     }
 
     static getDerivedStateFromProps(props, state) {
@@ -214,13 +212,12 @@ export default compose(
 
 ButtonSelect.propTypes = {
     options: PropTypes.any.isRequired,
-    alignment: PropTypes.oneOf(['left', 'right']),
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     icon: PropTypes.string,
     input: PropTypes.any,
-    label: PropTypes.string,
+    label: PropTypes.any,
     look: PropTypes.string,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
@@ -228,10 +225,10 @@ ButtonSelect.propTypes = {
     shape: PropTypes.string,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
+    width: PropTypes.string,
     onSelect: PropTypes.func
 }
 
 ButtonSelect.defaultProps = {
-    alignment: 'left',
     placement: 'below'
 }

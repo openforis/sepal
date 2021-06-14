@@ -1,8 +1,7 @@
 import {compose} from 'compose'
 import {withMapsContext} from './maps'
 import React from 'react'
-import _ from 'lodash'
-import styles from './map.module.css'
+import styles from './staticMap.module.css'
 
 class _StaticMap extends React.Component {
     map = React.createRef()
@@ -11,7 +10,7 @@ class _StaticMap extends React.Component {
         const {children} = this.props
         return (
             <React.Fragment>
-                <div ref={this.map} className={styles.map}/>
+                <div className={styles.map} ref={this.map}/>
                 <div className={styles.content}>
                     {children}
                 </div>

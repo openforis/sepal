@@ -23,8 +23,9 @@ export class Graph extends React.Component {
     }
 
     render() {
+        const {className} = this.props
         return (
-            <div className={styles.wrapper}>
+            <div className={[styles.wrapper, className].join(' ')}>
                 <div ref={this.graphRef} className={styles.graph}/>
             </div>
         )
@@ -39,19 +40,23 @@ export class Graph extends React.Component {
     }
 
     update(prevProps = {}) {
-        const {data, highlights} = this.props
-        const {data: prevData} = prevProps
+        const {data, highlights, dimensions} = this.props
+        const {dimensions: prevDimentions} = prevProps
+        // const {data: prevData} = prevProps
         const options = this.getOptions(this.props)
-        const prevOptions = this.getOptions(prevProps)
-        if (prevData)
-            Object.assign(prevData, data)
-        if (prevOptions)
-            Object.assign(prevOptions, options)
-        const updatedData = prevData || data
-        const newState = {data: updatedData, options: prevOptions || options}
+        // const prevOptions = this.getOptions(prevProps)
+        // TODO: Verify this with CCDC and CCDC Slice charts
+        // if (prevData)
+        //     Object.assign(prevData, data)
+        // if (prevOptions)
+        //     Object.assign(prevOptions, options)
+        // const updatedData = prevData || data
+        // const newState = {data: updatedData, options: prevOptions || options}
+        const updatedData = data
+        const newState = {data: updatedData, options}
         this.setState(newState)
         const underlayCallback = createUnderlayCallback(highlights)
-        if (!this.graph) {
+        if (!this.graph || !_.isEqual(dimensions, prevDimentions)) {
             this.graph = new Dygraph(this.graphRef.current, data, {...options, underlayCallback})
         } else {
             this.graph.updateOptions({file: [...updatedData], underlayCallback})

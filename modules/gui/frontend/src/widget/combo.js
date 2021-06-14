@@ -1,9 +1,8 @@
 import {Button} from 'widget/button'
-import {ButtonGroup} from 'widget/buttonGroup'
 import {Form} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {ScrollableList} from 'widget/list'
-import {Subject, fromEvent} from 'rxjs'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {delay} from 'rxjs/operators'
@@ -40,13 +39,19 @@ class _Combo extends React.Component {
         focused: false
     }
 
+    constructor() {
+        super()
+        this.onBlur = this.onBlur.bind(this)
+        this.handleBlur = this.handleBlur.bind(this)
+    }
+
     isActive() {
         const {busyMessage, disabled} = this.props
         return !(disabled || busyMessage)
     }
 
     render() {
-        const {errorMessage, busyMessage, standalone, disabled, className, label, tooltip, tooltipPlacement, onCancel} = this.props
+        const {errorMessage, busyMessage, standalone, disabled, className, label, labelButtons, tooltip, tooltipPlacement, onCancel} = this.props
         const {showOptions} = this.state
         const onClick = e => {
             if (this.isActive()) {
@@ -61,6 +66,7 @@ class _Combo extends React.Component {
             <Form.FieldSet
                 className={[styles.container, className].join(' ')}
                 label={label}
+                labelButtons={labelButtons}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 disabled={disabled}
@@ -77,7 +83,7 @@ class _Combo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, standalone, readOnly, inputClassName, onBlur} = this.props
+        const {placeholder, autoFocus, standalone, readOnly, inputClassName, additionalButtons = []} = this.props
         const {focused, filter, selectedOption, showOptions} = this.state
         const showOptionsKeyBinding = showOptions ? undefined : () => this.showOptions()
         const keymap = {
@@ -92,39 +98,42 @@ class _Combo extends React.Component {
             <Keybinding
                 disabled={!this.isActive() || !focused}
                 keymap={keymap}>
-                <Input
-                    ref={this.input}
-                    className={[
-                        styles.input,
-                        standalone ? styles.standalone : null,
-                        selectedOption && !showOptions ? styles.fakePlaceholder : null,
-                        inputClassName
-                    ].join(' ')}
-                    type='search'
-                    value={filter}
-                    placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
-                    disabled={!this.isActive()}
-                    readOnly={readOnly || isMobile()}
-                    rightComponent={this.renderButtons()}
-                    onChange={e => this.setFilter(e.target.value)}
-                    onFocus={() => this.setState({focused: true})}
-                    onBlur={e => {
-                        onBlur && onBlur(e)
-                        this.setState({focused: false})
-                    }}
-                />
-                <AutoFocus ref={this.input} enabled={autoFocus}/>
+                <AutoFocus element={this.input.current} enabled={autoFocus}>
+                    <Input
+                        ref={this.input}
+                        className={[
+                            styles.input,
+                            standalone ? styles.standalone : null,
+                            selectedOption && !showOptions ? styles.fakePlaceholder : null,
+                            inputClassName
+                        ].join(' ')}
+                        value={filter}
+                        placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
+                        disabled={!this.isActive()}
+                        readOnly={readOnly || isMobile()}
+                        buttons={[
+                            this.renderClearButton(),
+                            this.renderToggleOptionsButton()
+                        ]}
+                        additionalButtons={additionalButtons}
+                        onChange={e => this.setFilter(e.target.value)}
+                        onFocus={() => this.setState({focused: true})}
+                        onBlur={this.onBlur}
+                    />
+                </AutoFocus>
             </Keybinding>
         )
     }
 
-    renderButtons() {
-        return (
-            <ButtonGroup layout='horizontal-nowrap'>
-                {this.renderClearButton()}
-                {this.renderToggleOptionsButton()}
-            </ButtonGroup>
-        )
+    onBlur(e) {
+        const {onBlur} = this.props
+        const {showOptions} = this.state
+        if (showOptions) {
+            this.input.current.focus()
+        } else {
+            onBlur && onBlur(e)
+            this.setState({focused: false})
+        }
     }
 
     renderClearButton() {
@@ -133,11 +142,13 @@ class _Combo extends React.Component {
         return allowClear && selectedOption
             ? (
                 <Button
+                    key='clear'
                     chromeless
                     shape='none'
                     air='none'
                     icon='times'
                     iconFixedWidth
+                    tabIndex={-1}
                     onClick={() => this.select$.next()}
                 />
             )
@@ -153,12 +164,14 @@ class _Combo extends React.Component {
         }
         return (
             <Button
+                key='toggle'
                 chromeless
                 shape='none'
                 air='none'
                 icon={icon[placement]}
                 iconFlipVertical={showOptions}
                 iconFixedWidth
+                tabIndex={-1}
                 disabled={!this.isActive()}
                 onClick={() => showOptions
                     ? this.hideOptions()
@@ -174,7 +187,9 @@ class _Combo extends React.Component {
         return (
             <FloatingBox
                 element={this.inputContainer.current}
-                placement={placement}>
+                placement={placement}
+                alignment='fit'
+                onBlur={this.handleBlur}>
                 <ScrollableList
                     ref={this.list}
                     air='more'
@@ -253,25 +268,19 @@ class _Combo extends React.Component {
         )
     }
 
-    handleBlur() {
-        const {onCancel, addSubscription} = this.props
-        const click$ = fromEvent(document, 'click')
+    handleBlur(e) {
+        const {onCancel} = this.props
         const isInputClick = e => this.inputContainer.current && this.inputContainer.current.contains(e.target)
         const isListClick = e => this.list.current && this.list.current.contains && this.list.current.contains(e.target)
-        addSubscription(
-            click$.subscribe(e => {
-                if (!isInputClick(e) && !isListClick(e)) {
-                    this.setFilter()
-                    onCancel && onCancel(e)
-                }
-            })
-        )
+        if (!isInputClick(e) && !isListClick(e)) {
+            this.setFilter()
+            onCancel && onCancel(e)
+        }
     }
 
     componentDidMount() {
         this.setFilter()
         this.handleSelect()
-        this.handleBlur()
     }
 
     shouldComponentUpdate() {
@@ -283,19 +292,29 @@ class _Combo extends React.Component {
     }
 
     matcher(filter) {
-        // match beginning of multiple words in order (e.g. "u k" matches "United Kingdom")
-        return RegExp(filter.split(/\s/).map(part => `\\b${escapeStringRegexp(part)}`).join('.*'), 'i')
+        // match beginning of multiple words in any order (e.g. both "u k" and "k u" match "United Kingdom")
+        const parts = filter
+            .trim()
+            .split(/\s+/)
+            // .map(part => part ? `(?=.*\\b${escapeStringRegexp(part)})` : '')
+            .map(part => part ? `(?=.*${escapeStringRegexp(part)})` : '')
+            .join('')
+        return RegExp(`^${parts}.*$`, 'i')
     }
 
     updateOptions() {
         const {options} = this.props
         const {filter} = this.state
         const matcher = this.matcher(filter)
+        const filterGroup = group => {
+            const filtered = {...group, options: getFilteredOptions(group.options)}
+            return filtered.options.length ? filtered : null
+        }
         const getFilteredOptions = options =>
             _.compact(
                 options.map(option =>
                     option.options
-                        ? {...option, options: getFilteredOptions(option.options)}
+                        ? filterGroup(option)
                         : matcher.test(option.searchableText || option.label)
                             ? option
                             : null
@@ -314,7 +333,7 @@ class _Combo extends React.Component {
 
         const getInputOption = () => {
             const {value} = this.props
-            return flattenedOptions && flattenedOptions.find(option => option.value === value)
+            return flattenedOptions && flattenedOptions.find(option => !option.group && option.value === value)
         }
 
         const getSelectedOption = selectedOption => {
@@ -322,11 +341,12 @@ class _Combo extends React.Component {
             return validatedSelectedOption || getInputOption()
         }
 
-        this.updateState(prevState => ({
-            filteredOptions,
-            flattenedOptions,
-            selectedOption: getSelectedOption.bind(this)(prevState.selectedOption)
-        }))
+        this.updateState(prevState =>
+            ({
+                filteredOptions,
+                flattenedOptions,
+                selectedOption: getSelectedOption.bind(this)(prevState.selectedOption)
+            }))
     }
 }
 
@@ -338,7 +358,8 @@ export const Combo = compose(
 
 Combo.propTypes = {
     options: PropTypes.any.isRequired,
-    alignment: PropTypes.oneOf(['left', 'center', 'right']),
+    additionalButtons: PropTypes.arrayOf(PropTypes.node),
+    alignment: PropTypes.oneOf(['left', 'center', 'right', 'fit']),
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
     busyMessage: PropTypes.any,
@@ -347,7 +368,8 @@ Combo.propTypes = {
     errorMessage: PropTypes.any,
     inputClassName: PropTypes.string,
     keyboard: PropTypes.any,
-    label: PropTypes.string,
+    label: PropTypes.any,
+    labelButtons: PropTypes.any,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,

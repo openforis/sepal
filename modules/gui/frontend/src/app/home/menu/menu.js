@@ -32,6 +32,7 @@ class Menu extends React.Component {
                     <div className={styles.section}>
                         <SectionLink name='tasks' icon={hasActiveTasks ? 'spinner' : 'tasks'} disabled={budgetExceeded}/>
                         {user.admin ? <SectionLink name='users' icon='users'/> : null}
+                        <Link name='help' icon='question-circle' href='https://docs.sepal.io/'/>
                         <MenuMode className={styles.mode}/>
                     </div>
                 </div>
@@ -50,6 +51,16 @@ export default compose(
     Menu,
     connect(mapStateToProps)
 )
+
+const Link = ({name, icon, href}) =>
+    <Button
+        className={styles[name]}
+        icon={icon}
+        tooltip={msg(`home.sections.${name}`)}
+        tooltipPlacement='right'
+        linkUrl={href}
+        linkTarget={'_blank'}
+    />
 
 const _SectionLink = ({active, name, icon, disabled}) => {
     const link = `/${name}`

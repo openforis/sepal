@@ -36,14 +36,19 @@ const createRecipe = (recipeId, type, tabPlaceholder) => {
     closePanel()
 }
 
-const setTabType = (recipeId, type, tabPlaceholder) =>
-    actionBuilder('SET_TAB_TYPE')
-        .merge(['process.tabs', {id: recipeId}], {
-            type,
-            placeholder: `${tabPlaceholder}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`,
-            ui: {unsaved: true}
-        })
+const setTabType = (recipeId, type, tabPlaceholder) => {
+    const placeholder = `${tabPlaceholder}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`
+    const recipe = {
+        id: recipeId,
+        type,
+        placeholder,
+        ui: {unsaved: true}
+    }
+    return actionBuilder('SET_TAB_TYPE')
+        .merge(['process.tabs', {id: recipeId}], {placeholder, type})
+        .merge(['process.loadedRecipes', recipeId], recipe)
         .dispatch()
+}
 
 class _CreateRecipe extends React.Component {
     state = {

@@ -4,6 +4,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import styles from './portal.module.css'
+import withSubscriptions from 'subscription'
 
 const DEFAULT_PORTAL_CONTAINER_ID = 'defaultPortalContainer'
 
@@ -35,6 +36,10 @@ PortalContainer.propTypes = {
 }
 
 class Portal extends React.Component {
+    state = {
+        portalContainer: null
+    }
+
     getPortalContainer() {
         const {type, container, portalContext} = this.props
         if (type === 'context') {
@@ -60,13 +65,15 @@ class Portal extends React.Component {
     }
 
     render() {
-        const portalContainer = this.getPortalContainer()
+        const {portalContainer} = this.state
         return portalContainer
-            ? ReactDOM.createPortal(
-                this.renderContent(),
-                portalContainer
-            )
+            ? ReactDOM.createPortal(this.renderContent(), portalContainer)
             : null
+    }
+
+    componentDidMount() {
+        const portalContainer = this.getPortalContainer()
+        this.setState({portalContainer})
     }
 }
 
@@ -83,5 +90,6 @@ Portal.propTypes = {
 
 export default compose(
     Portal,
-    withPortalContext()
+    withPortalContext(),
+    withSubscriptions()
 )

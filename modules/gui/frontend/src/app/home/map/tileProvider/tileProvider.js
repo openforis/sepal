@@ -11,8 +11,18 @@ export class TileProvider {
         // this.abstractMethodError('getConcurrency')
     }
 
+    createElement(id, doc) {
+        const element = doc.createElement('div')
+        element.id = id
+        return element
+    }
+
     loadTile$(_tileRequest) {
         this.abstractMethodError('loadTile$')
+    }
+
+    renderTile({element, blob}) {
+        element.innerHTML = `<img src="${(window.URL || window.webkitURL).createObjectURL(blob)}"/>`
     }
 
     releaseTile(_tileElement) {

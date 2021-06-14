@@ -156,16 +156,18 @@ export class PanelButtons extends React.Component {
 
     render() {
         const {className, shown = true, onEnter, onEscape, children} = this.props
-        return shown ? (
-            <div className={[styles.buttons, className].join(' ')}>
-                <Keybinding keymap={{
-                    Enter: onEnter,
-                    Escape: onEscape
-                }}>
-                    {children ? children : this.renderButtons()}
-                </Keybinding>
-            </div>
-        ) : null
+        return (
+            <Keybinding keymap={{
+                Enter: onEnter,
+                Escape: onEscape
+            }}>
+                {shown ? (
+                    <div className={[styles.buttons, className].join(' ')}>
+                        {children ? children : this.renderButtons()}
+                    </div>
+                ) : null}
+            </Keybinding>
+        )
     }
 
     renderButtons() {

@@ -1,3 +1,4 @@
+import {ButtonGroup} from './buttonGroup'
 import Icon from './icon'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -5,48 +6,80 @@ import Tooltip from './tooltip'
 import styles from './label.module.css'
 
 export default class Label extends React.Component {
-    renderContents() {
-        const {msg, children} = this.props
-        return children ? children : msg
-    }
-
-    renderLabel(contents) {
+    render() {
         const {className, size, alignment, disabled} = this.props
         return (
-            <label className={[
+            <div className={[
                 styles.label,
                 styles[size],
                 styles[alignment],
                 disabled ? styles.disabled : null,
                 className
             ].join(' ')}>
-                {contents}
-                {disabled ? null : this.renderTooltip()}
-            </label>
+                {this.renderLeft()}
+                {this.renderRight()}
+            </div>
         )
     }
 
-    renderTooltip() {
-        const {tooltip, tooltipPlacement} = this.props
-        return tooltip
-            ? (
-                <Tooltip msg={tooltip} placement={tooltipPlacement}>
-                    <span><Icon className={styles.info} name='question-circle'/></span>
-                </Tooltip>
-            ) : null
+    renderContents() {
+        const {msg, children} = this.props
+        return children ? children : msg
     }
 
-    render() {
-        return this.renderLabel(this.renderContents())
+    renderLeft() {
+        const {tooltip, tooltipPlacement} = this.props
+        return (
+            <Tooltip msg={tooltip} placement={tooltipPlacement}>
+                <div>
+                    {this.renderContents()}
+                    {this.renderTooltipIcon()}
+                </div>
+            </Tooltip>
+        )
+    }
+
+    renderTooltipIcon() {
+        const {tooltip} = this.props
+        return tooltip
+            ? (
+                <Icon className={styles.info} name='question-circle'/>
+            )
+            : null
+    }
+
+    renderRight() {
+        const {error, buttons} = this.props
+        return error
+            ? (
+                <Icon
+                    className={styles.error}
+                    name='exclamation-triangle'
+                    variant='error'
+                    tooltip={error}
+                    tooltipPlacement='left'
+                    tooltipDelay={0}
+                    pulse
+                />
+            )
+            : buttons
+                ? (
+                    <ButtonGroup spacing='tight'>
+                        {buttons}
+                    </ButtonGroup>
+                )
+                : null
     }
 }
 
 Label.propTypes = {
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
+    buttons: PropTypes.arrayOf(PropTypes.node),
     children: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
-    msg: PropTypes.string,
+    error: PropTypes.any,
+    msg: PropTypes.any,
     size: PropTypes.oneOf(['normal', 'large']),
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any

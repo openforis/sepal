@@ -25,4 +25,5 @@ printf '%s\n' \
     'long_query_time = 1' \
     'slow_query_log = 1' \
     'slow_query_log_file = /var/log/mysql/slow-queries.log' \
+    'max_allowed_packet=128M' \
     >> /etc/mysql/my.cnf

@@ -1,13 +1,13 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
+import {ViewportResizeDetector} from 'widget/viewportResizeDetector'
 import {Widget} from 'widget/widget'
-import {animationFrameScheduler, combineLatest, fromEvent, interval, merge} from 'rxjs'
+import {animationFrameScheduler, combineLatest, fromEvent, interval, merge, of} from 'rxjs'
 import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, mapTo, scan, switchMap, withLatestFrom} from 'rxjs/operators'
 import Hammer from 'hammerjs'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
-import ViewportResizeDetector from 'widget/viewportResizeDetector'
 import _ from 'lodash'
 import styles from './slider.module.css'
 import withSubscriptions from 'subscription'
@@ -269,6 +269,7 @@ class _SliderDynamics extends React.Component {
         )
 
         const handleDragging$ = merge(
+            of(false),
             panStart$.pipe(mapTo(true)),
             panEnd$.pipe(mapTo(false)),
         )

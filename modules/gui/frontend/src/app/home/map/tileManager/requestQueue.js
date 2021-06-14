@@ -1,5 +1,5 @@
 import {getLogger} from 'log'
-import {requestTag} from 'tag'
+import {requestTag, tileProviderTag} from 'tag'
 import _ from 'lodash'
 
 const log = getLogger('tileManager')
@@ -20,23 +20,38 @@ export const getRequestQueue = () => {
         log.debug(`Enqueued ${requestTag({tileProviderId, requestId})}, pending: ${getCount()}`)
     }
 
-    const dequeueNormal = () => {
+    const dequeueFIFO = () => {
         const pendingRequest = pendingRequests.shift()
-        log.debug(`Dequeued (normal) ${requestTag(pendingRequest)}, pending: ${getCount()}`)
+        log.debug(`Dequeued ${requestTag(pendingRequest)}, pending: ${getCount()}`)
         return pendingRequest
     }
 
-    const dequeuePriority = requestId => {
+    const dequeueByRequestId = requestId => {
         if (requestId) {
             const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.requestId === requestId)
-            if (index !== -1) {
-                const [pendingRequest] = pendingRequests.splice(index, 1)
-                log.debug(`Dequeued (priority) ${requestTag(pendingRequest)}, pending: ${getCount()}`)
-                return pendingRequest
-            }
+            return dequeueByIndex(index, 'by requestId')
         }
-        console.warn(`Could not dequeue ${requestTag({requestId})}`)
-        return null
+        log.warn(`Could not dequeue ${requestTag({requestId})}, reverting to FIFO`)
+        return dequeueFIFO()
+    }
+
+    const dequeueByTileProviderId = tileProviderId => {
+        if (tileProviderId) {
+            const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.tileProviderId === tileProviderId)
+            return dequeueByIndex(index, 'by tileProviderId')
+        }
+        log.debug(`Could not dequeue ${tileProviderTag({tileProviderId})}, reverting to FIFO`)
+        return dequeueFIFO()
+    }
+
+    const dequeueByIndex = (index, option = '') => {
+        if (index !== -1) {
+            const [pendingRequest] = pendingRequests.splice(index, 1)
+            log.debug(`Dequeued ${option} ${requestTag(pendingRequest)}, pending: ${getCount()}`)
+            return pendingRequest
+        }
+        log.warn(`Could not dequeue index ${index}, reverting to FIFO`)
+        return dequeueFIFO()
     }
 
     const remove = requestId => {
@@ -52,5 +67,5 @@ export const getRequestQueue = () => {
     const scan = callback =>
         pendingRequests.forEach(callback)
 
-    return {isEmpty, enqueue, dequeueNormal, dequeuePriority, remove, scan}
+    return {isEmpty, enqueue, dequeueByRequestId, dequeueByTileProviderId, remove, scan}
 }

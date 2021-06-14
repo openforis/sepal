@@ -1,15 +1,14 @@
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {withMapContext} from 'app/home/map/mapContext'
-import GoogleSatelliteLayer from 'app/home/map/googleSatelliteLayer'
+import {withMap} from 'app/home/map/mapContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 
 class ChartPixelButton extends React.Component {
-    constructor(props) {
-        super(props)
-        this.state = {}
+    state = {
+        isSelecting: false,
+        clickListener: null
     }
 
     render() {
@@ -27,38 +26,28 @@ class ChartPixelButton extends React.Component {
     }
 
     startSelecting() {
-        const {mapContext: {sepalMap, google, googleMap}, showGoogleSatellite, onPixelSelected} = this.props
-        this.setState({isSelecting: true})
-        sepalMap.onOneClick(latLng => {
-            if (showGoogleSatellite) {
-                sepalMap.removeLayer('googleSatellite')
-            }
+        const {map, onPixelSelected} = this.props
+        const clickListener = map.addClickListenerOnce(latLng => {
             this.setState({isSelecting: false})
             onPixelSelected(latLng)
         })
-        if (showGoogleSatellite) {
-            sepalMap.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer({google, googleMap, layerIndex: 1})})
-        }
+
+        this.setState({isSelecting: true, clickListener})
     }
 
     cancelSelecting() {
-        const {mapContext: {sepalMap}, showGoogleSatellite} = this.props
-        this.setState({isSelecting: false})
-        if (showGoogleSatellite) {
-            sepalMap.removeLayer('googleSatellite')
-        }
-        sepalMap.clearClickListeners()
+        const {clickListener} = this.state
+        clickListener && clickListener.remove()
+        this.setState({isSelecting: false, clickListener: null})
     }
 }
 
 ChartPixelButton.propTypes = {
-    mapContext: PropTypes.object.isRequired,
     onPixelSelected: PropTypes.func.isRequired,
-    disabled: PropTypes.any,
-    showGoogleSatellite: PropTypes.any,
+    disabled: PropTypes.any
 }
 
 export default compose(
     ChartPixelButton,
-    withMapContext()
+    withMap()
 )

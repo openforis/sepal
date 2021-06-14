@@ -25,6 +25,10 @@
     cursor: pointer;
 }
 
+.widget {
+    position: relative;
+}
+
 .widget.border {
     --input-border-default-color: #606060;
     --input-border-hover-color: #b0b0b0;
@@ -58,7 +62,6 @@
 
 .widget.border.busy {
     --input-border-color: var(--input-border-default-color);
-    /* --input-border-color: var(--input-border-hover-color); */
 }
 
 .widget.error {
@@ -101,57 +104,17 @@
     }
 }
 
-label {
-    --label-color: #b0b0b0;
-    --label-background-color: transparent;
-    display: block;
-    margin: 0;
-    margin-bottom: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    color: var(--label-color);
-    background-color: var(--label-background-color);
+/* .widget.busy .content {
+    visibility: hidden;
 }
 
-label .info {
-    cursor: help;
-}
-
-fieldset label {
-    font-size: .7rem;
-    font-weight: normal;
-}
-
-.messageContainer {
-    position: relative;
-    width: 100%;
-}
-
-.message {
+.busyMessage {
     position: absolute;
     top: 0;
-    bottom: -2rem;
+    bottom: 1px;
     left: 0;
     right: 0;
-    color: var(--message-color);
-    font-size: .8rem;
-    font-weight: 400;
-}
-
-.message.error {
-    --message-color: #e81351;
-}
-
-.message.busy {
-    --message-color: #909090;
-}
-
-.label i {
+    display: flex;
+    align-items: center;
     font-size: .9rem;
-    margin-left: 0.5rem;
-    color: #B5B5B5;
-}
-
-.container:not(.normal).errorMessageSpacer:last-child {
-    margin-bottom: 1.5rem !important;
-}
+} */

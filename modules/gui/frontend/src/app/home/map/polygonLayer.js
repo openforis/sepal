@@ -1,4 +1,50 @@
+import {compose} from 'compose'
+import {connect} from 'store'
 import {of} from 'rxjs'
+import PropTypes from 'prop-types'
+import React from 'react'
+
+class _PolygonLayer extends React.Component {
+    render() {
+        return null
+    }
+
+    componentDidMount() {
+        this.setLayer()
+    }
+
+    componentDidUpdate() {
+        this.setLayer()
+    }
+
+    componentWillUnmount() {
+        const {id, map} = this.props
+        map.removeLayer(id)
+    }
+
+    setLayer() {
+        const {id, path, map, componentWillUnmount$} = this.props
+        if (path) {
+            const layer = new Layer({map, path})
+            map.setLayer({
+                id,
+                layer,
+                destroy$: componentWillUnmount$
+            })
+        }
+    }
+}
+
+export const PolygonLayer = compose(
+    _PolygonLayer,
+    connect()
+)
+
+PolygonLayer.propTypes = {
+    id: PropTypes.string.isRequired,
+    map: PropTypes.any,
+    path: PropTypes.any
+}
 
 const polygonOptions = fill => ({
     fillColor: '#FBFAF2',
@@ -8,34 +54,24 @@ const polygonOptions = fill => ({
     strokeWeight: 1
 })
 
-export const setPolygonLayer = ({
-    mapContext,
-    layerSpec: {id, path},
-    _fill,
-    destroy$,
-    onInitialized
-}) => {
-    const layer = path ? new PolygonLayer({mapContext, path}) : null
-    mapContext.sepalMap.setLayer({id, layer, destroy$, onInitialized})
-    return layer
-}
-
-class PolygonLayer {
-    constructor({mapContext: {google, googleMap, sepalMap}, path, fill}) {
+class Layer {
+    constructor({map, path, fill}) {
+        const {google, googleMap} = map.getGoogle()
         this.googleMap = googleMap
         this.type = 'PolygonLayer'
         this.polygonPath = path
         this.fill = fill
         this.layer = new google.maps.Polygon({
             paths: path.map(([lng, lat]) =>
-                new google.maps.LatLng(lat, lng)), ...polygonOptions(fill)
+                new google.maps.LatLng(lat, lng)), ...polygonOptions(fill),
+            clickable: false
         })
         const googleBounds = new google.maps.LatLngBounds()
         this.layer.getPaths().getArray().forEach(path =>
             path.getArray().forEach(latLng =>
                 googleBounds.extend(latLng)
             ))
-        this.bounds = sepalMap.fromGoogleBounds(googleBounds)
+        this.bounds = map.fromGoogleBounds(googleBounds)
     }
 
     equals(o) {
@@ -55,7 +91,9 @@ class PolygonLayer {
     }
 
     hide(hidden) {
-        hidden ? this.removeFromMap() : this.addToMap()
+        hidden
+            ? this.removeFromMap()
+            : this.addToMap()
     }
 
     initialize$() {

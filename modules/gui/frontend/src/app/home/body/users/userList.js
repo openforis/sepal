@@ -314,7 +314,7 @@ const Usage = ({currentValue, budgetValue, formattedValue}) => {
             <Tooltip
                 className={[overbudget ? styles.overBudget : null].join(' ')}
                 msg={msg('user.report.usage', {percentage})}
-                delay={.25}
+                delay={250}
                 placement='top'
             >
                 <div className={styles.usage} style={{'--usage': `${usage}`}}>

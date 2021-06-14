@@ -1,20 +1,21 @@
 import {ActivationContext} from 'widget/activation/activationContext'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {recipeAccess} from './recipeAccess'
 import {recipeActionBuilder} from './recipe'
 import {toPathList} from 'stateUtils'
 import {withContext} from 'context'
-import {withMapContext} from '../../map/mapContext'
 import React from 'react'
+import _ from 'lodash'
 import actionBuilder from 'action-builder'
 
 const Context = React.createContext()
 
-export const RecipeContext = ({rootStatePath = 'process.tabs', recipeId, children}) =>
+export const RecipeContext = ({rootStatePath = 'process.loadedRecipes', recipeId, children}) =>
     recipeId
         ? (
             <Context.Provider value={{
-                statePath: toPathList([rootStatePath, {id: recipeId}])
+                statePath: toPathList([rootStatePath, recipeId])
             }}>
                 <ActivationContext id={`recipe-${recipeId}`}>
                     {children}
@@ -24,25 +25,41 @@ export const RecipeContext = ({rootStatePath = 'process.tabs', recipeId, childre
         : null
 
 const withRecipeContext = withContext(Context, 'recipeContext')
-    
-export const withRecipe = mapRecipeToProps =>
+
+export const withRecipe = (mapRecipeToProps = () => ({})) =>
     WrappedComponent => {
         const mapStateToProps = (state, ownProps) => {
             const {recipeContext: {statePath}} = ownProps
             const recipe = {...select(statePath)}
-            return {
-                recipeActionBuilder: recipeActionBuilder(recipe.id),
-                ...mapRecipeToProps(recipe, ownProps)
+            if (!_.isEmpty(recipe)) {
+                return {
+                    recipeActionBuilder: recipeActionBuilder(recipe.id),
+                    recipeId: recipe.id,
+                    ...mapRecipeToProps(recipe, ownProps)
+                }
+            } else {
+                return ownProps
+            }
+        }
+        class HigherOrderComponent extends React.Component {
+            constructor(props) {
+                super(props)
+                const {recipeId, usingRecipe} = props
+                usingRecipe(recipeId)
+            }
+
+            render() {
+                return React.createElement(WrappedComponent, {...this.props})
             }
         }
         return compose(
-            WrappedComponent,
+            HigherOrderComponent,
             connect(mapStateToProps),
             withRecipeContext(),
-            withMapContext()
+            recipeAccess()
         )
     }
-    
+
 export const recipe = ({getDefaultModel, defaultModel, mapRecipeToProps}) =>
     WrappedComponent => {
         const mapStateToProps = (state, ownProps) => {

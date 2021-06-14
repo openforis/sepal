@@ -67,6 +67,8 @@
 		"cirrus": "Cirrus",
 		"dayOfYear": "Jour Julien",
 		"daysFromTarget": "Jours de la date-cible",
+		"fifth": "cinquième",
+		"fourth": "quart",
 		"green": "Vert",
 		"greenness": "Verdeur",
 		"nir": "NIR",
@@ -76,13 +78,29 @@
 		"redEdge2": "Rouge - bord 2",
 		"redEdge3": "Rouge - bord 3",
 		"redEdge4": "Rouge - bord 4",
+		"sixth": "Sixième",
 		"swir1": "SWIR1",
 		"swir2": "SWIR2",
 		"thermal": "Thermique",
 		"thermal2": "Thermique 2",
 		"unixTimeDays": "Date",
 		"waterVapor": "Vapeur d'eau",
-		"wetness": "Humidité"
+		"wetness": "Humidité",
+		"ndvi": "NDVI",
+		"ndmi": "NDMI",
+		"ndwi": "NDWI",
+		"mndwi": "MNDWI",
+		"ndfi": "NDFI",
+		"evi": "EVI",
+		"evi2": "EVI2",
+		"savi": "SAVI",
+		"nbr": "NBR",
+		"ui": "UI",
+		"ndbi": "NDBI",
+		"ibi": "IBI",
+		"nbi": "NBI",
+		"ebbi": "EBBI",
+		"bui": "BUI"
 	},
 	"body": {
 		"loading-apps": "Chargement des applications...",
@@ -205,6 +223,7 @@
 			"browse": "Fichiers",
 			"collapse": "Réduire le menu",
 			"expand": "Étendre le menu",
+			"help": "Ouvrez la documentation de SEPAL dans un nouvel onglet/fenêtre.",
 			"logout": "Déconnexion",
 			"process": "Traitement",
 			"tasks": "Tâches de fond",
@@ -336,10 +355,128 @@
 		}
 	},
 	"map": {
+		"info": {
+			"center": "Centrer",
+			"bounds": "Limites",
+			"coordinatesCopied": "Coordonnées copiées dans le presse-papiers"
+		},
+		"legendBuilder": {
+			"addEntry": {
+				"tooltip": "Ajouter une entrée de légende"
+			},
+			"colors": {
+				"colorPicker": {
+					"tooltip": "Afficher et modifier les couleurs de la légende à l'aide de sélecteurs de couleurs"
+				},
+				"edit": {
+					"tooltip": "Modifier couleur"
+				},
+				"swap": {
+					"tooltip": "Echanger cette couleur avec une autre dans la légende"
+				},
+				"text": {
+					"tooltip": "Afficher et modifier les couleurs de la légende en tant que texte"
+				}
+		  },
+		  "entry": {
+			  "error": {
+				  "duplicateColor": "Il y a plus d'une entrée avec cette couleur",
+				  "duplicateLabel": "Il y a plus d'une entrée avec ce label",
+          "duplicateValue": "Il y a plus d'une entrée avec cette valeur",
+          "invalidColor": "Couleur invalide"
+			  },
+			  "confirmation": "Êtes-vous sûr de vouloir supprimer cette entrée de la légende ?",
+			  "classLabel": {
+				  "placeholder": "Label..."
+			  }
+		},
+    "import": {
+      "title": "Importer",
+      "file": {
+        "label": "fichier CSV"
+      },
+      "colorColumnType": {
+        "label": "Format des colonnes de couleur",
+        "tooltip": "Spécifiez si la couleur est dans une seule colonne, ou si le rouge, le vert, le bleu sont dans des colonnes séparées.",
+        "single": "Colonne unique",
+        "multiple": "Colonnes multiples"
+      },
+      "column": {
+        "valueColumn": {
+          "label": "Valeur",
+          "placeholder": "Sélectionnez...",
+          "tooltip": "Colonne avec les valeurs de classe"
+        },
+        "labelColumn": {
+          "label": "Label",
+          "placeholder": "Sélectionnez...",
+          "tooltip": "Colonne avec les labels de classe"
+        },
+        "colorColumn": {
+          "label": "Color",
+          "placeholder": "Sélectionnez...",
+          "tooltip": "Colonne avec les couleurs de la classe"
+        },
+        "redColumn": {
+          "label": "Red",
+          "placeholder": "Sélectionnez...",
+          "tooltip": "Colonne avec les valeurs du canal rouge"
+        },
+        "greenColumn": {
+          "label": "Green",
+          "placeholder": "Sélectionnez...",
+          "tooltip": "Colonne avec les valeurs du canal vert"
+        },
+        "blueColumn": {
+          "label": "Blue",
+          "placeholder": "Sélectionnez...",
+          "tooltip": "Colonne avec les valeurs du canal bleu"
+        }
+      }
+    },
+    "label": "Légende",
+    "load": {
+      "label": "Chargement...",
+      "options": {
+        "importFromCsv": {
+          "label": "Importer depuis un CSV..."
+        },
+        "imageValues": {
+          "label": "Valeurs distinctes de la bande d'images",
+          "loadError": "Échec du chargement de valeurs distinctes à partir de la bande de l'image"
+        }
+      }
+    },
+    "noEntries": "Aucune entrée dans la légende. Ajoutez-en au moins une."
+  },
 		"layer": {
 			"error": "Echec du chargement de la couche"
 		},
 		"layout": {
+      "addImageLayerSource": {
+        "title": "Ajouter une couche",
+        "types": {
+          "Asset": {
+            "description": "Ajouter un asset Earth Engine",
+            "form": {
+              "asset.label": "Asset Earth Engine",
+              "loadError": "Impossible de lire l'asset"
+            },
+            "presets": "Pré-réglages"
+          },
+          "Planet": {
+            "description": "Ajouter un compte Planet",
+            "form": {
+              "description.label": "Description",
+              "apiKey.label": "Clé API Planet",
+              "invalidApiKey": "Clé API Planet non valide"
+            }
+          },
+          "Recipe": {
+            "description": "Ajouter une recette de SEPAL"
+          }
+        }
+      },
 			"area": {
 				"edit.tooltip": "Modifier les propriétés de la zone",
 				"remove": {
@@ -353,7 +490,162 @@
 					"tooltip": "Supprimer la couche"
 				}
 			},
-			"title": "Présentation de la carte"
+      "mode": {
+        "grid": {
+          "label": "Grille"
+        },
+        "stack": {
+          "label": "Pile"
+        }
+      },
+      "title": "Couches"
+    },
+    "visParams": {
+      "title": "Visualisation",
+      "bands": {
+        "loading": "Chargement des bandes...",
+        "loadError": "Échec du chargement des bandes de l'image"
+      },
+      "form": {
+        "band": {
+          "band.label": "Bande",
+          "blueChannel.label": "Canal Bleu",
+          "greenChannel.label": "Canal vert",
+          "hue.label": "Teinte",
+          "redChannel.label": "Canal rouge",
+          "reverse.tooltip": "Inverser la bande.",
+          "saturation.label": "Saturation",
+          "select.placeholder": "Sélectionnez une bande...",
+          "value.label": "Valeur"
+        },
+        "gamma": {
+          "label": "Gamma",
+          "info": "Valeur: {gamma}"
+        },
+        "histogram": {
+          "noData": "La bande ne contient aucune donnée."
+        },
+        "inverted": {
+          "label": "Inversé"
+        },
+        "palette": {
+          "label": "Palette",
+          "add": {
+            "tooltip": "Ajoutez une palette de couleurs."
+          },
+          "color": {
+            "edit": {
+              "tooltip": "Changez la couleur."
+            },
+            "insert": {
+              "tooltip": "Insérer une couleur avant celle-ci."
+            },
+            "remove": {
+              "tooltip": "Enlever la couleur."
+            }
+          },
+          "palette": {
+            "tooltip": "Afficher et modifier la palette à l'aide de sélecteurs de couleurs."
+          },
+          "preset": {
+            "placeholder": "Sélectionnez une palette prédéfinie...",
+            "attribution": "Pré-réglages de {url}."
+          },
+          "text": {
+            "tooltip": "Afficher et modifier la palette comme du texte.",
+            "placeholder": "Entrez une liste de couleurs au format csv..."
+          }
+        },
+        "min": {
+          "label": "min",
+          "notSmallerThanMax": "Doit être inférieur à max"
+        },
+        "max": {
+          "label": "max"
+        }
+      },
+      "stretch": {
+        "label": "Étirer"
+      },
+      "type": {
+        "categorical": {
+          "label": "Catégorielle",
+          "tooltip": "Bande unique avec valeurs catégorielles"
+        },
+        "continuous": {
+          "label": "Continue",
+          "tooltip": "Bande unique avec valeurs continues"
+        },
+        "rgb": {
+          "label": "RGB",
+          "tooltip": "Trois bandes correspondant aux canaux de couleur rouge, vert et bleu."
+        },
+        "hsv": {
+          "label": "HSV",
+          "tooltip": "Mappage à trois bandes pour la teinte, la saturation et la valeur."
+        }
+      }
+    },
+    "visualizationSelector": {
+      "label": "Bandes",
+      "userDefined.label": "Défini par l'utilisateur",
+      "add.tooltip": "Ajouter une visualisation",
+      "edit.tooltip": "Modifier la visualisation sélectionnée",
+      "clone.tooltip": "Dupliquer la visualisation prédéfinie sélectionnée",
+      "remove.tooltip": "Supprimer la visualisation sélectionnée"
+    }
+  },
+  "featureLayerSources": {
+    "Aoi": {
+      "type": "AOI",
+      "description": "Zone d'intérêt"
+    },
+    "Labels": {
+      "type": "Labels",
+      "description": "Libellés de la carte, routes et points d'intérêt"
+    },
+    "Legend": {
+      "type": "Légende",
+      "description": "légende de la carte"
+    },
+    "Classification": {
+      "type": "Classification",
+      "description": "Légende de la carte. Elle met en évidence la classe du pixel sous le curseur de la souris."
+    },
+    "Palette": {
+      "type": "Palette",
+      "description": "Palette appliquée à l'image. Elle affiche une valeur approximative pour le pixel situé sous le curseur de la souris."
+    },
+    "ReferenceData": {
+      "type": "Données de référence",
+      "description": "Afficher les marqueurs de données de référence"
+    },
+    "Values": {
+      "type": "Valeurs",
+      "description": "Affiche les valeurs approximatives de la bande pour le pixel situé sous le curseur de la souris."
+    },
+    "SceneAreas": {
+      "type": "Zones de scènes",
+      "description": "Sélectionnez les scènes à utiliser dans la mosaïque"
+    }
+  },
+  "imageLayerSources": {
+    "Asset": {
+      "label": "Asset EE",
+      "description": "Asset Earth Engine"
+    },
+    "Recipe": {
+      "label": "Formule",
+      "thisRecipeDescription": "cette formule",
+      "loadError": "Échec du chargement de la formule : {error}"
+    },
+    "Planet": {
+      "label": "Planet",
+      "nicfiDescription": "Images composites de Planet NICFI"
+    },
+    "GoogleSatellite": {
+      "label": "Google Satellite",
+      "description":"Imagerie satellite haute résolution de Google"
 		}
 	},
 	"notifications": {
@@ -366,7 +658,24 @@
 		"info": "{start} - {stop - 1} / {count}"
 	},
 	"process": {
-		"ccdc": {
+    "mapZoom": {
+      "fit": {
+        "tooltip": "Zoom sur la zone d'intérêt"
+      },
+      "zoomArea": {
+        "tooltip": "Zoom sur la zone"
+      },
+      "zoomIn": {
+        "tooltip": "Agrandir"
+      },
+      "zoomOut": {
+        "tooltip": "Réduire"
+      },
+      "search": {
+        "placeholder": "recherche géographique"
+      }
+    },
+    "ccdc": {
 			"chartPixel": {
 				"cancel.tooltip": "Annuler la représentation des séries temporelles",
 				"loadFailed": "Impossible de charger le graphique : {error}",
@@ -744,7 +1053,8 @@
 				"source": {
 					"asset": {
 						"label": "Asset Earth Engine CCDC",
-						"title": "Asset Earth Engine CCDC"
+						"title": "Asset Earth Engine CCDC",
+            "notCcdc": "L'asset ne contient pas de segments CCDC"
 					},
 					"button": "SRC",
 					"form": {
@@ -771,6 +1081,14 @@
 				"loading": "Chargement {loaded} de {count} tuiles",
 				"tilesFailed": "Echec de {failed}"
 			},
+      "source": {
+        "asset": {
+          "loadError": "Échec du chargement de l'asset"
+        },
+        "recipe": {
+          "loadError": "Échec du chargement de la recette"
+        }
+      },
 			"tabPlaceholder": "Coupe CCDC"
 		},
 		"classification": {
@@ -793,6 +1111,9 @@
 			"create": "Classification",
 			"description": "Classifier une mosaique de SEPAL ou Google Earth Engine (inclus processus multi-date pour la détection de changement)",
 			"layers": {
+        "imageLayer": {
+          "preSets": "Pré-reglages"
+        },
 				"referenceData": {
 					"description": "Points de données de référence utilisés pour créer la classification",
 					"label": "Données de référence"
@@ -1136,7 +1457,8 @@
 				"legend": {
 					"button": "LEG",
 					"title": "Legende",
-					"tooltip": "Configuration de la légende pour la classification"
+					"tooltip": "Configuration de la légende pour la classification",
+          "import": "Importer..."
 				},
 				"trainingData": {
 					"button": "ETR",
@@ -1413,6 +1735,8 @@
 		"mosaic": {
 			"bands": {
 				"combinations": "Combinaisons",
+        "indexes": "Indices",
+        "label": "Bandes",
 				"metadata": "Metadonnées",
 				"panSharpen": "Pan sharpen",
 				"placeholder": "Sélectionner les bandes à visualiser"
@@ -1425,26 +1749,6 @@
 				},
 				"layers": {
 					"tooltip": "Sélectionnez les couches à afficher"
-				},
-				"layersMenu": {
-					"baseLayer": "Couche de base",
-					"GOOGLE_SATELLITE": {
-						"description": "Couche satellite haute résolution de Google Maps",
-						"label": "Google Satellite"
-					},
-					"labels": {
-						"description": "Afficher les labels des cartes, les routes et les points d'intérêt",
-						"label": "Afficher les labels"
-					},
-					"overlay": "Superpositions",
-					"PLANET": {
-						"description": "Planet composites",
-						"label": "Show Labels"
-					},
-					"SEPAL": {
-						"description": "Couche sombre par défaut de SEPAL",
-						"label": "SEPAL"
-					}
 				},
 				"link": {
 					"tooltip": "Lier cette carte à toutes les autres cartes liées"
@@ -2018,6 +2322,7 @@
 			"title": "Révisions"
 		},
 		"saveRecipe": {
+      "error": "Désolé, mais quelque chose s'est mal passé lorsque vous avez essayé d'enregistrer votre formule. Si vous fermez la fenêtre/l'onglet, vous perdrez toutes les modifications apportées depuis le dernier enregistrement réussi. Pour être sûr de pouvoir enregistrer les données de cette recette, vous pouvez l'exporter. Allez dans le menu des formules en haut à droite et sélectionnez \"Exporter la formule\".",
 			"form": {
 				"name": {
 					"label": "Nom",
@@ -2505,6 +2810,9 @@
 		"page": "Page {pageNumber} de {pageCount}"
 	},
 	"widget": {
+    "assetInput": {
+      "loadError": "Unable to load asset"
+    },
 		"comboBox": {
 			"loading": "Chargement..."
 		},
@@ -2531,7 +2839,7 @@
 		"loading": "Chargement...",
 		"notification": {
 			"dismiss": "Cliquer pour ignorer",
-			"dismissOrWait": "Cliquer pour ignorer ou attendre {timeout} secondes",
+			"dismissOrWait": "Cliquer pour ignorer ou attendre {timeout} {timeout, plural, one {second} other {secondes}}",
 			"error": {
 				"title": "Erreur"
 			},

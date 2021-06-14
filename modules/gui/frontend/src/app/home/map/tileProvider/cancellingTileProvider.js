@@ -21,9 +21,9 @@ export class CancellingTileProvider extends DelegatingTileProvider {
         )
     }
 
-    releaseTile(requestId) {
-        super.releaseTile(requestId)
-        this.release$.next(requestId)
+    releaseTile(element) {
+        super.releaseTile(element)
+        this.release$.next(element.id)
     }
 
     close() {

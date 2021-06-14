@@ -4,9 +4,9 @@ def params(bands):
 
     Args:
         bands: The bands to get visualization params for. Must be one of the following:
-            VV, VV_min, VV_mean, VV_median, VV_max, VV_stdDev, VV_CV, VV_fitted, VV_residuals,
-            VH, VH_min, VH_mean, VH_median, VH_max, VH_stdDev, VH_CV, VH_fitted, VH_residuals,
-            ratio_VV_VH, ratio_VV_median_VH_median, NDCV
+            VV, VV_min, VV_mean, VV_med, VV_max, VV_std, VV_cv, VV_fit, VV_res,
+            VH, VH_min, VH_mean, VH_med, VH_max, VH_std, VH_cv, VH_fit, VH_res,
+            ratio_VV_VH, ratio_VV_med_VH_med, NDCV
             constant, t, phase, amplitude, residuals,
             dayOfYear, daysFromTarget.
 
@@ -19,28 +19,28 @@ def params(bands):
         'VV': {'range': [-20, 0]},
         'VV_min': {'range': [-25, 0]},
         'VV_mean': {'range': [-20, 0]},
-        'VV_median': {'range': [-20, 0]},
+        'VV_med': {'range': [-20, 0]},
         'VV_max': {'range': [-17, 10]},
-        'VV_stdDev': {'range': [0, 5]},
-        'VV_CV': {'range': [-6, 28]},
-        'VV_fitted': {'range': [-22, 0]},
-        'VV_residuals': {'range': [0, 2.4], 'stretch': [1, 0.5]},
+        'VV_std': {'range': [0, 5]},
+        'VV_cv': {'range': [-6, 28]},
+        'VV_fit': {'range': [-22, 0]},
+        'VV_res': {'range': [0, 2.4], 'stretch': [1, 0.5]},
         'VV_t': {'range': [-4, 4]},
         'VV_phase': {'range': [-3.14, 3.14]},
-        'VV_amplitude': {'range': [0.5, 5]},
+        'VV_amp': {'range': [0.5, 5]},
         'VH': {'range': [-25, -5]},
         'VH_min': {'range': [-34, -5]},
         'VH_mean': {'range': [-25, -5]},
-        'VH_median': {'range': [-25, -5]},
+        'VH_med': {'range': [-25, -5]},
         'VH_max': {'range': [-26, 2]},
-        'VH_stdDev': {'range': [0, 6]},
-        'VH_fitted': {'range': [-20, 2]},
-        'VH_residuals': {'range': [0, 2.4], 'stretch': [1, 0.5]},
+        'VH_std': {'range': [0, 6]},
+        'VH_fit': {'range': [-20, 2]},
+        'VH_res': {'range': [0, 2.4], 'stretch': [1, 0.5]},
         'VH_t': {'range': [-4, 4]},
         'VH_phase': {'range': [-3.14, 3.14]},
-        'VH_amplitude': {'range': [0.5, 5]},
-        'VH_CV': {'range': [0, 35]},
-        'ratio_VV_median_VH_median': {'range': [1, 15]},
+        'VH_amp': {'range': [0.5, 5]},
+        'VH_cv': {'range': [0, 35]},
+        'ratio_VV_med_VH_med': {'range': [1, 15]},
         'NDCV': {'range': [-1, 1]},
         'ratio_VV_VH': {'range': [1, 15]},
         'constant': {'range': [-280, 215]},
@@ -61,11 +61,11 @@ def hsv_params(bands):
 
     Args:
         bands: The bands to get visualization params for. Must be one of the following:
-            VV, VV_min, VV_mean, VV_median, VV_max, VV_stdDev, VV_CV,
-            VV_fitted, VV_residuals, VV_constant, VV_t, VV_phase, VV_amplitude, VV_residuals,
-            VH, VH_min, VH_mean, VH_median, VH_max, VH_stdDev, VH_CV,
-            VH_fitted, VH_residuals, VH_constant, VH_t, VH_phase, VH_amplitude, VH_residuals,
-            ratio_VV_VH, ratio_VV_median_VH_median, NDCV
+            VV, VV_min, VV_mean, VV_med, VV_max, VV_std, VV_cv,
+            VV_fit, VV_res, VV_const, VV_t, VV_phase, VV_amp, VV_res,
+            VH, VH_min, VH_mean, VH_med, VH_max, VH_std, VH_cv,
+            VH_fit, VH_res, VH_const, VH_t, VH_phase, VH_amp, VH_res,
+            ratio_VV_VH, ratio_VV_med_VH_med, NDCV
             dayOfYear, daysFromTarget.
 
     Returns:

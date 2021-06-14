@@ -19,7 +19,7 @@
     margin-right: calc(-1 * var(--horizontal-spacing));
 }
 
-.layout.loose {
+/* .layout.loose {
     --vertical-spacing: 3rem;
     --horizontal-spacing: 1.5rem;
 }
@@ -36,6 +36,38 @@
 
 .layout.none {
     --vertical-spacing: 0rem;
+    --horizontal-spacing: 0rem;
+} */
+
+.layout.vertical.loose {
+    --vertical-spacing: 3rem;
+}
+
+.layout.vertical.normal {
+    --vertical-spacing: 2rem;
+}
+
+.layout.vertical.compact {
+    --vertical-spacing: 1rem;
+}
+
+.layout.vertical.none {
+    --vertical-spacing: 0rem;
+}
+
+.layout.horizontal.loose {
+    --horizontal-spacing: 1.5rem;
+}
+
+.layout.horizontal.normal {
+    --horizontal-spacing: 1rem;
+}
+
+.layout.horizontal.compact {
+    --horizontal-spacing: .5rem;
+}
+
+.layout.horizontal.none {
     --horizontal-spacing: 0rem;
 }
 
@@ -62,4 +94,8 @@
 
 .layout.horizontal > .content > * {
     margin-right: var(--horizontal-spacing);
+}
+
+.layout.horizontal .layout.horizontal > .content > *:last-child {
+    margin-right: 0;
 }
