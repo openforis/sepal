@@ -99,7 +99,6 @@
 }
 
 .area.overlay {
-    --attribution-mask-size: 0rem;
     z-index: 1;
 }
 
