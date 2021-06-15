@@ -105,15 +105,17 @@ class _SourceSync extends React.Component {
 
     loadClassificationRecipe({ccdcRecipe, classificationId}) {
         const {stream, loadRecipe$} = this.props
-        stream('LOAD',
-            loadRecipe$(classificationId).pipe(
-                takeUntil(this.cancel$)
-            ),
-            classificationRecipe => {
-                this.updateRecipeSource({ccdcRecipe, classificationRecipe})
-            },
-            error => Notifications.error({message: msg('process.ccdcSlice.source.recipe.loadError'), error})
-        )
+        if (!stream('LOAD').active) {
+            stream('LOAD',
+                loadRecipe$(classificationId).pipe(
+                    takeUntil(this.cancel$)
+                ),
+                classificationRecipe => {
+                    this.updateRecipeSource({ccdcRecipe, classificationRecipe})
+                },
+                error => Notifications.error({message: msg('process.ccdcSlice.source.recipe.loadError'), error})
+            )
+        }
     }
 
     updateAssetSource(id, metadata) {

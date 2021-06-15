@@ -52,7 +52,8 @@ export const defaultModel = {
     },
     options: {
         corrections: [],
-        cloudMasking: 'AGGRESSIVE',
+        cloudDetection: ['QA', 'CLOUD_SCORE'],
+        cloudMasking: 'MODERATE',
         shadowMasking: 'OFF',
         snowMasking: 'ON',
         orbits: ['ASCENDING', 'DESCENDING'],
@@ -122,7 +123,7 @@ const allRadarMosaicVisualizations = recipe => {
             options: selectFrom(recipe, 'model.options')
         }
     }
-    const visualizations = [
+    return [
         ...radarMosaicVisualizations(radarMosaicRecipe)
             .map(visParams => ({
                 ...visParams,
@@ -134,7 +135,6 @@ const allRadarMosaicVisualizations = recipe => {
         toHarmonicVisualization('VH'),
         toHarmonicVisualization('ratio_VV_VH'),
     ]
-    return visualizations
 }
 
 export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>

@@ -1,6 +1,6 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {MosaicPreview} from '../../../mosaic/mosaicPreview'
+import {MosaicPreview} from 'app/home/body/process/recipe/mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -18,6 +18,7 @@ const fields = {
     hazePercentile: new Form.Field(),
     ndviPercentile: new Form.Field(),
     dayOfYearPercentile: new Form.Field(),
+    cloudDetection: new Form.Field().notEmpty(),
     cloudMasking: new Form.Field(),
     cloudBuffer: new Form.Field(),
     snowMasking: new Form.Field(),
@@ -71,7 +72,6 @@ class CompositeOptions extends React.Component {
 
     renderCorrectionOptions() {
         const {inputs: {corrections}, sources} = this.props
-        // const includesSentinel2 = Object.keys(sources).includes('SENTINEL_2')
         return (
             <Form.Buttons
                 label={msg('process.mosaic.panel.composite.form.corrections.label')}
@@ -120,26 +120,49 @@ class CompositeOptions extends React.Component {
     }
 
     renderCloudMaskingOptions() {
-        const {inputs: {cloudMasking}} = this.props
+        const {sources, inputs: {corrections, cloudDetection, cloudMasking}} = this.props
+        const pino26Disabled = corrections.value.includes('SR') || !_.isEqual(Object.keys(sources), ['SENTINEL_2'])
         return (
-            <Form.Buttons
-                label={msg('process.mosaic.panel.composite.form.cloudMasking.label')}
-                input={cloudMasking}
-                options={[{
-                    value: 'OFF',
-                    label: msg('process.mosaic.panel.composite.form.cloudMasking.none.label'),
-                    tooltip: msg('process.mosaic.panel.composite.form.cloudMasking.none.tooltip')
-                }, {
-                    value: 'MODERATE',
-                    label: msg('process.mosaic.panel.composite.form.cloudMasking.moderate.label'),
-                    tooltip: msg('process.mosaic.panel.composite.form.cloudMasking.moderate.tooltip')
-                }, {
-                    value: 'AGGRESSIVE',
-                    label: msg('process.mosaic.panel.composite.form.cloudMasking.aggressive.label'),
-                    tooltip: msg('process.mosaic.panel.composite.form.cloudMasking.aggressive.tooltip')
-                }]}
-                type='horizontal-wrap'
-            />
+            <React.Fragment>
+                <Form.Buttons
+                    label={msg('process.mosaic.panel.composite.form.cloudDetection.label')}
+                    input={cloudDetection}
+                    multiple
+                    options={[{
+                        value: 'QA',
+                        label: msg('process.mosaic.panel.composite.form.cloudDetection.qa.label'),
+                        tooltip: msg('process.mosaic.panel.composite.form.cloudDetection.qa.tooltip'),
+                    }, {
+                        value: 'CLOUD_SCORE',
+                        label: msg('process.mosaic.panel.composite.form.cloudDetection.cloudScore.label'),
+                        tooltip: msg('process.mosaic.panel.composite.form.cloudDetection.cloudScore.tooltip'),
+                    }, {
+                        value: 'PINO_26',
+                        label: msg('process.mosaic.panel.composite.form.cloudDetection.pino26.label'),
+                        tooltip: msg('process.mosaic.panel.composite.form.cloudDetection.pino26.tooltip'),
+                        neverSelected: pino26Disabled
+                    }]}
+                    type='horizontal-wrap'
+                />
+                <Form.Buttons
+                    label={msg('process.mosaic.panel.composite.form.cloudMasking.label')}
+                    input={cloudMasking}
+                    options={[{
+                        value: 'OFF',
+                        label: msg('process.mosaic.panel.composite.form.cloudMasking.none.label'),
+                        tooltip: msg('process.mosaic.panel.composite.form.cloudMasking.none.tooltip')
+                    }, {
+                        value: 'MODERATE',
+                        label: msg('process.mosaic.panel.composite.form.cloudMasking.moderate.label'),
+                        tooltip: msg('process.mosaic.panel.composite.form.cloudMasking.moderate.tooltip')
+                    }, {
+                        value: 'AGGRESSIVE',
+                        label: msg('process.mosaic.panel.composite.form.cloudMasking.aggressive.label'),
+                        tooltip: msg('process.mosaic.panel.composite.form.cloudMasking.aggressive.tooltip')
+                    }]}
+                    type='horizontal-wrap'
+                />
+            </React.Fragment>
         )
     }
 
@@ -251,6 +274,7 @@ const valuesToModel = values => ({
         {type: 'NDVI', percentile: values.ndviPercentile},
         {type: 'DAY_OF_YEAR', percentile: values.dayOfYearPercentile},
     ].filter(({percentile}) => percentile),
+    cloudDetection: values.cloudDetection,
     cloudMasking: values.cloudMasking,
     cloudBuffer: values.cloudBuffer,
     snowMasking: values.snowMasking,
@@ -268,6 +292,7 @@ const modelToValues = model => {
         hazePercentile: getPercentile('HAZE'),
         ndviPercentile: getPercentile('NDVI'),
         dayOfYearPercentile: getPercentile('DAY_OF_YEAR'),
+        cloudDetection: model.cloudDetection,
         cloudMasking: model.cloudMasking,
         cloudBuffer: model.cloudBuffer,
         snowMasking: model.snowMasking,

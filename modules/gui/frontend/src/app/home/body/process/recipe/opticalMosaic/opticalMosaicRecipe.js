@@ -30,6 +30,7 @@ export const defaultModel = {
     compositeOptions: {
         corrections: ['SR', 'BRDF'],
         filters: [],
+        cloudDetection: ['QA', 'CLOUD_SCORE'],
         cloudMasking: 'MODERATE',
         cloudBuffering: 0,
         snowMasking: 'ON',

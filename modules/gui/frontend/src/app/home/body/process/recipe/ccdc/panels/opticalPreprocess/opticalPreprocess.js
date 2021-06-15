@@ -1,26 +1,27 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-// import {RecipeActions} from '../../ccdcRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import React from 'react'
+import _ from 'lodash'
 import styles from './opticalPreprocess.module.css'
 
 const fields = {
     corrections: new Form.Field(),
+    cloudDetection: new Form.Field().notEmpty(),
     cloudMasking: new Form.Field(),
     shadowMasking: new Form.Field(),
     snowMasking: new Form.Field()
 }
 
-class OpticalPreprocess extends React.Component {
-    // constructor(props) {
-    //     super(props)
-    //     this.recipeActions = RecipeActions(props.recipeId)
-    // }
+const mapRecipeToProps = recipe => ({
+    sources: selectFrom(recipe, 'model.sources.dataSets')
+})
 
+class OpticalPreprocess extends React.Component {
     render() {
         return (
             <RecipeFormPanel
@@ -32,6 +33,7 @@ class OpticalPreprocess extends React.Component {
                 <Panel.Content>
                     <Layout>
                         {this.renderCorrectionsOptions()}
+                        {this.renderCloudDetectionOptions()}
                         {this.renderCloudMaskingOptions()}
                         {this.renderShadowMaskingOptions()}
                         {this.renderSnowMaskingOptions()}
@@ -58,6 +60,37 @@ class OpticalPreprocess extends React.Component {
                     label: msg('process.ccdc.panel.preprocess.form.corrections.brdf.label'),
                     tooltip: msg('process.ccdc.panel.preprocess.form.corrections.brdf.tooltip')
                 }]}
+            />
+        )
+    }
+
+    renderCloudDetectionOptions() {
+        const {sources, inputs: {corrections, cloudDetection}} = this.props
+        const pino26Disabled = corrections.value.includes('SR') || !_.isEqual(Object.keys(sources), ['SENTINEL_2'])
+        return (
+            <Form.Buttons
+                label={msg('process.ccdc.panel.preprocess.form.cloudDetection.label')}
+                input={cloudDetection}
+                multiple
+                options={[
+                    {
+                        value: 'QA',
+                        label: msg('process.ccdc.panel.preprocess.form.cloudDetection.qa.label'),
+                        tooltip: msg('process.ccdc.panel.preprocess.form.cloudDetection.qa.tooltip')
+                    },
+                    {
+                        value: 'CLOUD_SCORE',
+                        label: msg('process.ccdc.panel.preprocess.form.cloudDetection.cloudScore.label'),
+                        tooltip: msg('process.ccdc.panel.preprocess.form.cloudDetection.cloudScore.tooltip')
+                    },
+                    {
+                        value: 'PINO_26',
+                        label: msg('process.ccdc.panel.preprocess.form.cloudDetection.pino26.label'),
+                        tooltip: msg('process.ccdc.panel.preprocess.form.cloudDetection.pino26.tooltip'),
+                        neverSelected: pino26Disabled
+                    }
+                ]}
+                type='horizontal-wrap'
             />
         )
     }
@@ -127,6 +160,7 @@ OpticalPreprocess.propTypes = {}
 
 const valuesToModel = values => ({
     corrections: values.corrections,
+    cloudDetection: values.cloudDetection,
     cloudMasking: values.cloudMasking,
     shadowMasking: values.shadowMasking,
     snowMasking: values.snowMasking,
@@ -135,6 +169,7 @@ const valuesToModel = values => ({
 const modelToValues = model => {
     return ({
         corrections: model.corrections,
+        cloudDetection: model.cloudDetection,
         cloudMasking: model.cloudMasking,
         shadowMasking: model.shadowMasking,
         snowMasking: model.snowMasking
@@ -143,5 +178,5 @@ const modelToValues = model => {
 
 export default compose(
     OpticalPreprocess,
-    recipeFormPanel({id: 'options', fields, modelToValues, valuesToModel})
+    recipeFormPanel({id: 'options', fields, modelToValues, valuesToModel, mapRecipeToProps})
 )

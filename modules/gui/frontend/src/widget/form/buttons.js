@@ -51,7 +51,9 @@ export class FormButtons extends React.Component {
             .map(({value}) => value)
 
         input.set(multiple
-            ? input.value.filter(value => availableValues.includes(value))
+            ? _.isArray(input.value)
+                ? input.value.filter(value => availableValues.includes(value))
+                : []
             : availableValues.includes(input.value)
                 ? input.value
                 : null

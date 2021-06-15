@@ -785,6 +785,21 @@
         "preprocess": {
           "button": "PRC",
           "form": {
+            "cloudDetection": {
+              "label": "Cloud detection",
+              "cloudScore": {
+                "label": "Cloud score",
+                "tooltip": "Use cloud scoring algorithm"
+              },
+              "pino26": {
+                "label": "PINO 26",
+                "tooltip": "Use Pan-Tropical S2 cloud detection algorithm developed by Dario Simonetti"
+              },
+              "qa": {
+                "label": "QA bands",
+                "tooltip": "Use pre-created QA bands"
+              }
+            },
             "cloudMasking": {
               "aggressive": {
                 "label": "Aggressive",
@@ -1923,6 +1938,21 @@
                 "tooltip": "Only mask the clouds. It might leave hazy pixels around masked clouds, but will minimize the amount of maxed pixels in the mosaic."
               }
             },
+            "cloudDetection": {
+              "label": "Cloud detection",
+              "cloudScore": {
+                "label": "Cloud score",
+                "tooltip": "Use cloud scoring algorithm"
+              },
+              "pino26": {
+                "label": "PINO 26",
+                "tooltip": "Use Pan-Tropical S2 cloud detection algorithm developed by Dario Simonetti"
+              },
+              "qa": {
+                "label": "QA bands",
+                "tooltip": "Use pre-created QA bands"
+              }
+            },
             "cloudMasking": {
               "aggressive": {
                 "label": "Aggressive",
@@ -2380,6 +2410,21 @@
         "preprocess": {
           "button": "PRC",
           "form": {
+            "cloudDetection": {
+              "label": "Cloud detection",
+              "cloudScore": {
+                "label": "Cloud score",
+                "tooltip": "Use cloud scoring algorithm"
+              },
+              "pino26": {
+                "label": "PINO 26",
+                "tooltip": "Use Pan-Tropical S2 cloud detection algorithm developed by Dario Simonetti"
+              },
+              "qa": {
+                "label": "QA bands",
+                "tooltip": "Use pre-created QA bands"
+              }
+            },
             "cloudMasking": {
               "aggressive": {
                 "label": "Aggressive",

@@ -4,14 +4,21 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import React from 'react'
+import _ from 'lodash'
 import styles from './preProcessingOptions.module.css'
 
 const fields = {
     corrections: new Form.Field(),
+    cloudDetection: new Form.Field().notEmpty(),
     cloudMasking: new Form.Field(),
     snowMasking: new Form.Field()
 }
+
+const mapRecipeToProps = recipe => ({
+    sources: selectFrom(recipe, 'model.sources.dataSets')
+})
 
 class PreProcessingOptions extends React.Component {
     render() {
@@ -25,6 +32,7 @@ class PreProcessingOptions extends React.Component {
                 <Panel.Content>
                     <Layout>
                         {this.renderCorrectionsOptions()}
+                        {this.renderCloudDetectionOptions()}
                         {this.renderCloudMaskingOptions()}
                         {this.renderSnowMaskingOptions()}
                     </Layout>
@@ -50,6 +58,37 @@ class PreProcessingOptions extends React.Component {
                     label: msg('process.timeSeries.panel.preprocess.form.corrections.brdf.label'),
                     tooltip: msg('process.timeSeries.panel.preprocess.form.corrections.brdf.tooltip')
                 }]}
+            />
+        )
+    }
+
+    renderCloudDetectionOptions() {
+        const {sources, inputs: {corrections, cloudDetection}} = this.props
+        const pino26Disabled = corrections.value.includes('SR') || !_.isEqual(Object.keys(sources), ['SENTINEL_2'])
+        return (
+            <Form.Buttons
+                label={msg('process.timeSeries.panel.preprocess.form.cloudDetection.label')}
+                input={cloudDetection}
+                multiple
+                options={[
+                    {
+                        value: 'QA',
+                        label: msg('process.timeSeries.panel.preprocess.form.cloudDetection.qa.label'),
+                        tooltip: msg('process.timeSeries.panel.preprocess.form.cloudDetection.qa.tooltip')
+                    },
+                    {
+                        value: 'CLOUD_SCORE',
+                        label: msg('process.timeSeries.panel.preprocess.form.cloudDetection.cloudScore.label'),
+                        tooltip: msg('process.timeSeries.panel.preprocess.form.cloudDetection.cloudScore.tooltip')
+                    },
+                    {
+                        value: 'PINO_26',
+                        label: msg('process.timeSeries.panel.preprocess.form.cloudDetection.pino26.label'),
+                        tooltip: msg('process.timeSeries.panel.preprocess.form.cloudDetection.pino26.tooltip'),
+                        neverSelected: pino26Disabled
+                    }
+                ]}
+                type='horizontal-wrap'
             />
         )
     }
@@ -99,6 +138,7 @@ PreProcessingOptions.propTypes = {}
 
 const valuesToModel = values => ({
     corrections: values.corrections,
+    cloudDetection: values.cloudDetection,
     cloudMasking: values.cloudMasking,
     snowMasking: values.snowMasking
 })
@@ -107,6 +147,7 @@ const modelToValues = model => {
     return ({
         corrections: model.corrections,
         mask: model.mask,
+        cloudDetection: model.cloudDetection,
         cloudMasking: model.cloudMasking,
         snowMasking: model.snowMasking
     })
@@ -114,5 +155,5 @@ const modelToValues = model => {
 
 export default compose(
     PreProcessingOptions,
-    recipeFormPanel({id: 'options', fields, modelToValues, valuesToModel})
+    recipeFormPanel({id: 'options', fields, modelToValues, valuesToModel, mapRecipeToProps})
 )

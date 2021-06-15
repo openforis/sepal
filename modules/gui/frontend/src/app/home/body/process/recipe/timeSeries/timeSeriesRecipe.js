@@ -17,7 +17,8 @@ export const defaultModel = {
     },
     options: {
         corrections: [],
-        cloudMasking: 'AGGRESSIVE',
+        cloudDetection: ['QA', 'CLOUD_SCORE'],
+        cloudMasking: 'MODERATE',
         snowMasking: 'ON',
         orbits: ['ASCENDING', 'DECENDING'],
         geometricCorrection: 'ELLIPSOID',

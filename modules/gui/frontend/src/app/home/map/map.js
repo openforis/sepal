@@ -561,7 +561,7 @@ class _Map extends React.Component {
                         log.debug(`${mapTag(this.state.mapId)} received ${mapViewTag(view)}`)
                         this.synchronizeIn(view)
                     }
-                    this.view$.next(view)
+                    this.viewChanged$.next(view)
                 }
             ),
             this.updateView$.pipe(
