@@ -26,6 +26,7 @@ class ProcessingRecipeComponent extends DataSourceBackedComponent implements End
         CLASSIFICATION: new ClassificationMigrations(),
         CHANGE_DETECTION: new ChangeDetectionMigrations(),
         TIME_SERIES: new TimeSeriesMigrations(),
+        CCDC: new CcdcMigrations(),
         CCDC_SLICE: new CcdcSliceMigrations()
     ]
 
