@@ -393,13 +393,6 @@ class _Map extends React.Component {
                         }
                     }
                 }
-
-                if (drawPolygon) {
-                    if (mouseDownArea !== currentArea) {
-                        map.redrawPolygon()
-                    }
-                }
-
             }),
             map.getZoomArea$().subscribe(() =>
                 this.zoomArea(false)
