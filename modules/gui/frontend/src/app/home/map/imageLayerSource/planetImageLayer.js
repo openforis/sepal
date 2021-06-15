@@ -179,8 +179,10 @@ class _PlanetImageLayerSource extends React.Component {
 
     loadMosaics$() {
         return get$(
-            'https://api.planet.com/basemaps/v1/mosaics',
-            {username: this.getApiKey()}
+            'https://api.planet.com/basemaps/v1/mosaics', {
+                username: this.getApiKey(),
+                crossDomain: true
+            }
         ).pipe(
             map(({response: {mosaics}}) => _.orderBy(
                 mosaics.map(({first_acquired, last_acquired, item_types, _links: {tiles}}) => ({
