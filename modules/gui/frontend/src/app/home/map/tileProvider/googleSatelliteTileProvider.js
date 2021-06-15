@@ -22,7 +22,7 @@ export class GoogleSatelliteTileProvider extends TileProvider {
         return get$(url, {
             retries: 0,
             responseType: 'blob',
-            mode: 'no-cors'
+            crossDomain: true
         }).pipe(
             map(e => e.response)
         )
