@@ -378,7 +378,7 @@ class _Map extends React.Component {
 
         const subscriptions = [
             this.mouseDown$.subscribe(mouseDownArea => {
-                const {zoomArea, selectedZoomArea, drawPolygon} = this.state
+                const {zoomArea, selectedZoomArea} = this.state
                 const currentArea = this.getArea(id)
                 if (zoomArea) {
                     if (selectedZoomArea) {
