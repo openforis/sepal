@@ -209,6 +209,12 @@
       "failedToLoadRecipe": "Failed to load recipe",
       "title": "Google Earth Engine error"
     },
+    "image": {
+      "error": {
+        "notAnImage": "Not an image",
+        "notFound": "Asset not found"
+      }
+    },
     "table": {
       "error": {
         "notATable": "Not a Table",

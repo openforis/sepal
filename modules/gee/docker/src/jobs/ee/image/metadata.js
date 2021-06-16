@@ -1,10 +1,47 @@
 const {job} = require('root/jobs/job')
 
 const worker$ = ({asset, recipe}) => {
-    const {of} = require('rx')
-    const {map, switchMap} = require('rx/operators')
+    const {throwError, of} = require('rx')
+    const {catchError, map, switchMap} = require('rx/operators')
+    const {ClientException, NotFoundException} = require('sepal/exception')
+    const {EEException} = require('sepal/ee/exception')
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('ee')
+
+    const handleError$ = error =>
+        ee.getAsset$(asset, 0).pipe(
+            catchError(() => of(null)),
+            switchMap(asset =>
+                throwError(
+                    asset
+                        ? asset.type === 'Image'
+                            ? new EEException('Failed to load asset.', {
+                                cause: error,
+                                userMessage: {
+                                    message: 'Failed to load asset',
+                                    key: 'gee.error.earthEngineException',
+                                    args: {earthEngineMessage: error}
+                                }
+                            })
+                            : new ClientException('Asset is not an image', {
+                                cause: error,
+                                userMessage: {
+                                    message: 'Not an image',
+                                    key: 'gee.image.error.notAnImage',
+                                    args: {asset}
+                                }
+                            })
+                        : new NotFoundException('Asset not found.', {
+                            cause: error,
+                            userMessage: {
+                                message: 'Asset not found',
+                                key: 'gee.asset.error.notFound',
+                                args: {asset}
+                            }
+                        })
+                )
+            )
+        )
 
     const image$ = asset
         ? of(ee.Image(asset))
@@ -19,8 +56,10 @@ const worker$ = ({asset, recipe}) => {
                 dataTypes,
                 properties
             }
-        })
+        }),
+        catchError(handleError$)
     )
+
 }
 
 module.exports = job({

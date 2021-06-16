@@ -47,7 +47,9 @@ class _AssetInput extends React.Component {
             error => {
                 onError && onError(error)
                 input.setInvalid(
-                    msg('widget.assetInput.loadError')
+                    error.response && error.response.messageKey
+                        ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+                        : msg('widget.assetInput.loadError')
                 )
             }
         )

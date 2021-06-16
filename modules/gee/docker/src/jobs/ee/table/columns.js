@@ -22,7 +22,7 @@ const worker$ = ({tableId}) => {
                                     args: {earthEngineMessage: error},
                                 }
                             })
-                            : new ClientException(`Asset ${tableId} is not a table`, {
+                            : new ClientException('Asset is not a table', {
                                 cause: error,
                                 userMessage: {
                                     message: 'Not a table',
@@ -30,7 +30,7 @@ const worker$ = ({tableId}) => {
                                     args: {tableId}
                                 }
                             })
-                        : new NotFoundException(`Table ${tableId} not found `, {
+                        : new NotFoundException('Table  not found ', {
                             cause: error,
                             userMessage: {
                                 message: 'Table not found',
