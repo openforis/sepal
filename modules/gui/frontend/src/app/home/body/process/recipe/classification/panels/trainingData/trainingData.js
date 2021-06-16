@@ -75,7 +75,7 @@ class TrainingData extends React.Component {
             <SuperButton
                 key={`${dataSet.type}-${dataSet.dataSetId}`}
                 title={msg(`process.classification.panel.trainingData.type.${dataSet.type}.label`)}
-                description={collected ? msg('process.classification.panel.trainingData.type.COLLECTED.description') : name}
+                description={collected ? msg('process.classification.panel.trainingData.type.COLLECTED.label') : name}
                 removeMessage={msg('process.classification.panel.trainingData.remove.confirmationMessage', {name})}
                 removeTooltip={msg('process.classification.panel.trainingData.remove.tooltip')}
                 disabled={disabled}
