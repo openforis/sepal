@@ -1,5 +1,5 @@
 const ImageFactory = require('sepal/ee/imageFactory')
-const {switchMap} = require('rx/operators')
+const {switchMap} = require('rxjs/operators')
 const {exportImageToAsset$} = require('../jobs/export/toAsset')
 const _ = require('lodash')
 const {toVisualizationProperties} = require('../ee/visualizations')

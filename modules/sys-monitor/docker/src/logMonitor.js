@@ -1,8 +1,8 @@
 const Tail = require('tail-file')
 const {sepalServerLog} = require('./config')
 const log = require('sepal/log').getLogger('logMonitor')
-const {Subject} = require('rx')
-const {groupBy, debounceTime, mergeMap, map, tap} = require('rx/operators')
+const {Subject} = require('rxjs')
+const {groupBy, debounceTime, mergeMap, map, tap} = require('rxjs/operators')
 const _ = require('lodash')
 const {notify} = require('./email')
 

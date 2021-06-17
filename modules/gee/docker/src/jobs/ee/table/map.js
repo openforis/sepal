@@ -3,8 +3,8 @@ const {job} = require('root/jobs/job')
 const worker$ = ({tableId, columnName, columnValue, buffer, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
     const ee = require('ee')
     const {filterTable} = require('sepal/ee/table')
-    const {forkJoin} = require('rx')
-    const {map} = require('rx/operators')
+    const {forkJoin} = require('rxjs')
+    const {map} = require('rxjs/operators')
     const _ = require('lodash')
 
     const bufferMeters = (buffer && _.toNumber(buffer)) * 1000

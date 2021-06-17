@@ -1,8 +1,8 @@
 const {job} = require('root/jobs/job')
 
 const worker$ = (name, {args$, initArgs}) => {
-    const {timer, merge, of} = require('rx')
-    const {map, take, mergeMap, delay} = require('rx/operators')
+    const {timer, merge, of} = require('rxjs')
+    const {map, take, mergeMap, delay} = require('rxjs/operators')
 
     return merge(
         timer(0, 3000).pipe(

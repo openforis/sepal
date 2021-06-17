@@ -12,7 +12,6 @@
     },
     "_moduleAliases": {
         "sepal": "src",
-        "rx": "src/reexport/rx",
         "ee": "src/reexport/ee"
     },
     "dependencies": {

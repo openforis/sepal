@@ -1,6 +1,6 @@
 const ee = require('ee')
-const {concat, defer} = require('rx')
-const {switchMap} = require('rx/operators')
+const {concat, defer} = require('rxjs')
+const {switchMap} = require('rxjs/operators')
 const {finalize, swallow} = require('sepal/rxjs/operators')
 const {limiter$: exportLimiter$} = require('root/jobs/service/exportLimiter')
 const drive = require('root/drive')

@@ -16,8 +16,7 @@
     "_moduleAliases": {
         "root": "src",
         "sepal": "node_modules/shared/src",
-        "ee": "node_modules/shared/src/reexport/ee",
-        "rx": "node_modules/shared/src/reexport/rx"
+        "ee": "node_modules/shared/src/reexport/ee"
     },
     "dependencies": {
         "@google-cloud/storage": "^5.8.5",
@@ -25,6 +24,7 @@
         "fast-crc32c": "^2.0.0",
         "googleapis": "^76.0.0",
         "moment": "^2.29.1",
+        "rxjs": "^7.1.0",
         "shared": "../../../lib/js/shared"
     },
     "devDependencies": {

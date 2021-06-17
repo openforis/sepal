@@ -1,4 +1,4 @@
-const {map} = require('rx/operators')
+const {map} = require('rxjs/operators')
 const {Storage} = require('@google-cloud/storage')
 const {getCurrentContext$} = require('root/jobs/service/context')
 

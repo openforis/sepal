@@ -4,7 +4,7 @@ const {getSessionStatus, getSetUserStorage} = require('./persistence')
 const Bull = require('bull')
 const {v4: uuid} = require('uuid')
 const {formatDistanceToNow} = require('date-fns')
-const {Subject} = require('rx')
+const {Subject} = require('rxjs')
 const log = require('sepal/log').getLogger('jobQueue')
 
 const DELAY_SPREAD = .2

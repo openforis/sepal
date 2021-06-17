@@ -13,8 +13,7 @@
     "license": "ISC",
     "_moduleAliases": {
         "root": "src",
-        "sepal": "node_modules/shared/src",
-        "rx": "node_modules/shared/src/reexport/rx"
+        "sepal": "node_modules/shared/src"
     },
     "dependencies": {
         "bull": "^3.22.8",
@@ -24,6 +23,7 @@
         "lodash": "^4.17.21",
         "log4js": "^6.3.0",
         "moment": "^2.29.1",
+        "rxjs": "^7.1.0",
         "shared": "../../../lib/js/shared",
         "uuid": "^8.3.2"
     },

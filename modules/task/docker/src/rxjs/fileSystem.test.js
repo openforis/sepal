@@ -1,5 +1,5 @@
-const {from} = require('rx')
-const {switchMap, tap} = require('rx/operators')
+const {from} = require('rxjs')
+const {switchMap, tap} = require('rxjs/operators')
 const fs = require('fs')
 const os = require('os')
 const Path = require('path')

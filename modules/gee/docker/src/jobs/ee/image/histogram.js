@@ -6,7 +6,7 @@ const MAX_PIXELS = 1e5
 const worker$ = ({recipe, band, aoi}) => {
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('ee')
-    const {switchMap} = require('rx/operators')
+    const {switchMap} = require('rxjs/operators')
     const {toGeometry} = require('sepal/ee/aoi')
 
     const {getImage$, histogramMaxPixels} = ImageFactory(recipe, {selection: [band]})

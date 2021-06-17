@@ -5,7 +5,7 @@ const NUMBER_OF_POINTS = 5
 
 const worker$ = recipe => {
     const ee = require('ee')
-    const {map, switchMap} = require('rx/operators')
+    const {map, switchMap} = require('rxjs/operators')
     const classify = require('sepal/ee/classification/classification')
     const {getRows$} = require('sepal/ee/table')
     const _ = require('lodash')

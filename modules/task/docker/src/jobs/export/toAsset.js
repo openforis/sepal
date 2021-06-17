@@ -1,6 +1,6 @@
 const ee = require('ee')
-const {EMPTY, concat, of} = require('rx')
-const {catchError, map, switchMap} = require('rx/operators')
+const {EMPTY, concat, of} = require('rxjs')
+const {catchError, map, switchMap} = require('rxjs/operators')
 const {swallow} = require('sepal/rxjs/operators')
 const Path = require('path')
 const {limiter$: exportLimiter$} = require('root/jobs/service/exportLimiter')

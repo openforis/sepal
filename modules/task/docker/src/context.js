@@ -1,5 +1,5 @@
-const {BehaviorSubject, timer, EMPTY} = require('rx')
-const {catchError, filter, switchMap, tap, map, pairwise} = require('rx/operators')
+const {BehaviorSubject, timer, EMPTY} = require('rxjs')
+const {catchError, filter, switchMap, tap, map, pairwise} = require('rxjs/operators')
 const fs = require('fs')
 const path = require('path')
 const {mkdir$} = require('root/rxjs/fileSystem')

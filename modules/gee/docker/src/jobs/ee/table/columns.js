@@ -4,8 +4,8 @@ const worker$ = ({tableId}) => {
     const ee = require('ee')
     const {ClientException, NotFoundException} = require('sepal/exception')
     const {EEException} = require('sepal/ee/exception')
-    const {throwError, of} = require('rx')
-    const {switchMap, catchError} = require('rx/operators')
+    const {throwError, of} = require('rxjs')
+    const {switchMap, catchError} = require('rxjs/operators')
 
     const handleError$ = error =>
         ee.getAsset$(tableId, 0).pipe(
