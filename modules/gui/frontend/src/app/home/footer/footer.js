@@ -46,7 +46,7 @@ const Logout = () =>
         tooltipPlacement='top'/>
 
 const Title = () => {
-    const wikiURL = 'https://github.com/openforis/sepal/wiki'
+    const wikiURL = 'https://github.com/openforis/sepal'
     const buildNumber = process.env.REACT_APP_BUILD_NUMBER
     const gitCommit = process.env.REACT_APP_GIT_COMMIT
     const gitShortCommit = gitCommit && `${gitCommit.substring(0, 10)}...`
