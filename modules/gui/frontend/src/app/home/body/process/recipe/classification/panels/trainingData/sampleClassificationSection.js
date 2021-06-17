@@ -152,7 +152,8 @@ class SampleClassificationSection extends Component {
                 }
             },
             error => {
-                const {response: {defaultMessage, messageKey, messageArgs} = {}} = error
+                const response = error.response || {}
+                const {defaultMessage, messageKey, messageArgs} = response
                 this.props.inputs.assetToSample.setInvalid(
                     messageKey
                         ? msg(messageKey, messageArgs, defaultMessage)
