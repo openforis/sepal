@@ -1,5 +1,5 @@
-const {timer, of} = require('rx')
-const {mergeMap, map} = require('rx/operators')
+const {timer, of} = require('rxjs')
+const {mergeMap, map} = require('rxjs/operators')
 const {limiter$} = require('./testLimiter')
 
 module.exports = (minDuration, maxDuration = minDuration, errorProbability, {initArgs}) =>

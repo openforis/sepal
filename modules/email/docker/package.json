@@ -13,8 +13,7 @@
     "license": "ISC",
     "_moduleAliases": {
         "root": "src",
-        "sepal": "node_modules/shared/src",
-        "rx": "node_modules/shared/src/reexport/rx"
+        "sepal": "node_modules/shared/src"
     },
     "dependencies": {
         "bull": "^3.22.8",

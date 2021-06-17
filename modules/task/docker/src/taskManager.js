@@ -1,5 +1,5 @@
-const {Subject, EMPTY, merge, of} = require('rx')
-const {mergeMap, shareReplay, filter, tap, switchMap, catchError, switchMapTo} = require('rx/operators')
+const {Subject, EMPTY, merge, of} = require('rxjs')
+const {mergeMap, shareReplay, filter, tap, switchMap, catchError, switchMapTo} = require('rxjs/operators')
 const log = require('sepal/log').getLogger('task')
 const executeTask$ = require('./taskRunner')
 const {lastInWindow, repeating} = require('sepal/rxjs/operators')

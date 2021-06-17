@@ -1,5 +1,5 @@
-const {Subject} = require('rx')
-const {switchMap, first} = require('rx/operators')
+const {Subject} = require('rxjs')
+const {switchMap, first} = require('rxjs/operators')
 const ee = require('ee')
 const {getCredentials$} = require('root/context')
 

@@ -3,8 +3,8 @@ const {job} = require('root/jobs/job')
 const worker$ = ({recipe}) => {
     const ee = require('ee')
     const ImageFactory = require('sepal/ee/imageFactory')
-    const {of} = require('rx')
-    const {switchMap} = require('rx/operators')
+    const {of} = require('rxjs')
+    const {switchMap} = require('rxjs/operators')
 
     const {getGeometry$} = ImageFactory(recipe)
     return getGeometry$().pipe(

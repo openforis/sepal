@@ -1,4 +1,4 @@
-const {Subject} = require('rx')
+const {Subject} = require('rxjs')
 const {notifyEmailAddress} = require('./config')
 
 const email$ = new Subject()

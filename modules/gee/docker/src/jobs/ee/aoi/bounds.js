@@ -3,7 +3,7 @@ const {job} = require('root/jobs/job')
 const worker$ = ({aoi}) => {
     const ee = require('ee')
     const {toGeometry} = require('sepal/ee/aoi')
-    const {of} = require('rx')
+    const {of} = require('rxjs')
 
     const geometry = toGeometry(aoi)
     if (geometry) {

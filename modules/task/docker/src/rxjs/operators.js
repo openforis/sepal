@@ -1,5 +1,5 @@
-const {pipe} = require('rx')
-const {map} = require('rx/operators')
+const {pipe} = require('rxjs')
+const {map} = require('rxjs/operators')
 
 module.exports = {
     progress: ({defaultMessage, messageKey, messageArgs}) =>
