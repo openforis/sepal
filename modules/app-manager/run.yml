@@ -1,0 +1,23 @@
+---
+- file: path="/data/sepal" state=directory
+- file: path="/data/sepal/kernels" state=directory
+- file: path="/data/app-manager" state=directory
+- file: path="/data/app-manager/apps" state=directory
+- file: path="/data/app-manager/apps.json" state=touch
+
+- name: "app-manager | Start container"
+  docker_container:
+    api_version: "{{ api_version }}"
+    name: "{{ name }}"
+    pull: "{{ pull }}"
+    image: "{{ image }}"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
+    networks:
+      - name: 'sepal'
+    volumes:
+      - "/data/sepal/kernels:/usr/local/share/jupyter/kernels"
+      - "/data/app-manager/apps.json:/var/sepal/app-manager/apps.json"
+      - "/data/app-manager/apps:/var/sepal/app-manager/apps"
+      - "/data/app-manager/images:/var/sepal/app-manager/images"
