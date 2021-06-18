@@ -1,6 +1,5 @@
 package org.openforis.sepal
 
-import org.openforis.sepal.component.apps.AppsComponent
 import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.datasearch.DataSearchComponent
 import org.openforis.sepal.component.files.FilesComponent
@@ -49,7 +48,6 @@ class Main {
         )
         def dataSearchComponent = start DataSearchComponent.create(processingRecipeComponent, taskComponent, connectionManager)
         start new SandboxWebProxyComponent(config, workerSessionComponent, hostingServiceAdapter)
-        def appsComponent = new AppsComponent(config.appsFile)
         def notificationComponent = start NotificationComponent.create()
 
         def endpoints = new Endpoints(
@@ -60,7 +58,6 @@ class Main {
                 filesComponent,
                 taskComponent,
                 processingRecipeComponent,
-                appsComponent,
                 notificationComponent
         )
         start new Server(config.webAppPort, '/api', endpoints)
