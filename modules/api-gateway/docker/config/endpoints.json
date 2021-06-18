@@ -86,7 +86,7 @@
   {
     "prefix": "true",
     "path": "/api/apps/",
-    "target": "http://sepal:1025/api/apps",
+    "target": "http://app-manager:5001/",
     "https": "false",
     "authenticate": "true"
   },

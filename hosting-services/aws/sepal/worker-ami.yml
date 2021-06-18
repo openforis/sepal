@@ -49,6 +49,11 @@
         path: "/data/sepal/shared"
         state: directory
 
+    - name: Create /data/sepal/kernels
+      file:
+        path: "/data/sepal/kernels"
+        state: directory
+
     - name: Create /data/sepal/certificates
       file:
         path: "/data/sepal/certificates"
@@ -84,6 +89,16 @@
         fstype: "efs"
         state: "mounted"
         src: "{{ efs_id }}:/data/sepal/shared"
+        opts: "defaults,_netdev"
+        dump: 0
+        passno: 0
+
+    - name: Mount EFS Sepal Kernels Dir
+      mount:
+        name: "/data/sepal/kernels"
+        fstype: "efs"
+        state: "mounted"
+        src: "{{ efs_id }}:/data/sepal/kernels"
         opts: "defaults,_netdev"
         dump: 0
         passno: 0

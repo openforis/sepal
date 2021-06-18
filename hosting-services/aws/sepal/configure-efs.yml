@@ -50,7 +50,15 @@
         group: "9999"
         mode: "u=rwx,g=rwxs"
         state: "directory"
-    
+
+    - name: Create sepal kernels dir on EFS
+      file:
+        path: "/efs/data/sepal/kernels"
+        owner: "9999"
+        group: "9999"
+        mode: "u=rwx,g=rwxs"
+        state: "directory"
+
     - name: Create sepal worker instance log dir on EFS
       file:
         path: "/efs/data/sepal/worker-instance-log"

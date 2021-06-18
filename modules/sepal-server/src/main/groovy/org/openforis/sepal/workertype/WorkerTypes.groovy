@@ -9,7 +9,7 @@ final class WorkerTypes {
     static final String SANDBOX = 'sandbox'
     static final String TASK_EXECUTOR = 'task-executor'
     static final Map<String, Factory> FACTORIES = [
-            (SANDBOX)      : new SandboxFactory(),
+            (SANDBOX): new SandboxFactory(),
             (TASK_EXECUTOR): new TaskExecutorFactory()
     ]
 
@@ -34,16 +34,16 @@ final class WorkerTypes {
                     publishedPorts: taskExecutorPublishedPorts,
                     volumes: [
                             (userHome): "/home/${username}",
-                            (userTmp) : ["/tmp", "/home/${username}/tmp"]
+                            (userTmp): ["/tmp", "/home/${username}/tmp"]
                     ],
                     environment: [
-                            GOOGLE_PROJECT_ID_SEPAL_KEY   : config.googleProjectId,
-                            GOOGLE_REGION_SEPAL_KEY       : config.googleRegion,
-                            EE_ACCOUNT_SEPAL_ENV          : config.googleEarthEngineAccount,
-                            EE_PRIVATE_KEY_SEPAL_ENV      : eePrivateKey,
-                            SEPAL_HOST_SEPAL_ENV          : config.sepalHost,
+                            GOOGLE_PROJECT_ID_SEPAL_KEY: config.googleProjectId,
+                            GOOGLE_REGION_SEPAL_KEY: config.googleRegion,
+                            EE_ACCOUNT_SEPAL_ENV: config.googleEarthEngineAccount,
+                            EE_PRIVATE_KEY_SEPAL_ENV: eePrivateKey,
+                            SEPAL_HOST_SEPAL_ENV: config.sepalHost,
                             SEPAL_ADMIN_PASSWORD_SEPAL_ENV: config.sepalPassword,
-                            USERNAME_SEPAL_ENV            : username,
+                            USERNAME_SEPAL_ENV: username,
                     ],
                     waitCommand: ["/script/wait_until_initialized.sh"]
             )
@@ -64,11 +64,12 @@ final class WorkerTypes {
                             exposedPorts: [22, 8787, 3838, 8888],
                             publishedPorts: publishedPorts,
                             volumes: [
-                                    '/data/sepal/shiny' : '/shiny',
+                                    '/data/sepal/shiny': '/shiny',
                                     '/data/sepal/shared': "/home/${username}/shared",
-                                    (userHome)          : "/home/${username}",
-                                    (userTmp)           : ["/tmp", "/home/${username}/tmp"],
-                                    (ldapPem)           : "/etc/ldap/certificates/ldap-ca.crt.pem"],
+                                    '/data/sepal/kernels': "/usr/local/share/jupyter/kernels/",
+                                    (userHome): "/home/${username}",
+                                    (userTmp): ["/tmp", "/home/${username}/tmp"],
+                                    (ldapPem): "/etc/ldap/certificates/ldap-ca.crt.pem"],
                             runCommand: [
                                     '/script/init_container.sh',
                                     username,
