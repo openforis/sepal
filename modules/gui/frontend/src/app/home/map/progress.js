@@ -9,9 +9,7 @@ const mapRecipeToProps = recipe => ({
 })
 
 const _Progress = ({working}) =>
-    working
-        ? <div className={styles.progress}/>
-        : null
+    <div className={[styles.progress, working ? styles.active : null].join(' ')}/>
 
 export const Progress = compose(
     _Progress,
