@@ -1,10 +1,10 @@
 import {HoverDetector} from 'widget/hover'
 import {Padding} from 'widget/padding'
-import {Subject, merge} from 'rxjs'
+import {Subject, of} from 'rxjs'
 import {SuperButton} from 'widget/superButton'
-import {assignArea, removeArea, validAreas} from './layerAreas'
+import {assignArea, removeArea, swapAreas, validAreas} from './layerAreas'
 import {compose} from 'compose'
-import {distinctUntilChanged, filter, map, mapTo} from 'rxjs/operators'
+import {concatWith, distinctUntilChanged, filter, map, switchMap} from 'rxjs/operators'
 import {getImageLayerSource} from 'app/home/map/imageLayerSource/imageLayerSource'
 import {msg} from 'translate'
 import {withLayers} from '../withLayers'
@@ -15,16 +15,17 @@ import _ from 'lodash'
 import styles from './areas.module.css'
 import withSubscription from 'subscription'
 
+const AREA = Symbol('area')
+const SOURCE = Symbol('source')
+
 class _Areas extends React.Component {
     state = {
+        dragging: null,
+        dropArea: null,
+        currentAreas: null,
         areaCenters: null,
-        currentAreas: undefined,
-        nextAreas: undefined,
-        closestArea: undefined,
-        hovering: false,
-        dragging: false,
-        dragMode: undefined,
-        dragValue: null
+        nextAreas: null,
+        hovering: false
     }
 
     areaRefs = {
@@ -42,13 +43,13 @@ class _Areas extends React.Component {
     areaDrag$ = new Subject()
 
     render() {
-        const {dragging, dragMode, hovering} = this.state
+        const {dragging, hovering} = this.state
         return (
             <Padding noHorizontal>
                 <HoverDetector
                     className={_.flatten([
                         styles.container,
-                        dragging ? [styles.dragging, styles[dragMode]] : null,
+                        dragging ? [styles.dragging, styles[dragging.description]] : null,
                         hovering ? styles.hovering : null
                     ]).join(' ')}
                     onHover={hovering => this.setState({hovering})}>
@@ -61,15 +62,15 @@ class _Areas extends React.Component {
 
     renderCurrentAreas() {
         const {layers: {areas}} = this.props
-        const {nextAreas, dragMode, dragging, hovering, currentAreas} = this.state
+        const {nextAreas, dragging, hovering, currentAreas} = this.state
         const hidden = !!(dragging && hovering && nextAreas)
         return (
             <React.Fragment>
-                {currentAreas && !hidden && !hovering && dragging && dragMode === 'moving'
+                {currentAreas && !hidden && !hovering && dragging === AREA
                     ? this.renderAreas(currentAreas, false)
                     : null
                 }
-                <div className={hidden || (!hovering && dragging && dragMode === 'moving') ? styles.hidden : null}>
+                <div className={hidden || (!hovering && dragging === AREA) ? styles.hidden : null}>
                     {this.renderAreas(areas, true)}
                 </div>
             </React.Fragment>
@@ -116,8 +117,8 @@ class _Areas extends React.Component {
     }
 
     renderArea(areas, current, area) {
-        const {dragging, closestArea} = this.state
-        const highlighted = !current && dragging && area === closestArea
+        const {dragging, dropArea} = this.state
+        const highlighted = !current && dragging && area === dropArea
         const sourceId = areas[area]
             ? areas[area].imageLayer.sourceId
             : null
@@ -159,107 +160,137 @@ class _Areas extends React.Component {
         this.initializeDragDrop()
     }
 
-    initializeDragDrop() {
-        const {sourceDrag$, addSubscription} = this.props
-        const {areaDrag$} = this
-
-        const drag$ = merge(sourceDrag$, areaDrag$)
-
-        const sourceDragStart$ = sourceDrag$.pipe(
-            filter(({dragging}) => dragging === true),
-            map(({value}) => value)
-        )
-        const areaDragStart$ = areaDrag$.pipe(
-            filter(({dragging}) => dragging === true),
-            map(({value}) => value)
+    drag$(drag$) {
+        const dragStart$ = drag$.pipe(
+            filter(({dragging}) => dragging === true)
         )
 
-        const dragMove$ = drag$.pipe(
-            filter(({coords}) => coords),
-            map(({coords}) => coords),
-            map(coords => this.calculateClosestArea(coords)),
-            distinctUntilChanged()
-        )
-        const dragEnd$ = drag$.pipe(
-            filter(({dragging}) => dragging === false),
-            mapTo()
-        )
-
-        addSubscription(
-            sourceDragStart$.subscribe(
-                value => this.onSourceDragStart(value)
-            ),
-            areaDragStart$.subscribe(
-                area => this.onAreaDragStart(area)
-            ),
-            dragMove$.subscribe(
-                closestArea => this.onDragMove(closestArea)
-            ),
-            dragEnd$.subscribe(
-                () => this.onDragEnd()
+        return dragStart$.pipe(
+            switchMap(({value, coords}) =>
+                of(coords).pipe(
+                    concatWith(drag$.pipe(map(({coords}) => coords)))
+                ).pipe(
+                    filter(coords => coords),
+                    distinctUntilChanged(),
+                    map(coords => ({value, dropArea: this.getDropArea(coords)}))
+                )
             )
         )
     }
 
-    onSourceDragStart(sourceId) {
-        const {layers: {areas}} = this.props
-        this.onDragStart({
-            dragging: true,
-            dragMode: 'adding',
-            dragValue: sourceId,
-            currentAreas: areas
-        })
+    release$(drag$) {
+        return drag$.pipe(
+            filter(({dragging}) => dragging === false)
+        )
     }
 
-    onAreaDragStart(area) {
-        const {layers: {areas}} = this.props
-        this.onDragStart({
-            dragging: true,
-            dragMode: 'moving',
-            dragValue: areas[area],
-            currentAreas: removeArea({areas, area})
-        })
+    initializeDragDrop() {
+        const {sourceDrag$, addSubscription} = this.props
+        const {areaDrag$} = this
+
+        const sourceDragMove$ = this.drag$(sourceDrag$).pipe(
+            map(({value: source, dropArea}) => ({source, dropArea}))
+        )
+
+        const sourceRelease$ = this.release$(sourceDrag$)
+
+        const areaDragMove$ = this.drag$(areaDrag$).pipe(
+            map(({value: area, dropArea}) => ({area, dropArea}))
+        )
+
+        const areaRelease$ = this.release$(areaDrag$)
+
+        addSubscription(
+            sourceDragMove$.subscribe(
+                ({source, dropArea}) => this.onSourceDrag({source, dropArea})
+            ),
+            sourceRelease$.subscribe(
+                () => this.onSourceRelease()
+            ),
+            areaDragMove$.subscribe(
+                ({area, dropArea}) => this.onAreaDrag({area, dropArea})
+            ),
+            areaRelease$.subscribe(
+                () => this.onAreaRelease()
+            )
+        )
     }
 
-    onDragStart({dragging, dragMode, dragValue, currentAreas}) {
+    onDrag({dragging, currentAreas, dropArea}, callback) {
         const areaCenters = this.calculateDropTargetCenters(currentAreas)
         this.setState({
             dragging,
-            dragMode,
-            dragValue,
+            dropArea,
             currentAreas,
             areaCenters
+        }, () => {
+            if (dragging) {
+                const nextAreas = callback()
+                nextAreas && this.setState({nextAreas})
+            }
         })
     }
 
-    onDragMove(closestArea) {
-        const {currentAreas, dragValue} = this.state
-        if (currentAreas && closestArea) {
-            const nextAreas = assignArea({
-                areas: currentAreas,
-                area: closestArea,
-                value: dragValue
-            })
-            this.setState({
-                closestArea,
-                nextAreas
-            })
-        }
-    }
-
-    onDragEnd() {
-        const {dragMode, hovering, currentAreas, nextAreas} = this.state
+    onRelease(callback) {
         this.setState({
-            dragging: false,
-            dragValue: null
+            dragging: null,
+            dropArea: null,
+            currentAreas: null,
+            areaCenters: null,
+            nextAreas: null
+        }, callback)
+    }
+
+    onSourceDrag({source, dropArea}) {
+        const {layers: {areas}} = this.props
+        const currentAreas = areas
+        this.onDrag({dragging: SOURCE, currentAreas, dropArea}, () =>
+            assignArea({
+                areas: currentAreas,
+                area: dropArea,
+                value: source
+            })
+        )
+    }
+
+    onSourceRelease() {
+        const {hovering, nextAreas} = this.state
+        this.onRelease(() => {
+            if (hovering) {
+                nextAreas && this.updateAreas(nextAreas)
+            }
         })
-        if (hovering) {
-            nextAreas && this.updateAreas(nextAreas)
-        } else if (dragMode === 'moving') {
-            // Moving an already added area. Not hovering -> dragged outside.
-            // This removes the area
-            this.updateAreas(currentAreas)
-        }
+    }
+   
+    onAreaDrag({area, dropArea}) {
+        const {layers: {areas}} = this.props
+        const currentAreas = removeArea({areas, area})
+        const swap = Object.keys(areas).includes(dropArea)
+        this.onDrag({dragging: AREA, currentAreas, dropArea}, () =>
+            swap
+                ? swapAreas({
+                    areas,
+                    from: area,
+                    to: dropArea
+                })
+                : assignArea({
+                    areas: currentAreas,
+                    area: dropArea,
+                    value: areas[area]
+                })
+        )
+    }
+
+    onAreaRelease() {
+        const {hovering, currentAreas, nextAreas} = this.state
+        this.onRelease(() => {
+            if (hovering) {
+                nextAreas && this.updateAreas(nextAreas)
+            } else {
+                // remove area
+                this.updateAreas(currentAreas)
+            }
+        })
     }
 
     updateAreas(areas) {
@@ -269,11 +300,11 @@ class _Areas extends React.Component {
             .dispatch()
     }
 
-    calculateClosestArea(cursor) {
-        const {areaCenters, dragging} = this.state
+    getDropArea(cursor) {
+        const {areaCenters, dragging, hovering} = this.state
         const squaredDistanceFromCursor = center =>
             Math.pow(center.x - cursor.x, 2) + Math.pow(center.y - cursor.y, 2)
-        return dragging
+        return dragging && hovering
             ? _.chain(areaCenters)
                 .mapValues(areaCenter => squaredDistanceFromCursor(areaCenter))
                 .toPairs()
@@ -313,9 +344,5 @@ export const Areas = compose(
 )
 
 Areas.propTypes = {
-    // areas: PropTypes.shape({
-    //     area: PropTypes.oneOf(['center', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-left', 'left', 'top-left']),
-    //     value: PropTypes.any
-    // }),
     sourceDrag$: PropTypes.object
 }

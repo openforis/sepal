@@ -7,11 +7,11 @@
     overflow: hidden;
 }
 
-.container.moving {
+.container.area {
     cursor: move;
 }
 
-.container.adding {
+.container.source {
     cursor: copy;
 }
 

@@ -16,17 +16,27 @@ export const validAreas = areas => {
     }
 }
 
+export const swapAreas = ({areas, from, to}) => {
+    const nextAreas = {
+        ...areas,
+        [from]: areas[to],
+        [to]: areas[from]
+    }
+    return nextAreas
+}
+
 export const assignArea = ({areas, area, value}) => {
     assertValidState(areas)
+
     const newMask = maskByArea[area]
-    const nextState = {[area]: value}
+    const nextAreas = {[area]: value}
     Object.keys(areas)
         .map(area => ({value: areas[area], mask: maskByArea[area]}))
         .map(({value, mask}) => ({value, mask: updateMask(mask, newMask)}))
         .map(({value, mask}) => ({value, area: maskToArea(mask)}))
         .filter(({area}) => area)
-        .forEach(({value, area}) => nextState[area] = value)
-    return nextState
+        .forEach(({value, area}) => nextAreas[area] = value)
+    return nextAreas
 }
 
 export const removeArea = ({areas, area}) => {
