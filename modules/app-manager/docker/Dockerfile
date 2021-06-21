@@ -6,6 +6,7 @@ ENV SHARED /usr/local/src/sepal/lib/js/shared
 
 RUN apt update && apt install -y \
     curl \
+    git \
     python3 \
     sudo
 
