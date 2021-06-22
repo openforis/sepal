@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y \
   python3 \
   python3-gdal \
   python3-pip \
+  python3-venv \
   gdal-bin \
   screen \
   software-properties-common \

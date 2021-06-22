@@ -31,5 +31,6 @@
     - { role: build-module, module: user-storage-backup }
     - { role: build-module, module: gui }
     - { role: build-module, module: ceo-gateway }
+    - { role: build-module, module: app-manager }
     - { role: build-module, module: sepal-server }
     - role: push-images

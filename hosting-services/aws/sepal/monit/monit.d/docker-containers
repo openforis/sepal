@@ -50,6 +50,10 @@ check program ceo-gateway with path /usr/local/bin/dockercheck-ceo-gateway
     depends on docker
     if status != 0 then alert
 
+check program app-manager with path /usr/local/bin/dockercheck-app-manager
+    depends on docker
+    if status != 0 then alert
+
 check program mysql-backup with path /usr/local/bin/dockercheck-mysql-backup
     depends on docker
     if status != 0 then alert
