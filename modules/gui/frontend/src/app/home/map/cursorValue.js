@@ -58,7 +58,11 @@ const toHsv = (rgb, {bands, min, max, gamma}, dataTypes) => {
 }
 
 const toCategorical = (rgb, visParams, dataTypes) => {
-    const continuous = toContinuous(rgb, visParams, dataTypes)
+    const paddedPalette = sequence(visParams.min, visParams.max).map(() => '#000000')
+    visParams.values.forEach((value, i) => {
+        paddedPalette[value - visParams.min] = visParams.palette[i]
+    })
+    const continuous = toContinuous(rgb, {...visParams, palette: paddedPalette}, dataTypes)
     if (continuous.length && visParams.values) {
         return [_.minBy(visParams.values, value => Math.abs(value - continuous[0]))]
     } else {
@@ -130,3 +134,9 @@ const toContinuous = (rgb, visParams, dataTypes) => {
         ? [_.minBy(segments, 'error').value]
         : []
 }
+
+const sequence = (start, end, step = 1) =>
+    end >= start
+        ? Array.apply(null, {length: Math.floor((end - start) / step) + 1})
+            .map((_, i) => i * step + start)
+        : []
