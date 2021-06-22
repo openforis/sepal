@@ -3,7 +3,7 @@ set -e
 
 SEPAL_CONFIG=/etc/sepal/module.d
 SEPAL=/usr/local/lib/sepal
-SEPAL_MODULES=(user sepal-server api-gateway task gee gui user-storage email sys-monitor)
+SEPAL_MODULES=(user sepal-server api-gateway app-manager task gee gui user-storage email sys-monitor)
 SEPAL_GROUPS=(all dev)
 SEPAL_DEFAULT_GROUP=dev
 LOG_DIR=/var/log/sepal
@@ -32,7 +32,7 @@ group () {
         echo "${SEPAL_MODULES[@]}"
         ;;
     dev)
-        echo "user sepal-server ( -DskipSceneMetaDataUpdate ) api-gateway task gee gui user-storage email sys-monitor"
+        echo "user sepal-server ( -DskipSceneMetaDataUpdate ) api-gateway app-manager task gee gui user-storage email sys-monitor"
         ;;
     *)
         return 1
@@ -157,6 +157,10 @@ module_clean () {
         -p $SEPAL \
         --no-daemon \
         :sepal-api-gateway:clean &>/dev/null
+        ;;
+    app-manager)
+        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/app-manager/docker && rm -rf node_modules package-lock.json)
         ;;
     gee)
         (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
@@ -334,8 +338,10 @@ run () {
         -DconfigDir="$SEPAL_CONFIG/api-gateway" \
         $ARGS
         ;;
+    app-manager)
+        (cd $SEPAL/modules/app-manager/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
+        ;;
     gee)
-        # (cd $SEPAL/lib/js/shared && npm install)
         (cd $SEPAL/modules/gee/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     gui)

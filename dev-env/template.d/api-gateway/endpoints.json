@@ -96,7 +96,7 @@
   {
     "prefix": "true",
     "path": "/api/apps/",
-    "target": "http://localhost:1025/api/apps",
+    "target": "http://localhost:5011/",
     "https": "false",
     "authenticate": "true"
   },

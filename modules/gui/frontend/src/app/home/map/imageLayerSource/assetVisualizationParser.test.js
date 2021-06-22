@@ -91,15 +91,27 @@ test('toVisualizations(${properties}, ${bands}) === ${result}')
         },
         {
             properties: {
-                landcover_class_names: 'foo,bar,baz',
-                landcover_class_values: '5,13,17',
-                landcover_class_palette: 'red,green,blue'
+                b_class_names: 'foo,bar,baz',
+                b_class_values: '5,13,17',
+                b_class_palette: 'red,green,blue',
+                c_class_names: 'foo,bar,baz',
+                c_class_values: '5,13,17',
+                c_class_palette: 'red,green,blue',
             },
             bands: ['a', 'b', 'c'],
             result: [
                 {
                     type: 'categorical',
-                    bands: ['a'],
+                    bands: ['b'],
+                    min: [5],
+                    max: [17],
+                    values: [5, 13, 17],
+                    labels: ['foo', 'bar', 'baz'],
+                    palette: ['#FF0000', '#008000', '#0000FF']
+                },
+                {
+                    type: 'categorical',
+                    bands: ['c'],
                     min: [5],
                     max: [17],
                     values: [5, 13, 17],
@@ -108,25 +120,25 @@ test('toVisualizations(${properties}, ${bands}) === ${result}')
                 }
             ]
         },
-        {
-            properties: {
-                visualization_0_type: 'categorical',
-                visualization_0_bands: 'class',
-                visualization_0_labels: 'a\\,label, b\\,label',
-                visualization_0_values: '1, 2',
-                visualization_0_palette: 'white,black',
-            },
-            bands: ['class'],
-            result: [
-                {
-                    type: 'categorical',
-                    bands: ['class'],
-                    min: [1],
-                    max: [2],
-                    labels: ['a,label', 'b,label'],
-                    values: [1, 2],
-                    palette: ['#FFFFFF', '#000000']
-                }
-            ]
-        },
+        // {
+        //     properties: {
+        //         visualization_0_type: 'categorical',
+        //         visualization_0_bands: 'class',
+        //         visualization_0_labels: 'a\\,label, b\\,label',
+        //         visualization_0_values: '1, 2',
+        //         visualization_0_palette: 'white,black',
+        //     },
+        //     bands: ['class'],
+        //     result: [
+        //         {
+        //             type: 'categorical',
+        //             bands: ['class'],
+        //             min: [1],
+        //             max: [2],
+        //             labels: ['a,label', 'b,label'],
+        //             values: [1, 2],
+        //             palette: ['#FFFFFF', '#000000']
+        //         }
+        //     ]
+        // },
     )

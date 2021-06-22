@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "/usr/lib/R/bin/R",
+    "--slave",
+    "-e",
+    "IRkernel::main()",
+    "--args",
+    "{connection_file}"
+  ],
+  "display_name": "R",
+  "language": "R"
+}

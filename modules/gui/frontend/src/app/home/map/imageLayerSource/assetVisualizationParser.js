@@ -20,27 +20,23 @@ const parseVisualization = properties => _.chain(properties)
     })
     .value()
 
-const parseLandcoverClass = (properties, bands) => {
-    const visParams = _.chain(properties)
-        .keys()
-        .map(key => {
-            const match = key.match(/^landcover_class_(.*)/)
-            return match
-                ? {key: match[1], value: properties[match[0]]}
-                : null
-        })
-        .filter(match => match)
-        .keyBy('key')
-        .mapValues('value')
-        .mapKeys((_value, key) => key === 'names' ? 'labels' : key)
-        .set('type', 'categorical')
-        .set('bands', bands[0])
-        .value()
-    return visParams.values
-        ? [normalize(visParams)]
-        : []
-}
+const parseClassProperties = (properties, bands) =>
+    bands
+        .filter(band =>
+            _.intersection(Object.keys(properties), [
+                `${band}_class_names`,
+                `${band}_class_palette`,
+                `${band}_class_values`,
+            ]
+            ).length === 3)
+        .map(band => normalize({
+            type: 'categorical',
+            bands: [band],
+            labels: properties[`${band}_class_names`],
+            values: properties[`${band}_class_values`],
+            palette: properties[`${band}_class_palette`],
+        }))
 
 export const toVisualizations = (properties, bands) =>
-    parseVisualization(properties).concat(parseLandcoverClass(properties, bands))
+    parseVisualization(properties).concat(parseClassProperties(properties, bands))
 
