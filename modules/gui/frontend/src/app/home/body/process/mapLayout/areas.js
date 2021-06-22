@@ -224,7 +224,7 @@ class _Areas extends React.Component {
             currentAreas,
             areaCenters
         }, () => {
-            if (dragging) {
+            if (dragging && dropArea) {
                 const nextAreas = callback()
                 nextAreas && this.setState({nextAreas})
             }
