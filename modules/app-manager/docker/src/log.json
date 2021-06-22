@@ -1,0 +1,7 @@
+{
+    "port": 5111,
+    "categories": {
+        "apps": "debug",
+        "terminal": "debug"
+    }
+}

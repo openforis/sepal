@@ -32,7 +32,6 @@ subprojects {
 
     maven { url "https://jcenter.bintray.com/" }
     maven { url "https://repo.maven.apache.org/maven2" }
-    maven { url "http://www.openforis.org/nexus/content/groups/public/" }
   }
 
 
