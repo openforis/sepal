@@ -17,6 +17,7 @@
     networks:
       - name: 'sepal'
     volumes:
+      - "/data/sepal/shiny:/shiny"
       - "/data/sepal/kernels:/usr/local/share/jupyter/kernels"
       - "/data/app-manager/apps.json:/var/sepal/app-manager/apps.json"
       - "/data/app-manager/apps:/var/sepal/app-manager/apps"
