@@ -36,8 +36,8 @@ const policiesCompatible = (thisActivatable, otherActivatable) => {
     const otherCompatibleWithThis = compatibleWith(otherActivatable.id, thisPolicy)
     const otherShouldDeactivate = deactivateWhen(thisActivatable.id, otherPolicy)
     const thisShouldDeactivate = deactivateWhen(otherActivatable.id, thisPolicy)
-    return thisCompatibleWithOther
-        && (otherShouldDeactivate || (otherCompatibleWithThis && !thisShouldDeactivate))
+    return (thisActivatable.alwaysAllow || otherActivatable.alwaysAllow) ||
+        (thisCompatibleWithOther && (otherShouldDeactivate || (otherCompatibleWithThis && !thisShouldDeactivate)))
 }
 
 const validateBehavior = behavior => {
