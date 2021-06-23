@@ -35,4 +35,4 @@ USER node
 RUN bash -c "source /home/node/.nvm/nvm.sh && npm install"
 
 ADD src ${MODULE}/src
-CMD bash -c "cp -rn /etc/sepal/app-manager/kernels-templates/* /usr/local/share/jupyter/kernels/ && source /home/node/.nvm/nvm.sh && node src/main.js"
+CMD bash -c "sudo cp -rn /etc/sepal/app-manager/kernels-templates/* /usr/local/share/jupyter/kernels/ && source /home/node/.nvm/nvm.sh && node src/main.js"
