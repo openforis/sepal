@@ -86,7 +86,7 @@
   {
     "prefix": "true",
     "path": "/api/apps/",
-    "target": "http://app-manager:5001/",
+    "target": "http://app-manager:5011/",
     "https": "false",
     "authenticate": "true"
   },
