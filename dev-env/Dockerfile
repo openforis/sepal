@@ -18,10 +18,10 @@ RUN apt-get update && apt-get install -y \
   packer \
   procps \
   python3 \
-  python3-gdal \
+  python3-dev \
   python3-pip \
   python3-venv \
-  gdal-bin \
+  python3-wheel \
   screen \
   software-properties-common \
   sudo \
@@ -29,12 +29,17 @@ RUN apt-get update && apt-get install -y \
   wget \
   zip
 
+RUN pip3 install --upgrade pip
+
 # fix "mesg: ttyname failed: Inappropriate ioctl for device" warning
 RUN cp /etc/profile /root/.profile
 
 # install gdal
 RUN apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y
-RUN apt-get update && apt-get install -y gdal-bin
+RUN apt-get update && apt-get install -y \
+  libgdal-dev \
+  gdal-bin \
+  python3-gdal
 
 # install diskus
 RUN wget -q https://github.com/sharkdp/diskus/releases/download/v0.6.0/diskus_0.6.0_amd64.deb
