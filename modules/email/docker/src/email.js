@@ -1,5 +1,5 @@
 const log = require('sepal/log').getLogger('email')
-const {smtpHost, smtpPort, smtpSecure, smtpUser, smtpPassword, smtpFrom} = require('./config')
+const {smtpHost, smtpPort, smtpSecure, smtpUser, smtpPassword, smtpFromDomain} = require('./config')
 const fs = require('fs')
 const nodemailer = require('nodemailer')
 const Handlebars = require('handlebars')
@@ -41,8 +41,20 @@ const getBody = (content, contentType) => {
     }
 }
 
-const send = async ({id, email: {from = smtpFrom, to, cc, bcc, subject = '', content = '', contentType = 'text/plain'}}) => {
+const getFrom = from => {
+    if (from) {
+        if (from.includes('@')) {
+            return from
+        }
+        return `${from}@${smtpFromDomain}`
+    }
+    return `no-reply@${smtpFromDomain}`
+}
+
+const send = async ({id, email: {from: tentativeFrom, to, cc, bcc, subject = '', content = '', contentType = 'text/plain'}}) => {
     await transport.verify()
+    const from = getFrom(tentativeFrom)
+    log.warn(from)
     try {
         const body = getBody(content, contentType)
         const html = body.trim().length > 0

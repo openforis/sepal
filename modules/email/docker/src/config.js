@@ -14,7 +14,7 @@ try {
         .option('--smtp-secure <value>', 'SMTP secure', value => value == 'true', false)
         .requiredOption('--smtp-user <value>', 'SMTP user')
         .requiredOption('--smtp-password <value>', 'SMTP password')
-        .option('--smtp-from <value>', 'SMTP from')
+        .requiredOption('--smtp-from-domain <value>', 'SMTP from domain')
         .requiredOption('--sepal-host <value>')
         .requiredOption('--sepal-username <value>')
         .requiredOption('--sepal-password <value>')
@@ -33,7 +33,7 @@ const {
     smtpSecure = false,
     smtpUser,
     smtpPassword,
-    smtpFrom,
+    smtpFromDomain,
     sepalHost,
     sepalUsername,
     sepalPassword
@@ -50,7 +50,7 @@ module.exports = {
     smtpSecure,
     smtpUser,
     smtpPassword,
-    smtpFrom,
+    smtpFromDomain,
     sepalHost,
     sepalUsername,
     sepalPassword
