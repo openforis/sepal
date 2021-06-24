@@ -89,7 +89,10 @@ class _SelectPlanet extends React.Component {
     }
 
     validateApiKey$(apiKey) {
-        return get$('https://api.planet.com/basemaps/v1/mosaics', {username: apiKey})
+        return get$('https://api.planet.com/basemaps/v1/mosaics', {
+            username: apiKey,
+            crossDomain: true
+        })
     }
 
     add() {
