@@ -49,10 +49,10 @@ const warmUpTags = () =>
     _.forEach(rules, (rule, tag) => tag$.next({tag, warmup: true}))
 
 const start = () => {
-    const mytail = new Tail(sepalServerLog)
-    mytail.on('error', err => {throw(err)})
-    mytail.on('line', line => processLine(line))
-    mytail.on('restart', reason => {
+    const tail = new Tail(sepalServerLog)
+    tail.on('error', err => {throw(err)})
+    tail.on('line', line => processLine(line))
+    tail.on('restart', reason => {
         if(reason == 'PRIMEFOUND') log.debug('Now we can finally start tailing. File has appeared')
         if(reason == 'NEWPRIME') log.debug('We will switch over to the new file now')
         if(reason == 'TRUNCATE') log.debug('The file got smaller. I will go up and continue')
@@ -61,11 +61,10 @@ const start = () => {
      
     warmUpTags()
 
-    mytail.start()
+    tail.start()
 
-    log.info('Log monitoring started')
-    notify({subject: 'Log monitoring ready'})
-
+    log.info('Started')
+    notify({subject: 'Log monitoring started'})
 }
 
 module.exports = {start}

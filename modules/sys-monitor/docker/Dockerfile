@@ -29,5 +29,6 @@ CMD node \
     src/main.js \
     --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
     --sepal-server-log ${SEPAL_SERVER_LOG} \
-    --notify-email-address ${SYSADMIN_EMAIL_1} \
-    --notify-email-address ${SYSADMIN_EMAIL_2} 
+    --notify-to ${SEPAL_MONITORING_EMAIL} \
+    --notify-from sys-monitor
+    

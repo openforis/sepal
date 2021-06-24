@@ -4,9 +4,9 @@ const log = require('sepal/log').getLogger('main')
 const _ = require('lodash')
 
 const {initMessageQueue} = require('sepal/messageQueue')
-const {amqpUri, notifyEmailAddress, notifyAtStartup} = require('./config')
+const {amqpUri, notifyFrom, notifyTo} = require('./config')
 const {start} = require('./logMonitor')
-const {email$, notify} = require('./email')
+const {email$} = require('./email')
 
 const main = async () => {
     await initMessageQueue(amqpUri, {
@@ -16,12 +16,7 @@ const main = async () => {
     start()
 
     log.info('Initialized')
-    log.info(`Notifications will be sent to: ${notifyEmailAddress}`)
-
-    if (notifyAtStartup) {
-        log.info('Sending startup notification')
-        notify({subject: 'SEPAL sys-monitor started'})
-    }
+    log.info(`Notifications will be sent from: ${notifyFrom}, to: ${notifyTo}`)
 }
 
 main().catch(log.fatal)
