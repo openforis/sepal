@@ -3,15 +3,17 @@ const log = require('sepal/log').getLogger('main')
 
 const _ = require('lodash')
 
-const {messageQueue} = require('sepal/messageQueue')
+const {initMessageQueue} = require('sepal/messageQueue')
 const {amqpUri} = require('./config')
 const {logStats} = require('./emailQueue')
 const {messageHandler} = require('./messageHandler')
 
 const main = async () => {
-    messageQueue(amqpUri, ({addSubscriber}) => {
-        addSubscriber('email.send', 'email.send', messageHandler)
-        addSubscriber('user.emailNotificationsEnabled', 'user.emailNotificationsEnabled', messageHandler)
+    await initMessageQueue(amqpUri, {
+        subscribers: [
+            {queue: 'email.send', topic: 'email.send', handler: messageHandler},
+            {queue: 'user.emailNotificationsEnabled', topic: 'user.emailNotificationsEnabled', handler: messageHandler}
+        ]
     })
 
     await logStats()

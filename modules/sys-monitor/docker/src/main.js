@@ -3,16 +3,16 @@ const log = require('sepal/log').getLogger('main')
 
 const _ = require('lodash')
 
-const {messageQueue} = require('sepal/messageQueue')
+const {initMessageQueue} = require('sepal/messageQueue')
 const {amqpUri, notifyEmailAddress, notifyAtStartup} = require('./config')
 const {start} = require('./logMonitor')
 const {email$, notify} = require('./email')
 
 const main = async () => {
-    messageQueue(amqpUri, ({addPublisher, _addSubscriber}) => {
-        addPublisher('email.send', email$)
+    await initMessageQueue(amqpUri, {
+        publishers: [{key: 'email.send', publish$: email$}]
     })
-
+        
     start()
 
     log.info('Initialized')
