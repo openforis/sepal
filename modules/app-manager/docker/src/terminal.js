@@ -1,19 +1,21 @@
 const {Subject} = require('rxjs')
 const log = require('sepal/log').getLogger('terminal')
-const {execFile} = require('child_process')
+const {spawn} = require('child_process')
 
 const exec$ = (workingDir, command, args) => {
     const result$ = new Subject()
-    execFile(command, args, {cwd: workingDir}, (error, stdOut, stdErr) => {
-        if (error) {
-            log.warn(`Failed to execute command: ${command}:`, {error, stdErr, stdOut})
-            result$.error(error)
-        } else {
-            log.debug(`${workingDir}$ ${command} ${args.join(' ')}`)
-            log.debug(stdErr ? `${stdErr.trim()}\n${stdOut.trim()}` : stdOut.trim())
-            result$.next(stdOut)
-            result$.complete()
-        }
+    let lastLine
+    log.debug(`${workingDir}$ ${command} ${args.join(' ')}`)
+    const process = spawn(command, args, {cwd: workingDir})
+    process.stdout.on('data', data => {
+        const s = data.toString().trim()
+        lastLine = s
+        log.debug(s)
+    })
+    process.stderr.on('data', data => log.warn(data.toString().trim()))
+    process.on('close', () => {
+        result$.next(lastLine)
+        result$.complete()
     })
     return result$
 }
