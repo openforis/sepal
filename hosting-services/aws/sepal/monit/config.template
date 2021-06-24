@@ -6,6 +6,6 @@ set mailserver {{ smtp_host }} port {{ smtp_port }}
         username {{ smtp_username }} password {{ smtp_password }}
         using TLSV1 with timeout 30 seconds
 
-set mail-format { from: {{ smtp_from }} }
+set mail-format { from: monit@{{ smtp_host }} }
 
 set alert {{ sepal_monitoring_email }}
