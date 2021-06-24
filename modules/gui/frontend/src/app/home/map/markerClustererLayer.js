@@ -89,9 +89,11 @@ export default class MarkerClustererLayer {
     }
 
     updateMarker(marker) {
-        const mapMarker = this.getMapMarker(marker)
-        mapMarker.data = marker
-        this.updateIcon(marker, {fillColor: marker.color})
+        const mapMarker = this.findMapMarker(marker)
+        if (mapMarker) {
+            mapMarker.data = marker
+            this.updateIcon(marker, {fillColor: marker.color})
+        }
     }
 
     removeMarker(marker) {
@@ -103,15 +105,10 @@ export default class MarkerClustererLayer {
     }
 
     updateIcon(marker, iconUpdate) {
-        const mapMarker = this.getMapMarker(marker)
-        mapMarker.setIcon({...mapMarker.getIcon(), ...iconUpdate})
-    }
-
-    getMapMarker(marker) {
         const mapMarker = this.findMapMarker(marker)
-        if (!mapMarker)
-            throw new Error(`Marker not found: ${JSON.stringify(marker)}`)
-        return mapMarker
+        if (mapMarker) {
+            mapMarker.setIcon({...mapMarker.getIcon(), ...iconUpdate})
+        }
     }
 
     findMapMarker(marker) {
@@ -153,7 +150,8 @@ export default class MarkerClustererLayer {
         })
         mapMarker.data = marker
         mapMarker.addListener('click', () => {
-            onClick && onClick(this.getMapMarker({x, y}).data)
+            const m = this.findMapMarker({x, y})
+            m && onClick && onClick(m.data)
         })
         return mapMarker
     }
