@@ -102,6 +102,11 @@ const createVenv$ = ({path}) =>
         switchMap(() => exec$(
             '/',
             join(path, 'bin/pip3'),
+            ['install', '--upgrade', 'pip']
+        )),
+        switchMap(() => exec$(
+            '/',
+            join(path, 'bin/pip3'),
             ['install', 'ipykernel']
         ))
     )
