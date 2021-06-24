@@ -96,26 +96,26 @@ const createKernel$ = ({path}) => {
 const createVenv$ = ({path}) =>
     exec$(
         '/',
-        'python3',
-        ['-m', 'venv', path]
+        'sudo',
+        ['python3', '-m', 'venv', path]
     ).pipe(
         switchMap(() => exec$(
             '/',
-            join(path, 'bin/pip3'),
-            ['install', '--upgrade', 'pip']
+            'sudo',
+            [join(path, 'bin/pip3'), 'install', '--cache-dir', '/root/.cache/pip', '--upgrade', 'pip']
         )),
         switchMap(() => exec$(
             '/',
-            join(path, 'bin/pip3'),
-            ['install', 'ipykernel']
+            'sudo',
+            [join(path, 'bin/pip3'), 'install', '--cache-dir', '/root/.cache/pip', 'ipykernel', 'wheel']
         ))
     )
 
 const installRequirements$ = ({venvPath, requirementsPath}) =>
     exec$(
         '/',
-        join(venvPath, 'bin/pip3'),
-        ['install', '-r', requirementsPath]
+        'sudo',
+        [join(venvPath, 'bin/pip3'), 'install', '--cache-dir', '/root/.cache/pip', 'ipykernel', '-r', requirementsPath]
     )
 
 const exists$ = ({path}) =>
