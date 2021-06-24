@@ -32,6 +32,6 @@
       SMTP_SECURE: "false"
       SMTP_USER: "{{ smtp_username }}"
       SMTP_PASSWORD: "{{ smtp_password }}"
-      SMTP_FROM_DOMAIN: {{ sepal_host }}
+      SMTP_FROM_DOMAIN: "{{ sepal_host }}"
       SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
       SEPAL_ADMIN_PASSWORD_SEPAL_ENV: "{{ sepal_machine_admin_password }}"
