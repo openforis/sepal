@@ -9,10 +9,25 @@ ADD kernels /etc/sepal/app-manager/kernels-templates
 
 RUN apt update && apt install -y \
     curl \
+    gcc \
     git \
+    libpq-dev \
     python3 \
+    python3-dev \
+    python3-pip \
     python3-venv \
+    python3-wheel \
+    software-properties-common \
     sudo
+
+RUN apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y
+
+RUN apt-get update && apt-get install -y \
+    libgdal-dev \
+    gdal-bin \
+    python3-gdal
+
+RUN pip3 install --upgrade pip
 
 RUN adduser node && adduser node sudo && echo 'node      ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
 
