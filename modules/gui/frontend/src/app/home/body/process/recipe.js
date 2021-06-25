@@ -143,7 +143,6 @@ export const saveRecipe = tab => {
         ...select(recipePath(tab.id)),
         title: tab.title
     }
-    console.log({recipe})
     if (isInitialized(recipe)) {
         actionBuilder('SET_RECIPE_SAVED', recipe.id)
             .del(recipePath(recipe.id, 'ui.unsaved'))
