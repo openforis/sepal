@@ -118,8 +118,12 @@ export const setInitialized = recipeId => {
         .set(recipePath(recipeId, 'ui.initialized'), true)
         .dispatch()
     const recipe = select(recipePath(recipeId))
-    if (recipe.title)
-        saveRecipe(recipe)
+    const tab = select(tabPath(recipeId))
+    if (tab.title)
+        saveRecipe({
+            ...recipe,
+            title: tab.title
+        })
 }
 
 const updateRecipeList = recipe =>
@@ -139,6 +143,7 @@ export const saveRecipe = tab => {
         ...select(recipePath(tab.id)),
         title: tab.title
     }
+    console.log({recipe})
     if (isInitialized(recipe)) {
         actionBuilder('SET_RECIPE_SAVED', recipe.id)
             .del(recipePath(recipe.id, 'ui.unsaved'))
