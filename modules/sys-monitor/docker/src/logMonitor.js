@@ -1,5 +1,5 @@
 const Tail = require('tail-file')
-const {sepalServerLog} = require('./config')
+const {sepalServerLog, autoRearmDelayHours} = require('./config')
 const log = require('sepal/log').getLogger('logMonitor')
 const {Subject} = require('rxjs')
 const {groupBy, debounceTime, mergeMap, map, tap} = require('rxjs/operators')
@@ -17,23 +17,23 @@ const getEmail = tag => rules[tag].email || {}
 tag$.pipe(
     groupBy(({tag}) => tag),
     mergeMap(group$ => group$.pipe(
-        tap(({tag, warmup}) => tagDetected(tag, warmup)),
+        tap(({tag, activate}) => activate ? activateRule(tag) : acknowledgeRule(tag)),
         map(({tag}) => tag),
         debounceTime(getTimeout(group$.key) * 1000)
     ))
 ).subscribe(
-    tag => tagExpected(tag)
+    tag => triggerRule(tag)
 )
 
-const tagDetected = (tag, warmup) => {
-    if (warmup) {
-        log.info(`Rule armed: ${tag} (${getTimeout(tag)}sec)`)
-    } else {
-        log.debug(`Rule re-armed: ${tag} (${getTimeout(tag)}sec)`)
-    }
+const activateRule = tag => {
+    log.info(`Rule activated: ${tag} (${getTimeout(tag)}sec)`)
 }
 
-const tagExpected = tag => {
+const acknowledgeRule = tag => {
+    log.debug(`Rule acknowledged: ${tag} (${getTimeout(tag)}sec)`)
+}
+
+const triggerRule = tag => {
     log.info(`Rule triggered: ${tag}`)
     notify({subject: `Rule ${tag} triggered on ${new Date().toUTCString()}`, ...getEmail(tag)})
 }
@@ -45,8 +45,8 @@ const processLine = line =>
         }
     })
 
-const warmUpTags = () =>
-    _.forEach(rules, (rule, tag) => tag$.next({tag, warmup: true}))
+const activateRules = () =>
+    _.forEach(rules, (_rule, tag) => tag$.next({tag, activate: true}))
 
 const start = () => {
     const tail = new Tail(sepalServerLog)
@@ -58,8 +58,12 @@ const start = () => {
         if(reason == 'TRUNCATE') log.debug('The file got smaller. I will go up and continue')
         if(reason == 'CATCHUP') log.debug('We found a start in an earlier file and are now moving to the next one in the list')
     })
-     
-    warmUpTags()
+    
+    if (autoRearmDelayHours) {
+        log.info(`Auto re-arming every ${autoRearmDelayHours}h`)
+        setInterval(activateRules, autoRearmDelayHours * 3600 * 1000)
+    }
+    activateRules()
 
     tail.start()
 

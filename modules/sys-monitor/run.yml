@@ -16,5 +16,6 @@
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
       SEPAL_SERVER_LOG: "/log/messages"
-      INITIAL_DELAY: "600"
+      INITIAL_DELAY_MINUTES: "10"
+      AUTO_REARM_DELAY_HOURS: "24"
       SEPAL_MONITORING_EMAIL: "{{ sepal_monitoring_email }}"
