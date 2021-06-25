@@ -29,6 +29,8 @@ CMD node \
     src/main.js \
     --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
     --sepal-server-log ${SEPAL_SERVER_LOG} \
+    --initial-delay-minutes ${INITIAL_DELAY_MINUTES} \
+    --auto-rearm-delay-hours ${AUTO_REARM_DELAY_HOURS} \
     --notify-to ${SEPAL_MONITORING_EMAIL} \
     --notify-from sys-monitor
     

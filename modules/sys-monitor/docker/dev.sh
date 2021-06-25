@@ -8,5 +8,7 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     src/main.js \
     --amqp-uri amqp://rabbitmq \
     --sepal-server-log /var/log/sepal/sepal-server.log \
+    --initial-delay-minutes 1 \
+    --auto-rearm-delay-hours 1 \
     --notify-to foo@bar.baz \
     --notify-from sys-monitor
