@@ -118,8 +118,12 @@ export const setInitialized = recipeId => {
         .set(recipePath(recipeId, 'ui.initialized'), true)
         .dispatch()
     const recipe = select(recipePath(recipeId))
-    if (recipe.title)
-        saveRecipe(recipe)
+    const tab = select(tabPath(recipeId))
+    if (tab.title)
+        saveRecipe({
+            ...recipe,
+            title: tab.title
+        })
 }
 
 const updateRecipeList = recipe =>

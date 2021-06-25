@@ -2369,7 +2369,7 @@
     },
     "timeSeries": {
       "create": "Time series",
-      "description": "Download Landsat time series to SEPAL.",
+      "description": "Download time series of optical and radar data to SEPAL.",
       "mapToolbar": {
         "centerMap": {
           "tooltip": "Zoom to area of interest"
