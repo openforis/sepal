@@ -122,11 +122,9 @@ class ChartPixel extends React.Component {
         if (loading) {
             return this.renderSpinner()
         } else {
-            const scale = this.getMultiplier()
             return (
                 <CCDCGraph
                     band={selectedBand.value}
-                    scale={scale}
                     dateFormat={dateFormat}
                     startDate={startDate}
                     endDate={endDate}
@@ -137,20 +135,6 @@ class ChartPixel extends React.Component {
                 />
             )
         }
-    }
-
-    getMultiplier() {
-        const {inputs: {selectedBand}} = this.props
-        const options = flatBandOptions(this.bandSetting())
-        const option = options
-            .map(optionOrGroup =>
-                Object.keys(optionOrGroup).includes('options')
-                    ? optionOrGroup.options
-                    : [optionOrGroup]
-            )
-            .flat()
-            .find(({value}) => selectedBand.value === value)
-        return option ? option.timeSeriesMultiplier : 1
     }
 
     componentDidUpdate(prevProps) {
