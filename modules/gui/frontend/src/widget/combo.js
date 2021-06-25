@@ -287,8 +287,10 @@ class _Combo extends React.Component {
         return !this.state.selected
     }
 
-    componentDidUpdate() {
-        this.updateOptions()
+    componentDidUpdate(prevProps) {
+        const {value} = this.props
+        const {value: prevValue} = prevProps
+        this.updateOptions(value !== prevValue && value)
     }
 
     matcher(filter) {
@@ -302,7 +304,7 @@ class _Combo extends React.Component {
         return RegExp(`^${parts}.*$`, 'i')
     }
 
-    updateOptions() {
+    updateOptions(inputChanged) {
         const {options} = this.props
         const {filter} = this.state
         const matcher = this.matcher(filter)
@@ -338,7 +340,9 @@ class _Combo extends React.Component {
 
         const getSelectedOption = selectedOption => {
             const validatedSelectedOption = selectedOption && flattenedOptions.find(option => option.value === selectedOption.value)
-            return validatedSelectedOption || getInputOption()
+            return inputChanged
+                ? getInputOption()
+                : validatedSelectedOption || getInputOption()
         }
 
         this.updateState(prevState =>
