@@ -54,7 +54,6 @@ const getFrom = from => {
 const send = async ({id, email: {from: tentativeFrom, to, cc, bcc, subject = '', content = '', contentType = 'text/plain'}}) => {
     await transport.verify()
     const from = getFrom(tentativeFrom)
-    log.warn(from)
     try {
         const body = getBody(content, contentType)
         const html = body.trim().length > 0
