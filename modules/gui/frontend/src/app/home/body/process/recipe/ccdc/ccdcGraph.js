@@ -12,60 +12,17 @@ import styles from './ccdcGraph.module.css'
 export class CCDCGraph extends React.Component {
     state = {}
 
+    constructor(props) {
+        super(props)
+        this.highlightCallback = this.highlightCallback.bind(this)
+    }
+
     render() {
-        const {gapStrategy, segments, band, dateFormat, highlights = []} = this.props
+        const {highlights = []} = this.props
         const {data, gaps} = this.state
         const {startDate, endDate} = this.getDates()
         if (!data || !startDate || !endDate)
             return null
-
-        const highlightCallback = (event, x, points, row) => {
-            const point = points[0]
-            const [date, observationArray, modelArray] = data[row]
-            const observation = observationArray ? observationArray[0] : null
-            const model = modelArray ? modelArray[0] : null
-            const observationInfo = points.find(point => point.name === 'observations')
-                ? {observation}
-                : {}
-            if (segments) {
-                const segmentIndexes = sequence(0, segments.tStart.length - 1)
-                const findSegmentIndex = () => {
-                    const segmentIndex = segmentIndexes
-                        .findIndex(segmentIndex =>
-                            moment(fromT(segments.tStart[segmentIndex], dateFormat)).startOf('date').toDate() <= date
-                            && moment(fromT(segments.tEnd[segmentIndex], dateFormat)).startOf('date').toDate() > date
-                        )
-                    if (segmentIndex >= 0) {
-                        return segmentIndex
-                    } else if (_.isFinite(model) && gapStrategy === 'INTERPOLATE') {
-                        return segmentIndexes
-                            .findIndex(segmentIndex =>
-                                moment(fromT(segments.tEnd[segmentIndex], dateFormat)).startOf('date').toDate() > date
-                            ) - 1
-                    } else {
-                        return -1 // TODO: Deal with extrapolation
-                    }
-                }
-                const segmentIndex = findSegmentIndex()
-                const segmentInfo = segmentIndex !== -1
-                    ? {
-                        model,
-                        startDate: fromT(segments.tStart[segmentIndex], dateFormat),
-                        endDate: fromT(segments.tEnd[segmentIndex], dateFormat),
-                        tBreak: segments.changeProb[segmentIndex]
-                            ? fromT(segments.tBreak[segmentIndex], dateFormat)
-                            : null,
-                        magnitude: segments[`${band}_magnitude`][segmentIndex],
-                        rmse: segments[`${band}_rmse`][segmentIndex],
-                        observationCount: segments.numObs[segmentIndex],
-                        left: point.x <= 0.5
-                    }
-                    : {}
-                this.setState({point: {date, ...observationInfo, ...segmentInfo}})
-            } else {
-                this.setState({point: {date, ...observationInfo}})
-            }
-        }
 
         const unhighlightCallback = () => this.setState({point: null})
 
@@ -108,7 +65,7 @@ export class CCDCGraph extends React.Component {
                     rangeSelectorForegroundStrokeColor={'rgba(100%, 100%, 100%, .15)'}
                     errorBars
                     sigma={1}
-                    highlightCallback={isMobile() ? undefined : highlightCallback}
+                    highlightCallback={isMobile() ? undefined : this.highlightCallback}
                     unhighlightCallback={isMobile() ? undefined : unhighlightCallback}
                 />
                 {this.renderPoint()}
@@ -188,6 +145,56 @@ export class CCDCGraph extends React.Component {
                 </div>
             </div>
         )
+    }
+
+    highlightCallback(event, x, points, row) {
+        const {gapStrategy, segments, band, dateFormat} = this.props
+        const {data} = this.state
+        const point = points[0]
+        const [date, observationArray, modelArray] = data[row]
+        const observation = observationArray ? observationArray[0] : null
+        const model = modelArray ? modelArray[0] : null
+        const observationInfo = points.find(point => point.name === 'observations')
+            ? {observation}
+            : {}
+        if (segments) {
+            const segmentIndexes = sequence(0, segments.tStart.length - 1)
+            const findSegmentIndex = () => {
+                const segmentIndex = segmentIndexes
+                    .findIndex(segmentIndex =>
+                        moment(fromT(segments.tStart[segmentIndex], dateFormat)).startOf('date').toDate() <= date
+                        && moment(fromT(segments.tEnd[segmentIndex], dateFormat)).startOf('date').toDate() > date
+                    )
+                if (segmentIndex >= 0) {
+                    return segmentIndex
+                } else if (_.isFinite(model) && gapStrategy === 'INTERPOLATE') {
+                    return segmentIndexes
+                        .findIndex(segmentIndex =>
+                            moment(fromT(segments.tEnd[segmentIndex], dateFormat)).startOf('date').toDate() > date
+                        ) - 1
+                } else {
+                    return -1 // TODO: Deal with extrapolation
+                }
+            }
+            const segmentIndex = findSegmentIndex()
+            const segmentInfo = segmentIndex !== -1
+                ? {
+                    model,
+                    startDate: fromT(segments.tStart[segmentIndex], dateFormat),
+                    endDate: fromT(segments.tEnd[segmentIndex], dateFormat),
+                    tBreak: segments.changeProb[segmentIndex]
+                        ? fromT(segments.tBreak[segmentIndex], dateFormat)
+                        : null,
+                    magnitude: segments[`${band}_magnitude`][segmentIndex],
+                    rmse: segments[`${band}_rmse`][segmentIndex],
+                    observationCount: segments.numObs[segmentIndex],
+                    left: point.x <= 0.5
+                }
+                : {}
+            this.setState({point: {date, ...observationInfo, ...segmentInfo}})
+        } else {
+            this.setState({point: {date, ...observationInfo}})
+        }
     }
 
     getDates() {
