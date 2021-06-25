@@ -50,7 +50,6 @@ class ProcessingRecipeEndpoint {
                     LOG.warn("User $sepalUser.username tries to load recipe from other user: $recipe")
                     return halt(404)
                 }
-                println(recipe.contents)
                 send(recipe.contents)
             }
 
