@@ -10,7 +10,7 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <logger name="org.openforis.sepal.component.workerinstance.adapter" additivity="false" level="DEBUG">
+    <logger name="org.openforis.sepal.component.workerinstance.adapter" additivity="false" level="INFO">
         <appender-ref ref="STDOUT"/>
     </logger>
 

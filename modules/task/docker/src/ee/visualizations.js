@@ -23,7 +23,7 @@ const toVisualizationProperties = (visualizations = [], bands) => {
 
 const encode = value =>
     _.isString(value)
-        ? value.replaceAll(',', '\\,')
+        ? value.replace(/,/g, '\\,')
         : value
 
 module.exports = {toVisualizationProperties}
