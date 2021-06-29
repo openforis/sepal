@@ -3,7 +3,7 @@ set -e
 
 SEPAL_CONFIG=/etc/sepal/module.d
 SEPAL=/usr/local/lib/sepal
-SEPAL_MODULES=(user sepal-server api-gateway app-manager task gee gui user-storage email sys-monitor)
+SEPAL_MODULES=(user sepal-server gateway app-manager task gee gui user-storage email sys-monitor)
 SEPAL_GROUPS=(all dev)
 SEPAL_DEFAULT_GROUP=dev
 LOG_DIR=/var/log/sepal
@@ -32,7 +32,7 @@ group () {
         echo "${SEPAL_MODULES[@]}"
         ;;
     dev)
-        echo "user sepal-server ( -DskipSceneMetaDataUpdate ) api-gateway app-manager task gee gui user-storage email sys-monitor"
+        echo "user sepal-server ( -DskipSceneMetaDataUpdate ) gateway app-manager task gee gui user-storage email sys-monitor"
         ;;
     *)
         return 1
@@ -148,15 +148,9 @@ module_clean () {
     local MODULE=$1
     message "CLEANING" $MODULE YELLOW
     case $MODULE in
-    api-gateway)
-        $SEPAL/gradlew \
-        -p $SEPAL \
-        --no-daemon \
-        :sepal-common:clean &>/dev/null
-        $SEPAL/gradlew \
-        -p $SEPAL \
-        --no-daemon \
-        :sepal-api-gateway:clean &>/dev/null
+    gateway)
+        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/gateway/docker && rm -rf node_modules package-lock.json)
         ;;
     app-manager)
         (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
@@ -329,14 +323,8 @@ run () {
     shift
     local ARGS=$@
     case $MODULE in
-    api-gateway)
-        $SEPAL/gradlew \
-        -p $SEPAL \
-        --no-daemon \
-        --stacktrace \
-        :sepal-api-gateway:runDev \
-        -DconfigDir="$SEPAL_CONFIG/api-gateway" \
-        $ARGS
+    gateway)
+        (cd $SEPAL/modules/gateway/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     app-manager)
         (cd $SEPAL/modules/app-manager/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)

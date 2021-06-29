@@ -1,0 +1,10 @@
+{
+  "appManager": "app-manager:5011",
+  "ceoGateway": "ceo-gateway:8001",
+  "gee": "gee:5001",
+  "gui": "gui:7667",
+  "sandbox": "sepal:9191",
+  "sepal": "sepal:1025",
+  "terminal": "terminal:8000",
+  "user": "user"
+}
