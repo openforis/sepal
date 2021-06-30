@@ -197,7 +197,8 @@
     - { role: run-module, module: ceo-gateway }
     - { role: run-module, module: ssh-gateway }
     - { role: run-module, module: terminal }
-    - { role: run-module, module: api-gateway }
+#    - { role: run-module, module: api-gateway }
+    - { role: run-module, module: gateway }
     - { role: run-module, module: letsencrypt }
     - { role: run-module, module: haproxy }
     - { role: run-module, module: sys-monitor }
