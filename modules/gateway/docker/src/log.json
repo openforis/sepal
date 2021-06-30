@@ -1,7 +1,7 @@
 {
     "port": 5100,
     "categories": {
-        "gateway": "info",
-        "auth": "debug"
+        "gateway": "trace",
+        "auth": "trace"
     }
 }

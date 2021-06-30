@@ -80,7 +80,7 @@ const authMiddleware = async (req, res, next) => {
                     res.end()
                     return false
                 default:
-                    log.error(`[${username}] Error authenticating user`, response)
+                    log.error(`[${username}] Error authenticating user`, statusCode, response.body)
                     res.status(500)
                     res.end()
                     return false

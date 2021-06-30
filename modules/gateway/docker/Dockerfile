@@ -26,4 +26,5 @@ ADD modules.json /etc/sepal/module.d/gateway/modules.json
 
 CMD node \
     src/main.js \
-    --modules=/etc/sepal/module.d/gateway/modules.json
+    --modules=/etc/sepal/module.d/gateway/modules.json \
+    --secure
