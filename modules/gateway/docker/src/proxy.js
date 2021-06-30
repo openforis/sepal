@@ -13,14 +13,14 @@ const proxy = app =>
             changeOrigin: true,
             autoRewrite: !!rewrite,
             ws: true,
-            onProxyReq: (proxyReq, req, res) => {
+            onProxyReq: (proxyReq, req) => {
+                const user = req.session.user
                 req.socket.on('close', () => {
-                    const user = req.session.user
                     log.trace(`[${user ? user.username : 'not-authenticated'}] [${req.originalUrl}] Response closed`)
                     proxyReq.destroy()
                 })
-                if (authenticate) {
-                    proxyReq.setHeader('sepal-user', JSON.stringify(req.session.user))
+                if (authenticate && user) {
+                    proxyReq.setHeader('sepal-user', JSON.stringify(user))
                 }
                 if (cache) {
                     proxyReq.setHeader('Cache-Control', 'public, max-age=31536000')
