@@ -14,8 +14,9 @@ const proxy = app =>
             autoRewrite: !!rewrite,
             ws: true,
             onProxyReq: (proxyReq, req, res) => {
-                res.on('close', () => {
-                    log.trace('Response closed')
+                req.socket.on('close', () => {
+                    const user = req.session.user
+                    log.trace(`[${user ? user.username : 'not-authenticated'}] [${req.originalUrl}] Response closed`)
                     proxyReq.destroy()
                 })
                 if (authenticate) {
