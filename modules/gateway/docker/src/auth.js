@@ -38,7 +38,7 @@ const authMiddleware = async (req, res, next) => {
     const verifyGoogleTokens$ = defer(() => {
         const user = req.session.user
         const shouldRefresh = () => {
-            const expiresInMinutes = user.googleTokens.accessTokenExpiryDate - new Date().getTime() / 60 / 1000
+            const expiresInMinutes = (user.googleTokens.accessTokenExpiryDate - new Date().getTime()) / 60 / 1000
             return expiresInMinutes < REFRESH_IF_EXPIRES_IN_MINUTES
         }
         if (!user.googleTokens || !user.googleTokens.accessTokenExpiryDate) {
@@ -80,7 +80,7 @@ const authMiddleware = async (req, res, next) => {
                     res.end()
                     return false
                 default:
-                    log.error(`[${username}] Error authenticating user`, response)
+                    log.error(`[${username}] Error authenticating user`, statusCode, response.body)
                     res.status(500)
                     res.end()
                     return false

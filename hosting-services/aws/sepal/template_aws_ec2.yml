@@ -1,0 +1,10 @@
+plugin: amazon.aws.aws_ec2
+regions:
+  - ${region}
+filters:
+  tag:Type: ${type}
+  tag:Environment: ${deploy_environment}
+compose:
+  ec2_ip_address: public_ip_address
+  ec2_private_ip_address: private_ip_address
+  ec2_private_secondary_ip_address: private_ip_addresses

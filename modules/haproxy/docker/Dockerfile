@@ -1,12 +1,17 @@
-FROM haproxy:1.8.14
+FROM haproxy:2.4
 MAINTAINER OpenForis
 EXPOSE 80 443
 
+USER root
+
 ADD config /config
-ADD script /script
+ADD script/init_container.sh /usr/local/bin/init_container
 
-RUN chmod -R 500 /script && \
-    chmod -R 400 /config && sync && \
-    /script/init_image.sh
+RUN apt-get update -y && apt-get install -y \
+        supervisor \
+        net-tools
 
-CMD ["/script/init_container.sh"]
+RUN chmod 500 /usr/local/bin/init_container && \
+    chmod -R 400 /config
+
+CMD ["/usr/local/bin/init_container"]

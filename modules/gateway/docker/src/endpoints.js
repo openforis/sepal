@@ -9,6 +9,19 @@ const endpoints = [
     },
     {
         prefix: true,
+        path: '/api/ceo-gateway',
+        target: `http://${modules.ceoGateway}`,
+        authenticate: true
+    },
+    {
+        prefix: true,
+        path: '/api/terminal',
+        target: `http://${modules.terminal}`,
+        ws: true,
+        authenticate: true
+    },
+    {
+        prefix: true,
         path: '/api/user',
         target: `http://${modules.user}`,
         authenticate: true
@@ -93,6 +106,20 @@ const endpoints = [
         cache: true
     },
     {
+        prefix: true,
+        path: '/api/sandbox/jupyter',
+        target: `http://${modules.sandbox}/jupyter/api/sandbox/jupyter/`,
+        authenticate: true,
+        rewrite: false
+    },
+    {
+        prefix: true,
+        path: '/api/sandbox',
+        target: `http://${modules.sandbox}`,
+        authenticate: true,
+        rewrite: true
+    },
+    {
         prefix: false,
         path: '/privacy-policy',
         target: `http://${modules.gui}/resource/privacy-policy.html`,
@@ -101,7 +128,7 @@ const endpoints = [
     },
     {
         prefix: true,
-        path: '/',
+        path: '',
         target: `http://${modules.gui}`,
         authenticate: false,
         noCache: true

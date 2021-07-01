@@ -1,4 +1,4 @@
-check program api-gateway with path /usr/local/bin/dockercheck-api-gateway
+check program api-gateway with path /usr/local/bin/dockercheck-gateway
     depends on docker
     if status != 0 then alert
 

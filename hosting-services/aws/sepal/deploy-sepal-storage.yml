@@ -1,5 +1,5 @@
 - name: Configure Sepal instance
-  hosts: "tag_Type_SepalStorage:&tag_Environment_{{ deploy_environment }}"
+  hosts: all
   user: ec2-user
   become: yes
   gather_facts: true
