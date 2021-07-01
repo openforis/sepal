@@ -56,7 +56,7 @@ RUN curl -s "https://get.sdkman.io" | bash
 RUN bash -c "source '/home/sepal/.sdkman/bin/sdkman-init.sh' && sdk install java 12.0.2.hs-adpt"
 
 # install nvm, nodejs (stable) and global npm packages
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | bash
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 RUN bash -c "source /home/sepal/.nvm/nvm.sh && nvm install node stable && npm install -g nodemon npm-check-updates"
 
 # setup sepal
