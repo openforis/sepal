@@ -11,7 +11,7 @@ RUN apt-get update -y && apt-get install -y \
         supervisor \
         net-tools
 
-RUN chmod 500 /usr/local/bin/init_container \
+RUN chmod 500 /usr/local/bin/init_container && \
     chmod -R 400 /config
 
 CMD ["/usr/local/bin/init_container"]
