@@ -2,6 +2,7 @@
     "port": 5100,
     "categories": {
         "gateway": "trace",
+        "proxy": "trace",
         "auth": "trace"
     }
 }

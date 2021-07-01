@@ -1,15 +1,29 @@
 const {authMiddleware} = require('./auth')
 const {createProxyMiddleware} = require('http-proxy-middleware')
-const log = require('sepal/log').getLogger('gateway')
+const log = require('sepal/log').getLogger('proxy')
 const {endpoints} = require('./endpoints')
+const {categories: {proxy: sepalLogLevel}} = require('./log.json')
 
 const proxyEndpoints = app => endpoints.forEach(proxy(app))
+
+const logProvider = () => ({
+    log: log.debug,
+    debug: log.trace,
+    info: log.info,
+    warn: log.warn,
+    error: log.error
+})
+
+const logLevel = sepalLogLevel === 'trace'
+    ? 'debug'
+    : sepalLogLevel
 
 const proxy = app =>
     ({path, target, authenticate, cache, noCache, rewrite, ws}) => {
         const proxyMiddleware = createProxyMiddleware({
             target,
-            logLevel: 'debug',
+            logProvider,
+            logLevel,
             pathRewrite: {[`^${path}`]: ''},
             changeOrigin: true,
             autoRewrite: !!rewrite,
