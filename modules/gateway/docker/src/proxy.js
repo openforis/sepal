@@ -6,13 +6,23 @@ const {endpoints} = require('./endpoints')
 const proxyEndpoints = app => endpoints.forEach(proxy(app))
 
 const proxy = app =>
-    ({path, target, authenticate, cache, noCache, rewrite}) => {
+    ({path, target, authenticate, cache, noCache, rewrite, ws}) => {
         const proxyMiddleware = createProxyMiddleware({
             target,
+            logLevel: 'debug',
             pathRewrite: {[`^${path}`]: ''},
             changeOrigin: true,
             autoRewrite: !!rewrite,
-            ws: true,
+            ws,
+            onOpen: proxySocket => {
+                log.warn('onOpen')
+            },
+            onClose: (res, socket, head) => {
+                log.warn('onClose')
+            },
+            onProxyReqWs: (proxyReq, req, socket, options, head) => {
+                log.warn('onProxyReqWs', proxyReq.path)
+            },
             onProxyReq: (proxyReq, req) => {
                 const user = req.session.user
                 req.socket.on('close', () => {

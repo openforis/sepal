@@ -13,7 +13,8 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     httpOnly: false,
-    cookie: {secure}
+    cookie: {secure: false}
+    // cookie: {secure}
 }))
 app.use('/api/user/logout', logout)
 proxyEndpoints(app)

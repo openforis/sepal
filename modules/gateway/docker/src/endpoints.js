@@ -17,6 +17,7 @@ const endpoints = [
         prefix: true,
         path: '/api/terminal',
         target: `http://${modules.terminal}`,
+        ws: true,
         authenticate: true
     },
     {
