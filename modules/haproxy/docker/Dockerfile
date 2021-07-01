@@ -1,4 +1,4 @@
-FROM haproxy:1.8.14
+FROM haproxy:2.4
 MAINTAINER OpenForis
 EXPOSE 80 443
 
