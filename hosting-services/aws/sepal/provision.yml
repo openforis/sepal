@@ -15,14 +15,6 @@
         access_key_state: create
       register: letsencrypt_user
 
-    - name: LetsEncypt user
-      ansible.builtin.debug:
-        msg: "{{ letsencrypt_user }}"
-
-    - name: CONFIG HOME
-      ansible.builtin.debug:
-        msg: "{{ letsencrypt_user['created_keys'] }}"
-
     - name: Create letsencrypt user policy
       community.aws.iam_policy:
         iam_type: user
@@ -52,7 +44,7 @@
       copy:
         content: "letsencrypt_access_key_id: {{ letsencrypt_user['created_keys'][0]['access_key_id'] }}\nletsencrypt_secret_access_key: {{ letsencrypt_user['created_keys'][0]['secret_access_key'] }}\n"
         dest: "{{ letsencrypt_aws_keys_file }}"
-      when: "{{ letsencrypt_user['created_keys'] }}"
+      when: letsencrypt_user['created_keys']
 
     - name: Create Sepal-Storage security group
       ec2_group:
@@ -151,11 +143,6 @@
             to_port: 5672
             cidr_ip: "{{ sepal_storage_ip }}/32"
             rule_desc: 'Sepal-Storage'
-#          - proto: tcp
-#            from_port: 5672
-#            to_port: 5672
-#            group_id: "{{ sepal_storage_group['owner_id'] }}/{{ sepal_storage_group['group_id'] }}/{{ sepal_storage_group['group_name'] }}"
-#            rule_desc: 'Sepal-Storage'
           - proto: tcp
             from_port: 22
             to_port: 22

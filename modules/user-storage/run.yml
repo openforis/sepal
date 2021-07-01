@@ -1,6 +1,7 @@
 ---
 - name: "user-storage-redis | Start container"
   docker_container:
+    container_default_behavior: "{{ container_default_behavior }}"
     api_version: "{{ api_version }}"
     name: "user-storage-redis"
     pull: "{{ pull }}"
@@ -15,6 +16,7 @@
 
 - name: "user-storage | Start container"
   docker_container:
+    container_default_behavior: "{{ container_default_behavior }}"
     api_version: "{{ api_version }}"
     name: "{{ name }}"
     pull: "{{ pull }}"
@@ -35,4 +37,3 @@
       CONCURRENCY: "5"
       MAX_RETRIES: "10"
       INITIAL_RETRY_DELAY_SECONDS: "30"
-  

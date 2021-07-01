@@ -11,6 +11,7 @@
 
 - name: "sepal | Start container"
   docker_container:
+    container_default_behavior: "{{ container_default_behavior }}"
     api_version: "{{ api_version }}"
     name: "{{ name }}"
     pull: "{{ pull }}"

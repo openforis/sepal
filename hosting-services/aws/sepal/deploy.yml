@@ -1,5 +1,5 @@
 - name: Configure Sepal instance
-  hosts: "tag_Type_Sepal:&tag_Environment_{{ deploy_environment }}"
+  hosts: all
   user: ec2-user
   become: yes
   gather_facts: true
@@ -13,14 +13,14 @@
         sepal_http_ip: "{{ ec2_private_ip_address }}"
         sepal_ssh_ip: "{{ hostvars[inventory_hostname].ansible_eth0.ipv4_secondaries[0].address }}"
         syslog_address: "udp://{{ ec2_private_ip_address }}"
-
+#
     # bash prompt
     - name: Set bash prompt
       blockinfile:
         path: /etc/profile
         block: |
           # Bash prompt
-          PS1='{{bash_prompt}}'
+          PS1='{{ bash_prompt }}'
 
     # set locale
     - name: Set locale
