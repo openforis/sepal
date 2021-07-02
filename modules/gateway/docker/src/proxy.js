@@ -1,11 +1,11 @@
 const {authMiddleware} = require('./auth')
 const {createProxyMiddleware} = require('http-proxy-middleware')
 const {rewriteLocation} = require('./rewrite')
-const log = require('sepal/log').getLogger('proxy')
 const {endpoints} = require('./endpoints')
 const {categories: {proxy: sepalLogLevel}} = require('./log.json')
+const log = require('sepal/log').getLogger('proxy')
 
-const proxyEndpoints = app => endpoints.forEach(proxy(app))
+const proxyEndpoints = app => endpoints.map(proxy(app))
 
 const logProvider = () => ({
     log: log.debug,
@@ -30,23 +30,24 @@ const proxy = app =>
             pathRewrite: {[`^${path}`]: ''},
             ignorePath: !prefix,
             changeOrigin: true,
-            ws: true,
             onOpen: () => {
-                log.warn('onOpen')
+                log.trace('WebSocket opened')
             },
             onClose: () => {
-                log.warn('onClose')
+                log.trace('WebSocket closed')
             },
-            onProxyReqWs: proxyReq => {
-                log.warn('onProxyReqWs', proxyReq.path)
+            onProxyReqWs: (proxyReq, req) => {
+                const user = req.session && req.session.user
+                const username = user ? user.username : 'not-authenticated'
+                log.debug(`[${username}] Requesting WebSocket upgrade for "${req.originalUrl}" to target "${target}"`)
             },
             onProxyReq: (proxyReq, req) => {
-                const user = req.session.user
+                const user = req.session && req.session.user
                 const username = user ? user.username : 'not-authenticated'
-                // req.socket.on('close', () => {
-                //     log.trace(`[${username}] [${req.originalUrl}] Response closed`)
-                //     proxyReq.destroy()
-                // })
+                req.socket.on('close', () => {
+                    log.trace(`[${username}] [${req.originalUrl}] Response closed`)
+                    proxyReq.destroy()
+                })
                 if (authenticate && user) {
                     log.trace(`[${username}] [${req.originalUrl}] Setting sepal-user header`)
                     proxyReq.setHeader('sepal-user', JSON.stringify(user))
@@ -75,10 +76,12 @@ const proxy = app =>
                 }
             }
         })
+
         app.use(path, ...(authenticate
             ? [authMiddleware, proxyMiddleware]
             : [proxyMiddleware])
         )
+        return {path, proxy: proxyMiddleware}
     }
 
 module.exports = {proxyEndpoints}
