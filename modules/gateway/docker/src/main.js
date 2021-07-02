@@ -5,7 +5,7 @@ const express = require('express')
 const session = require('express-session')
 const {logout} = require('./logout')
 const {proxyEndpoints} = require('./proxy')
-const log = require('sepal/log').getLogger('proxy')
+const log = require('sepal/log').getLogger('gateway')
 
 const app = express()
 
@@ -30,8 +30,9 @@ const proxies = proxyEndpoints(app)
 const server = app.listen(port)
 server.on('upgrade', (res, socket, head) => {
     const url = res.url
-    const {proxy} = proxies.find(({path}) => !path || isMatch(url, `${path}/**`)) || {}
+    const {proxy, target} = proxies.find(({path}) => !path || isMatch(url, `${path}/**`)) || {}
     if (proxy) {
+        log.debug(`Requesting WebSocket upgrade for "${url}" to target "${target}"`)
         proxy.upgrade(res, socket, head)
     } else {
         log.warn(`No proxy found for WebSocket upgrade "${url}"`)

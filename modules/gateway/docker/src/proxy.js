@@ -3,16 +3,17 @@ const {createProxyMiddleware} = require('http-proxy-middleware')
 const {rewriteLocation} = require('./rewrite')
 const {endpoints} = require('./endpoints')
 const {categories: {proxy: sepalLogLevel}} = require('./log.json')
-const log = require('sepal/log').getLogger('proxy')
+const proxyLog = require('sepal/log').getLogger('proxy')
+const log = require('sepal/log').getLogger('gateway')
 
 const proxyEndpoints = app => endpoints.map(proxy(app))
 
 const logProvider = () => ({
-    log: log.debug,
-    debug: log.trace,
-    info: log.info,
-    warn: log.warn,
-    error: log.error
+    log: proxyLog.debug,
+    debug: proxyLog.trace,
+    info: proxyLog.info,
+    warn: proxyLog.warn,
+    error: proxyLog.error
 })
 
 const logLevel = sepalLogLevel === 'trace'
@@ -35,11 +36,6 @@ const proxy = app =>
             },
             onClose: () => {
                 log.trace('WebSocket closed')
-            },
-            onProxyReqWs: (proxyReq, req) => {
-                const user = req.session && req.session.user
-                const username = user ? user.username : 'not-authenticated'
-                log.debug(`[${username}] Requesting WebSocket upgrade for "${req.originalUrl}" to target "${target}"`)
             },
             onProxyReq: (proxyReq, req) => {
                 const user = req.session && req.session.user
@@ -81,7 +77,7 @@ const proxy = app =>
             ? [authMiddleware, proxyMiddleware]
             : [proxyMiddleware])
         )
-        return {path, proxy: proxyMiddleware}
+        return {path, target, proxy: proxyMiddleware}
     }
 
 module.exports = {proxyEndpoints}
