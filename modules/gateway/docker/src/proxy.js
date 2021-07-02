@@ -1,5 +1,6 @@
 const {authMiddleware} = require('./auth')
 const {createProxyMiddleware} = require('http-proxy-middleware')
+const {rewriteLocation} = require('./rewrite')
 const log = require('sepal/log').getLogger('proxy')
 const {endpoints} = require('./endpoints')
 const {categories: {proxy: sepalLogLevel}} = require('./log.json')
@@ -19,42 +20,57 @@ const logLevel = sepalLogLevel === 'trace'
     : sepalLogLevel
 
 const proxy = app =>
-    ({path, target, authenticate, cache, noCache, rewrite, ws}) => {
+    ({path, target, authenticate, cache, noCache, rewrite}) => {
         const proxyMiddleware = createProxyMiddleware({
             target,
             logProvider,
             logLevel,
+            proxyTimeout: 0,
+            timeout: 0,
             pathRewrite: {[`^${path}`]: ''},
             changeOrigin: true,
-            autoRewrite: !!rewrite,
-            ws,
-            onOpen: proxySocket => {
+            ws: true,
+            onOpen: () => {
                 log.warn('onOpen')
             },
-            onClose: (res, socket, head) => {
+            onClose: () => {
                 log.warn('onClose')
             },
-            onProxyReqWs: (proxyReq, req, socket, options, head) => {
+            onProxyReqWs: proxyReq => {
                 log.warn('onProxyReqWs', proxyReq.path)
             },
             onProxyReq: (proxyReq, req) => {
                 const user = req.session.user
+                const username = user ? user.username : 'not-authenticated'
                 req.socket.on('close', () => {
-                    log.trace(`[${user ? user.username : 'not-authenticated'}] [${req.originalUrl}] Response closed`)
+                    log.trace(`[${username}] [${req.originalUrl}] Response closed`)
                     proxyReq.destroy()
                 })
                 if (authenticate && user) {
+                    log.trace(`[${username}] [${req.originalUrl}] Setting sepal-user header`)
                     proxyReq.setHeader('sepal-user', JSON.stringify(user))
                 }
                 if (cache) {
+                    log.trace(`[${username}] [${req.originalUrl}] Enabling caching`)
                     proxyReq.setHeader('Cache-Control', 'public, max-age=31536000')
                 }
                 if (noCache) {
+                    log.trace(`[${username}] [${req.originalUrl}] Disabling caching`)
                     proxyReq.removeHeader('If-None-Match')
                     proxyReq.removeHeader('If-Modified-Since')
                     proxyReq.removeHeader('Cache-Control')
                     proxyReq.setHeader('Cache-Control', 'no-cache')
                     proxyReq.setHeader('Cache-Control', 'max-age=0')
+                }
+            },
+            onProxyRes: proxyRes => {
+                if (rewrite) {
+                    const location = proxyRes.headers['location']
+                    if (location) {
+                        const rewritten = rewriteLocation({path, target, location})
+                        log.debug(`Rewriting location header from "${location}" to "${rewritten}"`)
+                        proxyRes.headers['location'] = rewritten
+                    }
                 }
             }
         })
