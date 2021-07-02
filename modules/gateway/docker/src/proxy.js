@@ -20,14 +20,15 @@ const logLevel = sepalLogLevel === 'trace'
     : sepalLogLevel
 
 const proxy = app =>
-    ({path, target, authenticate, cache, noCache, rewrite}) => {
-        const proxyMiddleware = createProxyMiddleware({
+    ({path, target, prefix, authenticate, cache, noCache, rewrite}) => {
+        const proxyMiddleware = createProxyMiddleware(path, {
             target,
             logProvider,
             logLevel,
             proxyTimeout: 0,
             timeout: 0,
             pathRewrite: {[`^${path}`]: ''},
+            ignorePath: !prefix,
             changeOrigin: true,
             ws: true,
             onOpen: () => {
@@ -42,10 +43,10 @@ const proxy = app =>
             onProxyReq: (proxyReq, req) => {
                 const user = req.session.user
                 const username = user ? user.username : 'not-authenticated'
-                req.socket.on('close', () => {
-                    log.trace(`[${username}] [${req.originalUrl}] Response closed`)
-                    proxyReq.destroy()
-                })
+                // req.socket.on('close', () => {
+                //     log.trace(`[${username}] [${req.originalUrl}] Response closed`)
+                //     proxyReq.destroy()
+                // })
                 if (authenticate && user) {
                     log.trace(`[${username}] [${req.originalUrl}] Setting sepal-user header`)
                     proxyReq.setHeader('sepal-user', JSON.stringify(user))
@@ -81,5 +82,3 @@ const proxy = app =>
     }
 
 module.exports = {proxyEndpoints}
-
-// TODO: Non-prefix endpoints
