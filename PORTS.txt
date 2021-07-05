@@ -7,3 +7,4 @@ Node debug
     9234: task
     9235: terminal
     9236: user-storage
+    9237: gateway
