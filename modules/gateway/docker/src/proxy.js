@@ -3,6 +3,7 @@ const {createProxyMiddleware} = require('http-proxy-middleware')
 const {rewriteLocation} = require('./rewrite')
 const {endpoints} = require('./endpoints')
 const {categories: {proxy: sepalLogLevel}} = require('./log.json')
+const {sepalHost} = require('./config')
 const proxyLog = require('sepal/log').getLogger('proxy')
 const log = require('sepal/log').getLogger('gateway')
 
@@ -47,6 +48,8 @@ const proxy = app =>
                 if (authenticate && user) {
                     log.trace(`[${username}] [${req.originalUrl}] Setting sepal-user header`)
                     proxyReq.setHeader('sepal-user', JSON.stringify(user))
+                } else {
+                    log.trace(`[${username}] [${req.originalUrl}] No sepal-user header set`)
                 }
                 if (cache) {
                     log.trace(`[${username}] [${req.originalUrl}] Enabling caching`)
@@ -70,6 +73,7 @@ const proxy = app =>
                         proxyRes.headers['location'] = rewritten
                     }
                 }
+                proxyRes.headers['Content-Security-Policy'] = `connect-src 'self' https://${sepalHost} wss://${sepalHost} https://*.googleapis.com https://apis.google.com https://*.google.com https://*.planet.com; frame-ancestors 'self' https://$host https://*.googleapis.com https://apis.google.com`
             }
         })
 

@@ -11,3 +11,5 @@
     network_mode: "{{ network_mode }}"
     networks:
       - name: 'sepal'
+    env:
+      SEPAL_HOST: "{{ sepal_host }}"

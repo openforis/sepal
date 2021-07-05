@@ -7,13 +7,15 @@ const DEFAULT_PORT = 8001
 program
     .option('--port <number>', 'Port', DEFAULT_PORT)
     .option('--modules <value>', 'Modules', '/etc/sepal/module.d/gateway/modules.json')
+    .option('--sepalHost <value>', 'Sepal host', 'localhost')
     .option('--secure', 'Secure', false)
     .parse(process.argv)
 
 const {
     port,
-    secure,
-    modules
+    modules,
+    sepalHost,
+    secure
 } = program.opts()
 
 const readModules = () => {
@@ -29,6 +31,7 @@ log.info('Configuration loaded')
 
 module.exports = {
     port,
-    secure,
-    modules: readModules()
+    modules: readModules(),
+    sepalHost,
+    secure
 }
