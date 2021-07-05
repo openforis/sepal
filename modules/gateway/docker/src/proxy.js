@@ -31,7 +31,6 @@ const proxy = app =>
             timeout: 0,
             pathRewrite: {[`^${path}`]: ''},
             ignorePath: !prefix,
-            changeOrigin: true,
             onOpen: () => {
                 log.trace('WebSocket opened')
             },
@@ -39,6 +38,8 @@ const proxy = app =>
                 log.trace('WebSocket closed')
             },
             onProxyReq: (proxyReq, req) => {
+                // Make sure the client doesn't inject the user header, and pretend to be another user.
+                proxyReq.removeHeader('sepal-user')
                 const user = req.session && req.session.user
                 const username = user ? user.username : 'not-authenticated'
                 req.socket.on('close', () => {
