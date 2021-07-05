@@ -27,8 +27,8 @@ const proxy = app =>
             target,
             logProvider,
             logLevel,
-            proxyTimeout: 0,
-            timeout: 0,
+            proxyTimeout: 60 * 1000,
+            timeout: 60 * 1000,
             pathRewrite: {[`^${path}`]: ''},
             ignorePath: !prefix,
             onOpen: () => {
