@@ -6,7 +6,7 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     --watch $LIBS/shared \
     --inspect=0.0.0.0:9235 \
     src/main.js \
-    --ip '0.0.0.0' \
+    --ip '127.0.0.1' \
     --port 8000 \
     --home-dir '/var/sepal/sepal-server/home' \
     --ssh-script-path 'ssh_gateway.sh'
