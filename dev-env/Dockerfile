@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
   libffi-dev \
   multitail \
   nano \
+  net-tools \
   packer \
   procps \
   python3 \
