@@ -32,7 +32,7 @@ group () {
         echo "${SEPAL_MODULES[@]}"
         ;;
     dev)
-        echo "user sepal-server ( -DskipSceneMetaDataUpdate ) ateway app-manager task gee gui user-storage terminal email sys-monitor"
+        echo "user sepal-server ( -DskipSceneMetaDataUpdate ) gateway app-manager task gee gui user-storage terminal email sys-monitor"
         ;;
     *)
         return 1
