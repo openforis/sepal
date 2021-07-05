@@ -6,7 +6,9 @@
     "scripts": {
         "dev": "bash dev.sh",
         "postinstall": "link-module-alias",
-        "preinstall": "command -v link-module-alias && link-module-alias clean || true"
+        "preinstall": "command -v link-module-alias && link-module-alias clean || true",
+        "test": "jest",
+        "testWatch": "jest --watchAll"
     },
     "author": "",
     "license": "ISC",
