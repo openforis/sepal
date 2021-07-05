@@ -9,11 +9,9 @@ const {parse} = require('url')
 const log = require('sepal/log').getLogger('gateway')
 
 const app = express()
-
 app.use(session({
     secret: Math.random().toString(),
     name: 'SEPAL-SESSIONID',
-    httpOnly: false,
     cookie: {
         httpOnly: true,
         maxAge: 1000 * 60 * 30,
