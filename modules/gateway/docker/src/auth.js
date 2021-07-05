@@ -25,10 +25,10 @@ const authMiddleware = async (req, res, next) => {
         }).pipe(
             map(({body: googleTokens}) => {
                 if (googleTokens) {
-                    log.debug(`[${user.username}] Refreshed Google tokens for user`)
-                    req.session.user = {...user, googleTokens}
+                    log.debug(`[${user.username}] Refreshed Google tokens`)
+                    req.session.user = {...user, googleTokens: JSON.parse(googleTokens)}
                 } else {
-                    log.debug(`[${user.username}] Google tokens not refreshed for user`)
+                    log.warn(`[${user.username}] Google tokens not refreshed - missing from response`)
                 }
                 return true
             })
@@ -39,6 +39,7 @@ const authMiddleware = async (req, res, next) => {
         const user = req.session.user
         const shouldRefresh = () => {
             const expiresInMinutes = (user.googleTokens.accessTokenExpiryDate - new Date().getTime()) / 60 / 1000
+            log.trace(`[${user.username}] Google tokens expires in ${expiresInMinutes} minutes`)
             return expiresInMinutes < REFRESH_IF_EXPIRES_IN_MINUTES
         }
         if (!user.googleTokens || !user.googleTokens.accessTokenExpiryDate) {
@@ -47,7 +48,7 @@ const authMiddleware = async (req, res, next) => {
         } else if (shouldRefresh()) {
             return refreshGoogleTokens$
         } else {
-            log.trace(`[${user.username}] No need to refresh Google tokens for user`)
+            log.trace(`[${user.username}] No need to refresh Google tokens for user - more than ${REFRESH_IF_EXPIRES_IN_MINUTES} minutes left until expiry`)
             return of(true)
         }
     })
