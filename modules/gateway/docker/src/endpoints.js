@@ -21,12 +21,6 @@ const endpoints = [
         authenticate: true
     },
     {
-        prefix: true,
-        path: '/api/user',
-        target: `http://${modules.user}`,
-        authenticate: true
-    },
-    {
         prefix: false,
         path: '/api/user/password/reset-request',
         target: `http://${modules.user}/password/reset-request`,
@@ -49,6 +43,12 @@ const endpoints = [
         path: '/api/user/validate-token',
         target: `http://${modules.user}/validate-token`,
         authenticate: false
+    },
+    {
+        prefix: true,
+        path: '/api/user',
+        target: `http://${modules.user}`,
+        authenticate: true
     },
     {
         prefix: true,
@@ -132,7 +132,7 @@ const endpoints = [
         target: `http://${modules.gui}`,
         authenticate: false,
         noCache: true
-    },
+    }
 ]
 
 module.exports = {endpoints}

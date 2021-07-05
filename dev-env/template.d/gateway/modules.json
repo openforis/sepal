@@ -1,6 +1,6 @@
 {
-  "app-manager": "localhost:5011",
-  "ceo-gateway": "localhost:8001",
+  "appManager": "localhost:5011",
+  "ceoGateway": "localhost:8001",
   "gee": "localhost:5001",
   "gui": "localhost:7667",
   "sandbox": "localhost:9191",

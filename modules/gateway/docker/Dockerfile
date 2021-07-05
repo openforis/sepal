@@ -27,4 +27,5 @@ ADD modules.json /etc/sepal/module.d/gateway/modules.json
 CMD node \
     src/main.js \
     --modules=/etc/sepal/module.d/gateway/modules.json \
+    --sepalHost=${SEPAL_HOST} \
     --secure

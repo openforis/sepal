@@ -1,21 +1,39 @@
 require('sepal/log').configureServer(require('./log.json'))
-const {port, secure} = require('./config')
+const {port} = require('./config')
+const {isMatch} = require('micromatch')
 const express = require('express')
 const session = require('express-session')
 const {logout} = require('./logout')
 const {proxyEndpoints} = require('./proxy')
+const {parse} = require('url')
+const log = require('sepal/log').getLogger('gateway')
 
 const app = express()
-
 app.use(session({
     secret: Math.random().toString(),
     name: 'SEPAL-SESSIONID',
+    cookie: {
+        httpOnly: true,
+        maxAge: 1000 * 60 * 30,
+        sameSite: true,
+        secure: false
+    },
+    proxy: true,
     resave: false,
+    rolling: true,
     saveUninitialized: false,
-    httpOnly: false,
-    cookie: {secure: false}
-    // cookie: {secure}
+    unset: 'destroy'
 }))
 app.use('/api/user/logout', logout)
-proxyEndpoints(app)
-app.listen(port)
+const proxies = proxyEndpoints(app)
+const server = app.listen(port)
+server.on('upgrade', (res, socket, head) => {
+    const requestPath = parse(res.url).pathname
+    const {proxy, target} = proxies.find(({path}) => !path || requestPath === path || isMatch(requestPath, `${path}/**`)) || {}
+    if (proxy) {
+        log.debug(`Requesting WebSocket upgrade for "${requestPath}" to target "${target}"`)
+        proxy.upgrade(res, socket, head)
+    } else {
+        log.warn(`No proxy found for WebSocket upgrade "${requestPath}"`)
+    }
+})
