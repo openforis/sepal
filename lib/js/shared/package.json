@@ -15,7 +15,7 @@
         "ee": "src/reexport/ee"
     },
     "dependencies": {
-        "@google/earthengine": "0.1.270",
+        "@google/earthengine": "0.1.272",
         "amqplib": "^0.8.0",
         "base-64": "^1.0.0",
         "koa": "^2.13.1",
@@ -32,8 +32,8 @@
         "uuid": "^8.3.2"
     },
     "devDependencies": {
-        "eslint": "^7.29.0",
-        "jest": "^27.0.5",
+        "eslint": "^7.30.0",
+        "jest": "^27.0.6",
         "jest-expect-message": "^1.0.2",
         "link-module-alias": "^1.2.0"
     },
