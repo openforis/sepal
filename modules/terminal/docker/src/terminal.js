@@ -1,3 +1,4 @@
+const log = require('sepal/log').getLogger('terminal')
 const {exec} = require('child_process')
 const {interval, merge, Subject} = require('rxjs')
 const {map, filter, bufferTime} = require('rxjs/operators')
@@ -9,7 +10,7 @@ const start = (websocket, req) => {
     const terminal = session.terminal
     const subscriptions = []
 
-    console.log(`Started session: ${session.id}, terminal PID: ${terminal.pid}`)
+    log.info(`Started session: ${session.id}, terminal PID: ${terminal.pid}`)
 
     websocket.on('close', () => {
         terminal.kill()
@@ -17,13 +18,13 @@ const start = (websocket, req) => {
         subscriptions.forEach(subscription =>
             subscription.unsubscribe()
         )
-        console.log(`Closed session: ${session.id}, terminal PID: ${terminal.pid}`)
+        log.info(`Closed session: ${session.id}, terminal PID: ${terminal.pid}`)
         Session.remove(session.id)
     })
 
     // upstream (websocket to terminal)
 
-    websocket.on('message', msg => 
+    websocket.on('message', msg =>
         terminal.write(msg)
     )
 
@@ -47,7 +48,9 @@ const start = (websocket, req) => {
                 data => {
                     try {
                         websocket.send(data)
-                    } catch (e) {}
+                    } catch (e) {
+                        log.error('Could not send data to websocket', e)
+                    }
                 }
             )
         )
@@ -67,7 +70,7 @@ const resize = (req, res) => {
     const cols = parseInt(req.query.cols)
     const rows = parseInt(req.query.rows)
     session.terminal.resize(cols, rows)
-    console.log(`Resized session: ${session.id}, cols: ${cols}, rows: ${rows}`)
+    log.info(`Resized session: ${session.id}, cols: ${cols}, rows: ${rows}`)
     res.end()
 }
 

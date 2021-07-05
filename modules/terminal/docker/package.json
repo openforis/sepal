@@ -4,15 +4,26 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "start": "node src/server.js",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "dev": "bash dev.sh",
+        "postinstall": "link-module-alias",
+        "preinstall": "command -v link-module-alias && link-module-alias clean || true"
     },
     "author": "",
     "license": "ISC",
+    "_moduleAliases": {
+        "root": "src",
+        "sepal": "node_modules/shared/src"
+    },
     "dependencies": {
+        "commander": "^7.2.0",
         "express": "^4.17.1",
         "express-ws": "^5.0.2",
         "node-pty": "^0.10.1",
-        "rxjs": "^7.1.0"
+        "rxjs": "^7.1.0",
+        "shared": "../../../lib/js/shared"
+    },
+    "devDependencies": {
+        "eslint": "^7.29.0",
+        "link-module-alias": "^1.2.0"
     }
 }
