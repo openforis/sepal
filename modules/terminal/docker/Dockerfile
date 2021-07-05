@@ -1,11 +1,10 @@
-FROM node:10.15.2-stretch
-MAINTAINER OpenForis
+FROM node:14-stretch
 EXPOSE 8000
 
 ENV ROOT /usr/local/src/terminal
-ENV IP 0.0.0.0
-ENV PORT 8000
 
+# ENV IP 0.0.0.0
+# ENV PORT 8000
 
 ADD script/ssh_gateway.sh /usr/local/bin/ssh_gateway.sh
 RUN chmod +x /usr/local/bin/ssh_gateway.sh
@@ -21,4 +20,9 @@ RUN apt-get update && \
 ADD src ${ROOT}/src
 
 USER node
-CMD ["npm", "start"]
+CMD node \
+    src/main.js \
+    --host '0.0.0.0' \
+    --port 8000 \
+    --home-dir '/sepalUsers' \
+    --sshScriptPath '/usr/local/bin/ssh_gateway.sh'

@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-LIBS=$SEPAL_HOME/lib/js
+
 AUTH_CONFIG=$SEPAL_CONFIG/google-earth-engine/gee-oauth.json
 GEE_EMAIL=$(cat $AUTH_CONFIG | jq -r '.client_email')
 GEE_KEY=$(cat $AUTH_CONFIG | jq -r '.private_key' | sed -E ':a;N;$!ba;s/\r{0,1}\n/\\n/g')
+LIBS=$SEPAL_HOME/lib/js
 NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     --watch src \
     --watch $LIBS/shared \
-    --inspect=0.0.0.0:9229 src/main.js \
+    --inspect=0.0.0.0:9234 \
+    src/main.js \
     --gee-email "$GEE_EMAIL" \
     --gee-key "$GEE_KEY" \
     --google-project-id 'openforis-sepal' \

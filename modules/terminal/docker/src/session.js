@@ -1,6 +1,7 @@
+const log = require('sepal/log').getLogger('session')
 const pty = require('node-pty')
 
-const {USERS_HOME, SSH_SCRIPT_PATH} = require('./config')
+const {homeDir, sshScriptPath} = require('./config')
 
 const sessions = {}
 
@@ -8,9 +9,9 @@ const create = (id, req) => {
     const cols = parseInt(req.query.cols)
     const rows = parseInt(req.query.rows)
     const username = JSON.parse(req.headers['sepal-user']).username
-    const keyFile = `${USERS_HOME}/${username}/.ssh/id_rsa`
+    const keyFile = `${homeDir}/${username}/.ssh/id_rsa`
     const key = `/tmp/${username}-${id}.key`
-    const terminal = pty.spawn(SSH_SCRIPT_PATH, [username, keyFile, key], {
+    const terminal = pty.spawn(sshScriptPath, [username, keyFile, key], {
         name: 'xterm-color',
         cols: cols || 80,
         rows: rows || 24,
@@ -18,7 +19,7 @@ const create = (id, req) => {
         env: process.env
     })
 
-    console.log(`Created session: ${id}, terminal PID: ${terminal.pid}`)
+    log.info(`Created session: ${id}, terminal PID: ${terminal.pid}`)
 
     const session = {
         id,
@@ -44,7 +45,7 @@ const get = req => {
 
 const remove = id => {
     delete sessions[id]
-    console.log(`Removed session: ${id}`)
+    log.info(`Removed session: ${id}`)
 }
 
 module.exports = {get, remove}

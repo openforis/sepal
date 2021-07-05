@@ -1,8 +1,10 @@
+require('sepal/log').configureServer(require('./log.json'))
+const log = require('sepal/log').getLogger('main')
+
 const express = require('express')
 const expressWs = require('express-ws')
-
 const Terminal = require('./terminal')
-const {HOST, PORT} = require('./config')
+const {ip, port} = require('./config')
 
 const app = express()
 expressWs(app)
@@ -10,5 +12,5 @@ expressWs(app)
 app.ws('/:sessionId', Terminal.start)
 app.post('/:sessionId/size', Terminal.resize)
 
-app.listen(PORT, HOST)
-console.log(`Terminal server listening to http://${HOST}:${PORT}`)
+app.listen(ip, port)
+log.info(`Terminal server listening to http://${ip}:${port}`)
