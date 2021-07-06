@@ -6,7 +6,8 @@ ENV SHARED /usr/local/src/sepal/lib/js/shared
 
 RUN apt update && \
     apt install sudo && \
-    adduser node sudo
+    adduser node sudo && \
+    echo 'node    ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
 
 ADD build/lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
