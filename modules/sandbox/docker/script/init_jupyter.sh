@@ -5,6 +5,7 @@ echo
 echo "**************************"
 echo "*** Installing Jupyter ***"
 echo "**************************"
+apt-get install -y checkinstall
 /usr/bin/python3 -m pip install jupyter
 /usr/bin/python3 /usr/local/bin/jupyter-notebook --generate-config
 /usr/bin/python3 -m pip install ipykernel
