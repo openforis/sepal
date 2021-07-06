@@ -269,7 +269,7 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'thermal',
+                'aerosol', 'thermal', 'thermal2',
                 'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
@@ -731,6 +731,7 @@ const isOptical = dataSetId =>
     dataSetId !== 'SENTINEL_1'
 
 const getDataSetBands = ({dataSetId, correction, timeScan}) => {
+    console.log('getDataSetBands', {dataSetId, correction, bands: dataSetById[dataSetId][correction].bands})
     return isOptical(dataSetId)
         ? dataSetById[dataSetId][correction].bands
         : dataSetById[dataSetId][timeScan ? 'timeScan' : 'pointInTime'].bands
