@@ -124,7 +124,12 @@ class _SourceSync extends React.Component {
         const bandAndType = _.chain(bands)
             .map(sourceBand => sourceBand.match(baseBandPattern))
             .filter(match => match)
-            .map(([_, name, bandType]) => ({name, bandType: bandType === 'coefs' ? 'value' : bandType}))
+            .map(([_, name, bandType]) => bandType === 'coefs'
+                ? ['value', 'intercept', 'slope', 'phase_1', 'amplitude_1', 'phase_2', 'amplitude_2', 'phase_3', 'amplitude_3']
+                    .map(bandType => ({name, bandType}))
+                : [{name, bandType}]
+            )
+            .flatten()
             .value()
         const bandByName = _.groupBy(bandAndType, ({name}) => name)
         const baseBands = _.chain(bandAndType)
