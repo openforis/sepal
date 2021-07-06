@@ -30,7 +30,7 @@ USER node
 ADD src ${MODULE}/src
 CMD node \
     src/main.js \
-    --host '0.0.0.0' \
+    --ip '0.0.0.0' \
     --port 8000 \
     --home-dir '/sepalUsers' \
-    --sshScriptPath '/usr/local/bin/ssh_gateway.sh'
+    --ssh-script-path '/usr/local/bin/ssh_gateway.sh'
