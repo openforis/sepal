@@ -730,9 +730,7 @@ const opticalSourceIds = ['LANDSAT', 'SENTINEL_2']
 const isOptical = dataSetId =>
     dataSetId !== 'SENTINEL_1'
 
-const getDataSetBands = ({dataSetId, correction, timeScan}) => {
-    console.log('getDataSetBands', {dataSetId, correction, bands: dataSetById[dataSetId][correction].bands})
-    return isOptical(dataSetId)
+const getDataSetBands = ({dataSetId, correction, timeScan}) =>
+    isOptical(dataSetId)
         ? dataSetById[dataSetId][correction].bands
         : dataSetById[dataSetId][timeScan ? 'timeScan' : 'pointInTime'].bands
-}
