@@ -10,6 +10,10 @@
     restart_policy: "{{ restart_policy }}"
     network_mode: "{{ network_mode }}"
     ulimits: nofile:65536:65536
+    sysctls:
+      net.ipv4.tcp_keepalive_time: 60
+      net.ipv4.tcp_keepalive_intvl: 60
+      net.ipv4.tcp_keepalive_probes: 6
     networks:
       - name: 'sepal'
     volumes:
