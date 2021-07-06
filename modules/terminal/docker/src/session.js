@@ -21,11 +21,7 @@ const getUsername = sepalUser => {
 
 const getKeyFile = username => {
     const keyFile = `${homeDir}/${username}/.ssh/id_rsa`
-    if (fs.existsSync(keyFile)) {
-        return keyFile
-    } else {
-        throw Error(`Missing keyfile: ${keyFile}`)
-    }
+    return keyFile
 }
 
 const getTempKeyFile = (username, id) => {
@@ -42,9 +38,7 @@ const getTerminal = ({id, username, keyFile, tempKeyFile, cols, rows}) => {
         throw Error(`Missing ssh script file: ${sshScriptPath}`)
     }
     
-    log.info({sshScriptPath, username, keyFile, tempKeyFile})
-    // const terminal = pty.spawn(sshScriptPath, [username, keyFile, tempKeyFile], {
-    const terminal = pty.spawn(sshScriptPath, ['sepal', keyFile, tempKeyFile], {
+    const terminal = pty.spawn(sshScriptPath, [username, keyFile, tempKeyFile], {
         name: 'xterm-color',
         cols: cols || 80,
         rows: rows || 24,
