@@ -112,12 +112,11 @@ class _EETableSection extends React.Component {
                 <Form.Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.eeTable.column.label')}
                     input={eeTableColumn}
-                    busy={stream('LOAD_EE_TABLE_COLUMNS').active}
+                    busyMessage={stream('LOAD_EE_TABLE_ROWS').active && msg('widget.loading')}
                     disabled={eeTableColumnDisabled}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.eeTable.column.placeholder.${columnState}`)}
                     options={(columns || []).map(column => ({value: column, label: column}))}
                     onChange={column => {
-                        // console.log('eeTableColumn onChange')
                         eeTableRow.set('')
                         this.recipeActions.setEETableRows(null).dispatch()
                         this.eeTableColumnChanged$.next()
@@ -128,7 +127,6 @@ class _EETableSection extends React.Component {
                 <Form.Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.eeTable.row.label')}
                     input={eeTableRow}
-                    busy={stream('LOAD_EE_TABLE_ROWS').active}
                     disabled={eeTableRowDisabled}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.eeTable.row.placeholder.${rowState}`)}
                     options={(rows || []).map(value => ({value, label: value}))}
