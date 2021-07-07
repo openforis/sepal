@@ -1,6 +1,6 @@
 - name: Configure Sandbox Image
   strategy: debug
-  hosts: all
+  hosts: default
   user: ec2-user
   become: yes
   gather_facts: true

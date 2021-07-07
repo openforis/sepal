@@ -36,7 +36,7 @@ class HandlerRegistryCommandDispatcher implements CommandDispatcher {
             def (result, duration) = time {
                 execute(command, handler)
             }
-            LOG.debug("Completed command $command after $duration millis")
+            LOG.info("Completed command $command after $duration millis")
             return result
         } catch (Exception e) {
             def executionFailed = new ExecutionFailed(handler, command, e)

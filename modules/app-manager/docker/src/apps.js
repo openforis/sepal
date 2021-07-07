@@ -133,7 +133,7 @@ const checkout$ = ({path, branch}) => {
                     : exec$(
                         path,
                         'sudo',
-                        ['git', 'checkout', '-t', `origin/${branch}`]
+                        ['GIT_TERMINAL_PROMPT=0', 'git', 'checkout', '-t', `origin/${branch}`]
                     )),
             catchError(() => {
                 log.warn(`Failed to checkout branch ${branch}: ${path}`)
@@ -147,7 +147,7 @@ const onBranch$ = ({path, branch}) =>
     exec$(
         path,
         'sudo',
-        ['git', 'rev-parse', '--abbrev-ref', 'HEAD']
+        ['GIT_TERMINAL_PROMPT=0', 'git', 'rev-parse', '--abbrev-ref', 'HEAD']
     ).pipe(
         map(currentBranch => currentBranch.trim() === branch)
     )
@@ -156,7 +156,7 @@ const pull$ = ({path}) => {
     return exec$(
         path,
         'sudo',
-        ['git', 'pull', '--recurse-submodules']
+        ['GIT_TERMINAL_PROMPT=0', 'git', 'pull', '--recurse-submodules']
     )
 }
 
@@ -169,7 +169,7 @@ const clone$ = ({path, repository}) => {
         switchMap(() => exec$(
             dirname(path),
             'sudo',
-            ['git', 'clone', repository]
+            ['GIT_TERMINAL_PROMPT=0', 'git', 'clone', repository]
         ))
     )
 }

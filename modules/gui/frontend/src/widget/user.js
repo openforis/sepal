@@ -1,8 +1,8 @@
 import {EMPTY, Subject, timer} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {exhaustMap, map, switchMap, tap} from 'rxjs/operators'
 import {history} from 'route'
-import {map, switchMap, tap} from 'rxjs/operators'
 import {msg} from 'translate'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -119,7 +119,7 @@ class User extends React.Component {
     handleLogout() {
         this.props.stream('LOGOUT',
             logout$.pipe(
-                switchMap(() =>
+                exhaustMap(() =>
                     api.user.logout$()
                 )
             ),

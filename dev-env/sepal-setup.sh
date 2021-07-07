@@ -21,6 +21,9 @@ sudo ln -sf $PROJECT_DIR/dev-env/template.d /etc/sepal/template.d
 sudo mkdir -p /usr/local/share/jupyter/kernels/
 sudo cp -rn $PROJECT_DIR/modules/app-manager/docker/kernels/* /usr/local/share/jupyter/kernels/
 
+sudo mkdir -p /etc/sepal/gateway
+sudo cp -rn $PROJECT_DIR/modules/app-manager/docker/kernels/* /usr/local/share/jupyter/kernels/
+
 chmod +x $PROJECT_DIR/lib/python/shared/stack_time_series.py
 sudo ln -sf $PROJECT_DIR/lib/python/shared/stack_time_series.py /usr/local/bin/sepal-stack-time-series
 
@@ -48,6 +51,7 @@ sudo chown sepal /var/log/sepal
 
 TEMPLATE_DIR=$PROJECT_DIR/dev-env/template.d
 cp -R $TEMPLATE_DIR/* /etc/sepal/module.d/
+template $TEMPLATE_DIR/gateway/modules.json /etc/sepal/module.d/gateway/modules.json
 template $TEMPLATE_DIR/sepal-server/dataSearch.properties /etc/sepal/module.d/sepal-server/dataSearch.properties
 template $TEMPLATE_DIR/sepal-server/workerInstance.properties /etc/sepal/module.d/sepal-server/workerInstance.properties
 template $TEMPLATE_DIR/user/smtp.properties /etc/sepal/module.d/user/smtp.properties
@@ -59,6 +63,6 @@ sudo cp /etc/sepal/conf.d/certificates/gee-oauth.json /etc/sepal/module.d/google
 sudo chown -R sepal: /etc/sepal/module.d/google-earth-engine
 
 
-mkdir -p /etc/sepal/module.d/api-gateway
-sudo cp /etc/sepal/conf.d/certificates/sepal-https.* /etc/sepal/module.d/api-gateway
-sudo chown -R sepal: /etc/sepal/module.d/api-gateway
+#mkdir -p /etc/sepal/module.d/api-gateway
+#sudo cp /etc/sepal/conf.d/certificates/sepal-https.* /etc/sepal/module.d/api-gateway
+#sudo chown -R sepal: /etc/sepal/module.d/api-gateway

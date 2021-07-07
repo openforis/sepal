@@ -18,7 +18,8 @@ docker push localhost/openforis/ceo-gateway:{{ version }}
 docker push localhost/openforis/mysql:{{ version }}
 docker push localhost/openforis/mysql-backup:{{ version }}
 docker push localhost/openforis/gee:{{ version }}
-docker push localhost/openforis/api-gateway:{{ version }}
+docker push localhost/openforis/gateway:{{ version }}
+#docker push localhost/openforis/api-gateway:{{ version }}
 docker push localhost/openforis/ssh-gateway:{{ version }}
 docker push localhost/openforis/sandbox:{{ version }}
 docker push localhost/openforis/task:{{ version }}

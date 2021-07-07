@@ -9,6 +9,7 @@
 - name: "Run {{ module }}"
   include_tasks: "../../../modules/{{ module }}/run.yml"
   vars:
+    container_default_behavior: "compatibility"
     api_version: "1.38"
     name: "{{ container_name | default(module) }}"
     pull: "{{ docker_repository_host != 'localhost' }}"

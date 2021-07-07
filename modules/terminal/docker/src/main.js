@@ -12,5 +12,5 @@ expressWs(app)
 app.ws('/:sessionId', Terminal.start)
 app.post('/:sessionId/size', Terminal.resize)
 
-app.listen(ip, port)
+app.listen(port, ip)
 log.info(`Terminal server listening to http://${ip}:${port}`)

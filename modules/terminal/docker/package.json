@@ -6,7 +6,9 @@
     "scripts": {
         "dev": "bash dev.sh",
         "postinstall": "link-module-alias",
-        "preinstall": "command -v link-module-alias && link-module-alias clean || true"
+        "preinstall": "command -v link-module-alias && link-module-alias clean || true",
+        "test": "jest",
+        "testWatch": "jest --watchAll"
     },
     "author": "",
     "license": "ISC",
@@ -24,6 +26,8 @@
     },
     "devDependencies": {
         "eslint": "^7.29.0",
+        "jest": "^27.0.5",
+        "jest-expect-message": "^1.0.2",
         "link-module-alias": "^1.2.0"
     }
 }

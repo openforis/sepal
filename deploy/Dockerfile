@@ -1,7 +1,7 @@
-FROM debian:buster
-# Version 2021-04-30
+FROM debian:bullseye
 RUN apt-get update && apt-get install -y \
   curl \
+  gettext \
   git \
   nano \
   packer \
@@ -9,9 +9,10 @@ RUN apt-get update && apt-get install -y \
   python3 \
   python3-pip
 RUN pip3 install \
-  ansible==2.9.15 \
+  ansible \
   boto \
   boto3
 RUN ansible-galaxy collection install community.aws
+RUN ansible-galaxy collection install amazon.aws
 ADD boto.conf /root/.boto
 ENV SEPAL_HOME=/usr/local/lib/sepal

@@ -1,5 +1,5 @@
 - name: Setup Security Groups
-  hosts: "tag_Type_Sepal:&tag_Environment_{{ deploy_environment }}:&{{ region }}"
+  hosts: all
   user: ec2-user
   gather_facts: true
 
@@ -7,7 +7,6 @@
     - "{{ secret_vars_file }}"
 
   tasks:
-
     - name: Create Sandbox Security Group
       ec2_group:
         name: Sandbox

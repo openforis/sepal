@@ -269,7 +269,7 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'thermal',
+                'aerosol', 'thermal', 'thermal2',
                 'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
@@ -730,8 +730,7 @@ const opticalSourceIds = ['LANDSAT', 'SENTINEL_2']
 const isOptical = dataSetId =>
     dataSetId !== 'SENTINEL_1'
 
-const getDataSetBands = ({dataSetId, correction, timeScan}) => {
-    return isOptical(dataSetId)
+const getDataSetBands = ({dataSetId, correction, timeScan}) =>
+    isOptical(dataSetId)
         ? dataSetById[dataSetId][correction].bands
         : dataSetById[dataSetId][timeScan ? 'timeScan' : 'pointInTime'].bands
-}

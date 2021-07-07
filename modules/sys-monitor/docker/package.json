@@ -6,7 +6,9 @@
     "scripts": {
         "dev": "bash dev.sh",
         "postinstall": "link-module-alias",
-        "preinstall": "command -v link-module-alias && link-module-alias clean || true"
+        "preinstall": "command -v link-module-alias && link-module-alias clean || true",
+        "test": "jest",
+        "testWatch": "jest --watchAll"
     },
     "author": "",
     "license": "ISC",
@@ -15,7 +17,7 @@
         "sepal": "node_modules/shared/src"
     },
     "dependencies": {
-        "commander": "^7.2.0",
+        "commander": "^8.0.0",
         "lodash": "^4.17.21",
         "log4js": "^6.3.0",
         "rxjs": "^7.1.0",
@@ -23,7 +25,9 @@
         "tail-file": "^1.4.14"
     },
     "devDependencies": {
-        "eslint": "^7.29.0",
+        "eslint": "^7.30.0",
+        "jest": "^27.0.6",
+        "jest-expect-message": "^1.0.2",
         "link-module-alias": "^1.2.0"
     }
 }

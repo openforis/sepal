@@ -1,5 +1,6 @@
 - name: "api-gateway | Start container"
   docker_container:
+    container_default_behavior: "{{ container_default_behavior }}"
     api_version: "{{ api_version }}"
     name: "{{ name }}"
     pull: "{{ pull }}"
@@ -7,6 +8,10 @@
     state: "{{ state }}"
     restart_policy: "{{ restart_policy }}"
     network_mode: "{{ network_mode }}"
+    sysctls:
+      net.ipv4.tcp_keepalive_time: 10
+      net.ipv4.tcp_keepalive_intvl: 10
+      net.ipv4.tcp_keepalive_probes: 6
     networks:
       - name: 'sepal'
     volumes:

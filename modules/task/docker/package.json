@@ -19,16 +19,16 @@
     },
     "dependencies": {
         "@google-cloud/storage": "^5.8.5",
-        "commander": "^7.2.0",
+        "commander": "^8.0.0",
         "fast-crc32c": "^2.0.0",
-        "googleapis": "^78.0.0",
+        "googleapis": "^80.1.0",
         "moment": "^2.29.1",
         "rxjs": "^7.1.0",
         "shared": "../../../lib/js/shared"
     },
     "devDependencies": {
-        "eslint": "^7.29.0",
-        "jest": "^27.0.5",
+        "eslint": "^7.30.0",
+        "jest": "^27.0.6",
         "jest-expect-message": "^1.0.2",
         "link-module-alias": "^1.2.0"
     },
