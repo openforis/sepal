@@ -1,0 +1,9 @@
+Node debug
+
+    9230: app-manager
+    9231: email
+    9232: gee
+    9233: sys-monitor
+    9234: task
+    9235: terminal
+    9236: user-storage

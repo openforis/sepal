@@ -1,0 +1,8 @@
+{
+    "port": 5107,
+    "categories": {
+        "config": "info",
+        "main": "info",
+        "session": "info"
+    }
+}
