@@ -7,17 +7,14 @@ export default {
     bands$: ({asset, recipe, ...params}) =>
         postJson$('/api/gee/bands', {body: {asset, recipe, ...params}})
             .pipe(toResponse),
-    loadAssetVisualizations$: ({asset, ...params}) =>
-        postJson$('/api/gee/image/assetVisualizations', {body: {asset, ...params}})
-            .pipe(toResponse),
-    histogram$: ({recipe, band, aoi, ...params}) =>
-        postJson$('/api/gee/image/histogram', {body: {recipe, band, aoi, ...params}})
+    histogram$: ({recipe, band, aoi, mapBounds, ...params}) =>
+        postJson$('/api/gee/image/histogram', {body: {recipe, band, aoi, mapBounds, ...params}})
             .pipe(toResponse),
     imageMetadata$: ({asset, recipe}) =>
         postJson$('/api/gee/imageMetadata', {body: {asset, recipe}, retries: 0})
             .pipe(toResponse),
-    distinctBandValues$: ({recipe, band, aoi}) =>
-        postJson$('/api/gee/image/distinctBandValues', {body: {recipe, band, aoi}, retries: 0})
+    distinctBandValues$: ({recipe, band, aoi, mapBounds}) =>
+        postJson$('/api/gee/image/distinctBandValues', {body: {recipe, band, aoi, mapBounds}, retries: 0})
             .pipe(toResponse),
     sampleImage$: ({asset, count, scale, classBand}) =>
         get$('/api/gee/image/sample',

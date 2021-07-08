@@ -15,6 +15,7 @@ import {filter, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {normalize} from './visParams'
 import {selectFrom} from 'stateUtils'
+import {withMapContext} from '../mapContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
 import Confirm from 'widget/confirm'
@@ -478,7 +479,7 @@ class _VisParamsPanel extends React.Component {
     }
 
     initHistogram(name, {stretch}) {
-        const {stream, activatable: {recipe}, aoi} = this.props
+        const {stream, activatable: {recipe}, aoi, mapContext: {map: {getBounds}}} = this.props
         const {histograms} = this.state
         const histogram = histograms[name]
         const updateHistogram = (data, stretch) => this.setState(({histograms}) =>
@@ -492,8 +493,9 @@ class _VisParamsPanel extends React.Component {
         if (histogram) {
             updateHistogram(histogram.data, true)
         } else if (!stream(`LOAD_HISTOGRAM_${name}`).active) {
+            const mapBounds = getBounds()
             stream((`LOAD_HISTOGRAM_${name}`),
-                api.gee.histogram$({recipe, aoi, band: name}).pipe(
+                api.gee.histogram$({recipe, aoi, band: name, mapBounds}).pipe(
                     takeUntil(this.cancelHistogram$.pipe(
                         filter(nameToCancel => nameToCancel === name)
                     ))
@@ -539,7 +541,7 @@ class _VisParamsPanel extends React.Component {
     }
 
     loadDistinctBandValues() {
-        const {activatable: {recipe}, aoi, stream, inputs: {name1}} = this.props
+        const {activatable: {recipe}, aoi, stream, inputs: {name1}, mapContext: {map: {getBounds}}} = this.props
         const toEntries = values => values.map(value => ({
             id: guid(),
             value,
@@ -548,8 +550,9 @@ class _VisParamsPanel extends React.Component {
         }))
 
         if (!stream('LOAD_DISTINCT_IMAGE_VALUES').active) {
+            const mapBounds = getBounds()
             stream('LOAD_DISTINCT_IMAGE_VALUES',
-                api.gee.distinctBandValues$({recipe, band: name1.value, aoi}),
+                api.gee.distinctBandValues$({recipe, band: name1.value, aoi, mapBounds}),
                 values => this.setState({legendEntries: toEntries(values)}),
                 () => Notifications.error({message: msg('map.legendBuilder.load.options.imageValues.loadError')})
             )
@@ -620,9 +623,11 @@ export const VisParamsPanel = compose(
     _VisParamsPanel,
     form({fields}),
     withRecipe(mapRecipeToProps),
+    withMapContext(),
     activatable({
         id: ({area}) => `visParams-${area}`,
-        policy
+        policy,
+        alwaysAllow: true
     }),
     activator('legendImport')
 )

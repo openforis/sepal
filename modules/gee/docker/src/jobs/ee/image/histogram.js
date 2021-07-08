@@ -3,7 +3,7 @@ const {job} = require('root/jobs/job')
 const MAX_BUCKETS = Math.pow(2, 8)
 const MAX_PIXELS = 1e5
 
-const worker$ = ({recipe, band, aoi}) => {
+const worker$ = ({recipe, band, aoi, mapBounds}) => {
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('ee')
     const {switchMap} = require('rxjs/operators')
@@ -11,9 +11,20 @@ const worker$ = ({recipe, band, aoi}) => {
 
     const {getImage$, histogramMaxPixels} = ImageFactory(recipe, {selection: [band]})
     const histogram = image => {
-        const geometry = aoi
-            ? toGeometry(aoi)
-            : image.select(band).geometry()
+        const imageGeometry = image.select(band).geometry()
+        const mapGeometry = ee.Geometry.Rectangle(mapBounds)
+        const geometry = ee.Algorithms.If(
+            image.select(band).geometry().isUnbounded(),
+            aoi
+                ? ee.Algorithms.If(
+                    toGeometry(aoi).intersects(imageGeometry),
+                    toGeometry(aoi),
+                    mapGeometry
+                )
+                : mapGeometry
+            ,
+            imageGeometry
+        )
         return image.select(band).reduceRegion({
             reducer: ee.Reducer.autoHistogram(MAX_BUCKETS),
             geometry,
