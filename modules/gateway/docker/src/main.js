@@ -49,3 +49,7 @@ server.on('upgrade', (req, socket, head) => {
         }
     })
 })
+
+process.on('uncaughtException', error => {
+    log.fatal('Uncaught exception', error)
+})
