@@ -6,10 +6,12 @@ import {Layout} from 'widget/layout'
 import {LegendBuilder, defaultColor} from '../legendBuilder'
 import {Palette} from './palette'
 import {Panel} from 'widget/panel/panel'
+import {Subject} from 'rxjs'
 import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
+import {filter, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {normalize} from './visParams'
 import {selectFrom} from 'stateUtils'
@@ -102,6 +104,8 @@ class _VisParamsPanel extends React.Component {
         invalidLegendEntries: false,
         colorMode: 'palette'
     }
+
+    cancelHistogram$ = new Subject()
 
     constructor(props) {
         super(props)
@@ -325,7 +329,7 @@ class _VisParamsPanel extends React.Component {
                 type={type.value}
                 inputs={this.bandInputs(i)}
                 label={label}
-                onBandSelected={name => this.analyzeBand(name, {type: type.value, stretch: true})}/>
+                onBandSelected={name => this.bandSelected(i, name)}/>
         )
     }
 
@@ -452,6 +456,21 @@ class _VisParamsPanel extends React.Component {
         this.setState({legendEntries, invalidLegendEntries})
     }
 
+    bandSelected(i, name) {
+        const {inputs, stream} = this.props
+        const prevName = inputs[`name${i + 1}`].value
+        const prevActive = stream(`LOAD_HISTOGRAM_${prevName}`).active
+        if (prevActive) {
+            const prevSelectedElsewhere = [0, 1, 2]
+                .filter(index => index !== i)
+                .find(i => inputs[`name${i + 1}`].value === prevName)
+            if (!prevSelectedElsewhere) {
+                this.cancelHistogram$.next(prevName)
+            }
+        }
+        this.analyzeBand(name, {type: inputs.type.value, stretch: true})
+    }
+
     analyzeBand(name, {type, stretch}) {
         if (name && type !== 'categorical') {
             this.initHistogram(name, {stretch})
@@ -474,7 +493,11 @@ class _VisParamsPanel extends React.Component {
             updateHistogram(histogram.data, true)
         } else if (!stream(`LOAD_HISTOGRAM_${name}`).active) {
             stream((`LOAD_HISTOGRAM_${name}`),
-                api.gee.histogram$({recipe, aoi, band: name}),
+                api.gee.histogram$({recipe, aoi, band: name}).pipe(
+                    takeUntil(this.cancelHistogram$.pipe(
+                        filter(nameToCancel => nameToCancel === name)
+                    ))
+                ),
                 data => data
                     ? updateHistogram(data, stretch)
                     : Notifications.warning({message: msg('map.visParams.form.histogram.noData')})
