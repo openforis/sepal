@@ -1,4 +1,4 @@
-import {delete$, get$, post$} from 'http-client'
+import {delete$, get$, post$, postForm$} from 'http-client'
 import {map} from 'rxjs/operators'
 
 export default {
@@ -11,7 +11,7 @@ export default {
         get$('/api/notification/notifications').pipe(toResponse),
 
     updateMessage$: message =>
-        post$(`/api/notification/messages/${message.id}`, {
+        postForm$(`/api/notification/messages/${message.id}`, {
             body: message
         }).pipe(toResponse),
 
@@ -19,7 +19,7 @@ export default {
         delete$(`/api/notification/messages/${message.id}`).pipe(toResponse),
 
     updateMessageState$: userMessage =>
-        post$(`/api/notification/notifications/${userMessage.message.id}`, {
+        postForm$(`/api/notification/notifications/${userMessage.message.id}`, {
             body: {
                 state: userMessage.state
             }
@@ -39,7 +39,7 @@ export default {
         post$('/api/user/logout').pipe(toResponse),
 
     requestPasswordReset$: email =>
-        post$('/api/user/password/reset-request', {
+        postForm$('/api/user/password/reset-request', {
             body: {email}
         }).pipe(toResponse),
 
@@ -49,17 +49,17 @@ export default {
         }).pipe(toResponse),
 
     resetPassword$: (token, username, password) =>
-        post$('/api/user/password/reset', {
+        postForm$('/api/user/password/reset', {
             body: {token, password}
         }),
 
     updateCurrentUserDetails$: ({name, email, organization, emailNotificationsEnabled}) =>
-        post$('/api/user/current/details', {
+        postForm$('/api/user/current/details', {
             body: {name, email, organization, emailNotificationsEnabled}
         }).pipe(toResponse),
 
     changePassword$: ({oldPassword, newPassword}) =>
-        post$('/api/user/current/password', {
+        postForm$('/api/user/current/password', {
             body: {oldPassword, newPassword}
         }).pipe(toResponse),
 
@@ -72,7 +72,7 @@ export default {
             .pipe(toResponse),
 
     updateCurrentUserSession$: session =>
-        post$(`/api/sessions/session/${session.id}/earliestTimeoutTime`, {
+        postForm$(`/api/sessions/session/${session.id}/earliestTimeoutTime`, {
             body: {
                 hours: session.keepAlive
             }
@@ -90,17 +90,17 @@ export default {
             .pipe(toResponse),
 
     inviteUser$: userDetails =>
-        post$('/api/user/invite', {
+        postForm$('/api/user/invite', {
             body: userDetails
         }).pipe(toResponse),
 
     updateUser$: userDetails =>
-        post$('/api/user/details', {
+        postForm$('/api/user/details', {
             body: userDetails
         }).pipe(toResponse),
 
     updateUserBudget$: budget =>
-        post$('/api/budget', {
+        postForm$('/api/budget', {
             body: budget
         }).pipe(toResponse)
 }
