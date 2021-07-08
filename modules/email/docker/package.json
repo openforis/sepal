@@ -17,7 +17,7 @@
         "sepal": "node_modules/shared/src"
     },
     "dependencies": {
-        "bull": "^3.22.10",
+        "bull": "^3.22.11",
         "commander": "^8.0.0",
         "date-fns": "^2.22.1",
         "handlebars": "^4.7.7",
