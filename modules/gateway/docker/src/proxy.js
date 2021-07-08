@@ -3,10 +3,14 @@ const {createProxyMiddleware} = require('http-proxy-middleware')
 const {rewriteLocation} = require('./rewrite')
 const {endpoints} = require('./endpoints')
 const {categories: {proxy: sepalLogLevel}} = require('./log.json')
-const {sepalHost} = require('./config')
+const {modules, sepalHost} = require('./config')
+const {get$} = require('sepal/httpClient')
+const {EMPTY} = require('rxjs')
+const {map} = require('rxjs/operators')
 const proxyLog = require('sepal/log').getLogger('proxy')
 const log = require('sepal/log').getLogger('gateway')
 
+const currentUserUrl = `http://${modules.user}/current`
 const proxyEndpoints = app => endpoints.map(proxy(app))
 
 const logProvider = () => ({
@@ -47,7 +51,7 @@ const proxy = app =>
                     proxyReq.destroy()
                 })
                 if (authenticate && user) {
-                    log.trace(`[${username}] [${req.originalUrl}] Setting sepal-user header`)
+                    log.trace(`[${username}] [${req.originalUrl}] Setting sepal-user header`, user)
                     proxyReq.setHeader('sepal-user', JSON.stringify(user))
                 } else {
                     log.trace(`[${username}] [${req.originalUrl}] No sepal-user header set`)
@@ -65,7 +69,7 @@ const proxy = app =>
                     proxyReq.setHeader('Cache-Control', 'max-age=0')
                 }
             },
-            onProxyRes: proxyRes => {
+            onProxyRes: (proxyRes, req) => {
                 if (rewrite) {
                     const location = proxyRes.headers['location']
                     if (location) {
@@ -73,6 +77,9 @@ const proxy = app =>
                         log.debug(`Rewriting location header from "${location}" to "${rewritten}"`)
                         proxyRes.headers['location'] = rewritten
                     }
+                }
+                if (proxyRes.headers['sepal-user-updated']) {
+                    updateUserInSession(req)
                 }
                 proxyRes.headers['Content-Security-Policy'] = `connect-src 'self' https://${sepalHost} wss://${sepalHost} https://*.googleapis.com https://apis.google.com https://*.google.com https://*.planet.com; frame-ancestors 'self' https://$host https://*.googleapis.com https://apis.google.com`
             }
@@ -84,5 +91,29 @@ const proxy = app =>
         )
         return {path, target, proxy: proxyMiddleware}
     }
+
+const updateUserInSession = req => {
+    if (req.session && req.session.user) {
+        const user = req.session.user
+        log.debug(`[${user.username}] [${req.url}] Updating user in session`)
+        return get$(currentUserUrl, {
+            headers: {'sepal-user': JSON.stringify(user)}
+        }).pipe(
+            map((({body}) => JSON.parse(body))),
+        ).subscribe({
+            next: user => {
+                log.debug(`[${user.username}] [${req.url}] Updated user in session`)
+                log.fatal('user', user)
+                req.session.user = user
+                req.session.save()
+                log.fatal('session', req.session)
+            },
+            error: error => log.error(`[${user.username}] [${req.url}] Failed to load current user`, error)
+        })
+    } else {
+        log.warn('[not-authenticated] Updated user, but no user in session')
+        return EMPTY
+    }
+}
 
 module.exports = {proxyEndpoints}
