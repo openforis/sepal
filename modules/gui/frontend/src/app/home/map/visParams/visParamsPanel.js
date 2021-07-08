@@ -472,7 +472,7 @@ class _VisParamsPanel extends React.Component {
         )
         if (histogram) {
             updateHistogram(histogram.data, true)
-        } else {
+        } else if (!stream(`LOAD_HISTOGRAM_${name}`).active) {
             stream((`LOAD_HISTOGRAM_${name}`),
                 api.gee.histogram$({recipe, aoi, band: name}),
                 data => data
