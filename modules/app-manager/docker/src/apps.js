@@ -102,12 +102,12 @@ const createVenv$ = ({path}) =>
         switchMap(() => exec$(
             '/',
             'sudo',
-            [join(path, 'bin/pip3'), 'install', '--cache-dir', '/root/.cache/pip', '--upgrade', 'pip']
+            [join(path, 'bin/pip3'), 'install', '--cache-dir', '/root/.cache/pip', 'ipykernel', 'wheel']
         )),
         switchMap(() => exec$(
             '/',
             'sudo',
-            [join(path, 'bin/pip3'), 'install', '--cache-dir', '/root/.cache/pip', 'ipykernel', 'wheel']
+            [join(path, 'bin/pip3'), 'install', '--cache-dir', '/root/.cache/pip', '--upgrade', 'pip']
         ))
     )
 
