@@ -1,4 +1,4 @@
-import {Button} from '../../../../widget/button'
+import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {Histogram, histogramStretch} from './histogram'
@@ -35,7 +35,7 @@ const fields = {
         .skip((value, {type}) => type === 'categorical')
         .notBlank()
         .number()
-        .predicate((min1, {max1}) => min1 < max1, 'map.visParams.form.min.notSmallerThanMax'),
+        .predicate((min1, {max1}) => _.toNumber(min1) < _.toNumber(max1), 'map.visParams.form.min.notSmallerThanMax'),
     max1: new Form.Field()
         .skip((value, {name1}) => !name1)
         .skip((value, {type}) => type === 'categorical')
@@ -55,7 +55,7 @@ const fields = {
         .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
         .notBlank()
         .number()
-        .predicate((min2, {max2}) => min2 < max2, 'map.visParams.form.min.notSmallerThanMax'),
+        .predicate((min2, {max2}) => _.toNumber(min2) < _.toNumber(max2), 'map.visParams.form.min.notSmallerThanMax'),
     max2: new Form.Field()
         .skip((value, {name2}) => !name2)
         .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
@@ -74,7 +74,7 @@ const fields = {
         .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
         .notBlank()
         .number()
-        .predicate((min3, {max3}) => min3 < max3, 'map.visParams.form.min.notSmallerThanMax'),
+        .predicate((min3, {max3}) => _.toNumber(min3) < _.toNumber(max3), 'map.visParams.form.min.notSmallerThanMax'),
     max3: new Form.Field()
         .skip((value, {name3}) => !name3)
         .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
