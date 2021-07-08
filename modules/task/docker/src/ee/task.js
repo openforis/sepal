@@ -1,4 +1,4 @@
-const ee = require('ee')
+const ee = require('sepal/ee')
 const {interval, of, throwError} = require('rxjs')
 const {catchError, distinctUntilChanged, map, mapTo, exhaustMap, switchMap, takeWhile, tap} = require('rxjs/operators')
 const {finalize} = require('sepal/rxjs/operators')

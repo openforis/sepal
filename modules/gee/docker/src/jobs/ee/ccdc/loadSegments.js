@@ -7,7 +7,7 @@ const worker$ = ({recipe, latLng, bands}) => {
     const ccdc = require('sepal/ee/timeSeries/ccdc')
     const imageFactory = require('sepal/ee/imageFactory')
     const _ = require('lodash')
-    const ee = require('ee')
+    const ee = require('sepal/ee')
 
     const aoi = {type: 'POINT', ...latLng}
     const geometry = toGeometry(aoi)

@@ -19,7 +19,7 @@ const getCredentials = ctx => {
 
 const worker$ = ({sepalUser, serviceAccountCredentials}) => {
     const {swallow} = require('sepal/rxjs/operators')
-    const ee = require('ee')
+    const ee = require('sepal/ee')
 
     const secondsToExpiration = expiration => {
         const millisecondsLeft = expiration - Date.now()

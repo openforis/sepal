@@ -14,8 +14,7 @@
     "license": "ISC",
     "_moduleAliases": {
         "root": "src",
-        "sepal": "node_modules/shared/src",
-        "ee": "node_modules/shared/src/reexport/ee"
+        "sepal": "node_modules/shared/src"
     },
     "dependencies": {
         "@google-cloud/storage": "^5.8.5",

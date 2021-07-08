@@ -11,8 +11,7 @@
         "testWatch": "jest --watchAll"
     },
     "_moduleAliases": {
-        "sepal": "src",
-        "ee": "src/reexport/ee"
+        "sepal": "src"
     },
     "dependencies": {
         "@google/earthengine": "0.1.272",
