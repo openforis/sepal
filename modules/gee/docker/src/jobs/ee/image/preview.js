@@ -2,7 +2,7 @@ const {job} = require('root/jobs/job')
 
 const worker$ = ({recipe, visParams, panSharpen, bands}) => {
     const ImageFactory = require('sepal/ee/imageFactory')
-    const ee = require('ee')
+    const ee = require('sepal/ee')
     const {switchMap} = require('rxjs/operators')
     const {sequence} = require('sepal/utils/array')
     const log = require('sepal/log').getLogger('ee')

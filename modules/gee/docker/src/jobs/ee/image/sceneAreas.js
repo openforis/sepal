@@ -1,7 +1,7 @@
 const {job} = require('root/jobs/job')
 
 const worker$ = ({aoi, source}) => {
-    const ee = require('ee')
+    const ee = require('sepal/ee')
     const {toGeometry} = require('sepal/ee/aoi')
     const {map} = require('rxjs/operators')
 
