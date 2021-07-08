@@ -4,7 +4,7 @@ set -e
 SEPAL_CONFIG=/etc/sepal/module.d
 SEPAL=/usr/local/lib/sepal
 SEPAL_MODULES=(user sepal-server gateway app-manager task gee gui user-storage terminal email sys-monitor)
-SEPAL_GROUPS=(all dev)
+SEPAL_GROUPS=(all dev node)
 SEPAL_DEFAULT_GROUP=dev
 LOG_DIR=/var/log/sepal
 
@@ -33,6 +33,9 @@ group () {
         ;;
     dev)
         echo "user sepal-server ( -DskipSceneMetaDataUpdate ) gateway app-manager task gee gui user-storage terminal email sys-monitor"
+        ;;
+    node)
+        echo "app-manager email gateway gee task user-storage terminal sys-monitor"
         ;;
     *)
         return 1
