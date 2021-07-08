@@ -74,11 +74,17 @@ const submitRetrieveRecipeTask = recipe => {
     }
     const allBands = [
         ...recipe.model.source.bands,
-        ...recipe.model.source.baseBands.map(({name}) => name)
+        ...recipe.model.source.baseBands
+            .map(({name}) => Object.values(bandTypeSuffixes)
+                .map(suffix => `${name}${suffix}`)
+            )
+            .flat()
     ]
     const bands = [
         ...baseBands
-            .map(baseBand => bandTypes.map(bandType => `${baseBand}${bandTypeSuffixes[bandType]}`))
+            .map(name => bandTypes
+                .map(bandType => `${name}${bandTypeSuffixes[bandType]}`)
+            )
             .flat(),
         ...baseBands.map(({name}) => name),
         ...segmentBands

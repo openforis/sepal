@@ -7,13 +7,14 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import RetrievePanel from '../../../mosaic/panels/retrieve/retrieve'
 
-const mapRecipeToProps = recipe => ({
-    recipeId: recipe.id,
-    sources: selectFrom(recipe, 'model.sources'),
-    classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
-    classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
-    corrections: selectFrom(recipe, 'model.opticalPreprocess.corrections')
-})
+const mapRecipeToProps = recipe =>
+    ({
+        recipeId: recipe.id,
+        sources: selectFrom(recipe, 'model.sources'),
+        classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
+        classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
+        corrections: selectFrom(recipe, 'model.options.corrections')
+    })
 
 class Retrieve extends React.Component {
     render() {
