@@ -1,7 +1,7 @@
 const {job} = require('root/jobs/job')
 
 const worker$ = ({asset}) => {
-    const ee = require('ee')
+    const ee = require('sepal/ee')
     const {map} = require('rxjs/operators')
     const {v4: guid} = require('uuid')
 

@@ -1,6 +1,6 @@
 const {Subject} = require('rxjs')
 const {switchMap, first} = require('rxjs/operators')
-const ee = require('ee')
+const ee = require('sepal/ee')
 const {getCredentials$} = require('root/context')
 
 const secondsToExpiration = expiration => {

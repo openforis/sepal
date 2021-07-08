@@ -4,7 +4,7 @@ const {limiter} = require('sepal/ee/eeLimiter')
 const worker$ = () => {
     const {ReplaySubject} = require('rxjs')
     const {switchMap} = require('rxjs/operators')
-    const ee = require('ee')
+    const ee = require('sepal/ee')
     const {getContext$} = require('root/jobs/service/context')
     
     const DEFAULT_MAX_RETRIES = 10

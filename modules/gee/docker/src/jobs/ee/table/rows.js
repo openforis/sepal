@@ -1,7 +1,7 @@
 const {job} = require('root/jobs/job')
 
 const worker$ = ({tableId}) => {
-    const ee = require('ee')
+    const ee = require('sepal/ee')
     const {getRows$} = require('sepal/ee/table')
     return getRows$(ee.FeatureCollection(tableId), 'load table rows')
 }

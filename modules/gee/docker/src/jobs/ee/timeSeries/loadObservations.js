@@ -5,7 +5,7 @@ const worker$ = ({recipe, bands, latLng}) => {
     const {toGeometry} = require('sepal/ee/aoi')
     const {getRows$} = require('sepal/ee/table')
     const {switchMap} = require('rxjs/operators')
-    const ee = require('ee')
+    const ee = require('sepal/ee')
     const aoi = {type: 'POINT', ...latLng}
     const geometry = toGeometry(aoi)
 

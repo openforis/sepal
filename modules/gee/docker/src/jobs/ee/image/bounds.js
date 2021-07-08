@@ -1,7 +1,7 @@
 const {job} = require('root/jobs/job')
 
 const worker$ = ({recipe}) => {
-    const ee = require('ee')
+    const ee = require('sepal/ee')
     const ImageFactory = require('sepal/ee/imageFactory')
     const {of} = require('rxjs')
     const {switchMap} = require('rxjs/operators')
