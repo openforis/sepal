@@ -79,8 +79,13 @@ const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, pref
     const pad = value =>
         padding ? value.padStart(Math.max(length, defaultValue.length), ' ') : value
 
-    const formattedValue = (normalizedValue, magnitude, decimals) =>
-        (negative ? '-' : '') + prefix + normalizedValue.toFixed(decimals) + unitPadding + magnitudes[magnitude] + unit + suffix
+    const formattedValue = (normalizedValue, magnitude, decimals) => {
+        const adjustment = Math.floor(decimals / 3)
+        const adjustedMagnitude = magnitude - adjustment
+        const adjustedValue = normalizedValue * Math.pow(10, adjustment * 3)
+        const adjustedDecimals = decimals - (adjustment * 3)
+        return (negative ? '-' : '') + prefix + adjustedValue.toFixed(adjustedDecimals) + unitPadding + magnitudes[adjustedMagnitude] + unit + suffix
+    }
 
     const modulo3 = n =>
         ((n % 3) + 3) % 3 // safe for negative numbers too
