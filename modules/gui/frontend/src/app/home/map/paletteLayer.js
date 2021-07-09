@@ -17,6 +17,8 @@ const mapRecipeToProps = recipe => ({
     areas: selectFrom(recipe, 'layers.areas') || {}
 })
 
+const MIN_STEPS = 40
+
 class _PaletteLayer extends React.Component {
     state = {
         value: [],
@@ -49,19 +51,26 @@ class _PaletteLayer extends React.Component {
 
     renderPalette({min, max, palette, inverted}) {
         const {value, paletteWidth} = this.state
-        const cursorValues = value.map((v, i) =>
-            <CursorValue
+        const cursorValues = value.map((v, i) => {
+            const precisionDigits = format.significantDigits({value, min, max, minSteps: MIN_STEPS})
+            const valueWithPrecision = parseFloat(v.toPrecision(precisionDigits))
+            return <CursorValue
                 key={i}
-                value={Math.min(max, Math.max(min, v))}
+                value={Math.min(max, Math.max(min, valueWithPrecision))}
                 min={min}
                 max={max}
+                precisionDigits={precisionDigits}
                 paletteWidth={paletteWidth}
             />
+        }
         )
+
+        const minPrecisionDigits = format.significantDigits({value: min, min, max, minSteps: MIN_STEPS})
+        const maxPrecisionDigits = format.significantDigits({value: max, min, max, minSteps: MIN_STEPS})
         return (
             <div className={styles.container}>
                 <div className={styles.legend}>
-                    <Value value={min}/>
+                    <Value value={min} precisionDigits={minPrecisionDigits}/>
                     <div
                         className={styles.palette}
                         style={{'--palette': inverted
@@ -70,7 +79,7 @@ class _PaletteLayer extends React.Component {
                         <ElementResizeDetector onResize={({width}) => this.setState({paletteWidth: width})}/>
                         {cursorValues}
                     </div>
-                    <Value value={max}/>
+                    <Value value={max} precisionDigits={maxPrecisionDigits}/>
                 </div>
             </div>
         )
@@ -84,14 +93,14 @@ class _CursorValue extends React.Component {
     targetPosition$ = new Subject()
 
     render() {
-        const {value, min, max} = this.props
+        const {value, min, max, precisionDigits} = this.props
         const {position} = this.state
         const prefix = value <= min
             ? <>&#8805; </>
             : value >= max
                 ? <>&#8804; </>
                 : ''
-        const formatted = format.number({value, precisionDigits: 3})
+        const formatted = format.number({value, precisionDigits: Math.max(precisionDigits, 3)})
         return (
             <div
                 className={styles.cursorValue}
@@ -154,14 +163,18 @@ CursorValue.propTypes = {
     max: PropTypes.any,
     min: PropTypes.any,
     paletteWidth: PropTypes.any,
+    precisionDigits: PropTypes.any,
     value: PropTypes.any
 }
 
 const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * (rate * speed)
 
-const Value = ({value}) =>
+const Value = ({value, precisionDigits}) =>
     <div className={styles.value}>
-        {format.number({value, precisionDigits: 3})}
+        {format.number({
+            value: parseFloat(value.toPrecision(precisionDigits)),
+            precisionDigits: Math.max(precisionDigits, 3)
+        })}
     </div>
 
 export const PaletteLayer = compose(

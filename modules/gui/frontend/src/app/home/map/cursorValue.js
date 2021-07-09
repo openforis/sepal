@@ -36,8 +36,8 @@ const toRgb = (rgb, visParams, dataTypes) => {
         .map((c, i) => min[i] + c * (max[i] - min[i]) / 255)
         .map((v, i) => {
             return selectFrom(dataTypes, [visParams.bands[i], 'precision']) === 'int'
-                ? Math.round(parseFloat(v.toPrecision(3)))
-                : parseFloat(v.toPrecision(3))
+                ? Math.round(parseFloat(v))
+                : parseFloat(v)
         }
         )
 }
@@ -52,8 +52,8 @@ const toHsv = (rgb, {bands, min, max, gamma}, dataTypes) => {
         )
         .map((v, i) => {
             return selectFrom(dataTypes, [bands[i], 'precision']) === 'int'
-                ? Math.round(parseFloat(v.toPrecision(3)))
-                : parseFloat(v.toPrecision(3))
+                ? Math.round(parseFloat(v))
+                : parseFloat(v)
         })
 }
 
@@ -110,8 +110,8 @@ const toContinuous = (rgb, visParams, dataTypes) => {
         const toValue = toRgbValue.value
         const preciseValue = fromValue + factor * (toValue - fromValue)
         const value = selectFrom(dataTypes, [visParams.bands[0], 'precision']) === 'int'
-            ? Math.round(parseFloat(preciseValue.toPrecision(3)))
-            : parseFloat(preciseValue.toPrecision(3))
+            ? Math.round(parseFloat(preciseValue))
+            : parseFloat(preciseValue)
         return {value, inRange, error}
     }
 

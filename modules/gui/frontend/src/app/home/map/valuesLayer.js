@@ -17,6 +17,8 @@ const mapRecipeToProps = recipe => ({
     areas: selectFrom(recipe, 'layers.areas') || {}
 })
 
+const MIN_STEPS = 40
+
 class _ValuesLayer extends React.Component {
     state = {
         value: []
@@ -79,9 +81,15 @@ class _ValuesLayer extends React.Component {
     renderBand({key, band, min, max, value}) {
         const {clampedValue, clamping} = this.clamp({value, min, max})
         const clampingIndicator = this.clampingIndicator(clamping)
+        const precisionDigits = Math.max(
+            _.isNil(value)
+                ? 3
+                : format.significantDigits({value, min, max, minSteps: MIN_STEPS}),
+            3
+        )
         const description = format.number({
             value: _.isFinite(value) ? clampedValue : null,
-            precisionDigits: 3,
+            precisionDigits,
             padding: true,
             defaultValue: 'N/A'
         })
