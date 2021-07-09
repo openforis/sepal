@@ -75,7 +75,7 @@ const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, pref
     if (scaleMagnitude === -1) {
         throw Error('Unsupported scale.')
     }
-    
+
     const pad = value =>
         padding ? value.padStart(Math.max(length, defaultValue.length), ' ') : value
 
@@ -84,7 +84,7 @@ const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, pref
 
     const modulo3 = n =>
         ((n % 3) + 3) % 3 // safe for negative numbers too
-        
+
     // handle undefined/null value
     if (!_.isFinite(value)) {
         return pad(defaultValue)
@@ -94,7 +94,7 @@ const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, pref
     if (value === 0) {
         return pad(`${prefix}0${unitPadding}${unit}${suffix}`)
     }
-    
+
     const negative = value < 0
     const absValue = Math.abs(value)
 
@@ -116,6 +116,16 @@ const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, pref
     }
 }
 
+const significantDigits = ({value, min, max, minSteps}) => {
+    const stepSize = Math.abs(max - min) / minSteps
+    const stepSizeMagnitude = Math.floor(Math.log10(stepSize))
+    const valueMagnitude = Math.floor(Math.log10(Math.abs(value)))
+    const magnitude = valueMagnitude < stepSizeMagnitude
+        ? stepSizeMagnitude
+        : valueMagnitude - stepSizeMagnitude
+    return (magnitude < 0 ? 0 : magnitude) + 1
+}
+
 export default {
     integer,
     decimal,
@@ -130,5 +140,6 @@ export default {
     fullDate,
     date,
     fileSize,
-    number
+    number,
+    significantDigits
 }

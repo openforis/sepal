@@ -120,3 +120,23 @@ test('format.unitsPerHour({value: ${params.value}) === ${result}')
         {params: {value: 1}, result: '1.00/h'},
         {params: {value: 0.3}, result: '0.30/h'},
     )
+
+test('format.significantDigits({value: ${params.value}, min: ${params.min}, max: ${params.max}, minSteps: ${params.minSteps}) === ${result}')
+    .assert(({params, result}) => expect(
+        format.significantDigits(params)
+    ).toEqual(result))
+    .where(
+        {params: {value: 1, min: 0, max: 100, minSteps: 100}, result: 1},
+        {params: {value: -1, min: -1, max: 100, minSteps: 100}, result: 1},
+        {params: {value: 10, min: 0, max: 100, minSteps: 100}, result: 2},
+        {params: {value: 1.5, min: 0, max: 100, minSteps: 100}, result: 1},
+        {params: {value: 2015, min: 2013, max: 2017, minSteps: 100}, result: 6},
+        {params: {value: 2015, min: 2013, max: 2017, minSteps: 30}, result: 5},
+        {params: {value: 0, min: 0, max: 100, minSteps: 100}, result: 1},
+        {params: {value: 0.1, min: 0, max: 100, minSteps: 100}, result: 1},
+        {params: {value: 0.01, min: 0, max: 0.1, minSteps: 100}, result: 2},
+        {params: {value: 1.23, min: 0, max: 100, minSteps: 10}, result: 2},
+        {params: {value: 1, min: 0, max: 10, minSteps: 100}, result: 2},
+        {params: {value: 10, min: 0, max: 10, minSteps: 100}, result: 3},
+        {params: {value: 0.01343, min: 0, max: 10, minSteps: 100}, result: 1},
+    )
