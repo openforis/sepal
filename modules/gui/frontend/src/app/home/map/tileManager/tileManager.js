@@ -31,11 +31,13 @@ export const getTileManager = tileProvider => {
         stats.in++
         const response$ = new ReplaySubject()
         const cancel$ = new Subject()
-        submit({tileProviderId, requestId: request.id, request, response$, cancel$})
+        const requestId = request.id
+        submit({tileProviderId, requestId, request, response$, cancel$})
         return response$.pipe(
             first(),
             tap(() => stats.out++),
             finalize(() => {
+                log.debug('Finalizing', {tileProviderId, requestId})
                 cancel$.next()
                 log.trace(`Stats: in: ${stats.in}, out: ${stats.out}`)
             })
@@ -43,6 +45,7 @@ export const getTileManager = tileProvider => {
     }
 
     const releaseTile = requestId => {
+        log.debug(`Release tile ${requestId}`)
         cancel(requestId)
     }
 
@@ -51,6 +54,7 @@ export const getTileManager = tileProvider => {
     }
 
     const close = () => {
+        log.debug('Close')
         removeTileProvider(tileProviderId)
     }
 

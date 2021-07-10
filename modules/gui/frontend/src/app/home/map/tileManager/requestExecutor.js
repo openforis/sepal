@@ -4,7 +4,7 @@ import {getLogger} from 'log'
 import {requestTag, tileProviderTag} from 'tag'
 import _ from 'lodash'
 
-const log = getLogger('tileManager')
+const log = getLogger('tileManager/executor')
 
 export const getRequestExecutor = concurrency => {
     const finished$ = new Subject()
@@ -138,10 +138,17 @@ export const getRequestExecutor = concurrency => {
     }
 
     const cancel = requestId => {
-        const request = state.activeRequests[requestId]
-        if (request) {
-            request.cancel$.next()
+        if (requestId) {
+            const request = state.activeRequests[requestId]
+            if (request) {
+                log.debug(`Cancelling active request ${requestTag(request)}`)
+                request.cancel$.next()
+                return true
+            }
+        } else {
+            log.warn('Cannot cancel as no request id was provided')
         }
+        return false
     }
 
     const hidden = (tileProviderId, hidden) => {

@@ -6,7 +6,7 @@ import {tileProviderTag} from 'tag'
 import {v4 as uuid} from 'uuid'
 import _ from 'lodash'
 
-const log = getLogger('tileManager')
+const log = getLogger('tileManager/group')
 
 const tileProviderGroups = {}
 
@@ -83,8 +83,8 @@ const createTileManagerGroup = concurrency => {
 
     cancel$.subscribe(
         requestId => {
-            requestQueue.remove(requestId)
             requestExecutor.cancel(requestId)
+            requestQueue.remove(requestId)
         }
     )
     

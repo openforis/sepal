@@ -2,7 +2,7 @@ import {getLogger} from 'log'
 import {requestTag, tileProviderTag} from 'tag'
 import _ from 'lodash'
 
-const log = getLogger('tileManager')
+const log = getLogger('tileManager/queue')
 
 export const getRequestQueue = () => {
     const pendingRequests = []
@@ -47,7 +47,7 @@ export const getRequestQueue = () => {
     const dequeueByIndex = (index, option = '') => {
         if (index !== -1) {
             const [pendingRequest] = pendingRequests.splice(index, 1)
-            log.debug(`Dequeued ${option} ${requestTag(pendingRequest)}, pending: ${getCount()}`)
+            log.debug(`Dequeued ${option} ${requestTag(pendingRequest)} - currently pending: ${getCount()}`)
             return pendingRequest
         }
         log.warn(`Could not dequeue index ${index}, reverting to FIFO`)
@@ -59,9 +59,13 @@ export const getRequestQueue = () => {
             const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.requestId === requestId)
             if (index !== -1) {
                 const [pendingRequest] = pendingRequests.splice(index, 1)
-                log.debug(`Removed ${requestTag(pendingRequest)}, pending: ${getCount()}`)
+                log.debug(`Removed ${requestTag(pendingRequest)} - currently pending: ${getCount()}`)
+                return true
             }
+        } else {
+            log.warn('Cannot remove as no request id was provided')
         }
+        return false
     }
 
     const scan = callback =>
