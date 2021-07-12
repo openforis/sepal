@@ -8,6 +8,7 @@ import Icon from 'widget/icon'
 import Portal from 'widget/portal'
 import React from 'react'
 import _ from 'lodash'
+import format from 'format'
 import styles from './histogram.module.css'
 import withSubscriptions from 'subscription'
 
@@ -166,9 +167,29 @@ class Handles extends React.Component {
         const {histogramMin, histogramMax} = histogramMinMax(histogram)
         this.setState(({histogramMin: prevMin, histogramMax: prevMax}) => {
             return _.isFinite(histogramMin) && _.isFinite(histogramMax) && (prevMin !== histogramMin || prevMax !== histogramMax)
-                ? {histogramMin, histogramMax}
+                ? {
+                    histogramMin,
+                    histogramMax,
+                    precisionDigits: this.precisionDigits({histogramMin, histogramMax})
+                }
                 : null
         })
+    }
+
+    precisionDigits({histogramMin, histogramMax}) {
+        const forMin = format.significantDigits({
+            value: histogramMin,
+            min: histogramMin,
+            max: histogramMax,
+            minSteps: 40
+        })
+        const forMax = format.significantDigits({
+            value: histogramMax,
+            min: histogramMin,
+            max: histogramMax,
+            minSteps: 40
+        })
+        return Math.max(forMin, forMax)
     }
 
     onMinPosition(minPosition) {
@@ -185,13 +206,9 @@ class Handles extends React.Component {
 
     positionToValue(position) {
         const {width} = this.props
-        const {histogramMin, histogramMax} = this.state
+        const {histogramMin, histogramMax, precisionDigits} = this.state
         const widthFactor = (histogramMax - histogramMin) / width
-
-        const value = _.toNumber((histogramMin + position * widthFactor).toPrecision(3))
-        return histogramMax - histogramMin > 1000
-            ? value.toFixed(0)
-            : value
+        return _.toNumber((histogramMin + position * widthFactor).toPrecision(precisionDigits))
     }
 }
 
