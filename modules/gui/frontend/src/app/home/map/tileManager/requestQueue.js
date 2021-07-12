@@ -14,15 +14,15 @@ export const getRequestQueue = () => {
     const isEmpty = () => {
         return getCount() === 0
     }
-    
+
     const enqueue = ({tileProviderId, requestId, request, response$, cancel$}) => {
         pendingRequests.push({tileProviderId, requestId, request, response$, cancel$})
-        log.debug(`Enqueued ${requestTag({tileProviderId, requestId})}, pending: ${getCount()}`)
+        log.debug(`Enqueued ${requestTag({tileProviderId, requestId})}, currently pending: ${getCount()}`)
     }
 
     const dequeueFIFO = () => {
         const pendingRequest = pendingRequests.shift()
-        log.debug(`Dequeued ${requestTag(pendingRequest)}, pending: ${getCount()}`)
+        log.debug(`Dequeued ${requestTag(pendingRequest)}, currently pending: ${getCount()}`)
         return pendingRequest
     }
 
@@ -70,12 +70,11 @@ export const getRequestQueue = () => {
 
     const removeByTileProviderId = tileProviderId => {
         if (tileProviderId) {
-            pendingRequests.forEach(request => {
-                if (request.tileProviderId === tileProviderId) {
-                    removeByRequestId(request.requestId)
-                }
-            })
-            log.debug(`Removing ${tileProviderTag({tileProviderId})} - currently pending: ${getCount()}`)
+            const removed = _(pendingRequests)
+                .filter(request => request.tileProviderId === tileProviderId)
+                .reduce((count, request) => count + (removeByRequestId(request.requestId) ? 1 : 0), 0)
+                .value()
+            log.debug(`Removed ${removed} for ${tileProviderTag({tileProviderId})} - currently pending: ${getCount()}`)
         } else {
             log.warn('Cannot remove as no tileProvider id was provided')
         }
