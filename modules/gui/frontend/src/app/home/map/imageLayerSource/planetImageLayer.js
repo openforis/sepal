@@ -26,7 +26,7 @@ const defaultLayerConfig = {
 
 const CONCURRENCY = 10
 
-class _PlanetImageLayerSource extends React.Component {
+class _PlanetImageLayer extends React.Component {
     progress$ = new Subject()
     state = {}
 
@@ -203,7 +203,7 @@ class _PlanetImageLayerSource extends React.Component {
 }
 
 export const PlanetImageLayer = compose(
-    _PlanetImageLayerSource,
+    _PlanetImageLayer,
     withMapContext(),
     withMapAreaContext(),
     connect(),
