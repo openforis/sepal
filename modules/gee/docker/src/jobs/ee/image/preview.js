@@ -100,7 +100,7 @@ const worker$ = ({recipe, visParams, panSharpen, bands}) => {
                     .rename(band)
                 image = image.addBands(stretched, null, true)
             })
-            return image.select(bands).hsvToRgb().float()
+            return image.select(_.uniq(bands)).hsvToRgb().float()
         }
 
         const {getImage$, getVisParams$} = ImageFactory(recipe, bands)
