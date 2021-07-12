@@ -13,7 +13,7 @@ const stats = {
 }
 
 export const getTileManager = tileProvider => {
-    const {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancel, hidden} = getTileManagerGroup(tileProvider)
+    const {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, hidden} = getTileManagerGroup(tileProvider)
 
     const tileProviderId = uuid()
 
@@ -46,7 +46,7 @@ export const getTileManager = tileProvider => {
 
     const releaseTile = requestId => {
         log.debug(`Release tile ${requestId}`)
-        cancel(requestId)
+        cancelByRequestId(requestId)
     }
 
     const hide = isHidden => {

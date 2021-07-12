@@ -54,7 +54,7 @@ export const getRequestQueue = () => {
         return dequeueFIFO()
     }
 
-    const remove = requestId => {
+    const removeByRequestId = requestId => {
         if (requestId) {
             const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.requestId === requestId)
             if (index !== -1) {
@@ -68,8 +68,21 @@ export const getRequestQueue = () => {
         return false
     }
 
+    const removeByTileProviderId = tileProviderId => {
+        if (tileProviderId) {
+            pendingRequests.forEach(request => {
+                if (request.tileProviderId === tileProviderId) {
+                    removeByRequestId(request.requestId)
+                }
+            })
+            log.debug(`Removing ${tileProviderTag({tileProviderId})} - currently pending: ${getCount()}`)
+        } else {
+            log.warn('Cannot remove as no tileProvider id was provided')
+        }
+    }
+
     const scan = callback =>
         pendingRequests.forEach(callback)
 
-    return {isEmpty, enqueue, dequeueByRequestId, dequeueByTileProviderId, remove, scan}
+    return {isEmpty, enqueue, dequeueByRequestId, dequeueByTileProviderId, removeByRequestId, removeByTileProviderId, scan}
 }

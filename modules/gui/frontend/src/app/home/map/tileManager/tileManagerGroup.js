@@ -13,7 +13,6 @@ const tileProviderGroups = {}
 const createTileManagerGroup = concurrency => {
     const tileProvidersInfo = {}
     const request$ = new Subject()
-    const cancel$ = new Subject()
     
     const requestQueue = getRequestQueue()
     const requestExecutor = getRequestExecutor(concurrency)
@@ -35,6 +34,8 @@ const createTileManagerGroup = concurrency => {
     }
     
     const removeTileProvider = tileProviderId => {
+        requestQueue.removeByTileProviderId(tileProviderId)
+        requestExecutor.cancelByTileProviderId(tileProviderId)
         delete tileProvidersInfo[tileProviderId]
         log.debug(`Removed ${tileProviderTag(tileProviderId)}`)
     }
@@ -42,12 +43,14 @@ const createTileManagerGroup = concurrency => {
     const submit = currentRequest =>
         request$.next(currentRequest)
 
-    const cancel = requestId =>
-        cancel$.next(requestId)
-
     const hidden = (tileProviderId, hidden) => {
         requestExecutor.hidden(tileProviderId, hidden)
         requestQueue.scan(({tileProviderId, requestId}) => requestExecutor.notify({tileProviderId, requestId}))
+    }
+    
+    const cancelByRequestId = requestId => {
+        requestQueue.removeByRequestId(requestId)
+        requestExecutor.cancelByRequestId(requestId)
     }
     
     request$.subscribe(
@@ -81,14 +84,7 @@ const createTileManagerGroup = concurrency => {
         }
     )
 
-    cancel$.subscribe(
-        requestId => {
-            requestExecutor.cancel(requestId)
-            requestQueue.remove(requestId)
-        }
-    )
-    
-    return {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancel, hidden}
+    return {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, hidden}
 }
 
 export const getTileManagerGroup = tileProvider => {

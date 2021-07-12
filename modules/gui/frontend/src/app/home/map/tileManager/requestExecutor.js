@@ -137,11 +137,11 @@ export const getRequestExecutor = concurrency => {
         }
     }
 
-    const cancel = requestId => {
+    const cancelByRequestId = requestId => {
         if (requestId) {
             const request = state.activeRequests[requestId]
             if (request) {
-                log.debug(`Cancelling active request ${requestTag(request)}`)
+                log.debug(`Cancelling ${requestTag(request)}`)
                 request.cancel$.next()
                 return true
             }
@@ -151,9 +151,22 @@ export const getRequestExecutor = concurrency => {
         return false
     }
 
+    const cancelByTileProviderId = tileProviderId => {
+        if (tileProviderId) {
+            log.debug(`Cancelling ${tileProviderTag(tileProviderId)}`)
+            _.forEach(state.activeRequests, request => {
+                if (request.tileProviderId === tileProviderId) {
+                    cancelByRequestId(request.requestId)
+                }
+            })
+        } else {
+            log.warn('Cannot cancel as no tileProvider id was provided')
+        }
+    }
+
     const hidden = (tileProviderId, hidden) => {
         state.hidden[tileProviderId] = hidden
     }
 
-    return {isAvailable, execute, notify, cancel, hidden, finished$}
+    return {isAvailable, execute, notify, cancelByRequestId, cancelByTileProviderId, hidden, finished$}
 }
