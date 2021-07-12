@@ -8,7 +8,6 @@ import {withCursorValue} from './cursorValue'
 import {withMapAreaContext} from './mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
-import _ from 'lodash'
 import format from 'format'
 import styles from './valuesLayer.module.css'
 import withSubscriptions from 'subscription'
@@ -81,23 +80,21 @@ class _ValuesLayer extends React.Component {
     renderBand({key, band, min, max, value}) {
         const {clampedValue, clamping} = this.clamp({value, min, max})
         const clampingIndicator = this.clampingIndicator(clamping)
-        const precisionDigits = Math.max(
-            _.isNil(value)
-                ? 3
-                : format.significantDigits({value, min, max, minSteps: MIN_STEPS}),
-            3
-        )
-        const description = format.number({
-            value: _.isFinite(value) ? clampedValue : null,
-            precisionDigits,
-            padding: true,
+        const magnitude = format.stepMagnitude({min, max, minSteps: MIN_STEPS})
+        const formatted = format.numberToMagnitude({
+            value: clampedValue,
+            magnitude,
             defaultValue: 'N/A'
         })
+        const padding = (magnitude < 0
+            ? -magnitude + 1
+            : magnitude
+        ) + 7
+        const description = `${clampingIndicator} ${formatted}`.padStart(padding)
         return (
             <Shape key={key} shape='pill' size='small'>
                 <Item title={band}>
                     <pre className={[styles.value, clamping ? styles.clamping : null].join(' ')}>
-                        {clampingIndicator}
                         {description}
                     </pre>
                 </Item>

@@ -29,7 +29,7 @@ class _PaletteLayer extends React.Component {
         super(props)
         const {cursorValue$, addSubscription} = props
         addSubscription(
-            cursorValue$.subscribe(value => this.setState({value}))
+            cursorValue$.subscribe(value => this.setState({value: value && value}))
         )
     }
 
@@ -50,27 +50,22 @@ class _PaletteLayer extends React.Component {
     }
 
     renderPalette({min, max, palette, inverted}) {
-        const {value, paletteWidth} = this.state
+        const {value, paletteWidth, formattedMin, formattedMax, magnitude} = this.state
         const cursorValues = value.map((v, i) => {
-            const precisionDigits = format.significantDigits({value, min, max, minSteps: MIN_STEPS})
-            const valueWithPrecision = parseFloat(v.toPrecision(precisionDigits))
             return <CursorValue
                 key={i}
-                value={Math.min(max, Math.max(min, valueWithPrecision))}
+                value={Math.min(max, Math.max(min, value))}
                 min={min}
                 max={max}
-                precisionDigits={precisionDigits}
+                magnitude={magnitude}
                 paletteWidth={paletteWidth}
             />
-        }
-        )
+        })
 
-        const minPrecisionDigits = format.significantDigits({value: min, min, max, minSteps: MIN_STEPS})
-        const maxPrecisionDigits = format.significantDigits({value: max, min, max, minSteps: MIN_STEPS})
         return (
             <div className={styles.container}>
                 <div className={styles.legend}>
-                    <Value value={min} precisionDigits={minPrecisionDigits}/>
+                    <Value value={formattedMin}/>
                     <div
                         className={styles.palette}
                         style={{'--palette': inverted
@@ -79,10 +74,37 @@ class _PaletteLayer extends React.Component {
                         <ElementResizeDetector onResize={({width}) => this.setState({paletteWidth: width})}/>
                         {cursorValues}
                     </div>
-                    <Value value={max} precisionDigits={maxPrecisionDigits}/>
+                    <Value value={formattedMax}/>
                 </div>
             </div>
         )
+    }
+
+    componentDidMount() {
+        const {min, max} = this.getMinMax(this.props)
+        this.formatMinMax({min, max})
+    }
+
+    componentDidUpdate(prevProps) {
+        const {min: prevMin, max: prevMax} = this.getMinMax(prevProps)
+        const {min, max} = this.getMinMax(this.props)
+
+        if (min !== prevMin || max !== prevMax) {
+            this.formatMinMax({min, max})
+        }
+    }
+
+    getMinMax(props) {
+        const {mapAreaContext: {area}, areas} = props
+        const {min, max} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
+        return {min, max}
+    }
+
+    formatMinMax({min, max}) {
+        const magnitude = format.stepMagnitude({min, max, minSteps: MIN_STEPS})
+        const formattedMin = format.numberToMagnitude({value: min[0], magnitude})
+        const formattedMax = format.numberToMagnitude({value: max[0], magnitude})
+        this.setState({formattedMin, formattedMax, magnitude})
     }
 }
 
@@ -93,14 +115,18 @@ class _CursorValue extends React.Component {
     targetPosition$ = new Subject()
 
     render() {
-        const {value, min, max, precisionDigits} = this.props
+        const {value, min, max, magnitude} = this.props
         const {position} = this.state
         const prefix = value <= min
-            ? <>&#8805; </>
+            ? <>&#8804; </>
             : value >= max
-                ? <>&#8804; </>
+                ? <>&#8805; </>
                 : ''
-        const formatted = format.number({value, precisionDigits: Math.max(precisionDigits, 3)})
+        const formatted = value <= min
+            ? format.numberToMagnitude({value: min, magnitude})
+            : value >= max
+                ? format.numberToMagnitude({value: max, magnitude})
+                : format.numberToMagnitude({value, magnitude})
         return (
             <div
                 className={styles.cursorValue}
@@ -160,22 +186,22 @@ const CursorValue = compose(
 )
 
 CursorValue.propTypes = {
+    magnitude: PropTypes.any,
     max: PropTypes.any,
     min: PropTypes.any,
     paletteWidth: PropTypes.any,
-    precisionDigits: PropTypes.any,
     value: PropTypes.any
 }
 
 const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * (rate * speed)
 
-const Value = ({value, precisionDigits}) =>
-    <div className={styles.value}>
-        {format.number({
-            value: parseFloat(value.toPrecision(precisionDigits)),
-            precisionDigits: Math.max(precisionDigits, 3)
-        })}
-    </div>
+const Value = ({value}) => {
+    return (
+        <div className={styles.value}>
+            {value}
+        </div>
+    )
+}
 
 export const PaletteLayer = compose(
     _PaletteLayer,

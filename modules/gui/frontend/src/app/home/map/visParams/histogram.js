@@ -13,6 +13,7 @@ import styles from './histogram.module.css'
 import withSubscriptions from 'subscription'
 
 const DEFAULT_STRETCH = 99.9
+const MIN_STEPS = 40
 
 export class Histogram extends React.Component {
     state = {
@@ -170,26 +171,10 @@ class Handles extends React.Component {
                 ? {
                     histogramMin,
                     histogramMax,
-                    precisionDigits: this.precisionDigits({histogramMin, histogramMax})
+                    magnitude: format.stepMagnitude({min: histogramMin, max: histogramMax, minSteps: MIN_STEPS})
                 }
                 : null
         })
-    }
-
-    precisionDigits({histogramMin, histogramMax}) {
-        const forMin = format.significantDigits({
-            value: histogramMin,
-            min: histogramMin,
-            max: histogramMax,
-            minSteps: 40
-        })
-        const forMax = format.significantDigits({
-            value: histogramMax,
-            min: histogramMin,
-            max: histogramMax,
-            minSteps: 40
-        })
-        return Math.max(forMin, forMax)
     }
 
     onMinPosition(minPosition) {
@@ -206,9 +191,10 @@ class Handles extends React.Component {
 
     positionToValue(position) {
         const {width} = this.props
-        const {histogramMin, histogramMax, precisionDigits} = this.state
+        const {histogramMin, histogramMax, magnitude} = this.state
         const widthFactor = (histogramMax - histogramMin) / width
-        return _.toNumber((histogramMin + position * widthFactor).toPrecision(precisionDigits))
+        const value = _.toNumber(histogramMin + position * widthFactor)
+        return format.round({value, magnitude})
     }
 }
 

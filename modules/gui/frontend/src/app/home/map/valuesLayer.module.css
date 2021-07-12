@@ -7,7 +7,6 @@
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    /* z-index: 99999; */
 }
 
 .value {
