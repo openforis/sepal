@@ -1,5 +1,5 @@
-import {GoogleSatelliteTileProvider} from './tileProvider/googleSatelliteTileProvider'
-import {TileLayer} from './googleMaps/googleMapsLayer'
+import {GoogleSatelliteTileProvider} from '../tileProvider/googleSatelliteTileProvider'
+import {TileLayer} from './googleMapsLayer'
 import {of} from 'rxjs'
 
 export default class GoogleSatelliteLayer {

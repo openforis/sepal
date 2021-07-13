@@ -1,5 +1,5 @@
-import {TileLayer} from './googleMaps/googleMapsLayer'
-import {WMTSTileProvider} from './tileProvider/wmtsTileProvider'
+import {TileLayer} from './googleMapsLayer'
+import {WMTSTileProvider} from '../tileProvider/wmtsTileProvider'
 import {of} from 'rxjs'
 
 export default class WMTSLayer {
