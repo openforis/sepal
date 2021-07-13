@@ -26,7 +26,7 @@ const logLevel = sepalLogLevel === 'trace'
     : sepalLogLevel
 
 const proxy = app =>
-    ({path, target, prefix, authenticate, cache, noCache, rewrite}) => {
+    ({path, target, authenticate, cache, noCache, rewrite}) => {
         const proxyMiddleware = createProxyMiddleware(path, {
             target,
             logProvider,
@@ -34,7 +34,6 @@ const proxy = app =>
             proxyTimeout: 60 * 1000,
             timeout: 60 * 1000,
             pathRewrite: {[`^${path}`]: ''},
-            ignorePath: !prefix,
             onOpen: () => {
                 log.trace('WebSocket opened')
             },

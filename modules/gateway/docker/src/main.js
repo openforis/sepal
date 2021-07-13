@@ -1,5 +1,5 @@
 require('sepal/log').configureServer(require('./log.json'))
-const {port} = require('./config')
+const {port, secure} = require('./config')
 const {isMatch} = require('micromatch')
 const express = require('express')
 const session = require('express-session')
@@ -15,8 +15,8 @@ const sessionParser = session({
     cookie: {
         httpOnly: true,
         maxAge: 1000 * 60 * 30,
-        sameSite: false,
-        secure: false
+        sameSite: true,
+        secure
     },
     proxy: true,
     resave: false,
