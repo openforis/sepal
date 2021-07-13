@@ -15,7 +15,7 @@ const sessionParser = session({
     cookie: {
         httpOnly: true,
         maxAge: 1000 * 60 * 30,
-        sameSite: true,
+        sameSite: secure,
         secure
     },
     proxy: true,
