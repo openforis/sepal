@@ -128,12 +128,11 @@ class CCDCSlicePreview extends React.Component {
         const layer = new EarthEngineLayer({
             map,
             layerIndex: 2,
-            toggleable: true,
+            // toggleable: true,
             label: msg('process.ccdcSlice.preview.label'),
             description: msg('process.ccdcSlice.preview.description'),
             // bounds: previewRequest.recipe.model.aoi.bounds, // TODO: Figure out the AOI somehow
-            mapId$: api.gee.preview$(previewRequest),
-            props: previewRequest,
+            previewRequest,
             progress$: this.progress$
         })
         const changed = map.setLayer({

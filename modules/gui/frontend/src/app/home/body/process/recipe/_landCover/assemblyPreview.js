@@ -110,8 +110,7 @@ class AssemblyPreview extends React.Component {
         const layer = new EarthEngineLayer({
             map,
             layerIndex: 1,
-            mapId$: api.gee.preview$(previewRequest),
-            props: previewRequest,
+            previewRequest,
             progress$: this.progress$
         })
         const changed = map.setLayer({

@@ -123,7 +123,7 @@ class _AssetImageLayer extends React.Component {
         }
         if (!_.isEqual(previewRequest, prevPreviewRequest)) {
             this.layer && this.layer.removeFromMap()
-            this.layer = EarthEngineLayer.create({
+            this.layer = new EarthEngineLayer({
                 previewRequest,
                 visParams: layerConfig.visParams,
                 dataTypes,
