@@ -76,12 +76,11 @@ export default class EarthEngineLayer {
     }
 
     addToMap() {
-        if (!this.removed) {
-            const {map, layerIndex, progress$} = this
-            const tileProvider = this.createTileProvider()
-            this.tileLayer = new TileLayer({map, tileProvider, layerIndex, progress$})
-            this.tileLayer.add()
-        }
+        console.log('EarthEngineLayer.addToMap()')
+        const {map, layerIndex, progress$} = this
+        const tileProvider = this.createTileProvider()
+        this.tileLayer = new TileLayer({map, tileProvider, layerIndex, progress$})
+        this.tileLayer.add()
     }
 
     removeFromMap() {
