@@ -109,7 +109,7 @@ class _RecipeImageLayer extends React.Component {
             ...layerConfig
         }
         if (!_.isEqual(previewRequest, prevPreviewRequest)) {
-            this.layer && this.layer.close()
+            this.layer && this.layer.removeFromMap()
             this.layer = EarthEngineLayer.create({
                 previewRequest,
                 dataTypes,

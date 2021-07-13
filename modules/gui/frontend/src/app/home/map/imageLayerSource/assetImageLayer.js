@@ -77,7 +77,7 @@ class _AssetImageLayer extends React.Component {
     componentWillUnmount() {
         this.setComplete('initialize')
         this.setComplete('tiles')
-        this.layer && this.layer.close()
+        this.layer && this.layer.removeFromMap()
     }
 
     selectFirstVisualization() {
@@ -122,7 +122,7 @@ class _AssetImageLayer extends React.Component {
             ...layerConfig
         }
         if (!_.isEqual(previewRequest, prevPreviewRequest)) {
-            this.layer && this.layer.close()
+            this.layer && this.layer.removeFromMap()
             this.layer = EarthEngineLayer.create({
                 previewRequest,
                 visParams: layerConfig.visParams,
