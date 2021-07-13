@@ -77,7 +77,6 @@ export const getRequestQueue = () => {
             const removed = _(pendingRequests)
                 .filter(request => request.tileProviderId === tileProviderId)
                 .reduce((count, request) => count + (removeByRequestId(request.requestId) ? 1 : 0), 0)
-                .value()
             log.debug(`Removed ${removed} for ${tileProviderTag({tileProviderId})} - currently pending: ${getCount()}`)
         } else {
             log.warn('Cannot remove as no tileProvider id was provided')
