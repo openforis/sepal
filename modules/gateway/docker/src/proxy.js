@@ -80,7 +80,7 @@ const proxy = app =>
                 if (proxyRes.headers['sepal-user-updated']) {
                     updateUserInSession(req)
                 }
-                proxyRes.headers['Content-Security-Policy'] = `connect-src 'self' https://${sepalHost} wss://${sepalHost} https://*.googleapis.com https://apis.google.com https://*.google.com https://*.planet.com; frame-ancestors 'self' https://$host https://*.googleapis.com https://apis.google.com`
+                proxyRes.headers['Content-Security-Policy'] = `connect-src 'self' https://${sepalHost} wss://${sepalHost} https://*.googleapis.com https://apis.google.com https://*.google.com https://*.planet.com; frame-ancestors 'self' https://${sepalHost} https://*.googleapis.com https://apis.google.com`
             }
         })
 
