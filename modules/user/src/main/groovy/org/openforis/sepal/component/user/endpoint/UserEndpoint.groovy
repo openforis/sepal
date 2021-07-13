@@ -211,7 +211,14 @@ class UserEndpoint {
                 send toJson([url: url as String])
             }
 
-            get('/google/access-request-callback') {
+            get('/google/access-request-callback', [NO_AUTHORIZATION]) {
+                // Redirect from within the browser, to make sure SameSite cookies are included.
+                response.contentType = 'text/html'
+                def url = "/api/user/google/associate-account?${request.queryString}"
+                send "<html><head><meta http-equiv=\"refresh\" content=\"0;URL='${url}'\"/></head></html>"
+            }
+
+            get('/google/associate-account') {
                 response.contentType = 'application/json'
                 component.submit(
                         new AssociateGoogleAccount(

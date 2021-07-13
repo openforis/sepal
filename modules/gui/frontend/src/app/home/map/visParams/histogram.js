@@ -8,10 +8,12 @@ import Icon from 'widget/icon'
 import Portal from 'widget/portal'
 import React from 'react'
 import _ from 'lodash'
+import format from 'format'
 import styles from './histogram.module.css'
 import withSubscriptions from 'subscription'
 
 const DEFAULT_STRETCH = 99.9
+const MIN_STEPS = 40
 
 export class Histogram extends React.Component {
     state = {
@@ -166,7 +168,11 @@ class Handles extends React.Component {
         const {histogramMin, histogramMax} = histogramMinMax(histogram)
         this.setState(({histogramMin: prevMin, histogramMax: prevMax}) => {
             return _.isFinite(histogramMin) && _.isFinite(histogramMax) && (prevMin !== histogramMin || prevMax !== histogramMax)
-                ? {histogramMin, histogramMax}
+                ? {
+                    histogramMin,
+                    histogramMax,
+                    magnitude: format.stepMagnitude({min: histogramMin, max: histogramMax, minSteps: MIN_STEPS})
+                }
                 : null
         })
     }
@@ -185,13 +191,10 @@ class Handles extends React.Component {
 
     positionToValue(position) {
         const {width} = this.props
-        const {histogramMin, histogramMax} = this.state
+        const {histogramMin, histogramMax, magnitude} = this.state
         const widthFactor = (histogramMax - histogramMin) / width
-
-        const value = _.toNumber((histogramMin + position * widthFactor).toPrecision(3))
-        return histogramMax - histogramMin > 1000
-            ? value.toFixed(0)
-            : value
+        const value = _.toNumber(histogramMin + position * widthFactor)
+        return format.round({value, magnitude})
     }
 }
 

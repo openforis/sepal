@@ -8,6 +8,7 @@ apt-get update -y && apt-get install -y --fix-missing \
     aria2 \
     bc \
     dbview \
+    enchant \
     flex \
     gettext \
     gdal-bin \

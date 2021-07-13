@@ -49,8 +49,8 @@ test('format.number(${JSON.stringify(params)}) === ${result}')
         {params: {value: 123456, precisionDigits: 3}, result: '123k'},
         {params: {value: 123456, precisionDigits: 4}, result: '123.5k'},
         {params: {value: 123456, precisionDigits: 5}, result: '123.46k'},
-        {params: {value: 123456, precisionDigits: 6}, result: '123.456k'},
-        {params: {value: 123456, precisionDigits: 7}, result: '123.4560k'},
+        {params: {value: 123456, precisionDigits: 6}, result: '123456'},
+        {params: {value: 123456, precisionDigits: 7}, result: '123456.0'},
         {params: {value: 123456, scale: 'k', precisionDigits: 5}, result: '123.46M'},
         {params: {value: 18245.23, scale: 'k'}, result: '18.2M'},
         {params: {value: 18245.23, scale: 'µ', minScale: 'p'}, result: '18.2m'},
@@ -119,4 +119,69 @@ test('format.unitsPerHour({value: ${params.value}) === ${result}')
         {params: {value: 0}, result: '0/h'},
         {params: {value: 1}, result: '1.00/h'},
         {params: {value: 0.3}, result: '0.30/h'},
+    )
+
+test('format.significantDigits({value: ${params.value}, min: ${params.min}, max: ${params.max}, minSteps: ${params.minSteps}) === ${result}')
+    .assert(({params, result}) => expect(
+        format.significantDigits(params)
+    ).toEqual(result))
+    .where(
+        {params: {value: 1, min: 0, max: 100, minSteps: 100}, result: 1},
+        {params: {value: -1, min: -1, max: 100, minSteps: 100}, result: 1},
+        {params: {value: 10, min: 0, max: 100, minSteps: 100}, result: 2},
+        {params: {value: 1.5, min: 0, max: 100, minSteps: 100}, result: 1},
+        {params: {value: 2015, min: 2013, max: 2017, minSteps: 100}, result: 6},
+        {params: {value: 2015, min: 2013, max: 2017, minSteps: 30}, result: 5},
+        {params: {value: 0, min: 0, max: 100, minSteps: 100}, result: 1},
+        {params: {value: 0.1, min: 0, max: 100, minSteps: 100}, result: 1},
+        {params: {value: 0.01, min: 0, max: 0.1, minSteps: 100}, result: 2},
+        {params: {value: 1.23, min: 0, max: 100, minSteps: 10}, result: 2},
+        {params: {value: 1, min: 0, max: 10, minSteps: 100}, result: 2},
+        {params: {value: 10, min: 0, max: 10, minSteps: 100}, result: 3},
+        {params: {value: 0.01343, min: 0, max: 10, minSteps: 100}, result: 1},
+    )
+
+test('format.numberToMagnitude(${JSON.stringify(params)}) === ${result}')
+    .assert(({params, result}) => expect(format.numberToMagnitude(params)).toEqual(result))
+    .where(
+        {params: {value: null, magnitude: 0}, result: ''},
+        {params: {value: null, magnitude: 0, defaultValue: 'n/a'}, result: 'n/a'},
+        {params: {value: 0, magnitude: 0, defaultValue: 'n/a'}, result: '0'},
+        {params: {value: 0, magnitude: 0}, result: '0'},
+        {params: {value: 0, magnitude: 1}, result: '0'},
+        {params: {value: 1, magnitude: 0}, result: '1'},
+        {params: {value: 1, magnitude: 1}, result: '0'},
+        {params: {value: -1, magnitude: 0}, result: '-1'},
+        {params: {value: 12, magnitude: 0}, result: '12'},
+        {params: {value: 123, magnitude: 0}, result: '123'},
+        {params: {value: 12, magnitude: 1}, result: '10'},
+        {params: {value: 123, magnitude: 1}, result: '120'},
+        {params: {value: 123, magnitude: 2}, result: '100'},
+        {params: {value: 1234, magnitude: 0}, result: '1,234'},
+        {params: {value: 1234, magnitude: 1}, result: '1.23k'},
+        {params: {value: 12345, magnitude: 1}, result: '12.35k'},
+        {params: {value: 123456789, magnitude: 0}, result: '123,456,789'},
+        {params: {value: 123456789, magnitude: 3}, result: '123,457k'},
+        {params: {value: 123456789, magnitude: 6}, result: '123M'},
+        {params: {value: 123456789, magnitude: 9}, result: '0G'},
+        {params: {value: 123, magnitude: 3}, result: '0k'},
+        {params: {value: 999, magnitude: 3}, result: '1k'},
+        {params: {value: 1.23, magnitude: 0}, result: '1'},
+        {params: {value: 1.23, magnitude: -1}, result: '1.2'},
+        {params: {value: 1.23, magnitude: -2}, result: '1.23'},
+        {params: {value: 1.23, magnitude: -3, minScale: 'm'}, result: '1,230m'},
+        {params: {value: 1.23, magnitude: -3, minScale: ''}, result: '1.230'},
+        {params: {value: 1234, magnitude: 3, maxScale: ''}, result: '1,000'},
+        {params: {value: 0.0123, magnitude: -3}, result: '0.012'},
+    )
+
+test('format.round(${JSON.stringify(params)}) === ${result}')
+    .assert(({params, result}) => expect(format.round(params)).toEqual(result))
+    .where(
+        {params: {value: 123, magnitude: 0}, result: 123},
+        {params: {value: 123, magnitude: 1}, result: 120},
+        {params: {value: 123, magnitude: 2}, result: 100},
+        {params: {value: 123, magnitude: 3}, result: 0},
+        {params: {value: 500, magnitude: 3}, result: 1000},
+        {params: {value: 499.99, magnitude: 3}, result: 0},
     )

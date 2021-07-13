@@ -18,6 +18,9 @@ sudo ln -sf $PROJECT_DIR/dev-env/sepal.sh /usr/local/bin/sepal
 sudo ln -sf $PROJECT_DIR/dev-env/parse-yaml.sh /usr/local/bin/parse-yaml
 sudo ln -sf $PROJECT_DIR/dev-env/template.d /etc/sepal/template.d
 
+sudo ln -sf $PROJECT_DIR/modules/app-manager/docker/install-requirements.sh /usr/local/bin/install-requirements
+sudo chmod +x /usr/local/bin/install-requirements
+
 sudo mkdir -p /usr/local/share/jupyter/kernels/
 sudo cp -rn $PROJECT_DIR/modules/app-manager/docker/kernels/* /usr/local/share/jupyter/kernels/
 

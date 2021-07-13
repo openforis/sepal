@@ -75,16 +75,21 @@ const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, pref
     if (scaleMagnitude === -1) {
         throw Error('Unsupported scale.')
     }
-    
+
     const pad = value =>
         padding ? value.padStart(Math.max(length, defaultValue.length), ' ') : value
 
-    const formattedValue = (normalizedValue, magnitude, decimals) =>
-        (negative ? '-' : '') + prefix + normalizedValue.toFixed(decimals) + unitPadding + magnitudes[magnitude] + unit + suffix
+    const formattedValue = (normalizedValue, magnitude, decimals) => {
+        const adjustment = Math.floor(decimals / 3)
+        const adjustedMagnitude = magnitude - adjustment
+        const adjustedValue = normalizedValue * Math.pow(10, adjustment * 3)
+        const adjustedDecimals = decimals - (adjustment * 3)
+        return (negative ? '-' : '') + prefix + adjustedValue.toFixed(adjustedDecimals) + unitPadding + magnitudes[adjustedMagnitude] + unit + suffix
+    }
 
     const modulo3 = n =>
         ((n % 3) + 3) % 3 // safe for negative numbers too
-        
+
     // handle undefined/null value
     if (!_.isFinite(value)) {
         return pad(defaultValue)
@@ -94,7 +99,7 @@ const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, pref
     if (value === 0) {
         return pad(`${prefix}0${unitPadding}${unit}${suffix}`)
     }
-    
+
     const negative = value < 0
     const absValue = Math.abs(value)
 
@@ -116,6 +121,79 @@ const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, pref
     }
 }
 
+const significantDigits = ({value, min, max, minSteps}) => {
+    const stepSize = Math.abs(max - min) / minSteps
+    const stepSizeMagnitude = Math.floor(Math.log10(stepSize))
+    const valueMagnitude = Math.floor(Math.log10(Math.abs(value)))
+    const magnitude = valueMagnitude < stepSizeMagnitude
+        ? stepSizeMagnitude
+        : valueMagnitude - stepSizeMagnitude
+    return (magnitude < 0 ? 0 : magnitude) + 1
+}
+
+const numberToMagnitude = ({value, magnitude, minScale = '', maxScale = 'Y', defaultValue = ''}) => {
+    if (!_.isFinite(value)) {
+        return defaultValue
+    }
+    const scales = ['p', 'n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
+    const scaleOffset = 4
+    const scaleOfMagnitude = magnitude => scales[Math.floor((magnitude / 3) + scaleOffset)]
+    const magnitudeOfScale = scale => (scales.indexOf(scale) - scaleOffset) * 3
+    const roundedValue = round({value, magnitude})
+    const valueMagnitude = toMagnitude(roundedValue)
+    const precision = valueMagnitude - magnitude + 1
+
+    const targetScaleMagnitude = Math.floor(valueMagnitude / 3) * 3
+    const minScaleMagnitude = Math.floor((magnitude) / 3) * 3
+    const maxDecimals = 2
+    const maxScaleMagnitude = Math.floor((magnitude + maxDecimals) / 3) * 3
+
+    const scaleMagnitude = Math.max(
+        magnitudeOfScale(minScale),
+        Math.min(
+            magnitudeOfScale(maxScale),
+            Math.max(
+                minScaleMagnitude,
+                Math.min(
+                    maxScaleMagnitude, // Scaling more than this gives too many decimals
+                    targetScaleMagnitude
+                )
+            )
+        )
+    )
+    const multiplier = precision <= 0
+        ? 0
+        : Math.pow(10, -scaleMagnitude)
+    const decimals = Math.max(0, scaleMagnitude - magnitude)
+    const scaledValue = roundedValue * multiplier
+    const scale = scaleOfMagnitude(scaleMagnitude)
+    const valueInPrecision = parseFloat(scaledValue.toPrecision(Math.max(1, precision)))
+    return addThousandSeparators(
+        parseFloat(valueInPrecision)
+            .toFixed(decimals) + scale
+    )
+}
+
+const addThousandSeparators = numberString => {
+    const i = numberString.indexOf('.')
+    return i === -1
+        ? numberString.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+        : numberString.substring(0, i).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+        + numberString.substring(i, numberString.length)
+}
+
+const round = ({value, magnitude}) => {
+    const factor = Math.pow(10, magnitude)
+    return Math.round(value / factor) * factor
+}
+
+const toMagnitude = value =>
+    value === 0
+        ? 0
+        : Math.floor(Math.log10(Math.abs(value)))
+
+const stepMagnitude = ({min, max, minSteps}) => toMagnitude(Math.abs(max - min) / minSteps)
+
 export default {
     integer,
     decimal,
@@ -130,5 +208,9 @@ export default {
     fullDate,
     date,
     fileSize,
-    number
+    number,
+    significantDigits,
+    stepMagnitude,
+    numberToMagnitude,
+    round
 }
