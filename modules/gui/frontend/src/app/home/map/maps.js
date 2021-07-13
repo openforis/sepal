@@ -33,11 +33,15 @@ class _Maps extends React.Component {
 
     constructor(props) {
         super(props)
-        const {stream} = props
+        const {onError, stream} = props
         this.view$ = new Subject()
         stream('INIT_MAPS',
             this.initMaps$(),
-            mapsContext => this.setState(mapsContext)
+            mapsContext => this.setState(mapsContext),
+            error => {
+                onError(error)
+                this.setState({error})
+            }
         )
         this.createGoogleMap = this.createGoogleMap.bind(this)
         this.createSepalMap = this.createSepalMap.bind(this)
@@ -188,7 +192,7 @@ class _Maps extends React.Component {
 
     render() {
         const {children} = this.props
-        const {initialized, center, zoom, bounds, scale} = this.state
+        const {error, initialized, center, zoom, bounds, scale} = this.state
         return (
             <MapsContext.Provider value={{
                 createGoogleMap: this.createGoogleMap,
@@ -199,7 +203,7 @@ class _Maps extends React.Component {
                 bounds,
                 scale
             }}>
-                {children(initialized)}
+                {children(initialized, error)}
             </MapsContext.Provider>
         )
     }
@@ -211,5 +215,6 @@ export const Maps = compose(
 )
 
 Maps.propTypes = {
-    children: PropTypes.any
+    children: PropTypes.any.isRequired,
+    onError: PropTypes.func.isRequired
 }

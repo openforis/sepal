@@ -105,7 +105,8 @@
   "body": {
     "loading-apps": "Loading apps...",
     "loading-initializing-google-maps": "Initializing map...",
-    "starting-sepal": "Starting SEPAL..."
+    "starting-sepal": "Starting SEPAL...",
+    "starting-sepal-failed": "Something has gone wrong. Please reload the page and try again"
   },
   "browse": {
     "controls": {
@@ -223,14 +224,15 @@
     }
   },
   "home": {
+    "connectivityError": "You are currently unable to connect to the SEPAL server.",
     "sections": {
       "account": "Account settings",
       "app-launch-pad": "Apps",
       "browse": "Files",
       "collapse": "Automatically hide and show menu",
       "expand": "Always show menu",
-      "help": "Open Sepal documentation in a new tab/window",
-      "logout": "Logout from Sepal",
+      "help": "Open SEPAL documentation in a new tab/window",
+      "logout": "Logout from SEPAL",
       "process": "Process",
       "tasks": "Tasks",
       "terminal": "Terminal",
@@ -248,7 +250,7 @@
   "landing": {
     "features": {
       "apps": {
-        "description": "Extend the features in Sepal with custom data processing applications",
+        "description": "Extend the features in SEPAL with custom data processing applications",
         "title": "Extensible with apps"
       },
       "browse": {
@@ -317,7 +319,7 @@
     },
     "launch": "Launch",
     "loadCurrentUser": {
-      "error": "Failed to connect to Sepal"
+      "error": "Failed to connect to SEPAL"
     },
     "login": {
       "button": "Login",
@@ -359,9 +361,9 @@
     },
     "signup": "Signup",
     "tagline": "System for earth observations, data access, processing & analysis for land monitoring.",
-    "title": "Sepal",
+    "title": "SEPAL",
     "validate-token": {
-      "error": "This link is not valid anymore. Make sure you use the link in the latest email you received from Sepal."
+      "error": "This link is not valid anymore. Make sure you use the link in the latest email you received from SEPAL."
     }
   },
   "map": {
@@ -483,7 +485,7 @@
             }
           },
           "Recipe": {
-            "description": "Add a Sepal recipe"
+            "description": "Add a SEPAL recipe"
           }
         }
       },
@@ -661,7 +663,7 @@
   "notifications": {
     "error": {
       "connectionError": "Failed to connect to server. Either your internet connection failed, or server is unavailable at the moment.",
-      "generic": "Sepal encountered an error. Please try again or contact support if the problem persists."
+      "generic": "SEPAL encountered an error. Please try again or contact support if the problem persists."
     }
   },
   "pagination": {
@@ -1037,7 +1039,7 @@
               "GEE": "Google Earth Engine asset",
               "label": "Destination",
               "required": "A destination must be selected",
-              "SEPAL": "Sepal workspace"
+              "SEPAL": "SEPAL workspace"
             },
             "scale": {
               "info": "{scale} meters",
@@ -1070,7 +1072,7 @@
           },
           "task": {
             "GEE": "Export {name} as a Google Earth Engine asset",
-            "SEPAL": "Retrieve {name} to Sepal workspace"
+            "SEPAL": "Retrieve {name} to SEPAL workspace"
           },
           "title": "Retrieve",
           "tooltip": "Retrieve time-series"
@@ -1091,8 +1093,8 @@
             }
           },
           "recipe": {
-            "label": "Saved Sepal CCDC recipe",
-            "title": "Saved Sepal CCDC recipe"
+            "label": "Saved SEPAL CCDC recipe",
+            "title": "Saved SEPAL CCDC recipe"
           },
           "title": "Source",
           "tooltip": "Select EE asset with CCDC segments to slice"
@@ -1463,7 +1465,7 @@
           "loadingBandsError": "Failed to load from Google Earth Engine",
           "noImagery": "Please add at least one image to classify.",
           "recipe": {
-            "title": "Saved Sepal recipe"
+            "title": "Saved SEPAL recipe"
           },
           "remove": {
             "confirmationMessage": "Are you sure you want to remove {name} from your classification?",
@@ -1476,7 +1478,7 @@
           "tooltip": "Select images to classify",
           "type": {
             "ASSET": "Earth Engine asset",
-            "RECIPE_REF": "Sepal recipe"
+            "RECIPE_REF": "SEPAL recipe"
           }
         },
         "legend": {
@@ -1598,9 +1600,9 @@
               "tooltip": "Load reference data from an EE table."
             },
             "RECIPE": {
-              "label": "Saved Sepal recipe",
+              "label": "Saved SEPAL recipe",
               "title": "SEPAL RECIPE",
-              "tooltip": "Use training data from a saved Sepal recipe."
+              "tooltip": "Use training data from a saved SEPAL recipe."
             },
             "SAMPLE_CLASSIFICATION": {
               "label": "Sample classification",
@@ -2324,7 +2326,7 @@
       "name": "Name",
       "newRecipe": {
         "title": "Create recipe",
-        "tooltip": "Create a new Sepal recipe"
+        "tooltip": "Create a new SEPAL recipe"
       },
       "remove": {
         "success": "Recipe has been removed"
@@ -2342,7 +2344,7 @@
           "GEE": "Google Earth Engine asset",
           "label": "Retrieve to",
           "required": "A destination must be selected",
-          "SEPAL": "Sepal workspace"
+          "SEPAL": "SEPAL workspace"
         },
         "scale": {
           "info": "{scale} meters",
@@ -2350,7 +2352,7 @@
         },
         "task": {
           "GEE": "Export {name} as a Google Earth Engine asset",
-          "SEPAL": "Retrieve {name} to Sepal workspace"
+          "SEPAL": "Retrieve {name} to SEPAL workspace"
         }
       },
       "title": "Retrieve",
@@ -2756,7 +2758,7 @@
           "required": "Username is required"
         }
       },
-      "switchingToSepalGoogleAccount": "Switching to Sepal's Google Account",
+      "switchingToSEPALGoogleAccount": "Switching to SEPAL's Google Account",
       "title": "User details",
       "update": {
         "error": "Could not update user details.",

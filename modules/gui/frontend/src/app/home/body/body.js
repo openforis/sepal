@@ -6,6 +6,7 @@ import {history, location} from 'route'
 import {msg} from 'translate'
 import Apps from './apps/apps'
 import Browse from './browse/browse'
+import Notifications from '../../../widget/notifications'
 import Process from './process/process'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -64,8 +65,13 @@ class Body extends React.Component {
 
     render() {
         return (
-            <Maps>
-                {initialized => initialized ? this.renderSections() : this.renderProgress()}
+            <Maps onError={() => Notifications.error({message: msg('body.starting-sepal-failed'), timeout: -1})}>
+                {(initialized, error) => error
+                    ? null
+                    : initialized
+                        ? this.renderSections()
+                        : this.renderProgress()
+                }
             </Maps>
         )
     }

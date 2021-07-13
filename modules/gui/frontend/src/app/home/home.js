@@ -4,10 +4,12 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {exhaustMap, map} from 'rxjs/operators'
 import {isFloating} from './menu/menuMode'
+import {msg} from '../../translate'
 import {timer} from 'rxjs'
 import Body from './body/body'
 import Footer from './footer/footer'
 import Menu from './menu/menu'
+import Notifications from '../../widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -82,9 +84,10 @@ class Home extends React.Component {
     constructor(props) {
         super(props)
         const {stream} = props
-        stream('SCHEDULE_UPDATE_USER_REPORT', updateUserReport$())
-        stream('SCHEDULE_UPDATE_USER_MESSAGES', updateUserMessages$())
-        stream('SCHEDULE_UPDATE_TASKS', updateTasks$())
+        const errorHandler = () => Notifications.error({message: msg('home.connectivityError')})
+        stream('SCHEDULE_UPDATE_USER_REPORT', updateUserReport$(), null, errorHandler)
+        stream('SCHEDULE_UPDATE_USER_MESSAGES', updateUserMessages$(), null, errorHandler)
+        stream('SCHEDULE_UPDATE_TASKS', updateTasks$(), null, errorHandler)
     }
 
     render() {
