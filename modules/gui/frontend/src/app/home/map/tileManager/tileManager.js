@@ -1,7 +1,8 @@
-import {ReplaySubject, Subject} from 'rxjs'
+import {BehaviorSubject, ReplaySubject, Subject} from 'rxjs'
 import {finalize, first, tap} from 'rxjs/operators'
 import {getLogger} from 'log'
 import {getTileManagerGroup} from './tileManagerGroup'
+import {requestTag, tileProviderTag} from 'tag'
 import {v4 as uuid} from 'uuid'
 import _ from 'lodash'
 
@@ -13,9 +14,10 @@ const stats = {
 }
 
 export const getTileManager = tileProvider => {
-    const {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, hidden} = getTileManagerGroup(tileProvider)
+    const {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden} = getTileManagerGroup(tileProvider)
 
     const tileProviderId = uuid()
+    const pending$ = new BehaviorSubject(0)
 
     addTileProvider(tileProviderId, tileProvider)
 
@@ -27,17 +29,27 @@ export const getTileManager = tileProvider => {
         return getTileProviderInfo(tileProviderId).tileProvider.getConcurrency()
     }
 
-    const loadTile$ = request => {
+    const requestIn = () => {
         stats.in++
+        pending$.next(pending$.value + 1)
+    }
+
+    const requestOut = () => {
+        stats.out++
+        pending$.next(pending$.value - 1)
+    }
+
+    const loadTile$ = request => {
         const response$ = new ReplaySubject()
         const cancel$ = new Subject()
         const requestId = request.id
+        log.debug(`Load tile ${requestTag({tileProviderId, requestId})}`)
+        requestIn()
         submit({tileProviderId, requestId, request, response$, cancel$})
         return response$.pipe(
             first(),
-            tap(() => stats.out++),
+            tap(() => requestOut()),
             finalize(() => {
-                log.debug('Finalizing', {tileProviderId, requestId})
                 cancel$.next()
                 log.trace(`Stats: in: ${stats.in}, out: ${stats.out}`)
             })
@@ -45,12 +57,13 @@ export const getTileManager = tileProvider => {
     }
 
     const releaseTile = requestId => {
-        log.debug(`Release tile ${requestId}`)
+        log.debug(`Release tile ${requestTag({tileProviderId, requestId})}`)
         cancelByRequestId(requestId)
     }
 
-    const hide = isHidden => {
-        hidden(tileProviderId, isHidden)
+    const hide = hidden => {
+        log.debug(`Set ${tileProviderTag(tileProviderId)} ${hidden ? 'hidden' : 'visible'}`)
+        setHidden(tileProviderId, hidden)
     }
 
     const close = () => {
@@ -64,6 +77,7 @@ export const getTileManager = tileProvider => {
         loadTile$,
         releaseTile,
         hide,
+        pending$,
         close
     }
 }

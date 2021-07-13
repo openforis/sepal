@@ -43,8 +43,8 @@ const createTileManagerGroup = concurrency => {
     const submit = currentRequest =>
         request$.next(currentRequest)
 
-    const hidden = (tileProviderId, hidden) => {
-        requestExecutor.hidden(tileProviderId, hidden)
+    const setHidden = (tileProviderId, hidden) => {
+        requestExecutor.setHidden(tileProviderId, hidden)
         requestQueue.scan(({tileProviderId, requestId}) => requestExecutor.notify({tileProviderId, requestId}))
     }
     
@@ -84,7 +84,7 @@ const createTileManagerGroup = concurrency => {
         }
     )
 
-    return {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, hidden}
+    return {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden}
 }
 
 export const getTileManagerGroup = tileProvider => {

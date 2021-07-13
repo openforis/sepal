@@ -163,9 +163,9 @@ export const getRequestExecutor = concurrency => {
         }
     }
 
-    const hidden = (tileProviderId, hidden) => {
+    const setHidden = (tileProviderId, hidden) => {
         state.hidden[tileProviderId] = hidden
     }
 
-    return {isAvailable, execute, notify, cancelByRequestId, cancelByTileProviderId, hidden, finished$}
+    return {isAvailable, execute, notify, cancelByRequestId, cancelByTileProviderId, setHidden, finished$}
 }
