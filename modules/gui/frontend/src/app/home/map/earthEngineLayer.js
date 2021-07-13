@@ -76,10 +76,7 @@ export default class EarthEngineLayer {
     }
 
     addToMap() {
-        if (this.removed) {
-            console.log('EarthEngineLayer.addToMap() skipped')
-        } else {
-            console.log('EarthEngineLayer.addToMap()')
+        if (!this.removed) {
             const {map, layerIndex, progress$} = this
             const tileProvider = this.createTileProvider()
             this.tileLayer = new TileLayer({map, tileProvider, layerIndex, progress$})
@@ -88,7 +85,6 @@ export default class EarthEngineLayer {
     }
 
     removeFromMap() {
-        console.log('EarthEngineLayer.removeFromMap()')
         this.tileLayer && this.tileLayer.remove()
         this.cancel$.next()
     }
@@ -98,7 +94,6 @@ export default class EarthEngineLayer {
     }
 
     initialize$() {
-        console.log('EarthEngineLayer.initialize$()')
         this.onInitialize && this.onInitialize()
         return this.mapId$
             ? this.mapId$.pipe(

@@ -75,7 +75,6 @@ class _RecipeImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        console.log('RecipeImageLayer.componentDidMount()')
         const {addSubscription} = this.props
         addSubscription(
             this.progress$.subscribe(
@@ -87,10 +86,8 @@ class _RecipeImageLayer extends React.Component {
     }
 
     componentWillUnmount() {
-        console.log('RecipeImageLayer.componentWillUnmount()')
         this.setComplete('initialize')
         this.setComplete('tiles')
-        // this.layer && this.layer.close()
         this.layer && this.layer.removeFromMap()
     }
 
