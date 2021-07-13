@@ -1,9 +1,11 @@
-const fs = require('fs')
-const {Subject} = require('rxjs')
+const {readFile} = require('fs')
+const {stat} = require('fs/promises')
+const {Subject, from, of} = require('rxjs')
+const {catchError, map} = require('rxjs/operators')
 
 const fileToJson$ = path => {
     const json$ = new Subject()
-    fs.readFile(path, 'utf8', (error, s) => {
+    readFile(path, 'utf8', (error, s) => {
         if (error) {
             json$.error(error)
         } else {
@@ -18,4 +20,11 @@ const fileToJson$ = path => {
     return json$
 }
 
-module.exports = {fileToJson$}
+const lastModifiedDate$ = path => {
+    return from(stat(path)).pipe(
+        map(stats => stats.mtime),
+        catchError(() => of(null))
+    )
+}
+
+module.exports = {fileToJson$, lastModifiedDate$}

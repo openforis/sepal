@@ -1,7 +1,7 @@
-const {EMPTY, from, interval, of} = require('rxjs')
+const {EMPTY, from, interval, of, zip} = require('rxjs')
 const {catchError, delay, exhaustMap, filter, map, concatMap, switchMap} = require('rxjs/operators')
 const log = require('sepal/log').getLogger('apps')
-const {fileToJson$} = require('./file')
+const {fileToJson$, lastModifiedDate$} = require('./file')
 const {exec$} = require('./terminal')
 const {access, writeFile} = require('fs/promises')
 const {basename, dirname, join} = require('path')
@@ -111,13 +111,27 @@ const createVenv$ = ({path}) =>
         ))
     )
 
-const installRequirements$ = ({venvPath, requirementsPath}) =>
-    exec$(
-        '/',
-        'sudo',
-        ['install-requirements', venvPath, requirementsPath]
-
+const installRequirements$ = ({venvPath, requirementsPath}) => {
+    // If $venvPath/.installed exists, compare modified timestamp. If requirements are newer, install, otherwise, do nothing
+    return zip(
+        lastModifiedDate$(requirementsPath),
+        lastModifiedDate$(join(venvPath, '.installed'))
+    ).pipe(
+        switchMap(([requirementsTime, installTime]) => {
+            if (installTime < requirementsTime) {
+                log.info(`${requirementsPath} modified since last installation. ${installTime} >= ${requirementsTime}`)
+                return exec$(
+                    '/',
+                    'sudo',
+                    ['install-requirements', venvPath, requirementsPath]
+                )
+            } else {
+                log.info(`${requirementsPath} not modified since last installation. ${installTime} < ${requirementsTime}`)
+                return EMPTY
+            }
+        })
     )
+}
 
 const exists$ = ({path}) =>
     from(access(path)).pipe(
