@@ -1,6 +1,9 @@
 {
     "default": "info",
     "tileManager": "info",
+    "tileManager/group": "info",
+    "tileManager/queue": "info",
+    "tileManager/executor": "info",
     "map": "info",
     "sepalMap": "info",
     "maps": "info",

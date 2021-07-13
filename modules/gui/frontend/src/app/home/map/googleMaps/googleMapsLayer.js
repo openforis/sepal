@@ -1,31 +1,35 @@
-import {CancellingTileProvider} from '../tileProvider/cancellingTileProvider'
-import {MonitoringTileProvider} from '../tileProvider/monitoringTileProvider'
-import {PrioritizingTileProvider} from '../tileProvider/prioritizingTileProvider'
-import {RetryingTileManager} from '../tileProvider/retryingTileManager'
+import {BalancingTileProvider} from '../tileProvider/balancingTileProvider'
 import guid from 'guid'
 
-export const TileLayer = ({
-    layerIndex,
-    tileProvider,
-    map,
-    minZoom = 0,
-    maxZoom = 20,
-    progress$
-}) => {
-    const {google} = map.getGoogle()
-    const mapLayer = new GoogleMapsLayer(tileProvider, {google, minZoom, maxZoom}, progress$)
-    return {
-        add() {
-            map.addToMap(layerIndex, mapLayer)
-        },
+export class TileLayer {
+    constructor({
+        layerIndex,
+        tileProvider,
+        map,
+        minZoom = 0,
+        maxZoom = 20,
+        progress$
+    }) {
+        const {google} = map.getGoogle()
+        this.map = map
+        this.layerIndex = layerIndex
+        this.mapLayer = new GoogleMapsLayer(tileProvider, {google, minZoom, maxZoom}, progress$)
+    }
 
-        remove() {
-            map.removeFromMap(layerIndex)
-        },
+    add() {
+        const {map, layerIndex, mapLayer} = this
+        map.addToMap(layerIndex, mapLayer)
+    }
 
-        hide(hidden) {
-            mapLayer.setOpacity(hidden ? 0 : 1)
-        }
+    remove() {
+        const {map, layerIndex, mapLayer} = this
+        map.removeFromMap(layerIndex)
+        mapLayer.close()
+    }
+
+    hide(hidden) {
+        const {mapLayer} = this
+        mapLayer.setOpacity(hidden ? 0 : 1)
     }
 }
 
@@ -36,16 +40,7 @@ class GoogleMapsLayer {
         minZoom = 0,
         maxZoom = 20,
     } = {}, progress$) {
-        this.tileProvider =
-            new MonitoringTileProvider(
-                new RetryingTileManager(3,
-                    new PrioritizingTileProvider(
-                        new CancellingTileProvider(
-                            tileProvider
-                        )
-                    )
-                ), progress$
-            )
+        this.tileProvider = new BalancingTileProvider({tileProvider, reties: 3, progress$})
         this.name = name
         this.minZoom = minZoom
         this.maxZoom = maxZoom
@@ -102,5 +97,4 @@ class GoogleMapsLayer {
         const outOfBounds = zoom < minZoom || y < 0 || y >= maxCoord
         return {id, x, y, zoom, element, outOfBounds}
     }
-
 }

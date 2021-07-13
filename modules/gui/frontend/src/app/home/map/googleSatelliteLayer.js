@@ -17,16 +17,17 @@ export default class GoogleSatelliteLayer {
     addToMap() {
         const {map, layerIndex, progress$} = this
         const tileProvider = new GoogleSatelliteTileProvider()
-        this.layer = TileLayer({map, tileProvider, layerIndex, progress$})
-        this.layer.add()
+        this.tileLayer = new TileLayer({map, tileProvider, layerIndex, progress$})
+        this.tileLayer.add()
     }
 
     removeFromMap() {
-        this.map.removeFromMap(this.layerIndex)
+        this.tileLayer && this.tileLayer.remove()
     }
 
     hide(hidden) {
-        hidden ? this.removeFromMap() : this.addToMap()
+        // hidden ? this.removeFromMap() : this.addToMap()
+        this.tileLayer && this.tileLayer.hide(hidden)
     }
 
     initialize$() {

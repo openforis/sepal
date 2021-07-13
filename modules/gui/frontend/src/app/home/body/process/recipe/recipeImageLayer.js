@@ -75,19 +75,23 @@ class _RecipeImageLayer extends React.Component {
     }
 
     componentDidMount() {
+        console.log('RecipeImageLayer.componentDidMount()')
         const {addSubscription} = this.props
-        addSubscription(this.progress$.subscribe(
-            ({complete}) => complete
-                ? this.setComplete('tiles')
-                : this.setActive('tiles')
-        ))
-
+        addSubscription(
+            this.progress$.subscribe(
+                ({complete}) => complete
+                    ? this.setComplete('tiles')
+                    : this.setActive('tiles')
+            )
+        )
     }
 
     componentWillUnmount() {
+        console.log('RecipeImageLayer.componentWillUnmount()')
         this.setComplete('initialize')
         this.setComplete('tiles')
-        this.layer && this.layer.close()
+        // this.layer && this.layer.close()
+        this.layer && this.layer.removeFromMap()
     }
 
     maybeCreateLayer(dataTypes) {

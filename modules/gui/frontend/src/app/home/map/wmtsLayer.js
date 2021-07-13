@@ -18,18 +18,17 @@ export default class WMTSLayer {
     addToMap() {
         const {map, layerIndex, urlTemplate, concurrency, progress$} = this
         const tileProvider = new WMTSTileProvider({type: 'Planet', urlTemplate, concurrency})
-        this.layer = TileLayer({map, tileProvider, layerIndex, progress$})
-        this.layer.add()
+        this.tileLayer = new TileLayer({map, tileProvider, layerIndex, progress$})
+        this.tileLayer.add()
     }
 
     removeFromMap() {
-        this.map.removeFromMap(this.layerIndex)
+        this.tileLayer && this.tileLayer.remove()
     }
 
     hide(hidden) {
-        hidden
-            ? this.removeFromMap()
-            : this.addToMap()
+        // hidden ? this.removeFromMap() : this.addToMap()
+        this.tileLayer && this.tileLayer.hide(hidden)
     }
 
     initialize$() {

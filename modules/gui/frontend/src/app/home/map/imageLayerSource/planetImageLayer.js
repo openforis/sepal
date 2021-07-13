@@ -44,11 +44,13 @@ class _PlanetImageLayer extends React.Component {
     createLayer() {
         const {layerConfig: {bands, urlTemplate} = defaultLayerConfig, map} = this.props
         const concurrency = CONCURRENCY
-        return urlTemplate
+        const layer = urlTemplate
             ? this.selectedHasCir()
                 ? new WMTSLayer({map, urlTemplate: `${urlTemplate}&proc=${bands}`, concurrency, progress$: this.progress$})
                 : new WMTSLayer({map, concurrency, urlTemplate: `${urlTemplate}`})
             : null
+        this.layer = layer
+        return layer
     }
 
     renderForm() {
@@ -150,6 +152,7 @@ class _PlanetImageLayer extends React.Component {
 
     componentWillUnmount() {
         this.setComplete('tiles')
+        this.layer && this.layer.removeFromMap()
     }
 
     update() {

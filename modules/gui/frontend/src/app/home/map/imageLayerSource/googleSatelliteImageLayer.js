@@ -14,6 +14,7 @@ export class _GoogleSatelliteImageLayer extends React.Component {
     render() {
         const {map} = this.props
         const layer = new GoogleSatelliteLayer({map, progress$: this.progress$})
+        this.layer = layer
         return (
             <MapAreaLayout
                 layer={layer}
@@ -33,6 +34,7 @@ export class _GoogleSatelliteImageLayer extends React.Component {
 
     componentWillUnmount() {
         this.setComplete('tiles')
+        this.layer && this.layer.removeFromMap()
     }
 
     setActive(name) {

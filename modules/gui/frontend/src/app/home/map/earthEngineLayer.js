@@ -1,7 +1,7 @@
 import {EarthEngineTileProvider} from './tileProvider/earthEngineTileProvider'
-import {Subject, of} from 'rxjs'
+import {ReplaySubject, Subject, of} from 'rxjs'
 import {TileLayer} from './googleMaps/googleMapsLayer'
-import {mapTo, tap} from 'rxjs/operators'
+import {mapTo, takeUntil, tap} from 'rxjs/operators'
 import _ from 'lodash'
 import api from 'api'
 
@@ -55,22 +55,16 @@ export default class EarthEngineLayer {
         this.cursor$ = cursor$ || new Subject()
         this.onInitialize = onInitialize
         this.onInitialized = onInitialized
+        this.cancel$ = new ReplaySubject()
     }
 
     equals(o) {
         return _.isEqual(o && o.props, this.props)
     }
 
-    addToMap() {
-        const {map, layerIndex, progress$} = this
-        const tileProvider = this.createTileProvider()
-        this.layer = TileLayer({map, tileProvider, layerIndex, progress$})
-        this.layer.add()
-    }
-
     createTileProvider() {
         const {urlTemplate} = this
-        this.tileProvider = new EarthEngineTileProvider({
+        return new EarthEngineTileProvider({
             urlTemplate,
             dataTypes: this.dataTypes,
             visParams: this.visParams,
@@ -79,33 +73,55 @@ export default class EarthEngineLayer {
             dragging$: this.dragging$,
             cursor$: this.cursor$
         })
-        return this.tileProvider
+    }
+
+    addToMap() {
+        if (this.removed) {
+            console.log('EarthEngineLayer.addToMap() skipped')
+        } else {
+            console.log('EarthEngineLayer.addToMap()')
+            const {map, layerIndex, progress$} = this
+            const tileProvider = this.createTileProvider()
+            this.tileLayer = new TileLayer({map, tileProvider, layerIndex, progress$})
+            this.tileLayer.add()
+        }
     }
 
     removeFromMap() {
-        this.layer && this.layer.remove()
+        console.log('EarthEngineLayer.removeFromMap()')
+        this.tileLayer && this.tileLayer.remove()
+        this.cancel$.next()
     }
 
     hide(hidden) {
-        this.layer && this.layer.hide(hidden)
-    }
-
-    close() {
-        this.tileProvider && this.tileProvider.close()
+        this.tileLayer && this.tileLayer.hide(hidden)
     }
 
     initialize$() {
+        console.log('EarthEngineLayer.initialize$()')
         this.onInitialize && this.onInitialize()
-        return this.mapId
-            ? of(this)
-            : this.mapId$.pipe(
+        return this.mapId$
+            ? this.mapId$.pipe(
                 tap(({response: {token, mapId, urlTemplate}}) => {
                     this.token = token
                     this.mapId = mapId
                     this.urlTemplate = urlTemplate
                     this.onInitialized && this.onInitialized()
                 }),
-                mapTo(this)
+                mapTo(this),
+                takeUntil(this.cancel$)
             )
+            : of(this)
+        // return this.mapId
+        //     ? of(this)
+        //     : this.mapId$.pipe(
+        //         tap(({response: {token, mapId, urlTemplate}}) => {
+        //             this.token = token
+        //             this.mapId = mapId
+        //             this.urlTemplate = urlTemplate
+        //             this.onInitialized && this.onInitialized()
+        //         }),
+        //         mapTo(this)
+        //     )
     }
 }
