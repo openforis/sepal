@@ -76,7 +76,6 @@ export default class EarthEngineLayer {
     }
 
     addToMap() {
-        console.log('EarthEngineLayer.addToMap()')
         const {map, layerIndex, progress$} = this
         const tileProvider = this.createTileProvider()
         this.tileLayer = new TileLayer({map, tileProvider, layerIndex, progress$})
@@ -106,16 +105,5 @@ export default class EarthEngineLayer {
                 takeUntil(this.cancel$)
             )
             : of(this)
-        // return this.mapId
-        //     ? of(this)
-        //     : this.mapId$.pipe(
-        //         tap(({response: {token, mapId, urlTemplate}}) => {
-        //             this.token = token
-        //             this.mapId = mapId
-        //             this.urlTemplate = urlTemplate
-        //             this.onInitialized && this.onInitialized()
-        //         }),
-        //         mapTo(this)
-        //     )
     }
 }
