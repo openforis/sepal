@@ -12,6 +12,10 @@ function template {
 }
 
 PROJECT_DIR=/usr/local/lib/sepal
+
+# Re-enable TLSv1 and TLSv1.1 for java mail
+sed -i 's/jdk.tls.disabledAlgorithms=.*/jdk.tls.disabledAlgorithms=SSLv3, RC4, DES, MD5withRSA, /' $JAVA_HOME/conf/security/java.security
+
 sudo chmod +x $PROJECT_DIR/dev-env/*.sh
 sudo ln -sf $PROJECT_DIR/dev-env/sepal-setup.sh /usr/local/bin/sepal-setup
 sudo ln -sf $PROJECT_DIR/dev-env/sepal.sh /usr/local/bin/sepal
