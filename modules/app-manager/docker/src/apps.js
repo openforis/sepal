@@ -115,7 +115,8 @@ const installRequirements$ = ({venvPath, requirementsPath}) =>
     exec$(
         '/',
         'sudo',
-        [join(venvPath, 'bin/pip3'), 'install', '--cache-dir', '/root/.cache/pip', 'ipykernel', '-r', requirementsPath]
+        ['install-requirements', venvPath, requirementsPath]
+
     )
 
 const exists$ = ({path}) =>

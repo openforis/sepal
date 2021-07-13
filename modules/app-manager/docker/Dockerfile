@@ -5,6 +5,8 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV MODULE /usr/local/src/sepal/modules/app-manager/docker
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
+ADD install-requirements.sh /usr/local/bin/install-requirements
+RUN chmod +x /usr/local/bin/install-requirements
 ADD kernels /etc/sepal/app-manager/kernels-templates
 
 RUN apt update && apt install -y \
