@@ -1,28 +1,11 @@
-import {EarthEngineTileProvider} from './tileProvider/earthEngineTileProvider'
-import {ReplaySubject, Subject, of} from 'rxjs'
-import {TileLayer} from './googleMaps/googleMapsLayer'
+import {EarthEngineTileProvider} from '../tileProvider/earthEngineTileProvider'
+import {ReplaySubject, Subject} from 'rxjs'
+import {TileLayer} from './googleMapsLayer'
 import {mapTo, takeUntil, tap} from 'rxjs/operators'
 import _ from 'lodash'
 import api from 'api'
 
 export default class EarthEngineLayer {
-    static create({previewRequest, dataTypes, visParams, map, progress$, cursorValue$, boundsChanged$, dragging$, cursor$, onInitialize, onInitialized}) {
-        return new EarthEngineLayer({
-            map,
-            dataTypes,
-            visParams,
-            mapId$: api.gee.preview$(previewRequest),
-            props: previewRequest,
-            progress$,
-            cursorValue$,
-            boundsChanged$,
-            dragging$,
-            cursor$,
-            onInitialize,
-            onInitialized
-        })
-    }
-
     constructor({
         map,
         dataTypes,
@@ -30,8 +13,7 @@ export default class EarthEngineLayer {
         layerIndex = 0,
         label,
         description,
-        mapId$,
-        props,
+        previewRequest,
         progress$,
         cursorValue$,
         boundsChanged$,
@@ -46,8 +28,8 @@ export default class EarthEngineLayer {
         this.layerIndex = layerIndex
         this.label = label
         this.description = description
-        this.mapId$ = mapId$
-        this.props = props
+        this.mapId$ = api.gee.preview$(previewRequest)
+        this.props = previewRequest
         this.progress$ = progress$
         this.cursorValue$ = cursorValue$
         this.boundsChanged$ = boundsChanged$
@@ -93,17 +75,15 @@ export default class EarthEngineLayer {
 
     initialize$() {
         this.onInitialize && this.onInitialize()
-        return this.mapId$
-            ? this.mapId$.pipe(
-                tap(({response: {token, mapId, urlTemplate}}) => {
-                    this.token = token
-                    this.mapId = mapId
-                    this.urlTemplate = urlTemplate
-                    this.onInitialized && this.onInitialized()
-                }),
-                mapTo(this),
-                takeUntil(this.cancel$)
-            )
-            : of(this)
+        return this.mapId$.pipe(
+            tap(({response: {token, mapId, urlTemplate}}) => {
+                this.token = token
+                this.mapId = mapId
+                this.urlTemplate = urlTemplate
+                this.onInitialized && this.onInitialized()
+            }),
+            mapTo(this),
+            takeUntil(this.cancel$)
+        )
     }
 }

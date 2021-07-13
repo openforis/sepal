@@ -5,7 +5,7 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import {withMap} from 'app/home/map/mapContext'
-import EarthEngineLayer from 'app/home/map/earthEngineLayer'
+import EarthEngineLayer from 'app/home/map/layer/earthEngineLayer'
 import MapStatus from 'widget/mapStatus'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -78,8 +78,7 @@ class PrimitivePreview extends React.Component {
         const layer = new EarthEngineLayer({
             map,
             layerIndex: 1,
-            mapId$: api.gee.preview$(previewRequest),
-            props: previewRequest,
+            previewRequest,
             progress$: this.progress$
         })
         const changed = map.setLayer({
