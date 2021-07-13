@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {currentUser} from 'widget/user'
+import {currentUser} from 'user'
 import {isFloating} from './menuMode'
 import {isPathInLocation} from 'route'
 import {msg} from 'translate'

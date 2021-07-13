@@ -3,12 +3,12 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {CenteredProgress} from 'widget/progress'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PropTypes} from 'prop-types'
 import {compose} from 'compose'
 import {history, query} from 'route'
 import {msg} from 'translate'
-import {resetPassword, tokenUser, validateToken$} from 'widget/user'
+import {resetPassword$, tokenUser, validateToken$} from 'user'
 import Notifications from 'widget/notifications'
+import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
 import styles from './setPassword.module.css'
@@ -40,8 +40,9 @@ const mapStateToProps = () => ({
 
 class SetPassword extends React.Component {
     componentDidMount() {
+        const {stream} = this.props
         const token = query().token
-        this.props.stream('VALIDATE_TOKEN',
+        stream('VALIDATE_TOKEN',
             validateToken$(token),
             user => actionBuilder('TOKEN_VALIDATED')
                 .set('user.tokenUser', user)
@@ -62,8 +63,9 @@ class SetPassword extends React.Component {
     }
 
     resetPassword({username, password}) {
+        const {stream} = this.props
         const token = query().token
-        resetPassword({token, username, password})
+        stream('RESET_PASSWORD', resetPassword$({token, username, password}))
     }
 
     render() {

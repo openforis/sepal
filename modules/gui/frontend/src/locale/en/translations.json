@@ -316,8 +316,12 @@
       }
     },
     "launch": "Launch",
+    "loadCurrentUser": {
+      "error": "Failed to connect to Sepal"
+    },
     "login": {
       "button": "Login",
+      "error": "An error occurred during authentication.",
       "forgot-password-link": "Forgot password?",
       "password": {
         "invalid": "Invalid username/password",

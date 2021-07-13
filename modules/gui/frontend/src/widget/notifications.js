@@ -53,7 +53,7 @@ const publish = notification => {
             ...notification,
             group: group(notification)
         })
-    
+
     const defaultTitle = {
         'error': msg('widget.notification.error.title'),
         'warning': msg('widget.notification.warning.title')
@@ -63,7 +63,7 @@ const publish = notification => {
         id = uuid(),
         level = 'info',
         title = defaultTitle[level],
-        timeout = 4,
+        timeout = 8,
         dismissable = true,
         ...notification
     }) => ({id, level, title, timeout, dismissable, ...notification})

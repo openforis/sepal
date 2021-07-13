@@ -1,6 +1,6 @@
 import {ajax} from 'rxjs/ajax'
-import {catchError, flatMap, map, retryWhen} from 'rxjs/operators'
-import {logout} from 'widget/user'
+import {catchError, map, mergeMap, retryWhen} from 'rxjs/operators'
+import {logout$} from 'user'
 import {msg} from 'translate'
 import {of, range, throwError, timer, zip} from 'rxjs'
 import Notifications from 'widget/notifications'
@@ -97,7 +97,7 @@ const execute$ = (url, method, {retries, query, username, password, headers, val
                 return of(e)
             } else if (e.status === 401 && isRelative(url)) {
                 Notifications.warning({message: msg('unauthorized.warning'), group: true})
-                return logout()
+                return logout$()
             } else {
                 return throwError(e)
             }
@@ -107,7 +107,7 @@ const execute$ = (url, method, {retries, query, username, password, headers, val
                 error$,
                 range(1, retries + 1)
             ).pipe(
-                flatMap(
+                mergeMap(
                     ([error, retry]) => {
                         if (error.status < 500 || retry > retries)
                             return throwError(error)

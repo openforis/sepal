@@ -4,7 +4,9 @@ import {Layout} from 'widget/layout'
 import {UsageButton} from '../user/usage'
 import {UserDetailsButton} from '../user/userDetails'
 import {UserMessagesButton} from '../user/userMessages'
-import {logout} from 'widget/user'
+import {compose} from '../../../compose'
+import {connect} from '../../../store'
+import {logout$} from 'user'
 import {msg} from 'translate'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -34,17 +36,21 @@ const Footer = ({className}) => {
 
 Footer.propTypes = {}
 
-const Logout = () =>
+const _Logout = ({stream}) =>
     <Button
         chromeless
         look='transparent'
         size='large'
         air='less'
         icon='sign-out-alt'
-        onClick={logout}
+        onClick={() => stream('LOGOUT', logout$())}
         tooltip={msg('home.sections.logout')}
         tooltipPlacement='top'/>
 
+const Logout = compose(
+    _Logout,
+    connect()
+)
 const Title = () => {
     const wikiURL = 'https://github.com/openforis/sepal'
     const buildNumber = process.env.REACT_APP_BUILD_NUMBER
@@ -55,7 +61,7 @@ const Title = () => {
         clipboard.copy(value)
         Notifications.success({message})
     }
-    
+
     const tooltip =
         <Layout type='vertical' spacing='none'>
             <Layout type='horizontal-nowrap'>

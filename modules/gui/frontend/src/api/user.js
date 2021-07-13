@@ -44,7 +44,7 @@ export default {
         }).pipe(toResponse),
 
     validateToken$: token =>
-        post$('/api/user/validate-token', {
+        postForm$('/api/user/validate-token', {
             body: {token}
         }).pipe(toResponse),
 

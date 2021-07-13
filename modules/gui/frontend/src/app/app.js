@@ -1,12 +1,12 @@
 import {compose} from 'compose'
 import {connect} from 'store'
+import {loadUser$} from 'user'
 import {selectFrom} from 'stateUtils'
 import Home from 'app/home/home'
 import Landing from 'app/landing/landing'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
-import User from 'widget/user'
 import ViewportResizeSensor from 'widget/viewportResizeSensor'
 import css1 from './reset.css'
 import css2 from './app.css'
@@ -26,7 +26,6 @@ class App extends React.Component {
         const {hasDimensions} = this.props
         return (
             <div className='app'>
-                <User/>
                 <ViewportResizeSensor/>
                 {hasDimensions ? this.renderBody() : null}
                 <Notifications/>
@@ -41,6 +40,11 @@ class App extends React.Component {
                 ? <Home/>
                 : <Landing/>
             : <Loader/>
+    }
+
+    componentDidMount() {
+        const {stream} = this.props
+        stream('LOAD_USER', loadUser$())
     }
 }
 

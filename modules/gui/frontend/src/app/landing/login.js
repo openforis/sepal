@@ -3,7 +3,7 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
-import {invalidCredentials, login, resetInvalidCredentials} from 'widget/user'
+import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -25,8 +25,8 @@ const mapStateToProps = () => ({
 
 class Login extends React.Component {
     login({username, password}) {
-        login({username, password})
-        // this.props.stream('LOGIN', login$(username, password))
+        const {stream} = this.props
+        stream('LOGIN', login$({username, password}))
     }
 
     componentWillUnmount() {
@@ -39,7 +39,7 @@ class Login extends React.Component {
     }
 
     render() {
-        const {form, inputs: {username, password}, action} = this.props
+        const {form, inputs: {username, password}, stream} = this.props
         return (
             <Form className={styles.form} onSubmit={() => this.login(form.values())}>
                 <Layout spacing='loose'>
@@ -76,7 +76,6 @@ class Login extends React.Component {
                                 look='transparent'
                                 size='large'
                                 shape='pill'
-                                // alignment='left'
                                 label={msg('landing.login.forgot-password-link')}
                                 tabIndex={5}
                                 onMouseDown={e => e.preventDefault()}
@@ -90,9 +89,9 @@ class Login extends React.Component {
                                 size='x-large'
                                 shape='pill'
                                 additionalClassName={styles.loginButton}
-                                icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in-alt'}
+                                icon={stream('LOGIN').active ? 'spinner' : 'sign-in-alt'}
                                 label={msg('landing.login.button')}
-                                disabled={form.isInvalid() || action('LOGIN').dispatching}
+                                disabled={form.isInvalid() || stream('LOGIN').active}
                                 tabIndex={3}
                             />
                         </ButtonGroup>
