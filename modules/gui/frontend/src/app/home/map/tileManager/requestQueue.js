@@ -29,7 +29,9 @@ export const getRequestQueue = () => {
     const dequeueByRequestId = requestId => {
         if (requestId) {
             const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.requestId === requestId)
-            return dequeueByIndex(index, 'by requestId')
+            if (index !== -1) {
+                return dequeueByIndex(index, 'requestId')
+            }
         }
         log.warn(`Could not dequeue ${requestTag({requestId})}, reverting to FIFO`)
         return dequeueFIFO()
@@ -38,19 +40,21 @@ export const getRequestQueue = () => {
     const dequeueByTileProviderId = tileProviderId => {
         if (tileProviderId) {
             const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.tileProviderId === tileProviderId)
-            return dequeueByIndex(index, 'by tileProviderId')
+            if (index !== -1) {
+                return dequeueByIndex(index, 'tileProviderId')
+            }
         }
         log.debug(`Could not dequeue ${tileProviderTag({tileProviderId})}, reverting to FIFO`)
         return dequeueFIFO()
     }
 
-    const dequeueByIndex = (index, option = '') => {
+    const dequeueByIndex = (index, dequeueMode = '') => {
         if (index !== -1) {
             const [pendingRequest] = pendingRequests.splice(index, 1)
-            log.debug(`Dequeued ${option} ${requestTag(pendingRequest)} - currently pending: ${getCount()}`)
+            log.debug(`Dequeued by ${dequeueMode} ${requestTag(pendingRequest)} - currently pending: ${getCount()}`)
             return pendingRequest
         }
-        log.warn(`Could not dequeue index ${index}, reverting to FIFO`)
+        log.warn(`Could not dequeue by ${dequeueMode}, reverting to FIFO`)
         return dequeueFIFO()
     }
 
