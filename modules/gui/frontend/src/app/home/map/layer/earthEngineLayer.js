@@ -14,6 +14,7 @@ export default class EarthEngineLayer {
         label,
         description,
         previewRequest,
+        mapId$,
         progress$,
         cursorValue$,
         boundsChanged$,
@@ -28,7 +29,7 @@ export default class EarthEngineLayer {
         this.layerIndex = layerIndex
         this.label = label
         this.description = description
-        this.mapId$ = api.gee.preview$(previewRequest)
+        this.mapId$ = mapId$ || api.gee.preview$(previewRequest)
         this.props = previewRequest
         this.progress$ = progress$
         this.cursorValue$ = cursorValue$

@@ -70,7 +70,7 @@ EETableLayer.propTypes = {
 
 class Layer extends EarthEngineLayer {
     constructor({map, mapId$, layerIndex, watchedProps}) {
-        super({map, layerIndex, mapId$, props: watchedProps})
+        super({map, layerIndex, mapId$, previewRequest: watchedProps})
     }
 
     createTileProvider() {
