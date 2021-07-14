@@ -150,6 +150,9 @@ export const AssetImageLayer = compose(
 
 AssetImageLayer.propTypes = {
     source: PropTypes.any.isRequired,
+    boundsChanged$: PropTypes.any,
+    cursor$: PropTypes.any,
+    dragging$: PropTypes.any,
     layerConfig: PropTypes.object,
     map: PropTypes.object
 }
