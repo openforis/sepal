@@ -50,6 +50,7 @@ export class BalancingTileProvider extends TileProvider {
 
     releaseTile(element) {
         this.tileManager.releaseTile(element.id)
+        this.tileProvider.releaseTile(element)
     }
 
     hide(hidden) {
@@ -59,6 +60,7 @@ export class BalancingTileProvider extends TileProvider {
     close() {
         this.tileManager.close()
         this.subscriptions.forEach(subscription => subscription.unsubscribe())
+        this.tileProvider.close()
     }
 }
 
