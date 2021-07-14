@@ -146,5 +146,8 @@ export const RecipeImageLayer = compose(
 RecipeImageLayer.propTypes = {
     layerConfig: PropTypes.object.isRequired,
     source: PropTypes.object.isRequired,
-    map: PropTypes.object
+    boundsChanged$: PropTypes.any,
+    cursor$: PropTypes.any,
+    dragging$: PropTypes.any,
+    map: PropTypes.object,
 }

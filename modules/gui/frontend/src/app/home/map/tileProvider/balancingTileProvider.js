@@ -8,6 +8,7 @@ export class BalancingTileProvider extends TileProvider {
         super()
         this.subscriptions = []
         this.retries = retries
+        this.tileProvider = tileProvider
         this.tileManager = getTileManager(tileProvider)
         this.initProgress(progress$)
     }
@@ -37,6 +38,14 @@ export class BalancingTileProvider extends TileProvider {
             switchMap(() => this.tileManager.loadTile$(tileRequest)),
             retry(this.retries, {description: tileRequest.id}),
         )
+    }
+
+    createElement(id, doc) {
+        return this.tileProvider.createElement(id, doc)
+    }
+
+    renderTile({doc, element, blob}) {
+        this.tileProvider.renderTile({doc, element, blob})
     }
 
     releaseTile(element) {
