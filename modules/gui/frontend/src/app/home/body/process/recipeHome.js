@@ -42,7 +42,9 @@ class _RecipeHome extends React.Component {
                     <BottomBar className={styles.bottomBar}>
                         {recipes && recipes.length
                             ? <RecipeList.Pagination/>
-                            : <div>{msg('process.menu.noSavedRecipes')}</div>
+                            : !recipes
+                                ? null
+                                : <div>{msg('process.menu.noSavedRecipes')}</div>
                         }
                     </BottomBar>
                 </SectionLayout>

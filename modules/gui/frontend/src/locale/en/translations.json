@@ -2323,6 +2323,7 @@
     "recipe": {
       "lastUpdate": "Last update",
       "loading": "Loading recipes",
+      "loadingError": "Failed to load recipes. Please reload page to try again.",
       "name": "Name",
       "newRecipe": {
         "title": "Create recipe",

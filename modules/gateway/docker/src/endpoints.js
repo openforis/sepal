@@ -56,12 +56,12 @@ const endpoints = [
         target: `http://${modules.user}`,
         authenticate: true
     },
-    {
-        prefix: true,
-        path: '/api/processing-recipes',
-        target: `http://${modules.sepal}/api/processing-recipes`,
-        authenticate: true
-    },
+    // {
+    //     prefix: true,
+    //     path: '/api/processing-recipes',
+    //     target: `http://${modules.sepal}/api/processing-recipes`,
+    //     authenticate: true
+    // },
     {
         prefix: true,
         path: '/api/budget',

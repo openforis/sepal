@@ -5,6 +5,8 @@ import {RecipeListPagination} from './recipeListPagination'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {loadRecipes$} from '../recipe'
+import {msg} from 'translate'
+import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -48,13 +50,17 @@ class _RecipeList extends React.Component {
     componentDidMount() {
         const {recipes, stream} = this.props
         if (!recipes) {
-            stream('LOAD_RECIPES', loadRecipes$())
+            stream('LOAD_RECIPES',
+                loadRecipes$(),
+                null,
+                () => Notifications.error({message: msg('process.recipe.loadingError'), timeout: -1})
+            )
         }
     }
 
     isLoading() {
-        const {recipes, action} = this.props
-        return !recipes && !action('LOAD_RECIPES').dispatched
+        const {recipes, stream} = this.props
+        return !recipes && stream('LOAD_RECIPES').active
     }
 
     hasData() {
@@ -91,7 +97,7 @@ class _RecipeList extends React.Component {
             }, sortingDirection === 1 ? 'asc' : 'desc')
             .value()
     }
-    
+
     recipeMatchesFilter(recipe) {
         const {filterValues} = this.state
         const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
