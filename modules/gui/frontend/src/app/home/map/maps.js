@@ -16,6 +16,10 @@ const log = getLogger('maps')
 
 const GOOGLE_MAPS_VERSION = '3.44'
 
+const DEFAULT_ZOOM = 3
+const MIN_ZOOM = 3
+const MAX_ZOOM = 22
+
 export const MapsContext = React.createContext()
 
 export const withMapsContext = withContext(MapsContext, 'mapsContext')
@@ -104,9 +108,9 @@ class _Maps extends React.Component {
     createGoogleMap(mapElement, options = {}, style = 'sepalStyle') {
         const {google: {google}} = this.state
         const mapOptions = {
-            zoom: 3,
-            minZoom: 3,
-            maxZoom: 17,
+            zoom: DEFAULT_ZOOM,
+            minZoom: MIN_ZOOM,
+            maxZoom: MAX_ZOOM,
             center: new google.maps.LatLng(16.7794913, 9.6771556),
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             zoomControl: false,
