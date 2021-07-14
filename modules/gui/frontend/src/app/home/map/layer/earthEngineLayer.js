@@ -1,7 +1,7 @@
 import {EarthEngineTileProvider} from '../tileProvider/earthEngineTileProvider'
-import {ReplaySubject, Subject} from 'rxjs'
+import {ReplaySubject, Subject, throwError} from 'rxjs'
 import {TileLayer} from './googleMapsLayer'
-import {mapTo, takeUntil, tap} from 'rxjs/operators'
+import {catchError, mapTo, takeUntil, tap} from 'rxjs/operators'
 import _ from 'lodash'
 import api from 'api'
 
@@ -21,7 +21,8 @@ export default class EarthEngineLayer {
         dragging$,
         cursor$,
         onInitialize,
-        onInitialized
+        onInitialized,
+        onError
     }) {
         this.dataTypes = dataTypes
         this.visParams = visParams
@@ -38,6 +39,7 @@ export default class EarthEngineLayer {
         this.cursor$ = cursor$ || new Subject()
         this.onInitialize = onInitialize
         this.onInitialized = onInitialized
+        this.onError = onError
         this.cancel$ = new ReplaySubject()
     }
 
@@ -84,6 +86,10 @@ export default class EarthEngineLayer {
                 this.onInitialized && this.onInitialized()
             }),
             mapTo(this),
+            catchError(error => {
+                this.onError && this.onError(error)
+                return throwError(error)
+            }),
             takeUntil(this.cancel$)
         )
     }

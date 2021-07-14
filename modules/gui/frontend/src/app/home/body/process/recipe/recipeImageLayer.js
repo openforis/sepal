@@ -118,7 +118,8 @@ class _RecipeImageLayer extends React.Component {
                 dragging$,
                 cursor$,
                 onInitialize: () => this.setActive('initialize'),
-                onInitialized: () => this.setComplete('initialize')
+                onInitialized: () => this.setComplete('initialize'),
+                onError: () => this.setComplete('initialize')
             })
         }
         return this.layer
