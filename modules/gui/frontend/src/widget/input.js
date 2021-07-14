@@ -40,7 +40,6 @@ class _Input extends React.Component {
         input.value = value
         if (this.isSelectionAllowed()) {
             const {start, end} = this.state
-            const {selectionStart, selectionEnd} = input
             if (prevState.start !== start && input.selectionStart !== start) {
                 input.selectionStart = start
             }
