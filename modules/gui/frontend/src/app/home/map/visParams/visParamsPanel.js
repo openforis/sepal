@@ -502,7 +502,8 @@ class _VisParamsPanel extends React.Component {
                 ),
                 data => data
                     ? updateHistogram(data, stretch)
-                    : Notifications.warning({message: msg('map.visParams.form.histogram.noData')})
+                    : Notifications.warning({message: msg('map.visParams.form.histogram.noData')}),
+                error => Notifications.error({message: msg('map.visParams.form.histogram.error'), error})
             )
         }
     }

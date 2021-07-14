@@ -535,6 +535,7 @@
           "info": "Value: {gamma}"
         },
         "histogram": {
+          "error": "Failed to create histogram.",
           "noData": "The band contain no data."
         },
         "inverted": {
