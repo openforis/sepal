@@ -9,13 +9,25 @@ import {getTabsInfo} from 'widget/tabs/tabs'
 import {msg} from 'translate'
 import {recipePath, saveRecipe} from './recipe'
 import {select} from '../../../../store'
+import {withLeaveAlert} from 'widget/leaveAlert'
 import CloseRecipe from './closeRecipe'
 import ProcessMenu from './processMenu'
 import React from 'react'
 import Revisions from 'app/home/body/process/revisions'
 import SaveRecipe from './saveRecipe'
+import _ from 'lodash'
 
 export const getProcessTabsInfo = () => getTabsInfo('process')
+
+const mapStateToLeaveAlert = () => {
+    const recipes = select('process.loadedRecipes') || {}
+    const unsavedRecipes = _(recipes)
+        .values()
+        .map(recipe => recipe.ui && recipe.ui.unsaved)
+        .filter(unsaved => unsaved)
+        .size()
+    return unsavedRecipes
+}
 
 class Process extends React.Component {
     render() {
@@ -87,5 +99,6 @@ class Process extends React.Component {
 
 export default compose(
     Process,
-    activator('closeRecipeDialog')
+    activator('closeRecipeDialog'),
+    withLeaveAlert(mapStateToLeaveAlert)
 )
