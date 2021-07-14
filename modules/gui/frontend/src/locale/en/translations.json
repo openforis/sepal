@@ -106,7 +106,7 @@
     "loading-apps": "Loading apps...",
     "loading-initializing-google-maps": "Initializing map...",
     "starting-sepal": "Starting SEPAL...",
-    "starting-sepal-failed": "Something has gone wrong. Please reload the page and try again"
+    "starting-sepal-failed": "Something has gone wrong. Please reload the page and try again."
   },
   "browse": {
     "controls": {
