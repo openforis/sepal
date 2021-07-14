@@ -140,9 +140,7 @@ class _Maps extends React.Component {
     }
 
     getScale({center, zoom}) {
-        return Math.round(
-            156543.03392 * Math.cos(center.lat() * Math.PI / 180) / Math.pow(2, zoom)
-        )
+        return 156543.03392 * Math.cos(center.lat() * Math.PI / 180) / Math.pow(2, zoom)
     }
 
     createMapContext(mapId = uuid()) {

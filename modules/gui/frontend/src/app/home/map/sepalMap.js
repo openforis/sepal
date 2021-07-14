@@ -160,12 +160,20 @@ export class SepalMap {
 
     getZoom() {
         const {googleMap} = this
-        return googleMap.getZoom()
+        const zoom = googleMap.getZoom()
+        const sanitizedZoom = Math.min(googleMap.maxZoom, Math.max(googleMap.minZoom, zoom))
+        if (sanitizedZoom !== zoom) {
+            log.debug(`getZoom: zoom adjusted to fall within range [${googleMap.minZoom} - ${googleMap.maxZoom}]: ${zoom} -> ${sanitizedZoom}`)
+        }
+        return sanitizedZoom
     }
 
     setZoom(zoom) {
         const {googleMap} = this
         const sanitizedZoom = Math.min(googleMap.maxZoom, Math.max(googleMap.minZoom, zoom))
+        if (sanitizedZoom !== zoom) {
+            log.debug(`setZoom: zoom adjusted to fall within range [${googleMap.minZoom} - ${googleMap.maxZoom}]: ${zoom} -> ${sanitizedZoom}`)
+        }
         if (googleMap.getZoom() !== sanitizedZoom) {
             googleMap.setZoom(sanitizedZoom)
         }
