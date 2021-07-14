@@ -5,13 +5,12 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import {withMap} from 'app/home/map/mapContext'
-import EarthEngineLayer from 'app/home/map/layer/earthEngineLayer'
+import EarthEnginePreviewLayer from 'app/home/map/layer/earthEnginePreviewLayer'
 import Legend from './legend'
 import MapStatus from 'widget/mapStatus'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import api from 'api'
 import styles from 'app/home/body/process/classification/classificationPreview.module.css'
 import withSubscriptions from 'subscription'
 
@@ -107,7 +106,7 @@ class AssemblyPreview extends React.Component {
     updateLayer(previewRequest) {
         const {map, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
-        const layer = new EarthEngineLayer({
+        const layer = new EarthEnginePreviewLayer({
             map,
             layerIndex: 1,
             previewRequest,
