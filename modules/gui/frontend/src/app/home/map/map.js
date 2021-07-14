@@ -112,18 +112,20 @@ class _Map extends React.Component {
         })
     }
 
-    synchronizeOut(map) {
+    synchronizeOut(map, area) {
         const {overlay} = this.state
-        const {center, zoom, bounds} = map.getView()
-        this.withAllMaps(({map}) => map.setView({center, zoom, bounds}))
-        overlay && overlay.map.setView({center, zoom, bounds})
-        this.updateView$.next({center, zoom, bounds})
+        const view = map.getView()
+        log.debug(`${mapTag(this.state.mapId, area)} synchronizeOut ${mapViewTag(view)}`)
+        this.withAllMaps(({map}) => map.setView(view))
+        overlay && overlay.map.setView(view)
+        this.updateView$.next(view)
     }
 
-    synchronizeIn({center, zoom}) {
+    synchronizeIn(view) {
         const {overlay} = this.state
-        this.withAllMaps(({map}) => map.setView({center, zoom}))
-        overlay && overlay.map.setView({center, zoom})
+        log.debug(`${mapTag(this.state.mapId)} synchronizeIn ${mapViewTag(view)}`)
+        this.withAllMaps(({map}) => map.setView(view))
+        overlay && overlay.map.setView(view)
     }
 
     synchronizeCursor(cursorId, latLng, event) {
@@ -352,7 +354,7 @@ class _Map extends React.Component {
 
     createMap(id, area, element, callback) {
         const {mapsContext: {createSepalMap}} = this.props
-        log.debug(`${mapTag(this.state.mapId)} creating area ${area}`)
+        log.debug(`${mapTag(this.state.mapId, area)} creating area ${area}`)
 
         const isOverlay = area === 'overlay'
         const options = isOverlay ? {
@@ -369,9 +371,9 @@ class _Map extends React.Component {
         const listeners = [
             googleMap.addListener('mouseout', () => this.synchronizeCursor(id, null)),
             googleMap.addListener('mousemove', ({latLng, domEvent}) => this.synchronizeCursor(id, latLng, domEvent)),
-            googleMap.addListener('center_changed', () => this.synchronizeOut(map)),
+            googleMap.addListener('center_changed', () => this.synchronizeOut(map, area)),
             googleMap.addListener('bounds_changed', () => this.viewChanged$.next()),
-            googleMap.addListener('zoom_changed', () => this.synchronizeOut(map)),
+            googleMap.addListener('zoom_changed', () => this.synchronizeOut(map, area)),
             googleMap.addListener('dragstart', () => this.draggingMap$.next(true)),
             googleMap.addListener('dragend', () => this.draggingMap$.next(false))
         ]
