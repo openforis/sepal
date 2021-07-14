@@ -33,7 +33,7 @@ export const loadUser$ = () =>
         }),
         switchMap(reloadDelay => reloadDelay
             ? timer(reloadDelay).pipe(
-                map(() => loadUser$())
+                switchMap(() => loadUser$())
             )
             : EMPTY
         )
@@ -76,7 +76,7 @@ export const resetInvalidCredentials = () =>
 
 export const revokeGoogleAccess$ = () =>
     api.user.revokeGoogleAccess$().pipe(
-        map(() => loadUser$())
+        switchMap(() => loadUser$())
     )
 
 export const requestUserAccess$ = () =>
