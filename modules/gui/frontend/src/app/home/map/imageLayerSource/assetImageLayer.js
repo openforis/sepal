@@ -8,7 +8,7 @@ import {selectFrom} from 'stateUtils'
 import {setActive, setComplete} from '../progress'
 import {withMapAreaContext} from '../mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import EarthEngineLayer from '../layer/earthEngineLayer'
+import EarthEnginePreviewLayer from '../layer/earthEnginePreviewLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -113,7 +113,7 @@ class _AssetImageLayer extends React.Component {
         const {layerConfig, map, source, boundsChanged$, dragging$, cursor$} = this.props
         const asset = selectFrom(source, 'sourceConfig.asset')
         const dataTypes = selectFrom(source, 'sourceConfig.metadata.dataTypes') || {}
-        const {props: prevPreviewRequest} = this.layer || {}
+        const {watchedProps: prevPreviewRequest} = this.layer || {}
         const previewRequest = {
             recipe: {
                 type: 'ASSET',
@@ -123,7 +123,7 @@ class _AssetImageLayer extends React.Component {
         }
         if (!_.isEqual(previewRequest, prevPreviewRequest)) {
             this.layer && this.layer.removeFromMap()
-            this.layer = new EarthEngineLayer({
+            this.layer = new EarthEnginePreviewLayer({
                 previewRequest,
                 visParams: layerConfig.visParams,
                 dataTypes,
