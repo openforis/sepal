@@ -46,7 +46,7 @@
     "info": "Show information about this app",
     "initializing": "Starting session...",
     "loading": {
-      "error": "Failed to load apps. Try to reload the page.",
+      "error": "Failed to load apps. Please reload page to try again.",
       "progress": "Loading..."
     },
     "notRunning": "App is not running",

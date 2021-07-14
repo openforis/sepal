@@ -66,8 +66,8 @@ class _AppList extends React.Component {
     }
 
     isLoading() {
-        const {apps, action} = this.props
-        return !apps && !action('LOAD_APPS').dispatched
+        const {apps, stream} = this.props
+        return !apps && stream('LOAD_APPS').active
     }
 
     isRunning(app) {
