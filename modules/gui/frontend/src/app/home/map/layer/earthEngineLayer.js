@@ -1,9 +1,8 @@
 import {EarthEngineTileProvider} from '../tileProvider/earthEngineTileProvider'
-import {ReplaySubject, Subject, throwError} from 'rxjs'
+import {ReplaySubject, Subject, of, throwError} from 'rxjs'
 import {TileLayer} from './googleMapsLayer'
 import {catchError, mapTo, takeUntil, tap} from 'rxjs/operators'
 import _ from 'lodash'
-import api from 'api'
 
 export default class EarthEngineLayer {
     constructor({
@@ -13,7 +12,6 @@ export default class EarthEngineLayer {
         layerIndex = 0,
         label,
         description,
-        previewRequest,
         mapId$,
         progress$,
         cursorValue$,
@@ -22,7 +20,8 @@ export default class EarthEngineLayer {
         cursor$,
         onInitialize,
         onInitialized,
-        onError
+        onError,
+        watchedProps
     }) {
         this.dataTypes = dataTypes
         this.visParams = visParams
@@ -30,8 +29,8 @@ export default class EarthEngineLayer {
         this.layerIndex = layerIndex
         this.label = label
         this.description = description
-        this.mapId$ = mapId$ || api.gee.preview$(previewRequest)
-        this.props = previewRequest
+        this.mapId$ = mapId$
+        this.watchedProps = watchedProps
         this.progress$ = progress$
         this.cursorValue$ = cursorValue$
         this.boundsChanged$ = boundsChanged$
@@ -44,7 +43,7 @@ export default class EarthEngineLayer {
     }
 
     equals(o) {
-        return _.isEqual(o && o.props, this.props)
+        return _.isEqual(o && o.watchedProps, this.watchedProps)
     }
 
     createTileProvider() {
@@ -78,19 +77,21 @@ export default class EarthEngineLayer {
 
     initialize$() {
         this.onInitialize && this.onInitialize()
-        return this.mapId$.pipe(
-            tap(({response: {token, mapId, urlTemplate}}) => {
-                this.token = token
-                this.mapId = mapId
-                this.urlTemplate = urlTemplate
-                this.onInitialized && this.onInitialized()
-            }),
-            mapTo(this),
-            catchError(error => {
-                this.onError && this.onError(error)
-                return throwError(error)
-            }),
-            takeUntil(this.cancel$)
-        )
+        return this.token
+            ? of(this)
+            : this.mapId$.pipe(
+                tap(({token, mapId, urlTemplate}) => {
+                    this.token = token
+                    this.mapId = mapId
+                    this.urlTemplate = urlTemplate
+                    this.onInitialized && this.onInitialized()
+                }),
+                mapTo(this),
+                catchError(error => {
+                    this.onError && this.onError(error)
+                    return throwError(error)
+                }),
+                takeUntil(this.cancel$)
+            )
     }
 }

@@ -1,9 +1,6 @@
-import {EarthEngineTableTileProvider} from './tileProvider/earthEngineTableTileProvider'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {map} from 'rxjs/operators'
-import {of} from 'rxjs'
-import EarthEngineLayer from './layer/earthEngineLayer'
+import EarthEngineTableLayer from './layer/earthEngineTableLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import api from 'api'
@@ -41,7 +38,7 @@ class _EETableLayer extends React.Component {
     createLayer() {
         const {tableId, columnName, columnValue, buffer, color, fillColor, layerIndex, map} = this.props
         return tableId
-            ? new Layer({
+            ? new EarthEngineTableLayer({
                 map,
                 mapId$: api.gee.eeTableMap$({
                     tableId, columnName, columnValue, buffer, color, fillColor
@@ -66,28 +63,4 @@ EETableLayer.propTypes = {
     layerIndex: PropTypes.number,
     map: PropTypes.any,
     tableId: PropTypes.string
-}
-
-class Layer extends EarthEngineLayer {
-    constructor({map, mapId$, layerIndex, watchedProps}) {
-        super({map, layerIndex, mapId$, previewRequest: watchedProps})
-    }
-
-    createTileProvider() {
-        const {urlTemplate} = this
-        return new EarthEngineTableTileProvider({urlTemplate})
-    }
-
-    initialize$() {
-        if (this.token)
-            return of(this)
-        return this.mapId$.pipe(
-            map(({token, mapId, urlTemplate}) => {
-                this.token = token
-                this.mapId = mapId
-                this.urlTemplate = urlTemplate
-                return this
-            })
-        )
-    }
 }

@@ -3,7 +3,8 @@ import {map} from 'rxjs/operators'
 
 export default {
     preview$: ({recipe, ...params}) =>
-        postJson$('/api/gee/preview', {body: {recipe, ...params}, retries: 0}),
+        postJson$('/api/gee/preview', {body: {recipe, ...params}, retries: 0})
+            .pipe(toResponse),
     bands$: ({asset, recipe, ...params}) =>
         postJson$('/api/gee/bands', {body: {asset, recipe, ...params}})
             .pipe(toResponse),
