@@ -5,11 +5,12 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import {withMap} from 'app/home/map/mapContext'
-import EarthEnginePreviewLayer from 'app/home/map/layer/earthEnginePreviewLayer'
+import EarthEngineLayer from 'app/home/map/layer/earthEngineLayer'
 import MapStatus from 'widget/mapStatus'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
+import api from 'api'
 import styles from 'app/home/body/process/classification/classificationPreview.module.css'
 import withSubscriptions from 'subscription'
 
@@ -74,7 +75,7 @@ class PrimitivePreview extends React.Component {
     updateLayer(previewRequest) {
         const {map, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
-        const layer = new EarthEnginePreviewLayer({
+        const layer = new EarthEngineLayer({
             map,
             layerIndex: 1,
             previewRequest,

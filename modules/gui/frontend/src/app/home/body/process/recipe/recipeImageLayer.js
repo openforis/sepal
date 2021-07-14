@@ -10,7 +10,7 @@ import {selectFrom} from 'stateUtils'
 import {setActive, setComplete} from 'app/home/map/progress'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import {withRecipe} from '../recipeContext'
-import EarthEnginePreviewLayer from 'app/home/map/layer/earthEnginePreviewLayer'
+import EarthEngineLayer from 'app/home/map/layer/earthEngineLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -107,7 +107,7 @@ class _RecipeImageLayer extends React.Component {
         }
         if (!_.isEqual(previewRequest, prevPreviewRequest)) {
             this.layer && this.layer.removeFromMap()
-            this.layer = new EarthEnginePreviewLayer({
+            this.layer = new EarthEngineLayer({
                 previewRequest,
                 dataTypes,
                 visParams: layerConfig.visParams,

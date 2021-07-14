@@ -1,8 +1,9 @@
 import {EarthEngineTileProvider} from '../tileProvider/earthEngineTileProvider'
-import {ReplaySubject, Subject, of} from 'rxjs'
+import {ReplaySubject, Subject} from 'rxjs'
 import {TileLayer} from './googleMapsLayer'
 import {mapTo, takeUntil, tap} from 'rxjs/operators'
 import _ from 'lodash'
+import api from 'api'
 
 export default class EarthEngineLayer {
     constructor({
@@ -12,8 +13,7 @@ export default class EarthEngineLayer {
         layerIndex = 0,
         label,
         description,
-        mapId$,
-        props,
+        previewRequest,
         progress$,
         cursorValue$,
         boundsChanged$,
@@ -28,8 +28,8 @@ export default class EarthEngineLayer {
         this.layerIndex = layerIndex
         this.label = label
         this.description = description
-        this.mapId$ = mapId$
-        this.props = props
+        this.mapId$ = api.gee.preview$(previewRequest)
+        this.props = previewRequest
         this.progress$ = progress$
         this.cursorValue$ = cursorValue$
         this.boundsChanged$ = boundsChanged$
@@ -75,17 +75,15 @@ export default class EarthEngineLayer {
 
     initialize$() {
         this.onInitialize && this.onInitialize()
-        return this.token
-            ? of(this)
-            : this.mapId$.pipe(
-                tap(({response: {token, mapId, urlTemplate}}) => {
-                    this.token = token
-                    this.mapId = mapId
-                    this.urlTemplate = urlTemplate
-                    this.onInitialized && this.onInitialized()
-                }),
-                mapTo(this),
-                takeUntil(this.cancel$)
-            )
+        return this.mapId$.pipe(
+            tap(({response: {token, mapId, urlTemplate}}) => {
+                this.token = token
+                this.mapId = mapId
+                this.urlTemplate = urlTemplate
+                this.onInitialized && this.onInitialized()
+            }),
+            mapTo(this),
+            takeUntil(this.cancel$)
+        )
     }
 }

@@ -5,11 +5,12 @@ import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import EarthEnginePreviewLayer from 'app/home/map/layer/earthEnginePreviewLayer'
+import EarthEngineLayer from 'app/home/map/layer/earthEngineLayer'
 import MapStatus from 'widget/mapStatus'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
+import api from 'api'
 import withSubscriptions from 'subscription'
 
 const LABEL = 'ccdcSlice'
@@ -124,7 +125,7 @@ class CCDCSlicePreview extends React.Component {
         }
         const {map, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
-        const layer = new EarthEnginePreviewLayer({
+        const layer = new EarthEngineLayer({
             map,
             layerIndex: 2,
             // toggleable: true,
