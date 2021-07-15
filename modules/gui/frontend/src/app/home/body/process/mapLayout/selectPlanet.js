@@ -5,12 +5,12 @@ import {Subject} from 'rxjs'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {get$} from 'http-client'
 import {msg} from 'translate'
 import {takeUntil} from 'rxjs/operators'
 import {v4 as uuid} from 'uuid'
 import {withRecipe} from '../recipeContext'
 import React from 'react'
+import api from 'api'
 import styles from './selectPlanet.module.css'
 
 const mapStateToProps = () => {
@@ -76,23 +76,14 @@ class _SelectPlanet extends React.Component {
         this.apiKeyChanged$.next()
         this.setState({validatedApiKey: null},
             this.props.stream('VALIDATE_API_KEY',
-                this.validateApiKey$(apiKey).pipe(
+                api.planet.validateApiKey$(apiKey).pipe(
                     takeUntil(this.apiKeyChanged$)),
                 () => this.setState({validatedApiKey: apiKey}),
-                () => {
-                    this.props.inputs.planetApiKey.setInvalid(
-                        msg('map.layout.addImageLayerSource.types.Planet.form.invalidApiKey')
-                    )
-                }
+                () => this.props.inputs.planetApiKey.setInvalid(
+                    msg('map.layout.addImageLayerSource.types.Planet.form.invalidApiKey')
+                )
             )
         )
-    }
-
-    validateApiKey$(apiKey) {
-        return get$('https://api.planet.com/basemaps/v1/mosaics', {
-            username: apiKey,
-            crossDomain: true
-        })
     }
 
     add() {

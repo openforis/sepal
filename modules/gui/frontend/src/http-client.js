@@ -8,6 +8,8 @@ import base64 from 'base-64'
 
 const DEFAULT_RETRIES = 4
 
+const toResponse = map(e => e.response)
+
 export const get$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'GET', {
         retries,
@@ -16,7 +18,7 @@ export const get$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, vali
         headers,
         validStatuses,
         ...args
-    })
+    }).pipe(toResponse)
 
 export const post$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'POST', {
@@ -29,7 +31,7 @@ export const post$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, val
         },
         validStatuses,
         ...args
-    })
+    }).pipe(toResponse)
 
 export const postForm$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'POST', {
@@ -42,7 +44,7 @@ export const postForm$ = (url, {retries = DEFAULT_RETRIES, query, body, headers,
         },
         validStatuses,
         ...args
-    })
+    }).pipe(toResponse)
 
 export const postJson$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'POST', {
@@ -55,7 +57,7 @@ export const postJson$ = (url, {retries = DEFAULT_RETRIES, query, body, headers,
         },
         validStatuses,
         ...args
-    })
+    }).pipe(toResponse)
 
 export const delete$ = (url, {retries = DEFAULT_RETRIES, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'DELETE', {
@@ -63,9 +65,7 @@ export const delete$ = (url, {retries = DEFAULT_RETRIES, headers, validStatuses,
         headers,
         validStatuses,
         ...args
-    })
-
-export default {get$, post$, postJson$, delete$}
+    }).pipe(toResponse)
 
 const toQueryString = object =>
     object && Object.keys(object)

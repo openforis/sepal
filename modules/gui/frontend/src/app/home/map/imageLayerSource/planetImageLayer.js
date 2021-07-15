@@ -6,7 +6,6 @@ import {MapAreaLayout} from '../mapAreaLayout'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {get$} from 'http-client'
 import {map} from 'rxjs/operators'
 import {setActive, setComplete} from '../progress'
 import {withMapAreaContext} from '../mapAreaContext'
@@ -16,6 +15,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import WMTSLayer from '../layer/wmtsLayer'
 import _ from 'lodash'
+import api from 'api'
 import moment from 'moment'
 import styles from './planetImageLayer.module.css'
 import withSubscriptions from 'subscription'
@@ -181,13 +181,9 @@ class _PlanetImageLayer extends React.Component {
     }
 
     loadMosaics$() {
-        return get$(
-            'https://api.planet.com/basemaps/v1/mosaics', {
-                username: this.getApiKey(),
-                crossDomain: true
-            }
-        ).pipe(
-            map(({response: {mosaics}}) => _.orderBy(
+        const apiKey = this.getApiKey()
+        return api.planet.loadMosaics$(apiKey).pipe(
+            map(({mosaics}) => _.orderBy(
                 mosaics.map(({first_acquired, last_acquired, item_types, _links: {tiles}}) => ({
                     startDate: first_acquired.substring(0, 10),
                     endDate: last_acquired.substring(0, 10),

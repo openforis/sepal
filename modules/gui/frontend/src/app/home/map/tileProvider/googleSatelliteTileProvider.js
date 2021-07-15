@@ -1,14 +1,7 @@
 import {TileProvider} from './tileProvider'
-import {get$} from 'http-client'
-import {map} from 'rxjs/operators'
+import api from 'api'
 
 export class GoogleSatelliteTileProvider extends TileProvider {
-    constructor() {
-        super()
-        const subdomain = 'mt0'
-        this.formatTileUrl = (x, y, z) => `https://${subdomain}.google.com/vt/lyrs=s&x=${x}&y=${y}&z=${z}`
-    }
-
     getType() {
         return 'Google Satellite'
     }
@@ -18,13 +11,6 @@ export class GoogleSatelliteTileProvider extends TileProvider {
     }
 
     loadTile$({x, y, zoom}) {
-        const url = this.formatTileUrl(x, y, zoom)
-        return get$(url, {
-            retries: 0,
-            responseType: 'blob',
-            crossDomain: true
-        }).pipe(
-            map(e => e.response)
-        )
+        return api.google.loadTile$({x, y, zoom})
     }
 }

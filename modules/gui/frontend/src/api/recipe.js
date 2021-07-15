@@ -1,10 +1,8 @@
 import {delete$, get$, post$} from 'http-client'
-import {map} from 'rxjs/operators'
 
 export default {
     loadAll$: () =>
-        get$('/api/processing-recipes')
-            .pipe(toResponse),
+        get$('/api/processing-recipes'),
 
     save$: ({id, type, name, gzippedContents}) =>
         post$(`/api/processing-recipes/${id}`, {
@@ -12,15 +10,11 @@ export default {
             body: gzippedContents,
             headers: {'Content-Type': 'application/octet-stream'}
             // headers: {'Content-Type': 'application/json; charset=utf-8'}
-        }).pipe(toResponse),
+        }),
 
     delete$: recipeId =>
-        delete$(`/api/processing-recipes/${recipeId}`)
-            .pipe(toResponse),
+        delete$(`/api/processing-recipes/${recipeId}`),
 
     load$: recipeId =>
-        get$(`/api/processing-recipes/${recipeId}`)
-            .pipe(toResponse),
+        get$(`/api/processing-recipes/${recipeId}`),
 }
-
-const toResponse = map(e => e.response)

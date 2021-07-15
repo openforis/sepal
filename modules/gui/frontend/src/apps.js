@@ -17,10 +17,12 @@ export const loadApps$ = () =>
         )
     )
 
+// TODO: cleanup
+
 export const runApp$ = path => {
     const {endpoint} = appList().find(app => app.path === path)
 
-    const isSessionStarted = e => e.response.status === 'STARTED'
+    const isSessionStarted = e => e.status === 'STARTED'
 
     const requestSession$ = api.apps.requestSession$(endpoint).pipe(
         filter(isSessionStarted)

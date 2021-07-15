@@ -1,24 +1,13 @@
 import {TileProvider} from './tileProvider'
-import {get$} from 'http-client'
-import {map} from 'rxjs/operators'
+import api from 'api'
 
 export class WMTSTileProvider extends TileProvider {
     constructor({type, urlTemplate, tileSize, concurrency}) {
         super()
         this.type = type
-        this.concurrency = concurrency
-        this.formatTileUrl = (x, y, z) => {
-            const width = Math.pow(2, z)
-            x = x % width
-            if (x < 0) {
-                x += width
-            }
-            return urlTemplate
-                .replace('{x}', x)
-                .replace('{y}', y)
-                .replace('{z}', z)
-        }
+        this.urlTemplate = urlTemplate
         this.tileSize = tileSize
+        this.concurrency = concurrency
     }
 
     getType() {
@@ -30,13 +19,7 @@ export class WMTSTileProvider extends TileProvider {
     }
 
     loadTile$({x, y, zoom}) {
-        const url = this.formatTileUrl(x, y, zoom)
-        return get$(url, {
-            retries: 0,
-            responseType: 'blob',
-            crossDomain: true
-        }).pipe(
-            map(e => e.response)
-        )
+        const urlTemplate = this.urlTemplate
+        return api.wmts.loadTile$({urlTemplate, x, y, zoom})
     }
 }
