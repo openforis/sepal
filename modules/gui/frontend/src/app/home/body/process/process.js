@@ -19,16 +19,6 @@ import _ from 'lodash'
 
 export const getProcessTabsInfo = () => getTabsInfo('process')
 
-const mapStateToLeaveAlert = () => {
-    const recipes = select('process.loadedRecipes') || {}
-    const unsavedRecipes = _(recipes)
-        .values()
-        .map(recipe => recipe.ui && recipe.ui.unsaved)
-        .filter(unsaved => unsaved)
-        .size()
-    return unsavedRecipes
-}
-
 class Process extends React.Component {
     render() {
         return (
@@ -95,6 +85,16 @@ class Process extends React.Component {
             close()
         }
     }
+}
+
+const mapStateToLeaveAlert = () => {
+    const loadedRecipes = select('process.loadedRecipes') || {}
+    const unsavedRecipeCount = _(loadedRecipes)
+        .values()
+        .map(recipe => recipe.ui && recipe.ui.unsaved)
+        .filter(unsaved => unsaved)
+        .size()
+    return unsavedRecipeCount > 0
 }
 
 export default compose(
