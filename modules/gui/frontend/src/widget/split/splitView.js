@@ -231,23 +231,40 @@ class _SplitView extends React.PureComponent {
         this.initializeResizeDetector()
     }
 
+    componentDidUpdate(prevProps) {
+        const {mode: prevMode} = prevProps
+        const {mode} = this.props
+        if (prevMode !== mode) {
+            this.reset()
+        }
+    }
+
     initializeResizeDetector() {
-        const {addSubscription, position$} = this.props
+        const {addSubscription} = this.props
         addSubscription(
-            resize$.subscribe(size => {
-                const position = {
-                    x: size.width / 2,
-                    y: size.height / 2
-                }
-                position$.next(position)
-                this.setState({
-                    size,
-                    position,
-                    initialized: true
-                })
-            }
+            resize$.subscribe(
+                size => this.resize(size)
             )
         )
+    }
+
+    resize(size) {
+        const {position$} = this.props
+        const position = {
+            x: size.width / 2,
+            y: size.height / 2
+        }
+        position$.next(position)
+        this.setState({
+            size,
+            position,
+            initialized: true
+        })
+    }
+
+    reset() {
+        const {size} = this.state
+        this.resize(size)
     }
 }
 
