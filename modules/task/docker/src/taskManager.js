@@ -3,7 +3,7 @@ const {mergeMap, shareReplay, filter, tap, switchMap, catchError, switchMapTo} =
 const log = require('sepal/log').getLogger('task')
 const executeTask$ = require('./taskRunner')
 const {lastInWindow, repeating} = require('sepal/rxjs/operators')
-const http = require('sepal/httpClient')
+const {post$} = require('sepal/httpClient')
 const {getConfig, switchedToServiceAccount$} = require('./context')
 const {errorReport} = require('sepal/exception')
 
@@ -29,7 +29,7 @@ const cancelTask = id => {
 
 const taskStateChanged$ = (id, state, message) => {
     log.debug(() => msg(id, `notifying state change: ${state}`))
-    return http.postForm$(`https://${sepalHost}/api/tasks/task/${id}/state-updated`, {
+    return post$(`https://${sepalHost}/api/tasks/task/${id}/state-updated`, {
         body: {
             state,
             statusDescription: message
@@ -50,7 +50,7 @@ const taskStateChanged$ = (id, state, message) => {
 
 const taskProgressed$ = (id, progress) => {
     log.debug(() => msg(id, `notifying progress update: ${progress.defaultMessage}`))
-    return http.post$(`https://${sepalHost}/api/tasks/active`, {
+    return post$(`https://${sepalHost}/api/tasks/active`, {
         query: {progress: {[id]: progress}},
         username: sepalUsername,
         password: sepalPassword

@@ -1,4 +1,4 @@
-import {delete$, get$, post$, postForm$} from 'http-client'
+import {delete$, get$, post$} from 'http-client'
 
 export default {
     loadCurrentUser$: () =>
@@ -10,7 +10,7 @@ export default {
         get$('/api/notification/notifications'),
 
     updateMessage$: message =>
-        postForm$(`/api/notification/messages/${message.id}`, {
+        post$(`/api/notification/messages/${message.id}`, {
             body: message
         }),
 
@@ -18,7 +18,7 @@ export default {
         delete$(`/api/notification/messages/${message.id}`),
 
     updateMessageState$: userMessage =>
-        postForm$(`/api/notification/notifications/${userMessage.message.id}`, {
+        post$(`/api/notification/notifications/${userMessage.message.id}`, {
             body: {
                 state: userMessage.state
             }
@@ -29,7 +29,8 @@ export default {
 
     login$: (username, password) =>
         post$('/api/user/login', {
-            username, password,
+            username,
+            password,
             validStatuses: [200, 401]
         }),
 
@@ -37,27 +38,27 @@ export default {
         post$('/api/user/logout'),
 
     requestPasswordReset$: email =>
-        postForm$('/api/user/password/reset-request', {
+        post$('/api/user/password/reset-request', {
             body: {email}
         }),
 
     validateToken$: token =>
-        postForm$('/api/user/validate-token', {
+        post$('/api/user/validate-token', {
             body: {token}
         }),
 
     resetPassword$: (token, username, password) =>
-        postForm$('/api/user/password/reset', {
+        post$('/api/user/password/reset', {
             body: {token, password}
         }),
 
     updateCurrentUserDetails$: ({name, email, organization, emailNotificationsEnabled}) =>
-        postForm$('/api/user/current/details', {
+        post$('/api/user/current/details', {
             body: {name, email, organization, emailNotificationsEnabled}
         }),
 
     changePassword$: ({oldPassword, newPassword}) =>
-        postForm$('/api/user/current/password', {
+        post$('/api/user/current/password', {
             body: {oldPassword, newPassword}
         }),
 
@@ -70,7 +71,7 @@ export default {
         post$('/api/user/google/revoke-access'),
 
     updateCurrentUserSession$: session =>
-        postForm$(`/api/sessions/session/${session.id}/earliestTimeoutTime`, {
+        post$(`/api/sessions/session/${session.id}/earliestTimeoutTime`, {
             body: {
                 hours: session.keepAlive
             }
@@ -86,17 +87,17 @@ export default {
         get$('/api/budget/report'),
 
     inviteUser$: userDetails =>
-        postForm$('/api/user/invite', {
+        post$('/api/user/invite', {
             body: userDetails
         }),
 
     updateUser$: userDetails =>
-        postForm$('/api/user/details', {
+        post$('/api/user/details', {
             body: userDetails
         }),
 
     updateUserBudget$: budget =>
-        postForm$('/api/budget', {
+        post$('/api/budget', {
             body: budget
         })
 }

@@ -1,6 +1,6 @@
 const {defer, firstValueFrom, of} = require('rxjs')
 const {catchError, map} = require('rxjs/operators')
-const {postForm$, postJson$} = require('sepal/httpClient')
+const {post$, postJson$} = require('sepal/httpClient')
 const {modules} = require('./config')
 const log = require('sepal/log').getLogger('auth')
 
@@ -60,7 +60,7 @@ const authMiddleware = async (req, res, next) => {
             'base64'
         ).toString().split(':')
         log.trace(`[${username}] [${req.originalUrl}] Authenticating user`)
-        return postForm$(authenticationUrl, {
+        return post$(authenticationUrl, {
             body: {username, password},
             validStatuses: [200, 401]
         }).pipe(

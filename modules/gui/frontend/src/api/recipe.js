@@ -1,15 +1,13 @@
-import {delete$, get$, post$} from 'http-client'
+import {delete$, get$, postBinary$} from 'http-client'
 
 export default {
     loadAll$: () =>
         get$('/api/processing-recipes'),
 
     save$: ({id, type, name, gzippedContents}) =>
-        post$(`/api/processing-recipes/${id}`, {
+        postBinary$(`/api/processing-recipes/${id}`, {
             query: {type, name},
-            body: gzippedContents,
-            headers: {'Content-Type': 'application/octet-stream'}
-            // headers: {'Content-Type': 'application/json; charset=utf-8'}
+            body: gzippedContents
         }),
 
     delete$: recipeId =>

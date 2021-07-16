@@ -1,4 +1,4 @@
-import {get$, postForm$, postJson$} from 'http-client'
+import {get$, post$, postJson$} from 'http-client'
 
 export default {
     preview$: ({recipe, ...params}) =>
@@ -48,7 +48,7 @@ export default {
         }),
 
     autoSelectScenes$: ({sceneAreaIds, sources, dates, sceneSelectionOptions, sceneCount, cloudCoverTarget}) =>
-        postForm$('/api/data/best-scenes', {
+        post$('/api/data/best-scenes', {
             body: {
                 query: JSON.stringify({
                     sceneAreaIds, sources, dates, sceneSelectionOptions, sceneCount, cloudCoverTarget

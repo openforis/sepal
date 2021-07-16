@@ -24,19 +24,6 @@ export const post$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, val
     execute$(url, 'POST', {
         retries,
         query,
-        body,
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
-            ...headers
-        },
-        validStatuses,
-        ...args
-    }).pipe(toResponse)
-
-export const postForm$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
-    execute$(url, 'POST', {
-        retries,
-        query,
         body: toQueryString(body),
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
@@ -53,6 +40,19 @@ export const postJson$ = (url, {retries = DEFAULT_RETRIES, query, body, headers,
         body: body && JSON.stringify(body),
         headers: {
             'Content-Type': 'application/json; charset=utf-8',
+            ...headers
+        },
+        validStatuses,
+        ...args
+    }).pipe(toResponse)
+
+export const postBinary$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
+    execute$(url, 'POST', {
+        retries,
+        query,
+        body,
+        headers: {
+            'Content-Type': 'application/octet-stream',
             ...headers
         },
         validStatuses,
