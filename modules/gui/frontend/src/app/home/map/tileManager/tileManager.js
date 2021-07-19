@@ -4,14 +4,10 @@ import {getLogger} from 'log'
 import {getTileManagerGroup} from './tileManagerGroup'
 import {requestTag, tileProviderTag} from 'tag'
 import {v4 as uuid} from 'uuid'
-import _ from 'lodash'
 
 const log = getLogger('tileManager')
 
-const stats = {
-    in: 0,
-    out: 0
-}
+const requests = {}
 
 export const getTileManager = tileProvider => {
     const {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden} = getTileManagerGroup(tileProvider)
@@ -29,14 +25,16 @@ export const getTileManager = tileProvider => {
         return getTileProviderInfo(tileProviderId).tileProvider.getConcurrency()
     }
 
-    const requestIn = () => {
-        stats.in++
+    const requestIn = requestId => {
+        requests[requestId] = true
         pending$.next(pending$.value + 1)
     }
 
-    const requestOut = () => {
-        stats.out++
-        pending$.next(pending$.value - 1)
+    const requestOut = requestId => {
+        if (requests[requestId]) {
+            delete requests[requestId]
+            pending$.next(pending$.value - 1)
+        }
     }
 
     const loadTile$ = request => {
@@ -44,20 +42,21 @@ export const getTileManager = tileProvider => {
         const cancel$ = new Subject()
         const requestId = request.id
         log.debug(`Load tile ${requestTag({tileProviderId, requestId})}`)
-        requestIn()
+        requestIn(requestId)
         submit({tileProviderId, requestId, request, response$, cancel$})
         return response$.pipe(
             first(),
-            tap(() => requestOut()),
+            tap(() => requestOut(requestId)),
             finalize(() => {
                 cancel$.next()
-                log.trace(`Stats: in: ${stats.in}, out: ${stats.out}`)
+                log.trace(`Pending tiles: ${Object.keys(requests).length}`)
             })
         )
     }
 
     const releaseTile = requestId => {
         log.debug(`Release tile ${requestTag({tileProviderId, requestId})}`)
+        requestOut(requestId)
         cancelByRequestId(requestId)
     }
 

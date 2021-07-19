@@ -41,11 +41,11 @@ export const withRecipeLayer = ({
             componentDidMount() {
                 const {addSubscription} = this.props
                 addSubscription(
-                    this.progress$.subscribe(
-                        ({complete}) => complete
+                    this.progress$.subscribe({
+                        next: ({complete}) => complete
                             ? this.setComplete('tiles')
                             : this.setActive('tiles')
-                    )
+                    })
                 )
             }
 
