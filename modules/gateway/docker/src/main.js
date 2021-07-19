@@ -14,13 +14,11 @@ const sessionParser = session({
     name: 'SEPAL-SESSIONID',
     cookie: {
         httpOnly: true,
-        maxAge: 1000 * 60 * 30,
         sameSite: secure,
         secure
     },
     proxy: true,
     resave: false,
-    rolling: true,
     saveUninitialized: false,
     unset: 'destroy'
 })

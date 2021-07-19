@@ -14,7 +14,7 @@ import React from 'react'
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
     aoi: selectFrom(recipe, 'model.aoi'),
-    layers: selectFrom(recipe, 'layers'),
+    savedLayers: selectFrom(recipe, 'layers'),
     classificationRecipeId: selectFrom(recipe, 'model.sources.classification'),
     classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
 })
@@ -22,9 +22,9 @@ const mapRecipeToProps = recipe => ({
 class _CCDC extends React.Component {
     constructor(props) {
         super(props)
-        const {layers, recipeId} = props
+        const {savedLayers, recipeId} = props
         this.recipeActions = RecipeActions(recipeId)
-        initializeLayers({recipeId, layers, skipThis: true})
+        initializeLayers({recipeId, savedLayers, skipThis: true})
     }
 
     render() {

@@ -1,4 +1,4 @@
-import {EMPTY, of, timer} from 'rxjs'
+import {EMPTY, of} from 'rxjs'
 import {catchError, map, switchMap, tap} from 'rxjs/operators'
 import {history} from 'route'
 import {msg} from 'translate'
@@ -17,26 +17,7 @@ export const loadUser$ = () =>
             Notifications.error({message: msg('landing.loadCurrentUser.error')})
             return of(null)
         }),
-        map(user => {
-            actionBuilder('SET_CURRENT_USER', {user})
-                .set('user', {
-                    currentUser: user,
-                    initialized: true,
-                    loggedOn: !!user
-                })
-                .dispatch()
-            if (user && user.googleTokens) {
-                const expiryDate = user.googleTokens.accessTokenExpiryDate
-                const fiveMinutes = 5 * 60 * 1000
-                return Math.max(fiveMinutes, expiryDate - fiveMinutes - Date.now())
-            }
-        }),
-        switchMap(reloadDelay => reloadDelay
-            ? timer(reloadDelay).pipe(
-                switchMap(() => loadUser$())
-            )
-            : EMPTY
-        )
+        tap(user => updateUser(user))
     )
 
 export const login$ = ({username, password}) => {
@@ -68,6 +49,15 @@ export const resetPassword$ = ({token, username, password}) =>
             return EMPTY
         })
     )
+
+export const updateUser = user =>
+    actionBuilder('SET_CURRENT_USER', {user})
+        .set('user', {
+            currentUser: user,
+            initialized: true,
+            loggedOn: !!user
+        })
+        .dispatch()
 
 export const resetInvalidCredentials = () =>
     actionBuilder('RESET_INVALID_CREDENTIALS')

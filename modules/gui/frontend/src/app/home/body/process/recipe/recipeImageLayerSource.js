@@ -12,7 +12,6 @@ import {withRecipe} from '../recipeContext'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
-import guid from 'guid'
 
 const mapStateToProps = (state, {source: {sourceConfig: {recipeId}}}) => ({
     recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
@@ -91,7 +90,7 @@ export const initializeLayers = ({recipeId, savedLayers, additionalFeatureLayerS
         : {
             areas: {
                 'center': {
-                    id: guid(),
+                    id: 'default-layer',
                     imageLayer: {
                         sourceId: skipThis ? googleSatelliteImageLayerSource.id : recipeImageLayerSource.id
                     },

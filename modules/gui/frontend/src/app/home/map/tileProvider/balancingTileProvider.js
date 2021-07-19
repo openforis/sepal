@@ -18,9 +18,9 @@ export class BalancingTileProvider extends TileProvider {
             this.subscriptions.push(
                 this.tileManager.pending$.pipe(
                     debounceTime(200)
-                ).subscribe(
-                    pending => progress$.next({loading: pending, complete: !pending})
-                )
+                ).subscribe({
+                    next: pending => progress$.next({loading: pending, complete: !pending})
+                })
             )
         }
     }
