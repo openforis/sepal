@@ -107,12 +107,13 @@ export const RecipeActions = id => {
     }
 }
 
-export const getAllVisualizations = recipe => [
-    ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
-    ...visualizations[reflectance(recipe)],
-    ...visualizations.indexes,
-    ...(median(recipe) ? visualizations.metadata : [])
-]
+export const getAllVisualizations = recipe =>
+    [
+        ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
+        ...visualizations[reflectance(recipe)],
+        ...visualizations.indexes,
+        ...(median(recipe) ? [] : visualizations.metadata)
+    ]
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder

@@ -54,7 +54,7 @@ export const getAllVisualizations = recipe => {
     return [
         ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
         ...visualizations[type],
-        ...(type === 'POINT_IN_TYPE' ? visualizations.metadata : [])
+        ...(type === 'POINT_IN_TIME' ? visualizations.METADATA : [])
     ]
 }
 
