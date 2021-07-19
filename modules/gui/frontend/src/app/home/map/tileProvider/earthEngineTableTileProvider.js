@@ -1,7 +1,7 @@
 import {WMTSTileProvider} from './wmtsTileProvider'
 import ee from '@google/earthengine'
 
-const CONCURRENCY = 4
+const CONCURRENCY = 8
 
 export class EarthEngineTableTileProvider extends WMTSTileProvider {
     constructor({urlTemplate}) {
