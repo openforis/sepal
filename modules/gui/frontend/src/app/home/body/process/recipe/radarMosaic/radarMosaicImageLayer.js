@@ -7,6 +7,7 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {visualizations} from './visualizations'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
+import {withRecipeLayer} from '../withRecipeLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -93,7 +94,8 @@ class _RadarMosaicImageLayer extends React.Component {
 
 export const RadarMosaicImageLayer = compose(
     _RadarMosaicImageLayer,
-    withMapAreaContext()
+    withMapAreaContext(),
+    withRecipeLayer({toDataTypes: () => dataTypes})
 )
 
 RadarMosaicImageLayer.defaultProps = {
@@ -107,5 +109,3 @@ RadarMosaicImageLayer.propTypes = {
     layerConfig: PropTypes.object,
     map: PropTypes.object
 }
-
-export const radarMosaicDataTypes = () => dataTypes

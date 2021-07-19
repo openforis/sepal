@@ -9,6 +9,7 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {visualizations} from './visualizations'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
+import {withRecipeLayer} from '../withRecipeLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -155,7 +156,8 @@ class _OpticalMosaicImageLayer extends React.Component {
 
 export const OpticalMosaicImageLayer = compose(
     _OpticalMosaicImageLayer,
-    withMapAreaContext()
+    withMapAreaContext(),
+    withRecipeLayer({toDataTypes: () => dataTypes})
 )
 
 OpticalMosaicImageLayer.defaultProps = {
@@ -169,5 +171,3 @@ OpticalMosaicImageLayer.propTypes = {
     layerConfig: PropTypes.object,
     map: PropTypes.object
 }
-
-export const opticalMosaicDataTypes = () => dataTypes

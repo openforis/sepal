@@ -5,6 +5,7 @@ import {getAllVisualizations, hasTrainingData, preSetVisualizationOptions, suppo
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
+import {withRecipeLayer} from '../withRecipeLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -87,27 +88,10 @@ class _ClassificationImageLayer extends React.Component {
     }
 }
 
-export const ClassificationImageLayer = compose(
-    _ClassificationImageLayer,
-    withMapAreaContext()
-)
-
-ClassificationImageLayer.defaultProps = {
-    layerConfig: defaultLayerConfig
-}
-
-ClassificationImageLayer.propTypes = {
-    recipe: PropTypes.object.isRequired,
-    source: PropTypes.object.isRequired,
-    layer: PropTypes.object,
-    layerConfig: PropTypes.object,
-    map: PropTypes.object
-}
-
-export const classificationDataTypes = recipe => {
+const toDataTypes = recipe => {
     const legend = selectFrom(recipe, 'model.legend')
     if (!recipe.ui.initialized || !legend.entries.length) {
-        return []
+        return {}
     }
     const entries = _.sortBy(legend.entries, 'value')
     const classifierType = selectFrom(recipe, 'model.classifier.type')
@@ -123,4 +107,22 @@ export const classificationDataTypes = recipe => {
         })
     ].filter(o => o).forEach(({band, precision, min, max}) => dataTypes[band] = {precision, min, max})
     return dataTypes
+}
+
+export const ClassificationImageLayer = compose(
+    _ClassificationImageLayer,
+    withMapAreaContext(),
+    withRecipeLayer({toDataTypes})
+)
+
+ClassificationImageLayer.defaultProps = {
+    layerConfig: defaultLayerConfig
+}
+
+ClassificationImageLayer.propTypes = {
+    recipe: PropTypes.object.isRequired,
+    source: PropTypes.object.isRequired,
+    layer: PropTypes.object,
+    layerConfig: PropTypes.object,
+    map: PropTypes.object
 }

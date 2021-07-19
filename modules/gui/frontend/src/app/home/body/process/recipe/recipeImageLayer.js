@@ -1,147 +1,59 @@
-import {CCDCSliceImageLayer, ccdcSliceDataTypes} from './ccdcSlice/ccdcSliceImageLayer'
-import {ClassificationImageLayer, classificationDataTypes} from './classification/classificationImageLayer'
-import {CursorValue} from 'app/home/map/cursorValue'
-import {OpticalMosaicImageLayer, opticalMosaicDataTypes} from './opticalMosaic/opticalMosaicImageLayer'
-import {RadarMosaicImageLayer, radarMosaicDataTypes} from './radarMosaic/radarMosaicImageLayer'
-import {Subject} from 'rxjs'
+import {CCDCSliceImageLayer} from './ccdcSlice/ccdcSliceImageLayer'
+import {ClassificationImageLayer} from './classification/classificationImageLayer'
+import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
+import {RadarMosaicImageLayer} from './radarMosaic/radarMosaicImageLayer'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
-import {setActive, setComplete} from 'app/home/map/progress'
-import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import {withRecipe} from '../recipeContext'
-import EarthEnginePreviewLayer from 'app/home/map/layer/earthEnginePreviewLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
-import withSubscriptions from 'subscription'
 
 const mapStateToProps = (state, {source: {sourceConfig: {recipeId}}}) => ({
     recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
 })
 
 class _RecipeImageLayer extends React.Component {
-    progress$ = new Subject()
-    cursorValue$ = new Subject()
-
     render() {
         const {recipe} = this.props
         return recipe
-            ? (
-                <CursorValue value$={this.cursorValue$}>
-                    {this.renderRecipeLayer()}
-                </CursorValue>
-            )
+            ? this.renderRecipeLayer()
             : null
     }
 
     renderRecipeLayer() {
-        const {recipe, source, layerConfig, map} = this.props
+        const {recipe, source, layerConfig, map, boundsChanged$, dragging$, cursor$} = this.props
+        const props = {
+            recipe,
+            source,
+            layerConfig,
+            map,
+            boundsChanged$,
+            dragging$,
+            cursor$
+        }
         switch(recipe.type) {
         case 'MOSAIC': return (
-            <OpticalMosaicImageLayer
-                recipe={recipe}
-                source={source}
-                layerConfig={layerConfig}
-                layer={this.maybeCreateLayer(opticalMosaicDataTypes(recipe))}
-                map={map}/>
+            <OpticalMosaicImageLayer {...props}/>
         )
         case 'RADAR_MOSAIC': return (
-            <RadarMosaicImageLayer
-                recipe={recipe}
-                source={source}
-                layerConfig={layerConfig}
-                layer={this.maybeCreateLayer(radarMosaicDataTypes(recipe))}
-                map={map}/>
+            <RadarMosaicImageLayer {...props}/>
         )
         case 'CLASSIFICATION': return (
-            <ClassificationImageLayer
-                recipe={recipe}
-                source={source}
-                layerConfig={layerConfig}
-                layer={this.maybeCreateLayer(classificationDataTypes(recipe))}
-                map={map}/>
+            <ClassificationImageLayer {...props}/>
         )
         case 'CCDC_SLICE': return (
-            <CCDCSliceImageLayer
-                recipe={recipe}
-                source={source}
-                layerConfig={layerConfig}
-                layer={this.maybeCreateLayer(ccdcSliceDataTypes(recipe))}
-                map={map}/>
+            <CCDCSliceImageLayer {...props}/>
         )
         default: return null
         }
-    }
-
-    componentDidMount() {
-        const {addSubscription} = this.props
-        addSubscription(
-            this.progress$.subscribe(
-                ({complete}) => complete
-                    ? this.setComplete('tiles')
-                    : this.setActive('tiles')
-            )
-        )
-    }
-
-    componentWillUnmount() {
-        this.setComplete('initialize')
-        this.setComplete('tiles')
-        this.layer && this.layer.removeFromMap()
-    }
-
-    maybeCreateLayer(dataTypes) {
-        const {recipe, layerConfig, map} = this.props
-        return map && recipe.ui.initialized && layerConfig && layerConfig.visParams
-            ? this.createLayer(dataTypes)
-            : null
-    }
-
-    createLayer(dataTypes) {
-        const {recipe, layerConfig, map, boundsChanged$, dragging$, cursor$} = this.props
-        const {watchedProps: prevPreviewRequest} = this.layer || {}
-        const previewRequest = {
-            recipe: _.omit(recipe, ['ui', 'layers']),
-            ...layerConfig
-        }
-        if (!_.isEqual(previewRequest, prevPreviewRequest)) {
-            this.layer && this.layer.removeFromMap()
-            this.layer = new EarthEnginePreviewLayer({
-                previewRequest,
-                dataTypes,
-                visParams: layerConfig.visParams,
-                map,
-                progress$: this.progress$,
-                cursorValue$: this.cursorValue$,
-                boundsChanged$,
-                dragging$,
-                cursor$,
-                onInitialize: () => this.setActive('initialize'),
-                onInitialized: () => this.setComplete('initialize'),
-                onError: () => this.setComplete('initialize')
-            })
-        }
-        return this.layer
-    }
-
-    setActive(name) {
-        const {recipeActionBuilder, componentId} = this.props
-        setActive(`${name}-${componentId}`, recipeActionBuilder)
-    }
-
-    setComplete(name) {
-        const {recipeActionBuilder, componentId} = this.props
-        setComplete(`${name}-${componentId}`, recipeActionBuilder)
     }
 }
 
 export const RecipeImageLayer = compose(
     _RecipeImageLayer,
     connect(mapStateToProps),
-    withRecipe(),
-    withSubscriptions(),
-    withMapAreaContext()
+    withRecipe()
 )
 
 RecipeImageLayer.propTypes = {
