@@ -79,7 +79,7 @@ export const withRecipeLayer = ({
                     recipe: _.omit(recipe, ['ui', 'layers']),
                     ...layerConfig
                 }
-                const watchedProps = {recipes: recipes.map(r => _.omit(r, ['ui', 'layers']))}
+                const watchedProps = {recipes: recipes.map(r => _.omit(r, ['ui', 'layers'])), layerConfig}
                 if (!_.isEqual(watchedProps, prevWatchedProps)) {
                     this.layer && this.layer.removeFromMap()
                     this.layer = new EarthEnginePreviewLayer({
