@@ -237,7 +237,9 @@ const persistentProps = recipe =>
     _.pick(recipe, ['model', 'layers'])
 
 const isToBeSaved = (prevRecipe, recipe) =>
-    persistentProps(prevRecipe) && !_.isEqual(persistentProps(prevRecipe), persistentProps(recipe))
+    persistentProps(prevRecipe)
+        && !_.isEqual(persistentProps(prevRecipe), persistentProps(recipe))
+        && select(['process.tabs', {id: recipe.id}])
 
 subscribe('process.loadedRecipes', loadedRecipes => {
     const recipes = loadedRecipes && Object.values(loadedRecipes)
