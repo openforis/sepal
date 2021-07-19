@@ -26,6 +26,7 @@ export const withLeaveAlert = mapStateToLeaveAlert =>
             onClose(e) {
                 const {leaveAlert} = this.props
                 if (leaveAlert) {
+                    e.preventDefault()
                     e.returnValue = ''
                     return ''
                 }
