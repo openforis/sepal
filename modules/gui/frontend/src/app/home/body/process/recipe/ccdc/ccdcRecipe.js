@@ -167,4 +167,4 @@ const submitRetrieveRecipeTask = recipe => {
     return api.tasks.submit$(task).subscribe()
 }
 
-export const dateRange = dates => ([moment(dates.startDate, DATE_FORMAT), moment(dates.endDate, DATE_FORMAT)])
+export const dateRange = dates => ([moment.utc(dates.startDate, DATE_FORMAT), moment.utc(dates.endDate, DATE_FORMAT)])

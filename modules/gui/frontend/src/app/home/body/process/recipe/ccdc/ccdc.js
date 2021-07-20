@@ -1,16 +1,15 @@
-import {Aoi} from '../aoi'
+import {Aoi} from 'app/home/body/process/recipe/aoi'
 import {Map} from 'app/home/map/map'
-import {RecipeActions, defaultModel} from './ccdcRecipe'
+import {RecipeActions, dateRange, defaultModel} from './ccdcRecipe'
 import {compose} from 'compose'
-import {initializeLayers} from '../recipeImageLayerSource'
+import {initializeLayers} from 'app/home/body/process/recipe/recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
-import {recipeAccess} from '../../recipeAccess'
+import {recipeAccess} from 'app/home/body/process/recipeAccess'
 import {selectFrom} from 'stateUtils'
 import CCDCToolbar from './panels/ccdcToolbar'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import moment from 'moment'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
@@ -81,8 +80,5 @@ export default () => ({
     components: {
         recipe: CCDC
     },
-    getDateRange: recipe => [
-        moment.utc(recipe.model.dates.startDate, 'YYYY-MM-DD'),
-        moment.utc(recipe.model.dates.endDate, 'YYYY-MM-DD')
-    ]
+    getDateRange: recipe => dateRange(recipe.model.dates)
 })
