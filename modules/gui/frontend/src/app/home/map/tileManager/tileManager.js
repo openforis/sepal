@@ -1,13 +1,11 @@
 import {BehaviorSubject, ReplaySubject, Subject} from 'rxjs'
-import {finalize, first, tap} from 'rxjs/operators'
+import {finalize, first} from 'rxjs/operators'
 import {getLogger} from 'log'
 import {getTileManagerGroup} from './tileManagerGroup'
 import {requestTag, tileProviderTag} from 'tag'
 import {v4 as uuid} from 'uuid'
 
 const log = getLogger('tileManager')
-
-// const requests = {}
 
 export const getTileManager = tileProvider => {
     const {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden, getCount} = getTileManagerGroup(tileProvider)
@@ -42,7 +40,6 @@ export const getTileManager = tileProvider => {
         reportPending()
         return response$.pipe(
             first(),
-            tap(() => reportPending()),
             finalize(() => {
                 cancel$.next()
                 reportPending()
