@@ -9,34 +9,39 @@ const log = getLogger('tileManager/executor')
 export const getRequestExecutor = concurrency => {
     const finished$ = new Subject()
 
-    const state = {
-        activeRequests: {},
-        activeRequestCount: {},
-        hidden: {}
-    }
+    const activeRequests = {} // by requestId
+    const activeRequestCount = {} // by tileProviderId
+    const hiddenTileProviders = {} // by tileProviderId
 
     const getCount = tileProviderId =>
         tileProviderId
-            ? state.activeRequestCount[tileProviderId] || 0
-            : Object.keys(state.activeRequests).length
+            ? activeRequestCount[tileProviderId] || 0
+            : Object.keys(activeRequests).length
 
-    const setCount = (tileProviderId, count) =>
-        state.activeRequestCount[tileProviderId] = count
-
+    const increaseCount = tileProviderId => {
+        const count = getCount(tileProviderId) + 1
+        activeRequestCount[tileProviderId] = count
+        return count
+    }
+        
+    const decreaseCount = tileProviderId => {
+        const count = getCount(tileProviderId) - 1
+        activeRequestCount[tileProviderId] = count
+        return count
+    }
+    
     const isAvailable = () =>
         getCount() < concurrency
     
     const start = ({tileProviderId, requestId, request, response$, cancel$}) => {
-        state.activeRequests[requestId] = {tileProviderId, requestId, request, response$, cancel$, timestamp: Date.now()}
-        const activeRequestCountByTileProviderId = getCount(tileProviderId) + 1
-        setCount(tileProviderId, activeRequestCountByTileProviderId)
+        activeRequests[requestId] = {tileProviderId, requestId, request, response$, cancel$, timestamp: Date.now()}
+        const activeRequestCountByTileProviderId = increaseCount(tileProviderId)
         log.debug(`Started ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
     }
     
     const finish = ({tileProviderId, requestId, currentRequest, replacementRequest}) => {
-        delete state.activeRequests[requestId]
-        const activeRequestCountByTileProviderId = getCount(tileProviderId) - 1
-        setCount(tileProviderId, activeRequestCountByTileProviderId)
+        delete activeRequests[requestId]
+        const activeRequestCountByTileProviderId = decreaseCount(tileProviderId)
         log.debug(`Finished ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
         finished$.next({tileProviderId, currentRequest, replacementRequest})
     }
@@ -73,10 +78,10 @@ export const getRequestExecutor = concurrency => {
     }
 
     const isHidden = tileProviderId =>
-        !!(state.hidden[tileProviderId])
+        !!(hiddenTileProviders[tileProviderId])
 
     const getMaxActive = filter => {
-        const maxActive = _(state.activeRequestCount)
+        const maxActive = _(activeRequestCount)
             .toPairs()
             .filter(([tileProviderId, _count]) => isHidden(tileProviderId) === filter.hidden)
             .sortBy(([_tileProviderId, count]) => count)
@@ -89,7 +94,7 @@ export const getRequestExecutor = concurrency => {
     }
     
     const getMostRecentByTileProviderId = (tileProviderId, excludeCount) => {
-        const mostRecent = _(state.activeRequests)
+        const mostRecent = _(activeRequests)
             .pickBy(requestHandler => requestHandler.tileProviderId === tileProviderId)
             .values()
             .sortBy('timestamp')
@@ -139,7 +144,7 @@ export const getRequestExecutor = concurrency => {
 
     const cancelByRequestId = requestId => {
         if (requestId) {
-            const request = state.activeRequests[requestId]
+            const request = activeRequests[requestId]
             if (request) {
                 log.debug(`Cancelling ${requestTag(request)}`)
                 request.cancel$.next()
@@ -153,7 +158,7 @@ export const getRequestExecutor = concurrency => {
 
     const cancelByTileProviderId = tileProviderId => {
         if (tileProviderId) {
-            const cancelling = _(state.activeRequests)
+            const cancelling = _(activeRequests)
                 .values()
                 .filter(request => request.tileProviderId === tileProviderId)
                 .reduce((count, request) => count + (cancelByRequestId(request.requestId) ? 1 : 0), 0)
@@ -164,8 +169,8 @@ export const getRequestExecutor = concurrency => {
     }
 
     const setHidden = (tileProviderId, hidden) => {
-        state.hidden[tileProviderId] = hidden
+        hiddenTileProviders[tileProviderId] = hidden
     }
 
-    return {isAvailable, execute, notify, cancelByRequestId, cancelByTileProviderId, setHidden, finished$}
+    return {isAvailable, execute, notify, cancelByRequestId, cancelByTileProviderId, setHidden, finished$, getCount}
 }

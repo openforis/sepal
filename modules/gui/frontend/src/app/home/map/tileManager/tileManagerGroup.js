@@ -52,6 +52,11 @@ const createTileManagerGroup = concurrency => {
         requestQueue.removeByRequestId(requestId)
         requestExecutor.cancelByRequestId(requestId)
     }
+
+    const getCount = tileProviderId => ({
+        enqueued: requestQueue.getCount(tileProviderId),
+        executing: requestExecutor.getCount(tileProviderId)
+    })
     
     request$.subscribe(
         ({tileProviderId, requestId = uuid(), request, response$, cancel$}) => {
@@ -84,7 +89,7 @@ const createTileManagerGroup = concurrency => {
         }
     )
 
-    return {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden}
+    return {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden, getCount}
 }
 
 export const getTileManagerGroup = tileProvider => {

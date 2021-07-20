@@ -7,10 +7,10 @@ import {v4 as uuid} from 'uuid'
 
 const log = getLogger('tileManager')
 
-const requests = {}
+// const requests = {}
 
 export const getTileManager = tileProvider => {
-    const {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden} = getTileManagerGroup(tileProvider)
+    const {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden, getCount} = getTileManagerGroup(tileProvider)
 
     const tileProviderId = uuid()
     const pending$ = new BehaviorSubject(0)
@@ -25,16 +25,12 @@ export const getTileManager = tileProvider => {
         return getTileProviderInfo(tileProviderId).tileProvider.getConcurrency()
     }
 
-    const requestIn = requestId => {
-        requests[requestId] = true
-        pending$.next(pending$.value + 1)
-    }
-
-    const requestOut = requestId => {
-        if (requests[requestId]) {
-            delete requests[requestId]
-            pending$.next(pending$.value - 1)
-        }
+    const reportPending = () => {
+        const tileProviderCount = getCount(tileProviderId)
+        const overallCount = getCount()
+        const pending = tileProviderCount.enqueued + tileProviderCount.executing
+        pending$.next(pending)
+        log.trace(`${tileProviderTag(tileProviderId)}: enqueued: ${tileProviderCount.enqueued}/${overallCount.enqueued}, executing: ${tileProviderCount.executing}/${overallCount.executing}`)
     }
 
     const loadTile$ = request => {
@@ -42,21 +38,21 @@ export const getTileManager = tileProvider => {
         const cancel$ = new Subject()
         const requestId = request.id
         log.debug(`Load tile ${requestTag({tileProviderId, requestId})}`)
-        requestIn(requestId)
         submit({tileProviderId, requestId, request, response$, cancel$})
+        reportPending()
         return response$.pipe(
             first(),
-            tap(() => requestOut(requestId)),
+            tap(() => reportPending()),
             finalize(() => {
                 cancel$.next()
-                log.trace(`Pending tiles: ${Object.keys(requests).length}`)
+                reportPending()
             })
         )
     }
 
     const releaseTile = requestId => {
         log.debug(`Release tile ${requestTag({tileProviderId, requestId})}`)
-        requestOut(requestId)
+        reportPending()
         cancelByRequestId(requestId)
     }
 
