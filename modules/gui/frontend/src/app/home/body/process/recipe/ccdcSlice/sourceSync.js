@@ -12,7 +12,6 @@ import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
-import guid from 'guid'
 
 const baseBandPattern = /(.*)_(coefs|intercept|slope|phase_\d|amplitude_\d|rmse|magnitude)$/
 
@@ -150,7 +149,6 @@ class _SourceSync extends React.Component {
             startDate: metadata.properties.startDate,
             endDate: metadata.properties.endDate,
             visualizations: toVisualizations(metadata.properties, bands)
-                .map(visualization => ({...visualization, id: guid()}))
         }
         recipeActionBuilder('UPDATE_SOURCE', {sourceDetails})
             .set('model.source', sourceDetails)

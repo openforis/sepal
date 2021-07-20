@@ -1,3 +1,4 @@
+import {getRecipeType} from '../../recipeTypes'
 import {msg} from 'translate'
 import {getAllVisualizations as opticalMosaicVisualizations} from '../opticalMosaic/opticalMosaicRecipe'
 import {getAllVisualizations as radarMosaicVisualizations} from '../radarMosaic/radarMosaicRecipe'
@@ -110,6 +111,7 @@ const allOpticalMosaicVisualizations = recipe => {
         .filter(({type}) => type === 'continuous')
         .map(({bands}) => bands[0])
         .map(toHarmonicVisualization)
+        .filter(v => v)
     return [
         ...baseVisualizations,
         ...harmonicVisualizations
@@ -149,6 +151,7 @@ const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const title = msg(['process.retrieve.form.task.GEE'], {name})
     const visualizations = getAllVisualizations(recipe)
+    const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
     const task = {
         'operation': 'ccdc.asset_export',
         'params': {
@@ -157,10 +160,11 @@ const submitRetrieveRecipeTask = recipe => {
             recipe: _.omit(recipe, ['ui']),
             bands: recipe.ui.retrieveOptions.bands,
             visualizations,
-            scale: recipe.ui.retrieveOptions.scale
+            scale: recipe.ui.retrieveOptions.scale,
+            properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
         }
     }
     return api.tasks.submit$(task).subscribe()
 }
 
-export const dateRange = dates => ([moment(dates.startDate, DATE_FORMAT), moment(dates.endDate, DATE_FORMAT)])
+export const dateRange = dates => ([moment.utc(dates.startDate, DATE_FORMAT), moment.utc(dates.endDate, DATE_FORMAT)])

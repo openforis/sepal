@@ -2,14 +2,17 @@ const {exportImageToAsset$} = require('../jobs/export/toAsset')
 const {switchMap} = require('rxjs/operators')
 const ccdc = require('sepal/ee/timeSeries/ccdc')
 const {toVisualizationProperties} = require('../ee/visualizations')
+const {formatProperties} = require('./formatProperties')
 
 module.exports = {
-    submit$: (id, {recipe, bands, scale, description, visualizations}) => {
+    submit$: (id, {recipe, bands, scale, description, visualizations, properties}) => {
         return ccdc(recipe, {selection: bands}).getImage$().pipe(
             switchMap(segments => {
+                const formattedProperties = formatProperties({...properties, scale})
                 const allBands = getAllBands(bands)
                 return exportImageToAsset$({
                     image: segments
+                        .set(formattedProperties)
                         .set('startDate', recipe.model.dates.startDate)
                         .set('endDate', recipe.model.dates.endDate)
                         .set('dateFormat', recipe.model.ccdcOptions.dateFormat)

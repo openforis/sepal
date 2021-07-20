@@ -1,3 +1,4 @@
+import {getRecipeType} from '../../recipeTypes'
 import {msg} from 'translate'
 import {recipeActionBuilder} from 'app/home/body/process/recipe'
 import {selectFrom} from 'stateUtils'
@@ -54,7 +55,7 @@ export const getAllVisualizations = recipe => {
     return [
         ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
         ...visualizations[type],
-        ...(type === 'POINT_IN_TYPE' ? visualizations.metadata : [])
+        ...(type === 'POINT_IN_TIME' ? visualizations.METADATA : [])
     ]
 }
 
@@ -65,6 +66,8 @@ const submitRetrieveRecipeTask = recipe => {
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
     const visualizations = getAllVisualizations(recipe)
+        .filter(({bands: visBands}) => visBands.every(band => bands.includes(band)))
+    const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':
@@ -75,7 +78,8 @@ const submitRetrieveRecipeTask = recipe => {
                     recipe: _.omit(recipe, ['ui']),
                     bands: {selection: bands},
                     visualizations,
-                    scale
+                    scale,
+                    properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
                 }
             }
     }

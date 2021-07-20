@@ -6,6 +6,7 @@ import {MapAreaLayout} from '../mapAreaLayout'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {getRecipeType} from '../../body/process/recipeTypes'
 import {map} from 'rxjs/operators'
 import {setActive, setComplete} from '../progress'
 import {withMapAreaContext} from '../mapAreaContext'
@@ -25,6 +26,10 @@ const defaultLayerConfig = {
 }
 
 const CONCURRENCY = 10
+
+const mapRecipeToProps = recipe => ({
+    dateRange: getRecipeType(recipe.type).getDateRange(recipe)
+})
 
 class _PlanetImageLayer extends React.Component {
     progress$ = new Subject()
@@ -144,7 +149,7 @@ class _PlanetImageLayer extends React.Component {
         if (apiKey !== prevApiKey) {
             const {[apiKey]: mosaics} = this.state
             if (mosaics) {
-                this.selectUrlTemplate(mosaics[0].urlTemplate)
+                this.selectDefault(mosaics)
             }
         }
         this.update()
@@ -155,6 +160,22 @@ class _PlanetImageLayer extends React.Component {
         this.layer && this.layer.removeFromMap()
     }
 
+    selectDefault(mosaics) {
+        const {dateRange} = this.props
+        if (dateRange) {
+            const [start, end] = dateRange
+            const filtered = mosaics
+                .filter(({startDate, endDate}) =>
+                    moment.utc(startDate).isSameOrBefore(end) && moment.utc(endDate).isSameOrAfter(start)
+                )
+            return filtered.length
+                ? this.selectUrlTemplate(filtered[0].urlTemplate)
+                : this.selectUrlTemplate(mosaics[0].urlTemplate)
+        } else {
+            return this.selectUrlTemplate(mosaics[0].urlTemplate)
+        }
+    }
+
     update() {
         const {stream} = this.props
         const apiKey = this.getApiKey()
@@ -163,7 +184,7 @@ class _PlanetImageLayer extends React.Component {
             stream(`LOAD_PLANET_MOSAICS_${apiKey}`,
                 this.loadMosaics$(),
                 mosaics => {
-                    this.selectUrlTemplate(mosaics[0].urlTemplate)
+                    this.selectDefault(mosaics)
                     this.setState({[apiKey]: mosaics})
                 }
             )
@@ -206,7 +227,7 @@ export const PlanetImageLayer = compose(
     withMapContext(),
     withMapAreaContext(),
     connect(),
-    withRecipe(),
+    withRecipe(mapRecipeToProps),
     withSubscriptions()
 )
 

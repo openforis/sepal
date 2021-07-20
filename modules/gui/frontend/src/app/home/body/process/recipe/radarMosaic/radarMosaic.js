@@ -1,13 +1,14 @@
-import {Aoi} from '../aoi'
-import {Map} from '../../../../map/map'
+import {Aoi} from 'app/home/body/process/recipe/aoi'
+import {Map} from 'app/home/map/map'
 import {compose} from 'compose'
 import {defaultModel} from './radarMosaicRecipe'
-import {initializeLayers} from '../recipeImageLayerSource'
+import {initializeLayers} from 'app/home/body/process/recipe/recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
 import RadarMosaicToolbar from './panels/radarMosaicToolbar'
 import React from 'react'
+import moment from 'moment'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),
@@ -46,5 +47,12 @@ export default () => ({
     },
     components: {
         recipe: RadarMosaic
-    }
+    },
+    getDateRange: recipe => dateRange(recipe.model.dates)
 })
+
+const dateRange = ({fromDate, toDate, targetDate}) => {
+    const startDate = fromDate || targetDate
+    const endDate = toDate || targetDate
+    return [moment.utc(startDate, 'YYYY-MM-DD'), moment.utc(endDate, 'YYYY-MM-DD')]
+}

@@ -1,8 +1,8 @@
 const ImageFactory = require('sepal/ee/imageFactory')
 const {switchMap} = require('rxjs/operators')
 const {exportImageToAsset$} = require('../jobs/export/toAsset')
-const _ = require('lodash')
 const {toVisualizationProperties} = require('../ee/visualizations')
+const {formatProperties} = require('./formatProperties')
 
 module.exports = {
     submit$: (id, {image: {recipe, bands, scale, pyramidingPolicy, properties, visualizations}}) => {
@@ -30,12 +30,3 @@ const export$ = ({description, recipe, bands, scale, pyramidingPolicy, propertie
         }
         )
     )
-
-const formatProperties = properties => {
-    const formatted = {}
-    Object.keys(properties).forEach(key => {
-        const value = properties[key]
-        formatted[key] = _.isString(value) || _.isNumber(value) ? value : JSON.stringify(value)
-    })
-    return formatted
-}

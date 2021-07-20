@@ -11,6 +11,7 @@ import {selectFrom} from 'stateUtils'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import TimeSeriesToolbar from './panels/timeSeriesToolbar'
+import moment from 'moment'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),
@@ -79,5 +80,9 @@ export default () => ({
     },
     components: {
         recipe: TimeSeries
-    }
+    },
+    getDateRange: recipe => [
+        moment.utc(recipe.model.dates.startDate, 'YYYY-MM-DD'),
+        moment.utc(recipe.model.dates.endDate, 'YYYY-MM-DD')
+    ]
 })
