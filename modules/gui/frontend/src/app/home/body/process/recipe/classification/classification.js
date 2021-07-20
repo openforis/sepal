@@ -86,5 +86,8 @@ export default () => ({
     },
     components: {
         recipe: Classification
+    },
+    getDateRange(_recipe) {
+        return null
     }
 })

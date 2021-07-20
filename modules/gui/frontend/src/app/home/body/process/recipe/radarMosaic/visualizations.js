@@ -60,13 +60,15 @@ export const visualizations = {
             type: 'continuous',
             bands: ['dayOfYear'],
             min: [0],
-            max: [366]
+            max: [366],
+            palette: ['00FFFF', '000099']
         }),
         normalize({
             type: 'continuous',
             bands: ['daysFromTarget'],
             min: [0],
-            max: [183]
+            max: [183],
+            palette: ['00FF00', 'FF0000']
         })
     ]
 }

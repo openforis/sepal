@@ -1,6 +1,6 @@
 import {Aoi} from '../aoi'
 import {Map} from 'app/home/map/map'
-import {RecipeActions, defaultModel} from './opticalMosaicRecipe'
+import {RecipeActions, dateRange, defaultModel} from './opticalMosaicRecipe'
 import {SceneAreas} from './sceneAreas'
 import {compose} from 'compose'
 import {initializeLayers} from '../recipeImageLayerSource'
@@ -61,5 +61,6 @@ export default () => ({
     },
     components: {
         recipe: OpticalMosaic
-    }
+    },
+    getDateRange: recipe => dateRange(recipe.model.dates)
 })

@@ -10,6 +10,7 @@ import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
 import CCDCSliceToolbar from './panels/ccdcSliceToolbar'
 import React from 'react'
+import moment from 'moment'
 
 const mapRecipeToProps = recipe => ({
     source: selectFrom(recipe, 'model.source'),
@@ -51,5 +52,9 @@ export default () => ({
     },
     components: {
         recipe: CcdcSlice
+    },
+    getDateRange(recipe) {
+        const date = moment.utc(recipe.model.date.date, 'YYYY-MM-DD')
+        return [date, date]
     }
 })

@@ -1,3 +1,4 @@
+import {getRecipeType} from '../../recipeTypes'
 import {msg} from 'translate'
 import {recipeActionBuilder} from '../../recipe'
 import {selectFrom} from 'stateUtils'
@@ -122,6 +123,7 @@ const submitRetrieveRecipeTask = recipe => {
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
     const visualizations = getAllVisualizations(recipe)
+    const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':
@@ -132,7 +134,8 @@ const submitRetrieveRecipeTask = recipe => {
                     recipe: _.omit(recipe, ['ui']),
                     bands: {selection: bands},
                     visualizations,
-                    scale
+                    scale,
+                    properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
                 }
             }
     }
@@ -161,8 +164,8 @@ export const inDateRange = (date, dates) => {
 }
 
 export const dateRange = dates => {
-    const seasonStart = moment(dates.seasonStart, DATE_FORMAT)
-    const seasonEnd = moment(dates.seasonEnd, DATE_FORMAT)
+    const seasonStart = moment.utc(dates.seasonStart, DATE_FORMAT)
+    const seasonEnd = moment.utc(dates.seasonEnd, DATE_FORMAT)
     return [
         seasonStart.subtract(dates.yearsBefore, 'years'),
         seasonEnd.add(dates.yearsAfter, 'years')

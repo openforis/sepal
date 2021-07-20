@@ -10,6 +10,7 @@ import {selectFrom} from 'stateUtils'
 import CCDCToolbar from './panels/ccdcToolbar'
 import Notifications from 'widget/notifications'
 import React from 'react'
+import moment from 'moment'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
@@ -79,5 +80,9 @@ export default () => ({
     },
     components: {
         recipe: CCDC
-    }
+    },
+    getDateRange: recipe => [
+        moment.utc(recipe.model.dates.startDate, 'YYYY-MM-DD'),
+        moment.utc(recipe.model.dates.endDate, 'YYYY-MM-DD')
+    ]
 })
