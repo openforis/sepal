@@ -1,14 +1,26 @@
+import _ from 'lodash'
+
 const typeFloat = {precision: 'float'}
 
-export const getAvailableBands = recipe => {
+export const getAvailableBands = (recipe, select = ['dataSetBands', 'indexes', 'metadata']) => {
     const type = (recipe.model.dates || {}).fromDate
         ? 'TIME_SCAN'
         : 'POINT_IN_TIME'
-    return bands[type]
+    const bandsByGroup = {
+        dataSetBands: bands[type],
+        metadata: type === 'POINT_IN_TIME'
+            ? bands.METADATA
+            : {}
+    }
+    const availableBands = {}
+    select
+        .map(bandType => bandsByGroup[bandType] || {})
+        .forEach(groupBands => Object.keys(groupBands).forEach(band => availableBands[band] = groupBands[band]))
+    return availableBands
 }
 
-export const getGroupedBandOptions = recipe => {
-    const availableBands = getAvailableBands(recipe)
+export const getGroupedBandOptions = (recipe, select = ['dataSetBands', 'indexes', 'metadata']) => {
+    const availableBands = getAvailableBands(recipe, select)
     const toOption = band => ({value: band, label: band, ...availableBands[band]})
     return bandGroups
         .map(bands => bands.filter(band => availableBands[band]))
@@ -35,9 +47,7 @@ const bands = {
     POINT_IN_TIME: {
         VV: {dataType: typeFloat},
         VH: {dataType: typeFloat},
-        ratio_VV_VH: {dataType: typeFloat},
-        dayOfYear: {dataType: {precision: 'int', min: 0, max: 366}},
-        daysFromTarget: {dataType: {precision: 'int', min: 0, max: 183}},
+        ratio_VV_VH: {dataType: typeFloat}
     },
     TIME_SCAN: {
         VV_min: {dataType: typeFloat},
@@ -64,5 +74,9 @@ const bands = {
         VH_cv: {dataType: typeFloat},
         ratio_VV_med_VH_med: {dataType: typeFloat},
         NDCV: {dataType: typeFloat}
+    },
+    METADATA: {
+        dayOfYear: {dataType: {precision: 'int', min: 0, max: 366}},
+        daysFromTarget: {dataType: {precision: 'int', min: 0, max: 183}}
     }
 }

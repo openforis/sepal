@@ -44,7 +44,10 @@ export const getAvailableBands = ({
                 toOpticalRecipe({dataSetIds, corrections}),
                 ['indexes', 'dataSetBands']
             )
-            : getAvailableRadarBands(toRadarRecipe())
+            : getAvailableRadarBands(
+                toRadarRecipe(),
+                ['indexes', 'dataSetBands']
+            )
     )
     const classificationBands = getClassificationBands(classifierType, classificationLegend, include)
     return [...dataSetBands, ...classificationBands]
@@ -62,8 +65,14 @@ export const groupedBandOptions = ({
 }) => {
     const dataSetIds = dataSets || [dataSetId]
     const dataSetOptions = dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))
-        ? getGroupedOpticalBandOptions(toOpticalRecipe({dataSetIds, corrections}))
-        : getGroupedRadarBandOptions(toRadarRecipe())
+        ? getGroupedOpticalBandOptions(
+            toOpticalRecipe({dataSetIds, corrections}),
+            ['dataSetBands', 'indexes']
+        )
+        : getGroupedRadarBandOptions(
+            toRadarRecipe(),
+            ['indexes', 'dataSetBands']
+        )
     const classificationOptions = getClassificationOptions(classifierType, classificationLegend, include)
     return [...dataSetOptions, {options: classificationOptions}]
 }
