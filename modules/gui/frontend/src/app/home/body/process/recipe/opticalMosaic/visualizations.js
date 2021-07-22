@@ -1,4 +1,17 @@
+import {getAvailableBands} from './bands'
 import {normalize} from 'app/home/map/visParams/visParams'
+
+export const getPreSetVisualizations = recipe => {
+    const {model: {compositeOptions: {corrections}}} = recipe
+    const correction = corrections && corrections.includes('SR') ? 'SR' : 'TOA'
+    const availableBands = getAvailableBands(recipe)
+    const dataSetVisualizations = visualizations[correction]
+    return [
+        ...dataSetVisualizations,
+        ...visualizations.INDEXES,
+        ...visualizations.METADATA
+    ].filter(({bands}) => bands.every(band => availableBands[band]))
+}
 
 export const visualizations = {
     TOA: [
@@ -105,7 +118,7 @@ export const visualizations = {
             max: [800, -50, 50],
         })
     ],
-    metadata: [
+    METADATA: [
         normalize({
             type: 'continuous',
             bands: ['dayOfYear'],
@@ -121,7 +134,7 @@ export const visualizations = {
             palette: ['00FF00', 'FF0000']
         })
     ],
-    indexes: [
+    INDEXES: [
         normalize({type: 'continuous', bands: ['ndvi'], min: [-10000], max: [10000], palette: ['#112040', '#1c67a0', '#6db6b3', '#fffccc', '#abac21', '#177228', '#172313']}),
         normalize({type: 'continuous', bands: ['ndmi'], min: [-10000], max: [10000], palette: ['#FD3000', '#FF8410', '#FCC228', '#B3C120', '#4DA910', '#1E7D83', '#0034F5']}),
         normalize({type: 'continuous', bands: ['ndwi'], min: [-10000], max: [10000], palette: ['#F7ECE5', '#C4CA39', '#37B200', '#00834B', '#114E81', '#2C1C5D', '#040404']}),

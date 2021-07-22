@@ -1,16 +1,11 @@
-import {RecipeActions} from '../../classificationRecipe'
+import {RecipeActions} from 'app/home/body/process/recipe/classification/classificationRecipe'
 import {compose} from 'compose'
-import {groupedBandOptions} from 'sources'
-import {selectFrom} from 'stateUtils'
-import {withRecipe} from '../../../../recipeContext'
+import {getGroupedBandOptions} from 'app/home/body/process/recipe/classification/bands'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
-import RetrievePanel from '../../../mosaic/panels/retrieve/retrieve'
+import RetrievePanel from 'app/home/body/process/recipe/mosaic/panels/retrieve/retrieve'
 
-const mapRecipeToProps = recipe => ({
-    recipeId: recipe.id,
-    classificationLegend: selectFrom(recipe, 'model.legend') || {},
-    classifierType: selectFrom(recipe, 'model.classifier.type')
-})
+const mapRecipeToProps = recipe => ({recipe})
 
 class Retrieve extends React.Component {
     render() {
@@ -26,11 +21,8 @@ class Retrieve extends React.Component {
     }
 
     bandOptions() {
-        const {classificationLegend, classifierType} = this.props
-        return groupedBandOptions({
-            classification: {classifierType, classificationLegend},
-            order: ['classification']
-        })
+        const {recipe} = this.props
+        return getGroupedBandOptions(recipe)
     }
 
     retrieve(retrieveOptions) {

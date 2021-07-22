@@ -1,6 +1,6 @@
 import {RecipeActions} from '../../ccdcRecipe'
 import {compose} from 'compose'
-import {groupedBandOptions} from 'sources'
+import {groupedBandOptions, toDataSetIds} from 'sources'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from '../../../../recipeContext'
 import PropTypes from 'prop-types'
@@ -29,13 +29,11 @@ class Retrieve extends React.Component {
     }
 
     bandOptions() {
-        const {classificationLegend, classifierType, corrections, sources: {dataSets: sources}} = this.props
+        const {classificationLegend, classifierType, corrections, sources: {dataSets}} = this.props
         return groupedBandOptions({
-            sources,
+            dataSets: toDataSetIds(dataSets),
             corrections,
-            timeScan: false,
-            classification: {classifierType, classificationLegend, include: ['regression', 'probabilities']},
-            order: ['indexes', 'dataSets', 'classification']
+            classification: {classifierType, classificationLegend, include: ['regression', 'probabilities']}
         })
     }
 

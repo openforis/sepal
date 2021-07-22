@@ -1,4 +1,11 @@
+import {getAvailableBands} from './bands'
 import {normalize} from 'app/home/map/visParams/visParams'
+
+export const getPreSetVisualizations = recipe => {
+    const availableBands = getAvailableBands(recipe)
+    return Object.values(visualizations).flat()
+        .filter(({bands}) => bands.every(band => availableBands[band]))
+}
 
 export const visualizations = {
     POINT_IN_TIME: [

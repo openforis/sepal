@@ -3,6 +3,8 @@ import {Map} from 'app/home/map/map'
 import {RecipeActions, dateRange, defaultModel} from './opticalMosaicRecipe'
 import {SceneAreas} from './sceneAreas'
 import {compose} from 'compose'
+import {getAvailableBands} from './bands'
+import {getPreSetVisualizations} from './visualizations'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
@@ -62,5 +64,8 @@ export default () => ({
     components: {
         recipe: OpticalMosaic
     },
-    getDateRange: recipe => dateRange(recipe.model.dates)
+    getDependentRecipeIds: _recipe => [],
+    getDateRange: recipe => dateRange(recipe.model.dates),
+    getAvailableBands,
+    getPreSetVisualizations
 })

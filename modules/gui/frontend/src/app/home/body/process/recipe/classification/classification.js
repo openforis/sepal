@@ -3,7 +3,9 @@ import {DataCollectionContext, DataCollectionManager} from './dataCollectionMana
 import {Map} from 'app/home/map/map'
 import {RecipeActions} from './classificationRecipe'
 import {compose} from 'compose'
+import {getAvailableBands} from './bands'
 import {getDefaultModel} from './classificationRecipe'
+import {getPreSetVisualizations} from './visualizations'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
@@ -77,6 +79,11 @@ const Classification = compose(
     recipe({getDefaultModel, mapRecipeToProps})
 )
 
+const getDependentRecipeIds = recipe =>
+    (selectFrom(recipe, 'model.inputImagery.images') || [])
+        .filter(({type}) => type === 'RECIPE_REF')
+        .map(({id}) => id)
+
 export default () => ({
     id: 'CLASSIFICATION',
     labels: {
@@ -87,7 +94,10 @@ export default () => ({
     components: {
         recipe: Classification
     },
+    getDependentRecipeIds,
     getDateRange(_recipe) {
         return null
-    }
+    },
+    getAvailableBands,
+    getPreSetVisualizations
 })

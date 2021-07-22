@@ -2,6 +2,8 @@ import {Aoi} from 'app/home/body/process/recipe/aoi'
 import {Map} from 'app/home/map/map'
 import {compose} from 'compose'
 import {defaultModel} from './radarMosaicRecipe'
+import {getAvailableBands} from './bands'
+import {getPreSetVisualizations} from './visualizations'
 import {initializeLayers} from 'app/home/body/process/recipe/recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
@@ -38,6 +40,13 @@ const RadarMosaic = compose(
     recipe({defaultModel, mapRecipeToProps})
 )
 
+const getDateRange = recipe => {
+    const {fromDate, toDate, targetDate} = recipe.model.dates
+    const startDate = fromDate || targetDate
+    const endDate = toDate || targetDate
+    return [moment.utc(startDate, 'YYYY-MM-DD'), moment.utc(endDate, 'YYYY-MM-DD')]
+}
+
 export default () => ({
     id: 'RADAR_MOSAIC',
     labels: {
@@ -48,11 +57,8 @@ export default () => ({
     components: {
         recipe: RadarMosaic
     },
-    getDateRange: recipe => dateRange(recipe.model.dates)
+    getDependentRecipeIds: _recipe => [],
+    getDateRange,
+    getAvailableBands,
+    getPreSetVisualizations
 })
-
-const dateRange = ({fromDate, toDate, targetDate}) => {
-    const startDate = fromDate || targetDate
-    const endDate = toDate || targetDate
-    return [moment.utc(startDate, 'YYYY-MM-DD'), moment.utc(endDate, 'YYYY-MM-DD')]
-}

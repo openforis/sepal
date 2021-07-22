@@ -4,7 +4,7 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeActions, loadCCDCObservations$, loadCCDCSegments$} from '../ccdcRecipe'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {flatBandOptions, getAvailableBands} from 'sources'
+import {flatBandOptions, getAvailableBands, toDataSetIds} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {takeUntil} from 'rxjs/operators'
@@ -67,8 +67,8 @@ class ChartPixel extends React.Component {
                     scrollable={false}
                     noVerticalPadding>
                     <Form className={styles.form}>
-                        {this.renderChart()}
                         {this.renderBandOptions()}
+                        {this.renderChart()}
                     </Form>
                 </Panel.Content>
 
@@ -95,11 +95,9 @@ class ChartPixel extends React.Component {
         const {inputs: {selectedBand}} = this.props
         const options = flatBandOptions(this.bandSetting())
         return (
-            <Form.Buttons
-                className={styles.buttons}
-                layout='horizontal-nowrap-scroll'
+            <Form.Combo
+                className={styles.bandSelection}
                 input={selectedBand}
-                multiple={false}
                 options={options}/>
         )
     }
@@ -107,11 +105,9 @@ class ChartPixel extends React.Component {
     bandSetting() {
         const {classificationLegend, classifierType, corrections, dataSets} = this.props
         return {
-            sources: dataSets,
+            dataSets: toDataSetIds(dataSets),
             corrections,
-            timeScan: false,
-            classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']},
-            order: ['indexes', 'dataSets', 'classification']
+            classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']}
         }
     }
 

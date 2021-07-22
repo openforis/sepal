@@ -5,7 +5,7 @@ import {RecipeActions} from '../../ccdcRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {groupedBandOptions, groupedDataSetOptions, toSources} from 'sources'
+import {groupedBandOptions, groupedDataSetOptions, toDataSetIds, toSources} from 'sources'
 import {msg} from 'translate'
 import {recipeAccess} from '../../../../recipeAccess'
 import {selectFrom} from 'stateUtils'
@@ -103,11 +103,9 @@ class Sources extends React.Component {
         const {corrections, inputs: {breakpointBands, dataSets}} = this.props
         const {classificationLegend, classifierType} = this.state
         const options = groupedBandOptions({
-            sources: toSources(dataSets.value),
+            dataSets: toDataSetIds(dataSets),
             corrections,
-            timeScan: false,
-            classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']},
-            order: ['indexes', 'dataSets', 'classification']
+            classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']}
         })
         return (
             <Form.Buttons

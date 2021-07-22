@@ -1,27 +1,13 @@
-import {RecipeActions} from '../../radarMosaicRecipe'
+import {RecipeActions} from 'app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
 import {compose} from 'compose'
-import {groupedBandOptions} from 'sources'
-import {selectFrom} from 'stateUtils'
-import {withRecipe} from '../../../../recipeContext'
+import {getGroupedBandOptions} from 'app/home/body/process/recipe/radarMosaic/bands'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
-import RetrievePanel from '../../../mosaic/panels/retrieve/retrieve'
+import RetrievePanel from 'app/home/body/process/recipe/mosaic/panels/retrieve/retrieve'
 
-const mapRecipeToProps = recipe => {
-    return ({
-        recipeId: recipe.id,
-        timeScan: !selectFrom(recipe, 'model.dates.targetDate')
-    })
-}
-
-const option = band => ({value: band, label: band})
+const mapRecipeToProps = recipe => ({recipe})
 
 class Retrieve extends React.Component {
-    metadataOptions = {options: [
-        option('unixTimeDays'),
-        option('dayOfYear'),
-        option('daysFromTarget')
-    ]}
-
     render() {
         return (
             <RetrievePanel
@@ -35,15 +21,8 @@ class Retrieve extends React.Component {
     }
 
     bandOptions() {
-        const {timeScan} = this.props
-        const options = groupedBandOptions({
-            dataSetId: 'SENTINEL_1',
-            timeScan,
-            order: ['dataSets']
-        })
-        return timeScan
-            ? options
-            : [...options, this.metadataOptions]
+        const {recipe} = this.props
+        return getGroupedBandOptions(recipe)
     }
 
     retrieve(retrieveOptions) {

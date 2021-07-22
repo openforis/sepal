@@ -93,11 +93,9 @@ class ChartPixel extends React.Component {
         const {recipe: {model: {source: {baseBands}}}, inputs: {selectedBand}} = this.props
         const options = baseBands.map(({name}) => ({value: name, label: name}))
         return (
-            <Form.Buttons
-                className={styles.buttons}
-                layout='horizontal-nowrap-scroll'
+            <Form.Combo
+                className={styles.bandSelection}
                 input={selectedBand}
-                multiple={false}
                 options={options}/>
         )
     }

@@ -4,10 +4,14 @@ import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
 import {RadarMosaicImageLayer} from './radarMosaic/radarMosaicImageLayer'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {getAllVisualizations} from './visualizations'
 import {selectFrom} from 'stateUtils'
-import {withRecipe} from '../recipeContext'
+import {withMapAreaContext} from 'app/home/map/mapAreaContext'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import {withRecipeLayer} from './withRecipeLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 
 const mapStateToProps = (state, {source: {sourceConfig: {recipeId}}}) => ({
     recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
@@ -22,10 +26,11 @@ class _RecipeImageLayer extends React.Component {
     }
 
     renderRecipeLayer() {
-        const {recipe, source, layerConfig, map, boundsChanged$, dragging$, cursor$} = this.props
+        const {recipe, source, layer, layerConfig, map, boundsChanged$, dragging$, cursor$} = this.props
         const props = {
             recipe,
             source,
+            layer,
             layerConfig,
             map,
             boundsChanged$,
@@ -48,12 +53,43 @@ class _RecipeImageLayer extends React.Component {
         default: return null
         }
     }
+
+    componentDidMount() {
+        const {recipe, layerConfig: {visParams}} = this.props
+        if (!visParams) {
+            this.selectVisualization(getAllVisualizations(recipe)[0])
+        }
+    }
+
+    componentDidUpdate(prevProps) {
+        const {layerConfig: {visParams: prevVisParams}} = prevProps
+        const {recipe} = this.props
+        const allVisualizations = getAllVisualizations(recipe)
+        if (prevVisParams) {
+            const visParams = allVisualizations
+                .find(({id, bands}) => id === prevVisParams.id && (prevVisParams.id || _.isEqual(bands, prevVisParams.bands)))
+            if (!visParams) {
+                this.selectVisualization(allVisualizations[0])
+            } else if (!_.isEqual(visParams, prevVisParams)) {
+                this.selectVisualization(visParams)
+            }
+        } else {
+            this.selectVisualization(allVisualizations[0])
+        }
+    }
+
+    selectVisualization(visParams) {
+        const {layerConfig: {panSharpen}, mapAreaContext: {updateLayerConfig}} = this.props
+        updateLayerConfig({visParams, panSharpen})
+    }
 }
 
 export const RecipeImageLayer = compose(
     _RecipeImageLayer,
     connect(mapStateToProps),
-    withRecipe()
+    withRecipe(),
+    withRecipeLayer(),
+    withMapAreaContext()
 )
 
 RecipeImageLayer.propTypes = {

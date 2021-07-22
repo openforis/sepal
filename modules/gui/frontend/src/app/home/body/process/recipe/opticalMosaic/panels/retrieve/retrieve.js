@@ -1,34 +1,22 @@
-import {RecipeActions} from '../../opticalMosaicRecipe'
+import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {compose} from 'compose'
-import {groupedBandOptions, minScale} from 'sources'
-import {selectFrom} from 'stateUtils'
-import {withRecipe} from '../../../../recipeContext'
+import {getGroupedBandOptions} from 'app/home/body/process/recipe/opticalMosaic/bands'
+import {minScale} from 'app/home/body/process/recipe/opticalMosaic/sources'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
-import RetrievePanel from '../../../mosaic/panels/retrieve/retrieve'
+import RetrievePanel from 'app/home/body/process/recipe/mosaic/panels/retrieve/retrieve'
 
 const mapRecipeToProps = recipe => ({
-    recipeId: recipe.id,
-    sources: selectFrom(recipe, 'model.sources'),
-    compositeOptions: selectFrom(recipe, 'model.compositeOptions')
+    recipe
 })
 
-const option = band => ({value: band, label: band})
-
 class Retrieve extends React.Component {
-    metadataOptions = {
-        options: [
-            option('unixTimeDays'),
-            option('dayOfYear'),
-            option('daysFromTarget')
-        ]
-    }
-
     render() {
-        const {sources} = this.props
+        const {recipe} = this.props
         return (
             <RetrievePanel
                 bandOptions={this.bandOptions()}
-                defaultScale={minScale(sources)}
+                defaultScale={minScale(recipe)}
                 toSepal
                 toEE
                 onRetrieve={retrieveOptions => {
@@ -39,15 +27,8 @@ class Retrieve extends React.Component {
     }
 
     bandOptions() {
-        const {sources, compositeOptions: {compose, corrections}} = this.props
-        const options = groupedBandOptions({
-            sources,
-            corrections,
-            order: ['dataSets', 'indexes']
-        })
-        return compose === 'MEDIAN'
-            ? options
-            : [...options, this.metadataOptions]
+        const {recipe} = this.props
+        return getGroupedBandOptions(recipe)
     }
 
     retrieve(retrieveOptions) {
