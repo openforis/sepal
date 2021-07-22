@@ -1,8 +1,8 @@
 import {CursorValue} from 'app/home/map/cursorValue'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {connect} from 'store'
-import {selectFrom} from 'stateUtils'
+import {getRecipeType} from '../recipeTypes'
+import {select} from 'store'
 import {setActive, setComplete} from 'app/home/map/progress'
 import {withRecipe} from '../recipeContext'
 import EarthEnginePreviewLayer from 'app/home/map/layer/earthEnginePreviewLayer'
@@ -10,18 +10,21 @@ import React from 'react'
 import _ from 'lodash'
 import withSubscriptions from 'subscription'
 
-export const withRecipeLayer = ({
-    toDataTypes = (() => ({})),
-    toRecipeIds = (recipe => [recipe.id])
-}) => {
-    const mapStateToProps = (state, {recipe}) => {
-        const recipeIds = toRecipeIds(recipe)
-        return {
-            recipes: recipeIds
-                .map(recipeId => selectFrom(state, ['process.loadedRecipes', recipeId]))
-                .filter(recipe => recipe)
-        }
-    }
+const getDependentRecipes = recipe =>
+    getRecipeType(recipe.type)
+        .getDependentRecipeIds(recipe)
+        .map(recipeId => select(['process.loadedRecipes', recipeId]))
+        .filter(r => r)
+        .map(r => getDependentRecipes(r))
+        .flat()
+
+export const withRecipeLayer = () => {
+    const mapRecipeToProps = recipe => ({
+        recipe,
+        recipes: [recipe, ...getDependentRecipes(recipe)],
+        availableBands: getRecipeType(recipe.type).getAvailableBands(recipe)
+    })
+
     return WrappedComponent => {
         class _HigherOrderComponent extends React.Component {
             progress$ = new Subject()
@@ -72,8 +75,8 @@ export const withRecipeLayer = ({
             }
 
             createLayer() {
-                const {recipe, recipes, layerConfig, map, boundsChanged$, dragging$, cursor$} = this.props
-                const dataTypes = toDataTypes(recipe)
+                const {recipe, recipes, layerConfig, map, availableBands, boundsChanged$, dragging$, cursor$} = this.props
+                const dataTypes = _.mapValues(availableBands, 'dataType')
                 const {watchedProps: prevWatchedProps} = this.layer || {}
                 const previewRequest = {
                     recipe: _.omit(recipe, ['ui', 'layers']),
@@ -104,9 +107,7 @@ export const withRecipeLayer = ({
 
         return compose(
             _HigherOrderComponent,
-            connect(mapStateToProps),
-            withRecipe(),
-
+            withRecipe(mapRecipeToProps),
             withSubscriptions()
         )
     }

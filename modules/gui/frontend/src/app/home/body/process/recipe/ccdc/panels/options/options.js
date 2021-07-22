@@ -2,10 +2,10 @@ import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions, breakDetectionOptions} from '../../ccdcRecipe'
+import {RecipeActions, breakDetectionOptions} from 'app/home/body/process/recipe/ccdc/ccdcRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
-import {flatBandOptions, toSources} from 'sources'
+import {groupedBandOptions, toDataSetIds} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import React from 'react'
@@ -67,13 +67,16 @@ class Options extends React.Component {
     renderAdvanced() {
         const {corrections, classificationLegend, classifierType, sources, inputs: {dateFormat, tmaskBands, minObservations, chiSquareProbability, minNumOfYearsScaler, lambda, maxIterations}} = this.props
         const dataSets = sources.dataSets
-        const tmaskBandsOptions = flatBandOptions({
-            sources: toSources(dataSets.value),
+        const tmaskBandsOptions = groupedBandOptions({
+            dataSets: toDataSetIds(dataSets),
             corrections,
-            timeScan: false,
-            classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']},
-            order: ['indexes', 'dataSets', 'classification']
-        }).filter(({value}) => sources.breakpointBands.includes(value))
+            classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']}
+        })
+            .map(option => option.options
+                ? option.options.filter(({value}) => sources.breakpointBands.includes(value))
+                : [option]
+            )
+            .flat()
         return (
             <Layout>
                 <Form.Buttons

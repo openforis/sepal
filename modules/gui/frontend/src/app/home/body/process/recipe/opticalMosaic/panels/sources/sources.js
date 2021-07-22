@@ -1,11 +1,11 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {MosaicPreview} from '../../../mosaic/mosaicPreview'
+import {MosaicPreview} from 'app/home/body/process/recipe/mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions, dateRange} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
-import {imageSourceById, isDataSetInDateRange, sources} from 'sources'
+import {getDataSets, isDataSetInDateRange, sources} from 'app/home/body/process/recipe/opticalMosaic/sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
@@ -62,7 +62,7 @@ class Sources extends React.Component {
     renderSources() {
         return (
             <Layout>
-                {sources.map(source => this.renderSource(source, imageSourceById[source].dataSets))}
+                {sources.map(source => this.renderSource(source, getDataSets(source)))}
             </Layout>
         )
     }

@@ -1,8 +1,7 @@
+import {getAllVisualizations} from 'app/home/body/process/recipe/visualizations'
 import {msg} from 'translate'
-import {normalize} from 'app/home/map/visParams/visParams'
-import {recipeActionBuilder} from '../../recipe'
-import {removeImageLayerSource} from '../../mapLayout/imageLayerSources'
-import {selectFrom} from 'stateUtils'
+import {recipeActionBuilder} from 'app/home/body/process/recipe'
+import {removeImageLayerSource} from 'app/home/body/process/mapLayout/imageLayerSources'
 import _ from 'lodash'
 import api from 'api'
 import guid from 'guid'
@@ -151,26 +150,6 @@ export const RecipeActions = id => {
     }
 }
 
-export const getBandOptions = (legend, classifierType) =>
-    [
-        {
-            value: 'class',
-            label: msg('process.classification.bands.class')
-        },
-        supportRegression(classifierType) && {
-            value: 'regression',
-            label: msg('process.classification.bands.regression')
-        },
-        supportProbability(classifierType) && {
-            value: 'class_probability',
-            label: msg('process.classification.bands.classProbability')
-        },
-        ...legend.entries.map(({value, label}) => supportProbability(classifierType) && {
-            value: `probability_${value}`,
-            label: msg('process.classification.bands.probability', {class: label})
-        })
-    ].filter(option => option)
-
 export const supportRegression = classifierType =>
     ['RANDOM_FOREST', 'GRADIENT_TREE_BOOST', 'CART'].includes(classifierType)
 
@@ -201,72 +180,6 @@ const submitRetrieveRecipeTask = recipe => {
             }
     }
     return api.tasks.submit$(task).subscribe()
-}
-
-export const getAllVisualizations = recipe => [
-    ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
-    ...preSetVisualizationOptions(recipe).map(({visParams}) => visParams)
-]
-
-export const preSetVisualizationOptions = recipe => {
-    const legend = selectFrom(recipe, 'model.legend') || {}
-    const entries = _.sortBy(legend.entries, 'value')
-    if (!entries.length) {
-        return []
-    }
-    const classifierType = selectFrom(recipe, 'model.classifier.type')
-    const min = entries[0].value
-    const max = _.last(entries).value
-    const probabilityPalette = ['#000000', '#480000', '#710101', '#BA0000', '#FF0000', '#FFA500', '#FFFF00',
-        '#79C900', '#006400']
-    return [
-        {
-            value: 'class',
-            label: msg('process.classification.bands.class'),
-            visParams: normalize({
-                type: 'categorical',
-                bands: ['class'],
-                min,
-                max,
-                values: entries.map(({value}) => value),
-                labels: entries.map(({label}) => label),
-                palette: entries.map(({color}) => color),
-            })
-        },
-        supportRegression(classifierType) && {
-            value: 'regression',
-            label: msg('process.classification.bands.regression'),
-            visParams: normalize({
-                type: 'continuous',
-                bands: ['regression'],
-                min,
-                max,
-                palette: entries.map(({color}) => color),
-            })
-        },
-        supportProbability(classifierType) && {
-            value: 'class_probability',
-            label: msg('process.classification.bands.classProbability'),
-            visParams: normalize({
-                type: 'continuous',
-                bands: ['class_probability'],
-                min: 0,
-                max: 100,
-                palette: probabilityPalette
-            })
-        },
-        ...legend.entries.map(({value, label}) => supportProbability(classifierType) && {
-            value: `probability_${value}`,
-            label: msg('process.classification.bands.probability', {class: label}),
-            visParams: normalize({
-                type: 'continuous',
-                bands: [`probability_${value}`],
-                min: 0,
-                max: 100,
-                palette: probabilityPalette
-            })
-        })
-    ].filter(option => option)
 }
 
 export const hasTrainingData = recipe => {

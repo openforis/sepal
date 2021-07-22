@@ -24,3 +24,7 @@
     margin-bottom: 1rem;
 }
 
+.bandSelection {
+    width: fit-content;
+    margin: 1rem 0 1rem 1rem;
+}

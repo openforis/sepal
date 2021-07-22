@@ -1,8 +1,7 @@
-import {getRecipeType} from '../../recipeTypes'
+import {getAllVisualizations} from 'app/home/body/process/recipe/visualizations'
+import {getRecipeType} from 'app/home/body/process/recipeTypes'
 import {msg} from 'translate'
 import {recipeActionBuilder} from 'app/home/body/process/recipe'
-import {selectFrom} from 'stateUtils'
-import {visualizations} from './visualizations'
 import _ from 'lodash'
 import api from 'api'
 import moment from 'moment'
@@ -48,17 +47,6 @@ export const RecipeActions = id => {
     }
 }
 
-export const getAllVisualizations = recipe => {
-    const type = (selectFrom(recipe, 'model.dates') || {}).fromDate
-        ? 'TIME_SCAN'
-        : 'POINT_IN_TIME'
-    return [
-        ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
-        ...visualizations[type],
-        ...(type === 'POINT_IN_TIME' ? visualizations.METADATA : [])
-    ]
-}
-
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const scale = recipe.ui.retrieveOptions.scale
@@ -66,7 +54,6 @@ const submitRetrieveRecipeTask = recipe => {
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
     const visualizations = getAllVisualizations(recipe)
-        .filter(({bands: visBands}) => visBands.every(band => bands.includes(band)))
     const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,

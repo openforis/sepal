@@ -1,8 +1,7 @@
 import {getRecipeType} from '../../recipeTypes'
 import {msg} from 'translate'
-import {getAllVisualizations as opticalMosaicVisualizations} from '../opticalMosaic/opticalMosaicRecipe'
-import {getAllVisualizations as radarMosaicVisualizations} from '../radarMosaic/radarMosaicRecipe'
-import {recipeActionBuilder} from '../../recipe'
+import {recipeActionBuilder} from 'app/home/body/process/recipe'
+import {getAllVisualizations as recipeVisualizations} from 'app/home/body/process/recipe/visualizations'
 import {selectFrom} from 'stateUtils'
 import {toHarmonicVisualization} from './harmonicVisualizations'
 import _ from 'lodash'
@@ -100,12 +99,13 @@ export const getAllVisualizations = recipe => {
 
 const allOpticalMosaicVisualizations = recipe => {
     const opticalMosaicRecipe = {
+        type: 'MOSAIC',
         model: {
             sources: selectFrom(recipe, 'model.sources.dataSets'),
             compositeOptions: selectFrom(recipe, 'model.options')
         }
     }
-    const baseVisualizations = opticalMosaicVisualizations(opticalMosaicRecipe)
+    const baseVisualizations = getAllVisualizations(opticalMosaicRecipe)
         .map(visParams => ({...visParams, baseBands: [...new Set(visParams.bands)]}))
     const harmonicVisualizations = baseVisualizations
         .filter(({type}) => type === 'continuous')
@@ -121,12 +121,13 @@ const allOpticalMosaicVisualizations = recipe => {
 const RADAR_BAND_SCALE = 100
 const allRadarMosaicVisualizations = recipe => {
     const radarMosaicRecipe = {
+        type: 'RADAR_MOSAIC',
         model: {
             options: selectFrom(recipe, 'model.options')
         }
     }
     return [
-        ...radarMosaicVisualizations(radarMosaicRecipe)
+        ...recipeVisualizations(radarMosaicRecipe)
             .map(visParams => ({
                 ...visParams,
                 min: visParams.min.map(min => min * RADAR_BAND_SCALE),

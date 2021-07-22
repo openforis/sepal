@@ -30,13 +30,11 @@ class Retrieve extends React.Component {
     }
 
     bandOptions() {
-        const {classificationLegend, classifierType, corrections, sources: {dataSets: sources}} = this.props
+        const {classificationLegend, classifierType, corrections, sources: {dataSets}} = this.props
         return groupedBandOptions({
-            sources,
+            dataSets,
             corrections,
-            timeScan: false,
-            classification: {classifierType, classificationLegend, include: ['regression', 'probabilities']},
-            order: ['indexes', 'dataSets', 'classification']
+            classification: {classifierType, classificationLegend, include: ['regression', 'probabilities']}
         })
     }
 

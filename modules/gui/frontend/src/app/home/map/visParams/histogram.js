@@ -62,6 +62,7 @@ export class Histogram extends React.Component {
                                         x: {drawAxis: false},
                                         y: {drawAxis: false}
                                     }}
+                                    labels={['', '']}
                                     legend='never'
                                     highlightCircleSize={0}
                                     fillGraph={true}

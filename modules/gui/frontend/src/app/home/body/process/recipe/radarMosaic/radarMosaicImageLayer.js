@@ -1,16 +1,11 @@
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
 import {compose} from 'compose'
-import {dataTypes} from './dataTypes'
-import {getAllVisualizations} from './radarMosaicRecipe'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {visualizations} from './visualizations'
-import {withMapAreaContext} from 'app/home/map/mapAreaContext'
-import {withRecipeLayer} from '../withRecipeLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
 
 const defaultLayerConfig = {
     panSharpen: false
@@ -60,42 +55,10 @@ class _RadarMosaicImageLayer extends React.Component {
             />
         )
     }
-
-    componentDidMount() {
-        const {recipe, layerConfig: {visParams}} = this.props
-        if (!visParams) {
-            this.selectVisualization(getAllVisualizations(recipe)[0])
-        }
-    }
-
-    componentDidUpdate(prevProps) {
-        const {layerConfig: {visParams: prevVisParams}} = prevProps
-        const {recipe} = this.props
-        const allVisualizations = getAllVisualizations(recipe)
-        if (prevVisParams) {
-            const visParams = allVisualizations.find(({id, bands}) =>
-                _.isEqual([id, bands], [prevVisParams.id, prevVisParams.bands])
-            )
-            if (!visParams) {
-                this.selectVisualization(allVisualizations[0])
-            } else if (!_.isEqual(visParams, prevVisParams)) {
-                this.selectVisualization(visParams)
-            }
-        } else {
-            this.selectVisualization(allVisualizations[0])
-        }
-    }
-
-    selectVisualization(visParams) {
-        const {layerConfig: {panSharpen}, mapAreaContext: {updateLayerConfig}} = this.props
-        updateLayerConfig({visParams, panSharpen})
-    }
 }
 
 export const RadarMosaicImageLayer = compose(
-    _RadarMosaicImageLayer,
-    withMapAreaContext(),
-    withRecipeLayer({toDataTypes: () => dataTypes})
+    _RadarMosaicImageLayer
 )
 
 RadarMosaicImageLayer.defaultProps = {

@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {HoverDetector, HoverOverlay} from 'widget/hover'
-import {getDataSet} from 'sources'
+import {getDataSet} from './sources'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'

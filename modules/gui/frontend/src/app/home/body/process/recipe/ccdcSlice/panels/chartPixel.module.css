@@ -20,12 +20,12 @@
     color: #ccc;
 }
 
-.buttons button {
-    margin-bottom: 1rem;
-}
-
 .chart {
     flex-grow: 1;
     display: flex;
 }
 
+.bandSelection {
+    width: fit-content;
+    margin: 1rem 0 1rem 1rem;
+}
