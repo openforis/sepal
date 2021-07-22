@@ -22,7 +22,7 @@ apt-get update -y
 
 # Install development and runtime libraries (~4GB)
 apt-get install -y --no-install-recommends \
-  nvidia-driver-460=460.73.01-0ubuntu1 \
+  nvidia-driver-460=460.91.03-0ubuntu1 \
   cuda-toolkit-11-0 \
   cuda-toolkit-11-2 \
   libcudnn8=8.1.1.33-1+cuda11.2 \
