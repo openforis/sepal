@@ -1,5 +1,3 @@
-import _ from 'lodash'
-
 const typeFloat = {precision: 'float'}
 
 export const getAvailableBands = (recipe, select = ['dataSetBands', 'indexes', 'metadata']) => {
