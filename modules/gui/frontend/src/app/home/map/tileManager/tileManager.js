@@ -28,14 +28,14 @@ export const getTileManager = tileProvider => {
         const overallCount = getCount()
         const pending = tileProviderCount.enqueued + tileProviderCount.executing
         pending$.next(pending)
-        log.trace(`${tileProviderTag(tileProviderId)}: enqueued: ${tileProviderCount.enqueued}/${overallCount.enqueued}, executing: ${tileProviderCount.executing}/${overallCount.executing}`)
+        log.trace(() => `${tileProviderTag(tileProviderId)}: enqueued: ${tileProviderCount.enqueued}/${overallCount.enqueued}, executing: ${tileProviderCount.executing}/${overallCount.executing}`)
     }
 
     const loadTile$ = request => {
         const response$ = new ReplaySubject()
         const cancel$ = new Subject()
         const requestId = request.id
-        log.debug(`Load tile ${requestTag({tileProviderId, requestId})}`)
+        log.debug(() => `Load tile ${requestTag({tileProviderId, requestId})}`)
         submit({tileProviderId, requestId, request, response$, cancel$})
         reportPending()
         return response$.pipe(
@@ -48,18 +48,18 @@ export const getTileManager = tileProvider => {
     }
 
     const releaseTile = requestId => {
-        log.debug(`Release tile ${requestTag({tileProviderId, requestId})}`)
+        log.debug(() => `Release tile ${requestTag({tileProviderId, requestId})}`)
         reportPending()
         cancelByRequestId(requestId)
     }
 
     const hide = hidden => {
-        log.debug(`Set ${tileProviderTag(tileProviderId)} ${hidden ? 'hidden' : 'visible'}`)
+        log.debug(() => `Set ${tileProviderTag(tileProviderId)} ${hidden ? 'hidden' : 'visible'}`)
         setHidden(tileProviderId, hidden)
     }
 
     const close = () => {
-        log.debug('Close')
+        log.debug(() => 'Close')
         removeTileProvider(tileProviderId)
     }
 

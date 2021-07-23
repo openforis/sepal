@@ -30,14 +30,14 @@ const createTileManagerGroup = concurrency => {
             tileProvider,
             hidden: false
         }
-        log.debug(`Added ${tileProviderTag(tileProviderId)}`)
+        log.debug(() => `Added ${tileProviderTag(tileProviderId)}`)
     }
     
     const removeTileProvider = tileProviderId => {
         requestQueue.removeByTileProviderId(tileProviderId)
         requestExecutor.cancelByTileProviderId(tileProviderId)
         delete tileProvidersInfo[tileProviderId]
-        log.debug(`Removed ${tileProviderTag(tileProviderId)}`)
+        log.debug(() => `Removed ${tileProviderTag(tileProviderId)}`)
     }
 
     const submit = currentRequest =>
@@ -45,7 +45,9 @@ const createTileManagerGroup = concurrency => {
 
     const setHidden = (tileProviderId, hidden) => {
         requestExecutor.setHidden(tileProviderId, hidden)
-        requestQueue.scan(({tileProviderId, requestId}) => requestExecutor.notify({tileProviderId, requestId}))
+        requestQueue.scan(
+            ({tileProviderId, requestId}) => requestExecutor.notify({tileProviderId, requestId})
+        )
     }
     
     const cancelByRequestId = requestId => {
@@ -73,7 +75,7 @@ const createTileManagerGroup = concurrency => {
     requestExecutor.finished$.subscribe(
         ({tileProviderId: currentTileProviderId, currentRequest, replacementRequest}) => {
             if (requestQueue.isEmpty()) {
-                log.debug('Pending request queue empty')
+                log.debug(() => 'Pending request queue empty')
             } else {
                 if (replacementRequest) {
                     const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeueByRequestId(replacementRequest.requestId)

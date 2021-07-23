@@ -36,14 +36,14 @@ export const getRequestQueue = () => {
         assertValue(request, _.isObject, 'request must be provided', true)
         pendingRequests.push({tileProviderId, requestId, request, response$, cancel$})
         increaseCount(tileProviderId)
-        log.debug(`Enqueued ${requestTag({tileProviderId, requestId})}, currently pending: ${getCount()}`)
+        log.debug(() => `Enqueued ${requestTag({tileProviderId, requestId})}, currently pending: ${getCount()}`)
     }
 
     const dequeueFIFO = () => {
         const pendingRequest = pendingRequests.shift()
         const tileProviderId = pendingRequest.tileProviderId
         decreaseCount(tileProviderId)
-        log.debug(`Dequeued ${requestTag(pendingRequest)}, currently pending: ${getCount()}`)
+        log.debug(() => `Dequeued ${requestTag(pendingRequest)}, currently pending: ${getCount()}`)
         return pendingRequest
     }
 
@@ -52,7 +52,7 @@ export const getRequestQueue = () => {
             const [pendingRequest] = pendingRequests.splice(index, 1)
             const tileProviderId = pendingRequest.tileProviderId
             decreaseCount(tileProviderId)
-            log.debug(`Dequeued by ${dequeueMode} ${requestTag(pendingRequest)} - currently pending: ${getCount()}`)
+            log.debug(() => `Dequeued by ${dequeueMode} ${requestTag(pendingRequest)} - currently pending: ${getCount()}`)
             return pendingRequest
         }
         log.warn(`Could not dequeue by ${dequeueMode}, reverting to FIFO`)
@@ -77,7 +77,7 @@ export const getRequestQueue = () => {
                 return dequeueByIndex(index, 'tileProviderId')
             }
         }
-        log.debug(`Could not dequeue ${tileProviderTag({tileProviderId})}, reverting to FIFO`)
+        log.debug(() => `Could not dequeue ${tileProviderTag({tileProviderId})}, reverting to FIFO`)
         return dequeueFIFO()
     }
 
@@ -98,7 +98,7 @@ export const getRequestQueue = () => {
             const removed = _(pendingRequests)
                 .filter(request => request.tileProviderId === tileProviderId)
                 .reduce((count, request) => count + (discardByRequestId(request.requestId) ? 1 : 0), 0)
-            log.debug(`Removed ${removed} for ${tileProviderTag({tileProviderId})} - currently pending: ${getCount()}`)
+            log.debug(() => `Removed ${removed} for ${tileProviderTag({tileProviderId})} - currently pending: ${getCount()}`)
         } else {
             log.warn('Cannot remove as no tileProvider id was provided')
         }

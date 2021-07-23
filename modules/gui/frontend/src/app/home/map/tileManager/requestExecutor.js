@@ -36,13 +36,13 @@ export const getRequestExecutor = concurrency => {
     const start = ({tileProviderId, requestId, request, response$, cancel$}) => {
         activeRequests[requestId] = {tileProviderId, requestId, request, response$, cancel$, timestamp: Date.now()}
         const activeRequestCountByTileProviderId = increaseCount(tileProviderId)
-        log.debug(`Started ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
+        log.debug(() => `Started ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
     }
     
     const finish = ({tileProviderId, requestId, currentRequest, replacementRequest}) => {
         delete activeRequests[requestId]
         const activeRequestCountByTileProviderId = decreaseCount(tileProviderId)
-        log.debug(`Finished ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
+        log.debug(() => `Finished ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
         finished$.next({tileProviderId, currentRequest, replacementRequest})
     }
 
@@ -57,7 +57,7 @@ export const getRequestExecutor = concurrency => {
                     if (replacementRequest) {
                         finishInfo.currentRequest = currentRequest
                         finishInfo.replacementRequest = replacementRequest
-                        log.debug(`Replacing ${requestTag({tileProviderId, requestId})} with ${requestTag(replacementRequest)}`)
+                        log.debug(() => `Replacing ${requestTag({tileProviderId, requestId})} with ${requestTag(replacementRequest)}`)
                     }
                 })
             )),
@@ -66,12 +66,12 @@ export const getRequestExecutor = concurrency => {
             ),
         ).subscribe({
             next: response => {
-                log.debug(`Succeeded ${requestTag({tileProviderId, requestId})}`)
+                log.debug(() => `Succeeded ${requestTag({tileProviderId, requestId})}`)
                 response$.next(response)
                 response$.complete()
             },
             error: error => {
-                log.error(`Failed ${requestTag({tileProviderId, requestId})}`, error)
+                log.error(() => `Failed ${requestTag({tileProviderId, requestId})}`, error)
                 response$.error(error)
             }
         })
@@ -106,11 +106,11 @@ export const getRequestExecutor = concurrency => {
     const tryCancelMostRecentByTileProviderId = (tileProviderId, replacementRequest, excludeCount) => {
         const request = getMostRecentByTileProviderId(tileProviderId, excludeCount)
         if (request) {
-            log.debug(`Cancelling lowest priority request handler for ${tileProviderTag(tileProviderId)}`)
+            log.debug(() => `Cancelling lowest priority request handler for ${tileProviderTag(tileProviderId)}`)
             request.cancel$.next(replacementRequest)
             return true
         }
-        log.debug(`No cancellable request for ${tileProviderTag(tileProviderId)}`)
+        log.debug(() => `No cancellable request for ${tileProviderTag(tileProviderId)}`)
         return false
     }
     
@@ -129,7 +129,7 @@ export const getRequestExecutor = concurrency => {
             const activeCount = getCount(tileProviderId)
             const threshold = maxActive.count - 1
             if (activeCount < threshold) {
-                log.debug(`Detected insufficient handlers for ${tileProviderTag(tileProviderId)}, currently ${activeCount}`)
+                log.debug(() => `Detected insufficient handlers for ${tileProviderTag(tileProviderId)}, currently ${activeCount} out of ${getCount()}`)
                 return tryCancelMostRecentByTileProviderId(maxActive.tileProviderId, replacementRequest, 1)
             }
         }
@@ -138,6 +138,7 @@ export const getRequestExecutor = concurrency => {
 
     const notify = ({tileProviderId, requestId}) => {
         if (getCount() && !isHidden(tileProviderId)) {
+            log.debug(() => `Trying to start ${requestTag({tileProviderId, requestId})}`)
             tryCancelHidden({tileProviderId, requestId}) || tryCancelUnbalanced({tileProviderId, requestId})
         }
     }
@@ -146,7 +147,7 @@ export const getRequestExecutor = concurrency => {
         if (requestId) {
             const request = activeRequests[requestId]
             if (request) {
-                log.debug(`Cancelling ${requestTag(request)}`)
+                log.debug(() => `Cancelling ${requestTag(request)}`)
                 request.cancel$.next()
                 return true
             }
@@ -162,7 +163,9 @@ export const getRequestExecutor = concurrency => {
                 .values()
                 .filter(request => request.tileProviderId === tileProviderId)
                 .reduce((count, request) => count + (cancelByRequestId(request.requestId) ? 1 : 0), 0)
-            log.debug(`Cancelling ${cancelling} for ${tileProviderTag(tileProviderId)}`)
+            if (cancelling) {
+                log.debug(() => `Cancelling ${cancelling} for ${tileProviderTag(tileProviderId)}`)
+            }
         } else {
             log.warn('Cannot cancel as no tileProvider id was provided')
         }
