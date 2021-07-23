@@ -1,11 +1,11 @@
 import {RecipeActions} from '../../timeSeriesRecipe'
 import {compose} from 'compose'
-import {groupedBandOptions} from 'sources'
+import {groupedBandOptions, toDataSetIds} from 'sources'
 import {selectFrom} from 'stateUtils'
-import {withRecipe} from '../../../../recipeContext'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import RetrievePanel from '../../../mosaic/panels/retrieve/retrieve'
+import RetrievePanel from 'app/home/body/process/recipe/mosaic/panels/retrieve/retrieve'
 
 const mapRecipeToProps = recipe =>
     ({
@@ -32,7 +32,7 @@ class Retrieve extends React.Component {
     bandOptions() {
         const {classificationLegend, classifierType, corrections, sources: {dataSets}} = this.props
         return groupedBandOptions({
-            dataSets,
+            dataSets: toDataSetIds(dataSets),
             corrections,
             classification: {classifierType, classificationLegend, include: ['regression', 'probabilities']}
         })
