@@ -64,10 +64,9 @@ class _RecipeImageLayer extends React.Component {
     componentDidUpdate(prevProps) {
         const {layerConfig: {visParams: prevVisParams}} = prevProps
         const {recipe} = this.props
+        if (!recipe) return
         const allVisualizations = getAllVisualizations(recipe)
-        if (!allVisualizations.length) {
-            return
-        }
+        if (!allVisualizations.length) return
         if (prevVisParams) {
             const visParams = allVisualizations
                 .find(({id, bands}) => id === prevVisParams.id && (prevVisParams.id || _.isEqual(bands, prevVisParams.bands)))
