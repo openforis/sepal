@@ -31,6 +31,9 @@ export const getLogger = name => {
         info: (...args) => isEnabled(level, levels.INFO) && log(console.log, 'INFO', name, args),
         warn: (...args) => isEnabled(level, levels.WARN) && log(console.warn, 'WARN', name, args),
         error: (...args) => isEnabled(level, levels.ERROR) && log(console.error, 'ERROR', name, args),
-        fatal: (...args) => isEnabled(level, levels.FATAL) && log(console.error, 'UNKNOWN', name, args)
+        fatal: (...args) => isEnabled(level, levels.FATAL) && log(console.error, 'UNKNOWN', name, args),
+        isTraceEnabled: () => isEnabled(level, levels.TRACE),
+        isDebugEnabled: () => isEnabled(level, levels.DEBUG),
+        isInfoEnabled: () => isEnabled(level, levels.INFO)
     }
 }
