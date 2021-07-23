@@ -6,11 +6,8 @@ import _ from 'lodash'
 export const getAvailableBands = recipe => {
     const entries = selectFrom(recipe, 'model.legend.entries') || []
     const classifierType = selectFrom(recipe, 'model.classifier.type')
-    if (!classifierType) {
-        return {}
-    }
-    const min = entries[0].value
-    const max = _.last(entries).value
+    const min = entries.length ? entries[0].value : 0
+    const max = entries.length ? _.last(entries).value : 0
     const classBand = {class: {
         dataType: {precision: 'int', min, max},
         label: msg('process.classification.bands.class')
@@ -39,7 +36,6 @@ export const getAvailableBands = recipe => {
             })
             .value()
         : {}
-
     return {
         ...classBand,
         ...regressionBand,
