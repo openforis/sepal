@@ -43,6 +43,11 @@ const CcdcSlice = compose(
     recipe({defaultModel, mapRecipeToProps})
 )
 
+const getDependentRecipeIds = recipe => {
+    const {type, id} = selectFrom(recipe, 'model.source') || {}
+    return type === 'RECIPE_REF' ? [id] : []
+}
+
 export default () => ({
     id: 'CCDC_SLICE',
     labels: {
@@ -53,8 +58,11 @@ export default () => ({
     components: {
         recipe: CcdcSlice
     },
+    getDependentRecipeIds,
     getDateRange(recipe) {
         const date = moment.utc(recipe.model.date.date, 'YYYY-MM-DD')
         return [date, date]
-    }
+    },
+    getAvailableBands: recipe => selectFrom(recipe, 'model.source.bands') || [],
+    getPreSetVisualizations: recipe => selectFrom(recipe, 'model.source.visualizations') || []
 })

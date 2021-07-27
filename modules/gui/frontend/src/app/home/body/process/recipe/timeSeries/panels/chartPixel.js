@@ -66,8 +66,8 @@ class ChartPixel extends React.Component {
                     scrollable={false}
                     noVerticalPadding>
                     <Form className={styles.form}>
-                        {this.renderChart()}
                         {this.renderBandOptions()}
+                        {this.renderChart()}
                     </Form>
                 </Panel.Content>
 

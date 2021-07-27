@@ -105,7 +105,7 @@ const allOpticalMosaicVisualizations = recipe => {
             compositeOptions: selectFrom(recipe, 'model.options')
         }
     }
-    const baseVisualizations = getAllVisualizations(opticalMosaicRecipe)
+    const baseVisualizations = recipeVisualizations(opticalMosaicRecipe)
         .map(visParams => ({...visParams, baseBands: [...new Set(visParams.bands)]}))
     const harmonicVisualizations = baseVisualizations
         .filter(({type}) => type === 'continuous')

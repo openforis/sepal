@@ -5,7 +5,6 @@ import {getAllVisualizations} from './ccdcSliceRecipe'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
-import {withRecipeLayer} from '../withRecipeLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -82,12 +81,7 @@ class _CCDCSliceImageLayer extends React.Component {
 
 export const CCDCSliceImageLayer = compose(
     _CCDCSliceImageLayer,
-    withMapAreaContext(),
-    withRecipeLayer({
-        toRecipeIds: recipe => recipe.model.source.type === 'RECIPE_REF'
-            ? [recipe.id, recipe.model.source.id]
-            : [recipe.id]
-    })
+    withMapAreaContext()
 )
 
 CCDCSliceImageLayer.defaultProps = {
