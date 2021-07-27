@@ -8,7 +8,7 @@ export class GoogleMapsLayer {
         minZoom = 0,
         maxZoom = 20,
     } = {}, progress$) {
-        this.tileProvider = new BalancingTileProvider({tileProvider, reties: 3, progress$})
+        this.tileProvider = new BalancingTileProvider({tileProvider, retries: 3, progress$})
         this.name = name
         this.minZoom = minZoom
         this.maxZoom = maxZoom
