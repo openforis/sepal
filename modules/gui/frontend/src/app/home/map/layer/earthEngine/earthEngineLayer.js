@@ -1,6 +1,4 @@
-import {EarthEngineTileProvider} from '../../tileProvider/earthEngineTileProvider'
-import {ReplaySubject, Subject, of, throwError} from 'rxjs'
-import {TileLayer} from '../../tileLayer/tileLayer'
+import {ReplaySubject, of, throwError} from 'rxjs'
 import {catchError, mapTo, takeUntil, tap} from 'rxjs/operators'
 import Layer from '../layer'
 import _ from 'lodash'
@@ -8,40 +6,24 @@ import _ from 'lodash'
 export default class EarthEngineLayer extends Layer {
     constructor({
         map,
-        dataTypes,
-        visParams,
-        layerIndex = 0,
-        label,
-        description,
-        mapId$,
         progress$,
-        cursorValue$,
-        boundsChanged$,
-        dragging$,
-        cursor$,
+        layerIndex,
+        mapId$,
+        watchedProps,
         onInitialize,
         onInitialized,
-        onError,
-        watchedProps
+        onError
     }) {
-        super()
-        this.dataTypes = dataTypes
-        this.visParams = visParams
-        this.map = map
-        this.layerIndex = layerIndex
-        this.label = label
-        this.description = description
+        super({map, progress$, layerIndex})
         this.mapId$ = mapId$
         this.watchedProps = watchedProps
-        this.progress$ = progress$
-        this.cursorValue$ = cursorValue$
-        this.boundsChanged$ = boundsChanged$
-        this.dragging$ = dragging$
-        this.cursor$ = cursor$ || new Subject()
         this.onInitialize = onInitialize
         this.onInitialized = onInitialized
         this.onError = onError
         this.cancel$ = new ReplaySubject()
+        this.token = null
+        this.mapId = null
+        this.urlTemplate = null
     }
 
     equals(o) {
@@ -49,32 +31,12 @@ export default class EarthEngineLayer extends Layer {
     }
 
     createTileProvider() {
-        const {urlTemplate} = this
-        return new EarthEngineTileProvider({
-            urlTemplate,
-            dataTypes: this.dataTypes,
-            visParams: this.visParams,
-            cursorValue$: this.cursorValue$,
-            boundsChanged$: this.boundsChanged$,
-            dragging$: this.dragging$,
-            cursor$: this.cursor$
-        })
-    }
-
-    addToMap() {
-        const {map, layerIndex, progress$} = this
-        const tileProvider = this.createTileProvider()
-        this.tileLayer = new TileLayer({map, tileProvider, layerIndex, progress$})
-        this.tileLayer.add()
+        throw new Error('Subclass needs to implement createTileProvider')
     }
 
     removeFromMap() {
-        this.tileLayer && this.tileLayer.remove()
+        super.removeFromMap()
         this.cancel$.next()
-    }
-
-    hide(hidden) {
-        this.tileLayer && this.tileLayer.hide(hidden)
     }
 
     initialize$() {

@@ -2,8 +2,8 @@ import {EarthEngineTableTileProvider} from '../../tileProvider/earthEngineTableT
 import EarthEngineLayer from './earthEngineLayer'
 
 export default class EarthEngineTableLayer extends EarthEngineLayer {
-    constructor(args) {
-        super(args)
+    constructor({map, mapId$, layerIndex, watchedProps}) {
+        super({map, mapId$, layerIndex, watchedProps})
     }
 
     createTileProvider() {
