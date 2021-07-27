@@ -1,6 +1,6 @@
 import {GoogleMapsLayer} from './googleMapsLayer'
 
-export class TileLayer {
+export class GoogleTileLayer {
     constructor({
         layerIndex,
         tileProvider,

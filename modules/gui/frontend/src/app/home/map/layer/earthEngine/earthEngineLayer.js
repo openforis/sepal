@@ -1,9 +1,9 @@
 import {ReplaySubject, of, throwError} from 'rxjs'
 import {catchError, mapTo, takeUntil, tap} from 'rxjs/operators'
-import Layer from '../layer'
+import TileLayer from '../tileLayer'
 import _ from 'lodash'
 
-export default class EarthEngineLayer extends Layer {
+export default class EarthEngineLayer extends TileLayer {
     constructor({
         map,
         progress$,

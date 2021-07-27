@@ -1,7 +1,7 @@
 import {GoogleSatelliteTileProvider} from '../tileProvider/googleSatelliteTileProvider'
-import Layer from './layer'
+import TileLayer from './tileLayer'
 
-export default class GoogleSatelliteLayer extends Layer {
+export default class GoogleSatelliteLayer extends TileLayer {
     constructor({map, progress$}) {
         super({map, progress$})
         this.type = 'GoogleSatelliteLayer'

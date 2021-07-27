@@ -1,7 +1,7 @@
 import {WMTSTileProvider} from '../tileProvider/wmtsTileProvider'
-import Layer from './layer'
+import TileLayer from './tileLayer'
 
-export default class WMTSLayer extends Layer {
+export default class WMTSLayer extends TileLayer {
     constructor({map, urlTemplate, concurrency, progress$}) {
         super({map, progress$})
         this.urlTemplate = urlTemplate

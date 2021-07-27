@@ -1,4 +1,3 @@
-import {TileLayer} from '../tileLayer/tileLayer'
 import {of} from 'rxjs'
 
 export default class Layer {
@@ -6,7 +5,6 @@ export default class Layer {
         this.map = map
         this.layerIndex = layerIndex
         this.progress$ = progress$
-        this.tileLayer = null
     }
 
     equals(_o) {
@@ -18,18 +16,15 @@ export default class Layer {
     }
 
     addToMap() {
-        const {map, layerIndex, progress$} = this
-        const tileProvider = this.createTileProvider()
-        this.tileLayer = new TileLayer({map, tileProvider, layerIndex, progress$})
-        this.tileLayer.add()
+        throw new Error('Subclass needs to implement addToMap')
     }
 
     removeFromMap() {
-        this.tileLayer && this.tileLayer.remove()
+        throw new Error('Subclass needs to implement removeFromMap')
     }
 
-    hide(hidden) {
-        this.tileLayer && this.tileLayer.hide(hidden)
+    hide(_hidden) {
+        throw new Error('Subclass needs to implement hide')
     }
 
     initialize$() {
