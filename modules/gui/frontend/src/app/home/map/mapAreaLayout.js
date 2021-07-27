@@ -38,7 +38,7 @@ class _MapAreaLayout extends React.Component {
         this.updateFeatureLayers()
         const imageLayerId = 'imageLayer'
         if (layer) {
-            map.setLayer({id: imageLayerId, layer})
+            map.setLayer({id: imageLayerId, layer}) // TODO: destroy$
         } else {
             map.removeLayer(imageLayerId)
         }

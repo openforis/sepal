@@ -373,7 +373,8 @@ export class SepalMap {
         return this.layerById[id]
     }
 
-    setLayer({id, layer, destroy$ = NEVER, onInitialized, onError}) {
+    // setLayer({id, layer, destroy$ = NEVER, onInitialized, onError}) {
+    setLayer({id, layer, destroy$ = NEVER}) {
         const existingLayer = this.getLayer(id)
         const unchanged = layer === existingLayer || (existingLayer && existingLayer.equals(layer))
         if (unchanged) {
@@ -387,16 +388,15 @@ export class SepalMap {
                 takeUntil(this.removeLayer$.pipe(
                     filter(layerId => layerId === id),
                 ))
-            ).subscribe(
-                () => {
+            ).subscribe({
+                next: () => {
                     layer.__initialized__ = true
                     layer.addToMap()
-                    onInitialized && onInitialized(layer)
                 },
-                error => onError
-                    ? onError(error)
-                    : Notifications.error({message: msg('map.layer.error'), error})
-            )
+                error: error => {
+                    Notifications.error({message: msg('map.layer.error'), error})
+                }
+            })
         }
         return true
     }

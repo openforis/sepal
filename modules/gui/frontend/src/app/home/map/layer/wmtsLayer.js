@@ -1,9 +1,10 @@
-import {TileLayer} from './googleMapsLayer'
+import {TileLayer} from '../tileLayer/tileLayer'
 import {WMTSTileProvider} from '../tileProvider/wmtsTileProvider'
-import {of} from 'rxjs'
+import Layer from './layer'
 
-export default class WMTSLayer {
+export default class WMTSLayer extends Layer {
     constructor({map, urlTemplate, concurrency, progress$}) {
+        super()
         this.map = map
         this.layerIndex = 0
         this.urlTemplate = urlTemplate
@@ -29,9 +30,5 @@ export default class WMTSLayer {
     hide(hidden) {
         // hidden ? this.removeFromMap() : this.addToMap()
         this.tileLayer && this.tileLayer.hide(hidden)
-    }
-
-    initialize$() {
-        return of(this)
     }
 }

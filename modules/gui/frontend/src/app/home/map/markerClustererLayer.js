@@ -1,4 +1,5 @@
 import {of} from 'rxjs'
+import Layer from './layer/layer'
 import MarkerClusterer from '@googlemaps/markerclustererplus'
 import _ from 'lodash'
 import styles from './markerClustererLayer.module.css'
@@ -11,9 +12,10 @@ const SELECTED_STROKE_WIDTH = 3
 const DEFAULT_SCALE = 0.5
 const SELECTED_SCALE = 0.6
 
-export default class MarkerClustererLayer {
+export default class MarkerClustererLayer extends Layer {
 
     constructor({map, id, label, description}) {
+        super()
         const {google, googleMap} = map.getGoogle()
         this.type = 'MarkerClustererLayer'
         this.toggleable = true
@@ -134,10 +136,6 @@ export default class MarkerClustererLayer {
         hidden
             ? this.removeFromMap()
             : this.addToMap()
-    }
-
-    initialize$() {
-        return of(this)
     }
 
     toMapMarker(marker) {

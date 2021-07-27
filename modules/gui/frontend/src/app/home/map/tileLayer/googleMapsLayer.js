@@ -1,39 +1,7 @@
 import {BalancingTileProvider} from '../tileProvider/balancingTileProvider'
 import guid from 'guid'
 
-export class TileLayer {
-    constructor({
-        layerIndex,
-        tileProvider,
-        map,
-        minZoom = 0,
-        maxZoom = 20,
-        progress$
-    }) {
-        const {google} = map.getGoogle()
-        this.map = map
-        this.layerIndex = layerIndex
-        this.mapLayer = new GoogleMapsLayer(tileProvider, {google, minZoom, maxZoom}, progress$)
-    }
-
-    add() {
-        const {map, layerIndex, mapLayer} = this
-        map.addToMap(layerIndex, mapLayer)
-    }
-
-    remove() {
-        const {map, layerIndex, mapLayer} = this
-        map.removeFromMap(layerIndex)
-        mapLayer.close()
-    }
-
-    hide(hidden) {
-        const {mapLayer} = this
-        mapLayer.setOpacity(hidden ? 0 : 1)
-    }
-}
-
-class GoogleMapsLayer {
+export class GoogleMapsLayer {
     constructor(tileProvider, {
         google,
         name,

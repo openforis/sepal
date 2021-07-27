@@ -1,10 +1,11 @@
-import {EarthEngineTileProvider} from '../tileProvider/earthEngineTileProvider'
+import {EarthEngineTileProvider} from '../../tileProvider/earthEngineTileProvider'
 import {ReplaySubject, Subject, of, throwError} from 'rxjs'
-import {TileLayer} from './googleMapsLayer'
+import {TileLayer} from '../../tileLayer/tileLayer'
 import {catchError, mapTo, takeUntil, tap} from 'rxjs/operators'
+import Layer from '../layer'
 import _ from 'lodash'
 
-export default class EarthEngineLayer {
+export default class EarthEngineLayer extends Layer {
     constructor({
         map,
         dataTypes,
@@ -23,6 +24,7 @@ export default class EarthEngineLayer {
         onError,
         watchedProps
     }) {
+        super()
         this.dataTypes = dataTypes
         this.visParams = visParams
         this.map = map

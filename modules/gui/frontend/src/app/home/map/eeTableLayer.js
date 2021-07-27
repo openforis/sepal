@@ -1,6 +1,6 @@
 import {compose} from 'compose'
 import {connect} from 'store'
-import EarthEngineTableLayer from './layer/earthEngineTableLayer'
+import EarthEngineTableLayer from './layer/earthEngine/earthEngineTableLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import api from 'api'

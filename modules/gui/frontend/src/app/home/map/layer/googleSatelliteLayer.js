@@ -1,9 +1,10 @@
 import {GoogleSatelliteTileProvider} from '../tileProvider/googleSatelliteTileProvider'
-import {TileLayer} from './googleMapsLayer'
-import {of} from 'rxjs'
+import {TileLayer} from '../tileLayer/tileLayer'
+import Layer from './layer'
 
-export default class GoogleSatelliteLayer {
+export default class GoogleSatelliteLayer extends Layer {
     constructor({map, progress$}) {
+        super()
         this.map = map
         this.layerIndex = 0
         this.type = 'GoogleSatelliteLayer'
@@ -28,9 +29,5 @@ export default class GoogleSatelliteLayer {
     hide(hidden) {
         // hidden ? this.removeFromMap() : this.addToMap()
         this.tileLayer && this.tileLayer.hide(hidden)
-    }
-
-    initialize$() {
-        return of(this)
     }
 }
