@@ -1,6 +1,37 @@
 import {of} from 'rxjs'
 import Layer from './layer'
 
+export class GoogleLabelsLayer extends Layer {
+    constructor({map, layerIndex}) {
+        super({map, layerIndex})
+    }
+
+    createLayer() {
+        const {map} = this
+        const {google} = map.getGoogle()
+        this.layer = new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
+    }
+
+    equals(o) {
+        return o === this || o instanceof GoogleLabelsLayer
+    }
+
+    addToMap() {
+        this.layer || this.createLayer()
+        const {map, layerIndex, layer} = this
+        map.addToMap(layerIndex, layer)
+    }
+
+    removeFromMap() {
+        const {map, layerIndex} = this
+        map.removeFromMap(layerIndex)
+    }
+
+    initialize$() {
+        return of(this)
+    }
+}
+
 const labelsLayerStyle = [
     {featureType: 'all', stylers: [{visibility: 'off'}]},
     {elementType: 'labels.text.fill', stylers: [{color: '#ebd1aa'}, {visibility: 'on'}]},
@@ -18,31 +49,3 @@ const labelsLayerStyle = [
     {featureType: 'road.highway', elementType: 'geometry', stylers: [{color: '#ebbba2'}, {visibility: 'on'}]},
     {featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{color: '#1f2835'}, {visibility: 'on'}]}
 ]
-
-export class GoogleLabelsLayer extends Layer {
-    constructor({map, layerIndex}) {
-        super({map, layerIndex})
-        const {google} = map.getGoogle()
-        this.layer = new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
-    }
-
-    equals(o) {
-        return o === this || o instanceof GoogleLabelsLayer
-    }
-
-    addToMap() {
-        this.map.addToMap(this.layerIndex, this.layer)
-    }
-
-    removeFromMap() {
-        this.map.removeFromMap(this.layerIndex)
-    }
-
-    hide(_hidden) {
-        // No-op
-    }
-
-    initialize$() {
-        return of(this)
-    }
-}

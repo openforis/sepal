@@ -1,6 +1,7 @@
 import {BalancingTileProvider} from '../tileProvider/balancingTileProvider'
 import guid from 'guid'
 
+// TODO: does it implement an interface?
 export class GoogleMapsLayer {
     constructor(tileProvider, {
         google,

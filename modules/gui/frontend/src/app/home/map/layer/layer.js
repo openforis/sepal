@@ -11,10 +11,6 @@ export default class Layer {
         throw new Error('Subclass needs to implement equals')
     }
 
-    createTileProvider() {
-        throw new Error('Subclass needs to implement createTileProvider')
-    }
-
     addToMap() {
         throw new Error('Subclass needs to implement addToMap')
     }
@@ -23,8 +19,9 @@ export default class Layer {
         throw new Error('Subclass needs to implement removeFromMap')
     }
 
+    // TODO: is this needed at all?
     hide(_hidden) {
-        throw new Error('Subclass needs to implement hide')
+        // no-op
     }
 
     initialize$() {
