@@ -31,7 +31,7 @@ export default class EarthEngineLayer extends TileLayer {
     }
 
     createTileProvider() {
-        throw new Error('Subclass needs to implement createTileProvider')
+        throw new Error('Subclass should implement createTileProvider')
     }
 
     removeFromMap() {

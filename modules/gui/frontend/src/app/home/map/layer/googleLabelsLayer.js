@@ -1,30 +1,23 @@
 import {of} from 'rxjs'
-import Layer from './layer'
+import OverlayLayer from './overlayLayer'
 
-export class GoogleLabelsLayer extends Layer {
+export class GoogleLabelsLayer extends OverlayLayer {
     constructor({map, layerIndex}) {
         super({map, layerIndex})
     }
 
-    createLayer() {
+    createOverlay() {
         const {map} = this
         const {google} = map.getGoogle()
-        this.layer = new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
+        return new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
     }
 
     equals(o) {
         return o === this || o instanceof GoogleLabelsLayer
     }
 
-    addToMap() {
-        this.layer || this.createLayer()
-        const {map, layerIndex, layer} = this
-        map.addToMap(layerIndex, layer)
-    }
-
-    removeFromMap() {
-        const {map, layerIndex} = this
-        map.removeFromMap(layerIndex)
+    hide(_hidden) {
+        // no-op
     }
 
     initialize$() {

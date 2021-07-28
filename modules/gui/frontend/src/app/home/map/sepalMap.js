@@ -254,7 +254,6 @@ export class SepalMap {
 
     fitBounds(bounds) {
         const {google} = this
-        // const PADDING = 50 // compensate for attribution masking
         const PADDING = 2 // compensate for attribution masking
         const {googleMap} = this
         const nextBounds = bounds instanceof google.maps.LatLngBounds
@@ -357,12 +356,12 @@ export class SepalMap {
 
     // Layers
 
-    addToMap(layerIndex, layer) {
+    addOverlay(layerIndex, layer) {
         const {googleMap} = this
         googleMap.overlayMapTypes.setAt(layerIndex, layer)
     }
 
-    removeFromMap(layerIndex) {
+    removeOverlay(layerIndex) {
         const {googleMap} = this
         // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
         googleMap.overlayMapTypes.insertAt(layerIndex, null)

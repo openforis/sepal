@@ -1,7 +1,7 @@
 import {of} from 'rxjs'
-import Layer from './layer'
+import ShapeLayer from './shapeLayer'
 
-export class GooglePolygonLayer extends Layer {
+export class GooglePolygonLayer extends ShapeLayer {
     constructor({map, path, fill}) {
         super({map})
         this.type = 'PolygonLayer'
@@ -9,10 +9,10 @@ export class GooglePolygonLayer extends Layer {
         this.fill = fill
     }
 
-    createLayer() {
+    createShape() {
         const {map, path, fill} = this
         const {google} = map.getGoogle()
-        this.layer = new google.maps.Polygon({
+        return new google.maps.Polygon({
             paths: path.map(([lng, lat]) =>
                 new google.maps.LatLng(lat, lng)), ...polygonOptions(fill),
             clickable: false
@@ -31,24 +31,6 @@ export class GooglePolygonLayer extends Layer {
             o.path.toString() === this.path.toString() &&
             o.fill === this.fill
         )
-    }
-
-    addToMap() {
-        this.layer || this.createLayer()
-        const {map, layer} = this
-        const {googleMap} = map.getGoogle()
-        layer.setMap(googleMap)
-    }
-
-    removeFromMap() {
-        const {layer} = this
-        layer.setMap(null)
-    }
-
-    hide(hidden) {
-        hidden
-            ? this.removeFromMap()
-            : this.addToMap()
     }
 
     initialize$() {

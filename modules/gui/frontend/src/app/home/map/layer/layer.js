@@ -1,30 +1,22 @@
-import {of} from 'rxjs'
-
 export default class Layer {
-    constructor({map, layerIndex = 0, progress$}) {
+    constructor({map}) {
         this.map = map
-        this.layerIndex = layerIndex
-        this.progress$ = progress$
     }
 
     equals(_o) {
-        throw new Error('Subclass needs to implement equals')
+        throw new Error('Subclass should implement equals')
     }
 
     addToMap() {
-        throw new Error('Subclass needs to implement addToMap')
+        throw new Error('Subclass should implement addToMap')
     }
 
     removeFromMap() {
-        throw new Error('Subclass needs to implement removeFromMap')
+        throw new Error('Subclass should implement removeFromMap')
     }
 
     // TODO: is this needed at all?
     hide(_hidden) {
         // no-op
-    }
-
-    initialize$() {
-        return of(this)
     }
 }
