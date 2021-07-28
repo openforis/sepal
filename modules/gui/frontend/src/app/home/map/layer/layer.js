@@ -3,7 +3,7 @@ export default class Layer {
         this.map = map
     }
 
-    equals(_o) {
+    equals(_other) {
         throw new Error('Subclass should implement equals')
     }
 

@@ -32,6 +32,13 @@ export default class TileLayer extends OverlayLayer {
         }
     }
 
+    hide(hidden) {
+        const {overlay} = this
+        if (overlay) {
+            overlay.setOpacity(hidden ? 0 : 1)
+        }
+    }
+
     initialize$() {
         return of(this)
     }

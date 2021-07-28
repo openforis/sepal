@@ -26,11 +26,4 @@ export default class OverlayLayer extends Layer {
             map.removeOverlay(layerIndex)
         }
     }
-
-    hide(hidden) {
-        const {overlay} = this
-        if (overlay) {
-            overlay.setOpacity(hidden ? 0 : 1)
-        }
-    }
 }
