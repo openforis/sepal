@@ -1,4 +1,3 @@
-import {of} from 'rxjs'
 import Layer from './layer/layer'
 import MarkerClusterer from '@googlemaps/markerclustererplus'
 import _ from 'lodash'
