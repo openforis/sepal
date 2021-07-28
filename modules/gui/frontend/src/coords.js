@@ -28,12 +28,12 @@ const isLongitudeCompatible = coord =>
 const toLatitude = ({sign, value, dir}) =>
     value === '0'
         ? 0
-        : (sign == '-' ? -1 : 1) * value * (dir === 'S' ? -1 : 1)
+        : (sign === '-' ? -1 : 1) * value * (dir === 'S' ? -1 : 1)
 
 const toLongitude = ({sign, value, dir}) =>
     value === '0'
         ? 0
-        : (sign == '-' ? -1 : 1) * value * (dir === 'W' ? -1 : 1)
+        : (sign === '-' ? -1 : 1) * value * (dir === 'W' ? -1 : 1)
 
 export const parseCoordinates = string => {
     const parts = string.trim().toUpperCase().match(regexp)

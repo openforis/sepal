@@ -56,7 +56,7 @@ class _Input extends React.Component {
 
     moveCursorToEnd() {
         const el = this.ref.current
-        if (typeof el.selectionStart == 'number') {
+        if (typeof el.selectionStart === 'number') {
             el.selectionStart = el.selectionEnd = el.value.length
         } else if (typeof el.createTextRange != 'undefined') {
             el.focus()

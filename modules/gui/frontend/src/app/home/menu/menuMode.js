@@ -7,7 +7,7 @@ import React from 'react'
 import actionBuilder from 'action-builder'
 
 export function isFloating() {
-    return select('menu.floating') == null ? false : !!select('menu.floating')
+    return select('menu.floating') === null ? false : !!select('menu.floating')
 }
 
 const mapStateToProps = () => ({
