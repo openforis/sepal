@@ -28,8 +28,9 @@ export class GoogleMapsLayer {
         const request = this._toTileRequest({x, y, zoom, minZoom: this.minZoom, doc})
         const element = request.element
         this.tileElementById[element.id] = element
-        if (request.outOfBounds)
+        if (request.outOfBounds) {
             return element
+        }
 
         const tile$ = this.tileProvider.loadTile$(request)
         tile$.subscribe(blob => this.tileProvider.renderTile({doc, element, blob}))

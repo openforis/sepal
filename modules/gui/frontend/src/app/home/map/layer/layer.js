@@ -1,3 +1,5 @@
+import {of} from 'rxjs'
+
 export default class Layer {
     constructor({map}) {
         this.map = map
@@ -18,5 +20,9 @@ export default class Layer {
     // TODO: is this needed at all?
     hide(_hidden) {
         // no-op
+    }
+
+    initialize$() {
+        return of(this)
     }
 }

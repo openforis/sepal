@@ -1,5 +1,4 @@
 import {GoogleMapsLayer} from '../tileLayer/googleMapsLayer'
-import {of} from 'rxjs'
 import OverlayLayer from './overlayLayer'
 
 export default class TileLayer extends OverlayLayer {
@@ -37,9 +36,5 @@ export default class TileLayer extends OverlayLayer {
         if (overlay) {
             overlay.setOpacity(hidden ? 0 : 1)
         }
-    }
-
-    initialize$() {
-        return of(this)
     }
 }

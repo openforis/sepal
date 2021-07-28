@@ -41,8 +41,4 @@ export class GooglePolygonLayer extends ShapeLayer {
             o.fill === this.fill
         )
     }
-
-    initialize$() {
-        return of(this)
-    }
 }
