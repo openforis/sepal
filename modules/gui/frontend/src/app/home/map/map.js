@@ -48,8 +48,7 @@ class _Map extends React.Component {
     cursor$ = new Subject()
 
     state = {
-        maps: {},
-        areas: null,
+        maps: {}, // [id]: {id, map, listeners, subscriptions}
         mapId: null,
         googleMapsApiKey: null,
         norwayPlanetApiKey: null,
@@ -66,10 +65,11 @@ class _Map extends React.Component {
     constructor() {
         super()
         this.mapDelegate = this.mapDelegate.bind(this)
-
         this.toggleLinked = this.toggleLinked.bind(this)
+        this.isLinked = this.isLinked.bind(this)
         this.toggleZoomArea = this.toggleZoomArea.bind(this)
         this.cancelZoomArea = this.cancelZoomArea.bind(this)
+        this.isZoomArea = this.isZoomArea.bind(this)
         this.drawPolygon = this.drawPolygon.bind(this)
         this.disableDrawingMode = this.disableDrawingMode.bind(this)
         this.setLocationMarker = this.setLocationMarker.bind(this)
@@ -80,8 +80,8 @@ class _Map extends React.Component {
 
     withAllMaps(func) {
         const {maps} = this.state
-        return _.map(maps, ({area, map, listeners, subscriptions}, id) =>
-            func({id, area, map, listeners, subscriptions})
+        return _.map(maps, ({map, listeners, subscriptions}, id) =>
+            func({id, map, listeners, subscriptions})
         )
     }
 
@@ -631,7 +631,7 @@ class _Map extends React.Component {
 
         return {
             toggleLinked: this.toggleLinked,
-            isLinked: () => this.isLinked(),
+            isLinked: this.isLinked,
             canZoomIn: () => !map.isMaxZoom(),
             zoomIn: () => map.zoomIn(),
             canZoomOut: () => !map.isMinZoom(),
@@ -639,41 +639,21 @@ class _Map extends React.Component {
             canZoomArea: () => !map.isMaxZoom(),
             toggleZoomArea: this.toggleZoomArea,
             cancelZoomArea: this.cancelZoomArea,
-            isZoomArea: () => this.isZoomArea(),
+            isZoomArea: this.isZoomArea,
             canFit: () => isInitialized(),
             fit: () => map.fitBounds(bounds),
             setZoom: zoom => map.setZoom(zoom),
             getZoom: () => map.getZoom(),
-            setView: ({center, zoom}) => map.setView({center, zoom}),
+            setView: view => map.setView(view),
             fitBounds: bounds => map.fitBounds(bounds),
             getBounds: () => map.getBounds(),
-
             addClickListenerOnce: this.addClickListenerOnce,
             removeListener: this.removeListener,
-
-            // getScale: () => map.getMetersPerPixel(),
-
             drawPolygon: this.drawPolygon,
             disableDrawingMode: this.disableDrawingMode,
             setLocationMarker: this.setLocationMarker,
             setAreaMarker: this.setAreaMarker,
-
-            setLayer: (...args) => {
-                log.warn('should we call map.setLayer?')
-                map.setLayer(...args)
-            },
-            getGoogle: (...args) => {
-                log.warn('should we call map.getGoogle?')
-                return map.getGoogle(...args)
-            },
-            addToMap: (...args) => {
-                log.warn('should we call map.addToMap?')
-                map.addToMap(...args)
-            },
-            removeFromMap: (...args) => {
-                log.warn('should we call map.removeToMap?')
-                map.removeFromMap(...args)
-            },
+            getGoogle: () => map.getGoogle()
         }
     }
 }
