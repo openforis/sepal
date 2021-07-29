@@ -31,14 +31,18 @@ class _MapAreaLayout extends React.Component {
     }
 
     componentDidUpdate() {
-        const {layer, map} = this.props
+        const {layer, map, componentWillUnmount$} = this.props
         if (!map) {
             return
         }
         this.updateFeatureLayers()
         const imageLayerId = 'imageLayer'
         if (layer) {
-            map.setLayer({id: imageLayerId, layer}) // TODO: destroy$
+            map.setLayer({
+                id: imageLayerId,
+                layer,
+                destroy$: componentWillUnmount$
+            }) // TODO: destroy$?
         } else {
             map.removeLayer(imageLayerId)
         }
