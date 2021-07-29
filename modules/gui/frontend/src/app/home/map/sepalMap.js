@@ -354,7 +354,7 @@ export class SepalMap {
         }
     }
 
-    // Layers
+    // Overlays
 
     addOverlay(layerIndex, layer) {
         const {googleMap} = this
@@ -367,6 +367,19 @@ export class SepalMap {
         googleMap.overlayMapTypes.insertAt(layerIndex, null)
         googleMap.overlayMapTypes.removeAt(layerIndex + 1)
     }
+
+    // Shapes
+
+    addShape(shape) {
+        const {googleMap} = this
+        shape.setMap(googleMap)
+    }
+
+    removeShape(shape) {
+        shape.setMap(null)
+    }
+
+    // Layers
 
     getLayer(id) {
         return this.layerById[id]

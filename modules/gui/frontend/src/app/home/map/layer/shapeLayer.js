@@ -13,13 +13,16 @@ export default class ShapeLayer extends Layer {
     addToMap() {
         this.shape = this.shape || this.createShape()
         const {map, shape} = this
-        const {googleMap} = map.getGoogle()
-        shape.setMap(googleMap)
+        if (shape) {
+            map.addShape(shape)
+        }
     }
 
     removeFromMap() {
-        const {shape} = this
-        shape.setMap(null)
+        const {map, shape} = this
+        if (shape) {
+            map.removeShape(shape)
+        }
     }
 
     hide(hidden) {
