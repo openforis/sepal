@@ -1,4 +1,3 @@
-import {of} from 'rxjs'
 import OverlayLayer from './overlayLayer'
 
 export class GoogleLabelsLayer extends OverlayLayer {
@@ -18,10 +17,6 @@ export class GoogleLabelsLayer extends OverlayLayer {
 
     hide(_hidden) {
         // no-op
-    }
-
-    initialize$() {
-        return of(this)
     }
 }
 

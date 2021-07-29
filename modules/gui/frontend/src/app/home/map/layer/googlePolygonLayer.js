@@ -1,4 +1,3 @@
-import {of} from 'rxjs'
 import ShapeLayer from './shapeLayer'
 
 export class GooglePolygonLayer extends ShapeLayer {

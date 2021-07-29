@@ -372,7 +372,6 @@ export class SepalMap {
         return this.layerById[id]
     }
 
-    // setLayer({id, layer, destroy$ = NEVER, onInitialized, onError}) {
     setLayer({id, layer, destroy$ = NEVER}) {
         const existingLayer = this.getLayer(id)
         const unchanged = layer === existingLayer || (existingLayer && existingLayer.equals(layer))
