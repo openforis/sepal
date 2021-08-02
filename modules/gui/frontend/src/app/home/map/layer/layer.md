@@ -5,8 +5,9 @@ Layer
         TileLayer
             EarthEngineLayer
                 EarthEngineTableLayer
-                EarthEnginePreviewLayer
+                EarthEngineImageLayer
             GoogleSatelliteLayer
             WMTSLayer
+                PlanetLayer
      ShapeLayer
         GooglePolygonLayer
