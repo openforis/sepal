@@ -10,7 +10,7 @@ export default class Layer {
     constructor({map}) {
         this.map = map
         this.cancel$ = new ReplaySubject()
-        this.initiaized = false
+        this.initialized = false
     }
 
     equals(_other) {
@@ -42,7 +42,7 @@ export default class Layer {
             takeUntil(cancel$),
         ).subscribe({
             next: () => {
-                this.initiaized = true
+                this.initialized = true
                 this.addToMap()
             },
             error: error => {
@@ -56,6 +56,6 @@ export default class Layer {
     }
 
     isInitialized() {
-        return this.initiaized
+        return this.initialized
     }
 }
