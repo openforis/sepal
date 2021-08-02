@@ -1,5 +1,5 @@
-import {ReplaySubject, of, throwError} from 'rxjs'
-import {catchError, mapTo, takeUntil, tap} from 'rxjs/operators'
+import {catchError, tap} from 'rxjs/operators'
+import {of, throwError} from 'rxjs'
 import TileLayer from '../tileLayer'
 import _ from 'lodash'
 
@@ -20,7 +20,6 @@ export default class EarthEngineLayer extends TileLayer {
         this.onInitialize = onInitialize
         this.onInitialized = onInitialized
         this.onError = onError
-        this.cancel$ = new ReplaySubject()
         this.token = null
         this.mapId = null
         this.urlTemplate = null
@@ -34,15 +33,10 @@ export default class EarthEngineLayer extends TileLayer {
         throw new Error('Subclass should implement createTileProvider')
     }
 
-    removeFromMap() {
-        super.removeFromMap()
-        this.cancel$.next()
-    }
-
     initialize$() {
         this.onInitialize && this.onInitialize()
         return this.token
-            ? of(this)
+            ? of(true)
             : this.mapId$.pipe(
                 tap(({token, mapId, urlTemplate}) => {
                     this.token = token
@@ -50,12 +44,11 @@ export default class EarthEngineLayer extends TileLayer {
                     this.urlTemplate = urlTemplate
                     this.onInitialized && this.onInitialized()
                 }),
-                mapTo(this),
+                // mapTo(this),
                 catchError(error => {
                     this.onError && this.onError(error)
                     return throwError(error)
-                }),
-                takeUntil(this.cancel$)
+                })
             )
     }
 }

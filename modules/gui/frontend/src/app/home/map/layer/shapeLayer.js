@@ -11,6 +11,7 @@ export default class ShapeLayer extends Layer {
     }
 
     addToMap() {
+        super.addToMap()
         this.shape = this.shape || this.createShape()
         const {map, shape} = this
         if (shape) {
@@ -19,6 +20,7 @@ export default class ShapeLayer extends Layer {
     }
 
     removeFromMap() {
+        super.removeFromMap()
         const {map, shape} = this
         if (shape) {
             map.removeShape(shape)

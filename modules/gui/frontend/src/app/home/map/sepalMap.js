@@ -1,8 +1,5 @@
 import {NEVER, Subject} from 'rxjs'
-import {filter, takeUntil} from 'rxjs/operators'
 import {getLogger} from 'log'
-import {msg} from 'translate'
-import Notifications from 'widget/notifications'
 import _ from 'lodash'
 
 const log = getLogger('sepalMap')
@@ -394,20 +391,7 @@ export class SepalMap {
         this.removeLayer(id)
         if (layer) {
             this.layerById[id] = layer
-            layer.initialize$().pipe(
-                takeUntil(destroy$),
-                takeUntil(this.removeLayer$.pipe(
-                    filter(layerId => layerId === id),
-                ))
-            ).subscribe({
-                next: () => {
-                    layer.__initialized__ = true
-                    layer.addToMap()
-                },
-                error: error => {
-                    Notifications.error({message: msg('map.layer.error'), error})
-                }
-            })
+            layer.initialize(destroy$)
         }
         return true
     }
@@ -415,7 +399,6 @@ export class SepalMap {
     removeLayer(id) {
         const layer = this.getLayer(id)
         if (layer) {
-            this.removeLayer$.next(id)
             layer.removeFromMap()
             delete this.layerById[id]
         }
@@ -439,7 +422,7 @@ export class SepalMap {
 
     isLayerInitialized(id) {
         const layer = this.getLayer(id)
-        return !!(layer && layer.__initialized__)
+        return !!(layer && layer.isInitialized())
     }
 
     toggleableLayers() {

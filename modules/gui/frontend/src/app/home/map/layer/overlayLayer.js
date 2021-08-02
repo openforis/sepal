@@ -13,6 +13,7 @@ export default class OverlayLayer extends Layer {
     }
 
     addToMap() {
+        super.addToMap()
         this.overlay = this.overlay || this.createOverlay()
         const {map, layerIndex, overlay} = this
         if (overlay) {
@@ -21,6 +22,7 @@ export default class OverlayLayer extends Layer {
     }
 
     removeFromMap() {
+        super.removeFromMap()
         const {map, layerIndex, overlay} = this
         if (overlay) {
             map.removeOverlay(layerIndex)
