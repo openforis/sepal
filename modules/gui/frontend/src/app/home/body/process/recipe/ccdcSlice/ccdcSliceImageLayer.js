@@ -17,13 +17,11 @@ class _CCDCSliceImageLayer extends React.Component {
     render() {
         const {layer, map} = this.props
         return (
-            <React.Fragment>
-                <MapAreaLayout
-                    layer={layer}
-                    form={this.renderImageLayerForm()}
-                    map={map}
-                />
-            </React.Fragment>
+            <MapAreaLayout
+                layer={layer}
+                form={this.renderImageLayerForm()}
+                map={map}
+            />
         )
     }
 

@@ -18,12 +18,10 @@ class _MapAreaLayout extends React.Component {
     render() {
         const {mapAreaContext: {area}, form, map, areas} = this.props
         return (
-            <React.Fragment>
-                <SplitOverlay area={area}>
-                    <MapAreaMenu area={area} form={form}/>
-                    <FeatureLayers featureLayers={areas[area].featureLayers} map={map}/>
-                </SplitOverlay>
-            </React.Fragment>
+            <SplitOverlay area={area}>
+                <MapAreaMenu area={area} form={form}/>
+                <FeatureLayers featureLayers={areas[area].featureLayers} map={map}/>
+            </SplitOverlay>
         )
     }
     componentDidMount() {

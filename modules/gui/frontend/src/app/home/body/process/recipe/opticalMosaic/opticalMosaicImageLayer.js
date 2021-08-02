@@ -18,13 +18,11 @@ class _OpticalMosaicImageLayer extends React.Component {
     render() {
         const {layer, map} = this.props
         return (
-            <React.Fragment>
-                <MapAreaLayout
-                    layer={this.hasScenes() ? layer : null}
-                    form={this.renderImageLayerForm()}
-                    map={map}
-                />
-            </React.Fragment>
+            <MapAreaLayout
+                layer={this.hasScenes() ? layer : null}
+                form={this.renderImageLayerForm()}
+                map={map}
+            />
         )
     }
 
