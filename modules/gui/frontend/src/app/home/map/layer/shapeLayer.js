@@ -14,16 +14,17 @@ export default class ShapeLayer extends Layer {
         super.addToMap()
         this.shape = this.shape || this.createShape()
         const {map, shape} = this
+        const {googleMap} = map.getGoogle()
         if (shape) {
-            map.addShape(shape)
+            shape.setMap(googleMap)
         }
     }
 
     removeFromMap() {
         super.removeFromMap()
-        const {map, shape} = this
+        const {shape} = this
         if (shape) {
-            map.removeShape(shape)
+            shape.setMap(null)
         }
     }
 

@@ -16,16 +16,21 @@ export default class OverlayLayer extends Layer {
         super.addToMap()
         this.overlay = this.overlay || this.createOverlay()
         const {map, layerIndex, overlay} = this
+        const {googleMap} = map.getGoogle()
         if (overlay) {
-            map.addOverlay(layerIndex, overlay)
+            googleMap.overlayMapTypes.setAt(layerIndex, overlay)
+
         }
     }
 
     removeFromMap() {
         super.removeFromMap()
         const {map, layerIndex, overlay} = this
+        const {googleMap} = map.getGoogle()
         if (overlay) {
-            map.removeOverlay(layerIndex)
+            // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
+            googleMap.overlayMapTypes.insertAt(layerIndex, null)
+            googleMap.overlayMapTypes.removeAt(layerIndex + 1)
         }
     }
 }

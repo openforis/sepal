@@ -351,31 +351,6 @@ export class SepalMap {
         }
     }
 
-    // Overlays
-
-    addOverlay(layerIndex, layer) {
-        const {googleMap} = this
-        googleMap.overlayMapTypes.setAt(layerIndex, layer)
-    }
-
-    removeOverlay(layerIndex) {
-        const {googleMap} = this
-        // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
-        googleMap.overlayMapTypes.insertAt(layerIndex, null)
-        googleMap.overlayMapTypes.removeAt(layerIndex + 1)
-    }
-
-    // Shapes
-
-    addShape(shape) {
-        const {googleMap} = this
-        shape.setMap(googleMap)
-    }
-
-    removeShape(shape) {
-        shape.setMap(null)
-    }
-
     // Layers
 
     getLayer(id) {
