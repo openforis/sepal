@@ -2,7 +2,7 @@ import {BalancingTileProvider} from '../tileProvider/balancingTileProvider'
 import guid from 'guid'
 
 // implements google.maps.MapType
-export class GoogleMapsLayer {
+export class GoogleMapsOverlay {
     constructor(tileProvider, {
         google,
         name,
@@ -17,9 +17,6 @@ export class GoogleMapsLayer {
             tileProvider.tileSize || 256,
             tileProvider.tileSize || 256
         )
-        // this.alt = undefined
-        // this.projection = undefined
-        // this.radius = undefined
         this.tileElementById = {}
         this.opacity = 1
     }

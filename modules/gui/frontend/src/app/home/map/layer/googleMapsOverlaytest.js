@@ -1,4 +1,4 @@
-// import {PrioritizingTileProvider, TileProvider} from './googleMapsLayer'
+// import {PrioritizingTileProvider, TileProvider} from './googleMapsOverlay'
 // import {Subject, concat, defer, isObservable, of} from 'rxjs'
 // import {finalize, first} from 'rxjs/operators'
 

@@ -1,4 +1,4 @@
-import {GoogleMapsLayer} from '../tileLayer/googleMapsLayer'
+import {GoogleMapsOverlay} from './googleMapsOverlay'
 import OverlayLayer from './overlayLayer'
 
 export default class TileLayer extends OverlayLayer {
@@ -20,7 +20,7 @@ export default class TileLayer extends OverlayLayer {
         const {map, progress$, minZoom, maxZoom} = this
         const tileProvider = this.createTileProvider()
         const {google} = map.getGoogle()
-        return new GoogleMapsLayer(tileProvider, {google, minZoom, maxZoom}, progress$)
+        return new GoogleMapsOverlay(tileProvider, {google, minZoom, maxZoom}, progress$)
     }
 
     removeFromMap() {
