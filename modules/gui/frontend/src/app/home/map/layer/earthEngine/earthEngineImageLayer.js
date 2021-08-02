@@ -3,7 +3,7 @@ import {Subject} from 'rxjs'
 import EarthEngineLayer from './earthEngineLayer'
 import api from 'api'
 
-export default class EarthEnginePreviewLayer extends EarthEngineLayer {
+export default class EarthEngineImageLayer extends EarthEngineLayer {
 
     constructor({
         map,

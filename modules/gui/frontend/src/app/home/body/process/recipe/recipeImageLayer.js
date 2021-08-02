@@ -12,7 +12,7 @@ import {selectFrom} from 'stateUtils'
 import {setActive, setComplete} from 'app/home/map/progress'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import EarthEnginePreviewLayer from 'app/home/map/layer/earthEngine/earthEnginePreviewLayer'
+import EarthEngineImageLayer from 'app/home/map/layer/earthEngine/earthEngineImageLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -136,7 +136,7 @@ class _RecipeImageLayer extends React.Component {
         const watchedProps = {recipes: recipes.map(r => _.omit(r, ['ui', 'layers'])), layerConfig}
         if (!_.isEqual(watchedProps, prevWatchedProps)) {
             this.layer && this.layer.removeFromMap()
-            this.layer = new EarthEnginePreviewLayer({
+            this.layer = new EarthEngineImageLayer({
                 previewRequest,
                 watchedProps,
                 dataTypes,
