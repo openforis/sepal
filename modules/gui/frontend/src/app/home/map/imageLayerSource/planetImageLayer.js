@@ -12,9 +12,9 @@ import {setActive, setComplete} from '../progress'
 import {withMapAreaContext} from '../mapAreaContext'
 import {withMapContext} from '../mapContext'
 import {withRecipe} from '../../body/process/recipeContext'
+import PlanetLayer from '../layer/planetLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
-import WMTSLayer from '../layer/wmtsLayer'
 import _ from 'lodash'
 import api from 'api'
 import moment from 'moment'
@@ -51,8 +51,8 @@ class _PlanetImageLayer extends React.Component {
         const concurrency = CONCURRENCY
         const layer = urlTemplate
             ? this.selectedHasCir()
-                ? new WMTSLayer({map, urlTemplate: `${urlTemplate}&proc=${bands}`, concurrency, progress$: this.progress$})
-                : new WMTSLayer({map, concurrency, urlTemplate: `${urlTemplate}`})
+                ? new PlanetLayer({map, urlTemplate: `${urlTemplate}&proc=${bands}`, concurrency, progress$: this.progress$})
+                : new PlanetLayer({map, concurrency, urlTemplate: `${urlTemplate}`})
             : null
         this.layer = layer
         return layer
