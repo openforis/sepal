@@ -157,7 +157,6 @@ class _PlanetImageLayer extends React.Component {
 
     componentWillUnmount() {
         this.setComplete('tiles')
-        this.layer && this.layer.removeFromMap()
     }
 
     selectDefault(mosaics) {

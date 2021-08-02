@@ -19,7 +19,6 @@ export default class Layer {
 
     addToMap() {
         log.debug('Add to map')
-
     }
 
     removeFromMap() {

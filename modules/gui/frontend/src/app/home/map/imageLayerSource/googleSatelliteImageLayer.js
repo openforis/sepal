@@ -34,7 +34,6 @@ export class _GoogleSatelliteImageLayer extends React.Component {
 
     componentWillUnmount() {
         this.setComplete('tiles')
-        this.layer && this.layer.removeFromMap()
     }
 
     setActive(name) {

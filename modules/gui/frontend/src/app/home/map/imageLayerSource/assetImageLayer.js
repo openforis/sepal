@@ -77,7 +77,6 @@ class _AssetImageLayer extends React.Component {
     componentWillUnmount() {
         this.setComplete('initialize')
         this.setComplete('tiles')
-        this.layer && this.layer.removeFromMap()
     }
 
     selectFirstVisualization() {

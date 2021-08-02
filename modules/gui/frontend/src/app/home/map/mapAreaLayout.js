@@ -14,6 +14,8 @@ const mapRecipeToProps = recipe => ({
     areas: selectFrom(recipe, ['layers.areas'])
 })
 
+const LAYER_ID = 'imageLayer'
+
 class _MapAreaLayout extends React.Component {
     render() {
         const {mapAreaContext: {area}, form, map, areas} = this.props
@@ -34,15 +36,21 @@ class _MapAreaLayout extends React.Component {
             return
         }
         this.updateFeatureLayers()
-        const imageLayerId = 'imageLayer'
         if (layer) {
             map.setLayer({
-                id: imageLayerId,
+                id: LAYER_ID,
                 layer,
                 destroy$: componentWillUnmount$
             }) // TODO: destroy$?
         } else {
-            map.removeLayer(imageLayerId)
+            map.removeLayer(LAYER_ID)
+        }
+    }
+
+    componentWillUnmount() {
+        const {layer, map} = this.props
+        if (layer) {
+            map.removeLayer(LAYER_ID)
         }
     }
 
