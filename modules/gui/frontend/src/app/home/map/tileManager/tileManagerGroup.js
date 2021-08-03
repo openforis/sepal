@@ -34,7 +34,7 @@ const createTileManagerGroup = concurrency => {
     }
     
     const removeTileProvider = tileProviderId => {
-        requestQueue.removeByTileProviderId(tileProviderId)
+        requestQueue.discardByTileProviderId(tileProviderId)
         requestExecutor.cancelByTileProviderId(tileProviderId)
         delete tileProvidersInfo[tileProviderId]
         log.debug(() => `Removed ${tileProviderTag(tileProviderId)}`)
@@ -51,7 +51,7 @@ const createTileManagerGroup = concurrency => {
     }
     
     const cancelByRequestId = requestId => {
-        requestQueue.removeByRequestId(requestId)
+        requestQueue.discardByRequestId(requestId)
         requestExecutor.cancelByRequestId(requestId)
     }
 
@@ -73,18 +73,17 @@ const createTileManagerGroup = concurrency => {
     )
     
     requestExecutor.finished$.subscribe(
-        ({tileProviderId: currentTileProviderId, currentRequest, replacementRequest}) => {
+        ({currentRequest, replacementTileProviderId}) => {
             if (requestQueue.isEmpty()) {
                 log.debug(() => 'Pending request queue empty')
             } else {
-                if (replacementRequest) {
-                    // const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeueByRequestId(replacementRequest.requestId)
-                    const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeueByTileProviderId(replacementRequest.tileProviderId)
+                if (replacementTileProviderId) {
+                    const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeueByTileProviderId(replacementTileProviderId)
                     const tileProvider = getTileProviderInfo(tileProviderId).tileProvider
                     requestExecutor.execute(tileProvider, {tileProviderId, requestId, request, response$, cancel$})
                     submit(currentRequest)
                 } else {
-                    const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeueByTileProviderId(currentTileProviderId)
+                    const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeueByTileProviderId(currentRequest.tileProviderId)
                     const tileProvider = getTileProviderInfo(tileProviderId).tileProvider
                     requestExecutor.execute(tileProvider, {tileProviderId, requestId, request, response$, cancel$})
                 }

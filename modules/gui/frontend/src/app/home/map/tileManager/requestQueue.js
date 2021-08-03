@@ -59,17 +59,6 @@ export const getRequestQueue = () => {
         return dequeueFIFO()
     }
 
-    const dequeueByRequestId = requestId => {
-        if (requestId) {
-            const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.requestId === requestId)
-            if (index !== -1) {
-                return dequeueByIndex(index, 'requestId')
-            }
-        }
-        log.warn(`Could not dequeue ${requestTag({requestId})}, reverting to FIFO`)
-        return dequeueFIFO()
-    }
-
     const dequeueByTileProviderId = tileProviderId => {
         if (tileProviderId) {
             const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.tileProviderId === tileProviderId)
@@ -107,5 +96,5 @@ export const getRequestQueue = () => {
     const scan = callback =>
         pendingRequests.forEach(callback)
 
-    return {isEmpty, enqueue, dequeueByRequestId, dequeueByTileProviderId, removeByRequestId: discardByRequestId, removeByTileProviderId: discardByTileProviderId, scan, getCount}
+    return {isEmpty, enqueue, dequeueByTileProviderId, discardByRequestId, discardByTileProviderId, scan, getCount}
 }
