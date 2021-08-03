@@ -78,7 +78,8 @@ const createTileManagerGroup = concurrency => {
                 log.debug(() => 'Pending request queue empty')
             } else {
                 if (replacementRequest) {
-                    const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeueByRequestId(replacementRequest.requestId)
+                    // const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeueByRequestId(replacementRequest.requestId)
+                    const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeueByTileProviderId(replacementRequest.tileProviderId)
                     const tileProvider = getTileProviderInfo(tileProviderId).tileProvider
                     requestExecutor.execute(tileProvider, {tileProviderId, requestId, request, response$, cancel$})
                     submit(currentRequest)

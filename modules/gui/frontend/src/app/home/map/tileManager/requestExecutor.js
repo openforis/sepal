@@ -108,7 +108,12 @@ export const getRequestExecutor = concurrency => {
     const tryCancelMostRecentByTileProviderId = (tileProviderId, replacementRequest, excludeCount) => {
         const request = getMostRecentByTileProviderId(tileProviderId, excludeCount)
         if (request) {
-            log.debug(() => `Cancelling lowest priority request for ${isHidden(tileProviderId) ? 'hidden' : 'visible'} ${tileProviderTag(tileProviderId)}`)
+            // log.debug(() => `Cancelling lowest priority request for ${isHidden(tileProviderId) ? 'hidden' : 'visible'} ${tileProviderTag(tileProviderId)}`)
+            log.debug(() => [
+                'Replacing lowest priority request',
+                `for ${isHidden(tileProviderId) ? 'hidden' : 'visible'} ${tileProviderTag(tileProviderId)}`,
+                `with oldest request for ${tileProviderTag(replacementRequest.tileProviderId)}`
+            ].join(' '))
             request.cancel$.next(replacementRequest)
             return true
         }
