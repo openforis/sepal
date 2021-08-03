@@ -39,23 +39,27 @@ export const getRequestExecutor = concurrency => {
         log.debug(() => `Started ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
     }
     
-    const finish = ({tileProviderId, requestId, currentRequest, replacementRequest}) => {
+    const finish = ({currentRequest, replacementRequest}) => {
+        const {tileProviderId, requestId, complete} = currentRequest
         delete activeRequests[requestId]
         const activeRequestCountByTileProviderId = decreaseCount(tileProviderId)
-        log.debug(() => `Finished ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
+        if (complete) {
+            log.debug(() => `Completed ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
+        } else {
+            log.debug(() => `Aborted ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
+        }
         finished$.next({tileProviderId, currentRequest, replacementRequest})
     }
 
     const execute = (tileProvider, currentRequest) => {
         start(currentRequest)
         const {tileProviderId, requestId, request, response$, cancel$} = currentRequest
-        const finishInfo = {tileProviderId, requestId}
+        const finishInfo = {currentRequest}
         tileProvider.loadTile$(request).pipe(
             first(),
             takeUntil(cancel$.pipe(
                 tap(replacementRequest => {
                     if (replacementRequest) {
-                        finishInfo.currentRequest = currentRequest
                         finishInfo.replacementRequest = replacementRequest
                         log.debug(() => `Replacing ${requestTag({tileProviderId, requestId})} with ${requestTag(replacementRequest)}`)
                     }
@@ -63,10 +67,11 @@ export const getRequestExecutor = concurrency => {
             )),
             finalize(() =>
                 finish(finishInfo)
-            ),
+            )
         ).subscribe({
             next: response => {
                 log.debug(() => `Succeeded ${requestTag({tileProviderId, requestId})}`)
+                currentRequest.complete = true
                 response$.next(response)
                 response$.complete()
             },
@@ -76,9 +81,6 @@ export const getRequestExecutor = concurrency => {
             }
         })
     }
-
-    const isHidden = tileProviderId =>
-        !!(hiddenTileProviders[tileProviderId])
 
     const getMaxActive = filter => {
         const maxActive = _(activeRequestCount)
@@ -106,7 +108,7 @@ export const getRequestExecutor = concurrency => {
     const tryCancelMostRecentByTileProviderId = (tileProviderId, replacementRequest, excludeCount) => {
         const request = getMostRecentByTileProviderId(tileProviderId, excludeCount)
         if (request) {
-            log.debug(() => `Cancelling lowest priority request handler for ${tileProviderTag(tileProviderId)}`)
+            log.debug(() => `Cancelling lowest priority request for ${isHidden(tileProviderId) ? 'hidden' : 'visible'} ${tileProviderTag(tileProviderId)}`)
             request.cancel$.next(replacementRequest)
             return true
         }
@@ -138,8 +140,13 @@ export const getRequestExecutor = concurrency => {
 
     const notify = ({tileProviderId, requestId}) => {
         if (getCount() && !isHidden(tileProviderId)) {
-            log.debug(() => `Trying to start ${requestTag({tileProviderId, requestId})}`)
-            tryCancelHidden({tileProviderId, requestId}) || tryCancelUnbalanced({tileProviderId, requestId})
+            log.debug(() => `Notified ${requestTag({tileProviderId, requestId})}`)
+            const priority = tryCancelHidden({tileProviderId, requestId}) || tryCancelUnbalanced({tileProviderId, requestId})
+            if (priority) {
+                log.debug(() => `Prioritized ${requestTag({tileProviderId, requestId})}`)
+            } else {
+                log.debug(() => `Ignored non-priority ${requestTag({tileProviderId, requestId})}`)
+            }
         }
     }
 
@@ -147,8 +154,10 @@ export const getRequestExecutor = concurrency => {
         if (requestId) {
             const request = activeRequests[requestId]
             if (request) {
-                log.debug(() => `Cancelling ${requestTag(request)}`)
-                request.cancel$.next()
+                if (!request.complete) {
+                    log.debug(() => `Cancelling ${requestTag(request)}`)
+                    request.cancel$.next()
+                }
                 return true
             }
         } else {
@@ -174,6 +183,9 @@ export const getRequestExecutor = concurrency => {
     const setHidden = (tileProviderId, hidden) => {
         hiddenTileProviders[tileProviderId] = hidden
     }
+
+    const isHidden = tileProviderId =>
+        !!(hiddenTileProviders[tileProviderId])
 
     return {isAvailable, execute, notify, cancelByRequestId, cancelByTileProviderId, setHidden, finished$, getCount}
 }
