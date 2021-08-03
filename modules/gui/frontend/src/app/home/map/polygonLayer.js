@@ -23,14 +23,10 @@ class _PolygonLayer extends React.Component {
     }
 
     setLayer() {
-        const {id, path, map, componentWillUnmount$} = this.props
+        const {id, path, map} = this.props
         if (path) {
             const layer = new GooglePolygonLayer({map, path})
-            map.setLayer({
-                id,
-                layer,
-                destroy$: componentWillUnmount$
-            })
+            map.setLayer({id, layer})
         }
     }
 }

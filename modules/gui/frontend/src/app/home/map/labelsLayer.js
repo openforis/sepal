@@ -23,13 +23,9 @@ class _LabelsLayer extends React.Component {
     }
 
     setLayer() {
-        const {id, layerIndex, map, componentWillUnmount$} = this.props
+        const {id, layerIndex, map} = this.props
         const layer = new GoogleLabelsLayer({map, layerIndex})
-        map.setLayer({
-            id,
-            layer,
-            destroy$: componentWillUnmount$
-        })
+        map.setLayer({id, layer})
     }
 }
 

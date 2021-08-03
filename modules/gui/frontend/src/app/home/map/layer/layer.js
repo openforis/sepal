@@ -35,11 +35,10 @@ export default class Layer {
         return of(true)
     }
 
-    initialize(cancel$) {
+    initialize() {
         log.debug('Initialize')
         this.initialize$().pipe(
-            takeUntil(this.cancel$),
-            takeUntil(cancel$),
+            takeUntil(this.cancel$)
         ).subscribe({
             next: () => {
                 this.initialized = true

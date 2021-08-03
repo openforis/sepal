@@ -24,14 +24,10 @@ class _EETableLayer extends React.Component {
     }
 
     setLayer() {
-        const {id, map, componentWillUnmount$} = this.props
+        const {id, map} = this.props
         const layer = this.createLayer()
         if (layer) {
-            map.setLayer({
-                id,
-                layer,
-                destroy$: componentWillUnmount$
-            })
+            map.setLayer({id, layer})
         }
     }
 

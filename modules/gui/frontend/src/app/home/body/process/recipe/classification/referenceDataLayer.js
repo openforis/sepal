@@ -46,13 +46,9 @@ class ReferenceDataLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {collecting, map, componentWillUnmount$} = this.props
+        const {collecting, map} = this.props
         this.updateAllMarkers()
-        map.setLayer({
-            id: 'referenceData',
-            layer: this.layer,
-            destroy$: componentWillUnmount$
-        })
+        map.setLayer({id: 'referenceData', layer: this.layer})
         if (collecting) {
             this.addMapListener()
         }
