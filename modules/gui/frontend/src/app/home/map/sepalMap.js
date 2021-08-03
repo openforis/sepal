@@ -1,4 +1,4 @@
-import {NEVER, Subject} from 'rxjs'
+import {Subject} from 'rxjs'
 import {getLogger} from 'log'
 import _ from 'lodash'
 
@@ -357,7 +357,7 @@ export class SepalMap {
         return this.layerById[id]
     }
 
-    setLayer({id, layer, destroy$ = NEVER}) {
+    setLayer({id, layer}) {
         const existingLayer = this.getLayer(id)
         const unchanged = layer === existingLayer || (existingLayer && existingLayer.equals(layer))
         if (unchanged) {
@@ -366,7 +366,7 @@ export class SepalMap {
         this.removeLayer(id)
         if (layer) {
             this.layerById[id] = layer
-            layer.initialize(destroy$)
+            layer.initialize()
         }
         return true
     }

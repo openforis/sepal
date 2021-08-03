@@ -1,11 +1,9 @@
-import {compose} from 'compose'
-import {connect} from 'store'
 import EarthEngineTableLayer from './layer/earthEngine/earthEngineTableLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import api from 'api'
 
-class _RecipeGeometryLayer extends React.Component {
+export class RecipeGeometryLayer extends React.Component {
     render() {
         return null
     }
@@ -45,11 +43,6 @@ class _RecipeGeometryLayer extends React.Component {
             : null
     }
 }
-
-export const RecipeGeometryLayer = compose(
-    _RecipeGeometryLayer,
-    connect()
-)
 
 RecipeGeometryLayer.propTypes = {
     color: PropTypes.string.isRequired,

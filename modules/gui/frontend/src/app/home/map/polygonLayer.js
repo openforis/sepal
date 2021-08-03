@@ -1,10 +1,8 @@
 import {GooglePolygonLayer} from './layer/googlePolygonLayer'
-import {compose} from 'compose'
-import {connect} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-class _PolygonLayer extends React.Component {
+export class PolygonLayer extends React.Component {
     render() {
         return null
     }
@@ -30,11 +28,6 @@ class _PolygonLayer extends React.Component {
         }
     }
 }
-
-export const PolygonLayer = compose(
-    _PolygonLayer,
-    connect()
-)
 
 PolygonLayer.propTypes = {
     id: PropTypes.string.isRequired,

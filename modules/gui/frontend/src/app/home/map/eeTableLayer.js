@@ -1,11 +1,9 @@
-import {compose} from 'compose'
-import {connect} from 'store'
 import EarthEngineTableLayer from './layer/earthEngine/earthEngineTableLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import api from 'api'
 
-class _EETableLayer extends React.Component {
+export class EETableLayer extends React.Component {
     render() {
         return null
     }
@@ -45,11 +43,6 @@ class _EETableLayer extends React.Component {
             : null
     }
 }
-
-export const EETableLayer = compose(
-    _EETableLayer,
-    connect()
-)
 
 EETableLayer.propTypes = {
     id: PropTypes.string.isRequired,

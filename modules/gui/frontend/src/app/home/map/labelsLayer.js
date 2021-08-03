@@ -1,10 +1,8 @@
 import {GoogleLabelsLayer} from './layer/googleLabelsLayer'
-import {compose} from 'compose'
-import {connect} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-class _LabelsLayer extends React.Component {
+export class LabelsLayer extends React.Component {
     render() {
         return null
     }
@@ -28,11 +26,6 @@ class _LabelsLayer extends React.Component {
         map.setLayer({id, layer})
     }
 }
-
-export const LabelsLayer = compose(
-    _LabelsLayer,
-    connect()
-)
 
 LabelsLayer.propTypes = {
     id: PropTypes.string.isRequired,
