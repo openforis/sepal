@@ -1,6 +1,6 @@
 import {catchError, tap} from 'rxjs/operators'
 import {of, throwError} from 'rxjs'
-import TileLayer from '../tileLayer'
+import TileLayer from './tileLayer'
 import _ from 'lodash'
 
 export default class EarthEngineLayer extends TileLayer {

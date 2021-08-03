@@ -1,4 +1,4 @@
-import {EarthEngineTableTileProvider} from '../../tileProvider/earthEngineTableTileProvider'
+import {EarthEngineTableTileProvider} from '../tileProvider/earthEngineTableTileProvider'
 import EarthEngineLayer from './earthEngineLayer'
 
 export default class EarthEngineTableLayer extends EarthEngineLayer {

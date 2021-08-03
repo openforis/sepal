@@ -1,4 +1,4 @@
-import {EarthEngineTileProvider} from '../../tileProvider/earthEngineTileProvider'
+import {EarthEngineTileProvider} from '../tileProvider/earthEngineTileProvider'
 import {Subject} from 'rxjs'
 import EarthEngineLayer from './earthEngineLayer'
 import api from 'api'
