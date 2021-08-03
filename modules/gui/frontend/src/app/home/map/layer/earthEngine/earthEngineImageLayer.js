@@ -4,7 +4,6 @@ import EarthEngineLayer from './earthEngineLayer'
 import api from 'api'
 
 export default class EarthEngineImageLayer extends EarthEngineLayer {
-
     constructor({
         map,
         previewRequest,

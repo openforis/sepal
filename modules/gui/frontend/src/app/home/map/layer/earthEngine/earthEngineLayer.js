@@ -44,7 +44,6 @@ export default class EarthEngineLayer extends TileLayer {
                     this.urlTemplate = urlTemplate
                     this.onInitialized && this.onInitialized()
                 }),
-                // mapTo(this),
                 catchError(error => {
                     this.onError && this.onError(error)
                     return throwError(error)

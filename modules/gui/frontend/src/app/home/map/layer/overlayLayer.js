@@ -19,7 +19,6 @@ export default class OverlayLayer extends Layer {
         const {googleMap} = map.getGoogle()
         if (overlay) {
             googleMap.overlayMapTypes.setAt(layerIndex, overlay)
-
         }
     }
 

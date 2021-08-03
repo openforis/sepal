@@ -5,14 +5,14 @@ export class GoogleLabelsLayer extends OverlayLayer {
         super({map, layerIndex})
     }
 
+    equals(o) {
+        return o === this || o instanceof GoogleLabelsLayer
+    }
+
     createOverlay() {
         const {map} = this
         const {google} = map.getGoogle()
         return new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
-    }
-
-    equals(o) {
-        return o === this || o instanceof GoogleLabelsLayer
     }
 
     hide(_hidden) {
