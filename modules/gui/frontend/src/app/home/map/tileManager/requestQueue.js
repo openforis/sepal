@@ -36,7 +36,7 @@ export const getRequestQueue = () => {
         assertValue(request, _.isObject, 'request must be provided', true)
         pendingRequests.push({tileProviderId, requestId, request, response$, cancel$})
         increaseCount(tileProviderId)
-        log.debug(() => `Enqueued ${requestTag({tileProviderId, requestId})}, currently pending: ${getCount()}`)
+        log.debug(() => `Enqueued ${requestTag({tileProviderId, requestId})}, enqueued: ${getCount()}`)
     }
 
     const dequeueFIFO = () => {
@@ -44,7 +44,7 @@ export const getRequestQueue = () => {
             const pendingRequest = pendingRequests.shift()
             const tileProviderId = pendingRequest.tileProviderId
             decreaseCount(tileProviderId)
-            log.debug(() => `Dequeued FIFO ${requestTag(pendingRequest)}, currently pending: ${getCount()}`)
+            log.debug(() => `Dequeued FIFO ${requestTag(pendingRequest)}, enqueued: ${getCount()}`)
             return pendingRequest
         }
         return null
@@ -55,7 +55,7 @@ export const getRequestQueue = () => {
             const [pendingRequest] = pendingRequests.splice(index, 1)
             const tileProviderId = pendingRequest.tileProviderId
             decreaseCount(tileProviderId)
-            log.debug(() => `Dequeued by ${dequeueMode} ${requestTag(pendingRequest)} - currently pending: ${getCount()}`)
+            log.debug(() => `Dequeued by ${dequeueMode} ${requestTag(pendingRequest)}, enqueued: ${getCount()}`)
             return pendingRequest
         }
         return null
@@ -93,7 +93,7 @@ export const getRequestQueue = () => {
             const removed = _(pendingRequests)
                 .filter(request => request.tileProviderId === tileProviderId)
                 .reduce((count, request) => count + (discardByRequestId(request.requestId) ? 1 : 0), 0)
-            log.debug(() => `Removed ${removed} for ${tileProviderTag({tileProviderId})} - currently pending: ${getCount()}`)
+            log.debug(() => `Removed ${removed} for ${tileProviderTag(tileProviderId)}, enqueued: ${getCount()}`)
         } else {
             log.warn('Cannot remove as no tileProvider id was provided')
         }
