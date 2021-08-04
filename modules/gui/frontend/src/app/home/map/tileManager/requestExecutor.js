@@ -34,19 +34,15 @@ export const getRequestExecutor = concurrency => {
         getCount() < concurrency
 
     const getPriorityTileProviderIds = tileProviderId => {
-        const visibleTileProviderIds = _(activeRequestCount)
+        const priorityTileProviderIds = _(activeRequestCount)
             .toPairs()
-            .filter(([tileProviderId, _count]) => isHidden(tileProviderId) === false)
-            .sortBy(([_tileProviderId, count]) => count)
+            .sortBy([
+                ([tileProviderId, _count]) => isHidden(tileProviderId), // sort by visibility (visible first)
+                ([_tileProviderId, count]) => count                     // sort by count (lowest first)
+            ])
             .map(([tileProviderId, _count]) => tileProviderId)
             .value()
-        const hiddenTileProviderIds = _(activeRequestCount)
-            .toPairs()
-            .filter(([tileProviderId, _count]) => isHidden(tileProviderId) === true)
-            .sortBy(([_tileProviderId, count]) => count)
-            .map(([tileProviderId, _count]) => tileProviderId)
-            .value()
-        const tileProviderIds = _.uniq([tileProviderId, ...visibleTileProviderIds, ...hiddenTileProviderIds])
+        const tileProviderIds = _.uniq([tileProviderId, ...priorityTileProviderIds])
         log.debug(() => 'Priority tile providers: ', tileProviderIds.map(tileProviderId => tileProviderTag(tileProviderId)))
         return tileProviderIds
     }
