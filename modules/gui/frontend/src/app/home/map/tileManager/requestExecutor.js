@@ -76,11 +76,13 @@ export const getRequestExecutor = concurrency => {
         const finishInfo = {currentRequest}
         tileProvider.loadTile$(request).pipe(
             first(),
-            takeUntil(cancel$.pipe(
-                tap(replacementTileProviderId =>
-                    finishInfo.replacementTileProviderId = replacementTileProviderId
+            takeUntil(
+                cancel$.pipe(
+                    tap(replacementTileProviderId =>
+                        finishInfo.replacementTileProviderId = replacementTileProviderId
+                    )
                 )
-            )),
+            ),
             finalize(() =>
                 finish(finishInfo)
             )
