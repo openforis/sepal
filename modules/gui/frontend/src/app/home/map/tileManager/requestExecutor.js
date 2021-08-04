@@ -93,7 +93,6 @@ export const getRequestExecutor = concurrency => {
                 log.debug(() => `Succeeded ${requestTag({tileProviderId, requestId})}`)
                 currentRequest.complete = true
                 response$.next(response)
-                response$.complete()
             },
             error: error => {
                 log.error(() => `Failed ${requestTag({tileProviderId, requestId})}`, error)
