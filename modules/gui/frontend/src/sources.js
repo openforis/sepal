@@ -37,7 +37,7 @@ export const getAvailableBands = ({
         include = ['class', 'regression', 'class_probability', 'probabilities']
     } = {}
 }) => {
-    const dataSetIds = dataSets || [dataSetId]
+    const dataSetIds = dataSets || dataSetId ? [dataSetId] : []
     const dataSetBands = Object.keys(
         dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))
             ? getAvailableOpticalBands(
@@ -63,7 +63,7 @@ export const groupedBandOptions = ({
         include = ['class', 'regression', 'class_probability', 'probabilities']
     } = {}
 }) => {
-    const dataSetIds = dataSets || [dataSetId]
+    const dataSetIds = dataSets || dataSetId ? [dataSetId] : []
     const dataSetOptions = dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))
         ? getGroupedOpticalBandOptions(
             toOpticalRecipe({dataSetIds, corrections}),
