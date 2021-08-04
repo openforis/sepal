@@ -34,8 +34,8 @@ const createTileManagerGroup = concurrency => {
     }
     
     const removeTileProvider = tileProviderId => {
-        requestQueue.discardByTileProviderId(tileProviderId)
-        requestExecutor.cancelByTileProviderId(tileProviderId)
+        requestQueue.removeTileProvider(tileProviderId)
+        requestExecutor.removeTileProvider(tileProviderId)
         delete tileProvidersInfo[tileProviderId]
         log.debug(() => `Removed ${tileProviderTag(tileProviderId)}`)
     }

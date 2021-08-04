@@ -187,5 +187,11 @@ export const getRequestExecutor = concurrency => {
     const isHidden = tileProviderId =>
         !!(hiddenTileProviders[tileProviderId])
 
-    return {isAvailable, execute, notify, cancelByRequestId, cancelByTileProviderId, setHidden, finished$, getCount}
+    const removeTileProvider = tileProviderId => {
+        cancelByTileProviderId(tileProviderId)
+        delete activeRequestCount[tileProviderId]
+        delete hiddenTileProviders[tileProviderId]
+    }
+    
+    return {isAvailable, execute, notify, cancelByRequestId, removeTileProvider, setHidden, finished$, getCount}
 }

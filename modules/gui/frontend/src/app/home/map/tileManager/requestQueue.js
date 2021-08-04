@@ -96,5 +96,10 @@ export const getRequestQueue = () => {
     const scan = callback =>
         pendingRequests.forEach(callback)
 
-    return {isEmpty, enqueue, dequeueByTileProviderId, discardByRequestId, discardByTileProviderId, scan, getCount}
+    const removeTileProvider = tileProviderId => {
+        discardByTileProviderId(tileProviderId)
+        delete pendingRequestCount[tileProviderId]
+    }
+
+    return {isEmpty, enqueue, dequeueByTileProviderIds, discardByRequestId, removeTileProvider, scan, getCount}
 }
