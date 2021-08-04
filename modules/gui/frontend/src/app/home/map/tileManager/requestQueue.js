@@ -40,23 +40,25 @@ export const getRequestQueue = () => {
     }
 
     const dequeueFIFO = () => {
-        const pendingRequest = pendingRequests.shift()
-        const tileProviderId = pendingRequest.tileProviderId
-        decreaseCount(tileProviderId)
-        log.debug(() => `Dequeued ${requestTag(pendingRequest)}, currently pending: ${getCount()}`)
-        return pendingRequest
+        if (pendingRequests.length) {
+            const pendingRequest = pendingRequests.shift()
+            const tileProviderId = pendingRequest.tileProviderId
+            decreaseCount(tileProviderId)
+            log.debug(() => `Dequeued FIFO ${requestTag(pendingRequest)}, currently pending: ${getCount()}`)
+            return pendingRequest
+        }
+        return null
     }
 
     const dequeueByIndex = (index, dequeueMode = '') => {
-        if (index !== -1) {
+        if (index !== -1 && index < pendingRequests.length) {
             const [pendingRequest] = pendingRequests.splice(index, 1)
             const tileProviderId = pendingRequest.tileProviderId
             decreaseCount(tileProviderId)
             log.debug(() => `Dequeued by ${dequeueMode} ${requestTag(pendingRequest)} - currently pending: ${getCount()}`)
             return pendingRequest
         }
-        log.warn(`Could not dequeue by ${dequeueMode}, reverting to FIFO`)
-        return dequeueFIFO()
+        return null
     }
 
     const dequeueByTileProviderId = tileProviderId => {
@@ -66,9 +68,13 @@ export const getRequestQueue = () => {
                 return dequeueByIndex(index, 'tileProviderId')
             }
         }
-        log.debug(() => `Could not dequeue ${tileProviderTag({tileProviderId})}, reverting to FIFO`)
-        return dequeueFIFO()
+        return null
     }
+
+    const dequeueByTileProviderIds = ([tileProviderId, ...tileProviderIds]) =>
+        dequeueByTileProviderId(tileProviderId)
+            || (tileProviderIds.length && dequeueByTileProviderIds(tileProviderIds))
+            || dequeueFIFO()
 
     const discardByRequestId = requestId => {
         if (requestId) {

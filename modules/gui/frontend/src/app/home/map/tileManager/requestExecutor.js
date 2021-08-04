@@ -32,6 +32,24 @@ export const getRequestExecutor = concurrency => {
     
     const isAvailable = () =>
         getCount() < concurrency
+
+    const getPriorityTileProviderIds = tileProviderId => {
+        const visibleTileProviderIds = _(activeRequestCount)
+            .toPairs()
+            .filter(([tileProviderId, _count]) => isHidden(tileProviderId) === false)
+            .sortBy(([_tileProviderId, count]) => count)
+            .map(([tileProviderId, _count]) => tileProviderId)
+            .value()
+        const hiddenTileProviderIds = _(activeRequestCount)
+            .toPairs()
+            .filter(([tileProviderId, _count]) => isHidden(tileProviderId) === true)
+            .sortBy(([_tileProviderId, count]) => count)
+            .map(([tileProviderId, _count]) => tileProviderId)
+            .value()
+        const tileProviderIds = _.uniq([tileProviderId, ...visibleTileProviderIds, ...hiddenTileProviderIds])
+        log.debug(() => 'Priority tile providers: ', tileProviderIds.map(tileProviderId => tileProviderTag(tileProviderId)))
+        return tileProviderIds
+    }
     
     const start = ({tileProviderId, requestId, request, response$, cancel$}) => {
         activeRequests[requestId] = {tileProviderId, requestId, request, response$, cancel$, timestamp: Date.now()}
@@ -48,7 +66,12 @@ export const getRequestExecutor = concurrency => {
         } else {
             log.debug(() => `Aborted ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
         }
-        finished$.next({currentRequest, replacementTileProviderId})
+        if (replacementTileProviderId) {
+            finished$.next({currentRequest, replacementTileProviderId})
+        } else {
+            const priorityTileProviderIds = getPriorityTileProviderIds(tileProviderId)
+            finished$.next({currentRequest, priorityTileProviderIds})
+        }
     }
 
     const execute = (tileProvider, currentRequest) => {
