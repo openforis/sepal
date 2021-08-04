@@ -8,7 +8,7 @@ import {v4 as uuid} from 'uuid'
 const log = getLogger('tileManager')
 
 export const getTileManager = tileProvider => {
-    const {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden, getCount} = getTileManagerGroup(tileProvider)
+    const {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden, getStats} = getTileManagerGroup(tileProvider)
 
     const tileProviderId = uuid()
     const pending$ = new BehaviorSubject(0)
@@ -24,11 +24,9 @@ export const getTileManager = tileProvider => {
     }
 
     const reportPending = () => {
-        const tileProviderCount = getCount(tileProviderId)
-        const overallCount = getCount()
-        const pending = tileProviderCount.enqueued + tileProviderCount.executing
-        pending$.next(pending)
-        log.trace(() => `${tileProviderTag(tileProviderId)}: enqueued: ${tileProviderCount.enqueued}/${overallCount.enqueued}, executing: ${tileProviderCount.executing}/${overallCount.executing}`)
+        const tileProviderStats = getStats(tileProviderId)
+        pending$.next(tileProviderStats.pending)
+        log.debug(() => `${tileProviderTag(tileProviderId)}: ${tileProviderStats.msg}`)
     }
 
     const loadTile$ = request => {

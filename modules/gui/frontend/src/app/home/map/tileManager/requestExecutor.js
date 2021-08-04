@@ -90,7 +90,6 @@ export const getRequestExecutor = concurrency => {
             )
         ).subscribe({
             next: response => {
-                log.debug(() => `Succeeded ${requestTag({tileProviderId, requestId})}`)
                 currentRequest.complete = true
                 response$.next(response)
             },

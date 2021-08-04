@@ -10,7 +10,7 @@ const log = getLogger('tileManager/group')
 
 const tileProviderGroups = {}
 
-const createTileManagerGroup = concurrency => {
+const createTileManagerGroup = (type, concurrency) => {
     const tileProvidersInfo = {}
     const request$ = new Subject()
     
@@ -55,10 +55,22 @@ const createTileManagerGroup = concurrency => {
         requestExecutor.cancelByRequestId(requestId)
     }
 
-    const getCount = tileProviderId => ({
-        enqueued: requestQueue.getCount(tileProviderId),
-        executing: requestExecutor.getCount(tileProviderId)
-    })
+    const getStats = tileProviderId => {
+        const enqueued = requestQueue.getCount(tileProviderId)
+        const totalEnqueued = requestQueue.getCount()
+        const active = requestExecutor.getCount(tileProviderId)
+        const totalActive = requestExecutor.getCount()
+        const maxActive = getTileProviderInfo(tileProviderId).tileProvider.getConcurrency()
+        const pending = enqueued + active
+        const totalPending = totalEnqueued + totalActive
+        const msg = [
+            `type: ${type}`,
+            `enqueued: ${enqueued}/${totalEnqueued}`,
+            `active: ${active}/${totalActive}/${maxActive}`,
+            `pending: ${pending}/${totalPending}`,
+        ].join(', ')
+        return {type, enqueued, totalEnqueued, active, totalActive, maxActive, pending, totalPending, msg}
+    }
     
     request$.subscribe(
         ({tileProviderId, requestId = uuid(), request, response$, cancel$}) => {
@@ -91,13 +103,13 @@ const createTileManagerGroup = concurrency => {
         }
     )
 
-    return {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden, getCount}
+    return {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden, getStats}
 }
 
 export const getTileManagerGroup = tileProvider => {
     const type = tileProvider.getType()
     if (!tileProviderGroups[type]) {
-        tileProviderGroups[type] = createTileManagerGroup(tileProvider.getConcurrency())
+        tileProviderGroups[type] = createTileManagerGroup(type, tileProvider.getConcurrency())
     }
     return tileProviderGroups[type]
 }
