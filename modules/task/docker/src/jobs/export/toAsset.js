@@ -67,8 +67,8 @@ const exportImageToAsset$ = ({
                 task,
                 description: `exportImageToAsset(assetId: ${assetId}, description: ${description})`,
                 assetId,
-            retries
-        })
+                retries
+            })
         })
     )
 }
