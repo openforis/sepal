@@ -133,7 +133,7 @@ class _RecipeImageLayer extends React.Component {
             recipe: _.omit(recipe, ['ui', 'layers']),
             ...layerConfig
         }
-        const watchedProps = {recipes: recipes.map(r => _.omit(r, ['ui', 'layers'])), layerConfig}
+        const watchedProps = {recipes: recipes.map(r => _.omit(r, ['ui', 'layers', 'title'])), layerConfig}
         if (!_.isEqual(watchedProps, prevWatchedProps)) {
             this.layer && this.layer.removeFromMap()
             this.layer = new EarthEngineImageLayer({
