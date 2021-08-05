@@ -1,6 +1,6 @@
 import {Activator, activator} from 'widget/activation/activator'
 import {Msg} from 'translate'
-import {RecipeState, addRecipe, exportRecipe$} from './recipe'
+import {RecipeState, duplicateRecipe, exportRecipe$} from './recipe'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import Menu, {MenuItem} from 'widget/menu'
@@ -24,7 +24,7 @@ class ProcessMenu extends React.Component {
                     {unsaved
                         ? this.renderUnsavedRecipeItems()
                         : this.renderSavedRecipeItems()}
-                    <MenuItem onSelect={() => this.duplicateRecipe()}>
+                    <MenuItem onSelect={() => duplicateRecipe(this.props.recipe)}>
                         <Msg id='process.menu.duplicateRecipe'/>
                     </MenuItem>
                     <MenuItem onSelect={() => this.exportRecipe(recipe)}>
@@ -66,17 +66,6 @@ class ProcessMenu extends React.Component {
     exportRecipe() {
         const {recipe, stream} = this.props
         stream('EXPORT_RECIPE', exportRecipe$(recipe))
-    }
-
-    duplicateRecipe() {
-        const {recipe} = this.props
-        const duplicate = ({
-            ...recipe,
-            placeholder: `${recipe.title || recipe.placeholder}_copy`,
-            title: null,
-            ui: {...recipe.ui, unsaved: true}
-        })
-        return addRecipe(duplicate)
     }
 }
 

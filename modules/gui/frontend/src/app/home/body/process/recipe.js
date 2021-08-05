@@ -12,6 +12,7 @@ import React from 'react'
 import _ from 'lodash'
 import actionBuilder, {scopedActionBuilder} from 'action-builder'
 import api from 'api'
+import guid from 'guid'
 
 const saveToBackend$ = (() => {
     const save$ = new Subject()
@@ -183,24 +184,18 @@ export const selectRecipe = recipeId =>
         .set('process.selectedTabId', recipeId)
         .dispatch()
 
-const duplicateRecipe = (sourceRecipe, destinationRecipeId) => ({
-    ...sourceRecipe,
-    id: destinationRecipeId,
-    placeholder: `${sourceRecipe.title || sourceRecipe.placeholder}_copy`,
-    title: null,
-    ui: {...sourceRecipe.ui, unsaved: true}
-})
+export const duplicateRecipe = sourceRecipe =>
+    addRecipe({
+        ...sourceRecipe,
+        id: guid(),
+        placeholder: `${sourceRecipe.title || sourceRecipe.placeholder}_copy`,
+        title: null,
+        ui: {...sourceRecipe.ui, unsaved: true, initialized: true}
+    })
 
 export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
     api.recipe.load$(sourceRecipeId).pipe(
-        map(sourceRecipe => {
-            return duplicateRecipe(sourceRecipe, destinationRecipeId)
-        }),
-        map(recipe =>
-            actionBuilder('DUPLICATE_RECIPE', {duplicate: recipe})
-                .set(recipePath(destinationRecipeId), initializeRecipe(recipe))
-                .dispatch()
-        )
+        map(sourceRecipe => duplicateRecipe(sourceRecipe, destinationRecipeId))
     )
 
 export const removeRecipe$ = recipeId =>

@@ -81,7 +81,9 @@ class _RecipeHome extends React.Component {
     duplicateRecipe(recipeIdToDuplicate) {
         const {stream} = this.props
         stream('DUPLICATE_RECIPE',
-            duplicateRecipe$(recipeIdToDuplicate, this.props.recipeId)
+            duplicateRecipe$(recipeIdToDuplicate).pipe(
+                tap(() => closeTab(this.props.recipeId, 'process'))
+            )
         )
     }
 
