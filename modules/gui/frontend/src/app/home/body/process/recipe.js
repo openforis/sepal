@@ -204,7 +204,7 @@ export const removeRecipe$ = recipeId =>
             removeAllRevisions(recipeId)
             actionBuilder('REMOVE_RECIPE', {recipeId})
                 .del(['process.recipes', {id: recipeId}])
-                .del(['process.loadedRecipes', {id: recipeId}])
+                .del(['process.loadedRecipes', recipeId])
                 .dispatch()
         })
     )
