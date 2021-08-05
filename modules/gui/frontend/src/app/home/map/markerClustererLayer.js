@@ -14,7 +14,7 @@ const SELECTED_SCALE = 0.6
 export default class MarkerClustererLayer extends Layer {
 
     constructor({map, id, label, description}) {
-        super()
+        super({map})
         const {google, googleMap} = map.getGoogle()
         this.type = 'MarkerClustererLayer'
         this.toggleable = true
