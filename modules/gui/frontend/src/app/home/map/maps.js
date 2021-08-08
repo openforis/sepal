@@ -10,6 +10,7 @@ import {v4 as uuid} from 'uuid'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import api from 'api'
 
 const log = getLogger('maps')
@@ -26,19 +27,16 @@ export const withMapsContext = withContext(MapsContext, 'mapsContext')
 
 class _Maps extends React.Component {
     state = {
-        mapsContext: null,
-        center: {},
-        zoom: null,
-        scale: null
+        mapsContext: null
     }
 
+    view$ = new Subject()
     currentView = null
     linkedMaps = new Set()
 
     constructor(props) {
         super(props)
         const {onError, stream} = props
-        this.view$ = new Subject()
         stream('INIT_MAPS',
             this.initMaps$(),
             mapsContext => this.setState(mapsContext),
@@ -140,7 +138,7 @@ class _Maps extends React.Component {
     }
 
     getScale({center, zoom}) {
-        return 156543.03392 * Math.cos(center.lat() * Math.PI / 180) / Math.pow(2, zoom)
+        return 156543.03392 * Math.cos(center.lat * Math.PI / 180) / Math.pow(2, zoom)
     }
 
     createMapContext(mapId = uuid()) {
@@ -149,7 +147,7 @@ class _Maps extends React.Component {
 
         const view$ = merge(
             this.view$.pipe(
-                debounceTime(1000),
+                debounceTime(100),
                 distinctUntilChanged(),
                 filter(({mapId: id}) => mapId !== id),
                 map(({view}) => view)
@@ -173,19 +171,18 @@ class _Maps extends React.Component {
             const {currentView} = this
             const {center, zoom, bounds} = view
 
-            if (currentView && currentView.center.equals(center) && currentView.zoom === zoom) {
+            if (currentView && _.isEqual(currentView.center, center) && currentView.zoom === zoom) {
                 log.debug(() => `View update from ${mapTag(mapId)} ignored`)
             } else {
                 log.debug(() => `View update from ${mapTag(mapId)} accepted: ${mapViewTag(view)}`)
-                this.view$.next({mapId, view})
-                this.currentView = view
                 const scale = this.getScale({center, zoom})
-                this.setState({
-                    center: center ? {lat: center.lat(), lng: center.lng()} : {},
+                this.view$.next({mapId, view: {
+                    center,
                     zoom,
                     bounds,
                     scale
-                })
+                }})
+                this.currentView = view
             }
         }
 
@@ -194,16 +191,16 @@ class _Maps extends React.Component {
 
     render() {
         const {children} = this.props
-        const {error, initialized, center, zoom, bounds, scale} = this.state
+        const {error, initialized} = this.state
+        const {view$} = this
         return (
             <MapsContext.Provider value={{
                 createGoogleMap: this.createGoogleMap,
                 createSepalMap: this.createSepalMap,
                 createMapContext: this.createMapContext,
-                center,
-                zoom,
-                bounds,
-                scale
+                view$: view$.pipe(
+                    map(({view}) => view)
+                )
             }}>
                 {children(initialized, error)}
             </MapsContext.Provider>

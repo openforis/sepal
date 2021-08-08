@@ -218,11 +218,16 @@ class CollectPanel extends React.Component {
         setTimeout(() => dataCollectionManager.update(point, prevValue))
     }
 
-    moveMap(point) {
+    // moveMap(point) {
+    //     const {map} = this.props
+    //     const {google} = map.getGoogle()
+    //     const center = new google.maps.LatLng(point.y, point.x)
+    //     map.setView({center, zoom: 16})
+    // }
+
+    moveMap({x: lng, y: lat}) {
         const {map} = this.props
-        const {google} = map.getGoogle()
-        const center = new google.maps.LatLng(point.y, point.x)
-        map.setView({center, zoom: 16})
+        map.setView({center: {lat, lng}, zoom: 16})
     }
 
     findNext() {

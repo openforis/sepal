@@ -12,14 +12,24 @@ import Tooltip from 'widget/tooltip'
 import clipboard from 'clipboard'
 import format from 'format'
 import styles from './mapInfo.module.css'
+import withSubscriptions from 'subscription'
 
 class _MapInfo extends React.Component {
-    constructor() {
-        super()
+    state = {
+        view: {}
+    }
+
+    componentDidMount() {
+        const {mapsContext: {view$}, addSubscription} = this.props
+        addSubscription(
+            view$.subscribe(
+                view => view && this.setState({view})
+            )
+        )
     }
 
     render() {
-        const {mapsContext: {scale}} = this.props
+        const {view: {scale}} = this.state
         return scale
             ? (
                 <div className={styles.container}>
@@ -40,7 +50,7 @@ class _MapInfo extends React.Component {
     }
 
     tooltip() {
-        const {mapsContext: {center, bounds: [sw, ne]}} = this.props
+        const {view: {center, bounds: [sw, ne]}} = this.state
         return (
             <Layout type='vertical'>
                 <Widget label={msg('map.info.center')} spacing='compact'>
@@ -85,12 +95,12 @@ class _MapInfo extends React.Component {
     }
 
     getCenter() {
-        const {mapsContext: {center: {lat, lng}}} = this.props
+        const {view: {center: {lat, lng}}} = this.state
         return `[${lng}, ${lat}]`
     }
 
     getBounds() {
-        const {mapsContext: {bounds: [[w, s], [e, n]]}} = this.props
+        const {view: {bounds: [[w, s], [e, n]]}} = this.state
         return `[[${w}, ${s}], [${e}, ${n}]]`
     }
 
@@ -123,7 +133,8 @@ class _MapInfo extends React.Component {
 
 export const MapInfo = compose(
     _MapInfo,
-    withMapsContext()
+    withMapsContext(),
+    withSubscriptions()
 )
 
 MapInfo.propTypes = {}
