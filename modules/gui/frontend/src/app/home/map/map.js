@@ -95,7 +95,7 @@ class _Map extends React.Component {
     }
 
     removeMap(id) {
-        log.debug(`${mapTag(this.state.mapId)} removing map for layer ${id}`)
+        log.debug(() => `${mapTag(this.state.mapId)} removing map for layer ${id}`)
         const {maps} = this.state
         const {map, listeners, subscriptions} = maps[id]
         const {google} = map.getGoogle()
@@ -115,7 +115,7 @@ class _Map extends React.Component {
     synchronizeOut(map, area) {
         const {overlay} = this.state
         const view = map.getView()
-        log.debug(`${mapTag(this.state.mapId, area)} synchronizeOut ${mapViewTag(view)}`)
+        log.debug(() => `${mapTag(this.state.mapId, area)} synchronizeOut ${mapViewTag(view)}`)
         this.withAllMaps(({map}) => map.setView(view))
         overlay && overlay.map.setView(view)
         this.updateView$.next(view)
@@ -123,7 +123,7 @@ class _Map extends React.Component {
 
     synchronizeIn(view) {
         const {overlay} = this.state
-        log.debug(`${mapTag(this.state.mapId)} synchronizeIn ${mapViewTag(view)}`)
+        log.debug(() => `${mapTag(this.state.mapId)} synchronizeIn ${mapViewTag(view)}`)
         this.withAllMaps(({map}) => map.setView(view))
         overlay && overlay.map.setView(view)
     }
@@ -354,7 +354,7 @@ class _Map extends React.Component {
 
     createMap(id, area, element, callback) {
         const {mapsContext: {createSepalMap}} = this.props
-        log.debug(`${mapTag(this.state.mapId, area)} creating area ${area}`)
+        log.debug(() => `${mapTag(this.state.mapId, area)} creating area ${area}`)
 
         const isOverlay = area === 'overlay'
         const options = isOverlay ? {
@@ -553,7 +553,7 @@ class _Map extends React.Component {
                 view => {
                     const {linked} = this.state
                     if (view && linked) {
-                        log.debug(`${mapTag(this.state.mapId)} received ${mapViewTag(view)}`)
+                        log.debug(() => `${mapTag(this.state.mapId)} received ${mapViewTag(view)}`)
                         this.synchronizeIn(view)
                     }
                     this.updateView$.next(view)
@@ -568,7 +568,7 @@ class _Map extends React.Component {
                     if (linked) {
                         if (center && zoom) {
                             const view = {center, zoom, bounds}
-                            log.debug(`${mapTag(this.state.mapId)} reporting ${mapViewTag(view)}`)
+                            log.debug(() => `${mapTag(this.state.mapId)} reporting ${mapViewTag(view)}`)
                             updateView(view)
                         }
                     }
@@ -579,7 +579,7 @@ class _Map extends React.Component {
                 finalize(() => notifyLinked(false))
             ).subscribe(
                 linked => {
-                    log.debug(`${mapTag(this.state.mapId)} ${linked ? 'linked' : 'unlinked'}`)
+                    log.debug(() => `${mapTag(this.state.mapId)} ${linked ? 'linked' : 'unlinked'}`)
                     notifyLinked(linked)
                 }
             )

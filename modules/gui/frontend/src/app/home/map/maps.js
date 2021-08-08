@@ -5,7 +5,7 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {debounceTime, distinctUntilChanged, filter, map, switchMap} from 'rxjs/operators'
 import {getLogger} from 'log'
-import {mapTag} from 'tag'
+import {mapTag, mapViewTag} from 'tag'
 import {v4 as uuid} from 'uuid'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
@@ -149,7 +149,7 @@ class _Maps extends React.Component {
 
         const view$ = merge(
             this.view$.pipe(
-                debounceTime(50),
+                debounceTime(1000),
                 distinctUntilChanged(),
                 filter(({mapId: id}) => mapId !== id),
                 map(({view}) => view)
@@ -163,7 +163,7 @@ class _Maps extends React.Component {
             } else {
                 this.linkedMaps.delete(mapId)
             }
-            log.debug(`Linked maps: ${this.linkedMaps.size}`)
+            log.debug(() => `Linked maps: ${this.linkedMaps.size}`)
             if (linked && this.linkedMaps.size > 1 && this.currentView) {
                 requestedView$.next(this.currentView)
             }
@@ -174,9 +174,9 @@ class _Maps extends React.Component {
             const {center, zoom, bounds} = view
 
             if (currentView && currentView.center.equals(center) && currentView.zoom === zoom) {
-                log.debug(`View update from ${mapTag(mapId)} ignored`)
+                log.debug(() => `View update from ${mapTag(mapId)} ignored`)
             } else {
-                log.debug(`View update from ${mapTag(mapId)} accepted`)
+                log.debug(() => `View update from ${mapTag(mapId)} accepted: ${mapViewTag(view)}`)
                 this.view$.next({mapId, view})
                 this.currentView = view
                 const scale = this.getScale({center, zoom})
