@@ -8,10 +8,16 @@ import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './mapToolbar.module.css'
+import withSubscriptions from 'subscription'
 
 class MapToolbar extends React.Component {
+    state = {
+        linked: null
+    }
+
     render() {
         const {map, children} = this.props
+        const {linked} = this.state
         return (
             <React.Fragment>
                 <MapLayout/>
@@ -26,9 +32,9 @@ class MapToolbar extends React.Component {
                         tooltip='zoom'/>
                     <Toolbar.ToolbarButton
                         onClick={() => map.toggleLinked()}
-                        selected={map.isLinked()}
+                        selected={linked}
                         icon='link'
-                        tooltip={msg(map.isLinked() ? 'process.mosaic.mapToolbar.unlink.tooltip' : 'process.mosaic.mapToolbar.link.tooltip')}/>
+                        tooltip={msg(linked ? 'process.mosaic.mapToolbar.unlink.tooltip' : 'process.mosaic.mapToolbar.link.tooltip')}/>
                     <Toolbar.ActivationButton
                         id='mapLayout'
                         icon='layer-group'
@@ -37,6 +43,15 @@ class MapToolbar extends React.Component {
                 </Toolbar>
                 <Keybinding disabled={!map.isZoomArea()} keymap={{Escape: () => map.cancelZoomArea()}}/>
             </React.Fragment>
+        )
+    }
+
+    componentDidMount() {
+        const {map, addSubscription} = this.props
+        addSubscription(
+            map.linked$.subscribe(
+                linked => this.setState({linked})
+            )
         )
     }
 }
@@ -48,5 +63,6 @@ MapToolbar.propTypes = {
 
 export default compose(
     MapToolbar,
-    withMap()
+    withMap(),
+    withSubscriptions()
 )

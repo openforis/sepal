@@ -38,7 +38,7 @@ const mapRecipeToProps = recipe => ({
 
 class _Map extends React.Component {
     updateView$ = new Subject()
-    linked$ = new ReplaySubject()
+    linked$ = new BehaviorSubject(false)
     mapInitialized$ = new BehaviorSubject()
     mouseDown$ = new Subject()
     draggingMap$ = new BehaviorSubject(false)
@@ -410,18 +410,15 @@ class _Map extends React.Component {
     }
 
     setLinked(linked) {
-        this.setState({linked}, () => this.linked$.next(linked))
+        this.linked$.next(linked)
     }
 
     toggleLinked() {
-        const {linked: wasLinked} = this.state
-        const linked = !wasLinked
-        this.setLinked(linked)
+        this.setLinked(!this.isLinked())
     }
 
     isLinked() {
-        const {linked} = this.state
-        return linked
+        return this.linked$.getValue()
     }
 
     render() {
@@ -610,8 +607,8 @@ class _Map extends React.Component {
         const isInitialized = () => bounds
 
         return {
+            linked$: this.linked$,
             toggleLinked: this.toggleLinked,
-            isLinked: this.isLinked,
             canZoomIn: () => !map.isMaxZoom(),
             zoomIn: () => map.zoomIn(),
             canZoomOut: () => !map.isMinZoom(),
