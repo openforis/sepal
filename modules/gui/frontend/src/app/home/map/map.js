@@ -10,11 +10,11 @@ import {SplitView} from 'widget/split/splitView'
 import {VisParamsPanel} from './visParams/visParamsPanel'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {debounceTime, distinctUntilChanged, filter, finalize, first, last, map as rxMap, share, switchMap, takeUntil, windowTime} from 'rxjs/operators'
+import {filter, finalize, first, last, map as rxMap, share, switchMap, takeUntil, windowTime} from 'rxjs/operators'
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
-import {mapTag, mapViewTag} from 'tag'
+import {mapTag} from 'tag'
 import {recipePath} from '../body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import {v4 as uuid} from 'uuid'
@@ -80,8 +80,8 @@ class _Map extends React.Component {
 
     withAllMaps(func) {
         const {maps} = this.state
-        return _.map(maps, ({map, listeners, subscriptions}, id) =>
-            func({id, map, listeners, subscriptions})
+        return _.map(maps, ({map, area, listeners, subscriptions}, id) =>
+            func({id, map, area, listeners, subscriptions})
         )
     }
 
@@ -115,15 +115,20 @@ class _Map extends React.Component {
     synchronizeOut(map, area) {
         const {overlay} = this.state
         const view = map.getView()
-        log.debug(() => `${mapTag(this.state.mapId, area)} synchronizeOut ${mapViewTag(view)}`)
-        this.withAllMaps(({map}) => map.setView(view))
-        overlay && overlay.map.setView(view)
-        this.updateView$.next(view)
+        this.withAllMaps(({map, area: currentArea}) => {
+            if (currentArea !== area) {
+                map.setView(view)
+            }
+        })
+        if (area === 'overlay') {
+            this.updateView$.next(view)
+        } else {
+            overlay && overlay.map.setView(view)
+        }
     }
 
     synchronizeIn(view) {
         const {overlay} = this.state
-        log.debug(() => `${mapTag(this.state.mapId)} synchronizeIn ${mapViewTag(view)}`)
         this.withAllMaps(({map}) => map.setView(view))
         overlay && overlay.map.setView(view)
     }
@@ -232,7 +237,7 @@ class _Map extends React.Component {
             if (element) {
                 if (!maps[id]) {
                     this.createMap(id, area, element, ({map, listeners, subscriptions}) => {
-                        this.setState(({maps}) => ({maps: {...maps, [id]: {id, map, listeners, subscriptions}}}))
+                        this.setState(({maps}) => ({maps: {...maps, [id]: {id, map, area, listeners, subscriptions}}}))
                     })
                 }
             }
@@ -371,8 +376,8 @@ class _Map extends React.Component {
         const listeners = [
             googleMap.addListener('mouseout', () => this.synchronizeCursor(id, null)),
             googleMap.addListener('mousemove', ({latLng, domEvent}) => this.synchronizeCursor(id, latLng, domEvent)),
-            googleMap.addListener('center_changed', () => this.synchronizeOut(map, area)),
             googleMap.addListener('bounds_changed', () => this.viewChanged$.next()),
+            googleMap.addListener('center_changed', () => this.synchronizeOut(map, area)),
             googleMap.addListener('zoom_changed', () => this.synchronizeOut(map, area)),
             googleMap.addListener('dragstart', () => this.draggingMap$.next(true)),
             googleMap.addListener('dragend', () => this.draggingMap$.next(false))
@@ -513,7 +518,7 @@ class _Map extends React.Component {
 
     componentDidMount() {
         const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
-        const {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView, notifyLinked} = createMapContext()
+        const {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView$, linked$} = createMapContext()
 
         this.setLinked(getProcessTabsInfo().single)
 
@@ -522,7 +527,7 @@ class _Map extends React.Component {
             googleMapsApiKey,
             norwayPlanetApiKey
         }, () => {
-            this.subscribe({view$, updateView, notifyLinked})
+            this.subscribe({view$, updateView$, linked$})
             onEnable(() => this.setVisibility(true))
             onDisable(() => this.setVisibility(false))
         })
@@ -546,42 +551,17 @@ class _Map extends React.Component {
         })
     }
 
-    subscribe({view$, updateView, notifyLinked}) {
+    subscribe({view$, updateView$, linked$}) {
         const {addSubscription} = this.props
         addSubscription(
             view$.subscribe(
-                view => {
-                    const {linked} = this.state
-                    if (view && linked) {
-                        log.debug(() => `${mapTag(this.state.mapId)} received ${mapViewTag(view)}`)
-                        this.synchronizeIn(view)
-                    }
-                    this.updateView$.next(view)
-                }
+                view => this.synchronizeIn(view)
             ),
-            this.updateView$.pipe(
-                debounceTime(50),
-                distinctUntilChanged()
-            ).subscribe(
-                ({center, zoom, bounds}) => {
-                    const {linked} = this.state
-                    if (linked) {
-                        if (center && zoom) {
-                            const view = {center, zoom, bounds}
-                            log.debug(() => `${mapTag(this.state.mapId)} reporting ${mapViewTag(view)}`)
-                            updateView(view)
-                        }
-                    }
-                }
+            this.updateView$.subscribe(
+                view => updateView$.next(view)
             ),
-            this.linked$.pipe(
-                distinctUntilChanged(),
-                finalize(() => notifyLinked(false))
-            ).subscribe(
-                linked => {
-                    log.debug(() => `${mapTag(this.state.mapId)} ${linked ? 'linked' : 'unlinked'}`)
-                    notifyLinked(linked)
-                }
+            this.linked$.subscribe(
+                linked => linked$.next(linked)
             )
         )
     }

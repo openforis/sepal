@@ -1,9 +1,9 @@
+import {BehaviorSubject, Subject, from, merge, of, zip} from 'rxjs'
 import {Loader} from 'google-maps'
 import {SepalMap} from './sepalMap'
-import {Subject, from, merge, of, zip} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {debounceTime, distinctUntilChanged, filter, map, switchMap} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, filter, finalize, map, switchMap} from 'rxjs/operators'
 import {getLogger} from 'log'
 import {mapTag, mapViewTag} from 'tag'
 import {v4 as uuid} from 'uuid'
@@ -12,6 +12,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
+import withSubscriptions from 'subscription'
 
 const log = getLogger('maps')
 
@@ -30,8 +31,7 @@ class _Maps extends React.Component {
         mapsContext: null
     }
 
-    view$ = new Subject()
-    currentView = null
+    view$ = new BehaviorSubject()
     linkedMaps = new Set()
 
     constructor(props) {
@@ -141,52 +141,78 @@ class _Maps extends React.Component {
         return 156543.03392 * Math.cos(center.lat * Math.PI / 180) / Math.pow(2, zoom)
     }
 
+    getCurrentView() {
+        const {view$} = this
+        const update = view$.getValue()
+        return update && update.view
+    }
+
     createMapContext(mapId = uuid()) {
+        const {addSubscription} = this.props
         const {google: {googleMapsApiKey}, norwayPlanet: {norwayPlanetApiKey}} = this.state
         const requestedView$ = new Subject()
 
         const view$ = merge(
             this.view$.pipe(
-                debounceTime(100),
                 distinctUntilChanged(),
-                filter(({mapId: id}) => mapId !== id),
+                filter(value => value),
+                filter(({mapId: id}) => this.linkedMaps.has(mapId) && mapId !== id),
                 map(({view}) => view)
             ),
             requestedView$
         )
 
-        const notifyLinked = linked => {
+        const updateView$ = new Subject()
+        const linked$ = new Subject()
+
+        const setLinked = linked => {
+            const currentView = this.getCurrentView()
+            log.debug(() => `${mapTag(mapId)} ${linked ? 'linked' : 'unlinked'}`)
             if (linked) {
                 this.linkedMaps.add(mapId)
             } else {
                 this.linkedMaps.delete(mapId)
             }
             log.debug(() => `Linked maps: ${this.linkedMaps.size}`)
-            if (linked && this.linkedMaps.size > 1 && this.currentView) {
-                requestedView$.next(this.currentView)
+            if (linked && this.linkedMaps.size > 1 && currentView) {
+                requestedView$.next(currentView)
             }
         }
 
         const updateView = view => {
-            const {currentView} = this
-            const {center, zoom, bounds} = view
-
-            if (currentView && _.isEqual(currentView.center, center) && currentView.zoom === zoom) {
-                log.debug(() => `View update from ${mapTag(mapId)} ignored`)
+            if (this.linkedMaps.has(mapId)) {
+                const currentView = this.getCurrentView()
+                const {center, zoom, bounds} = view
+                if (center && zoom) {
+                    if (currentView && _.isEqual(currentView.center, center) && currentView.zoom === zoom) {
+                        log.trace(() => `View update from linked ${mapTag(mapId)} ignored`)
+                    } else {
+                        log.debug(() => `View update from linked ${mapTag(mapId)} accepted: ${mapViewTag(view)}`)
+                        const scale = this.getScale({center, zoom})
+                        this.view$.next({mapId, view: {center, zoom, bounds, scale}})
+                    }
+                }
             } else {
-                log.debug(() => `View update from ${mapTag(mapId)} accepted: ${mapViewTag(view)}`)
-                const scale = this.getScale({center, zoom})
-                this.view$.next({mapId, view: {
-                    center,
-                    zoom,
-                    bounds,
-                    scale
-                }})
-                this.currentView = view
+                log.debug(() => `View update from unlinked ${mapTag(mapId)} discarded`)
             }
         }
 
-        return {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView, notifyLinked}
+        addSubscription(
+            linked$.pipe(
+                distinctUntilChanged(),
+                finalize(() => setLinked(false))
+            ).subscribe(
+                linked => setLinked(linked)
+            ),
+            updateView$.pipe(
+                debounceTime(100),
+                distinctUntilChanged()
+            ).subscribe(
+                view => updateView(view)
+            )
+        )
+
+        return {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView$, linked$}
     }
 
     render() {
@@ -199,6 +225,7 @@ class _Maps extends React.Component {
                 createSepalMap: this.createSepalMap,
                 createMapContext: this.createMapContext,
                 view$: view$.pipe(
+                    filter(value => value),
                     map(({view}) => view)
                 )
             }}>
@@ -210,7 +237,8 @@ class _Maps extends React.Component {
 
 export const Maps = compose(
     _Maps,
-    connect()
+    connect(),
+    withSubscriptions()
 )
 
 Maps.propTypes = {
