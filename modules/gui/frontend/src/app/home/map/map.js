@@ -64,7 +64,6 @@ class _Map extends React.Component {
         super()
         this.mapDelegate = this.mapDelegate.bind(this)
         this.toggleLinked = this.toggleLinked.bind(this)
-        this.isLinked = this.isLinked.bind(this)
         this.toggleZoomArea = this.toggleZoomArea.bind(this)
         this.cancelZoomArea = this.cancelZoomArea.bind(this)
         this.isZoomArea = this.isZoomArea.bind(this)
