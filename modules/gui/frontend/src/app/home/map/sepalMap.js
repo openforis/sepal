@@ -239,33 +239,36 @@ export class SepalMap {
 
     // Bounds
 
-    fromGoogleBounds(googleBounds) {
-        if (googleBounds) {
-            const sw = googleBounds.getSouthWest()
-            const ne = googleBounds.getNorthEast()
+    fromGoogleBounds(bounds) {
+        const {google} = this
+        if (bounds && bounds instanceof google.maps.LatLngBounds) {
+            const sw = bounds.getSouthWest()
+            const ne = bounds.getNorthEast()
             return [
                 [sw.lng(), sw.lat()],
                 [ne.lng(), ne.lat()]
             ]
+        } else {
+            return bounds
         }
-        return null
     }
 
     toGoogleBounds(bounds) {
         const {google} = this
-        return new google.maps.LatLngBounds(
-            {lng: bounds[0][0], lat: bounds[0][1]},
-            {lng: bounds[1][0], lat: bounds[1][1]}
-        )
+        if (bounds && bounds instanceof google.maps.LatLngBounds) {
+            return bounds
+        } else {
+            return new google.maps.LatLngBounds(
+                {lng: bounds[0][0], lat: bounds[0][1]},
+                {lng: bounds[1][0], lat: bounds[1][1]}
+            )
+        }
     }
 
     fitBounds(bounds) {
-        const {google} = this
         const PADDING = 2 // compensate for attribution masking
         const {googleMap} = this
-        const nextBounds = bounds instanceof google.maps.LatLngBounds
-            ? bounds
-            : this.toGoogleBounds(bounds)
+        const nextBounds = this.toGoogleBounds(bounds)
         const currentBounds = googleMap.getBounds()
         const boundsChanged = !currentBounds || !currentBounds.equals(nextBounds)
         if (boundsChanged) {
