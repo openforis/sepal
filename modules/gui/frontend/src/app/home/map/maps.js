@@ -167,13 +167,12 @@ class _Maps extends React.Component {
 
         const setLinked = linked => {
             const currentView = this.getCurrentView()
-            log.debug(() => `${mapTag(mapId)} ${linked ? 'linked' : 'unlinked'}`)
             if (linked) {
                 this.linkedMaps.add(mapId)
             } else {
                 this.linkedMaps.delete(mapId)
             }
-            log.debug(() => `Linked maps: ${this.linkedMaps.size}`)
+            log.debug(() => `${mapTag(mapId)} ${linked ? 'linked' : 'unlinked'}, now ${this.linkedMaps.size} linked.`)
             if (linked && this.linkedMaps.size > 1 && currentView) {
                 requestedView$.next(currentView)
             }
@@ -193,7 +192,7 @@ class _Maps extends React.Component {
                     }
                 }
             } else {
-                log.debug(() => `View update from unlinked ${mapTag(mapId)} discarded`)
+                log.trace(() => `View update from unlinked ${mapTag(mapId)} discarded`)
             }
         }
 
