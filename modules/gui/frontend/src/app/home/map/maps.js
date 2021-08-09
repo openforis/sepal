@@ -36,41 +36,43 @@ class _Maps extends React.Component {
 
     constructor(props) {
         super(props)
-        const {onError, stream} = props
-        stream('INIT_MAPS',
-            this.initMaps$(),
-            mapsContext => this.setState(mapsContext),
-            error => {
-                onError(error)
-                this.setState({error})
-            }
-        )
         this.createGoogleMap = this.createGoogleMap.bind(this)
         this.createSepalMap = this.createSepalMap.bind(this)
         this.createMapContext = this.createMapContext.bind(this)
+        this.initialize()
     }
 
-    initMaps$() {
-        return api.map.loadApiKeys$().pipe(
-            switchMap(({google: googleMapsApiKey, norwayPlanet: norwayPlanetApiKey}) =>
-                zip(
-                    this.initGoogleMaps$(googleMapsApiKey),
-                    this.initNorwayPlanet$(norwayPlanetApiKey)
-                )
-            ),
-            map(([google, norwayPlanet]) => ({
-                google,
-                norwayPlanet,
-                initialized: true
-            }))
+    initialize() {
+        const {stream} = this.props
+        stream('INIT_MAPS',
+            this.initialize$(),
+            providers => this.setState({...providers, initialized: true}),
+            error => this.handleError(error)
         )
     }
 
-    initGoogleMaps$(googleMapsApiKey) {
-        const loader = new Loader(googleMapsApiKey, {
+    initialize$() {
+        return api.map.loadApiKeys$().pipe(
+            switchMap(
+                ({google: googleMapsApiKey, norwayPlanet: norwayPlanetApiKey}) =>
+                    zip(
+                        this.initGoogleMaps$(googleMapsApiKey),
+                        this.initNorwayPlanet$(norwayPlanetApiKey)
+                    )
+            ),
+            map(([google, norwayPlanet]) => ({google, norwayPlanet}))
+        )
+    }
+
+    getGoogleMapsLoader(googleMapsApiKey) {
+        return new Loader(googleMapsApiKey, {
             version: GOOGLE_MAPS_VERSION,
             libraries: ['drawing', 'places']
         })
+    }
+
+    initGoogleMaps$(googleMapsApiKey) {
+        const loader = this.getGoogleMapsLoader(googleMapsApiKey)
         return from(loader.load()).pipe(
             switchMap(google =>
                 of({google, googleMapsApiKey})
@@ -80,6 +82,12 @@ class _Maps extends React.Component {
 
     initNorwayPlanet$(norwayPlanetApiKey) {
         return of({norwayPlanetApiKey})
+    }
+
+    handleError(error) {
+        const {onError} = this.props
+        onError && onError(error)
+        this.setState({error})
     }
 
     getStyleOptions(style = 'sepalStyle') {
