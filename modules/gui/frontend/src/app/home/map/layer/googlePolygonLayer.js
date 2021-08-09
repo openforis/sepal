@@ -36,11 +36,5 @@ export class GooglePolygonLayer extends ShapeLayer {
         )
         const polygonOptions = this.getPolygonOptions(fill, paths)
         return new google.maps.Polygon(polygonOptions)
-        // const googleBounds = new google.maps.LatLngBounds()
-        // this.layer.getPaths().getArray().forEach(path =>
-        //     path.getArray().forEach(latLng =>
-        //         googleBounds.extend(latLng)
-        //     ))
-        // this.bounds = map.fromGoogleBounds(googleBounds)
     }
 }

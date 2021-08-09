@@ -17,6 +17,7 @@ import withSubscriptions from 'subscription'
 const log = getLogger('maps')
 
 const GOOGLE_MAPS_VERSION = '3.44'
+const GOOGLE_MAPS_LIBRARIES = ['drawing', 'places']
 
 const DEFAULT_ZOOM = 3
 const MIN_ZOOM = 3
@@ -67,7 +68,7 @@ class _Maps extends React.Component {
     getGoogleMapsLoader(googleMapsApiKey) {
         return new Loader(googleMapsApiKey, {
             version: GOOGLE_MAPS_VERSION,
-            libraries: ['drawing', 'places']
+            libraries: GOOGLE_MAPS_LIBRARIES
         })
     }
 
