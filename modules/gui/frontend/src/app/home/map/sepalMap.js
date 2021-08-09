@@ -240,12 +240,15 @@ export class SepalMap {
     // Bounds
 
     fromGoogleBounds(googleBounds) {
-        const sw = googleBounds.getSouthWest()
-        const ne = googleBounds.getNorthEast()
-        return [
-            [sw.lng(), sw.lat()],
-            [ne.lng(), ne.lat()]
-        ]
+        if (googleBounds) {
+            const sw = googleBounds.getSouthWest()
+            const ne = googleBounds.getNorthEast()
+            return [
+                [sw.lng(), sw.lat()],
+                [ne.lng(), ne.lat()]
+            ]
+        }
+        return null
     }
 
     toGoogleBounds(bounds) {

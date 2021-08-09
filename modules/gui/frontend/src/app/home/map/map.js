@@ -368,6 +368,10 @@ class _Map extends React.Component {
 
         this.withFirstMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
 
+        if (isOverlay) {
+            this.updateView$.next(map.getView())
+        }
+
         const {googleMap} = map.getGoogle()
 
         const listeners = [

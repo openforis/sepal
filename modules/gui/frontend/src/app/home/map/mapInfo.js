@@ -34,7 +34,7 @@ class _MapInfo extends React.Component {
             ? (
                 <div className={styles.container}>
                     <Tooltip
-                        msg={this.tooltip()}
+                        msg={this.renderTooltip()}
                         placement='bottomLeft'
                         clickTrigger={true}>
                         <Button
@@ -49,79 +49,90 @@ class _MapInfo extends React.Component {
             : null
     }
 
-    tooltip() {
-        const {view: {center, bounds: [sw, ne]}} = this.state
+    renderTooltip() {
+        const {view: {center, bounds}} = this.state
         return (
             <Layout type='vertical'>
-                <Widget label={msg('map.info.center')} spacing='compact'>
-                    <div>{formatCoordinates(center, 5)}</div>
-                    <ButtonGroup>
-                        <Button
-                            shape='pill'
-                            icon='copy'
-                            label='coords'
-                            onClick={() => this.copyPlainCenterCoordinates()}
-                        />
-                        <Button
-                            shape='pill'
-                            icon='copy'
-                            label='EE'
-                            onClick={() => this.copyEECenterCoordinates()}
-                        />
-                    </ButtonGroup>
-                </Widget>
-                <Widget label={msg('map.info.bounds')} spacing='compact'>
-                    <div>
-                        <div>{formatCoordinates(sw, 5)}</div>
-                        <div>{formatCoordinates(ne, 5)}</div>
-                    </div>
-                    <ButtonGroup>
-                        <Button
-                            shape='pill'
-                            icon='copy'
-                            label='coords'
-                            onClick={() => this.copyPlainBoundsCoordinates()}
-                        />
-                        <Button
-                            shape='pill'
-                            icon='copy'
-                            label='EE'
-                            onClick={() => this.copyEEBoundsCoordinates()}
-                        />
-                    </ButtonGroup>
-                </Widget>
+                {center && this.renderCenter(center)}
+                {bounds && this.renderBounds(bounds)}
             </Layout>
         )
     }
 
-    getCenter() {
-        const {view: {center: {lat, lng}}} = this.state
+    renderCenter(center) {
+        return (
+            <Widget label={msg('map.info.center')} spacing='compact'>
+                <div>{formatCoordinates(center, 5)}</div>
+                <ButtonGroup>
+                    <Button
+                        shape='pill'
+                        icon='copy'
+                        label='coords'
+                        onClick={() => this.copyPlainCenterCoordinates(center)}
+                    />
+                    <Button
+                        shape='pill'
+                        icon='copy'
+                        label='EE'
+                        onClick={() => this.copyEECenterCoordinates(center)}
+                    />
+                </ButtonGroup>
+            </Widget>
+        )
+    }
+
+    renderBounds(bounds) {
+        const [sw, ne] = bounds
+        return (
+            <Widget label={msg('map.info.bounds')} spacing='compact'>
+                <div>
+                    <div>{formatCoordinates(sw, 5)}</div>
+                    <div>{formatCoordinates(ne, 5)}</div>
+                </div>
+                <ButtonGroup>
+                    <Button
+                        shape='pill'
+                        icon='copy'
+                        label='coords'
+                        onClick={() => this.copyPlainBoundsCoordinates(bounds)}
+                    />
+                    <Button
+                        shape='pill'
+                        icon='copy'
+                        label='EE'
+                        onClick={() => this.copyEEBoundsCoordinates(bounds)}
+                    />
+                </ButtonGroup>
+            </Widget>
+        )
+    }
+
+    copyPlainCenterCoordinates(center) {
+        clipboard.copy(this.formatCenter(center))
+        this.notify()
+    }
+
+    copyEECenterCoordinates(center) {
+        clipboard.copy(`ee.Geometry.Point(${this.formatCenter(center)})`)
+        this.notify()
+    }
+
+    copyPlainBoundsCoordinates(bounds) {
+        clipboard.copy(this.formatBounds(bounds))
+        this.notify()
+    }
+
+    copyEEBoundsCoordinates(bounds) {
+        clipboard.copy(`ee.Geometry.Rectangle(${this.formatBounds(bounds)})`)
+        this.notify()
+    }
+
+    formatCenter({lat, lng}) {
         return `[${lng}, ${lat}]`
     }
 
-    getBounds() {
-        const {view: {bounds: [[w, s], [e, n]]}} = this.state
+    formatBounds([[w, s], [e, n]]) {
         return `[[${w}, ${s}], [${e}, ${n}]]`
-    }
-
-    copyPlainCenterCoordinates() {
-        clipboard.copy(this.getCenter())
-        this.notify()
-    }
-
-    copyEECenterCoordinates() {
-        clipboard.copy(`ee.Geometry.Point(${this.getCenter()})`)
-        this.notify()
-    }
-
-    copyPlainBoundsCoordinates() {
-        clipboard.copy(this.getBounds())
-        this.notify()
-    }
-
-    copyEEBoundsCoordinates() {
-        clipboard.copy(`ee.Geometry.Rectangle(${this.getBounds()})`)
-        this.notify()
     }
 
     notify() {
