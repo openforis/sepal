@@ -132,11 +132,16 @@ export class SepalMap {
     }
 
     getView() {
+        const {googleMap} = this
         const center = this.getCenter()
         const zoom = this.getZoom()
         const bounds = this.getBounds()
         const scale = this.getScale(center, zoom)
-        return {center, zoom, bounds, scale}
+        const minZoom = googleMap.minZoom
+        const maxZoom = googleMap.maxZoom
+        const isMinZoom = zoom === minZoom
+        const isMaxZoom = zoom === maxZoom
+        return {center, zoom, bounds, scale, minZoom, maxZoom, isMinZoom, isMaxZoom}
     }
 
     setView({center, zoom}) {
@@ -191,16 +196,6 @@ export class SepalMap {
     zoomOut() {
         const {googleMap} = this
         this.setZoom(googleMap.getZoom() - 1)
-    }
-
-    isMaxZoom() {
-        const {googleMap} = this
-        return googleMap.getZoom() === googleMap.maxZoom
-    }
-
-    isMinZoom() {
-        const {googleMap} = this
-        return googleMap.getZoom() === googleMap.minZoom
     }
 
     zoomArea() {

@@ -1,4 +1,4 @@
-import {BehaviorSubject, ReplaySubject, Subject, combineLatest, concat, of, pipe} from 'rxjs'
+import {BehaviorSubject, Subject, combineLatest, concat, of, pipe} from 'rxjs'
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {LegendImport} from './legendImport'
@@ -630,11 +630,8 @@ class _Map extends React.Component {
             view$: this.updateView$,
             linked$: this.linked$,
             toggleLinked: this.toggleLinked,
-            canZoomIn: () => !map.isMaxZoom(),
             zoomIn: () => map.zoomIn(),
-            canZoomOut: () => !map.isMinZoom(),
             zoomOut: () => map.zoomOut(),
-            canZoomArea: () => !map.isMaxZoom(),
             toggleZoomArea: this.toggleZoomArea,
             cancelZoomArea: this.cancelZoomArea,
             isZoomArea: this.isZoomArea,

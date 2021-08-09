@@ -11,11 +11,13 @@ import {withMap} from './mapContext'
 import Keybinding from 'widget/keybinding'
 import React from 'react'
 import styles from './mapZoom.module.css'
+import withSubscriptions from 'subscription'
 
 class _MapZoomPanel extends React.Component {
     state = {
         coordinateResults: [],
-        placeResults: []
+        placeResults: [],
+        view: {}
     }
 
     constructor() {
@@ -26,7 +28,7 @@ class _MapZoomPanel extends React.Component {
 
     render() {
         const {map} = this.props
-        const {coordinateResults, placeResults} = this.state
+        const {coordinateResults, placeResults, view: {isMinZoom, isMaxZoom}} = this.state
         return (
             <Keybinding keymap={{'Plus': () => map.zoomIn(), 'Minus': () => map.zoomOut()}}>
                 <Panel className={styles.panel} type='top-right'>
@@ -34,14 +36,14 @@ class _MapZoomPanel extends React.Component {
                         <Layout spacing='compact'>
                             <ButtonGroup alignment='fill'>
                                 <Button
-                                    disabled={!map.canZoomIn()}
+                                    disabled={isMaxZoom}
                                     onClick={() => map.zoomIn()}
                                     icon={'plus'}
                                     tooltip={msg('process.mapZoom.zoomIn.tooltip')}
                                     tooltipPlacement='bottom'
                                 />
                                 <Button
-                                    disabled={!map.canZoomOut()}
+                                    disabled={isMinZoom}
                                     onClick={() => map.zoomOut()}
                                     icon={'minus'}
                                     tooltip={msg('process.mapZoom.zoomOut.tooltip')}
@@ -49,7 +51,7 @@ class _MapZoomPanel extends React.Component {
                                 />
                                 <Button
                                     look={map.isZoomArea() ? 'highlight' : 'default'}
-                                    disabled={!map.canZoomArea()}
+                                    disabled={isMaxZoom}
                                     onClick={() => map.toggleZoomArea()}
                                     icon={'crop-alt'}
                                     tooltip={msg('process.mapZoom.zoomArea.tooltip')}
@@ -87,10 +89,15 @@ class _MapZoomPanel extends React.Component {
     }
 
     componentDidMount() {
-        const {map} = this.props
+        const {map, addSubscription} = this.props
         const {google} = map.getGoogle()
         this.autoComplete = new google.maps.places.AutocompleteService()
         this.geoCoder = new google.maps.Geocoder()
+        addSubscription(
+            map.view$.subscribe(
+                view => this.setState({view})
+            )
+        )
     }
 
     search(query) {
@@ -190,6 +197,7 @@ const policy = () => ({
 export const MapZoomPanel = compose(
     _MapZoomPanel,
     withMap(),
+    withSubscriptions(),
     activatable({
         id: 'mapZoom',
         policy,
