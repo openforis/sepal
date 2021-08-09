@@ -54,7 +54,6 @@ class _Map extends React.Component {
         norwayPlanetApiKey: null,
         zoomArea: null,
         selectedZoomArea: null,
-        linked: null,
         overlay: null,
         overlayActive: false,
         drawPolygon: false
@@ -414,11 +413,8 @@ class _Map extends React.Component {
     }
 
     toggleLinked() {
-        this.setLinked(!this.isLinked())
-    }
-
-    isLinked() {
-        return this.linked$.getValue()
+        const linked = this.linked$.getValue()
+        this.setLinked(!linked)
     }
 
     render() {
