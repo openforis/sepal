@@ -39,7 +39,6 @@ const mapRecipeToProps = recipe => ({
 class _Map extends React.Component {
     updateView$ = new Subject()
     linked$ = new BehaviorSubject(false)
-    mapInitialized$ = new BehaviorSubject()
     mouseDown$ = new Subject()
     draggingMap$ = new BehaviorSubject(false)
     viewChanged$ = new Subject()
@@ -532,10 +531,6 @@ class _Map extends React.Component {
         Object.values(prevAreas)
             .filter(({id}) => !Object.values(areas).map(({id}) => id).includes(id))
             .map(({id}) => this.removeMap(id))
-
-        if (this.isMapInitialized()) {
-            this.mapInitialized$.next(true)
-        }
     }
 
     componentWillUnmount() {
