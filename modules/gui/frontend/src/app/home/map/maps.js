@@ -20,7 +20,7 @@ const GOOGLE_MAPS_VERSION = '3.44'
 
 const DEFAULT_ZOOM = 3
 const MIN_ZOOM = 3
-const MAX_ZOOM = 22
+const MAX_ZOOM = 20
 
 export const MapsContext = React.createContext()
 
