@@ -19,7 +19,7 @@ const argsJoiner = (args, delimiter = ARG_DELIMITER) =>
 
 const tag = (tag, args, delimiter) => `${tag}<${argsJoiner(args, delimiter)}>`
 
-const mapTag = (mapId, area) => tag('Map', [mapId, area])
+const mapTag = (mapId, layerId) => tag('Map', [mapId, layerId])
 
 const mapViewTag = ({center, zoom}) => tag('View', [center.lat.toFixed(4), center.lng.toFixed(4), zoom], '/')
 

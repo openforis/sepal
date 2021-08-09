@@ -92,21 +92,19 @@ class _Map extends React.Component {
     }
 
     removeMap(id) {
-        log.debug(() => `${mapTag(this.state.mapId)} removing map for layer ${id}`)
         const {maps} = this.state
-        const {map, listeners, subscriptions} = maps[id]
+        const {map, area, listeners, subscriptions} = maps[id]
         const {google} = map.getGoogle()
-        _.forEach(listeners, listener =>
+        log.debug(() => `Removing ${mapTag(this.state.mapId, id)} (${area})`)
+        listeners.forEach(listener =>
             google.maps.event.removeListener(listener)
         )
-        _.forEach(subscriptions, subscription =>
+        subscriptions.forEach(subscription =>
             subscription.unsubscribe()
         )
-        this.setState(({maps}) => {
-            const updatedMaps = {...maps}
-            delete updatedMaps[id]
-            return ({maps: updatedMaps})
-        })
+        this.setState(
+            ({maps}) => ({maps: _.omit(maps, id)})
+        )
     }
 
     synchronizeOut(map, area) {
@@ -356,7 +354,7 @@ class _Map extends React.Component {
 
     createMap(id, area, element, callback) {
         const {mapsContext: {createSepalMap}} = this.props
-        log.debug(() => `${mapTag(this.state.mapId, area)} creating area ${area}`)
+        log.debug(() => `Adding ${mapTag(this.state.mapId, id)} (${area})`)
 
         const isOverlay = area === 'overlay'
         const options = isOverlay ? {
