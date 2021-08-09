@@ -5,7 +5,7 @@ import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {formatCoordinates} from 'coords'
 import {msg} from 'translate'
-import {withMapsContext} from './maps'
+import {withMap} from './mapContext'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
@@ -20,9 +20,9 @@ class _MapInfo extends React.Component {
     }
 
     componentDidMount() {
-        const {mapsContext: {view$}, addSubscription} = this.props
+        const {map, addSubscription} = this.props
         addSubscription(
-            view$.subscribe(
+            map.view$.subscribe(
                 view => view && this.setState({view})
             )
         )
@@ -133,7 +133,7 @@ class _MapInfo extends React.Component {
 
 export const MapInfo = compose(
     _MapInfo,
-    withMapsContext(),
+    withMap(),
     withSubscriptions()
 )
 

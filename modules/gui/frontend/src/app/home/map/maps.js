@@ -137,10 +137,6 @@ class _Maps extends React.Component {
         return new SepalMap(google, googleMap)
     }
 
-    getScale({center, zoom}) {
-        return 156543.03392 * Math.cos(center.lat * Math.PI / 180) / Math.pow(2, zoom)
-    }
-
     getCurrentView() {
         const {view$} = this
         const update = view$.getValue()
@@ -181,14 +177,13 @@ class _Maps extends React.Component {
         const updateView = view => {
             if (this.linkedMaps.has(mapId)) {
                 const currentView = this.getCurrentView()
-                const {center, zoom, bounds} = view
+                const {center, zoom} = view
                 if (center && zoom) {
                     if (currentView && _.isEqual(currentView.center, center) && currentView.zoom === zoom) {
                         log.trace(() => `View update from linked ${mapTag(mapId)} ignored`)
                     } else {
                         log.debug(() => `View update from linked ${mapTag(mapId)} accepted: ${mapViewTag(view)}`)
-                        const scale = this.getScale({center, zoom})
-                        this.view$.next({mapId, view: {center, zoom, bounds, scale}})
+                        this.view$.next({mapId, view})
                     }
                 }
             } else {
@@ -217,16 +212,11 @@ class _Maps extends React.Component {
     render() {
         const {children} = this.props
         const {error, initialized} = this.state
-        const {view$} = this
         return (
             <MapsContext.Provider value={{
                 createGoogleMap: this.createGoogleMap,
                 createSepalMap: this.createSepalMap,
-                createMapContext: this.createMapContext,
-                view$: view$.pipe(
-                    filter(value => value),
-                    map(({view}) => view)
-                )
+                createMapContext: this.createMapContext
             }}>
                 {children(initialized, error)}
             </MapsContext.Provider>

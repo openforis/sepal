@@ -37,7 +37,7 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _Map extends React.Component {
-    updateView$ = new Subject()
+    updateView$ = new BehaviorSubject({})
     linked$ = new BehaviorSubject(false)
     mouseDown$ = new Subject()
     draggingMap$ = new BehaviorSubject(false)
@@ -598,6 +598,7 @@ class _Map extends React.Component {
         const isInitialized = () => bounds
 
         return {
+            view$: this.updateView$,
             linked$: this.linked$,
             toggleLinked: this.toggleLinked,
             canZoomIn: () => !map.isMaxZoom(),

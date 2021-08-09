@@ -127,11 +127,16 @@ export class SepalMap {
 
     // View
 
+    getScale(center, zoom) {
+        return 156543.03392 * Math.cos(center.lat * Math.PI / 180) / Math.pow(2, zoom)
+    }
+
     getView() {
         const center = this.getCenter()
         const zoom = this.getZoom()
         const bounds = this.getBounds()
-        return {center, zoom, bounds}
+        const scale = this.getScale(center, zoom)
+        return {center, zoom, bounds, scale}
     }
 
     setView({center, zoom}) {
