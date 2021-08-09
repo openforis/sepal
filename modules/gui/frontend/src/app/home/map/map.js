@@ -352,6 +352,34 @@ class _Map extends React.Component {
             .dispatch()
     }
 
+    onMouseOut(id) {
+        this.synchronizeCursor(id, null)
+    }
+
+    onMouseMove(id, latLng, domEvent) {
+        this.synchronizeCursor(id, latLng, domEvent)
+    }
+
+    onBoundsChanged() {
+        this.viewChanged$.next()
+    }
+
+    onCenterChanged(map, area) {
+        this.synchronizeOut(map, area)
+    }
+
+    onZoomChanged(map, area) {
+        this.synchronizeOut(map, area)
+    }
+
+    onDragStart() {
+        this.draggingMap$.next(true)
+    }
+
+    onDragEnd() {
+        this.draggingMap$.next(false)
+    }
+
     createMap(id, area, element, callback) {
         const {mapsContext: {createSepalMap}} = this.props
         log.debug(() => `Adding ${mapTag(this.state.mapId, id)} (${area})`)
@@ -373,13 +401,13 @@ class _Map extends React.Component {
         const {googleMap} = map.getGoogle()
 
         const listeners = [
-            googleMap.addListener('mouseout', () => this.synchronizeCursor(id, null)),
-            googleMap.addListener('mousemove', ({latLng, domEvent}) => this.synchronizeCursor(id, latLng, domEvent)),
-            googleMap.addListener('bounds_changed', () => this.viewChanged$.next()),
-            googleMap.addListener('center_changed', () => this.synchronizeOut(map, area)),
-            googleMap.addListener('zoom_changed', () => this.synchronizeOut(map, area)),
-            googleMap.addListener('dragstart', () => this.draggingMap$.next(true)),
-            googleMap.addListener('dragend', () => this.draggingMap$.next(false))
+            googleMap.addListener('mouseout', () => this.onMouseOut(id)),
+            googleMap.addListener('mousemove', ({latLng, domEvent}) => this.onMouseMove(id, latLng, domEvent)),
+            googleMap.addListener('bounds_changed', () => this.onBoundsChanged()),
+            googleMap.addListener('center_changed', () => this.onCenterChanged(map, area)),
+            googleMap.addListener('zoom_changed', () => this.onZoomChanged(map, area)),
+            googleMap.addListener('dragstart', () => this.onDragStart()),
+            googleMap.addListener('dragend', () => this.onDragEnd())
         ]
 
         const subscriptions = [
