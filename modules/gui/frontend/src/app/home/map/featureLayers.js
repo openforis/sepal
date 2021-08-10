@@ -53,14 +53,15 @@ class _FeatureLayer extends React.Component {
         case 'Legend': return <LegendLayer/>
         case 'Palette': return <PaletteLayer/>
         case 'Values': return <ValuesLayer/>
-        case 'Aoi':
-            return <AoiLayer
+        case 'Aoi': return (
+            <AoiLayer
                 id={source.type}
                 layerConfig={layerConfig}
                 layerIndex={layerIndex}
                 recipe={recipe}
                 map={map}
             />
+        )
         case 'SceneAreas':
             return <SceneAreasLayer map={map}/>
         case 'ReferenceData':

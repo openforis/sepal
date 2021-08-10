@@ -6,9 +6,11 @@ import {RadarMosaicImageLayer} from './radarMosaic/radarMosaicImageLayer'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {finalize} from 'rxjs/operators'
 import {getAllVisualizations} from './visualizations'
 import {getRecipeType} from '../recipeTypes'
 import {selectFrom} from 'stateUtils'
+import {v4 as uuid} from 'uuid'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {withTabContext} from 'widget/tabs/tabContext'
@@ -23,6 +25,7 @@ const mapStateToProps = (state, {source: {sourceConfig: {recipeId}}}) => ({
 })
 
 class _RecipeImageLayer extends React.Component {
+    componentId = uuid()
     progress$ = new Subject()
     cursorValue$ = new Subject()
 
@@ -74,10 +77,10 @@ class _RecipeImageLayer extends React.Component {
         }
 
         addSubscription(
-            this.progress$.subscribe({
-                next: ({complete}) => complete
-                    ? this.setBusy('tiles', false)
-                    : this.setBusy('tiles', true)
+            this.progress$.pipe(
+                finalize(() => this.setBusy('tiles', false))
+            ).subscribe({
+                next: ({complete}) => this.setBusy('tiles', !complete)
             })
         )
     }
@@ -107,8 +110,8 @@ class _RecipeImageLayer extends React.Component {
     }
 
     setBusy(name, busy) {
-        const {tabContext: {setBusy}, componentId} = this.props
-        setBusy(`${name}-${componentId}`, busy)
+        const {tabContext: {setBusy}} = this.props
+        setBusy(`${name}-${this.componentId}`, busy)
     }
 
     maybeCreateLayer() {
