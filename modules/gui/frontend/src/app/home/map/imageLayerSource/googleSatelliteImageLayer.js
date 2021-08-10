@@ -1,8 +1,8 @@
 import {MapAreaLayout} from '../mapAreaLayout'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {setActive, setComplete} from '../progress'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import {withTabContext} from 'widget/tabs/tabContext'
 import GoogleSatelliteLayer from '../layer/googleSatelliteLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -27,30 +27,26 @@ export class _GoogleSatelliteImageLayer extends React.Component {
         const {addSubscription} = this.props
         addSubscription(this.progress$.subscribe(
             ({complete}) => complete
-                ? this.setComplete('tiles')
-                : this.setActive('tiles')
+                ? this.setBusy('tiles', false)
+                : this.setBusy('tiles', true)
         ))
     }
 
     componentWillUnmount() {
-        this.setComplete('tiles')
+        this.setBusy('tiles', false)
     }
 
-    setActive(name) {
-        const {recipeActionBuilder, componentId} = this.props
-        setActive(`${name}-${componentId}`, recipeActionBuilder)
-    }
-
-    setComplete(name) {
-        const {recipeActionBuilder, componentId} = this.props
-        setComplete(`${name}-${componentId}`, recipeActionBuilder)
+    setBusy(name, busy) {
+        const {tabContext: {setBusy}, componentId} = this.props
+        setBusy(`${name}-${componentId}`, busy)
     }
 }
 
 export const GoogleSatelliteImageLayer = compose(
     _GoogleSatelliteImageLayer,
     withSubscriptions(),
-    withRecipe()
+    withRecipe(),
+    withTabContext()
 )
 
 GoogleSatelliteImageLayer.propTypes = {

@@ -5,9 +5,9 @@ import {VisualizationSelector} from './visualizationSelector'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {setActive, setComplete} from '../progress'
 import {withMapAreaContext} from '../mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import {withTabContext} from 'widget/tabs/tabContext'
 import EarthEngineImageLayer from '../layer/earthEngineImageLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -66,17 +66,19 @@ class _AssetImageLayer extends React.Component {
 
     componentDidMount() {
         const {addSubscription} = this.props
-        addSubscription(this.progress$.subscribe(
-            ({complete}) => complete
-                ? this.setComplete('tiles')
-                : this.setActive('tiles')
-        ))
+        addSubscription(
+            this.progress$.subscribe(
+                ({complete}) => complete
+                    ? this.setBusy('tiles', false)
+                    : this.setBusy('tiles', true)
+            )
+        )
         this.selectFirstVisualization()
     }
 
     componentWillUnmount() {
-        this.setComplete('initialize')
-        this.setComplete('tiles')
+        this.setBusy('initialize', false)
+        this.setBusy('tiles', false)
     }
 
     selectFirstVisualization() {
@@ -91,14 +93,9 @@ class _AssetImageLayer extends React.Component {
         }
     }
 
-    setActive(name) {
-        const {recipeActionBuilder, componentId} = this.props
-        setActive(`${name}-${componentId}`, recipeActionBuilder)
-    }
-
-    setComplete(name) {
-        const {recipeActionBuilder, componentId} = this.props
-        setComplete(`${name}-${componentId}`, recipeActionBuilder)
+    setBusy(name, busy) {
+        const {tabContext: {setBusy}, componentId} = this.props
+        setBusy(`${name}-${componentId}`, busy)
     }
 
     maybeCreateLayer() {
@@ -132,9 +129,9 @@ class _AssetImageLayer extends React.Component {
                 boundsChanged$,
                 dragging$,
                 cursor$,
-                onInitialize: () => this.setActive('initialize'),
-                onInitialized: () => this.setComplete('initialize'),
-                onError: () => this.setComplete('initialize'),
+                onInitialize: () => this.setBusy('initialize', true),
+                onInitialized: () => this.setBusy('initialize', false),
+                onError: () => this.setBusy('initialize', false),
             })
         }
         return this.layer
@@ -145,7 +142,8 @@ export const AssetImageLayer = compose(
     _AssetImageLayer,
     withSubscriptions(),
     withRecipe(mapRecipeToProps),
-    withMapAreaContext()
+    withMapAreaContext(),
+    withTabContext()
 )
 
 AssetImageLayer.propTypes = {

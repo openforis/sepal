@@ -9,9 +9,9 @@ import {connect, select} from 'store'
 import {getAllVisualizations} from './visualizations'
 import {getRecipeType} from '../recipeTypes'
 import {selectFrom} from 'stateUtils'
-import {setActive, setComplete} from 'app/home/map/progress'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import {withTabContext} from 'widget/tabs/tabContext'
 import EarthEngineImageLayer from 'app/home/map/layer/earthEngineImageLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -76,8 +76,8 @@ class _RecipeImageLayer extends React.Component {
         addSubscription(
             this.progress$.subscribe({
                 next: ({complete}) => complete
-                    ? this.setComplete('tiles')
-                    : this.setActive('tiles')
+                    ? this.setBusy('tiles', false)
+                    : this.setBusy('tiles', true)
             })
         )
     }
@@ -102,18 +102,13 @@ class _RecipeImageLayer extends React.Component {
     }
 
     componentWillUnmount() {
-        this.setComplete('initialize')
-        this.setComplete('tiles')
+        this.setBusy('initialize', false)
+        this.setBusy('tiles', false)
     }
 
-    setActive(name) {
-        const {recipeActionBuilder, componentId} = this.props
-        setActive(`${name}-${componentId}`, recipeActionBuilder)
-    }
-
-    setComplete(name) {
-        const {recipeActionBuilder, componentId} = this.props
-        setComplete(`${name}-${componentId}`, recipeActionBuilder)
+    setBusy(name, busy) {
+        const {tabContext: {setBusy}, componentId} = this.props
+        setBusy(`${name}-${componentId}`, busy)
     }
 
     maybeCreateLayer() {
@@ -147,9 +142,9 @@ class _RecipeImageLayer extends React.Component {
                 boundsChanged$,
                 dragging$,
                 cursor$,
-                onInitialize: () => this.setActive('initialize'),
-                onInitialized: () => this.setComplete('initialize'),
-                onError: () => this.setComplete('initialize')
+                onInitialize: () => this.setBusy('initialize', true),
+                onInitialized: () => this.setBusy('initialize', false),
+                onError: () => this.setBusy('initialize', false)
             })
         }
         return this.layer
@@ -174,6 +169,7 @@ export const RecipeImageLayer = compose(
     connect(mapStateToProps),
     withRecipe(),
     withMapAreaContext(),
+    withTabContext(),
     withSubscriptions()
 )
 

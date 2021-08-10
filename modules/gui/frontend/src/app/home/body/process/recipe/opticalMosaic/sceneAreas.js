@@ -9,9 +9,9 @@ import {compose} from 'compose'
 import {msg} from 'translate'
 import {objectEquals} from 'collections'
 import {selectFrom} from 'stateUtils'
-import {setActive, setComplete} from 'app/home/map/progress'
 import {takeUntil} from 'rxjs/operators'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import {withTabContext} from 'widget/tabs/tabContext'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import api from 'api'
@@ -51,19 +51,23 @@ class _SceneAreas extends React.Component {
     }
 
     componentWillUnmount() {
-        const {recipeActionBuilder, componentId} = this.props
         this.toggleLayer(false)
-        setComplete(`loadSceneAreas-${componentId}`, recipeActionBuilder)
+        this.setBusy(false)
     }
 
     loadSceneAreas(aoi, source) {
-        const {stream} = this.props
-        this.setActive()
+        const {recipeId, stream} = this.props
+        RecipeActions(recipeId).setSceneAreas(null).dispatch()
+        this.loadSceneArea$.next()
+        this.setBusy(true)
         stream('LOAD_SCENE_AREAS',
             api.gee.sceneAreas$({aoi, source}).pipe(
                 takeUntil(this.loadSceneArea$)
             ),
-            sceneAreas => this.setComplete(sceneAreas),
+            sceneAreas => {
+                RecipeActions(recipeId).setSceneAreas(sceneAreas).dispatch()
+                this.setBusy(false)
+            },
             e => Notifications.error({
                 title: msg('gee.error.title'),
                 message: msg('process.mosaic.sceneAreas.error'),
@@ -81,22 +85,12 @@ class _SceneAreas extends React.Component {
                         }}
                     />
             })
-
         )
     }
 
-    setActive() {
-        const {recipeId, recipeActionBuilder, componentId} = this.props
-        this.loadSceneArea$.next()
-        const recipeActions = RecipeActions(recipeId)
-        recipeActions.setSceneAreas(null).dispatch()
-        setActive(`loadSceneAreas-${componentId}`, recipeActionBuilder)
-    }
-
-    setComplete(sceneAreas) {
-        const {recipeId, recipeActionBuilder, componentId} = this.props
-        RecipeActions(recipeId).setSceneAreas(sceneAreas).dispatch()
-        setComplete(`loadSceneAreas-${componentId}`, recipeActionBuilder)
+    setBusy(busy) {
+        const {tabContext: {setBusy}, componentId} = this.props
+        setBusy(`loadSceneAreas-${componentId}`, busy)
     }
 
     toggleLayer(include) {
@@ -144,7 +138,8 @@ class _SceneAreas extends React.Component {
 
 export const SceneAreas = compose(
     _SceneAreas,
-    withRecipe(mapRecipeToProps)
+    withRecipe(mapRecipeToProps),
+    withTabContext()
 )
 
 SceneAreas.propTypes = {}

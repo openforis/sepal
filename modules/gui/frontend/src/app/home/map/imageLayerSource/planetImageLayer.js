@@ -8,10 +8,10 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {getRecipeType} from '../../body/process/recipeTypes'
 import {map} from 'rxjs/operators'
-import {setActive, setComplete} from '../progress'
 import {withMapAreaContext} from '../mapAreaContext'
 import {withMapContext} from '../mapContext'
 import {withRecipe} from '../../body/process/recipeContext'
+import {withTabContext} from 'widget/tabs/tabContext'
 import PlanetLayer from '../layer/planetLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -123,22 +123,17 @@ class _PlanetImageLayer extends React.Component {
         )
     }
 
-    setActive(name) {
-        const {recipeActionBuilder, componentId} = this.props
-        setActive(`${name}-${componentId}`, recipeActionBuilder)
-    }
-
-    setComplete(name) {
-        const {recipeActionBuilder, componentId} = this.props
-        setComplete(`${name}-${componentId}`, recipeActionBuilder)
+    setBusy(name, busy) {
+        const {tabContext: {setBusy}, componentId} = this.props
+        setBusy(`${name}-${componentId}`, busy)
     }
 
     componentDidMount() {
         const {addSubscription} = this.props
         addSubscription(this.progress$.subscribe(
             ({complete}) => complete
-                ? this.setComplete('tiles')
-                : this.setActive('tiles')
+                ? this.setBusy('tiles', false)
+                : this.setBusy('tiles', true)
         ))
         this.update()
     }
@@ -156,7 +151,7 @@ class _PlanetImageLayer extends React.Component {
     }
 
     componentWillUnmount() {
-        this.setComplete('tiles')
+        this.setBusy('tiles', false)
     }
 
     selectDefault(mosaics) {
@@ -223,10 +218,11 @@ class _PlanetImageLayer extends React.Component {
 
 export const PlanetImageLayer = compose(
     _PlanetImageLayer,
+    connect(),
     withMapContext(),
     withMapAreaContext(),
-    connect(),
     withRecipe(mapRecipeToProps),
+    withTabContext(),
     withSubscriptions()
 )
 
