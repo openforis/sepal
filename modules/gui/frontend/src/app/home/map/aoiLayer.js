@@ -25,8 +25,8 @@ export const countryToEETable = aoi => ({
 export const AoiLayer = ({id, layerConfig = {}, layerIndex, map, recipe}) => {
     const aoi = layerConfig.aoi || recipe.model.aoi || {}
     switch (aoi.type) {
-    case 'COUNTRY':
-        return <EETableLayer
+    case 'COUNTRY': return (
+        <EETableLayer
             id={id}
             map={map}
             tableId={countryEETable}
@@ -38,8 +38,9 @@ export const AoiLayer = ({id, layerConfig = {}, layerIndex, map, recipe}) => {
             layerIndex={layerIndex}
             watchedProps={aoi}
         />
-    case 'EE_TABLE':
-        return <EETableLayer
+    )
+    case 'EE_TABLE': return (
+        <EETableLayer
             id={id}
             map={map}
             tableId={aoi.id}
@@ -51,8 +52,9 @@ export const AoiLayer = ({id, layerConfig = {}, layerIndex, map, recipe}) => {
             layerIndex={layerIndex}
             watchedProps={aoi}
         />
-    case 'POLYGON':
-        return <PolygonLayer
+    )
+    case 'POLYGON': return (
+        <PolygonLayer
             id={id}
             map={map}
             path={aoi.path}
@@ -60,8 +62,9 @@ export const AoiLayer = ({id, layerConfig = {}, layerIndex, map, recipe}) => {
             color={color}
             fillColor={fillColor}
         />
-    default:
-        return <RecipeGeometryLayer
+    )
+    default: return (
+        <RecipeGeometryLayer
             id={id}
             map={map}
             color={color}
@@ -69,9 +72,6 @@ export const AoiLayer = ({id, layerConfig = {}, layerIndex, map, recipe}) => {
             layerIndex={layerIndex}
             recipe={recipe}
         />
+    )
     }
-}
-
-// TODO: Remove
-export const setAoiLayer = () => {
 }
