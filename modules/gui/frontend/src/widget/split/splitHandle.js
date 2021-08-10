@@ -10,7 +10,7 @@ import withSubscriptions from 'subscription'
 
 const log = getLogger('splitHandle')
 
-const SMOOTHING_FACTOR = .2
+const SMOOTHING_FACTOR = .5
 
 const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
 
