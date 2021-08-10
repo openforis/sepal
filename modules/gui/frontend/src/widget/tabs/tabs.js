@@ -90,6 +90,8 @@ class _Tabs extends React.Component {
         }
     }
 
+    busy$ = new Subject()
+
     renderTab(tab) {
         const {selectedTabId, statePath, onTitleChanged, onClose} = this.props
         const close = () => this.closeTab(tab.id)
@@ -100,6 +102,7 @@ class _Tabs extends React.Component {
                 title={tab.title}
                 placeholder={tab.placeholder}
                 selected={tab.id === selectedTabId}
+                busy$={this.busy$}
                 closing={tab.ui && tab.ui.closing}
                 statePath={statePath}
                 onTitleChanged={onTitleChanged}
@@ -111,7 +114,13 @@ class _Tabs extends React.Component {
     renderTabContent(tab) {
         const {selectedTabId, children} = this.props
         return (
-            <TabContent key={tab.id} id={tab.id} type={tab.type} selected={tab.id === selectedTabId}>
+            <TabContent
+                key={tab.id}
+                id={tab.id}
+                type={tab.type}
+                selected={tab.id === selectedTabId}
+                busy$={this.busy$}
+            >
                 {children}
             </TabContent>
         )

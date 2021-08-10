@@ -2,13 +2,16 @@ import {Button} from 'widget/button'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
+import {filter} from 'rxjs/operators'
 import {renameTab, selectTab} from './tabs'
 import {select} from 'store'
 import {withScrollable} from 'widget/scrollable'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import styles from './tabHandle.module.css'
+import withSubscriptions from 'subscription'
 
 const CLOSE_ANIMATION_DURATION_MS = 250
 
@@ -25,7 +28,8 @@ class _TabHandle extends React.Component {
         this.state = {
             editing: false,
             title,
-            prevTitle: title
+            prevTitle: title,
+            busy: {}
         }
     }
 
@@ -43,7 +47,8 @@ class _TabHandle extends React.Component {
 
     render() {
         const {selected, closing} = this.props
-        const {editing} = this.state
+        const {busy, editing} = this.state
+        const isBusy = Object.keys(busy).length > 0
         return (
             <Layout
                 type='horizontal-nowrap'
@@ -52,6 +57,7 @@ class _TabHandle extends React.Component {
                     styles.tab,
                     styles.regular,
                     selected ? styles.selected : null,
+                    isBusy ? styles.busy : null,
                     closing ? styles.closing : null,
                     editing ? styles.editing : null
                 ].join(' ')}
@@ -185,7 +191,22 @@ class _TabHandle extends React.Component {
         }
     }
 
+    setBusy(label, isBusy) {
+        this.setState(
+            ({busy}) => ({busy: isBusy ? {...busy, [label]: true} : _.omit(busy, label)})
+        )
+    }
+
     componentDidMount() {
+        const {id, busy$, addSubscription} = this.props
+        const tabBusy$ = busy$.pipe(
+            filter(({id: currentId}) => id === currentId)
+        )
+        addSubscription(
+            tabBusy$.subscribe(
+                ({label, isBusy}) => this.setBusy(label, isBusy)
+            )
+        )
         this.scrollSelectedTabIntoView()
     }
 
@@ -199,10 +220,12 @@ class _TabHandle extends React.Component {
 
 export const TabHandle = compose(
     _TabHandle,
-    withScrollable()
+    withScrollable(),
+    withSubscriptions()
 )
 
 TabHandle.propTypes = {
+    busy$: PropTypes.any,
     closing: PropTypes.any,
     id: PropTypes.string,
     placeholder: PropTypes.string,
