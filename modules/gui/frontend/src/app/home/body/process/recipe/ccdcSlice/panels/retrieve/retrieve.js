@@ -32,7 +32,7 @@ const mapRecipeToProps = recipe => ({
     user: currentUser()
 })
 
-class Retrieve extends React.Component {
+class _Retrieve extends React.Component {
     state = {
         customScale: false
     }
@@ -276,11 +276,11 @@ class Retrieve extends React.Component {
     }
 }
 
+export const Retrieve = compose(
+    _Retrieve,
+    recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})
+)
+
 Retrieve.propTypes = {
     recipeId: PropTypes.string
 }
-
-export default compose(
-    Retrieve,
-    recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})
-)

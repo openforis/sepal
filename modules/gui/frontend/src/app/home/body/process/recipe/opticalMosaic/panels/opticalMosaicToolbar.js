@@ -1,3 +1,4 @@
+import {Retrieve} from 'app/home/body/process/recipe/opticalMosaic/panels/retrieve/retrieve'
 import {SceneSelectionType} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
@@ -12,7 +13,6 @@ import CompositeOptions from 'app/home/body/process/recipe/opticalMosaic/panels/
 import Dates from 'app/home/body/process/recipe/opticalMosaic/panels/dates/dates'
 import PanelWizard from 'widget/panelWizard'
 import React from 'react'
-import Retrieve from 'app/home/body/process/recipe/opticalMosaic/panels/retrieve/retrieve'
 import SceneSelectionOptions from 'app/home/body/process/recipe/opticalMosaic/panels/sceneSelectionOptions/sceneSelectionOptions'
 import Sources from 'app/home/body/process/recipe/opticalMosaic/panels/sources/sources'
 import _ from 'lodash'

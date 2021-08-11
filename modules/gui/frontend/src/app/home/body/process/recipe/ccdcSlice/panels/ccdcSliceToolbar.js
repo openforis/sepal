@@ -1,4 +1,5 @@
 import {RecipeActions} from '../ccdcSliceRecipe'
+import {Retrieve} from './retrieve/retrieve'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -11,7 +12,6 @@ import Date from './date/date'
 import Options from './options/options'
 import PanelWizard from 'widget/panelWizard'
 import React from 'react'
-import Retrieve from './retrieve/retrieve'
 import Source from './source/source'
 import styles from './ccdcSliceToolbar.module.css'
 

@@ -1,3 +1,4 @@
+import {Retrieve} from './retrieve/retrieve'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -9,7 +10,6 @@ import Dates from './dates/dates'
 import Options from 'app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
 import PanelWizard from 'widget/panelWizard'
 import React from 'react'
-import Retrieve from './retrieve/retrieve'
 import styles from './radarMosaicToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({

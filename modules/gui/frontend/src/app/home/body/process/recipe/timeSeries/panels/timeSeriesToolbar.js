@@ -1,4 +1,5 @@
 import {RecipeActions} from '../timeSeriesRecipe'
+import {Retrieve} from 'app/home/body/process/recipe/timeSeries/panels/retrieve/retrieve'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -13,7 +14,6 @@ import OpticalOptions from 'app/home/body/process/recipe/timeSeries/panels/prePr
 import PanelWizard from 'widget/panelWizard'
 import RadarOptions from 'app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
 import React from 'react'
-import Retrieve from 'app/home/body/process/recipe/timeSeries/panels/retrieve/retrieve'
 import Sources from 'app/home/body/process/recipe/timeSeries/panels/sources/sources'
 import _ from 'lodash'
 import styles from './timeSeriesToolbar.module.css'

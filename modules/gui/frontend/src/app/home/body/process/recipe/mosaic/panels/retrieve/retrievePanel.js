@@ -8,7 +8,7 @@ import {currentUser} from 'user'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './retrieve.module.css'
+import styles from './retrievePanel.module.css'
 
 const fields = {
     bands: new Form.Field()
@@ -24,7 +24,7 @@ const mapRecipeToProps = () => ({
     user: currentUser()
 })
 
-class Retrieve extends React.Component {
+class _MosaicRetrievePanel extends React.Component {
     state = {
         customScale: false
     }
@@ -167,7 +167,12 @@ class Retrieve extends React.Component {
     }
 }
 
-Retrieve.propTypes = {
+export const MosaicRetrievePanel = compose(
+    _MosaicRetrievePanel,
+    recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})
+)
+
+MosaicRetrievePanel.propTypes = {
     bandOptions: PropTypes.array.isRequired,
     defaultScale: PropTypes.number.isRequired,
     onRetrieve: PropTypes.func.isRequired,
@@ -175,8 +180,3 @@ Retrieve.propTypes = {
     toEE: PropTypes.any,
     toSepal: PropTypes.any
 }
-
-export default compose(
-    Retrieve,
-    recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})
-)

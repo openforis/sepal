@@ -1,3 +1,4 @@
+import {MosaicRetrievePanel} from 'app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
 import {RecipeActions} from '../../timeSeriesRecipe'
 import {compose} from 'compose'
 import {groupedBandOptions, toDataSetIds} from 'sources'
@@ -5,7 +6,6 @@ import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import RetrievePanel from 'app/home/body/process/recipe/mosaic/panels/retrieve/retrieve'
 
 const mapRecipeToProps = recipe =>
     ({
@@ -16,10 +16,10 @@ const mapRecipeToProps = recipe =>
         corrections: selectFrom(recipe, 'model.options.corrections')
     })
 
-class Retrieve extends React.Component {
+class _Retrieve extends React.Component {
     render() {
         return (
-            <RetrievePanel
+            <MosaicRetrievePanel
                 bandOptions={this.bandOptions()}
                 defaultScale={30}
                 single
@@ -44,11 +44,11 @@ class Retrieve extends React.Component {
     }
 }
 
+export const Retrieve = compose(
+    _Retrieve,
+    withRecipe(mapRecipeToProps)
+)
+
 Retrieve.propTypes = {
     recipeId: PropTypes.string
 }
-
-export default compose(
-    Retrieve,
-    withRecipe(mapRecipeToProps)
-)
