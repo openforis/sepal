@@ -64,8 +64,12 @@ export const isDataSetInDateRange = (dataSetId, fromDate, toDate) => {
 
 export const minScale = recipe => {
     const sources = selectFrom(recipe, 'model.sources') || {}
-    const sourceIds = Object.keys(sources)
-    return Math.min(...sourceIds.map(sourceId => getDataSets(sourceId).scale))
+    return _(sources)
+        .keys()
+        .map(sourceId => imageSourceById[sourceId].dataSets)
+        .flatten()
+        .map(dataSet => dataSetById[dataSet].scale)
+        .min()
 }
 
 const imageSourceById = {
