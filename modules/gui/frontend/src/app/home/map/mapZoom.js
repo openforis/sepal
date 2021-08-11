@@ -91,8 +91,8 @@ class _MapZoomPanel extends React.Component {
     renderZoomButtons() {
         return (
             <ButtonGroup alignment='fill'>
-                {this.renderZoomInButton()}
                 {this.renderZoomOutButton()}
+                {this.renderZoomInButton()}
                 {this.renderZoomAreaButton()}
                 {this.renderFitButton()}
             </ButtonGroup>
