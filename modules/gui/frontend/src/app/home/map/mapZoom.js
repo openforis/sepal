@@ -3,6 +3,7 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {SearchBox} from 'widget/searchBox'
+import {Slider} from 'widget/slider'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {formatCoordinates, parseCoordinates} from 'coords'
@@ -34,6 +35,7 @@ class _MapZoomPanel extends React.Component {
                     <Panel.Content>
                         <Layout spacing='compact'>
                             {this.renderZoomButtons()}
+                            {this.renderZoomLevelIndicator()}
                             {this.renderSearch()}
                         </Layout>
                     </Panel.Content>
@@ -41,6 +43,49 @@ class _MapZoomPanel extends React.Component {
                 </Panel>
             </Keybinding>
         )
+    }
+
+    getTickLabel(zoom) {
+        const {view: {minZoom, maxZoom}} = this.state
+        if (zoom === minZoom) {
+            return 'min'
+        }
+        if (zoom === maxZoom) {
+            return 'max'
+        }
+        return null
+    }
+
+    getZoomTicks() {
+        const {view: {minZoom, maxZoom}} = this.state
+        return Array(maxZoom - minZoom + 1).fill().map(
+            (_, index) => {
+                const zoom = index + minZoom
+                return {
+                    value: zoom,
+                    label: this.getTickLabel(zoom)
+                }
+            }
+        )
+    }
+
+    renderZoomLevelIndicator() {
+        const {map} = this.props
+        const {view: {zoom, minZoom, maxZoom}} = this.state
+        if (zoom && minZoom && maxZoom) {
+            return (
+                <Slider
+                    value={zoom}
+                    minValue={minZoom}
+                    maxValue={maxZoom}
+                    ticks={this.getZoomTicks()}
+                    snap
+                    onChange={zoom => map.setZoom(zoom)}
+                />
+            )
+        }
+        return null
+
     }
 
     renderZoomButtons() {
@@ -63,7 +108,7 @@ class _MapZoomPanel extends React.Component {
                 onClick={() => map.zoomIn()}
                 icon={'plus'}
                 tooltip={msg('process.mapZoom.zoomIn.tooltip')}
-                tooltipPlacement='bottom'
+                tooltipPlacement='top'
             />
         )
     }
@@ -77,7 +122,7 @@ class _MapZoomPanel extends React.Component {
                 onClick={() => map.zoomOut()}
                 icon={'minus'}
                 tooltip={msg('process.mapZoom.zoomOut.tooltip')}
-                tooltipPlacement='bottom'
+                tooltipPlacement='top'
             />
         )
     }
@@ -92,7 +137,7 @@ class _MapZoomPanel extends React.Component {
                 onClick={() => map.toggleZoomArea()}
                 icon={'crop-alt'}
                 tooltip={msg('process.mapZoom.zoomArea.tooltip')}
-                tooltipPlacement='bottom'
+                tooltipPlacement='top'
             />
         )
     }
@@ -105,7 +150,7 @@ class _MapZoomPanel extends React.Component {
                 onClick={() => map.fit()}
                 icon={'bullseye'}
                 tooltip={msg('process.mapZoom.fit.tooltip')}
-                tooltipPlacement='bottom'
+                tooltipPlacement='top'
             />
         )
     }
