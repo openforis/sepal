@@ -284,7 +284,7 @@ class _SliderDynamics extends React.Component {
                 const {position} = this.state
                 return animationFrame$.pipe(
                     map(() => targetPosition),
-                    scan(lerp(dragging ? .25 : .1), position),
+                    scan(lerp(dragging ? .30 : .15), position),
                     map(position => Math.round(position)),
                     distinctUntilChanged()
                 )
