@@ -274,7 +274,9 @@ class _SliderDynamics extends React.Component {
             panEnd$.pipe(mapTo(false)),
         )
 
-        const targetPosition$ = merge(clickPosition$, dragPosition$)
+        const targetPosition$ = merge(clickPosition$, dragPosition$).pipe(
+            map(position => Math.round(position))
+        )
 
         const handlePosition$ = targetPosition$.pipe(
             withLatestFrom(handleDragging$),
