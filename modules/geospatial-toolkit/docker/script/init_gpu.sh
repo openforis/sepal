@@ -21,8 +21,23 @@ apt install -y ./nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
 apt-get update -y
 
 # Install development and runtime libraries (~4GB)
-apt-get install -y --no-install-recommends \
+apt-get install -y --no-install-recommends \--no-install-recommends \
   nvidia-driver-460=460.73.01-0ubuntu1 \
+  libnvidia-gl-460=460.73.01-0ubuntu1 \
+  nvidia-kernel-source-460=460.73.01-0ubuntu1 \
+  libnvidia-compute-460=460.73.01-0ubuntu1 \
+  libnvidia-extra-460=460.73.01-0ubuntu1 \
+  nvidia-compute-utils-460=460.73.01-0ubuntu1 \
+  libnvidia-decode-460=460.73.01-0ubuntu1 \
+  libnvidia-encode-460=460.73.01-0ubuntu1 \
+  nvidia-utils-460=460.73.01-0ubuntu1 \
+  xserver-xorg-video-nvidia-460=460.73.01-0ubuntu1 \
+  libnvidia-cfg1-460=460.73.01-0ubuntu1 \
+  libnvidia-ifr1-460=460.73.01-0ubuntu1 \
+  libnvidia-fbc1-460=460.73.01-0ubuntu1 \
+  libnvidia-common-460=460.73.01-0ubuntu1 \
+  nvidia-dkms-460=460.73.01-0ubuntu1 \
+  nvidia-kernel-common-460=460.73.01-0ubuntu1 \
   cuda-toolkit-11-0 \
   cuda-toolkit-11-2 \
   libcudnn8=8.1.1.33-1+cuda11.2 \
