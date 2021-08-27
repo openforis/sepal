@@ -128,7 +128,7 @@ SliderContainer.propTypes = {
         PropTypes.number,
         PropTypes.array
     ]),
-    value: PropTypes.number,
+    value: PropTypes.any,
     width: PropTypes.number,
     onChange: PropTypes.func
 }
@@ -218,7 +218,7 @@ class _SliderDynamics extends React.Component {
 
     initialize({handleRef, clickableAreaRef}) {
         const {addSubscription} = this.props
-        
+
         this.setHandlePositionByValue()
 
         const handle = new Hammer(handleRef)
@@ -422,7 +422,7 @@ SliderDynamics.propTypes = {
     maxValue: PropTypes.number.isRequired,
     minValue: PropTypes.number.isRequired,
     normalize: PropTypes.func.isRequired,
-    value: PropTypes.number.isRequired,
+    value: PropTypes.any.isRequired,
     decimals: PropTypes.number,
     invert: PropTypes.bool,
     snap: PropTypes.bool,

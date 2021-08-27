@@ -1,7 +1,6 @@
 import {Slider} from 'widget/slider'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
 
 export class FormSlider extends React.Component {
     render() {
