@@ -37,7 +37,7 @@ export const getAvailableBands = ({
         include = ['class', 'regression', 'class_probability', 'probabilities']
     } = {}
 }) => {
-    const dataSetIds = dataSets || dataSetId ? [dataSetId] : []
+    const dataSetIds = dataSets || (dataSetId ? [dataSetId] : [])
     const dataSetBands = Object.keys(
         dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))
             ? getAvailableOpticalBands(
