@@ -3,7 +3,7 @@ import {ViewportResizeDetector} from 'widget/viewportResizeDetector'
 import {Widget} from 'widget/widget'
 import {animationFrameScheduler, combineLatest, fromEvent, interval, merge, of} from 'rxjs'
 import {compose} from 'compose'
-import {distinctUntilChanged, filter, map, mapTo, scan, switchMap, tap, withLatestFrom} from 'rxjs/operators'
+import {distinctUntilChanged, filter, map, mapTo, scan, switchMap, withLatestFrom} from 'rxjs/operators'
 import Hammer from 'hammerjs'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
@@ -552,6 +552,6 @@ Slider.propTypes = {
     ]),
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
-    value: PropTypes.number,
+    value: PropTypes.any,
     onChange: PropTypes.func
 }
