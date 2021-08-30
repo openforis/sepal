@@ -1,0 +1,3 @@
+check filesystem rootfs with path /
+    if space usage > 80% for 5 times within 15 cycles then alert
+    if space usage > 90% then alert

@@ -1,4 +1,4 @@
-set daemon 30 with start delay 300
+set daemon 60 with start delay 300
 
 set log /var/log/monit.log
 
