@@ -131,7 +131,7 @@
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
 
     - name: Install docker
-      command: "amazon-linux-extras install docker"
+      command: "amazon-linux-extras install docker -y"
 
     - name: Create /etc/docker
       file:
