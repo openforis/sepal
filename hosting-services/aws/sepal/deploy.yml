@@ -14,129 +14,129 @@
         sepal_ssh_ip: "{{ hostvars[inventory_hostname].ansible_eth0.ipv4_secondaries[0].address }}"
         syslog_address: "udp://{{ ec2_private_ip_address }}"
 #
-    # bash prompt
-    - name: Set bash prompt
-      blockinfile:
-        path: /etc/profile
-        block: |
-          # Bash prompt
-          PS1='{{ bash_prompt }}'
-
-    # set locale
-    - name: Set locale
-      lineinfile:
-        path: /etc/environment
-        line: "{{ item }}"
-      with_items:
-        - "LANG=en_US.utf-8"
-        - "LC_ALL=en_US.utf-8"
-
-    # monit
-    - name: Install EPEL repository
-      yum:
-        name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
-
-    - name: Install monit
-      yum:
-        name: 'monit'
-
-    - name: Stop monit
-      systemd:
-        name: monit
-        state: stopped
-        enabled: yes
-        masked: no
-
-    - name: Configure monit 1/3
-      copy:
-        src: "monit/monit.d/"
-        dest: "/etc/monit.d/"
-        owner: "root"
-        group: "root"
-        mode: "0644"
-
-    - name: Configure monit 2/3
-      template:
-        src: "monit/config.template"
-        dest: "/etc/monit.d/config"
-        owner: "root"
-        group: "root"
-        mode: "0644"
-
-    - name: Configure monit 3/3
-      copy:
-        src: "monit/dockercheck/"
-        dest: "/usr/local/bin/"
-        owner: "root"
-        group: "root"
-        mode: "0755"
-
-    - file: path="/data/sepal/etc" state=directory
-    - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
-
-    # sshd
-    - name: Bind sshd to primary private IP
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        line: "ListenAddress {{ ec2_private_ip_address }}"
-        insertafter: "#ListenAddress"
-      register: sshd_config
-
-    - name: Restart sshd
-      service:
-        name: sshd
-        state: restarted
-      when: sshd_config.changed
-
-    # rsyslog
-    - name: Copy rsyslog.conf
-      template: src="rsyslog.conf" dest=/etc/rsyslog.conf
-
-    - name: Copy rsyslog.d
-      copy:
-        src: "rsyslog.d/"
-        dest: "/etc/rsyslog.d/"
-        owner: "root"
-        group: "root"
-        mode: "0644"
-
-    - name: Start rsyslog
-      service: name=rsyslog state=started
-
-    # logrotate
-    - name: Copy worker-instances logrotate configuration
-      copy:
-        src: "logrotate.d/"
-        dest: "/etc/logrotate.d/"
-        owner: "root"
-        group: "root"
-        mode: "0644"
-
-    # docker
-    - file: path="/data/docker/storage/devicemapper/metadata" state=directory
-    - file: path="/data/docker/storage/tmp" state=directory
-
-    - name: Create Docker LVM Volume Group
-      lvg: vg=vg-docker pvs=/dev/sdb
-
-    - name: Create Docker LVM Data Volume
-      lvol: vg=vg-docker lv=data size=30g
-
-    - name: Create Docker LVM Metadata Volume
-      lvol: vg=vg-docker lv=metadata size=19g
-
-    - name: Create docker-registry certificate dir
-      file:
-        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
-        state: directory
-
-    - name: Copy docker-registry certificate
-      copy:
-        src: "{{ config_home }}/certificates/docker-registry.crt"
-        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+#    # bash prompt
+#    - name: Set bash prompt
+#      blockinfile:
+#        path: /etc/profile
+#        block: |
+#          # Bash prompt
+#          PS1='{{ bash_prompt }}'
+#
+#    # set locale
+#    - name: Set locale
+#      lineinfile:
+#        path: /etc/environment
+#        line: "{{ item }}"
+#      with_items:
+#        - "LANG=en_US.utf-8"
+#        - "LC_ALL=en_US.utf-8"
+#
+#    # monit
+#    - name: Install EPEL repository
+#      yum:
+#        name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+#
+#    - name: Install monit
+#      yum:
+#        name: 'monit'
+#
+#    - name: Stop monit
+#      systemd:
+#        name: monit
+#        state: stopped
+#        enabled: yes
+#        masked: no
+#
+#    - name: Configure monit 1/3
+#      copy:
+#        src: "monit/monit.d/"
+#        dest: "/etc/monit.d/"
+#        owner: "root"
+#        group: "root"
+#        mode: "0644"
+#
+#    - name: Configure monit 2/3
+#      template:
+#        src: "monit/config.template"
+#        dest: "/etc/monit.d/config"
+#        owner: "root"
+#        group: "root"
+#        mode: "0644"
+#
+#    - name: Configure monit 3/3
+#      copy:
+#        src: "monit/dockercheck/"
+#        dest: "/usr/local/bin/"
+#        owner: "root"
+#        group: "root"
+#        mode: "0755"
+#
+#    - file: path="/data/sepal/etc" state=directory
+#    - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
+#
+#    # sshd
+#    - name: Bind sshd to primary private IP
+#      lineinfile:
+#        path: /etc/ssh/sshd_config
+#        line: "ListenAddress {{ ec2_private_ip_address }}"
+#        insertafter: "#ListenAddress"
+#      register: sshd_config
+#
+#    - name: Restart sshd
+#      service:
+#        name: sshd
+#        state: restarted
+#      when: sshd_config.changed
+#
+#    # rsyslog
+#    - name: Copy rsyslog.conf
+#      template: src="rsyslog.conf" dest=/etc/rsyslog.conf
+#
+#    - name: Copy rsyslog.d
+#      copy:
+#        src: "rsyslog.d/"
+#        dest: "/etc/rsyslog.d/"
+#        owner: "root"
+#        group: "root"
+#        mode: "0644"
+#
+#    - name: Start rsyslog
+#      service: name=rsyslog state=started
+#
+#    # logrotate
+#    - name: Copy worker-instances logrotate configuration
+#      copy:
+#        src: "logrotate.d/"
+#        dest: "/etc/logrotate.d/"
+#        owner: "root"
+#        group: "root"
+#        mode: "0644"
+#
+#    # docker
+#    - file: path="/data/docker/storage/devicemapper/metadata" state=directory
+#    - file: path="/data/docker/storage/tmp" state=directory
+#
+#    - name: Create Docker LVM Volume Group
+#      lvg: vg=vg-docker pvs=/dev/sdb
+#
+#    - name: Create Docker LVM Data Volume
+#      lvol: vg=vg-docker lv=data size=30g
+#
+#    - name: Create Docker LVM Metadata Volume
+#      lvol: vg=vg-docker lv=metadata size=19g
+#
+#    - name: Create docker-registry certificate dir
+#      file:
+#        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+#        state: directory
+#
+#    - name: Copy docker-registry certificate
+#      copy:
+#        src: "{{ config_home }}/certificates/docker-registry.crt"
+#        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
 
     - name: Install docker
-      command: "amazon-linux-extras install docker"
+      command: "amazon-linux-extras install docker -y"
 
     - name: Install Development Tools
       yum:
