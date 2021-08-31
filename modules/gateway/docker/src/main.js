@@ -5,7 +5,6 @@ const express = require('express')
 const session = require('express-session')
 const {logout} = require('./logout')
 const {proxyEndpoints} = require('./proxy')
-const {parse} = require('url')
 const log = require('sepal/log').getLogger('gateway')
 
 const app = express()
@@ -29,7 +28,7 @@ const server = app.listen(port)
 
 server.on('upgrade', (req, socket, head) => {
     sessionParser(req, {}, () => { // Make sure we have access to session for the websocket
-        const requestPath = parse(req.url).pathname
+        const requestPath = new URL(req.url).pathname
         const user = req.session.user
         const username = user ? user.username : 'not-authenticated'
         if (user) {
