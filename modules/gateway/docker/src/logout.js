@@ -1,6 +1,6 @@
 const log = require('sepal/log').getLogger('auth')
 
-const logout = async (req, res, next) => {
+const logout = async (req, res, _next) => {
     const user = req.session.user
     req.session.destroy()
     if (user) {
