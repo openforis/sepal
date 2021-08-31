@@ -5,6 +5,7 @@ const {readFileSync} = require('fs')
 const DEFAULT_PORT = 8001
 
 program
+    .requiredOption('--redis-uri <value>', 'Redis URI')
     .option('--port <number>', 'Port', DEFAULT_PORT)
     .option('--modules <value>', 'Modules', '/etc/sepal/module.d/gateway/modules.json')
     .option('--sepalHost <value>', 'Sepal host', 'localhost')
@@ -12,6 +13,7 @@ program
     .parse(process.argv)
 
 const {
+    redisUri,
     port,
     modules,
     sepalHost,
@@ -30,6 +32,7 @@ const readModules = () => {
 log.info('Configuration loaded')
 
 module.exports = {
+    redisUri,
     port,
     modules: readModules(),
     sepalHost,

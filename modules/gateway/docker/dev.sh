@@ -6,4 +6,5 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     --watch $LIBS/shared \
     --inspect=0.0.0.0:9237 \
     src/main.js \
+    --redis-uri redis://gateway-redis \
     --modules /etc/sepal/module.d/gateway/modules.json

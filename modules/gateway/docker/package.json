@@ -18,9 +18,11 @@
     },
     "dependencies": {
         "commander": "^8.0.0",
+        "connect-redis": "^6.0.0",
         "express": "^4.17.1",
         "express-session": "^1.17.2",
         "http-proxy-middleware": "^2.0.1",
+        "ioredis": "^4.27.9",
         "lodash": "^4.17.21",
         "log4js": "^6.3.0",
         "micromatch": "^4.0.4",

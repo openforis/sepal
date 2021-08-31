@@ -1,14 +1,20 @@
 require('sepal/log').configureServer(require('./log.json'))
-const {port, secure} = require('./config')
+const {redisUri, port, secure} = require('./config')
 const {isMatch} = require('micromatch')
 const express = require('express')
+const Redis = require('ioredis')
 const session = require('express-session')
 const {logout} = require('./logout')
 const {proxyEndpoints} = require('./proxy')
 const log = require('sepal/log').getLogger('gateway')
 
+const redis = new Redis(redisUri)
+const RedisSessionStore = require('connect-redis')(session)
+
 const app = express()
+
 const sessionParser = session({
+    store: new RedisSessionStore({client: redis}),
     secret: Math.random().toString(),
     name: 'SEPAL-SESSIONID',
     cookie: {
@@ -21,6 +27,7 @@ const sessionParser = session({
     saveUninitialized: false,
     unset: 'destroy'
 })
+
 app.use(sessionParser)
 app.use('/api/user/logout', logout)
 const proxies = proxyEndpoints(app)

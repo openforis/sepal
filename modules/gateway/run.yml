@@ -1,4 +1,19 @@
 ---
+- name: "gateway-redis | Start container"
+  docker_container:
+    container_default_behavior: "{{ container_default_behavior }}"
+    api_version: "{{ api_version }}"
+    name: "gateway-redis"
+    pull: "{{ pull }}"
+    image: "redis:6"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
+    networks:
+      - name: 'sepal'
+    volumes:
+      - "/data/gateway-redis:/data"
+
 - name: "gateway | Start container"
   docker_container:
     container_default_behavior: "{{ container_default_behavior }}"

@@ -21,6 +21,12 @@ services:
       ports:
         - "15671-15672:15671-15672"
       hostname: rabbitmq
+  gateway-redis:
+      image: redis:6
+      container_name: gateway-redis
+      hostname: gateway-redis
+      volumes:
+        - $DATA_DIR/gateway-redis:/data:delegated
   user-storage-redis:
       image: redis:6
       container_name: user-storage-redis
