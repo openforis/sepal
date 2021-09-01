@@ -2,6 +2,7 @@ import {CCDCSliceImageLayer} from './ccdcSlice/ccdcSliceImageLayer'
 import {ClassificationImageLayer} from './classification/classificationImageLayer'
 import {CursorValue} from 'app/home/map/cursorValue'
 import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
+import {PlanetMosaicImageLayer} from './planetMosaic/planetMosaicImageLayer'
 import {RadarMosaicImageLayer} from './radarMosaic/radarMosaicImageLayer'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
@@ -59,6 +60,9 @@ class _RecipeImageLayer extends React.Component {
         )
         case 'RADAR_MOSAIC': return (
             <RadarMosaicImageLayer {...props}/>
+        )
+        case 'PLANET_MOSAIC': return (
+            <PlanetMosaicImageLayer {...props}/>
         )
         case 'CLASSIFICATION': return (
             <ClassificationImageLayer {...props}/>

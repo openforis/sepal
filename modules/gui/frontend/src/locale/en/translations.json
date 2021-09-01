@@ -2205,6 +2205,57 @@
       },
       "tabPlaceholder": "Optical_mosaic"
     },
+    "planetMosaic": {
+      "create": "Planet mosaic",
+      "description": "Create a mosaic using Planet composites.",
+      "panel": {
+        "dates": {
+          "button": "DAT",
+          "form": {
+            "type": {
+              "DATE_RANGE": {
+                "label": "Date range",
+                "tooltip": ""
+              },
+              "SINGLE_DATE": {
+                "label": "Single date",
+                "tooltip": ""
+              }
+            },
+            "fromDate": {
+              "label": "From date",
+              "malformed": "Invalid date"
+            },
+            "toDate": {
+              "label": "To date",
+              "malformed": "Invalid date"
+            }
+          },
+          "title": "Dates",
+          "tooltip": "Specify dates"
+        },
+        "options": {
+          "button": "OPT",
+          "cloudThreshold": {
+            "label": "Cloud masking",
+            "tooltip": "Planet composites already removes clouds. Setting this to a value > 0 will remove additional clouds.",
+            "value": "{value}%"
+          },
+          "shadowThreshold": {
+            "label": "Cloud shadow masking",
+            "tooltip": "Planet composites already removes cloud shadows. Setting this to a value > 0 will remove additional cloud shadows.",
+            "value": "{value}%"
+          },
+          "title": "Options",
+          "tooltip": "Configure mosaic options"
+        }
+      },
+      "preview": {
+        "description": "Preview of Planet mosaic, generated on the fly by EE.",
+        "label": "Planet mosaic"
+      },
+      "tabPlaceholder": "Planet_mosaic"
+    },
     "radarMosaic": {
       "create": "Radar mosaic",
       "description": "Create a mosaic using Sentinel 1.",
