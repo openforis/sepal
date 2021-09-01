@@ -30,7 +30,7 @@ const createTileManagerGroup = (type, concurrency) => {
             tileProviders[tileProviderId] = tileProvider
             log.debug(() => `Added ${tileProviderTag(tileProviderId)}`)
         } else {
-            log.error(`Cannot add existing ${tileProviderTag(tileProviderId)}`)
+            log.warn(`Cannot add existing ${tileProviderTag(tileProviderId)}`)
         }
     }
     
@@ -41,7 +41,7 @@ const createTileManagerGroup = (type, concurrency) => {
             delete tileProviders[tileProviderId]
             log.debug(() => `Removed ${tileProviderTag(tileProviderId)}`)
         } else {
-            log.error(`Cannot remove non-existing ${tileProviderTag(tileProviderId)}`)
+            log.warn(`Cannot remove non-existing ${tileProviderTag(tileProviderId)}`)
         }
     }
 

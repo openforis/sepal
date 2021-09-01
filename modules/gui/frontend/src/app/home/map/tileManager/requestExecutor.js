@@ -48,25 +48,33 @@ export const getRequestExecutor = concurrency => {
     }
     
     const start = ({tileProviderId, requestId, request, response$, cancel$}) => {
-        activeRequests[requestId] = {tileProviderId, requestId, request, response$, cancel$, timestamp: Date.now()}
-        const activeRequestCountByTileProviderId = increaseCount(tileProviderId)
-        log.debug(() => `Started ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
+        if (!activeRequests[requestId]) {
+            activeRequests[requestId] = {tileProviderId, requestId, request, response$, cancel$, timestamp: Date.now()}
+            const activeRequestCountByTileProviderId = increaseCount(tileProviderId)
+            log.debug(() => `Started ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
+        } else {
+            log.warn(() => `Cannot start already started ${requestTag({tileProviderId, requestId})}`)
+        }
     }
     
     const finish = ({currentRequest, replacementTileProviderId}) => {
         const {tileProviderId, requestId, complete} = currentRequest
-        delete activeRequests[requestId]
-        const activeRequestCountByTileProviderId = decreaseCount(tileProviderId)
-        if (complete) {
-            log.debug(() => `Completed ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
+        if (activeRequests[requestId]) {
+            delete activeRequests[requestId]
+            const activeRequestCountByTileProviderId = decreaseCount(tileProviderId)
+            if (complete) {
+                log.debug(() => `Completed ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
+            } else {
+                log.debug(() => `Aborted ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
+            }
+            if (replacementTileProviderId) {
+                finished$.next({currentRequest, replacementTileProviderId})
+            } else {
+                const priorityTileProviderIds = getPriorityTileProviderIds(tileProviderId)
+                finished$.next({currentRequest, priorityTileProviderIds})
+            }
         } else {
-            log.debug(() => `Aborted ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
-        }
-        if (replacementTileProviderId) {
-            finished$.next({currentRequest, replacementTileProviderId})
-        } else {
-            const priorityTileProviderIds = getPriorityTileProviderIds(tileProviderId)
-            finished$.next({currentRequest, priorityTileProviderIds})
+            log.warn(() => `Cannot finish already finished ${requestTag({tileProviderId, requestId})}`)
         }
     }
 
