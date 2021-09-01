@@ -29,7 +29,7 @@ export const toDataSetIds = sources =>
 
 export const getAvailableBands = ({
     dataSetId,
-    dataSets = {},
+    dataSets = [],
     corrections,
     classification: {
         classifierType,
@@ -55,7 +55,7 @@ export const getAvailableBands = ({
 
 export const groupedBandOptions = ({
     dataSetId,
-    dataSets = {},
+    dataSets = [],
     corrections,
     classification: {
         classifierType,
@@ -79,7 +79,7 @@ export const groupedBandOptions = ({
 
 export const flatBandOptions = ({
     dataSetId,
-    dataSets = {},
+    dataSets = [],
     corrections,
     classification: {
         classifierType,

@@ -170,7 +170,7 @@ class _SourceSync extends React.Component {
     recipeSource({ccdcRecipe, classificationRecipe}) {
         const corrections = ccdcRecipe.model.options.corrections
         const baseBands = getAvailableBands({
-            dataSets: ccdcRecipe.model.sources.dataSets,
+            dataSets: Object.values(ccdcRecipe.model.sources.dataSets).flat(),
             corrections,
             classification: classificationRecipe
                 ? {

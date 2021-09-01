@@ -8,6 +8,7 @@ import {currentUser} from 'user'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import styles from './retrievePanel.module.css'
 
 const fields = {
@@ -105,17 +106,17 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     renderPresetScale() {
-        const {inputs: {scale}} = this.props
+        const {ticks, inputs: {scale}} = this.props
         return (
             <div>
                 <Form.Slider
                     label={msg('process.retrieve.form.scale.label')}
                     info={scale => msg('process.retrieve.form.scale.info', {scale})}
                     input={scale}
-                    minValue={10}
-                    maxValue={100}
                     scale={'log'}
-                    ticks={[10, 15, 20, 30, 60, 100]}
+                    minValue={_.min(ticks)}
+                    maxValue={_.max(ticks)}
+                    ticks={ticks}
                     snap
                     range='none'
                 />
@@ -172,11 +173,15 @@ export const MosaicRetrievePanel = compose(
     recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})
 )
 
+MosaicRetrievePanel.defaultProps = {
+    ticks: [10, 15, 20, 30, 60, 100]
+}
 MosaicRetrievePanel.propTypes = {
     bandOptions: PropTypes.array.isRequired,
     defaultScale: PropTypes.number.isRequired,
     onRetrieve: PropTypes.func.isRequired,
     single: PropTypes.any,
+    ticks: PropTypes.array,
     toEE: PropTypes.any,
     toSepal: PropTypes.any
 }
