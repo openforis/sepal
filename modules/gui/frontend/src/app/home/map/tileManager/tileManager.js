@@ -57,7 +57,7 @@ export const getTileManager = tileProvider => {
     }
 
     const close = () => {
-        log.debug(() => 'Close')
+        log.debug(() => `Close ${tileProviderTag(tileProviderId)}`)
         removeTileProvider(tileProviderId)
     }
 
