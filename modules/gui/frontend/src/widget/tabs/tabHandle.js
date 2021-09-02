@@ -204,7 +204,7 @@ class _TabHandle extends React.Component {
         )
         addSubscription(
             tabBusy$.subscribe(
-                ({label, isBusy}) => this.setBusy(label, isBusy)
+                ({label, busy}) => this.setBusy(label, busy)
             )
         )
         this.scrollSelectedTabIntoView()

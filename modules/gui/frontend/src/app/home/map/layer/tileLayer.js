@@ -2,8 +2,8 @@ import {GoogleMapsOverlay} from './googleMapsOverlay'
 import OverlayLayer from './overlayLayer'
 
 export default class TileLayer extends OverlayLayer {
-    constructor({map, layerIndex, progress$, minZoom, maxZoom}) {
-        super({map, layerIndex, progress$})
+    constructor({map, layerIndex, busy$, minZoom, maxZoom}) {
+        super({map, layerIndex, busy$})
         this.minZoom = minZoom
         this.maxZoom = maxZoom
     }
@@ -17,10 +17,10 @@ export default class TileLayer extends OverlayLayer {
     }
 
     createOverlay() {
-        const {map, progress$, minZoom, maxZoom} = this
+        const {map, busy$, minZoom, maxZoom} = this
         const tileProvider = this.createTileProvider()
         const {google} = map.getGoogle()
-        return new GoogleMapsOverlay(tileProvider, {google, minZoom, maxZoom}, progress$)
+        return new GoogleMapsOverlay(tileProvider, {google, minZoom, maxZoom}, busy$)
     }
 
     removeFromMap() {

@@ -1,7 +1,4 @@
-import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {finalize} from 'rxjs/operators'
-import {v4 as uuid} from 'uuid'
 import {withTabContext} from 'widget/tabs/tabContext'
 import EarthEngineTableLayer from './layer/earthEngineTableLayer'
 import PropTypes from 'prop-types'
@@ -10,22 +7,11 @@ import api from 'api'
 import withSubscriptions from 'subscription'
 
 class _RecipeGeometryLayer extends React.Component {
-    componentId = uuid()
-    progress$ = new Subject()
-
     render() {
         return null
     }
 
     componentDidMount() {
-        const {addSubscription} = this.props
-        addSubscription(
-            this.progress$.pipe(
-                finalize(() => this.setBusy('tiles', false))
-            ).subscribe({
-                next: ({complete}) => this.setBusy('tiles', !complete)
-            })
-        )
         this.setLayer()
     }
 
@@ -47,7 +33,7 @@ class _RecipeGeometryLayer extends React.Component {
     }
 
     createLayer() {
-        const {recipe, color, fillColor, layerIndex, map} = this.props
+        const {recipe, color, fillColor, layerIndex, map, busy$} = this.props
         return recipe.ui.initialized
             ? new EarthEngineTableLayer({
                 map,
@@ -56,17 +42,9 @@ class _RecipeGeometryLayer extends React.Component {
                 }),
                 layerIndex,
                 watchedProps: recipe.model,
-                progress$: this.progress$,
-                onInitialize: () => this.setBusy('initialize', true),
-                onInitialized: () => this.setBusy('initialize', false),
-                onError: () => this.setBusy('initialize', false)
+                busy$
             })
             : null
-    }
-
-    setBusy(name, busy) {
-        const {tabContext: {setBusy}} = this.props
-        setBusy(`${name}-${this.componentId}`, busy)
     }
 }
 

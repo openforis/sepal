@@ -2,8 +2,8 @@ import {PlanetTileProvider} from '../tileProvider/planetTileProvider'
 import WMTSLayer from './wmtsLayer'
 
 export default class PlanetLayer extends WMTSLayer {
-    constructor({map, urlTemplate, concurrency, progress$}) {
-        super({map, urlTemplate, concurrency, progress$})
+    constructor({map, urlTemplate, concurrency, busy$}) {
+        super({map, urlTemplate, concurrency, busy$})
     }
 
     createTileProvider() {

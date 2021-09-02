@@ -2,8 +2,8 @@ import {GoogleSatelliteTileProvider} from '../tileProvider/googleSatelliteTilePr
 import TileLayer from './tileLayer'
 
 export default class GoogleSatelliteLayer extends TileLayer {
-    constructor({map, progress$}) {
-        super({map, progress$})
+    constructor({map, busy$}) {
+        super({map, busy$})
     }
 
     equals(o) {

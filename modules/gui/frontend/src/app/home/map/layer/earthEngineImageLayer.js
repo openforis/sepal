@@ -8,10 +8,7 @@ export default class EarthEngineImageLayer extends EarthEngineLayer {
         map,
         previewRequest,
         layerIndex,
-        progress$,
-        onInitialize,
-        onInitialized,
-        onError,
+        busy$,
         watchedProps,
         dataTypes,
         visParams,
@@ -22,13 +19,10 @@ export default class EarthEngineImageLayer extends EarthEngineLayer {
     }) {
         super({
             map,
-            progress$,
+            busy$,
             layerIndex,
             mapId$: api.gee.preview$(previewRequest),
-            watchedProps: watchedProps || previewRequest,
-            onInitialize,
-            onInitialized,
-            onError
+            watchedProps: watchedProps || previewRequest
         })
 
         this.dataTypes = dataTypes

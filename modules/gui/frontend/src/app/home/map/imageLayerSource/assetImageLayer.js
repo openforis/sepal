@@ -22,7 +22,6 @@ const mapRecipeToProps = (recipe, ownProps) => {
 }
 
 class _AssetImageLayer extends React.Component {
-    progress$ = new Subject()
     cursorValue$ = new Subject()
 
     render() {
@@ -65,20 +64,7 @@ class _AssetImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {addSubscription} = this.props
-        addSubscription(
-            this.progress$.subscribe(
-                ({complete}) => complete
-                    ? this.setBusy('tiles', false)
-                    : this.setBusy('tiles', true)
-            )
-        )
         this.selectFirstVisualization()
-    }
-
-    componentWillUnmount() {
-        this.setBusy('initialize', false)
-        this.setBusy('tiles', false)
     }
 
     selectFirstVisualization() {
@@ -106,7 +92,7 @@ class _AssetImageLayer extends React.Component {
     }
 
     createLayer() {
-        const {layerConfig, map, source, boundsChanged$, dragging$, cursor$} = this.props
+        const {layerConfig, map, source, boundsChanged$, dragging$, cursor$, busy$} = this.props
         const asset = selectFrom(source, 'sourceConfig.asset')
         const dataTypes = selectFrom(source, 'sourceConfig.metadata.dataTypes') || {}
         const {watchedProps: prevPreviewRequest} = this.layer || {}
@@ -125,13 +111,10 @@ class _AssetImageLayer extends React.Component {
                 dataTypes,
                 map,
                 cursorValue$: this.cursorValue$,
-                progress$: this.progress$,
+                busy$,
                 boundsChanged$,
                 dragging$,
-                cursor$,
-                onInitialize: () => this.setBusy('initialize', true),
-                onInitialized: () => this.setBusy('initialize', false),
-                onError: () => this.setBusy('initialize', false),
+                cursor$
             })
         }
         return this.layer

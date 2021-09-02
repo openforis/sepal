@@ -7,11 +7,9 @@ import {RadarMosaicImageLayer} from './radarMosaic/radarMosaicImageLayer'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {finalize} from 'rxjs/operators'
 import {getAllVisualizations} from './visualizations'
 import {getRecipeType} from '../recipeTypes'
 import {selectFrom} from 'stateUtils'
-import {v4 as uuid} from 'uuid'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {withTabContext} from 'widget/tabs/tabContext'
@@ -26,8 +24,6 @@ const mapStateToProps = (state, {source: {sourceConfig: {recipeId}}}) => ({
 })
 
 class _RecipeImageLayer extends React.Component {
-    componentId = uuid()
-    progress$ = new Subject()
     cursorValue$ = new Subject()
 
     render() {
@@ -75,18 +71,10 @@ class _RecipeImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {recipe, layerConfig: {visParams}, addSubscription} = this.props
+        const {recipe, layerConfig: {visParams}} = this.props
         if (!visParams) {
             this.selectVisualization(getAllVisualizations(recipe)[0])
         }
-
-        addSubscription(
-            this.progress$.pipe(
-                finalize(() => this.setBusy('tiles', false))
-            ).subscribe({
-                next: ({complete}) => this.setBusy('tiles', !complete)
-            })
-        )
     }
 
     componentDidUpdate(prevProps) {
@@ -108,16 +96,6 @@ class _RecipeImageLayer extends React.Component {
         }
     }
 
-    componentWillUnmount() {
-        this.setBusy('initialize', false)
-        this.setBusy('tiles', false)
-    }
-
-    setBusy(name, busy) {
-        const {tabContext: {setBusy}} = this.props
-        setBusy(`${name}-${this.componentId}`, busy)
-    }
-
     maybeCreateLayer() {
         const {recipe, layerConfig, map} = this.props
         return map && recipe.ui.initialized && layerConfig && layerConfig.visParams
@@ -126,7 +104,7 @@ class _RecipeImageLayer extends React.Component {
     }
 
     createLayer() {
-        const {recipe, layerConfig, map, boundsChanged$, dragging$, cursor$} = this.props
+        const {recipe, layerConfig, map, boundsChanged$, dragging$, cursor$, busy$} = this.props
         const recipes = [recipe, ...getDependentRecipes(recipe)]
         const availableBands = getRecipeType(recipe.type).getAvailableBands(recipe)
         const dataTypes = _.mapValues(availableBands, 'dataType')
@@ -144,14 +122,11 @@ class _RecipeImageLayer extends React.Component {
                 dataTypes,
                 visParams: layerConfig.visParams,
                 map,
-                progress$: this.progress$,
+                busy$,
                 cursorValue$: this.cursorValue$,
                 boundsChanged$,
                 dragging$,
-                cursor$,
-                onInitialize: () => this.setBusy('initialize', true),
-                onInitialized: () => this.setBusy('initialize', false),
-                onError: () => this.setBusy('initialize', false)
+                cursor$
             })
         }
         return this.layer

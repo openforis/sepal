@@ -1,8 +1,8 @@
 import TileLayer from './tileLayer'
 
 export default class WMTSLayer extends TileLayer {
-    constructor({map, urlTemplate, concurrency, progress$}) {
-        super({map, progress$})
+    constructor({map, urlTemplate, concurrency, busy$}) {
+        super({map, busy$})
         this.urlTemplate = urlTemplate
         this.concurrency = concurrency
     }

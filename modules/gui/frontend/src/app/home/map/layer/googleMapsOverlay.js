@@ -8,8 +8,8 @@ export class GoogleMapsOverlay {
         name,
         minZoom = 0,
         maxZoom = 20,
-    } = {}, progress$) {
-        this.tileProvider = new BalancingTileProvider({tileProvider, retries: 3, progress$})
+    } = {}, busy$) {
+        this.tileProvider = new BalancingTileProvider({tileProvider, retries: 3, busy$})
         this.name = name
         this.minZoom = minZoom
         this.maxZoom = maxZoom

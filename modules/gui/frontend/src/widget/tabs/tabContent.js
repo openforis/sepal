@@ -1,18 +1,27 @@
 import {Enabled, connect} from 'store'
 import {PortalContainer, PortalContext} from 'widget/portal'
+import {Subject} from 'rxjs'
 import {TabContext} from './tabContext'
 import {compose} from 'compose'
+import {v4 as uuid} from 'uuid'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './tabContent.module.css'
+import withSubscriptions from 'subscription'
 
 class _TabContent extends React.PureComponent {
+    constructor() {
+        super()
+        this.getBusy$ = this.getBusy$.bind(this)
+    }
+
     render() {
-        const {id, type, selected, busy$, children} = this.props
+        const {id, type, selected, children} = this.props
         const portalContainerId = `portal_tab_${id}`
         const tabContext = {
-            setBusy: (label, isBusy) => busy$.next({id, label, isBusy})
+            getBusy$: this.getBusy$
+                
         }
         return (
             <PortalContext id={portalContainerId}>
@@ -30,11 +39,26 @@ class _TabContent extends React.PureComponent {
             </PortalContext>
         )
     }
+
+    getBusy$() {
+        const {id, busy$, addSubscription} = this.props
+        const label = uuid()
+        const busyTab$ = new Subject()
+
+        addSubscription(
+            busyTab$.subscribe({
+                next: busy => busy$.next({id, label, busy})
+            })
+        )
+
+        return busyTab$
+    }
 }
 
 export const TabContent = compose(
     _TabContent,
-    connect()
+    connect(),
+    withSubscriptions()
 )
 
 TabContent.propTypes = {

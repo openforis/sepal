@@ -52,45 +52,42 @@ class _SceneAreas extends React.Component {
 
     componentWillUnmount() {
         this.toggleLayer(false)
-        this.setBusy(false)
     }
 
     loadSceneAreas(aoi, source) {
-        const {recipeId, stream} = this.props
+        const {recipeId, stream, busy$} = this.props
         RecipeActions(recipeId).setSceneAreas(null).dispatch()
         this.loadSceneArea$.next()
-        this.setBusy(true)
+        busy$.next(true)
         stream('LOAD_SCENE_AREAS',
             api.gee.sceneAreas$({aoi, source}).pipe(
                 takeUntil(this.loadSceneArea$)
             ),
             sceneAreas => {
                 RecipeActions(recipeId).setSceneAreas(sceneAreas).dispatch()
-                this.setBusy(false)
+                busy$.next(false)
             },
-            e => Notifications.error({
-                title: msg('gee.error.title'),
-                message: msg('process.mosaic.sceneAreas.error'),
-                error: e.response ? msg(e.response.messageKey, e.response.messageArgs, e.response.defaultMessage) : null,
-                timeout: 0,
-                content: dismiss =>
-                    <Button
-                        look='transparent'
-                        shape='pill'
-                        icon='sync'
-                        label={msg('button.retry')}
-                        onClick={() => {
-                            dismiss()
-                            this.reload()
-                        }}
-                    />
-            })
+            e => {
+                busy$.next(false)
+                Notifications.error({
+                    title: msg('gee.error.title'),
+                    message: msg('process.mosaic.sceneAreas.error'),
+                    error: e.response ? msg(e.response.messageKey, e.response.messageArgs, e.response.defaultMessage) : null,
+                    timeout: 0,
+                    content: dismiss =>
+                        <Button
+                            look='transparent'
+                            shape='pill'
+                            icon='sync'
+                            label={msg('button.retry')}
+                            onClick={() => {
+                                dismiss()
+                                this.reload()
+                            }}
+                        />
+                })
+            }
         )
-    }
-
-    setBusy(busy) {
-        const {tabContext: {setBusy}, componentId} = this.props
-        setBusy(`loadSceneAreas-${componentId}`, busy)
     }
 
     toggleLayer(include) {

@@ -6,20 +6,14 @@ import _ from 'lodash'
 export default class EarthEngineLayer extends TileLayer {
     constructor({
         map,
-        progress$,
+        busy$,
         layerIndex,
         mapId$,
-        watchedProps,
-        onInitialize,
-        onInitialized,
-        onError
+        watchedProps
     }) {
-        super({map, progress$, layerIndex})
+        super({map, busy$, layerIndex})
         this.mapId$ = mapId$
         this.watchedProps = watchedProps
-        this.onInitialize = onInitialize
-        this.onInitialized = onInitialized
-        this.onError = onError
         this.token = null
         this.mapId = null
         this.urlTemplate = null
@@ -34,7 +28,7 @@ export default class EarthEngineLayer extends TileLayer {
     }
 
     initialize$() {
-        this.onInitialize && this.onInitialize()
+        this.busy$ && this.busy$.next(true)
         return this.token
             ? of(true)
             : this.mapId$.pipe(
@@ -42,10 +36,8 @@ export default class EarthEngineLayer extends TileLayer {
                     this.token = token
                     this.mapId = mapId
                     this.urlTemplate = urlTemplate
-                    this.onInitialized && this.onInitialized()
                 }),
                 catchError(error => {
-                    this.onError && this.onError(error)
                     return throwError(error)
                 })
             )

@@ -1,10 +1,10 @@
 import Layer from './layer'
 
 export default class OverlayLayer extends Layer {
-    constructor({map, layerIndex = 0, progress$}) {
+    constructor({map, layerIndex = 0, busy$}) {
         super({map})
         this.layerIndex = layerIndex
-        this.progress$ = progress$
+        this.busy$ = busy$
         this.overlay = null
     }
 

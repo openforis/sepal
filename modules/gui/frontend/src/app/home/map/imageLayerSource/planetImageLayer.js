@@ -3,7 +3,6 @@ import {Combo} from 'widget/combo'
 import {Item} from 'widget/item'
 import {Layout} from 'widget/layout'
 import {MapAreaLayout} from '../mapAreaLayout'
-import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {getRecipeType} from '../../body/process/recipeTypes'
@@ -32,7 +31,6 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _PlanetImageLayer extends React.Component {
-    progress$ = new Subject()
     state = {}
 
     render() {
@@ -47,12 +45,12 @@ class _PlanetImageLayer extends React.Component {
     }
 
     createLayer() {
-        const {layerConfig: {bands, urlTemplate} = defaultLayerConfig, map} = this.props
+        const {layerConfig: {bands, urlTemplate} = defaultLayerConfig, map, busy$} = this.props
         const concurrency = CONCURRENCY
         const layer = urlTemplate
             ? this.selectedHasCir()
-                ? new PlanetLayer({map, urlTemplate: `${urlTemplate}&proc=${bands}`, concurrency, progress$: this.progress$})
-                : new PlanetLayer({map, concurrency, urlTemplate: `${urlTemplate}`})
+                ? new PlanetLayer({map, urlTemplate: `${urlTemplate}&proc=${bands}`, concurrency, busy$})
+                : new PlanetLayer({map, urlTemplate: `${urlTemplate}`, concurrency, busy$})
             : null
         this.layer = layer
         return layer
@@ -123,18 +121,7 @@ class _PlanetImageLayer extends React.Component {
         )
     }
 
-    setBusy(name, busy) {
-        const {tabContext: {setBusy}, componentId} = this.props
-        setBusy(`${name}-${componentId}`, busy)
-    }
-
     componentDidMount() {
-        const {addSubscription} = this.props
-        addSubscription(this.progress$.subscribe(
-            ({complete}) => complete
-                ? this.setBusy('tiles', false)
-                : this.setBusy('tiles', true)
-        ))
         this.update()
     }
 
@@ -148,10 +135,6 @@ class _PlanetImageLayer extends React.Component {
             }
         }
         this.update()
-    }
-
-    componentWillUnmount() {
-        this.setBusy('tiles', false)
     }
 
     selectDefault(mosaics) {
