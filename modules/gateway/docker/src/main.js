@@ -50,6 +50,9 @@ const main = async () => {
     app.use('/api/user/logout', logout)
     const proxies = proxyEndpoints(app)
     const server = app.listen(port)
+
+    // avoid MaxListenersExceededWarning
+    server.setMaxListeners(30)
     
     server.on('upgrade', (req, socket, head) => {
         sessionParser(req, {}, () => { // Make sure we have access to session for the websocket
