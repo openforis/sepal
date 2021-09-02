@@ -7,6 +7,7 @@ const session = require('express-session')
 const {logout} = require('./logout')
 const {proxyEndpoints} = require('./proxy')
 const {v4: uuid} = require('uuid')
+const url = require('url')
 const log = require('sepal/log').getLogger('gateway')
 
 const redis = new Redis(redisUri)
@@ -52,7 +53,7 @@ const main = async () => {
     
     server.on('upgrade', (req, socket, head) => {
         sessionParser(req, {}, () => { // Make sure we have access to session for the websocket
-            const requestPath = new URL(req.url).pathname
+            const requestPath = url.parse(req.url).pathname
             const user = req.session.user
             const username = user ? user.username : 'not-authenticated'
             if (user) {
