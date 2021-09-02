@@ -5,6 +5,7 @@ echo
 echo "**************************"
 echo "*** Installing Jupyter ***"
 echo "**************************"
+# VERSION 2021-09-02
 apt-get install -y libzmq3-dev
 /usr/bin/python3 -m pip install jupyter
 /usr/bin/python3 /usr/local/bin/jupyter-notebook --generate-config
