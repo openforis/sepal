@@ -38,7 +38,8 @@ export default class EarthEngineLayer extends TileLayer {
                     this.urlTemplate = urlTemplate
                 }),
                 catchError(error => {
-                    return throwError(error)
+                    this.busy$ && this.busy$.next(false)
+                    return throwError(() => error)
                 })
             )
     }
