@@ -4,6 +4,7 @@ import {connect} from 'store'
 import {forkJoin, timer} from 'rxjs'
 import {msg} from 'translate'
 import {runApp$} from 'apps'
+import {withTabContext} from 'widget/tabs/tabContext'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -38,6 +39,11 @@ class AppInstance extends React.Component {
         )
     }
 
+    componentDidMount() {
+        const {busy$} = this.props
+        busy$.next(true)
+    }
+
     render() {
         const {app: {label, alt}} = this.props
         return (
@@ -70,7 +76,7 @@ class AppInstance extends React.Component {
                     src={`/api${path}`}
                     title={label || alt}
                     style={{display: appState === 'READY' ? 'block' : 'none'}}
-                    onLoad={() => this.setState({appState: 'READY'})}
+                    onLoad={() => this.ready()}
                 />
             )
             : null
@@ -83,6 +89,12 @@ class AppInstance extends React.Component {
             : appState !== 'READY'
                 ? msg('apps.loading.progress')
                 : null
+    }
+
+    ready() {
+        const {busy$} = this.props
+        busy$.next(false)
+        this.setState({appState: 'READY'})
     }
 }
 
@@ -101,5 +113,6 @@ AppInstance.contextTypes = {
 
 export default compose(
     AppInstance,
-    connect()
+    connect(),
+    withTabContext()
 )
