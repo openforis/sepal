@@ -22,7 +22,7 @@ export const withTabContext = () =>
                 }
 
                 componentWillUnmount() {
-                    this.busy$.next(false)
+                    this.busy$.complete()
                 }
             }
         )

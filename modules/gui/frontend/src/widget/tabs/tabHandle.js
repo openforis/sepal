@@ -199,11 +199,10 @@ class _TabHandle extends React.Component {
 
     componentDidMount() {
         const {id, busy$, addSubscription} = this.props
-        const tabBusy$ = busy$.pipe(
-            filter(({id: currentId}) => id === currentId)
-        )
         addSubscription(
-            tabBusy$.subscribe(
+            busy$.pipe(
+                filter(({id: currentId}) => id === currentId)
+            ).subscribe(
                 ({label, busy}) => this.setBusy(label, busy)
             )
         )

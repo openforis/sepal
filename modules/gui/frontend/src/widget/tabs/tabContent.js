@@ -3,6 +3,7 @@ import {PortalContainer, PortalContext} from 'widget/portal'
 import {Subject} from 'rxjs'
 import {TabContext} from './tabContext'
 import {compose} from 'compose'
+import {finalize} from 'rxjs/operators'
 import {v4 as uuid} from 'uuid'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -21,7 +22,6 @@ class _TabContent extends React.PureComponent {
         const portalContainerId = `portal_tab_${id}`
         const tabContext = {
             getBusy$: this.getBusy$
-                
         }
         return (
             <PortalContext id={portalContainerId}>
@@ -44,10 +44,13 @@ class _TabContent extends React.PureComponent {
         const {id, busy$, addSubscription} = this.props
         const label = uuid()
         const busyTab$ = new Subject()
+        const setBusy = busy => busy$.next({id, label, busy})
 
         addSubscription(
-            busyTab$.subscribe({
-                next: busy => busy$.next({id, label, busy})
+            busyTab$.pipe(
+                finalize(() => setBusy(false))
+            ).subscribe({
+                next: busy => setBusy(busy)
             })
         )
 
