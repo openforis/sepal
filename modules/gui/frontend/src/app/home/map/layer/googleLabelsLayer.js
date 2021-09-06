@@ -1,3 +1,4 @@
+import {MAX_ZOOM} from '../maps'
 import OverlayLayer from './overlayLayer'
 
 export class GoogleLabelsLayer extends OverlayLayer {
@@ -12,7 +13,9 @@ export class GoogleLabelsLayer extends OverlayLayer {
     createOverlay() {
         const {map} = this
         const {google} = map.getGoogle()
-        return new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
+        const styledMapType = new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
+        styledMapType.maxZoom = MAX_ZOOM
+        return styledMapType
     }
 
     hide(_hidden) {

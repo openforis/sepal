@@ -20,8 +20,8 @@ const GOOGLE_MAPS_VERSION = '3.44'
 const GOOGLE_MAPS_LIBRARIES = ['drawing', 'places']
 
 const DEFAULT_ZOOM = 3
-const MIN_ZOOM = 3
-const MAX_ZOOM = 20
+export const MIN_ZOOM = 3
+export const MAX_ZOOM = 23
 
 export const MapsContext = React.createContext()
 
@@ -134,7 +134,9 @@ class _Maps extends React.Component {
 
         const googleMap = new google.maps.Map(mapElement, mapOptions)
 
-        googleMap.mapTypes.set('style', new google.maps.StyledMapType(this.getStyleOptions(style), {name: 'map'}))
+        const styledMapType = new google.maps.StyledMapType(this.getStyleOptions(style), {name: 'map'})
+        styledMapType.maxZoom = MAX_ZOOM
+        googleMap.mapTypes.set('style', styledMapType)
         googleMap.setMapTypeId('style')
 
         return googleMap
