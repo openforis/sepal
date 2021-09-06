@@ -134,8 +134,13 @@ class _Maps extends React.Component {
 
         const googleMap = new google.maps.Map(mapElement, mapOptions)
 
-        const styledMapType = new google.maps.StyledMapType(this.getStyleOptions(style), {name: 'map'})
-        styledMapType.maxZoom = MAX_ZOOM
+        const styledMapTypeStyles = this.getStyleOptions(style)
+        const styledMapTypeOptions = {
+            name: 'map',
+            maxZoom: MAX_ZOOM
+        }
+        const styledMapType = new google.maps.StyledMapType(styledMapTypeStyles, styledMapTypeOptions)
+
         googleMap.mapTypes.set('style', styledMapType)
         googleMap.setMapTypeId('style')
 
