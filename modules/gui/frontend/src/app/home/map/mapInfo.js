@@ -39,7 +39,10 @@ class _MapInfo extends React.Component {
                         msg={this.renderTooltip()}
                         placement='bottomLeft'
                         clickTrigger={true}>
-                        <Button look='transparent' shape='none'>
+                        <Button
+                            look='transparent'
+                            shape='none'
+                            size='small'>
                             <ElementResizeDetector onResize={({width}) => this.setState({width})}>
                                 <div className={styles.mapInfo}>
                                     <div>{format.number({value: scale, unit: 'm/px'})}</div>
