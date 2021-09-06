@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
+import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Layout} from 'widget/layout'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
@@ -16,7 +17,8 @@ import withSubscriptions from 'subscription'
 
 class _MapInfo extends React.Component {
     state = {
-        view: {}
+        view: {},
+        width: null
     }
 
     componentDidMount() {
@@ -29,7 +31,7 @@ class _MapInfo extends React.Component {
     }
 
     render() {
-        const {view: {scale}} = this.state
+        const {view: {scale}, width} = this.state
         return scale
             ? (
                 <div className={styles.container}>
@@ -37,11 +39,14 @@ class _MapInfo extends React.Component {
                         msg={this.renderTooltip()}
                         placement='bottomLeft'
                         clickTrigger={true}>
-                        <Button
-                            look='transparent'
-                            shape='pill'
-                            size='small'>
-                            {format.number({value: scale, unit: 'm/px'})}
+                        <Button look='transparent' shape='none'>
+                            <ElementResizeDetector onResize={({width}) => this.setState({width})}>
+                                <div className={styles.mapInfo}>
+                                    <div>{format.number({value: scale, unit: 'm/px'})}</div>
+                                    <div className={styles.scale}></div>
+                                    <div>{format.number({value: width * scale, unit: 'm'})}</div>
+                                </div>
+                            </ElementResizeDetector>
                         </Button>
                     </Tooltip>
                 </div>
