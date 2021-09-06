@@ -695,26 +695,6 @@
 					"observationCount.label": "nombre d'Obs.",
 					"rmse.label": "RMSE",
 					"startDate.label": "Date de début"
-				},
-				"centerMap": {
-					"tooltip": "Zoom sur la zone d'intérêt"
-				},
-				"labels": {
-					"hide": {
-						"tooltip": "Cacher les labels"
-					},
-					"show": {
-						"tooltip": "Afficher les labels"
-					}
-				},
-				"zoom": {
-					"tooltip": "Zoom sur la zone"
-				},
-				"zoomIn": {
-					"tooltip": "Agrandir"
-				},
-				"zoomOut": {
-					"tooltip": "Réduire"
 				}
 			},
 			"panel": {
@@ -870,28 +850,6 @@
 			},
 			"create": "Coupe CCDC",
 			"description": "Créer une coupe d'un asset CCDC, pour une date précise.",
-			"mapToolbar": {
-				"centerMap": {
-					"tooltip": "Zoom sur la zone d'intérêt"
-				},
-				"labels": {
-					"hide": {
-						"tooltip": "Cacher les labels"
-					},
-					"show": {
-						"tooltip": "Afficher les labels"
-					}
-				},
-				"zoom": {
-					"tooltip": "Zoom sur la zone"
-				},
-				"zoomIn": {
-					"tooltip": "Agrandir"
-				},
-				"zoomOut": {
-					"tooltip": "Réduire"
-				}
-			},
 			"panel": {
 				"date": {
 					"button": "DAT",
@@ -1735,8 +1693,8 @@
 		"mosaic": {
 			"bands": {
 				"combinations": "Combinaisons",
-        "indexes": "Indices",
-        "label": "Bandes",
+                "indexes": "Indices",
+                "label": "Bandes",
 				"metadata": "Metadonnées",
 				"panSharpen": "Pan sharpen",
 				"placeholder": "Sélectionner les bandes à visualiser"
@@ -1744,8 +1702,8 @@
 			"create": "Mosaique",
 			"description": "Créer une mosaique avec Landsat ou Sentinel 2",
 			"mapToolbar": {
-				"centerMap": {
-					"tooltip": "Zoomer sur la zone d'intérêt"
+				"zoom": {
+					"tooltip": "Zoomer"
 				},
 				"layers": {
 					"tooltip": "Sélectionnez les couches à afficher"
@@ -1753,25 +1711,8 @@
 				"link": {
 					"tooltip": "Lier cette carte à toutes les autres cartes liées"
 				},
-				"sceneAreas": {
-					"hide": {
-						"tooltip": "Masquer les empreintes des scènes"
-					},
-					"show": {
-						"tooltip": "Afficher les empreintes des scènes"
-					}
-				},
 				"unlink": {
 					"tooltip": "Déconnecter cette carte"
-				},
-				"zoom": {
-					"tooltip": "Zoomer sur la zone"
-				},
-				"zoomIn": {
-					"tooltip": "Agrandir"
-				},
-				"zoomOut": {
-					"tooltip": "Réduire"
 				}
 			},
 			"panel": {
@@ -2334,28 +2275,6 @@
 		"timeSeries": {
 			"create": "Séries temporelles",
 			"description": "Télécharger une série temporelle LANDSAT vers SEPAL",
-			"mapToolbar": {
-				"centerMap": {
-					"tooltip": "Zoom sur les zones d'intérêt"
-				},
-				"labels": {
-					"hide": {
-						"tooltip": "Cacher les labels"
-					},
-					"show": {
-						"tooltip": "Afficher les labels"
-					}
-				},
-				"zoom": {
-					"tooltip": "Zoomer sur la zone"
-				},
-				"zoomIn": {
-					"tooltip": "Agrandir"
-				},
-				"zoomOut": {
-					"tooltip": "Réduire"
-				}
-			},
 			"panel": {
 				"dates": {
 					"button": "DAT",

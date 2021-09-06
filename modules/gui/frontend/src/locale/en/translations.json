@@ -708,26 +708,6 @@
           "observationCount.label": "Obs. count",
           "rmse.label": "RMSE",
           "startDate.label": "Start date"
-        },
-        "centerMap": {
-          "tooltip": "Zoom to area of interest"
-        },
-        "labels": {
-          "hide": {
-            "tooltip": "Hide labels"
-          },
-          "show": {
-            "tooltip": "Show labels"
-          }
-        },
-        "zoom": {
-          "tooltip": "Zoom to area"
-        },
-        "zoomIn": {
-          "tooltip": "Zoom in"
-        },
-        "zoomOut": {
-          "tooltip": "Zoom out"
         }
       },
       "panel": {
@@ -898,28 +878,6 @@
       },
       "create": "CCDC slice",
       "description": "Create a slice of a CCDC asset, for a specific date.",
-      "mapToolbar": {
-        "centerMap": {
-          "tooltip": "Zoom to area of interest"
-        },
-        "labels": {
-          "hide": {
-            "tooltip": "Hide labels"
-          },
-          "show": {
-            "tooltip": "Show labels"
-          }
-        },
-        "zoom": {
-          "tooltip": "Zoom to area"
-        },
-        "zoomIn": {
-          "tooltip": "Zoom in"
-        },
-        "zoomOut": {
-          "tooltip": "Zoom out"
-        }
-      },
       "panel": {
         "date": {
           "button": "DAT",
@@ -1772,8 +1730,8 @@
       "create": "Optical mosaic",
       "description": "Create a mosaic using Landsat or Sentinel 2.",
       "mapToolbar": {
-        "centerMap": {
-          "tooltip": "Zoom to area of interest"
+        "zoom": {
+            "tooltip": "Zoom"
         },
         "layers": {
           "tooltip": "Select layers to show"
@@ -1781,25 +1739,8 @@
         "link": {
           "tooltip": "Link this map to all other linked maps"
         },
-        "sceneAreas": {
-          "hide": {
-            "tooltip": "Hide scene areas"
-          },
-          "show": {
-            "tooltip": "Show scene areas"
-          }
-        },
         "unlink": {
           "tooltip": "Unlink this map"
-        },
-        "zoom": {
-          "tooltip": "Zoom to area"
-        },
-        "zoomIn": {
-          "tooltip": "Zoom in"
-        },
-        "zoomOut": {
-          "tooltip": "Zoom out"
         }
       },
       "panel": {
@@ -2429,28 +2370,6 @@
     "timeSeries": {
       "create": "Time series",
       "description": "Download time series of optical and radar data to SEPAL.",
-      "mapToolbar": {
-        "centerMap": {
-          "tooltip": "Zoom to area of interest"
-        },
-        "labels": {
-          "hide": {
-            "tooltip": "Hide labels"
-          },
-          "show": {
-            "tooltip": "Show labels"
-          }
-        },
-        "zoom": {
-          "tooltip": "Zoom to area"
-        },
-        "zoomIn": {
-          "tooltip": "Zoom in"
-        },
-        "zoomOut": {
-          "tooltip": "Zoom out"
-        }
-      },
       "panel": {
         "dates": {
           "button": "DAT",

@@ -400,26 +400,6 @@
 					"observationCount.label": "número de Obs.",
 					"rmse.label": "RMSE",
 					"startDate.label": "Fecha de inicio"
-				},
-				"centerMap": {
-					"tooltip": "Acercamiento a la zona de interés"
-				},
-				"labels": {
-					"hide": {
-						"tooltip": "Ocultar etiquetas"
-					},
-					"show": {
-						"tooltip": "Mostrar etiquetas"
-					}
-				},
-				"zoom": {
-					"tooltip": "Acercar a la zona"
-				},
-				"zoomIn": {
-					"tooltip": "Acercar"
-				},
-				"zoomOut": {
-					"tooltip": "Alejar"
 				}
 			},
 			"panel": {
@@ -575,28 +555,6 @@
 			},
 			"create": "Corte de CCDC",
 			"description": "Crear un corte de un asset de CCDC, para una fecha específica.",
-			"mapToolbar": {
-				"centerMap": {
-					"tooltip": "Zoom a la zona de interés"
-				},
-				"labels": {
-					"hide": {
-						"tooltip": "Ocultar etiquetas"
-					},
-					"show": {
-						"tooltip": "Mostrar etiquetas"
-					}
-				},
-				"zoom": {
-					"tooltip": "Zoom a la zona"
-				},
-				"zoomIn": {
-					"tooltip": "Ampliar"
-				},
-				"zoomOut": {
-					"tooltip": "Alejar"
-				}
-			},
 			"panel": {
 				"date": {
 					"button": "FEC",
@@ -1434,54 +1392,17 @@
 			"create": "Mosaico óptico",
 			"description": "Crear mosaico de Landsat o Sentinel 2.",
 			"mapToolbar": {
-				"centerMap": {
-					"tooltip": "Zoom a la zona de interés"
+				"zoom": {
+					"tooltip": "Acercar"
 				},
 				"layers": {
 					"tooltip": "Seleccionar capas para mostrar"
 				},
-				"layersMenu": {
-					"baseLayer": "Capa base",
-					"GOOGLE_SATELLITE": {
-						"description": "Capa de satélite de alta resolución de Google Maps",
-						"label": "Google Satellite"
-					},
-					"labels": {
-						"description": "Mostrar etiquetas de mapas, carreteras y puntos de interés",
-						"label": "Mostrar etiquetas"
-					},
-					"overlay": "Superposiciones",
-					"PLANET": {
-						"label": "Planet",
-						"description": "Planet composites"
-					},
-					"SEPAL": {
-						"description": "Capa oscura minimalista de SEPAL por defecto",
-						"label": "SEPAL"
-					}
-				},
 				"link": {
 					"tooltip": "Enlaza este mapa con todos los demás mapas enlazados"
 				},
-				"sceneAreas": {
-					"hide": {
-						"tooltip": "Ocultar áreas de la escena"
-					},
-					"show": {
-						"tooltip": "Mostrar áreas de la escena"
-					}
-				},
 				"unlink": {
 					"tooltip": "Desenlazar este mapa"
-				},
-				"zoom": {
-					"tooltip": "Acercar al área"
-				},
-				"zoomIn": {
-					"tooltip": "Acercar"
-				},
-				"zoomOut": {
-					"tooltip": "Alejar"
 				}
 			},
 			"panel": {
@@ -2043,28 +1964,6 @@
 		"timeSeries": {
 			"create": "Series temporales",
 			"description": "Descargar series temporales de Landsat en SEPAL.",
-			"mapToolbar": {
-				"centerMap": {
-					"tooltip": "Zoom a la zona de interés"
-				},
-				"labels": {
-					"hide": {
-						"tooltip": "Ocultar etiquetas"
-					},
-					"show": {
-						"tooltip": "Mostrar etiquetas"
-					}
-				},
-				"zoom": {
-					"tooltip": "Zoom a la zona"
-				},
-				"zoomIn": {
-					"tooltip": "Acercar"
-				},
-				"zoomOut": {
-					"tooltip": "Alejar"
-				}
-			},
 			"panel": {
 				"dates": {
 					"button": "DAT",

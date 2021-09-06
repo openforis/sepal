@@ -29,7 +29,7 @@ class MapToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='mapZoom'
                         icon={'search'}
-                        tooltip='zoom'/>
+                        tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
                     <Toolbar.ToolbarButton
                         onClick={() => map.toggleLinked()}
                         selected={linked}
