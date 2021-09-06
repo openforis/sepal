@@ -151,6 +151,13 @@ export class SepalMap {
 
     // Center
 
+    toGoogleLocation(latLng) {
+        const {google} = this
+        return latLng instanceof google.maps.LatLng
+            ? latLng
+            : new google.maps.LatLng(latLng)
+    }
+
     getCenter() {
         const {googleMap} = this
         const lngLatCenter = googleMap.getCenter()
@@ -158,8 +165,8 @@ export class SepalMap {
     }
 
     setCenter(center) {
-        const {google, googleMap} = this
-        const lngLatCenter = new google.maps.LatLng(center)
+        const {googleMap} = this
+        const lngLatCenter = this.toGoogleLocation(center)
         if (!googleMap.getCenter().equals(lngLatCenter)) {
             googleMap.setCenter(lngLatCenter)
         }
