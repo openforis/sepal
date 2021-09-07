@@ -9,7 +9,7 @@ export class BalancingTileProvider extends TileProvider {
         this.subscriptions = []
         this.retries = retries
         this.tileProvider = tileProvider
-        this.tileManager = getTileManager(tileProvider)
+        this.tileManager = getTileManager({tileProvider})
         this.initProgress(busy$)
     }
 

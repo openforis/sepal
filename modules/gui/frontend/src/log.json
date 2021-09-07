@@ -1,8 +1,7 @@
 {
     "default": "info",
     "layer": "info",
-    "tileManager": "info",
-    "tileManager/group": "info",
+    "tileManager": "debug",
     "tileManager/queue": "info",
     "tileManager/executor": "info",
     "map": "info",
