@@ -78,6 +78,7 @@ const createTileManagerGroup = (type, concurrency) => {
             `active: ${active}/${totalActive}/${maxActive}`,
             `pending: ${pending}/${totalPending}`,
         ].join(', ')
+        log.debug(() => `${tileProviderTag(tileProviderId)}: ${msg}`)
         return {type, enqueued, totalEnqueued, active, totalActive, maxActive, pending, totalPending, msg}
     }
 
@@ -142,7 +143,6 @@ export const getTileManager = ({tileProviderId = uuid(), tileProvider}) => {
     const reportPending = () => {
         const tileProviderStats = tileManagerGroup.getStats()
         pending$.next(tileProviderStats.pending)
-        log.debug(() => `${tileProviderTag(tileProviderId)}: ${tileProviderStats.msg}`)
     }
 
     const loadTile$ = request => {
