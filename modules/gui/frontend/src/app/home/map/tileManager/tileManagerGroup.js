@@ -27,9 +27,9 @@ const createTileManagerGroup = (type, concurrency) => {
     const addTileProvider = (tileProviderId, tileProvider) => {
         if (!tileProviders[tileProviderId]) {
             tileProviders[tileProviderId] = tileProvider
-            log.debug(() => `Added ${tileProviderTag(tileProviderId)}`)
+            log.debug(() => `Added ${tileProviderTag(tileProviderId)}: ${type}`)
         } else {
-            log.warn(`Cannot add existing ${tileProviderTag(tileProviderId)}`)
+            log.warn(() => `Cannot add existing ${tileProviderTag(tileProviderId)}`)
         }
     }
 
@@ -38,9 +38,9 @@ const createTileManagerGroup = (type, concurrency) => {
             requestQueue.removeTileProvider(tileProviderId)
             requestExecutor.removeTileProvider(tileProviderId)
             delete tileProviders[tileProviderId]
-            log.debug(() => `Removed ${tileProviderTag(tileProviderId)}`)
+            log.debug(() => `Removed ${tileProviderTag(tileProviderId)}: ${type}`)
         } else {
-            log.debug(`Skipped removing non-existing ${tileProviderTag(tileProviderId)}`)
+            log.debug(() => `Skipped removing non-existing ${tileProviderTag(tileProviderId)}`)
         }
     }
 
@@ -91,7 +91,7 @@ const createTileManagerGroup = (type, concurrency) => {
     requestExecutor.finished$.subscribe(
         ({currentRequest, replacementTileProviderId, priorityTileProviderIds}) => {
             if (requestQueue.isEmpty()) {
-                log.debug(() => 'Pending request queue empty')
+                log.trace(() => 'Pending request queue empty')
             } else {
                 if (replacementTileProviderId) {
                     const request = requestQueue.dequeueByTileProviderIds([replacementTileProviderId])
