@@ -107,13 +107,12 @@ const createTileManagerGroup = (type, concurrency) => {
         }
     )
 
-    return {getTileProvider, addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden, getStats}
+    return {addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden, getStats}
 }
 
-export const getTileManagerGroup = tileProvider => {
-    const type = tileProvider.getType()
+export const getTileManagerGroup = (type, concurrency) => {
     if (!tileProviderGroups[type]) {
-        tileProviderGroups[type] = createTileManagerGroup(type, tileProvider.getConcurrency())
+        tileProviderGroups[type] = createTileManagerGroup(type, concurrency)
     }
     return tileProviderGroups[type]
 }

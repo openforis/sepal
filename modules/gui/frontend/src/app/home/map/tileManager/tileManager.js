@@ -7,21 +7,15 @@ import {v4 as uuid} from 'uuid'
 
 const log = getLogger('tileManager')
 
-export const getTileManager = tileProvider => {
-    const {getTileProvider, addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden, getStats} = getTileManagerGroup(tileProvider)
+export const getTileManager = (tileProvider, tileProviderId = uuid()) => {
+    const type = tileProvider.getType()
+    const concurrency = tileProvider.getConcurrency()
 
-    const tileProviderId = uuid()
+    const {addTileProvider, removeTileProvider, submit, cancelByRequestId, setHidden, getStats} = getTileManagerGroup(type, concurrency)
+
     const pending$ = new BehaviorSubject(0)
 
     addTileProvider(tileProviderId, tileProvider)
-
-    const getType = () => {
-        return getTileProvider(tileProviderId).getType()
-    }
-
-    const getConcurrency = () => {
-        return getTileProvider(tileProviderId).getConcurrency()
-    }
 
     const reportPending = () => {
         const tileProviderStats = getStats(tileProviderId)
@@ -62,8 +56,6 @@ export const getTileManager = tileProvider => {
     }
 
     return {
-        getType,
-        getConcurrency,
         loadTile$,
         releaseTile,
         hide,

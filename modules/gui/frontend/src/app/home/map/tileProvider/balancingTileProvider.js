@@ -26,11 +26,11 @@ export class BalancingTileProvider extends TileProvider {
     }
 
     getType() {
-        return this.tileManager.getType()
+        return this.tileProvider.getType()
     }
 
     getConcurrency() {
-        return this.tileManager.getConcurrency()
+        return this.tileProvider.getConcurrency()
     }
 
     loadTile$(tileRequest) {
