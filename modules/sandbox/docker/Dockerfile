@@ -1,6 +1,7 @@
 FROM openforis/geospatial-toolkit
 MAINTAINER OpenForis
 ENV SEPAL_USERS_GRP_NAME sepalUsers
+ENV VERSION 2021-09-07
 
 ADD config /config
 ADD templates /templates
