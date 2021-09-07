@@ -41,10 +41,11 @@ class _MapInfo extends React.Component {
                         clickTrigger={true}>
                         <Button
                             look='transparent'
-                            shape='none'
-                            size='small'>
+                            shape='rectangle'
+                            size='x-small'
+                            additionalClassName={styles.button}>
                             <ElementResizeDetector onResize={({width}) => this.setState({width})}>
-                                <div className={styles.mapInfo}>
+                                <div className={styles.content}>
                                     <div>{format.number({value: scale, unit: 'm/px'})}</div>
                                     <div className={styles.scale}></div>
                                     <div>{format.number({value: width * scale, unit: 'm'})}</div>

@@ -5,13 +5,13 @@
     pointer-events: all;
 }
 
-.mapInfo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+.button {
     width: 5.5rem;
     height: 2.5rem;
+}
+
+.content {
+    width: 100%;
 }
 
 .scale {
