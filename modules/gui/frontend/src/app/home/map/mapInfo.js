@@ -43,7 +43,8 @@ class _MapInfo extends React.Component {
                             look='transparent'
                             shape='rectangle'
                             size='x-small'
-                            additionalClassName={styles.button}>
+                            additionalClassName={styles.button}
+                            air='less'>
                             <ElementResizeDetector onResize={({width}) => this.setState({width})}>
                                 <div className={styles.content}>
                                     <div>{format.number({value: scale, unit: 'm/px'})}</div>
