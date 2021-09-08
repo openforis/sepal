@@ -1,10 +1,9 @@
 .toolbar {
     --button-panel-margin: .5rem;
     --icon-size: 1.1rem;
-    
     position: absolute;
     pointer-events: all;
-    z-index: 0;
+    z-index: 3; /* ensure buttons stay above panels, to delete button-panel border */
 }
 
 .toolbar.horizontal {

@@ -17,13 +17,13 @@
     --content-padding-horizontal: .8rem;
     --padding-panel-buttons: .5rem;
     --header-color: #e8e8e8;
-    max-height: calc(100% - 1rem);
+    max-height: calc(100vh - (var(--top-bar-height) + 3 * var(--toolbar-edge-margin) + var(--toolbar-button-size) + var(--footer-height)));
     width: calc(100% - var(--margin-left) - var(--margin-right));
     background-color: var(--panel-default-background-color);
     border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
     border-radius: .5rem;
     pointer-events: all;
-    z-index: 10;
+    z-index: 2;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -48,6 +48,7 @@
     top: .5rem;
     bottom: .5rem;
     max-width: calc(100% - 1rem);
+    max-height: calc(100% - 1rem);
 }
 
 .panel.top {

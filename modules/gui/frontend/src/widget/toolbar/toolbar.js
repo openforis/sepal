@@ -2,6 +2,7 @@ import {ActivationButton} from './activationButton'
 import {Context} from './context'
 import {PanelButton} from './panelButton'
 import {ToolbarButton} from './toolbarButton'
+import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import lookStyles from 'style/look.module.css'
@@ -22,8 +23,8 @@ export class Toolbar extends React.Component {
             className
         ]
         return (
-            <div ref={this.panelContainer}>
-                <div className={classNames.join(' ')}>
+            <Portal>
+                <div className={classNames.join(' ')} ref={this.panelContainer}>
                     <Context.Provider value={{
                         horizontal: !!horizontal,
                         panel: !!panel,
@@ -33,7 +34,7 @@ export class Toolbar extends React.Component {
                         {this.props.children}
                     </Context.Provider>
                 </div>
-            </div>
+            </Portal>
         )
     }
 }
