@@ -43,6 +43,9 @@
     border-radius: var(--button-border-radius);
     color: var(--look-default-color);
     background-color: var(--look-default-background-color);
+    font-size: .8rem;
+    font-weight: 500;
+    text-transform: uppercase;
 }
 
 .toolbar button:hover:not(:disabled) {
