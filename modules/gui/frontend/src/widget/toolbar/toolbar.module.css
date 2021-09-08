@@ -30,7 +30,7 @@
 }
 
 .toolbar.vertical.top-right {
-    top: 6rem;
+    top: 3.5rem;
     right: var(--toolbar-edge-margin);
 }
 
