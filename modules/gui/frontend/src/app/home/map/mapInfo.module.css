@@ -3,6 +3,7 @@
     top: .5rem;
     right: .5rem;
     pointer-events: all;
+    border: 1px solid transparent; /* HACK: compensate for border in look.module.css, not used here */
 }
 
 .button {
