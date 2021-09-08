@@ -249,7 +249,6 @@ class _Map extends React.Component {
                     includeAreaFeatureLayerSource,
                     excludeAreaFeatureLayerSource
                 }}>
-                    <LegendImport/>
                     <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
                     {layerComponent}
                 </MapAreaContext.Provider>
@@ -528,6 +527,7 @@ class _Map extends React.Component {
                     <div className={styles.recipe}>
                         <MapToolbar statePath={[statePath, 'ui']}/>
                         <MapInfo/>
+                        <LegendImport/>
                         {children}
                     </div>
                 </Content>
