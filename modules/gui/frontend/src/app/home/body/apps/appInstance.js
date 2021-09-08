@@ -85,9 +85,7 @@ class AppInstance extends React.Component {
         const {appState} = this.state
         return appState === 'REQUESTED'
             ? msg('apps.initializing')
-            : appState !== 'READY'
-                ? msg('apps.loading.progress')
-                : null
+            : msg('apps.loading.progress')
     }
 
     ready() {
