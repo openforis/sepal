@@ -10,8 +10,9 @@ export class PanelContent extends React.Component {
         return scrollable
             ? (
                 <ScrollableContainer className={styles.scrollable}>
-                    <Scrollable className={className}>
+                    <Scrollable>
                         <Padding
+                            className={className}
                             noHorizontal={noHorizontalPadding}
                             noVertical={noVerticalPadding}
                         >
