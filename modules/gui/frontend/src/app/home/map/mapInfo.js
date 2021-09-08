@@ -40,7 +40,7 @@ class _MapInfo extends React.Component {
                         placement='bottomLeft'
                         clickTrigger={true}>
                         <Button
-                            look='transparent'
+                            look='default'
                             shape='rectangle'
                             size='x-small'
                             additionalClassName={styles.button}
