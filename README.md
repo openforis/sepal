@@ -43,12 +43,21 @@ perform powerful image processing, are completely customizable and function simi
 
 Screenshots
 -----------
-![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/01_login.png)            ![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/02_landing.png)
-![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/03_list.png)             ![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/04_search.png)
-![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/05_scene-selection.png)  ![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/06_rome.png)
-![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/07_files.png)            ![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/08_apps.png)
-![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/09_visualizer.png)       ![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/10_terminal.png) 
-
+![01 landing](https://user-images.githubusercontent.com/149204/132474862-daf724e5-e7f8-4086-9132-c9afde0e6173.png)
+![02 login](https://user-images.githubusercontent.com/149204/132474870-be73899f-f6bb-4d8b-96c5-05bb21a5d53c.png)
+![03 recipe list](https://user-images.githubusercontent.com/149204/132474880-12333a36-dee0-4bdc-a0b4-0e9aab24b601.png)
+![03 create recipe](https://user-images.githubusercontent.com/149204/132481048-6149f776-a7ed-47cb-8f75-3519aa1b8f1e.png)
+![04 optical](https://user-images.githubusercontent.com/149204/132482428-16ef1555-26bc-441a-8717-d65db3b62ef4.png)
+![05 nicfi planet composite](https://user-images.githubusercontent.com/149204/132474895-da433549-5d52-48cf-93ae-23c0ee9d47c0.png)
+![06 sentinel1 time scan](https://user-images.githubusercontent.com/149204/132483174-154e792e-b6ce-4b22-ad08-1b8e4fdda829.png)
+![07 sentinel1 harmonics](https://user-images.githubusercontent.com/149204/132474903-0d1db533-7427-49f6-9981-07aa5a0f6b71.png)
+![08 classification](https://user-images.githubusercontent.com/149204/132474907-d4a018a1-282f-4dbd-b870-90bae470d1a0.png)
+![09 ccdc chart](https://user-images.githubusercontent.com/149204/132474909-3a3c9f9d-4fb9-42b8-be01-2b354c7283a3.png)
+![10 visparams](https://user-images.githubusercontent.com/149204/132474911-13fdd36a-e4fd-4ad2-93e2-e0a53510b1dc.png)
+![11 layers layout](https://user-images.githubusercontent.com/149204/132478296-627a62cd-9d7b-40cf-a1aa-034c50664cf6.png)
+![12 iPhone](https://user-images.githubusercontent.com/149204/132478926-2bf51235-de16-4a11-9bfb-4960b1e5471a.png)
+![13 terminal](https://user-images.githubusercontent.com/149204/132491822-db82fe79-154f-4f60-b0bc-b5a57006c5a4.png)
+![14 apps](https://user-images.githubusercontent.com/149204/132491851-5ac0303f-1064-4e12-9627-f34e3f78d880.png)
 
 Architectural overview
 ----------------------
