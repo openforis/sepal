@@ -75,12 +75,14 @@ class _MapInfo extends React.Component {
                 <div>{formatCoordinates(center, 5)}</div>
                 <ButtonGroup>
                     <Button
+                        look='highlight'
                         shape='pill'
                         icon='copy'
                         label='coords'
                         onClick={() => this.copyPlainCenterCoordinates(center)}
                     />
                     <Button
+                        look='highlight'
                         shape='pill'
                         icon='copy'
                         label='EE'
@@ -101,12 +103,14 @@ class _MapInfo extends React.Component {
                 </div>
                 <ButtonGroup>
                     <Button
+                        look='highlight'
                         shape='pill'
                         icon='copy'
                         label='coords'
                         onClick={() => this.copyPlainBoundsCoordinates(bounds)}
                     />
                     <Button
+                        look='highlight'
                         shape='pill'
                         icon='copy'
                         label='EE'
@@ -147,7 +151,8 @@ class _MapInfo extends React.Component {
 
     notify() {
         Notifications.info({
-            message: msg('map.info.coordinatesCopied')
+            message: msg('map.info.coordinatesCopied'),
+            timeout: 2
         })
     }
 }
