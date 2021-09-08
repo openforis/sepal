@@ -89,6 +89,11 @@
     border-color: var(--look-highlight-active-border-color);
 }
 
+.toolbar button.activationButton.selected,
+.toolbar button.activationButton.selected:hover {
+    background-color: var(--panel-default-background-color);
+}
+
 .toolbar.vertical.panelButton button.activationButton.selected {
     width: calc(var(--toolbar-button-size) + var(--button-panel-margin));
     margin-left: calc(-1 * var(--button-panel-margin));
@@ -101,7 +106,6 @@
 }
 
 .toolbar.horizontal button.activationButton.selected {
-    background-color: var(--look-default-disabled-background-color);
     height: calc(var(--toolbar-button-size) + var(--button-panel-margin));
     margin-bottom: calc(-1 * var(--button-panel-margin));
     padding-bottom: calc(var(--button-panel-margin) + var(--selected-panel-border-width));
