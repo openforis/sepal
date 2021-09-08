@@ -54,7 +54,6 @@ class AppInstance extends React.Component {
                     <div className={styles.backdrop}>
                         {label || alt}
                     </div>
-                    <div className={styles.loading}/>
                     <div className={styles.status}>
                         {this.renderStatus()}
                     </div>
