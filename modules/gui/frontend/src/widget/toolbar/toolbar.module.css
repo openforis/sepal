@@ -24,13 +24,23 @@
     margin-top: var(--toolbar-button-spacing);
 }
 
-.toolbar.top-right {
+.toolbar.horizontal.top-right {
     top: var(--toolbar-edge-margin);
     right: var(--toolbar-edge-margin);
 }
 
-.toolbar.bottom-right {
+.toolbar.vertical.top-right {
+    top: 6rem;
+    right: var(--toolbar-edge-margin);
+}
+
+.toolbar.horizontal.bottom-right {
     bottom: var(--toolbar-edge-margin);
+    right: var(--toolbar-edge-margin);
+}
+
+.toolbar.vertical.bottom-right {
+    bottom: 6rem;
     right: var(--toolbar-edge-margin);
 }
 
