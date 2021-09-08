@@ -56,6 +56,8 @@ Screenshots
 ![10 visparams](https://user-images.githubusercontent.com/149204/132474911-13fdd36a-e4fd-4ad2-93e2-e0a53510b1dc.png)
 ![11 layers layout](https://user-images.githubusercontent.com/149204/132478296-627a62cd-9d7b-40cf-a1aa-034c50664cf6.png)
 ![12 iPhone](https://user-images.githubusercontent.com/149204/132478926-2bf51235-de16-4a11-9bfb-4960b1e5471a.png)
+![13 terminal](https://user-images.githubusercontent.com/149204/132491822-db82fe79-154f-4f60-b0bc-b5a57006c5a4.png)
+![14 apps](https://user-images.githubusercontent.com/149204/132491851-5ac0303f-1064-4e12-9627-f34e3f78d880.png)
 
 Architectural overview
 ----------------------
