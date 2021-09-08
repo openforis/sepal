@@ -47,7 +47,7 @@ Screenshots
 ![02 login](https://user-images.githubusercontent.com/149204/132474870-be73899f-f6bb-4d8b-96c5-05bb21a5d53c.png)
 ![03 recipe list](https://user-images.githubusercontent.com/149204/132474880-12333a36-dee0-4bdc-a0b4-0e9aab24b601.png)
 ![03 create recipe](https://user-images.githubusercontent.com/149204/132481048-6149f776-a7ed-47cb-8f75-3519aa1b8f1e.png)
-![04 rome-cir](https://user-images.githubusercontent.com/149204/132474884-3a62fa86-52bd-4841-ba39-01ba808536da.png)
+![04 optical](https://user-images.githubusercontent.com/149204/132482428-16ef1555-26bc-441a-8717-d65db3b62ef4.png)
 ![05 nicfi planet composite](https://user-images.githubusercontent.com/149204/132474895-da433549-5d52-48cf-93ae-23c0ee9d47c0.png)
 ![06 sentinel1 time scan](https://user-images.githubusercontent.com/149204/132474899-b505b1da-b087-4923-9432-1174436a744f.png)
 ![07 sentinel1 harmonics](https://user-images.githubusercontent.com/149204/132474903-0d1db533-7427-49f6-9981-07aa5a0f6b71.png)
