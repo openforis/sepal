@@ -49,7 +49,7 @@ Screenshots
 ![03 create recipe](https://user-images.githubusercontent.com/149204/132481048-6149f776-a7ed-47cb-8f75-3519aa1b8f1e.png)
 ![04 optical](https://user-images.githubusercontent.com/149204/132482428-16ef1555-26bc-441a-8717-d65db3b62ef4.png)
 ![05 nicfi planet composite](https://user-images.githubusercontent.com/149204/132474895-da433549-5d52-48cf-93ae-23c0ee9d47c0.png)
-![06 sentinel1 time scan](https://user-images.githubusercontent.com/149204/132474899-b505b1da-b087-4923-9432-1174436a744f.png)
+![06 sentinel1 time scan](https://user-images.githubusercontent.com/149204/132483174-154e792e-b6ce-4b22-ad08-1b8e4fdda829.png)
 ![07 sentinel1 harmonics](https://user-images.githubusercontent.com/149204/132474903-0d1db533-7427-49f6-9981-07aa5a0f6b71.png)
 ![08 classification](https://user-images.githubusercontent.com/149204/132474907-d4a018a1-282f-4dbd-b870-90bae470d1a0.png)
 ![09 ccdc chart](https://user-images.githubusercontent.com/149204/132474909-3a3c9f9d-4fb9-42b8-be01-2b354c7283a3.png)
