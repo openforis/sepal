@@ -114,7 +114,7 @@
 		"loading": {
 			"error": "No se puede recuperar la información del documento."
 		},
-		"removeConfirmation": "¿Retirar {directories} {directories, plural, one {directorio} other {directorios}} y {files} {files, plural, one {documento} other {documentaos}}?",
+		"removeConfirmation": "¿Eliminar {directories} {directories, plural, one {directorio} other {directorios}} y {files} {files, plural, one {documento} other {documentos}}?",
 		"removing": {
 			"error": "No es posible retirar los documentos."
 		},
@@ -2453,7 +2453,7 @@
 			}
 		},
 		"safetyButton": {
-			"label": "Proceda"
+			"label": "Continuar"
 		},
 		"seasonSelect": {
 			"from": "De",
