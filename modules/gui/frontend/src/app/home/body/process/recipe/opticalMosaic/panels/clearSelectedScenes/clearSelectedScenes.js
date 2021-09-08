@@ -1,9 +1,9 @@
 import {Form} from 'widget/form/form'
-import {Msg, msg} from 'translate'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
+import {msg} from 'translate'
 import React from 'react'
 import styles from './clearSelectedScenes.module.css'
 
@@ -28,7 +28,7 @@ class ClearSelectedScenes extends React.Component {
                     title={msg('process.mosaic.panel.clearSelectedScenes.title')}/>
 
                 <Panel.Content className={styles.content}>
-                    <Msg id='process.mosaic.panel.clearSelectedScenes.message'/>
+                    {msg('process.mosaic.panel.clearSelectedScenes.message')}
                 </Panel.Content>
 
                 <Form.PanelButtons applyLabel={msg('process.mosaic.panel.clearSelectedScenes.apply')}/>

@@ -1,8 +1,9 @@
 .panel {
-    max-width: 22rem;
+    height: 14rem;
+    max-width: 20rem;
 }
 
 .content {
-    align-items: center;
+    display: flex;
     justify-content: center;
 }
