@@ -184,7 +184,7 @@ const clone$ = ({path, repository}) => {
         switchMap(() => exec$(
             dirname(path),
             'sudo',
-            ['GIT_TERMINAL_PROMPT=0', 'git', 'clone', repository]
+            ['GIT_TERMINAL_PROMPT=0', 'git', 'clone', '--recurse-submodules', repository]
         ))
     )
 }
