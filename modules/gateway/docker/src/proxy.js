@@ -102,10 +102,8 @@ const updateUserInSession = req => {
         ).subscribe({
             next: user => {
                 log.debug(`[${user.username}] [${req.url}] Updated user in session`)
-                log.fatal('user', user)
                 req.session.user = user
                 req.session.save()
-                log.fatal('session', req.session)
             },
             error: error => log.error(`[${user.username}] [${req.url}] Failed to load current user`, error)
         })
