@@ -217,17 +217,13 @@ class _Areas extends React.Component {
         )
     }
 
-    onDrag({dragging, currentAreas, dropArea}, callback) {
+    onDrag({dragging, currentAreas, nextAreas, dropArea}) {
         this.areaCenters = this.calculateDropTargetCenters(currentAreas)
         this.setState({
             dragging,
             dropArea,
-            currentAreas
-        }, () => {
-            if (dragging && dropArea) {
-                const nextAreas = callback()
-                nextAreas && this.setState({nextAreas})
-            }
+            currentAreas,
+            nextAreas
         })
     }
 
@@ -244,13 +240,14 @@ class _Areas extends React.Component {
     onSourceDrag({source, dropArea}) {
         const {layers: {areas}} = this.props
         const currentAreas = areas
-        this.onDrag({dragging: SOURCE, currentAreas, dropArea}, () =>
-            assignArea({
+        const nextAreas = dropArea
+            ? assignArea({
                 areas: currentAreas,
                 area: dropArea,
                 value: source
             })
-        )
+            : null
+        this.onDrag({dragging: SOURCE, dropArea, currentAreas, nextAreas})
     }
 
     onSourceRelease() {
@@ -266,8 +263,8 @@ class _Areas extends React.Component {
         const {layers: {areas}} = this.props
         const currentAreas = removeArea({areas, area})
         const swap = Object.keys(areas).includes(dropArea)
-        this.onDrag({dragging: AREA, currentAreas, dropArea}, () =>
-            swap
+        const nextAreas = dropArea
+            ? swap
                 ? swapAreas({
                     areas,
                     from: area,
@@ -278,7 +275,8 @@ class _Areas extends React.Component {
                     area: dropArea,
                     value: areas[area]
                 })
-        )
+            : null
+        this.onDrag({dragging: AREA, dropArea, currentAreas, nextAreas})
     }
 
     onAreaRelease() {
