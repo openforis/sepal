@@ -105,6 +105,12 @@ const endpoints = [
         authenticate: true
     },
     {
+        prefix: false,
+        path: '/api/apps/list',
+        target: `http://${modules.appManager}`,
+        noCache: true
+    },
+    {
         prefix: true,
         path: '/static',
         target: `http://${modules.gui}/static`,
