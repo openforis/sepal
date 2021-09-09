@@ -23,10 +23,11 @@ class _Areas extends React.Component {
         dragging: null,
         dropArea: null,
         currentAreas: null,
-        areaCenters: null,
         nextAreas: null,
         hovering: false
     }
+
+    areaCenters = null
 
     areaRefs = {
         'center': React.createRef(),
@@ -217,12 +218,11 @@ class _Areas extends React.Component {
     }
 
     onDrag({dragging, currentAreas, dropArea}, callback) {
-        const areaCenters = this.calculateDropTargetCenters(currentAreas)
+        this.areaCenters = this.calculateDropTargetCenters(currentAreas)
         this.setState({
             dragging,
             dropArea,
-            currentAreas,
-            areaCenters
+            currentAreas
         }, () => {
             if (dragging && dropArea) {
                 const nextAreas = callback()
@@ -232,11 +232,11 @@ class _Areas extends React.Component {
     }
 
     onRelease(callback) {
+        this.areaCenters = null
         this.setState({
             dragging: null,
             dropArea: null,
             currentAreas: null,
-            areaCenters: null,
             nextAreas: null
         }, callback)
     }
@@ -301,7 +301,8 @@ class _Areas extends React.Component {
     }
 
     getDropArea(cursor) {
-        const {areaCenters, dragging, hovering} = this.state
+        const {dragging, hovering} = this.state
+        const {areaCenters} = this
         const squaredDistanceFromCursor = center =>
             Math.pow(center.x - cursor.x, 2) + Math.pow(center.y - cursor.y, 2)
         return dragging && hovering
