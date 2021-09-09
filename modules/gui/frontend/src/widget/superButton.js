@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Item} from 'widget/item'
-import {Subject, animationFrameScheduler, fromEvent, interval, merge, timer} from 'rxjs'
+import {Subject, animationFrameScheduler, fromEvent, interval, timer} from 'rxjs'
 import {compose} from 'compose'
 import {debounceTime, distinctUntilChanged, filter, map, switchMap, takeUntil} from 'rxjs/operators'
 import Hammer from 'hammerjs'
@@ -312,25 +312,18 @@ class _SuperButton extends React.Component {
 
         hammer.get('pan').set({
             direction: Hammer.DIRECTION_ALL,
-            // threshold: 0
+            threshold: 0
         })
 
-        const hold$ = merge(
-            fromEvent(draggableHandle, 'mousedown'),
-            fromEvent(draggableHandle, 'touchstart')
-        )
-        const release$ = merge(
-            fromEvent(draggableHandle, 'mouseup'),
-            fromEvent(draggableHandle, 'touchend')
-        )
         const pan$ = fromEvent(hammer, 'panstart panmove panend')
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
         const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
         const animationFrame$ = interval(0, animationFrameScheduler)
 
-        const dragStart$ = merge(hold$, panStart$).pipe(
-            filter(({pageX, pageY}) => pageX && pageY),
+        const dragStart$ = panStart$.pipe(
+            map(({changedPointers}) => changedPointers[0]),
+            filter(({pageX, pageY} = {}) => pageX && pageY),
             map(({pageX, pageY}) => {
                 const {x: clientX, y: clientY, width, height} = draggable.getBoundingClientRect()
                 const offset = {
@@ -352,7 +345,6 @@ class _SuperButton extends React.Component {
                     },
                     offset
                 }
-                    
             })
         )
 
@@ -377,7 +369,7 @@ class _SuperButton extends React.Component {
             )
         )
 
-        const dragEnd$ = merge(release$, panEnd$)
+        const dragEnd$ = panEnd$
 
         addSubscription(
             dragStart$.subscribe(this.onDragStart),
