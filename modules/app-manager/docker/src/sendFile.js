@@ -20,4 +20,10 @@ const sendFile = (ctx, path) =>
         .catch(_e => {
             ctx.throw(404)
         })
-module.exports = {sendFile}
+
+const sendFileNoCache = (ctx, path) => {
+    ctx.response.set('content-type', mime.lookup(path))
+    ctx.body = fs.createReadStream(path)
+}
+
+module.exports = {sendFile, sendFileNoCache}
