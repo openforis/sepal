@@ -106,9 +106,12 @@ to prevent click-through from click-hold buttons */
     line-height: .4rem;
 }
 
+.dragging.original {
+    opacity: .5;
+}
 
-.dragging {
-    opacity: .70;
+.dragging.clone {
+    opacity: .9;
 }
 
 .dragHandle {
@@ -129,15 +132,16 @@ to prevent click-through from click-hold buttons */
     pointer-events: none;
 }
 
-.draggableGhost {
+.draggableClone {
     position: absolute;
     top: calc(var(--y) * 1px);
     left: calc(var(--x) * 1px);
-    z-index: 1;
-    width: fit-content;
-}
-
-.draggableGhost > * {
     width: calc(var(--width) * 1px);
     height: calc(var(--height) * 1px);
+    display: flex;
+    z-index: 1;
+}
+
+.draggableClone > * {
+    flex-grow: 1;
 }

@@ -146,7 +146,7 @@ class _SuperButton extends React.Component {
         return (
             <React.Fragment>
                 {this.renderRealButton()}
-                {this.isDragging() ? this.renderGhostButton() : null}
+                {this.isDragging() ? this.renderDraggableCloneButton() : null}
             </React.Fragment>
         )
     }
@@ -155,14 +155,15 @@ class _SuperButton extends React.Component {
         return this.renderButton(true)
     }
 
-    renderButton(real) {
+    renderButton(original) {
         const {dragHandleHover} = this.state
         const {className} = this.props
         const classNames = _.flatten([
-            styles.container,
             lookStyles.look,
             lookStyles.transparent,
             lookStyles.noTransitions,
+            styles.container,
+            original ? styles.original : styles.clone,
             this.isSelected() === true ? [lookStyles.hover, styles.expanded] : null,
             this.isDisabled() ? lookStyles.nonInteractive : null,
             this.isDraggable() ? [styles.draggable, dragHandleHover ? null : lookStyles.noHover] : null,
@@ -172,21 +173,21 @@ class _SuperButton extends React.Component {
         ]).join(' ')
         return (
             <div ref={this.draggable} className={classNames}>
-                {this.isDraggable() ? this.renderDragHandle(real) : null}
+                {this.isDraggable() ? this.renderDragHandle(original) : null}
                 <div className={styles.main}>
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
                     {this.renderContent()}
-                    {real && this.renderButtons()}
+                    {original && this.renderButtons()}
                 </div>
                 {this.renderChildren()}
             </div>
         )
     }
 
-    renderDragHandle(real) {
+    renderDragHandle(original) {
         return (
             <div
-                ref={real ? this.draggableHandle : null}
+                ref={original ? this.draggableHandle : null}
                 className={styles.handle}
                 onMouseOver={() => this.setState({dragHandleHover: true})}
                 onMouseOut={() => this.setState({dragHandleHover: false})}
@@ -194,15 +195,15 @@ class _SuperButton extends React.Component {
         )
     }
 
-    renderGhostButton() {
+    renderDraggableCloneButton() {
         const {position, size} = this.state
-        const {dragGhostClassName} = this.props
+        const {dragCloneClassName} = this.props
         if (position && size) {
             return (
                 <Portal type='global'>
                     <div className={styles.draggableContainer}>
                         <div
-                            className={[styles.draggableGhost, dragGhostClassName].join(' ')}
+                            className={[styles.draggableClone, dragCloneClassName].join(' ')}
                             style={{
                                 '--x': position.x,
                                 '--y': position.y,
@@ -453,6 +454,7 @@ SuperButton.propTypes = {
     description: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     disabled: PropTypes.any,
     drag$: PropTypes.object,
+    dragCloneClassName: PropTypes.string,
     dragTooltip: PropTypes.string,
     dragValue: PropTypes.any,
     duplicateDisabled: PropTypes.any,
