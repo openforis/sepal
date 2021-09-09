@@ -18,7 +18,6 @@ const EXPAND_DELAYED_TIMEOUT_MS = 1000
 
 class _SuperButton extends React.Component {
     draggable = React.createRef()
-    draggableHandle = React.createRef()
     expand$ = new Subject()
 
     state = {
@@ -172,8 +171,13 @@ class _SuperButton extends React.Component {
             className
         ]).join(' ')
         return (
-            <div ref={this.draggable} className={classNames}>
-                {this.isDraggable() ? this.renderDragHandle(original) : null}
+            <div
+                ref={original ? this.draggable : null}
+                className={classNames}
+                onMouseOver={() => this.setState({dragHandleHover: true})}
+                onMouseOut={() => this.setState({dragHandleHover: false})}
+            >
+                {this.isDraggable() ? this.renderDragHandle() : null}
                 <div className={styles.main}>
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
                     {this.renderContent()}
@@ -184,14 +188,9 @@ class _SuperButton extends React.Component {
         )
     }
 
-    renderDragHandle(original) {
+    renderDragHandle() {
         return (
-            <div
-                ref={original ? this.draggableHandle : null}
-                className={styles.handle}
-                onMouseOver={() => this.setState({dragHandleHover: true})}
-                onMouseOut={() => this.setState({dragHandleHover: false})}
-            />
+            <div className={styles.handle}/>
         )
     }
 
@@ -306,9 +305,8 @@ class _SuperButton extends React.Component {
     initializeDraggable() {
         const {addSubscription} = this.props
         const draggable = this.draggable.current
-        const draggableHandle = this.draggableHandle.current
 
-        const hammer = new Hammer(draggableHandle)
+        const hammer = new Hammer(draggable)
 
         hammer.get('pan').set({
             direction: Hammer.DIRECTION_ALL,
