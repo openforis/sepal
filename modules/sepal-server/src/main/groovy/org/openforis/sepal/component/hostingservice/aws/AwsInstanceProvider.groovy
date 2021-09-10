@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit
 final class AwsInstanceProvider implements InstanceProvider {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private static final String SECURITY_GROUP = 'Sandbox'
+    private static final int PUBLIC_IP_RETRIES = 300
     private final JobScheduler jobScheduler
     private final String currentSepalVersion
     private final String region
@@ -57,7 +58,7 @@ final class AwsInstanceProvider implements InstanceProvider {
         LOG.debug("Waiting for public IP to be come available on instance $instance, " +
                 "instanceType: $instanceType, reservation: $reservation")
         int retries = 0
-        while (!instance.host && retries < Integer.MAX_VALUE) {
+        while (!instance.host && retries < PUBLIC_IP_RETRIES) {
             retries++
             LOG.debug("Getting instance $instance.id to see if the public ID is assigned yet, " +
                     "instanceType: $instanceType, reservation: $reservation")
