@@ -17,17 +17,17 @@
         "sepal": "node_modules/shared/src"
     },
     "dependencies": {
-        "@google-cloud/storage": "^5.8.5",
-        "commander": "^8.0.0",
+        "@google-cloud/storage": "^5.14.1",
+        "commander": "^8.2.0",
         "fast-crc32c": "^2.0.0",
-        "googleapis": "^81.0.0",
+        "googleapis": "^85.0.0",
         "moment": "^2.29.1",
-        "rxjs": "^7.2.0",
+        "rxjs": "^7.3.0",
         "shared": "../../../lib/js/shared"
     },
     "devDependencies": {
-        "eslint": "^7.30.0",
-        "jest": "^27.0.6",
+        "eslint": "^7.32.0",
+        "jest": "^27.1.1",
         "jest-expect-message": "^1.0.2",
         "link-module-alias": "^1.2.0"
     },
