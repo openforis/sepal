@@ -25,7 +25,7 @@ git+git://github.com/openforis/earthengine-api.git@v0.1.270#egg=earthengine-api&
 ########  BFAST dependencies ########
 wget
 Sphinx==2.2.0
-sphinx-bootstrap-theme=0.7.1
+sphinx-bootstrap-theme==0.7.1
 numpydoc
 
 ########  sepal modules  ########
