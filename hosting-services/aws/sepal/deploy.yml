@@ -31,11 +31,6 @@
         - "LANG=en_US.utf-8"
         - "LC_ALL=en_US.utf-8"
 
-    # multitail
-    - name: Install multitail
-      yum:
-        name: "multitail"
-
     # monit
     - name: Install EPEL repository
       yum:
@@ -113,6 +108,20 @@
       copy:
         src: "logrotate.d/"
         dest: "/etc/logrotate.d/"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    # Install multitail
+    - name: Install multitail
+      yum:
+        name: "multitail"
+
+    # profile.d
+    - name: Copy profile.d
+      copy:
+        src: "profile.d/"
+        dest: "/etc/profile.d/"
         owner: "root"
         group: "root"
         mode: "0644"
