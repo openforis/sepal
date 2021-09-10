@@ -62,8 +62,13 @@ final class AwsInstanceProvider implements InstanceProvider {
             LOG.debug("Getting instance $instance.id to see if the public ID is assigned yet, " +
                     "instanceType: $instanceType, reservation: $reservation")
 
-            instance = getInstance(instance.id)
-            LOG.debug("Got instance $instance")
+            try {
+                instance = getInstance(instance.id)
+                LOG.debug("Got instance $instance")
+            } catch (AmazonEC2Exception ignore) {
+                // Instance might not be available straight away
+                LOG.warn("Failed to get instance $instance.id. Will still keep on waiting for it to become available.")
+            }
             Thread.sleep(1000)
         }
         if (!instance.host)
@@ -256,17 +261,17 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private void tagInstance(String instanceId, Collection<Tag>... tagCollections) {
         try {
-            retry(10) {
+            retry(10, ({
                 def tags = tagCollections.toList().flatten() as Tag[]
                 LOG.info("Tagging instance $instanceId with $tags")
                 def request = new CreateTagsRequest()
                         .withResources(instanceId)
                         .withTags(tags)
                 client.createTags(request)
-            }
+            } as Closure<Void>))
         } catch (Exception e) {
-            terminate()
-            throw new FailedToTagInstance("Failed to tag instance $instanceId with $tags", e)
+            terminate(instanceId)
+            throw new FailedToTagInstance("Failed to tag instance $instanceId with $tagCollections", e)
         }
     }
 
@@ -285,7 +290,7 @@ final class AwsInstanceProvider implements InstanceProvider {
         }
     }
 
-    private int backoff(int retries) {
+    private void backoff(int retries) {
         def millis = (long) Math.pow(2, retries ?: 0) * 1000
         Thread.sleep(millis)
     }
