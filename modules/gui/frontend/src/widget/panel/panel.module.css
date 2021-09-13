@@ -17,7 +17,7 @@
     --content-padding-horizontal: .8rem;
     --padding-panel-buttons: .5rem;
     --header-color: #e8e8e8;
-    max-height: calc(100vh - (var(--top-bar-height) + 3 * var(--toolbar-edge-margin) + var(--toolbar-button-size) + var(--footer-height)));
+    max-height: calc(100% - (2 * var(--toolbar-edge-margin) + var(--toolbar-button-size) + var(--margin-bottom)));
     width: calc(100% - var(--margin-left) - var(--margin-right));
     background-color: var(--panel-default-background-color);
     border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
