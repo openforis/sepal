@@ -22,26 +22,26 @@ apt-get update -y
 
 # Install development and runtime libraries (~4GB)
 apt-get install -y --no-install-recommends \--no-install-recommends \
-  nvidia-driver-470=470.63.01-0ubuntu1 \
-  libnvidia-gl-470=470.63.01-0ubuntu1 \
-  nvidia-kernel-source-470=470.63.01-0ubuntu1 \
-  libnvidia-compute-470=470.63.01-0ubuntu1 \
-  libnvidia-extra-470=470.63.01-0ubuntu1 \
-  nvidia-compute-utils-470=470.63.01-0ubuntu1 \
-  libnvidia-decode-470=470.63.01-0ubuntu1 \
-  libnvidia-encode-470=470.63.01-0ubuntu1 \
-  nvidia-utils-470=470.63.01-0ubuntu1 \
-  xserver-xorg-video-nvidia-470=470.63.01-0ubuntu1 \
-  libnvidia-cfg1-470=470.63.01-0ubuntu1 \
-  libnvidia-ifr1-470=470.63.01-0ubuntu1 \
-  libnvidia-fbc1-470=470.63.01-0ubuntu1 \
-  libnvidia-common-470=470.63.01-0ubuntu1 \
-  nvidia-dkms-470=470.63.01-0ubuntu1 \
-  nvidia-kernel-common-470=470.63.01-0ubuntu1 \
+  nvidia-driver-470=470.63.01-0ubuntu0.18.04.2 \
+  libnvidia-gl-470=470.63.01-0ubuntu0.18.04.2 \
+  nvidia-kernel-source-470=470.63.01-0ubuntu0.18.04.2 \
+  libnvidia-compute-470=470.63.01-0ubuntu0.18.04.2 \
+  libnvidia-extra-470=470.63.01-0ubuntu0.18.04.2 \
+  nvidia-compute-utils-470=470.63.01-0ubuntu0.18.04.2 \
+  libnvidia-decode-470=470.63.01-0ubuntu0.18.04.2 \
+  libnvidia-encode-470=470.63.01-0ubuntu0.18.04.2 \
+  nvidia-utils-470=470.63.01-0ubuntu0.18.04.2 \
+  xserver-xorg-video-nvidia-470=470.63.01-0ubuntu0.18.04.2 \
+  libnvidia-cfg1-470=470.63.01-0ubuntu0.18.04.2 \
+  libnvidia-ifr1-470=470.63.01-0ubuntu0.18.04.2 \
+  libnvidia-fbc1-470=470.63.01-0ubuntu0.18.04.2 \
+  libnvidia-common-470=470.63.01-0ubuntu0.18.04.2 \
+  nvidia-dkms-470=470.63.01-0ubuntu0.18.04.2 \
+  nvidia-kernel-common-470=470.63.01-0ubuntu0.18.04.2 \
   cuda-toolkit-11-0 \
   cuda-toolkit-11-4 \
-  libcudnn8=8.1.1.33-1+cuda11.4 \
-  libcudnn8-dev=8.1.1.33-1+cuda11.4
+  libcudnn8=8.2.4.15-1+cuda11.4 \
+  libcudnn8-dev=8.2.4.15-1+cuda11.4
 
 echo -n "/usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.1">/etc/OpenCL/vendors/nvidia.icd
 
