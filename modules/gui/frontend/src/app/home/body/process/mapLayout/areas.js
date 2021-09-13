@@ -4,7 +4,7 @@ import {Subject, of} from 'rxjs'
 import {SuperButton} from 'widget/superButton'
 import {assignArea, removeArea, swapAreas, validAreas} from './layerAreas'
 import {compose} from 'compose'
-import {concatWith, distinctUntilChanged, filter, map, switchMap} from 'rxjs/operators'
+import {concatWith, distinctUntilChanged, filter, map, switchMap, takeUntil} from 'rxjs/operators'
 import {getImageLayerSource} from 'app/home/map/imageLayerSource/imageLayerSource'
 import {msg} from 'translate'
 import {withLayers} from '../withLayers'
@@ -161,7 +161,7 @@ class _Areas extends React.Component {
         this.initializeDragDrop()
     }
 
-    drag$(drag$) {
+    drag$(drag$, release$) {
         const dragStart$ = drag$.pipe(
             filter(({dragging}) => dragging === true)
         )
@@ -173,7 +173,8 @@ class _Areas extends React.Component {
                 ).pipe(
                     filter(coords => coords),
                     distinctUntilChanged(),
-                    map(coords => ({value, dropArea: this.getDropArea(coords)}))
+                    map(coords => ({value, dropArea: this.getDropArea(coords)})),
+                    takeUntil(release$)
                 )
             )
         )
@@ -189,17 +190,17 @@ class _Areas extends React.Component {
         const {sourceDrag$, addSubscription} = this.props
         const {areaDrag$} = this
 
-        const sourceDragMove$ = this.drag$(sourceDrag$).pipe(
+        const sourceRelease$ = this.release$(sourceDrag$)
+
+        const sourceDragMove$ = this.drag$(sourceDrag$, sourceRelease$).pipe(
             map(({value: source, dropArea}) => ({source, dropArea}))
         )
 
-        const sourceRelease$ = this.release$(sourceDrag$)
+        const areaRelease$ = this.release$(areaDrag$)
 
-        const areaDragMove$ = this.drag$(areaDrag$).pipe(
+        const areaDragMove$ = this.drag$(areaDrag$, areaRelease$).pipe(
             map(({value: area, dropArea}) => ({area, dropArea}))
         )
-
-        const areaRelease$ = this.release$(areaDrag$)
 
         addSubscription(
             sourceDragMove$.subscribe(
