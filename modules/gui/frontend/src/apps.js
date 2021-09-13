@@ -34,7 +34,7 @@ export const runApp$ = path => {
     )
 
     return concat(requestSession$, waitForSession$).pipe(
-        switchMap(() => get$(`api/${path}`, {retries: 9})),
+        switchMap(() => get$(`api${path}`, {retries: 9})),
         first()
     )
 }
