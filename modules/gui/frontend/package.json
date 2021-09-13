@@ -46,7 +46,7 @@
     "redux": "4.1.1",
     "rxjs": "7.3.0",
     "uuid": "^8.3.2",
-    "xterm": "^4.14.0",
+    "xterm": "^4.14.1",
     "xterm-addon-fit": "^0.5.0"
   },
   "scripts": {
