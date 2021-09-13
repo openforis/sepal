@@ -1,10 +1,10 @@
 import {HoverDetector} from 'widget/hover'
 import {Padding} from 'widget/padding'
-import {Subject, of} from 'rxjs'
+import {Subject} from 'rxjs'
 import {SuperButton} from 'widget/superButton'
 import {assignArea, removeArea, swapAreas, validAreas} from './layerAreas'
 import {compose} from 'compose'
-import {concatWith, distinctUntilChanged, filter, map, switchMap, takeUntil} from 'rxjs/operators'
+import {distinctUntilChanged, filter, map, switchMap, takeUntil} from 'rxjs/operators'
 import {getImageLayerSource} from 'app/home/map/imageLayerSource/imageLayerSource'
 import {msg} from 'translate'
 import {withLayers} from '../withLayers'
@@ -162,19 +162,13 @@ class _Areas extends React.Component {
     }
 
     drag$(drag$, release$) {
-        const dragStart$ = drag$.pipe(
-            filter(({dragging}) => dragging === true)
-        )
-
-        return dragStart$.pipe(
-            switchMap(({value, coords}) =>
-                of(coords).pipe(
-                    concatWith(drag$.pipe(map(({coords}) => coords)))
-                ).pipe(
-                    filter(coords => coords),
-                    distinctUntilChanged(),
-                    map(coords => ({value, dropArea: this.getDropArea(coords)})),
-                    takeUntil(release$)
+        return drag$.pipe(
+            filter(({dragging}) => dragging === true),
+            switchMap(({value}) =>
+                drag$.pipe(
+                    takeUntil(release$),
+                    map(({coords}) => ({value, dropArea: this.getDropArea(coords)})),
+                    distinctUntilChanged()
                 )
             )
         )
@@ -228,14 +222,14 @@ class _Areas extends React.Component {
         })
     }
 
-    onRelease(callback) {
+    onRelease() {
         this.areaCenters = null
         this.setState({
             dragging: null,
             dropArea: null,
             currentAreas: null,
             nextAreas: null
-        }, callback)
+        })
     }
 
     onSourceDrag({source, dropArea}) {
@@ -253,11 +247,10 @@ class _Areas extends React.Component {
 
     onSourceRelease() {
         const {hovering, nextAreas} = this.state
-        this.onRelease(() => {
-            if (hovering) {
-                nextAreas && this.updateAreas(nextAreas)
-            }
-        })
+        if (hovering) {
+            nextAreas && this.updateAreas(nextAreas)
+        }
+        this.onRelease()
     }
    
     onAreaDrag({area, dropArea}) {
@@ -282,14 +275,13 @@ class _Areas extends React.Component {
 
     onAreaRelease() {
         const {hovering, currentAreas, nextAreas} = this.state
-        this.onRelease(() => {
-            if (hovering) {
-                nextAreas && this.updateAreas(nextAreas)
-            } else {
-                // remove area
-                this.updateAreas(currentAreas)
-            }
-        })
+        if (hovering) {
+            nextAreas && this.updateAreas(nextAreas)
+        } else {
+            // remove area
+            this.updateAreas(currentAreas)
+        }
+        this.onRelease()
     }
 
     updateAreas(areas) {
