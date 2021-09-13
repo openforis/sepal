@@ -2,6 +2,7 @@ import {ContentPadding} from 'widget/sectionLayout'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {forkJoin, timer} from 'rxjs'
+import {getLogger} from 'log'
 import {msg} from 'translate'
 import {runApp$} from 'apps'
 import {withTabContext} from 'widget/tabs/tabContext'
@@ -10,6 +11,8 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './appInstance.module.css'
 
+const log = getLogger('apps')
+
 class AppInstance extends React.Component {
     state = {
         appState: 'REQUESTED'
@@ -17,18 +20,27 @@ class AppInstance extends React.Component {
 
     constructor(props) {
         super(props)
-        this.runApp(props.app)
+        this.runApp()
     }
 
-    runApp(app) {
+    runApp() {
+        const {app} = this.props
         this.props.stream('RUN_APP',
             forkJoin([
                 runApp$(app.path),
                 timer(500)
             ]),
             () => this.onInitialized(),
-            () => Notifications.error({message: msg('apps.run.error', {label: app.label || app.alt})})
+            error => this.onError(error)
         )
+    }
+
+    onError(error) {
+        const {app, busy$} = this.props
+        log.error('Failed to load app', error)
+        this.setState({appState: 'FAILED'})
+        Notifications.error({message: msg('apps.run.error', {label: app.label || app.alt})})
+        busy$.next(false)
     }
 
     onInitialized() {
@@ -82,10 +94,13 @@ class AppInstance extends React.Component {
     }
 
     renderStatus() {
+        const {app} = this.props
         const {appState} = this.state
         return appState === 'REQUESTED'
             ? msg('apps.initializing')
-            : msg('apps.loading.progress')
+            : appState === 'FAILED'
+                ? msg('apps.run.error', {label: app.label || app.alt})
+                : msg('apps.loading.progress')
     }
 
     ready() {
