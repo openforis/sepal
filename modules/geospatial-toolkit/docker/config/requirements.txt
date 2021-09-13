@@ -1,4 +1,4 @@
-# version 2020-02-03
+# version 2021-09-13
 ########  geospatial data analysis  ########
 scikit-image
 scipy
@@ -50,7 +50,7 @@ llvmlite==0.31.0
 coverage
 
 ########  OSK requirements  ########
-git+https://github.com/ESA-PhiLab/OpenSarToolkit.git@main
+git+https://github.com/ESA-PhiLab/OpenSarToolkit.git
 descartes
 fiona
 godale
