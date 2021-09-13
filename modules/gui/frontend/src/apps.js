@@ -1,5 +1,6 @@
-import {concat, exhaustMap, filter, first, map} from 'rxjs/operators'
-import {interval} from 'rxjs'
+import {concat, interval} from 'rxjs'
+import {exhaustMap, filter, first, map, switchMap} from 'rxjs/operators'
+import {get$} from './http-client'
 import {select} from 'store'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
@@ -17,25 +18,23 @@ export const loadApps$ = () =>
         )
     )
 
-// TODO: cleanup
-
 export const runApp$ = path => {
     const {endpoint} = appList().find(app => app.path === path)
 
     const isSessionStarted = e => e.status === 'STARTED'
 
     const requestSession$ = api.apps.requestSession$(endpoint).pipe(
-        filter(isSessionStarted)
+        filter(e => isSessionStarted(e))
     )
 
-    const waitForSession$ = interval(1000).pipe(
+    const waitForSession$ = interval(2000).pipe(
         exhaustMap(() => api.apps.waitForSession$(endpoint)),
-        filter(isSessionStarted),
+        filter(e => isSessionStarted(e)),
         first()
     )
 
-    return requestSession$.pipe(
-        concat(waitForSession$),
+    return concat(requestSession$, waitForSession$).pipe(
+        switchMap(() => get$(`api${path}`, {retries: 9})),
         first()
     )
 }

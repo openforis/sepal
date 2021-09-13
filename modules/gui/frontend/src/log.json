@@ -1,5 +1,6 @@
 {
     "default": "info",
+    "apps": "info",
     "layer": "info",
     "tileManager": "info",
     "tileManager/queue": "info",
