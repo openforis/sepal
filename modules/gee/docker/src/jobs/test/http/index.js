@@ -3,7 +3,7 @@ const {job} = require('root/jobs/job')
 module.exports = job({
     jobName: 'Test1',
     jobPath: __filename,
-    initArgs: () => 'Test',
+    initArgs: () => ({hello: 'Test'}),
     maxConcurrency: 200,
     minIdleCount: 5,
     maxIdleMilliseconds: 2000,
