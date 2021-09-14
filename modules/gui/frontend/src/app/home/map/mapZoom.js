@@ -280,7 +280,7 @@ class _MapZoomPanel extends React.Component {
 }
 
 const policy = () => ({
-    _: 'allow-then-deactivate'
+    _: 'allow'
 })
 
 export const MapZoomPanel = compose(
@@ -289,6 +289,7 @@ export const MapZoomPanel = compose(
     withSubscriptions(),
     activatable({
         id: 'mapZoom',
-        policy
+        policy,
+        alwaysAllow: true
     })
 )

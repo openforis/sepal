@@ -26,7 +26,7 @@ class _MapAreaMenuPanel extends React.Component {
                 element={element}
                 alignment='center'
                 placement='above-below'
-                onBlur={deactivate}
+                onBlur={() => deactivate()}
             >
                 <Panel className={styles.panel} type='normal'>
                     <Panel.Content>
@@ -124,7 +124,7 @@ class _MapAreaMenuPanel extends React.Component {
 }
 
 const policy = () => ({
-    _: 'allow-then-deactivate'
+    _: 'allow'
 })
 
 export const MapAreaMenuPanel = compose(
@@ -133,7 +133,8 @@ export const MapAreaMenuPanel = compose(
     withRecipe(recipe => ({recipe})),
     activatable({
         id: ({area}) => `mapAreaMenu-${area}`,
-        policy
+        policy,
+        alwaysAllow: true
     })
 
 )

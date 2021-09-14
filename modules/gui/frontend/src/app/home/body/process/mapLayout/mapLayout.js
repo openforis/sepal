@@ -110,7 +110,7 @@ class _MapLayoutPanel extends React.Component {
 }
 
 const policy = () => ({
-    _: 'allow-then-deactivate'
+    _: 'allow'
 })
 
 export const MapLayoutPanel = compose(
@@ -118,7 +118,8 @@ export const MapLayoutPanel = compose(
     withRecipe(mapRecipeToProps),
     activatable({
         id: 'mapLayout',
-        policy
+        policy,
+        alwaysAllow: true
     }),
     activator('addImageLayerSource')
 )
