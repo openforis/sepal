@@ -3,7 +3,7 @@ MAINTAINER OpenForis
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current \
     SDKMAN_DIR=/usr/local/lib/sdkman \
-    GDAL_DATA=/usr/share/gdal \
+    GDAL_DATA=/usr/share/gdal
 
 ADD script/init_apt.sh /script/
 RUN chmod u+x /script/init_apt.sh && sync && /script/init_apt.sh
