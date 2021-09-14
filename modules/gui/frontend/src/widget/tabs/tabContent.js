@@ -12,19 +12,19 @@ export class TabContent extends React.PureComponent {
         const portalContainerId = `portal_tab_${id}`
         const tabContext = {id, busy$}
         return (
-            <PortalContext id={portalContainerId}>
-                <div className={[
-                    styles.tabContent,
-                    selected && styles.selected
-                ].join(' ')}>
-                    <Enabled value={selected}>
-                        <PortalContainer id={portalContainerId}/>
-                        <TabContext.Provider value={tabContext}>
+            <div className={[
+                styles.tabContent,
+                selected && styles.selected
+            ].join(' ')}>
+                <Enabled value={selected}>
+                    <PortalContainer id={portalContainerId}/>
+                    <TabContext.Provider value={tabContext}>
+                        <PortalContext id={portalContainerId}>
                             {children({id, type})}
-                        </TabContext.Provider>
-                    </Enabled>
-                </div>
-            </PortalContext>
+                        </PortalContext>
+                    </TabContext.Provider>
+                </Enabled>
+            </div>
         )
     }
 }
