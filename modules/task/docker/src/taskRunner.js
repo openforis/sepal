@@ -5,6 +5,12 @@ const {job} = require('root/jobs/job')
 const log = require('sepal/log').getLogger('task')
 const _ = require('lodash')
 
+const contextService = require('root/jobs/service/context').contextService
+const exportLimiter = require('root/jobs/service/exportLimiter').limiter
+const driveLimiter = require('root/jobs/service/driveLimiter').limiter
+const driveSerializer = require('root/jobs/service/driveSerializer').limiter
+const gcsSerializer = require('root/jobs/service/gcsSerializer').limiter
+
 const tasks = {
     'image.asset_export': () => require('./tasks/imageAssetExport'),
     'image.sepal_export': () => require('./tasks/imageSepalExport'),
@@ -88,13 +94,7 @@ module.exports = job({
     jobName: 'execute task',
     jobPath: __filename,
     before: [require('root/jobs/configure'), require('root/jobs/ee/initialize')],
-    services: [
-        require('root/jobs/service/context').contextService,
-        require('root/jobs/service/exportLimiter').limiter,
-        require('root/jobs/service/driveLimiter').limiter,
-        require('root/jobs/service/driveSerializer').limiter,
-        require('root/jobs/service/gcsSerializer').limiter,
-    ],
+    services: [contextService, exportLimiter, driveLimiter, driveSerializer, gcsSerializer],
     args: ({task}) => [task],
     worker$: executeTask$
 })
