@@ -10,6 +10,8 @@ wget -nv http://step.esa.int/downloads/8.0/installers/$INSTALL_SCRIPT
 sh $INSTALL_SCRIPT -q -overwrite
 rm -f $INSTALL_SCRIPT
 
+echo "snap.userdir=/tmp/.snap" >> /usr/local/snap/etc/snap.properties
+
 snap --nosplash --nogui --modules --update-all 2>&1 | while read -r line; do \
         echo "$line" && \
         [ "$line" = "updates=0" ] && sleep 2 && pkill -TERM -f "snap/jre/bin/java"; \
