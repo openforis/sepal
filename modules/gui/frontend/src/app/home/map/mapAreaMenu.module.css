@@ -13,11 +13,15 @@
     align-items: flex-end;
 }
 
-.button {
+.buttonContainer {
     margin: 2.5rem 0;
     padding: .5rem;
-    pointer-events: all;
+    pointer-events: none;
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+.buttonContainer > * {
+    pointer-events: all;
 }

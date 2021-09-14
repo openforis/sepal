@@ -158,7 +158,7 @@ export class MapAreaMenu extends React.Component {
                 {activator => {
                     const {activate, deactivate, active, canActivate} = activator
                     return (
-                        <div className={styles.button} ref={this.ref}>
+                        <div className={styles.buttonContainer} ref={this.ref}>
                             <Button
                                 look='default'
                                 shape='pill'
