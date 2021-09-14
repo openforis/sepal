@@ -64,14 +64,12 @@ class _MapInfoPanel extends React.Component {
                 </div>
                 <ButtonGroup>
                     <Button
-                        look='highlight'
                         shape='pill'
                         icon='copy'
                         label='coords'
                         onClick={() => this.copyPlainCenterCoordinates(center)}
                     />
                     <Button
-                        look='highlight'
                         shape='pill'
                         icon='copy'
                         label='EE'
@@ -92,14 +90,12 @@ class _MapInfoPanel extends React.Component {
                 </div>
                 <ButtonGroup>
                     <Button
-                        look='highlight'
                         shape='pill'
                         icon='copy'
                         label='coords'
                         onClick={() => this.copyPlainBoundsCoordinates(bounds)}
                     />
                     <Button
-                        look='highlight'
                         shape='pill'
                         icon='copy'
                         label='EE'
@@ -185,14 +181,13 @@ class _MapInfo extends React.Component {
                 <div className={styles.container}>
                     <MapInfoPanel/>
                     <Activator id={'mapInfo'}>
-                        {({activate, deactivate, active, canActivate}) => (
+                        {({activate, deactivate, active}) => (
                             <Button
                                 look='default'
                                 shape='rectangle'
                                 size='x-small'
                                 additionalClassName={styles.button}
                                 onClick={() => active ? deactivate() : activate()}
-                                // disabled={!canActivate}
                                 air='less'>
                                 <ElementResizeDetector onResize={({width}) => this.setState({width})}>
                                     <div className={styles.content}>
