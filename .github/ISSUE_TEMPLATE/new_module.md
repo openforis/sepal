@@ -4,7 +4,6 @@ about: Ask to add you module to sepal dashboard
 title: ''
 labels: ''
 assignees: ''
-
 ---
 
 **What is the name of your repository ?**  
@@ -27,6 +26,6 @@ require new libs, should be use with a GEE acount ... etc
 - [ ] Description set 
 - [ ] Comprehensive README 
 - [ ] 3 languages documentation files (can be empty)
-- [ ] The module works with the default available Python libs
+- [ ] The requirements.txt file have been updated
 - [ ] Existence of a `release` branch 
-- [ ] check behaviour 
+- [ ] check behaviour within a fresh venv
