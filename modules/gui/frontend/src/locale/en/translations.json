@@ -368,6 +368,7 @@
   },
   "map": {
     "info": {
+        "tooltip": "Show coordinates",
         "center": "Center",
         "bounds": "Bounds",
         "coordinatesCopied": "Coordinates copied to the clipboard"

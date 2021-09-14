@@ -146,7 +146,7 @@ const policy = () => ({
     _: 'allow'
 })
 
-export const MapInfoPanel = compose(
+const MapInfoPanel = compose(
     _MapInfoPanel,
     withMap(),
     withSubscriptions(),
@@ -188,7 +188,9 @@ class _MapInfo extends React.Component {
                                 size='x-small'
                                 additionalClassName={styles.button}
                                 onClick={() => active ? deactivate() : activate()}
-                                air='less'>
+                                air='less'
+                                tooltip={active ? null : msg('map.info.tooltip')}
+                                tooltipPlacement='bottomLeft'>
                                 <ElementResizeDetector onResize={({width}) => this.setState({width})}>
                                     <div className={styles.content}>
                                         <div>{format.number({value: scale, unit: 'm/px'})}</div>
