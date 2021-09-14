@@ -47,7 +47,11 @@ class _MapInfoPanel extends React.Component {
                         {bounds && this.renderBounds(bounds)}
                     </Layout>
                 </Panel.Content>
-                <Panel.Buttons onEscape={deactivate} shown={false}/>
+                <Panel.Buttons onEnter={deactivate} onEscape={deactivate}>
+                    <Panel.Buttons.Main>
+                        <Panel.Buttons.Close onClick={deactivate}/>
+                    </Panel.Buttons.Main>
+                </Panel.Buttons>
             </Panel>
         )
     }
