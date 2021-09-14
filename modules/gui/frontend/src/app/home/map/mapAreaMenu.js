@@ -26,7 +26,7 @@ class _MapAreaMenuPanel extends React.Component {
                 element={element}
                 alignment='center'
                 placement='above-below'
-                onBlur={() => deactivate()}
+                onBlur={deactivate}
             >
                 <Panel className={styles.panel} type='normal'>
                     <Panel.Content>
