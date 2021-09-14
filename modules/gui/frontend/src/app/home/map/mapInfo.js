@@ -9,6 +9,7 @@ import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {formatCoordinates} from 'coords'
 import {msg} from 'translate'
+import {throttleTime} from 'rxjs'
 import {withMap} from './mapContext'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -16,6 +17,8 @@ import clipboard from 'clipboard'
 import format from 'format'
 import styles from './mapInfo.module.css'
 import withSubscriptions from 'subscription'
+
+const THROTTLE_TIME_MS = 100
 
 class _MapInfoPanel extends React.Component {
     state = {
@@ -25,7 +28,9 @@ class _MapInfoPanel extends React.Component {
     componentDidMount() {
         const {map: {view$}, addSubscription} = this.props
         addSubscription(
-            view$.subscribe(
+            view$.pipe(
+                throttleTime(THROTTLE_TIME_MS)
+            ).subscribe(
                 view => view && this.setState({view})
             )
         )
@@ -161,7 +166,9 @@ class _MapInfo extends React.Component {
     componentDidMount() {
         const {map: {view$}, addSubscription} = this.props
         addSubscription(
-            view$.subscribe(
+            view$.pipe(
+                throttleTime(THROTTLE_TIME_MS)
+            ).subscribe(
                 view => view && this.setState({view})
             )
         )
