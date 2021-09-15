@@ -38,13 +38,12 @@ class _MapInfoPanel extends React.Component {
 
     render() {
         const {activatable: {deactivate}} = this.props
-        const {view: {center, bounds}} = this.state
+        const {view: {center, zoom}} = this.state
         return (
             <Panel className={styles.panel} type='top-right'>
                 <Panel.Content>
                     <Layout type='vertical'>
-                        {center && this.renderCenter(center)}
-                        {bounds && this.renderBounds(bounds)}
+                        {center && zoom && this.renderCenter(center, zoom)}
                     </Layout>
                 </Panel.Content>
                 <Panel.Buttons onEnter={deactivate} onEscape={deactivate}>
@@ -56,50 +55,39 @@ class _MapInfoPanel extends React.Component {
         )
     }
 
-    renderCenter(center) {
+    renderCenter(center, zoom) {
         return (
             <Widget label={msg('map.info.center')} spacing='compact'>
                 <div className={styles.coordinates}>
                     {formatCoordinates(center, 5)}
                 </div>
-                <ButtonGroup>
+                <ButtonGroup layout='vertical'>
                     <Button
                         shape='pill'
                         icon='copy'
-                        label='coords'
+                        label='[longitude, latitude]'
+                        alignment='left'
                         onClick={() => this.copyPlainCenterCoordinates(center)}
+                        tooltip={msg('map.info.copy')}
+                        tooltipPlacement='left'
                     />
                     <Button
                         shape='pill'
                         icon='copy'
-                        label='EE'
+                        label='ee.Geometry.Point(...)'
+                        alignment='left'
                         onClick={() => this.copyEECenterCoordinates(center)}
-                    />
-                </ButtonGroup>
-            </Widget>
-        )
-    }
-
-    renderBounds(bounds) {
-        const [sw, ne] = bounds
-        return (
-            <Widget label={msg('map.info.bounds')} spacing='compact'>
-                <div className={styles.coordinates}>
-                    <div>{formatCoordinates(sw, 5)}</div>
-                    <div>{formatCoordinates(ne, 5)}</div>
-                </div>
-                <ButtonGroup>
-                    <Button
-                        shape='pill'
-                        icon='copy'
-                        label='coords'
-                        onClick={() => this.copyPlainBoundsCoordinates(bounds)}
+                        tooltip={msg('map.info.copy')}
+                        tooltipPlacement='left'
                     />
                     <Button
                         shape='pill'
                         icon='copy'
-                        label='EE'
-                        onClick={() => this.copyEEBoundsCoordinates(bounds)}
+                        label='Map.setCenter(...)'
+                        alignment='left'
+                        onClick={() => this.copyEESetCenter(center, zoom)}
+                        tooltip={msg('map.info.copy')}
+                        tooltipPlacement='left'
                     />
                 </ButtonGroup>
             </Widget>
@@ -116,22 +104,13 @@ class _MapInfoPanel extends React.Component {
         this.notify()
     }
 
-    copyPlainBoundsCoordinates(bounds) {
-        clipboard.copy(this.formatBounds(bounds))
-        this.notify()
-    }
-
-    copyEEBoundsCoordinates(bounds) {
-        clipboard.copy(`ee.Geometry.Rectangle(${this.formatBounds(bounds)})`)
+    copyEESetCenter({lat, lng}, zoom) {
+        clipboard.copy(`Map.setCenter(${lng}, ${lat}, ${zoom})`)
         this.notify()
     }
 
     formatCenter({lat, lng}) {
         return `[${lng}, ${lat}]`
-    }
-
-    formatBounds([[w, s], [e, n]]) {
-        return `[[${w}, ${s}], [${e}, ${n}]]`
     }
 
     notify() {
