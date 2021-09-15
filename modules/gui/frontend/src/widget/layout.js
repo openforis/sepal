@@ -26,7 +26,7 @@ export class Layout extends React.Component {
 }
 
 Layout.propTypes = {
-    children: PropTypes.any.isRequired,
+    children: PropTypes.any,
     className: PropTypes.string,
     spacing: PropTypes.oneOf(['loose', 'normal', 'compact', 'none']),
     style: PropTypes.object,
