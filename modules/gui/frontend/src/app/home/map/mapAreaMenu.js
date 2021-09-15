@@ -1,8 +1,6 @@
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
-import {Combo} from 'widget/combo'
-import {Item} from 'widget/item'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
@@ -30,7 +28,7 @@ class _MapAreaMenuPanel extends React.Component {
             >
                 <Panel className={styles.panel} type='normal'>
                     <Panel.Header>
-                        {this.renderImageLayerSourceDescription()}
+                        {this.getImageLayerSourceDescription()}
                     </Panel.Header>
                     <Panel.Content>
                         <Layout>
@@ -45,7 +43,7 @@ class _MapAreaMenuPanel extends React.Component {
         )
     }
 
-    renderImageLayerSourceDescription() {
+    getImageLayerSourceDescription() {
         const {imageLayerSources, layers: {areas}, area, recipe} = this.props
         const {imageLayer} = areas[area]
 
@@ -119,10 +117,9 @@ export const MapAreaMenuPanel = compose(
         policy,
         alwaysAllow: true
     })
-
 )
 
-export class MapAreaMenu extends React.Component {
+class _MapAreaMenu extends React.Component {
     ref = React.createRef()
 
     render() {
@@ -148,6 +145,8 @@ export class MapAreaMenu extends React.Component {
                                 icon='bars'
                                 disabled={!canActivate && !active}
                                 onClick={() => active ? deactivate() : activate()}
+                                tooltip={this.getImageLayerSourceDescription()}
+                                tooltipDisabled={active}
                             />
                         </div>
                     )
@@ -162,7 +161,22 @@ export class MapAreaMenu extends React.Component {
             <MapAreaMenuPanel area={area} form={form} element={this.ref.current}/>
         )
     }
+
+    getImageLayerSourceDescription() {
+        const {imageLayerSources, layers: {areas}, area, recipe} = this.props
+        const {imageLayer} = areas[area]
+
+        const source = imageLayerSources.find(({id}) => id === imageLayer.sourceId)
+        const {description} = getImageLayerSource({recipe, source})
+        return description
+    }
 }
+
+export const MapAreaMenu = compose(
+    _MapAreaMenu,
+    withLayers(),
+    withRecipe(recipe => ({recipe}))
+)
 
 MapAreaMenu.propTypes = {
     area: PropTypes.string,
