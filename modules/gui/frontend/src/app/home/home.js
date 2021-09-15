@@ -99,10 +99,12 @@ class Home extends React.Component {
                     floatingMenu && styles.floatingMenu,
                     floatingFooter && styles.floatingFooter
                 ].join(' ')}>
-                    <Menu className={styles.menu}/>
-                    <div className={styles.main}>
-                        <Body className={styles.body}/>
-                        <Footer className={styles.footer}/>
+                    <div id='main'>
+                        <Menu className={styles.menu}/>
+                        <div className={styles.main}>
+                            <Body className={styles.body}/>
+                            <Footer className={styles.footer}/>
+                        </div>
                     </div>
                     <PortalContainer/>
                 </div>
