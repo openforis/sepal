@@ -4,7 +4,6 @@ echo
 echo "*********************************"
 echo "*** Installing misc utilities ***"
 echo "*********************************"
-export DEBIAN_FRONTEND=noninteractive
 apt-get update -y && apt-get install -y --fix-missing \
     aria2 \
     bc \

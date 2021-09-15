@@ -1,7 +1,5 @@
 #!/bin/bash
 set -e
-export DEBIAN_FRONTEND=noninteractive
-
 echo
 echo "********************"
 echo "*** Installing R ***"

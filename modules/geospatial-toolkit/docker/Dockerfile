@@ -5,6 +5,8 @@ ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     SDKMAN_DIR=/usr/local/lib/sdkman \
     GDAL_DATA=/usr/share/gdal
 
+ARG DEBIAN_FRONTEND noninteractive
+
 ADD script/init_apt.sh /script/
 RUN chmod u+x /script/init_apt.sh && sync && /script/init_apt.sh
 
@@ -38,8 +40,6 @@ RUN chmod u+x /script/init_drive.sh && sync && /script/init_drive.sh
 
 ADD script/init_node.sh /script/
 RUN chmod u+x /script/init_node.sh && sync && /script/init_node.sh
-
-ENV DEBIAN_FRONTEND noninteractive
 
 ADD script/init_gpu.sh /script/
 RUN chmod u+x /script/init_gpu.sh && sync && /script/init_gpu.sh
