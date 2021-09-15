@@ -135,13 +135,12 @@ export class SepalMap {
         const {googleMap} = this
         const center = this.getCenter()
         const zoom = this.getZoom()
-        const bounds = this.getBounds()
         const scale = this.getScale(center, zoom)
         const minZoom = googleMap.minZoom
         const maxZoom = googleMap.maxZoom
         const isMinZoom = zoom === minZoom
         const isMaxZoom = zoom === maxZoom
-        return {center, zoom, bounds, scale, minZoom, maxZoom, isMinZoom, isMaxZoom}
+        return {center, zoom, scale, minZoom, maxZoom, isMinZoom, isMaxZoom}
     }
 
     setView({center, zoom}) {

@@ -119,6 +119,11 @@ class _VisualizationSelector extends React.Component {
         recipeActionBuilder('REMOVE_VIS_PARAMS', {visParams})
             .del(['layers.userDefinedVisualizations', source.id, {id: visParams.id}])
             .dispatch()
+        const options = this.flattenOptions(this.getOptions())
+        this.selectVisParams(options.length
+            ? options[0].visParams
+            : null
+        )
     }
 }
 
