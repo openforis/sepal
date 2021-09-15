@@ -1,7 +1,6 @@
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
-import {Combo} from 'widget/combo'
 import {Item} from 'widget/item'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
@@ -29,9 +28,11 @@ class _MapAreaMenuPanel extends React.Component {
                 onBlur={deactivate}
             >
                 <Panel className={styles.panel} type='normal'>
+                    <Panel.Header>
+                        {this.getImageLayerSourceDescription()}
+                    </Panel.Header>
                     <Panel.Content>
                         <Layout>
-                            {this.renderImageLayerSource()}
                             {this.renderImageLayerForm()}
                             {this.renderFeatureLayers()}
                         </Layout>
@@ -43,32 +44,13 @@ class _MapAreaMenuPanel extends React.Component {
         )
     }
 
-    renderImageLayerSource() {
+    getImageLayerSourceDescription() {
         const {imageLayerSources, layers: {areas}, area, recipe} = this.props
         const {imageLayer} = areas[area]
 
-        const imageLayerSourceOptions = imageLayerSources.map(source => {
-            const {id, type} = source
-            const {description} = getImageLayerSource({recipe, source})
-            return ({
-                value: id,
-                type,
-                label: description,
-                searchableText: `${msg(`imageLayerSources.${type}.label`)} ${description}`,
-                render: () => <Item title={msg(`imageLayerSources.${type}.label`)} description={description}/>
-            })
-        })
-
-        const {label, type} = imageLayerSourceOptions.find(({value}) => value === imageLayer.sourceId)
-        return (
-            <Combo
-                label={msg(`imageLayerSources.${type}.label`)}
-                placeholder={label}
-                options={imageLayerSourceOptions}
-                value={imageLayer.sourceId}
-                onChange={({value}) => this.selectImageLayer(value)}
-            />
-        )
+        const source = imageLayerSources.find(({id}) => id === imageLayer.sourceId)
+        const {description} = getImageLayerSource({recipe, source})
+        return description
     }
 
     renderImageLayerForm() {
@@ -136,10 +118,9 @@ export const MapAreaMenuPanel = compose(
         policy,
         alwaysAllow: true
     })
-
 )
 
-export class MapAreaMenu extends React.Component {
+class _MapAreaMenu extends React.Component {
     ref = React.createRef()
 
     render() {
@@ -165,6 +146,8 @@ export class MapAreaMenu extends React.Component {
                                 icon='bars'
                                 disabled={!canActivate && !active}
                                 onClick={() => active ? deactivate() : activate()}
+                                tooltip={this.getImageLayerSourceDescription()}
+                                tooltipDisabled={active}
                             />
                         </div>
                     )
@@ -179,7 +162,25 @@ export class MapAreaMenu extends React.Component {
             <MapAreaMenuPanel area={area} form={form} element={this.ref.current}/>
         )
     }
+
+    getImageLayerSourceDescription() {
+        const {imageLayerSources, layers: {areas}, area, recipe} = this.props
+        const {imageLayer} = areas[area]
+
+        const source = imageLayerSources.find(({id}) => id === imageLayer.sourceId)
+        const {description} = getImageLayerSource({recipe, source})
+        return (
+            <Item title={msg(`imageLayerSources.${source.type}.label`)} description={description}/>
+        )
+    }
+
 }
+
+export const MapAreaMenu = compose(
+    _MapAreaMenu,
+    withLayers(),
+    withRecipe(recipe => ({recipe}))
+)
 
 MapAreaMenu.propTypes = {
     area: PropTypes.string,
