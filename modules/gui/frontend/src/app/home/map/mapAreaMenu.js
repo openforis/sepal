@@ -1,6 +1,7 @@
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
+import {Item} from 'widget/item'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
@@ -168,8 +169,11 @@ class _MapAreaMenu extends React.Component {
 
         const source = imageLayerSources.find(({id}) => id === imageLayer.sourceId)
         const {description} = getImageLayerSource({recipe, source})
-        return description
+        return (
+            <Item title={msg(`imageLayerSources.${source.type}.label`)} description={description}/>
+        )
     }
+
 }
 
 export const MapAreaMenu = compose(
