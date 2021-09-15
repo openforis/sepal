@@ -358,6 +358,7 @@
 		"info": {
 			"center": "Centrer",
 			"bounds": "Limites",
+            "copy": "Copier dans le presse-papier",
 			"coordinatesCopied": "Coordonnées copiées dans le presse-papiers"
 		},
 		"legendBuilder": {

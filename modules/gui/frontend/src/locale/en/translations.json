@@ -371,6 +371,7 @@
         "tooltip": "Show coordinates",
         "center": "Center",
         "bounds": "Bounds",
+        "copy": "Copy to clipboard",
         "coordinatesCopied": "Coordinates copied to the clipboard"
     },
     "legendBuilder": {
