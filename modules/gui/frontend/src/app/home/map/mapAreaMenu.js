@@ -50,7 +50,9 @@ class _MapAreaMenuPanel extends React.Component {
 
         const source = imageLayerSources.find(({id}) => id === imageLayer.sourceId)
         const {description} = getImageLayerSource({recipe, source})
-        return description
+        return (
+            <div>{description}</div>
+        )
     }
 
     renderImageLayerForm() {
