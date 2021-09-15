@@ -9,7 +9,7 @@ import {SplitView} from 'widget/split/splitView'
 import {VisParamsPanel} from './visParams/visParamsPanel'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {filter, finalize, first, last, map as rxMap, share, switchMap, takeUntil, windowTime} from 'rxjs/operators'
+import {distinctUntilChanged, filter, finalize, first, last, map as rxMap, share, switchMap, takeUntil, windowTime} from 'rxjs/operators'
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
@@ -36,7 +36,7 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _Map extends React.Component {
-    updateView$ = new BehaviorSubject({})
+    viewUpdates$ = new BehaviorSubject({})
     linked$ = new BehaviorSubject(false)
     mouseDown$ = new Subject()
     draggingMap$ = new BehaviorSubject(false)
@@ -44,6 +44,10 @@ class _Map extends React.Component {
     splitPosition$ = new BehaviorSubject()
     draggingSplit$ = new BehaviorSubject(false)
     cursor$ = new Subject()
+
+    filteredViewUpdates$ = this.viewUpdates$.pipe(
+        distinctUntilChanged(_.isEqual)
+    )
 
     state = {
         maps: {}, // [id]: {id, map, listeners, subscriptions}
@@ -114,7 +118,7 @@ class _Map extends React.Component {
                 map.setView(view)
             }
         })
-        this.updateView$.next(view)
+        this.viewUpdates$.next(view)
         if (area !== 'overlay') {
             overlay && overlay.map.setView(view)
         }
@@ -392,7 +396,7 @@ class _Map extends React.Component {
         this.withFirstMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
 
         if (isOverlay) {
-            this.updateView$.next(map.getView())
+            this.viewUpdates$.next(map.getView())
         }
 
         const {googleMap} = map.getGoogle()
@@ -571,7 +575,7 @@ class _Map extends React.Component {
             view$.subscribe(
                 view => this.synchronizeIn(view)
             ),
-            this.updateView$.subscribe(
+            this.filteredViewUpdates$.subscribe(
                 view => updateView$.next(view)
             ),
             this.linked$.subscribe(
@@ -624,7 +628,7 @@ class _Map extends React.Component {
         const isInitialized = () => bounds
 
         return {
-            view$: this.updateView$,
+            view$: this.filteredViewUpdates$,
             linked$: this.linked$,
             toggleLinked: this.toggleLinked,
             zoomIn: () => map.zoomIn(),
