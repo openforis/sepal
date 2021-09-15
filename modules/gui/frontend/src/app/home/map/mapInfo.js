@@ -74,7 +74,7 @@ class _MapInfoPanel extends React.Component {
                     <Button
                         shape='pill'
                         icon='copy'
-                        label='ee.Geometry.Point(...)'
+                        label='ee.Geometry.Point()'
                         alignment='left'
                         onClick={() => this.copyEECenterCoordinates(center)}
                         tooltip={msg('map.info.copy')}
@@ -83,7 +83,7 @@ class _MapInfoPanel extends React.Component {
                     <Button
                         shape='pill'
                         icon='copy'
-                        label='Map.setCenter(...)'
+                        label='Map.setCenter()'
                         alignment='left'
                         onClick={() => this.copyEESetCenter(center, zoom)}
                         tooltip={msg('map.info.copy')}
