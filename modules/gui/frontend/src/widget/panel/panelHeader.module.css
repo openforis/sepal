@@ -13,7 +13,9 @@
 }
 
 .header * {
+    overflow: hidden;
     text-transform: uppercase;
+    text-overflow: ellipsis;
 }
 
 .header .icon {
