@@ -14,16 +14,20 @@ R -e "install.packages('rgdal', version='1.3-9', dependencies=TRUE, repos='http:
 R -e "pacman::p_load(\
         'BIOMASS',\
         'mapview',\
+        'pkgdown',\
         'rJava',\
         'rknn',\
+        'ragg',\
         'RStoolbox',\
         'sf',\
+        'textshaping',\
         'tigris',\
         'XLConnect',\
         'xlsx',\
         'vtree',\
         'xlsxjars'\
     )"
+
 R -e "pacman::p_load_gh(\
         'r-barnes/dggridR',\
         'bfast2/bfast',\
