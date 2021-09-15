@@ -29,9 +29,11 @@ class _MapAreaMenuPanel extends React.Component {
                 onBlur={deactivate}
             >
                 <Panel className={styles.panel} type='normal'>
+                    <Panel.Header>
+                        {this.renderImageLayerSourceDescription()}
+                    </Panel.Header>
                     <Panel.Content>
                         <Layout>
-                            {this.renderImageLayerSource()}
                             {this.renderImageLayerForm()}
                             {this.renderFeatureLayers()}
                         </Layout>
@@ -43,32 +45,13 @@ class _MapAreaMenuPanel extends React.Component {
         )
     }
 
-    renderImageLayerSource() {
+    renderImageLayerSourceDescription() {
         const {imageLayerSources, layers: {areas}, area, recipe} = this.props
         const {imageLayer} = areas[area]
 
-        const imageLayerSourceOptions = imageLayerSources.map(source => {
-            const {id, type} = source
-            const {description} = getImageLayerSource({recipe, source})
-            return ({
-                value: id,
-                type,
-                label: description,
-                searchableText: `${msg(`imageLayerSources.${type}.label`)} ${description}`,
-                render: () => <Item title={msg(`imageLayerSources.${type}.label`)} description={description}/>
-            })
-        })
-
-        const {label, type} = imageLayerSourceOptions.find(({value}) => value === imageLayer.sourceId)
-        return (
-            <Combo
-                label={msg(`imageLayerSources.${type}.label`)}
-                placeholder={label}
-                options={imageLayerSourceOptions}
-                value={imageLayer.sourceId}
-                onChange={({value}) => this.selectImageLayer(value)}
-            />
-        )
+        const source = imageLayerSources.find(({id}) => id === imageLayer.sourceId)
+        const {description} = getImageLayerSource({recipe, source})
+        return description
     }
 
     renderImageLayerForm() {
