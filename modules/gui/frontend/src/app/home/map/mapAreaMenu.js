@@ -111,7 +111,7 @@ const policy = () => ({
     _: 'allow'
 })
 
-export const MapAreaMenuPanel = compose(
+const MapAreaMenuPanel = compose(
     _MapAreaMenuPanel,
     withLayers(),
     withRecipe(recipe => ({recipe})),
