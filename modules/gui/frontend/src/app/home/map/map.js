@@ -114,9 +114,8 @@ class _Map extends React.Component {
                 map.setView(view)
             }
         })
-        if (area === 'overlay') {
-            this.updateView$.next(view)
-        } else {
+        this.updateView$.next(view)
+        if (area !== 'overlay') {
             overlay && overlay.map.setView(view)
         }
     }
