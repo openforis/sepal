@@ -1,5 +1,5 @@
 const {job} = require('root/jobs/job')
-const {limiter} = require('sepal/ee/eeLimiterService')
+const {limiterService: eeLimiterService} = require('sepal/ee/eeLimiterService')
 
 const worker$ = () => {
     const {swallow} = require('sepal/rxjs/operators')
@@ -21,6 +21,6 @@ const worker$ = () => {
 module.exports = job({
     jobName: 'EE Initialization',
     before: [require('./authenticate')],
-    services: [limiter],
+    services: [eeLimiterService],
     worker$
 })

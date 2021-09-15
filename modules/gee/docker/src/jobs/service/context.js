@@ -3,8 +3,8 @@ const {first} = require('rxjs/operators')
 const service = require('sepal/service')
 
 const contextService = {
-    name: 'ContextService',
-    service$: () => {
+    serviceName: 'ContextService',
+    serviceHandler$: () => {
         const {of} = require('rxjs')
         return of(require('root/config'))
     }

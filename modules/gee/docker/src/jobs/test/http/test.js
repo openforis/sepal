@@ -1,9 +1,9 @@
 const {timer, of} = require('rxjs')
 const {mergeMap, map} = require('rxjs/operators')
-const {limiter$} = require('./testLimiter')
+const {limiter$: testLimiter$} = require('./testLimiter')
 
 module.exports = (minDuration, maxDuration = minDuration, errorProbability, {initArgs: {hello}}) =>
-    limiter$(
+    testLimiter$(
         of(true).pipe(
             map(() => Math.round(Math.random() * (maxDuration - minDuration) + minDuration)),
             mergeMap(duration =>

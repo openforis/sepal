@@ -1,5 +1,5 @@
 const {job} = require('root/jobs/job')
-const {limiter} = require('sepal/ee/eeLimiterService')
+const {limiterService: eeLimiterService} = require('sepal/ee/eeLimiterService')
 
 const worker$ = () => {
     const {ReplaySubject} = require('rxjs')
@@ -73,6 +73,6 @@ const worker$ = () => {
 
 module.exports = job({
     jobName: 'EE Initialization',
-    services: [limiter],
+    services: [eeLimiterService],
     worker$
 })
