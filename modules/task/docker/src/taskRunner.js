@@ -6,10 +6,10 @@ const log = require('sepal/log').getLogger('task')
 const _ = require('lodash')
 
 const {contextService} = require('root/jobs/service/context')
-const {limiterService: exportLimiterService} = require('root/jobs/service/exportLimiter')
-const {limiterService: driveLimiterService} = require('root/jobs/service/driveLimiter')
-const {limiterService: driveSerializerService} = require('root/jobs/service/driveSerializer')
-const {limiterService: gcsSerializerService} = require('root/jobs/service/gcsSerializer')
+const {exportLimiterService} = require('root/jobs/service/exportLimiter')
+const {driveLimiterService} = require('root/jobs/service/driveLimiter')
+const {driveSerializerService} = require('root/jobs/service/driveSerializer')
+const {gcsSerializerService} = require('root/jobs/service/gcsSerializer')
 
 const tasks = {
     'image.asset_export': () => require('./tasks/imageAssetExport'),

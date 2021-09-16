@@ -1,5 +1,5 @@
 const {job} = require('root/jobs/job')
-const {limiterService: eeLimiterService} = require('sepal/ee/eeLimiterService')
+const {eeLimiterService} = require('sepal/ee/eeLimiterService')
 
 const worker$ = () => {
     const {swallow} = require('sepal/rxjs/operators')
