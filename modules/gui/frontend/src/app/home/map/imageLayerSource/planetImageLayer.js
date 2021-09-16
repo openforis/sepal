@@ -182,12 +182,14 @@ class _PlanetImageLayer extends React.Component {
         const apiKey = this.getApiKey()
         return api.planet.loadMosaics$(apiKey).pipe(
             map(({mosaics}) => _.orderBy(
-                mosaics.map(({first_acquired, last_acquired, item_types, _links: {tiles}}) => ({
-                    startDate: first_acquired.substring(0, 10),
-                    endDate: last_acquired.substring(0, 10),
-                    urlTemplate: tiles,
-                    hasCir: item_types.includes('PSScene4Band')
-                })),
+                mosaics
+                    .filter(({datatype}) => datatype !== 'byte')
+                    .map(({first_acquired, last_acquired, item_types, _links: {tiles}}) => ({
+                        startDate: first_acquired.substring(0, 10),
+                        endDate: last_acquired.substring(0, 10),
+                        urlTemplate: tiles,
+                        hasCir: item_types.includes('PSScene4Band')
+                    })),
                 ['startDate', 'endDate'], ['desc', 'desc']
             ))
         )
