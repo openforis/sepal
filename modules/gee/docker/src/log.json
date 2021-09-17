@@ -6,13 +6,14 @@
         "channel-forward": "info",
         "channel-reverse": "info",
         "ee": "info",
-        "http": "debug",
+        "http": "info",
         "limiter": "info",
         "logger": "info",
         "main": "info",
         "scheduler": "info",
         "pool": "info",
         "service": "info",
+        "tokenLimiter": "info",
         "transport": "info",
         "worker": "info"
     },
@@ -29,6 +30,7 @@
         "scheduler": "info",
         "pool": "info",
         "service": "info",
+        "tokenLimiter": "info",
         "transport": "info",
         "worker": "info"
     }

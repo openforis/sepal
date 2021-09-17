@@ -21,6 +21,10 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
     const {swallow} = require('sepal/rxjs/operators')
     const ee = require('sepal/ee')
 
+    if (sepalUser) {
+        ee.setUsername(sepalUser.username)
+    }
+
     const secondsToExpiration = expiration => {
         const millisecondsLeft = expiration - Date.now()
         if (millisecondsLeft < 0) {
