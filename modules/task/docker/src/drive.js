@@ -8,7 +8,7 @@ const fs = require('fs')
 const Path = require('path')
 const {retry, swallow} = require('sepal/rxjs/operators')
 const {mkdir$} = require('./rxjs/fileSystem')
-const {limiter$: driveLimiter$} = require('./jobs/service/driveLimiter')
+const {driveLimiter$} = require('./jobs/service/driveLimiter')
 const format = require('./format')
 const moment = require('moment')
 

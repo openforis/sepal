@@ -3,7 +3,7 @@ const {EMPTY, concat, of} = require('rxjs')
 const {catchError, map, switchMap} = require('rxjs/operators')
 const {swallow} = require('sepal/rxjs/operators')
 const Path = require('path')
-const {limiter$: exportLimiter$} = require('root/jobs/service/exportLimiter')
+const {exportLimiter$} = require('root/jobs/service/exportLimiter')
 const task$ = require('root/ee/task')
 const {progress} = require('root/rxjs/operators')
 

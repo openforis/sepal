@@ -3,8 +3,8 @@ const service = require('sepal/service')
 const {first} = require('rxjs/operators')
 
 const contextService = {
-    name: 'ContextService',
-    service$: () => require('root/context').getContext$()
+    serviceName: 'ContextService',
+    serviceHandler$: () => require('root/context').getContext$()
 }
 
 module.exports = {
