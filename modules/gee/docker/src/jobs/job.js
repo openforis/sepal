@@ -11,7 +11,7 @@ module.exports = {
         maxIdleMilliseconds,
         ctx,
         before = [require('root/jobs/ee/initialize')],
-        services = [],
+        services,
         args = ctx => [ctx.request.body],
         worker$,
     }) =>

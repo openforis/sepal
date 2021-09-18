@@ -18,6 +18,7 @@
         "service": "info",
         "task": "info",
         "terminal": "info",
+        "tokenLimiter": "info",
         "transport": "info",
         "worker": "info"
     }

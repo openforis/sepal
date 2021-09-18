@@ -1,6 +1,9 @@
-const {Limiter} = require('sepal/service/limiter')
+const {LimiterService} = require('sepal/service/limiter')
 
-module.exports = Limiter({
-    name: 'GCSSerializer',
+const options = {
     maxConcurrency: 1
-})
+}
+
+const {limiterService: gcsSerializerService, limiter$: gcsSerializer$} = LimiterService('GCSSerializer', options)
+
+module.exports = {gcsSerializerService, gcsSerializer$}

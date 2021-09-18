@@ -304,9 +304,9 @@ tail() {
                 return
             fi
         done
-        multitail ${LOGFILES[@]}
+        multitail -CT ANSI ${LOGFILES[@]}
     else
-        multitail $LOG_DIR/*.log
+        multitail -CT ANSI $LOG_DIR/*.log
     fi
 }
 

@@ -161,7 +161,10 @@ class _PlanetImageLayer extends React.Component {
             stream(`LOAD_PLANET_MOSAICS_${apiKey}`,
                 this.loadMosaics$(),
                 mosaics => {
-                    this.selectDefault(mosaics)
+                    const {layerConfig: {urlTemplate} = {}} = this.props
+                    if (!urlTemplate) {
+                        this.selectDefault(mosaics)
+                    }
                     this.setState({[apiKey]: mosaics})
                 }
             )
