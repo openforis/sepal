@@ -20,7 +20,7 @@ queue.process(concurrency, async job => {
     if (to.length || cc.length || bcc.length) {
         return await send({id, email: {to, cc, bcc, ...props}})
     } else {
-        log.debug('Email discarded due as no recipient is enabled to receive email notifications')
+        log.debug(() => 'Email discarded due as no recipient is enabled to receive email notifications')
     }
 })
 
@@ -45,7 +45,7 @@ queue.on('stalled', job => {
 queue.on('drained', async () => await logStats())
 
 const enqueue = async (message, {id = uid(), priority = 1} = {}) => {
-    log.debug(`<${id}> Enqueuing email ${tag(message)} with priority ${priority}`)
+    log.debug(() => `<${id}> Enqueuing email ${tag(message)} with priority ${priority}`)
     return await queue.add(message, {
         jobId: id,
         priority,
