@@ -51,7 +51,6 @@ llvmlite==0.31.0
 coverage
 
 ########  OSK requirements  ########
-git+https://github.com/ESA-PhiLab/OpenSarToolkit.git
 descartes
 fiona
 godale
