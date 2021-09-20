@@ -17,6 +17,12 @@ java \
     "$password" 2> /dev/null
 
 if [ -s $sshScriptFile ]; then
-    eval "$sshScriptFile \"${SSH_ORIGINAL_COMMAND:-}\""
-    rm $sshScriptFile > /dev/null 2>&1
+  n=0
+  until [ "$n" -ge 5 ]
+  do
+    eval "$sshScriptFile \"${SSH_ORIGINAL_COMMAND:-}\"" && break
+    n=$((n+1))
+    sleep 5
+  done
+  rm $sshScriptFile > /dev/null 2>&1
 fi
