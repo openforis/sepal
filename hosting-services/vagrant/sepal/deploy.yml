@@ -148,7 +148,7 @@
     - { role: run-module, module: user }
     - { role: run-module, module: user-storage }
     - { role: run-module, module: user-storage-backup }
-    - { role: run-modulemodule, module: app-manager }
+    - { role: run-module, module: app-manager }
     - { role: run-module, module: sepal-server, container_name: sepal }
     - { role: run-module, module: gui }
     - { role: run-module, module: ceo-gateway }
