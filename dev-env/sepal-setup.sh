@@ -70,6 +70,3 @@ sudo cp /etc/sepal/conf.d/certificates/gee-oauth.json /etc/sepal/module.d/google
 sudo chown -R sepal: /etc/sepal/module.d/google-earth-engine
 
 
-#mkdir -p /etc/sepal/module.d/api-gateway
-#sudo cp /etc/sepal/conf.d/certificates/sepal-https.* /etc/sepal/module.d/api-gateway
-#sudo chown -R sepal: /etc/sepal/module.d/api-gateway
