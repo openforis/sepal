@@ -38,12 +38,12 @@ const download$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) =>
     )
 
 const delete$ = ({bucketPath, prefix}) => {
-    log.debug(`delete files ${bucketPath}:${prefix}`)
+    log.debug(() => `delete files ${bucketPath}:${prefix}`)
     return cloudStorage$().pipe(
         map(cloudStorage => cloudStorage.bucket(`gs://${bucketPath}`)),
         switchMap(bucket => bucket.deleteFiles({prefix})),
         catchError(error => {
-            log.debug(`Failed to delete ${bucketPath}:${prefix}`, error.message)
+            log.debug(() => [`Failed to delete ${bucketPath}:${prefix}`, error.message])
             return EMPTY
         }),
         swallow()

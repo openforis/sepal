@@ -64,7 +64,7 @@ const send = async ({id, email: {from: tentativeFrom, to, cc, bcc, subject = '',
             ? log.trace(`<${id}> Sending email ${tag({from, to, cc, bcc, subject})}\n`, body)
             : log.debug(`<${id}> Sending email ${tag({from, to, cc, bcc, subject})}`)
         const status = await transport.sendMail(email)
-        log.debug(`<${id}> Email status:`, status)
+        log.debug(() => [`<${id}> Email status:`, status])
     } catch (error) {
         log.warn(`<${id}> Ignoring email ${tag({from, to, cc, bcc, subject})}`, error)
     }

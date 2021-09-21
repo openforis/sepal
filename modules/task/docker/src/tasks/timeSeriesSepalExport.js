@@ -173,7 +173,7 @@ const export$ = ({downloadDir, description, recipe, indicator, scale}) => {
 
     return tileIds$.pipe(
         switchMap(tileIds => exportTiles$(tileIds)),
-        tap(progress => log.trace(`time-series: ${JSON.stringify(progress)}`)),
+        tap(progress => log.trace(() => `time-series: ${JSON.stringify(progress)}`)),
         scan(
             (acc, progress) => {
                 return ({

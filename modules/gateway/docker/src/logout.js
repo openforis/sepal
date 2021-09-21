@@ -4,7 +4,7 @@ const logout = async (req, res, _next) => {
     const user = req.session.user
     req.session.destroy()
     if (user) {
-        log.debug(`[${user.username}] Logout`)
+        log.debug(() => `[${user.username}] Logout`)
     }
     const cookieHeader = req.get('Cookie')
     if (cookieHeader) {
