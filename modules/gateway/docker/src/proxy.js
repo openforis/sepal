@@ -73,7 +73,7 @@ const proxy = app =>
                     const location = proxyRes.headers['location']
                     if (location) {
                         const rewritten = rewriteLocation({path, target, location})
-                        log.debug(`Rewriting location header from "${location}" to "${rewritten}"`)
+                        log.debug(() => `Rewriting location header from "${location}" to "${rewritten}"`)
                         proxyRes.headers['location'] = rewritten
                     }
                 }
@@ -101,7 +101,7 @@ const updateUserInSession = req => {
             map((({body}) => JSON.parse(body))),
         ).subscribe({
             next: user => {
-                log.debug(`[${user.username}] [${req.url}] Updated user in session`)
+                log.debug(() => `[${user.username}] [${req.url}] Updated user in session`)
                 req.session.user = user
                 req.session.save()
             },

@@ -35,12 +35,12 @@ const toBoolean = value => {
 }
 
 const setEmailNotificationsEnabled = async (emailAddress, enabled) => {
-    log.debug(`Setting email notifications preference for address <${emailAddress}>: ${enabled}`)
+    log.debug(() => `Setting email notifications preference for address <${emailAddress}>: ${enabled}`)
     await redis.set(emailNotificationsEnabledKey(emailAddress), fromBoolean(enabled))
 }
 
 const getEmailNotificationsEnabled = async emailAddress => {
-    log.debug(`Getting email notifications preference for address <${emailAddress}>`)
+    log.debug(() => `Getting email notifications preference for address <${emailAddress}>`)
     return toBoolean(await redis.get(emailNotificationsEnabledKey(emailAddress)))
 }
 

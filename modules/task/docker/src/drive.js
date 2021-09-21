@@ -38,7 +38,7 @@ const auth$ = () =>
         switchMap(({userCredentials}) => {
             const oAuth2Client = new google.auth.OAuth2()
             const expiration = moment(userCredentials['access_token_expiry_date'])
-            log.debug(`Authenticating with token expiring ${expiration.fromNow()} (${expiration})`)
+            log.debug(() => `Authenticating with token expiring ${expiration.fromNow()} (${expiration})`)
             oAuth2Client.setCredentials({
                 access_token: userCredentials['access_token']
             })

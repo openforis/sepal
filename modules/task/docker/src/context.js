@@ -18,12 +18,12 @@ const setCredentials = userCredentials => {
         const timeLeftMs = tokenExpiration - Date.now()
         const currentCredentials = context$.getValue()
         if (timeLeftMs > 0 && (!currentCredentials || !_.isEqual(userCredentials, currentCredentials.userCredentials))) {
-            log.debug(`User credentials updated, expiring in ${Math.round(timeLeftMs / 1000)} seconds`)
+            log.debug(() => `User credentials updated, expiring in ${Math.round(timeLeftMs / 1000)} seconds`)
             context$.next({config, userCredentials, serviceAccountCredentials, isUserAccount: true})
         } else if (timeLeftMs <= 0) {
             log.warn('Received expired user credentials, ignored')
         } else {
-            log.trace('User credentials unchanged')
+            log.trace(() => 'User credentials unchanged')
         }
     } else {
         context$.next({config, serviceAccountCredentials, isUserAccount: false})
@@ -38,7 +38,7 @@ const credentialsPath = () =>
 
 const monitorUserCredentials = () => {
     const userCredentialsPath = credentialsPath()
-    log.debug(`Monitoring user credentials in ${userCredentialsPath}`)
+    log.debug(() => `Monitoring user credentials in ${userCredentialsPath}`)
     mkdir$(credentialsDir(), {recursive: true}).pipe(
         catchError(() => EMPTY),
         switchMap(() =>
@@ -57,7 +57,7 @@ const loadUserCredentials = () => {
             setCredentials(userCredentials)
         })
         .catch(() => {
-            log.trace('Missing of invalid user credentials file')
+            log.trace(() => 'Missing of invalid user credentials file')
             setCredentials()
         })
 }
@@ -76,7 +76,7 @@ const switchedToServiceAccount$ =
         pairwise(),
         map(([previous, current]) => previous.isUserAccount && !current.isUserAccount),
         filter(switchedToServiceAccount => switchedToServiceAccount),
-        tap(() => log.debug('Switched to service account'))
+        tap(() => log.debug(() => 'Switched to service account'))
     )
 
 monitorUserCredentials()

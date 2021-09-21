@@ -18,7 +18,11 @@ const tasks = {
     'ccdc.asset_export': () => require('./tasks/ccdcAssetExport')
 }
 
-const msg = (id, msg) => `Task ${id.substr(-4)}: ${msg}`
+const {tag} = require('sepal/tag')
+
+const taskTag = id => tag('Task', id)
+
+const msg = (id, msg) => `${taskTag, id}: ${msg}`
 
 const executeTask$ = ({id, name, params}, {cmd$}) => {
     const cancel$ = cmd$

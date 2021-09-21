@@ -47,7 +47,7 @@ const exportImageToSepal$ = (
 
     const throughCloudStorage$ = () => {
         const exportToCloudStorage$ = ({task, description, _retries}) => {
-            log.debug('Earth Engine <to Cloud Storage>:', description)
+            log.debug(() => ['Earth Engine <to Cloud Storage>:', description])
             return exportLimiter$(
                 task$(task, description)
             )
@@ -103,7 +103,7 @@ const exportImageToSepal$ = (
 
     const throughDrive$ = () => {
         const exportToDrive$ = ({task, description, folder, _retries}) => {
-            log.debug('Earth Engine <to Google Drive>:', description)
+            log.debug(() => ['Earth Engine <to Google Drive>:', description])
             return exportLimiter$(
                 concat(
                     createDriveFolder$(folder),

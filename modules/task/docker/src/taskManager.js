@@ -6,6 +6,9 @@ const {lastInWindow, repeating} = require('sepal/rxjs/operators')
 const {post$} = require('sepal/httpClient')
 const {getConfig, switchedToServiceAccount$} = require('./context')
 const {errorReport} = require('sepal/exception')
+const {tag} = require('sepal/tag')
+
+const taskTag = id => tag('Task', id)
 
 const MIN_TIME_BETWEEN_NOTIFICATIONS = 1 * 1000
 const MAX_TIME_BETWEEN_NOTIFICATIONS = 60 * 1000
@@ -15,10 +18,10 @@ const {sepalHost, sepalUsername, sepalPassword} = getConfig()
 const task$ = new Subject()
 const cancel$ = new Subject()
 
-const msg = (id, msg) => `Task [${id.substr(-4)}]: ${msg}`
+const msg = (id, msg) => `${taskTag(id)}: ${msg}`
 
 const submitTask = task => {
-    log.debug(msg(task.id, 'submitted'))
+    log.debug(() => msg(task.id, 'submitted'))
     task$.next(task)
 }
 

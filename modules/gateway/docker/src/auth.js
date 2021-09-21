@@ -26,7 +26,7 @@ const authMiddleware = async (req, res, next) => {
             }).pipe(
                 map(({body: googleTokens}) => {
                     if (googleTokens) {
-                        log.debug(`[${user.username}] [${req.originalUrl}] Refreshed Google tokens`)
+                        log.debug(() => `[${user.username}] [${req.originalUrl}] Refreshed Google tokens`)
                         req.session.user = {...user, googleTokens: JSON.parse(googleTokens)}
                         res.set('sepal-user', JSON.stringify(req.session.user))
                     } else {
@@ -70,11 +70,11 @@ const authMiddleware = async (req, res, next) => {
                     const {body, statusCode} = response
                     switch(statusCode) {
                     case 200:
-                        log.debug(`[${username}] [${req.originalUrl}] Authenticated user`)
+                        log.debug(() => `[${username}] [${req.originalUrl}] Authenticated user`)
                         req.session.user = JSON.parse(body)
                         return true
                     case 401:
-                        log.debug(`[${username}] [${req.originalUrl}] Invalid credentials for user`)
+                        log.debug(() => `[${username}] [${req.originalUrl}] Invalid credentials for user`)
                         if (!req.get('No-auth-challenge')) {
                             log.trace(`[${req.originalUrl}] Sending auth challenge`)
                             res.set('WWW-Authenticate', 'Basic realm="Sepal"')

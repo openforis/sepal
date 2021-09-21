@@ -83,7 +83,7 @@ const runTask$ = (task, description) => {
     }
 
     const cleanup$ = taskId => {
-        log.debug(`EE task cleanup starting (${description}, ${taskId})`)
+        log.debug(() => `EE task cleanup starting (${description}, ${taskId})`)
         return status$(taskId, 0).pipe(
             map(({state}) => isRunning(state)),
             switchMap(running =>
