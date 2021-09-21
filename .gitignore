@@ -23,7 +23,6 @@ build
 /modules/user/docker/binary/sepal-user.jar
 /modules/sepal-server/docker/binary/sepal.jar
 /modules/*/docker/binary/sepal-gui.jar
-/modules/api-gateway/docker/binary/sepal-api-gateway.jar
 
 #Sepal frontend
 /modules/*/frontend/build
@@ -41,9 +40,6 @@ build
 
 #Python
 *.pyc
-modules/ceo/docker/src/ceo/gee_gateway
-modules/ceo/docker/env
-modules/ceo/docker/src/ceo/static/node_modules
 yarn.lock
 venv/
 
@@ -60,9 +56,6 @@ node_modules/
 /common/out/production/classes/
 /common-test/out/
 /common-test/out/production/classes/
-/modules/api-gateway/out/
-/modules/api-gateway/out/production/classes/
-/modules/api-gateway/out/test/classes/
 /modules/gui/out/
 /modules/gui/out/production/classes/
 /modules/gui/out/test/classes/
