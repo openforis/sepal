@@ -27,8 +27,8 @@ ADD build/lib /usr/local/lib/sepal
 RUN chmod +x /usr/local/lib/sepal/python/shared/stack_time_series.py && \
     ln -s /usr/local/lib/sepal/python/shared/stack_time_series.py /usr/local/bin/sepal-stack-time-series
 
-ADD script/init_osk.sh /script/
-RUN chmod u+x /script/init_osk.sh && sync && /script/init_osk.sh
+ADD script/init_ost.sh /script/
+RUN chmod u+x /script/init_ost.sh && sync && /script/init_ost.sh
 
 ADD script/init_sepal_ui.sh /script/
 RUN chmod u+x /script/init_sepal_ui.sh && sync && /script/init_sepal_ui.sh
