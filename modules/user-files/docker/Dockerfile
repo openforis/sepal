@@ -30,12 +30,5 @@ RUN npm install
 ADD src ${MODULE}/src
 CMD node \
     src/main.js \
-    # --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
-    # --redis-uri redis://user-storage-redis \
-    --home-dir /sepalUsers
-    # --min-delay-seconds ${MIN_DELAY_SECONDS} \
-    # --max-delay-seconds ${MAX_DELAY_SECONDS} \
-    # --delay-increase-factor ${DELAY_INCREASE_FACTOR} \
-    # --concurrency ${CONCURRENCY} \
-    # --max-retries ${MAX_RETRIES} \
-    # --initial-retry-delay-seconds ${INITIAL_RETRY_DELAY_SECONDS}
+    --home-dir /sepalUsers \
+    --poll-interval-milliseconds ${POLL_INTERVAL_MS}

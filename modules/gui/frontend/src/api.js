@@ -7,6 +7,7 @@ import planet from './api/planet'
 import recipe from './api/recipe'
 import tasks from './api/tasks'
 import user from './api/user'
+import userFiles from './api/userFiles'
 import wmts from './api/wmts'
 
 export default {
@@ -19,5 +20,6 @@ export default {
     recipe,
     tasks,
     user,
+    userFiles,
     wmts
 }

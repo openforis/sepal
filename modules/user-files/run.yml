@@ -14,11 +14,4 @@
     volumes:
       - "/data/sepal/home:/sepalUsers"
     env:
-      # RABBITMQ_HOST: "{{ sepal_host }}"
-      # RABBITMQ_PORT: "5672"
-      # MIN_DELAY_SECONDS: "60"
-      # MAX_DELAY_SECONDS: "86400"
-      # DELAY_INCREASE_FACTOR: "2"
-      # CONCURRENCY: "5"
-      # MAX_RETRIES: "10"
-      # INITIAL_RETRY_DELAY_SECONDS: "30"
+      POLL_INTERVAL_MS: "1000"

@@ -6,5 +6,6 @@
   "sandbox": "localhost:9191",
   "sepal": "localhost:1025",
   "terminal": "localhost:8000",
-  "user": "localhost:1027"
+  "user": "localhost:1027",
+  "userFiles": "localhost:5999"
 }
