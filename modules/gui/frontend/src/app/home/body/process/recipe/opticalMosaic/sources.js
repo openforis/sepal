@@ -12,11 +12,12 @@ export const getDataSetBands = recipe => {
     const corrections = selectFrom(recipe, 'model.compositeOptions.corrections')
     const dataSetIds = Object.values(sources).flat()
     const correction = corrections && corrections.includes('SR') ? 'SR' : 'TOA'
-    return _.uniq(
-        dataSetIds
-            .map(dataSetId => dataSetById[dataSetId][correction].bands)
-            .flat()
-    )
+
+    const bandsPerDataSet = dataSetIds.map(dataSetId => dataSetById[dataSetId][correction].bands)
+    return _(...bandsPerDataSet)
+        .intersection()
+        .uniq()
+        .value()
 }
 
 export const toSources = dataSetIds => {
