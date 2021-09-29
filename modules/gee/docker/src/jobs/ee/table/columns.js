@@ -12,7 +12,7 @@ const worker$ = ({tableId}) => {
             catchError(() => of(null)),
             switchMap(asset =>
                 throwError(
-                    asset
+                    () => asset
                         ? asset.type === 'FeatureCollection'
                             ? new EEException(`Failed to load table columns from ${tableId}.`, {
                                 cause: error,
