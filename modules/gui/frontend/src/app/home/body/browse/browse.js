@@ -1,15 +1,12 @@
 import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {Observable} from 'rxjs'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {catchError, delay, map} from 'rxjs/operators'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {dotSafe} from 'stateUtils'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
-import Notifications from 'widget/notifications'
 import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -45,7 +42,9 @@ class Browse extends React.Component {
     userFiles = api.userFiles.userFiles()
 
     componentDidMount() {
-        const {addSubscription} = this.props
+        const {addSubscription, onEnable, onDisable} = this.props
+        onEnable(() => this.enabled(true))
+        onDisable(() => this.enabled(false))
         addSubscription(
             this.userFiles.downstream$.subscribe(
                 updates =>
@@ -54,6 +53,10 @@ class Browse extends React.Component {
                     }, actionBuilder('UPDATE_TREE')).dispatch()
             )
         )
+    }
+
+    enabled(enabled) {
+        this.userFiles.upstream$.next({enabled})
     }
 
     childPath(path = '/', name = '/') {

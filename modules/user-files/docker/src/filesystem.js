@@ -2,30 +2,42 @@ const {readdir, stat, rm} = require('fs/promises')
 const log = require('sepal/log').getLogger('filesystem')
 const Path = require('path')
 const {EMPTY, concat, timer, from, Subject} = require('rxjs')
-const {exhaustMap, distinctUntilChanged, switchMap, takeUntil} = require('rxjs/operators')
+const {exhaustMap, distinctUntilChanged, switchMap, takeUntil, takeWhile} = require('rxjs/operators')
 const _ = require('lodash')
+const {minDuration$} = require('sepal/rxjs/operators')
+
+const REMOVE_COMFORT_DELAY_MS = 1000
 
 const createWatcher = async ({out$, stop$, baseDir, pollIntervalMilliseconds}) => {
     const monitoredPaths = []
     const trigger$ = new Subject()
+    const state = {
+        enabled: true
+    }
 
     const triggerAction$ = trigger => {
         if (trigger) {
-            if (trigger.remove) {
-                return from(
+            if (!_.isNil(trigger.enabled)) {
+                state.enabled = trigger.enabled
+            }
+            if (!_.isNil(trigger.remove)) {
+                const removePaths$ = from(
                     removePaths(trigger.remove, {ignoreMissing: true})
                 )
+                return minDuration$(removePaths$, REMOVE_COMFORT_DELAY_MS)
             }
         }
         return EMPTY
     }
 
+    const poll$ =
+        timer(0, pollIntervalMilliseconds).pipe(
+            takeWhile(() => state.enabled)
+        )
+
     trigger$.pipe(
         switchMap(trigger =>
-            concat(
-                triggerAction$(trigger),
-                timer(0, pollIntervalMilliseconds)
-            )
+            concat(triggerAction$(trigger), poll$)
         ),
         exhaustMap(() => from(scanDirs())),
         distinctUntilChanged(_.isEqual),
@@ -124,7 +136,11 @@ const createWatcher = async ({out$, stop$, baseDir, pollIntervalMilliseconds}) =
         trigger$.next({remove: paths})
     }
 
-    return {monitor, unmonitor, remove}
+    const enabled = enabled => {
+        trigger$.next({enabled})
+    }
+
+    return {monitor, unmonitor, remove, enabled}
 }
 
 module.exports = {

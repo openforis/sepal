@@ -20,6 +20,7 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
     const {switchMap} = require('rxjs/operators')
     const Path = require('path')
     const {createWatcher} = require('./filesystem')
+    const _ = require('lodash')
 
     const userHomeDir = Path.join(homeDir, username)
     const out$ = new Subject()
@@ -42,14 +43,16 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
         const processMessage = json => {
             const msg = parseJSON(json)
             if (msg) {
-                if (msg.monitor) {
+                if (!_.isNil(msg.monitor)) {
                     watcher.monitor(msg.monitor)
-                } else if (msg.unmonitor) {
+                } else if (!_.isNil(msg.unmonitor)) {
                     watcher.unmonitor(msg.unmonitor)
-                } else if (msg.remove) {
+                } else if (!_.isNil(msg.remove)) {
                     watcher.remove(msg.remove)
+                } else if (!_.isNil(msg.enabled)) {
+                    watcher.enabled(msg.enabled)
                 } else {
-                    throw new Error(`Unsupported message: ${msg}`)
+                    log.warn('Unsupported message:', msg)
                 }
             }
         }
