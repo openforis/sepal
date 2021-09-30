@@ -16,8 +16,9 @@ class SshSessionCommand {
                 "-i $privateKey " +
                 "-l $session.username " +
                 "-q " +
-                "-o StrictHostKeyChecking=no " +
-                "-o UserKnownHostsFile=/dev/null " +
+                "-oStrictHostKeyChecking=no " +
+                "-oUserKnownHostsFile=/dev/null " +
+                "-oBatchMode=yes " +
                 "-p 222 " +
                 "$session.host \$1", 'UTF-8')
     }

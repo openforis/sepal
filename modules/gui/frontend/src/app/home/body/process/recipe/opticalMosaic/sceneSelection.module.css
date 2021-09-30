@@ -114,6 +114,11 @@
 
 .info {
     display: flex;
+    align-items: center;
+}
+
+.info svg {
+    margin-right: 0.4rem;
 }
 
 /* bar */

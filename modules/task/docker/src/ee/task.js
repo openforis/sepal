@@ -49,7 +49,7 @@ const runTask$ = (task, description) => {
         interval(MONITORING_FREQUENCY).pipe(
             exhaustMap(() => status$(taskId)),
             switchMap(({state, error_message: error}) => error || state === FAILED
-                ? throwError(new Error(error))
+                ? throwError(() => new Error(error))
                 : of(state)
             ),
             distinctUntilChanged(),

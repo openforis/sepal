@@ -102,7 +102,8 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                         },
                         Memory: memoryBytes,
                         MemorySwap: memoryBytes,
-                        KernelMemory: memoryBytes
+                        KernelMemory: memoryBytes,
+                        ShmSize: (long) instanceType.ramBytes / 2
                 ],
                 ExposedPorts: image.exposedPorts.collectEntries {
                     ["$it/tcp", [:]]

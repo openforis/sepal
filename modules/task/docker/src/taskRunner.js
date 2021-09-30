@@ -83,7 +83,7 @@ const executeTask$ = ({id, name, params}, {cmd$}) => {
             takeUntil(cancel$.pipe(
                 tap(() => finalState$.next(cancelState))
             )),
-            catchError(e => concat(finalize$, throwError(e)))
+            catchError(e => concat(finalize$, throwError(() => e)))
         ),
         finalize$,
         finalState$.pipe(first())

@@ -73,7 +73,7 @@ const retry = (maxRetries, {minDelay = 500, maxDelay = 30000, exponentiality = 2
             mergeMap(
                 ([error, retry]) => {
                     if (retry > maxRetries) {
-                        return throwError(error)
+                        return throwError(() => error)
                     } else {
                         const exponentialBackoff = Math.pow(exponentiality, retry) * minDelay
                         const cappedExponentialBackoff = Math.min(exponentialBackoff, maxDelay)

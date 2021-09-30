@@ -123,7 +123,7 @@ const getFolderByName$ = ({name, parentId}) =>
             files.length
                 ? of({id: files[0].id}) // handling the first match only
                 : throwError(
-                    new NotFoundException(`Directory "${name}" not found ${parentId ? `in parent ${parentId}` : ''}`)
+                    () => new NotFoundException(`Directory "${name}" not found ${parentId ? `in parent ${parentId}` : ''}`)
                 )
         )
     )
@@ -141,7 +141,7 @@ const getOrCreateFolderByName$ = ({name, parentId, create}) =>
             catchError(error =>
                 error instanceof NotFoundException && create
                     ? createFolderByName$({name, parentId})
-                    : throwError(error)
+                    : throwError(() => error)
             )
         )
     )
@@ -190,13 +190,13 @@ const getFolderByPath$ = ({path, create} = {}) =>
             catchError(error =>
                 error instanceof NotFoundException
                     ? throwError(
-                        new NotFoundException(error, {
+                        () => new NotFoundException(error, {
                             userMessage: {
                                 message: `Path not found: '${path}'`
                             }
                         })
                     )
-                    : throwError(error)
+                    : throwError(() => error)
             )
         )
     )
@@ -226,7 +226,7 @@ const removeFolderByPath$ = ({path}) =>
                 if (e instanceof NotFoundException) {
                     return EMPTY
                 } else {
-                    throwError(e)
+                    throwError(() => e)
                 }
             }),
             switchMap(({id}) => remove$({id})),

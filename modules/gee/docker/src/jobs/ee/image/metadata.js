@@ -13,7 +13,7 @@ const worker$ = ({asset, recipe}) => {
             catchError(() => of(null)),
             switchMap(asset =>
                 throwError(
-                    asset
+                    () => asset
                         ? asset.type === 'Image'
                             ? new EEException('Failed to load asset.', {
                                 cause: error,

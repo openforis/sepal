@@ -5,7 +5,6 @@ echo
 echo "**********************************************"
 echo "*** Installing biota, sen2mosaic, deforest ***"
 echo "**********************************************"
-# VERSION 2021-05-13
 
 cd /usr/local/lib
 git clone https://bitbucket.org/sambowers/biota.git
