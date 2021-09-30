@@ -83,7 +83,7 @@ const endpoints = [
     {
         prefix: true,
         path: '/api/user-files',
-        target: `http://${modules.userFiles}/ws`,
+        target: `http://${modules.userFiles}`,
         ws: true,
         authenticate: true
     },

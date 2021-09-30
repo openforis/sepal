@@ -302,7 +302,7 @@ class Browse extends React.Component {
         const oneFileSelected = selected.files === 1 && selected.directories === 0
         const selectedFiles = this.selectedItems().files
         const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
-        const downloadUrl = selectedFile && api.files.downloadUrl(selectedFile)
+        const downloadUrl = selectedFile && api.userFiles.downloadUrl(selectedFile)
         const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
         const {showDotFiles} = this.props
         let dotFilesTooltip = `browse.controls.${showDotFiles ? 'hideDotFiles' : 'showDotFiles'}.tooltip`

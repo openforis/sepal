@@ -4,6 +4,6 @@
         "config": "info",
         "filesystem": "debug",
         "main": "info",
-        "files": "debug"
+        "ws": "debug"
     }
 }
