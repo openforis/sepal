@@ -10,34 +10,34 @@ echo "***************************"
 # Trying with cuda-toolkit instead of cuda, to prevent wrong nvidia-driver to be installed.
 # That version must match the version on the host machine.
 
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
-mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600
-apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
-add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /"
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
+mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
+apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
+add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
 apt-get update -y
 
-wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
-apt install -y ./nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
+wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu2004/x86_64/nvidia-machine-learning-repo-ubuntu2004_1.0.0-1_amd64.deb
+apt install -y ./nvidia-machine-learning-repo-ubuntu2004_1.0.0-1_amd64.deb
 apt-get update -y
 
 # Install development and runtime libraries (~4GB)
 apt-get install -y --no-install-recommends \--no-install-recommends \
-  nvidia-driver-470=470.63.01-0ubuntu0.18.04.2 \
-  libnvidia-gl-470=470.63.01-0ubuntu0.18.04.2 \
-  nvidia-kernel-source-470=470.63.01-0ubuntu0.18.04.2 \
-  libnvidia-compute-470=470.63.01-0ubuntu0.18.04.2 \
-  libnvidia-extra-470=470.63.01-0ubuntu0.18.04.2 \
-  nvidia-compute-utils-470=470.63.01-0ubuntu0.18.04.2 \
-  libnvidia-decode-470=470.63.01-0ubuntu0.18.04.2 \
-  libnvidia-encode-470=470.63.01-0ubuntu0.18.04.2 \
-  nvidia-utils-470=470.63.01-0ubuntu0.18.04.2 \
-  xserver-xorg-video-nvidia-470=470.63.01-0ubuntu0.18.04.2 \
-  libnvidia-cfg1-470=470.63.01-0ubuntu0.18.04.2 \
-  libnvidia-ifr1-470=470.63.01-0ubuntu0.18.04.2 \
-  libnvidia-fbc1-470=470.63.01-0ubuntu0.18.04.2 \
-  libnvidia-common-470=470.63.01-0ubuntu0.18.04.2 \
-  nvidia-dkms-470=470.63.01-0ubuntu0.18.04.2 \
-  nvidia-kernel-common-470=470.63.01-0ubuntu0.18.04.2 \
+  nvidia-driver-470=470.63.01-0ubuntu0.20.04.2 \
+  libnvidia-gl-470=470.63.01-0ubuntu0.20.04.2 \
+  nvidia-kernel-source-470=470.63.01-0ubuntu0.20.04.2 \
+  libnvidia-compute-470=470.63.01-0ubuntu0.20.04.2 \
+  libnvidia-extra-470=470.63.01-0ubuntu0.20.04.2 \
+  nvidia-compute-utils-470=470.63.01-0ubuntu0.20.04.2 \
+  libnvidia-decode-470=470.63.01-0ubuntu0.20.04.2 \
+  libnvidia-encode-470=470.63.01-0ubuntu0.20.04.2 \
+  nvidia-utils-470=470.63.01-0ubuntu0.20.04.2 \
+  xserver-xorg-video-nvidia-470=470.63.01-0ubuntu0.20.04.2 \
+  libnvidia-cfg1-470=470.63.01-0ubuntu0.20.04.2 \
+  libnvidia-ifr1-470=470.63.01-0ubuntu0.20.04.2 \
+  libnvidia-fbc1-470=470.63.01-0ubuntu0.20.04.2 \
+  libnvidia-common-470=470.63.01-0ubuntu0.20.04.2 \
+  nvidia-dkms-470=470.63.01-0ubuntu0.20.04.2 \
+  nvidia-kernel-common-470=470.63.01-0ubuntu0.20.04.2 \
   cuda-toolkit-11-0 \
   cuda-toolkit-11-4 \
   libcudnn8=8.2.4.15-1+cuda11.4 \
@@ -68,4 +68,5 @@ su -c "make install"
 
 pip3 install --upgrade pip
 pip3 install numpy --upgrade --force-reinstall
+pip3 install testresources
 pip3 install tensorflow==2.6.0

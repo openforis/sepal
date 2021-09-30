@@ -18,16 +18,16 @@ apt-get update && apt-get install -y \
 	 libshp-dev \
 	 libtiff5-dev \
 	 make \
-	 python-h5py \
-	 python-saga \
-	 python-scipy \
-	 python-tk \
-	 python-qt4 \
+	 python3-h5py \
+	 python3-saga \
+	 python3-scipy \
+	 python3-tk \
 	 perl \
 	 spatialite-bin
 
 wget -nv http://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run
 chmod u+x OpenForisToolkit.run
+ln -sf /usr/bin/python3 /usr/bin/python
 yes 1 | ./OpenForisToolkit.run
 rm OpenForisToolkit.run
 

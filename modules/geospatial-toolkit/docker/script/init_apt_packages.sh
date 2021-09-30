@@ -4,6 +4,7 @@ echo
 echo "*********************************"
 echo "*** Installing misc utilities ***"
 echo "*********************************"
+export DEBIAN_FRONTEND=noninteractive
 apt-get update -y && apt-get install -y --fix-missing \
     aria2 \
     bc \
@@ -18,7 +19,6 @@ apt-get update -y && apt-get install -y --fix-missing \
     libcairo2-dev \
     libcunit1-dev \
     libdbd-xbase-perl \
-    libgfortran3 \
     libgfortran5 \
     libglade2-dev \
     libgtk2.0-dev \
