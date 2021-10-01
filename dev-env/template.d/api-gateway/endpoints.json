@@ -102,8 +102,8 @@
   },
   {
     "prefix": "true",
-    "path": "/api/files",
-    "target": "http://localhost:1025/api/files",
+    "path": "/api/user-files",
+    "target": "http://localhost:5999/api/user-files",
     "https": "false",
     "authenticate": "true"
   },

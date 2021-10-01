@@ -38,7 +38,7 @@ const treePath = (path = '/') =>
         ) : []
 
 class Browse extends React.Component {
-    
+
     userFiles = api.userFiles.userFiles()
 
     componentDidMount() {
@@ -83,28 +83,6 @@ class Browse extends React.Component {
             .dispatch()
 
         this.userFiles.upstream$.next({remove: paths})
-        // this.props.stream('REQUEST_REMOVE_PATHS',
-        // api.files.removePaths$(paths).pipe(
-        //     catchError(() => {
-        //         Notifications.error({message: msg('browse.removing.error')})
-        //         return Observable.of([])
-        //     }),
-        //     map(() => actionBuilder('REMOVE_PATHS', {paths})
-        //         .forEach(paths, (actionBuilder, path) => {
-        //             actionBuilder.del([TREE, dotSafe(treePath(path)), 'removing'])
-        //             actionBuilder.set([TREE, dotSafe(treePath(path)), 'removed'], true)
-        //         })
-        //         .dispatch()
-        //     ),
-        //     delay(ANIMATION_DURATION_MS),
-        //     map(() => actionBuilder('REMOVE_PATHS', {paths})
-        //         .forEach(paths, (actionBuilder, path) =>
-        //             actionBuilder.del([TREE, dotSafe(treePath(path))])
-        //         )
-        //         .dispatch()
-        //     )
-        // )
-        // )
     }
 
     pruneRemovedNodes(actionBuilder, path) {
@@ -121,10 +99,6 @@ class Browse extends React.Component {
 
     isDirectory(directory) {
         return !!directory.dir
-    }
-
-    isDirectoryUnpopulated(directory) {
-        return !directory.files
     }
 
     toggleDirectory(path, directory) {

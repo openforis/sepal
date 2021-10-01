@@ -29,6 +29,7 @@
     - { role: build-module, module: user }
     - { role: build-module, module: user-storage }
     - { role: build-module, module: user-storage-backup }
+    - { role: build-module, module: user-files }
     - { role: build-module, module: gui }
     - { role: build-module, module: ceo-gateway }
     - { role: build-module, module: app-manager }

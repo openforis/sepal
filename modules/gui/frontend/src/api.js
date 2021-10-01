@@ -1,5 +1,4 @@
 import apps from './api/apps'
-import files from './api/files'
 import gee from './api/gee'
 import google from './api/google'
 import map from './api/map'
@@ -12,7 +11,6 @@ import wmts from './api/wmts'
 
 export default {
     apps,
-    files,
     gee,
     google,
     map,

@@ -1,4 +1,5 @@
 FROM node:14-stretch
+EXPOSE 5999
 
 ENV MODULE /usr/local/src/sepal/modules/user-storage/docker
 ENV SHARED /usr/local/src/sepal/lib/js/shared
