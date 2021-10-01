@@ -43,7 +43,6 @@ abstract class AbstractBudgetTest extends Specification {
     final connectionManager = new SqlConnectionManager(database.dataSource)
     final eventDispatcher = new SynchronousEventDispatcher()
     final hostingService = new FakeHostingService()
-    final userFiles = new FakeUserFiles()
     final userRepository = Mock(UserRepository)
     final clock = new FakeClock()
 
@@ -57,7 +56,6 @@ abstract class AbstractBudgetTest extends Specification {
             connectionManager,
             hostingService,
             userRepository,
-            userFiles,
             eventDispatcher,
             new FakeTopic(),
             new FakeTopic(),
@@ -164,7 +162,6 @@ abstract class AbstractBudgetTest extends Specification {
             hours = DateTime.hoursBetween(start, parseDateString(args.end))
 
         clock.set(start)
-        userFiles.gbUsed(username(args), gb)
         updateStorageUsage(gbUsed: gb)
         if (hours) {
             clock.forward((hours * 60d * 60d) as long, TimeUnit.SECONDS)
