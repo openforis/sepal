@@ -49,10 +49,18 @@ class _Panel extends React.Component {
     renderPortal(type) {
         return (
             <Portal>
-                <div className={type === 'center' ? styles.centerWrapper : null}>
-                    {this.renderContent()}
-                </div>
+                {type === 'center'
+                    ? this.renderCenteredContent()
+                    : this.renderContent()}
             </Portal>
+        )
+    }
+
+    renderCenteredContent() {
+        return (
+            <div className={styles.centerWrapper}>
+                {this.renderContent()}
+            </div>
         )
     }
 
