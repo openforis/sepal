@@ -4,7 +4,7 @@
     position: relative;
 }
 
-.container.disabled::before {
+.container.disabled::after {
     content: '';
     position: absolute;
     top: 0;
