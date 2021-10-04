@@ -87,7 +87,7 @@ export default class UserList extends React.Component {
             : true
     }
 
-    isUserOverBudget({report: {budget, current}}) {
+    isUserOverBudget({quota: {budget, current}}) {
         return current.instanceSpending > budget.instanceSpending
             || current.storageSpending > budget.storageSpending
             || current.storageQuota > budget.storageQuota
@@ -331,7 +331,7 @@ class UserItem extends React.Component {
                 name,
                 status,
                 updateTime,
-                report: {
+                quota: {
                     budget = {},
                     current = {}
                 } = {}

@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {forkJoin, zip} from 'rxjs'
-import {map} from 'rxjs/operators'
+import {map, tap} from 'rxjs/operators'
 import {msg} from 'translate'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -19,9 +19,10 @@ const getUserList$ = () => forkJoin(
     map(([users, budget]) =>
         _.map(users, user => ({
             ...user,
-            report: budget[user.username || {}]
+            quota: budget[user.username || {}]
         }))
-    )
+    ),
+    tap(console.log)
 )
 
 class Users extends React.Component {
@@ -73,7 +74,7 @@ class Users extends React.Component {
     }
 
     editUser(user) {
-        const {username, name, email, organization, admin, report: {budget}} = user
+        const {username, name, email, organization, admin, quota: {budget}} = user
         this.setState({
             userDetails: {
                 username,
@@ -107,7 +108,7 @@ class Users extends React.Component {
             ).pipe(
                 map(([userDetails, userBudget]) => ({
                     ...userDetails,
-                    report: {
+                    quota: {
                         budget: userBudget
                     }
                 }))
@@ -139,7 +140,7 @@ class Users extends React.Component {
                         : users[index] = {
                             ...userDetails,
                             // Make sure current spending is taken from previous details if not provided in the update.
-                            report: _.merge(users[index].report, userDetails.report)
+                            quota: _.merge(users[index].quota, userDetails.quota)
                         }
                 }
                 return {users}
@@ -160,7 +161,7 @@ class Users extends React.Component {
             name: userDetails.name,
             email: userDetails.email,
             organization: userDetails.organization,
-            report: {
+            quota: {
                 budget: {
                     instanceSpending: userDetails.monthlyBudgetInstanceSpending,
                     storageSpending: userDetails.monthlyBudgetStorageSpending,
