@@ -6,7 +6,8 @@ echo "**************************"
 echo "*** Installing Node.js ***"
 echo "**************************"
 
-curl -sL https://deb.nodesource.com/setup_16.x | bash -
+curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
+bash nodesource_setup.sh
 apt-get update -y && apt-get install -y nodejs
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
