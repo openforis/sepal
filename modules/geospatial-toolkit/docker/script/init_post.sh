@@ -16,6 +16,7 @@ printf '%s\n' \
     'SHELL="/bin/bash"' \
     'SEPAL="true"' \
     'PROJ_LIB="/usr/share/proj"' \
+    'DISPLAY=":0.0"' \
     >> /etc/environment
 
 # Remove redundant files
