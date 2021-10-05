@@ -1,4 +1,4 @@
-FROM ubuntu:bionic
+FROM ubuntu:focal
 EXPOSE 5011
 
 ENV DEBIAN_FRONTEND noninteractive

@@ -34,8 +34,8 @@
     position: absolute;
     top: calc(-.5 * var(--handle-height));
     bottom: calc(-1.5 * var(--handle-height));
-    left: 0;
-    right: 0;
+    left: calc(-.5 * var(--handle-width));
+    right: calc(-.5 * var(--handle-width));
     cursor: pointer;
     z-index: 1;
 }
@@ -97,7 +97,7 @@
 
 .cursor.handle {
     background-color: var(--cursor-color);
-    z-index: 2;
+    z-index: 0;
 }
 
 .cursor.handle:hover {

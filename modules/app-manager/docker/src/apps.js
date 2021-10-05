@@ -23,11 +23,12 @@ const apps$ = () =>
     fileToJson$('/var/sepal/app-manager/apps.json').pipe(
         switchMap(({apps}) => from(apps)),
         filter(({repository}) => repository),
-        map(({endpoint = 'shiny', repository, branch}) => {
+        map(({endpoint = 'shiny', label, repository, branch}) => {
             const name = basename(repository)
             return {
                 endpoint,
                 name,
+                label,
                 path: endpoint === 'jupyter'
                     ? `/var/sepal/app-manager/apps/${name}`
                     : `/shiny/${name}`,
@@ -61,21 +62,22 @@ const useCustomKernel$ = ({endpoint, path}) =>
         ? exists$({path: join(path, 'requirements.txt')})
         : of(false)
 
-const updateKernel$ = ({name, path}) => {
+const updateKernel$ = ({name, path, label}) => {
     const kernelPath = join('/usr/local/share/jupyter/kernels', `venv-${name}`)
     const venvPath = join(kernelPath, 'venv')
     return exists$({path: kernelPath}).pipe(
-        switchMap(kernelExists => kernelExists ? of(true) : createKernel$({path: kernelPath})),
+        switchMap(kernelExists => kernelExists ? of(true) : createKernel$({path: kernelPath, label})),
         switchMap(() => exists$(venvPath)),
         switchMap(venvExists => venvExists ? of(true) : createVenv$({path: venvPath})),
         switchMap(() => installRequirements$({venvPath, requirementsPath: join(path, 'requirements.txt')}))
     )
 }
 
-const createKernel$ = ({path}) => {
+const createKernel$ = ({path, label}) => {
     const venvPath = join(path, 'venv')
     const kernel = {
         'argv': [join(venvPath, 'bin/python3'), '-m', 'ipykernel_launcher', '-f', '{connection_file}'],
+        'display_name': `App: ${label}`,
         'language': 'python'
     }
 
