@@ -7,8 +7,9 @@ import React from 'react'
 
 export default class Tooltip extends React.Component {
     render() {
-        const {msg, placement, disabled, delay, clickTrigger, hoverTrigger, destroyTooltipOnHide, onVisibleChange, afterVisibleChange, children, ...otherProps} = this.props
+        const {msg, placement, disabled, delay, clickTrigger, hoverTrigger, focusTrigger, destroyTooltipOnHide, onVisibleChange, afterVisibleChange, children, ...otherProps} = this.props
         const trigger = [
+            focusTrigger ? 'focus' : '',
             clickTrigger ? 'click' : '',
             hoverTrigger && !isMobile() ? 'hover' : ''
         ]
@@ -40,6 +41,7 @@ Tooltip.propTypes = {
     delay: PropTypes.number,
     destroyTooltipOnHide: PropTypes.any,
     disabled: PropTypes.bool,
+    focusTrigger: PropTypes.any,
     hoverTrigger: PropTypes.any,
     left: PropTypes.bool,
     msg: PropTypes.any,
@@ -55,6 +57,7 @@ Tooltip.propTypes = {
 Tooltip.defaultProps = {
     clickTrigger: false,
     hoverTrigger: true,
+    focusTrigger: false,
     delay: 750,
     disabled: false,
     placement: 'top',
