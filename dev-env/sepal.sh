@@ -474,6 +474,30 @@ case "$1" in
         shift
         tail $@
         ;;
+    log)
+        shift
+        if [[ $# -ne 1 ]]; then
+            no_one_argument
+        else
+            log $1
+        fi
+        ;;
+    startlog)
+        shift
+        if [[ $# -ne 1 ]]; then
+            no_one_argument
+        else
+            startlog $1
+        fi
+        ;;
+    restartlog)
+        shift
+        if [[ $# -ne 1 ]]; then
+            no_one_argument
+        else
+            restartlog $1
+        fi
+        ;;
     *)
         usage
         ;;
