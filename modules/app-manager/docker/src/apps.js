@@ -77,7 +77,7 @@ const createKernel$ = ({path, label}) => {
     const venvPath = join(path, 'venv')
     const kernel = {
         'argv': [join(venvPath, 'bin/python3'), '-m', 'ipykernel_launcher', '-f', '{connection_file}'],
-        'display_name': `App: ${label}`,
+        'display_name': ` (venv) ${label}`,
         'language': 'python'
     }
 

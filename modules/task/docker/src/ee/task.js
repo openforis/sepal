@@ -48,9 +48,10 @@ const runTask$ = (task, description) => {
     const monitor$ = taskId =>
         interval(MONITORING_FREQUENCY).pipe(
             exhaustMap(() => status$(taskId)),
-            switchMap(({state, error_message: error}) => error || state === FAILED
-                ? throwError(() => new Error(error))
-                : of(state)
+            switchMap(({state, error_message: error}) =>
+                (error || state === FAILED)
+                    ? throwError(() => new Error(error))
+                    : of(state)
             ),
             distinctUntilChanged(),
             takeWhile(state => isRunning(state)),
