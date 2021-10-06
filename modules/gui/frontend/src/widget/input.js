@@ -121,7 +121,6 @@ class _Input extends React.Component {
                         trigger='focus'>
                         <input
                             ref={this.ref}
-                            className={readOnly ? styles.readOnly : null}
                             type={this.isSearchInput() ? 'text' : type}
                             name={name}
                             defaultValue={value}

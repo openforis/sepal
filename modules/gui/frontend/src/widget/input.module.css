@@ -25,6 +25,12 @@
     transition: background-color 800ms ease-out;
 }
 
+.input input:read-only,
+.input textarea:read-only {
+    opacity: .6;
+    pointer-events: none;
+}
+
 .input input[type=number] {
     text-align: right;
 }
@@ -40,10 +46,4 @@
 .input input::placeholder,
 .input textarea::placeholder {
     color: hsl(0, 0%, 45%);
-}
-
-.input input.readOnly,
-.input textarea.readOnly {
-    color: inherit;
-    pointer-events: none;
 }
