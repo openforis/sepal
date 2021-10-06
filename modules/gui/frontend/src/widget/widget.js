@@ -63,14 +63,13 @@ export class Widget extends React.Component {
 
     getWidgetState() {
         const {errorMessage, busyMessage} = this.props
-        return errorMessage
-            ? 'error'
-            : busyMessage
-                ? 'busy'
-                : 'normal'
+        if (errorMessage) return 'error'
+        if (busyMessage) return 'busy'
+        return 'normal'
     }
+
     renderLabel() {
-        const {label, labelButtons, tooltip, tooltipPlacement, alignment, errorMessage} = this.props
+        const {label, labelButtons, tooltip, tooltipPlacement, tooltipTrigger, alignment, errorMessage} = this.props
         return label
             ? (
                 <Label
@@ -79,6 +78,7 @@ export class Widget extends React.Component {
                     buttons={labelButtons}
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
+                    tooltipTrigger={tooltipTrigger}
                     tabIndex={-1}
                     error={errorMessage}
                 />
@@ -106,6 +106,7 @@ Widget.propTypes = {
     spacing: PropTypes.any,
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any,
+    tooltipTrigger: PropTypes.any,
     onClick: PropTypes.func
 }
 
