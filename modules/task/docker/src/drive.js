@@ -66,7 +66,8 @@ const drive$ = (message, op) => {
                     ),
                     map(({data}) => data)
                 )
-            )),
+            )
+        ),
         retry(RETRIES)
     )
 }
