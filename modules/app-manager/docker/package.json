@@ -20,14 +20,14 @@
         "commander": "^8.2.0",
         "lodash": "^4.17.21",
         "log4js": "^6.3.0",
-        "mime-types": "^2.1.32",
+        "mime-types": "^2.1.33",
         "moment": "^2.29.1",
-        "rxjs": "^7.3.0",
+        "rxjs": "^7.3.1",
         "shared": "../../../lib/js/shared"
     },
     "devDependencies": {
         "eslint": "^7.32.0",
-        "jest": "^27.1.1",
+        "jest": "^27.2.4",
         "jest-expect-message": "^1.0.2",
         "link-module-alias": "^1.2.0"
     }
