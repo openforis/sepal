@@ -7,7 +7,7 @@ export const download = (url, filename) => {
     var downloadElement = document.createElement('a')
     downloadElement.setAttribute('style', 'display: none')
     downloadElement.setAttribute('href', url)
-    downloadElement.setAttribute('download', filename)
+    // downloadElement.setAttribute('download', filename)
     document.body.appendChild(downloadElement)
     downloadElement.click()
     downloadElement.remove()

@@ -1,5 +1,0 @@
-[
-    {"command": "open", "path": "/var/sepal/sepal-server/home/admin/downloads"}
-    ,
-    {"command": "close", "path": "/var/sepal/sepal-server/home/admin/downloads"}
-]

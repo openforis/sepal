@@ -1,48 +1,215 @@
 const Job = require('sepal/worker/job')
 const logConfig = require('./log.json')
 
-const worker$ = (username, {args$, initArgs: {homeDir}}) => {
-    const log = require('sepal/log').getLogger('files')
-    const {Subject, finalize} = require('rxjs')
-    const Path = require('path')
-    const {createWatcher} = require('./watcher')
+const getSepalUser = request => {
+    const sepalUser = request.headers['sepal-user']
+    return sepalUser
+        ? JSON.parse(sepalUser)
+        : {}
+}
 
-    const userHomeDir = Path.join(homeDir, username)
+const getInitArgs = () => {
+    const {homeDir, pollIntervalMilliseconds} = require('./config')
+    return {homeDir, pollIntervalMilliseconds}
+}
+
+const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}}) => {
+    const Path = require('path')
+    const {realpath, readdir, stat, rm} = require('fs/promises')
+    const {EMPTY, concat, timer, Subject, finalize, from} = require('rxjs')
+    const {exhaustMap, distinctUntilChanged, takeUntil, takeWhile, switchMap} = require('rxjs/operators')
+    const {minDuration$} = require('sepal/rxjs/operators')
+    const _ = require('lodash')
+    const {resolvePath} = require('./filesystem')
+    const log = require('sepal/log').getLogger('ws')
+    
+    const REMOVE_COMFORT_DELAY_MS = 1000
+
     const out$ = new Subject()
     const stop$ = new Subject()
 
-    const watcher = createWatcher({out$, stop$, baseDir: userHomeDir})
-
-    const parseMessage = msg => {
-        try {
-            const {command, path} = JSON.parse(msg)
-            switch (command) {
-            case 'open':
-                watcher.addPath(path)
-                break
-            case 'close':
-                watcher.removePath(path)
-                break
-                // case 'delete':
-                //     break
-            default:
-                throw new Error(`Unsupported command: ${command}`)
-            }
-        } catch (error) {
-            log.warn('Ignoring malformed message', msg)
+    const createWatcher = async ({out$, stop$, userHomeDir, pollIntervalMilliseconds}) => {
+        const monitoredPaths = []
+        const trigger$ = new Subject()
+        const state = {
+            enabled: true
         }
+    
+        const triggerAction$ = trigger => {
+            if (trigger) {
+                if (!_.isNil(trigger.enabled)) {
+                    state.enabled = trigger.enabled
+                }
+                if (!_.isNil(trigger.remove)) {
+                    const removePaths$ = from(
+                        removePaths(trigger.remove, {ignoreMissing: true})
+                    )
+                    return minDuration$(removePaths$, REMOVE_COMFORT_DELAY_MS)
+                }
+            }
+            return EMPTY
+        }
+    
+        const poll$ =
+            timer(0, pollIntervalMilliseconds).pipe(
+                takeWhile(() => state.enabled)
+            )
+    
+        trigger$.pipe(
+            switchMap(trigger =>
+                concat(triggerAction$(trigger), poll$)
+            ),
+            exhaustMap(() => from(scanDirs())),
+            distinctUntilChanged(_.isEqual),
+            takeUntil(stop$)
+        ).subscribe(
+            data => out$.next(JSON.stringify(data))
+        )
+    
+        const scanDirs = () =>
+            Promise.all(
+                monitoredPaths.map(item => scanDir(item))
+            )
+    
+        const scanDir = ({path, absolutePath}) =>
+            readdir(absolutePath)
+                .then(files =>
+                    scanFiles({absolutePath, files})
+                        .then(files => ({path, tree: toTree(files)}))
+                )
+                .catch(error => {
+                    log.warn(error)
+                    return ({path, error: error.code})
+                })
+    
+        const scanFiles = ({absolutePath, files}) =>
+            Promise.all(
+                files.map(filename => scanFile(absolutePath, filename))
+            )
+    
+        const scanFile = (path, filename) => {
+            const {absolutePath, isSubPath} = resolvePath(path, filename)
+            if (isSubPath) {
+                return stat(absolutePath)
+                    .then(stat => ({
+                        name: filename,
+                        dir: stat.isDirectory(),
+                        file: stat.isFile(),
+                        size: stat.size,
+                        mtime: stat.mtimeNs,
+                    }))
+                    .catch(error => {
+                        log.warn(() => [`Ignoring unresolvable path: ${path}`, error])
+                    })
+            } else {
+                log.debug(() => `Ignoring non-subdir path: ${path}`)
+            }
+        }
+            
+        const toTree = files =>
+            _(files)
+                .compact()
+                .transform((tree, {name, ...file}) => tree[name] = {...file}, {})
+                .value()
+    
+        const removePaths = (paths, options) =>
+            Promise.all(
+                paths.map(path => removePath(path, options))
+            )
+    
+        const removePath = (path, options) => {
+            unmonitor(path, options)
+            log.debug(() => `Removing path: ${path}`)
+            const {absolutePath} = resolvePath(userHomeDir, path)
+            return rm(absolutePath, {recursive: true})
+        }
+    
+        const isMonitored = path =>
+            _.find(monitoredPaths, ({path: monitoredPath}) => monitoredPath === path)
+    
+        const toDir = path =>
+            path.substr(-1) === '/' ? path : Path.join(path, '/')
+    
+        const monitor = path => {
+            const {absolutePath} = resolvePath(userHomeDir, path)
+            if (!isMonitored(path)) {
+                monitoredPaths.push({path, absolutePath})
+                log.debug(() => `Monitoring path: ${path}`)
+                trigger$.next()
+            } else {
+                log.warn(`Cannot monitor already-monitored path: ${path}`)
+            }
+        }
+    
+        const unmonitor = (path, {ignoreMissing} = {}) => {
+            if (isMonitored(path)) {
+                const pathDir = toDir(path)
+                const unmonitoredPaths = _.remove(monitoredPaths,
+                    ({path: monitoredPath}) => monitoredPath.startsWith(pathDir) || monitoredPath === path
+                )
+                unmonitoredPaths.forEach(({path}) => log.debug(() => `Unmonitoring path: ${path}`))
+            } else {
+                if (ignoreMissing) {
+                    log.debug(() => `Ignored non-monitored path: ${path}`)
+                } else {
+                    log.warn(`Cannot unmonitor non-monitored path: ${path}`)
+                }
+            }
+        }
+    
+        const remove = paths => {
+            trigger$.next({remove: paths})
+        }
+    
+        const enabled = enabled => {
+            trigger$.next({enabled})
+        }
+    
+        return {monitor, unmonitor, remove, enabled}
     }
 
-    args$.subscribe({
-        next: command => parseMessage(command),
-    })
+    const init = async () => {
+        const userHomeDir = await realpath(Path.join(homeDir, username))
+        const watcher = await createWatcher({out$, stop$, userHomeDir, pollIntervalMilliseconds})
 
-    // watcher.addPath(userHomeDir)
+        watcher.monitor('/')
 
-    return out$.pipe(
-        finalize(
-            () => stop$.next()
+        const parseJSON = json => {
+            try {
+                return JSON.parse(json)
+            } catch (error) {
+                log.warn('Malformed JSON message:', json)
+            }
+        }
+    
+        const processMessage = json => {
+            const msg = parseJSON(json)
+            if (msg) {
+                if (!_.isNil(msg.monitor)) {
+                    watcher.monitor(msg.monitor)
+                } else if (!_.isNil(msg.unmonitor)) {
+                    watcher.unmonitor(msg.unmonitor)
+                } else if (!_.isNil(msg.remove)) {
+                    watcher.remove(msg.remove)
+                } else if (!_.isNil(msg.enabled)) {
+                    watcher.enabled(msg.enabled)
+                } else {
+                    log.warn('Unsupported message:', msg)
+                }
+            }
+        }
+    
+        args$.subscribe(
+            msg => processMessage(msg)
         )
+    }
+
+    return from(init()).pipe(
+        switchMap(() => out$.pipe(
+            finalize(
+                () => stop$.next()
+            )
+        ))
     )
 }
 
@@ -50,7 +217,7 @@ module.exports = Job(logConfig)({
     jobName: 'Files',
     jobPath: __filename,
     before: [],
-    initArgs: () => ({homeDir: require('./config').homeDir}),
-    args: ({params: {username}}) => [username],
+    initArgs: () => getInitArgs(),
+    args: request => [getSepalUser(request).username],
     worker$
 })

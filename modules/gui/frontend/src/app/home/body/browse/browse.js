@@ -1,15 +1,12 @@
 import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {Observable, Subject, forkJoin, timer} from 'rxjs'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {catchError, delay, exhaustMap, filter, map, takeUntil} from 'rxjs/operators'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {dotSafe} from 'stateUtils'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
-import Notifications from 'widget/notifications'
 import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -20,10 +17,10 @@ import api from 'api'
 import format from 'format'
 import lookStyles from 'style/look.module.css'
 import styles from './browse.module.css'
+import withSubscriptions from 'subscription'
 
 const TREE = 'files.tree'
 const SHOW_DOT_FILES = 'files.showDotFiles'
-const REFRESH_INTERVAL_MS = 1000
 const ANIMATION_DURATION_MS = 1000
 
 const mapStateToProps = () => ({
@@ -41,45 +38,25 @@ const treePath = (path = '/') =>
         ) : []
 
 class Browse extends React.Component {
-    disableRefresh$ = new Subject()
     
+    userFiles = api.userFiles.userFiles()
+
     componentDidMount() {
-        this.loadPath('/')
-        this.props.onEnable(() => this.enableRefresh())
-        this.props.onDisable(() => this.disableRefresh())
-        this.enableRefresh()
-    }
-
-    enableRefresh() {
-        this.props.stream('SCHEDULE_REFRESH',
-            timer(0, REFRESH_INTERVAL_MS).pipe(
-                exhaustMap(() => this.updateTree$()),
-                takeUntil(this.disableRefresh$)
+        const {addSubscription, onEnable, onDisable} = this.props
+        onEnable(() => this.enabled(true))
+        onDisable(() => this.enabled(false))
+        addSubscription(
+            this.userFiles.downstream$.subscribe(
+                updates =>
+                    _.transform(updates, (actionBuilder, {path, tree}) => {
+                        tree && actionBuilder.assign([TREE, dotSafe(treePath(path))], {files: tree, opened: true})
+                    }, actionBuilder('UPDATE_TREE')).dispatch()
             )
         )
     }
 
-    updateTree$() {
-        return api.files.updateTree$(this.props.tree).pipe(
-            catchError(() => {
-                Notifications.error({message: msg('browse.loading.error')})
-                return Observable.of([])
-            }),
-            filter(tree => tree),
-            map(tree => {
-                actionBuilder('UPDATE_TREE')
-                    .merge(TREE, tree)
-                    .dispatch()
-            }),
-            delay(ANIMATION_DURATION_MS),
-            map(() => this.pruneRemovedNodes(
-                actionBuilder('CLEANUP_TREE')).dispatch()
-            )
-        )
-    }
-
-    disableRefresh() {
-        this.disableRefresh$.next()
+    enabled(enabled) {
+        this.userFiles.upstream$.next({enabled})
     }
 
     childPath(path = '/', name = '/') {
@@ -98,25 +75,6 @@ class Browse extends React.Component {
         return this.getNode(path).files
     }
 
-    loadPath(path) {
-        this.props.stream('REQUEST_LOAD_FILES',
-            forkJoin(
-                api.files.loadPath$(path).pipe(
-                    catchError(() => {
-                        Notifications.error({message: msg('browse.loading.error')})
-                        return Observable.of([])
-                    })
-                ),
-                timer(200) // add 200ms comfort delay if response is quicker
-            ).pipe(
-                map(([tree]) => actionBuilder('LOAD_PATH', {path})
-                    .set([TREE, dotSafe(treePath(path))], _.assign(tree, {opened: true}))
-                    .dispatch()
-                )
-            )
-        )
-    }
-
     removePaths(paths) {
         actionBuilder('REMOVE_PATH_PENDING', {paths})
             .forEach(paths, (actionBuilder, path) =>
@@ -124,28 +82,29 @@ class Browse extends React.Component {
             )
             .dispatch()
 
-        this.props.stream('REQUEST_REMOVE_PATHS',
-            api.files.removePaths$(paths).pipe(
-                catchError(() => {
-                    Notifications.error({message: msg('browse.removing.error')})
-                    return Observable.of([])
-                }),
-                map(() => actionBuilder('REMOVE_PATHS', {paths})
-                    .forEach(paths, (actionBuilder, path) => {
-                        actionBuilder.del([TREE, dotSafe(treePath(path)), 'removing'])
-                        actionBuilder.set([TREE, dotSafe(treePath(path)), 'removed'], true)
-                    })
-                    .dispatch()
-                ),
-                delay(ANIMATION_DURATION_MS),
-                map(() => actionBuilder('REMOVE_PATHS', {paths})
-                    .forEach(paths, (actionBuilder, path) =>
-                        actionBuilder.del([TREE, dotSafe(treePath(path))])
-                    )
-                    .dispatch()
-                )
-            )
-        )
+        this.userFiles.upstream$.next({remove: paths})
+        // this.props.stream('REQUEST_REMOVE_PATHS',
+        // api.files.removePaths$(paths).pipe(
+        //     catchError(() => {
+        //         Notifications.error({message: msg('browse.removing.error')})
+        //         return Observable.of([])
+        //     }),
+        //     map(() => actionBuilder('REMOVE_PATHS', {paths})
+        //         .forEach(paths, (actionBuilder, path) => {
+        //             actionBuilder.del([TREE, dotSafe(treePath(path)), 'removing'])
+        //             actionBuilder.set([TREE, dotSafe(treePath(path)), 'removed'], true)
+        //         })
+        //         .dispatch()
+        //     ),
+        //     delay(ANIMATION_DURATION_MS),
+        //     map(() => actionBuilder('REMOVE_PATHS', {paths})
+        //         .forEach(paths, (actionBuilder, path) =>
+        //             actionBuilder.del([TREE, dotSafe(treePath(path))])
+        //         )
+        //         .dispatch()
+        //     )
+        // )
+        // )
     }
 
     pruneRemovedNodes(actionBuilder, path) {
@@ -173,9 +132,6 @@ class Browse extends React.Component {
             this.collapseDirectory(path, directory)
         } else {
             this.expandDirectory(path, directory)
-            if (this.isDirectoryUnpopulated(directory)) {
-                this.loadPath(path)
-            }
         }
     }
 
@@ -183,10 +139,34 @@ class Browse extends React.Component {
         return !!this.getNode(path).opened
     }
 
+    scanOpenDirs(path) {
+        const node = this.getNode(path)
+        if (node.files) {
+            _(node.files)
+                .map(({dir, opened}, name) => (dir && opened) ? name : null)
+                .filter(_.identity)
+                .forEach(name => this.userFiles.upstream$.next({monitor: Path.resolve(path, name)}))
+        }
+
+    }
+
     expandDirectory(path) {
         actionBuilder('EXPAND_DIRECTORY')
             .set([TREE, dotSafe(treePath(path)), 'opened'], true)
             .dispatch()
+        this.userFiles.upstream$.next({monitor: path})
+        this.scanOpenDirs(path)
+    }
+
+    collapseDirectory(path) {
+        const ab = actionBuilder('COLLAPSE_DIRECTORY', {path})
+        this.deselectDescendants(ab, path)
+        this.removeAddedFlag(ab, path)
+        ab
+            .set([TREE, dotSafe(treePath(path)), 'opened'], false)
+            // .del([TREE, dotSafe(treePath(path)), 'files'])
+            .dispatch()
+        this.userFiles.upstream$.next({unmonitor: path})
     }
 
     removeAddedFlag(actionBuilder, path) {
@@ -200,15 +180,6 @@ class Browse extends React.Component {
             }
         })
         return actionBuilder
-    }
-
-    collapseDirectory(path) {
-        const ab = actionBuilder('COLLAPSE_DIRECTORY', {path})
-        this.deselectDescendants(ab, path)
-        this.removeAddedFlag(ab, path)
-        ab
-            .del([TREE, dotSafe(treePath(path)), 'opened'])
-            .dispatch()
     }
 
     toggleSelected(path) {
@@ -331,7 +302,7 @@ class Browse extends React.Component {
         const oneFileSelected = selected.files === 1 && selected.directories === 0
         const selectedFiles = this.selectedItems().files
         const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
-        const downloadUrl = selectedFile && api.files.downloadUrl(selectedFile)
+        const downloadUrl = selectedFile && api.userFiles.downloadUrl(selectedFile)
         const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
         const {showDotFiles} = this.props
         let dotFilesTooltip = `browse.controls.${showDotFiles ? 'hideDotFiles' : 'showDotFiles'}.tooltip`
@@ -381,7 +352,8 @@ class Browse extends React.Component {
 
     renderNodeInfo(file) {
         return this.isDirectory(file)
-            ? this.renderDirectoryInfo(file)
+        // ? this.renderDirectoryInfo(file)
+            ? null
             : this.renderFileInfo(file)
     }
 
@@ -393,13 +365,13 @@ class Browse extends React.Component {
         )
     }
 
-    renderDirectoryInfo(dir) {
-        return (
-            <span className={styles.fileInfo}>
-                ({msg('browse.info.directory', {itemCount: dir.count})})
-            </span>
-        )
-    }
+    // renderDirectoryInfo({itemCount}) {
+    //     return (
+    //         <span className={styles.fileInfo}>
+    //             ({msg('browse.info.directory', {itemCount})})
+    //         </span>
+    //     )
+    // }
 
     renderIcon(path, fileName, file) {
         return this.isDirectory(file)
@@ -482,8 +454,8 @@ class Browse extends React.Component {
 
     renderListItems(path, files, depth) {
         const {showDotFiles} = this.props
-        return files ?
-            _.chain(files)
+        return files
+            ? _.chain(files)
                 .pickBy(file => file)
                 .toPairs()
                 .sortBy(0)
@@ -528,5 +500,6 @@ Browse.propTypes = {
 
 export default compose(
     Browse,
-    connect(mapStateToProps)
+    connect(mapStateToProps),
+    withSubscriptions()
 )

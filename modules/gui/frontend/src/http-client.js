@@ -1,10 +1,14 @@
 import {ajax} from 'rxjs/ajax'
 import {catchError, map, mergeMap, retryWhen, tap} from 'rxjs/operators'
+import {getLogger} from 'log'
 import {logout$, updateUser} from 'user'
 import {msg} from 'translate'
 import {of, range, throwError, timer, zip} from 'rxjs'
+import {webSocket} from 'rxjs/webSocket'
 import Notifications from 'widget/notifications'
 import base64 from 'base-64'
+
+const log = getLogger('http')
 
 const DEFAULT_RETRIES = 4
 
@@ -67,6 +71,41 @@ export const delete$ = (url, {retries = DEFAULT_RETRIES, headers, validStatuses,
         ...args
     }).pipe(toResponse)
 
+export const WebSocket = (url, {maxRetries} = {}) => {
+    const upstream$ = webSocket(webSocketUrl(url))
+    let retry = 0
+    const downstream$ = upstream$.pipe(
+        retryWhen(error$ =>
+            error$.pipe(
+                tap(() => retry++),
+                mergeMap(
+                    error => (error.status < 500 || retry > maxRetries)
+                        ? throwError(() => error)
+                        : timer(Math.pow(2, Math.min((retry - 1), 4)) * 500)
+                ),
+                tap(() => log.debug(() => `Retrying websocket connection to ${url}: ${retry}${maxRetries ? `/${maxRetries}` : ''}`))
+            )
+        ),
+        tap(() => retry = 0)
+    )
+    return {upstream$, downstream$}
+}
+    
+const webSocketUrl = url => {
+    const {protocol, host} = window.location
+    if (url.startsWith('wss:') || url.startsWith('ws:')) {
+        return url
+    } else {
+        if (protocol === 'https:') {
+            return `wss://${host}${url}`
+        }
+        if (protocol === 'http:') {
+            return `ws://${host}${url}`
+        }
+    }
+    throw Error(`Cannot determine websocket url: ${url}`)
+}
+        
 const toQueryString = object =>
     object && Object.keys(object)
         .map(key => {
@@ -78,7 +117,7 @@ const toQueryString = object =>
 const validateResponse = (response, validStatuses) =>
     !validStatuses || validStatuses.includes(response.status)
         ? response
-        : throwError(response)
+        : throwError(() => response)
 
 const execute$ = (url, method, {retries, query, username, password, headers, validStatuses, ...args}) => {
     const queryString = toQueryString(query)
@@ -105,7 +144,7 @@ const execute$ = (url, method, {retries, query, username, password, headers, val
                 Notifications.warning({message: msg('unauthorized.warning'), group: true})
                 return logout$()
             } else {
-                return throwError(e)
+                return throwError(() => e)
             }
         }),
         retryWhen(function (error$) {
@@ -116,7 +155,7 @@ const execute$ = (url, method, {retries, query, username, password, headers, val
                 mergeMap(
                     ([error, retry]) => {
                         if (error.status < 500 || retry > retries)
-                            return throwError(error)
+                            return throwError(() => error)
                         else
                             return timer(Math.pow(2, retry) * 200)
                     }

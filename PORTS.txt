@@ -8,3 +8,4 @@ Node debug
     9235: terminal
     9236: user-storage
     9237: gateway
+    9238: user-files
