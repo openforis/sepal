@@ -9,6 +9,7 @@ import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
+import Tooltip from 'widget/tooltip'
 import styles from './input.module.css'
 import withForwardedRef from 'ref'
 
@@ -67,7 +68,7 @@ class _Input extends React.Component {
     }
 
     render() {
-        const {className, disabled, label, tooltip, tooltipPlacement, errorMessage, busyMessage, border, onClick} = this.props
+        const {className, disabled, label, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border, onClick} = this.props
         return (
             <Widget
                 className={[
@@ -78,6 +79,7 @@ class _Input extends React.Component {
                 label={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
+                tooltipTrigger={tooltipTrigger}
                 errorMessage={errorMessage}
                 busyMessage={busyMessage}
                 border={border}
@@ -105,33 +107,39 @@ class _Input extends React.Component {
         const {
             type, name, placeholder, maxLength, tabIndex,
             autoFocus, autoComplete, autoCorrect, autoCapitalize,
-            spellCheck, disabled, readOnly, value
+            spellCheck, disabled, readOnly, value,
+            inputTooltip, inputTooltipPlacement
         } = this.props
         const {focused} = this.state
         return (
             // [HACK] input is wrapped in a div for fixing Firefox input width in flex
             <Keybinding keymap={{' ': null}} disabled={!focused} priority>
                 <div className={styles.inputWrapper}>
-                    <input
-                        ref={this.ref}
-                        className={readOnly ? styles.readOnly : null}
-                        type={this.isSearchInput() ? 'text' : type}
-                        name={name}
-                        defaultValue={value}
-                        placeholder={placeholder}
-                        maxLength={maxLength}
-                        tabIndex={tabIndex}
-                        autoFocus={autoFocus && !isMobile()}
-                        autoComplete={autoComplete ? 'on' : 'off'}
-                        autoCorrect={autoCorrect ? 'on' : 'off'}
-                        autoCapitalize={autoCapitalize ? 'on' : 'off'}
-                        spellCheck={spellCheck ? 'true' : 'false'}
-                        disabled={disabled}
-                        readOnly={readOnly ? 'readonly' : ''}
-                        onFocus={this.onFocus}
-                        onBlur={this.onBlur}
-                        onChange={this.onChange}
-                    />
+                    <Tooltip
+                        msg={inputTooltip}
+                        placement={inputTooltipPlacement}
+                        trigger='focus'>
+                        <input
+                            ref={this.ref}
+                            className={readOnly ? styles.readOnly : null}
+                            type={this.isSearchInput() ? 'text' : type}
+                            name={name}
+                            defaultValue={value}
+                            placeholder={placeholder}
+                            maxLength={maxLength}
+                            tabIndex={tabIndex}
+                            autoFocus={autoFocus && !isMobile()}
+                            autoComplete={autoComplete ? 'on' : 'off'}
+                            autoCorrect={autoCorrect ? 'on' : 'off'}
+                            autoCapitalize={autoCapitalize ? 'on' : 'off'}
+                            spellCheck={spellCheck ? 'true' : 'false'}
+                            disabled={disabled}
+                            readOnly={readOnly ? 'readonly' : ''}
+                            onFocus={this.onFocus}
+                            onBlur={this.onBlur}
+                            onChange={this.onChange}
+                        />
+                    </Tooltip>
                 </div>
             </Keybinding>
         )
@@ -239,6 +247,8 @@ Input.propTypes = {
     disabled: PropTypes.any,
     errorMessage: PropTypes.string,
     fadeOverflow: PropTypes.any,
+    inputTooltip: PropTypes.any,
+    inputTooltipPlacement: PropTypes.string,
     label: PropTypes.string,
     maxLength: PropTypes.number,
     name: PropTypes.string,
@@ -248,6 +258,7 @@ Input.propTypes = {
     tabIndex: PropTypes.number,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
+    tooltipTrigger: PropTypes.string,
     transform: PropTypes.func,
     type: PropTypes.string,
     value: PropTypes.any,
@@ -281,7 +292,7 @@ class _Textarea extends React.Component {
     }
 
     render() {
-        const {className, disabled, label, tooltip, tooltipPlacement, errorMessage, busyMessage, border} = this.props
+        const {className, disabled, label, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border} = this.props
         return (
             <Widget
                 className={[
@@ -292,6 +303,7 @@ class _Textarea extends React.Component {
                 label={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
+                tooltipTrigger={tooltipTrigger}
                 errorMessage={errorMessage}
                 busyMessage={busyMessage}
                 border={border}>
@@ -301,30 +313,35 @@ class _Textarea extends React.Component {
     }
 
     renderTextArea() {
-        const {className, name, value, placeholder, autoFocus, tabIndex, minRows, maxRows, onChange, onBlur, onFocus} = this.props
+        const {className, name, value, placeholder, autoFocus, inputTooltip, inputTooltipPlacement, tabIndex, minRows, maxRows, onChange, onBlur, onFocus} = this.props
         const {focused} = this.state
         return (
             <Keybinding keymap={{Enter: null, ' ': null}} disabled={!focused} priority>
-                <TextareaAutosize
-                    ref={this.element}
-                    className={className}
-                    name={name}
-                    value={value || ''}
-                    placeholder={placeholder}
-                    tabIndex={tabIndex}
-                    autoFocus={autoFocus && !isMobile()}
-                    minRows={minRows}
-                    maxRows={maxRows}
-                    onFocus={e => {
-                        this.setState({focused: true})
-                        onFocus && onFocus(e)
-                    }}
-                    onBlur={e => {
-                        this.setState({focused: false})
-                        onBlur && onBlur(e)
-                    }}
-                    onChange={e => onChange && onChange(e)}
-                />
+                <Tooltip
+                    msg={inputTooltip}
+                    placement={inputTooltipPlacement}
+                    trigger='focus'>
+                    <TextareaAutosize
+                        ref={this.element}
+                        className={className}
+                        name={name}
+                        value={value || ''}
+                        placeholder={placeholder}
+                        tabIndex={tabIndex}
+                        autoFocus={autoFocus && !isMobile()}
+                        minRows={minRows}
+                        maxRows={maxRows}
+                        onFocus={e => {
+                            this.setState({focused: true})
+                            onFocus && onFocus(e)
+                        }}
+                        onBlur={e => {
+                            this.setState({focused: false})
+                            onBlur && onBlur(e)
+                        }}
+                        onChange={e => onChange && onChange(e)}
+                    />
+                </Tooltip>
             </Keybinding>
         )
     }
@@ -341,6 +358,8 @@ Textarea.propTypes = {
     className: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.string,
+    inputTooltip: PropTypes.any,
+    inputTooltipPlacement: PropTypes.string,
     label: PropTypes.any,
     maxRows: PropTypes.number,
     minRows: PropTypes.number,
@@ -349,6 +368,7 @@ Textarea.propTypes = {
     tabIndex: PropTypes.number,
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any,
+    tooltipTrigger: PropTypes.any,
     value: PropTypes.any,
     onBlur: PropTypes.func,
     onChange: PropTypes.func,
