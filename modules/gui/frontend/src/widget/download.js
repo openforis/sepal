@@ -2,9 +2,9 @@ import {from} from 'rxjs'
 import {map} from 'rxjs/operators'
 import JSZip from 'jszip'
 
-export const download = (url, filename) => {
+export const download = (url, _filename) => {
     // create hidden anchor, attach to DOM, click it and remove it from the DOM
-    var downloadElement = document.createElement('a')
+    const downloadElement = document.createElement('a')
     downloadElement.setAttribute('style', 'display: none')
     downloadElement.setAttribute('href', url)
     // downloadElement.setAttribute('download', filename)
