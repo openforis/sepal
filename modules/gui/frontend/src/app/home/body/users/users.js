@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {forkJoin, zip} from 'rxjs'
-import {map, tap} from 'rxjs/operators'
+import {map} from 'rxjs/operators'
 import {msg} from 'translate'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -21,8 +21,7 @@ const getUserList$ = () => forkJoin(
             ...user,
             quota: budget[user.username || {}]
         }))
-    ),
-    tap(console.log)
+    )
 )
 
 class Users extends React.Component {
