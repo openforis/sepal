@@ -1,4 +1,4 @@
-FROM node:14-stretch
+FROM node:16-stretch
 EXPOSE 5001
 
 ENV GEE /usr/local/src/sepal/modules/gee/docker
