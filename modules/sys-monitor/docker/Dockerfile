@@ -1,4 +1,4 @@
-FROM node:14-stretch
+FROM node:16-stretch
 
 ENV MODULE /usr/local/src/sepal/modules/sys-monitor/docker
 ENV SHARED /usr/local/src/sepal/lib/js/shared
@@ -33,4 +33,3 @@ CMD node \
     --auto-rearm-delay-hours ${AUTO_REARM_DELAY_HOURS} \
     --notify-to ${SEPAL_MONITORING_EMAIL} \
     --notify-from sys-monitor
-    

@@ -130,6 +130,7 @@
     - { role: build-module, module: user-storage }
     - { role: build-module, module: user-storage-backup }
     - { role: build-module, module: sepal-server }
+    - { role: build-module, module: user-files }
     - { role: build-module, module: gui }
     - { role: build-module, module: ceo-gateway }
     - { role: build-module, module: app-manager }
@@ -150,6 +151,7 @@
     - { role: run-module, module: user-storage-backup }
     - { role: run-module, module: app-manager }
     - { role: run-module, module: sepal-server, container_name: sepal }
+    - { role: run-module, module: user-files }
     - { role: run-module, module: gui }
     - { role: run-module, module: ceo-gateway }
     - { role: run-module, module: ssh-gateway }

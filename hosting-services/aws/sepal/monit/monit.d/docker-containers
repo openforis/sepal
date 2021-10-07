@@ -22,6 +22,10 @@ check program email-redis with path /usr/local/bin/dockercheck-email-redis
     depends on docker
     if status != 0 then alert
 
+check program user-files with path /usr/local/bin/dockercheck-user-files
+    depends on docker
+    if status != 0 then alert
+
 check program gee with path /usr/local/bin/dockercheck-gee
     depends on docker
     if status != 0 then alert

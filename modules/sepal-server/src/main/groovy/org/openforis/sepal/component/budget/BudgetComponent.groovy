@@ -3,16 +3,13 @@ package org.openforis.sepal.component.budget
 import groovy.transform.Canonical
 import groovymvc.Controller
 import org.openforis.sepal.component.DataSourceBackedComponent
-import org.openforis.sepal.component.budget.adapter.FilesComponentBackedUserFiles
 import org.openforis.sepal.component.budget.adapter.JdbcBudgetRepository
-import org.openforis.sepal.component.budget.adapter.UserFiles
 import org.openforis.sepal.component.budget.api.HostingService
 import org.openforis.sepal.component.budget.command.*
 import org.openforis.sepal.component.budget.endpoint.BudgetEndpoint
 import org.openforis.sepal.component.budget.internal.InstanceSpendingService
 import org.openforis.sepal.component.budget.internal.StorageUseService
 import org.openforis.sepal.component.budget.query.*
-import org.openforis.sepal.component.files.FilesComponent
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
@@ -33,14 +30,12 @@ class BudgetComponent extends DataSourceBackedComponent implements EndpointRegis
     private final Topic userTopic
     private final Topic userStorageTopic
 
-    static BudgetComponent create(HostingServiceAdapter hostingServiceAdapter, FilesComponent filesComponent,
-                                  SqlConnectionManager connectionManager) {
+    static BudgetComponent create(HostingServiceAdapter hostingServiceAdapter, SqlConnectionManager connectionManager) {
         def config = new BudgetConfig()
         new BudgetComponent(
                 connectionManager,
                 hostingServiceAdapter.hostingService,
                 new RestUserRepository(config.userEndpoint, config.userEndpointUser),
-                new FilesComponentBackedUserFiles(filesComponent),
                 new TopicEventDispatcher(
                         new RabbitMQTopic(COMPONENT_NAME, config.rabbitMQHost, config.rabbitMQPort)
                 ),
@@ -54,7 +49,6 @@ class BudgetComponent extends DataSourceBackedComponent implements EndpointRegis
             SqlConnectionManager connectionManager,
             HostingService hostingService,
             UserRepository userRepository,
-            UserFiles userFiles,
             HandlerRegistryEventDispatcher eventDispatcher,
             Topic userTopic,
             Topic userStorageTopic,
@@ -64,7 +58,7 @@ class BudgetComponent extends DataSourceBackedComponent implements EndpointRegis
         this.userStorageTopic = userStorageTopic
         def budgetRepository = new JdbcBudgetRepository(connectionManager, clock)
         def instanceSpendingService = new InstanceSpendingService(budgetRepository, hostingService, clock)
-        def storageUseService = new StorageUseService(budgetRepository, userFiles, hostingService, clock)
+        def storageUseService = new StorageUseService(budgetRepository, hostingService, clock)
         def generateSpendingReportHandler = new GenerateSpendingReportHandler(instanceSpendingService, storageUseService, budgetRepository, userRepository)
         def generateUserSpendingReportHandler = new GenerateUserSpendingReportHandler(instanceSpendingService, storageUseService, budgetRepository)
 

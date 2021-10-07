@@ -7,8 +7,8 @@ apt-get -y update && apt-get install -y \
   software-properties-common \
   sudo
 
-curl -sL https://deb.nodesource.com/setup_14.x | bash -
-apt-get install -y nodejs\
+curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+apt-get update && apt-get install -y nodejs\
  bzip2
 
 useradd -m -d "${JENKINS_HOME}"  jenkins

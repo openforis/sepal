@@ -1,4 +1,4 @@
-FROM node:14-stretch
+FROM node:16-stretch
 EXPOSE 8000
 
 ENV MODULE /usr/local/src/sepal/modules/terminal/docker
