@@ -1,6 +1,6 @@
 const ee = require('sepal/ee')
 const {concat, defer, switchMap} = require('rxjs')
-const {finalize, swallow} = require('sepal/rxjs/operators')
+const {finalize, swallow} = require('sepal/rxjs')
 const drive = require('root/drive')
 const {initUserBucket$} = require('root/cloudStorageBucket')
 const cloudStorage = require('root/cloudStorageDownload')

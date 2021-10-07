@@ -18,7 +18,7 @@ const getCredentials = ctx => {
 }
 
 const worker$ = ({sepalUser, serviceAccountCredentials}) => {
-    const {swallow} = require('sepal/rxjs/operators')
+    const {swallow} = require('sepal/rxjs')
     const ee = require('sepal/ee')
 
     if (sepalUser) {
