@@ -9,7 +9,7 @@ import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {formatCoordinates} from 'coords'
 import {msg} from 'translate'
-import {throttleTime} from 'rxjs'
+import {throttleTime} from 'rxjs/operators'
 import {withMap} from './mapContext'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -146,7 +146,7 @@ class _MapInfo extends React.Component {
         const {map: {view$}, addSubscription} = this.props
         addSubscription(
             view$.pipe(
-                throttleTime(THROTTLE_TIME_MS)
+                throttleTime(THROTTLE_TIME_MS, null, {leading: true, trailing: true})
             ).subscribe(
                 view => view && this.setState({view})
             )
