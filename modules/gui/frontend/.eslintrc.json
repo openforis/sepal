@@ -4,16 +4,13 @@
         "node":  true,
         "browser": true,
         "amd": true,
-        "es6": true
+        "es2021": true
     },
     "extends": [
         "eslint:recommended",
         "plugin:react/recommended"
-        // "plugin:import/errors",
-        // "plugin:import/warnings"
     ],
     "parserOptions": {
-        "ecmaVersion": 9,
         "ecmaFeatures": {
             "jsx": true
         },
@@ -26,7 +23,7 @@
     ],
     "settings": {
         "react": {
-            "version": "16.4"
+            "version": "17"
         }
     },
     "rules": {
@@ -100,8 +97,6 @@
             "warn",
             "never"
         ],
-        "space-before-blocks": "warn",
-        "space-infix-ops": "warn",
         "quotes": [
             "warn",
             "single"
@@ -133,6 +128,11 @@
             "ignoreMemberSort": false,
             "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
         }],
-        "space-in-parens": ["warn", "never"]
+        "space-before-blocks": "warn",
+        "space-in-parens": ["warn", "never"],
+        "space-infix-ops": "warn",
+        "template-curly-spacing": [
+            "warn"
+        ]
     }
 }

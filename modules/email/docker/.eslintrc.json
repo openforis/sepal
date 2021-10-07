@@ -1,20 +1,14 @@
 {
     "env": {
         "node":  true,
-        "browser": true,
         "amd": true,
-        "es6": true
+        "es2021": true
     },
     "extends": [
         "eslint:recommended"
-        // "plugin:import/errors",
-        // "plugin:import/warnings"
+        // "plugin:import/recommended"
     ],
     "parserOptions": {
-        "ecmaVersion": 9,
-        "ecmaFeatures": {
-            "jsx": true
-        },
         "sourceType": "module"
     },
     "plugins": [
@@ -99,12 +93,6 @@
         "prefer-template": [
             "error"
         ],
-        "space-before-blocks": "error",
-        "space-in-parens": [
-            "error",
-            "never"
-        ],
-        "space-infix-ops": "error",
         "quotes": [
             "error",
             "single"
@@ -113,13 +101,19 @@
             "error",
             "never"
         ],
-        "template-curly-spacing": [
-            "error"
-        ]
+        "space-before-blocks": "error",
+        "space-in-parens": [
+            "error",
+            "never"
+        ],
+        "space-infix-ops": "error",
         // "sort-imports-es6-autofix/sort-imports-es6": ["error", {
         //     "ignoreCase": false,
         //     "ignoreMemberSort": false,
         //     "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
-        // }]
+        // }],
+        "template-curly-spacing": [
+            "error"
+        ]
     }
 }
