@@ -1,5 +1,4 @@
-const {BehaviorSubject, concat, of, throwError} = require('rxjs')
-const {catchError, distinctUntilChanged, first, map, takeUntil, tap} = require('rxjs/operators')
+const {BehaviorSubject, concat, of, throwError, catchError, distinctUntilChanged, first, map, takeUntil, tap} = require('rxjs')
 const {finalize$} = require('sepal/rxjs')
 const {job} = require('root/jobs/job')
 const log = require('sepal/log').getLogger('task')

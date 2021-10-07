@@ -1,5 +1,4 @@
-const {Subject} = require('rxjs')
-const {switchMap, first} = require('rxjs/operators')
+const {Subject, switchMap, first} = require('rxjs')
 const ee = require('sepal/ee')
 const {getCredentials$} = require('root/context')
 

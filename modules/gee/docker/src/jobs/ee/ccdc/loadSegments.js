@@ -2,8 +2,7 @@ const {job} = require('root/jobs/job')
 
 const worker$ = ({recipe, latLng, bands}) => {
     const {toGeometry} = require('sepal/ee/aoi')
-    const {of} = require('rxjs')
-    const {map, switchMap} = require('rxjs/operators')
+    const {of, map, switchMap} = require('rxjs')
     const ccdc = require('sepal/ee/timeSeries/ccdc')
     const imageFactory = require('sepal/ee/imageFactory')
     const _ = require('lodash')

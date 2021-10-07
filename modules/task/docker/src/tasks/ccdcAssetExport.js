@@ -1,5 +1,5 @@
 const {exportImageToAsset$} = require('../jobs/export/toAsset')
-const {switchMap} = require('rxjs/operators')
+const {switchMap} = require('rxjs')
 const ccdc = require('sepal/ee/timeSeries/ccdc')
 const {toVisualizationProperties} = require('../ee/visualizations')
 const {formatProperties} = require('./formatProperties')

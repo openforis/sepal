@@ -1,5 +1,4 @@
-const {concat} = require('rxjs')
-const {switchMap} = require('rxjs/operators')
+const {concat, switchMap} = require('rxjs')
 const moment = require('moment')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
 const {createVrt$, setBandNames$} = require('sepal/gdal')

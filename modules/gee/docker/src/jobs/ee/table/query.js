@@ -2,7 +2,7 @@ const {job} = require('root/jobs/job')
 
 const worker$ = ({select, from, where = [], orderBy = []}) => {
     const ee = require('sepal/ee')
-    const {map} = require('rxjs/operators')
+    const {map} = require('rxjs')
     const _ = require('lodash')
 
     const collection = ee.FeatureCollection(from)

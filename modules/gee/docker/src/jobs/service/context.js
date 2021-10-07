@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const {first} = require('rxjs/operators')
+const {first} = require('rxjs')
 const service = require('sepal/service')
 
 const contextService = {

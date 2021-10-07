@@ -1,5 +1,4 @@
-const {defer, firstValueFrom, of} = require('rxjs')
-const {catchError, map} = require('rxjs/operators')
+const {defer, firstValueFrom, of, catchError, map} = require('rxjs')
 const {post$, postJson$} = require('sepal/httpClient')
 const {modules} = require('./config')
 const log = require('sepal/log').getLogger('auth')

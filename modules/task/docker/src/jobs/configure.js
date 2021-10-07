@@ -4,7 +4,7 @@ const contextService = require('root/jobs/service/context').contextService
 const worker$ = () => {
     const {configure} = require('sepal/context')
     const {getCurrentContext$} = require('root/jobs/service/context')
-    const {tap} = require('rxjs/operators')
+    const {tap} = require('rxjs')
     const {swallow} = require('sepal/rxjs/operators')
     return getCurrentContext$().pipe(
         tap(({config}) => configure(config)),

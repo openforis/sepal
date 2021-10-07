@@ -16,8 +16,7 @@ const getInitArgs = () => {
 const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}}) => {
     const Path = require('path')
     const {realpath, readdir, stat, rm} = require('fs/promises')
-    const {EMPTY, concat, timer, Subject, finalize, from} = require('rxjs')
-    const {exhaustMap, distinctUntilChanged, takeUntil, takeWhile, switchMap} = require('rxjs/operators')
+    const {EMPTY, concat, timer, Subject, finalize, from, exhaustMap, distinctUntilChanged, takeUntil, takeWhile, switchMap} = require('rxjs')
     const {minDuration$} = require('sepal/rxjs/operators')
     const _ = require('lodash')
     const {resolvePath} = require('./filesystem')

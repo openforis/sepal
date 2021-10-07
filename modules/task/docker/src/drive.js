@@ -1,5 +1,4 @@
-const {defer, EMPTY, ReplaySubject, concat, from, of, throwError} = require('rxjs')
-const {catchError, expand, filter, map, mergeMap, mergeScan, scan, switchMap} = require('rxjs/operators')
+const {defer, EMPTY, ReplaySubject, concat, from, of, throwError, catchError, expand, filter, map, mergeMap, mergeScan, scan, switchMap} = require('rxjs')
 const {google} = require('googleapis')
 const {NotFoundException} = require('sepal/exception')
 const log = require('sepal/log').getLogger('drive')

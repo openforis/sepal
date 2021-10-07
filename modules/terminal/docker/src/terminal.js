@@ -1,7 +1,6 @@
 const log = require('sepal/log').getLogger('terminal')
 const {exec} = require('child_process')
-const {interval, merge, Subject} = require('rxjs')
-const {map, mapTo, filter, bufferTime} = require('rxjs/operators')
+const {interval, merge, Subject, map, mapTo, filter, bufferTime} = require('rxjs')
 
 const Session = require('./session')
 

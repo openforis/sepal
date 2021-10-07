@@ -1,7 +1,6 @@
 const {readFile} = require('fs')
 const {stat} = require('fs/promises')
-const {Subject, from, of} = require('rxjs')
-const {catchError, map} = require('rxjs/operators')
+const {Subject, from, of, catchError, map} = require('rxjs')
 
 const fileToJson$ = path => {
     const json$ = new Subject()

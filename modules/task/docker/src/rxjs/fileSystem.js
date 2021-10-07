@@ -1,5 +1,4 @@
-const {defer, of} = require('rxjs')
-const {catchError, map, switchMap} = require('rxjs/operators')
+const {defer, of, catchError, map, switchMap} = require('rxjs')
 const {fromPromise} = require('sepal/rxjs')
 const fs = require('fs')
 const Path = require('path')

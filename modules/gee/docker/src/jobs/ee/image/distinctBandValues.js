@@ -6,7 +6,7 @@ const MAX_VALUE_COUNT = 256
 const worker$ = ({recipe, band, aoi, mapBounds}) => {
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('sepal/ee')
-    const {switchMap, tap} = require('rxjs/operators')
+    const {switchMap, tap} = require('rxjs')
     const {toGeometry} = require('sepal/ee/aoi')
 
     const {getImage$} = ImageFactory(recipe, {selection: [band]})

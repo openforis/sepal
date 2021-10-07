@@ -2,8 +2,7 @@ const {job} = require('root/jobs/job')
 const {eeLimiterService} = require('sepal/ee/eeLimiterService')
 
 const worker$ = () => {
-    const {ReplaySubject} = require('rxjs')
-    const {switchMap} = require('rxjs/operators')
+    const {ReplaySubject, switchMap} = require('rxjs')
     const ee = require('sepal/ee')
     const {getContext$} = require('root/jobs/service/context')
     

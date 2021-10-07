@@ -1,8 +1,7 @@
 const {job} = require('root/jobs/job')
 
 const worker$ = () => {
-    const {EMPTY} = require('rxjs')
-    const {delay} = require('rxjs/operators')
+    const {EMPTY, delay} = require('rxjs')
     return EMPTY.pipe(delay(100))
 }
 

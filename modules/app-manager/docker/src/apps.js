@@ -1,5 +1,4 @@
-const {EMPTY, from, interval, of, zip} = require('rxjs')
-const {catchError, delay, exhaustMap, filter, map, concatMap, switchMap} = require('rxjs/operators')
+const {EMPTY, from, interval, of, zip, catchError, delay, exhaustMap, filter, map, concatMap, switchMap} = require('rxjs')
 const log = require('sepal/log').getLogger('apps')
 const {fileToJson$, lastModifiedDate$} = require('./file')
 const {exec$} = require('./terminal')

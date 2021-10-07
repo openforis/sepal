@@ -2,7 +2,7 @@ const {job} = require('root/jobs/job')
 
 const worker$ = ({asset}) => {
     const ee = require('sepal/ee')
-    const {map} = require('rxjs/operators')
+    const {map} = require('rxjs')
     const {v4: guid} = require('uuid')
 
     const extractLandcover = image => {

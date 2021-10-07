@@ -4,7 +4,7 @@ const worker$ = ({recipe}) => {
     const ee = require('sepal/ee')
     const ImageFactory = require('sepal/ee/imageFactory')
     const {of} = require('rxjs')
-    const {switchMap} = require('rxjs/operators')
+    const {switchMap} = require('rxjs')
 
     const {getGeometry$} = ImageFactory(recipe)
     return getGeometry$().pipe(
