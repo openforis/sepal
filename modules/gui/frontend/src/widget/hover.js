@@ -1,6 +1,5 @@
 import {compose} from 'compose'
-import {delay, distinctUntilChanged, map, mapTo, switchMap, takeUntil, zip} from 'rxjs/operators'
-import {fromEvent, merge, of} from 'rxjs'
+import {delay, distinctUntilChanged, fromEvent, map, mapTo, merge, of, switchMap, takeUntil, zip} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'

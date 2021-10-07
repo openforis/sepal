@@ -1,5 +1,4 @@
-import {catchError, tap} from 'rxjs/operators'
-import {of, throwError} from 'rxjs'
+import {catchError, of, tap, throwError} from 'rxjs'
 import TileLayer from './tileLayer'
 import _ from 'lodash'
 

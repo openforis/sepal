@@ -1,6 +1,5 @@
-import {Subject} from 'rxjs'
+import {Subject, finalize} from 'rxjs'
 import {compose} from 'compose'
-import {finalize} from 'rxjs/operators'
 import {v4 as uuid} from 'uuid'
 import {withContext} from 'context'
 import React from 'react'

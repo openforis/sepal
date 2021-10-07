@@ -1,9 +1,8 @@
 import * as PropTypes from 'prop-types'
 import {Form} from 'widget/form/form'
-import {Subject} from 'rxjs'
+import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {takeUntil} from 'rxjs/operators'
 import React, {Component} from 'react'
 import api from 'api'
 

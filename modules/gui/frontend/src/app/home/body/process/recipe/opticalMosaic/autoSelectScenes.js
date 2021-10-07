@@ -1,7 +1,6 @@
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {Subject} from 'rxjs'
+import {Subject, map, takeUntil} from 'rxjs'
 import {compose} from 'compose'
-import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import MapStatus from 'widget/mapStatus'

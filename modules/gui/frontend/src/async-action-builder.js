@@ -1,6 +1,6 @@
 import {dispatch} from 'store'
 import {msg} from 'translate'
-import {takeUntil} from 'rxjs/operators'
+import {takeUntil} from 'rxjs'
 // import Notifications from 'widget/notifications'
 import actionBuilder from 'action-builder'
 

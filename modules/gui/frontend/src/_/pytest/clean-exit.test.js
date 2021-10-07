@@ -1,6 +1,5 @@
-import {Subject, from, interval, of} from 'rxjs'
+import {Subject, from, interval, map, merge, mergeAll, mergeMap, of, take} from 'rxjs'
 import {WorkQueue} from './workqueue'
-import {map, merge, mergeAll, mergeMap, take} from 'rxjs/operators'
 
 const executeTask = task => {
     console.info(`Running task ${task.description}`)

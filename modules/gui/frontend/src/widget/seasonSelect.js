@@ -1,7 +1,6 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
-import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
+import {animationFrameScheduler, distinctUntilChanged, filter, fromEvent, interval, map, scan, switchMap, takeUntil} from 'rxjs'
 import {compose} from 'compose'
-import {distinctUntilChanged, filter, map, scan, switchMap, takeUntil} from 'rxjs/operators'
 import {intersect} from 'collections'
 import Hammer from 'hammerjs'
 import PropTypes from 'prop-types'

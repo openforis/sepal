@@ -1,6 +1,5 @@
-import {Subject, concat} from 'rxjs'
+import {Subject, concat, debounceTime, distinctUntilChanged, first} from 'rxjs'
 import {compose} from 'compose'
-import {debounceTime, distinctUntilChanged, first} from 'rxjs/operators'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'

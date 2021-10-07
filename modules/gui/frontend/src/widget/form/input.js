@@ -1,7 +1,6 @@
 import {Input, Textarea} from 'widget/input'
-import {Subject} from 'rxjs'
+import {Subject, debounceTime, distinctUntilChanged} from 'rxjs'
 import {compose} from 'compose'
-import {debounceTime, distinctUntilChanged} from 'rxjs/operators'
 import {getErrorMessage} from 'widget/form/error'
 import {withFormContext} from 'widget/form/context'
 import PropTypes from 'prop-types'

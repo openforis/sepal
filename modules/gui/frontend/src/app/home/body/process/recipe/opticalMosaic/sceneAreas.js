@@ -4,12 +4,11 @@ import {
     SceneSelectionType,
     getSource
 } from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {Subject} from 'rxjs'
+import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {objectEquals} from 'collections'
 import {selectFrom} from 'stateUtils'
-import {takeUntil} from 'rxjs/operators'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {withTabContext} from 'widget/tabs/tabContext'
 import Notifications from 'widget/notifications'

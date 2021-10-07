@@ -1,5 +1,4 @@
-import {BehaviorSubject, ReplaySubject, Subject} from 'rxjs'
-import {finalize, first} from 'rxjs/operators'
+import {BehaviorSubject, ReplaySubject, Subject, finalize, first} from 'rxjs'
 import {getLogger} from 'log'
 import {getRequestExecutor} from './requestExecutor'
 import {getRequestQueue} from './requestQueue'

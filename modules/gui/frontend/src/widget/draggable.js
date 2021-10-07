@@ -1,6 +1,5 @@
-import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
+import {animationFrameScheduler, distinctUntilChanged, filter, fromEvent, interval, map, switchMap} from 'rxjs'
 import {compose} from 'compose'
-import {distinctUntilChanged, filter, map, switchMap} from 'rxjs/operators'
 import Hammer from 'hammerjs'
 import PropTypes from 'prop-types'
 import React from 'react'

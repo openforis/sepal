@@ -1,7 +1,6 @@
 import {TileProvider} from './tileProvider'
-import {debounceTime, mergeMap, retryWhen, switchMap} from 'rxjs/operators'
+import {debounceTime, mergeMap, of, pipe, range, retryWhen, switchMap, throwError, timer, zip} from 'rxjs'
 import {getTileManager} from '../tileManager/tileManager'
-import {of, pipe, range, throwError, timer, zip} from 'rxjs'
 
 export class BalancingTileProvider extends TileProvider {
     constructor({tileProvider, retries, busy$}) {

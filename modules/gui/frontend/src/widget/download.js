@@ -1,5 +1,4 @@
-import {from} from 'rxjs'
-import {map} from 'rxjs/operators'
+import {from, map} from 'rxjs'
 import JSZip from 'jszip'
 
 export const download = (url, _filename) => {

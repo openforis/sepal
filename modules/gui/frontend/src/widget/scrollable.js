@@ -1,6 +1,5 @@
-import {EMPTY, Subject, animationFrameScheduler, fromEvent, interval} from 'rxjs'
+import {EMPTY, Subject, animationFrameScheduler, debounceTime, distinctUntilChanged, fromEvent, interval, map, mapTo, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs'
 import {compose} from 'compose'
-import {debounceTime, distinctUntilChanged, map, mapTo, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs/operators'
 import {v4 as uuid} from 'uuid'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'

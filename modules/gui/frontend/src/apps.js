@@ -1,5 +1,4 @@
-import {concat, interval} from 'rxjs'
-import {exhaustMap, filter, first, map, switchMap} from 'rxjs/operators'
+import {concat, exhaustMap, filter, first, interval, map, switchMap} from 'rxjs'
 import {get$} from './http-client'
 import {select} from 'store'
 import _ from 'lodash'

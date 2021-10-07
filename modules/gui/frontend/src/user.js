@@ -1,5 +1,4 @@
-import {EMPTY, of} from 'rxjs'
-import {catchError, map, switchMap, tap} from 'rxjs/operators'
+import {EMPTY, catchError, map, of, switchMap, tap} from 'rxjs'
 import {history} from 'route'
 import {msg} from 'translate'
 import {select} from 'store'

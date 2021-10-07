@@ -1,5 +1,4 @@
-import {Subject, forkJoin} from 'rxjs'
-import {toArray} from 'rxjs/operators'
+import {Subject, forkJoin, toArray} from 'rxjs'
 import Papa from 'papaparse'
 
 export const parseCsvFile$ = file => {

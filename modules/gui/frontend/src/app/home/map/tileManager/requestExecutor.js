@@ -1,5 +1,4 @@
-import {Subject} from 'rxjs'
-import {finalize, first, takeUntil, tap} from 'rxjs/operators'
+import {Subject, finalize, first, takeUntil, tap} from 'rxjs'
 import {getLogger} from 'log'
 import {requestTag, tileProviderTag} from 'tag'
 import _ from 'lodash'

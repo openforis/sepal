@@ -1,5 +1,4 @@
-import {Subject, isObservable, of} from 'rxjs'
-import {catchError, concat, delay, filter, map, merge, mergeMap, share, takeUntil, takeWhile, tap} from 'rxjs/operators'
+import {Subject, catchError, concat, delay, filter, isObservable, map, merge, mergeMap, of, share, takeUntil, takeWhile, tap} from 'rxjs'
 import {onUnsubscribe} from './operators'
 
 export class WorkQueue {

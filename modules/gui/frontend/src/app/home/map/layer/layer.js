@@ -1,7 +1,6 @@
-import {ReplaySubject, of} from 'rxjs'
+import {ReplaySubject, of, takeUntil} from 'rxjs'
 import {getLogger} from 'log'
 import {msg} from 'translate'
-import {takeUntil} from 'rxjs/operators'
 import Notifications from 'widget/notifications'
 
 const log = getLogger('layer')

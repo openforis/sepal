@@ -1,7 +1,6 @@
-import {Subject, merge, timer} from 'rxjs'
+import {Subject, delay, filter, map, merge, mergeMap, scan, takeWhile, timer} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {delay, filter, map, mergeMap, scan, takeWhile} from 'rxjs/operators'
 import {simplehash as hash} from 'hash'
 import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'

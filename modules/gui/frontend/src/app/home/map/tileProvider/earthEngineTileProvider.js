@@ -1,6 +1,5 @@
 import {WMTSTileProvider} from './wmtsTileProvider'
-import {combineLatest} from 'rxjs'
-import {filter, map} from 'rxjs/operators'
+import {combineLatest, filter, map} from 'rxjs'
 import {toBandValues} from '../cursorValue'
 import ee from '@google/earthengine'
 

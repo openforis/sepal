@@ -1,7 +1,6 @@
-import {EMPTY, combineLatest, fromEvent, timer} from 'rxjs'
+import {EMPTY, combineLatest, distinctUntilChanged, fromEvent, switchMap, take, takeUntil, timer} from 'rxjs'
 import {Link} from 'route'
 import {compose} from 'compose'
-import {distinctUntilChanged, switchMap, take, takeUntil} from 'rxjs/operators'
 import {download} from 'widget/download'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'

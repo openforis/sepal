@@ -1,6 +1,5 @@
 import {compose} from 'compose'
-import {filter} from 'rxjs/operators'
-import {fromEvent, merge} from 'rxjs'
+import {filter, fromEvent, merge} from 'rxjs'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
