@@ -29,7 +29,7 @@ class _MapInfoPanel extends React.Component {
         const {map: {view$}, addSubscription} = this.props
         addSubscription(
             view$.pipe(
-                throttleTime(THROTTLE_TIME_MS)
+                throttleTime(THROTTLE_TIME_MS, null, {leading: true, trailing: true})
             ).subscribe(
                 view => view && this.setState({view})
             )
