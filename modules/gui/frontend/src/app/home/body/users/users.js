@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {forkJoin, map, zip} from 'rxjs'
+import {forkJoin, map, tap, zip} from 'rxjs'
 import {msg} from 'translate'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -18,7 +18,16 @@ const getUserList$ = () => forkJoin(
     map(([users, budget]) =>
         _.map(users, user => ({
             ...user,
-            quota: budget[user.username || {}]
+            quota: {
+                ...budget[user.username || {}],
+                budgetUpdateRequest: {
+                    message: 'Hello admin, I would need more storage and instance spending. Could you please grant? Thank you!',
+                    creationTimestamp: new Date().toISOString(),
+                    instanceSpending: 111,
+                    storageSpending: 222,
+                    storageQuota: 333
+                }
+            }
         }))
     )
 )
@@ -72,7 +81,7 @@ class Users extends React.Component {
     }
 
     editUser(user) {
-        const {username, name, email, organization, admin, quota: {budget}} = user
+        const {username, name, email, organization, admin, quota} = user
         this.setState({
             userDetails: {
                 username,
@@ -80,9 +89,10 @@ class Users extends React.Component {
                 email,
                 organization,
                 admin,
-                monthlyBudgetInstanceSpending: budget.instanceSpending,
-                monthlyBudgetStorageSpending: budget.storageSpending,
-                monthlyBudgetStorageQuota: budget.storageQuota
+                // monthlyBudgetInstanceSpending: budget.instanceSpending,
+                // monthlyBudgetStorageSpending: budget.storageSpending,
+                // monthlyBudgetStorageQuota: budget.storageQuota,
+                quota
             }
         })
     }
@@ -91,14 +101,22 @@ class Users extends React.Component {
         this.setState({
             userDetails: {
                 newUser: true,
-                monthlyBudgetInstanceSpending: 1,
-                monthlyBudgetStorageSpending: 1,
-                monthlyBudgetStorageQuota: 20
+                quota: {
+                    budget: {
+                        instanceSpending: 1,
+                        storageSpending: 1,
+                        storageQuota: 20
+                    }
+                }
+                // monthlyBudgetInstanceSpending: 1,
+                // monthlyBudgetStorageSpending: 1,
+                // monthlyBudgetStorageQuota: 20
             }
         })
     }
 
     updateUser(userDetails) {
+        console.log(userDetails)
         const update$ = userDetails =>
             zip(
                 updateUserDetails$(userDetails),

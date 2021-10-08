@@ -32,7 +32,7 @@ export class Buttons extends React.Component {
         }
     }
 
-    renderButton({value, label, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected}) {
+    renderButton({value, look: customLook, icon, label, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected}) {
         const {chromeless, air, disabled: allDisabled, look, shape, size, tabIndex} = this.props
         const selected = !allDisabled && (alwaysSelected || (!neverSelected && this.isSelected(value)))
         return chromeless
@@ -40,10 +40,11 @@ export class Buttons extends React.Component {
                 <Button
                     key={value}
                     chromeless
-                    look='transparent'
+                    look={selected ? (customLook || 'transparent') : 'transparent'}
                     shape={shape || 'pill'}
                     size={size}
                     disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
+                    icon={icon}
                     label={label}
                     content={selected ? 'smallcaps-highlight' : 'smallcaps'}
                     tooltip={tooltip}
@@ -54,11 +55,12 @@ export class Buttons extends React.Component {
             : (
                 <Button
                     key={value}
-                    look={selected ? 'highlight' : look || 'default'}
+                    look={selected ? (customLook || 'highlight') : look || 'default'}
                     shape={shape}
                     size={size}
                     air={air}
                     disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
+                    icon={icon}
                     label={label}
                     content='smallcaps'
                     tooltip={tooltip}
@@ -114,7 +116,6 @@ Buttons.propTypes = {
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
-    // label: PropTypes.oneOf([PropTypes.string, PropTypes.element]),
     label: PropTypes.any,
     layout: PropTypes.string,
     look: PropTypes.string,

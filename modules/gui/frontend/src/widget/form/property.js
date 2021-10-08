@@ -44,6 +44,10 @@ class FormProperty {
         return this.predicate(value => !isBlank(value), messageId, messageArgs)
     }
 
+    notNil(messageId = 'fieldValidation.notNil', messageArgs) {
+        return this.predicate(value => !_.isNil(value), messageId, messageArgs)
+    }
+
     email(messageId = 'fieldValidation.email', messageArgs) {
         return this.match(FormConstraint._EMAIL_REGEX, messageId, messageArgs)
     }

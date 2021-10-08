@@ -2706,6 +2706,9 @@
         "monthlyLimits": {
           "label": "Monthly limits"
         },
+        "budgetUpdateRequest": {
+            "label": "Budget update request"
+        },
         "name": {
           "label": "Name",
           "required": "Name is required"

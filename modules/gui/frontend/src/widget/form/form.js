@@ -208,6 +208,11 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                 })
             }
 
+            resetValue(name) {
+                const state = this.state
+                state.values[name] = state.initialValues[name]
+            }
+
             isValueDirty(name) {
                 const state = this.state
                 return !_.isEqual(state.values[name], state.initialValues[name])
@@ -244,6 +249,7 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                         isDirty: () => this.isValueDirty(name),
                         set: value => this.set(name, value),
                         setInitialValue: value => this.setInitialValue(name, value),
+                        resetValue: () => this.resetValue(name),
                         handleChange: e => this.handleChange(e),
                         onChange: listener => {
                             const listeners = this.changeListenersByInputName[name] || []
