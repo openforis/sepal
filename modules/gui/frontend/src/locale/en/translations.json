@@ -2370,6 +2370,12 @@
       "title": "Save recipe"
     },
     "timeSeries": {
+      "chartPixel": {
+        "loadObservations": {
+          "error": "Failed to load observations",
+          "noData": "Pixel has no observations"
+        }
+      },
       "create": "Time series",
       "description": "Download time series of optical and radar data to SEPAL.",
       "panel": {
