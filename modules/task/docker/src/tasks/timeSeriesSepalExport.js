@@ -130,7 +130,7 @@ const export$ = ({downloadDir, description, recipe, indicator, scale}) => {
     const hasImagery$ = (geometry, startDate, endDate) =>
         ee.getInfo$(
             isRadar()
-                ? hasRadarImagery({geometry, startDate, endDate})
+                ? hasRadarImagery({geometry, startDate, endDate, orbits: recipe.model.options.orbits})
                 : hasOpticalImagery({dataSets: extractDataSets(dataSets), reflectance, geometry, startDate, endDate}),
             'check if date range has imagery'
         )
