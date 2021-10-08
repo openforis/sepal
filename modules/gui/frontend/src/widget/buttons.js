@@ -70,9 +70,9 @@ export class Buttons extends React.Component {
     }
 
     renderButtons(options, key, label, disabled) {
-        const {layout, alignment} = this.props
+        const {layout, alignment, spacing} = this.props
         return (
-            <ButtonGroup key={key} className={styles.buttons} layout={layout} alignment={alignment} label={label} disabled={disabled}>
+            <ButtonGroup key={key} className={styles.buttons} layout={layout} alignment={alignment} spacing={spacing} label={label} disabled={disabled}>
                 {options.map(option => this.renderButton(
                     _.isObjectLike(option)
                         ? option
@@ -123,6 +123,7 @@ Buttons.propTypes = {
     selected: PropTypes.any,
     shape: PropTypes.string,
     size: PropTypes.string,
+    spacing: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
