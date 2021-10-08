@@ -34,12 +34,18 @@ const pathSections = path =>
 const treePath = (path = '/') =>
     path !== '/'
         ? _.reduce(pathSections(path),
-            (treePath, pathElement) => treePath.concat(['files', pathElement]), []
+            (treePath, pathElement) => treePath.concat(['items', pathElement]), []
         ) : []
 
 class Browse extends React.Component {
 
     userFiles = api.userFiles.userFiles()
+
+    constructor() {
+        super()
+        this.processUpdates = this.processUpdates.bind(this)
+        this.processUpdate = this.processUpdate.bind(this)
+    }
 
     componentDidMount() {
         const {addSubscription, onEnable, onDisable} = this.props
@@ -47,12 +53,22 @@ class Browse extends React.Component {
         onDisable(() => this.enabled(false))
         addSubscription(
             this.userFiles.downstream$.subscribe(
-                updates =>
-                    _.transform(updates, (actionBuilder, {path, tree}) => {
-                        tree && actionBuilder.assign([TREE, dotSafe(treePath(path))], {files: tree, opened: true})
-                    }, actionBuilder('UPDATE_TREE')).dispatch()
+                updates => this.processUpdates(updates)
             )
         )
+    }
+
+    processUpdates(updates) {
+        _.transform(updates, this.processUpdate, actionBuilder('UPDATE_TREE')).dispatch()
+    }
+
+    processUpdate(actionBuilder, {path, items}) {
+        const selected = this.getNode(path).selected || {}
+        actionBuilder.assign([TREE, dotSafe(treePath(path))], {
+            items,
+            opened: true,
+            selected: _.pick(selected, _.keys(items))
+        })
     }
 
     enabled(enabled) {
@@ -67,12 +83,16 @@ class Browse extends React.Component {
         return Path.dirname(path)
     }
 
+    parsePath(path = '/') {
+        return {dir: Path.dirname(path), base: Path.basename(path)}
+    }
+
     getNode(path) {
         return _.get(this.props.tree, treePath(path), this.props.tree)
     }
 
     getFiles(path) {
-        return this.getNode(path).files
+        return this.getNode(path).items
     }
 
     removePaths(paths) {
@@ -115,8 +135,8 @@ class Browse extends React.Component {
 
     scanOpenDirs(path) {
         const node = this.getNode(path)
-        if (node.files) {
-            _(node.files)
+        if (node.items) {
+            _(node.items)
                 .map(({dir, opened}, name) => (dir && opened) ? name : null)
                 .filter(_.identity)
                 .forEach(name => this.userFiles.upstream$.next({monitor: Path.resolve(path, name)}))
@@ -135,25 +155,10 @@ class Browse extends React.Component {
     collapseDirectory(path) {
         const ab = actionBuilder('COLLAPSE_DIRECTORY', {path})
         this.deselectDescendants(ab, path)
-        this.removeAddedFlag(ab, path)
         ab
             .set([TREE, dotSafe(treePath(path)), 'opened'], false)
-            // .del([TREE, dotSafe(treePath(path)), 'files'])
             .dispatch()
         this.userFiles.upstream$.next({unmonitor: path})
-    }
-
-    removeAddedFlag(actionBuilder, path) {
-        _.forEach(this.getFiles(path), (file, name) => {
-            const childPath = this.childPath(path, name)
-            if (file.added) {
-                actionBuilder.del([TREE, dotSafe(treePath(childPath)), 'added'])
-            }
-            if (this.isDirectory(file)) {
-                this.removeAddedFlag(actionBuilder, childPath)
-            }
-        })
-        return actionBuilder
     }
 
     toggleSelected(path) {
@@ -163,7 +168,8 @@ class Browse extends React.Component {
     }
 
     isSelected(path) {
-        return this.getNode(path).selected
+        const {dir, base} = this.parsePath(path)
+        return _.get(this.getNode(dir).selected, base)
     }
 
     isAncestorSelected(path) {
@@ -176,7 +182,7 @@ class Browse extends React.Component {
     deselectAncestors(actionBuilder, path) {
         const parentPath = this.parentPath(path)
         if (parentPath !== path) {
-            actionBuilder.del([TREE, dotSafe(treePath(parentPath)), 'selected'])
+            this.deselectItem(parentPath)
             this.deselectAncestors(actionBuilder, parentPath)
         }
         return actionBuilder
@@ -185,7 +191,7 @@ class Browse extends React.Component {
     deselectDescendants(actionBuilder, path) {
         _.forEach(this.getFiles(path), (file, name) => {
             const childPath = this.childPath(path, name)
-            actionBuilder.del([TREE, dotSafe(treePath(childPath)), 'selected'])
+            actionBuilder.del([TREE, dotSafe(treePath(path)), 'selected', dotSafe(name)])
             if (this.isDirectory(file)) {
                 this.deselectDescendants(actionBuilder, childPath)
             }
@@ -199,14 +205,16 @@ class Browse extends React.Component {
             this.deselectDescendants(actionBuilder, path)
             return actionBuilder
         }
+        const {dir, base} = this.parsePath(path)
         deselectHierarchy(actionBuilder('SELECT_ITEM', {path}), path)
-            .set([TREE, dotSafe(treePath(path)), 'selected'], true)
+            .set([TREE, dotSafe(treePath(dir)), 'selected', dotSafe(base)], true)
             .dispatch()
     }
 
     deselectItem(path) {
+        const {dir, base} = this.parsePath(path)
         actionBuilder('DESELECT_ITEM', {path})
-            .del([TREE, dotSafe(treePath(path)), 'selected'])
+            .del([TREE, dotSafe(treePath(dir)), 'selected', dotSafe(base)])
             .dispatch()
     }
 
@@ -218,7 +226,7 @@ class Browse extends React.Component {
     selectedItems(path = '/', selected = {files: [], directories: []}) {
         _.transform(this.getFiles(path), (selected, file, name) => {
             const childPath = this.childPath(path, name)
-            if (file.selected) {
+            if (this.isSelected(childPath)) {
                 if (this.isDirectory(file)) {
                     selected.directories.push(childPath)
                 } else {
@@ -237,17 +245,6 @@ class Browse extends React.Component {
         const {files, directories} = this.selectedItems()
         this.removePaths(_.concat(directories, files))
         this.clearSelection()
-    }
-
-    isRemoved(path) {
-        return this.getNode(path).removed
-    }
-
-    isAncestorRemoved(path) {
-        const parentPath = this.parentPath(path)
-        return parentPath !== path
-            ? this.isRemoved(parentPath) || this.isAncestorRemoved(parentPath)
-            : false
     }
 
     countSelectedItems() {
@@ -359,7 +356,7 @@ class Browse extends React.Component {
             e.stopPropagation()
             this.toggleDirectory(path, directory)
         }
-        return expanded && !directory.files
+        return expanded && !directory.items
             ? this.renderSpinner()
             : (
                 <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}>
@@ -386,10 +383,10 @@ class Browse extends React.Component {
     }
 
     renderList(path, tree, depth = 0) {
-        const {files} = tree
-        return files && this.isDirectoryExpanded(path) ? (
+        const {items} = tree
+        return items && this.isDirectoryExpanded(path) ? (
             <ul>
-                {this.renderListItems(path, files, depth)}
+                {this.renderListItems(path, items, depth)}
             </ul>
         ) : null
     }
@@ -398,8 +395,7 @@ class Browse extends React.Component {
         const fullPath = this.childPath(path, file ? fileName : null)
         const isSelected = this.isSelected(fullPath) || this.isAncestorSelected(fullPath)
         const isAdded = file.added
-        const isRemoved = file.removed || this.isRemoved(fullPath) || this.isAncestorRemoved(fullPath)
-        const isRemoving = file.removing && !isRemoved
+        const isRemoving = file.removing
         return (
             <li key={fileName}>
                 <div
@@ -408,8 +404,7 @@ class Browse extends React.Component {
                         isSelected ? lookStyles.highlight : lookStyles.transparent,
                         isSelected ? null : lookStyles.chromeless,
                         isAdded ? styles.added : null,
-                        isRemoving ? styles.removing : null,
-                        isRemoved ? styles.removed : null
+                        isRemoving ? styles.removing : null
                     ].join(' ')}
                     style={{
                         '--depth': depth,
@@ -426,10 +421,10 @@ class Browse extends React.Component {
         )
     }
 
-    renderListItems(path, files, depth) {
+    renderListItems(path, items, depth) {
         const {showDotFiles} = this.props
-        return files
-            ? _.chain(files)
+        return items
+            ? _.chain(items)
                 .pickBy(file => file)
                 .toPairs()
                 .sortBy(0)

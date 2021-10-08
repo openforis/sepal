@@ -74,10 +74,11 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
             readdir(absolutePath)
                 .then(files =>
                     scanFiles({absolutePath, files})
-                        .then(files => ({path, tree: toTree(files)}))
+                        .then(files => ({path, items: toTree(files)}))
                 )
                 .catch(error => {
                     log.warn(error)
+                    unmonitor(path)
                     return ({path, error: error.code})
                 })
     
