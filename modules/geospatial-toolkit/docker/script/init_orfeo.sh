@@ -17,3 +17,6 @@ ln -sf $otb orfeo
 chmod o+rx orfeo/*.sh
 chmod o+rx orfeo/otbenv.profile
 cd -
+
+# Patch OTB to support GDAL > 3.2
+find /usr/local/lib/orfeo/bin -type f -name '*' -exec sed -i 's/from osgeo\.utils/from osgeo_utils/g' {} +
