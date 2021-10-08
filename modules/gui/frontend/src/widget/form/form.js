@@ -210,7 +210,7 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
 
             resetValue(name) {
                 const state = this.state
-                state.values[name] = state.initialValues[name]
+                this.set(name, state.initialValues[name])
             }
 
             isValueDirty(name) {
