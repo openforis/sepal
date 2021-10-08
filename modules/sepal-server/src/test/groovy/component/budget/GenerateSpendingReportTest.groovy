@@ -1,28 +1,10 @@
 package component.budget
 
 import org.openforis.sepal.component.budget.api.Budget
-import org.openforis.sepal.component.budget.api.UserSpendingReport
 
 import static java.lang.Math.round
 
 class GenerateSpendingReportTest extends AbstractBudgetTest {
-//    def 'Given a user without specified budget and no spending, when generating report, user got default budget and no spending'() {
-//
-//        when:
-//        def report = generateSpendingReport()
-//
-//        then:
-//        report[testUsername] == new UserSpendingReport(
-//                username: testUsername,
-//                instanceSpending: 0,
-//                storageSpending: 0,
-//                storageUsage: 0,
-//                instanceBudget: defaultBudget.instanceSpending,
-//                storageBudget: defaultBudget.storageSpending,
-//                storageQuota: defaultBudget.storageQuota
-//        )
-//    }
-
     def 'Given a user with budget and spending, when generating report, report reflects budget and spending'() {
         updateUserBudget(new Budget(instanceSpending: 11, storageSpending: 22, storageQuota: 33))
         session(start: '2016-01-01', hours: 2, hourlyCost: 4)
@@ -42,5 +24,24 @@ class GenerateSpendingReportTest extends AbstractBudgetTest {
         userReport.instanceBudget == 11
         userReport.storageBudget == 22
         userReport.storageQuota == 33
+    }
+
+    def 'Give user with budget update request, when generating report, request is included'() {
+        updateUserBudget(new Budget(instanceSpending: 11, storageSpending: 22, storageQuota: 33))
+        requestBudgetUpdate(
+                message: 'increase my budget',
+                budget: new Budget(instanceSpending: 12, storageSpending: 23, storageQuota: 34)
+        )
+
+        when:
+        def report = generateSpendingReport()
+
+        then:
+        def budgetUpdateRequest = report[testUsername].budgetUpdateRequest
+        budgetUpdateRequest
+        budgetUpdateRequest?.message == 'increase my budget'
+        budgetUpdateRequest?.instanceSpending == 12
+        budgetUpdateRequest?.storageSpending == 23
+        budgetUpdateRequest?.storageQuota == 34
     }
 }

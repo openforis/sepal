@@ -2,14 +2,12 @@ package org.openforis.sepal.component.budget.adapter
 
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
-import org.openforis.sepal.component.budget.api.Budget
-import org.openforis.sepal.component.budget.api.BudgetRepository
-import org.openforis.sepal.component.budget.api.InstanceUse
-import org.openforis.sepal.component.budget.api.StorageUse
-import org.openforis.sepal.component.budget.api.UserSpendingReport
+import org.openforis.sepal.component.budget.api.*
 import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.DateTime
+
+import java.sql.Timestamp
 
 class JdbcBudgetRepository implements BudgetRepository {
     private final SqlConnectionManager connectionManager
@@ -123,6 +121,8 @@ class JdbcBudgetRepository implements BudgetRepository {
             sql.executeInsert('''
                     INSERT INTO user_budget(monthly_instance, monthly_storage, storage_quota, username)
                     VALUES(?, ?, ?, ?) ''', params)
+
+        closeBudgetUpdateRequest(username, budget)
     }
 
     void saveSpendingReport(Map<String, UserSpendingReport> report) {
@@ -130,7 +130,7 @@ class JdbcBudgetRepository implements BudgetRepository {
         sql.withBatch('''
             INSERT INTO user_spending 
                 (username, instance_spending, storage_spending, storage_usage)
-                values (?, ?, ?, ?)''') {ps ->
+                values (?, ?, ?, ?)''') { ps ->
             report.values().forEach {
                 ps.addBatch([it.username, it.instanceSpending, it.storageSpending, it.storageUsage])
             }
@@ -144,7 +144,45 @@ class JdbcBudgetRepository implements BudgetRepository {
             WHERE username = ?''', [report.instanceSpending, report.storageSpending, report.storageUsage, username])
     }
 
+    void requestBudgetUpdate(String username, String message, Budget requestedBudget) {
+        def updated = sql.executeUpdate('''
+            UPDATE budget_update_request 
+            SET requested_monthly_instance = ?, requested_monthly_storage = ?, requested_storage_quota = ?, message = ?, update_time = ?  
+            WHERE username = ? and state = 'PENDING' 
+            ''', [requestedBudget.instanceSpending, requestedBudget.storageSpending, requestedBudget.storageQuota, message, clock.now(), username])
+
+        if (!updated) {
+            def initialBudget = userBudget(username)
+            sql.executeInsert('''
+                    INSERT INTO budget_update_request(initial_monthly_instance, initial_monthly_storage, initial_storage_quota, requested_monthly_instance, requested_monthly_storage, requested_storage_quota, message, creation_time, update_time, state, username)
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', [
+                    initialBudget.instanceSpending, initialBudget.storageSpending, initialBudget.storageQuota, requestedBudget.instanceSpending, requestedBudget.storageSpending, requestedBudget.storageQuota, message, clock.now(), clock.now(), 'PENDING', username
+            ])
+        }
+    }
+
+    private void closeBudgetUpdateRequest(String username, Budget finalBudget) {
+        sql.executeUpdate('''
+            UPDATE budget_update_request 
+            SET final_monthly_instance = ?, final_monthly_storage = ?, final_storage_quota = ?, update_time = ?, state = 'CLOSED'  
+            WHERE username = ? and state = 'PENDING' 
+            ''', [finalBudget.instanceSpending, finalBudget.storageSpending, finalBudget.storageQuota, clock.now(), username])
+    }
+
+    BudgetUpdateRequest budgetUpdateRequest(String username) {
+        def request = null
+        sql.eachRow('''
+                SELECT requested_monthly_instance, requested_monthly_storage, requested_storage_quota, message, creation_time, update_time
+                FROM budget_update_request
+                WHERE username = ? and state = 'PENDING' 
+                ''', [username]) {
+            request = toBudgetUpdateRequest(it)
+        }
+        return request
+    }
+
     Map<String, UserSpendingReport> spendingReport() {
+        def requests = budgetUpdateRequests()
         def report = [:]
         sql.rows('''
             SELECT s.username, s.instance_spending, s.storage_spending, s.storage_usage, 
@@ -156,16 +194,44 @@ class JdbcBudgetRepository implements BudgetRepository {
             LEFT JOIN user_budget b ON s.username = b.username
             ''').each {
             report[it.username] = new UserSpendingReport(
-                username: it.username,
-                instanceSpending: it.instance_spending,
-                storageSpending: it.storage_spending,
-                storageUsage: it.storage_usage,
-                instanceBudget: it.monthly_instance,
-                storageBudget: it.monthly_storage,
-                storageQuota: it.storage_quota
+                    username: it.username,
+                    instanceSpending: it.instance_spending,
+                    storageSpending: it.storage_spending,
+                    storageUsage: it.storage_usage,
+                    instanceBudget: it.monthly_instance,
+                    storageBudget: it.monthly_storage,
+                    storageQuota: it.storage_quota,
+                    budgetUpdateRequest: requests[it.username]
             )
         }
         return report
+    }
+
+    private Map<String, BudgetUpdateRequest> budgetUpdateRequests() {
+        def requests = [:]
+        sql.eachRow('''
+                SELECT requested_monthly_instance, requested_monthly_storage, requested_storage_quota, message, creation_time, update_time
+                FROM budget_update_request
+                WHERE state = 'PENDING' 
+                ''') {
+            requests[it.username] = toBudgetUpdateRequest(it)
+        }
+        return requests
+    }
+
+    private BudgetUpdateRequest toBudgetUpdateRequest(row) {
+        new BudgetUpdateRequest(
+                message: row.longText('message'),
+                instanceSpending: row.requested_monthly_instance,
+                storageSpending: row.requested_monthly_storage,
+                storageQuota: row.requested_storage_quota,
+                creationTime: toDate(row.creation_time),
+                updateTime: toDate(row.update_time)
+        )
+    }
+
+    private Date toDate(date) {
+        return date ? new Date((date as Timestamp).time) : null
     }
 
     private Sql getSql() {

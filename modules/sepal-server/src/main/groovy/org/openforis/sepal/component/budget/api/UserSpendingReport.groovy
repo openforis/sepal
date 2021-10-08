@@ -12,4 +12,5 @@ class UserSpendingReport {
     double storageBudget
     double storageQuota
     double costPerGbMonth
+    BudgetUpdateRequest budgetUpdateRequest
 }

@@ -70,6 +70,7 @@ class BudgetComponent extends DataSourceBackedComponent implements EndpointRegis
         command(UpdateUserStorageUsage, new UpdateUserStorageUsageHandler(storageUseService))
         command(UpdateSpendingReport, new UpdateSpendingReportHandler(budgetRepository, generateSpendingReportHandler, connectionManager))
         command(UpdateUserSpendingReport, new UpdateUserSpendingReportHandler(budgetRepository, generateUserSpendingReportHandler))
+        command(RequestBudgetUpdate, new RequestBudgetUpdateHandler(budgetRepository))
 
         query(GenerateSpendingReport,
                 generateSpendingReportHandler)
