@@ -1,5 +1,6 @@
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {Form, form} from 'widget/form/form'
+import {NoData} from '../../../../../../../widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions, loadObservations$} from '../timeSeriesRecipe'
 import {Subject, takeUntil} from 'rxjs'
@@ -113,8 +114,11 @@ class ChartPixel extends React.Component {
         const {dateFormat, startDate, endDate, inputs: {selectedBand}} = this.props
         const {observations} = this.state
         const loading = !observations
+        const noObservations = observations && !observations.features.length
         if (loading) {
             return this.renderSpinner()
+        } else if (noObservations) {
+            return <NoData message={msg('process.timeSeries.chartPixel.loadObservations.noData')}/>
         } else {
             return (
                 <CCDCGraph

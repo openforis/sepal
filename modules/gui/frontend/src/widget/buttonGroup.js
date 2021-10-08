@@ -37,7 +37,7 @@ export const ButtonGroup = ({className, layout, alignment, spacing, label, disab
 
 ButtonGroup.propTypes = {
     children: PropTypes.any.isRequired,
-    alignment: PropTypes.oneOf(['left', 'center', 'right', 'spaced', 'fill']),
+    alignment: PropTypes.oneOf(['left', 'center', 'right', 'spaced', 'fill', 'distribute']),
     className: PropTypes.string,
     disabled: PropTypes.any,
     label: PropTypes.any,

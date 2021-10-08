@@ -65,13 +65,19 @@
     justify-content: space-between;
 }
 
-.horizontal.alignment-fill {
+.horizontal.alignment-fill,
+.horizontal.alignment-distribute {
     --horizontal-spacing: 1rem;
     --vertical-spacing: 1rem;
     flex-grow: 1;
 }
 
 .horizontal.alignment-fill > * {
+    flex-grow: 1;
+}
+
+.horizontal.alignment-distribute > * {
+    flex-basis: 0;
     flex-grow: 1;
 }
 
