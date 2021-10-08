@@ -28,13 +28,21 @@ class BudgetComponentAdapter implements BudgetManager {
     Spending userSpending(String username) {
         def report = budgetComponent.submit(new GenerateUserSpendingReport(username))
         return new Spending(
-            monthlyInstanceBudget: report.instanceBudget,
-            monthlyInstanceSpending: report.instanceSpending,
-            monthlyStorageBudget: report.storageBudget,
-            monthlyStorageSpending: report.storageSpending,
-            storageQuota: report.storageQuota,
-            storageUsed: report.storageUsage,
-            costPerGbMonth: report.costPerGbMonth
+                monthlyInstanceBudget: report.instanceBudget,
+                monthlyInstanceSpending: report.instanceSpending,
+                monthlyStorageBudget: report.storageBudget,
+                monthlyStorageSpending: report.storageSpending,
+                storageQuota: report.storageQuota,
+                storageUsed: report.storageUsage,
+                costPerGbMonth: report.costPerGbMonth,
+                budgetUpdateRequest: report.budgetUpdateRequest ? new BudgetUpdateRequest(
+                        message: report.budgetUpdateRequest.message,
+                        instanceSpending: report.budgetUpdateRequest.instanceSpending,
+                        storageSpending: report.budgetUpdateRequest.storageSpending,
+                        storageQuota: report.budgetUpdateRequest.storageQuota,
+                        creationTime: report.budgetUpdateRequest.creationTime,
+                        updateTime: report.budgetUpdateRequest.updateTime
+                ) : null
         )
     }
 

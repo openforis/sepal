@@ -11,4 +11,5 @@ class Spending {
     double storageQuota
     double storageUsed
     double costPerGbMonth
+    BudgetUpdateRequest budgetUpdateRequest
 }
