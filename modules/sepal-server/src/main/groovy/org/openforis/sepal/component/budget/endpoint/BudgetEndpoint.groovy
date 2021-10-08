@@ -80,6 +80,11 @@ class BudgetEndpoint {
                         message: message,
                         budget: budget
                 )
+                def errors = bindAndValidate(command)
+                if (errors)
+                    throw new InvalidRequest(errors)
+                component.submit(command)
+                response.status = 204
             }
         }
     }
