@@ -5,18 +5,15 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './section.module.css'
 
-const content = (staticMap, children) =>
-    staticMap
-        ? <StaticMap>{children}</StaticMap>
-        : children
-
-const Section = ({path, captureMouseEvents, staticMap = true, children}) => (
+const Section = ({path, captureMouseEvents, children}) => (
     <Selectable
         id={path}
         className={styles.section}
         active={isPathInLocation(path)}
         captureMouseEvents={captureMouseEvents}>
-        {content(staticMap, children)}
+        <StaticMap>
+            {children}
+        </StaticMap>
     </Selectable>
 )
 
