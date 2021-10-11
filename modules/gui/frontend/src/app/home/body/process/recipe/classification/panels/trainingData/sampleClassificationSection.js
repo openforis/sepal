@@ -1,4 +1,5 @@
 import * as PropTypes from 'prop-types'
+import {AssetInput} from 'widget/assetInput'
 import {Form} from 'widget/form/form'
 import {FormCombo} from 'widget/form/combo'
 import {Layout} from 'widget/layout'
@@ -10,6 +11,7 @@ import api from 'api'
 
 class SampleClassificationSection extends Component {
     eeTableChanged$ = new Subject()
+    state = {bands: []}
 
     render() {
         return (
@@ -77,38 +79,35 @@ class SampleClassificationSection extends Component {
 
     renderAssetToSample() {
         const {inputs: {assetToSample}} = this.props
-        return <Form.Input
+        return <AssetInput
             label={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.label')}
             autoFocus
             input={assetToSample}
             placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.placeholder')}
             spellCheck={false}
             errorMessage
-            onChangeDebounced={asset =>
-                this.loadInputData({
-                    asset,
-                    count: this.props.inputs.samplesPerClass.value,
-                    scale: this.props.inputs.sampleScale.value,
-                    classBand: this.props.inputs.valueColumn.value
-                })}
+            onLoading={() => this.setState({bands: []})}
+            onLoaded={({metadata}) => {
+                this.setState({bands: metadata.bands || []})
+            }}
             busyMessage={this.props.stream('SAMPLE_IMAGE').active && msg('widget.loading')}
         />
     }
 
     renderValueColumnInput() {
-        const {inputs: {columns, valueColumn}} = this.props
-        const columnNames = columns.value || []
-        const columnOptions = columnNames
-            .filter(column => column !== '.geo')
-            .map(column => ({value: column, label: column}))
+        const {inputs: {valueColumn}} = this.props
+        const {bands = []} = this.state
+        const options = bands
+            .map(band => ({value: band, label: band}))
         return (
             <FormCombo
                 input={valueColumn}
-                disabled={!columnNames.length}
-                options={columnOptions}
+                disabled={!bands.length}
+                options={options}
                 label={msg('process.classification.panel.trainingData.form.sampleClassification.valueColumn.label')}
                 placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.valueColumn.placeholder')}
                 tooltip={msg('process.classification.panel.trainingData.form.sampleClassification.valueColumn.tooltip')}
+                busyMessage={this.props.stream('SAMPLE_IMAGE').active && msg('widget.loading')}
                 onChange={({value: classBand}) =>
                     this.loadInputData({
                         asset: this.props.inputs.assetToSample.value,
