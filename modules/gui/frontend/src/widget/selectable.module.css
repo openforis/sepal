@@ -32,11 +32,11 @@
 @keyframes show {
     0% {
         opacity: 0;
-        transform: translateX(15%);
+        /* transform: translateX(15%); */
     }
     100% {
         opacity: 1;
-        transform: none;
+        /* transform: none; */
         visibility: visible; /* Enables event capturing */
     }
 }
@@ -44,11 +44,11 @@
 @keyframes hide {
     0% {
         opacity: 1;
-        transform: none;
+        /* transform: none; */
     }
     100% {
         opacity: 0;
-        transform: translateX(15%);
+        /* transform: translateX(15%); */
         visibility: hidden; /* Disables event capturing */
     }
 }
