@@ -1,5 +1,7 @@
 Node debug
 
+Ports exposed in dev-env/docker-compose.yml: 9230-9249
+
     9230: app-manager
     9231: email
     9232: gee
@@ -9,3 +11,14 @@ Node debug
     9236: user-storage
     9237: gateway
     9238: user-files
+    9239: <free>
+    9240: <free>
+    9241: <free>
+    9242: <free>
+    9243: <free>
+    9244: <free>
+    9245: <free>
+    9246: <free>
+    9247: <free>
+    9248: <free>
+    9249: <free>
