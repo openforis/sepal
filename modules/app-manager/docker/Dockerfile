@@ -34,8 +34,8 @@ RUN pip3 install --upgrade pip
 RUN adduser node && adduser node sudo && echo 'node      ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
 
 USER node
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
-RUN bash -c "source /home/node/.nvm/nvm.sh && nvm install node stable"
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+RUN bash -c "source /home/node/.nvm/nvm.sh && nvm install node 14"
 
 ADD build/lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared

@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
   sudo \
   zip
 RUN apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y && \
-    curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+    curl -fsSL https://deb.nodesource.com/setup_14.x | bash -
 RUN apt-get update && apt-get install -y \
     gdal-bin \
     nodejs

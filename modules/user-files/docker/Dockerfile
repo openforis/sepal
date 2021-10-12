@@ -1,4 +1,4 @@
-FROM node:16-stretch
+FROM node:14-stretch
 EXPOSE 5999
 
 ENV MODULE /usr/local/src/sepal/modules/user-storage/docker

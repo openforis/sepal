@@ -58,7 +58,7 @@ RUN bash -c "source '/home/sepal/.sdkman/bin/sdkman-init.sh' && sdk install java
 
 # install nvm, nodejs (stable) and global npm packages
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
-RUN bash -c "source /home/sepal/.nvm/nvm.sh && nvm install node stable && npm install -g nodemon npm-check-updates"
+RUN bash -c "source /home/sepal/.nvm/nvm.sh && nvm install 14 && npm install -g nodemon npm-check-updates"
 
 # setup sepal
 ENV SEPAL_HOME=/usr/local/lib/sepal
