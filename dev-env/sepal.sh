@@ -4,6 +4,7 @@ set -e
 SEPAL_CONFIG=/etc/sepal/module.d
 SEPAL=/usr/local/lib/sepal
 SEPAL_MODULES=(user sepal-server gateway app-manager task gee gui user-storage terminal email sys-monitor user-files)
+SEPAL_PSEUDO_MODULES=(shared)
 SEPAL_GROUPS=(all dev node)
 SEPAL_DEFAULT_GROUP=dev
 LOG_DIR=/var/log/sepal
@@ -20,6 +21,11 @@ is_module () {
     printf '%s\n' ${SEPAL_MODULES[@]} | grep -qP "^$NAME$"
 }
 
+is_pseudomodule () {
+    local NAME=$1
+    printf '%s\n' ${SEPAL_PSEUDO_MODULES[@]} | grep -qP "^$NAME$"
+}
+
 is_group () {
     local NAME=$1
     printf '%s\n' ${SEPAL_GROUPS[@]} | grep -qP "^$NAME$"
@@ -32,10 +38,10 @@ group () {
         echo "${SEPAL_MODULES[@]}"
         ;;
     dev)
-        echo "user sepal-server ( -DskipSceneMetaDataUpdate ) gateway app-manager task gee gui user-storage terminal email sys-monitor user-files"
+        echo "user sepal-server ( -DskipSceneMetaDataUpdate ) app-manager email gateway gee gui sys-monitor task terminal user-files user-storage"
         ;;
     node)
-        echo "app-manager email gateway gee task user-storage terminal sys-monitor user-files"
+        echo "app-manager email gateway gee sys-monitor task terminal user-files user-storage"
         ;;
     *)
         return 1
@@ -151,21 +157,8 @@ module_clean () {
     local MODULE=$1
     message "CLEANING" $MODULE YELLOW
     case $MODULE in
-    app-manager)
-        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/app-manager/docker && rm -rf node_modules package-lock.json)
-        ;;
-    email)
-        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/email/docker && rm -rf node_modules package-lock.json)
-        ;;
-    gateway)
-        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/gateway/docker && rm -rf node_modules package-lock.json)
-        ;;
-    gee)
-        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/gee/docker && rm -rf node_modules package-lock.json)
+    shared)
+        (cd $SEPAL/lib/js/shared && rm -rf node_modules/ package-lock.json)
         ;;
     gui)
         (cd $SEPAL/modules/gui/frontend && rm -rf node_modules package-lock.json)
@@ -180,18 +173,6 @@ module_clean () {
         --no-daemon \
         :sepal-server:clean &>/dev/null
         ;;
-    sys-monitor)
-        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/sys-monitor/docker && rm -rf node_modules package-lock.json)
-        ;;
-    task)
-        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/task/docker && rm -rf node_modules package-lock.json)
-        ;;
-    terminal)
-        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/terminal/docker && rm -rf node_modules package-lock.json)
-        ;;
     user)
         $SEPAL/gradlew \
         -p $SEPAL \
@@ -202,13 +183,96 @@ module_clean () {
         --no-daemon \
         :sepal-user:clean &>/dev/null
         ;;
+    *)
+        (cd $SEPAL/modules/$MODULE/docker && rm -rf node_modules package-lock.json)
+        ;;
+    esac
+}
+
+module_update () {
+    local MODULE=$1
+    message "UPDATING" $MODULE YELLOW
+    case $MODULE in
+    shared)
+        (cd $SEPAL/lib/js/shared && ncu -i)
+        ;;
+    gui)
+        (cd $SEPAL/modules/gui/frontend && ncu -i)    
+        ;;
+    *)
+        (cd $SEPAL/modules/$MODULE/docker && ncu -i)    
+        ;;
+    esac
+}
+
+module_install () {
+    local MODULE=$1
+    message "INSTALLING" $MODULE YELLOW
+    case $MODULE in
+    shared)
+        (cd $SEPAL/lib/js/shared && npm install)
+        ;;
+    gui)
+        (cd $SEPAL/modules/gui/frontend && npm install)
+        ;;
+    *)
+        (cd $SEPAL/modules/$MODULE/docker && npm install)
+        ;;
+    esac
+}
+
+run () {
+    local MODULE=$1
+    shift
+    local ARGS=$@
+    case $MODULE in
+    app-manager)
+        (cd $SEPAL/modules/app-manager/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
+        ;;
+    email)
+        (cd $SEPAL/modules/email/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
+        ;;
+    gateway)
+        (cd $SEPAL/modules/gateway/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
+        ;;
+    gee)
+        (cd $SEPAL/modules/gee/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
+        ;;
+    gui)
+        (cd $SEPAL/modules/gui/frontend && npm start)
+        ;;
+    terminal)
+        (cd $SEPAL/modules/terminal/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
+        ;;
+    sepal-server)
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        --stacktrace \
+        :sepal-server:runDev \
+        -DconfigDir="$SEPAL_CONFIG/sepal-server" \
+        $ARGS
+        ;;
+    sys-monitor)
+        (cd $SEPAL/modules/sys-monitor/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
+        ;;
+    task)
+        (cd $SEPAL/modules/task/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
+        ;;
+    user)
+        sudo $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        --stacktrace \
+        :sepal-user:runDev \
+        -DconfigDir="$SEPAL_CONFIG/user" \
+        $ARGS
+        ;;
     user-files)
-        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/user-files/docker && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/user-files/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     user-storage)
-        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/user-storage/docker && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/user-storage/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     *)
         return 1
@@ -243,7 +307,7 @@ do_with_modules () {
                             local GROUP=$CURRENT_NAME
                             local MODULES="$(group $GROUP)"
                             do_with_modules "$COMMANDS" $MODULES
-                        elif is_module $CURRENT_NAME; then
+                        elif is_module $CURRENT_NAME || is_pseudomodule $CURRENT_NAME; then
                             local MODULE=$CURRENT_NAME
                             for COMMAND in $COMMANDS; do
                                 $COMMAND $MODULE "${ARGS[@]}"
@@ -282,8 +346,8 @@ restart () {
 }
 
 clean () {
-  do_with_modules "module_stop" ${@:-all}
-  do_with_modules "module_clean" ${@:-all}
+    do_with_modules "module_stop" ${@:-all}
+    do_with_modules "module_clean" ${@:-all}
 }
 
 build () {
@@ -296,7 +360,7 @@ build-debug () {
     $SEPAL/gradlew build -x test -x :sepal-gui:build -p $SEPAL --stacktrace --debug
 }
 
-tail() {
+tail () {
     if [[ $# -gt 0 ]]; then
         local MODULES=$@
         local LOGFILES=()
@@ -314,7 +378,7 @@ tail() {
     fi
 }
 
-log() {
+log () {
     local MODULE=$1
     do_with_modules "module_log" $MODULE
 }
@@ -329,63 +393,19 @@ restartlog () {
     do_with_modules "module_stop module_start module_log" $MODULE
 }
 
-run () {
-    local MODULE=$1
-    shift
-    local ARGS=$@
-    case $MODULE in
-    app-manager)
-        (cd $SEPAL/modules/app-manager/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    email)
-        (cd $SEPAL/modules/email/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    gateway)
-        (cd $SEPAL/modules/gateway/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    gee)
-        (cd $SEPAL/modules/gee/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    gui)
-        (cd $SEPAL/modules/gui/frontend && npm install && npm start)
-        ;;
-    sepal-server)
-        $SEPAL/gradlew \
-        -p $SEPAL \
-        --no-daemon \
-        --stacktrace \
-        :sepal-server:runDev \
-        -DconfigDir="$SEPAL_CONFIG/sepal-server" \
-        $ARGS
-        ;;
-    sys-monitor)
-        (cd $SEPAL/modules/sys-monitor/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    task)
-        (cd $SEPAL/modules/task/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    terminal)
-        (cd $SEPAL/modules/terminal/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    user)
-        sudo $SEPAL/gradlew \
-        -p $SEPAL \
-        --no-daemon \
-        --stacktrace \
-        :sepal-user:runDev \
-        -DconfigDir="$SEPAL_CONFIG/user" \
-        $ARGS
-        ;;
-    user-files)
-        (cd $SEPAL/modules/user-files/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    user-storage)
-        (cd $SEPAL/modules/user-storage/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    *)
-        return 1
-        ;;
-    esac
+foo () {
+    echo "foo: $@"
+}
+
+update () {
+    do_with_modules "module_update" shared
+    do_with_modules "module_update" node
+    do_with_modules "module_update" gui
+    do_with_modules "module_stop" node
+    do_with_modules "module_stop" gui
+    do_with_modules "module_clean module_install" shared
+    do_with_modules "module_clean module_install" node
+    do_with_modules "module_clean module_install" gui
 }
 
 usage () {
@@ -400,6 +420,7 @@ usage () {
     echo "   init                         first build of SEPAL"
     echo "   build                        build SEPAL"
     echo "   build-debug                  build SEPAL w/debug enabled"
+    echo "   update                       update all npm packages"
     echo "   clean       [<module>...]    clean module(s)/group(s)"
     echo "   status      [<module>...]    check module(s)/group(s)"
     echo "   start       [<module>...]    start module(s)/group(s)"
@@ -421,8 +442,18 @@ usage () {
     exit 1
 }
 
-no_one_argument () {
-    usage "Wrong number of arguments"
+enforce_one_argument () {
+    local COMMAND=$1, ARG_COUNT=$2
+    if [[ $ARG_COUNT -ne 1 ]]; then
+        usage "command '$1' requires one argument"
+    fi
+}
+
+enforce_zero_arguments () {
+    local COMMAND=$1, ARG_COUNT=$2
+    if [[ $ARG_COUNT -ne 0 ]]; then
+        usage "command '$1' requires no arguments"
+    fi
 }
 
 [ -z "$1" ] && usage
@@ -468,29 +499,25 @@ case "$1" in
         shift
         tail $@
         ;;
+    update)
+        shift
+        enforce_zero_arguments update $#
+        update
+        ;;
     log)
         shift
-        if [[ $# -ne 1 ]]; then
-            no_one_argument
-        else
-            log $1
-        fi
+        enforce_one_argument startlog $#
+        log $1
         ;;
     startlog)
         shift
-        if [[ $# -ne 1 ]]; then
-            no_one_argument
-        else
-            startlog $1
-        fi
+        enforce_one_argument startlog $#
+        startlog $1
         ;;
     restartlog)
         shift
-        if [[ $# -ne 1 ]]; then
-            no_one_argument
-        else
-            restartlog $1
-        fi
+        enforce_one_argument restartlog $#
+        restartlog $1
         ;;
     *)
         usage
