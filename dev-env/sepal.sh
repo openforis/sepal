@@ -226,23 +226,8 @@ run () {
     shift
     local ARGS=$@
     case $MODULE in
-    app-manager)
-        (cd $SEPAL/modules/app-manager/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    email)
-        (cd $SEPAL/modules/email/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    gateway)
-        (cd $SEPAL/modules/gateway/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    gee)
-        (cd $SEPAL/modules/gee/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
     gui)
         (cd $SEPAL/modules/gui/frontend && npm start)
-        ;;
-    terminal)
-        (cd $SEPAL/modules/terminal/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     sepal-server)
         $SEPAL/gradlew \
@@ -253,12 +238,6 @@ run () {
         -DconfigDir="$SEPAL_CONFIG/sepal-server" \
         $ARGS
         ;;
-    sys-monitor)
-        (cd $SEPAL/modules/sys-monitor/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    task)
-        (cd $SEPAL/modules/task/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
     user)
         sudo $SEPAL/gradlew \
         -p $SEPAL \
@@ -268,14 +247,8 @@ run () {
         -DconfigDir="$SEPAL_CONFIG/user" \
         $ARGS
         ;;
-    user-files)
-        (cd $SEPAL/modules/user-files/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    user-storage)
-        (cd $SEPAL/modules/user-storage/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
     *)
-        return 1
+        (cd $SEPAL/modules/$MODULE/docker && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     esac
 }
