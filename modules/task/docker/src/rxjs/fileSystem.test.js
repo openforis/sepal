@@ -1,4 +1,4 @@
-const {from, switchMap, tap} = require('rxjs')
+const {firstValueFrom, from, switchMap, tap} = require('rxjs')
 const fs = require('fs')
 const os = require('os')
 const Path = require('path')
@@ -82,9 +82,11 @@ const mkTmpDir$ = () =>
     from(fs.promises.mkdtemp(Path.join(os.tmpdir(), 'test-')))
 
 beforeEach(() =>
-    mkTmpDir$().pipe(
-        tap(path => emptyDirPath = path)
-    ).toPromise()
+    firstValueFrom(
+        mkTmpDir$().pipe(
+            tap(path => emptyDirPath = path)
+        )
+    )
 )
 
 afterEach(() => {

@@ -46,6 +46,7 @@ module.exports = router =>
         .post('/table/query', stream(ctx => tableQuery$(ctx)))
         .get('/table/map', stream(ctx => tableMap$(ctx)))
         .get('/test/worker/:min/:max/:errorProbability', stream(ctx => testHttp$(ctx)))
+        .post('/test/worker/:min/:max/:errorProbability', stream(ctx => testHttp$(ctx)))
         .get('/test/direct/:min/:max/:errorProbability', stream(
             ({params: {min, max, errorProbability}}) => testHttpDirect$(parseInt(min), parseInt(max), parseInt(errorProbability))
         ))

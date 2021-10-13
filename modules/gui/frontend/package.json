@@ -9,8 +9,8 @@
     "@fortawesome/free-regular-svg-icons": "5.15.4",
     "@fortawesome/free-solid-svg-icons": "5.15.4",
     "@fortawesome/react-fontawesome": "0.1.15",
-    "@google/earthengine": "0.1.284",
-    "@googlemaps/markerclustererplus": "^1.2.3",
+    "@google/earthengine": "0.1.285",
+    "@googlemaps/markerclustererplus": "^1.2.4",
     "base-64": "1.0.0",
     "color": "4.0.1",
     "cross-fetch": "^3.1.4",
@@ -44,7 +44,7 @@
     "react-textarea-autosize": "^8.3.3",
     "react-transition-group": "4.4.2",
     "redux": "4.1.1",
-    "rxjs": "7.3.1",
+    "rxjs": "7.4.0",
     "uuid": "^8.3.2",
     "xterm": "^4.14.1",
     "xterm-addon-fit": "^0.5.0"
@@ -56,8 +56,8 @@
     "eject": "react-scripts eject"
   },
   "devDependencies": {
-    "@babel/core": "^7.15.5",
-    "@types/react": "17.0.27",
+    "@babel/core": "^7.15.8",
+    "@types/react": "17.0.29",
     "contains-path": "^1.0.0",
     "eslint": "^7",
     "eslint-plugin-react": "7.26.1",

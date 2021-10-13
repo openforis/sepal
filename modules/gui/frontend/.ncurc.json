@@ -1,0 +1,7 @@
+{
+    "reject": [
+        "eslint",
+        "imports-loader",
+        "type-fest"
+    ]
+}

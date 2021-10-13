@@ -21,13 +21,13 @@
         "lodash": "^4.17.21",
         "log4js": "^6.3.0",
         "moment": "^2.29.1",
-        "rxjs": "^7.3.1",
+        "rxjs": "^7.4.0",
         "shared": "../../../lib/js/shared",
         "uuid": "^8.3.2"
     },
     "devDependencies": {
-        "eslint": "^7.32.0",
-        "jest": "^27.2.4",
+        "eslint": "^8.0.0",
+        "jest": "^27.2.5",
         "jest-expect-message": "^1.0.2",
         "link-module-alias": "^1.2.0"
     }

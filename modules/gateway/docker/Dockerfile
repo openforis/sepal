@@ -1,4 +1,4 @@
-FROM node:16-stretch
+FROM node:14-stretch
 
 ENV MODULE /usr/local/src/sepal/modules/gateway/docker
 ENV SHARED /usr/local/src/sepal/lib/js/shared
