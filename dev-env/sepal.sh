@@ -151,13 +151,17 @@ module_clean () {
     local MODULE=$1
     message "CLEANING" $MODULE YELLOW
     case $MODULE in
-    gateway)
-        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/gateway/docker && rm -rf node_modules package-lock.json)
-        ;;
     app-manager)
         (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
         (cd $SEPAL/modules/app-manager/docker && rm -rf node_modules package-lock.json)
+        ;;
+    email)
+        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/email/docker && rm -rf node_modules package-lock.json)
+        ;;
+    gateway)
+        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/gateway/docker && rm -rf node_modules package-lock.json)
         ;;
     gee)
         (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
@@ -176,9 +180,17 @@ module_clean () {
         --no-daemon \
         :sepal-server:clean &>/dev/null
         ;;
+    sys-monitor)
+        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/sys-monitor/docker && rm -rf node_modules package-lock.json)
+        ;;
     task)
         (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
         (cd $SEPAL/modules/task/docker && rm -rf node_modules package-lock.json)
+        ;;
+    terminal)
+        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/terminal/docker && rm -rf node_modules package-lock.json)
         ;;
     user)
         $SEPAL/gradlew \
@@ -190,25 +202,13 @@ module_clean () {
         --no-daemon \
         :sepal-user:clean &>/dev/null
         ;;
-    user-storage)
-        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/user-storage/docker && rm -rf node_modules package-lock.json)
-        ;;
-    terminal)
-        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/terminal/docker && rm -rf node_modules package-lock.json)
-        ;;
-    email)
-        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/email/docker && rm -rf node_modules package-lock.json)
-        ;;
-    sys-monitor)
-        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/sys-monitor/docker && rm -rf node_modules package-lock.json)
-        ;;
     user-files)
         (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
         (cd $SEPAL/modules/user-files/docker && rm -rf node_modules package-lock.json)
+        ;;
+    user-storage)
+        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/user-storage/docker && rm -rf node_modules package-lock.json)
         ;;
     *)
         return 1
@@ -334,11 +334,14 @@ run () {
     shift
     local ARGS=$@
     case $MODULE in
-    gateway)
-        (cd $SEPAL/modules/gateway/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
     app-manager)
         (cd $SEPAL/modules/app-manager/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
+        ;;
+    email)
+        (cd $SEPAL/modules/email/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
+        ;;
+    gateway)
+        (cd $SEPAL/modules/gateway/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     gee)
         (cd $SEPAL/modules/gee/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
@@ -355,9 +358,14 @@ run () {
         -DconfigDir="$SEPAL_CONFIG/sepal-server" \
         $ARGS
         ;;
+    sys-monitor)
+        (cd $SEPAL/modules/sys-monitor/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
+        ;;
     task)
-        # (cd $SEPAL/lib/js/shared && npm install)
         (cd $SEPAL/modules/task/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
+        ;;
+    terminal)
+        (cd $SEPAL/modules/terminal/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     user)
         sudo $SEPAL/gradlew \
@@ -368,25 +376,11 @@ run () {
         -DconfigDir="$SEPAL_CONFIG/user" \
         $ARGS
         ;;
-    user-storage)
-        # (cd $SEPAL/lib/js/shared && npm install)
-        (cd $SEPAL/modules/user-storage/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    terminal)
-        # (cd $SEPAL/lib/js/shared && npm install)
-        (cd $SEPAL/modules/terminal/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    email)
-        # (cd $SEPAL/lib/js/shared && npm install)
-        (cd $SEPAL/modules/email/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
-    sys-monitor)
-        # (cd $SEPAL/lib/js/shared && npm install)
-        (cd $SEPAL/modules/sys-monitor/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
-        ;;
     user-files)
-        # (cd $SEPAL/lib/js/shared && npm install)
         (cd $SEPAL/modules/user-files/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
+        ;;
+    user-storage)
+        (cd $SEPAL/modules/user-storage/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     *)
         return 1
