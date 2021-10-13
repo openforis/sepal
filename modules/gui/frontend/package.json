@@ -57,7 +57,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.15.8",
-    "@types/react": "17.0.28",
+    "@types/react": "17.0.29",
     "contains-path": "^1.0.0",
     "eslint": "^7",
     "eslint-plugin-react": "7.26.1",
