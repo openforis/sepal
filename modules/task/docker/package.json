@@ -17,7 +17,7 @@
         "sepal": "node_modules/shared/src"
     },
     "dependencies": {
-        "@google-cloud/storage": "^5.15.0",
+        "@google-cloud/storage": "^5.15.1",
         "commander": "^8.2.0",
         "fast-crc32c": "^2.0.0",
         "googleapis": "^88.2.0",
