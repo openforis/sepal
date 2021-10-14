@@ -183,7 +183,11 @@ const submitRetrieveRecipeTask = recipe => {
 }
 
 export const hasTrainingData = recipe => {
-    const countPerClass = (recipe.ui.collect && recipe.ui.collect.countPerClass) || {}
     const hasRecipeDataType = recipe.model.trainingData.dataSets.find(({type}) => type === 'RECIPE')
-    return hasRecipeDataType || Object.values(countPerClass).filter(count => count > 0).length >= 2
+    if (recipe.ui.collect) {
+        const countPerClass = recipe.ui.collect.countPerClass || {}
+        return hasRecipeDataType || Object.values(countPerClass).filter(count => count > 0).length >= 2
+    } else {
+        return !!recipe.model.trainingData.dataSets.find(({referenceData = []}) => referenceData.length)
+    }
 }
