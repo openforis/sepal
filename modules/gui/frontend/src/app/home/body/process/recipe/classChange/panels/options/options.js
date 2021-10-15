@@ -3,6 +3,7 @@ import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
+import {hasConfidence} from 'app/home/body/process/recipe/classChange/classChangeRecipe'
 import {msg} from 'translate'
 import React from 'react'
 import styles from './options.module.css'
@@ -10,6 +11,8 @@ import styles from './options.module.css'
 const fields = {
     minConfidence: new Form.Field()
 }
+
+const mapRecipeToProps = recipe => ({recipe})
 
 class Options extends React.Component {
     constructor(props) {
@@ -33,7 +36,7 @@ class Options extends React.Component {
     }
 
     renderContent() {
-        const {inputs: {minConfidence}} = this.props
+        const {inputs: {minConfidence}, recipe} = this.props
         return (
             <Layout>
                 <Form.Slider
@@ -44,6 +47,7 @@ class Options extends React.Component {
                     maxValue={100}
                     ticks={[0, 10, 25, 50, 75, 90, 100]}
                     info={value => msg('process.classChange.panel.options.minConfidence.value', {value})}
+                    disabled={!hasConfidence(recipe)}
                 />
             </Layout>
         )
@@ -52,5 +56,5 @@ class Options extends React.Component {
 
 export default compose(
     Options,
-    recipeFormPanel({id: 'options', fields})
+    recipeFormPanel({id: 'options', fields, mapRecipeToProps})
 )
