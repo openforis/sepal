@@ -1,4 +1,5 @@
 import {CCDCSliceImageLayer} from './ccdcSlice/ccdcSliceImageLayer'
+import {ClassChangeImageLayer} from './classChange/classChangeImageLayer'
 import {ClassificationImageLayer} from './classification/classificationImageLayer'
 import {CursorValue} from 'app/home/map/cursorValue'
 import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
@@ -50,23 +51,33 @@ class _RecipeImageLayer extends React.Component {
             dragging$,
             cursor$
         }
-        switch(recipe.type) {
-        case 'MOSAIC': return (
-            <OpticalMosaicImageLayer {...props}/>
-        )
-        case 'RADAR_MOSAIC': return (
-            <RadarMosaicImageLayer {...props}/>
-        )
-        case 'PLANET_MOSAIC': return (
-            <PlanetMosaicImageLayer {...props}/>
-        )
-        case 'CLASSIFICATION': return (
-            <ClassificationImageLayer {...props}/>
-        )
-        case 'CCDC_SLICE': return (
-            <CCDCSliceImageLayer {...props}/>
-        )
-        default: return null
+        switch (recipe.type) {
+        case 'MOSAIC':
+            return (
+                <OpticalMosaicImageLayer {...props}/>
+            )
+        case 'RADAR_MOSAIC':
+            return (
+                <RadarMosaicImageLayer {...props}/>
+            )
+        case 'PLANET_MOSAIC':
+            return (
+                <PlanetMosaicImageLayer {...props}/>
+            )
+        case 'CLASSIFICATION':
+            return (
+                <ClassificationImageLayer {...props}/>
+            )
+        case 'CLASS_CHANGE':
+            return (
+                <ClassChangeImageLayer {...props}/>
+            )
+        case 'CCDC_SLICE':
+            return (
+                <CCDCSliceImageLayer {...props}/>
+            )
+        default:
+            return null
         }
     }
 
@@ -85,7 +96,10 @@ class _RecipeImageLayer extends React.Component {
         if (!allVisualizations.length) return
         if (prevVisParams) {
             const visParams = allVisualizations
-                .find(({id, bands}) => id === prevVisParams.id && (prevVisParams.id || _.isEqual(bands, prevVisParams.bands)))
+                .find(({
+                    id,
+                    bands
+                }) => id === prevVisParams.id && (prevVisParams.id || _.isEqual(bands, prevVisParams.bands)))
             if (!visParams) {
                 this.selectVisualization(allVisualizations[0])
             } else if (!_.isEqual(visParams, prevVisParams)) {
@@ -161,5 +175,5 @@ RecipeImageLayer.propTypes = {
     boundsChanged$: PropTypes.any,
     cursor$: PropTypes.any,
     dragging$: PropTypes.any,
-    map: PropTypes.object,
+    map: PropTypes.object
 }

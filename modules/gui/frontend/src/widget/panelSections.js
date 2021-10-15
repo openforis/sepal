@@ -75,12 +75,14 @@ export default class PanelSections extends React.Component {
     }
 
     componentDidMount() {
-        const {step, inputs, selected} = this.props
+        const {step, inputs, selected, onChange} = this.props
         step && step.set(0)
         if (this.isSelectionSection())
             Object.keys(inputs)
                 .filter(name => name !== selected.name)
                 .forEach(name => inputs[name] && inputs[name].set(''))
+
+        onChange && selected.onChange(onChange)
     }
 
     isSelectionSection() {
@@ -112,6 +114,7 @@ PanelSections.propTypes = {
     icon: PropTypes.string,
     label: PropTypes.string,
     step: PropTypes.any, // input field
+    onChange: PropTypes.func
 }
 
 PanelSections.defaultProps = {
