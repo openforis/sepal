@@ -1,8 +1,8 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {MosaicPreview} from '../../../mosaic/mosaicPreview'
+import {MosaicPreview} from 'app/home/body/process/recipe/mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from '../../classificationRecipe'
+import {RecipeActions} from 'app/home/body/process/recipe/classification/classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -12,7 +12,6 @@ import styles from './auxiliaryImagery.module.css'
 
 const fields = {
     included: new Form.Field()
-        .notBlank('process.classification.panel.auxiliaryImagery.form.required')
 }
 
 class AuxiliaryImagery extends React.Component {
