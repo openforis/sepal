@@ -33,33 +33,10 @@ export class Widget extends React.Component {
         )
     }
 
-    // no busy message
     renderContent() {
         const {children} = this.props
         return children
     }
-
-    // render busy message in place of original content
-    // renderContent() {
-    //     const {children} = this.props
-    //     return (
-    //         <div>
-    //             <div className={styles.content}>
-    //                 {children}
-    //             </div>
-    //             {this.renderBusyMessage()}
-    //         </div>
-    //     )
-    // }
-
-    // renderBusyMessage() {
-    //     const {busyMessage} = this.props
-    //     return busyMessage ? (
-    //         <div className={styles.busyMessage}>
-    //             {busyMessage}
-    //         </div>
-    //     ) : null
-    // }
 
     getWidgetState() {
         const {errorMessage, busyMessage} = this.props
