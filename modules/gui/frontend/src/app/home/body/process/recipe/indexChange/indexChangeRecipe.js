@@ -4,6 +4,7 @@ import {msg} from 'translate'
 import {recipeActionBuilder} from 'app/home/body/process/recipe'
 import _ from 'lodash'
 import api from 'api'
+import guid from 'guid'
 import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -12,6 +13,34 @@ export const defaultModel = {
     dates: {
         fromDate: moment().startOf('year').format(DATE_FORMAT),
         toDate: moment().add(1, 'years').startOf('year').format(DATE_FORMAT)
+    },
+    legend: {
+        entries: [
+            {
+                id: guid(),
+                color: '#d73027',
+                value: 1,
+                label: 'Decrease',
+                from: undefined,
+                to: 0
+            },
+            {
+                id: guid(),
+                color: '#ffffff',
+                value: 2,
+                label: 'Stable',
+                from: 0,
+                to: 0
+            },
+            {
+                id: guid(),
+                color: '#1a9850',
+                value: 3,
+                label: 'Increase',
+                from: 0,
+                to: undefined
+            }
+        ]
     },
     options: {
         cloudThreshold: 0.15,
@@ -34,7 +63,7 @@ export const RecipeActions = id => {
             }, {bands})
         },
         retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_CLASS_CHANGE_RETRIEVAL', {retrieveOptions})
+            return actionBuilder('REQUEST_INDEX_CHANGE_RETRIEVAL', {retrieveOptions})
                 .setAll({
                     'ui.retrieveState': 'SUBMITTED',
                     'ui.retrieveOptions': retrieveOptions,
@@ -45,24 +74,14 @@ export const RecipeActions = id => {
     }
 }
 
-export const hasConfidence = recipe => {
+export const hasError = recipe => {
     const fromImage = recipe.model.fromImage
     const toImage = recipe.model.toImage
     if (!fromImage || !toImage) {
         return false
     }
-    const fromBands = Object.keys(fromImage.bands)
-    const fromValues = fromImage.bands[fromImage.band].values
-    const toBands = Object.keys(toImage.bands)
-    const toValues = fromImage.bands[toImage.band].values
-
-    if (!_.isEqual(new Set(fromValues), new Set(toValues))) {
-        return false
-    } else {
-        const probabilityBands = fromValues.map(value => `probability_${value}`)
-        return probabilityBands.every(band => fromBands.includes(band))
-            && probabilityBands.every(band => toBands.includes(band))
-    }
+    // TODO: Implement...
+    return true
 }
 
 const submitRetrieveRecipeTask = recipe => {

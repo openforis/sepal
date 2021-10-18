@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PalettePreSets, pickColors} from './visParams/palettePreSets'
+import {PalettePreSets, pickColors} from 'app/home/map/visParams/palettePreSets'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -142,7 +142,11 @@ const entryFields = {
             }
         }, 'map.legendBuilder.entry.error.invalidColor'),
     label: new Form.Field()
-        .notBlank()
+        .notBlank(),
+    from: new Form.Field()
+        .number(),
+    to: new Form.Field()
+        .number()
 }
 
 const entryConstraints = {
@@ -169,12 +173,44 @@ class _Entry extends React.Component {
     state = {invalid: true}
 
     render() {
+        return (
+            <Layout type='vertical' spacing='compact'>
+                {this.renderBasics()}
+                {this.renderRange()}
+            </Layout>
+        )
+    }
+
+    renderRange() {
+        const {inputs: {from, to}} = this.props
+        return (
+            <Layout type='horizontal-nowrap' className={styles.range}>
+                <Form.Input
+                    placeholder={'From'}
+                    input={from}
+                    errorMessage
+                    autoComplete={false}
+                    onChange={e => this.notifyChange({from: e.target.value})}
+                />
+
+                <Form.Input
+                    placeholder={'To'}
+                    input={to}
+                    errorMessage
+                    autoComplete={false}
+                    onChange={e => this.notifyChange({to: e.target.value})}
+                />
+            </Layout>
+        )
+    }
+
+    renderBasics() {
         const {form, entry, entries, mode, locked, inputs: {value, color, label}, onSwap} = this.props
         const otherColors = entries
             .filter(({id}) => entry.id !== id)
             .map(({color}) => color)
         return (
-            <Layout type={'horizontal-nowrap'} className={styles.entry}>
+            <Layout type='horizontal-nowrap' className={styles.basics}>
                 {mode === 'palette'
                     ? (
                         <ColorInput
@@ -248,18 +284,27 @@ class _Entry extends React.Component {
         inputs.value.set(entry.value)
         inputs.color.set(entry.color)
         inputs.label.set(entry.label)
+        inputs.from.set(entry.from)
+        inputs.to.set(entry.to)
     }
 
-    notifyChange({color, value, label}) {
+    notifyChange({color, value, label, from, to}) {
         const {entry, onChange, inputs, form} = this.props
         const updatedEntry = {
             id: entry.id,
             color: color === undefined ? inputs.color.value : color,
-            value: parseInt(value === undefined ? inputs.value.value : value),
-            label: label === undefined ? inputs.label.value : label
+            value: toInt(value === undefined ? inputs.value.value : value),
+            label: label === undefined ? inputs.label.value : label,
+            from: toInt(from === undefined ? inputs.from.value : from),
+            to: toInt(to === undefined ? inputs.to.value : to)
         }
         onChange(updatedEntry, form.isInvalid())
     }
+}
+
+const toInt = s => {
+    console.log({s, result: _.isFinite(parseInt(s)) ? parseInt(s) : undefined})
+    return _.isFinite(parseInt(s)) ? parseInt(s) : undefined
 }
 
 const Entry = compose(
@@ -272,7 +317,7 @@ class ColorInput extends React.Component {
     colorInputRef = React.createRef()
 
     render() {
-        const {input, invalid, autoFocus, onChange} = this.props
+        const {input, invalid, onChange} = this.props
         const {swap} = this.state
         return (
             <div className={styles.colorContainer}>

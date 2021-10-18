@@ -1,9 +1,10 @@
 import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {LegendBuilder, defaultColor} from 'app/home/map/legendBuilder'
+import {LegendBuilder, defaultColor} from './legendBuilder'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {recipeActionBuilder} from 'app/home/body/process/recipe'
@@ -25,6 +26,7 @@ const fields = {
 const mapRecipeToProps = recipe => {
     return ({
         toImage: selectFrom(recipe, 'model.toImage'),
+        importedLegendEntries: selectFrom(recipe, 'ui.importedLegendEntries'),
         legendEntries: selectFrom(recipe, 'model.legend.entries') || [],
         fromImage: selectFrom(recipe, 'model.fromImage')
     })
@@ -32,46 +34,11 @@ const mapRecipeToProps = recipe => {
 
 class _Legend extends React.Component {
     render() {
-        const {legendEntries} = this.props
+        const {importedLegendEntries, legendEntries} = this.props
         return <LegendPanel
+            importedLegendEntries={importedLegendEntries}
             legendEntries={legendEntries}
         />
-    }
-
-    componentDidUpdate(prevProps) {
-        const {fromImage: prevFromImage, toImage: prevToImage} = prevProps
-        const {fromImage, toImage} = this.props
-
-        if (!_.isEqual([prevFromImage, prevToImage], [fromImage, toImage])) {
-            this.updateLegend()
-        }
-    }
-
-    updateLegend() {
-        const {recipeId, fromImage, toImage} = this.props
-        const imageLabels = ({band, bands}) => bands[band].labels
-
-        if (!fromImage || !toImage) {
-            return
-        }
-
-        const entries = imageLabels(fromImage)
-            .map(fromLabel =>
-                imageLabels(toImage).map(toLabel => {
-                    return `${fromLabel} -> ${toLabel}`
-                })
-            )
-            .flat()
-            .map((label, i) => ({
-                id: guid(),
-                value: i + 1,
-                color: defaultColor(i + 1),
-                label
-            }))
-        const actionBuilder = recipeActionBuilder(recipeId)
-        actionBuilder('UPDATE_LEGEND', {fromImage, toImage, entries})
-            .set('model.legend.entries', entries)
-            .dispatch()
     }
 }
 
@@ -107,7 +74,13 @@ class _LegendPanel extends React.Component {
                         {this.renderContent()}
                     </Layout>
                 </Panel.Content>
-                <Form.PanelButtons/>
+                <Form.PanelButtons>
+                    <Panel.Buttons.Add onClick={() => this.addEntry()}/>
+                    <Button
+                        icon='file-import'
+                        label={msg('process.indexChange.panel.legend.import')}
+                        onClick={() => this.importLegend()}/>
+                </Form.PanelButtons>
             </RecipeFormPanel>
         )
     }
@@ -118,7 +91,6 @@ class _LegendPanel extends React.Component {
         return (
             <LegendBuilder
                 entries={entries.value}
-                locked={true}
                 colorMode={colorMode}
                 onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
             />
@@ -130,6 +102,26 @@ class _LegendPanel extends React.Component {
         inputs.entries.set(legendEntries)
     }
 
+    componentDidUpdate() {
+        const {inputs, importedLegendEntries, recipeActionBuilder} = this.props
+        if (importedLegendEntries) {
+            recipeActionBuilder('CLEAR_IMPORTED_LEGEND_ENTRIES', {importedLegendEntries})
+                .del('ui.importedLegendEntries')
+                .dispatch()
+            inputs.entries.set(importedLegendEntries)
+        }
+    }
+
+    addEntry() {
+        const {inputs: {entries}} = this.props
+        const id = guid()
+        const max = _.maxBy(entries.value, 'value')
+        const value = max ? max.value + 1 : 1
+        const color = defaultColor(entries.value.length)
+        const label = ''
+        entries.set([...entries.value, {id, value, color, label}])
+    }
+
     toggleColorMode() {
         this.setState(({colorMode}) => ({colorMode: colorMode === 'palette' ? 'text' : 'palette'}))
     }
@@ -139,6 +131,11 @@ class _LegendPanel extends React.Component {
         inputs.entries.set(legendEntries)
         inputs.invalidEntries.set(invalidLegendEntries)
     }
+
+    importLegend() {
+        const {activator: {activatables: {legendImport}}} = this.props
+        legendImport.activate()
+    }
 }
 
 const valuesToModel = ({entries}) => ({
@@ -146,12 +143,14 @@ const valuesToModel = ({entries}) => ({
 })
 
 const additionalPolicy = () => ({
-    _: 'disallow'
+    _: 'disallow',
+    legendImport: 'allow'
 })
 
 const LegendPanel = compose(
     _LegendPanel,
-    recipeFormPanel({id: 'legend', fields, additionalPolicy, valuesToModel})
+    recipeFormPanel({id: 'legend', fields, additionalPolicy, valuesToModel}),
+    activator('legendImport')
 )
 
 export const Legend = compose(

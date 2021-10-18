@@ -97,7 +97,7 @@ class _Combo extends React.Component {
             <Keybinding
                 disabled={!this.isActive() || !focused}
                 keymap={keymap}>
-                <AutoFocus element={this.input.current} enabled={autoFocus}>
+                <AutoFocus element={this.input.current} focusEnabled={autoFocus}>
                     <Input
                         ref={this.input}
                         className={[

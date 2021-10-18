@@ -28,7 +28,7 @@ class ImageForm extends Component {
                     })}
                 </div>
                 <FormButtons
-                    label={msg('bands')}
+                    label={msg('process.classChange.panel.inputImage.changeBand.label')}
                     input={band}
                     disabled={!bandOptions.length}
                     options={bandOptions}
@@ -49,9 +49,9 @@ class ImageForm extends Component {
             const defaultBand = bandNames.find(bandName => loadedBands[bandName].values.length)
                 || bandNames[0]
             band.set(defaultBand)
-            metadata.set(loadedMetadata)
-            visualizations.set(loadedVisualizations)
         }
+        metadata.set(loadedMetadata)
+        visualizations.set(loadedVisualizations)
     }
 }
 

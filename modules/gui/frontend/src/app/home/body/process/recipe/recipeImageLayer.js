@@ -2,6 +2,7 @@ import {CCDCSliceImageLayer} from './ccdcSlice/ccdcSliceImageLayer'
 import {ClassChangeImageLayer} from './classChange/classChangeImageLayer'
 import {ClassificationImageLayer} from './classification/classificationImageLayer'
 import {CursorValue} from 'app/home/map/cursorValue'
+import {IndexChangeImageLayer} from './indexChange/indexChangeImageLayer'
 import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
 import {PlanetMosaicImageLayer} from './planetMosaic/planetMosaicImageLayer'
 import {RadarMosaicImageLayer} from './radarMosaic/radarMosaicImageLayer'
@@ -71,6 +72,10 @@ class _RecipeImageLayer extends React.Component {
         case 'CLASS_CHANGE':
             return (
                 <ClassChangeImageLayer {...props}/>
+            )
+        case 'INDEX_CHANGE':
+            return (
+                <IndexChangeImageLayer {...props}/>
             )
         case 'CCDC_SLICE':
             return (
