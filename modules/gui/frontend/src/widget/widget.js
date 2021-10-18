@@ -24,7 +24,7 @@ export class Widget extends React.Component {
                     spacing={spacing}
                     className={[
                         styles.widget,
-                        styles[widgetState],
+                        disabled ? styles.normal : styles[widgetState],
                         border ? styles.border : null
                     ].join(' ')}>
                     {this.renderContent()}
