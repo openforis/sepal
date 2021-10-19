@@ -76,11 +76,7 @@ export const RecipeActions = id => {
 export const hasError = recipe => {
     const fromImage = recipe.model.fromImage
     const toImage = recipe.model.toImage
-    if (!fromImage || !toImage) {
-        return false
-    }
-    // TODO: Implement...
-    return true
+    return fromImage && fromImage.errorBand && toImage && toImage.errorBand
 }
 
 const submitRetrieveRecipeTask = recipe => {
