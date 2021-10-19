@@ -7,7 +7,6 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {recipeActionBuilder} from 'app/home/body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'

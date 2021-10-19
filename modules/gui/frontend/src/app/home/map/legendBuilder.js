@@ -45,7 +45,7 @@ export class LegendBuilder extends React.Component {
         return (
             <div className={styles.entries}>
                 <Layout type='vertical' spacing='compact'>
-                    {entries.map((entry, i) => this.renderEntry(entry, i == entries.length - 1))}
+                    {entries.map((entry, i) => this.renderEntry(entry, i === entries.length - 1))}
                 </Layout>
                 <PalettePreSets onSelect={this.applyPreset} count={entries.length} className={styles.palettePreSets} autoFocus={false}/>
             </div>
@@ -272,7 +272,7 @@ class ColorInput extends React.Component {
     colorInputRef = React.createRef()
 
     render() {
-        const {input, invalid, autoFocus, onChange} = this.props
+        const {input, invalid, onChange} = this.props
         const {swap} = this.state
         return (
             <div className={styles.colorContainer}>

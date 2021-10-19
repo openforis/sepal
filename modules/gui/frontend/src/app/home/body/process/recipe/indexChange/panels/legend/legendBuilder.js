@@ -45,7 +45,7 @@ export class LegendBuilder extends React.Component {
         return (
             <div className={styles.entries}>
                 <Layout type='vertical' spacing='compact'>
-                    {entries.map((entry, i) => this.renderEntry(entry, i == entries.length - 1))}
+                    {entries.map((entry, i) => this.renderEntry(entry, i === entries.length - 1))}
                 </Layout>
                 <PalettePreSets onSelect={this.applyPreset} count={entries.length} className={styles.palettePreSets} autoFocus={false}/>
             </div>
@@ -303,7 +303,6 @@ class _Entry extends React.Component {
 }
 
 const toInt = s => {
-    console.log({s, result: _.isFinite(parseInt(s)) ? parseInt(s) : undefined})
     return _.isFinite(parseInt(s)) ? parseInt(s) : undefined
 }
 
