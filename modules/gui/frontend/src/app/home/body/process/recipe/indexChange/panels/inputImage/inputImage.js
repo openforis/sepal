@@ -23,8 +23,7 @@ export const fields = {
         .notEmpty(),
     band: new Form.Field()
         .notBlank(),
-    errorBand: new Form.Field()
-        .notBlank(),
+    errorBand: new Form.Field(),
     bandMin: new Form.Field(),
     bandMax: new Form.Field(),
     errorBandMax: new Form.Field(),
