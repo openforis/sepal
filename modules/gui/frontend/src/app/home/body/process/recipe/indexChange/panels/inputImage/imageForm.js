@@ -8,6 +8,8 @@ import React, {Component} from 'react'
 import styles from './inputImage.module.css'
 
 class ImageForm extends Component {
+    state = {errorBandCleared: true}
+
     render() {
         const {input, inputComponent, inputs: {band, errorBand, bands}} = this.props
         const bandOptions = (Object.keys(bands.value) || [])
@@ -31,12 +33,17 @@ class ImageForm extends Component {
                     input={band}
                     disabled={!bandOptions.length}
                     options={bandOptions}
+                    onChange={() => this.setState({errorBandCleared: false})}
                 />
                 <Form.Combo
                     label={msg('process.indexChange.panel.inputImage.errorBand.label')}
                     input={errorBand}
                     disabled={!bandOptions.length}
                     options={bandOptions}
+                    allowClear
+                    onChange={selectedOption => {
+                        this.setState({errorBandCleared: !selectedOption})
+                    }}
                 />
             </Layout>
         )
@@ -52,11 +59,13 @@ class ImageForm extends Component {
 
     update() {
         const {fromBand, inputs: {band, bands, errorBand}} = this.props
+        const {errorBandCleared} = this.state
+
         if (!band.value && fromBand && bands.value) {
             bands.value[fromBand] && band.set(fromBand)
         }
 
-        if (!errorBand.value && band.value && bands.value) {
+        if (!errorBandCleared && !errorBand.value && band.value && bands.value) {
             const defaultErrorBand = `${band.value}_rmse`
             bands.value[defaultErrorBand] && errorBand.set(defaultErrorBand)
         }
