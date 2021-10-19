@@ -43,8 +43,7 @@ export const defaultModel = {
         ]
     },
     options: {
-        cloudThreshold: 0.15,
-        shadowThreshold: 0.4
+        minConfidence: 2.5
     }
 }
 
