@@ -46,6 +46,7 @@ class Options extends React.Component {
                     input={minConfidence}
                     minValue={0}
                     maxValue={5}
+                    decimals={1}
                     ticks={[0, 1, 2, 3, 4, 5]}
                     info={value => msg('process.indexChange.panel.options.minConfidence.value', {value})}
                     disabled={!hasError(recipe)}
