@@ -41,8 +41,7 @@ export class InputImage extends React.Component {
             <RecipeFormPanel
                 className={styles.panel}
                 placement="bottom-right"
-                // onApply={this.updateImageLayerSources}
-            >
+                onApply={this.updateImageLayerSources}>
                 {this.renderSections()}
             </RecipeFormPanel>
         )
@@ -112,15 +111,16 @@ export class InputImage extends React.Component {
                     }
                 }
             default:
-                throw Error(`Unexpected section: ${section}`)
+                return
             }
         }
 
         const source = toImageLayerSource()
-
-        recipeActionBuilder('UPDATE_INPUT_IMAGE_LAYER_SOURCE', {source})
-            .set(['layers.additionalImageLayerSources', {id: source.id}], source)
-            .dispatch()
+        if (source) {
+            recipeActionBuilder('UPDATE_INPUT_IMAGE_LAYER_SOURCE', {source})
+                .set(['layers.additionalImageLayerSources', {id: source.id}], source)
+                .dispatch()
+        }
     }
 }
 
