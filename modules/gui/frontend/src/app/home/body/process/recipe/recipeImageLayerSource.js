@@ -54,7 +54,7 @@ class _RecipeImageLayerSource extends React.Component {
         const {currentUserDefinedVisualizations, recipeId, source, recipeActionBuilder} = this.props
         const description = toDescription(recipe)
         if (recipeId !== source.sourceConfig.recipeId) {
-            const userDefinedVisualizations = selectFrom(recipe, 'layers.userDefinedVisualizations.this-recipe')
+            const userDefinedVisualizations = selectFrom(recipe, 'layers.userDefinedVisualizations.this-recipe') || []
             const currentVisualizationIds = currentUserDefinedVisualizations.map(({id}) => id)
             userDefinedVisualizations
                 .reduce(
