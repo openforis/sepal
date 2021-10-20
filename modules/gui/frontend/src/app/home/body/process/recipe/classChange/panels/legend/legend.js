@@ -33,9 +33,7 @@ const mapRecipeToProps = recipe => {
 class _Legend extends React.Component {
     render() {
         const {legendEntries} = this.props
-        return <LegendPanel
-            legendEntries={legendEntries}
-        />
+        return <LegendPanel legendEntries={legendEntries}/>
     }
 
     componentDidUpdate(prevProps) {
@@ -49,15 +47,14 @@ class _Legend extends React.Component {
 
     updateLegend() {
         const {recipeId, fromImage, toImage} = this.props
-        const imageLabels = ({band, bands}) => bands[band].labels
 
         if (!fromImage || !toImage) {
             return
         }
 
-        const entries = imageLabels(fromImage)
-            .map(fromLabel =>
-                imageLabels(toImage).map(toLabel => {
+        const entries = fromImage.legendEntries
+            .map(({label: fromLabel}) =>
+                toImage.legendEntries.map(({label: toLabel}) => {
                     return `${fromLabel} -> ${toLabel}`
                 })
             )

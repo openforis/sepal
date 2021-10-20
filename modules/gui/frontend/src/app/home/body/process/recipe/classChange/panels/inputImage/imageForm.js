@@ -1,17 +1,21 @@
 import * as PropTypes from 'prop-types'
-import {FormButtons} from '../../../../../../../../widget/form/buttons'
+import {FormCombo} from 'widget/form/combo'
 import {Layout} from 'widget/layout'
+import {Legend} from 'legend/legend'
 import {compose} from 'compose'
-import {msg} from '../../../../../../../../translate'
+import {msg} from 'translate'
 import {withScrollable} from 'widget/scrollable'
 import React, {Component} from 'react'
+import guid from 'guid'
 import styles from './inputImage.module.css'
 
 class ImageForm extends Component {
+    state = {entries: [], loadedRecipe: null}
+
     render() {
-        const {input, inputComponent, inputs: {band, bands}} = this.props
+        const {input, inputComponent, inputs: {band, bands, legendEntries}} = this.props
+        const {loadedRecipe} = this.state
         const bandOptions = (Object.keys(bands.value) || [])
-            .filter(bandName => bands.value[bandName].values.length) // TODO: For now, remove options without values. Later, allow user to specify values
             .map(bandName => ({
                 value: bandName,
                 label: bandName
@@ -24,21 +28,52 @@ class ImageForm extends Component {
                         onLoading: () => {
                             bands.set({})
                         },
-                        onLoaded: ({id, bands, metadata, visualizations}) => this.onLoaded(id, bands, metadata, visualizations)
+                        onLoaded: ({id, bands, metadata, visualizations, recipe}) => this.onLoaded(id, bands, metadata, visualizations, recipe)
                     })}
                 </div>
-                <FormButtons
+                <FormCombo
                     label={msg('process.classChange.panel.inputImage.changeBand.label')}
                     input={band}
                     disabled={!bandOptions.length}
                     options={bandOptions}
                 />
+                <Legend
+                    label={'Legend'}
+                    recipe={loadedRecipe}
+                    band={band.value}
+                    entries={legendEntries.value || []}
+                    disabled={!band.value}
+                    onUpdate={updatedEntries => legendEntries.set(updatedEntries)}
+                />
             </Layout>
         )
     }
 
-    onLoaded(id, loadedBands, loadedMetadata, loadedVisualizations) {
-        const {form, inputs: {band, bands, metadata, visualizations}} = this.props
+    componentDidUpdate(prevProps) {
+        const {inputs: {band: {value: prevBand}}} = prevProps
+        const {inputs: {band: {value: band}}} = this.props
+        if (band && band !== prevBand) {
+            this.bandSelected(band)
+        }
+    }
+
+    bandSelected(band) {
+        const {inputs: {bands, legendEntries}} = this.props
+        const visualization = bands.value[band]
+        const entries = ((visualization && visualization.values) || [])
+            .map((value, i) => {
+                return {
+                    id: guid(),
+                    color: (visualization.palette && visualization.palette[i]) || '#000000',
+                    value,
+                    label: (visualization.labels && visualization.labels[i]) || `${value}`,
+                }
+            })
+        legendEntries.set(entries)
+    }
+
+    onLoaded(id, loadedBands, loadedMetadata, loadedVisualizations, loadedRecipe) {
+        const {form, inputs: {band, bands, metadata, visualizations, recipe}} = this.props
         if (!id || !form.isDirty()) {
             return
         }
@@ -52,6 +87,8 @@ class ImageForm extends Component {
         }
         metadata.set(loadedMetadata)
         visualizations.set(loadedVisualizations)
+        recipe.set(loadedRecipe.id)
+        this.setState({loadedRecipe})
     }
 }
 

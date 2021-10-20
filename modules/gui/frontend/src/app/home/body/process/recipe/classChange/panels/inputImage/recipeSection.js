@@ -29,14 +29,14 @@ class _RecipeSection extends React.Component {
                 placeholder={msg('process.classification.panel.inputImagery.form.recipe.placeholder')}
                 options={options}
                 autoFocus
-                onChange={({value}) => this.loadBands(value)}
+                onChange={({value}) => this.onRecipeSelected(value)}
                 errorMessage
                 busyMessage={stream('LOAD_RECIPE_BANDS').active}
             />
         )
     }
 
-    loadBands(recipeId) {
+    onRecipeSelected(recipeId) {
         const {stream, onLoading, onLoaded, loadRecipe$} = this.props
         if (recipeId) {
             onLoading(recipeId)
@@ -48,7 +48,14 @@ class _RecipeSection extends React.Component {
                         )
                     )
                 ),
-                bands => onLoaded({id: recipeId, bands})
+                bands => onLoaded({
+                    id: recipeId,
+                    bands,
+                    recipe: {
+                        type: 'RECIPE_REF',
+                        id: recipeId
+                    }
+                })
             )
         }
     }
@@ -61,10 +68,7 @@ class _RecipeSection extends React.Component {
             .forEach(bandName => {
                 const visualization = categoricalVisualizations
                     .find(({bands}) => bands[0] === bandName) || {}
-                bands[bandName] = {
-                    values: visualization.values || [],
-                    labels: visualization.labels || [],
-                }
+                bands[bandName] = {...visualization}
             })
         return bands
     }

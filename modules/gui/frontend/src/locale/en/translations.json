@@ -2983,6 +2983,15 @@
         "tooMany": "Can only drop a single file."
       }
     },
+    "legend": {
+      "edit": {
+        "tooltip": "Update legend"
+      },
+      "editLegendPanel": {
+        "title": "Update legend"
+      },
+      "noEntries": "No legend entries"
+    },
     "list": {
       "noResults": "No results"
     },

@@ -24,6 +24,8 @@ export const fields = {
     band: new Form.Field()
         .notBlank(),
     metadata: new Form.Field(),
+    legendEntries: new Form.Field()
+        .notEmpty(),
     visualizations: new Form.Field()
 }
 
@@ -39,7 +41,8 @@ export class InputImage extends React.Component {
             <RecipeFormPanel
                 className={styles.panel}
                 placement="bottom-right"
-                onApply={this.updateImageLayerSources}>
+                // onApply={this.updateImageLayerSources}
+            >
                 {this.renderSections()}
             </RecipeFormPanel>
         )
@@ -78,6 +81,7 @@ export class InputImage extends React.Component {
                     inputs.asset.set(undefined)
                     inputs.metadata.set(undefined)
                     inputs.visualizations.set(undefined)
+                    inputs.legendEntries.set(undefined)
                 }}
             />
         )
@@ -124,7 +128,8 @@ export const modelToValues = model => {
     const values = {
         section: model.type || 'SELECTION',
         bands: model.bands,
-        band: model.band
+        band: model.band,
+        legendEntries: model.legendEntries
     }
     switch (model.type) {
     case 'RECIPE_REF':
@@ -140,7 +145,8 @@ export const valuesToModel = values => {
     const model = {
         type: values.section,
         bands: values.bands,
-        band: values.band
+        band: values.band,
+        legendEntries: values.legendEntries
     }
     switch (values.section) {
     case 'RECIPE_REF':

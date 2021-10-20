@@ -34,7 +34,16 @@ export default class AssetSection extends React.Component {
                 labels: visualization.labels || [],
             }
         })
-        onLoaded({id: asset, bands, metadata, visualizations})
+        onLoaded({
+            id: asset,
+            bands,
+            metadata,
+            visualizations,
+            recipe: {
+                type: 'ASSET',
+                id: asset
+            }
+        })
     }
 }
 

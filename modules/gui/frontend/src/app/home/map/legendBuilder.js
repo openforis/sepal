@@ -26,10 +26,14 @@ export class LegendBuilder extends React.Component {
     }
 
     render() {
-        const {entries} = this.props
-        return entries.length
-            ? this.renderEntries()
-            : this.renderNoEntries()
+        const {entries, className} = this.props
+        return (
+            <div className={className}>
+                {entries.length
+                    ? this.renderEntries()
+                    : this.renderNoEntries()}
+            </div>
+        )
     }
 
     renderNoEntries() {
@@ -47,7 +51,12 @@ export class LegendBuilder extends React.Component {
                 <Layout type='vertical' spacing='compact'>
                     {entries.map((entry, i) => this.renderEntry(entry, i === entries.length - 1))}
                 </Layout>
-                <PalettePreSets onSelect={this.applyPreset} count={entries.length} className={styles.palettePreSets} autoFocus={false}/>
+                <PalettePreSets
+                    onSelect={this.applyPreset}
+                    count={entries.length}
+                    className={styles.palettePreSets}
+                    autoFocus={false}
+                />
             </div>
         )
     }
