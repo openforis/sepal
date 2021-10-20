@@ -46,7 +46,7 @@ export class Widget extends React.Component {
     }
 
     renderLabel() {
-        const {label, labelButtons, tooltip, tooltipPlacement, tooltipTrigger, alignment, errorMessage} = this.props
+        const {label, labelButtons, tooltip, tooltipPlacement, tooltipTrigger, alignment, disabled, errorMessage} = this.props
         return label
             ? (
                 <Label
@@ -57,7 +57,7 @@ export class Widget extends React.Component {
                     tooltipPlacement={tooltipPlacement}
                     tooltipTrigger={tooltipTrigger}
                     tabIndex={-1}
-                    error={errorMessage}
+                    error={!disabled && errorMessage}
                 />
             )
             : null
