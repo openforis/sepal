@@ -424,7 +424,7 @@ const getOmega = dateFormat => {
     case FRACTIONAL_YEARS:
         return 2.0 * Math.PI
     case UNIX_TIME_MILLIS:
-        return 2.0 * Math.PI * 60 * 60 * 24 * 365.25
+        return 2.0 * Math.PI / (1000 * 60 * 60 * 24 * 365.25)
     default:
         throw Error('Only dateFormat 0 (Julian days), 1 (Fractional years), and 2 (Unix time milliseconds) is supported')
     }
