@@ -5,18 +5,10 @@ import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from '../mapAreaContext'
-import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import SafetyButton from 'widget/safetyButton'
 import guid from 'guid'
-
-const mapRecipeToProps = (recipe, ownProps) => {
-    const {source} = ownProps
-    return {
-        userDefinedVisualizations: selectFrom(recipe, ['layers.userDefinedVisualizations', source.id]) || []
-    }
-}
 
 class _VisualizationSelector extends React.Component {
     state = {}
@@ -31,6 +23,7 @@ class _VisualizationSelector extends React.Component {
                 bands.join(',') === selectedVisParams.bands.join(',')
             )
         )
+
         const editMode = selectedOption && selectedOption.visParams.userDefined ? 'edit' : 'clone'
         return (
             <Combo
@@ -76,7 +69,8 @@ class _VisualizationSelector extends React.Component {
     }
 
     getOptions() {
-        const {userDefinedVisualizations, presetOptions} = this.props
+        const {recipe, presetOptions} = this.props
+        const userDefinedVisualizations = selectFrom(recipe, ['layers.userDefinedVisualizations.this-recipe']) || []
         const userDefinedOptions = userDefinedVisualizations.map(visParams => ({
             value: visParams.id,
             label: visParams.bands.join(', '),
@@ -129,7 +123,6 @@ class _VisualizationSelector extends React.Component {
 
 export const VisualizationSelector = compose(
     _VisualizationSelector,
-    withRecipe(mapRecipeToProps),
     activator(),
     withMapAreaContext()
 )
