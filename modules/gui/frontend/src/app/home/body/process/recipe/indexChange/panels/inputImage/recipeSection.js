@@ -1,7 +1,6 @@
 import {Form} from 'widget/form/form'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {getAllVisualizations} from 'app/home/body/process/recipe/visualizations'
 import {getRecipeType} from 'app/home/body/process/recipeTypes'
 import {map, switchMap} from 'rxjs'
 import {msg} from 'translate'
@@ -45,8 +44,8 @@ class _RecipeSection extends React.Component {
                 loadRecipe$(recipeId).pipe(
                     switchMap(recipe =>
                         api.gee.bands$({recipe}).pipe(
-                            map(bandNames => ({
-                                bands: this.extractBands(recipe, bandNames),
+                            map(bands => ({
+                                bands,
                                 visualizations: getRecipeType(recipe.type).getPreSetVisualizations(recipe)
                             }))
                         )
@@ -55,22 +54,6 @@ class _RecipeSection extends React.Component {
                 ({bands, visualizations}) => onLoaded({id: recipeId, bands, visualizations})
             )
         }
-    }
-
-    extractBands(recipe, bandNames) {
-        const bands = {}
-        const categoricalVisualizations = getAllVisualizations(recipe)
-            .filter(({type}) => type === 'categorical')
-        bandNames
-            .forEach(bandName => {
-                const visualization = categoricalVisualizations
-                    .find(({bands}) => bands[0] === bandName) || {}
-                bands[bandName] = {
-                    values: visualization.values || [],
-                    labels: visualization.labels || [],
-                }
-            })
-        return bands
     }
 }
 

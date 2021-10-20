@@ -21,9 +21,12 @@ import React from 'react'
 import _ from 'lodash'
 import withSubscriptions from 'subscription'
 
-const mapStateToProps = (state, {source: {sourceConfig: {recipeId}}}) => ({
+const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => ({
+    sourceId: id,
     recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
 })
+
+const mapRecipeToProps = recipe => ({currentRecipe: recipe})
 
 class _RecipeImageLayer extends React.Component {
     cursorValue$ = new Subject()
@@ -87,17 +90,17 @@ class _RecipeImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {recipe, layerConfig: {visParams}} = this.props
+        const {currentRecipe, sourceId, layerConfig: {visParams}} = this.props
         if (!visParams) {
-            this.selectVisualization(getAllVisualizations(recipe)[0])
+            this.selectVisualization(getAllVisualizations(currentRecipe, sourceId)[0])
         }
     }
 
     componentDidUpdate(prevProps) {
-        const {layerConfig: {visParams: prevVisParams}} = prevProps
+        const {currentRecipe, sourceId, layerConfig: {visParams: prevVisParams}} = prevProps
         const {recipe} = this.props
         if (!recipe) return
-        const allVisualizations = getAllVisualizations(recipe)
+        const allVisualizations = getAllVisualizations(currentRecipe, sourceId)
         if (!allVisualizations.length) return
         if (prevVisParams) {
             const visParams = allVisualizations
@@ -168,7 +171,7 @@ const getDependentRecipes = recipe =>
 export const RecipeImageLayer = compose(
     _RecipeImageLayer,
     connect(mapStateToProps),
-    withRecipe(),
+    withRecipe(mapRecipeToProps),
     withMapAreaContext(),
     withTabContext(),
     withSubscriptions()
