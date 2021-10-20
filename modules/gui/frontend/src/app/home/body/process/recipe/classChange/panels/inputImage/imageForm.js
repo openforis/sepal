@@ -26,7 +26,9 @@ class ImageForm extends Component {
                     {React.createElement(inputComponent, {
                         input,
                         onLoading: () => {
+                            band.set(null)
                             bands.set({})
+                            legendEntries.set(null)
                         },
                         onLoaded: ({id, bands, metadata, visualizations, recipe}) => this.onLoaded(id, bands, metadata, visualizations, recipe)
                     })}
@@ -81,7 +83,11 @@ class ImageForm extends Component {
         const bandNames = Object.keys(loadedBands)
         const selectedBand = band.value
         if (!selectedBand || !bandNames.includes(selectedBand)) {
-            const defaultBand = bandNames.find(bandName => loadedBands[bandName].values.length)
+            const defaultBand = bandNames
+                .find(bandName => {
+                    const values = loadedBands[bandName].values
+                    return values && values.length
+                })
                 || bandNames[0]
             band.set(defaultBand)
         }
