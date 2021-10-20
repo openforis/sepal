@@ -312,7 +312,7 @@ class _Textarea extends React.Component {
     }
 
     renderTextArea() {
-        const {className, name, value, placeholder, autoFocus, inputTooltip, inputTooltipPlacement, tabIndex, minRows, maxRows, onChange, onBlur, onFocus} = this.props
+        const {className, name, value, placeholder, autoFocus, inputTooltip, inputTooltipPlacement, tabIndex, disabled, minRows, maxRows, onChange, onBlur, onFocus} = this.props
         const {focused} = this.state
         return (
             <Keybinding keymap={{Enter: null, ' ': null}} disabled={!focused} priority>
@@ -327,6 +327,7 @@ class _Textarea extends React.Component {
                         value={value || ''}
                         placeholder={placeholder}
                         tabIndex={tabIndex}
+                        disabled={disabled}
                         autoFocus={autoFocus && !isMobile()}
                         minRows={minRows}
                         maxRows={maxRows}
