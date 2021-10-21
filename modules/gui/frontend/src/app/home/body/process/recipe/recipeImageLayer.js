@@ -9,11 +9,10 @@ import {RadarMosaicImageLayer} from './radarMosaic/radarMosaicImageLayer'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {getAllVisualizations} from './visualizations'
+import {getAllVisualizations, getUserDefinedVisualizations} from './visualizations'
 import {getRecipeType} from '../recipeTypes'
 import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
-import {withRecipe} from 'app/home/body/process/recipeContext'
 import {withTabContext} from 'widget/tabs/tabContext'
 import EarthEngineImageLayer from 'app/home/map/layer/earthEngineImageLayer'
 import PropTypes from 'prop-types'
@@ -25,8 +24,6 @@ const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => ({
     sourceId: id,
     recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
 })
-
-const mapRecipeToProps = recipe => ({currentRecipe: recipe})
 
 class _RecipeImageLayer extends React.Component {
     cursorValue$ = new Subject()
@@ -43,9 +40,10 @@ class _RecipeImageLayer extends React.Component {
     }
 
     renderRecipeLayer() {
-        const {recipe, source, layerConfig, map, boundsChanged$, dragging$, cursor$} = this.props
+        const {currentRecipe, recipe, source, layerConfig, map, boundsChanged$, dragging$, cursor$} = this.props
         const layer = this.maybeCreateLayer()
         const props = {
+            currentRecipe,
             recipe,
             source,
             layer,
@@ -90,17 +88,23 @@ class _RecipeImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {currentRecipe, sourceId, layerConfig: {visParams}} = this.props
+        if (this.selfManagedVisualiations()) {
+            return
+        }
+        const {layerConfig: {visParams}} = this.props
         if (!visParams) {
-            this.selectVisualization(getAllVisualizations(currentRecipe, sourceId)[0])
+            this.selectVisualization((this.toAllVis())[0])
         }
     }
 
     componentDidUpdate(prevProps) {
-        const {currentRecipe, sourceId, layerConfig: {visParams: prevVisParams}} = prevProps
+        if (this.selfManagedVisualiations()) {
+            return
+        }
+        const {layerConfig: {visParams: prevVisParams}} = prevProps
         const {recipe} = this.props
         if (!recipe) return
-        const allVisualizations = getAllVisualizations(currentRecipe, sourceId)
+        const allVisualizations = this.toAllVis()
         if (!allVisualizations.length) return
         if (prevVisParams) {
             const visParams = allVisualizations
@@ -116,6 +120,19 @@ class _RecipeImageLayer extends React.Component {
         } else {
             this.selectVisualization(allVisualizations[0])
         }
+    }
+
+    selfManagedVisualiations() {
+        const {recipe} = this.props
+        return recipe.type === 'CCDC_SLICE'
+    }
+
+    toAllVis() {
+        const {currentRecipe, recipe, sourceId} = this.props
+        return [
+            ...getUserDefinedVisualizations(currentRecipe, sourceId),
+            ...getAllVisualizations(recipe),
+        ]
     }
 
     maybeCreateLayer() {
@@ -171,7 +188,6 @@ const getDependentRecipes = recipe =>
 export const RecipeImageLayer = compose(
     _RecipeImageLayer,
     connect(mapStateToProps),
-    withRecipe(mapRecipeToProps),
     withMapAreaContext(),
     withTabContext(),
     withSubscriptions()

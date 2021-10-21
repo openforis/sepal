@@ -76,7 +76,7 @@ export class InputImage extends React.Component {
                 icon="image"
                 label={title}
                 onChange={() => {
-                    inputs.bands.set({})
+                    inputs.bands.set(undefined)
                     inputs.band.set(undefined)
                     inputs.recipe.set(undefined)
                     inputs.asset.set(undefined)
@@ -112,15 +112,16 @@ export class InputImage extends React.Component {
                     }
                 }
             default:
-                throw Error(`Unexpected section: ${section}`)
+                return
             }
         }
 
         const source = toImageLayerSource()
-
-        recipeActionBuilder('UPDATE_INPUT_IMAGE_LAYER_SOURCE', {source})
-            .set(['layers.additionalImageLayerSources', {id: source.id}], source)
-            .dispatch()
+        if (source) {
+            recipeActionBuilder('UPDATE_INPUT_IMAGE_LAYER_SOURCE', {source})
+                .set(['layers.additionalImageLayerSources', {id: source.id}], source)
+                .dispatch()
+        }
     }
 }
 
