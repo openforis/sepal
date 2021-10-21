@@ -6,8 +6,8 @@ import {RecipeImageLayerSource} from 'app/home/body/process/recipe/recipeImageLa
 import {createLegendFeatureLayerSource} from '../legendFeatureLayerSource'
 import {createPaletteFeatureLayerSource} from '../paletteFeatureLayerSource'
 import {createValuesFeatureLayerSource} from '../valuesFeatureLayerSource'
-import {selectFrom} from 'stateUtils'
 import React from 'react'
+import _ from 'lodash'
 
 const getRecipeImageLayerSource = ({recipe, source, layerConfig = {}, map, boundsChanged$, dragging$, cursor$}) => {
     if (!recipe) {
@@ -23,6 +23,7 @@ const getRecipeImageLayerSource = ({recipe, source, layerConfig = {}, map, bound
         ),
         layerComponent: (
             <RecipeImageLayer
+                currentRecipe={recipe}
                 source={source}
                 layerConfig={layerConfig}
                 map={map}
@@ -71,8 +72,11 @@ const getAssetImageLayerSource = ({source, layerConfig, map, boundsChanged$, dra
 }
 
 const getAssetRecipeFeatureLayerSources = layerConfig => {
-    const type = selectFrom(layerConfig, 'visParams.type')
-    switch(type) {
+    const visParams = layerConfig && layerConfig.visParams
+    if (!_.isObject(visParams)) {
+        return []
+    }
+    switch(visParams.type) {
     case 'continuous':
         return [createPaletteFeatureLayerSource()]
     case 'categorical':

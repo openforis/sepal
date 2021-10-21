@@ -12,7 +12,7 @@ class ImageForm extends Component {
 
     render() {
         const {input, inputComponent, inputs: {band, errorBand, bands}} = this.props
-        const bandOptions = (Object.keys(bands.value) || [])
+        const bandOptions = (bands.value || [])
             .map(bandName => ({
                 value: bandName,
                 label: bandName
@@ -23,7 +23,9 @@ class ImageForm extends Component {
                     {React.createElement(inputComponent, {
                         input,
                         onLoading: () => {
-                            bands.set({})
+                            bands.set(undefined)
+                            band.set(undefined)
+                            errorBand.set(undefined)
                         },
                         onLoaded: ({id, bands, metadata, visualizations}) => this.onLoaded(id, bands, metadata, visualizations)
                     })}
@@ -77,7 +79,7 @@ class ImageForm extends Component {
             return
         }
         bands.set(loadedBands)
-        const bandNames = Object.keys(loadedBands)
+        const bandNames = loadedBands
         const selectedBand = band.value
         if (!selectedBand || !bandNames.includes(selectedBand)) {
             const defaultBand = fromBand || bandNames[0]

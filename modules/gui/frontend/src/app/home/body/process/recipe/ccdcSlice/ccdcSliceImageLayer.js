@@ -2,6 +2,7 @@ import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
 import {compose} from 'compose'
 import {getAllVisualizations} from './ccdcSliceRecipe'
+import {getUserDefinedVisualizations} from 'app/home/body/process/recipe/visualizations'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
@@ -48,16 +49,16 @@ class _CCDCSliceImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {recipe, layerConfig: {visParams}} = this.props
-        if (!visParams) {
-            this.selectVisualization(getAllVisualizations(recipe)[0])
+        const {layerConfig: {visParams}} = this.props
+        if (!visParams || !_.isObject(visParams)) {
+            const allVisualizations = this.toAllVis()
+            this.selectVisualization(allVisualizations[0])
         }
     }
 
     componentDidUpdate(prevProps) {
         const {layerConfig: {visParams: prevVisParams}} = prevProps
-        const {recipe} = this.props
-        const allVisualizations = getAllVisualizations(recipe)
+        const allVisualizations = this.toAllVis()
         if (prevVisParams) {
             const visParams = allVisualizations.find(({id}) => id === prevVisParams.id)
                 || allVisualizations.find(({bands}) => _.isEqual(bands, prevVisParams.bands))
@@ -69,6 +70,14 @@ class _CCDCSliceImageLayer extends React.Component {
         } else {
             allVisualizations.length && this.selectVisualization(allVisualizations[0])
         }
+    }
+
+    toAllVis() {
+        const {currentRecipe, recipe, sourceId} = this.props
+        return [
+            ...getUserDefinedVisualizations(currentRecipe, sourceId),
+            ...getAllVisualizations(recipe),
+        ]
     }
 
     selectVisualization(visParams) {
@@ -87,6 +96,7 @@ CCDCSliceImageLayer.defaultProps = {
 }
 
 CCDCSliceImageLayer.propTypes = {
+    currentRecipe: PropTypes.object.isRequired,
     recipe: PropTypes.object.isRequired,
     source: PropTypes.object.isRequired,
     layer: PropTypes.object,
