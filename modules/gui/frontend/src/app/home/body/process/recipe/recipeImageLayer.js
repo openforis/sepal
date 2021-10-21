@@ -124,7 +124,7 @@ class _RecipeImageLayer extends React.Component {
 
     selfManagedVisualiations() {
         const {recipe} = this.props
-        return recipe.type === 'CCDC_SLICE'
+        return recipe && recipe.type === 'CCDC_SLICE'
     }
 
     toAllVis() {
