@@ -1583,8 +1583,121 @@
       },
       "tabPlaceholder": "Classification"
     },
+    "classChange": {
+      "create": "Class change",
+      "description": "Create a class change map from two categorical images, either SEPAL recipes or EE assets.",
+      "layers": {
+        "imageLayer": {
+          "preSets": "Pre-sets"
+        }
+      },
+      "panel": {
+        "inputImage": {
+          "asset": {
+            "title": "Earth Engine Asset"
+          },
+          "changeBand": {
+            "label": "Change band"
+          },
+          "from": {
+            "button": {
+              "label": "FRM",
+              "tooltip": "Select from image"
+            },
+            "title": "From image"
+          },
+          "recipe": {
+            "title": "Saved SEPAL Recipe"
+          },
+          "to": {
+            "button": {
+              "label": "TO",
+              "tooltip": "Select to image"
+            },
+            "title": "To image"
+          }
+        },
+        "legend": {
+          "button": {
+            "label": "LEG",
+            "tooltip": "Configure class change legend"
+          },
+          "import": "Import..."
+        },
+        "options": {
+          "button": {
+            "label": "OPT",
+            "tooltip": "Configure how class change is created"
+          },
+          "minConfidence": {
+            "label": "Min confidence",
+            "tooltip": "The minimum change in classification probability required to consider a change.",
+            "value": "{value}%"
+          }
+        }
+      },
+      "tabPlaceholder": "Class_change"
+    },
     "closeRecipe": {
       "message": "Do you want to save this recipe?"
+    },
+    "indexChange": {
+      "create": "Index change",
+      "description": "Create an index change map from two images, either SEPAL recipes or EE assets.",
+      "layers": {
+        "imageLayer": {
+          "preSets": "Pre-sets"
+        }
+      },
+      "panel": {
+        "inputImage": {
+          "asset": {
+            "title": "Earth Engine Asset"
+          },
+          "changeBand": {
+            "label": "Change band"
+          },
+          "errorBand": {
+            "label": "Error band"
+          },
+          "from": {
+            "button": {
+              "label": "FRM",
+              "tooltip": "Select from image"
+            },
+            "title": "From image"
+          },
+          "recipe": {
+            "title": "Saved SEPAL Recipe"
+          },
+          "to": {
+            "button": {
+              "label": "TO",
+              "tooltip": "Select to image"
+            },
+            "title": "To image"
+          }
+        },
+        "legend": {
+          "button": {
+            "label": "LEG",
+            "tooltip": "Configure index change legend"
+          },
+          "import": "Import..."
+        },
+        "options": {
+          "button": {
+            "label": "OPT",
+            "tooltip": "Configure how index change is created"
+          },
+          "minConfidence": {
+            "label": "Min confidence",
+            "tooltip": "The minimum change in classification probability required to consider a change.",
+            "value": "{value}%"
+          }
+        }
+      },
+      "tabPlaceholder": "Index_change"
     },
     "landCover": {
       "create": "RLCMS",
@@ -2869,6 +2982,15 @@
         "reject": "Cannot drop file. Wrong file type?",
         "tooMany": "Can only drop a single file."
       }
+    },
+    "legend": {
+      "edit": {
+        "tooltip": "Update legend"
+      },
+      "editLegendPanel": {
+        "title": "Update legend"
+      },
+      "noEntries": "No legend entries"
     },
     "list": {
       "noResults": "No results"

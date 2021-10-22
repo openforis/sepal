@@ -1,0 +1,13 @@
+.panel {
+    max-width: 26rem;
+}
+
+.inline {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.inline > * + * {
+    margin-left: 1rem;
+}

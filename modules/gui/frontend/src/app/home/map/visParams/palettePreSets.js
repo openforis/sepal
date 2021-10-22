@@ -35,7 +35,7 @@ export const pickColors = (count, colors) => {
         })
 }
 
-export const PalettePreSets = ({onSelect, count, className}) => {
+export const PalettePreSets = ({onSelect, count, className, autoFocus}) => {
     const allOptions = [
         ...options,
         ...(count ? colorBrewerOptions(count) : [])
@@ -43,6 +43,7 @@ export const PalettePreSets = ({onSelect, count, className}) => {
     return (
         <Combo
             className={className}
+            autoFocus={autoFocus}
             placeholder={msg('map.visParams.form.palette.preset.placeholder')}
             placement='above'
             options={allOptions}

@@ -17,6 +17,10 @@ const mapStateToProps = (state, {source: {sourceConfig: {recipeId}}}) => ({
     recipe: selectFrom(state, ['process.loadedRecipes', recipeId])
 })
 
+const mapRecipeToProps = (recipe, {source: {id}}) => ({
+    currentUserDefinedVisualizations: selectFrom(recipe, ['layers.userDefinedVisualizations', id]) || []
+})
+
 class _RecipeImageLayerSource extends React.Component {
     render() {
         return null
@@ -47,10 +51,19 @@ class _RecipeImageLayerSource extends React.Component {
     }
 
     updateSourceConfig(recipe) {
-        const {recipeId, source, recipeActionBuilder} = this.props
+        const {currentUserDefinedVisualizations, recipeId, source, recipeActionBuilder} = this.props
         const description = toDescription(recipe)
         if (recipeId !== source.sourceConfig.recipeId) {
-            recipeActionBuilder('UPDATE_RECIPE_IMAGE_LAYER_SOURCE', {description})
+            const userDefinedVisualizations = selectFrom(recipe, 'layers.userDefinedVisualizations.this-recipe') || []
+            const currentVisualizationIds = currentUserDefinedVisualizations.map(({id}) => id)
+            userDefinedVisualizations
+                .reduce(
+                    (builder, visualization) =>
+                        currentVisualizationIds.includes(visualization.id)
+                            ? builder
+                            : builder.push(['layers.userDefinedVisualizations', source.id], visualization),
+                    recipeActionBuilder('UPDATE_RECIPE_IMAGE_LAYER_SOURCE', {description})
+                )
                 .set(['layers.additionalImageLayerSources', {id: source.id}, 'sourceConfig.description'], description)
                 .dispatch()
         }
@@ -60,7 +73,7 @@ class _RecipeImageLayerSource extends React.Component {
 export const RecipeImageLayerSource = compose(
     _RecipeImageLayerSource,
     connect(mapStateToProps),
-    withRecipe(),
+    withRecipe(mapRecipeToProps),
     recipeAccess()
 )
 

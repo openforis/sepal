@@ -1,0 +1,62 @@
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
+import {Panel} from 'widget/panel/panel'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
+import {hasError} from 'app/home/body/process/recipe/indexChange/indexChangeRecipe'
+import {msg} from 'translate'
+import React from 'react'
+import styles from './options.module.css'
+
+const fields = {
+    minConfidence: new Form.Field()
+}
+
+const mapRecipeToProps = recipe => ({recipe})
+
+class Options extends React.Component {
+    constructor(props) {
+        super(props)
+    }
+
+    render() {
+        return (
+            <RecipeFormPanel
+                className={styles.panel}
+                placement='bottom-right'>
+                <Panel.Header
+                    icon='layer-group'
+                    title={msg('process.indexChange.panel.options.title')}/>
+                <Panel.Content>
+                    {this.renderContent()}
+                </Panel.Content>
+                <Form.PanelButtons/>
+            </RecipeFormPanel>
+        )
+    }
+
+    renderContent() {
+        const {inputs: {minConfidence}, recipe} = this.props
+        // TODO: Better name?
+        return (
+            <Layout>
+                <Form.Slider
+                    label={msg('process.indexChange.panel.options.minConfidence.label')}
+                    tooltip={msg('process.indexChange.panel.options.minConfidence.tooltip')}
+                    input={minConfidence}
+                    minValue={0}
+                    maxValue={5}
+                    decimals={1}
+                    ticks={[0, 1, 2, 3, 4, 5]}
+                    info={value => msg('process.indexChange.panel.options.minConfidence.value', {value})}
+                    disabled={!hasError(recipe)}
+                />
+            </Layout>
+        )
+    }
+}
+
+export default compose(
+    Options,
+    recipeFormPanel({id: 'options', fields, mapRecipeToProps})
+)
