@@ -10,16 +10,25 @@
     padding-right: .25rem;
 }
 
-.inputWrapper {
+/* .inputWrapper {
+    display: flex;
     flex-grow: 1;
+} */
+
+.prefix {
+    padding-right: .25rem;
+}
+
+.suffix {
+    padding-left: .25rem;
 }
 
 .input input,
 .input textarea {
-    display: block;
-    width: 100%;
+    display: flex;
+    flex-grow: 1;
+    width: 100%; /* required by Firefox */
     border: none;
-    padding: .25rem .5rem;
     color: #fff;
     background-color: transparent;
     transition: background-color 800ms ease-out;
@@ -32,7 +41,9 @@
 }
 
 .input input[type=number] {
+    justify-self: right;
     text-align: right;
+    width: 4rem;
 }
 
 .input input:-webkit-autofill,

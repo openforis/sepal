@@ -94,16 +94,15 @@ class _Input extends React.Component {
     }
 
     renderContent() {
-        const {buttons} = this.props
-        return this.isSearchInput() || buttons
-            ? (
-                <Layout type='horizontal-nowrap' spacing='none'>
-                    {this.renderLeftComponent()}
-                    {this.renderInput()}
-                    {this.renderbuttons()}
-                </Layout>
-            )
-            : this.renderInput()
+        return (
+            <Layout type='horizontal-nowrap' spacing='none'>
+                {this.renderSearch()}
+                {this.renderPrefix()}
+                {this.renderInput()}
+                {this.renderSuffix()}
+                {this.renderbuttons()}
+            </Layout>
+        )
     }
 
     renderInput() {
@@ -175,11 +174,33 @@ class _Input extends React.Component {
         onChange && onChange(e)
     }
 
-    renderLeftComponent() {
+    renderSearch() {
         return this.isSearchInput()
             ? (
                 <div className={[styles.search, styles.dim].join(' ')}>
                     <Icon name='search'/>
+                </div>
+            )
+            : null
+    }
+
+    renderPrefix() {
+        const {prefix} = this.props
+        return prefix
+            ? (
+                <div className={[styles.prefix, styles.dim].join(' ')}>
+                    {prefix}
+                </div>
+            )
+            : null
+    }
+
+    renderSuffix() {
+        const {suffix} = this.props
+        return suffix
+            ? (
+                <div className={[styles.suffix, styles.dim].join(' ')}>
+                    {suffix}
                 </div>
             )
             : null
@@ -256,8 +277,10 @@ Input.propTypes = {
     maxLength: PropTypes.number,
     name: PropTypes.string,
     placeholder: PropTypes.any,
+    prefix: PropTypes.any,
     readOnly: PropTypes.any,
     spellCheck: PropTypes.any,
+    suffix: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
