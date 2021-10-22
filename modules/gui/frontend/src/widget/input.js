@@ -115,34 +115,34 @@ class _Input extends React.Component {
         } = this.props
         const {focused} = this.state
         return (
-            // [HACK] input is wrapped in a div for fixing Firefox input width in flex
             <Keybinding keymap={{' ': null}} disabled={!focused} priority>
-                <div className={styles.inputWrapper}>
-                    <Tooltip
-                        msg={inputTooltip}
-                        placement={inputTooltipPlacement}
-                        trigger='focus'>
-                        <input
-                            ref={this.ref}
-                            type={this.isSearchInput() ? 'text' : type}
-                            name={name}
-                            defaultValue={value}
-                            placeholder={placeholder}
-                            maxLength={maxLength}
-                            tabIndex={tabIndex}
-                            autoFocus={autoFocus && !isMobile()}
-                            autoComplete={autoComplete ? 'on' : 'off'}
-                            autoCorrect={autoCorrect ? 'on' : 'off'}
-                            autoCapitalize={autoCapitalize ? 'on' : 'off'}
-                            spellCheck={spellCheck ? 'true' : 'false'}
-                            disabled={disabled}
-                            readOnly={readOnly ? 'readonly' : ''}
-                            onFocus={this.onFocus}
-                            onBlur={this.onBlur}
-                            onChange={this.onChange}
-                        />
-                    </Tooltip>
-                </div>
+                {/* [HACK] input is wrapped in a div for fixing Firefox input width in flex */}
+                {/* <div className={styles.inputWrapper}> */}
+                <Tooltip
+                    msg={inputTooltip}
+                    placement={inputTooltipPlacement}
+                    trigger='focus'>
+                    <input
+                        ref={this.ref}
+                        type={this.isSearchInput() ? 'text' : type}
+                        name={name}
+                        defaultValue={value}
+                        placeholder={placeholder}
+                        maxLength={maxLength}
+                        tabIndex={tabIndex}
+                        autoFocus={autoFocus && !isMobile()}
+                        autoComplete={autoComplete ? 'on' : 'off'}
+                        autoCorrect={autoCorrect ? 'on' : 'off'}
+                        autoCapitalize={autoCapitalize ? 'on' : 'off'}
+                        spellCheck={spellCheck ? 'true' : 'false'}
+                        disabled={disabled}
+                        readOnly={readOnly ? 'readonly' : ''}
+                        onFocus={this.onFocus}
+                        onBlur={this.onBlur}
+                        onChange={this.onChange}
+                    />
+                </Tooltip>
+                {/* </div> */}
             </Keybinding>
         )
     }
