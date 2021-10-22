@@ -62,7 +62,7 @@ class _SourceSync extends React.Component {
             api.gee.imageMetadata$({asset: source.id}).pipe(
                 takeUntil(this.cancel$)
             ),
-            metadata => this.updateAssetSource(source.id, metadata),
+            metadata => this.updateAssetSource(source.id, metadata, source),
             error => Notifications.error({message: msg('process.ccdcSlice.source.asset.loadError'), error})
         )
     }
@@ -117,7 +117,7 @@ class _SourceSync extends React.Component {
         }
     }
 
-    updateAssetSource(id, metadata) {
+    updateAssetSource(id, metadata, source) {
         const {recipeActionBuilder} = this.props
         const bands = metadata.bands
         const bandAndType = _.chain(bands)
@@ -139,13 +139,15 @@ class _SourceSync extends React.Component {
         const segmentBands = bands
             .filter(name => ['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb'].includes(name))
             .map(name => ({name}))
+        const assetDateFormat = metadata.properties.dateFormat
+        const dateFormat = assetDateFormat === undefined ? source.dateFormat : assetDateFormat
         const sourceDetails = {
             type: 'ASSET',
             id,
             bands,
             baseBands,
             segmentBands,
-            dateFormat: metadata.properties.dateFormat,
+            dateFormat,
             startDate: metadata.properties.startDate,
             endDate: metadata.properties.endDate,
             visualizations: toVisualizations(metadata.properties, bands)
