@@ -214,7 +214,7 @@ class _Constraint extends React.Component {
         switch (operator.value) {
         case 'class': return null // TODO: Implement...
         case 'range': return `${format(from)} ${isInclusive(fromInclusive) ? '≤' : '<'} ${band.value} ${isInclusive(toInclusive) ? '≤' : '<'} ${format(to)}`
-        default: return `band ${operator.value} ${format(value)}`
+        default: return `${band.value} ${operator.value} ${format(value)}`
         }
     }
 
@@ -232,14 +232,14 @@ class _Constraint extends React.Component {
         case 'class': return constraint // TODO: Implement...
         case 'range': return {
             ...constraint,
-            from: from.value,
-            fromInclusive: !!(fromInclusive.value && fromInclusive.length && fromInclusive[0]),
-            to: to.value,
-            toInclusive: !!(toInclusive.value && toInclusive.length && toInclusive[0]),
+            from: parseFloat(from.value),
+            fromInclusive: !!(fromInclusive.value && fromInclusive.value.length && fromInclusive.value[0]),
+            to: parseFloat(to.value),
+            toInclusive: !!(toInclusive.value && toInclusive.value.length && toInclusive.value[0]),
         }
         default: return {
             ...constraint,
-            value: value.value
+            value: parseFloat(value.value)
         }
         }
     }
