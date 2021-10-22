@@ -83,7 +83,10 @@ class _Input extends React.Component {
                 errorMessage={errorMessage}
                 busyMessage={busyMessage}
                 border={border}
-                onClick={e => onClick && onClick(e)}
+                onClick={e => {
+                    this.ref.current && this.ref.current.focus()
+                    onClick && onClick(e)
+                }}
             >
                 {this.renderContent()}
             </Widget>
