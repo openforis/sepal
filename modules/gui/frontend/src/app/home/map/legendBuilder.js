@@ -262,6 +262,7 @@ class _Entry extends React.Component {
     notifyChange({color, value, label}) {
         const {entry, onChange, inputs, form} = this.props
         const updatedEntry = {
+            ...entry,
             id: entry.id,
             color: color === undefined ? inputs.color.value : color,
             value: parseInt(value === undefined ? inputs.value.value : value),
