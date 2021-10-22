@@ -105,7 +105,7 @@ class BudgetEndpoint {
                         instanceSpending: spending.instanceBudget,
                         storageSpending: spending.storageBudget,
                         storageQuota: spending.storageQuota],
-                budgetUpdateRequeset: spending.budgetUpdateRequest
+                budgetUpdateRequest: spending.budgetUpdateRequest
         ]
     }
 
