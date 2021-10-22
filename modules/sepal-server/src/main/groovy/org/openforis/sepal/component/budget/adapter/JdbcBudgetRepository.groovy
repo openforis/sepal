@@ -210,7 +210,7 @@ class JdbcBudgetRepository implements BudgetRepository {
     private Map<String, BudgetUpdateRequest> budgetUpdateRequests() {
         def requests = [:]
         sql.eachRow('''
-                SELECT requested_monthly_instance, requested_monthly_storage, requested_storage_quota, message, creation_time, update_time
+                SELECT username, requested_monthly_instance, requested_monthly_storage, requested_storage_quota, message, creation_time, update_time
                 FROM budget_update_request
                 WHERE state = 'PENDING' 
                 ''') {
