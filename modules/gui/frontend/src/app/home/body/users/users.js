@@ -18,16 +18,7 @@ const getUserList$ = () => forkJoin(
     map(([users, budget]) =>
         _.map(users, user => ({
             ...user,
-            quota: {
-                ...budget[user.username || {}],
-                budgetUpdateRequest: {
-                    message: 'Hello admin, I would need more storage and instance spending. Could you please grant? Thank you!',
-                    creationTimestamp: new Date().toISOString(),
-                    instanceSpending: 111,
-                    storageSpending: 222,
-                    storageQuota: 333
-                }
-            }
+            quota: budget[user.username || {}]
         }))
     )
 )

@@ -1,56 +1,50 @@
 .resources {
+    display: grid;
+    /* grid-template-columns: 4fr 2fr 2fr 5fr; */
+    grid-template-columns: 3fr 5rem 4rem 2fr;
+    grid-template-rows: auto;
+    column-gap: 1rem;
     width: 100%;
-    padding: 0 1rem;
+    align-items: center;
+    justify-items: right;
+    padding-left: 1rem;
+    grid-template-areas: 'label quota used bar';
 }
 
-.resources table {
-    margin: auto;
+.resources > * {
+    margin: .5rem;
+}
+
+.resources .label {
+    grid-area: label;
+    justify-self: left;
+}
+
+.resources .quota {
+    grid-area: quota;
+}
+
+.resources .used {
+    grid-area: used;
+}
+
+.resources .bar {
+    grid-area: bar;
+    position: relative;
+    height: .75rem;
     width: 100%;
+    border: 1px solid var(--wireframe-color);
+    border-radius: .25rem;
 }
 
-.resources th {
-    font-weight: normal;
-    font-size: .8rem;
-    text-transform: uppercase;
-    color: #dddddd;
-    padding: .2rem .5rem .2rem 0;
-}
-
-.resources th.quota {
-    text-align: right;
-}
-
-.resources th.used {
-    text-align: right;
-}
-
-.resources td {
-    font-size: 1rem;
-    padding: .2rem .5rem;
-}
-
-.resources tr.clickable:hover {
-    background-color: #404040;
-    cursor: pointer;
-}
-
-.number {
-    text-align: right;
-}
-
-.resources td.percent {
-    margin-left: 1rem;
-    font-size: 0.8rem;
-}
-
-.resources td.percent.low {
-    color: var(--success-color)
-}
-
-.resources td.percent.medium {
-    color: var(--warning-color)
-}
-
-.resources td.percent.high {
-    color: var(--error-color)
+.resources .bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-image: linear-gradient(to right,green,yellow, red);
+    clip-path: inset(0 calc(100% * (1 - var(--fraction))) 0 0);
+    border-radius: .25rem;
 }

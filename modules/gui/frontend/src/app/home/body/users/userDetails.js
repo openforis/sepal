@@ -21,15 +21,15 @@ const fields = {
     organization: new Form.Field()
         .notBlank('user.userDetails.form.organization.required'),
     admin: new Form.Field(),
-    monthlyBudgetInstanceSpending: new Form.Field()
+    instanceSpending: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.instanceSpending.atLeast1')
         .int('user.userDetails.form.monthlyBudget.instanceSpending.atLeast1')
         .min(1, 'user.userDetails.form.monthlyBudget.instanceSpending.atLeast1'),
-    monthlyBudgetStorageSpending: new Form.Field()
+    storageSpending: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.storageSpending.atLeast1')
         .int('user.userDetails.form.monthlyBudget.storageSpending.atLeast1')
         .min(1, 'user.userDetails.form.monthlyBudget.storageSpending.atLeast1'),
-    monthlyBudgetStorageQuota: new Form.Field()
+    storageQuota: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
         .int('user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
         .min(1, 'user.userDetails.form.monthlyBudget.storageQuota.atLeast1'),
@@ -39,21 +39,17 @@ const fields = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const userDetails = ownProps.userDetails
+    const {userDetails} = ownProps
+    const {newUser, username, name, email, organization, admin = false} = userDetails
+    const {quota: {budget: {instanceSpending, storageSpending, storageQuota}, budgetUpdateRequest}} = userDetails
+    const userRequestInstanceSpendingState = budgetUpdateRequest ? null : false
+    const userRequestStorageSpendingState = budgetUpdateRequest ? null : false
+    const userRequestStorageQuotaState = budgetUpdateRequest ? null : false
+
     return {
         values: {
-            newUser: userDetails.newUser,
-            username: userDetails.username,
-            name: userDetails.name,
-            email: userDetails.email,
-            organization: userDetails.organization,
-            admin: userDetails.admin || false,
-            monthlyBudgetInstanceSpending: userDetails.quota.budget.instanceSpending,
-            monthlyBudgetStorageSpending: userDetails.quota.budget.storageSpending,
-            monthlyBudgetStorageQuota: userDetails.quota.budget.storageQuota,
-            userRequestInstanceSpendingState: null,
-            userRequestStorageSpendingState: null,
-            userRequestStorageQuotaState: null
+            newUser, username, name, email, organization, admin, instanceSpending, storageSpending, storageQuota,
+            userRequestInstanceSpendingState, userRequestStorageSpendingState, userRequestStorageQuotaState
         }
     }
 }
@@ -71,8 +67,7 @@ class UserDetails extends React.Component {
     }
 
     render() {
-        const {userDetails: {quota: {budgetUpdateRequest}}, form, inputs} = this.props
-        const {username, name, email, organization, admin, monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota, userRequestInstanceSpendingState, userRequestStorageSpendingState, userRequestStorageQuotaState} = inputs
+        const {form, inputs: {username, name, email, organization, instanceSpending, storageSpending, storageQuota}} = this.props
         const newUser = !this.props.userDetails.username
         return (
             <Form.Panel
@@ -85,19 +80,8 @@ class UserDetails extends React.Component {
                 <Panel.Header
                     icon='user'
                     title={msg('user.userDetails.title')}
-                    label={
-                        <Form.Buttons
-                            input={admin}
-                            multiple={false}
-                            options={[{
-                                value: false,
-                                label: msg('user.userDetails.form.user.label')
-                            }, {
-                                value: true,
-                                label: msg('user.userDetails.form.admin.label')
-                            }]}
-                        />
-                    }/>
+                    label={this.renderUserRoleButtons()}
+                />
                 <Panel.Content>
                     <Layout>
                         <Form.Input
@@ -131,28 +115,29 @@ class UserDetails extends React.Component {
                             className={styles.monthlyLimits}
                             layout='horizontal'
                             label={msg('user.userDetails.form.monthlyLimits.label')}
-                            errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}
-                        >
+                            tooltip={msg('user.userDetails.form.monthlyLimits.tooltip')}
+                            tooltipPlacement='topLeft'
+                            errorMessage={[instanceSpending, storageSpending, storageQuota]}>
                             <Form.Input
                                 label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
                                 type='number'
-                                input={monthlyBudgetInstanceSpending}
+                                input={instanceSpending}
                                 spellCheck={false}
-                                onChange={({target: {value}}) => userRequestInstanceSpendingState.set(value == budgetUpdateRequest.instanceSpending)}
+                                prefix='US$/mo.'
                             />
                             <Form.Input
                                 label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
                                 type='number'
-                                input={monthlyBudgetStorageSpending}
+                                input={storageSpending}
                                 spellCheck={false}
-                                onChange={({target: {value}}) => userRequestStorageSpendingState.set(value == budgetUpdateRequest.storageSpending)}
+                                prefix='US$/mo.'
                             />
                             <Form.Input
                                 label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
                                 type='number'
-                                input={monthlyBudgetStorageQuota}
+                                input={storageQuota}
                                 spellCheck={false}
-                                onChange={({target: {value}}) => userRequestStorageQuotaState.set(value == budgetUpdateRequest.storageQuota)}
+                                prefix='GB'
                             />
                         </Form.FieldSet>
                         {this.isUserRequest() ? this.renderUserRequest() : null}
@@ -163,9 +148,26 @@ class UserDetails extends React.Component {
         )
     }
 
+    renderUserRoleButtons() {
+        const {inputs: {admin}} = this.props
+        return (
+            <Form.Buttons
+                input={admin}
+                multiple={false}
+                options={[{
+                    value: false,
+                    label: msg('user.userDetails.form.user.label')
+                }, {
+                    value: true,
+                    label: msg('user.userDetails.form.admin.label')
+                }]}
+            />
+        )
+    }
+
     renderUserRequest() {
         const {userDetails: {quota: {budgetUpdateRequest}}, inputs} = this.props
-        const {monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota, userRequestInstanceSpendingState, userRequestStorageSpendingState, userRequestStorageQuotaState} = inputs
+        const {instanceSpending, storageSpending, storageQuota, userRequestInstanceSpendingState, userRequestStorageSpendingState, userRequestStorageQuotaState} = inputs
         return (
             <Form.FieldSet
                 className={styles.monthlyLimits}
@@ -180,8 +182,9 @@ class UserDetails extends React.Component {
                         type='number'
                         value={budgetUpdateRequest.instanceSpending}
                         readOnly
+                        prefix='US$/mo.'
                     />
-                    {this.renderAcceptDeclineButtons(userRequestInstanceSpendingState, monthlyBudgetInstanceSpending, budgetUpdateRequest.instanceSpending)}
+                    {this.renderAcceptDeclineButtons(userRequestInstanceSpendingState, instanceSpending, budgetUpdateRequest.instanceSpending)}
                 </Layout>
                 <Layout type='vertical'>
                     <Input
@@ -189,8 +192,9 @@ class UserDetails extends React.Component {
                         type='number'
                         value={budgetUpdateRequest.storageSpending}
                         readOnly
+                        prefix='US$/mo.'
                     />
-                    {this.renderAcceptDeclineButtons(userRequestStorageSpendingState, monthlyBudgetStorageSpending, budgetUpdateRequest.storageSpending)}
+                    {this.renderAcceptDeclineButtons(userRequestStorageSpendingState, storageSpending, budgetUpdateRequest.storageSpending)}
                 </Layout>
                 <Layout type='vertical'>
                     <Input
@@ -198,8 +202,9 @@ class UserDetails extends React.Component {
                         type='number'
                         value={budgetUpdateRequest.storageQuota}
                         readOnly
+                        prefix='GB'
                     />
-                    {this.renderAcceptDeclineButtons(userRequestStorageQuotaState, monthlyBudgetStorageQuota, budgetUpdateRequest.storageQuota)}
+                    {this.renderAcceptDeclineButtons(userRequestStorageQuotaState, storageQuota, budgetUpdateRequest.storageQuota)}
                 </Layout>
             </Form.FieldSet>
         )
@@ -217,18 +222,14 @@ class UserDetails extends React.Component {
         }]
         return (
             <Form.Buttons
-                alignment='fill'
+                alignment='distribute'
                 layout='horizontal-wrap'
-                spacing='tight'
                 options={options}
                 input={input}
-                onChange={value => {
-                    if (value) {
-                        valueInput.set(userRequestValue)
-                    } else {
-                        valueInput.resetValue()
-                    }
-                }}
+                onChange={value => value
+                    ? valueInput.set(userRequestValue)
+                    : valueInput.resetValue()
+                }
             />
         )
     }

@@ -2766,10 +2766,11 @@
     },
     "report": {
       "resources": {
-        "monthlyInstance": "Instance budget",
-        "monthlyStorage": "Storage budget",
+        "max": "Max",
+        "instanceSpending": "Instance spending",
+        "storageSpending": "Storage spending",
+        "storageSpace": "Storage space",
         "quota": "Quota",
-        "storage": "Storage",
         "title": "Resources",
         "used": "Used",
         "used%": "Used"
@@ -2785,7 +2786,24 @@
         "title": "Sessions"
       },
       "title": "User report",
-      "usage": "Using {percentage}% of allocated quota"
+      "usage": "Using {percentage}% of allocated quota",
+      "updateQuota": "Request additional resources"
+    },
+    "quotaUpdate": {
+        "title": "Request additional resources",
+        "info": "Please propose suitable values for your limits, along with a justification message. SEPAL administrators will review your request.",
+        "form": {
+            "created": "Created",
+            "modified": "Modified",
+            "message": {
+                "label": "Message",
+                "required": "Message is required"
+            }
+        },
+        "update": {
+            "success": "Quota update request has been submitted.",
+            "error": "Quota update request error."
+        }
     },
     "userDetails": {
       "form": {
@@ -2807,23 +2825,24 @@
         },
         "monthlyBudget": {
           "instanceSpending": {
-            "atLeast1": "Monthly instance budget must be at least 1",
-            "label": "Instance US$",
-            "required:": "Monthly instance budget is required"
-          },
-          "storageQuota": {
-            "atLeast1": "Monthly storage must be at least 1",
-            "label": "Storage GB",
-            "required:": "Monthly storage quota is required"
+            "atLeast1": "Instance spending must be at least 1",
+            "label": "Instance spending",
+            "required:": "Instance spending is required"
           },
           "storageSpending": {
-            "atLeast1": "Monthly storage budget must be at least 1",
-            "label": "Storage US$",
-            "required:": "Monthly storage budget is required"
+            "atLeast1": "Storage spending must be at least 1",
+            "label": "Storage spending",
+            "required:": "Storage spending is required"
+          },
+          "storageQuota": {
+            "atLeast1": "Storage space must be at least 1",
+            "label": "Storage space",
+            "required:": "Storage space is required"
           }
         },
         "monthlyLimits": {
-          "label": "Monthly limits"
+          "label": "Limits",
+          "tooltip": "Maximum monthly spending (US$/month) for instances and storage, and maximum disk space (GB) allocated for storage."
         },
         "budgetUpdateRequest": {
             "label": "Budget update request"
@@ -2954,6 +2973,9 @@
         },
         "pending": {
           "label": "Pending"
+        },
+        "budgetUpdateRequest": {
+            "label": "Budget update"
         }
       }
     },
