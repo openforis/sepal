@@ -1,0 +1,31 @@
+.entries {
+    margin-top: 0.5rem;
+}
+
+.entry {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    grid-gap: 1rem;
+    color: #ccc;
+}
+
+
+.entry .color {
+    --color: black; /* To be overridden */
+    background-color: var(--color);
+    height: 1.5rem;
+    width: 1.5rem;
+}
+
+.entry .value {
+    width: 2rem;
+}
+
+.entry .label {
+
+}
+
+.noData {
+    color: gray;
+    font-size: .9rem;
+}

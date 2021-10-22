@@ -26,10 +26,14 @@ export class LegendBuilder extends React.Component {
     }
 
     render() {
-        const {entries} = this.props
-        return entries.length
-            ? this.renderEntries()
-            : this.renderNoEntries()
+        const {entries, className} = this.props
+        return (
+            <div className={className}>
+                {entries.length
+                    ? this.renderEntries()
+                    : this.renderNoEntries()}
+            </div>
+        )
     }
 
     renderNoEntries() {
@@ -45,14 +49,19 @@ export class LegendBuilder extends React.Component {
         return (
             <div className={styles.entries}>
                 <Layout type='vertical' spacing='compact'>
-                    {entries.map(entry => this.renderEntry(entry))}
+                    {entries.map((entry, i) => this.renderEntry(entry, i === entries.length - 1))}
                 </Layout>
-                <PalettePreSets onSelect={this.applyPreset} count={entries.length} className={styles.palettePreSets}/>
+                <PalettePreSets
+                    onSelect={this.applyPreset}
+                    count={entries.length}
+                    className={styles.palettePreSets}
+                    autoFocus={false}
+                />
             </div>
         )
     }
 
-    renderEntry(entry) {
+    renderEntry(entry, last) {
         const {colorMode, entries, locked} = this.props
         return <Layout key={entry.id} type={'horizontal-nowrap'}>
             <Entry
@@ -63,6 +72,7 @@ export class LegendBuilder extends React.Component {
                 onValidate={this.updateValidation}
                 onSwap={color => this.swap(color, entry.color)}
                 locked={locked}
+                autoFocus={last}
             />
             <RemoveButton
                 message={msg('map.legendBuilder.entry.confirmation')}
@@ -279,6 +289,7 @@ class ColorInput extends React.Component {
                     type='color'
                     className={styles.colorInput}
                     value={input.value}
+                    autoFocus={true}
                     onChange={({target: {value}}) => {
                         input.set(value)
                         onChange(value)

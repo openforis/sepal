@@ -83,7 +83,10 @@ class _Input extends React.Component {
                 errorMessage={errorMessage}
                 busyMessage={busyMessage}
                 border={border}
-                onClick={e => onClick && onClick(e)}
+                onClick={e => {
+                    this.ref.current && this.ref.current.focus()
+                    onClick && onClick(e)
+                }}
             >
                 {this.renderContent()}
             </Widget>
@@ -91,16 +94,15 @@ class _Input extends React.Component {
     }
 
     renderContent() {
-        const {buttons} = this.props
-        return this.isSearchInput() || buttons
-            ? (
-                <Layout type='horizontal-nowrap' spacing='none'>
-                    {this.renderLeftComponent()}
-                    {this.renderInput()}
-                    {this.renderbuttons()}
-                </Layout>
-            )
-            : this.renderInput()
+        return (
+            <Layout type='horizontal-nowrap' spacing='none'>
+                {this.renderSearch()}
+                {this.renderPrefix()}
+                {this.renderInput()}
+                {this.renderSuffix()}
+                {this.renderbuttons()}
+            </Layout>
+        )
     }
 
     renderInput() {
@@ -112,34 +114,35 @@ class _Input extends React.Component {
         } = this.props
         const {focused} = this.state
         return (
-            // [HACK] input is wrapped in a div for fixing Firefox input width in flex
             <Keybinding keymap={{' ': null}} disabled={!focused} priority>
-                <div className={styles.inputWrapper}>
-                    <Tooltip
-                        msg={inputTooltip}
-                        placement={inputTooltipPlacement}
-                        trigger='focus'>
-                        <input
-                            ref={this.ref}
-                            type={this.isSearchInput() ? 'text' : type}
-                            name={name}
-                            defaultValue={value}
-                            placeholder={placeholder}
-                            maxLength={maxLength}
-                            tabIndex={tabIndex}
-                            autoFocus={autoFocus && !isMobile()}
-                            autoComplete={autoComplete ? 'on' : 'off'}
-                            autoCorrect={autoCorrect ? 'on' : 'off'}
-                            autoCapitalize={autoCapitalize ? 'on' : 'off'}
-                            spellCheck={spellCheck ? 'true' : 'false'}
-                            disabled={disabled}
-                            readOnly={readOnly ? 'readonly' : ''}
-                            onFocus={this.onFocus}
-                            onBlur={this.onBlur}
-                            onChange={this.onChange}
-                        />
-                    </Tooltip>
-                </div>
+                {/* [HACK] input is wrapped in a div for fixing Firefox input width in flex */}
+                {/* <div className={styles.inputWrapper}> */}
+                <Tooltip
+                    msg={inputTooltip}
+                    placement={inputTooltipPlacement}
+                    trigger='focus'>
+                    <input
+                        ref={this.ref}
+                        type={this.isSearchInput() ? 'text' : type}
+                        name={name}
+                        defaultValue={value}
+                        placeholder={placeholder}
+                        maxLength={maxLength}
+                        tabIndex={tabIndex}
+                        autoFocus={autoFocus && !isMobile()}
+                        autoComplete={autoComplete ? 'on' : 'off'}
+                        autoCorrect={autoCorrect ? 'on' : 'off'}
+                        autoCapitalize={autoCapitalize ? 'on' : 'off'}
+                        spellCheck={spellCheck ? 'true' : 'false'}
+                        disabled={disabled}
+                        readOnly={readOnly ? 'readonly' : ''}
+                        onFocus={this.onFocus}
+                        onBlur={this.onBlur}
+                        onChange={this.onChange}
+                        onWheel={e => type === 'number' && e.target.blur()} // disable mouse wheel on input type=number
+                    />
+                </Tooltip>
+                {/* </div> */}
             </Keybinding>
         )
     }
@@ -171,11 +174,33 @@ class _Input extends React.Component {
         onChange && onChange(e)
     }
 
-    renderLeftComponent() {
+    renderSearch() {
         return this.isSearchInput()
             ? (
                 <div className={[styles.search, styles.dim].join(' ')}>
                     <Icon name='search'/>
+                </div>
+            )
+            : null
+    }
+
+    renderPrefix() {
+        const {prefix} = this.props
+        return prefix
+            ? (
+                <div className={[styles.prefix, styles.dim].join(' ')}>
+                    {prefix}
+                </div>
+            )
+            : null
+    }
+
+    renderSuffix() {
+        const {suffix} = this.props
+        return suffix
+            ? (
+                <div className={[styles.suffix, styles.dim].join(' ')}>
+                    {suffix}
                 </div>
             )
             : null
@@ -252,8 +277,10 @@ Input.propTypes = {
     maxLength: PropTypes.number,
     name: PropTypes.string,
     placeholder: PropTypes.any,
+    prefix: PropTypes.any,
     readOnly: PropTypes.any,
     spellCheck: PropTypes.any,
+    suffix: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
