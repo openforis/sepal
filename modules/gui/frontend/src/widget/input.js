@@ -140,6 +140,7 @@ class _Input extends React.Component {
                         onFocus={this.onFocus}
                         onBlur={this.onBlur}
                         onChange={this.onChange}
+                        onWheel={e => type === 'number' && e.target.blur()} // disable mouse wheel on input type=number
                     />
                 </Tooltip>
                 {/* </div> */}
