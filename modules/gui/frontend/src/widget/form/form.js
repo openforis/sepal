@@ -258,6 +258,7 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                     isDirty: () => this.isDirty(),
                     setInitialValues: values => this.setInitialValues(values),
                     values: () => this.state.values,
+
                     onDirty: listener => listener && this.dirtyListeners.push(listener),
                     onClean: listener => listener && this.cleanListeners.push(listener),
                     onDirtyChanged: listener => {

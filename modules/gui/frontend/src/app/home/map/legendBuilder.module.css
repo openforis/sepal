@@ -1,6 +1,5 @@
-.panel {
-    min-height: 20rem;
-    max-width: 27rem;
+.container {
+    margin-top: 0.8rem;
 }
 
 .title {

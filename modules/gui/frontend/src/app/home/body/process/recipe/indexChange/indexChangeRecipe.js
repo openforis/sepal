@@ -21,24 +21,45 @@ export const defaultModel = {
                 color: '#d73027',
                 value: 1,
                 label: 'Decrease',
-                from: undefined,
-                to: 0
+                booleanOperator: 'and',
+                constraints: [{
+                    id: guid(),
+                    description: 'description < 0',
+                    image: 'this-recipe',
+                    band: 'difference',
+                    operator: '<',
+                    value: 0
+                }]
             },
             {
                 id: guid(),
                 color: '#ffffff',
                 value: 2,
                 label: 'Stable',
-                from: 0,
-                to: 0
+                booleanOperator: 'and',
+                constraints: [{
+                    id: guid(),
+                    description: 'description = 0',
+                    image: 'this-recipe',
+                    band: 'difference',
+                    operator: '=',
+                    value: 0
+                }]
             },
             {
                 id: guid(),
                 color: '#1a9850',
                 value: 3,
                 label: 'Increase',
-                from: 0,
-                to: undefined
+                booleanOperator: 'and',
+                constraints: [{
+                    id: guid(),
+                    description: 'description > 0',
+                    image: 'this-recipe',
+                    band: 'difference',
+                    operator: '>',
+                    value: 0
+                }]
             }
         ]
     },

@@ -1,14 +1,12 @@
 import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
-import {Layout} from 'widget/layout'
-import {LegendBuilder, defaultColor} from './legendBuilder'
+import {LegendBuilder, defaultColor} from 'app/home/map/legendBuilder'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -22,33 +20,19 @@ const fields = {
         .predicate((entries, {invalidEntries}) => !invalidEntries && entries.length, 'invalid')
 }
 
-const mapRecipeToProps = recipe => {
-    return ({
-        toImage: selectFrom(recipe, 'model.toImage'),
-        importedLegendEntries: selectFrom(recipe, 'ui.importedLegendEntries'),
-        legendEntries: selectFrom(recipe, 'model.legend.entries') || [],
-        fromImage: selectFrom(recipe, 'model.fromImage')
-    })
-}
+const mapRecipeToProps = recipe => ({
+    importedLegendEntries: selectFrom(recipe, 'ui.importedLegendEntries'),
+    legendEntries: selectFrom(recipe, 'model.legend.entries') || []
+})
 
 class _Legend extends React.Component {
-    render() {
-        const {importedLegendEntries, legendEntries} = this.props
-        return <LegendPanel
-            importedLegendEntries={importedLegendEntries}
-            legendEntries={legendEntries}
-        />
-    }
-}
-
-class _LegendPanel extends React.Component {
     state = {colorMode: 'palette'}
 
     render() {
         const {colorMode} = this.state
         const title = (
             <div className={styles.title}>
-                <div>{msg('process.classification.panel.legend.title')}</div>
+                <div>{msg('process.indexChange.panel.legend.title')}</div>
                 <Button
                     chromeless
                     size='small'
@@ -62,17 +46,18 @@ class _LegendPanel extends React.Component {
         )
         return (
             <RecipeFormPanel
-                placement="bottom-right"
+                placement='bottom-right'
                 className={styles.panel}>
                 <Panel.Header
-                    icon="list"
+                    icon='list'
                     title={title}
+
                 />
+
                 <Panel.Content>
-                    <Layout spacing='compact'>
-                        {this.renderContent()}
-                    </Layout>
+                    {this.renderContent()}
                 </Panel.Content>
+
                 <Form.PanelButtons>
                     <Panel.Buttons.Add onClick={() => this.addEntry()}/>
                     <Button
@@ -146,15 +131,10 @@ const additionalPolicy = () => ({
     legendImport: 'allow'
 })
 
-const LegendPanel = compose(
-    _LegendPanel,
-    recipeFormPanel({id: 'legend', fields, additionalPolicy, valuesToModel}),
-    activator('legendImport')
-)
-
 export const Legend = compose(
     _Legend,
-    withRecipe(mapRecipeToProps)
+    recipeFormPanel({id: 'legend', fields, mapRecipeToProps, additionalPolicy, valuesToModel}),
+    activator('legendImport')
 )
 
 Legend.propTypes = {

@@ -26,9 +26,9 @@ export class LegendBuilder extends React.Component {
     }
 
     render() {
-        const {entries, className} = this.props
+        const {entries} = this.props
         return (
-            <div className={className}>
+            <div className={styles.container}>
                 {entries.length
                     ? this.renderEntries()
                     : this.renderNoEntries()}

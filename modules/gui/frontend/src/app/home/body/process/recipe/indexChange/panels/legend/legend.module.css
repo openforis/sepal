@@ -13,11 +13,3 @@
 .entry {
     flex-grow: 1;
 }
-
-.value {
-    line-height: 2rem;
-}
-
-.label {
-    flex-grow: 1;
-}

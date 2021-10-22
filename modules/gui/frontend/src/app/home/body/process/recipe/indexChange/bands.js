@@ -29,10 +29,20 @@ export const getAvailableBands = recipe => {
         }
         : {}
 
+    const confidence = hasError(recipe)
+        ? {
+            confidence: {
+                dataType: {precision: 'float'},
+                label: 'confidence'
+            }
+        }
+        : {}
+
     return {
         ...change,
         ...difference,
-        ...error
+        ...error,
+        ...confidence
     }
 }
 

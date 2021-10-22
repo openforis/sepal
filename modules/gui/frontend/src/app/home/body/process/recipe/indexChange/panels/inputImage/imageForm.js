@@ -35,7 +35,10 @@ class ImageForm extends Component {
                     input={band}
                     disabled={!bandOptions.length}
                     options={bandOptions}
-                    onChange={() => this.setState({errorBandCleared: false})}
+                    onChange={({value}) => {
+                        this.setDefaultErrorBand(value)
+                        this.setState({errorBandCleared: false})
+                    }}
                 />
                 <Form.Combo
                     label={msg('process.indexChange.panel.inputImage.errorBand.label')}
@@ -64,13 +67,18 @@ class ImageForm extends Component {
         const {errorBandCleared} = this.state
 
         if (!band.value && fromBand && bands.value) {
-            bands.value[fromBand] && band.set(fromBand)
+            bands.value.includes(fromBand) && band.set(fromBand)
         }
 
         if (!errorBandCleared && !errorBand.value && band.value && bands.value) {
-            const defaultErrorBand = `${band.value}_rmse`
-            bands.value[defaultErrorBand] && errorBand.set(defaultErrorBand)
+            this.setDefaultErrorBand(band.value)
         }
+    }
+
+    setDefaultErrorBand(band) {
+        const {inputs: {bands, errorBand}} = this.props
+        const defaultErrorBand = `${band}_rmse`
+        bands.value.includes(defaultErrorBand) && errorBand.set(defaultErrorBand)
     }
 
     onLoaded(id, loadedBands, loadedMetadata, loadedVisualizations) {
@@ -84,6 +92,7 @@ class ImageForm extends Component {
         if (!selectedBand || !bandNames.includes(selectedBand)) {
             const defaultBand = fromBand || bandNames[0]
             band.set(defaultBand)
+            this.setDefaultErrorBand(defaultBand)
         }
         metadata.set(loadedMetadata)
         visualizations.set(loadedVisualizations)

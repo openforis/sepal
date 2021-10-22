@@ -1681,9 +1681,17 @@
         "legend": {
           "button": {
             "label": "LEG",
-            "tooltip": "Configure index change legend"
+            "tooltip": "Configure change category legend"
           },
-          "import": "Import..."
+          "import": "Import...",
+          "title": "Legend"
+        },
+        "mapping": {
+          "button": {
+            "label": "MAP",
+            "tooltip": "Map index difference to change category"
+          },
+          "title": "Mapping"
         },
         "options": {
           "button": {

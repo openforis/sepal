@@ -33,7 +33,7 @@ class _SuperButton extends React.Component {
         this.onDragMove = this.onDragMove.bind(this)
         this.onDragEnd = this.onDragEnd.bind(this)
     }
-    
+
     isExpandable() {
         const {clickToExpand, children} = this.props
         return clickToExpand && children
@@ -291,10 +291,10 @@ class _SuperButton extends React.Component {
     }
 
     renderChildren() {
-        const {children} = this.props
+        const {children, expandedClassName} = this.props
         return children && this.isSelected() !== false
             ? (
-                <div className={styles.expand}>
+                <div className={[styles.expand, expandedClassName].join(' ')}>
                     {children}
                 </div>
             )
@@ -451,6 +451,7 @@ SuperButton.propTypes = {
     editDisabled: PropTypes.any,
     editTooltip: PropTypes.string,
     expanded: PropTypes.any,
+    expandedClassName: PropTypes.string,
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     highlightClassName: PropTypes.string,
     highlightDescription: PropTypes.any,

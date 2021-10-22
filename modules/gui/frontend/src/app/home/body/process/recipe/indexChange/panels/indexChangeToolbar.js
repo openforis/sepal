@@ -1,4 +1,5 @@
 import {Legend} from './legend/legend'
+import {Mapping} from './mapping/mapping'
 import {Retrieve} from './retrieve/retrieve'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
@@ -32,6 +33,7 @@ class IndexChangeToolbar extends React.Component {
                 <FromImage/>
                 <ToImage/>
                 <Legend/>
+                <Mapping/>
                 <Options/>
 
                 <Toolbar
@@ -64,6 +66,10 @@ class IndexChangeToolbar extends React.Component {
                         id="legend"
                         label={msg('process.indexChange.panel.legend.button.label')}
                         tooltip={msg('process.indexChange.panel.legend.button.tooltip')}/>
+                    <Toolbar.ActivationButton
+                        id="mapping"
+                        label={msg('process.indexChange.panel.mapping.button.label')}
+                        tooltip={msg('process.indexChange.panel.mapping.button.tooltip')}/>
                     <Toolbar.ActivationButton
                         id="options"
                         label={msg('process.indexChange.panel.options.button.label')}

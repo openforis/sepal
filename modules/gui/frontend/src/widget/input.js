@@ -91,13 +91,13 @@ class _Input extends React.Component {
     }
 
     renderContent() {
-        const {buttons} = this.props
-        return this.isSearchInput() || buttons
+        const {buttons, additionalButtons} = this.props
+        return this.isSearchInput() || buttons || additionalButtons
             ? (
                 <Layout type='horizontal-nowrap' spacing='none'>
                     {this.renderLeftComponent()}
                     {this.renderInput()}
-                    {this.renderbuttons()}
+                    {this.renderButtons()}
                 </Layout>
             )
             : this.renderInput()
@@ -181,7 +181,7 @@ class _Input extends React.Component {
             : null
     }
 
-    renderbuttons() {
+    renderButtons() {
         const {value, additionalButtons, buttons} = this.props
         return value && this.isSearchInput()
             ? this.renderClearButton()

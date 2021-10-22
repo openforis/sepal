@@ -30,7 +30,7 @@ class _FormInput extends React.Component {
     }
 
     renderInput() {
-        const {form, className, input, errorMessage, busyMessage, type, validate, tabIndex, onChange, onBlur, ...props} = this.props
+        const {form, className, input, errorMessage, busyMessage, type, validate, tabIndex, onChange, onBlur, additionalButtons, ...props} = this.props
         return (
             <Input
                 {...props}
@@ -44,6 +44,7 @@ class _FormInput extends React.Component {
                 errorMessage={getErrorMessage(form, errorMessage === true ? input : errorMessage)}
                 busyMessage={busyMessage}
                 tabIndex={tabIndex}
+                additionalButtons={additionalButtons}
                 onChange={e => {
                     input.handleChange(e)
                     this.change$.next(e.target.value)
@@ -92,6 +93,7 @@ export const FormInput = compose(
 
 FormInput.propTypes = {
     input: PropTypes.object.isRequired,
+    additionalButtons: PropTypes.arrayOf(PropTypes.node),
     autoCapitalize: PropTypes.any,
     autoComplete: PropTypes.any,
     autoCorrect: PropTypes.any,

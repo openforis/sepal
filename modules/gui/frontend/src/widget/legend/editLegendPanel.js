@@ -107,7 +107,6 @@ class _EditLegendPanel extends React.Component {
                         entries={legendEntries}
                         colorMode={colorMode}
                         onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
-                        className={styles.legendBuilder}
                     />
                 </Widget>
             </Layout>

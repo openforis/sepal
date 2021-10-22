@@ -1,7 +1,7 @@
 import * as PropTypes from 'prop-types'
 import {FormCombo} from 'widget/form/combo'
 import {Layout} from 'widget/layout'
-import {Legend} from 'legend/legend'
+import {Legend} from 'widget/legend/legend'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {withScrollable} from 'widget/scrollable'

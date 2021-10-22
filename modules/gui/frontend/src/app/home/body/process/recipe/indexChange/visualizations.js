@@ -33,6 +33,16 @@ export const getPreSetVisualizations = recipe => {
         })
     }
 
+    const confidence = () => {
+        return normalize({
+            type: 'continuous',
+            bands: ['confidence'],
+            min: 0,
+            max: 10,
+            palette: '#042333, #2C3395, #744992, #B15F82, #EB7958, #FBB43D, #E8FA5B'
+        })
+    }
+
     const legend = selectFrom(recipe, 'model.legend') || {}
     const entries = _.sortBy(legend.entries, 'value') || []
 
@@ -56,6 +66,7 @@ export const getPreSetVisualizations = recipe => {
     return [
         hasDifference ? [difference()] : [],
         hasLegend ? [change()] : [],
-        hasError ? [error()] : []
+        hasError ? [error()] : [],
+        hasError ? [confidence()] : []
     ].flat()
 }
