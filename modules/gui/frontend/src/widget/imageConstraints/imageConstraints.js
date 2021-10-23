@@ -70,6 +70,11 @@ class _ImageConstraints extends React.Component {
     componentDidMount() {
         const {constraints = []} = this.props
         this.setState({constraints})
+        if (constraints.length) {
+            this.setState({constraints})
+        } else {
+            this.addConstraint()
+        }
     }
 
     changeBooleanOperator(booleanOperator) {
