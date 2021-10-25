@@ -51,7 +51,7 @@ class _Usage extends React.Component {
                             label={msg('user.report.updateQuota')}
                             icon='pencil-alt'
                             onClick={() => this.setState({requestBudgetUpdate: true})}
-                            // shown={!admin}
+                            shown={!admin}
                         />
                     </Panel.Buttons.Extra>
                 </Panel.Buttons>

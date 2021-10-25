@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {forkJoin, map, tap, zip} from 'rxjs'
+import {forkJoin, map, zip} from 'rxjs'
 import {msg} from 'translate'
 import Notifications from 'widget/notifications'
 import React from 'react'
