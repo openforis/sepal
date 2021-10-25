@@ -27,7 +27,7 @@ class _Usage extends React.Component {
     }
 
     renderOverview() {
-        const {user: {admin}, activatable: {deactivate}} = this.props
+        const {activatable: {deactivate}} = this.props
         const close = () => deactivate()
         return (
             <Panel
@@ -51,7 +51,6 @@ class _Usage extends React.Component {
                             label={msg('user.report.updateQuota')}
                             icon='pencil-alt'
                             onClick={() => this.setState({requestBudgetUpdate: true})}
-                            shown={!admin}
                         />
                     </Panel.Buttons.Extra>
                 </Panel.Buttons>
