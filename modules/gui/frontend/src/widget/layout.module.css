@@ -16,6 +16,7 @@
 .layout.horizontal {
     display: flex;
     flex-direction: column;
+    flex-grow: 1;
     margin-right: calc(-1 * var(--horizontal-spacing));
 }
 
