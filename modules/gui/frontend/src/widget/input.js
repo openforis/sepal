@@ -128,7 +128,7 @@ class _Input extends React.Component {
                         defaultValue={value}
                         placeholder={placeholder}
                         maxLength={maxLength}
-                        tabIndex={tabIndex}
+                        tabIndex={disabled || readOnly ? -1 : tabIndex}
                         autoFocus={autoFocus && !isMobile()}
                         autoComplete={autoComplete ? 'on' : 'off'}
                         autoCorrect={autoCorrect ? 'on' : 'off'}
