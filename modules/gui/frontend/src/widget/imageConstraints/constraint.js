@@ -136,7 +136,7 @@ class _Constraint extends React.Component {
         if (!imageSpec) {
             return null
         }
-        const {legendEntries} = imageSpec.bands.find(({name}) => name === band.value)
+        const {legendEntries = []} = imageSpec.bands.find(({name}) => name === band.value) || {}
         return (
             <Legend
                 entries={legendEntries}
@@ -255,7 +255,7 @@ class _Constraint extends React.Component {
         if (!imageSpec) {
             return null
         }
-        const {legendEntries} = imageSpec.bands.find(({name}) => name === band.value)
+        const {legendEntries = []} = imageSpec.bands.find(({name}) => name === band.value) || {}
         return legendEntries
             .filter(({value}) => selectedClasses.value.includes(value))
             .map(({label}) => label).join(', ')
