@@ -149,14 +149,19 @@ class JdbcBudgetRepository implements BudgetRepository {
             UPDATE budget_update_request 
             SET requested_monthly_instance = ?, requested_monthly_storage = ?, requested_storage_quota = ?, message = ?, update_time = ?  
             WHERE username = ? and state = 'PENDING' 
-            ''', [requestedBudget.instanceSpending, requestedBudget.storageSpending, requestedBudget.storageQuota, message, clock.now(), username])
+            ''', [
+                requestedBudget.instanceSpending, requestedBudget.storageSpending, requestedBudget.storageQuota,
+                message, clock.now(), username
+        ])
 
         if (!updated) {
             def initialBudget = userBudget(username)
             sql.executeInsert('''
-                    INSERT INTO budget_update_request(initial_monthly_instance, initial_monthly_storage, initial_storage_quota, requested_monthly_instance, requested_monthly_storage, requested_storage_quota, message, creation_time, update_time, state, username)
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', [
-                    initialBudget.instanceSpending, initialBudget.storageSpending, initialBudget.storageQuota, requestedBudget.instanceSpending, requestedBudget.storageSpending, requestedBudget.storageQuota, message, clock.now(), clock.now(), 'PENDING', username
+                    INSERT INTO budget_update_request(id, initial_monthly_instance, initial_monthly_storage, initial_storage_quota, requested_monthly_instance, requested_monthly_storage, requested_storage_quota, message, creation_time, update_time, state, username)
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', [
+                    UUID.randomUUID().toString(), initialBudget.instanceSpending, initialBudget.storageSpending,
+                    initialBudget.storageQuota, requestedBudget.instanceSpending, requestedBudget.storageSpending,
+                    requestedBudget.storageQuota, message, clock.now(), clock.now(), 'PENDING', username
             ])
         }
     }
