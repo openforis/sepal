@@ -59,8 +59,8 @@ class _ImageConstraints extends React.Component {
                 selected={booleanOperator}
                 alignment='right'
                 options={[
-                    {value: 'and', label: 'and', tooltip: msg('map.visParams.type.continuous.tooltip')},
-                    {value: 'or', label: 'or', tooltip: msg('map.visParams.type.categorical.tooltip')}
+                    {value: 'and', label: 'and', tooltip: msg('widget.imageConstraints.logicalAnd.tooltip')},
+                    {value: 'or', label: 'or', tooltip: msg('widget.imageConstraints.logicalOr.tooltip')}
                 ]}
                 onChange={booleanOperator => this.changeBooleanOperator(booleanOperator)}
             />

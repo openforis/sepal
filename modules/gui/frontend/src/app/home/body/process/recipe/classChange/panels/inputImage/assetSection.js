@@ -11,8 +11,8 @@ export default class AssetSection extends React.Component {
             <AssetInput
                 className={style.inputComponent}
                 input={input}
-                label={msg('process.classification.panel.inputImagery.form.asset.label')}
-                placeholder={msg('process.classification.panel.inputImagery.form.asset.placeholder')}
+                label={msg('process.classChange.panel.inputImage.asset.label')}
+                placeholder={msg('process.classChange.panel.inputImage.asset.placeholder')}
                 autoFocus
                 onLoading={onLoading}
                 onLoaded={({asset, metadata, visualizations}) => {

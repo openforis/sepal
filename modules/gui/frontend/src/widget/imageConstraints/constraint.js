@@ -37,12 +37,12 @@ class _Constraint extends React.Component {
     }
 
     operatorOptions = [
-        {value: '<', label: '<'},
-        {value: '≤', label: '≤'},
-        {value: '>', label: '>'},
-        {value: '≥', label: '≥'},
-        {value: '=', label: '='},
-        {value: 'range', label: 'range'},
+        {value: '<', label: msg('widget.imageConstraints.operator.lessThan.label')},
+        {value: '≤', label: msg('widget.imageConstraints.operator.lessThanOrEquals.label')},
+        {value: '>', label: msg('widget.imageConstraints.operator.greaterThan.label')},
+        {value: '≥', label: msg('widget.imageConstraints.operator.greaterThanOrEquals.label')},
+        {value: '=', label: msg('widget.imageConstraints.operator.equals.label')},
+        {value: 'range', label: msg('widget.imageConstraints.operator.range.label')},
     ]
 
     render() {
@@ -73,7 +73,7 @@ class _Constraint extends React.Component {
         const imageOptions = images.map(({id, description, bands}) => ({value: id, label: description, bands}))
         return (
             <Form.Combo
-                label={'Image'}
+                label={msg('widget.imageConstraints.image.label')}
                 input={image}
                 options={imageOptions}
                 onChange={({bands}) => bands.length === 1 && band.set(bands[0].name)}
@@ -90,7 +90,7 @@ class _Constraint extends React.Component {
             : []
         return (
             <Form.Combo
-                label={'Band'}
+                label={msg('widget.imageConstraints.band.label')}
                 input={band}
                 options={bandOptions}
                 className={styles.band}
@@ -103,7 +103,7 @@ class _Constraint extends React.Component {
         const {inputs: {operator}} = this.props
         return (
             <Form.Combo
-                label={'Operator'}
+                label={msg('widget.imageConstraints.operator.label')}
                 input={operator}
                 options={this.operatorOptions}
                 className={styles.operator}
@@ -144,7 +144,7 @@ class _Constraint extends React.Component {
         return (
             <Layout type='horizontal' className={styles.range}>
                 <Form.Input
-                    label={'From value'}
+                    label={msg('widget.imageConstraints.range.from.label')}
                     input={from}
                     autoFocus
                     errorMessage
@@ -152,7 +152,7 @@ class _Constraint extends React.Component {
                     additionalButtons={[fromInclusiveButton]}
                 />
                 <Form.Input
-                    label={'To value'}
+                    label={msg('widget.imageConstraints.range.to.label')}
                     input={to}
                     errorMessage
                     className={styles.rangeInput}
@@ -166,7 +166,7 @@ class _Constraint extends React.Component {
         const {inputs: {value}} = this.props
         return (
             <Form.Input
-                label={'Value'}
+                label={msg('widget.imageConstraints.value.label')}
                 input={value}
                 autoFocus
                 errorMessage

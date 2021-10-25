@@ -24,9 +24,9 @@ class _RecipeSection extends React.Component {
         }))
         return (
             <Form.Combo
-                label={msg('process.classification.panel.inputImagery.form.recipe.label')}
+                label={msg('process.classChange.panel.inputImage.recipe.label')}
                 input={input}
-                placeholder={msg('process.classification.panel.inputImagery.form.recipe.placeholder')}
+                placeholder={msg('process.classChange.panel.inputImage.recipe.placeholder')}
                 options={options}
                 autoFocus
                 onChange={({value}) => this.onRecipeSelected(value)}

@@ -1594,6 +1594,8 @@
       "panel": {
         "inputImage": {
           "asset": {
+            "label": "Earth Engine asset ID",
+            "placeholder": "Enter an asset ID...",
             "title": "Earth Engine Asset"
           },
           "changeBand": {
@@ -1607,6 +1609,8 @@
             "title": "From image"
           },
           "recipe": {
+            "label": "Recipe",
+            "placeholder": "Select a recipe...",
             "title": "Saved SEPAL Recipe"
           },
           "to": {
@@ -1652,6 +1656,8 @@
       "panel": {
         "inputImage": {
           "asset": {
+            "label": "Earth Engine asset ID",
+            "placeholder": "Enter an asset ID...",
             "title": "Earth Engine Asset"
           },
           "changeBand": {
@@ -1668,6 +1674,8 @@
             "title": "From image"
           },
           "recipe": {
+            "label": "Recipe",
+            "placeholder": "Select a recipe...",
             "title": "Saved SEPAL Recipe"
           },
           "to": {
@@ -2989,6 +2997,50 @@
         "dropOrClick": "Drop file here, or click to select file",
         "reject": "Cannot drop file. Wrong file type?",
         "tooMany": "Can only drop a single file."
+      }
+    },
+    "imageConstraints": {
+      "band": {
+        "label": "Band"
+      },
+      "image": {
+        "label": "Image"
+      },
+      "logicalAnd": {
+        "tooltip": "All constraints must be true"
+      },
+      "logicalOr": {
+        "tooltip": "One of the constraints must be true"
+      },
+      "operator": {
+        "equals": {
+          "label": ">"
+        },
+        "greaterThan": {
+          "label": ">"
+        },
+        "greaterThanOrEquals": {
+          "label": ">"
+        },
+        "label": "Operator",
+        "lessThan": {
+          "label": "<"
+        },
+        "lessThanOrEquals": {
+          "label": "≤"
+        },
+        "range": {
+          "from": {
+            "label": "From value"
+          },
+          "label": "Range",
+          "to": {
+            "label": "To value"
+          }
+        }
+      },
+      "value": {
+        "label": "Value"
       }
     },
     "legend": {
