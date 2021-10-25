@@ -39,18 +39,15 @@ class AssetSection extends React.Component {
                     options={[
                         {
                             value: J_DAYS,
-                            label: msg('process.ccdc.panel.dates.form.dateFormat.jDays.label'),
-                            tooltip: msg('process.ccdc.panel.dates.form.dateFormat.jDays.tooltip')
+                            label: msg('process.ccdc.panel.dates.form.dateFormat.jDays.label')
                         },
                         {
                             value: FRACTIONAL_YEARS,
-                            label: msg('process.ccdc.panel.dates.form.dateFormat.fractionalYears.label'),
-                            tooltip: msg('process.ccdc.panel.dates.form.dateFormat.fractionalYears.tooltip')
+                            label: msg('process.ccdc.panel.dates.form.dateFormat.fractionalYears.label')
                         },
                         {
                             value: UNIX_TIME_MILLIS,
-                            label: msg('process.ccdc.panel.dates.form.dateFormat.unixTimeMillis.label'),
-                            tooltip: msg('process.ccdc.panel.dates.form.dateFormat.unixTimeMillis.tooltip')
+                            label: msg('process.ccdc.panel.dates.form.dateFormat.unixTimeMillis.label')
                         }
                     ]}
                 />
