@@ -1637,7 +1637,8 @@
             "label": "Min confidence",
             "tooltip": "The minimum change in classification probability required to consider a change.",
             "value": "{value}%"
-          }
+          },
+          "title": "Options"
         }
       },
       "tabPlaceholder": "Class_change"
@@ -1708,9 +1709,10 @@
           },
           "minConfidence": {
             "label": "Min confidence",
-            "tooltip": "The minimum change in classification probability required to consider a change.",
-            "value": "{value}%"
-          }
+            "tooltip": "Determines how large the difference must be to be considered significant. If difference/error is smaller than this value, the difference is considered 0 when creating the categorical change band.",
+            "value": "{value} x error"
+          },
+          "title": "Options"
         }
       },
       "tabPlaceholder": "Index_change"
@@ -3030,13 +3032,15 @@
           "label": "≤"
         },
         "range": {
-          "from": {
-            "label": "From value"
-          },
-          "label": "Range",
-          "to": {
-            "label": "To value"
-          }
+          "label": "Range"
+        }
+      },
+      "range": {
+        "from": {
+          "label": "From value"
+        },
+        "to": {
+          "label": "To value"
         }
       },
       "value": {
