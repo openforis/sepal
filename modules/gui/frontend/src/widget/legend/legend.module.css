@@ -7,6 +7,8 @@
     grid-template-columns: auto auto 1fr;
     grid-gap: 1rem;
     color: #ccc;
+    padding: .5rem .25rem;
+    margin: .2rem 0;
 }
 
 
@@ -15,6 +17,7 @@
     background-color: var(--color);
     height: 1.5rem;
     width: 1.5rem;
+    border-radius: var(--button-border-radius);
 }
 
 .entry .value {
@@ -23,6 +26,17 @@
 
 .entry .label {
 
+}
+
+.selected {
+    background-color: var(--look-selected-background-color);
+}
+.selected.selectable:hover {
+    background-color: var(--look-selected-hover-background-color);
+}
+
+.selectable:hover {
+    background-color: var(--look-default-hover-background-color);
 }
 
 .noData {

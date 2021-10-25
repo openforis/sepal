@@ -1,4 +1,5 @@
 import {Legend} from '../legend/legend'
+import {Mapping} from './mapping/mapping'
 import {RecipeActions} from '../remappingRecipe'
 import {Retrieve} from './retrieve/retrieve'
 import {Toolbar} from 'widget/toolbar/toolbar'
@@ -24,12 +25,13 @@ class RemappingToolbar extends React.Component {
         const {recipeId, collecting, initialized} = this.props
         return (
             <PanelWizard
-                panels={['inputImagery', 'legend']}
+                panels={['inputImagery', 'legend', 'mapping']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
                 <Retrieve/>
                 <InputImagery/>
                 <Legend/>
+                <Mapping/>
 
                 <Toolbar
                     vertical
@@ -63,6 +65,10 @@ class RemappingToolbar extends React.Component {
                         id='legend'
                         label={msg('process.remapping.panel.legend.button')}
                         tooltip={msg('process.remapping.panel.legend.tooltip')}/>
+                    <Toolbar.ActivationButton
+                        id='mapping'
+                        label={msg('process.remapping.panel.mapping.button.label')}
+                        tooltip={msg('process.remapping.panel.mapping.button.tooltip')}/>
                 </Toolbar>
             </PanelWizard>
         )
@@ -70,8 +76,7 @@ class RemappingToolbar extends React.Component {
 }
 
 RemappingToolbar.propTypes = {
-    dataCollectionManager: PropTypes.object.isRequired,
-    recipeId: PropTypes.string.isRequired,
+    recipeId: PropTypes.string.isRequired
 }
 
 export default compose(

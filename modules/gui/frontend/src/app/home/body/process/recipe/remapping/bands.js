@@ -1,47 +1,15 @@
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {supportProbability, supportRegression} from './remappingRecipe'
 import _ from 'lodash'
 
 export const getAvailableBands = recipe => {
     const entries = selectFrom(recipe, 'model.legend.entries') || []
-    const classifierType = selectFrom(recipe, 'model.classifier.type')
     const min = entries.length ? entries[0].value : 0
     const max = entries.length ? _.last(entries).value : 0
-    const classBand = {class: {
+    return {class: {
         dataType: {precision: 'int', min, max},
-        label: msg('process.remapping.bands.class')
+        label: msg('process.classification.bands.class')
     }}
-    const regressionBand = supportRegression(classifierType)
-        ? {regression: {
-            dataType: {precision: 'float', min, max},
-            label: msg('process.remapping.bands.regression')
-        }}
-        : {}
-    const classProbabilityBand = supportProbability(classifierType)
-        ? {class_probability: {
-            dataType: {precision: 'int', min: 0, max: 100},
-            label: msg('process.remapping.bands.classProbability')
-        }}
-        : {}
-
-    const entryProbabilityBands = supportProbability(classifierType)
-        ? _.chain(entries)
-            .keyBy(({value}) => `probability_${value}`)
-            .mapValues(({label}) => {
-                return ({
-                    dataType: {precision: 'int', min: 0, max: 100},
-                    label: msg('process.remapping.bands.probability', {class: label})
-                })
-            })
-            .value()
-        : {}
-    return {
-        ...classBand,
-        ...regressionBand,
-        ...classProbabilityBand,
-        ...entryProbabilityBands
-    }
 }
 
 export const getGroupedBandOptions = recipe => {

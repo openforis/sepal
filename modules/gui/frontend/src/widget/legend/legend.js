@@ -1,7 +1,6 @@
 import * as PropTypes from 'prop-types'
 import {Button} from 'widget/button'
 import {EditLegendPanel} from './editLegendPanel'
-import {Layout} from 'widget/layout'
 import {Widget} from 'widget/widget'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
@@ -17,10 +16,17 @@ const mapRecipeToProps = (recipe, {componentId}) => ({
 
 class _Legend extends React.Component {
     render() {
-        const {label, entries, disabled, recipe, band, activator: {activatables}, componentId, onUpdate} = this.props
+        const {label, entries, disabled, recipe, band, selected = [], activator: {activatables}, componentId, onUpdate, onSelectionChange} = this.props
         const renderOption = ({color, value, label}) => {
             return (
-                <div key={value} className={styles.entry}>
+                <div
+                    key={value}
+                    className={[
+                        styles.entry,
+                        selected.includes(value) ? styles.selected : '',
+                        onSelectionChange ? styles.selectable : '',
+                    ].join(' ')}
+                    onClick={() => this.select(value)}>
                     <div className={styles.color} style={{'--color': color}}/>
                     <div className={styles.value}>{value}</div>
                     <div className={styles.label}>{label}</div>
@@ -48,9 +54,9 @@ class _Legend extends React.Component {
                 <EditLegendPanel/>
                 {entries && entries.length
                     ? (
-                        <Layout type="vertical" spacing="compact" className={styles.entries}>
+                        <div className={styles.entries}>
                             {entries.map(renderOption)}
-                        </Layout>
+                        </div>
                     )
                     : (
                         <div className={styles.noData}>
@@ -69,6 +75,18 @@ class _Legend extends React.Component {
                 .del(toUpdatedEntryPath(componentId))
                 .dispatch()
             onUpdate && onUpdate(updatedEntries)
+        }
+    }
+
+    select(value) {
+        const {selected, onSelectionChange} = this.props
+        if (onSelectionChange) {
+            const filtered = selected.filter(v => v !== value)
+            if (selected.length === filtered.length) {
+                onSelectionChange([...selected, value])
+            } else {
+                onSelectionChange([...filtered])
+            }
         }
     }
 }
@@ -90,5 +108,7 @@ Legend.propTypes = {
     disabled: PropTypes.any,
     label: PropTypes.any,
     recipe: PropTypes.any,
+    selected: PropTypes.array,
+    onSelectionChange: PropTypes.func,
     onUpdate: PropTypes.func
 }

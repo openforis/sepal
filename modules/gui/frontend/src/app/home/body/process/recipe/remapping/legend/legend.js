@@ -21,9 +21,7 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => {
-    const dataSets = selectFrom(recipe, 'model.trainingData').dataSets || []
     return ({
-        hasTrainingData: !!dataSets.find(dataSet => dataSet.type !== 'COLLECTED' || !_.isEmpty(dataSet.referenceData)),
         importedLegendEntries: selectFrom(recipe, 'ui.importedLegendEntries'),
         legendEntries: selectFrom(recipe, 'model.legend.entries') || []
     })
@@ -74,12 +72,11 @@ class _Legend extends React.Component {
     }
 
     renderContent() {
-        const {hasTrainingData, inputs: {entries}} = this.props
+        const {inputs: {entries}} = this.props
         const {colorMode} = this.state
         return (
             <LegendBuilder
                 entries={entries.value}
-                locked={hasTrainingData}
                 colorMode={colorMode}
                 onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
             />

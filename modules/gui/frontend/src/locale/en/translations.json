@@ -1608,6 +1608,9 @@
             },
             "title": "From image"
           },
+          "legend": {
+            "label": "Legend"
+          },
           "recipe": {
             "label": "Recipe",
             "placeholder": "Select a recipe...",
@@ -2362,11 +2365,34 @@
               "required": "An image must be selected"
             }
           },
+          "legend": {
+            "label": "Legend"
+          },
           "noImagery": "Please add at least one image to remap.",
           "recipe": {
             "title": "Saved SEPAL recipe"
           },
-          "title": "Input imagery"
+          "title": "Input imagery",
+          "type": {
+            "categorical": "Categorical",
+            "continuous": "Continuous",
+            "ASSET": "Earth Engine asset",
+            "RECIPE_REF": "SEPAL recipe",
+            "label": "Type"
+          }
+        },
+        "legend": {
+          "button": "LEG",
+          "title": "Legend",
+          "tooltip": "Setup legend to remap imagery to",
+          "import": "Import..."
+        },
+        "mapping": {
+          "button": {
+            "label": "MAP",
+            "tooltip": "Map input imagery to legend entries"
+          },
+          "title": "Mapping"
         }
       }
     },

@@ -40,7 +40,7 @@ class ImageForm extends Component {
                     options={bandOptions}
                 />
                 <Legend
-                    label={'Legend'}
+                    label={msg('process.classChange.panel.inputImage.legend.label')}
                     recipe={loadedRecipe}
                     band={band.value}
                     entries={legendEntries.value || []}

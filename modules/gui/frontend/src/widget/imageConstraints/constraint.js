@@ -1,5 +1,6 @@
 import {Form, form} from '../form/form'
 import {Layout} from '../layout'
+import {Legend} from '../legend/legend'
 import {SuperButton} from '../superButton'
 import {compose} from '../../compose'
 import {msg} from '../../translate'
@@ -27,13 +28,15 @@ const fields = {
         .skip((value, {operator}) => operator !== 'range')
         .notBlank(),
     fromInclusive: new Form.Field(),
-    toInclusive: new Form.Field()
+    toInclusive: new Form.Field(),
+    selectedClasses: new Form.Field()
 }
 
 class _Constraint extends React.Component {
     state = {
         invalid: false,
-        constraint: undefined
+        constraint: undefined,
+        imageSpec: undefined
     }
 
     operatorOptions = [
@@ -46,10 +49,11 @@ class _Constraint extends React.Component {
     ]
 
     render() {
-        const {selected, images, inputs: {image, operator}, onClick, onRemove} = this.props
+        const {selected, images, inputs: {operator}, onClick, onRemove} = this.props
+        const {imageSpec} = this.state
         return (
             <SuperButton
-                title={image.value}
+                title={imageSpec && imageSpec.description}
                 description={this.toDescription()}
                 expanded={selected}
                 unsafeRemove
@@ -61,8 +65,8 @@ class _Constraint extends React.Component {
                     <Layout type='horizontal'>
                         {this.renderBand()}
                         {operator.value !== 'class' ? this.renderOperator() : null}
-                        {this.renderValue()}
                     </Layout>
+                    {this.renderValue()}
                 </Layout>
             </SuperButton>
         )
@@ -76,7 +80,7 @@ class _Constraint extends React.Component {
                 label={msg('widget.imageConstraints.image.label')}
                 input={image}
                 options={imageOptions}
-                onChange={({bands}) => bands.length === 1 && band.set(bands[0].name)}
+                onChange={({bands}) => bands.length && band.set(bands[0].name)}
             />
         )
     }
@@ -94,7 +98,13 @@ class _Constraint extends React.Component {
                 input={band}
                 options={bandOptions}
                 className={styles.band}
-                onChange={({type}) => type === 'categorical' && operator.set('class')}
+                onChange={({type}) => {
+                    if (type === 'categorical') {
+                        operator.set('class')
+                    } else {
+                        (!operator.value || operator.value === 'class') && operator.set('<')
+                    }
+                }}
             />
         )
     }
@@ -121,7 +131,19 @@ class _Constraint extends React.Component {
     }
 
     renderClassSelector() {
-        return null // TODO: Implement...
+        const {inputs: {band, selectedClasses}} = this.props
+        const {imageSpec} = this.state
+        if (!imageSpec) {
+            return null
+        }
+        const {legendEntries} = imageSpec.bands.find(({name}) => name === band.value)
+        return (
+            <Legend
+                entries={legendEntries}
+                selected={selectedClasses.value}
+                onSelectionChange={updatedSelection => selectedClasses.set([...updatedSelection])}
+            />
+        )
     }
 
     renderRangeSelector() {
@@ -176,7 +198,7 @@ class _Constraint extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {image, band, operator, from, fromInclusive, to, toInclusive, value}} = this.props
+        const {inputs: {image, band, operator, from, fromInclusive, to, toInclusive, value, selectedClasses}} = this.props
         const {constraint} = this.props
         image.set(constraint.image)
         band.set(constraint.band && constraint.band)
@@ -186,12 +208,21 @@ class _Constraint extends React.Component {
         to.set(constraint.to)
         toInclusive.set(constraint.toInclusive ? [constraint.toInclusive] : [])
         value.set(constraint.value)
+        selectedClasses.set(constraint.selectedClasses || [])
         this.updateConstraint()
+        this.putImageSpecInState()
     }
 
     componentDidUpdate() {
         this.validate()
         this.updateConstraint()
+        this.putImageSpecInState()
+    }
+
+    putImageSpecInState() {
+        const {images, inputs: {image}} = this.props
+        const imageSpec = images.find(({id}) => id === image.value)
+        this.setState(({imageSpec: prevSpec}) => _.isEqual(prevSpec, imageSpec) ? null : {imageSpec})
     }
 
     validate() {
@@ -212,14 +243,26 @@ class _Constraint extends React.Component {
         const format = input => _.isFinite(parseFloat(input.value)) ? input.value : '?'
         const isInclusive = input => input.value && input.value.length && input.value[0]
         switch (operator.value) {
-        case 'class': return null // TODO: Implement...
+        case 'class': return this.toSelectedClassesDescription()
         case 'range': return `${format(from)} ${isInclusive(fromInclusive) ? '≤' : '<'} ${band.value} ${isInclusive(toInclusive) ? '≤' : '<'} ${format(to)}`
         default: return `${band.value} ${operator.value} ${format(value)}`
         }
     }
 
+    toSelectedClassesDescription() {
+        const {inputs: {band, selectedClasses}} = this.props
+        const {imageSpec} = this.state
+        if (!imageSpec) {
+            return null
+        }
+        const {legendEntries} = imageSpec.bands.find(({name}) => name === band.value)
+        return legendEntries
+            .filter(({value}) => selectedClasses.value.includes(value))
+            .map(({label}) => label).join(', ')
+    }
+
     toConstraint() {
-        const {constraint: {id}, inputs: {image, band, operator, from, fromInclusive, to, toInclusive, value}} = this.props
+        const {constraint: {id}, inputs: {image, band, operator, from, fromInclusive, to, toInclusive, value, selectedClasses}} = this.props
         const constraint = {
             id,
             description: this.toDescription(),
@@ -229,7 +272,10 @@ class _Constraint extends React.Component {
         }
 
         switch(operator.value) {
-        case 'class': return constraint // TODO: Implement...
+        case 'class': return {
+            ...constraint,
+            selectedClasses: selectedClasses.value
+        }
         case 'range': return {
             ...constraint,
             from: parseFloat(from.value),

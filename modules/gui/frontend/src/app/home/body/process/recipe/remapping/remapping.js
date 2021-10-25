@@ -1,6 +1,5 @@
 import {Aoi} from '../aoi'
 import {Map} from 'app/home/map/map'
-import {RecipeActions} from './remappingRecipe'
 import {compose} from 'compose'
 import {getAvailableBands} from './bands'
 import {getDefaultModel} from './remappingRecipe'
@@ -13,7 +12,6 @@ import React from 'react'
 import RemappingToolbar from './panels/remappingToolbar'
 
 const mapRecipeToProps = recipe => ({
-    initialized: selectFrom(recipe, 'ui.initialized'),
     images: selectFrom(recipe, 'model.inputImagery.images'),
     savedLayers: selectFrom(recipe, 'layers'),
 })
@@ -23,17 +21,7 @@ class _Remapping extends React.Component {
     constructor(props) {
         super(props)
         const {savedLayers, recipeId} = props
-        this.recipeActions = RecipeActions(recipeId)
-        initializeLayers({
-            recipeId,
-            savedLayers,
-            additionalFeatureLayerSources: [{
-                id: 'referenceData',
-                type: 'ReferenceData',
-                description: msg('featureLayerSources.ReferenceData.description'),
-                defaultEnabled: true
-            }]
-        })
+        initializeLayers({recipeId, savedLayers})
     }
 
     render() {

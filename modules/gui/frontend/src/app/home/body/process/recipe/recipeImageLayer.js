@@ -6,6 +6,7 @@ import {IndexChangeImageLayer} from './indexChange/indexChangeImageLayer'
 import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
 import {PlanetMosaicImageLayer} from './planetMosaic/planetMosaicImageLayer'
 import {RadarMosaicImageLayer} from './radarMosaic/radarMosaicImageLayer'
+import {RemappingImageLayer} from './remapping/remappingImageLayer'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -77,6 +78,10 @@ class _RecipeImageLayer extends React.Component {
         case 'INDEX_CHANGE':
             return (
                 <IndexChangeImageLayer {...props}/>
+            )
+        case 'REMAPPING':
+            return (
+                <RemappingImageLayer {...props}/>
             )
         case 'CCDC_SLICE':
             return (

@@ -1,32 +1,34 @@
 import {Form} from 'widget/form/form'
+import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {SectionSelection} from './sectionSelection'
+import {bandsAvailableToAdd, defaultBand} from 'app/home/body/process/recipe/remapping/remappingRecipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import AssetSection from './assetSection'
-import ButtonSelect from 'widget/buttonSelect'
 import ImageForm from './imageForm'
 import PanelSections from 'widget/panelSections'
 import React from 'react'
 import RecipeSection from './recipeSection'
-import guid from 'guid'
 import styles from './inputImage.module.css'
 
 const fields = {
     imageId: new Form.Field(),
     section: new Form.Field()
-        .notBlank('process.remapping.panel.inputImagery.form.section.required'),
+        .notBlank(),
     recipe: new Form.Field()
         .skip((value, {section}) => section !== 'RECIPE_REF')
-        .notBlank('process.remapping.panel.inputImagery.form.recipe.required'),
+        .notBlank(),
     asset: new Form.Field()
         .skip((value, {section}) => section !== 'ASSET')
-        .notBlank('process.remapping.panel.inputImagery.form.asset.required'),
+        .notBlank(),
     bands: new Form.Field()
-        .notEmpty('process.remapping.panel.inputImagery.form.bands.required'),
+        .notEmpty(),
     metadata: new Form.Field(),
-    visualizations: new Form.Field()
+    visualizations: new Form.Field(),
+    includedBands: new Form.Field()
+        .notEmpty()
 }
 
 const mapRecipeToProps = recipe => ({
@@ -71,7 +73,11 @@ class InputImage extends React.Component {
                     icon='image'
                     label={msg('IMAGE TO CLASSIFY')}
                     defaultButtons={
-                        <Form.PanelButtons/>
+                        <Form.PanelButtons>
+                            <Panel.Buttons.Add
+                                disabled={!this.canAddBand()}
+                                onClick={() => this.addBand()}/>
+                        </Form.PanelButtons>
                     }
                 />
             </RecipeFormPanel>
@@ -81,6 +87,19 @@ class InputImage extends React.Component {
     componentDidUpdate() {
         const {inputs, activatable: {imageId}} = this.props
         inputs.imageId.set(imageId)
+    }
+
+    canAddBand() {
+        const {inputs: {bands, includedBands}} = this.props
+        return !!bandsAvailableToAdd(bands.value, includedBands.value).length
+    }
+
+    addBand() {
+        const {inputs: {bands, includedBands}} = this.props
+        const availableBands = bandsAvailableToAdd(bands.value, includedBands.value)
+        if (availableBands.length) {
+            includedBands.set([...(includedBands.value || []), defaultBand(availableBands[0], bands.value)])
+        }
     }
 
     updateImageLayerSources({section, asset, recipe: recipeId, metadata, visualizations}) {
@@ -148,7 +167,12 @@ const modelToValues = model => {
     const values = {
         imageId: model.imageId,
         section: model.type || 'SELECTION',
+        recipe: model.recipe,
+        asset: model.asset,
         bands: model.bands,
+        metadata: model.metadata,
+        visualizations: model.visualizations,
+        includedBands: model.includedBands
     }
     switch (model.type) {
     case 'RECIPE_REF':
@@ -164,7 +188,12 @@ const valuesToModel = values => {
     const model = {
         imageId: values.imageId,
         type: values.section,
+        recipe: values.recipe,
+        asset: values.asset,
         bands: values.bands,
+        metadata: values.metadata,
+        visualizations: values.visualizations,
+        includedBands: values.includedBands
     }
     switch (values.section) {
     case 'RECIPE_REF':

@@ -6,20 +6,44 @@ import style from './inputImage.module.css'
 
 export default class AssetSection extends React.Component {
     render() {
-        const {input, onLoading, onLoaded} = this.props
+        const {input, onLoading} = this.props
         return (
             <AssetInput
                 className={style.inputComponent}
                 input={input}
-                label={msg('process.remapping.panel.inputImagery.form.asset.label')}
-                placeholder={msg('process.remapping.panel.inputImagery.form.asset.placeholder')}
+                label={msg('process.classChange.panel.inputImage.asset.label')}
+                placeholder={msg('process.classChange.panel.inputImage.asset.placeholder')}
                 autoFocus
                 onLoading={onLoading}
                 onLoaded={({asset, metadata, visualizations}) => {
-                    onLoaded({id: asset, bands: metadata.bands, metadata, visualizations})
+                    this.onLoaded({asset, metadata, visualizations})
                 }}
             />
         )
+    }
+
+    onLoaded({asset, metadata, visualizations}) {
+        const {onLoaded} = this.props
+        const bands = {}
+        const categoricalVisualizations = visualizations.filter(({type}) => type === 'categorical')
+        metadata.bands.forEach(bandName => {
+            const visualization = categoricalVisualizations
+                .find(({bands}) => bands[0] === bandName) || {}
+            bands[bandName] = {
+                values: visualization.values || [],
+                labels: visualization.labels || [],
+            }
+        })
+        onLoaded({
+            id: asset,
+            bands,
+            metadata,
+            visualizations,
+            recipe: {
+                type: 'ASSET',
+                id: asset
+            }
+        })
     }
 }
 

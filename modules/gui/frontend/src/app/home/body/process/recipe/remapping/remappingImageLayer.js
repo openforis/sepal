@@ -3,7 +3,6 @@ import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualization
 import {compose} from 'compose'
 import {getAvailableBands} from './bands'
 import {getPreSetVisualizations} from './visualizations'
-import {hasTrainingData} from './remappingRecipe'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
@@ -59,7 +58,7 @@ class _RemappingImageLayer extends React.Component {
     canRender() {
         const {recipe} = this.props
         const inputImagery = selectFrom(recipe, ['model.inputImagery.images']) || []
-        return inputImagery.length && hasTrainingData(recipe)
+        return !!inputImagery.length
     }
 }
 
