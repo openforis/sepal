@@ -2791,7 +2791,9 @@
     },
     "quotaUpdate": {
         "title": "Request additional resources",
-        "info": "Please propose suitable values for your limits, along with a justification message. SEPAL administrators will review your request.",
+        "info": "Please propose suitable values for monthly spending and storage space, along with a justification message. SEPAL administrators will review your request.",
+        "info1": "Please propose suitable values for monthly spending and storage space, along with a justification for your request.",
+        "info2": "SEPAL administrators will review your request.",
         "form": {
             "created": "Created",
             "modified": "Modified",

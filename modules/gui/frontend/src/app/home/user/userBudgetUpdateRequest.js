@@ -32,20 +32,15 @@ const fields = {
 }
 
 const mapStateToProps = () => {
+    const spending = select('user.currentUserReport.spending')
     const budgetUpdateRequest = select('user.currentUserReport.budgetUpdateRequest')
-    if (budgetUpdateRequest) {
-        const {message, instanceSpending, storageSpending, storageQuota} = budgetUpdateRequest
-        return {
-            budgetUpdateRequest,
-            values: {
-                instanceSpending,
-                storageSpending,
-                storageQuota,
-                message
-            }
-        }
+    const values = {
+        instanceSpending: budgetUpdateRequest ? budgetUpdateRequest.instanceSpending : spending.monthlyInstanceBudget,
+        storageSpending: budgetUpdateRequest ? budgetUpdateRequest.storageSpending : spending.monthlyStorageBudget,
+        storageQuota: budgetUpdateRequest ? budgetUpdateRequest.storageQuota : spending.storageQuota,
+        message: budgetUpdateRequest && budgetUpdateRequest.message
     }
-    return null
+    return {budgetUpdateRequest, values}
 }
 
 export class _BudgetUpdateRequest extends React.Component {
@@ -64,8 +59,10 @@ export class _BudgetUpdateRequest extends React.Component {
                     title={msg('user.quotaUpdate.title')}/>
                 <Panel.Content>
                     <Layout>
-                        {this.renderCreationTime(budgetUpdateRequest)}
-                        {this.renderUpdateTime(budgetUpdateRequest)}
+                        <Layout type='horizontal'>
+                            {this.renderCreationTime(budgetUpdateRequest)}
+                            {this.renderUpdateTime(budgetUpdateRequest)}
+                        </Layout>
                         {this.renderMessage()}
                         {this.renderMonthlyLimits()}
                         {this.renderJustificationMessage()}
@@ -77,37 +74,48 @@ export class _BudgetUpdateRequest extends React.Component {
     }
 
     renderCreationTime() {
-        const {budgetUpdateRequest: {creationTime} = {}} = this.props
-        return creationTime
-            ? (
-                <Input
-                    label={msg('user.quotaUpdate.form.created')}
-                    readOnly
-                    // value={moment(creationTime).format('LLLL')}
-                    value={moment(creationTime).fromNow()}
-                />
-            )
-            : null
+        const {budgetUpdateRequest} = this.props
+        if (budgetUpdateRequest) {
+            const {creationTime} = budgetUpdateRequest
+            if (creationTime) {
+                return (
+                    <Input
+                        label={msg('user.quotaUpdate.form.created')}
+                        readOnly
+                        // value={moment(creationTime).format('LLLL')}
+                        value={moment(creationTime).fromNow()}
+                    />
+                )
+            }
+        }
+        return null
     }
 
     renderUpdateTime() {
-        const {budgetUpdateRequest: {updateTime} = {}} = this.props
-        return updateTime
-            ? (
-                <Input
-                    label={msg('user.quotaUpdate.form.modified')}
-                    readOnly
-                    // value={moment(updateTime).format('LLLL')}
-                    value={moment(updateTime).fromNow()}
-                />
-            )
-            : null
+        const {budgetUpdateRequest} = this.props
+        if (budgetUpdateRequest) {
+            const {updateTime} = budgetUpdateRequest
+            if (updateTime) {
+                return (
+                    <Input
+                        label={msg('user.quotaUpdate.form.modified')}
+                        readOnly
+                        // value={moment(updateTime).format('LLLL')}
+                        value={moment(updateTime).fromNow()}
+                    />
+                )
+            }
+        }
+        return null
     }
 
     renderMessage() {
         return (
             <Message type='info' icon='comment'>
-                {msg('user.quotaUpdate.info')}
+                <Layout type='vertical' spacing='compact'>
+                    <div>{msg('user.quotaUpdate.info1')}</div>
+                    <div>{msg('user.quotaUpdate.info2')}</div>
+                </Layout>
             </Message>
         )
     }

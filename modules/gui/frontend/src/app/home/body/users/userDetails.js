@@ -124,6 +124,7 @@ class UserDetails extends React.Component {
                                 input={instanceSpending}
                                 spellCheck={false}
                                 prefix='US$/mo.'
+                                onChange={e => this.onChangeInstanceSpending(e.target.value)}
                             />
                             <Form.Input
                                 label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
@@ -131,6 +132,7 @@ class UserDetails extends React.Component {
                                 input={storageSpending}
                                 spellCheck={false}
                                 prefix='US$/mo.'
+                                onChange={e => this.onChangeStorageSpending(e.target.value)}
                             />
                             <Form.Input
                                 label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
@@ -138,6 +140,7 @@ class UserDetails extends React.Component {
                                 input={storageQuota}
                                 spellCheck={false}
                                 prefix='GB'
+                                onChange={e => this.onChangeStorageQuota(e.target.value)}
                             />
                         </Form.FieldSet>
                         {this.isUserRequest() ? this.renderUserRequest() : null}
@@ -146,6 +149,30 @@ class UserDetails extends React.Component {
                 <Form.PanelButtons/>
             </Form.Panel>
         )
+    }
+
+    onChangeInstanceSpending(instanceSpending) {
+        const {userDetails: {quota: {budgetUpdateRequest}}, inputs: {userRequestInstanceSpendingState}} = this.props
+        if (budgetUpdateRequest) {
+            const approved = instanceSpending >= budgetUpdateRequest.instanceSpending
+            userRequestInstanceSpendingState.set(approved)
+        }
+    }
+
+    onChangeStorageSpending(storageSpending) {
+        const {userDetails: {quota: {budgetUpdateRequest}}, inputs: {userRequestStorageSpendingState}} = this.props
+        if (budgetUpdateRequest) {
+            const approved = storageSpending >= budgetUpdateRequest.storageSpending
+            userRequestStorageSpendingState.set(approved)
+        }
+    }
+
+    onChangeStorageQuota(storageQuota) {
+        const {userDetails: {quota: {budgetUpdateRequest}}, inputs: {userRequestStorageQuotaState}} = this.props
+        if (budgetUpdateRequest) {
+            const approved = storageQuota >= budgetUpdateRequest.storageQuota
+            userRequestStorageQuotaState.set(approved)
+        }
     }
 
     renderUserRoleButtons() {
@@ -176,35 +203,37 @@ class UserDetails extends React.Component {
                 <div className={styles.message}>
                     {budgetUpdateRequest.message}
                 </div>
-                <Layout type='vertical'>
-                    <Input
-                        label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
-                        type='number'
-                        value={budgetUpdateRequest.instanceSpending}
-                        readOnly
-                        prefix='US$/mo.'
-                    />
-                    {this.renderAcceptDeclineButtons(userRequestInstanceSpendingState, instanceSpending, budgetUpdateRequest.instanceSpending)}
-                </Layout>
-                <Layout type='vertical'>
-                    <Input
-                        label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
-                        type='number'
-                        value={budgetUpdateRequest.storageSpending}
-                        readOnly
-                        prefix='US$/mo.'
-                    />
-                    {this.renderAcceptDeclineButtons(userRequestStorageSpendingState, storageSpending, budgetUpdateRequest.storageSpending)}
-                </Layout>
-                <Layout type='vertical'>
-                    <Input
-                        label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
-                        type='number'
-                        value={budgetUpdateRequest.storageQuota}
-                        readOnly
-                        prefix='GB'
-                    />
-                    {this.renderAcceptDeclineButtons(userRequestStorageQuotaState, storageQuota, budgetUpdateRequest.storageQuota)}
+                <Layout type='horizontal'>
+                    <Layout type='vertical'>
+                        <Input
+                            label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
+                            type='number'
+                            value={budgetUpdateRequest.instanceSpending}
+                            readOnly
+                            prefix='US$/mo.'
+                        />
+                        {this.renderAcceptDeclineButtons(userRequestInstanceSpendingState, instanceSpending, budgetUpdateRequest.instanceSpending)}
+                    </Layout>
+                    <Layout type='vertical'>
+                        <Input
+                            label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
+                            type='number'
+                            value={budgetUpdateRequest.storageSpending}
+                            readOnly
+                            prefix='US$/mo.'
+                        />
+                        {this.renderAcceptDeclineButtons(userRequestStorageSpendingState, storageSpending, budgetUpdateRequest.storageSpending)}
+                    </Layout>
+                    <Layout type='vertical'>
+                        <Input
+                            label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
+                            type='number'
+                            value={budgetUpdateRequest.storageQuota}
+                            readOnly
+                            prefix='GB'
+                        />
+                        {this.renderAcceptDeclineButtons(userRequestStorageQuotaState, storageQuota, budgetUpdateRequest.storageQuota)}
+                    </Layout>
                 </Layout>
             </Form.FieldSet>
         )

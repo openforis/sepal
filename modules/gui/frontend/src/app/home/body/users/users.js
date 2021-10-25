@@ -107,7 +107,6 @@ class Users extends React.Component {
     }
 
     updateUser(userDetails) {
-        console.log(userDetails)
         const update$ = userDetails =>
             zip(
                 updateUserDetails$(userDetails),
@@ -126,17 +125,8 @@ class Users extends React.Component {
                 ? api.user.inviteUser$({username, name, email, organization, admin})
                 : api.user.updateUser$({username, name, email, organization, admin})
 
-        const updateUserBudget$ = ({
-            username,
-            monthlyBudgetInstanceSpending: instanceSpending,
-            monthlyBudgetStorageSpending: storageSpending,
-            monthlyBudgetStorageQuota: storageQuota
-        }) => api.user.updateUserBudget$({
-            username,
-            instanceSpending,
-            storageSpending,
-            storageQuota
-        })
+        const updateUserBudget$ = ({username, instanceSpending, storageSpending, storageQuota}) =>
+            api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota})
 
         const updateLocalState = userDetails =>
             this.setState(({users}) => {

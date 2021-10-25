@@ -7,7 +7,7 @@ import format from 'format'
 import styles from './userResources.module.css'
 
 const mapStateToProps = () => ({
-    userReport: select('user.currentUserReport'),
+    userReport: select('user.currentUserReport')
 })
 
 class UserResources extends React.Component {
