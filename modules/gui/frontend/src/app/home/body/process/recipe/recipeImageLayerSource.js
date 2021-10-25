@@ -22,6 +22,10 @@ const mapRecipeToProps = (recipe, {source: {id}}) => ({
 })
 
 class _RecipeImageLayerSource extends React.Component {
+    state = {
+        recipeFailedToLoad: false
+    }
+
     render() {
         return null
     }
@@ -43,11 +47,17 @@ class _RecipeImageLayerSource extends React.Component {
 
     loadRecipe() {
         const {stream, source: {sourceConfig: {recipeId}}, loadRecipe$} = this.props
-        stream('LOAD_RECIPE',
-            loadRecipe$(recipeId),
-            recipe => this.updateSourceConfig(recipe),
-            error => Notifications.error({message: msg('imageLayerSources.Recipe.loadError', {error}), error})
-        )
+        const {recipeFailedToLoad} = this.state
+        if (!recipeFailedToLoad) {
+            stream('LOAD_RECIPE',
+                loadRecipe$(recipeId),
+                recipe => this.updateSourceConfig(recipe),
+                error => {
+                    this.setState({recipeFailedToLoad: true})
+                    Notifications.error({message: msg('imageLayerSources.Recipe.loadError', {error}), error})
+                }
+            )
+        }
     }
 
     updateSourceConfig(recipe) {
