@@ -6,10 +6,20 @@ import indexChange from './recipe/indexChange/indexChange'
 import opticalMosaic from './recipe/opticalMosaic/opticalMosaic'
 import planetMosaic from './recipe/planetMosaic/planetMosaic'
 import radarMosaic from './recipe/radarMosaic/radarMosaic'
+import remapping from './recipe/remapping/remapping'
 import timeSeries from './recipe/timeSeries/timeSeries'
 
 export const listRecipeTypes = () => ([
-    opticalMosaic(), radarMosaic(), planetMosaic(), classification(), timeSeries(), ccdc(), ccdcSlice(), classChange(), indexChange()
+    opticalMosaic(),
+    radarMosaic(),
+    planetMosaic(),
+    classification(),
+    timeSeries(),
+    ccdc(),
+    ccdcSlice(),
+    classChange(),
+    indexChange(),
+    remapping()
 ])
 
 export const getRecipeType = id => listRecipeTypes().find(recipeType => recipeType.id === id)

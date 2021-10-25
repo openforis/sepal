@@ -368,11 +368,11 @@
   },
   "map": {
     "info": {
-        "tooltip": "Show coordinates",
-        "center": "Center",
-        "bounds": "Bounds",
-        "copy": "Copy to clipboard",
-        "coordinatesCopied": "Coordinates copied to the clipboard"
+      "tooltip": "Show coordinates",
+      "center": "Center",
+      "bounds": "Bounds",
+      "copy": "Copy to clipboard",
+      "coordinatesCopied": "Coordinates copied to the clipboard"
     },
     "legendBuilder": {
       "addEntry": {
@@ -660,7 +660,7 @@
     },
     "GoogleSatellite": {
       "label": "Google Satellite",
-      "description":"Google hi-res satellite imagery"
+      "description": "Google hi-res satellite imagery"
     }
   },
   "notifications": {
@@ -674,21 +674,21 @@
   },
   "process": {
     "mapZoom": {
-        "fit": {
-            "tooltip": "Zoom to area of interest"
-        },
-        "zoomArea": {
-            "tooltip": "Zoom to area"
-        },
-        "zoomIn": {
-            "tooltip": "Zoom in"
-        },
-        "zoomOut": {
-            "tooltip": "Zoom out"
-        },
-        "search": {
-            "placeholder": "geo search"
-        }
+      "fit": {
+        "tooltip": "Zoom to area of interest"
+      },
+      "zoomArea": {
+        "tooltip": "Zoom to area"
+      },
+      "zoomIn": {
+        "tooltip": "Zoom in"
+      },
+      "zoomOut": {
+        "tooltip": "Zoom out"
+      },
+      "search": {
+        "placeholder": "geo search"
+      }
     },
     "ccdc": {
       "chartPixel": {
@@ -1717,126 +1717,6 @@
       },
       "tabPlaceholder": "Index_change"
     },
-    "landCover": {
-      "create": "RLCMS",
-      "description": "Regional Land Cover Monitoring System. Create land cover map along with confidence levels from Landsat or Sentinel 2.",
-      "panel": {
-        "compositeOptions": {
-          "button": "CMP",
-          "form": {
-            "cloudThreshold": {
-              "label": "Max cloud-cover",
-              "max": "Include all scenes, independent on cloud-cover",
-              "off": "Only include cloud-free scenes",
-              "tooltip": "Exclude scenes with more clouds than the specified value.",
-              "value": "Exclude scenes with more than {value}% clouds"
-            },
-            "corrections": {
-              "brdf": {
-                "label": "BRDF",
-                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
-              },
-              "label": "Corrections",
-              "surfaceReflectance": {
-                "label": "SR",
-                "tooltip": "Use scenes atmospherically corrected surface reflectance."
-              },
-              "terrain": {
-                "label": "TERRAIN",
-                "tooltip": "Apply terrain correction."
-              }
-            },
-            "mask": {
-              "clouds": {
-                "label": "Clouds",
-                "tooltip": "Apply more aggressive cloud masking."
-              },
-              "haze": {
-                "label": "Haze",
-                "tooltip": "Mask haze"
-              },
-              "label": "Mask",
-              "shadow": {
-                "label": "Shadow",
-                "tooltip": "Mask Shadow"
-              },
-              "snow": {
-                "label": "Snow",
-                "tooltip": "Mask snow. This tend to leave pixels with shadowy snow"
-              }
-            }
-          },
-          "title": "Composite options",
-          "tooltip": "Configure how composite is created"
-        },
-        "createComposites": {
-          "task": "Create RLCMS composites",
-          "tooltip": "Create composites"
-        },
-        "createLandCoverMap": {
-          "task": "Create RLCMS land-cover map",
-          "tooltip": "Create land-cover map"
-        },
-        "period": {
-          "button": "PER",
-          "endYear": {
-            "label": "End year",
-            "malformed": "Not a year"
-          },
-          "startBeforeEnd": "Start must be before end year",
-          "startYear": {
-            "label": "Start year",
-            "malformed": "Not a year"
-          },
-          "title": "Period",
-          "tooltip": "Specify time period"
-        },
-        "trainingData": {
-          "button": "TRN",
-          "form": {
-            "classColumn": {
-              "label": "Class column",
-              "placeholder": {
-                "loaded": "Select a column...",
-                "loading": "Loading columns...",
-                "noFusionTable": "Enter a Fusion Table ID first"
-              },
-              "required": "A column must be selected"
-            },
-            "eeTable": {
-              "invalid": "Invalid EE Table ID",
-              "label": "EE table",
-              "placeholder": "Enter a EE Table ID",
-              "required": "EE Table must be specified"
-            },
-            "fusionTable": {
-              "invalid": "Invalid Fusion Table ID",
-              "label": "Fusion table",
-              "placeholder": "Enter a Fusion Table ID",
-              "required": "Fusion Table must be specified"
-            },
-            "yearAndClassColumnsSame": "Year and class columns are the same",
-            "yearColumn": {
-              "label": "Year column",
-              "placeholder": {
-                "loaded": "Select a column...",
-                "loading": "Loading columns...",
-                "noFusionTable": "Enter a Fusion Table ID first"
-              },
-              "required": "A column must be selected"
-            }
-          },
-          "title": "Training data",
-          "tooltip": "Configure training data source"
-        },
-        "typology": {
-          "button": "TYP",
-          "title": "Typology",
-          "tooltip": "Select typology"
-        }
-      },
-      "tabPlaceholder": "RLCMS"
-    },
     "menu": {
       "duplicateRecipe": "Duplicate recipe",
       "exportRecipe": "Export recipe",
@@ -1864,7 +1744,7 @@
       "description": "Create a mosaic using Landsat or Sentinel 2.",
       "mapToolbar": {
         "zoom": {
-            "tooltip": "Zoom"
+          "tooltip": "Zoom"
         },
         "layers": {
           "tooltip": "Select layers to show"
@@ -2459,6 +2339,36 @@
         "success": "Recipe has been removed"
       },
       "type": "Type"
+    },
+    "remapping": {
+      "create": "Remapping",
+      "description": "Remap categorical and continuous image bands into new categories.",
+      "panel": {
+        "inputImagery": {
+          "asset": {
+            "title": "Earth Engine asset"
+          },
+          "button": "IMG",
+          "form": {
+            "asset": {
+              "label": "Earth Engine asset ID",
+              "placeholder": "Enter an asset ID..."
+            },
+            "recipe": {
+              "label": "Recipe",
+              "placeholder": "Select a recipe..."
+            },
+            "section": {
+              "required": "An image must be selected"
+            }
+          },
+          "noImagery": "Please add at least one image to remap.",
+          "recipe": {
+            "title": "Saved SEPAL recipe"
+          },
+          "title": "Input imagery"
+        }
+      }
     },
     "retrieve": {
       "apply": "Retrieve",

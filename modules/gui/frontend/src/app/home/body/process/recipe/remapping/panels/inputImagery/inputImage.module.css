@@ -1,0 +1,16 @@
+.panel {
+    height: 40rem;
+    width: 40rem;
+}
+
+.inputComponent {
+    flex-grow: 1;
+}
+
+.loadingProgress {
+    margin-top: 5rem;
+}
+
+.selectedBandSetSpec .widget {
+    margin: .5rem 0;
+}

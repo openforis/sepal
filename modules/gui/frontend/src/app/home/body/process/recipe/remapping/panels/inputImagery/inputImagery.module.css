@@ -1,0 +1,26 @@
+.panel {
+    min-height: 23rem;
+    max-width: 27rem;
+}
+
+.list ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.list li:last-child {
+    margin-bottom: 0;
+}
+
+.imageInfo {
+    word-break: break-all;
+}
+
+.noImagery {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: gray;
+    font-size: .9rem;
+}
