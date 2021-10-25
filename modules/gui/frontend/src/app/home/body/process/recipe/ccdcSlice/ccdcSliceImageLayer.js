@@ -60,8 +60,11 @@ class _CCDCSliceImageLayer extends React.Component {
         const {layerConfig: {visParams: prevVisParams}} = prevProps
         const allVisualizations = this.toAllVis()
         if (prevVisParams) {
-            const visParams = allVisualizations.find(({id}) => id === prevVisParams.id)
-                || allVisualizations.find(({bands}) => _.isEqual(bands, prevVisParams.bands))
+            const visParams = allVisualizations
+                .find(({
+                    id,
+                    bands
+                }) => id === prevVisParams.id && (prevVisParams.id || _.isEqual(bands, prevVisParams.bands)))
             if (!visParams) {
                 allVisualizations.length && this.selectVisualization(allVisualizations[0])
             } else if (!_.isEqual(visParams, prevVisParams)) {
