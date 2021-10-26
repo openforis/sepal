@@ -5,6 +5,7 @@ import groovymvc.validate.Constraints
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.budget.api.Budget
 import org.openforis.sepal.component.budget.api.UserSpendingReport
+import org.openforis.sepal.component.budget.command.RequestBudgetUpdate
 import org.openforis.sepal.component.budget.command.UpdateBudget
 import org.openforis.sepal.component.budget.query.LoadSpendingReport
 import org.openforis.sepal.endpoint.InvalidRequest
@@ -33,24 +34,24 @@ class BudgetEndpoint {
             post('/budget', [ADMIN]) {
                 response.contentType = 'application/json'
                 constrain(UpdateBudget, [
-                    username: [notNull(), notBlank()],
-                    budget: notNull()
+                        username: [notNull(), notBlank()],
+                        budget: notNull()
                 ])
                 constrain(Budget, [
-                    instanceSpending: Constraints.min(0),
-                    storageSpending: Constraints.min(0),
-                    storageQuota: Constraints.min(0)
+                        instanceSpending: Constraints.min(0),
+                        storageSpending: Constraints.min(0),
+                        storageQuota: Constraints.min(0)
                 ])
 
                 def budget = new Budget(
-                    instanceSpending: params.required('instanceSpending', double),
-                    storageSpending: params.required('storageSpending', double),
-                    storageQuota: params.required('storageQuota', double)
+                        instanceSpending: params.required('instanceSpending', double),
+                        storageSpending: params.required('storageSpending', double),
+                        storageQuota: params.required('storageQuota', double)
                 )
 
                 def command = new UpdateBudget(
-                    username: params.required('username', String),
-                    budget: budget
+                        username: params.required('username', String),
+                        budget: budget
                 )
                 def errors = bindAndValidate(command)
                 if (errors)
@@ -59,6 +60,31 @@ class BudgetEndpoint {
                 if (currentUser.username == command.username) // Current user updated
                     response.addHeader('sepal-user-updated', 'true')
                 send toJson(budget)
+            }
+
+            post('/budget/requestUpdate') {
+                constrain(RequestBudgetUpdate, [
+                        message: [notNull(), notBlank()],
+                        budget: notNull()
+                ])
+
+                def message = params.required('message')
+                def budget = new Budget(
+                        instanceSpending: params.required('instanceSpending', double),
+                        storageSpending: params.required('storageSpending', double),
+                        storageQuota: params.required('storageQuota', double)
+                )
+
+                def command = new RequestBudgetUpdate(
+                        username: currentUser.username,
+                        message: message,
+                        budget: budget
+                )
+                def errors = bindAndValidate(command)
+                if (errors)
+                    throw new InvalidRequest(errors)
+                component.submit(command)
+                response.status = 204
             }
         }
     }
@@ -71,14 +97,15 @@ class BudgetEndpoint {
 
     private Map spendingAsMap(UserSpendingReport spending) {
         [
-            current: [
-                instanceSpending: spending.instanceSpending,
-                storageSpending: spending.storageSpending,
-                storageQuota: spending.storageUsage],
-            budget: [
-                instanceSpending: spending.instanceBudget,
-                storageSpending: spending.storageBudget,
-                storageQuota: spending.storageQuota]
+                current: [
+                        instanceSpending: spending.instanceSpending,
+                        storageSpending: spending.storageSpending,
+                        storageQuota: spending.storageUsage],
+                budget: [
+                        instanceSpending: spending.instanceBudget,
+                        storageSpending: spending.storageBudget,
+                        storageQuota: spending.storageQuota],
+                budgetUpdateRequest: spending.budgetUpdateRequest
         ]
     }
 

@@ -72,7 +72,7 @@ class Users extends React.Component {
     }
 
     editUser(user) {
-        const {username, name, email, organization, admin, quota: {budget}} = user
+        const {username, name, email, organization, admin, quota} = user
         this.setState({
             userDetails: {
                 username,
@@ -80,9 +80,10 @@ class Users extends React.Component {
                 email,
                 organization,
                 admin,
-                monthlyBudgetInstanceSpending: budget.instanceSpending,
-                monthlyBudgetStorageSpending: budget.storageSpending,
-                monthlyBudgetStorageQuota: budget.storageQuota
+                // monthlyBudgetInstanceSpending: budget.instanceSpending,
+                // monthlyBudgetStorageSpending: budget.storageSpending,
+                // monthlyBudgetStorageQuota: budget.storageQuota,
+                quota
             }
         })
     }
@@ -91,9 +92,16 @@ class Users extends React.Component {
         this.setState({
             userDetails: {
                 newUser: true,
-                monthlyBudgetInstanceSpending: 1,
-                monthlyBudgetStorageSpending: 1,
-                monthlyBudgetStorageQuota: 20
+                quota: {
+                    budget: {
+                        instanceSpending: 1,
+                        storageSpending: 1,
+                        storageQuota: 20
+                    }
+                }
+                // monthlyBudgetInstanceSpending: 1,
+                // monthlyBudgetStorageSpending: 1,
+                // monthlyBudgetStorageQuota: 20
             }
         })
     }
@@ -117,17 +125,8 @@ class Users extends React.Component {
                 ? api.user.inviteUser$({username, name, email, organization, admin})
                 : api.user.updateUser$({username, name, email, organization, admin})
 
-        const updateUserBudget$ = ({
-            username,
-            monthlyBudgetInstanceSpending: instanceSpending,
-            monthlyBudgetStorageSpending: storageSpending,
-            monthlyBudgetStorageQuota: storageQuota
-        }) => api.user.updateUserBudget$({
-            username,
-            instanceSpending,
-            storageSpending,
-            storageQuota
-        })
+        const updateUserBudget$ = ({username, instanceSpending, storageSpending, storageQuota}) =>
+            api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota})
 
         const updateLocalState = userDetails =>
             this.setState(({users}) => {

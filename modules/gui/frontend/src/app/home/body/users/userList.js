@@ -5,13 +5,13 @@ import {Layout} from 'widget/layout'
 import {Pageable} from 'widget/pageable/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
+import {UserResourceUsage} from 'app/home/user/userResourceUsage'
 import {msg} from 'translate'
 import Highlight from 'react-highlighter'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Tooltip from 'widget/tooltip'
 import _ from 'lodash'
 import format from 'format'
 import lookStyles from 'style/look.module.css'
@@ -80,17 +80,36 @@ export default class UserList extends React.Component {
 
     userMatchesStatusFilter(user) {
         const {statusFilter} = this.state
-        return statusFilter
-            ? statusFilter === 'OVERBUDGET'
-                ? this.isUserOverBudget(user)
-                : user.status === statusFilter
-            : true
+        switch (statusFilter) {
+        case 'PENDING':
+            return this.isUserPending(user)
+        case 'ACTIVE':
+            return this.isUserActive(user)
+        case 'OVERBUDGET':
+            return this.isUserOverBudget(user)
+        case 'BUDGET_UPDATE':
+            return this.isUserRequestingBudgetUpdate(user)
+        default:
+            return true
+        }
+    }
+
+    isUserPending({status}) {
+        return status === 'PENDING'
+    }
+    
+    isUserActive({status}) {
+        return status === 'ACTIVE'
     }
 
     isUserOverBudget({quota: {budget, current}}) {
         return current.instanceSpending > budget.instanceSpending
             || current.storageSpending > budget.storageSpending
             || current.storageQuota > budget.storageQuota
+    }
+
+    isUserRequestingBudgetUpdate({quota: {budgetUpdateRequest}}) {
+        return budgetUpdateRequest
     }
 
     onKeyDown({key}) {
@@ -132,9 +151,9 @@ export default class UserList extends React.Component {
     renderHeader() {
         return (
             <div className={[styles.grid, styles.header].join(' ')}>
-                <Label className={styles.instanceBudget} msg={msg('user.report.resources.monthlyInstance')}/>
-                <Label className={styles.storageBudget} msg={msg('user.report.resources.monthlyStorage')}/>
-                <Label className={styles.storage} msg={msg('user.report.resources.storage')}/>
+                <Label className={styles.instanceBudget} msg={msg('user.report.resources.instanceSpending')}/>
+                <Label className={styles.storageBudget} msg={msg('user.report.resources.storageSpending')}/>
+                <Label className={styles.storage} msg={msg('user.report.resources.storageSpace')}/>
                 <div className={styles.info}>
                     {this.renderInfo()}
                 </div>
@@ -158,9 +177,9 @@ export default class UserList extends React.Component {
                 })}
                 {this.renderColumnHeader({
                     column: 'report.budget.instanceSpending',
-                    label: msg('user.report.resources.quota'),
+                    label: msg('user.report.resources.max'),
                     defaultSorting: -1,
-                    classNames: [styles.instanceBudgetQuota, styles.number]
+                    classNames: [styles.instanceBudgetMax, styles.number]
                 })}
                 {this.renderColumnHeader({
                     column: 'report.current.instanceSpending',
@@ -170,9 +189,9 @@ export default class UserList extends React.Component {
                 })}
                 {this.renderColumnHeader({
                     column: 'report.budget.storageSpending',
-                    label: msg('user.report.resources.quota'),
+                    label: msg('user.report.resources.max'),
                     defaultSorting: -1,
-                    classNames: [styles.storageBudgetQuota, styles.number]
+                    classNames: [styles.storageBudgetMax, styles.number]
                 })}
                 {this.renderColumnHeader({
                     column: 'report.current.storageSpending',
@@ -182,15 +201,15 @@ export default class UserList extends React.Component {
                 })}
                 {this.renderColumnHeader({
                     column: 'report.budget.storageQuota',
-                    label: msg('user.report.resources.quota'),
+                    label: msg('user.report.resources.max'),
                     defaultSorting: -1,
-                    classNames: [styles.storageQuota, styles.number]
+                    classNames: [styles.storageSpaceMax, styles.number]
                 })}
                 {this.renderColumnHeader({
                     column: 'report.current.storageQuota',
                     label: msg('user.report.resources.used'),
                     defaultSorting: -1,
-                    classNames: [styles.storageUsed, styles.number]
+                    classNames: [styles.storageSpaceUsed, styles.number]
                 })}
             </div>
         )
@@ -218,6 +237,9 @@ export default class UserList extends React.Component {
         }, {
             label: msg('users.filter.status.overbudget.label'),
             value: 'OVERBUDGET'
+        }, {
+            label: msg('users.filter.status.budgetUpdateRequest.label'),
+            value: 'BUDGET_UPDATE'
         }]
         return (
             <Buttons
@@ -305,25 +327,6 @@ UserList.propTypes = {
     onSelect: PropTypes.func.isRequired
 }
 
-const Usage = ({currentValue, budgetValue, formattedValue}) => {
-    const percentage = Math.round(100 * currentValue / budgetValue)
-    const overbudget = currentValue > budgetValue
-    const usage = Math.min(currentValue / budgetValue, 1)
-    return (
-        <div className={styles.number}>
-            <Tooltip
-                className={[overbudget ? styles.overBudget : null].join(' ')}
-                msg={msg('user.report.usage', {percentage})}
-                delay={250}
-                placement='top'
-            >
-                <div className={styles.usage} style={{'--usage': `${usage}`}}>
-                    {formattedValue}
-                </div>
-            </Tooltip>
-        </div>
-    )
-}
 class UserItem extends React.Component {
     render() {
         const {
@@ -356,50 +359,28 @@ class UserItem extends React.Component {
                 <div>{status ? msg(`user.userDetails.form.status.${status}`) : <Icon name='spinner'/>}</div>
                 <div>{moment(updateTime).fromNow()}</div>
 
-                {this.renderInstanceSpending(budget, current)}
-                {this.renderStorageSpending(budget, current)}
-                {this.renderStorageQuota(budget, current)}
-
-            </div>
-        )
-    }
-
-    renderInstanceSpending(budget, current) {
-        return (
-            <React.Fragment>
                 <div className={styles.number}>{format.dollars(budget.instanceSpending)}</div>
-                <Usage
+
+                <UserResourceUsage
                     currentValue={current.instanceSpending}
                     budgetValue={budget.instanceSpending}
                     formattedValue={format.dollars(current.instanceSpending)}
                 />
-            </React.Fragment>
-        )
-    }
-
-    renderStorageSpending(budget, current) {
-        return (
-            <React.Fragment>
                 <div className={styles.number}>{format.dollars(budget.storageSpending)}</div>
-                <Usage
+
+                <UserResourceUsage
                     currentValue={current.storageSpending}
                     budgetValue={budget.storageSpending}
                     formattedValue={format.dollars(current.storageSpending)}
                 />
-            </React.Fragment>
-        )
-    }
-
-    renderStorageQuota(budget, current) {
-        return (
-            <React.Fragment>
                 <div className={styles.number}>{format.fileSize(budget.storageQuota, {scale: 'G'})}</div>
-                <Usage
+
+                <UserResourceUsage
                     currentValue={current.storageQuota}
                     budgetValue={budget.storageQuota}
                     formattedValue={format.fileSize(current.storageQuota, {scale: 'G'})}
                 />
-            </React.Fragment>
+            </div>
         )
     }
 }

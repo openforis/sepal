@@ -11,6 +11,8 @@
     font-weight: 500;
     text-transform: uppercase;
     color: var(--label-color);
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .label.normal {

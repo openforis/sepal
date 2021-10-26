@@ -1,3 +1,4 @@
+import {Message} from 'widget/message'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {SuperButton} from 'widget/superButton'
 import {compose} from 'compose'
@@ -8,7 +9,6 @@ import Notifications from 'widget/notifications'
 import React from 'react'
 import actionBuilder from 'action-builder'
 import format from 'format'
-import styles from './userSessions.module.css'
 
 const mapStateToProps = () => ({
     sessions: select('user.currentUserReport.sessions')
@@ -35,9 +35,9 @@ class UserSessions extends React.Component {
 
     renderNoSessions() {
         return (
-            <div className={styles.noSessions}>
+            <Message type='info'>
                 {msg('user.report.sessions.noSessions')}
-            </div>
+            </Message>
         )
     }
 

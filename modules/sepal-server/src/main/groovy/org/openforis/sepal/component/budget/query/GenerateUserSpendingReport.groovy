@@ -19,9 +19,9 @@ class GenerateUserSpendingReportHandler implements QueryHandler<UserSpendingRepo
     private final BudgetRepository budgetRepository
 
     GenerateUserSpendingReportHandler(
-        InstanceSpendingService instanceSpendingService,
-        StorageUseService storageUseService,
-        BudgetRepository budgetRepository) {
+            InstanceSpendingService instanceSpendingService,
+            StorageUseService storageUseService,
+            BudgetRepository budgetRepository) {
         this.instanceSpendingService = instanceSpendingService
         this.storageUseService = storageUseService
         this.budgetRepository = budgetRepository
@@ -30,19 +30,21 @@ class GenerateUserSpendingReportHandler implements QueryHandler<UserSpendingRepo
     UserSpendingReport execute(GenerateUserSpendingReport query) {
         def username = query.username
         double instanceSpending = instanceSpendingService.instanceSpending(username)
-        def storageUse = storageUseService.storageUseForThisMonth(query.username)
+        def storageUse = storageUseService.storageUseForThisMonth(username)
         double storageSpending = storageUseService.calculateSpending(storageUse)
         double costPerGbMonth = storageUseService.costPerGbMonth()
         def budget = budgetRepository.userBudget(username)
+        def budgetUpdateRequest = budgetRepository.budgetUpdateRequest(username)
         new UserSpendingReport(
-            username: username,
-            instanceSpending: instanceSpending,
-            storageSpending: storageSpending,
-            storageUsage: storageUse.gb,
-            instanceBudget: budget.instanceSpending,
-            storageBudget: budget.storageSpending,
-            storageQuota: budget.storageQuota,
-            costPerGbMonth: costPerGbMonth
+                username: username,
+                instanceSpending: instanceSpending,
+                storageSpending: storageSpending,
+                storageUsage: storageUse.gb,
+                instanceBudget: budget.instanceSpending,
+                storageBudget: budget.storageSpending,
+                storageQuota: budget.storageQuota,
+                costPerGbMonth: costPerGbMonth,
+                budgetUpdateRequest: budgetUpdateRequest
         )
     }
 }

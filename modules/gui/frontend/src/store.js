@@ -240,7 +240,7 @@ const stream = component => {
         completed: status === 'COMPLETED'
     })
 
-    return (name, stream$, onSuccess, onError, onComplete) => {
+    const f = ({name, stream$, onNext, onError, onComplete}) => {
         const componentPath = `stream.${component.id}`
         const statePath = `${componentPath}.${name}`
 
@@ -268,7 +268,7 @@ const stream = component => {
                 takeUntil(component.componentWillUnmount$)
             ).subscribe(
                 next => {
-                    onSuccess && onSuccess(next)
+                    onNext && onNext(next)
                 },
                 error => {
                     unmounted || setStatus('FAILED')
@@ -283,5 +283,14 @@ const stream = component => {
                     onComplete && onComplete()
                 }
             )
+    }
+
+    return (...args) => {
+        if (args.length === 1 && _.isObject(args[0])) {
+            return f(args[0])
+        } else {
+            const [name, stream$, onNext, onError, onComplete] = args
+            return f({name, stream$, onNext, onError, onComplete})
+        }
     }
 }

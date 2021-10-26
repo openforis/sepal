@@ -1,53 +1,69 @@
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
+import Label from 'widget/label'
 import React from 'react'
 import format from 'format'
 import styles from './userResources.module.css'
 
 const mapStateToProps = () => ({
-    userReport: select('user.currentUserReport'),
+    userReport: select('user.currentUserReport')
 })
 
 class UserResources extends React.Component {
     render() {
-        const {spending} = this.props.userReport
+        const {userReport: {spending}} = this.props
         return (
-            <table className={styles.resources}>
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th className={styles.quota}>{msg('user.report.resources.quota')}</th>
-                        <th className={styles.used}>{msg('user.report.resources.used')}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <th>{msg('user.report.resources.monthlyInstance')}</th>
-                        <td className={styles.number}>{format.dollars(spending.monthlyInstanceBudget)}</td>
-                        <td className={styles.number}>{format.dollars(spending.monthlyInstanceSpending)}</td>
-                        <PercentCell used={spending.monthlyInstanceSpending} budget={spending.monthlyInstanceBudget}/>
-                    </tr>
-                    <tr>
-                        <th>{msg('user.report.resources.monthlyStorage')}</th>
-                        <td className={styles.number}>{format.dollars(spending.monthlyStorageBudget)}</td>
-                        <td className={styles.number}>{format.dollars(spending.monthlyStorageSpending)}</td>
-                        <PercentCell
-                            used={spending.monthlyStorageSpending}
-                            budget={spending.monthlyStorageBudget}
-                            level={spending.projectedStorageSpending > spending.monthlyStorageBudget
-                                ? 'medium'
-                                : undefined
-                            }/>
-                    </tr>
-                    <tr>
-                        <th>{msg('user.report.resources.storage')}</th>
-                        <td className={styles.number}>{format.number({value: spending.storageQuota, scale: 'G', unit: 'B'})}</td>
-                        <td className={styles.number}>{format.number({value: spending.storageUsed, scale: 'G', unit: 'B'})}</td>
-                        <PercentCell used={spending.storageUsed} budget={spending.storageQuota}/>
-                    </tr>
-                </tbody>
-            </table>
+            <div>
+                {this.renderHeader()}
+                {this.renderInstanceBudget(spending)}
+                {this.renderStorageBudget(spending)}
+                {this.renderStorage(spending)}
+            </div>
+        )
+    }
+
+    renderHeader() {
+        return (
+            <div className={styles.resources}>
+                <div className={styles.label}/>
+                <Label className={styles.quota} msg={msg('user.report.resources.max')}/>
+                <Label className={styles.user} msg={msg('user.report.resources.used')}/>
+                <div/>
+            </div>
+        )
+    }
+
+    renderInstanceBudget({monthlyInstanceSpending, monthlyInstanceBudget}) {
+        return (
+            <div className={styles.resources}>
+                <Label className={styles.label} msg={msg('user.report.resources.instanceSpending')}/>
+                <div className={styles.quota}>{format.dollars(monthlyInstanceBudget, {suffix: '/mo.'})}</div>
+                <div className={styles.used}>{format.percent(monthlyInstanceSpending, monthlyInstanceBudget, 0)}</div>
+                <div className={styles.bar} style={{'--fraction': monthlyInstanceSpending / monthlyInstanceBudget}}/>
+            </div>
+        )
+    }
+
+    renderStorageBudget({monthlyStorageSpending, monthlyStorageBudget}) {
+        return (
+            <div className={styles.resources}>
+                <Label className={styles.label} msg={msg('user.report.resources.storageSpending')}/>
+                <div className={styles.quota}>{format.dollars(monthlyStorageBudget, {suffix: '/mo.'})}</div>
+                <div className={styles.used}>{format.percent(monthlyStorageSpending, monthlyStorageBudget, 0)}</div>
+                <div className={styles.bar} style={{'--fraction': monthlyStorageSpending / monthlyStorageBudget}}/>
+            </div>
+        )
+    }
+
+    renderStorage({storageUsed, storageQuota}) {
+        return (
+            <div className={styles.resources}>
+                <Label className={styles.label} msg={msg('user.report.resources.storageSpace')}/>
+                <div className={styles.quota}>{format.number({value: storageQuota, scale: 'G', unit: 'B'})}</div>
+                <div className={styles.used}>{format.percent(storageUsed, storageQuota, 0)}</div>
+                <div className={styles.bar} style={{'--fraction': storageUsed / storageQuota}}/>
+            </div>
         )
     }
 }
@@ -56,16 +72,3 @@ export default compose(
     UserResources,
     connect(mapStateToProps)
 )
-
-const PercentCell = ({used, budget, level = null}) => {
-    const ratio = used / budget
-    if (ratio >= 1)
-        level = 'high'
-    else if (ratio > 0.75 && level !== 'high')
-        level = 'medium'
-    else if (!level)
-        level = 'low'
-    return <td className={[styles.percent, styles[level]].join(' ')}>
-        {format.percent(used, budget, 0)}
-    </td>
-}

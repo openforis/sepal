@@ -94,8 +94,8 @@ class SandboxSessionEndpoint {
             context.with {
                 response.contentType = 'application/json'
                 def report = component.submit(new GenerateUserSessionReport(
-                    username: username,
-                    workerType: SANDBOX))
+                        username: username,
+                        workerType: SANDBOX))
                 def map = reportAsMap(report)
                 send toJson(map)
             }
@@ -106,16 +106,16 @@ class SandboxSessionEndpoint {
                 response.contentType = 'application/json'
                 response.status = 201
                 def session = component.submit(new RequestSession(
-                    instanceType: params.required('instanceType'),
-                    workerType: SANDBOX,
-                    username: username
+                        instanceType: params.required('instanceType'),
+                        workerType: SANDBOX,
+                        username: username
                 ))
                 send toJson([
-                    id: session.id,
-                    path: "sessions/${forCurrentUser ? '' : "$username/"}session/$session.id",
-                    username: username,
-                    status: sessionStatus(session),
-                    host: session.instance.host
+                        id: session.id,
+                        path: "sessions/${forCurrentUser ? '' : "$username/"}session/$session.id",
+                        username: username,
+                        status: sessionStatus(session),
+                        host: session.instance.host
                 ])
             }
         }
@@ -124,15 +124,15 @@ class SandboxSessionEndpoint {
             context.with {
                 response.contentType = 'application/json'
                 def session = component.submit(new Heartbeat(
-                    sessionId: params.required('sessionId'),
-                    username: username
+                        sessionId: params.required('sessionId'),
+                        username: username
                 ))
                 send toJson([
-                    id: session.id,
-                    path: "sessions/${forCurrentUser ? '' : "$username/"}session/$session.id",
-                    username: username,
-                    status: sessionStatus(session),
-                    host: session.instance.host
+                        id: session.id,
+                        path: "sessions/${forCurrentUser ? '' : "$username/"}session/$session.id",
+                        username: username,
+                        status: sessionStatus(session),
+                        host: session.instance.host
                 ])
             }
         }
@@ -143,9 +143,9 @@ class SandboxSessionEndpoint {
                 def earliestTimeout = params.required('hours', Double)
                 response.status = 204
                 component.submit(new SetEarliestTimeoutTime(
-                    sessionId: params.required('sessionId'),
-                    time: advanceHours(new Date(), earliestTimeout),
-                    username: username
+                        sessionId: params.required('sessionId'),
+                        time: advanceHours(new Date(), earliestTimeout),
+                        username: username
                 ))
             }
         }
@@ -154,8 +154,8 @@ class SandboxSessionEndpoint {
             context.with {
                 response.status = 204
                 component.submit(new CloseSession(
-                    sessionId: params.required('sessionId'),
-                    username: username
+                        sessionId: params.required('sessionId'),
+                        username: username
                 ))
             }
         }
@@ -165,49 +165,50 @@ class SandboxSessionEndpoint {
                 [(it.id): it]
             } as Map<String, InstanceType>
             [
-                sessions: report.sessions.collect { sessionAsMap(it, instanceTypeById[it.instanceType]) },
-                instanceTypes: report.instanceTypes.collect { instanceTypeAsMap(it) },
-                spending: spendingAsMap(report.spending)
+                    sessions: report.sessions.collect { sessionAsMap(it, instanceTypeById[it.instanceType]) },
+                    instanceTypes: report.instanceTypes.collect { instanceTypeAsMap(it) },
+                    spending: spendingAsMap(report.spending),
+                    budgetUpdateRequest: report.spending.budgetUpdateRequest
             ]
         }
 
         private Map sessionAsMap(WorkerSession session, InstanceType instanceType) {
             def earliestTimeoutHours = Math.max(0, hoursBetween(new Date(), session.earliestTimeoutTime))
             [
-                id: session.id,
-                path: "sessions/${forCurrentUser ? '' : "$username/"}session/$session.id",
-                username: username,
-                status: sessionStatus(session),
-                host: session.instance.host,
-                earliestTimeoutHours: earliestTimeoutHours,
-                instanceType: instanceTypeAsMap(instanceType),
-                creationTime: session.creationTime.format("yyyy-MM-dd'T'HH:mm:ss"),
-                costSinceCreation: (instanceType.hourlyCost * hoursSince(session.creationTime)).round(2)
+                    id: session.id,
+                    path: "sessions/${forCurrentUser ? '' : "$username/"}session/$session.id",
+                    username: username,
+                    status: sessionStatus(session),
+                    host: session.instance.host,
+                    earliestTimeoutHours: earliestTimeoutHours,
+                    instanceType: instanceTypeAsMap(instanceType),
+                    creationTime: session.creationTime.format("yyyy-MM-dd'T'HH:mm:ss"),
+                    costSinceCreation: (instanceType.hourlyCost * hoursSince(session.creationTime)).round(2)
             ]
         }
 
         private Map instanceTypeAsMap(InstanceType instanceType) {
             [
-                id: instanceType.id,
-                path: "sessions/${forCurrentUser ? '' : "$username/"}instance-type/$instanceType.id",
-                name: instanceType.name,
-                tag: instanceType.tag,
-                cpuCount: instanceType.cpuCount,
-                ramGiB: instanceType.ramGiB,
-                description: instanceType.description,
-                hourlyCost: instanceType.hourlyCost
+                    id: instanceType.id,
+                    path: "sessions/${forCurrentUser ? '' : "$username/"}instance-type/$instanceType.id",
+                    name: instanceType.name,
+                    tag: instanceType.tag,
+                    cpuCount: instanceType.cpuCount,
+                    ramGiB: instanceType.ramGiB,
+                    description: instanceType.description,
+                    hourlyCost: instanceType.hourlyCost
             ]
         }
 
         private Map spendingAsMap(Spending spending) {
             [
-                monthlyInstanceBudget: spending.monthlyInstanceBudget,
-                monthlyInstanceSpending: spending.monthlyInstanceSpending,
-                monthlyStorageBudget: spending.monthlyStorageBudget,
-                monthlyStorageSpending: spending.monthlyStorageSpending,
-                storageQuota: spending.storageQuota,
-                storageUsed: spending.storageUsed,
-                costPerGbMonth: spending.costPerGbMonth
+                    monthlyInstanceBudget: spending.monthlyInstanceBudget,
+                    monthlyInstanceSpending: spending.monthlyInstanceSpending,
+                    monthlyStorageBudget: spending.monthlyStorageBudget,
+                    monthlyStorageSpending: spending.monthlyStorageSpending,
+                    storageQuota: spending.storageQuota,
+                    storageUsed: spending.storageUsed,
+                    costPerGbMonth: spending.costPerGbMonth
             ]
         }
 

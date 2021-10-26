@@ -324,12 +324,12 @@ clean () {
 }
 
 build () {
-    stop
+    stop sepal-server user
     $SEPAL/gradlew build -x test -x :sepal-gui:build -p $SEPAL
 }
 
 build-debug () {
-    stop
+    stop sepal-server user
     $SEPAL/gradlew build -x test -x :sepal-gui:build -p $SEPAL --stacktrace --debug
 }
 

@@ -99,5 +99,10 @@ export default {
     updateUserBudget$: budget =>
         post$('/api/budget', {
             body: budget
+        }),
+
+    updateBudgetUpdateRequest$: budgetUpdateRequest =>
+        post$('/api/budget/requestUpdate', {
+            body: budgetUpdateRequest
         })
 }

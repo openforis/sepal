@@ -1,0 +1,27 @@
+.text {
+    display: flex;
+}
+
+.icon {
+    margin-right: 1rem;
+}
+
+.type-normal {
+    color: #ccc;
+}
+
+.type-error {
+    color: var(--error-color);
+}
+
+.type-info {
+    color: var(--info-color);
+}
+
+.type-warning {
+    color: var(--warning-color);
+}
+
+.type-success {
+    color: var(--success-color);
+}

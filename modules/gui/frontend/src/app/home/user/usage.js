@@ -1,12 +1,13 @@
 import {Activator} from 'widget/activation/activator'
+import {BudgetUpdateRequest} from './userBudgetUpdateRequest'
 import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
+import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
-import Label from 'widget/label'
 import React from 'react'
 import UserResources from './userResources'
 import UserSession from './userSession'
@@ -15,11 +16,16 @@ import format from 'format'
 import styles from './usage.module.css'
 
 const mapStateToProps = () => ({
+    user: select('user.currentUser'),
     userReport: select('user.currentUserReport'),
     selectedSessionId: select('ui.selectedSessionId')
 })
 
 class _Usage extends React.Component {
+    state = {
+        requestBudgetUpdate: false
+    }
+
     renderOverview() {
         const {activatable: {deactivate}} = this.props
         const close = () => deactivate()
@@ -40,6 +46,13 @@ class _Usage extends React.Component {
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close onClick={close}/>
                     </Panel.Buttons.Main>
+                    <Panel.Buttons.Extra>
+                        <Panel.Buttons.Add
+                            label={msg('user.report.updateQuota')}
+                            icon='pencil-alt'
+                            onClick={() => this.setState({requestBudgetUpdate: true})}
+                        />
+                    </Panel.Buttons.Extra>
                 </Panel.Buttons>
             </Panel>
         )
@@ -47,19 +60,17 @@ class _Usage extends React.Component {
 
     renderResosurces() {
         return (
-            <React.Fragment>
-                <Label msg={msg('user.report.resources.title')} size='large'/>
+            <Widget label={msg('user.report.resources.title')}>
                 <UserResources/>
-            </React.Fragment>
+            </Widget>
         )
     }
 
     renderSessions() {
         return (
-            <React.Fragment>
-                <Label msg={msg('user.report.sessions.title')} size='large'/>
+            <Widget label={msg('user.report.sessions.title')}>
                 <UserSessions/>
-            </React.Fragment>
+            </Widget>
         )
     }
 
@@ -69,11 +80,20 @@ class _Usage extends React.Component {
         )
     }
 
+    renderRequestBudgetUpdate() {
+        return (
+            <BudgetUpdateRequest onClose={() => this.setState({requestBudgetUpdate: false})}/>
+        )
+    }
+
     render() {
         const {selectedSessionId} = this.props
-        return selectedSessionId
-            ? this.renderSession()
-            : this.renderOverview()
+        const {requestBudgetUpdate} = this.state
+        return requestBudgetUpdate
+            ? this.renderRequestBudgetUpdate()
+            : selectedSessionId
+                ? this.renderSession()
+                : this.renderOverview()
     }
 }
 
@@ -90,6 +110,7 @@ const Usage = compose(
 Usage.propTypes = {}
 
 const _UsageButton = ({userReport, budgetExceeded, budgetWarning}) => {
+    // console.log(userReport)
     const hourlySpending = userReport.sessions
         ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
         : 0

@@ -1,0 +1,8 @@
+.usage {
+    --usage: 0;
+    /* color: hsl(calc(220 * (1 - var(--usage))), 75%, 50%); */
+    /* color: rgb(calc(255 * var(--usage)), calc(255 * (1 - var(--usage))), 0); */
+    color: hsl(calc(220 * (1 - var(--usage))), 75%, 50%);
+    display: flex;
+    justify-content: flex-end;
+}

@@ -82,7 +82,7 @@
     justify-content: center;
 }
 
-.grid > .instanceBudgetQuota {
+.grid > .instanceBudgetMax {
     grid-area: ibq;
     justify-self: right;
 }
@@ -92,7 +92,7 @@
     justify-self: right;
 }
 
-.grid > .storageBudgetQuota {
+.grid > .storageBudgetMax {
     grid-area: sbq;
     justify-self: right;
 }
@@ -102,12 +102,12 @@
     justify-self: right;
 }
 
-.grid > .storageQuota {
+.grid > .storageSpaceMax {
     grid-area: stq;
     justify-self: right;
 }
 
-.grid > .storageUsed {
+.grid > .storageSpaceUsed {
     grid-area: stu;
     justify-self: right;
 }
@@ -145,11 +145,6 @@
     font-weight: 500;
     color: yellow;
     background-color: transparent;
-}
-
-.usage {
-    --usage: 0;
-    color: hsl(calc(220 * (1 - var(--usage))), 75%, 50%);
 }
 
 .tooltip {
