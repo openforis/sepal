@@ -24,7 +24,7 @@ export const defaultModel = {
                 booleanOperator: 'and',
                 constraints: [{
                     id: guid(),
-                    description: 'description < 0',
+                    description: 'difference < 0',
                     image: 'this-recipe',
                     band: 'difference',
                     operator: '<',
@@ -39,7 +39,7 @@ export const defaultModel = {
                 booleanOperator: 'and',
                 constraints: [{
                     id: guid(),
-                    description: 'description = 0',
+                    description: 'difference = 0',
                     image: 'this-recipe',
                     band: 'difference',
                     operator: '=',
@@ -54,7 +54,7 @@ export const defaultModel = {
                 booleanOperator: 'and',
                 constraints: [{
                     id: guid(),
-                    description: 'description > 0',
+                    description: 'difference > 0',
                     image: 'this-recipe',
                     band: 'difference',
                     operator: '>',
