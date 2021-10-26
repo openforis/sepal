@@ -19,7 +19,12 @@ export const getAvailableBands = recipe => {
             label: 'difference'
         }
     }
-
+    const normalizedDifference = {
+        normalizedDifference: {
+            dataType: {precision: 'float'},
+            label: 'normalizedDifference'
+        }
+    }
     const error = hasError(recipe)
         ? {
             error: {
@@ -28,7 +33,6 @@ export const getAvailableBands = recipe => {
             }
         }
         : {}
-
     const confidence = hasError(recipe)
         ? {
             confidence: {
@@ -41,6 +45,7 @@ export const getAvailableBands = recipe => {
     return {
         ...change,
         ...difference,
+        ...normalizedDifference,
         ...error,
         ...confidence
     }

@@ -19,6 +19,16 @@ export const getPreSetVisualizations = recipe => {
         })
     }
 
+    const normalizedDifference = () => {
+        return normalize({
+            type: 'continuous',
+            bands: ['normalizedDifference'],
+            min: -1,
+            max: 1,
+            palette: '#a50026, #d73027, #f46d43, #fdae61, #ffffff, #a6d96a, #66bd63, #1a9850, #006837'
+        })
+    }
+
     const error = () => {
         const maxError = fromImage && toImage
             ? Math.max(fromImage.errorBandMax, toImage.errorBandMax)
@@ -65,6 +75,7 @@ export const getPreSetVisualizations = recipe => {
     }
     return [
         hasDifference ? [difference()] : [],
+        hasDifference ? [normalizedDifference()] : [],
         hasLegend ? [change()] : [],
         hasError ? [error()] : [],
         hasError ? [confidence()] : []
