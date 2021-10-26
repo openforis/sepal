@@ -1,5 +1,5 @@
 .label {
-    --label-color: #b0b0b0;
+    --label-color: hsl(0, 0%, 70%);
     --normal-font-size: .8rem;
     --large-font-size: .9rem;
     display: flex;
