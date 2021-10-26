@@ -14,7 +14,7 @@ import styles from './input.module.css'
 import withForwardedRef from 'ref'
 
 const checkProtectedKey = e => {
-    const PROTECTED_KEY_CODES = ['ArrowLeft', 'ArrowRight', 'ArrowUp, ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']
+    const PROTECTED_KEY_CODES = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']
     if (PROTECTED_KEY_CODES.includes(e.code)) {
         e.stopPropagation()
     }
