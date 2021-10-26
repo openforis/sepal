@@ -25,3 +25,7 @@
 .type-success {
     color: var(--success-color);
 }
+
+.centered {
+    justify-content: center;
+}

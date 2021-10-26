@@ -5,11 +5,12 @@ import styles from './message.module.css'
 
 export class Message extends React.Component {
     render() {
-        const {className, text, type, children} = this.props
+        const {className, text, type, centered, children} = this.props
         return (
             <div className={[
                 styles.text,
                 styles[`type-${type}`],
+                centered ? styles.centered : null,
                 className
             ].join(' ')}>
                 {this.renderIcon()}
@@ -33,6 +34,7 @@ Message.defaultProps = {
 }
 
 Message.propTypes = {
+    centered: PropTypes.any,
     children: PropTypes.any,
     className: PropTypes.string,
     icon: PropTypes.string,
