@@ -27,6 +27,7 @@
         "marked": "^3.0.7",
         "moment": "^2.29.1",
         "nodemailer": "^6.7.0",
+        "rxjs": "^7.4.0",
         "shared": "../../../lib/js/shared",
         "short-unique-id": "^4.4.4"
     },
