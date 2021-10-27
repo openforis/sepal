@@ -2,12 +2,24 @@ import {Layout} from './layout'
 import Label from './label'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import styles from './buttonGroup.module.css'
 
 const classNames = layout =>
     layout.split('-').map(className => styles[className])
 
 export const ButtonGroup = ({className, layout, alignment, spacing, label, disabled, children}) => {
+    const mapChild = (child, index, childrenCount) =>
+        React.cloneElement(child, {
+            collapseLeft: index !== 0,
+            collapseRight: index !== childrenCount - 1
+        })
+
+    const mapChildren = children =>
+        React.Children.map(children, (child, index) =>
+            mapChild(child, index, children.length)
+        )
+
     const buttons = (
         <div className={[
             styles.container,
@@ -19,10 +31,11 @@ export const ButtonGroup = ({className, layout, alignment, spacing, label, disab
                 styles[`alignment-${alignment}`],
                 styles[`spacing-${spacing}`]
             ].join(' ')}>
-                {children}
+                {spacing === 'tight' ? mapChildren(children) : children}
             </div>
         </div>
     )
+
     return label
         ? (
             <Layout spacing={spacing}>
@@ -36,8 +49,8 @@ export const ButtonGroup = ({className, layout, alignment, spacing, label, disab
 }
 
 ButtonGroup.propTypes = {
-    children: PropTypes.any.isRequired,
     alignment: PropTypes.oneOf(['left', 'center', 'right', 'spaced', 'fill', 'distribute']),
+    children: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     label: PropTypes.any,
