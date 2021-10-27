@@ -11,8 +11,8 @@ const classNames = layout =>
 export const ButtonGroup = ({className, layout, alignment, spacing, label, disabled, children}) => {
     const mapChild = (child, index, childrenCount) =>
         React.cloneElement(child, {
-            collapseLeft: index !== 0,
-            collapseRight: index !== childrenCount - 1
+            joinLeft: index !== 0,
+            joinRight: index !== childrenCount - 1
         })
 
     const mapChildren = children =>
