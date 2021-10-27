@@ -13,9 +13,8 @@ import Tooltip from 'widget/tooltip'
 import styles from './input.module.css'
 import withForwardedRef from 'ref'
 
-const checkProtectedKey = e => {
-    const PROTECTED_KEY_CODES = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']
-    if (PROTECTED_KEY_CODES.includes(e.code)) {
+const checkProtectedKey = (e, protectedKeyCodes) => {
+    if (protectedKeyCodes.includes(e.code)) {
         e.stopPropagation()
     }
 }
@@ -74,6 +73,10 @@ class _Input extends React.Component {
         }
     }
 
+    checkProtectedKey(e) {
+        return checkProtectedKey(e, ['ArrowLeft', 'ArrowRight', 'Home', 'End'])
+    }
+    
     render() {
         const {className, disabled, label, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border, onClick} = this.props
         return (
@@ -147,7 +150,7 @@ class _Input extends React.Component {
                         onBlur={this.onBlur}
                         onChange={this.onChange}
                         onWheel={e => type === 'number' && e.target.blur()} // disable mouse wheel on input type=number
-                        onKeyDown={checkProtectedKey}
+                        onKeyDown={e => this.checkProtectedKey(e)}
                     />
                 </Tooltip>
                 {/* </div> */}
@@ -325,6 +328,10 @@ class _Textarea extends React.Component {
         this.ref = props.forwardedRef || React.createRef()
     }
 
+    checkProtectedKey(e) {
+        return checkProtectedKey(e, ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'])
+    }
+    
     render() {
         const {className, disabled, label, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border} = this.props
         return (
@@ -375,7 +382,7 @@ class _Textarea extends React.Component {
                             onBlur && onBlur(e)
                         }}
                         onChange={e => onChange && onChange(e)}
-                        onKeyDown={checkProtectedKey}
+                        onKeyDown={e => this.checkProtectedKey(e)}
                     />
                 </Tooltip>
             </Keybinding>
