@@ -45,7 +45,7 @@ class _Button extends React.Component {
 
     classNames() {
         const {chromeless, className, additionalClassName, look, size, shape, air, content,
-            alignment, width, onClickHold, hover, disableTransitions} = this.props
+            alignment, width, joinLeft, joinRight, onClickHold, hover, disableTransitions} = this.props
         return className ? className : [
             styles.button,
             styles[`size-${size}`],
@@ -54,6 +54,8 @@ class _Button extends React.Component {
             styles[`content-${content}`],
             styles[`alignment-${alignment}`],
             styles[`width-${width}`],
+            joinLeft ? styles['join-left'] : null,
+            joinRight ? styles['join-right'] : null,
             lookStyles.look,
             lookStyles[look],
             chromeless ? lookStyles.chromeless : null,
@@ -340,6 +342,8 @@ Button.propTypes = {
     iconSpin: PropTypes.any,
     iconType: PropTypes.string,
     iconVariant: PropTypes.string,
+    joinLeft: PropTypes.any,
+    joinRight: PropTypes.any,
     label: PropTypes.any,
     linkTarget: PropTypes.string,
     linkUrl: PropTypes.string,
