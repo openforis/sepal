@@ -3,6 +3,7 @@ import {ScrollableList} from 'widget/list'
 import {Shape} from 'widget/shape'
 import {Subject, debounceTime, distinctUntilChanged, filter, merge} from 'rxjs'
 import {compose} from 'compose'
+import {simplifyString} from 'string'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -144,7 +145,7 @@ class _SearchBox extends React.Component {
                     onSearchValue && onSearchValue(value)
                     onSearchValues && onSearchValues(
                         _.chain(value.split(/\s+/))
-                            .map(filter => escapeStringRegexp(filter.trim()))
+                            .map(filter => simplifyString(escapeStringRegexp(filter.trim())))
                             .compact()
                             .value()
                     )

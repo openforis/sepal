@@ -6,6 +6,7 @@ import {compose} from 'compose'
 import {connect, select} from 'store'
 import {loadApps$} from 'apps'
 import {msg} from 'translate'
+import {simplifyString} from 'string'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -116,7 +117,7 @@ class _AppList extends React.Component {
         return filterValues
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
-                    matcher.test(app[property])
+                    matcher.test(simplifyString(app[property]))
                 )
             )
             : true

@@ -7,6 +7,7 @@ import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {UserResourceUsage} from 'app/home/user/userResourceUsage'
 import {msg} from 'translate'
+import {simplifyString} from 'string'
 import Highlight from 'react-highlighter'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
@@ -72,7 +73,7 @@ export default class UserList extends React.Component {
         return textFilterValues
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
-                    matcher.test(user[property])
+                    matcher.test(simplifyString(user[property]))
                 )
             )
             : true
@@ -97,7 +98,7 @@ export default class UserList extends React.Component {
     isUserPending({status}) {
         return status === 'PENDING'
     }
-    
+
     isUserActive({status}) {
         return status === 'ACTIVE'
     }

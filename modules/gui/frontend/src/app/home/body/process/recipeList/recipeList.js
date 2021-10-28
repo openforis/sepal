@@ -6,6 +6,7 @@ import {compose} from 'compose'
 import {connect, select} from 'store'
 import {loadRecipes$} from '../recipe'
 import {msg} from 'translate'
+import {simplifyString} from 'string'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -105,7 +106,7 @@ class _RecipeList extends React.Component {
         return filterValues
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
-                    matcher.test(recipe[property])
+                    matcher.test(simplifyString(recipe[property]))
                 )
             )
             : true
