@@ -166,7 +166,7 @@ class _Button extends React.Component {
         const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipVisible, tooltipClickTrigger} = this.props
         const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
         const message = tooltipPanel || tooltip
-        const visibility = _.isNil() ? {} : {visible: tooltipVisible}
+        const visibility = _.isNil(tooltipVisible) ? {} : {visible: tooltipVisible}
         return this.active() && message && !tooltipDisabled ? (
             <Tooltip
                 msg={message}
