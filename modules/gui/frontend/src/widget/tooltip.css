@@ -2,4 +2,5 @@
     max-width: 25rem;
     opacity: 1;
     overflow: hidden;
+    box-shadow: 0 0 1rem hsla(0, 0%, 0%, .75) !important;
 }

@@ -27,24 +27,3 @@
 .resources .used {
     grid-area: used;
 }
-
-.resources .bar {
-    grid-area: bar;
-    position: relative;
-    height: .75rem;
-    width: 100%;
-    border: 1px solid var(--wireframe-color);
-    border-radius: .25rem;
-}
-
-.resources .bar::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-image: linear-gradient(to right,green,yellow, red);
-    clip-path: inset(0 calc(100% * (1 - var(--fraction))) 0 0);
-    border-radius: .25rem;
-}
