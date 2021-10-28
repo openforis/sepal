@@ -162,7 +162,7 @@ class _Button extends React.Component {
     }
 
     renderTooltip(contents) {
-        const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay} = this.props
+        const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipClickTrigger} = this.props
         const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
         const message = tooltipPanel || tooltip
         return this.active() && message && !tooltipDisabled ? (
@@ -171,8 +171,9 @@ class _Button extends React.Component {
                 placement={tooltipPlacement}
                 delay={tooltipDelay}
                 hoverTrigger={!tooltipPanel}
-                clickTrigger={!this.linked()}
+                clickTrigger={tooltipClickTrigger || !this.linked()}
                 overlayInnerStyle={overlayInnerStyle}
+                onVisibleChange={tooltipOnVisible}
             >
                 {contents}
             </Tooltip>
@@ -355,8 +356,10 @@ Button.propTypes = {
     stopPropagation: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.any,
+    tooltipClickTrigger: PropTypes.any,
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
+    tooltipOnVisible: PropTypes.func,
     tooltipPanel: PropTypes.any,
     tooltipPlacement: PropTypes.any,
     type: PropTypes.oneOf(['button', 'submit', 'reset']),
