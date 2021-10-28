@@ -8,7 +8,7 @@ export class Message extends React.Component {
         const {className, text, type, children} = this.props
         return (
             <div className={[
-                styles.text,
+                styles.message,
                 styles[`type-${type}`],
                 className
             ].join(' ')}>
@@ -19,10 +19,10 @@ export class Message extends React.Component {
     }
 
     renderIcon() {
-        const {icon} = this.props
+        const {icon, iconSize} = this.props
         return icon
             ? (
-                <Icon name={icon} size='2x' className={styles.icon}/>
+                <Icon name={icon} size={iconSize} className={styles.icon}/>
             )
             : null
     }
@@ -36,6 +36,7 @@ Message.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     icon: PropTypes.string,
+    iconSize: PropTypes.string,
     text: PropTypes.string,
     type: PropTypes.oneOf(['normal', 'info'])
 }
