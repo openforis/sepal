@@ -1,13 +1,13 @@
 const {job} = require('root/jobs/job')
 
-const worker$ = ({select, from, where = [], orderBy = []}) => {
+const worker$ = ({select, from, where = [], distinct = [], orderBy = []}) => {
     const ee = require('sepal/ee')
     const {map} = require('rxjs')
-    const _ = require('lodash')
 
     const collection = ee.FeatureCollection(from)
     const filtered = where.reduce((c, f) => c.filterMetadata(f[0], f[1], f[2]), collection)
-    const sorted = orderBy.reduce((c, sort) => c.sort(sort), filtered)
+    const withDistinct = distinct.length ? filtered.distinct(distinct) : filtered
+    const sorted = orderBy.reduce((c, sort) => c.sort(sort), withDistinct)
 
     return ee.getInfo$(
         sorted

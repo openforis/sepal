@@ -16,7 +16,7 @@ export default {
         postJson$('/api/gee/image/histogram', {
             body: {recipe, band, aoi, mapBounds, ...params}
         }),
-            
+
     imageMetadata$: ({asset, recipe}) =>
         postJson$('/api/gee/imageMetadata', {
             body: {asset, recipe},
@@ -92,9 +92,9 @@ export default {
             query: {tableId, columnName, columnValue, buffer, color, fillColor}
         }),
 
-    queryEETable$: ({select, from, where, orderBy}) =>
+    queryEETable$: ({select, from, where, distinct, orderBy}) =>
         postJson$('/api/gee/table/query', {
-            body: {select, from, where, orderBy}
+            body: {select, from, where, distinct, orderBy}
         }),
 
     loadTimeSeriesObservations$: ({recipe, latLng, bands}) =>
