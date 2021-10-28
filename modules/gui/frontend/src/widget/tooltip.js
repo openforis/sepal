@@ -4,15 +4,16 @@ import {isMobile} from 'widget/userAgent'
 import PropTypes from 'prop-types'
 import RcTooltip from 'rc-tooltip'
 import React from 'react'
+import _ from 'lodash'
 
 export default class Tooltip extends React.Component {
     render() {
         const {msg, placement, disabled, delay, clickTrigger, hoverTrigger, focusTrigger, destroyTooltipOnHide, onVisibleChange, afterVisibleChange, children, ...otherProps} = this.props
-        const trigger = [
+        const trigger = _.compact([
             focusTrigger ? 'focus' : '',
             clickTrigger ? 'click' : '',
             hoverTrigger && !isMobile() ? 'hover' : ''
-        ]
+        ])
         return msg && !disabled
             ? (
                 <RcTooltip
