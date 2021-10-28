@@ -88,8 +88,9 @@ export class TooltipConfirmationButton extends React.Component {
 
     constructor() {
         super()
-        this.toggleVisibility = this.toggleVisibility.bind(this)
+        this.setVisibility = this.setVisibility.bind(this)
         this.onClick = this.onClick.bind(this)
+        this.onClickHold = this.onClickHold.bind(this)
     }
 
     askConfirmation(askConfirmation) {
@@ -115,20 +116,20 @@ export class TooltipConfirmationButton extends React.Component {
             : tooltip
     }
 
-    toggleVisibility(visible) {
+    setVisibility(visible) {
         if (visible) {
             this.setState({tooltipVisible: true})
         } else {
-            this.setState({tooltipVisible: false, askConfirmation: false})
+            this.setState({tooltipVisible: false}, () => this.setState({askConfirmation: false}))
         }
     }
 
     toggleConfirmation() {
         const {askConfirmation} = this.state
         if (askConfirmation) {
-            this.setState({askConfirmation: false})
+            this.setVisibility(false)
         } else {
-            this.setState({askConfirmation: true, tooltipVisible: true})
+            this.setState({askConfirmation: true}, () => this.setVisibility(true))
         }
     }
 
@@ -137,8 +138,13 @@ export class TooltipConfirmationButton extends React.Component {
         skipConfirmation ? onConfirm() : this.toggleConfirmation()
     }
 
+    onClickHold() {
+        const {onConfirm} = this.props
+        onConfirm()
+    }
+
     render() {
-        const {busy, chromeless, disabled, icon, iconType, label, shape, size, tooltipPlacement, width, onConfirm} = this.props
+        const {busy, chromeless, disabled, icon, iconType, label, shape, size, tooltipPlacement, width} = this.props
         const {tooltipVisible} = this.state
         return (
             <Button
@@ -153,10 +159,10 @@ export class TooltipConfirmationButton extends React.Component {
                 disabled={disabled}
                 tooltip={this.renderTooltip()}
                 tooltipPlacement={tooltipPlacement}
-                tooltipOnVisible={this.toggleVisibility}
                 tooltipVisible={tooltipVisible}
+                tooltipOnVisible={this.setVisibility}
                 onClick={this.onClick}
-                onClickHold={onConfirm}
+                onClickHold={this.onClickHold}
             />
         )
     }
