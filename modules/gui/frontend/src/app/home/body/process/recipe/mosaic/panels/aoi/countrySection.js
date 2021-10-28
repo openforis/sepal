@@ -42,7 +42,9 @@ const loadCountryForArea$ = areaId => {
         from: countryEETable,
         where: [['id', 'equals', areaId]],
         orderBy: ['label']
-    })
+    }).pipe(
+        map(rows => rows.length ? rows[0]['parent_id'] : null)
+    )
 }
 
 const loadCountryAreas$ = countryId => {
@@ -144,7 +146,7 @@ class _CountrySection extends React.Component {
 
     componentDidMount() {
         const {stream, inputs: {country, area}} = this.props
-        if (area.value && !country.value)
+        if (area.value && !country.value) {
             stream('LOAD_COUNTRY_FOR_AREA',
                 loadCountryForArea$(area.value).pipe(
                     map(countryId => {
@@ -152,6 +154,7 @@ class _CountrySection extends React.Component {
                         this.loadCountryAreas(countryId)
                     })
                 ))
+        }
         if (country.value) {
             this.loadCountryAreas(country.value)
         }
