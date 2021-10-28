@@ -1,55 +1,61 @@
-import {Button} from 'widget/button'
+import {ModalConfirmationButton, TooltipConfirmationButton} from './safetyButton'
 import PropTypes from 'prop-types'
 import React from 'react'
-import SafetyButton from './safetyButton'
 
 export default class RemoveButton extends React.Component {
-    renderSafe() {
-        const {tooltip, tooltipPlacement, message, size, onRemove, disabled} = this.props
+    render() {
+        const {message} = this.props
+        return message
+            ? this.renderModalConfirmationButton()
+            : this.renderTooltipConfirmationButton()
+    }
+
+    renderModalConfirmationButton() {
+        const {tooltip, tooltipPlacement, title, message, size, onRemove, disabled, unsafe} = this.props
         return (
-            <SafetyButton
-                chromeless={true}
+            <ModalConfirmationButton
+                chromeless
                 shape='circle'
-                size={size}
                 icon='trash'
+                size={size}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
-                message={message}
-                onConfirm={onRemove}
                 disabled={disabled}
+                skipConfirmation={unsafe}
+                onConfirm={onRemove}
+                title={title}
+                message={message}
             />
         )
     }
 
-    renderUnsafe() {
-        const {tooltip, tooltipPlacement, onRemove, disabled} = this.props
+    renderTooltipConfirmationButton() {
+        const {tooltip, tooltipPlacement, size, onRemove, disabled, unsafe} = this.props
         return (
-            <Button
-                chromeless={true}
+            <TooltipConfirmationButton
+                chromeless
                 shape='circle'
                 icon='trash'
+                size={size}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
-                onClick={onRemove}
                 disabled={disabled}
+                skipConfirmation={unsafe}
+                onConfirm={onRemove}
             />
         )
-    }
-    render() {
-        const {unsafe} = this.props
-        return unsafe
-            ? this.renderUnsafe()
-            : this.renderSafe()
     }
 }
 
 RemoveButton.propTypes = {
     onRemove: PropTypes.func.isRequired,
+    chromeless: PropTypes.any,
     disabled: PropTypes.any,
-    message: PropTypes.string,
-    size: PropTypes.oneOf(['x-small', 'small', 'normal', 'large', 'x-large', 'xx-large']),
-    tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string,
+    message: PropTypes.any,
+    size: PropTypes.any,
+    title: PropTypes.any,
+    tooltip: PropTypes.any,
+    tooltipPlacement: PropTypes.any,
     unsafe: PropTypes.any
 }
 
