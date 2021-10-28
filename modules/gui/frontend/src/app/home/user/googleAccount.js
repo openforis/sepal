@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
+import {ModalConfirmationButton} from 'widget/safetyButton'
 import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
@@ -10,7 +11,6 @@ import {msg} from 'translate'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import SafetyButton from 'widget/safetyButton'
 import styles from './googleAccount.module.css'
 
 const mapStateToProps = state => {
@@ -71,7 +71,7 @@ class GoogleAccount extends React.Component {
     renderDisconnectButton() {
         const taskCount = this.getTaskCount()
         return (
-            <SafetyButton
+            <ModalConfirmationButton
                 icon='google'
                 iconType='brands'
                 label={msg('user.googleAccount.disconnect.label')}

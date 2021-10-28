@@ -125,7 +125,6 @@ export class RecipeListData extends React.Component {
                 highlight={highlightMatcher}
                 highlightTitle={false}
                 duplicateTooltip={msg('process.menu.duplicateRecipe')}
-                removeMessage={msg('process.menu.removeRecipe.message', {recipe: recipe.name})}
                 removeTooltip={msg('process.menu.removeRecipe.tooltip')}
                 onClick={onSelect ? () => onSelect(recipe.id) : null}
                 onDuplicate={onDuplicate ? () => onDuplicate(recipe.id) : null}

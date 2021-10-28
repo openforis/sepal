@@ -24,7 +24,8 @@ const loadCountries$ = () => {
     return api.gee.queryEETable$({
         select: ['id', 'label'],
         from: countryEETable,
-        where: [['parent_id', 'equals', '']],
+        where: [['parent_id', 'equals', null]],
+        distinct: ['id'],
         orderBy: ['label']
     }).pipe(
         map(countries => countries.map(({id, label}) => ({value: id, label}))),
@@ -64,9 +65,10 @@ const loadCountryAreas$ = countryId => {
 }
 
 const mapStateToProps = (state, ownProps) => {
+    const country = ownProps.inputs.country.value
     return {
         countries: select('countries'),
-        countryAreas: select(['areasByCountry', ownProps.inputs.country.value]),
+        countryAreas: country ? select(['areasByCountry', ownProps.inputs.country.value]) : [],
     }
 }
 
@@ -106,7 +108,7 @@ class _CountrySection extends React.Component {
                     placement='below'
                     options={countries || []}
                     placeholder={countryPlaceholder}
-                    busyMessage={loadCountries.active && msg('widget.loading')}
+                    busyMessage={loadCountries.active || stream('LOAD_COUNTRY_FOR_AREA').active}
                     disabled={loadCountries.failed}
                     autoFocus
                     onChange={option => {
@@ -121,7 +123,7 @@ class _CountrySection extends React.Component {
                     placement='below'
                     options={(countryAreas || [])}
                     placeholder={areaPlaceholder}
-                    busyMessage={loadCountryAreas.active && msg('widget.loading')}
+                    busyMessage={loadCountryAreas.active || stream('LOAD_COUNTRY_FOR_AREA').active}
                     disabled={loadCountryAreas.failed || !countryAreas || countryAreas.length === 0}
                     autoFocus
                     onChange={() => this.aoiChanged$.next()}

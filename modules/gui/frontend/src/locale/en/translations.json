@@ -1726,7 +1726,6 @@
       "noSavedRecipes": "No saved recipes",
       "recipeNotSaved": "Recipe is not saved.",
       "removeRecipe": {
-        "message": "Do you want to remove {recipe}?",
         "tooltip": "Remove recipe"
       },
       "revertToOldRevision": "Revert to old revision...",

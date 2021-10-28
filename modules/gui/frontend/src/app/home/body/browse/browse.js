@@ -301,7 +301,6 @@ class Browse extends React.Component {
                         disabled={!oneFileSelected}
                     />
                     <RemoveButton
-                        message={this.removeInfo()}
                         tooltip={msg('browse.controls.remove.tooltip')}
                         tooltipPlacement='bottom'
                         onRemove={() => this.removeSelected()}

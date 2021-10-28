@@ -138,10 +138,10 @@ const valuesToModel = values => {
 
 const modelToValues = (model = {}) => {
     if (model.type === 'EE_TABLE')
-        if (model.id === countryEETable) // TODO: Add EE Table for countries
+        if (model.id === countryEETable)
             return {
                 section: 'COUNTRY',
-                [model.level ? model.level.toLowerCase() : 'COUNTRY']: model.key,
+                [model.level ? model.level.toLowerCase() : 'country']: model.key,
                 buffer: model.buffer
             }
         else
