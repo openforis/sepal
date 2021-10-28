@@ -1,6 +1,6 @@
 import {select} from 'store'
 
-const _isMobile = () => {
+export const isMobile = () => {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera
     if (/windows phone/i.test(userAgent))
         return true
@@ -14,7 +14,3 @@ const _isMobile = () => {
     const dimensions = select('dimensions')
     return dimensions.width < 500 || (dimensions.height < 500 && dimensions.height > 0)
 }
-
-const IS_MOBILE = _isMobile()
-
-export const isMobile = () => IS_MOBILE
