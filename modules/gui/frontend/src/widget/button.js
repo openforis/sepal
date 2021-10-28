@@ -6,6 +6,7 @@ import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
+import _ from 'lodash'
 import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
 import withForwardedRef from 'ref'
@@ -165,6 +166,7 @@ class _Button extends React.Component {
         const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipVisible, tooltipClickTrigger} = this.props
         const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
         const message = tooltipPanel || tooltip
+        const visibility = _.isNil() ? {} : {visible: tooltipVisible}
         return this.active() && message && !tooltipDisabled ? (
             <Tooltip
                 msg={message}
@@ -174,7 +176,7 @@ class _Button extends React.Component {
                 clickTrigger={tooltipClickTrigger || !this.linked()}
                 overlayInnerStyle={overlayInnerStyle}
                 onVisibleChange={tooltipOnVisible}
-                visible={tooltipVisible}
+                {...visibility}
             >
                 {contents}
             </Tooltip>
