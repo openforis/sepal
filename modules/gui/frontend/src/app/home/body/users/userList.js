@@ -2,6 +2,7 @@ import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import {Layout} from 'widget/layout'
+import {Message} from 'widget/message'
 import {Pageable} from 'widget/pageable/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
@@ -329,19 +330,8 @@ UserList.propTypes = {
 
 class UserItem extends React.Component {
     render() {
-        const {
-            user: {
-                name,
-                status,
-                updateTime,
-                quota: {
-                    budget = {},
-                    current = {}
-                } = {}
-            },
-            highlight,
-            onClick
-        } = this.props
+        const {user, onClick} = this.props
+        const {status, quota: {budget = {}, current = {}} = {}} = user
         return (
             <div
                 className={[
@@ -353,34 +343,105 @@ class UserItem extends React.Component {
                     styles.user,
                     status ? styles.clickable : null
                 ].join(' ')}
-                onClick={() => status ? onClick() : null}
-            >
-                <div><Highlight search={highlight} ignoreDiacritics={true} matchClass={styles.highlight}>{name}</Highlight></div>
-                <div>{status ? msg(`user.userDetails.form.status.${status}`) : <Icon name='spinner'/>}</div>
-                <div>{moment(updateTime).fromNow()}</div>
+                onClick={() => status ? onClick() : null}>
+                {this.renderName(user)}
+                {this.renderStatus(user)}
+                {this.renderLastUpdate(user)}
+                {this.renderBudgetUpdateRequest(user)}
+                {this.renderInstanceSpending(budget, current)}
+                {this.renderStorageSpending(budget, current)}
+                {this.renderStorageQuota(budget, current)}
+            </div>
+        )
+    }
 
-                <div className={styles.number}>{format.dollars(budget.instanceSpending)}</div>
+    renderName({name}) {
+        const {highlight} = this.props
+        return (
+            <div>
+                <Highlight search={highlight} ignoreDiacritics={true} matchClass={styles.highlight}>{name}</Highlight>
+            </div>
+        )
+    }
 
+    renderStatus({status}) {
+        return (
+            <div>
+                {status ? this.renderDefinedStatus(status) : this.renderUndefinedStatus() }
+            </div>
+        )
+    }
+
+    renderDefinedStatus(status) {
+        return (
+            <Message text={msg(`user.userDetails.form.status.${status}`)}/>
+        )
+    }
+
+    renderUndefinedStatus() {
+        return (
+            <Icon name='spinner'/>
+        )
+    }
+
+    renderLastUpdate({updateTime}) {
+        return (
+            <div>
+                {moment(updateTime).fromNow()}
+            </div>
+        )
+    }
+
+    renderBudgetUpdateRequest({quota: {budgetUpdateRequest}}) {
+        return (
+            <div>
+                <Icon name={budgetUpdateRequest ? 'envelope' : null}/>
+            </div>
+        )
+    }
+
+    renderInstanceSpending(budget, current) {
+        return (
+            <React.Fragment>
+                <div className={styles.number}>
+                    {format.dollars(budget.instanceSpending)}
+                </div>
                 <UserResourceUsage
                     currentValue={current.instanceSpending}
                     budgetValue={budget.instanceSpending}
                     formattedValue={format.dollars(current.instanceSpending)}
                 />
-                <div className={styles.number}>{format.dollars(budget.storageSpending)}</div>
+            </React.Fragment>
+        )
+    }
 
+    renderStorageSpending(budget, current) {
+        return (
+            <React.Fragment>
+                <div className={styles.number}>
+                    {format.dollars(budget.storageSpending)}
+                </div>
                 <UserResourceUsage
                     currentValue={current.storageSpending}
                     budgetValue={budget.storageSpending}
                     formattedValue={format.dollars(current.storageSpending)}
                 />
-                <div className={styles.number}>{format.fileSize(budget.storageQuota, {scale: 'G'})}</div>
+            </React.Fragment>
+        )
+    }
 
+    renderStorageQuota(budget, current) {
+        return (
+            <React.Fragment>
+                <div className={styles.number}>
+                    {format.fileSize(budget.storageQuota, {scale: 'G'})}
+                </div>
                 <UserResourceUsage
                     currentValue={current.storageQuota}
                     budgetValue={budget.storageQuota}
                     formattedValue={format.fileSize(current.storageQuota, {scale: 'G'})}
                 />
-            </div>
+            </React.Fragment>
         )
     }
 }
