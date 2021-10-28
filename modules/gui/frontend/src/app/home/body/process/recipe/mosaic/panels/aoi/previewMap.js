@@ -12,7 +12,7 @@ import styles from './previewMap.module.css'
 const log = getLogger('previewMap')
 
 const PREVIEW_MAP_OPTIONS = {
-    minZoom: 1,
+    minZoom: 0,
     zoom: 1,
     gestureHandling: 'none',
     draggableCursor: 'default'
