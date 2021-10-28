@@ -1,3 +1,4 @@
+import {Gauge} from 'widget/gauge'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
@@ -40,7 +41,7 @@ class UserResources extends React.Component {
                 <Label className={styles.label} msg={msg('user.report.resources.instanceSpending')}/>
                 <div className={styles.quota}>{format.dollars(monthlyInstanceBudget, {suffix: '/mo.'})}</div>
                 <div className={styles.used}>{format.percent(monthlyInstanceSpending, monthlyInstanceBudget, 0)}</div>
-                <div className={styles.bar} style={{'--fraction': monthlyInstanceSpending / monthlyInstanceBudget}}/>
+                <Gauge value={monthlyInstanceSpending} maxValue={monthlyInstanceBudget}/>
             </div>
         )
     }
@@ -51,7 +52,7 @@ class UserResources extends React.Component {
                 <Label className={styles.label} msg={msg('user.report.resources.storageSpending')}/>
                 <div className={styles.quota}>{format.dollars(monthlyStorageBudget, {suffix: '/mo.'})}</div>
                 <div className={styles.used}>{format.percent(monthlyStorageSpending, monthlyStorageBudget, 0)}</div>
-                <div className={styles.bar} style={{'--fraction': monthlyStorageSpending / monthlyStorageBudget}}/>
+                <Gauge value={monthlyStorageSpending} maxValue={monthlyStorageBudget}/>
             </div>
         )
     }
@@ -62,7 +63,7 @@ class UserResources extends React.Component {
                 <Label className={styles.label} msg={msg('user.report.resources.storageSpace')}/>
                 <div className={styles.quota}>{format.number({value: storageQuota, scale: 'G', unit: 'B'})}</div>
                 <div className={styles.used}>{format.percent(storageUsed, storageQuota, 0)}</div>
-                <div className={styles.bar} style={{'--fraction': storageUsed / storageQuota}}/>
+                <Gauge value={storageUsed} maxValue={storageQuota}/>
             </div>
         )
     }
