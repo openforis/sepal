@@ -8,7 +8,7 @@ import {withMapAreaContext} from '../mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import SafetyButton from 'widget/safetyButton'
+import RemoveButton from 'widget/removeButton'
 import guid from 'guid'
 
 const mapRecipeToProps = (recipe, {source}) => ({
@@ -52,16 +52,12 @@ class _VisualizationSelector extends React.Component {
                         disabled={!selectedOption}
                         onClick={() => this.editVisParams(selectedOption.visParams, editMode)}
                     />,
-                    <SafetyButton
+                    <RemoveButton
                         key='remove'
-                        tooltip={msg('map.visualizationSelector.remove.tooltip')}
-                        icon='trash'
-                        chromeless
-                        shape='circle'
                         size='small'
-                        message={'Are you sure you want to remove these visualization parameters?'}
+                        tooltip={msg('map.visualizationSelector.remove.tooltip')}
                         disabled={!selectedOption || editMode === 'clone'}
-                        onConfirm={() => this.removeVisParams(selectedOption.visParams)}
+                        onRemove={() => this.removeVisParams(selectedOption.visParams)}
                     />
                 ]}
                 placeholder={'Select bands to visualize...'}
