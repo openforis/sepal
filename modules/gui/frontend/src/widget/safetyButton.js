@@ -104,7 +104,7 @@ export class TooltipConfirmationButton extends React.Component {
     renderTooltip() {
         const {tooltip} = this.props
         const {askConfirmation} = this.state
-        return askConfirmation
+        return askConfirmation || isMobile()
             ? this.renderTooltipConfirmation()
             : tooltip
     }
