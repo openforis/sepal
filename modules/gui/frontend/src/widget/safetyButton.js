@@ -1,5 +1,4 @@
 import {Button} from 'widget/button'
-import {isMobile} from './userAgent'
 import {msg} from 'translate'
 import Confirm from 'widget/confirm'
 import PropTypes from 'prop-types'
@@ -83,7 +82,14 @@ ModalConfirmationButton.propTypes = {
 
 export class TooltipConfirmationButton extends React.Component {
     state = {
-        askConfirmation: false
+        askConfirmation: false,
+        tooltipVisible: false
+    }
+
+    constructor() {
+        super()
+        this.toggleVisibility = this.toggleVisibility.bind(this)
+        this.onClick = this.onClick.bind(this)
     }
 
     askConfirmation(askConfirmation) {
@@ -104,14 +110,36 @@ export class TooltipConfirmationButton extends React.Component {
     renderTooltip() {
         const {tooltip} = this.props
         const {askConfirmation} = this.state
-        return askConfirmation || isMobile()
+        return askConfirmation
             ? this.renderTooltipConfirmation()
             : tooltip
     }
 
-    render() {
-        const {busy, chromeless, disabled, icon, iconType, label, shape, size, skipConfirmation, tooltipPlacement, width, onConfirm} = this.props
+    toggleVisibility(visible) {
+        if (visible) {
+            this.setState({tooltipVisible: true})
+        } else {
+            this.setState({tooltipVisible: false, askConfirmation: false})
+        }
+    }
+
+    toggleConfirmation() {
         const {askConfirmation} = this.state
+        if (askConfirmation) {
+            this.setState({askConfirmation: false})
+        } else {
+            this.setState({askConfirmation: true, tooltipVisible: true})
+        }
+    }
+
+    onClick() {
+        const {skipConfirmation, onConfirm} = this.props
+        skipConfirmation ? onConfirm() : this.toggleConfirmation()
+    }
+
+    render() {
+        const {busy, chromeless, disabled, icon, iconType, label, shape, size, tooltipPlacement, width, onConfirm} = this.props
+        const {tooltipVisible} = this.state
         return (
             <Button
                 busy={busy}
@@ -125,11 +153,10 @@ export class TooltipConfirmationButton extends React.Component {
                 disabled={disabled}
                 tooltip={this.renderTooltip()}
                 tooltipPlacement={tooltipPlacement}
-                tooltipClickTrigger={isMobile()}
-                tooltipDelay={500}
-                tooltipOnVisible={visible => !visible && this.askConfirmation(false)}
-                onClick={() => skipConfirmation ? onConfirm() : this.askConfirmation(!askConfirmation)}
-                onClickHold={() => onConfirm && onConfirm()}
+                tooltipOnVisible={this.toggleVisibility}
+                tooltipVisible={tooltipVisible}
+                onClick={this.onClick}
+                onClickHold={onConfirm}
             />
         )
     }
