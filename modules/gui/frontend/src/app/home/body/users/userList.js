@@ -395,7 +395,7 @@ class UserItem extends React.Component {
     renderBudgetUpdateRequest({quota: {budgetUpdateRequest}}) {
         return (
             <div>
-                <Icon name={budgetUpdateRequest ? 'envelope' : null}/>
+                {budgetUpdateRequest ? <Icon name='envelope'/> : null}
             </div>
         )
     }
