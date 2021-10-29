@@ -75,9 +75,9 @@ export class LegendBuilder extends React.Component {
                 autoFocus={last}
             />
             <RemoveButton
-                message={msg('map.legendBuilder.entry.confirmation')}
                 size='small'
                 disabled={locked}
+                tooltip={msg('map.legendBuilder.entry.remove.tooltip')}
                 onRemove={() => this.removeEntry(entry)}/>
         </Layout>
     }

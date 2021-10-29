@@ -386,7 +386,9 @@
           "duplicateValue": "Il y a plus d'une entrée avec cette valeur",
           "invalidColor": "Couleur invalide"
 			  },
-			  "confirmation": "Êtes-vous sûr de vouloir supprimer cette entrée de la légende ?",
+			  "remove": {
+                  "tooltip": "Supprimer cette entrée de la légende"
+              },
 			  "classLabel": {
 				  "placeholder": "Label..."
 			  }

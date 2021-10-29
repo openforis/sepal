@@ -399,7 +399,9 @@
           "duplicateValue": "There are more than one entry with this value",
           "invalidColor": "Invalid color"
         },
-        "confirmation": "Are you sure you want to remove this legend entry?",
+        "remove": {
+            "tooltip": "Remove this legend entry"
+        },
         "classLabel": {
           "placeholder": "Label..."
         }
