@@ -1,5 +1,5 @@
 import {BalancingTileProvider} from '../tileProvider/balancingTileProvider'
-import {MAX_ZOOM, MIN_ZOOM} from '../maps'
+import {MAX_ZOOM} from '../maps'
 import guid from 'guid'
 
 // implements google.maps.MapType
@@ -7,7 +7,7 @@ export class GoogleMapsOverlay {
     constructor(tileProvider, {
         google,
         name,
-        minZoom = MIN_ZOOM,
+        minZoom = 0,
         maxZoom = MAX_ZOOM,
     } = {}, busy$) {
         this.tileProvider = new BalancingTileProvider({tileProvider, retries: 3, busy$})

@@ -28,7 +28,7 @@ export class Layout extends React.Component {
 Layout.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
-    spacing: PropTypes.oneOf(['loose', 'normal', 'compact', 'none']),
+    spacing: PropTypes.oneOf(['loose', 'normal', 'compact', 'tight', 'none']),
     style: PropTypes.object,
     type: PropTypes.oneOf(['vertical', 'horizontal', 'horizontal-nowrap'])
 }

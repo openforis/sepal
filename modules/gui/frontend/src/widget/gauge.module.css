@@ -1,0 +1,32 @@
+.container {
+    width: 100%;
+}
+
+.container > * + * {
+    margin-top: .5rem;
+}
+
+.bar {
+    --padding: 1px;
+    grid-area: bar;
+    position: relative;
+    height: 1rem;
+    width: 100%;
+    background-color: hsla(0, 0%, 0%, .3);
+    border: 1px solid #666;
+}
+
+.bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1px;
+    background-image: linear-gradient(to right,royalblue, green,gold, red);
+    background-repeat: no-repeat;
+    background-position: var(--padding) var(--padding);
+    background-size: calc(100% - 2 * var(--padding)) calc(100% - 2 * var(--padding));
+    clip-path: inset(0 calc(100% * (1 - var(--fraction))) 0 0);
+}

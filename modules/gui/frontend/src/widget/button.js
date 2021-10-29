@@ -6,6 +6,7 @@ import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
+import _ from 'lodash'
 import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
 import withForwardedRef from 'ref'
@@ -162,17 +163,20 @@ class _Button extends React.Component {
     }
 
     renderTooltip(contents) {
-        const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay} = this.props
+        const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipVisible, tooltipClickTrigger} = this.props
         const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
         const message = tooltipPanel || tooltip
+        const visibility = _.isNil(tooltipVisible) ? {} : {visible: tooltipVisible}
         return this.active() && message && !tooltipDisabled ? (
             <Tooltip
                 msg={message}
                 placement={tooltipPlacement}
                 delay={tooltipDelay}
                 hoverTrigger={!tooltipPanel}
-                clickTrigger={!this.linked()}
+                clickTrigger={tooltipClickTrigger || !this.linked()}
                 overlayInnerStyle={overlayInnerStyle}
+                onVisibleChange={tooltipOnVisible}
+                {...visibility}
             >
                 {contents}
             </Tooltip>
@@ -355,10 +359,13 @@ Button.propTypes = {
     stopPropagation: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.any,
+    tooltipClickTrigger: PropTypes.any,
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
+    tooltipOnVisible: PropTypes.func,
     tooltipPanel: PropTypes.any,
     tooltipPlacement: PropTypes.any,
+    tooltipVisible: PropTypes.any,
     type: PropTypes.oneOf(['button', 'submit', 'reset']),
     width: PropTypes.oneOf(['fit', 'fill']),
     onClick: PropTypes.func,

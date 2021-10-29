@@ -3,7 +3,7 @@ import {PolygonLayer} from './polygonLayer'
 import {RecipeGeometryLayer} from './recipeGeometryLayer'
 import React from 'react'
 
-export const countryEETable = 'users/wiell/SepalResources/countries'
+export const countryEETable = 'users/wiell/SepalResources/gaul'
 
 export const removeAoiLayer = map => {
     map.removeLayer('Aoi')

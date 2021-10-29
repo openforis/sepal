@@ -1,14 +1,16 @@
 import {Layout} from './layout'
+import {compose} from 'compose'
 import Label from './label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './buttonGroup.module.css'
+import withForwardedRef from 'ref'
 
 const classNames = layout =>
     layout.split('-').map(className => styles[className])
 
-export const ButtonGroup = ({className, layout, alignment, spacing, label, disabled, children}) => {
+const _ButtonGroup = ({className, layout, alignment, spacing, label, disabled, forwardedRef, children}) => {
     const mapChild = (child, index, childrenCount) =>
         React.cloneElement(child, {
             joinLeft: index !== 0,
@@ -21,10 +23,12 @@ export const ButtonGroup = ({className, layout, alignment, spacing, label, disab
         )
 
     const buttons = (
-        <div className={[
-            styles.container,
-            className
-        ].join(' ')}>
+        <div
+            ref={forwardedRef}
+            className={[
+                styles.container,
+                className
+            ].join(' ')}>
             <div className={[
                 styles.buttonGroup,
                 ...classNames(layout),
@@ -47,6 +51,11 @@ export const ButtonGroup = ({className, layout, alignment, spacing, label, disab
         )
         : buttons
 }
+
+export const ButtonGroup = compose(
+    _ButtonGroup,
+    withForwardedRef()
+)
 
 ButtonGroup.propTypes = {
     alignment: PropTypes.oneOf(['left', 'center', 'right', 'spaced', 'fill', 'distribute']),

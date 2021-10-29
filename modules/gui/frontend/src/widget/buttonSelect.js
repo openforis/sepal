@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {ButtonGroup} from './buttonGroup'
 import {ScrollableList} from 'widget/list'
 import {Subject, delay} from 'rxjs'
 import {compose} from 'compose'
@@ -46,6 +47,13 @@ class ButtonSelect extends React.Component {
     }
 
     renderButton() {
+        const {onClick} = this.props
+        return onClick
+            ? this.renderMultiButton()
+            : this.renderSingleButton()
+    }
+
+    renderSingleButton() {
         const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement, width} = this.props
         return (
             <Button
@@ -58,14 +66,44 @@ class ButtonSelect extends React.Component {
                 tooltipPlacement={tooltipPlacement}
                 width={width}
                 onClick={() => this.toggleOptions()}
-                disabled={disabled}
-            >
-                {this.renderContent()}
+                disabled={disabled}>
+                {this.renderContent(true)}
             </Button>
         )
     }
 
-    renderContent() {
+    renderMultiButton() {
+        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement, width, onClick} = this.props
+        return (
+            <ButtonGroup ref={this.input} spacing='tight'>
+                <Button
+                    chromeless={chromeless}
+                    shape={shape}
+                    look={look}
+                    icon={icon}
+                    tooltip={tooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    width={width}
+                    onClick={e => onClick && onClick(e)}
+                    disabled={disabled}>
+                    {this.renderContent(false)}
+                </Button>
+                <Button
+                    chromeless={chromeless}
+                    shape={shape}
+                    look={look}
+                    icon={this.getChevronIcon()}
+                    tooltip={tooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    width={width}
+                    onClick={() => this.toggleOptions()}
+                    disabled={disabled}
+                />
+            </ButtonGroup>
+        )
+    }
+
+    renderContent(renderChevron) {
         const {label, icon, width} = this.props
         const {selectedOption} = this.state
         return (
@@ -74,16 +112,14 @@ class ButtonSelect extends React.Component {
                 <div>
                     {(selectedOption && selectedOption.buttonLabel) || label}
                 </div>
-                {this.renderChevron()}
+                {renderChevron ? <Icon name={this.getChevronIcon()}/> : null}
             </div>
         )
     }
 
-    renderChevron() {
+    getChevronIcon() {
         const {placement} = this.props
-        return (
-            <Icon name={placement === 'above' ? 'chevron-up' : 'chevron-down'}/>
-        )
+        return placement === 'above' ? 'chevron-up' : 'chevron-down'
     }
 
     renderOptions() {
@@ -225,6 +261,7 @@ ButtonSelect.propTypes = {
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     width: PropTypes.string,
+    onClick: PropTypes.func,
     onSelect: PropTypes.func
 }
 

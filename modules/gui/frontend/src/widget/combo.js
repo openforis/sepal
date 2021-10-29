@@ -7,6 +7,7 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
+import {simplifyString} from 'string'
 import AutoFocus from 'widget/autoFocus'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
@@ -297,8 +298,7 @@ class _Combo extends React.Component {
         const parts = filter
             .trim()
             .split(/\s+/)
-            // .map(part => part ? `(?=.*\\b${escapeStringRegexp(part)})` : '')
-            .map(part => part ? `(?=.*${escapeStringRegexp(part)})` : '')
+            .map(part => simplifyString(part ? `(?=.*${escapeStringRegexp(part)})` : ''))
             .join('')
         return RegExp(`^${parts}.*$`, 'i')
     }
@@ -316,7 +316,7 @@ class _Combo extends React.Component {
                 options.map(option =>
                     option.options
                         ? filterGroup(option)
-                        : matcher.test(option.searchableText || option.label)
+                        : matcher.test(simplifyString(option.searchableText || option.label))
                             ? option
                             : null
                 )

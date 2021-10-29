@@ -52,6 +52,10 @@
     --vertical-spacing: 1rem;
 }
 
+.layout.vertical.tight {
+    --vertical-spacing: .5rem;
+}
+
 .layout.vertical.none {
     --vertical-spacing: 0rem;
 }
@@ -66,6 +70,10 @@
 
 .layout.horizontal.compact {
     --horizontal-spacing: .5rem;
+}
+
+.layout.horizontal.tight {
+    --horizontal-spacing: .25rem;
 }
 
 .layout.horizontal.none {
