@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {delay, distinctUntilChanged, fromEvent, map, mapTo, merge, of, switchMap, takeUntil, zip} from 'rxjs'
+import {delay, distinctUntilChanged, fromEvent, map, mapTo, merge, of, switchMap, takeUntil, zip, zipWith} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -44,7 +44,7 @@ class _HoverDetector extends React.Component {
             windowTouchStart$.pipe( // Cancel hover when touching outside of element
                 switchMap(e =>
                     of(e).pipe(
-                        zip(windowTouchEnd$),
+                        zipWith(windowTouchEnd$),
                         map(([start, end]) =>
                             element.contains(start.target) && element.contains(end.target)
                         ),
