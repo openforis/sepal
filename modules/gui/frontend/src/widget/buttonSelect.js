@@ -54,7 +54,7 @@ class ButtonSelect extends React.Component {
     }
 
     renderSingleButton() {
-        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement, width} = this.props
+        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
         return (
             <Button
                 ref={this.input}
@@ -66,6 +66,8 @@ class ButtonSelect extends React.Component {
                 tooltipPlacement={tooltipPlacement}
                 width={width}
                 onClick={() => this.toggleOptions()}
+                onMouseOver={onMouseOver}
+                onMouseOut={onMouseOut}
                 disabled={disabled}>
                 {this.renderContent(true)}
             </Button>
@@ -73,9 +75,11 @@ class ButtonSelect extends React.Component {
     }
 
     renderMultiButton() {
-        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement, width, onClick} = this.props
+        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement, width, onClick, onMouseOver, onMouseOut} = this.props
         return (
-            <ButtonGroup ref={this.input} spacing='tight'>
+            <ButtonGroup
+                ref={this.input}
+                spacing='tight'>
                 <Button
                     chromeless={chromeless}
                     shape={shape}
@@ -85,6 +89,8 @@ class ButtonSelect extends React.Component {
                     tooltipPlacement={tooltipPlacement}
                     width={width}
                     onClick={e => onClick && onClick(e)}
+                    onMouseOver={onMouseOver}
+                    onMouseOut={onMouseOut}
                     disabled={disabled}>
                     {this.renderContent(false)}
                 </Button>
@@ -262,6 +268,8 @@ ButtonSelect.propTypes = {
     tooltipPlacement: PropTypes.string,
     width: PropTypes.string,
     onClick: PropTypes.func,
+    onMouseOut: PropTypes.func,
+    onMouseOver: PropTypes.func,
     onSelect: PropTypes.func
 }
 

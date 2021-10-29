@@ -10,7 +10,7 @@ import withForwardedRef from 'ref'
 const classNames = layout =>
     layout.split('-').map(className => styles[className])
 
-const _ButtonGroup = ({className, layout, alignment, spacing, label, disabled, forwardedRef, children}) => {
+const _ButtonGroup = ({className, layout, alignment, spacing, label, disabled, onMouseOver, onMouseOut, forwardedRef, children}) => {
     const mapChild = (child, index, childrenCount) =>
         React.cloneElement(child, {
             joinLeft: index !== 0,
@@ -28,7 +28,9 @@ const _ButtonGroup = ({className, layout, alignment, spacing, label, disabled, f
             className={[
                 styles.container,
                 className
-            ].join(' ')}>
+            ].join(' ')}
+            onMouseOver={onMouseOver}
+            onMouseOut={onMouseOut}>
             <div className={[
                 styles.buttonGroup,
                 ...classNames(layout),
@@ -64,7 +66,9 @@ ButtonGroup.propTypes = {
     disabled: PropTypes.any,
     label: PropTypes.any,
     layout: PropTypes.oneOf(['horizontal-wrap', 'horizontal-nowrap', 'horizontal-nowrap-scroll', 'vertical']),
-    spacing: PropTypes.oneOf(['normal', 'tight', 'loose'])
+    spacing: PropTypes.oneOf(['normal', 'tight', 'loose']),
+    onMouseOut: PropTypes.func,
+    onMouseOver: PropTypes.func
 }
 
 ButtonGroup.defaultProps = {
