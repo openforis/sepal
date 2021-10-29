@@ -177,37 +177,37 @@ export default class UserList extends React.Component {
                     classNames: [styles.updateTime]
                 })}
                 {this.renderColumnHeader({
-                    column: 'report.budget.instanceSpending',
+                    column: 'quota.budget.instanceSpending',
                     label: msg('user.report.resources.max'),
                     defaultSorting: -1,
                     classNames: [styles.instanceBudgetMax, styles.number]
                 })}
                 {this.renderColumnHeader({
-                    column: 'report.current.instanceSpending',
+                    column: 'quota.current.instanceSpending',
                     label: msg('user.report.resources.used'),
                     defaultSorting: -1,
                     classNames: [styles.instanceBudgetUsed, styles.number]
                 })}
                 {this.renderColumnHeader({
-                    column: 'report.budget.storageSpending',
+                    column: 'quota.budget.storageSpending',
                     label: msg('user.report.resources.max'),
                     defaultSorting: -1,
                     classNames: [styles.storageBudgetMax, styles.number]
                 })}
                 {this.renderColumnHeader({
-                    column: 'report.current.storageSpending',
+                    column: 'quota.current.storageSpending',
                     label: msg('user.report.resources.used'),
                     defaultSorting: -1,
                     classNames: [styles.storageBudgetUsed, styles.number]
                 })}
                 {this.renderColumnHeader({
-                    column: 'report.budget.storageQuota',
+                    column: 'quota.budget.storageQuota',
                     label: msg('user.report.resources.max'),
                     defaultSorting: -1,
                     classNames: [styles.storageSpaceMax, styles.number]
                 })}
                 {this.renderColumnHeader({
-                    column: 'report.current.storageQuota',
+                    column: 'quota.current.storageQuota',
                     label: msg('user.report.resources.used'),
                     defaultSorting: -1,
                     classNames: [styles.storageSpaceUsed, styles.number]
