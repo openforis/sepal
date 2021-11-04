@@ -79,7 +79,10 @@ class ButtonSelect extends React.Component {
         return (
             <ButtonGroup
                 ref={this.input}
-                spacing='tight'>
+                spacing='tight'
+                onMouseOver={onMouseOver}
+                onMouseOut={onMouseOut}
+            >
                 <Button
                     chromeless={chromeless}
                     shape={shape}
@@ -89,8 +92,6 @@ class ButtonSelect extends React.Component {
                     tooltipPlacement={tooltipPlacement}
                     width={width}
                     onClick={e => onClick && onClick(e)}
-                    onMouseOver={onMouseOver}
-                    onMouseOut={onMouseOut}
                     disabled={disabled}>
                     {this.renderContent(false)}
                 </Button>
