@@ -6,7 +6,7 @@ import styles from './widget.module.css'
 
 export class Widget extends React.Component {
     render() {
-        const {layout, spacing, border, disabled, className, onClick} = this.props
+        const {layout, spacing, framed, scrollable, border, disabled, className, onClick} = this.props
         const widgetState = this.getWidgetState()
         return (
             <div
@@ -15,6 +15,7 @@ export class Widget extends React.Component {
                     styles[widgetState],
                     onClick && !disabled ? styles.clickable : null,
                     disabled ? styles.disabled : null,
+                    scrollable ? styles.scrollable : null,
                     className
                 ].join(' ')}
                 onClick={e => onClick && onClick(e)}>
@@ -22,6 +23,8 @@ export class Widget extends React.Component {
                 <Layout
                     type={layout}
                     spacing={spacing}
+                    framed={framed}
+                    scrollable={scrollable}
                     className={[
                         styles.widget,
                         disabled ? styles.normal : styles[widgetState],
@@ -77,9 +80,11 @@ Widget.propTypes = {
     className: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,
+    framed: PropTypes.any,
     label: PropTypes.any,
     labelButtons: PropTypes.any,
     layout: PropTypes.any,
+    scrollable: PropTypes.any,
     spacing: PropTypes.any,
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any,

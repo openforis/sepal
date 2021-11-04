@@ -7,13 +7,15 @@ const typeClassNames = type =>
 
 export class Layout extends React.Component {
     render() {
-        const {type, spacing, className, style, children} = this.props
+        const {type, spacing, framed, scrollable, className, style, children} = this.props
         return (
             <div
                 className={[
                     styles.layout,
                     ...typeClassNames(type),
                     styles[spacing],
+                    framed ? styles.framed : null,
+                    scrollable ? styles.scrollable : null,
                     className
                 ].join(' ')}
                 style={style}>
@@ -28,6 +30,8 @@ export class Layout extends React.Component {
 Layout.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
+    framed: PropTypes.any,
+    scrollable: PropTypes.any,
     spacing: PropTypes.oneOf(['loose', 'normal', 'compact', 'tight', 'none']),
     style: PropTypes.object,
     type: PropTypes.oneOf(['vertical', 'horizontal', 'horizontal-nowrap'])
