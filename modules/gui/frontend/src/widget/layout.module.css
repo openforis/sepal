@@ -1,5 +1,8 @@
 
 .layout {
+    display: flex;
+    flex-grow: 1;
+    flex-shrink: 0;
     overflow: hidden;
 }
 
@@ -13,32 +16,22 @@
     margin-bottom: var(--vertical-spacing);
 }
 
+.layout.framed {
+    border: 1px solid var(--wireframe-color);
+    border-radius: var(--container-border-radius);
+    padding: 1rem;
+}
+
+.layout.vertical {
+    flex-direction: row;
+    flex-shrink: 1;
+    justify-content: space-between;
+}
+
 .layout.horizontal {
-    display: flex;
     flex-direction: column;
-    flex-grow: 1;
     margin-right: calc(-1 * var(--horizontal-spacing));
 }
-
-/* .layout.loose {
-    --vertical-spacing: 3rem;
-    --horizontal-spacing: 1.5rem;
-}
-
-.layout.normal {
-    --vertical-spacing: 2rem;
-    --horizontal-spacing: 1rem;
-}
-
-.layout.compact {
-    --vertical-spacing: 1rem;
-    --horizontal-spacing: .5rem;
-}
-
-.layout.none {
-    --vertical-spacing: 0rem;
-    --horizontal-spacing: 0rem;
-} */
 
 .layout.vertical.loose {
     --vertical-spacing: 3rem;
@@ -86,6 +79,14 @@
 
 .layout.vertical > .content {
     flex-direction: column;
+}
+
+.layout.vertical.scrollable > .content {
+    overflow-y: scroll;
+}
+
+.layout.vertical.scrollable > .content > * {
+    flex-grow: 0;
 }
 
 .layout.horizontal > .content {
