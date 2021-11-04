@@ -28,15 +28,16 @@ const _ButtonGroup = ({className, layout, alignment, spacing, label, disabled, o
             className={[
                 styles.container,
                 className
-            ].join(' ')}
-            onMouseOver={onMouseOver}
-            onMouseOut={onMouseOut}>
-            <div className={[
-                styles.buttonGroup,
-                ...classNames(layout),
-                styles[`alignment-${alignment}`],
-                styles[`spacing-${spacing}`]
             ].join(' ')}>
+            <div
+                className={[
+                    styles.buttonGroup,
+                    ...classNames(layout),
+                    styles[`alignment-${alignment}`],
+                    styles[`spacing-${spacing}`]
+                ].join(' ')}
+                onMouseEnter={onMouseOver}
+                onMouseLeave={onMouseOut}>
                 {spacing === 'tight' ? mapChildren(children) : children}
             </div>
         </div>
