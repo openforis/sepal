@@ -3,7 +3,7 @@ const {smtpHost, smtpPort, smtpSecure, smtpUser, smtpPassword, smtpFromDomain} =
 const fs = require('fs')
 const nodemailer = require('nodemailer')
 const Handlebars = require('handlebars')
-const marked = require('marked')
+const {marked} = require('marked')
 
 const EMAIL_TEMPLATE = fs.readFileSync(`${__dirname}/template.hbs`, {encoding: 'utf-8'})
 
