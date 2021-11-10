@@ -1,4 +1,3 @@
-import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {Histogram, histogramStretch} from './histogram'
