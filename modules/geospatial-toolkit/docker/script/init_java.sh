@@ -15,4 +15,5 @@ source "$SDKMAN_DIR/bin/sdkman-init.sh"
 ln -s `which java` /usr/local/bin/java
 ln -s `which groovy` /usr/local/bin/groovy
 
+echo "export SDKMAN_DIR=/usr/local/lib/sdkman" >> /etc/profile
 echo 'source "$SDKMAN_DIR/bin/sdkman-init.sh"' >> /etc/profile
