@@ -7,7 +7,7 @@ const typeClassNames = type =>
 
 export class Layout extends React.Component {
     render() {
-        const {type, spacing, framed, scrollable, className, style, children} = this.props
+        const {type, spacing, framed, scrollable, className, style, onClick, onMouseOver, onMouseOut, children} = this.props
         return (
             <div
                 className={[
@@ -18,7 +18,10 @@ export class Layout extends React.Component {
                     scrollable ? styles.scrollable : null,
                     className
                 ].join(' ')}
-                style={style}>
+                style={style}
+                onClick={onClick}
+                onMouseEnter={onMouseOver}
+                onMouseLeave={onMouseOut}>
                 <div className={styles.content}>
                     {children}
                 </div>
@@ -34,7 +37,10 @@ Layout.propTypes = {
     scrollable: PropTypes.any,
     spacing: PropTypes.oneOf(['loose', 'normal', 'compact', 'tight', 'none']),
     style: PropTypes.object,
-    type: PropTypes.oneOf(['vertical', 'horizontal', 'horizontal-nowrap'])
+    type: PropTypes.oneOf(['vertical', 'horizontal', 'horizontal-nowrap']),
+    onClick: PropTypes.func,
+    onMouseOut: PropTypes.func,
+    onMouseOver: PropTypes.func
 }
 
 Layout.defaultProps = {
