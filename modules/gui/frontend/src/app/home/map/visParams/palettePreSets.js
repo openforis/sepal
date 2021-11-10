@@ -42,6 +42,8 @@ export const PalettePreSets = ({onSelect, count, className, autoFocus}) => {
     ]
     return (
         <Combo
+            label={msg('map.visParams.form.palette.preset.label')}
+            tooltip={msg('map.visParams.form.palette.preset.tooltip')}
             className={className}
             autoFocus={autoFocus}
             placeholder={msg('map.visParams.form.palette.preset.placeholder')}
@@ -67,12 +69,15 @@ export const PalettePreSets = ({onSelect, count, className, autoFocus}) => {
 }
 
 const renderOption = (value, label) => {
-    return <div
-        className={styles.presetOption}
-        style={{'--palette': value.join(', ')}}>
-        <Label msg={label} className={styles.presetLabel}/>
-    </div>
+    return (
+        <div
+            className={styles.presetOption}
+            style={{'--palette': value.join(', ')}}>
+            <Label msg={label} className={styles.presetLabel}/>
+        </div>
+    )
 }
+
 const toOptions = options => options.map(({label, value}) => ({
     key: label, label, value, render: () => renderOption(value, label)
 }))

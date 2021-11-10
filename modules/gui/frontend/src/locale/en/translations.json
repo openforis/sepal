@@ -565,6 +565,8 @@
             "tooltip": "Show and edit palette using color pickers."
           },
           "preset": {
+              "label": "Palette",
+              "tooltip": "Apply a pre-set palette. Please be advised: this is optional and it will reset any custom colors you might have assigned.",
             "placeholder": "Select a pre-set palette...",
             "attribution": "Pre-sets from {url}."
           },
