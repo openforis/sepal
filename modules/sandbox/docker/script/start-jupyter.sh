@@ -24,7 +24,7 @@ function exportEnvironment {
 
 exportEnvironment
 
-sudo -iu $sandbox_user DISPLAY=:0.0 PATH=$PATH PROJ_LIB=/usr/share/proj NODE_PATH=$NODE_PATH:`npm root -g`:`npm root` python3 /usr/local/bin/jupyter-notebook\
+sudo -iu $sandbox_user PATH=$PATH PROJ_LIB=/usr/share/proj NODE_PATH=$NODE_PATH:`npm root -g`:`npm root` python3 /usr/local/bin/jupyter-notebook\
  --no-browser\
  --allow-root\
  --ip=0.0.0.0\
