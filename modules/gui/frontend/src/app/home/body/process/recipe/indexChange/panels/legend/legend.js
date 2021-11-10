@@ -26,32 +26,14 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _Legend extends React.Component {
-    state = {colorMode: 'palette'}
-
     render() {
-        const {colorMode} = this.state
-        const title = (
-            <div className={styles.title}>
-                <div>{msg('process.indexChange.panel.legend.title')}</div>
-                <Button
-                    chromeless
-                    size='small'
-                    icon={colorMode === 'palette' ? 'font' : 'palette'}
-                    tooltip={msg(colorMode === 'palette'
-                        ? 'map.legendBuilder.colors.text.tooltip'
-                        : 'map.legendBuilder.colors.colorPicker.tooltip')}
-                    onClick={() => this.toggleColorMode()}
-                />
-            </div>
-        )
         return (
             <RecipeFormPanel
                 placement='bottom-right'
                 className={styles.panel}>
                 <Panel.Header
                     icon='list'
-                    title={title}
-
+                    title={msg('process.indexChange.panel.legend.title')}
                 />
 
                 <Panel.Content>
@@ -71,11 +53,9 @@ class _Legend extends React.Component {
 
     renderContent() {
         const {inputs: {entries}} = this.props
-        const {colorMode} = this.state
         return (
             <LegendBuilder
                 entries={entries.value}
-                colorMode={colorMode}
                 onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
             />
         )
@@ -104,10 +84,6 @@ class _Legend extends React.Component {
         const color = defaultColor(entries.value.length)
         const label = ''
         entries.set([...entries.value, {id, value, color, label}])
-    }
-
-    toggleColorMode() {
-        this.setState(({colorMode}) => ({colorMode: colorMode === 'palette' ? 'text' : 'palette'}))
     }
 
     updateLegendEntries(legendEntries, invalidLegendEntries) {

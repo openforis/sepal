@@ -1,15 +1,4 @@
 .panel {
-    min-height: 20rem;
+    height: 40rem;
     max-width: 27rem;
-}
-
-.title {
-    display: flex;
-    flex-grow: 1;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.entry {
-    flex-grow: 1;
 }

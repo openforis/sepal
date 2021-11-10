@@ -42,13 +42,13 @@ export class LegendBuilder extends React.Component {
     }
 
     renderEntries() {
-        const {entries, label} = this.props
+        const {entries} = this.props
         return (
             <Layout>
                 <Widget
                     layout='vertical'
                     spacing='compact'
-                    label={label}
+                    label={msg('map.legendBuilder.label')}
                     labelButtons={this.renderLabelButtons()}
                     scrollable
                     framed>
@@ -79,13 +79,21 @@ export class LegendBuilder extends React.Component {
                     locked={locked}
                     autoFocus={last}
                 />
-                <RemoveButton
-                    size='small'
-                    disabled={locked}
-                    tooltip={msg('map.legendBuilder.entry.remove.tooltip')}
-                    tooltipPlacement='left'
-                    onRemove={() => this.removeEntry(entry)}/>
+                {locked ? null : this.renderRemoveButton(entry)}
             </Layout>
+        )
+    }
+
+    renderRemoveButton(entry) {
+        const {locked} = this.props
+        return (
+            <RemoveButton
+                size='small'
+                disabled={locked}
+                tooltip={msg('map.legendBuilder.entry.remove.tooltip')}
+                tooltipPlacement='left'
+                onRemove={() => this.removeEntry(entry)}
+            />
         )
     }
 
@@ -233,14 +241,13 @@ class _Entry extends React.Component {
     }
 
     renderHexColor() {
-        const {locked, inputs: {color}} = this.props
+        const {inputs: {color}} = this.props
         return (
             <Form.Input
                 className={styles.colorText}
                 input={color}
                 errorMessage={[color, 'colorUnique']}
                 autoComplete={false}
-                disabled={locked}
                 onChange={e => this.notifyChange({color: e.target.value})}
             />
         )
@@ -348,7 +355,7 @@ class ColorInput extends React.Component {
                 <Tooltip
                     msg={this.renderTooltip()}
                     delay={0}
-                    placement='top'
+                    placement='left'
                     clickTrigger={isMobile()}
                     onVisibleChange={visible => swap && !visible && this.setState({swap: false})}>
                     <div
@@ -369,7 +376,7 @@ class ColorInput extends React.Component {
 
     renderColorButtons() {
         return (
-            <ButtonGroup layouy='horizontal-nowrap'>
+            <ButtonGroup layout='horizontal-nowrap'>
                 <Button
                     icon='pen'
                     chromeless

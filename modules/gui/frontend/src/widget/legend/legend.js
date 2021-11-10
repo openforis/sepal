@@ -1,6 +1,8 @@
 import * as PropTypes from 'prop-types'
 import {Button} from 'widget/button'
 import {EditLegendPanel} from './editLegendPanel'
+import {Layout} from 'widget/layout'
+import {Message} from 'widget/message'
 import {Widget} from 'widget/widget'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
@@ -16,55 +18,73 @@ const mapRecipeToProps = (recipe, {componentId}) => ({
 
 class _Legend extends React.Component {
     render() {
-        const {label, entries, disabled, recipe, band, selected = [], activator: {activatables}, componentId, onUpdate, onSelectionChange} = this.props
-        const renderOption = ({color, value, label}) => {
-            return (
-                <div
-                    key={value}
-                    className={[
-                        styles.entry,
-                        selected.includes(value) ? styles.selected : '',
-                        onSelectionChange ? styles.selectable : '',
-                    ].join(' ')}
-                    onClick={() => this.select(value)}>
-                    <div className={styles.color} style={{'--color': color}}/>
-                    <div className={styles.value}>{value}</div>
-                    <div className={styles.label}>{label}</div>
-                </div>
-            )
-        }
+        const {label, entries, disabled} = this.props
+
+        return (
+            <Widget
+                label={label}
+                disabled={disabled}
+                labelButtons={this.renderLabelButtons()}
+                framed>
+                <EditLegendPanel/>
+                {entries && entries.length ? this.renderEntries() : this.renderNoEntries()}
+            </Widget>
+        )
+    }
+
+    renderLabelButtons() {
+        const {entries, recipe, band, activator: {activatables}, componentId, onUpdate} = this.props
 
         const editLegend = () => {
             activatables.editLegendPanel.activate({recipe, band, entries, statePath: toUpdatedEntryPath(componentId)})
         }
 
-        const labelButtons = onUpdate
-            ? [<Button
-                key="edit"
-                icon="edit"
-                tooltip={msg('widget.legend.edit.tooltip')}
-                chromeless
-                shape="circle"
-                size="small"
-                onClick={editLegend}
-            />]
-            : []
+        return onUpdate
+            ? [
+                <Button
+                    key="edit"
+                    icon="edit"
+                    tooltip={msg('widget.legend.edit.tooltip')}
+                    chromeless
+                    shape="circle"
+                    size="small"
+                    onClick={editLegend}
+                />
+            ]
+            : null
+    }
+
+    renderNoEntries() {
         return (
-            <Widget label={label} disabled={disabled} labelButtons={labelButtons}>
-                <EditLegendPanel/>
-                {entries && entries.length
-                    ? (
-                        <div className={styles.entries}>
-                            {entries.map(renderOption)}
-                        </div>
-                    )
-                    : (
-                        <div className={styles.noData}>
-                            {msg('widget.legend.noEntries')}
-                        </div>
-                    )
-                }
-            </Widget>
+            <Message text={msg('widget.legend.noEntries')}/>
+        )
+    }
+
+    renderEntries() {
+        const {entries} = this.props
+        return (
+            <Layout type='vertical' spacing='compact'>
+                {entries.map(entry => this.renderEntry(entry))}
+            </Layout>
+        )
+    }
+
+    renderEntry({color, value, label}) {
+        const {selected = [], onSelectionChange} = this.props
+        return (
+            <Layout
+                type='horizontal-nowrap'
+                key={value}
+                className={[
+                    styles.entry,
+                    selected.includes(value) ? styles.selected : '',
+                    onSelectionChange ? styles.selectable : '',
+                ].join(' ')}
+                onClick={() => this.select(value)}>
+                <div className={styles.color} style={{'--color': color}}/>
+                <div className={styles.value}>{value}</div>
+                <div className={styles.label}>{label}</div>
+            </Layout>
         )
     }
 

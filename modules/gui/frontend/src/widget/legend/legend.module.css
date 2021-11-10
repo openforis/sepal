@@ -1,18 +1,12 @@
-.entries {
-    margin-top: 0.5rem;
-}
-
 .entry {
     display: grid;
     grid-template-columns: auto auto 1fr;
     grid-gap: 1rem;
     color: #ccc;
-    padding: .5rem .25rem;
-    margin: .2rem 0;
 }
 
 
-.entry .color {
+.color {
     --color: black; /* To be overridden */
     background-color: var(--color);
     height: 1.5rem;
@@ -20,26 +14,19 @@
     border-radius: var(--button-border-radius);
 }
 
-.entry .value {
+.value {
     width: 2rem;
-}
-
-.entry .label {
-
+    text-align: right;
 }
 
 .selected {
     background-color: var(--look-selected-background-color);
 }
+
 .selected.selectable:hover {
     background-color: var(--look-selected-hover-background-color);
 }
 
 .selectable:hover {
     background-color: var(--look-default-hover-background-color);
-}
-
-.noData {
-    color: gray;
-    font-size: .9rem;
 }

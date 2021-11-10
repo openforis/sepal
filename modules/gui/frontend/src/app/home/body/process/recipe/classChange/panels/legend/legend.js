@@ -1,4 +1,3 @@
-import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {LegendBuilder, defaultColor} from 'app/home/map/legendBuilder'
@@ -73,33 +72,16 @@ class _Legend extends React.Component {
 }
 
 class _LegendPanel extends React.Component {
-    state = {colorMode: 'palette'}
-
     render() {
-        const {colorMode} = this.state
-        const title = (
-            <div className={styles.title}>
-                <div>{msg('process.classification.panel.legend.title')}</div>
-                <Button
-                    chromeless
-                    size='small'
-                    icon={colorMode === 'palette' ? 'font' : 'palette'}
-                    tooltip={msg(colorMode === 'palette'
-                        ? 'map.legendBuilder.colors.text.tooltip'
-                        : 'map.legendBuilder.colors.colorPicker.tooltip')}
-                    onClick={() => this.toggleColorMode()}
-                />
-            </div>
-        )
         return (
             <RecipeFormPanel
                 placement="bottom-right"
                 className={styles.panel}>
                 <Panel.Header
                     icon="list"
-                    title={title}
+                    title={msg('process.classification.panel.legend.title')}
                 />
-                <Panel.Content>
+                <Panel.Content scrollable={false}>
                     <Layout spacing='compact'>
                         {this.renderContent()}
                     </Layout>
@@ -111,12 +93,10 @@ class _LegendPanel extends React.Component {
 
     renderContent() {
         const {inputs: {entries}} = this.props
-        const {colorMode} = this.state
         return (
             <LegendBuilder
                 entries={entries.value}
                 locked={true}
-                colorMode={colorMode}
                 onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
             />
         )
@@ -125,10 +105,6 @@ class _LegendPanel extends React.Component {
     componentDidMount() {
         const {legendEntries, inputs} = this.props
         inputs.entries.set(legendEntries)
-    }
-
-    toggleColorMode() {
-        this.setState(({colorMode}) => ({colorMode: colorMode === 'palette' ? 'text' : 'palette'}))
     }
 
     updateLegendEntries(legendEntries, invalidLegendEntries) {

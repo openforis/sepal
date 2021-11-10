@@ -1,9 +1,6 @@
-import {Button} from 'widget/button'
 import {Form, form} from 'widget/form/form'
-import {Layout} from 'widget/layout'
 import {LegendBuilder, defaultColor} from 'app/home/map/legendBuilder'
 import {Panel} from 'widget/panel/panel'
-import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
@@ -90,8 +87,6 @@ class _EditLegendPanel extends React.Component {
                 options={options}
                 disabled={stream('LOAD_DISTINCT_IMAGE_VALUES').active}
                 onClick={() => this.addLegendEntry()}
-                // onMouseOver={() => console.log('mouseover')}
-                // onMouseOut={() => console.log('mouseout')}
                 onSelect={option => option && _.find(options, ({value}) => value === option.value).onSelect()}
             />
         )
@@ -101,7 +96,6 @@ class _EditLegendPanel extends React.Component {
         const {legendEntries} = this.state
         return (
             <LegendBuilder
-                label={msg('map.legendBuilder.label')}
                 entries={legendEntries}
                 onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
             />

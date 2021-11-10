@@ -101,8 +101,7 @@ class _VisParamsPanel extends React.Component {
         histograms: {},
         askConfirmation: false,
         legendEntries: [],
-        invalidLegendEntries: false,
-        colorMode: 'palette'
+        invalidLegendEntries: false
     }
 
     cancelHistogram$ = new Subject()
@@ -275,7 +274,7 @@ class _VisParamsPanel extends React.Component {
 
     renderLegendBuilder() {
         const {stream} = this.props
-        const {bands, colorMode, legendEntries} = this.state
+        const {bands, legendEntries} = this.state
         const loading = stream('LOAD_DISTINCT_IMAGE_VALUES').active
         return (
             <Layout>
@@ -291,33 +290,14 @@ class _VisParamsPanel extends React.Component {
                         </Widget>
                     )
                     : (
-                        <Widget label={msg('map.legendBuilder.label')} labelButtons={this.renderLabelButtons()}>
-                            <LegendBuilder
-                                entries={legendEntries}
-                                colorMode={colorMode}
-                                onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
-                            />
-                        </Widget>
+                        <LegendBuilder
+                            entries={legendEntries}
+                            onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
+                        />
                     )
                 }
             </Layout>
         )
-    }
-
-    renderLabelButtons() {
-        const {colorMode} = this.state
-        return [
-            <Button
-                key={'colorMode'}
-                chromeless
-                size='small'
-                icon={colorMode === 'palette' ? 'font' : 'palette'}
-                tooltip={msg(colorMode === 'palette'
-                    ? 'map.legendBuilder.colors.text.tooltip'
-                    : 'map.legendBuilder.colors.colorPicker.tooltip')}
-                onClick={() => this.toggleColorMode()}
-            />
-        ]
     }
 
     renderBandForm(i, label) {
@@ -361,10 +341,6 @@ class _VisParamsPanel extends React.Component {
                 }}
                 onCancel={() => this.setState({askConfirmation: false})}/>
         )
-    }
-
-    toggleColorMode() {
-        this.setState(({colorMode}) => ({colorMode: colorMode === 'palette' ? 'text' : 'palette'}))
     }
 
     stretchHistograms(percent) {
