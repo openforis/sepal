@@ -20,7 +20,12 @@ wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu2
 apt install -y ./nvidia-machine-learning-repo-ubuntu2004_1.0.0-1_amd64.deb
 apt-get update -y
 
-# Install development and runtime libraries (~4GB)
+# Ensure same nvidia driver version is used both in init_gpu.sh and in init-gpu-drivers.sh
+#
+# Version for different instance types:
+#   https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver
+# Find download URL:
+#   https://www.nvidia.com/Download/Find.aspx
 apt-get install -y --no-install-recommends \--no-install-recommends \
   nvidia-driver-470=470.82.01-0ubuntu1 \
   libnvidia-gl-470=470.82.01-0ubuntu1 \
