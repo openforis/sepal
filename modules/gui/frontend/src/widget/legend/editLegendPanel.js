@@ -1,5 +1,4 @@
 import {Button} from 'widget/button'
-import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {LegendBuilder, defaultColor} from 'app/home/map/legendBuilder'
@@ -31,8 +30,7 @@ const mapRecipeToProps = recipe => ({
 class _EditLegendPanel extends React.Component {
     state = {
         legendEntries: [],
-        invalidLegendEntries: false,
-        colorMode: 'palette'
+        invalidLegendEntries: false
     }
 
     constructor(props) {
@@ -51,7 +49,7 @@ class _EditLegendPanel extends React.Component {
                     icon='layer-group'
                     title={msg('widget.legend.editLegendPanel.title')}
                 />
-                <Panel.Content>
+                <Panel.Content scrollable={false}>
                     {this.renderContent()}
                 </Panel.Content>
                 <Panel.Buttons onEscape={deactivate} onEnter={() => invalid || this.apply()}>
@@ -83,55 +81,31 @@ class _EditLegendPanel extends React.Component {
             },
         ]
         return (
-            <ButtonGroup>
-                <Panel.Buttons.Add onClick={() => this.addLegendEntry()}/>
-                <ButtonSelect
-                    label={msg('map.legendBuilder.load.label')}
-                    icon={stream('LOAD_DISTINCT_IMAGE_VALUES').active ? 'spinner' : 'file-import'}
-                    placement='above'
-                    tooltipPlacement='bottom'
-                    options={options}
-                    disabled={stream('LOAD_DISTINCT_IMAGE_VALUES').active}
-                    onSelect={option => option && _.find(options, ({value}) => value === option.value).onSelect()}
-                />
-            </ButtonGroup>
+            <ButtonSelect
+                look={'add'}
+                icon={'plus'}
+                label={msg('button.add')}
+                placement='above'
+                tooltipPlacement='bottom'
+                options={options}
+                disabled={stream('LOAD_DISTINCT_IMAGE_VALUES').active}
+                onClick={() => this.addLegendEntry()}
+                // onMouseOver={() => console.log('mouseover')}
+                // onMouseOut={() => console.log('mouseout')}
+                onSelect={option => option && _.find(options, ({value}) => value === option.value).onSelect()}
+            />
         )
     }
 
     renderContent() {
-        const {colorMode, legendEntries} = this.state
+        const {legendEntries} = this.state
         return (
-            <Layout>
-                <Widget label={msg('map.legendBuilder.label')} labelButtons={this.renderLabelButtons()}>
-                    <LegendBuilder
-                        entries={legendEntries}
-                        colorMode={colorMode}
-                        onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
-                    />
-                </Widget>
-            </Layout>
-        )
-    }
-
-    renderLabelButtons() {
-        const {colorMode} = this.state
-        return [
-            <Button
-                key={'colorMode'}
-                chromeless
-                size='small'
-                shape='circle'
-                icon={colorMode === 'palette' ? 'font' : 'palette'}
-                tooltip={msg(colorMode === 'palette'
-                    ? 'map.legendBuilder.colors.text.tooltip'
-                    : 'map.legendBuilder.colors.colorPicker.tooltip')}
-                onClick={() => this.toggleColorMode()}
+            <LegendBuilder
+                label={msg('map.legendBuilder.label')}
+                entries={legendEntries}
+                onChange={(updatedEntries, invalid) => this.updateLegendEntries(updatedEntries, invalid)}
             />
-        ]
-    }
-
-    toggleColorMode() {
-        this.setState(({colorMode}) => ({colorMode: colorMode === 'palette' ? 'text' : 'palette'}))
+        )
     }
 
     componentDidMount() {

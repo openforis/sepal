@@ -379,17 +379,11 @@
         "tooltip": "Add legend entry"
       },
       "colors": {
-        "colorPicker": {
-          "tooltip": "Show and edit legend colors using color pickers"
-        },
         "edit": {
           "tooltip": "Change color"
         },
         "swap": {
           "tooltip": "Swap this color with another in the legend"
-        },
-        "text": {
-          "tooltip": "Show and edit legend colors as text"
         }
       },
       "entry": {

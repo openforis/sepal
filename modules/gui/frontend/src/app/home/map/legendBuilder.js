@@ -2,7 +2,9 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
+import {Message} from 'widget/message'
 import {PalettePreSets, pickColors} from './visParams/palettePreSets'
+import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -15,7 +17,8 @@ import styles from './legendBuilder.module.css'
 
 export class LegendBuilder extends React.Component {
     state = {
-        invalidEntries: {}
+        invalidEntries: {},
+        showHexColorCode: false
     }
 
     constructor(props) {
@@ -27,59 +30,82 @@ export class LegendBuilder extends React.Component {
 
     render() {
         const {entries} = this.props
-        return (
-            <div className={styles.container}>
-                {entries.length
-                    ? this.renderEntries()
-                    : this.renderNoEntries()}
-            </div>
-        )
+        return entries.length
+            ? this.renderEntries()
+            : this.renderNoEntries()
     }
 
     renderNoEntries() {
         return (
-            <div className={styles.noEntries}>
-                {msg('map.legendBuilder.noEntries')}
-            </div>
+            <Message type='info' text={msg('map.legendBuilder.noEntries')} centered/>
         )
     }
 
     renderEntries() {
-        const {entries} = this.props
+        const {entries, label} = this.props
         return (
-            <div className={styles.entries}>
-                <Layout type='vertical' spacing='compact'>
+            <Layout>
+                <Widget
+                    layout='vertical'
+                    spacing='compact'
+                    label={label}
+                    labelButtons={this.renderLabelButtons()}
+                    scrollable
+                    framed>
                     {entries.map((entry, i) => this.renderEntry(entry, i === entries.length - 1))}
-                </Layout>
+                </Widget>
                 <PalettePreSets
                     onSelect={this.applyPreset}
                     count={entries.length}
                     className={styles.palettePreSets}
                     autoFocus={false}
                 />
-            </div>
+            </Layout>
         )
     }
 
     renderEntry(entry, last) {
-        const {colorMode, entries, locked} = this.props
-        return <Layout key={entry.id} type={'horizontal-nowrap'}>
-            <Entry
-                mode={colorMode}
-                entry={entry}
-                entries={entries}
-                onChange={this.updateEntry}
-                onValidate={this.updateValidation}
-                onSwap={color => this.swap(color, entry.color)}
-                locked={locked}
-                autoFocus={last}
-            />
-            <RemoveButton
+        const {entries, locked} = this.props
+        const {showHexColorCode} = this.state
+        return (
+            <Layout key={entry.id} type='horizontal-nowrap'>
+                <Entry
+                    showHexColorCode={showHexColorCode}
+                    entry={entry}
+                    entries={entries}
+                    onChange={this.updateEntry}
+                    onValidate={this.updateValidation}
+                    onSwap={color => this.swap(color, entry.color)}
+                    locked={locked}
+                    autoFocus={last}
+                />
+                <RemoveButton
+                    size='small'
+                    disabled={locked}
+                    tooltip={msg('map.legendBuilder.entry.remove.tooltip')}
+                    tooltipPlacement='left'
+                    onRemove={() => this.removeEntry(entry)}/>
+            </Layout>
+        )
+    }
+
+    renderLabelButtons() {
+        const {showHexColorCode} = this.state
+        return [
+            <Button
+                key={'showHexColorCode'}
+                look={showHexColorCode ? 'selected' : 'default'}
                 size='small'
-                disabled={locked}
-                tooltip={msg('map.legendBuilder.entry.remove.tooltip')}
-                onRemove={() => this.removeEntry(entry)}/>
-        </Layout>
+                shape='pill'
+                air='less'
+                label={'HEX'}
+                onClick={() => this.toggleshowHexColorCode()}
+            />
+        ]
+    }
+
+    toggleshowHexColorCode() {
+        this.setState(({showHexColorCode}) => ({showHexColorCode: !showHexColorCode}))
     }
 
     applyPreset(colors) {
@@ -178,55 +204,77 @@ class _Entry extends React.Component {
     state = {invalid: true}
 
     render() {
-        const {form, entry, entries, mode, locked, inputs: {value, color, label}, onSwap} = this.props
+        const {showHexColorCode} = this.props
+        return (
+            <Layout type={'horizontal-nowrap'}>
+                {this.renderColorPicker()}
+                {showHexColorCode ? this.renderHexColor() : null}
+                {this.renderValueInput()}
+                {this.renderLabelInput()}
+            </Layout>
+        )
+    }
+
+    renderColorPicker() {
+        const {form, entry, entries, locked, inputs: {color}, onSwap} = this.props
         const otherColors = entries
             .filter(({id}) => entry.id !== id)
             .map(({color}) => color)
         return (
-            <Layout type={'horizontal-nowrap'} className={styles.entry}>
-                {mode === 'palette'
-                    ? (
-                        <ColorInput
-                            input={color}
-                            otherColors={otherColors}
-                            onChange={color => this.notifyChange({color})}
-                            onSwap={color => onSwap(color)}
-                            invalid={!!form.errors.colorUnique}
-                            disabled={locked}
-                        />
-                    )
-                    : (
-                        <Form.Input
-                            className={styles.colorText}
-                            input={color}
-                            errorMessage={[color, 'colorUnique']}
-                            autoComplete={false}
-                            disabled={locked}
-                            onChange={e => this.notifyChange({color: e.target.value})}
-                        />
-                    )}
+            <ColorInput
+                input={color}
+                otherColors={otherColors}
+                onChange={color => this.notifyChange({color})}
+                onSwap={color => onSwap(color)}
+                invalid={!!form.errors.colorUnique}
+                disabled={locked}
+            />
+        )
+    }
 
-                <Form.Input
-                    className={styles.value}
-                    input={value}
-                    errorMessage={[value, 'valueUnique']}
-                    autoComplete={false}
-                    disabled={locked}
-                    onChange={e => this.notifyChange({value: e.target.value})}
-                />
+    renderHexColor() {
+        const {locked, inputs: {color}} = this.props
+        return (
+            <Form.Input
+                className={styles.colorText}
+                input={color}
+                errorMessage={[color, 'colorUnique']}
+                autoComplete={false}
+                disabled={locked}
+                onChange={e => this.notifyChange({color: e.target.value})}
+            />
+        )
+    }
 
-                <Form.Input
-                    className={styles.label}
-                    input={label}
-                    placeholder={msg('map.legendBuilder.entry.classLabel.placeholder')}
-                    autoFocus={!entry.label}
-                    errorMessage={[label, 'labelUnique']}
-                    autoComplete={false}
-                    onChange={e => {
-                        this.notifyChange({label: e.target.value})
-                    }}
-                />
-            </Layout>
+    renderValueInput() {
+        const {locked, inputs: {value}} = this.props
+        return (
+            <Form.Input
+                className={styles.value}
+                input={value}
+                type='number'
+                errorMessage={[value, 'valueUnique']}
+                autoComplete={false}
+                disabled={locked}
+                onChange={e => this.notifyChange({value: e.target.value})}
+            />
+        )
+    }
+
+    renderLabelInput() {
+        const {entry, inputs: {label}} = this.props
+        return (
+            <Form.Input
+                className={styles.label}
+                input={label}
+                placeholder={msg('map.legendBuilder.entry.classLabel.placeholder')}
+                autoFocus={!entry.label}
+                errorMessage={[label, 'labelUnique']}
+                autoComplete={false}
+                onChange={e => {
+                    this.notifyChange({label: e.target.value})
+                }}
+            />
         )
     }
 
@@ -347,7 +395,7 @@ class ColorInput extends React.Component {
     renderSwap() {
         const {otherColors, onSwap} = this.props
         return (
-            <div className={styles.palette}>
+            <Layout type='horizontal' spacing='compact'>
                 {otherColors.map((c, i) =>
                     <div
                         key={i}
@@ -359,7 +407,7 @@ class ColorInput extends React.Component {
                         }}
                     />
                 )}
-            </div>
+            </Layout>
         )
     }
 }
@@ -386,4 +434,5 @@ const COLORS = [
     '#F13A13',  // Vivid Reddish Orange
     '#232C16'  // Dark Olive Green
 ]
+
 export const defaultColor = i => i < COLORS.length ? COLORS[i] : COLORS[COLORS.length - 1]

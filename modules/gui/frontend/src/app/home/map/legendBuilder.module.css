@@ -1,44 +1,3 @@
-.container {
-    margin-top: 0.8rem;
-}
-
-.title {
-    display: flex;
-    flex-grow: 1;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.noEntries {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-grow: 1;
-    color: gray;
-}
-
-.entries {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    flex-grow: 1;
-}
-
-.palettePreSets {
-    margin-top: 2rem;
-}
-
-.entry {
-    flex-grow: 1;
-}
-
-.value {
-    width: 3.5rem;
-}
-
-.value input {
-    text-align: right;
-}
 
 .colorContainer {
     position: relative;
@@ -49,6 +8,7 @@
     height: 1.7rem;
     background-color: var(--color);
     margin-bottom: -.2rem;
+    border-radius: var(--button-border-radius);
     opacity: 1;
 }
 
@@ -82,17 +42,8 @@
     flex-grow: 1;
 }
 
-.palette {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-}
-
 .swapColor {
-    width: 1.7rem;
-    height: 1.7rem;
     background-color: var(--color);
     cursor: pointer;
     flex-shrink: 0;
-    margin: .3rem;
 }
