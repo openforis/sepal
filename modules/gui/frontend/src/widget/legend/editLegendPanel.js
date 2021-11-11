@@ -4,6 +4,7 @@ import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
+import {downloadCsv} from '../download'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withMapContext} from 'app/home/map/mapContext'
@@ -65,17 +66,28 @@ class _EditLegendPanel extends React.Component {
 
     renderLegendBuilderButtons() {
         const {stream} = this.props
+        const {legendEntries} = this.state
         const options = [
-            {
-                value: 'import',
-                label: msg('map.legendBuilder.load.options.importFromCsv.label'),
-                onSelect: this.importLegend
-            },
-            {
-                value: 'imageValues',
-                label: msg('map.legendBuilder.load.options.imageValues.label'),
-                onSelect: this.loadDistinctBandValues
-            },
+            {options: [
+                {
+                    value: 'import',
+                    label: msg('map.legendBuilder.load.options.importFromCsv.label'),
+                    onSelect: this.importLegend
+                },
+                {
+                    value: 'imageValues',
+                    label: msg('map.legendBuilder.load.options.imageValues.label'),
+                    onSelect: this.loadDistinctBandValues
+                }
+            ]},
+            {options: [
+                {
+                    value: 'export',
+                    label: msg('map.legendBuilder.load.options.exportToCsv.label'),
+                    disabled: !legendEntries || !legendEntries.length,
+                    onSelect: () => this.exportLegend()
+                }
+            ]}
         ]
         return (
             <ButtonSelect
@@ -137,6 +149,16 @@ class _EditLegendPanel extends React.Component {
     importLegend() {
         const {activator: {activatables: {legendImport}}} = this.props
         legendImport.activate()
+    }
+
+    exportLegend() {
+        const {legendEntries} = this.state
+        const csv = [
+            ['color,value,label'],
+            legendEntries.map(({color, value, label}) => `${color},${value},"${label.replaceAll('"', '\\"')}"`)
+        ].flat().join('\n')
+        const filename = 'legend.csv'
+        downloadCsv(csv, filename)
     }
 
     loadDistinctBandValues() {
