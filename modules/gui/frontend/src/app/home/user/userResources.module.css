@@ -1,13 +1,11 @@
 .resources {
     display: grid;
-    /* grid-template-columns: 4fr 2fr 2fr 5fr; */
     grid-template-columns: 3fr 5rem 4rem 2fr;
     grid-template-rows: auto;
     column-gap: 1rem;
     width: 100%;
     align-items: center;
     justify-items: right;
-    padding-left: 1rem;
     grid-template-areas: 'label quota used bar';
 }
 

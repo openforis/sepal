@@ -60,7 +60,7 @@ class _Usage extends React.Component {
 
     renderResosurces() {
         return (
-            <Widget label={msg('user.report.resources.title')}>
+            <Widget label={msg('user.report.resources.title')} framed>
                 <UserResources/>
             </Widget>
         )
@@ -68,7 +68,7 @@ class _Usage extends React.Component {
 
     renderSessions() {
         return (
-            <Widget label={msg('user.report.sessions.title')}>
+            <Widget label={msg('user.report.sessions.title')} framed>
                 <UserSessions/>
             </Widget>
         )

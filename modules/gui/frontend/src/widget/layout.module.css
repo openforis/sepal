@@ -17,9 +17,20 @@
 }
 
 .layout.framed {
-    border: 1px solid var(--wireframe-color);
-    border-radius: var(--container-border-radius);
+    position: relative;
+    border: 1px solid var(--section-wireframe-color);
+    border-radius: var(--section-border-radius);
     padding: 1rem;
+}
+
+.layout.framed::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: hsla(0, 0%, 0%, .05);
 }
 
 .layout.vertical {
