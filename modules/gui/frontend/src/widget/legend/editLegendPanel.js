@@ -87,7 +87,6 @@ class _EditLegendPanel extends React.Component {
                 options={options}
                 disabled={stream('LOAD_DISTINCT_IMAGE_VALUES').active}
                 onClick={() => this.addLegendEntry()}
-                onSelect={option => option && _.find(options, ({value}) => value === option.value).onSelect()}
             />
         )
     }

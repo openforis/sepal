@@ -73,7 +73,6 @@ class _Legend extends React.Component {
                 tooltipPlacement='bottom'
                 options={options}
                 onClick={() => this.addEntry()}
-                onSelect={option => option && _.find(options, ({value}) => value === option.value).onSelect()}
             />
         )
     }
