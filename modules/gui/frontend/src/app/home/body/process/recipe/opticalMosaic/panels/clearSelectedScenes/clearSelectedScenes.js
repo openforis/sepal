@@ -1,4 +1,5 @@
 import {Form} from 'widget/form/form'
+import {Message} from 'widget/message'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -28,7 +29,7 @@ class ClearSelectedScenes extends React.Component {
                     title={msg('process.mosaic.panel.clearSelectedScenes.title')}/>
 
                 <Panel.Content className={styles.content}>
-                    {msg('process.mosaic.panel.clearSelectedScenes.message')}
+                    <Message text={msg('process.mosaic.panel.clearSelectedScenes.message')} centered/>
                 </Panel.Content>
 
                 <Form.PanelButtons applyLabel={msg('process.mosaic.panel.clearSelectedScenes.apply')}/>

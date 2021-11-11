@@ -1,9 +1,4 @@
 .panel {
     height: 14rem;
-    max-width: 20rem;
-}
-
-.content {
-    display: flex;
-    justify-content: center;
+    max-width: 22rem;
 }
