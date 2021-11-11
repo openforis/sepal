@@ -35,7 +35,7 @@ class UserSessions extends React.Component {
 
     renderNoSessions() {
         return (
-            <Message type='info' text={msg('user.report.sessions.noSessions')}/>
+            <Message text={msg('user.report.sessions.noSessions')} centered/>
         )
     }
 
