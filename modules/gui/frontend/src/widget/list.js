@@ -321,6 +321,7 @@ class List extends React.Component {
 
     selectOption(option) {
         const {onSelect} = this.props
+        option.onSelect && option.onSelect()
         onSelect && onSelect(option)
     }
 
