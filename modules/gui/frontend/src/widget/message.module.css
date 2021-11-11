@@ -25,3 +25,10 @@
 .type-success {
     color: var(--success-color);
 }
+
+.centered {
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
