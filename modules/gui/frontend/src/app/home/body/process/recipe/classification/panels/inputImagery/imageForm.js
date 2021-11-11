@@ -72,6 +72,10 @@ class ImageForm extends Component {
             scrollable.scrollToBottom()
         }
 
+        if (bandSetSpecs.value && bandSetSpecs.value.length === 1) {
+            const nextId = bandSetSpecs.value[0].id
+            this.setState(({selectedSpecId}) => nextId === selectedSpecId ? null : {selectedSpecId: nextId})
+        }
     }
 
     renderBandSetSpecs() {
