@@ -214,7 +214,7 @@ class _Entry extends React.Component {
     render() {
         const {showHexColorCode} = this.props
         return (
-            <Layout type={'horizontal-nowrap'}>
+            <Layout type={'horizontal-nowrap'} className={styles.entry}>
                 {this.renderColorPicker()}
                 {showHexColorCode ? this.renderHexColor() : null}
                 {this.renderValueInput()}

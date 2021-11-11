@@ -1,3 +1,6 @@
+.entry {
+    flex-shrink: 1;
+}
 
 .colorContainer {
     position: relative;
