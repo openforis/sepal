@@ -18,7 +18,6 @@ export class BandSpec extends React.Component {
                 description={band}
                 expanded={selected}
                 unsafeRemove
-                expandedClassName={styles.form}
                 onClick={() => onClick(id)}
                 onRemove={() => onRemove(id)}>
                 {this.renderExpansion()}

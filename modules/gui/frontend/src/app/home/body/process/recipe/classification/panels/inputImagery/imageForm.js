@@ -92,7 +92,6 @@ class ImageForm extends Component {
                 key={bandSetSpec.id}
                 title={BandSetSpec.renderTitle(bandSetSpec)}
                 description={BandSetSpec.renderDescription(bandSetSpec)}
-                className={selected ? styles.selectedBandSetSpec : null}
                 unsafeRemove
                 removeDisabled={bandSetSpec.type === 'IMAGE_BANDS'}
                 onClick={() => this.editBandSetSpec(bandSetSpec)}

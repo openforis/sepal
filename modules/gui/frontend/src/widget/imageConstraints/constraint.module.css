@@ -1,9 +1,3 @@
-.constraintForm {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    background-color: hsla(var(--look-transparent-h), calc(var(--look-transparent-s) * .5), calc(var(--look-transparent-l) * .8), var(--look-overlay-a));
-}
-
 .band {
     flex-grow: 1;
 }
