@@ -6,7 +6,7 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {SuperButton} from 'widget/superButton'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
-import {connect} from '../../../../../../../../store'
+import {connect} from 'store'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
@@ -70,13 +70,15 @@ class _Mapping extends React.Component {
                 <div className={styles.label}>{entry.label}</div>
             </div>
         )
-        return <SuperButton
-            key={entry.id}
-            title={title}
-            onClick={() => activatables[`entryMapping-${entry.id}}`].activate()}
-        >
-            {this.renderMappingOverview(entry)}
-        </SuperButton>
+        return (
+            <SuperButton
+                key={entry.id}
+                title={title}
+                expansionClickable
+                onClick={() => activatables[`entryMapping-${entry.id}}`].activate()}>
+                {this.renderMappingOverview(entry)}
+            </SuperButton>
+        )
     }
 
     renderMappingOverview({id, color, value, label, constraints = [], booleanOperator}) {
