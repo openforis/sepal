@@ -6,7 +6,6 @@ import {compose} from 'compose'
 import {withScrollable} from 'widget/scrollable'
 import React, {Component} from 'react'
 import _ from 'lodash'
-import styles from './inputImage.module.css'
 
 class ImageForm extends Component {
     state = {
@@ -16,7 +15,7 @@ class ImageForm extends Component {
 
     render() {
         return (
-            <Layout>
+            <Layout type={'vertical'}>
                 {this.renderImageSelector()}
                 {this.renderIncludedBands()}
             </Layout>
@@ -25,7 +24,7 @@ class ImageForm extends Component {
 
     renderImageSelector() {
         const {input, inputComponent, inputs: {includedBands, bands}} = this.props
-        return <div ref={this.element} className={styles.inputComponent}>
+        return <div ref={this.element}>
             {React.createElement(inputComponent, {
                 input,
                 onLoading: () => {

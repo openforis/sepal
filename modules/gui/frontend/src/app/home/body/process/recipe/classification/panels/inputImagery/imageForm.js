@@ -46,7 +46,7 @@ class ImageForm extends Component {
         const {input, inputComponent, inputs: {bands}} = this.props
         return (
             <Layout>
-                <div ref={this.element} className={styles.inputComponent}>
+                <div ref={this.element}>
                     {React.createElement(inputComponent, {
                         input,
                         onLoading: () => {
