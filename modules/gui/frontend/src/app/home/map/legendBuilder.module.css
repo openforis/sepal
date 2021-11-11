@@ -1,5 +1,6 @@
 .entry {
     flex-shrink: 1;
+    height: 1.9rem;
 }
 
 .colorContainer {
