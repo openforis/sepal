@@ -2343,6 +2343,11 @@
     "remapping": {
       "create": "Remapping",
       "description": "Remap categorical and continuous image bands into new categories.",
+      "layers": {
+        "imageLayer": {
+          "preSets": "Pre-sets"
+        }
+      },
       "panel": {
         "inputImagery": {
           "asset": {
