@@ -45,8 +45,8 @@ class _SuperButton extends React.Component {
     }
 
     isClickable() {
-        const {disabled, onClick, expanded} = this.props
-        return !disabled && (onClick || (this.isExpandable() && !expanded) || this.isDraggable())
+        const {disabled, onClick, expansionClickable, expanded} = this.props
+        return !disabled && (onClick || expansionClickable || (this.isExpandable() && !expanded) || this.isDraggable())
     }
 
     isInternallySelected() {
@@ -291,10 +291,12 @@ class _SuperButton extends React.Component {
     }
 
     renderChildren() {
-        const {children, expandedClassName} = this.props
+        const {children, expansionClickable, expandedClassName} = this.props
         return children && this.isSelected() !== false
             ? (
-                <div className={[styles.expand, expandedClassName].join(' ')}>
+                <div
+                    className={[styles.expand, expansionClickable ? styles.expansionClickable : null, expandedClassName].join(' ')}
+                    onClick={() => expansionClickable && this.handleClick()}>
                     {children}
                 </div>
             )
@@ -452,6 +454,7 @@ SuperButton.propTypes = {
     editTooltip: PropTypes.string,
     expanded: PropTypes.any,
     expandedClassName: PropTypes.string,
+    expansionClickable: PropTypes.any,
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     highlightClassName: PropTypes.string,
     highlightDescription: PropTypes.any,
