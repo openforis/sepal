@@ -49,7 +49,8 @@ apt-get install -y --no-install-recommends \--no-install-recommends \
   libcudnn8-dev=8.2.4.15-1+cuda11.4
 
 echo -n "/usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.1">/etc/OpenCL/vendors/nvidia.icd
-
+# Enable persistence mode
+nvidia-smi -pm 1
 
 cd /usr/local/src/
 git clone https://github.com/pyopencl/pyopencl --branch v2021.1.1
