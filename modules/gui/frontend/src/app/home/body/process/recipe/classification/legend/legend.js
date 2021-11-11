@@ -1,4 +1,3 @@
-import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {LegendBuilder, defaultColor} from 'app/home/map/legendBuilder'
 import {Panel} from 'widget/panel/panel'
@@ -7,6 +6,7 @@ import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import ButtonSelect from 'widget/buttonSelect'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -47,13 +47,31 @@ class _Legend extends React.Component {
                 </Panel.Content>
 
                 <Form.PanelButtons>
-                    <Panel.Buttons.Add onClick={() => this.addEntry()}/>
-                    <Button
-                        icon='file-import'
-                        label={msg('process.classification.panel.legend.import')}
-                        onClick={() => this.importLegend()}/>
+                    {this.renderAddButton()}
                 </Form.PanelButtons>
             </RecipeFormPanel>
+        )
+    }
+
+    renderAddButton() {
+        const options = [
+            {
+                value: 'import',
+                label: msg('map.legendBuilder.load.options.importFromCsv.label'),
+                onSelect: () => this.importLegend()
+            }
+        ]
+        return (
+            <ButtonSelect
+                look={'add'}
+                icon={'plus'}
+                label={msg('button.add')}
+                placement='above'
+                tooltipPlacement='bottom'
+                options={options}
+                onClick={() => this.addEntry()}
+                onSelect={option => option && _.find(options, ({value}) => value === option.value).onSelect()}
+            />
         )
     }
 

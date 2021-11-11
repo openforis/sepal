@@ -1,4 +1,3 @@
-import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {Histogram, histogramStretch} from './histogram'
 import {Layout} from 'widget/layout'
@@ -149,7 +148,7 @@ class _VisParamsPanel extends React.Component {
     }
 
     renderLegendBuilderButtons() {
-        const {stream, inputs: {name1}} = this.props
+        const {stream} = this.props
         const options = [
             {
                 value: 'import',
@@ -159,23 +158,21 @@ class _VisParamsPanel extends React.Component {
             {
                 value: 'imageValues',
                 label: msg('map.legendBuilder.load.options.imageValues.label'),
-                disabled: !name1.value,
                 onSelect: this.loadDistinctBandValues
             },
         ]
         return (
-            <ButtonGroup>
-                <Panel.Buttons.Add onClick={() => this.addLegendEntry()}/>
-                <ButtonSelect
-                    label={msg('map.legendBuilder.load.label')}
-                    icon='file-import'
-                    placement='above'
-                    tooltipPlacement='bottom'
-                    options={options}
-                    disabled={stream('LOAD_DISTINCT_IMAGE_VALUES').active}
-                    onSelect={option => option && _.find(options, ({value}) => value === option.value).onSelect()}
-                />
-            </ButtonGroup>
+            <ButtonSelect
+                look={'add'}
+                icon={'plus'}
+                label={msg('button.add')}
+                placement='above'
+                tooltipPlacement='bottom'
+                options={options}
+                disabled={stream('LOAD_DISTINCT_IMAGE_VALUES').active}
+                onClick={() => this.addLegendEntry()}
+                onSelect={option => option && _.find(options, ({value}) => value === option.value).onSelect()}
+            />
         )
     }
 
