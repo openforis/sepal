@@ -2,6 +2,7 @@ html {
     --header-font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
 
     --wireframe-color: rgba(100%, 100%, 100%, .15);
+    --section-wireframe-color: rgba(100%, 100%, 100%, .1);
     --wireframe: 1px solid var(--wireframe-color);
 
     --selected-hue: 40;
@@ -9,6 +10,7 @@ html {
 
     --button-border-radius: .2rem;
     --container-border-radius: .4rem;
+    --section-border-radius: .3rem;
 
     --panel-default-background-color: hsla(36, 8%, 15%, .95);
     --panel-default-overlay-color: hsla(36, 8%, 15%, .7);
