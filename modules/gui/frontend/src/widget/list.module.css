@@ -25,3 +25,7 @@
     text-transform: uppercase;
     border-bottom: 1px solid #333;
 }
+
+.options .separator {
+    border-bottom: 1px solid #333;
+}
