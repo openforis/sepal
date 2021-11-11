@@ -47,9 +47,10 @@ to prevent click-through from click-hold buttons */
 
 .expand {
     border-top: var(--wireframe);
-    padding: .25rem .5rem;
+    padding: 1rem .5rem;
     cursor: default;
     pointer-events: all;
+    background-color: hsla(var(--look-transparent-h), calc(var(--look-transparent-s) * .5), calc(var(--look-transparent-l) * .8), var(--look-overlay-a));
 }
 
 .expanded .info > * {

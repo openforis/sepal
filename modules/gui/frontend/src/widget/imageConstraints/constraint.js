@@ -57,7 +57,6 @@ class _Constraint extends React.Component {
                 description={this.toDescription()}
                 expanded={selected}
                 unsafeRemove
-                expandedClassName={styles.constraintForm}
                 onClick={() => onClick()}
                 onRemove={() => onRemove()}>
                 <Layout>
