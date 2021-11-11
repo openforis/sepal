@@ -13,3 +13,6 @@ chmod +x NVIDIA-Linux-x86_64*.run
 /bin/sh ./NVIDIA-Linux-x86_64*.run -s
 chmod +x /usr/local/bin/init-gpu-drivers.sh
 systemctl enable init-gpu-drivers.service
+
+# Enable persistence mode
+nvidia-smi -pm 1
