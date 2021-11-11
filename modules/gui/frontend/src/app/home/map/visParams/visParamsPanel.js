@@ -159,7 +159,7 @@ class _VisParamsPanel extends React.Component {
                 value: 'imageValues',
                 label: msg('map.legendBuilder.load.options.imageValues.label'),
                 onSelect: this.loadDistinctBandValues
-            },
+            }
         ]
         return (
             <ButtonSelect

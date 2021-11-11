@@ -4,6 +4,7 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
+import {downloadCsv} from 'widget/download'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import ButtonSelect from 'widget/buttonSelect'
@@ -22,7 +23,8 @@ const fields = {
 
 const mapRecipeToProps = recipe => ({
     importedLegendEntries: selectFrom(recipe, 'ui.importedLegendEntries'),
-    legendEntries: selectFrom(recipe, 'model.legend.entries') || []
+    legendEntries: selectFrom(recipe, 'model.legend.entries') || [],
+    title: recipe.title || recipe.placeholder
 })
 
 class _Legend extends React.Component {
@@ -48,11 +50,18 @@ class _Legend extends React.Component {
     }
 
     renderAddButton() {
+        const {inputs: {entries}} = this.props
         const options = [
             {
                 value: 'import',
                 label: msg('map.legendBuilder.load.options.importFromCsv.label'),
                 onSelect: () => this.importLegend()
+            },
+            {
+                value: 'export',
+                label: msg('map.legendBuilder.load.options.exportToCsv.label'),
+                disabled: !entries.value || !entries.value.length,
+                onSelect: () => this.exportLegend()
             }
         ]
         return (
@@ -113,6 +122,16 @@ class _Legend extends React.Component {
     importLegend() {
         const {activator: {activatables: {legendImport}}} = this.props
         legendImport.activate()
+    }
+
+    exportLegend() {
+        const {title, inputs: {entries}} = this.props
+        const csv = [
+            ['color,value,label'],
+            entries.value.map(({color, value, label}) => `${color},${value},"${label.replaceAll('"', '\\"')}"`)
+        ].flat().join('\n')
+        const filename = `${title}_legend.csv`
+        downloadCsv(csv, filename)
     }
 }
 

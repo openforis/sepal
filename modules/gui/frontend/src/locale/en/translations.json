@@ -448,6 +448,9 @@
       "load": {
         "label": "Load...",
         "options": {
+          "exportToCsv": {
+            "label": "Export as CSV"
+          },
           "importFromCsv": {
             "label": "Import from CSV..."
           },
