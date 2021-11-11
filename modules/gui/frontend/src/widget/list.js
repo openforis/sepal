@@ -128,7 +128,7 @@ class List extends React.Component {
             : option.group
                 ? option.render || option.label
                     ? this.renderGroup(option, index)
-                    : this.renderSeparator(option)
+                    : this.renderSeparator(option, index)
                 : this.renderNonSelectableOption(option, index)
     }
 
@@ -169,7 +169,7 @@ class List extends React.Component {
 
     renderSeparator(option, index) {
         return (
-            <li key={option.key || option.value || index} className={styles.separator}/>
+            <li key={option.key || index} className={styles.separator}/>
         )
     }
 
