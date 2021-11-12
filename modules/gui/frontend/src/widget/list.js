@@ -126,7 +126,9 @@ class List extends React.Component {
         return option.value !== undefined && !option.disabled
             ? this.renderSelectableOption(option, index)
             : option.group
-                ? this.renderGroup(option, index)
+                ? option.render || option.label
+                    ? this.renderGroup(option, index)
+                    : this.renderSeparator(option, index)
                 : this.renderNonSelectableOption(option, index)
     }
 
@@ -162,6 +164,12 @@ class List extends React.Component {
                     disabled
                 />
             </li>
+        )
+    }
+
+    renderSeparator(option, index) {
+        return (
+            <li key={option.key || index} className={styles.separator}/>
         )
     }
 
@@ -321,6 +329,7 @@ class List extends React.Component {
 
     selectOption(option) {
         const {onSelect} = this.props
+        option.onSelect && option.onSelect()
         onSelect && onSelect(option)
     }
 

@@ -325,7 +325,7 @@ class _Combo extends React.Component {
             _.flatten(
                 options.map(option =>
                     option.options
-                        ? [{label: option.label, group: true}, ...option.options]
+                        ? [{..._.omit(option, 'options'), group: true}, ...option.options]
                         : option
                 )
             )

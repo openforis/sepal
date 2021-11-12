@@ -9,6 +9,7 @@ import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
+import {downloadCsv} from 'widget/download'
 import {msg} from 'translate'
 import {normalize} from 'app/home/map/visParams/visParams'
 import {selectFrom} from 'stateUtils'
@@ -149,17 +150,28 @@ class _VisParamsPanel extends React.Component {
 
     renderLegendBuilderButtons() {
         const {stream} = this.props
+        const {legendEntries} = this.state
         const options = [
-            {
-                value: 'import',
-                label: msg('map.legendBuilder.load.options.importFromCsv.label'),
-                onSelect: this.importLegend
-            },
-            {
-                value: 'imageValues',
-                label: msg('map.legendBuilder.load.options.imageValues.label'),
-                onSelect: this.loadDistinctBandValues
-            },
+            {options: [
+                {
+                    value: 'import',
+                    label: msg('map.legendBuilder.load.options.importFromCsv.label'),
+                    onSelect: this.importLegend
+                },
+                {
+                    value: 'imageValues',
+                    label: msg('map.legendBuilder.load.options.imageValues.label'),
+                    onSelect: this.loadDistinctBandValues
+                }
+            ]},
+            {options: [
+                {
+                    value: 'export',
+                    label: msg('map.legendBuilder.load.options.exportToCsv.label'),
+                    disabled: !legendEntries || !legendEntries.length,
+                    onSelect: () => this.exportLegend()
+                }
+            ]}
         ]
         return (
             <ButtonSelect
@@ -171,7 +183,6 @@ class _VisParamsPanel extends React.Component {
                 options={options}
                 disabled={stream('LOAD_DISTINCT_IMAGE_VALUES').active}
                 onClick={() => this.addLegendEntry()}
-                onSelect={option => option && _.find(options, ({value}) => value === option.value).onSelect()}
             />
         )
     }
@@ -510,6 +521,17 @@ class _VisParamsPanel extends React.Component {
     importLegend() {
         const {activator: {activatables: {legendImport}}} = this.props
         legendImport.activate()
+    }
+
+    exportLegend() {
+        const {inputs: {name1}} = this.props
+        const {legendEntries} = this.state
+        const csv = [
+            ['color,value,label'],
+            legendEntries.map(({color, value, label}) => `${color},${value},"${label.replaceAll('"', '\\"')}"`)
+        ].flat().join('\n')
+        const filename = `${name1.value}_legend.csv`
+        downloadCsv(csv, filename)
     }
 
     loadDistinctBandValues() {
