@@ -33,12 +33,11 @@ class BlurDetector extends React.Component {
         const {onBlur, addSubscription} = this.props
         this.setEnabled(false)
         if (onBlur) {
-            const mainElement = document.getElementById('main')
             addSubscription(
                 merge(
-                    fromEvent(mainElement, 'mousedown', {capture: true}),
-                    fromEvent(mainElement, 'touchstart', {capture: true}),
-                    fromEvent(mainElement, 'focus', {capture: true}),
+                    fromEvent(document, 'mousedown', {capture: true}),
+                    fromEvent(document, 'touchstart', {capture: true}),
+                    fromEvent(document, 'focus', {capture: true}),
                 ).pipe(
                     filter(() => this.enabled)
                 ).subscribe(
