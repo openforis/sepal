@@ -708,7 +708,6 @@ const Band = ({invertable, onBandSelected, bands, label, inputs: {name, inverted
             placeholder={msg('map.visParams.form.band.select.placeholder')}
             input={name}
             options={options}
-            disabled={!bands}
             busyMessage={!bands && msg('map.visParams.bands.loading')}
             additionalButtons={invertable ? [invertedWidget] : []}
             onChange={({value}) => onBandSelected && onBandSelected(value)}
