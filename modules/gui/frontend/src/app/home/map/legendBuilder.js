@@ -44,7 +44,7 @@ export class LegendBuilder extends React.Component {
     renderEntries() {
         const {entries} = this.props
         return (
-            <Layout>
+            <Layout type='vertical' fill>
                 <Widget
                     layout='vertical'
                     spacing='compact'
@@ -214,7 +214,7 @@ class _Entry extends React.Component {
     render() {
         const {showHexColorCode} = this.props
         return (
-            <Layout type={'horizontal-nowrap'} className={styles.entry}>
+            <Layout type='horizontal-nowrap' fill className={styles.entry}>
                 {this.renderColorPicker()}
                 {showHexColorCode ? this.renderHexColor() : null}
                 {this.renderValueInput()}
