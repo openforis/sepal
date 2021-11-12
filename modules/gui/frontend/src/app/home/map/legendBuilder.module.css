@@ -1,4 +1,5 @@
 .entry {
+    /* flex-grow: 1; */
     flex-shrink: 1;
     height: 1.9rem;
 }
