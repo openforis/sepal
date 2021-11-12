@@ -41,7 +41,7 @@ class _ValuesLayer extends React.Component {
         return bands ?
             (
                 <div className={styles.container}>
-                    <Layout type='horizontal-nowrap' spacing='none' className={styles.bands}>
+                    <Layout type='horizontal-nowrap' spacing='none'>
                         {[0, 1, 2].map(i => this.renderBand({
                             key: i,
                             band: bands[i],
