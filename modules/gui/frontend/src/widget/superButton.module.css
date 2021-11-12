@@ -45,7 +45,7 @@ to prevent click-through from click-hold buttons */
     flex-shrink: 0;
 }
 
-.expand {
+.expansion {
     border-top: var(--wireframe);
     padding: .75rem .5rem;
     pointer-events: all;

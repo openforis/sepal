@@ -154,9 +154,24 @@ class _SuperButton extends React.Component {
     }
 
     renderButton(original) {
+        return (
+            <div
+                ref={original ? this.draggable : null}
+                className={this.getClassName(original)}
+                onMouseOver={() => this.setState({dragHandleHover: true})}
+                onMouseOut={() => this.setState({dragHandleHover: false})}
+            >
+                {this.isDraggable() ? this.renderDragHandle() : null}
+                {this.renderMain(original)}
+                {this.renderExpansion()}
+            </div>
+        )
+    }
+
+    getClassName(original) {
         const {dragHandleHover} = this.state
         const {className} = this.props
-        const classNames = _.flatten([
+        return _.flatten([
             lookStyles.look,
             lookStyles.transparent,
             lookStyles.noTransitions,
@@ -169,20 +184,14 @@ class _SuperButton extends React.Component {
             this.isClickable() ? null : styles.unclickable,
             className
         ]).join(' ')
+    }
+
+    renderMain(original) {
         return (
-            <div
-                ref={original ? this.draggable : null}
-                className={classNames}
-                onMouseOver={() => this.setState({dragHandleHover: true})}
-                onMouseOut={() => this.setState({dragHandleHover: false})}
-            >
-                {this.isDraggable() ? this.renderDragHandle() : null}
-                <div className={styles.main}>
-                    <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
-                    {this.renderContent()}
-                    {original && this.renderButtons()}
-                </div>
-                {this.renderChildren()}
+            <div className={styles.main}>
+                <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
+                {this.renderContent()}
+                {original && this.renderButtons()}
             </div>
         )
     }
@@ -290,12 +299,12 @@ class _SuperButton extends React.Component {
             : null
     }
 
-    renderChildren() {
+    renderExpansion() {
         const {children, expansionClickable, expandedClassName} = this.props
         return children && this.isSelected() !== false
             ? (
                 <div
-                    className={[styles.expand, expansionClickable ? styles.expansionClickable : null, expandedClassName].join(' ')}
+                    className={[styles.expansion, expansionClickable ? styles.expansionClickable : null, expandedClassName].join(' ')}
                     onClick={() => expansionClickable && this.handleClick()}>
                     {children}
                 </div>
