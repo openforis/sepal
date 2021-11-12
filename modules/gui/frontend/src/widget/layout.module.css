@@ -1,7 +1,7 @@
 
 .layout {
     display: flex;
-    flex-grow: 1;
+    flex-grow: 0;
     flex-shrink: 0;
     overflow: hidden;
 }
@@ -14,6 +14,10 @@
 
 .layout > .content > * {
     margin-bottom: var(--vertical-spacing);
+}
+
+.layout.fill {
+    flex-grow: 1;
 }
 
 .layout.framed {
@@ -31,6 +35,7 @@
     left: 0;
     right: 0;
     background-color: hsla(0, 0%, 0%, .05);
+    pointer-events: none;
 }
 
 .layout.vertical {
@@ -90,6 +95,10 @@
 
 .layout.vertical > .content {
     flex-direction: column;
+}
+
+.layout.vertical.scrollable {
+    flex-grow: 1;
 }
 
 .layout.vertical.scrollable > .content {
