@@ -14,7 +14,7 @@ export class BandSpec extends React.Component {
         const {selected, spec: {id, band, type}, onClick, onRemove} = this.props
         return (
             <SuperButton
-                title={msg(['process.remapping.panel.inputImagery.type', type])}
+                title={msg(['process.remapping.panel.inputImagery.form.type', type])}
                 description={band}
                 expanded={selected}
                 unsafeRemove
@@ -58,7 +58,7 @@ export class BandSpec extends React.Component {
             }))
         return (
             <Combo
-                label={msg('process.classChange.panel.inputImage.changeBand.label')}
+                label={msg('process.remapping.panel.inputImagery.form.band.label')}
                 value={band}
                 options={bandOptions}
                 className={styles.bandSelector}
@@ -69,12 +69,12 @@ export class BandSpec extends React.Component {
     renderTypeSelector() {
         const {spec: {type}} = this.props
         const typeOptions = [
-            {value: 'categorical', label: msg('process.remapping.panel.inputImagery.type.categorical')},
-            {value: 'continuous', label: msg('process.remapping.panel.inputImagery.type.continuous')}
+            {value: 'categorical', label: msg('process.remapping.panel.inputImagery.form.type.categorical')},
+            {value: 'continuous', label: msg('process.remapping.panel.inputImagery.form.type.continuous')}
         ]
         return (
             <Buttons
-                label={msg('process.remapping.panel.inputImagery.type.label')}
+                label={msg('process.remapping.panel.inputImagery.form.type.label')}
                 selected={type}
                 options={typeOptions}
                 onChange={type => this.updateType(type)}
@@ -86,7 +86,7 @@ export class BandSpec extends React.Component {
         const {recipe, spec: {band, legendEntries}} = this.props
         return (
             <Legend
-                label={msg('process.remapping.panel.inputImagery.legend.label')}
+                label={msg('process.remapping.panel.inputImagery.form.legend.label')}
                 band={band}
                 entries={legendEntries || []}
                 recipe={recipe}
