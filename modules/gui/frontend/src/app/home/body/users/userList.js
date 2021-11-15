@@ -104,13 +104,15 @@ export default class UserList extends React.Component {
         return status === 'ACTIVE'
     }
 
-    isUserOverBudget({quota: {budget, current}}) {
-        return current.instanceSpending > budget.instanceSpending
+    isUserOverBudget({quota: {budget, current} = {}}) {
+        return budget && current && (
+            current.instanceSpending > budget.instanceSpending
             || current.storageSpending > budget.storageSpending
             || current.storageQuota > budget.storageQuota
+        )
     }
 
-    isUserRequestingBudgetUpdate({quota: {budgetUpdateRequest}}) {
+    isUserRequestingBudgetUpdate({quota: {budgetUpdateRequest} = {}}) {
         return budgetUpdateRequest
     }
 
@@ -332,7 +334,7 @@ UserList.propTypes = {
 class UserItem extends React.Component {
     render() {
         const {user, onClick} = this.props
-        const {status, quota: {budget = {}, current = {}} = {}} = user
+        const {name, status, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
         return (
             <div
                 className={[
@@ -345,10 +347,10 @@ class UserItem extends React.Component {
                     status ? styles.clickable : null
                 ].join(' ')}
                 onClick={() => status ? onClick() : null}>
-                {this.renderName(user)}
-                {this.renderStatus(user)}
-                {this.renderLastUpdate(user)}
-                {this.renderBudgetUpdateRequest(user)}
+                {this.renderName(name)}
+                {this.renderStatus(status)}
+                {this.renderLastUpdate(updateTime)}
+                {this.renderBudgetUpdateRequest(budgetUpdateRequest)}
                 {this.renderInstanceSpending(budget, current)}
                 {this.renderStorageSpending(budget, current)}
                 {this.renderStorageQuota(budget, current)}
@@ -356,7 +358,7 @@ class UserItem extends React.Component {
         )
     }
 
-    renderName({name}) {
+    renderName(name) {
         const {highlight} = this.props
         return (
             <div>
@@ -365,7 +367,7 @@ class UserItem extends React.Component {
         )
     }
 
-    renderStatus({status}) {
+    renderStatus(status) {
         return (
             <div>
                 {status ? this.renderDefinedStatus(status) : this.renderUndefinedStatus() }
@@ -385,7 +387,7 @@ class UserItem extends React.Component {
         )
     }
 
-    renderLastUpdate({updateTime}) {
+    renderLastUpdate(updateTime) {
         return (
             <div>
                 {moment(updateTime).fromNow()}
@@ -393,7 +395,7 @@ class UserItem extends React.Component {
         )
     }
 
-    renderBudgetUpdateRequest({quota: {budgetUpdateRequest}}) {
+    renderBudgetUpdateRequest(budgetUpdateRequest) {
         return (
             <div>
                 {budgetUpdateRequest ? <Icon name='envelope'/> : null}
@@ -401,7 +403,7 @@ class UserItem extends React.Component {
         )
     }
 
-    renderInstanceSpending(budget, current) {
+    renderInstanceSpending(budget = {}, current = {}) {
         return (
             <React.Fragment>
                 <div className={styles.number}>
@@ -416,7 +418,7 @@ class UserItem extends React.Component {
         )
     }
 
-    renderStorageSpending(budget, current) {
+    renderStorageSpending(budget = {}, current = {}) {
         return (
             <React.Fragment>
                 <div className={styles.number}>
@@ -431,7 +433,7 @@ class UserItem extends React.Component {
         )
     }
 
-    renderStorageQuota(budget, current) {
+    renderStorageQuota(budget = {}, current = {}) {
         return (
             <React.Fragment>
                 <div className={styles.number}>
