@@ -18,7 +18,7 @@ const getUserList$ = () => forkJoin(
     map(([users, budget]) =>
         _.map(users, user => ({
             ...user,
-            quota: budget[user.username || {}]
+            quota: budget[user.username] || {}
         }))
     )
 )
