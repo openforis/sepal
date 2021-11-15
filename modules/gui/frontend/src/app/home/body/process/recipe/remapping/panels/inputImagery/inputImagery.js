@@ -81,10 +81,9 @@ class InputImagery extends React.Component {
         return (
             <SuperButton
                 key={`${image.type}-${image.id}`}
-                title={msg(`process.remapping.panel.inputImagery.type.${image.type}`)}
+                title={msg(`process.remapping.panel.inputImagery.form.type.${image.type}`)}
                 description={name}
-                removeMessage={msg('process.remapping.panel.inputImagery.remove.confirmationMessage', {name})}
-                removeTooltip={msg('process.remapping.panel.inputImagery.remove.tooltip')}
+                removeTooltip={msg('process.remapping.panel.inputImagery.form.remove.tooltip')}
                 onClick={() => this.editImage(image)}
                 onRemove={() => this.removeImage(image)}
             />
@@ -93,7 +92,7 @@ class InputImagery extends React.Component {
 
     renderNoImageryMessage() {
         return (
-            <NoData message={msg('process.remapping.panel.inputImagery.noImagery')}></NoData>
+            <NoData message={msg('process.remapping.panel.inputImagery.form.noImagery')}/>
         )
     }
 

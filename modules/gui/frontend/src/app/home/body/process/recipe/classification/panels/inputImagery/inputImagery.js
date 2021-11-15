@@ -83,7 +83,6 @@ class InputImagery extends React.Component {
                 key={`${image.type}-${image.id}`}
                 title={msg(`process.classification.panel.inputImagery.type.${image.type}`)}
                 description={name}
-                removeMessage={msg('process.classification.panel.inputImagery.remove.confirmationMessage', {name})}
                 removeTooltip={msg('process.classification.panel.inputImagery.remove.tooltip')}
                 onClick={() => this.editImage(image)}
                 onRemove={() => this.removeImage(image)}
@@ -93,7 +92,7 @@ class InputImagery extends React.Component {
 
     renderNoImageryMessage() {
         return (
-            <NoData message={msg('process.classification.panel.inputImagery.noImagery')}></NoData>
+            <NoData message={msg('process.classification.panel.inputImagery.noImagery')}/>
         )
     }
 

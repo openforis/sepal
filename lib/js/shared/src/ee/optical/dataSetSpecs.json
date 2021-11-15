@@ -11,36 +11,28 @@
             },
             "bands": {
                 "blue": {
-                    "name": "B1",
-                    "scaled": false
+                    "name": "B1"
                 },
                 "green": {
-                    "name": "B2",
-                    "scaled": false
+                    "name": "B2"
                 },
                 "red": {
-                    "name": "B3",
-                    "scaled": false
+                    "name": "B3"
                 },
                 "nir": {
-                    "name": "B4",
-                    "scaled": false
+                    "name": "B4"
                 },
                 "swir1": {
-                    "name": "B5",
-                    "scaled": false
+                    "name": "B5"
                 },
                 "thermal": {
-                    "name": "B6",
-                    "scaled": false
+                    "name": "B6"
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": false
+                    "name": "B7"
                 },
                 "qa": {
-                    "name": "BQA",
-                    "scaled": false
+                    "name": "BQA"
                 }
             }
         },
@@ -55,36 +47,28 @@
             },
             "bands": {
                 "blue": {
-                    "name": "B1",
-                    "scaled": false
+                    "name": "B1"
                 },
                 "green": {
-                    "name": "B2",
-                    "scaled": false
+                    "name": "B2"
                 },
                 "red": {
-                    "name": "B3",
-                    "scaled": false
+                    "name": "B3"
                 },
                 "nir": {
-                    "name": "B4",
-                    "scaled": false
+                    "name": "B4"
                 },
                 "swir1": {
-                    "name": "B5",
-                    "scaled": false
+                    "name": "B5"
                 },
                 "thermal": {
-                    "name": "B6",
-                    "scaled": false
+                    "name": "B6"
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": false
+                    "name": "B7"
                 },
                 "qa": {
-                    "name": "BQA",
-                    "scaled": false
+                    "name": "BQA"
                 }
             }
         },
@@ -99,36 +83,28 @@
             },
             "bands": {
                 "blue": {
-                    "name": "B1",
-                    "scaled": false
+                    "name": "B1"
                 },
                 "green": {
-                    "name": "B2",
-                    "scaled": false
+                    "name": "B2"
                 },
                 "red": {
-                    "name": "B3",
-                    "scaled": false
+                    "name": "B3"
                 },
                 "nir": {
-                    "name": "B4",
-                    "scaled": false
+                    "name": "B4"
                 },
                 "swir1": {
-                    "name": "B5",
-                    "scaled": false
+                    "name": "B5"
                 },
                 "thermal": {
-                    "name": "B6",
-                    "scaled": false
+                    "name": "B6"
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": false
+                    "name": "B7"
                 },
                 "qa": {
-                    "name": "BQA",
-                    "scaled": false
+                    "name": "BQA"
                 }
             }
         },
@@ -143,36 +119,28 @@
             },
             "bands": {
                 "blue": {
-                    "name": "B1",
-                    "scaled": false
+                    "name": "B1"
                 },
                 "green": {
-                    "name": "B2",
-                    "scaled": false
+                    "name": "B2"
                 },
                 "red": {
-                    "name": "B3",
-                    "scaled": false
+                    "name": "B3"
                 },
                 "nir": {
-                    "name": "B4",
-                    "scaled": false
+                    "name": "B4"
                 },
                 "swir1": {
-                    "name": "B5",
-                    "scaled": false
+                    "name": "B5"
                 },
                 "thermal": {
-                    "name": "B6",
-                    "scaled": false
+                    "name": "B6"
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": false
+                    "name": "B7"
                 },
                 "qa": {
-                    "name": "BQA",
-                    "scaled": false
+                    "name": "BQA"
                 }
             }
         },
@@ -187,44 +155,34 @@
             },
             "bands": {
                 "blue": {
-                    "name": "B1",
-                    "scaled": false
+                    "name": "B1"
                 },
                 "green": {
-                    "name": "B2",
-                    "scaled": false
+                    "name": "B2"
                 },
                 "red": {
-                    "name": "B3",
-                    "scaled": false
+                    "name": "B3"
                 },
                 "nir": {
-                    "name": "B4",
-                    "scaled": false
+                    "name": "B4"
                 },
                 "swir1": {
-                    "name": "B5",
-                    "scaled": false
+                    "name": "B5"
                 },
                 "thermal": {
-                    "name": "B6_VCID_1",
-                    "scaled": false
+                    "name": "B6_VCID_1"
                 },
                 "thermal2": {
-                    "name": "B6_VCID_2",
-                    "scaled": false
+                    "name": "B6_VCID_2"
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": false
+                    "name": "B7"
                 },
                 "pan": {
-                    "name": "B8",
-                    "scaled": false
+                    "name": "B8"
                 },
                 "qa": {
-                    "name": "BQA",
-                    "scaled": false
+                    "name": "BQA"
                 }
             }
         },
@@ -239,44 +197,34 @@
             },
             "bands": {
                 "blue": {
-                    "name": "B1",
-                    "scaled": false
+                    "name": "B1"
                 },
                 "green": {
-                    "name": "B2",
-                    "scaled": false
+                    "name": "B2"
                 },
                 "red": {
-                    "name": "B3",
-                    "scaled": false
+                    "name": "B3"
                 },
                 "nir": {
-                    "name": "B4",
-                    "scaled": false
+                    "name": "B4"
                 },
                 "swir1": {
-                    "name": "B5",
-                    "scaled": false
+                    "name": "B5"
                 },
                 "thermal": {
-                    "name": "B6_VCID_1",
-                    "scaled": false
+                    "name": "B6_VCID_1"
                 },
                 "thermal2": {
-                    "name": "B6_VCID_2",
-                    "scaled": false
+                    "name": "B6_VCID_2"
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": false
+                    "name": "B7"
                 },
                 "pan": {
-                    "name": "B8",
-                    "scaled": false
+                    "name": "B8"
                 },
                 "qa": {
-                    "name": "BQA",
-                    "scaled": false
+                    "name": "BQA"
                 }
             }
         },
@@ -291,52 +239,40 @@
             },
             "bands": {
                 "aerosol": {
-                    "name": "B1",
-                    "scaled": false
+                    "name": "B1"
                 },
                 "blue": {
-                    "name": "B2",
-                    "scaled": false
+                    "name": "B2"
                 },
                 "green": {
-                    "name": "B3",
-                    "scaled": false
+                    "name": "B3"
                 },
                 "red": {
-                    "name": "B4",
-                    "scaled": false
+                    "name": "B4"
                 },
                 "nir": {
-                    "name": "B5",
-                    "scaled": false
+                    "name": "B5"
                 },
                 "swir1": {
-                    "name": "B6",
-                    "scaled": false
+                    "name": "B6"
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": false
+                    "name": "B7"
                 },
                 "pan": {
-                    "name": "B8",
-                    "scaled": false
+                    "name": "B8"
                 },
                 "cirrus": {
-                    "name": "B9",
-                    "scaled": false
+                    "name": "B9"
                 },
                 "thermal": {
-                    "name": "B10",
-                    "scaled": false
+                    "name": "B10"
                 },
                 "thermal2": {
-                    "name": "B11",
-                    "scaled": false
+                    "name": "B11"
                 },
                 "qa": {
-                    "name": "BQA",
-                    "scaled": false
+                    "name": "BQA"
                 }
             }
         },
@@ -351,52 +287,40 @@
             },
             "bands": {
                 "aerosol": {
-                    "name": "B1",
-                    "scaled": false
+                    "name": "B1"
                 },
                 "blue": {
-                    "name": "B2",
-                    "scaled": false
+                    "name": "B2"
                 },
                 "green": {
-                    "name": "B3",
-                    "scaled": false
+                    "name": "B3"
                 },
                 "red": {
-                    "name": "B4",
-                    "scaled": false
+                    "name": "B4"
                 },
                 "nir": {
-                    "name": "B5",
-                    "scaled": false
+                    "name": "B5"
                 },
                 "swir1": {
-                    "name": "B6",
-                    "scaled": false
+                    "name": "B6"
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": false
+                    "name": "B7"
                 },
                 "pan": {
-                    "name": "B8",
-                    "scaled": false
+                    "name": "B8"
                 },
                 "cirrus": {
-                    "name": "B9",
-                    "scaled": false
+                    "name": "B9"
                 },
                 "thermal": {
-                    "name": "B10",
-                    "scaled": false
+                    "name": "B10"
                 },
                 "thermal2": {
-                    "name": "B11",
-                    "scaled": false
+                    "name": "B11"
                 },
                 "qa": {
-                    "name": "BQA",
-                    "scaled": false
+                    "name": "BQA"
                 }
             }
         },
@@ -404,65 +328,63 @@
             "reflectance": "TOA",
             "dataSetName": "SENTINEL_2",
             "collectionName": "COPERNICUS/S2",
-            "scaled": false,
             "maxZenith": 10.3,
             "calibrationCoefs": {"slopes": [1], "intercepts": [0]},
             "bands": {
                 "aerosol": {
                     "name": "B1",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "blue": {
                     "name": "B2",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "green": {
                     "name": "B3",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "red": {
                     "name": "B4",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "redEdge1": {
                     "name": "B5",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "redEdge2": {
                     "name": "B6",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "redEdge3": {
                     "name": "B7",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "nir": {
                     "name": "B8",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "redEdge4": {
                     "name": "B8A",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "waterVapor": {
                     "name": "B9",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "cirrus": {
                     "name": "B10",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "swir1": {
                     "name": "B11",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "swir2": {
                     "name": "B12",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "qa": {
-                    "name": "QA60",
-                    "scaled": false
+                    "name": "QA60"
                 }
             }
         }
@@ -471,344 +393,378 @@
         "LANDSAT_4": {
             "reflectance": "SR",
             "dataSetName": "LANDSAT_4",
-            "collectionName": "LANDSAT/LT04/C01/T1_SR",
-            "scaled": false,
+            "collectionName": "LANDSAT/LT04/C02/T1_L2",
             "maxZenith": 7.5,
             "bands": {
                 "blue": {
-                    "name": "B1",
-                    "scaled": true
+                    "name": "SR_B1",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "green": {
-                    "name": "B2",
-                    "scaled": true
+                    "name": "SR_B2",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "red": {
-                    "name": "B3",
-                    "scaled": true
+                    "name": "SR_B3",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "nir": {
-                    "name": "B4",
-                    "scaled": true
+                    "name": "SR_B4",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "swir1": {
-                    "name": "B5",
-                    "scaled": true
+                    "name": "SR_B5",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "thermal": {
-                    "name": "B6",
-                    "scaled": true
+                    "name": "ST_B6",
+                    "scale": 0.00341802,
+                    "offset": 149
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": true
+                    "name": "SR_B7",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "qa": {
-                    "name": "pixel_qa",
-                    "scaled": false
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_4_T2": {
             "reflectance": "SR",
             "dataSetName": "LANDSAT_4_T2",
-            "collectionName": "LANDSAT/LT04/C01/T2_SR",
-            "scaled": false,
+            "collectionName": "LANDSAT/LT04/C02/T2_L2",
             "maxZenith": 7.5,
             "bands": {
                 "blue": {
-                    "name": "B1",
-                    "scaled": true
+                    "name": "SR_B1",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "green": {
-                    "name": "B2",
-                    "scaled": true
+                    "name": "SR_B2",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "red": {
-                    "name": "B3",
-                    "scaled": true
+                    "name": "SR_B3",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "nir": {
-                    "name": "B4",
-                    "scaled": true
+                    "name": "SR_B4",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "swir1": {
-                    "name": "B5",
-                    "scaled": true
+                    "name": "SR_B5",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "thermal": {
-                    "name": "B6",
-                    "scaled": true
+                    "name": "ST_B6",
+                    "scale": 0.00341802,
+                    "offset": 149
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": true
+                    "name": "SR_B7",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "qa": {
-                    "name": "pixel_qa",
-                    "scaled": false
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_5": {
             "reflectance": "SR",
             "dataSetName": "LANDSAT_5",
-            "collectionName": "LANDSAT/LT05/C01/T1_SR",
-            "scaled": false,
+            "collectionName": "LANDSAT/LT05/C02/T1_L2",
             "maxZenith": 7.5,
             "bands": {
                 "blue": {
-                    "name": "B1",
-                    "scaled": true
+                    "name": "SR_B1",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "green": {
-                    "name": "B2",
-                    "scaled": true
+                    "name": "SR_B2",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "red": {
-                    "name": "B3",
-                    "scaled": true
+                    "name": "SR_B3",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "nir": {
-                    "name": "B4",
-                    "scaled": true
+                    "name": "SR_B4",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "swir1": {
-                    "name": "B5",
-                    "scaled": true
+                    "name": "SR_B5",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "thermal": {
-                    "name": "B6",
-                    "scaled": true
+                    "name": "ST_B6",
+                    "scale": 0.00341802,
+                    "offset": 149
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": true
+                    "name": "SR_B7",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "qa": {
-                    "name": "pixel_qa",
-                    "scaled": false
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_5_T2": {
             "reflectance": "SR",
             "dataSetName": "LANDSAT_5_T2",
-            "collectionName": "LANDSAT/LT05/C01/T2_SR",
-            "scaled": false,
+            "collectionName": "LANDSAT/LT05/C02/T2_L2",
             "maxZenith": 7.5,
             "bands": {
                 "blue": {
-                    "name": "B1",
-                    "scaled": true
+                    "name": "SR_B1",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "green": {
-                    "name": "B2",
-                    "scaled": true
+                    "name": "SR_B2",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "red": {
-                    "name": "B3",
-                    "scaled": true
+                    "name": "SR_B3",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "nir": {
-                    "name": "B4",
-                    "scaled": true
+                    "name": "SR_B4",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "swir1": {
-                    "name": "B5",
-                    "scaled": true
+                    "name": "SR_B5",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "thermal": {
-                    "name": "B6",
-                    "scaled": true
+                    "name": "ST_B6",
+                    "scale": 0.00341802,
+                    "offset": 149
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": true
+                    "name": "SR_B7",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "qa": {
-                    "name": "pixel_qa",
-                    "scaled": false
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_7": {
             "reflectance": "SR",
             "dataSetName": "LANDSAT_7",
-            "collectionName": "LANDSAT/LE07/C01/T1_SR",
-            "scaled": false,
+            "collectionName": "LANDSAT/LE07/C02/T1_L2",
             "maxZenith": 7.5,
             "bands": {
                 "blue": {
-                    "name": "B1",
-                    "scaled": true
+                    "name": "SR_B1",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "green": {
-                    "name": "B2",
-                    "scaled": true
+                    "name": "SR_B2",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "red": {
-                    "name": "B3",
-                    "scaled": true
+                    "name": "SR_B3",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "nir": {
-                    "name": "B4",
-                    "scaled": true
+                    "name": "SR_B4",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "swir1": {
-                    "name": "B5",
-                    "scaled": true
+                    "name": "SR_B5",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "thermal": {
-                    "name": "B6",
-                    "scaled": true
+                    "name": "ST_B6",
+                    "scale": 0.00341802,
+                    "offset": 149
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": true
+                    "name": "SR_B7",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "qa": {
-                    "name": "pixel_qa",
-                    "scaled": false
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_7_T2": {
             "reflectance": "SR",
             "dataSetName": "LANDSAT_7_T2",
-            "collectionName": "LANDSAT/LE07/C01/T2_SR",
-            "scaled": false,
+            "collectionName": "LANDSAT/LE07/C02/T2_L2",
             "maxZenith": 7.5,
             "bands": {
                 "blue": {
-                    "name": "B1",
-                    "scaled": true
+                    "name": "SR_B1",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "green": {
-                    "name": "B2",
-                    "scaled": true
+                    "name": "SR_B2",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "red": {
-                    "name": "B3",
-                    "scaled": true
+                    "name": "SR_B3",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "nir": {
-                    "name": "B4",
-                    "scaled": true
+                    "name": "SR_B4",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "swir1": {
-                    "name": "B5",
-                    "scaled": true
+                    "name": "SR_B5",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "thermal": {
-                    "name": "B6",
-                    "scaled": true
+                    "name": "ST_B6",
+                    "scale": 0.00341802,
+                    "offset": 149
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": true
+                    "name": "SR_B7",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "qa": {
-                    "name": "pixel_qa",
-                    "scaled": false
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_8": {
             "reflectance": "SR",
             "dataSetName": "LANDSAT_8",
-            "collectionName": "LANDSAT/LC08/C01/T1_SR",
-            "scaled": false,
+            "collectionName": "LANDSAT/LC08/C02/T1_L2",
             "maxZenith": 7.5,
             "bands": {
                 "aerosol": {
-                    "name": "B1",
-                    "scaled": true
+                    "name": "SR_B1",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "blue": {
-                    "name": "B2",
-                    "scaled": true
+                    "name": "SR_B2",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "green": {
-                    "name": "B3",
-                    "scaled": true
+                    "name": "SR_B3",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "red": {
-                    "name": "B4",
-                    "scaled": true
+                    "name": "SR_B4",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "nir": {
-                    "name": "B5",
-                    "scaled": true
+                    "name": "SR_B5",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "swir1": {
-                    "name": "B6",
-                    "scaled": true
+                    "name": "SR_B6",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": true
+                    "name": "SR_B7",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "thermal": {
-                    "name": "B10",
-                    "scaled": true
-                },
-                "thermal2": {
-                    "name": "B11",
-                    "scaled": true
+                    "name": "ST_B10",
+                    "scale": 0.00341802,
+                    "offset": 149
                 },
                 "qa": {
-                    "name": "pixel_qa",
-                    "scaled": false
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_8_T2": {
             "reflectance": "SR",
             "dataSetName": "LANDSAT_8_T2",
-            "collectionName": "LANDSAT/LC08/C01/T2_SR",
-            "scaled": false,
+            "collectionName": "LANDSAT/LC08/C02/T2_L2",
             "maxZenith": 7.5,
             "bands": {
                 "aerosol": {
-                    "name": "B1",
-                    "scaled": true
+                    "name": "SR_B1",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "blue": {
-                    "name": "B2",
-                    "scaled": true
+                    "name": "SR_B2",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "green": {
-                    "name": "B3",
-                    "scaled": true
+                    "name": "SR_B3",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "red": {
-                    "name": "B4",
-                    "scaled": true
+                    "name": "SR_B4",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "nir": {
-                    "name": "B5",
-                    "scaled": true
+                    "name": "SR_B5",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "swir1": {
-                    "name": "B6",
-                    "scaled": true
+                    "name": "SR_B6",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "swir2": {
-                    "name": "B7",
-                    "scaled": true
+                    "name": "SR_B7",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
                 },
                 "thermal": {
-                    "name": "B10",
-                    "scaled": true
-                },
-                "thermal2": {
-                    "name": "B11",
-                    "scaled": true
+                    "name": "ST_B10",
+                    "scale": 0.00341802,
+                    "offset": 149
                 },
                 "qa": {
-                    "name": "pixel_qa",
-                    "scaled": false
+                    "name": "QA_PIXEL"
                 }
             }
         },
@@ -816,60 +772,58 @@
             "reflectance": "SR",
             "dataSetName": "SENTINEL_2",
             "collectionName": "COPERNICUS/S2_SR",
-            "scaled": false,
             "maxZenith": 10.3,
             "bands": {
                 "aerosol": {
                     "name": "B1",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "blue": {
                     "name": "B2",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "green": {
                     "name": "B3",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "red": {
                     "name": "B4",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "redEdge1": {
                     "name": "B5",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "redEdge2": {
                     "name": "B6",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "redEdge3": {
                     "name": "B7",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "nir": {
                     "name": "B8",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "redEdge4": {
                     "name": "B8A",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "waterVapor": {
                     "name": "B9",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "swir1": {
                     "name": "B11",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "swir2": {
                     "name": "B12",
-                    "scaled": true
+                    "scale": 0.0001
                 },
                 "qa": {
-                    "name": "QA60",
-                    "scaled": false
+                    "name": "QA60"
                 }
             }
         }

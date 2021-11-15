@@ -2362,29 +2362,35 @@
               "label": "Earth Engine asset ID",
               "placeholder": "Enter an asset ID..."
             },
+            "band": {
+              "label": "Band"
+            },
+            "legend": {
+              "label": "Legend"
+            },
+            "noImagery": "Please add at least one image to remap.",
             "recipe": {
               "label": "Recipe",
               "placeholder": "Select a recipe..."
             },
+            "remove": {
+              "tooltip": "Remove image from remapping"
+            },
             "section": {
               "required": "An image must be selected"
+            },
+            "type": {
+              "categorical": "Categorical",
+              "continuous": "Continuous",
+              "ASSET": "Earth Engine asset",
+              "RECIPE_REF": "SEPAL recipe",
+              "label": "Type"
             }
           },
-          "legend": {
-            "label": "Legend"
-          },
-          "noImagery": "Please add at least one image to remap.",
           "recipe": {
             "title": "Saved SEPAL recipe"
           },
-          "title": "Input imagery",
-          "type": {
-            "categorical": "Categorical",
-            "continuous": "Continuous",
-            "ASSET": "Earth Engine asset",
-            "RECIPE_REF": "SEPAL recipe",
-            "label": "Type"
-          }
+          "title": "Input imagery"
         },
         "legend": {
           "button": "LEG",
@@ -2399,7 +2405,8 @@
           },
           "title": "Mapping"
         }
-      }
+      },
+      "tabPlaceholder": "Remapping"
     },
     "retrieve": {
       "apply": "Retrieve",
