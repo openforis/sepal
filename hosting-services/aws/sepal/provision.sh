@@ -38,7 +38,7 @@ ansible-playbook configure-efs.yml \
     --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml"
 
 jsonConfig=$(mktemp /tmp/sepal-json-config.XXXXXX)
-python3 -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < "$CONFIG_HOME"/secret.yml > "$jsonConfig"
+python3 -c 'import sys, yaml, json; json.dump(yaml.safe_load(sys.stdin), sys.stdout, indent=4)' < "$CONFIG_HOME"/secret.yml > "$jsonConfig"
 packer build \
     --var-file "$jsonConfig" \
     --var "version=$VERSION"  \

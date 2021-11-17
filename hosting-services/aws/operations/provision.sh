@@ -36,13 +36,13 @@ ansible-playbook deploy.yml \
     --extra-vars "region=$REGION version=$VERSION secret_vars_file=$CONFIG_HOME/secret.yml config_home=$CONFIG_HOME"
 
 
-#jsonConfig=$(mktemp /tmp/sepal-json-config.XXXXXX)
-#python3 -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < $CONFIG_HOME/secret.yml > $jsonConfig
-#packer build \
-#    --var-file "$jsonConfig" \
-#    --var "version=$VERSION"  \
-#    --var "userHome=$HOME" \
-#    --var "config_home=$CONFIG_HOME"\
-#      packer.json
-#
-#rm "$jsonConfig"
+jsonConfig=$(mktemp /tmp/sepal-json-config.XXXXXX)
+python3 -c 'import sys, yaml, json; json.dump(yaml.safe_load(sys.stdin), sys.stdout, indent=4)' < $CONFIG_HOME/secret.yml > $jsonConfig
+packer build \
+    --var-file "$jsonConfig" \
+    --var "version=$VERSION"  \
+    --var "userHome=$HOME" \
+    --var "config_home=$CONFIG_HOME"\
+      packer.json
+
+rm "$jsonConfig"
