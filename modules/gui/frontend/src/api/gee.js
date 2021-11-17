@@ -17,6 +17,12 @@ export default {
             body: {recipe, band, aoi, mapBounds, ...params}
         }),
 
+    assetMetadata$: ({asset, expectedType}) =>
+        postJson$('/api/gee/assetMetadata', {
+            body: {asset, expectedType},
+            retries: 0
+        }),
+
     imageMetadata$: ({asset, recipe}) =>
         postJson$('/api/gee/imageMetadata', {
             body: {asset, recipe},

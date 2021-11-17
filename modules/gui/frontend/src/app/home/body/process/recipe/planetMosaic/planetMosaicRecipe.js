@@ -8,10 +8,21 @@ import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
+export const NICFI_ASSETS = [
+    'projects/planet-nicfi/assets/basemaps/africa',
+    'projects/planet-nicfi/assets/basemaps/asia',
+    'projects/planet-nicfi/assets/basemaps/americas'
+]
+
 export const defaultModel = {
     dates: {
         fromDate: moment().startOf('year').format(DATE_FORMAT),
         toDate: moment().add(1, 'years').startOf('year').format(DATE_FORMAT)
+    },
+    sources: {
+        source: 'BASEMAPS',
+        assets: NICFI_ASSETS,
+        histogramMatching: 'DISABLED'
     },
     options: {
         cloudThreshold: 0.15,

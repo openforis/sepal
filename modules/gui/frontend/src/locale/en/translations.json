@@ -200,6 +200,11 @@
     "unauthorized": "You don't have access to this Fusion Table"
   },
   "gee": {
+    "asset": {
+      "error": {
+        "wrongType": "Asset is of type '{actualType}' while '{expectedType}' is expected."
+      }
+    },
     "classification": {
       "error": {
         "noTrainingData": "There is no training data in selected area of interest."
@@ -2205,6 +2210,40 @@
           },
           "title": "Options",
           "tooltip": "Configure mosaic options"
+        },
+        "sources": {
+          "button": "SRC",
+          "form": {
+            "asset": {
+              "label": "Earth Engine asset ID",
+              "placeholder": "Enter an asset ID...",
+              "required": "You must enter an asset ID"
+            },
+            "collectionType": {
+              "label": "Collection type"
+            },
+            "collectionTypes": {
+              "BASEMAPS": {
+                "label": "Custom basemaps"
+              },
+              "DAILY": {
+                "label": "Daily imagery"
+              },
+              "NICFI": {
+                "label": "NICFI basemaps"
+              }
+            },
+            "histogramMatching": {
+              "label": "Histogram matching",
+              "tooltip": "Normalize images included in mosaic using Histogram matching. This will slow down processing significant, and can cause some details to be lost. Overall consistency and noise level can, however, be significantly improved with this option enabled.",
+              "options": {
+                "DISABLED": "Disabled",
+                "ENABLED": "Enabled"
+              }
+            }
+          },
+          "title": "Sources",
+          "tooltip": "Select image source"
         }
       },
       "preview": {

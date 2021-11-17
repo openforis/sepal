@@ -30,18 +30,23 @@ class _AssetInput extends React.Component {
     }
 
     loadMetadata(asset) {
-        const {input, onError, onLoading, onLoaded, stream} = this.props
+        const {expectedType, input, onError, onLoading, onLoaded, stream} = this.props
         onLoading && onLoading(asset)
         this.assetChanged$.next()
         stream('LOAD_ASSET_METADATA',
-            api.gee.imageMetadata$({asset}).pipe(
+            (expectedType === 'Image'
+                ? api.gee.imageMetadata$({asset})
+                : api.gee.assetMetadata$({asset, expectedType})
+            ).pipe(
                 takeUntil(this.assetChanged$)
             ),
             metadata => onLoaded && onLoaded({
                 asset,
                 metadata,
-                visualizations: toVisualizations(metadata.properties, metadata.bands)
-                    .map(visualization => ({...visualization, id: guid()}))
+                visualizations: metadata.bands
+                    ? toVisualizations(metadata.properties, metadata.bands)
+                        .map(visualization => ({...visualization, id: guid()}))
+                    : undefined
             }),
             error => {
                 onError && onError(error)
@@ -60,9 +65,14 @@ export const AssetInput = compose(
     connect()
 )
 
+AssetInput.defaultProps = {
+    expectedType: 'Image'
+}
+
 AssetInput.propTypes = {
     input: PropTypes.object.isRequired,
     className: PropTypes.any,
+    expectedType: PropTypes.string,
     label: PropTypes.any,
     placeholder: PropTypes.string,
     onError: PropTypes.func,
