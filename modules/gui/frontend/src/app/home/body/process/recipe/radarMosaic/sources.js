@@ -1,6 +1,8 @@
 import {msg} from 'translate'
 import moment from 'moment'
 
+export const isRadarDataSet = dataSetId => !!dataSetById[dataSetId]
+
 export const getDataSetOptions = ({startDate, endDate}) => {
     return Object.keys(dataSetById)
         .map(dataSetId => ({

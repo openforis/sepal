@@ -6,6 +6,10 @@ export const getAvailableBands = () => ({
     red: {dataType: int10000},
     nir: {dataType: int10000},
     ndvi: {dataType: int10000},
+    ndwi: {dataType: int10000},
+    evi: {dataType: int10000},
+    evi2: {dataType: int10000},
+    savi: {dataType: int10000},
 })
 
 export const getGroupedBandOptions = (recipe, select = ['dataSetBands', 'indexes', 'metadata']) => {
@@ -19,5 +23,5 @@ export const getGroupedBandOptions = (recipe, select = ['dataSetBands', 'indexes
 
 const bandGroups = [
     ['blue', 'green', 'red', 'nir'],
-    ['ndvi']
+    ['ndvi', 'ndwi', 'evi', 'evi2', 'savi']
 ]

@@ -4,14 +4,20 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import React from 'react'
 import styles from './options.module.css'
 
 const fields = {
     cloudThreshold: new Form.Field(),
     shadowThreshold: new Form.Field(),
-    cloudBuffer: new Form.Field()
+    cloudBuffer: new Form.Field(),
+    histogramMatching: new Form.Field()
 }
+
+const mapRecipeToProps = recipe => ({
+    source: selectFrom(recipe, 'model.sources.source')
+})
 
 class Options extends React.Component {
     constructor(props) {
@@ -37,6 +43,7 @@ class Options extends React.Component {
     renderContent() {
         return (
             <Layout>
+                {this.renderHistogramMatching()}
                 {this.renderCloudThreshold()}
                 {this.renderShadowThreshold()}
                 {this.renderCloudBufferOptions()}
@@ -97,15 +104,43 @@ class Options extends React.Component {
             />
         )
     }
+
+    renderHistogramMatching() {
+        const {source, inputs: {histogramMatching}} = this.props
+        if (source !== 'DAILY') {
+            return null
+        }
+        const options = [
+            {value: 'ENABLED', label: msg('process.planetMosaic.panel.options.form.histogramMatching.options.ENABLED')},
+            {value: 'DISABLED', label: msg('process.planetMosaic.panel.options.form.histogramMatching.options.DISABLED')},
+        ]
+        return (
+            <Form.Buttons
+                label={msg('process.planetMosaic.panel.options.form.histogramMatching.label')}
+                tooltip={msg('process.planetMosaic.panel.options.form.histogramMatching.tooltip')}
+                input={histogramMatching}
+                options={options}
+            />
+        )
+    }
+
+    componentDidMount() {
+        const {inputs: {histogramMatching}} = this.props
+        if (!histogramMatching.value) {
+            histogramMatching.set('DISABLED')
+        }
+    }
 }
 
 const valuesToModel = values => ({
+    histogramMatching: values.histogramMatching || 'DISABLED',
     cloudThreshold: 1 - values.cloudThreshold / 100,
     shadowThreshold: 1 - values.shadowThreshold / 100,
     cloudBuffer: values.cloudBuffer || 0
 })
 
 const modelToValues = model => ({
+    histogramMatching: model.histogramMatching || 'DISABLED',
     cloudThreshold: 100 - model.cloudThreshold * 100,
     shadowThreshold: 100 - model.shadowThreshold * 100,
     cloudBuffer: model.cloudBuffer || 0
@@ -113,5 +148,5 @@ const modelToValues = model => ({
 
 export default compose(
     Options,
-    recipeFormPanel({id: 'options', fields, modelToValues, valuesToModel})
+    recipeFormPanel({id: 'options', fields, mapRecipeToProps, modelToValues, valuesToModel})
 )

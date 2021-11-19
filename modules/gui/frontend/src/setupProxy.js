@@ -6,5 +6,6 @@ module.exports = app => app
         target: 'http://localhost:8001/',
         ws: true,
         proxyTimeout: 10 * 60 * 1000,
-        timeout: 10 * 60 * 1000
+        timeout: 10 * 60 * 1000,
+        onProxyReq: (proxyReq, req) => req.setTimeout(10 * 60 * 1000)
     }))

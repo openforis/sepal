@@ -3,13 +3,14 @@ import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {setInitialized} from '../../../recipe'
+import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import Aoi from 'app/home/body/process/recipe/mosaic/panels/aoi/aoi'
 import Dates from './dates/dates'
 import Options from './options/options'
 import PanelWizard from 'widget/panelWizard'
 import React from 'react'
+import Sources from './sources/sources'
 import styles from './planetMosaicToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -22,7 +23,7 @@ class PlanetMosaicToolbar extends React.Component {
         const {recipeId, initialized} = this.props
         return (
             <PanelWizard
-                panels={['aoi', 'dates']}
+                panels={['aoi', 'dates', 'sources']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
 
@@ -30,6 +31,7 @@ class PlanetMosaicToolbar extends React.Component {
 
                 <Aoi/>
                 <Dates/>
+                <Sources/>
                 <Options/>
 
                 <Toolbar
@@ -58,6 +60,10 @@ class PlanetMosaicToolbar extends React.Component {
                         id='dates'
                         label={msg('process.planetMosaic.panel.dates.button')}
                         tooltip={msg('process.planetMosaic.panel.dates.tooltip')}/>
+                    <Toolbar.ActivationButton
+                        id='sources'
+                        label={msg('process.planetMosaic.panel.sources.button')}
+                        tooltip={msg('process.planetMosaic.panel.sources.tooltip')}/>
                     <Toolbar.ActivationButton
                         id='options'
                         label={msg('process.planetMosaic.panel.options.button')}

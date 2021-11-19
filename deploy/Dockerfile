@@ -11,7 +11,9 @@ RUN apt-get update && apt-get install -y \
 RUN pip3 install \
   ansible \
   boto \
-  boto3
+  boto3 \
+  pyyaml==5.4.1
+
 RUN ansible-galaxy collection install community.aws
 RUN ansible-galaxy collection install amazon.aws
 ADD boto.conf /root/.boto
