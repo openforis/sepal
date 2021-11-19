@@ -11,13 +11,15 @@ import styles from './preProcessingOptions.module.css'
 
 const fields = {
     corrections: new Form.Field(),
+    histogramMatching: new Form.Field(),
     cloudDetection: new Form.Field().notEmpty(),
     cloudMasking: new Form.Field(),
     snowMasking: new Form.Field()
 }
 
 const mapRecipeToProps = recipe => ({
-    sources: selectFrom(recipe, 'model.sources.dataSets')
+    sources: selectFrom(recipe, 'model.sources.dataSets'),
+    dataSetType: selectFrom(recipe, 'model.sources.dataSetType')
 })
 
 class PreProcessingOptions extends React.Component {
@@ -32,6 +34,7 @@ class PreProcessingOptions extends React.Component {
                 <Panel.Content>
                     <Layout>
                         {this.renderCorrectionsOptions()}
+                        {this.renderHistogramMatching()}
                         {this.renderCloudDetectionOptions()}
                         {this.renderCloudMaskingOptions()}
                         {this.renderSnowMaskingOptions()}
@@ -43,7 +46,10 @@ class PreProcessingOptions extends React.Component {
     }
 
     renderCorrectionsOptions() {
-        const {inputs: {corrections}} = this.props
+        const {dataSetType, inputs: {corrections}} = this.props
+        if (dataSetType === 'PLANET') {
+            return null
+        }
         return (
             <Form.Buttons
                 label={msg('process.timeSeries.panel.preprocess.form.corrections.label')}
@@ -58,6 +64,25 @@ class PreProcessingOptions extends React.Component {
                     label: msg('process.timeSeries.panel.preprocess.form.corrections.brdf.label'),
                     tooltip: msg('process.timeSeries.panel.preprocess.form.corrections.brdf.tooltip')
                 }]}
+            />
+        )
+    }
+
+    renderHistogramMatching() {
+        const {dataSetType, inputs: {histogramMatching}} = this.props
+        if (dataSetType !== 'PLANET') {
+            return null
+        }
+        const options = [
+            {value: 'ENABLED', label: msg('process.planetMosaic.panel.options.form.histogramMatching.options.ENABLED')},
+            {value: 'DISABLED', label: msg('process.planetMosaic.panel.options.form.histogramMatching.options.DISABLED')},
+        ]
+        return (
+            <Form.Buttons
+                label={msg('process.planetMosaic.panel.options.form.histogramMatching.label')}
+                tooltip={msg('process.planetMosaic.panel.options.form.histogramMatching.tooltip')}
+                input={histogramMatching}
+                options={options}
             />
         )
     }
@@ -132,12 +157,20 @@ class PreProcessingOptions extends React.Component {
             />
         )
     }
+
+    componentDidMount() {
+        const {inputs: {histogramMatching}} = this.props
+        if (!histogramMatching.value) {
+            histogramMatching.set('DISABLED')
+        }
+    }
 }
 
 PreProcessingOptions.propTypes = {}
 
 const valuesToModel = values => ({
     corrections: values.corrections,
+    histogramMatching: values.histogramMatching,
     cloudDetection: values.cloudDetection,
     cloudMasking: values.cloudMasking,
     snowMasking: values.snowMasking
@@ -146,6 +179,7 @@ const valuesToModel = values => ({
 const modelToValues = model => {
     return ({
         corrections: model.corrections,
+        histogramMatching: model.histogramMatching,
         mask: model.mask,
         cloudDetection: model.cloudDetection,
         cloudMasking: model.cloudMasking,
