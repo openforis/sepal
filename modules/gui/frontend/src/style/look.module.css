@@ -158,7 +158,11 @@
     border-color: transparent !important;
 }
 
-/* disabled */
+/* disabled/nonClickable/nonInteractive */
+
+.look.nonClickable {
+    cursor: default !important;
+}
 
 .look:disabled,
 .look.nonInteractive {
@@ -166,8 +170,15 @@
     pointer-events: none !important;
 }
 
+/* .look.nonClickable > *, */
 .look.nonInteractive > * {
     pointer-events: all;
+}
+
+/* draggable */
+
+.look.draggable {
+    cursor: grab !important;
 }
 
 /* nonInteractive */
