@@ -73,4 +73,4 @@ su -c "make install"
 pip3 install --upgrade pip
 pip3 install numpy --upgrade --force-reinstall
 pip3 install testresources
-pip3 install tensorflow==2.6.0
+pip3 install tensorflow==2.7.0
