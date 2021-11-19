@@ -1,21 +1,41 @@
+import {AssetInput} from 'widget/assetInput'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
+import {NICFI_ASSETS} from '../../../planetMosaic/planetMosaicRecipe'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/timeSeries/timeSeriesRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {groupedDataSetOptions, toSources} from 'sources'
+import {
+    isOpticalDataSet,
+    getDataSetOptions as opticalDataSetOptions
+} from 'app/home/body/process/recipe/opticalMosaic/sources'
+import {
+    isRadarDataSet,
+    getDataSetOptions as radarDataSetOptions
+} from 'app/home/body/process/recipe/radarMosaic/sources'
 import {msg} from 'translate'
+import {getDataSetOptions as planetDataSetOptions} from 'app/home/body/process/recipe/planetMosaic/sources'
 import {recipeAccess} from 'app/home/body/process/recipeAccess'
 import {selectFrom} from 'stateUtils'
+import {toSources} from 'sources'
 import Notifications from 'widget/notifications'
 import React from 'react'
+import _ from 'lodash'
 import styles from './sources.module.css'
 
 const fields = {
+    dataSetType: new Form.Field()
+        .notEmpty(),
     dataSets: new Form.Field()
         .notEmpty(),
+    asset: new Form.Field()
+        .skip((v, {dataSets}) => !['BASEMAPS', 'DAILY'].includes(dataSets))
+        .notBlank(),
+    validAsset: new Form.Field()
+        .skip((v, {dataSets}) => !['BASEMAPS', 'DAILY'].includes(dataSets))
+        .notBlank(),
     classification: new Form.Field()
 }
 
@@ -47,7 +67,9 @@ class Sources extends React.Component {
                     title={msg('process.timeSeries.panel.sources.title')}/>
                 <Panel.Content>
                     <Layout>
+                        {this.renderDataSetTypes()}
                         {this.renderDataSets()}
+                        {this.renderAssetId()}
                         {this.renderClassification()}
                     </Layout>
                 </Panel.Content>
@@ -56,14 +78,33 @@ class Sources extends React.Component {
         )
     }
 
-    renderDataSets() {
-        const {dates, inputs: {dataSets}} = this.props
-        const options = groupedDataSetOptions({dataSetIds: dataSets.value, ...dates})
+    renderDataSetTypes() {
+        const {inputs: {dataSetType}} = this.props
+        const options = [
+            {value: 'OPTICAL', label: msg('process.ccdc.panel.sources.form.dataSetTypes.OPTICAL')},
+            {value: 'RADAR', label: msg('process.ccdc.panel.sources.form.dataSetTypes.RADAR')},
+            {value: 'PLANET', label: msg('process.ccdc.panel.sources.form.dataSetTypes.PLANET')},
+        ]
         return (
             <Form.Buttons
-                input={dataSets}
+                label={msg('process.ccdc.panel.sources.form.dataSetType.label')}
+                input={dataSetType}
                 options={options}
-                multiple
+            />
+        )
+    }
+
+    renderDataSets() {
+        const {inputs: {dataSetType, dataSets}} = this.props
+        if (!dataSetType.value) {
+            return null
+        }
+        return (
+            <Form.Buttons
+                label={msg('process.ccdc.panel.sources.form.dataSets.label')}
+                input={dataSets}
+                options={this.dataSetOptions()}
+                multiple={dataSetType.value === 'OPTICAL'}
             />
         )
     }
@@ -88,10 +129,67 @@ class Sources extends React.Component {
                     ? this.loadClassification(selected.value)
                     : this.deselectClassification()}
                 allowClear
-                autoFocus
                 errorMessage
             />
         )
+    }
+
+    renderAssetId() {
+        const {inputs: {dataSets, asset, validAsset}} = this.props
+        if (!['BASEMAPS', 'DAILY'].includes(dataSets.value)) {
+            return null
+        }
+        return (
+            <AssetInput
+                input={asset}
+                label={msg('process.planetMosaic.panel.sources.form.asset.label')}
+                placeholder={msg('process.planetMosaic.panel.sources.form.asset.placeholder')}
+                expectedType='ImageCollection'
+                autoFocus
+                onLoading={() => validAsset.set('')}
+                onLoaded={() => validAsset.set('valid')}
+            />
+        )
+    }
+
+    componentDidMount() {
+        const {inputs: {dataSetType, classification}} = this.props
+        if (!dataSetType.value) {
+            dataSetType.set('OPTICAL')
+        }
+        if (classification.value) {
+            this.loadClassification(classification.value)
+        }
+    }
+
+    componentDidUpdate(prevProps) {
+        const {inputs: {dataSetType: {value: prevDataSetType}}} = prevProps
+        const {inputs: {dataSetType: {value: dataSetType}, dataSets, asset}} = this.props
+        const dataSetTypeChanged = prevDataSetType !== dataSetType
+        if (dataSetTypeChanged) {
+            const options = this.dataSetOptions()
+            const validDataSets = _.intersection(options.map(({value}) => value), dataSets.value)
+            if (!validDataSets.length) {
+                const defaultDataSets =
+                    dataSetType === 'OPTICAL'
+                        ? [options[0].value]
+                        : options[0].value
+                dataSets.set(defaultDataSets)
+            }
+            if (dataSetType !== 'PLANET') {
+                asset.set(null)
+            }
+        }
+    }
+
+    dataSetOptions() {
+        const {dates, inputs: {dataSetType}} = this.props
+        switch (dataSetType.value) {
+        case 'OPTICAL': return opticalDataSetOptions({...dates})
+        case 'RADAR': return radarDataSetOptions({...dates})
+        case 'PLANET': return planetDataSetOptions({...dates}).filter(({value}) => value !== 'NICFI')
+        default: return []
+        }
     }
 
     loadClassification(recipeId) {
@@ -120,17 +218,34 @@ class Sources extends React.Component {
 
 Sources.propTypes = {}
 
-const valuesToModel = ({dataSets, classification}) => {
-    return {
-        dataSets: toSources(dataSets),
+const valuesToModel = ({dataSetType, asset, dataSets, classification}) => {
+    const nicfiSource = dataSetType === 'NICFI'
+    return ({
+        dataSetType,
+        dataSets: toSources(_.isArray(dataSets) ? dataSets : [dataSets]),
+        assets: nicfiSource ? NICFI_ASSETS : [asset],
         classification
-    }
+    })
 }
 
-const modelToValues = ({dataSets, classification}) => ({
-    dataSets: Object.values(dataSets).flat(),
-    classification
-})
+const modelToValues = ({dataSetType, assets, dataSets, classification}) => {
+    const nicfiSource = dataSetType === 'NICFI'
+    const dataSetIds = _.uniq(Object.values(dataSets).flat())
+    const defaultedDataSetType = dataSetType
+        ? dataSetType
+        : dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))
+            ? 'OPTICAL'
+            : dataSetIds.find(dataSetId => isRadarDataSet(dataSetId))
+                ? 'RADAR'
+                : 'PLANET'
+    return ({
+        dataSetType: defaultedDataSetType,
+        dataSets: defaultedDataSetType === 'OPTICAL' || !dataSetIds.length ? dataSetIds : dataSetIds[0],
+        asset: nicfiSource || _.isEmpty(assets) ? null : assets[0],
+        validAsset: true,
+        classification
+    })
+}
 
 export default compose(
     Sources,

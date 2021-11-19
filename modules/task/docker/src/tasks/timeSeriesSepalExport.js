@@ -1,6 +1,7 @@
 const {toFeatureCollection} = require('sepal/ee/aoi')
 const {hasImagery: hasOpticalImagery} = require('sepal/ee/optical/collection')
 const {hasImagery: hasRadarImagery} = require('sepal/ee/radar/collection')
+const {hasImagery: hasPlanetImagery} = require('sepal/ee/planet/collection')
 const tile = require('sepal/ee/tile')
 const {exportImageToSepal$} = require('../jobs/export/toSepal')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
@@ -38,7 +39,8 @@ module.exports = {
 
 const export$ = ({downloadDir, description, recipe, indicator, scale}) => {
     const aoi = recipe.model.aoi
-    const dataSets = recipe.model.sources.dataSets
+    const sources = recipe.model.sources
+    const dataSets = sources.dataSets
     const {startDate, endDate} = recipe.model.dates
     const reflectance = recipe.model.options.corrections.includes('SR') ? 'SR' : 'TOA'
     const tiles = tile(toFeatureCollection(aoi), TILE_DEGREES) // synchronous EE
@@ -98,6 +100,7 @@ const export$ = ({downloadDir, description, recipe, indicator, scale}) => {
     }
 
     const isRadar = () => _.isEqual(Object.values(dataSets).flat(), ['SENTINEL_1'])
+    const isOptical = () => Object.keys(dataSets).find(type => ['LANDSAT', 'SENTINEL_2'].includes(type))
 
     const createTimeSeries$ = (feature, startDate, endDate) => {
         const images$ = getCollection$({recipe, bands: [indicator], startDate, endDate})
@@ -131,7 +134,9 @@ const export$ = ({downloadDir, description, recipe, indicator, scale}) => {
         ee.getInfo$(
             isRadar()
                 ? hasRadarImagery({geometry, startDate, endDate, orbits: recipe.model.options.orbits})
-                : hasOpticalImagery({dataSets: extractDataSets(dataSets), reflectance, geometry, startDate, endDate}),
+                : isOptical()
+                    ? hasOpticalImagery({dataSets: extractDataSets(dataSets), reflectance, geometry, startDate, endDate})
+                    : hasPlanetImagery({sources: {...sources, source: Object.values(sources.dataSets).flat()[0]}, geometry, startDate, endDate}),
             'check if date range has imagery'
         )
 

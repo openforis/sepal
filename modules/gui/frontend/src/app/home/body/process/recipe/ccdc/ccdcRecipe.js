@@ -141,6 +141,7 @@ const allRadarMosaicVisualizations = recipe => {
         toHarmonicVisualization('ratio_VV_VH'),
     ]
 }
+
 const allPlanetMosaicVisualizations = recipe => {
     const sources = selectFrom(recipe, 'model.sources.dataSets')
     const {cloudMasking, cloudBuffer, histogramMatching} = recipe.model.options

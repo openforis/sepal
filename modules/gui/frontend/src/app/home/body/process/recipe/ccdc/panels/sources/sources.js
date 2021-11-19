@@ -230,7 +230,7 @@ class Sources extends React.Component {
         if (!dataSetType.value) {
             dataSetType.set('OPTICAL')
         }
-        if (classification) {
+        if (classification.value) {
             this.loadClassification(classification.value)
         }
     }
