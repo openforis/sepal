@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
 import {msg} from 'translate'
 import Confirm from 'widget/confirm'
+import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -49,7 +50,7 @@ export class ModalConfirmationButton extends React.Component {
                     tooltipPlacement={tooltipPlacement}
                     tooltipDelay={500}
                     onClick={() => skipConfirmation ? onConfirm() : this.askConfirmation(true)}
-                    onClickHold={() => onConfirm()}
+                    onClickHold={onConfirm}
                 />
                 {askConfirmation ? this.renderConfirm() : null}
             </React.Fragment>
@@ -100,11 +101,13 @@ export class TooltipConfirmationButton extends React.Component {
     renderTooltipConfirmation() {
         const {onConfirm} = this.props
         return (
-            <Button
-                look='cancel'
-                icon='exclamation-triangle'
-                label={msg('button.confirm')}
-                onClick={() => onConfirm && onConfirm()}/>
+            <Keybinding keymap={{'Escape': () => this.setVisibility(false)}}>
+                <Button
+                    look='cancel'
+                    icon='exclamation-triangle'
+                    label={msg('button.confirm')}
+                    onClick={onConfirm}/>
+            </Keybinding>
         )
     }
 
