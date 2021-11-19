@@ -1,0 +1,16 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    align-items: center;
+}
+
+.content {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.inline {
+    /* z-index: 1; */
+    flex-shrink: 0;
+}

@@ -1,5 +1,6 @@
 import {Buttons} from '../buttons'
 import {Constraint} from './constraint'
+import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
@@ -102,28 +103,33 @@ class _ImageConstraints extends React.Component {
     }
 
     renderContent() {
-        const {images} = this.props
-        const {constraints, selected} = this.state
+        const {constraints} = this.state
         return (
-            <div>
-                {constraints.map(constraint =>
-                    <Constraint
-                        key={constraint.id}
-                        constraint={constraint}
-                        images={images}
-                        selected={selected === constraint.id}
-                        onClick={() => this.select(constraint.id)}
-                        onRemove={() => this.remove(constraint.id)}
-                        onValidate={invalid => this.setState(({invalidById}) => ({
-                            invalidById: {
-                                ...invalidById,
-                                [constraint.id]: invalid
-                            }
-                        }))}
-                        onChange={constraint => this.updateConstraint(constraint)}
-                    />
-                )}
-            </div>
+            <Layout type='vertical' spacing='tight'>
+                {constraints.map(constraint => this.renderConstraint(constraint))}
+            </Layout>
+        )
+    }
+
+    renderConstraint(constraint) {
+        const {images} = this.props
+        const {selected} = this.state
+        return (
+            <Constraint
+                key={constraint.id}
+                constraint={constraint}
+                images={images}
+                selected={selected === constraint.id}
+                onClick={() => this.select(constraint.id)}
+                onRemove={() => this.remove(constraint.id)}
+                onValidate={invalid => this.setState(({invalidById}) => ({
+                    invalidById: {
+                        ...invalidById,
+                        [constraint.id]: invalid
+                    }
+                }))}
+                onChange={constraint => this.updateConstraint(constraint)}
+            />
         )
     }
 

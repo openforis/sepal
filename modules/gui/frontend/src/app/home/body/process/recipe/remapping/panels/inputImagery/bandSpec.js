@@ -1,8 +1,9 @@
 import {Buttons} from 'widget/buttons'
 import {Combo} from 'widget/combo'
+import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {Legend} from 'widget/legend/legend'
-import {SuperButton} from 'widget/superButton'
+import {ListItem} from 'widget/listItem'
 import {defaultBand, defaultLegendEntries} from 'app/home/body/process/recipe/remapping/remappingRecipe'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
@@ -13,15 +14,18 @@ export class BandSpec extends React.Component {
     render() {
         const {selected, spec: {id, band, type}, onClick, onRemove} = this.props
         return (
-            <SuperButton
-                title={msg(['process.remapping.panel.inputImagery.form.type', type])}
-                description={band}
+            <ListItem
+                expansion={this.renderExpansion()}
                 expanded={selected}
-                unsafeRemove
-                onClick={() => onClick(id)}
-                onRemove={() => onRemove(id)}>
-                {this.renderExpansion()}
-            </SuperButton>
+                expansionClickable={false}
+                onClick={() => onClick(id)}>
+                <CrudItem
+                    title={msg(['process.remapping.panel.inputImagery.form.type', type])}
+                    description={band}
+                    unsafeRemove
+                    onRemove={() => onRemove(id)}
+                />
+            </ListItem>
         )
     }
 

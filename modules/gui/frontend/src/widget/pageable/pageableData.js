@@ -1,4 +1,5 @@
 import {Consumer} from './pageableContext'
+import {Layout} from 'widget/layout'
 import OverflowDetector from 'widget/overflowDetector'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -35,6 +36,15 @@ PageableData.propTypes = {
 
 class PageItems extends React.Component {
     render() {
+        return (
+            <Layout type='vertical' spacing='tight'>
+                {this.renderItems()}
+            </Layout>
+        )
+        
+    }
+
+    renderItems() {
         const {items} = this.props
         return items.map(
             (item, index) => this.renderItem(item, index)

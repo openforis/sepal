@@ -1,7 +1,8 @@
+import {CrudItem} from 'widget/crudItem'
 import {HoverDetector} from 'widget/hover'
+import {ListItem} from 'widget/listItem'
 import {Padding} from 'widget/padding'
 import {Subject, distinctUntilChanged, filter, map, switchMap, takeUntil} from 'rxjs'
-import {SuperButton} from 'widget/superButton'
 import {assignArea, removeArea, swapAreas, validAreas} from './layerAreas'
 import {compose} from 'compose'
 import {getImageLayerSource} from 'app/home/map/imageLayerSource/imageLayerSource'
@@ -143,14 +144,17 @@ class _Areas extends React.Component {
         return source
             ? (
                 <div className={styles.areaContent}>
-                    <SuperButton
-                        title={msg(`imageLayerSources.${source.type}.label`)}
-                        description={description}
-                        removeMessage={msg('map.layout.area.remove.message')}
-                        removeTooltip={msg('map.layout.area.remove.tooltip')}
+                    <ListItem
                         drag$={this.areaDrag$}
                         dragValue={area}
-                    />
+                    >
+                        <CrudItem
+                            title={msg(`imageLayerSources.${source.type}.label`)}
+                            description={description}
+                            // removeMessage={msg('map.layout.area.remove.message')}
+                            removeTooltip={msg('map.layout.area.remove.tooltip')}
+                        />
+                    </ListItem>
                 </div>
             )
             : null

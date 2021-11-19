@@ -391,7 +391,7 @@
           "duplicateColor": "There are more than one entry with this color",
           "duplicateLabel": "There are more than one entry with this label",
           "duplicateValue": "There are more than one entry with this value",
-          "invalidColor": "Invalid color"
+          "invalidColor": "Another entry has the same color"
         },
         "remove": {
             "tooltip": "Remove this legend entry"
@@ -2912,7 +2912,6 @@
     "noMessages": "There are no messages",
     "post": "Post message",
     "remove": "Remove message",
-    "removeConfirmation": "Remove message {subject}?",
     "state": {
       "READ": "Mark as unread",
       "UNREAD": "Mark as read"

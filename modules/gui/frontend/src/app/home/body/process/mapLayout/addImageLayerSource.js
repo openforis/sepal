@@ -1,5 +1,7 @@
+import {CrudItem} from 'widget/crudItem'
+import {Layout} from 'widget/layout'
+import {ListItem} from 'widget/listItem'
 import {Panel} from 'widget/panel/panel'
-import {SuperButton} from 'widget/superButton'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
@@ -37,20 +39,44 @@ class _AddImageLayerSourcePanel extends React.Component {
 
     renderOptions() {
         return (
-            <React.Fragment>
-                <SuperButton
+            <Layout type='vertical' spacing='tight'>
+                {this.renderRecipeButton()}
+                {this.renderAssetButton()}
+                {this.renderPlanetButton()}
+            </Layout>
+        )
+    }
+
+    renderRecipeButton() {
+        return (
+            <ListItem onClick={() => this.selectRecipe()}>
+                <CrudItem
                     title={msg('imageLayerSources.Recipe.label')}
                     description={msg('map.layout.addImageLayerSource.types.Recipe.description')}
-                    onClick={() => this.selectRecipe()}/>
-                <SuperButton
+                />
+            </ListItem>
+        )
+    }
+
+    renderAssetButton() {
+        return (
+            <ListItem onClick={() => this.selectAsset()}>
+                <CrudItem
                     title={msg('imageLayerSources.Asset.label')}
                     description={msg('map.layout.addImageLayerSource.types.Asset.description')}
-                    onClick={() => this.selectAsset()}/>
-                <SuperButton
+                />
+            </ListItem>
+        )
+    }
+
+    renderPlanetButton() {
+        return (
+            <ListItem onClick={() => this.selectPlanet()}>
+                <CrudItem
                     title={msg('imageLayerSources.Planet.label')}
                     description={msg('map.layout.addImageLayerSource.types.Planet.description')}
-                    onClick={() => this.selectPlanet()}/>
-            </React.Fragment>
+                />
+            </ListItem>
         )
     }
 

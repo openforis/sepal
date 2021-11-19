@@ -1,0 +1,114 @@
+.verticalWrapper {
+    --border-radius: var(--button-border-radius);
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    border-radius: var(--border-radius);
+    /* flex-grow: 1; */
+    /* flex-shrink: 1; */
+}
+
+.horizontalWrapper {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.dragHandle {
+    width: 1rem;
+    height: 100%;
+    cursor: grab;
+}
+
+.dragHandle::before {
+    content: '.. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..';
+    position: absolute;
+    display: flex;
+    align-items: center;
+    width: 1rem;
+    top: .5rem;
+    bottom: .5rem;
+    left: .25rem;
+    overflow: hidden;
+    line-height: .4rem;
+    color: rgb(40%, 40%, 40%);
+}
+
+.main {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    align-items: center;
+    border-radius: var(--border-radius);
+    padding: .25rem .5rem;
+}
+
+.main.expanded {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom: 0;
+}
+
+.content {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.expansion {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 1rem;
+    pointer-events: all;
+    border-radius: var(--border-radius);
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.expansion::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: hsla(0, 0%, 0%, .3);
+    border-radius: var(--border-radius);
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.dragging.original {
+    opacity: .5;
+}
+
+.dragging.clone {
+    opacity: .9;
+}
+
+.draggableContainer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    pointer-events: none;
+    cursor: grab;
+}
+
+.draggableClone {
+    position: absolute;
+    top: calc(var(--y) * 1px);
+    left: calc(var(--x) * 1px);
+    width: calc(var(--width) * 1px);
+    height: calc(var(--height) * 1px);
+    display: flex;
+    z-index: 1;
+}
+
+.draggableClone > * {
+    flex-grow: 1;
+}

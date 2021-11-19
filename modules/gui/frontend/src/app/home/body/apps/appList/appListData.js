@@ -4,11 +4,12 @@ import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import {CenteredProgress} from 'widget/progress'
 import {Consumer} from './appListContext'
+import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
+import {ListItem} from 'widget/listItem'
 import {Pageable} from 'widget/pageable/pageable'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
-import {SuperButton} from 'widget/superButton'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser} from 'user'
@@ -162,7 +163,6 @@ class _AppListData extends React.Component {
                 key={'statusIcon'}
                 name='circle'
                 size='xs'
-                // pulse
                 variant='info'
                 tooltip={msg('apps.running')}
                 tooltipPlacement='left'
@@ -194,24 +194,26 @@ class _AppListData extends React.Component {
         const {onSelect} = this.props
         const unavailable = this.isDisabled(app) || this.isDisallowed(app)
         return (
-            <SuperButton
-                content={
+            <ListItem
+                disabled={unavailable}
+                onClick={() => onSelect(app)}
+            >
+                <CrudItem
+                    infoTooltip={msg('apps.info')}
+                    tooltipPlacement='left'
+                    inlineComponents={[
+                        this.renderGoogleAccountRequiredButton(app),
+                        this.renderStatusIcon(app)
+                    ]}
+                    infoDisabled={false}
+                    onInfo={() => this.showInfo(app)}
+                >
                     <AppItem
                         app={app}
                         highlight={highlightMatcher}
                     />
-                }
-                disabled={unavailable}
-                infoTooltip={msg('apps.info')}
-                tooltipPlacement='left'
-                inlineComponents={[
-                    this.renderGoogleAccountRequiredButton(app),
-                    this.renderStatusIcon(app)
-                ]}
-                infoDisabled={false}
-                onInfo={() => this.showInfo(app)}
-                onClick={() => onSelect(app)}
-            />
+                </CrudItem>
+            </ListItem>
         )
     }
 

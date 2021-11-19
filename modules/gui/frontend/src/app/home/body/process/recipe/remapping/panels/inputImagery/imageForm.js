@@ -47,7 +47,7 @@ class ImageForm extends Component {
         const {loadedRecipe, selected} = this.state
         const availableBands = bandsAvailableToAdd(bands.value, includedBands.value)
         return (
-            <div>
+            <Layout type='vertical' spacing='tight'>
                 {(includedBands.value || []).map(bandSpec =>
                     <BandSpec
                         key={bandSpec.band}
@@ -62,7 +62,7 @@ class ImageForm extends Component {
                         onRemove={id => this.removeBandSpec(id)}
                     />
                 )}
-            </div>
+            </Layout>
         )
     }
 

@@ -1,7 +1,8 @@
 import * as PropTypes from 'prop-types'
 import {BandSetSpec} from './bandSetSpec'
+import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
-import {SuperButton} from 'widget/superButton'
+import {ListItem} from 'widget/listItem'
 import {compose} from 'compose'
 import {mutate} from 'stateUtils'
 import {withScrollable} from 'widget/scrollable'
@@ -92,18 +93,19 @@ class ImageForm extends Component {
         const {selectedSpecId} = this.state
         const selected = selectedSpecId === bandSetSpec.id
         return (
-            <SuperButton
+            <ListItem
                 key={bandSetSpec.id}
-                title={BandSetSpec.renderTitle(bandSetSpec)}
-                description={BandSetSpec.renderDescription(bandSetSpec)}
-                unsafeRemove
-                removeDisabled={bandSetSpec.type === 'IMAGE_BANDS'}
-                onClick={() => this.editBandSetSpec(bandSetSpec)}
-                onRemove={() => this.removeBandSetSpec(bandSetSpec)}
+                expansion={this.renderBandSetSpecEditor(bandSetSpec)}
                 expanded={selected}
-            >
-                {this.renderBandSetSpecEditor(bandSetSpec)}
-            </SuperButton>
+                onClick={() => this.editBandSetSpec(bandSetSpec)}>
+                <CrudItem
+                    title={BandSetSpec.renderTitle(bandSetSpec)}
+                    description={BandSetSpec.renderDescription(bandSetSpec)}
+                    unsafeRemove
+                    removeDisabled={bandSetSpec.type === 'IMAGE_BANDS'}
+                    onRemove={() => this.removeBandSetSpec(bandSetSpec)}
+                />
+            </ListItem>
         )
     }
 

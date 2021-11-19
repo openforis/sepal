@@ -39,11 +39,9 @@ class _Legend extends React.Component {
                     icon='list'
                     title={msg('process.remapping.panel.legend.title')}
                 />
-
-                <Panel.Content>
+                <Panel.Content scrollable={false}>
                     {this.renderContent()}
                 </Panel.Content>
-
                 <Form.PanelButtons>
                     {this.renderAddButton()}
                 </Form.PanelButtons>

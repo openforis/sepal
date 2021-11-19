@@ -1,10 +1,11 @@
+import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
+import {ListItem} from 'widget/listItem'
 import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {SuperButton} from 'widget/superButton'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -79,14 +80,16 @@ class InputImagery extends React.Component {
         if (!name)
             return null
         return (
-            <SuperButton
+            <ListItem
                 key={`${image.type}-${image.id}`}
-                title={msg(`process.classification.panel.inputImagery.type.${image.type}`)}
-                description={name}
-                removeTooltip={msg('process.classification.panel.inputImagery.remove.tooltip')}
-                onClick={() => this.editImage(image)}
-                onRemove={() => this.removeImage(image)}
-            />
+                onClick={() => this.editImage(image)}>
+                <CrudItem
+                    title={msg(`process.classification.panel.inputImagery.type.${image.type}`)}
+                    description={name}
+                    removeTooltip={msg('process.classification.panel.inputImagery.remove.tooltip')}
+                    onRemove={() => this.removeImage(image)}
+                />
+            </ListItem>
         )
     }
 

@@ -2,40 +2,11 @@
     max-width: 23rem;
 }
 
-.legendEntry {
-    display: grid;
-    grid-template-columns: auto auto 1fr;
-    grid-gap: 1rem;
-    color: #ccc;
-}
-
-
-.legendEntry .color {
-    --color: black; /* To be overridden */
-    background-color: var(--color);
-    height: 1.5rem;
-    width: 1.5rem;
-}
-
-.legendEntry .value {
-    width: 2rem;
-}
-
-.legendEntry .label {
-
-}
-
 .selected {
     background-color: var(--look-selected-active-background-color) !important;
 }
 
-.content {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-}
-
 .loadingNextPoint {
-    /*margin: 2rem;*/
     text-align: center;
 }
 
@@ -46,11 +17,4 @@
     justify-content: space-between;
     align-items: center;
     margin-left: 0.5rem;
-}
-
-.header .point {
-}
-
-.header .buttons {
-
 }

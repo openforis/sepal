@@ -1,0 +1,167 @@
+import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
+import {Item} from 'widget/item'
+import PropTypes from 'prop-types'
+import React from 'react'
+import RemoveButton from 'widget/removeButton'
+import _ from 'lodash'
+import styles from './crudItem.module.css'
+
+export class CrudItem extends React.Component {
+    render() {
+        return (
+            <div className={styles.container}>
+                {this.renderContent()}
+                {this.renderButtons()}
+            </div>
+        )
+    }
+
+    getContent() {
+        const {content, children} = this.props
+        return content || children
+    }
+
+    renderContent() {
+        const content = this.getContent()
+        return content
+            ? <div className={styles.content}>{content}</div>
+            : this.renderDefaultContent()
+    }
+
+    renderDefaultContent() {
+        const {title, description, image, timestamp, highlight, highlightClassName, highlightTitle, highlightDescription} = this.props
+        return (
+            <Item
+                className={styles.content}
+                title={title}
+                description={description}
+                image={image}
+                timestamp={timestamp}
+                highlight={highlight}
+                highlightClassName={highlightClassName}
+                highlightTitle={highlightTitle}
+                highlightDescription={highlightDescription}
+            />
+        )
+    }
+
+    renderButtons() {
+        return (
+            <ButtonGroup layout='horizontal-nowrap' className={styles.inline}>
+                {this.renderInlineComponents()}
+                {this.renderInfoButton()}
+                {this.renderEditButton()}
+                {this.renderDuplicateButton()}
+                {this.renderRemoveButton()}
+            </ButtonGroup>
+        )
+    }
+
+    renderInlineComponents() {
+        const {inlineComponents} = this.props
+        return inlineComponents
+            ? inlineComponents
+            : null
+    }
+
+    renderInfoButton() {
+        const {infoDisabled, onInfo, infoTooltip, tooltipPlacement} = this.props
+        return onInfo
+            ? (
+                <Button
+                    chromeless
+                    shape='circle'
+                    size='large'
+                    icon='info-circle'
+                    tooltip={infoTooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    disabled={infoDisabled}
+                    onClick={onInfo}/>
+            )
+            : null
+    }
+
+    renderEditButton() {
+        const {editDisabled, onEdit, editTooltip, tooltipPlacement} = this.props
+        return onEdit
+            ? (
+                <Button
+                    chromeless
+                    shape='circle'
+                    size='large'
+                    icon='edit'
+                    tooltip={editTooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    editDisabled={editDisabled}
+                    onClick={onEdit}
+                />
+            )
+            : null
+    }
+
+    renderDuplicateButton() {
+        const {duplicateDisabled, onDuplicate, duplicateTooltip, tooltipPlacement} = this.props
+        return onDuplicate
+            ? (
+                <Button
+                    chromeless
+                    shape='circle'
+                    size='large'
+                    icon='clone'
+                    tooltip={duplicateTooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    disabled={duplicateDisabled}
+                    onClick={onDuplicate}/>
+            )
+            : null
+    }
+
+    renderRemoveButton() {
+        const {onRemove, removeTooltip, removeMessage, removeDisabled, tooltipPlacement, unsafeRemove} = this.props
+        return onRemove
+            ? (
+                <RemoveButton
+                    message={removeMessage}
+                    tooltip={removeTooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    unsafe={unsafeRemove}
+                    disabled={removeDisabled}
+                    onRemove={onRemove}/>
+            )
+            : null
+    }
+}
+
+CrudItem.propTypes = {
+    children: PropTypes.any,
+    className: PropTypes.string,
+    content: PropTypes.any,
+    description: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+    duplicateDisabled: PropTypes.any,
+    duplicateTooltip: PropTypes.string,
+    editDisabled: PropTypes.any,
+    editTooltip: PropTypes.string,
+    highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    highlightClassName: PropTypes.string,
+    highlightDescription: PropTypes.any,
+    highlightTitle: PropTypes.any,
+    image: PropTypes.any,
+    infoDisabled: PropTypes.any,
+    infoTooltip: PropTypes.string,
+    inlineComponents: PropTypes.any,
+    removeDisabled: PropTypes.any,
+    removeMessage: PropTypes.string,
+    removeTooltip: PropTypes.string,
+    title: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+    tooltipPlacement: PropTypes.string,
+    unsafeRemove: PropTypes.any,
+    onDuplicate: PropTypes.func,
+    onEdit: PropTypes.func,
+    onInfo: PropTypes.func,
+    onRemove: PropTypes.func
+}
+
+CrudItem.defaultProps = {
+    tooltipPlacement: 'left'
+}

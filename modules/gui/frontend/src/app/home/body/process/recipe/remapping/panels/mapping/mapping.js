@@ -1,9 +1,12 @@
+import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
 import {ImageConstraints} from 'widget/imageConstraints/imageConstraints'
+import {Layout} from 'widget/layout'
+import {LegendItem} from 'widget/legend/legendItem'
+import {ListItem} from 'widget/listItem'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {SuperButton} from 'widget/superButton'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -42,11 +45,9 @@ class _Mapping extends React.Component {
                     icon='list'
                     title={msg('process.remapping.panel.mapping.title')}
                 />
-
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-
                 <Form.PanelButtons/>
             </RecipeFormPanel>
         )
@@ -55,29 +56,29 @@ class _Mapping extends React.Component {
     renderContent() {
         const {legendEntries} = this.props
         return (
-            <div>
+            <Layout type='vertical' spacing='tight'>
                 {legendEntries.map(entry => this.renderEntryMapping(entry))}
-            </div>
+            </Layout>
         )
     }
 
     renderEntryMapping(entry) {
         const {activator: {activatables}} = this.props
-        const title = (
-            <div key={entry.id} className={styles.entry}>
-                <div className={styles.color} style={{'--color': entry.color}}/>
-                <div className={styles.value}>{entry.value}</div>
-                <div className={styles.label}>{entry.label}</div>
-            </div>
-        )
         return (
-            <SuperButton
+            <ListItem
                 key={entry.id}
-                title={title}
+                onClick={() => activatables[`entryMapping-${entry.id}}`].activate()}
+                expansion={this.renderMappingOverview(entry)}
                 expansionClickable
-                onClick={() => activatables[`entryMapping-${entry.id}}`].activate()}>
-                {this.renderMappingOverview(entry)}
-            </SuperButton>
+                expanded>
+                <CrudItem content={
+                    <LegendItem
+                        color={entry.color}
+                        value={entry.value}
+                        label={entry.label}
+                    />
+                }/>
+            </ListItem>
         )
     }
 
@@ -109,7 +110,8 @@ class _Mapping extends React.Component {
                 />
                 {constraints.length
                     ? this.renderConstraintsDescription(constraints, booleanOperator)
-                    : <NoData message={'Not mapping created for this change category'}/>}
+                    // TODO: implement message
+                    : <NoData message={'No mapping created for this change category'}/>}
 
             </React.Fragment>
         )

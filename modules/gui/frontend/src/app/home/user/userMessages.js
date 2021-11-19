@@ -1,10 +1,12 @@
 import {Activator, activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
+import {CrudItem} from 'widget/crudItem'
+import {Layout} from 'widget/layout'
+import {ListItem} from 'widget/listItem'
 import {Markdown} from 'widget/markdown'
 import {Msg, msg} from 'translate'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
-import {SuperButton} from 'widget/superButton'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -145,7 +147,9 @@ class _UserMessages extends React.Component {
         if (userMessages.length) {
             const sortedUserMessages = _.orderBy(userMessages, userMessage => moment(userMessage.message.creationTime) || moment(), 'desc')
             return (
-                sortedUserMessages.map((userMessage, index) => this.renderMessage(userMessage, index))
+                <Layout type='vertical' spacing='tight'>
+                    {sortedUserMessages.map((userMessage, index) => this.renderMessage(userMessage, index))}
+                </Layout>
             )
         } else {
             return (
@@ -177,24 +181,30 @@ class _UserMessages extends React.Component {
         const author = userMessage.message.username
         const creationTime = userMessage.message.creationTime
         return (
-            <SuperButton
+            <ListItem
                 key={index}
-                title={<Msg id='userMessages.author' author={author}/>}
-                description={userMessage.message.subject}
-                timestamp={creationTime}
-                editTooltip={msg('userMessages.edit')}
-                removeMessage={msg('userMessages.removeConfirmation', {subject: message.subject})}
-                removeTooltip={msg('userMessages.remove')}
-                onExpandDelayed={() => this.setReadState(userMessage, 'READ')}
-                onEdit={isAdmin ? () => this.editMessage(message) : null}
-                onRemove={isAdmin ? () => this.removeMessage(message) : null}
-                inlineComponents={[
-                    this.renderStatusButton(userMessage)
-                ]}
-                clickToExpand
-            >
-                <Markdown className={styles.contents} source={userMessage.message.contents}/>
-            </SuperButton>
+                expansion={this.renderMessageBody(userMessage.message.contents)}
+                clickToToggle
+                onExpandDelayed={() => this.setReadState(userMessage, 'READ')}>
+                <CrudItem
+                    title={<Msg id='userMessages.author' author={author}/>}
+                    description={userMessage.message.subject}
+                    timestamp={creationTime}
+                    editTooltip={msg('userMessages.edit')}
+                    removeTooltip={msg('userMessages.remove')}
+                    onEdit={isAdmin ? () => this.editMessage(message) : null}
+                    onRemove={isAdmin ? () => this.removeMessage(message) : null}
+                    inlineComponents={[
+                        this.renderStatusButton(userMessage)
+                    ]}
+                />
+            </ListItem>
+        )
+    }
+
+    renderMessageBody(contents) {
+        return (
+            <Markdown className={styles.contents} source={contents}/>
         )
     }
 

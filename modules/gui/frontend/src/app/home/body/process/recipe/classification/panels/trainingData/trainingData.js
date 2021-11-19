@@ -1,11 +1,12 @@
+import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
+import {ListItem} from 'widget/listItem'
 import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Subject} from 'rxjs'
-import {SuperButton} from 'widget/superButton'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -72,19 +73,21 @@ class TrainingData extends React.Component {
         const collected = dataSet.type === 'COLLECTED'
         const disabled = collected
         return (
-            <SuperButton
+            <ListItem
                 key={`${dataSet.type}-${dataSet.dataSetId}`}
-                title={msg(`process.classification.panel.trainingData.type.${dataSet.type}.label`)}
-                description={collected ? msg('process.classification.panel.trainingData.type.COLLECTED.label') : name}
-                removeMessage={msg('process.classification.panel.trainingData.remove.confirmationMessage', {name})}
-                removeTooltip={msg('process.classification.panel.trainingData.remove.tooltip')}
                 disabled={disabled}
-                onClick={disabled ? null : () => this.editDataSet(dataSet)}
-                onRemove={disabled ? null : () => {
-                    this.removeDataSet(dataSet)
-                    setTimeout(() => dataCollectionManager.updateAll())
-                }}
-            />
+                onClick={() => this.editDataSet(dataSet)}>
+                <CrudItem
+                    title={msg(`process.classification.panel.trainingData.type.${dataSet.type}.label`)}
+                    description={collected ? msg('process.classification.panel.trainingData.type.COLLECTED.label') : name}
+                    removeMessage={msg('process.classification.panel.trainingData.remove.confirmationMessage', {name})}
+                    removeTooltip={msg('process.classification.panel.trainingData.remove.tooltip')}
+                    onRemove={() => {
+                        this.removeDataSet(dataSet)
+                        setTimeout(() => dataCollectionManager.updateAll())
+                    }}
+                />
+            </ListItem>
         )
     }
 

@@ -1,6 +1,7 @@
+import {CrudItem} from 'widget/crudItem'
+import {ListItem} from 'widget/listItem'
 import {Message} from 'widget/message'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {SuperButton} from 'widget/superButton'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
@@ -51,17 +52,18 @@ class UserSessions extends React.Component {
         const title = `${session.instanceType.name} (${session.instanceType.description})`
         const description = `${this.renderCost(session)} (${this.renderHourlyCost(session)})`
         return (
-            <SuperButton
-                key={session.id}
-                title={title}
-                description={description}
-                timestamp={session.creationTime}
-                editTooltip={msg('user.userSession.update.tooltip')}
-                removeMessage={msg('user.userSession.stop.message')}
-                removeTooltip={msg('user.userSession.stop.tooltip')}
-                onEdit={() => this.selectSession(session)}
-                onRemove={() => this.stopSession(session)}
-            />
+            <ListItem key={session.id}>
+                <CrudItem
+                    title={title}
+                    description={description}
+                    timestamp={session.creationTime}
+                    editTooltip={msg('user.userSession.update.tooltip')}
+                    removeMessage={msg('user.userSession.stop.message')}
+                    removeTooltip={msg('user.userSession.stop.tooltip')}
+                    onEdit={() => this.selectSession(session)}
+                    onRemove={() => this.stopSession(session)}
+                />
+            </ListItem>
         )
     }
 

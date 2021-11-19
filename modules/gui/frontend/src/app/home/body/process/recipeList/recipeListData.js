@@ -2,11 +2,12 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {CenteredProgress} from 'widget/progress'
 import {Consumer} from './recipeListContext'
+import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
+import {ListItem} from 'widget/listItem'
 import {Pageable} from 'widget/pageable/pageable'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
-import {SuperButton} from 'widget/superButton'
 import {getRecipeType} from '../recipeTypes'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
@@ -117,19 +118,21 @@ export class RecipeListData extends React.Component {
     renderRecipe(recipe, highlightMatcher) {
         const {onSelect, onDuplicate, onRemove} = this.props
         return (
-            <SuperButton
+            <ListItem
                 key={recipe.id}
-                title={this.getRecipeTypeName(recipe.type)}
-                description={recipe.name}
-                timestamp={recipe.updateTime}
-                highlight={highlightMatcher}
-                highlightTitle={false}
-                duplicateTooltip={msg('process.menu.duplicateRecipe')}
-                removeTooltip={msg('process.menu.removeRecipe.tooltip')}
-                onClick={onSelect ? () => onSelect(recipe.id) : null}
-                onDuplicate={onDuplicate ? () => onDuplicate(recipe.id) : null}
-                onRemove={onRemove ? () => onRemove(recipe.id) : null}
-            />
+                onClick={onSelect ? () => onSelect(recipe.id) : null}>
+                <CrudItem
+                    title={this.getRecipeTypeName(recipe.type)}
+                    description={recipe.name}
+                    timestamp={recipe.updateTime}
+                    highlight={highlightMatcher}
+                    highlightTitle={false}
+                    duplicateTooltip={msg('process.menu.duplicateRecipe')}
+                    removeTooltip={msg('process.menu.removeRecipe.tooltip')}
+                    onDuplicate={onDuplicate ? () => onDuplicate(recipe.id) : null}
+                    onRemove={onRemove ? () => onRemove(recipe.id) : null}
+                />
+            </ListItem>
         )
     }
 

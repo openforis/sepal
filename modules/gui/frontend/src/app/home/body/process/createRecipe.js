@@ -1,6 +1,8 @@
 import {Button} from 'widget/button'
+import {CrudItem} from 'widget/crudItem'
+import {Layout} from 'widget/layout'
+import {ListItem} from 'widget/listItem'
 import {Panel} from 'widget/panel/panel'
-import {SuperButton} from 'widget/superButton'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {getRecipeType, listRecipeTypes} from './recipeTypes'
@@ -119,9 +121,9 @@ class _CreateRecipe extends React.Component {
                     icon='book-open'
                     title={msg('process.recipe.newRecipe.title')}/>
                 <Panel.Content>
-                    <div>
+                    <Layout type='vertical' spacing='tight'>
                         {listRecipeTypes().map(recipeType => this.renderRecipeType(recipeType))}
-                    </div>
+                    </Layout>
                 </Panel.Content>
                 <Panel.Buttons shown={!trigger} onEnter={close} onEscape={close}>
                     <Panel.Buttons.Main>
@@ -186,14 +188,16 @@ class RecipeType extends React.Component {
             ? <span>{name}<sup className={styles.beta}>Beta</sup></span>
             : name
         return (
-            <SuperButton
+            <ListItem
                 key={id}
-                className={styles.recipe}
-                title={title}
-                description={creationDescription}
-                onClick={() => createRecipe(recipeId, id, tabPlaceholder)}
-                onInfo={() => details && onInfo && onInfo(id)}
-            />
+                onClick={() => createRecipe(recipeId, id, tabPlaceholder)}>
+                <CrudItem
+                    className={styles.recipe}
+                    title={title}
+                    description={creationDescription}
+                    // onInfo={() => details && onInfo && onInfo(id)}
+                />
+            </ListItem>
         )
     }
 }

@@ -1,9 +1,11 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
+import {Layout} from 'widget/layout'
+import {LegendItem} from 'widget/legend/legendItem'
+import {ListItem} from 'widget/listItem'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions, hasTrainingData} from '../../classificationRecipe'
 import {Subject, takeUntil} from 'rxjs'
-import {SuperButton} from 'widget/superButton'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -78,7 +80,7 @@ class CollectPanel extends React.Component {
                     title={point
                         ? pointHeader()
                         : msg('process.classification.collect.findingNextPoint.title')}/>
-                <Panel.Content className={styles.content}>
+                <Panel.Content>
                     {loadingNextPoint
                         ? this.renderLoadingNextPoint()
                         : this.renderForm()}
@@ -90,31 +92,31 @@ class CollectPanel extends React.Component {
 
     renderForm() {
         const {legend} = this.props
-        return legend.entries.map(entry => this.renderOption(entry))
+        return (
+            <Layout type='vertical' spacing='tight'>
+                {legend.entries.map(entry => this.renderOption(entry))}
+            </Layout>
+        )
     }
 
     renderOption(legendEntry) {
         const {point} = this.props
+        const {color, value, label} = legendEntry
         return (
-            <SuperButton
+            <ListItem
                 key={legendEntry.value}
-                className={this.isSelected(legendEntry) ? styles.selected : null}
-                title={this.renderOptionTitle(legendEntry)}
                 onClick={() =>
                     point['class'] === legendEntry.value
                         ? this.deselectValue({...point, 'class': null})
                         : this.selectValue({...point, 'class': legendEntry.value})}
-            />
-        )
-    }
-
-    renderOptionTitle({color, value, label}) {
-        return (
-            <div className={styles.legendEntry}>
-                <div className={styles.color} style={{'--color': color}}/>
-                <div className={styles.value}>{value}</div>
-                <div className={styles.label}>{label}</div>
-            </div>
+            >
+                <LegendItem
+                    color={color}
+                    value={value}
+                    label={label}
+                    selected={this.isSelected(legendEntry)}
+                />
+            </ListItem>
         )
     }
 

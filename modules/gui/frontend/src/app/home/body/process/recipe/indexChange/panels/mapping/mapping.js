@@ -1,9 +1,10 @@
+import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
 import {ImageConstraints} from 'widget/imageConstraints/imageConstraints'
+import {ListItem} from 'widget/listItem'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {SuperButton} from 'widget/superButton'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -57,13 +58,16 @@ class _Mapping extends React.Component {
                 <div className={styles.label}>{entry.label}</div>
             </div>
         )
-        return <SuperButton
-            key={entry.id}
-            title={title}
-            onClick={() => activatables[`entryMapping-${entry.id}}`].activate()}
-        >
-            {this.renderMappingOverview(entry)}
-        </SuperButton>
+        return (
+            <ListItem
+                key={entry.id}
+                onClick={() => activatables[`entryMapping-${entry.id}}`].activate()}>
+                <CrudItem
+                    title={title}
+                    content={this.renderMappingOverview(entry)}
+                />
+            </ListItem>
+        )
     }
 
     renderMappingOverview({id, color, value, label, constraints = [], booleanOperator}) {

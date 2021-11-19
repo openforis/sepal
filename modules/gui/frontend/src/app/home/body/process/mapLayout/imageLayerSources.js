@@ -1,6 +1,9 @@
+import {CrudItem} from 'widget/crudItem'
+import {Layout} from 'widget/layout'
+import {ListItem} from 'widget/listItem'
 import {Padding} from 'widget/padding'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {SuperButton} from 'widget/superButton'
+import {Textarea} from 'widget/input'
 import {compose} from 'compose'
 import {getImageLayerSource} from 'app/home/map/imageLayerSource/imageLayerSource'
 import {msg} from 'translate'
@@ -13,7 +16,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import guid from 'guid'
-import styles from './areas.module.css'
 
 export class _ImageLayerSources extends React.Component {
     render() {
@@ -22,8 +24,10 @@ export class _ImageLayerSources extends React.Component {
             <ScrollableContainer>
                 <Scrollable>
                     <Padding noHorizontal>
-                        {standardImageLayerSources.map(source => this.renderSource({source, removable: false}))}
-                        {additionalImageLayerSources.map(source => this.renderSource({source, removable: true}))}
+                        <Layout type='vertical' spacing='tight'>
+                            {standardImageLayerSources.map(source => this.renderSource({source, removable: false}))}
+                            {additionalImageLayerSources.map(source => this.renderSource({source, removable: true}))}
+                        </Layout>
                     </Padding>
                 </Scrollable>
             </ScrollableContainer>
@@ -35,23 +39,25 @@ export class _ImageLayerSources extends React.Component {
         const {description} = getImageLayerSource({recipe, source})
         return source && source.id
             ? (
-                <SuperButton
+                <ListItem
                     key={source.id}
-                    title={msg(`imageLayerSources.${source.type}.label`)}
-                    description={description}
-                    removeMessage={msg('map.layout.layer.remove.message')}
-                    removeTooltip={msg('map.layout.layer.remove.tooltip')}
+                    expansion={<Textarea value='Hello SEPAL!'/>}
+                    clickToToggle
                     drag$={drag$}
                     dragValue={{
                         id: guid(),
                         imageLayer: {sourceId: source.id},
                         featureLayers: []
-                    }}
-                    dragGhostClassName={styles.dragGhost}
-                    onRemove={removable
-                        ? () => this.removeSource(source.id)
-                        : null}
-                />
+                    }}>
+                    <CrudItem
+                        key={source.id}
+                        title={msg(`imageLayerSources.${source.type}.label`)}
+                        description={description}
+                        removeMessage={msg('map.layout.layer.remove.message')}
+                        removeTooltip={msg('map.layout.layer.remove.tooltip')}
+                        onRemove={removable ? () => this.removeSource(source.id) : null}
+                    />
+                </ListItem>
             )
             : null
     }

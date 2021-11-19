@@ -1,7 +1,8 @@
+import {CrudItem} from 'widget/crudItem'
 import {Form, form} from '../form/form'
 import {Layout} from '../layout'
 import {Legend} from '../legend/legend'
-import {SuperButton} from '../superButton'
+import {ListItem} from 'widget/listItem'
 import {compose} from '../../compose'
 import {msg} from '../../translate'
 import React from 'react'
@@ -52,22 +53,26 @@ class _Constraint extends React.Component {
         const {selected, images, inputs: {operator}, onClick, onRemove} = this.props
         const {imageSpec} = this.state
         return (
-            <SuperButton
-                title={imageSpec && imageSpec.description}
-                description={this.toDescription()}
+            <ListItem
                 expanded={selected}
-                unsafeRemove
-                onClick={() => onClick()}
-                onRemove={() => onRemove()}>
-                <Layout>
-                    {images.length !== 1 ? this.renderImage() : null}
-                    <Layout type='horizontal'>
-                        {this.renderBand()}
-                        {operator.value !== 'class' ? this.renderOperator() : null}
+                expansion={
+                    <Layout>
+                        {images.length !== 1 ? this.renderImage() : null}
+                        <Layout type='horizontal'>
+                            {this.renderBand()}
+                            {operator.value !== 'class' ? this.renderOperator() : null}
+                        </Layout>
+                        {this.renderValue()}
                     </Layout>
-                    {this.renderValue()}
-                </Layout>
-            </SuperButton>
+                }
+                onClick={onClick}>
+                <CrudItem
+                    title={imageSpec && imageSpec.description}
+                    description={this.toDescription()}
+                    unsafeRemove
+                    onRemove={() => onRemove()}>
+                </CrudItem>
+            </ListItem>
         )
     }
 
@@ -257,7 +262,7 @@ class _Constraint extends React.Component {
         const {legendEntries = []} = imageSpec.bands.find(({name}) => name === band.value) || {}
         return legendEntries
             .filter(({value}) => selectedClasses.value.includes(value))
-            .map(({label}) => label).join(', ')
+            .map(({label}) => label).join(', ') || 'no selection'
     }
 
     toConstraint() {
