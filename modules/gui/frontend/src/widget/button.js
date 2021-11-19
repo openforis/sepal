@@ -184,12 +184,13 @@ class _Button extends React.Component {
     }
 
     renderButton(contents) {
-        const {type, tabIndex, onClickHold, forwardedRef} = this.props
+        const {type, style, tabIndex, onClickHold, forwardedRef} = this.props
         return (
             <button
                 ref={forwardedRef}
                 type={type}
                 className={this.classNames()}
+                style={style}
                 tabIndex={tabIndex}
                 disabled={!this.active()}
                 onMouseOver={e => this.handleMouseOver(e)}
@@ -357,6 +358,7 @@ Button.propTypes = {
     shown: PropTypes.any,
     size: PropTypes.oneOf(['x-small', 'small', 'normal', 'large', 'x-large', 'xx-large']),
     stopPropagation: PropTypes.any,
+    style: PropTypes.object,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.any,
     tooltipClickTrigger: PropTypes.any,
