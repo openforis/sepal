@@ -24,9 +24,9 @@ class _RecipeSection extends React.Component {
         }))
         return (
             <Form.Combo
-                label={msg('process.indexChange.panel.inputImage.asset.label')}
+                label={msg('process.indexChange.panel.inputImage.recipe.label')}
                 input={input}
-                placeholder={msg('process.indexChange.panel.inputImage.asset.placeholder')}
+                placeholder={msg('process.indexChange.panel.inputImage.recipe.placeholder')}
                 options={options}
                 autoFocus
                 onChange={({value}) => this.loadBands(value)}
