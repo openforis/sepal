@@ -1,0 +1,32 @@
+.color {
+    background-color: var(--color) !important;
+}
+
+/* Warning: very sensitive */
+.colorInput {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    margin: .5rem 0 0 0;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.container {
+    position: relative;
+}
+
+.badgeContainer {
+    position: absolute;
+    top: .35rem;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.badge {
+    position: absolute;
+}

@@ -1,17 +1,15 @@
 import {Button} from 'widget/button'
-import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
+import {LegendColor} from 'widget/legend/legendColor'
 import {Message} from 'widget/message'
 import {PalettePreSets, pickColors} from './visParams/palettePreSets'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
-import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import Color from 'color'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
-import Tooltip from 'widget/tooltip'
 import _ from 'lodash'
 import styles from './legendBuilder.module.css'
 
@@ -340,30 +338,17 @@ class ColorInput extends React.Component {
         const {input, invalid, onChange} = this.props
         const {swap} = this.state
         return (
-            <div className={styles.colorContainer}>
-                <input
-                    type='color'
-                    className={styles.colorInput}
-                    value={input.value}
-                    autoFocus={true}
-                    onChange={({target: {value}}) => {
-                        input.set(value)
-                        onChange(value)
-                    }}
-                    ref={this.colorInputRef}
-                />
-                <Tooltip
-                    msg={this.renderTooltip()}
-                    delay={0}
-                    placement='left'
-                    clickTrigger={isMobile()}
-                    onVisibleChange={visible => swap && !visible && this.setState({swap: false})}>
-                    <div
-                        className={[styles.color, invalid ? styles.invalid : ''].join(' ')}
-                        style={{'--color': input.value}}
-                    />
-                </Tooltip>
-            </div>
+            <LegendColor
+                color={input.value}
+                invalid={invalid}
+                tooltip={this.renderTooltip()}
+                tooltipPlacement='left'
+                onTooltipVisibleChange={visible => swap && !visible && this.setState({swap: false})}
+                onChange={value => {
+                    input.set(value)
+                    onChange(value)
+                }}
+            />
         )
     }
 
@@ -376,38 +361,30 @@ class ColorInput extends React.Component {
 
     renderColorButtons() {
         return (
-            <ButtonGroup layout='horizontal-nowrap'>
-                <Button
-                    icon='pen'
-                    chromeless
-                    shape='circle'
-                    size='small'
-                    tooltip={msg('map.legendBuilder.colors.edit.tooltip')}
-                    onClick={() => {
-                        this.colorInputRef.current.focus()
-                        this.colorInputRef.current.click()
-                    }}
-                />
-                <Button
-                    icon='exchange-alt'
-                    chromeless
-                    shape='circle'
-                    size='small'
-                    tooltip={msg('map.legendBuilder.colors.swap.tooltip')}
-                    onClick={() => this.setState({swap: true})}
-                />
-            </ButtonGroup>)
+            <Button
+                icon='exchange-alt'
+                chromeless
+                shape='circle'
+                size='small'
+                tooltip={msg('map.legendBuilder.colors.swap.tooltip')}
+                onClick={() => this.setState({swap: true})}
+            />
+        )
+    }
+
+    colorPicker() {
+        this.colorInputRef.current.focus()
+        this.colorInputRef.current.click()
     }
 
     renderSwap() {
         const {otherColors, onSwap} = this.props
         return (
-            <Layout type='horizontal' spacing='compact'>
+            <Layout type='horizontal' spacing='tight' alignment='left'>
                 {otherColors.map((c, i) =>
-                    <div
+                    <LegendColor
                         key={i}
-                        className={[styles.color, styles.swapColor].join(' ')}
-                        style={{'--color': c}}
+                        color={c}
                         onClick={() => {
                             this.setState({swap: false})
                             onSwap(c)

@@ -4,40 +4,6 @@
     height: 1.9rem;
 }
 
-.colorContainer {
-    position: relative;
-}
-
-.color {
-    width: 1.7rem;
-    height: 1.7rem;
-    background-color: var(--color);
-    margin-bottom: -.2rem;
-    border-radius: var(--button-border-radius);
-    opacity: 1;
-}
-
-.color.invalid {
-    border: 2px solid var(--error-color);
-}
-
-.color:hover {
-    border: 2px solid var(--wireframe-color);
-}
-
-.color.invalid:hover {
-    border: 2px solid var(--error-color);
-}
-
-.colorInput {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    pointer-events: none;
-    opacity: 0;
-}
 
 .colorText input {
     width: 5rem;
@@ -46,10 +12,4 @@
 .label {
     flex-grow: 1;
     flex-shrink: 1;
-}
-
-.swapColor {
-    background-color: var(--color);
-    cursor: pointer;
-    flex-shrink: 0;
 }

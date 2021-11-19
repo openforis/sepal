@@ -2,6 +2,8 @@ import * as PropTypes from 'prop-types'
 import {Button} from 'widget/button'
 import {EditLegendPanel} from './editLegendPanel'
 import {Layout} from 'widget/layout'
+import {LegendItem} from './legendItem'
+import {ListItem} from 'widget/listItem'
 import {Message} from 'widget/message'
 import {Widget} from 'widget/widget'
 import {activator} from 'widget/activation/activator'
@@ -10,7 +12,6 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
-import styles from './legend.module.css'
 
 const mapRecipeToProps = (recipe, {componentId}) => ({
     updatedEntries: selectFrom(recipe, toUpdatedEntryPath(componentId))
@@ -19,13 +20,11 @@ const mapRecipeToProps = (recipe, {componentId}) => ({
 class _Legend extends React.Component {
     render() {
         const {label, entries, disabled} = this.props
-
         return (
             <Widget
                 label={label}
                 disabled={disabled}
-                labelButtons={this.renderLabelButtons()}
-                framed>
+                labelButtons={this.renderLabelButtons()}>
                 <EditLegendPanel/>
                 {entries && entries.length ? this.renderEntries() : this.renderNoEntries()}
             </Widget>
@@ -63,7 +62,7 @@ class _Legend extends React.Component {
     renderEntries() {
         const {entries} = this.props
         return (
-            <Layout type='vertical' spacing='compact'>
+            <Layout type='vertical' spacing='tight'>
                 {entries.map(entry => this.renderEntry(entry))}
             </Layout>
         )
@@ -72,30 +71,17 @@ class _Legend extends React.Component {
     renderEntry({color, value, label}) {
         const {selected = [], onSelectionChange} = this.props
         return (
-            <Layout
-                type='horizontal-nowrap'
+            <ListItem
                 key={value}
-                className={[
-                    styles.entry,
-                    selected.includes(value) ? styles.selected : '',
-                    onSelectionChange ? styles.selectable : '',
-                ].join(' ')}
-                onClick={() => this.select(value)}>
-                <div className={styles.color} style={{'--color': color}}/>
-                <div className={styles.value}>{value}</div>
-                <div className={styles.label}>{label}</div>
-            </Layout>
+                onClick={onSelectionChange ? () => this.select(value) : null}>
+                <LegendItem
+                    color={color}
+                    value={value}
+                    label={label}
+                    selected={selected.includes(value)}
+                />
+            </ListItem>
         )
-    }
-
-    componentDidUpdate() {
-        const {componentId, recipeActionBuilder, updatedEntries, onUpdate} = this.props
-        if (updatedEntries) {
-            recipeActionBuilder('CLEAR_UPDATED_ENTRIES', {updatedEntries})
-                .del(toUpdatedEntryPath(componentId))
-                .dispatch()
-            onUpdate && onUpdate(updatedEntries)
-        }
     }
 
     select(value) {
@@ -107,6 +93,16 @@ class _Legend extends React.Component {
             } else {
                 onSelectionChange([...filtered])
             }
+        }
+    }
+
+    componentDidUpdate() {
+        const {componentId, recipeActionBuilder, updatedEntries, onUpdate} = this.props
+        if (updatedEntries) {
+            recipeActionBuilder('CLEAR_UPDATED_ENTRIES', {updatedEntries})
+                .del(toUpdatedEntryPath(componentId))
+                .dispatch()
+            onUpdate && onUpdate(updatedEntries)
         }
     }
 }
