@@ -183,7 +183,7 @@ CreateRecipe.propTypes = {
 
 class RecipeType extends React.Component {
     render() {
-        const {recipeId, type: {id, labels: {name, tabPlaceholder, creationDescription}, beta, details}, onInfo} = this.props
+        const {recipeId, type: {id, labels: {name, tabPlaceholder, creationDescription}, beta}} = this.props
         const title = beta
             ? <span>{name}<sup className={styles.beta}>Beta</sup></span>
             : name
@@ -195,7 +195,6 @@ class RecipeType extends React.Component {
                     className={styles.recipe}
                     title={title}
                     description={creationDescription}
-                    // onInfo={() => details && onInfo && onInfo(id)}
                 />
             </ListItem>
         )
