@@ -110,7 +110,6 @@ const Usage = compose(
 Usage.propTypes = {}
 
 const _UsageButton = ({userReport, budgetExceeded, budgetWarning}) => {
-    // console.log(userReport)
     const hourlySpending = userReport.sessions
         ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
         : 0

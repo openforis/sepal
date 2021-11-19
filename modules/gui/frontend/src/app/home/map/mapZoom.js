@@ -242,7 +242,6 @@ class _MapZoomPanel extends React.Component {
             this.geoCoder.geocode({placeId}, results => {
                 if (results && results.length) {
                     const result = results[0]
-                    // console.log(result)
                     if (result.geometry) {
                         const bounds = result.geometry.bounds
                         const location = result.geometry.location
