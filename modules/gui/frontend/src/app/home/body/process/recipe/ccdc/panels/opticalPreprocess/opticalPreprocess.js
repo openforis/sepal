@@ -11,14 +11,16 @@ import styles from './opticalPreprocess.module.css'
 
 const fields = {
     corrections: new Form.Field(),
-    cloudDetection: new Form.Field().notEmpty(),
+    histogramMatching: new Form.Field(),
+    cloudDetection: new Form.Field(),
     cloudMasking: new Form.Field(),
     shadowMasking: new Form.Field(),
     snowMasking: new Form.Field()
 }
 
 const mapRecipeToProps = recipe => ({
-    sources: selectFrom(recipe, 'model.sources.dataSets')
+    sources: selectFrom(recipe, 'model.sources.dataSets'),
+    dataSetType: selectFrom(recipe, 'model.sources.dataSetType'),
 })
 
 class OpticalPreprocess extends React.Component {
@@ -33,6 +35,7 @@ class OpticalPreprocess extends React.Component {
                 <Panel.Content>
                     <Layout>
                         {this.renderCorrectionsOptions()}
+                        {this.renderHistogramMatching()}
                         {this.renderCloudDetectionOptions()}
                         {this.renderCloudMaskingOptions()}
                         {this.renderShadowMaskingOptions()}
@@ -45,7 +48,10 @@ class OpticalPreprocess extends React.Component {
     }
 
     renderCorrectionsOptions() {
-        const {inputs: {corrections}} = this.props
+        const {dataSetType, inputs: {corrections}} = this.props
+        if (dataSetType === 'PLANET') {
+            return null
+        }
         return (
             <Form.Buttons
                 label={msg('process.ccdc.panel.preprocess.form.corrections.label')}
@@ -60,6 +66,25 @@ class OpticalPreprocess extends React.Component {
                     label: msg('process.ccdc.panel.preprocess.form.corrections.brdf.label'),
                     tooltip: msg('process.ccdc.panel.preprocess.form.corrections.brdf.tooltip')
                 }]}
+            />
+        )
+    }
+
+    renderHistogramMatching() {
+        const {dataSetType, inputs: {histogramMatching}} = this.props
+        if (dataSetType !== 'PLANET') {
+            return null
+        }
+        const options = [
+            {value: 'ENABLED', label: msg('process.planetMosaic.panel.options.form.histogramMatching.options.ENABLED')},
+            {value: 'DISABLED', label: msg('process.planetMosaic.panel.options.form.histogramMatching.options.DISABLED')},
+        ]
+        return (
+            <Form.Buttons
+                label={msg('process.planetMosaic.panel.options.form.histogramMatching.label')}
+                tooltip={msg('process.planetMosaic.panel.options.form.histogramMatching.tooltip')}
+                input={histogramMatching}
+                options={options}
             />
         )
     }
@@ -154,12 +179,20 @@ class OpticalPreprocess extends React.Component {
             />
         )
     }
+
+    componentDidMount() {
+        const {inputs: {histogramMatching}} = this.props
+        if (!histogramMatching.value) {
+            histogramMatching.set('DISABLED')
+        }
+    }
 }
 
 OpticalPreprocess.propTypes = {}
 
 const valuesToModel = values => ({
     corrections: values.corrections,
+    histogramMatching: values.histogramMatching,
     cloudDetection: values.cloudDetection,
     cloudMasking: values.cloudMasking,
     shadowMasking: values.shadowMasking,
@@ -169,6 +202,7 @@ const valuesToModel = values => ({
 const modelToValues = model => {
     return ({
         corrections: model.corrections,
+        histogramMatching: model.histogramMatching,
         cloudDetection: model.cloudDetection,
         cloudMasking: model.cloudMasking,
         shadowMasking: model.shadowMasking,

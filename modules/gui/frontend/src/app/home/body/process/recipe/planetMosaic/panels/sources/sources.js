@@ -6,6 +6,7 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {getDataSetOptions as planetDataSetOptions} from 'app/home/body/process/recipe/planetMosaic/sources'
 import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -20,8 +21,6 @@ const fields = {
     validAsset: new Form.Field()
         .skip((v, {source}) => source === 'NICFI')
         .notBlank(),
-    histogramMatching: new Form.Field()
-        .skip((v, {source}) => source !== 'DAILY'),
 }
 
 const mapRecipeToProps = recipe => ({
@@ -53,20 +52,13 @@ class Sources extends React.Component {
                 {source.value !== 'NICFI'
                     ? this.renderAssetId()
                     : null}
-                {source.value === 'DAILY'
-                    ? this.renderHistogramMatching()
-                    : null}
             </Layout>
         )
     }
 
     renderSources() {
-        const {inputs: {source}} = this.props
-        const options = [
-            {value: 'NICFI', label: msg('process.planetMosaic.panel.sources.form.collectionTypes.NICFI.label')},
-            {value: 'BASEMAPS', label: msg('process.planetMosaic.panel.sources.form.collectionTypes.BASEMAPS.label')},
-            {value: 'DAILY', label: msg('process.planetMosaic.panel.sources.form.collectionTypes.DAILY.label')},
-        ]
+        const {dates, inputs: {source}} = this.props
+        const options = planetDataSetOptions(dates)
         return (
             <Form.Buttons
                 label={msg('process.planetMosaic.panel.sources.form.collectionType.label')}
@@ -91,32 +83,10 @@ class Sources extends React.Component {
         )
     }
 
-    renderHistogramMatching() {
-        const {inputs: {histogramMatching}} = this.props
-        const options = [
-            {value: 'ENABLED', label: msg('process.planetMosaic.panel.sources.form.histogramMatching.options.ENABLED')},
-            {value: 'DISABLED', label: msg('process.planetMosaic.panel.sources.form.histogramMatching.options.DISABLED')},
-        ]
-        return (
-            <Form.Buttons
-                label={msg('process.planetMosaic.panel.sources.form.histogramMatching.label')}
-                tooltip={msg('process.planetMosaic.panel.sources.form.histogramMatching.tooltip')}
-                input={histogramMatching}
-                options={options}
-            />
-        )
-    }
-
     componentDidMount() {
-        const {inputs: {source, histogramMatching, validAsset}} = this.props
+        const {inputs: {source, validAsset}} = this.props
         if (!source.value) {
             source.set('NICFI')
-        }
-        if (!histogramMatching.value) {
-            histogramMatching.set('DISABLED')
-        }
-        if (!histogramMatching.value) {
-            histogramMatching.set('DISABLED')
         }
         validAsset.set('valid')
     }
@@ -126,8 +96,7 @@ const valuesToModel = values => {
     const nicfiSource = values.source === 'NICFI'
     return {
         source: nicfiSource ? 'BASEMAPS' : values.source,
-        assets: nicfiSource ? NICFI_ASSETS : [values.asset],
-        histogramMatching: values.source === 'DAILY' ? values.histogramMatching : 'DISABLED'
+        assets: nicfiSource ? NICFI_ASSETS : [values.asset]
     }
 }
 
@@ -136,8 +105,7 @@ const modelToValues = model => {
     return {
         source: nicfiSource ? 'NICFI' : model.source,
         asset: nicfiSource || _.isEmpty(model.assets) ? null : model.assets[0],
-        validAsset: true,
-        histogramMatching: model.source === 'DAILY' ? model.histogramMatching : 'DISABLED'
+        validAsset: true
     }
 }
 

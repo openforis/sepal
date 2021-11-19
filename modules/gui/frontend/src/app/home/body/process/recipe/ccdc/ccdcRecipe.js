@@ -92,9 +92,11 @@ export const RecipeActions = id => {
 }
 
 export const getAllVisualizations = recipe => {
-    return _.isEmpty(selectFrom(recipe, ['model.sources.dataSets.SENTINEL_1']))
-        ? allOpticalMosaicVisualizations(recipe)
-        : allRadarMosaicVisualizations(recipe)
+    return !_.isEmpty(selectFrom(recipe, ['model.sources.dataSets.SENTINEL_1']))
+        ? allRadarMosaicVisualizations(recipe)
+        : Object.keys(selectFrom(recipe, ['model.sources.dataSets'])).find(source => ['LANDSAT', 'SENTINEL_2'].includes(source))
+            ? allOpticalMosaicVisualizations(recipe)
+            : allPlanetMosaicVisualizations(recipe)
 }
 
 const allOpticalMosaicVisualizations = recipe => {
@@ -137,6 +139,37 @@ const allRadarMosaicVisualizations = recipe => {
         toHarmonicVisualization('VV'),
         toHarmonicVisualization('VH'),
         toHarmonicVisualization('ratio_VV_VH'),
+    ]
+}
+const allPlanetMosaicVisualizations = recipe => {
+    const sources = selectFrom(recipe, 'model.sources.dataSets')
+    const {cloudMasking, cloudBuffer, histogramMatching} = recipe.model.options
+    const cloudThreshold = cloudMasking === 'MODERATE' ? 0 : 80
+
+    const planetMosaicRecipe = {
+        type: 'PLANET_MOSAIC',
+        model: {
+            sources: {
+                ...sources,
+                source: Object.values(sources).flat()[0]
+            },
+            options: {
+                histogramMatching,
+                cloudThreshold,
+                cloudBuffer
+            }
+        }
+    }
+    const baseVisualizations = recipeVisualizations(planetMosaicRecipe)
+        .map(visParams => ({...visParams, baseBands: [...new Set(visParams.bands)]}))
+    const harmonicVisualizations = baseVisualizations
+        .filter(({type}) => type === 'continuous')
+        .map(({bands}) => bands[0])
+        .map(toHarmonicVisualization)
+        .filter(v => v)
+    return [
+        ...baseVisualizations,
+        ...harmonicVisualizations
     ]
 }
 

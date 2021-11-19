@@ -868,6 +868,17 @@
               "placeholder": "Select a classification...",
               "tooltip": "(Optional) Select a classification recipe and apply the classifier to every acquisition in the time-series."
             },
+            "dataSets": {
+              "label": "Data set"
+            },
+            "dataSetType": {
+              "label": "Type"
+            },
+            "dataSetTypes": {
+              "OPTICAL": "Optical",
+              "PLANET": "Planet",
+              "RADAR": "Radar"
+            },
             "required": "A data source must be selected"
           },
           "title": "Sources",
@@ -2203,6 +2214,16 @@
             "tooltip": "Planet composites already removes clouds. Setting this to a value > 0 will remove additional clouds.",
             "value": "{value}%"
           },
+          "form": {
+          "histogramMatching": {
+            "label": "Histogram matching",
+            "tooltip": "Normalize images included in mosaic using Histogram matching. This will slow down processing significant, and can cause some details to be lost. Overall consistency and noise level can, however, be significantly improved with this option enabled.",
+            "options": {
+              "DISABLED": "Disabled",
+              "ENABLED": "Enabled"
+            }
+          }
+          },
           "shadowThreshold": {
             "label": "Cloud shadow masking",
             "tooltip": "Planet composites already removes cloud shadows. Setting this to a value > 0 will remove additional cloud shadows.",
@@ -2224,21 +2245,16 @@
             },
             "collectionTypes": {
               "BASEMAPS": {
-                "label": "Custom basemaps"
+                "label": "Custom basemaps",
+                "tooltip": "Use image collection with Planet basemaps/level 1 composites"
               },
               "DAILY": {
-                "label": "Daily imagery"
+                "label": "Daily imagery",
+                "tooltip": "Use image collection with daily Planet imagery/level 2 imagery"
               },
               "NICFI": {
-                "label": "NICFI basemaps"
-              }
-            },
-            "histogramMatching": {
-              "label": "Histogram matching",
-              "tooltip": "Normalize images included in mosaic using Histogram matching. This will slow down processing significant, and can cause some details to be lost. Overall consistency and noise level can, however, be significantly improved with this option enabled.",
-              "options": {
-                "DISABLED": "Disabled",
-                "ENABLED": "Enabled"
+                "label": "NICFI basemaps",
+                "tooltip": "Use image collection with the NICFI Planet basemaps/level 1 composites"
               }
             }
           },
