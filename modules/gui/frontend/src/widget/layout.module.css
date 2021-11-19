@@ -49,43 +49,43 @@
     margin-right: calc(-1 * var(--horizontal-spacing));
 }
 
-.layout.vertical.loose {
+.layout.vertical.spacing-loose {
     --vertical-spacing: 3rem;
 }
 
-.layout.vertical.normal {
+.layout.vertical.spacing-normal {
     --vertical-spacing: 2rem;
 }
 
-.layout.vertical.compact {
+.layout.vertical.spacing-compact {
     --vertical-spacing: 1rem;
 }
 
-.layout.vertical.tight {
+.layout.vertical.spacing-tight {
     --vertical-spacing: .5rem;
 }
 
-.layout.vertical.none {
+.layout.vertical.spacing-none {
     --vertical-spacing: 0rem;
 }
 
-.layout.horizontal.loose {
+.layout.horizontal.spacing-loose {
     --horizontal-spacing: 1.5rem;
 }
 
-.layout.horizontal.normal {
+.layout.horizontal.spacing-normal {
     --horizontal-spacing: 1rem;
 }
 
-.layout.horizontal.compact {
+.layout.horizontal.spacing-compact {
     --horizontal-spacing: .5rem;
 }
 
-.layout.horizontal.tight {
+.layout.horizontal.spacing-tight {
     --horizontal-spacing: .25rem;
 }
 
-.layout.horizontal.none {
+.layout.horizontal.spacing-none {
     --horizontal-spacing: 0rem;
 }
 
@@ -113,9 +113,20 @@
     width: 100%;
     flex-direction: row;
     flex-wrap: wrap;
-    justify-content: space-between;
     align-items: center; /* required */
     margin-bottom: calc(-1 * var(--vertical-spacing));
+}
+
+.layout.horizontal.alignment-left > .content {
+    justify-content: flex-start;
+}
+
+.layout.horizontal.alignment-right > .content {
+    justify-content: flex-end;
+}
+
+.layout.horizontal.alignment-justified > .content {
+    justify-content: space-between;
 }
 
 .layout.horizontal.nowrap > .content {
