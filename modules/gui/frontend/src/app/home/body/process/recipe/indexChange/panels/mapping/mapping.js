@@ -1,6 +1,7 @@
 import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
 import {ImageConstraints} from 'widget/imageConstraints/imageConstraints'
+import {LegendItem} from 'widget/legend/legendItem'
 import {ListItem} from 'widget/listItem'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
@@ -51,21 +52,20 @@ class _Mapping extends React.Component {
 
     renderEntryMapping(entry) {
         const {activator: {activatables}} = this.props
-        const title = (
-            <div key={entry.id} className={styles.entry}>
-                <div className={styles.color} style={{'--color': entry.color}}/>
-                <div className={styles.value}>{entry.value}</div>
-                <div className={styles.label}>{entry.label}</div>
-            </div>
-        )
         return (
             <ListItem
                 key={entry.id}
-                onClick={() => activatables[`entryMapping-${entry.id}}`].activate()}>
-                <CrudItem
-                    title={title}
-                    content={this.renderMappingOverview(entry)}
-                />
+                onClick={() => activatables[`entryMapping-${entry.id}}`].activate()}
+                expansion={this.renderMappingOverview(entry)}
+                expansionClickable
+                expanded>
+                <CrudItem content={
+                    <LegendItem
+                        color={entry.color}
+                        value={entry.value}
+                        label={entry.label}
+                    />
+                }/>
             </ListItem>
         )
     }
