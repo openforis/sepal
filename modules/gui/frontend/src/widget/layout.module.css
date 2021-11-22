@@ -1,5 +1,6 @@
 
 .layout {
+    position: relative;
     display: flex;
     flex-grow: 0;
     flex-shrink: 0;
@@ -9,22 +10,23 @@
 .layout > .content {
     display: flex;
     flex-grow: 1;
-    overflow: hidden;
+    /* overflow: hidden; */
 }
 
-.layout > .content > * {
-    margin-bottom: var(--vertical-spacing);
-}
+/* fill */
 
 .layout.fill {
     flex-grow: 1;
+    flex-shrink: 1;
 }
 
+/* framed */
+
 .layout.framed {
-    position: relative;
+    padding: .75rem;
+    padding: 1rem;
     border: 1px solid var(--section-wireframe-color);
     border-radius: var(--section-border-radius);
-    padding: 1rem;
 }
 
 .layout.framed::before {
@@ -38,64 +40,41 @@
     pointer-events: none;
 }
 
+/* vertical */
+
 .layout.vertical {
     flex-direction: row;
     flex-shrink: 1;
     justify-content: space-between;
 }
 
-.layout.horizontal {
-    flex-direction: column;
-    margin-right: calc(-1 * var(--horizontal-spacing));
-}
-
-.layout.vertical.spacing-loose {
-    --vertical-spacing: 3rem;
-}
-
-.layout.vertical.spacing-normal {
-    --vertical-spacing: 2rem;
-}
-
-.layout.vertical.spacing-compact {
-    --vertical-spacing: 1rem;
-}
-
-.layout.vertical.spacing-tight {
-    --vertical-spacing: .5rem;
-}
-
-.layout.vertical.spacing-none {
-    --vertical-spacing: 0rem;
-}
-
-.layout.horizontal.spacing-loose {
-    --horizontal-spacing: 1.5rem;
-}
-
-.layout.horizontal.spacing-normal {
-    --horizontal-spacing: 1rem;
-}
-
-.layout.horizontal.spacing-compact {
-    --horizontal-spacing: .5rem;
-}
-
-.layout.horizontal.spacing-tight {
-    --horizontal-spacing: .25rem;
-}
-
-.layout.horizontal.spacing-none {
-    --horizontal-spacing: 0rem;
-}
-
-.layout.vertical > .content > *:last-child {
-    margin-bottom: 0;
-}
-
 .layout.vertical > .content {
     flex-direction: column;
 }
+
+/* vertical/spacing */
+
+.layout.vertical.spacing-loose > .content > * + * {
+    margin-top: 3rem;
+}
+
+.layout.vertical.spacing-normal > .content > * + * {
+    margin-top: 2rem;
+}
+
+.layout.vertical.spacing-compact > .content > * + * {
+    margin-top: 1rem;
+}
+
+.layout.vertical.spacing-tight > .content > * + * {
+    margin-top: .5rem;
+}
+
+.layout.vertical.spacing-none > .content > * + * {
+    margin-top: 0rem;
+}
+
+/* vertical/scrollable */
 
 .layout.vertical.scrollable {
     flex-grow: 1;
@@ -109,13 +88,75 @@
     flex-grow: 0;
 }
 
+/* horizontal */
+
+.layout.horizontal {
+    flex-direction: column;
+}
+
 .layout.horizontal > .content {
     width: 100%;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center; /* required */
-    margin-bottom: calc(-1 * var(--vertical-spacing));
 }
+
+/* horizontal/spacing */
+
+.layout.horizontal.spacing-loose > .content > * {
+    margin-bottom: 1.5rem;
+    margin-right: 1.5rem;
+}
+
+.layout.horizontal.spacing-normal > .content > * {
+    margin-bottom: 1rem;
+    margin-right: 1rem;
+}
+
+.layout.horizontal.spacing-compact > .content > * {
+    margin-bottom: .5rem;
+    margin-right: .5rem;
+}
+
+.layout.horizontal.spacing-tight > .content > * {
+    margin-bottom: .25rem;
+    margin-right: .25rem;
+}
+
+.layout.horizontal.spacing-none > .content > * {
+    margin-bottom: 0rem;
+    margin-right: 0rem;
+}
+
+/* horizontal/spacing: compensate bottom margin */
+
+.layout.horizontal.spacing-loose > .content {
+    margin-bottom: -1.5rem;
+}
+
+.layout.horizontal.spacing-normal > .content {
+    margin-bottom: -1rem;
+}
+
+.layout.horizontal.spacing-compact > .content {
+    margin-bottom: -.5rem;
+}
+
+.layout.horizontal.spacing-tight > .content {
+    margin-bottom: -.25rem;
+}
+
+.layout.horizontal.spacing-none > .content {
+    margin-bottom: 0rem;
+}
+
+/* horizontal: compensate right margin */
+
+.layout.horizontal > .content > *:last-child {
+    margin-right: 0rem;
+}
+ 
+/* horizontal/alignment */
 
 .layout.horizontal.alignment-left > .content {
     justify-content: flex-start;
@@ -129,13 +170,13 @@
     justify-content: space-between;
 }
 
+/* horizontal/wrap */
+
 .layout.horizontal.nowrap > .content {
     flex-wrap: nowrap;
 }
 
-.layout.horizontal > .content > * {
-    margin-right: var(--horizontal-spacing);
-}
+/* horizontal/misc */
 
 .layout.horizontal .layout.horizontal > .content > *:last-child {
     margin-right: 0;
