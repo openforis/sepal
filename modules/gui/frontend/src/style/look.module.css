@@ -184,7 +184,7 @@
 
 /* nonInteractive */
 
-/* .look:not(.chromeless).nonInteractive::before { */
+/* .look:not(.chromeless).nonInteractive::after { */
 .look.nonInteractive::after {
     content: '';
     position: absolute;
@@ -227,7 +227,7 @@
     border-color: var(--look-default-disabled-border-color);
 }
 
-.look.default:not(.chromeless).nonInteractive::before {
+.look.default:not(.chromeless).nonInteractive::after {
     background-color: var(--look-default-disabled-overlay-color);
 }
 
@@ -261,7 +261,7 @@
     border-color: var(--look-transparent-disabled-border-color);
 }
 
-.look.transparent:not(.chromeless).nonInteractive::before {
+.look.transparent:not(.chromeless).nonInteractive::after {
     background-color: var(--look-transparent-disabled-overlay-color);
 }
 
@@ -295,7 +295,7 @@
     border-color: var(--look-highlight-disabled-border-color);
 }
 
-.look.highlight:not(.chromeless).nonInteractive::before {
+.look.highlight:not(.chromeless).nonInteractive::after {
     background-color: var(--look-highlight-disabled-overlay-color);
 }
 
@@ -329,7 +329,7 @@
     border-color: var(--look-selected-disabled-border-color);
 }
 
-.look.selected:not(.chromeless).nonInteractive::before {
+.look.selected:not(.chromeless).nonInteractive::after {
     background-color: var(--look-selected-disabled-overlay-color);
 }
 
@@ -363,7 +363,7 @@
     border-color: var(--look-add-disabled-border-color);
 }
 
-.look.add:not(.chromeless).nonInteractive::before {
+.look.add:not(.chromeless).nonInteractive::after {
     background-color: var(--look-add-disabled-overlay-color);
 }
 
@@ -399,7 +399,7 @@
     border-color: var(--look-apply-disabled-border-color);
 }
 
-.look.apply:not(.chromeless).nonInteractive::before {
+.look.apply:not(.chromeless).nonInteractive::after {
     background-color: var(--look-apply-disabled-overlay-color);
 }
 
@@ -433,6 +433,6 @@
     border-color: var(--look-cancel-disabled-border-color);
 }
 
-.look.cancel:not(.chromeless).nonInteractive::before {
+.look.cancel:not(.chromeless).nonInteractive::after {
     background-color: var(--look-cancel-disabled-overlay-color);
 }
