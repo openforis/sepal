@@ -361,7 +361,7 @@ Button.propTypes = {
     stopPropagation: PropTypes.any,
     style: PropTypes.object,
     tabIndex: PropTypes.number,
-    tail: PropTypes.string,
+    tail: PropTypes.any,
     tooltip: PropTypes.any,
     tooltipClickTrigger: PropTypes.any,
     tooltipDelay: PropTypes.number,
