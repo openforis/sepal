@@ -184,7 +184,8 @@
 
 /* nonInteractive */
 
-.look:not(.chromeless).nonInteractive::before {
+/* .look:not(.chromeless).nonInteractive::before { */
+.look.nonInteractive::after {
     content: '';
     position: absolute;
     top: 0;
@@ -193,6 +194,7 @@
     right: 0;
     z-index: 1;
     border-radius: inherit;
+    pointer-events: all;
 }
 
 /* default */
