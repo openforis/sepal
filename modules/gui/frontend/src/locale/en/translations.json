@@ -549,6 +549,8 @@
         },
         "palette": {
           "label": "Palette",
+          "tooltip": "Show and edit palette using color pickers.",
+          "empty": "Empty palette, using gray scale.",
           "add": {
             "tooltip": "Add a color to the palette."
           },
@@ -562,9 +564,6 @@
             "remove": {
               "tooltip": "Remove color."
             }
-          },
-          "palette": {
-            "tooltip": "Show and edit palette using color pickers."
           },
           "preset": {
               "label": "Palette",

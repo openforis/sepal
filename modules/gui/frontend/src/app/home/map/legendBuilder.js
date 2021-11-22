@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
+import {ColorElement} from 'widget/colorElement'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {LegendColor} from 'widget/legend/legendColor'
 import {Message} from 'widget/message'
 import {PalettePreSets, pickColors} from './visParams/palettePreSets'
 import {Widget} from 'widget/widget'
@@ -338,7 +338,7 @@ class ColorInput extends React.Component {
         const {input, invalid, onChange} = this.props
         const {swap} = this.state
         return (
-            <LegendColor
+            <ColorElement
                 color={input.value}
                 invalid={invalid}
                 tooltip={this.renderTooltip()}
@@ -372,17 +372,12 @@ class ColorInput extends React.Component {
         )
     }
 
-    colorPicker() {
-        this.colorInputRef.current.focus()
-        this.colorInputRef.current.click()
-    }
-
     renderSwap() {
         const {otherColors, onSwap} = this.props
         return (
             <Layout type='horizontal' spacing='tight' alignment='left'>
                 {otherColors.map((c, i) =>
-                    <LegendColor
+                    <ColorElement
                         key={i}
                         color={c}
                         onClick={() => {

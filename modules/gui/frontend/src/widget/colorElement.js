@@ -4,9 +4,10 @@ import {msg} from 'translate'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './legendColor.module.css'
+import _ from 'lodash'
+import styles from './colorElement.module.css'
 
-export class LegendColor extends React.Component {
+export class ColorElement extends React.Component {
     colorInputRef = React.createRef()
 
     constructor() {
@@ -26,19 +27,19 @@ export class LegendColor extends React.Component {
     }
 
     renderButton() {
-        const {color, tooltip, tooltipPlacement, onTooltipVisibleCahange, onChange, onClick} = this.props
+        const {color, size, tooltip, tooltipPlacement, onTooltipVisibleChange, onChange, onClick} = this.props
         return (
             <Button
                 air='less'
                 shape='rectangle'
-                size='small'
+                size={size}
                 additionalClassName={styles.color}
                 style={{'--color': color}}
                 tooltip={tooltip}
                 tooltipClickTrigger={isMobile()}
                 tooltipDelay={0}
                 tooltipPlacement={tooltipPlacement}
-                tooltipVisible={onTooltipVisibleCahange}
+                tooltipVisible={onTooltipVisibleChange}
                 onClick={() => onChange ? this.showColorPicker() : onClick}
             >
                 {this.renderInput()}
@@ -47,13 +48,15 @@ export class LegendColor extends React.Component {
     }
 
     renderInput() {
-        const {color} = this.props
+        const {color, onFocus, onBlur} = this.props
         return (
             <input
                 ref={this.colorInputRef}
                 className={styles.colorInput}
                 type='color'
                 value={color}
+                onFocus={onFocus}
+                onBlur={onBlur}
                 onChange={this.onChange}
             />
         )
@@ -90,14 +93,34 @@ export class LegendColor extends React.Component {
         this.colorInputRef.current.focus()
         this.colorInputRef.current.click()
     }
+    
+    hideColorPicker() {
+        this.colorInputRef.current.blur()
+    }
+    
+    componentDidMount() {
+        const {edit} = this.props
+        if (!_.isNil(edit)) {
+            edit ? this.showColorPicker() : this.hideColorPicker()
+        }
+    }
 }
 
-LegendColor.propTypes = {
+ColorElement.defaultProps = {
+    color: '',
+    size: 'normal'
+}
+ 
+ColorElement.propTypes = {
     color: PropTypes.string,
+    edit: PropTypes.any,
     invalid: PropTypes.any,
+    size: PropTypes.any,
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any,
+    onBlur: PropTypes.func,
     onChange: PropTypes.func,
     onClick: PropTypes.func,
+    onFocus: PropTypes.func,
     onTooltipVisibleChange: PropTypes.func
 }

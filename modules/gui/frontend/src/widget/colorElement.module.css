@@ -1,3 +1,8 @@
+.container {
+    position: relative;
+    --picker-margin: .5rem;
+}
+
 .color {
     background-color: var(--color) !important;
 }
@@ -5,17 +10,13 @@
 /* Warning: very sensitive */
 .colorInput {
     position: absolute;
-    height: 100%;
+    height: calc(100% + 2 * var(--picker-margin));
     width: 100%;
     padding: 0;
-    margin: .5rem 0 0 0;
+    margin: 0;
     border: 0;
     opacity: 0;
     pointer-events: none;
-}
-
-.container {
-    position: relative;
 }
 
 .badgeContainer {

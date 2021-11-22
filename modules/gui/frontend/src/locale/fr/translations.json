@@ -532,6 +532,7 @@
         },
         "palette": {
           "label": "Palette",
+          "tooltip": "Afficher et modifier la palette à l'aide de sélecteurs de couleurs.",
           "add": {
             "tooltip": "Ajoutez une palette de couleurs."
           },
@@ -545,9 +546,6 @@
             "remove": {
               "tooltip": "Enlever la couleur."
             }
-          },
-          "palette": {
-            "tooltip": "Afficher et modifier la palette à l'aide de sélecteurs de couleurs."
           },
           "preset": {
             "placeholder": "Sélectionnez une palette prédéfinie...",

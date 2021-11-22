@@ -1,17 +1,14 @@
 import {Button} from 'widget/button'
-import {ButtonGroup} from 'widget/buttonGroup'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
+import {NoData} from 'widget/noData'
+import {PaletteColor} from './paletteColor'
 import {PalettePreSets} from './palettePreSets'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Widget} from 'widget/widget'
-import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import Color from 'color'
 import React from 'react'
-import Tooltip from 'widget/tooltip'
 import guid from 'guid'
-import styles from './palette.module.css'
 
 export class Palette extends React.Component {
     state = {
@@ -26,30 +23,24 @@ export class Palette extends React.Component {
     }
 
     render() {
-        const {className} = this.props
+        const {show} = this.state
         return (
-            <Widget
-                label={msg('map.visParams.form.palette.label')}
-                labelButtons={this.labelButtons()}
-                layout={'vertical'}
-                className={className}>
-                <Layout className={styles.paletteRow}>
-                    {this.renderPalette()}
-                    {this.renderText()}
-                </Layout>
+            <Layout type='vertical'>
+                <Widget
+                    label={msg('map.visParams.form.palette.label')}
+                    labelButtons={this.labelButtons()}
+                    layout={'vertical'}>
+                    {show === 'palette' ? this.renderPalette() : this.renderText()}
+                </Widget>
                 <PalettePreSets onSelect={this.applyPreset} count={20}/>
-            </Widget>
+            </Layout>
         )
     }
 
     renderText() {
-        const {show, text} = this.state
-        if (show !== 'text') {
-            return null
-        }
+        const {text} = this.state
         return (
             <Input
-                className={styles.widget}
                 value={text}
                 placeholder={msg('map.visParams.form.palette.text.placeholder')}
                 onChange={({target: {value}}) => this.updateText(value)}
@@ -58,39 +49,34 @@ export class Palette extends React.Component {
     }
 
     renderPalette() {
-        const {edit, show} = this.state
-        if (show !== 'palette') {
-            return null
-        }
+        return (
+            <Layout type='horizontal' spacing='tight' alignment='left' framed>
+                {this.renderPaletteColors()}
+            </Layout>
+        )
+    }
+
+    renderPaletteColors() {
         const {input} = this.props
-        const colorInputs = (input.value || []).map(({color, id}, i) =>
-            <ColorInput
+        const colors = input.value || []
+        return colors.length
+            ? colors.map(({color, id}, index) => this.renderPaletteColor({color, id, index}))
+            : <NoData message={msg('map.visParams.form.palette.empty')}/>
+    }
+
+    renderPaletteColor({color, id, index}) {
+        const {edit} = this.state
+        return (
+            <PaletteColor
                 key={id}
                 color={color}
-                onInsert={() => this.insertColor(i)}
+                onInsert={() => this.insertColor(index)}
                 onRemove={() => this.removeColor(id)}
-                onBlur={() => {
-                    this.setState({edit: null})
-                }}
-                onChange={color => {
-                    this.updateColor(color, id)
-                }}
-                onEdit={() => this.setState({edit: id})}
+                onFocus={() => this.setState({edit: id})}
+                onBlur={() => this.setState({edit: null})}
+                onChange={color => this.updateColor(color, id)}
                 edit={edit === id}
             />
-        )
-        const noColors =
-            <div className={styles.noData}>
-                Empty palette, using gray scale.
-            </div>
-        return (
-            <ScrollableContainer>
-                <Scrollable direction='x' className={styles.palette}>
-                    {colorInputs.length
-                        ? colorInputs
-                        : noColors}
-                </Scrollable>
-            </ScrollableContainer>
         )
     }
 
@@ -126,7 +112,7 @@ export class Palette extends React.Component {
                         chromeless
                         shape='circle'
                         size='small'
-                        tooltip={msg('map.visParams.form.palette.palette.tooltip')}
+                        tooltip={msg('map.visParams.form.palette.tooltip')}
                         onClick={() => this.showPalette()}
                     />
                 )
@@ -220,86 +206,6 @@ export class Palette extends React.Component {
             input.set(colors)
         } else {
             input.set([])
-        }
-    }
-}
-
-class ColorInput extends React.Component {
-    element = null
-
-    constructor(props) {
-        super(props)
-        this.initRef = this.initRef.bind(this)
-    }
-
-    render() {
-        const {color, onBlur, onChange} = this.props
-        return (
-            <div className={styles.colorContainer}>
-                <input
-                    type='color'
-                    className={styles.colorInput}
-                    value={Color(color).hex()}
-                    onChange={({target: {value}}) => onChange(value)}
-                    onBlur={() => onBlur()}
-                    ref={this.initRef}
-                />
-                <Tooltip
-                    msg={this.renderColorButtons()}
-                    delay={0}
-                    placement={'bottom'}
-                    clickTrigger={isMobile()}>
-                    <div
-                        className={styles.color}
-                        style={{'--color': Color(color).hex()}}
-                    />
-                </Tooltip>
-            </div>
-        )
-    }
-
-    renderColorButtons() {
-        const {onEdit, onInsert, onRemove} = this.props
-        return (
-            <ButtonGroup layouy='horizontal-nowrap'>
-                <Button
-                    icon='plus'
-                    chromeless
-                    shape='circle'
-                    size='small'
-                    tooltip={msg('map.visParams.form.palette.color.insert.tooltip')}
-                    onClick={() => onInsert()}
-                />
-                <Button
-                    icon='pen'
-                    chromeless
-                    shape='circle'
-                    size='small'
-                    tooltip={msg('map.visParams.form.palette.color.edit.tooltip')}
-                    onClick={() => {
-                        onEdit()
-                        this.element.focus()
-                        this.element.click()
-                    }}
-                />
-                <Button
-                    icon='trash'
-                    chromeless
-                    shape='circle'
-                    size='small'
-                    tooltip={msg('map.visParams.form.palette.color.remove.tooltip')}
-                    onClick={() => onRemove()}
-                />
-            </ButtonGroup>)
-    }
-
-    initRef(element) {
-        this.element = element
-        const {edit} = this.props
-        if (edit) {
-            setTimeout(
-                () => this.element && this.element.click()
-            )
         }
     }
 }
