@@ -3,6 +3,7 @@ import {Layout} from 'widget/layout'
 import {MosaicPreview} from 'app/home/body/process/recipe/mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -55,14 +56,12 @@ class CompositeOptions extends React.Component {
 
     renderContent() {
         return (
-            <Layout>
+            <Layout type='vertical'>
                 {this.renderCorrectionOptions()}
-                <Layout spacing='compact'>
-                    {this.renderFilterOptions()}
-                </Layout>
+                {this.renderFilterOptions()}
+                {this.renderCloudMaskingOptions()}
+                {this.renderCloudBufferOptions()}
                 <Layout type='horizontal'>
-                    {this.renderCloudMaskingOptions()}
-                    {this.renderCloudBufferOptions()}
                     {this.renderSnowMaskingOptions()}
                     {this.renderComposeOptions()}
                 </Layout>
@@ -101,11 +100,11 @@ class CompositeOptions extends React.Component {
             inputs: {corrections, shadowPercentile, hazePercentile, ndviPercentile, dayOfYearPercentile}
         } = this.props
         return (
-            <React.Fragment>
-                <Label
-                    msg={msg('process.mosaic.panel.composite.form.filters.label')}
-                    tooltip={msg('process.mosaic.panel.composite.form.filters.tooltip')}
-                    tooltipPlacement='top'/>
+            <Widget
+                label={msg('process.mosaic.panel.composite.form.filters.label')}
+                spacing='compact'
+                tooltip={msg('process.mosaic.panel.composite.form.filters.tooltip')}
+                tooltipPlacement='top'>
                 <PercentileField
                     input={shadowPercentile}/>
                 <PercentileField
@@ -115,7 +114,7 @@ class CompositeOptions extends React.Component {
                     input={ndviPercentile}/>
                 <PercentileField
                     input={dayOfYearPercentile}/>
-            </React.Fragment>
+            </Widget>
         )
     }
 
