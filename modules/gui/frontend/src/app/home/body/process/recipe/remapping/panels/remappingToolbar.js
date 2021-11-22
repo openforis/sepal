@@ -38,13 +38,6 @@ class RemappingToolbar extends React.Component {
                     placement='top-right'
                     panel
                     className={styles.top}>
-                    <Toolbar.ToolbarButton
-                        selected={collecting}
-                        onClick={() => RecipeActions(recipeId).setCollecting(!collecting)}
-                        icon={'map-marker'}
-                        tooltip={msg(collecting
-                            ? 'process.remapping.collect.disable.tooltip'
-                            : 'process.remapping.collect.enable.tooltip')}/>
                     <Toolbar.ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'
