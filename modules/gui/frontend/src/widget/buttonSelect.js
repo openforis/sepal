@@ -119,20 +119,6 @@ class ButtonSelect extends React.Component {
         return (selectedOption && selectedOption.buttonLabel) || label
     }
 
-    // renderContent(renderChevron) {
-    //     const {label, icon, width} = this.props
-    //     const {selectedOption} = this.state
-    //     return (
-    //         <div className={[styles.content, width === 'fill' ? styles.fill : ''].join(' ')}>
-    //             {icon && <Icon name={icon}/>}
-    //             <div>
-    //                 {(selectedOption && selectedOption.buttonLabel) || label}
-    //             </div>
-    //             {renderChevron ? <Icon name={this.getChevronIcon()}/> : null}
-    //         </div>
-    //     )
-    // }
-
     getChevronIcon() {
         const {placement} = this.props
         return placement === 'above' ? 'chevron-up' : 'chevron-down'
