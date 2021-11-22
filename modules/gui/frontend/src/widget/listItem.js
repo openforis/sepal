@@ -148,8 +148,8 @@ class _ListItem extends React.Component {
             lookStyles.transparent,
             lookStyles.noTransitions,
             clickable ? null : [lookStyles.noHover, lookStyles.nonClickable],
-            this.isDisabled() ? lookStyles.nonInteractive : null,
-            (this.isDragging() || this.isDraggable() && !this.isClickable()) ? lookStyles.draggable : null
+            (this.isDragging() || this.isDraggable() && !this.isClickable()) ? lookStyles.draggable : null,
+            this.isDisabled() ? lookStyles.nonInteractive : null
         ])
     }
 
