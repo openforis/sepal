@@ -504,7 +504,6 @@
       },
       "layer": {
         "remove": {
-          "message": "Please confirm removal of this layer",
           "tooltip": "Remove layer"
         }
       },

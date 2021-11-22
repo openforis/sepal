@@ -488,7 +488,6 @@
 			},
 			"layer": {
 				"remove": {
-					"message": "Confirmer la suppression de cette couche",
 					"tooltip": "Supprimer la couche"
 				}
 			},

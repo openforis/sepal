@@ -51,7 +51,6 @@ export class _ImageLayerSources extends React.Component {
                         key={source.id}
                         title={msg(`imageLayerSources.${source.type}.label`)}
                         description={description}
-                        removeMessage={msg('map.layout.layer.remove.message')}
                         removeTooltip={msg('map.layout.layer.remove.tooltip')}
                         onRemove={removable ? () => this.removeSource(source.id) : null}
                     />
