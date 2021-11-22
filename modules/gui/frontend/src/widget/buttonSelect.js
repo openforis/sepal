@@ -68,9 +68,12 @@ class ButtonSelect extends React.Component {
                 onClick={() => this.toggleOptions()}
                 onMouseOver={onMouseOver}
                 onMouseOut={onMouseOut}
-                disabled={disabled}>
-                {this.renderContent(true)}
-            </Button>
+                disabled={disabled}
+                label={this.getLabel()}
+                tail={
+                    <Icon name={this.getChevronIcon()}/>
+                }
+            />
         )
     }
 
@@ -92,9 +95,9 @@ class ButtonSelect extends React.Component {
                     tooltipPlacement={tooltipPlacement}
                     width={width}
                     onClick={e => onClick && onClick(e)}
-                    disabled={disabled}>
-                    {this.renderContent(false)}
-                </Button>
+                    disabled={disabled}
+                    label={this.getLabel()}
+                />
                 <Button
                     chromeless={chromeless}
                     shape={shape}
@@ -110,19 +113,25 @@ class ButtonSelect extends React.Component {
         )
     }
 
-    renderContent(renderChevron) {
-        const {label, icon, width} = this.props
+    getLabel() {
+        const {label} = this.props
         const {selectedOption} = this.state
-        return (
-            <div className={[styles.content, width === 'fill' ? styles.fill : ''].join(' ')}>
-                {icon && <Icon name={icon}/>}
-                <div>
-                    {(selectedOption && selectedOption.buttonLabel) || label}
-                </div>
-                {renderChevron ? <Icon name={this.getChevronIcon()}/> : null}
-            </div>
-        )
+        return (selectedOption && selectedOption.buttonLabel) || label
     }
+
+    // renderContent(renderChevron) {
+    //     const {label, icon, width} = this.props
+    //     const {selectedOption} = this.state
+    //     return (
+    //         <div className={[styles.content, width === 'fill' ? styles.fill : ''].join(' ')}>
+    //             {icon && <Icon name={icon}/>}
+    //             <div>
+    //                 {(selectedOption && selectedOption.buttonLabel) || label}
+    //             </div>
+    //             {renderChevron ? <Icon name={this.getChevronIcon()}/> : null}
+    //         </div>
+    //     )
+    // }
 
     getChevronIcon() {
         const {placement} = this.props
