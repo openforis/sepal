@@ -41,8 +41,6 @@ export class _ImageLayerSources extends React.Component {
             ? (
                 <ListItem
                     key={source.id}
-                    expansion={<Textarea value='Hello SEPAL!'/>}
-                    clickToToggle
                     drag$={drag$}
                     dragValue={{
                         id: guid(),
