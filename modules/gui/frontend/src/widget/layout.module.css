@@ -24,7 +24,6 @@
 
 .layout.framed {
     padding: .75rem;
-    padding: 1rem;
     border: 1px solid var(--section-wireframe-color);
     border-radius: var(--section-border-radius);
 }
