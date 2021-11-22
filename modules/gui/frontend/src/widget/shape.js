@@ -68,12 +68,13 @@ class _Shape extends React.Component {
     }
 
     renderContents() {
-        const {icon, iconPlacement, content, children} = this.props
+        const {icon, iconPlacement, content, tail, children} = this.props
         return (
             <div className={styles.contents}>
                 {icon && iconPlacement === 'left' ? this.renderIcon() : null}
                 {children ? children : content}
                 {icon && iconPlacement === 'right' ? this.renderIcon() : null}
+                {tail}
             </div>
         )
     }
@@ -114,6 +115,7 @@ Shape.propTypes = {
     shape: PropTypes.oneOf(['rectangle', 'pill', 'circle', 'none']),
     shown: PropTypes.any,
     size: PropTypes.oneOf(['x-small', 'small', 'normal', 'large', 'x-large', 'xx-large']),
+    tail: PropTypes.string,
     tooltip: PropTypes.string,
     tooltipDisabled: PropTypes.any,
     tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),

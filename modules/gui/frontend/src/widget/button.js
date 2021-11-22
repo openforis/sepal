@@ -230,12 +230,13 @@ class _Button extends React.Component {
     }
 
     renderContents() {
-        const {icon, iconPlacement, label, children} = this.props
+        const {icon, iconPlacement, label, tail, children} = this.props
         return children ? children : (
             <div className={styles.contents}>
                 {icon && iconPlacement === 'left' ? this.renderIcon() : null}
                 {label ? this.renderLabel() : null}
                 {icon && iconPlacement === 'right' ? this.renderIcon() : null}
+                {tail}
             </div>
         )
     }
@@ -360,6 +361,7 @@ Button.propTypes = {
     stopPropagation: PropTypes.any,
     style: PropTypes.object,
     tabIndex: PropTypes.number,
+    tail: PropTypes.string,
     tooltip: PropTypes.any,
     tooltipClickTrigger: PropTypes.any,
     tooltipDelay: PropTypes.number,
