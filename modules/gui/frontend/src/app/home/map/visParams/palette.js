@@ -28,15 +28,17 @@ export class Palette extends React.Component {
             <Layout type='vertical'>
                 <Widget
                     label={msg('map.visParams.form.palette.label')}
+                    tooltip={msg('map.visParams.form.palette.tooltip')}
                     labelButtons={[
                         this.renderInputModeButton()
                     ]}
                     layout={'vertical'}
-                    spacing='compact'>
+                    spacing='compact'
+                >
                     {this.renderPalette()}
                     {show === 'text' ? this.renderTextInput() : null}
+                    <PalettePreSets onSelect={this.applyPreset} count={20}/>
                 </Widget>
-                <PalettePreSets onSelect={this.applyPreset} count={20}/>
             </Layout>
         )
     }
