@@ -42,8 +42,6 @@ export const PalettePreSets = ({onSelect, count, className, autoFocus}) => {
     ]
     return (
         <Combo
-            // label={msg('map.visParams.form.palette.preset.label')}
-            // tooltip={msg('map.visParams.form.palette.preset.tooltip')}
             className={className}
             autoFocus={autoFocus}
             placeholder={msg('map.visParams.form.palette.preset.placeholder')}
