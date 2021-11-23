@@ -215,15 +215,29 @@ class _VisParamsPanel extends React.Component {
     renderTypeButtons() {
         const {inputs: {type}} = this.props
         return (
-            <Form.Buttons
+            <ButtonSelect
+                chromeless
+                shape='pill'
+                placement='below'
                 input={type}
-                alignment='right'
-                options={[
-                    {value: 'continuous', label: msg('map.visParams.type.continuous.label'), tooltip: msg('map.visParams.type.continuous.tooltip')},
-                    {value: 'categorical', label: msg('map.visParams.type.categorical.label'), tooltip: msg('map.visParams.type.categorical.tooltip')},
-                    {value: 'rgb', label: msg('map.visParams.type.rgb.label'), tooltip: msg('map.visParams.type.rgb.tooltip')},
-                    {value: 'hsv', label: msg('map.visParams.type.hsv.label'), tooltip: msg('map.visParams.type.hsv.tooltip')},
-                ]}
+                tooltipPlacement='bottom'
+                options={[{
+                    value: 'continuous',
+                    label: msg('map.visParams.type.continuous.label'),
+                    tooltip: msg('map.visParams.type.continuous.tooltip')
+                }, {
+                    value: 'categorical',
+                    label: msg('map.visParams.type.categorical.label'),
+                    tooltip: msg('map.visParams.type.categorical.tooltip')
+                }, {
+                    value: 'rgb',
+                    label: msg('map.visParams.type.rgb.label'),
+                    tooltip: msg('map.visParams.type.rgb.tooltip')
+                }, {
+                    value: 'hsv',
+                    label: msg('map.visParams.type.hsv.label'),
+                    tooltip: msg('map.visParams.type.hsv.tooltip')
+                }]}
                 onChange={nextType => this.onTypeChanged(nextType)}
             />
         )
