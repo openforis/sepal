@@ -28,16 +28,20 @@ export class Palette extends React.Component {
             <Layout type='vertical'>
                 <Widget
                     label={msg('map.visParams.form.palette.label')}
-                    labelButtons={this.labelButtons()}
-                    layout={'vertical'}>
-                    {show === 'palette' ? this.renderPalette() : this.renderText()}
+                    labelButtons={[
+                        this.renderInputModeButton()
+                    ]}
+                    layout={'vertical'}
+                    spacing='compact'>
+                    {this.renderPalette()}
+                    {show === 'text' ? this.renderTextInput() : null}
                 </Widget>
                 <PalettePreSets onSelect={this.applyPreset} count={20}/>
             </Layout>
         )
     }
 
-    renderText() {
+    renderTextInput() {
         const {text} = this.state
         return (
             <Input
@@ -52,6 +56,7 @@ export class Palette extends React.Component {
         return (
             <Layout type='horizontal' spacing='tight' alignment='left' framed>
                 {this.renderPaletteColors()}
+                {this.renderAddPaletteColorButton()}
             </Layout>
         )
     }
@@ -79,9 +84,9 @@ export class Palette extends React.Component {
         )
     }
 
-    labelButtons() {
+    renderAddPaletteColorButton() {
         const {show} = this.state
-        return [
+        return (
             <Button
                 key={'add'}
                 icon='plus'
@@ -91,34 +96,28 @@ export class Palette extends React.Component {
                 disabled={show !== 'palette'}
                 tooltip={msg('map.visParams.form.palette.add.tooltip')}
                 onClick={() => this.addColor()}
-            />,
-            show === 'palette'
-                ? (
-                    <Button
-                        key={'text'}
-                        icon='font'
-                        chromeless
-                        shape='circle'
-                        size='small'
-                        tooltip={msg('map.visParams.form.palette.text.tooltip')}
-                        onClick={() => this.showText()}
-                    />
-                )
-                : (
-                    <Button
-                        key={'palette'}
-                        icon='palette'
-                        chromeless
-                        shape='circle'
-                        size='small'
-                        tooltip={msg('map.visParams.form.palette.tooltip')}
-                        onClick={() => this.showPalette()}
-                    />
-                )
-        ]
+            />
+        )
     }
 
-    showText() {
+    renderInputModeButton() {
+        const {show} = this.state
+        const textMode = show === 'text'
+        return (
+            <Button
+                key={'showHexColorCode'}
+                look={textMode ? 'selected' : 'default'}
+                size='small'
+                shape='pill'
+                air='less'
+                label={'HEX'}
+                tooltip={msg(textMode ? 'map.visParams.form.palette.tooltip' : 'map.visParams.form.palette.text.tooltip')}
+                onClick={() => textMode ? this.showPalette() : this.showTextInput()}
+            />
+        )
+    }
+
+    showTextInput() {
         const {input} = this.props
         this.setText(input.value || [])
         this.setState({show: 'text'})
