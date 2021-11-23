@@ -1,6 +1,5 @@
 import {Legend} from '../legend/legend'
 import {Mapping} from './mapping/mapping'
-import {RecipeActions} from '../remappingRecipe'
 import {Retrieve} from './retrieve/retrieve'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
@@ -22,7 +21,7 @@ const mapRecipeToProps = recipe => ({
 
 class RemappingToolbar extends React.Component {
     render() {
-        const {recipeId, collecting, initialized} = this.props
+        const {recipeId, initialized} = this.props
         return (
             <PanelWizard
                 panels={['inputImagery', 'legend', 'mapping']}
