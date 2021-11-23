@@ -1,7 +1,5 @@
 import {Button} from 'widget/button'
 import {HexColorPicker} from 'react-colorful'
-import {Subject, debounceTime} from 'rxjs'
-import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import FloatingBox from 'widget/floatingBox'
@@ -12,16 +10,12 @@ import React from 'react'
 import _ from 'lodash'
 import _css from './colorElement.css'
 import styles from './colorElement.module.css'
-import withSubscriptions from 'subscription'
 
-const DEBOUNCE_TIME_MS = 50
-
-class _ColorElement extends React.Component {
+export class ColorElement extends React.Component {
     ref = React.createRef()
-    color$ = new Subject()
 
     state = {
-        showColorPicker: false,
+        edit: false,
         color: null
     }
 
@@ -34,18 +28,19 @@ class _ColorElement extends React.Component {
 
     render() {
         const {invalid} = this.props
-        const {showColorPicker} = this.state
+        const {edit} = this.state
         return (
             <div className={styles.container}>
                 {this.renderButton()}
                 {invalid ? this.renderWarning() : null}
-                {showColorPicker ? this.renderColorPicker() : null}
+                {edit ? this.renderColorPicker() : null}
             </div>
         )
     }
 
     renderButton() {
-        const {color, size, tooltip, tooltipPlacement, onTooltipVisibleChange} = this.props
+        const {size, tooltip, tooltipPlacement, onTooltipVisibleChange} = this.props
+        const {color} = this.state
         return (
             <Button
                 ref={this.ref}
@@ -101,61 +96,52 @@ class _ColorElement extends React.Component {
     }
 
     isInternallyControlled() {
-        const {onClick, onBlur, edit} = this.props
-        return _.isNil(onClick) || _.isNil(onBlur) || _.isNil(edit)
+        const {onClick, onChange, edit} = this.props
+        return _.isNil(onClick) || _.isNil(onChange) || _.isNil(edit)
     }
 
     onClick() {
-        const {onClick, onChange} = this.props
-        this.isInternallyControlled() && onChange
-            ? this.showColorPicker()
-            : onClick && onClick()
+        const {onClick} = this.props
+        this.isInternallyControlled() && this.toggleColorPicker()
+        onClick && onClick()
     }
 
     onBlur() {
-        const {onBlur, onChange} = this.props
-        this.isInternallyControlled() && onChange
-            ? this.hideColorPicker()
-            : onBlur && onBlur()
+        const {onChange} = this.props
+        const {color} = this.state
+        this.isInternallyControlled() && this.hideColorPicker()
+        onChange && onChange(color)
     }
 
-    onChange(value) {
-        this.color$.next(value)
+    onChange(color) {
+        this.setState({color})
     }
 
-    showColorPicker() {
-        const {showColorPicker} = this.state
-        showColorPicker || this.setState({showColorPicker: true})
+    toggleColorPicker() {
+        this.setState(({edit}) => ({edit: !edit}))
     }
     
     hideColorPicker() {
-        const {showColorPicker} = this.state
-        showColorPicker && this.setState({showColorPicker: false})
+        this.setState({edit: false})
     }
     
     static getDerivedStateFromProps(props) {
         const {edit} = props
-        return _.isNil(edit)
-            ? null
-            : {showColorPicker: edit}
+        return !_.isNil(edit) ? {edit} : null
     }
 
     componentDidMount() {
-        const {onChange, addSubscription} = this.props
-        addSubscription(
-            this.color$.pipe(
-                debounceTime(DEBOUNCE_TIME_MS)
-            ).subscribe(
-                value => onChange && onChange(value)
-            )
-        )
+        const {color} = this.props
+        this.setState({color})
+    }
+
+    componentDidUpdate({color: prevColor}) {
+        const {color} = this.props
+        if (color !== prevColor) {
+            this.setState({color})
+        }
     }
 }
-
-export const ColorElement = compose(
-    _ColorElement,
-    withSubscriptions()
-)
 
 ColorElement.defaultProps = {
     color: '',
@@ -169,7 +155,6 @@ ColorElement.propTypes = {
     size: PropTypes.any,
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any,
-    onBlur: PropTypes.func,
     onChange: PropTypes.func,
     onClick: PropTypes.func,
     onTooltipVisibleChange: PropTypes.func
