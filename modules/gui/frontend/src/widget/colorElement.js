@@ -1,35 +1,54 @@
 import {Button} from 'widget/button'
+import {HexColorPicker} from 'react-colorful'
+import {Subject, debounceTime} from 'rxjs'
+import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
+import FloatingBox from 'widget/floatingBox'
 import Icon from 'widget/icon'
+import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
+import _css from './colorElement.css'
 import styles from './colorElement.module.css'
+import withSubscriptions from 'subscription'
 
-export class ColorElement extends React.Component {
-    colorInputRef = React.createRef()
+const DEBOUNCE_TIME_MS = 50
+
+class _ColorElement extends React.Component {
+    ref = React.createRef()
+    color$ = new Subject()
+
+    state = {
+        showColorPicker: false,
+        color: null
+    }
 
     constructor() {
         super()
+        this.onBlur = this.onBlur.bind(this)
         this.onClick = this.onClick.bind(this)
         this.onChange = this.onChange.bind(this)
     }
 
     render() {
         const {invalid} = this.props
+        const {showColorPicker} = this.state
         return (
             <div className={styles.container}>
                 {this.renderButton()}
                 {invalid ? this.renderWarning() : null}
+                {showColorPicker ? this.renderColorPicker() : null}
             </div>
         )
     }
 
     renderButton() {
-        const {color, size, tooltip, tooltipPlacement, onTooltipVisibleChange, onChange, onClick} = this.props
+        const {color, size, tooltip, tooltipPlacement, onTooltipVisibleChange} = this.props
         return (
             <Button
+                ref={this.ref}
                 air='less'
                 shape='rectangle'
                 size={size}
@@ -40,25 +59,26 @@ export class ColorElement extends React.Component {
                 tooltipDelay={0}
                 tooltipPlacement={tooltipPlacement}
                 tooltipVisible={onTooltipVisibleChange}
-                onClick={() => onChange ? this.showColorPicker() : onClick}
-            >
-                {this.renderInput()}
-            </Button>
+                onClick={this.onClick}
+            />
         )
     }
 
-    renderInput() {
-        const {color, onFocus, onBlur} = this.props
+    renderColorPicker() {
+        const {color} = this.props
         return (
-            <input
-                ref={this.colorInputRef}
-                className={styles.colorInput}
-                type='color'
-                value={color}
-                onFocus={onFocus}
-                onBlur={onBlur}
-                onChange={this.onChange}
-            />
+            <Keybinding keymap={{'Escape': this.onBlur}}>
+                <FloatingBox
+                    element={this.ref.current}
+                    className={[styles.colorPicker, 'colorPicker'].join(' ')}
+                    onBlur={this.onBlur}>
+                    <HexColorPicker
+                        color={color}
+                        onChange={this.onChange}
+                    />
+                </FloatingBox>
+            </Keybinding>
+
         )
     }
 
@@ -80,31 +100,62 @@ export class ColorElement extends React.Component {
         )
     }
 
-    onClick() {
-        this.showColorPicker()
+    isInternallyControlled() {
+        const {onClick, onBlur, edit} = this.props
+        return _.isNil(onClick) || _.isNil(onBlur) || _.isNil(edit)
     }
 
-    onChange({target: {value}}) {
-        const {onChange} = this.props
-        onChange && onChange(value)
+    onClick() {
+        const {onClick, onChange} = this.props
+        this.isInternallyControlled() && onChange
+            ? this.showColorPicker()
+            : onClick && onClick()
+    }
+
+    onBlur() {
+        const {onBlur, onChange} = this.props
+        this.isInternallyControlled() && onChange
+            ? this.hideColorPicker()
+            : onBlur && onBlur()
+    }
+
+    onChange(value) {
+        this.color$.next(value)
     }
 
     showColorPicker() {
-        this.colorInputRef.current.focus()
-        this.colorInputRef.current.click()
+        const {showColorPicker} = this.state
+        showColorPicker || this.setState({showColorPicker: true})
     }
     
     hideColorPicker() {
-        this.colorInputRef.current.blur()
+        const {showColorPicker} = this.state
+        showColorPicker && this.setState({showColorPicker: false})
     }
     
+    static getDerivedStateFromProps(props) {
+        const {edit} = props
+        return _.isNil(edit)
+            ? null
+            : {showColorPicker: edit}
+    }
+
     componentDidMount() {
-        const {edit} = this.props
-        if (!_.isNil(edit)) {
-            edit ? this.showColorPicker() : this.hideColorPicker()
-        }
+        const {onChange, addSubscription} = this.props
+        addSubscription(
+            this.color$.pipe(
+                debounceTime(DEBOUNCE_TIME_MS)
+            ).subscribe(
+                value => onChange && onChange(value)
+            )
+        )
     }
 }
+
+export const ColorElement = compose(
+    _ColorElement,
+    withSubscriptions()
+)
 
 ColorElement.defaultProps = {
     color: '',
@@ -121,6 +172,5 @@ ColorElement.propTypes = {
     onBlur: PropTypes.func,
     onChange: PropTypes.func,
     onClick: PropTypes.func,
-    onFocus: PropTypes.func,
     onTooltipVisibleChange: PropTypes.func
 }

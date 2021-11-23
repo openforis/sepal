@@ -7,7 +7,7 @@ import React from 'react'
 
 export class PaletteColor extends React.Component {
     render() {
-        const {color, edit, onFocus, onBlur, onChange} = this.props
+        const {color, edit, onClick, onBlur, onChange} = this.props
         return (
             <ColorElement
                 color={color}
@@ -16,7 +16,7 @@ export class PaletteColor extends React.Component {
                 tooltip={this.renderTooltip()}
                 tooltipPlacement='top'
                 edit={edit}
-                onFocus={onFocus}
+                onClick={onClick}
                 onBlur={onBlur}
                 onChange={value => onChange(value)}
             />
@@ -64,8 +64,8 @@ export class PaletteColor extends React.Component {
 PaletteColor.poropTypes = {
     color: PropTypes.string,
     edit: PropTypes.any,
-    onFocus: PropTypes.func,
     onBlur: PropTypes.func,
+    onClick: PropTypes.func,
     onChange: PropTypes.func,
     onInsert: PropTypes.func,
     onRemove: PropTypes.func

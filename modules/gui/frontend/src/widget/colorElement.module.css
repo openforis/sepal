@@ -8,6 +8,10 @@
     border: none;
 }
 
+.colorPicker {
+    margin-top: .5rem;
+}
+
 /* Warning: very sensitive */
 .colorInput {
     position: absolute;

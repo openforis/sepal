@@ -1,0 +1,17 @@
+/* Small */
+.colorPicker .react-colorful {
+    width: 8rem;
+    height: 8rem;
+}
+
+.colorPicker .react-colorful__hue {
+    height: 1rem;
+}
+
+.colorPicker .react-colorful__saturation-pointer,
+.colorPicker .react-colorful__hue-pointer,
+.colorPicker .react-colorful__alpha-pointer {
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 1px solid white;
+}

@@ -72,7 +72,7 @@ export class Palette extends React.Component {
                 color={color}
                 onInsert={() => this.insertColor(index)}
                 onRemove={() => this.removeColor(id)}
-                onFocus={() => this.setState({edit: id})}
+                onClick={() => this.setState({edit: id})}
                 onBlur={() => this.setState({edit: null})}
                 onChange={color => this.updateColor(color, id)}
                 edit={edit === id}
@@ -168,7 +168,7 @@ export class Palette extends React.Component {
                 color: colorEntry.id === idToUpdate ? color : colorEntry.color
             }))
         )
-        this.setState({edit: null})
+        // this.setState({edit: null})
     }
 
     setColors(colors) {
@@ -181,7 +181,8 @@ export class Palette extends React.Component {
         const text = colors
             .map(({color}) => color)
             .join(', ')
-        this.setState({text, edit: null})
+        // this.setState({text, edit: null})
+        this.setState({text})
     }
 
     applyPreset(colors) {
