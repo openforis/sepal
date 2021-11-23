@@ -116,7 +116,7 @@ class ButtonSelect extends React.Component {
     getLabel() {
         const {label} = this.props
         const {selectedOption} = this.state
-        return (selectedOption && selectedOption.buttonLabel) || label
+        return (selectedOption && (selectedOption.buttonLabel || selectedOption.label)) || label
     }
 
     getChevronIcon() {
