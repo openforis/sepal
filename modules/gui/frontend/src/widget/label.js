@@ -1,4 +1,5 @@
 import {ButtonGroup} from './buttonGroup'
+import {isMobile} from './userAgent'
 import Icon from './icon'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -30,7 +31,10 @@ export default class Label extends React.Component {
     renderLeft() {
         const {tooltip, tooltipPlacement} = this.props
         return (
-            <Tooltip msg={tooltip} placement={tooltipPlacement}>
+            <Tooltip
+                msg={tooltip}
+                placement={tooltipPlacement}
+                clickTrigger={isMobile()}>
                 <div>
                     {this.renderContents()}
                     {this.renderTooltipIcon()}
