@@ -72,7 +72,7 @@ export class Palette extends React.Component {
                 color={color}
                 onInsert={() => this.insertColor(index)}
                 onRemove={() => this.removeColor(id)}
-                onClick={() => this.setState({edit: id})}
+                onClick={() => this.setState(({edit}) => ({edit: edit ? null : id}))}
                 onChange={color => this.updateColor(color, id)}
                 edit={edit === id}
             />
