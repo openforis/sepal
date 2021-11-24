@@ -61,7 +61,7 @@ class GoogleAccount extends React.Component {
                 iconType='brands'
                 label={msg('user.googleAccount.connect.label')}
                 look='add'
-                width='fill'
+                width='max'
                 busy={useUserGoogleAccount.active || useUserGoogleAccount.completed}
                 onClick={e => this.useUserGoogleAccount(e)}
             />
@@ -77,7 +77,7 @@ class GoogleAccount extends React.Component {
                 label={msg('user.googleAccount.disconnect.label')}
                 title={msg('user.googleAccount.disconnect.warning.title')}
                 message={msg('user.googleAccount.disconnect.warning.message', {taskCount})}
-                width='fill'
+                width='max'
                 skipConfirmation={!taskCount}
                 busy={this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT').active}
                 onConfirm={() => this.useSepalGoogleAccount()}

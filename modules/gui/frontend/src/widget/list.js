@@ -142,7 +142,7 @@ class List extends React.Component {
                     air={air}
                     additionalClassName={styles.group}
                     label={option.render ? option.render() : option.label}
-                    width='fill'
+                    width='max'
                     alignment={alignment}
                     disabled
                 />
@@ -159,7 +159,7 @@ class List extends React.Component {
                     look='transparent'
                     air={air}
                     label={option.render ? option.render() : option.label}
-                    width='fill'
+                    width='max'
                     alignment={alignment}
                     disabled
                 />
@@ -199,7 +199,7 @@ class List extends React.Component {
                     tooltip={option.tooltip}
                     tooltipPlacement={tooltipPlacement}
                     hover={hover}
-                    width='fill'
+                    width='max'
                     alignment={alignment}
                     disableTransitions
                     onMouseOver={() => this.highlightOption(option)}

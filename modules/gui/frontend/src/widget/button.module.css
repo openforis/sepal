@@ -119,6 +119,10 @@
 }
 
 .width-fill {
+    flex-grow: 1;
+}
+
+.width-max {
     width: 100%;
     flex-grow: 1;
 }
