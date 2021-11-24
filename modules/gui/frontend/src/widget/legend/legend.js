@@ -4,7 +4,7 @@ import {EditLegendPanel} from './editLegendPanel'
 import {Layout} from 'widget/layout'
 import {LegendItem} from './legendItem'
 import {ListItem} from 'widget/listItem'
-import {Message} from 'widget/message'
+import {NoData} from 'widget/noData'
 import {Widget} from 'widget/widget'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
@@ -55,7 +55,7 @@ class _Legend extends React.Component {
 
     renderNoEntries() {
         return (
-            <Message text={msg('widget.legend.noEntries')}/>
+            <NoData message={msg('widget.legend.noEntries')}/>
         )
     }
 

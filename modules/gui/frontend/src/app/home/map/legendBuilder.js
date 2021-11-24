@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {ColorElement} from 'widget/colorElement'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {Message} from 'widget/message'
+import {NoData} from 'widget/noData'
 import {PalettePreSets, pickColors} from './visParams/palettePreSets'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
@@ -35,7 +35,7 @@ export class LegendBuilder extends React.Component {
 
     renderNoEntries() {
         return (
-            <Message type='info' text={msg('map.legendBuilder.noEntries')} centered/>
+            <NoData message={msg('map.legendBuilder.noEntries')}/>
         )
     }
 

@@ -2,7 +2,6 @@ import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import {Layout} from 'widget/layout'
-import {Message} from 'widget/message'
 import {Pageable} from 'widget/pageable/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
@@ -377,7 +376,7 @@ class UserItem extends React.Component {
 
     renderDefinedStatus(status) {
         return (
-            <Message text={msg(`user.userDetails.form.status.${status}`)}/>
+            <div>{msg(`user.userDetails.form.status.${status}`)}</div>
         )
     }
 

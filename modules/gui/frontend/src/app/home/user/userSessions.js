@@ -1,6 +1,6 @@
 import {CrudItem} from 'widget/crudItem'
 import {ListItem} from 'widget/listItem'
-import {Message} from 'widget/message'
+import {NoData} from 'widget/noData'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -36,7 +36,7 @@ class UserSessions extends React.Component {
 
     renderNoSessions() {
         return (
-            <Message text={msg('user.report.sessions.noSessions')} centered/>
+            <NoData message={msg('user.report.sessions.noSessions')}/>
         )
     }
 
