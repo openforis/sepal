@@ -1,7 +1,5 @@
-import {Layout} from './layout'
 import {Widget} from './widget'
 import {compose} from 'compose'
-import Label from './label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -19,28 +17,21 @@ const _ButtonGroup = ({className, layout, alignment, spacing, framed, label, dis
             mapChild(child, index, children.length)
         )
 
-    const buttons = (
+    return (
         <Widget
             ref={forwardedRef}
             className={className}
+            label={label}
             layout={layout}
             alignment={alignment}
             spacing={spacing}
             framed={framed}
+            disabled={disabled}
             onMouseOver={onMouseOver}
             onMouseOut={onMouseOut}>
             {spacing === 'none' ? mapChildren(children) : children}
         </Widget>
     )
-
-    return label
-        ? (
-            <Layout spacing={spacing}>
-                <Label disabled={disabled}>{label}</Label>
-                {buttons}
-            </Layout>
-        )
-        : buttons
 }
 
 export const ButtonGroup = compose(
