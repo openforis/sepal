@@ -114,6 +114,7 @@ class PreProcessingOptions extends React.Component {
                     }
                 ]}
                 type='horizontal-wrap'
+                disabled={this.noProcessing()}
             />
         )
     }
@@ -134,6 +135,7 @@ class PreProcessingOptions extends React.Component {
                     tooltip: msg('process.timeSeries.panel.preprocess.form.cloudMasking.aggressive.tooltip')
                 }]}
                 type='horizontal-wrap'
+                disabled={this.noProcessing()}
             />
         )
     }
@@ -154,6 +156,7 @@ class PreProcessingOptions extends React.Component {
                     tooltip: msg('process.timeSeries.panel.preprocess.form.snowMasking.on.tooltip')
                 }]}
                 type='horizontal-nowrap'
+                disabled={this.noProcessing()}
             />
         )
     }
@@ -163,6 +166,11 @@ class PreProcessingOptions extends React.Component {
         if (!histogramMatching.value) {
             histogramMatching.set('DISABLED')
         }
+    }
+
+    noProcessing() {
+        const {sources, inputs: {histogramMatching}} = this.props
+        return Object.values(sources).flat().includes('DAILY') && histogramMatching.value !== 'ENABLED'
     }
 }
 
