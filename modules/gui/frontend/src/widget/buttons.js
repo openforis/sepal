@@ -74,7 +74,15 @@ export class Buttons extends React.Component {
     renderButtons(options, key, label, disabled) {
         const {layout, alignment, spacing} = this.props
         return (
-            <ButtonGroup key={key} className={styles.buttons} layout={layout} alignment={alignment} spacing={spacing} label={label} disabled={disabled}>
+            <ButtonGroup
+                key={key}
+                className={styles.buttons}
+                label={label}
+                layout={layout}
+                alignment={alignment}
+                spacing={spacing}
+                disabled={disabled}
+            >
                 {options.map(option => this.renderButton(
                     _.isObjectLike(option)
                         ? option
@@ -93,11 +101,13 @@ export class Buttons extends React.Component {
     }
 
     render() {
-        const {label, tooltip, tooltipPlacement, disabled, options, className} = this.props
+        const {label, tooltip, tooltipPlacement, groupSpacing, framed, disabled, options, className} = this.props
         return (
             <Widget
                 className={className}
                 label={label}
+                spacing={groupSpacing}
+                framed={framed}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 disabled={disabled}
@@ -110,12 +120,18 @@ export class Buttons extends React.Component {
     }
 }
 
+Buttons.defaultProps = {
+    groupSpacing: 'compact-separated'
+}
+
 Buttons.propTypes = {
     air: PropTypes.any,
     alignment: PropTypes.any,
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
+    framed: PropTypes.any,
+    groupSpacing: PropTypes.any,
     label: PropTypes.any,
     layout: PropTypes.string,
     look: PropTypes.string,
