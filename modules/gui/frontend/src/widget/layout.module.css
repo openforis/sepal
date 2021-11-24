@@ -103,6 +103,28 @@
     margin-top: 0rem;
 }
 
+/* vertical/alignment */
+
+.layout.vertical.alignment-left > .content {
+    align-items: flex-start;
+}
+
+.layout.vertical.alignment-center > .content {
+    align-items: center;
+}
+
+.layout.vertical.alignment-right > .content {
+    align-items: flex-end;
+}
+
+.layout.vertical.alignment-spaced > .content {
+    align-items: space-between;
+}
+
+.layout.vertical.alignment-fill > .content > * {
+    width: auto;
+}
+
 /* vertical/fill, vertical/scrollable */
 
 .layout.vertical.fill,
