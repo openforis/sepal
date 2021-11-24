@@ -65,7 +65,6 @@ class _MosaicRetrievePanel extends React.Component {
                     ? this.renderDestination()
                     : null
                 }
-
             </Layout>
         )
     }
@@ -101,7 +100,9 @@ class _MosaicRetrievePanel extends React.Component {
                 label={msg('process.retrieve.form.bands.label')}
                 input={bands}
                 multiple={!single}
-                options={bandOptions}/>
+                options={bandOptions}
+                framed
+            />
         )
     }
 
