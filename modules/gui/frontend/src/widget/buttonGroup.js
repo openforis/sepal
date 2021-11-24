@@ -1,16 +1,13 @@
 import {Layout} from './layout'
+import {Widget} from './widget'
 import {compose} from 'compose'
 import Label from './label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import styles from './buttonGroup.module.css'
 import withForwardedRef from 'ref'
 
-const classNames = layout =>
-    layout.split('-').map(className => styles[className])
-
-const _ButtonGroup = ({className, layout, alignment, spacing, label, disabled, onMouseOver, onMouseOut, forwardedRef, children}) => {
+const _ButtonGroup = ({className, layout, alignment, spacing, framed, label, disabled, onMouseOver, onMouseOut, forwardedRef, children}) => {
     const mapChild = (child, index, childrenCount) =>
         React.cloneElement(child, {
             joinLeft: index !== 0,
@@ -23,33 +20,24 @@ const _ButtonGroup = ({className, layout, alignment, spacing, label, disabled, o
         )
 
     const buttons = (
-        <div
+        <Widget
             ref={forwardedRef}
-            className={[
-                styles.container,
-                className
-            ].join(' ')}>
-            <div
-                className={[
-                    styles.buttonGroup,
-                    ...classNames(layout),
-                    styles[`alignment-${alignment}`],
-                    styles[`spacing-${spacing}`]
-                ].join(' ')}
-                onMouseEnter={onMouseOver}
-                onMouseLeave={onMouseOut}>
-                {spacing === 'tight' ? mapChildren(children) : children}
-            </div>
-        </div>
+            className={className}
+            layout={layout}
+            alignment={alignment}
+            spacing={spacing}
+            framed={framed}
+            onMouseOver={onMouseOver}
+            onMouseOut={onMouseOut}>
+            {spacing === 'none' ? mapChildren(children) : children}
+        </Widget>
     )
 
     return label
         ? (
             <Layout spacing={spacing}>
-                <div>
-                    <Label disabled={disabled}>{label}</Label>
-                    {buttons}
-                </div>
+                <Label disabled={disabled}>{label}</Label>
+                {buttons}
             </Layout>
         )
         : buttons
@@ -61,19 +49,20 @@ export const ButtonGroup = compose(
 )
 
 ButtonGroup.propTypes = {
-    alignment: PropTypes.oneOf(['left', 'center', 'right', 'spaced', 'fill', 'distribute']),
+    alignment: PropTypes.any,
     children: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
+    framed: PropTypes.any,
     label: PropTypes.any,
-    layout: PropTypes.oneOf(['horizontal-wrap', 'horizontal-nowrap', 'horizontal-nowrap-scroll', 'vertical']),
-    spacing: PropTypes.oneOf(['normal', 'tight', 'loose']),
+    layout: PropTypes.any,
+    spacing: PropTypes.any,
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func
 }
 
 ButtonGroup.defaultProps = {
     alignment: 'left',
-    layout: 'horizontal-wrap',
-    spacing: 'normal'
+    layout: 'horizontal',
+    spacing: 'compact'
 }

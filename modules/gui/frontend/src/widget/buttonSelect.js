@@ -82,7 +82,7 @@ class ButtonSelect extends React.Component {
         return (
             <ButtonGroup
                 ref={this.input}
-                spacing='tight'
+                spacing='none'
                 onMouseOver={onMouseOver}
                 onMouseOut={onMouseOut}
             >
