@@ -42,13 +42,12 @@ export class LegendBuilder extends React.Component {
     renderEntries() {
         const {entries} = this.props
         return (
-            <Layout type='vertical' fill>
+            <Layout type='vertical-fill'>
                 <Widget
-                    layout='vertical'
+                    layout='vertical-scrollable'
                     spacing='compact'
                     label={msg('map.legendBuilder.label')}
                     labelButtons={this.renderLabelButtons()}
-                    scrollable
                     framed>
                     {entries.map((entry, i) => this.renderEntry(entry, i === entries.length - 1))}
                 </Widget>
