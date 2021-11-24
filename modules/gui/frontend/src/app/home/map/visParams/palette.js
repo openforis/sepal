@@ -67,7 +67,13 @@ export class Palette extends React.Component {
         const colors = input.value || []
         return colors.length
             ? colors.map(({color, id}, index) => this.renderPaletteColor({color, id, index}))
-            : <NoData message={msg('map.visParams.form.palette.empty')}/>
+            : this.renderNoData()
+    }
+
+    renderNoData() {
+        return (
+            <NoData message={msg('map.visParams.form.palette.empty')}/>
+        )
     }
 
     renderPaletteColor({color, id, index}) {
@@ -92,8 +98,8 @@ export class Palette extends React.Component {
                 key={'add'}
                 icon='plus'
                 chromeless
-                shape='circle'
                 size='small'
+                width='fill'
                 disabled={show !== 'palette'}
                 tooltip={msg('map.visParams.form.palette.add.tooltip')}
                 onClick={() => this.addColor()}
