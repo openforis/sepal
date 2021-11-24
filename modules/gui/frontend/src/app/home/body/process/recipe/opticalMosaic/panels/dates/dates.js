@@ -171,7 +171,6 @@ class Dates extends React.Component {
                                 ? msg('process.mosaic.panel.dates.form.futureSeasons.info.number', {futureSeasons})
                                 : msg('process.mosaic.panel.dates.form.futureSeasons.info.none')
                             }
-                            alignment='right'
                             input={yearsAfter}
                             ticks={[0, 1, 2, 3, 5, 10, {value: 25, label: 'all'}]}
                             snap
