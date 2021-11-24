@@ -13,13 +13,6 @@
     /* overflow: hidden; */
 }
 
-/* fill */
-
-.layout.fill {
-    flex-grow: 1;
-    flex-shrink: 1;
-}
-
 /* framed */
 
 .layout.framed {
@@ -133,17 +126,9 @@
     flex-shrink: 1;
 }
 
-/* .layout.vertical.scrollable {
-    flex-grow: 1;
-} */
-
 .layout.vertical.scrollable > .content {
     overflow-y: scroll;
 }
-
-/* .layout.vertical.scrollable > .content > * {
-    flex-grow: 0;
-} */
 
 /* horizontal */
 
