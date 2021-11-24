@@ -27,6 +27,7 @@ class _SectionSelection extends React.Component {
                 look='transparent'
                 shape='pill'
                 layout='vertical'
+                alignment='fill'
                 air='more'
                 input={section}
                 options={options}/>

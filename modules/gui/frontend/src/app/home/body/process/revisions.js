@@ -38,6 +38,7 @@ class Revisions extends React.Component {
         return (
             <Form.Buttons
                 layout='vertical'
+                alignment='fill'
                 spacing='tight'
                 uppercase={false}
                 options={options}
