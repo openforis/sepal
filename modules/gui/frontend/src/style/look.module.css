@@ -167,6 +167,7 @@
 /* disabled/nonInteractive */
 
 .look:disabled,
+.look.disabled,
 .look.nonInteractive {
     cursor: default !important;
     pointer-events: none !important;
@@ -182,9 +183,8 @@
     cursor: grab !important;
 }
 
-/* nonInteractive */
-
-/* .look:not(.chromeless).nonInteractive::after { */
+.look:disabled::after,
+.look.disabled::after,
 .look.nonInteractive::after {
     content: '';
     position: absolute;
@@ -206,28 +206,34 @@
 }
 
 .look.default:not(:disabled):not(.nonInteractive).hover,
-.look.default:not(:disabled):not(.nonInteractive):not(.noHover):hover {
+.look.default:not(.disabled):not(.nonInteractive).hover,
+.look.default:not(:disabled):not(.nonInteractive):not(.noHover):hover,
+.look.default:not(.disabled):not(.nonInteractive):not(.noHover):hover {
     color: var(--look-default-hover-color);
     background-color: var(--look-default-hover-background-color);
     border-color: var(--look-default-hover-border-color);
 }
 
-.look.default:not(:disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active {
+.look.default:not(:disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active,
+.look.default:not(.disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active {
     color: var(--look-default-active-color);
     background-color: var(--look-default-active-background-color);
     border-color: var(--look-default-active-border-color);
 }
 
-.look.default:disabled {
+.look.default:disabled,
+.look.default.disabled {
     color: var(--look-default-disabled-color);
 }
 
-.look.default:not(.chromeless):disabled {
+.look.default:not(.chromeless):disabled,
+.look.default:not(.chromeless).disabled {
     background-color: var(--look-default-disabled-background-color);
     border-color: var(--look-default-disabled-border-color);
 }
 
-.look.default:not(.chromeless).nonInteractive::after {
+.look.default:not(.chromeless):disabled::after,
+.look.default:not(.chromeless).disabled::after {
     background-color: var(--look-default-disabled-overlay-color);
 }
 
@@ -240,28 +246,34 @@
 }
 
 .look.transparent:not(:disabled):not(.nonInteractive).hover,
-.look.transparent:not(:disabled):not(.nonInteractive):not(.noHover):hover {
+.look.transparent:not(.disabled):not(.nonInteractive).hover,
+.look.transparent:not(:disabled):not(.nonInteractive):not(.noHover):hover,
+.look.transparent:not(.disabled):not(.nonInteractive):not(.noHover):hover {
     color: var(--look-transparent-hover-color);
     background-color: var(--look-transparent-hover-background-color);
     border-color: var(--look-transparent-hover-border-color);
 }
 
-.look.transparent:not(:disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active {
+.look.transparent:not(:disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active,
+.look.transparent:not(.disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active {
     color: var(--look-transparent-active-color);
     background-color: var(--look-transparent-active-background-color);
     border-color: var(--look-transparent-active-border-color);
 }
 
-.look.transparent:disabled {
+.look.transparent:disabled,
+.look.transparent.disabled {
     color: var(--look-transparent-disabled-color);
 }
 
-.look.transparent:not(.chromeless):disabled {
+.look.transparent:not(.chromeless):disabled,
+.look.transparent:not(.chromeless).disabled {
     background-color: var(--look-transparent-disabled-background-color);
     border-color: var(--look-transparent-disabled-border-color);
 }
 
-.look.transparent:not(.chromeless).nonInteractive::after {
+.look.transparent:not(.chromeless):disabled::after,
+.look.transparent:not(.chromeless).disabled::after {
     background-color: var(--look-transparent-disabled-overlay-color);
 }
 
@@ -274,28 +286,34 @@
 }
 
 .look.highlight:not(:disabled):not(.nonInteractive).hover,
-.look.highlight:not(:disabled):not(.nonInteractive):not(.noHover):hover {
+.look.highlight:not(.disabled):not(.nonInteractive).hover,
+.look.highlight:not(:disabled):not(.nonInteractive):not(.noHover):hover,
+.look.highlight:not(.disabled):not(.nonInteractive):not(.noHover):hover {
     color: var(--look-highlight-hover-color);
     background-color: var(--look-highlight-hover-background-color);
     border-color: var(--look-highlight-hover-border-color);
 }
 
-.look.highlight:not(:disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active {
+.look.highlight:not(:disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active,
+.look.highlight:not(.disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active {
     color: var(--look-highlight-active-color);
     background-color: var(--look-highlight-active-background-color);
     border-color: var(--look-highlight-active-border-color);
 }
 
-.look.highlight:disabled {
+.look.highlight:disabled,
+.look.highlight.disabled {
     color: var(--look-highlight-disabled-color);
 }
 
-.look.highlight:not(.chromeless):disabled {
+.look.highlight:not(.chromeless):disabled,
+.look.highlight:not(.chromeless).disabled {
     background-color: var(--look-highlight-disabled-background-color);
     border-color: var(--look-highlight-disabled-border-color);
 }
 
-.look.highlight:not(.chromeless).nonInteractive::after {
+.look.highlight:not(.chromeless):disabled::after,
+.look.highlight:not(.chromeless).disabled::after {
     background-color: var(--look-highlight-disabled-overlay-color);
 }
 
@@ -308,28 +326,34 @@
 }
 
 .look.selected:not(:disabled):not(.nonInteractive).hover,
-.look.selected:not(:disabled):not(.nonInteractive):not(.noHover):hover {
+.look.selected:not(.disabled):not(.nonInteractive).hover,
+.look.selected:not(:disabled):not(.nonInteractive):not(.noHover):hover,
+.look.selected:not(.disabled):not(.nonInteractive):not(.noHover):hover {
     color: var(--look-selected-hover-color);
     background-color: var(--look-selected-hover-background-color);
     border-color: var(--look-selected-hover-border-color);
 }
 
-.look.selected:not(:disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active {
+.look.selected:not(:disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active,
+.look.selected:not(.disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active {
     color: var(--look-selected-active-color);
     background-color: var(--look-selected-active-background-color);
     border-color: var(--look-selected-active-border-color);
 }
 
-.look.selected:disabled {
+.look.selected:disabled,
+.look.selected.disabled {
     color: var(--look-selected-disabled-color);
 }
 
-.look.selected:not(.chromeless):disabled {
+.look.selected:not(.chromeless):disabled,
+.look.selected:not(.chromeless).disabled {
     background-color: var(--look-selected-disabled-background-color);
     border-color: var(--look-selected-disabled-border-color);
 }
 
-.look.selected:not(.chromeless).nonInteractive::after {
+.look.selected:not(.chromeless):disabled::after,
+.look.selected:not(.chromeless).disabled::after {
     background-color: var(--look-selected-disabled-overlay-color);
 }
 
@@ -342,28 +366,34 @@
 }
 
 .look.add:not(:disabled):not(.nonInteractive).hover,
-.look.add:not(:disabled):not(.nonInteractive):not(.noHover):hover {
+.look.add:not(.disabled):not(.nonInteractive).hover,
+.look.add:not(:disabled):not(.nonInteractive):not(.noHover):hover,
+.look.add:not(.disabled):not(.nonInteractive):not(.noHover):hover {
     color: var(--look-add-hover-color);
     background-color: var(--look-add-hover-background-color);
     border-color: var(--look-add-hover-border-color);
 }
 
-.look.add:not(:disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active {
+.look.add:not(:disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active,
+.look.add:not(.disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active {
     color: var(--look-add-active-color);
     background-color: var(--look-add-active-background-color);
     border-color: var(--look-add-active-border-color);
 }
 
-.look.add:disabled {
+.look.add:disabled,
+.look.add.disabled {
     color: var(--look-add-disabled-color);
 }
 
-.look.add:not(.chromeless):disabled {
+.look.add:not(.chromeless):disabled,
+.look.add:not(.chromeless).disabled {
     background-color: var(--look-add-disabled-background-color);
     border-color: var(--look-add-disabled-border-color);
 }
 
-.look.add:not(.chromeless).nonInteractive::after {
+.look.add:not(.chromeless):disabled::after,
+.look.add:not(.chromeless).disabled::after {
     background-color: var(--look-add-disabled-overlay-color);
 }
 
@@ -376,30 +406,36 @@
 }
 
 .look.apply:not(:disabled):not(.nonInteractive).hover,
-.look.apply:not(:disabled):not(.nonInteractive):not(.noHover):hover {
+.look.apply:not(.disabled):not(.nonInteractive).hover,
+.look.apply:not(:disabled):not(.nonInteractive):not(.noHover):hover,
+.look.apply:not(.disabled):not(.nonInteractive):not(.noHover):hover {
     color: var(--look-apply-hover-color);
     background-color: var(--look-apply-hover-background-color);
     border-color: var(--look-apply-hover-border-color);
 }
 
-.look.apply:not(:disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active {
+.look.apply:not(:disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active,
+.look.apply:not(.disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active {
     color: var(--look-apply-active-color);
     background-color: var(--look-apply-active-background-color);
     border-color: var(--look-apply-active-border-color);
 }
 
-.look.apply:disabled {
+.look.apply:disabled,
+.look.apply.disabled {
     color: var(--look-apply-disabled-color);
     background-color: var(--look-apply-disabled-background-color);
     border-color: var(--look-apply-disabled-border-color);
 }
 
-.look.apply:not(.chromeless):disabled {
+.look.apply:not(.chromeless):disabled,
+.look.apply:not(.chromeless).disabled {
     background-color: var(--look-apply-disabled-background-color);
     border-color: var(--look-apply-disabled-border-color);
 }
 
-.look.apply:not(.chromeless).nonInteractive::after {
+.look.apply:not(.chromeless):disabled::after,
+.look.apply:not(.chromeless).disabled::after {
     background-color: var(--look-apply-disabled-overlay-color);
 }
 
@@ -412,27 +448,33 @@
 }
 
 .look.cancel:not(:disabled):not(.nonInteractive).hover,
-.look.cancel:not(:disabled):not(.nonInteractive):not(.noHover):hover {
+.look.cancel:not(.disabled):not(.nonInteractive).hover,
+.look.cancel:not(:disabled):not(.nonInteractive):not(.noHover):hover,
+.look.cancel:not(.disabled):not(.nonInteractive):not(.noHover):hover {
     color: var(--look-cancel-hover-color);
     background-color: var(--look-cancel-hover-background-color);
     border-color: var(--look-cancel-hover-border-color);
 }
 
-.look.cancel:not(:disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active {
+.look.cancel:not(:disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active,
+.look.cancel:not(.disabled):not(.nonInteractive):not(.chromeless):not(.noHover):active {
     color: var(--look-cancel-active-color);
     background-color: var(--look-cancel-active-background-color);
     border-color: var(--look-cancel-active-border-color);
 }
 
-.look.cancel:disabled {
+.look.cancel:disabled,
+.look.cancel.disabled {
     color: var(--look-cancel-disabled-color);
 }
 
-.look.cancel:not(.chromeless):disabled {
+.look.cancel:not(.chromeless):disabled,
+.look.cancel:not(.chromeless).disabled {
     background-color: var(--look-cancel-disabled-background-color);
     border-color: var(--look-cancel-disabled-border-color);
 }
 
-.look.cancel:not(.chromeless).nonInteractive::after {
+.look.cancel:not(.chromeless):disabled::after,
+.look.cancel:not(.chromeless).disabled::after {
     background-color: var(--look-cancel-disabled-overlay-color);
 }
