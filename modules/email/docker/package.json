@@ -17,22 +17,22 @@
         "sepal": "node_modules/shared/src"
     },
     "dependencies": {
-        "bull": "^4.1.0",
+        "bull": "^4.1.1",
         "commander": "^8.3.0",
-        "date-fns": "^2.25.0",
+        "date-fns": "^2.26.0",
         "handlebars": "^4.7.7",
-        "ioredis": "^4.28.0",
+        "ioredis": "^4.28.1",
         "lodash": "^4.17.21",
         "log4js": "^6.3.0",
-        "marked": "^4.0.0",
+        "marked": "^4.0.4",
         "moment": "^2.29.1",
-        "nodemailer": "^6.7.0",
+        "nodemailer": "^6.7.1",
         "rxjs": "^7.4.0",
         "shared": "../../../lib/js/shared",
         "short-unique-id": "^4.4.4"
     },
     "devDependencies": {
-        "eslint": "^8.2.0",
+        "eslint": "^8.3.0",
         "jest": "^27.3.1",
         "jest-expect-message": "^1.0.2",
         "link-module-alias": "^1.2.0"
