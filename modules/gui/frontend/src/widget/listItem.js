@@ -184,12 +184,10 @@ class _ListItem extends React.Component {
     renderItem(original) {
         return (
             <div
-                // ref={original ? this.draggable : null}
                 className={this.getItemClassName(original)}
                 onClick={this.onClick}
                 onMouseOver={this.onMouseOver}
-                onMouseOut={this.onMouseOut}
-            >
+                onMouseOut={this.onMouseOut}>
                 <div className={styles.horizontalWrapper}>
                     {this.renderMain(original)}
                     {this.renderExpansion()}
