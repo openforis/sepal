@@ -32,7 +32,6 @@ export class Palette extends React.Component {
                     labelButtons={[
                         this.renderInputModeButton()
                     ]}
-                    layout={'vertical'}
                     spacing='compact'
                 >
                     {this.renderPalette()}
