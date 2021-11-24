@@ -39,7 +39,7 @@ export class ColorElement extends React.Component {
     }
 
     renderButton() {
-        const {size, tooltip, tooltipPlacement, onTooltipVisibleChange} = this.props
+        const {size, tooltip, tooltipPlacement, onClick, onChange, onTooltipVisibleChange} = this.props
         const {color} = this.state
         return (
             <Button
@@ -54,7 +54,8 @@ export class ColorElement extends React.Component {
                 tooltipDelay={0}
                 tooltipPlacement={tooltipPlacement}
                 tooltipVisible={onTooltipVisibleChange}
-                onClick={this.onClick}
+                // onClick={onClick && this.onClick}
+                onClick={(onClick || onChange) && this.onClick}
             />
         )
     }
@@ -96,8 +97,8 @@ export class ColorElement extends React.Component {
     }
 
     isInternallyControlled() {
-        const {onClick, onChange, edit} = this.props
-        return _.isNil(onClick) || _.isNil(onChange) || _.isNil(edit)
+        const {onChange, edit} = this.props
+        return _.isNil(edit) && !_.isNil(onChange)
     }
 
     onClick() {
