@@ -1,23 +1,24 @@
+import {compose} from 'compose'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './layout.module.css'
+import withForwardedRef from 'ref'
 
 const typeClassNames = type =>
     type.split('-').map(className => styles[className])
 
-export class Layout extends React.Component {
+class _Layout extends React.Component {
     render() {
-        const {type, spacing, alignment, fill, framed, scrollable, className, style, onClick, onMouseOver, onMouseOut, children} = this.props
+        const {forwardedRef, type, spacing, alignment, framed, className, style, onClick, onMouseOver, onMouseOut, children} = this.props
         return (
             <div
+                ref={forwardedRef}
                 className={[
                     styles.layout,
                     ...typeClassNames(type),
                     styles[`spacing-${spacing}`],
                     styles[`alignment-${alignment}`],
-                    fill ? styles.fill : null,
                     framed ? styles.framed : null,
-                    scrollable ? styles.scrollable : null,
                     className
                 ].join(' ')}
                 style={style}
@@ -32,23 +33,26 @@ export class Layout extends React.Component {
     }
 }
 
+export const Layout = compose(
+    _Layout,
+    withForwardedRef()
+)
+
 Layout.propTypes = {
-    align: PropTypes.oneOf(['left', 'right', 'justify']),
+    align: PropTypes.oneOf(['left', 'center', 'right', 'spaced', 'fill', 'distribute']),
     children: PropTypes.any,
     className: PropTypes.string,
-    fill: PropTypes.any,
     framed: PropTypes.any,
-    scrollable: PropTypes.any,
-    spacing: PropTypes.oneOf(['loose', 'normal', 'compact', 'tight', 'none']),
+    spacing: PropTypes.oneOf(['loose', 'normal', 'normal-separated', 'compact', 'compact-separated', 'tight', 'none']),
     style: PropTypes.object,
-    type: PropTypes.oneOf(['vertical', 'horizontal', 'horizontal-nowrap']),
+    type: PropTypes.oneOf(['vertical', 'vertical-fill', 'vertical-scrollable', 'horizontal', 'horizontal-nowrap']),
     onClick: PropTypes.func,
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func
 }
 
 Layout.defaultProps = {
-    alignment: 'justified',
+    alignment: 'spaced',
     spacing: 'normal',
     type: 'vertical'
 }
