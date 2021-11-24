@@ -1,5 +1,6 @@
 import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
 import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 import {NoData} from 'widget/noData'
@@ -69,28 +70,32 @@ class InputImagery extends React.Component {
     }
 
     renderImages(images) {
-        return images.map(image => this.renderImage(image))
+        return (
+            <Layout type='vertical' spacing='tight'>
+                {images.map((image, index) => this.renderImage(image, index))}
+            </Layout>
+        )
     }
 
-    renderImage(image) {
+    renderImage(image, index) {
         const {recipeNameById} = this.props
         const name = image.type === 'RECIPE_REF'
             ? recipeNameById[image.id]
             : image.id
-        if (!name)
-            return null
-        return (
-            <ListItem
-                key={`${image.type}-${image.id}`}
-                onClick={() => this.editImage(image)}>
-                <CrudItem
-                    title={msg(`process.remapping.panel.inputImagery.form.type.${image.type}`)}
-                    description={name}
-                    // removeTooltip={msg('process.remapping.panel.inputImagery.form.remove.tooltip')}
-                    onRemove={() => this.removeImage(image)}
-                />
-            </ListItem>
-        )
+        const key = `${image.type}-${image.id}-${index}`
+        return name
+            ? (
+                <ListItem
+                    key={key}
+                    onClick={() => this.editImage(image)}>
+                    <CrudItem
+                        title={msg(`process.remapping.panel.inputImagery.form.type.${image.type}`)}
+                        description={name}
+                        onRemove={() => this.removeImage(image)}
+                    />
+                </ListItem>
+            )
+            : null
     }
 
     renderNoImageryMessage() {
