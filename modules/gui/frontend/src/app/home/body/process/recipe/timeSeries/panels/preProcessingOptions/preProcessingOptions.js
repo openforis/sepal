@@ -113,7 +113,7 @@ class PreProcessingOptions extends React.Component {
                         neverSelected: pino26Disabled
                     }
                 ]}
-                type='horizontal-wrap'
+                type='horizontal'
                 disabled={this.noProcessing()}
             />
         )
@@ -134,7 +134,7 @@ class PreProcessingOptions extends React.Component {
                     label: msg('process.timeSeries.panel.preprocess.form.cloudMasking.aggressive.label'),
                     tooltip: msg('process.timeSeries.panel.preprocess.form.cloudMasking.aggressive.tooltip')
                 }]}
-                type='horizontal-wrap'
+                type='horizontal'
                 disabled={this.noProcessing()}
             />
         )

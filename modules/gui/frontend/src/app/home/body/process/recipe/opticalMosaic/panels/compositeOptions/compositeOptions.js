@@ -140,7 +140,7 @@ class CompositeOptions extends React.Component {
                         tooltip: msg('process.mosaic.panel.composite.form.cloudDetection.pino26.tooltip'),
                         neverSelected: pino26Disabled
                     }]}
-                    type='horizontal-wrap'
+                    type='horizontal'
                 />
                 <Form.Buttons
                     label={msg('process.mosaic.panel.composite.form.cloudMasking.label')}
@@ -158,7 +158,7 @@ class CompositeOptions extends React.Component {
                         label: msg('process.mosaic.panel.composite.form.cloudMasking.aggressive.label'),
                         tooltip: msg('process.mosaic.panel.composite.form.cloudMasking.aggressive.tooltip')
                     }]}
-                    type='horizontal-wrap'
+                    type='horizontal'
                 />
             </React.Fragment>
         )
@@ -183,7 +183,7 @@ class CompositeOptions extends React.Component {
                     label: msg('process.mosaic.panel.composite.form.cloudBuffer.aggressive.label'),
                     tooltip: msg('process.mosaic.panel.composite.form.cloudBuffer.aggressive.tooltip')
                 }]}
-                type='horizontal-wrap'
+                type='horizontal'
             />
         )
     }

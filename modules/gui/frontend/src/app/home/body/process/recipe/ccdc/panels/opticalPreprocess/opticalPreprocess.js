@@ -115,7 +115,7 @@ class OpticalPreprocess extends React.Component {
                         neverSelected: pino26Disabled
                     }
                 ]}
-                type='horizontal-wrap'
+                type='horizontal'
                 disabled={this.noProcessing()}
             />
         )
@@ -136,7 +136,7 @@ class OpticalPreprocess extends React.Component {
                     label: msg('process.ccdc.panel.preprocess.form.cloudMasking.aggressive.label'),
                     tooltip: msg('process.ccdc.panel.preprocess.form.cloudMasking.aggressive.tooltip')
                 }]}
-                type='horizontal-wrap'
+                type='horizontal'
                 disabled={this.noProcessing()}
             />
         )

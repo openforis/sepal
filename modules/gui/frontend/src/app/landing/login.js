@@ -59,7 +59,7 @@ class Login extends React.Component {
                         tabIndex={2}
                         errorMessage
                     />
-                    <ButtonGroup layout='horizontal-wrap' alignment='fill'>
+                    <ButtonGroup layout='horizontal' alignment='fill'>
                         <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
                             <Button
                                 chromeless

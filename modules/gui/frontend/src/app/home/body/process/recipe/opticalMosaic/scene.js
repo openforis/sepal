@@ -115,7 +115,7 @@ export class Scene extends React.Component {
         return (
             <ButtonGroup
                 className={styles.overlayControls}
-                layout='horizontal-wrap'
+                layout='horizontal'
                 alignment='fill'>
                 <Button
                     look='add'
@@ -136,7 +136,7 @@ export class Scene extends React.Component {
         return (
             <ButtonGroup
                 className={styles.overlayControls}
-                layout='horizontal-wrap'
+                layout='horizontal'
                 alignment='fill'>
                 <Button
                     look='cancel'

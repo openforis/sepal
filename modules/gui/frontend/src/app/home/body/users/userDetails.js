@@ -252,7 +252,7 @@ class UserDetails extends React.Component {
         return (
             <Form.Buttons
                 alignment='distribute'
-                layout='horizontal-wrap'
+                layout='horizontal'
                 options={options}
                 input={input}
                 onChange={value => value
