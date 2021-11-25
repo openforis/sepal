@@ -61,7 +61,7 @@ class _MapInfoPanel extends React.Component {
                 <div className={styles.coordinates}>
                     {formatCoordinates(center, 5)}
                 </div>
-                <ButtonGroup layout='vertical'>
+                <ButtonGroup layout='vertical' alignment='fill'>
                     <Button
                         shape='pill'
                         icon='copy'
