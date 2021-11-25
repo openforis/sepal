@@ -24,7 +24,7 @@ export class PaletteColor extends React.Component {
 
     renderTooltip() {
         return (
-            <ButtonGroup layouy='horizontal-nowrap'>
+            <ButtonGroup layout='horizontal-nowrap'>
                 {this.renderAddButton()}
                 {this.renderRemoveButton()}
             </ButtonGroup>
