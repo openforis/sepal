@@ -1463,6 +1463,17 @@
         },
         "trainingData": {
           "button": "TRN",
+          "clearCollected": {
+            "confirmation": {
+              "label": "Clear",
+              "message": "Are you sure you want to clear all collected reference data?",
+              "title": "Clear reference data"
+            },
+            "label": "Clear collected reference data"
+          },
+          "export": {
+            "label": "Export reference data to CSV"
+          },
           "form": {
             "class": {
               "classColumnFormat": {
