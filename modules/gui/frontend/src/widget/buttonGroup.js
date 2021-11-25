@@ -2,7 +2,6 @@ import {Widget} from './widget'
 import {compose} from 'compose'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
 import withForwardedRef from 'ref'
 
 const _ButtonGroup = ({className, layout, alignment, spacing, framed, label, disabled, onMouseOver, onMouseOut, forwardedRef, children}) => {
