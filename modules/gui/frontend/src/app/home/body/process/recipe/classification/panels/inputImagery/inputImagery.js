@@ -70,9 +70,11 @@ class InputImagery extends React.Component {
     }
 
     renderImages(images) {
-        <Layout type='vertical' spacing='tight'>
-            {images.map((image, index) => this.renderImage(image, index))}
-        </Layout>
+        return (
+            <Layout type='vertical' spacing='tight'>
+                {images.map((image, index) => this.renderImage(image, index))}
+            </Layout>
+        )
     }
 
     renderImage(image, index) {
