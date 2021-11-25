@@ -127,6 +127,12 @@
     flex-grow: 1;
 }
 
+.button.width-max > .contents,
+.button.width-fill > .contents {
+    display: flex;
+    flex-grow: 1;
+}
+
 /* air */
 
 .air-normal {
@@ -152,11 +158,6 @@
 .button > * {
     white-space: nowrap;
     position: relative;
-}
-
-.button.width-fill > .contents {
-    display: flex;
-    flex-grow: 1;
 }
 
 /* spacing between icon and label */
