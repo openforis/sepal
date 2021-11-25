@@ -115,7 +115,7 @@ export class Scene extends React.Component {
         return (
             <ButtonGroup
                 className={styles.overlayControls}
-                layout='horizontal'
+                layout='vertical'
                 alignment='fill'>
                 <Button
                     look='add'
