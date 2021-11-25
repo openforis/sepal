@@ -50,22 +50,29 @@ class _Mapping extends React.Component {
         )
     }
 
+    onClick() {
+
+    }
+
     renderEntryMapping(entry) {
         const {activator: {activatables}} = this.props
+        const onClick = () => activatables[`entryMapping-${entry.id}}`].activate()
         return (
             <ListItem
                 key={entry.id}
-                onClick={() => activatables[`entryMapping-${entry.id}}`].activate()}
+                onClick={onClick}
                 expansion={this.renderMappingOverview(entry)}
                 expansionClickable
                 expanded>
-                <CrudItem content={
-                    <LegendItem
-                        color={entry.color}
-                        value={entry.value}
-                        label={entry.label}
-                    />
-                }/>
+                <CrudItem
+                    content={
+                        <LegendItem
+                            color={entry.color}
+                            value={entry.value}
+                            label={entry.label}
+                            onClick={onClick}
+                        />
+                    }/>
             </ListItem>
         )
     }
