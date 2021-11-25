@@ -1,9 +1,9 @@
 import {Button} from 'widget/button'
-import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {NoData} from 'widget/noData'
 import {PaletteColor} from './paletteColor'
 import {PalettePreSets} from './palettePreSets'
+import {Textarea} from 'widget/input'
 import {Widget} from 'widget/widget'
 import {msg} from 'translate'
 import Color from 'color'
@@ -14,7 +14,7 @@ export class Palette extends React.Component {
     state = {
         text: null,
         edit: null,
-        show: 'palette'
+        showTextInput: false
     }
 
     constructor(props) {
@@ -23,7 +23,7 @@ export class Palette extends React.Component {
     }
 
     render() {
-        const {show} = this.state
+        const {edit, showTextInput} = this.state
         return (
             <Layout type='vertical'>
                 <Widget
@@ -35,8 +35,11 @@ export class Palette extends React.Component {
                     spacing='compact'
                 >
                     {this.renderPalette()}
-                    {show === 'text' ? this.renderTextInput() : null}
-                    <PalettePreSets onSelect={this.applyPreset} count={20}/>
+                    {showTextInput ? this.renderTextInput() : null}
+                    <PalettePreSets
+                        disabled={edit}
+                        onSelect={this.applyPreset} count={20}
+                    />
                 </Widget>
             </Layout>
         )
@@ -45,9 +48,11 @@ export class Palette extends React.Component {
     renderTextInput() {
         const {text} = this.state
         return (
-            <Input
+            <Textarea
                 value={text}
                 placeholder={msg('map.visParams.form.palette.text.placeholder')}
+                minRows={3}
+                maxRows={3}
                 onChange={({target: {value}}) => this.updateText(value)}
             />
         )
@@ -65,9 +70,7 @@ export class Palette extends React.Component {
     renderPaletteColors() {
         const {input} = this.props
         const colors = input.value || []
-        return colors.length
-            ? colors.map(({color, id}, index) => this.renderPaletteColor({color, id, index}))
-            : this.renderNoData()
+        return colors.map(({color, id}, index) => this.renderPaletteColor({color, id, index}))
     }
 
     renderNoData() {
@@ -85,22 +88,22 @@ export class Palette extends React.Component {
                 onInsert={() => this.insertColor(index)}
                 onRemove={() => this.removeColor(id)}
                 onClick={() => this.setState(({edit}) => ({edit: edit ? null : id}))}
-                onChange={color => this.updateColor(color, id)}
+                onChange={color => color ? this.updateColor(color, id) : this.removeColor(id)}
                 edit={edit === id}
             />
         )
     }
 
     renderAddPaletteColorButton() {
-        const {show} = this.state
+        const {showTextInput} = this.state
         return (
             <Button
                 key={'add'}
-                icon='plus'
                 chromeless
+                icon='plus'
                 size='small'
                 width='fill'
-                disabled={show !== 'palette'}
+                disabled={showTextInput}
                 tooltip={msg('map.visParams.form.palette.add.tooltip')}
                 onClick={() => this.addColor()}
             />
@@ -108,30 +111,35 @@ export class Palette extends React.Component {
     }
 
     renderInputModeButton() {
-        const {show} = this.state
-        const textMode = show === 'text'
+        const {showTextInput} = this.state
         return (
             <Button
                 key={'showHexColorCode'}
-                look={textMode ? 'selected' : 'default'}
+                look={showTextInput ? 'selected' : 'default'}
                 size='small'
                 shape='pill'
                 air='less'
                 label={'HEX'}
-                tooltip={msg(textMode ? 'map.visParams.form.palette.tooltip' : 'map.visParams.form.palette.text.tooltip')}
-                onClick={() => textMode ? this.showPalette() : this.showTextInput()}
+                tooltip={msg(showTextInput ? 'map.visParams.form.palette.tooltip' : 'map.visParams.form.palette.text.tooltip')}
+                onClick={() => showTextInput ? this.showPalette() : this.showTextInput()}
             />
         )
+    }
+
+    isPaletteEmpty() {
+        const {input} = this.props
+        const colors = input.value || []
+        return colors.length === 0
     }
 
     showTextInput() {
         const {input} = this.props
         this.setText(input.value || [])
-        this.setState({show: 'text'})
+        this.setState({showTextInput: true})
     }
 
     showPalette() {
-        this.setState({show: 'palette'})
+        this.setState({showTextInput: false})
     }
 
     createColor(color, edit) {
@@ -145,7 +153,7 @@ export class Palette extends React.Component {
     addColor() {
         const {input} = this.props
         const palette = input.value || []
-        const color = this.createColor('#000000')
+        const color = this.createColor()
         this.setColors([...palette, color])
         this.setState({edit: color.id})
     }
@@ -153,7 +161,7 @@ export class Palette extends React.Component {
     insertColor(index) {
         const {input} = this.props
         const palette = input.value || []
-        const color = this.createColor('#000000')
+        const color = this.createColor()
         this.setColors([...palette.slice(0, index), color, ...palette.slice(index)])
         this.setState({edit: color.id})
     }

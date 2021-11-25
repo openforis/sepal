@@ -3,7 +3,7 @@
     display: flex;
     align-items: flex-start;
     flex-grow: 1;
-    height: 4rem;
+    height: 2.5rem;
     color: green !important;
     background: linear-gradient(90deg, var(--palette)) !important;
 }
@@ -11,5 +11,5 @@
 .presetLabel {
     background-color: black;
     color: #ccc;
-    padding: 0.25rem .5rem;
+    padding: .25rem .5rem;
 }

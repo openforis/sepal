@@ -47,14 +47,13 @@ export class ColorElement extends React.Component {
                 air='less'
                 shape='rectangle'
                 size={size}
-                additionalClassName={styles.color}
+                additionalClassName={color ? styles.color : styles.placeholder}
                 style={{'--color': color}}
                 tooltip={tooltip}
                 tooltipClickTrigger={isMobile()}
                 tooltipDelay={0}
                 tooltipPlacement={tooltipPlacement}
                 tooltipVisible={onTooltipVisibleChange}
-                // onClick={onClick && this.onClick}
                 onClick={(onClick || onChange) && this.onClick}
             />
         )

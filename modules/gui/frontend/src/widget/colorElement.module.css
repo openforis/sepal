@@ -4,7 +4,12 @@
 
 .color {
     background-color: var(--color) !important;
-    border: none;
+    border-color: var(--color) !important;
+}
+
+.placeholder {
+    background-color: transparent !important;
+    border-color: var(--wireframe-color) !important;
 }
 
 .colorPicker {

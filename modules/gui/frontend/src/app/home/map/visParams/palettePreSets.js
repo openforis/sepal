@@ -35,7 +35,7 @@ export const pickColors = (count, colors) => {
         })
 }
 
-export const PalettePreSets = ({onSelect, count, className, autoFocus}) => {
+export const PalettePreSets = ({onSelect, count, className, autoFocus, disabled}) => {
     const allOptions = [
         ...options,
         ...(count ? colorBrewerOptions(count) : [])
@@ -61,7 +61,9 @@ export const PalettePreSets = ({onSelect, count, className, autoFocus}) => {
                     linkUrl={'https://github.com/gee-community/ee-palettes'}
                 />
             ]}
+            disabled={disabled}
             onChange={({value}) => onSelect(value)}
+            
         />
     )
 }
