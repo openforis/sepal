@@ -2,6 +2,7 @@ import {Button} from 'widget/button'
 import {FileSelect} from 'widget/fileSelect'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
+import {LegendItem} from 'widget/legend/legendItem'
 import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -694,8 +695,10 @@ class Classifier extends React.Component {
         if (type.value !== 'SVM' || svmType.value !== 'ONE_CLASS' || legend.entries.length !== 2)
             return
 
-        const options = legend.entries.map(entry =>
-            ({value: entry.value, label: entry.label, render: () => <LegendEntry entry={entry}/>})
+        const options = legend.entries.map(({color, label, value}) =>
+            ({value, label, render: () => (
+                <LegendItem color={color} label={label} value={value}/>
+            )})
         )
         return (
             <Form.Combo
@@ -826,13 +829,6 @@ const modelToValues = model => ({
     metric: model.metric,
     decisionTree: model.decisionTree
 })
-
-const LegendEntry = ({entry: {value, color, label}}) =>
-    <div className={styles.legendEntry}>
-        <div className={styles.color} style={{'--color': color}}/>
-        <div className={styles.value}>{value}</div>
-        <div className={styles.label}>{label}</div>
-    </div>
 
 const toInt = input => {
     input = _.isString(input) ? input : _.toString(input)
