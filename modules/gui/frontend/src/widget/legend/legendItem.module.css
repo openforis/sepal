@@ -1,31 +1,7 @@
-.entry {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
+.label {
+    margin-left: .25rem;
 }
 
 .value {
-    width: 3rem;
-    text-align: right;
+    color: #808080;
 }
-
-.label {
-    flex-grow: 1;
-}
-
-/* 
-.entry {
-    display: grid;
-    grid-template-columns: auto auto 1fr;
-    grid-gap: 1rem;
-    color: #ccc;
-}
-
-.value {
-    width: 2rem;
-}
-
-.label {
-
-}
- */

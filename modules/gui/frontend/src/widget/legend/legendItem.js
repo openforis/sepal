@@ -10,9 +10,11 @@ export class LegendItem extends React.Component {
         const {color, value, label, selected} = this.props
         return (
             <Layout type='horizontal-nowrap'>
-                <ColorElement color={color}/>
-                <div className={styles.value}>{value}</div>
-                <div className={styles.label}>{label}</div>
+                <Layout type='horizontal-nowrap' spacing='compact'>
+                    <ColorElement color={color}/>
+                    <div className={styles.label}>{label}</div>
+                    <div className={styles.value}>({value})</div>
+                </Layout>
                 {selected ? <Icon name={'check'}/> : null}
             </Layout>
         )

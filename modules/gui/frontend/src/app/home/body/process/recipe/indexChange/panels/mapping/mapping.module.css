@@ -3,60 +3,6 @@
     max-width: 27rem;
 }
 
-.title {
-    display: flex;
-    flex-grow: 1;
-    justify-content: space-between;
-    align-items: center;
-}
-
-
-.entry {
-    display: grid;
-    grid-template-columns: auto auto 1fr;
-    grid-gap: 1rem;
-    color: #ccc;
-}
-
-
-.entry .color {
-    --color: black; /* To be overridden */
-    background-color: var(--color);
-    height: 1.5rem;
-    width: 1.5rem;
-}
-
-.entry .value {
-    width: 2rem;
-}
-
-.entry .label {
-
-}
-
-.constraintTitle {
-    display: flex;
-    flex-direction: row;
-    color: #ccc;
-    align-items: center;
-}
-
-
-.constraintTitle .color {
-    --color: black; /* To be overridden */
-    background-color: var(--color);
-    height: 1rem;
-    width: 1rem;
-}
-
-.constraintTitle .value {
-    margin-left: 0.5rem;
-}
-
-.constraintTitle .label {
-    margin-left: 0.3rem;
-}
-
 .constraintsDescriptions {
-    margin: 0.5rem;
+    margin: .5rem;
 }
