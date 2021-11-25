@@ -195,7 +195,7 @@ class List extends React.Component {
                     chromeless={!selected}
                     look={selected ? 'selected' : 'highlight'}
                     air={air}
-                    label={option.render ? option.render() : option.label}
+                    label={option.render ? null : option.label}
                     tooltip={option.tooltip}
                     tooltipPlacement={tooltipPlacement}
                     hover={hover}
@@ -205,7 +205,9 @@ class List extends React.Component {
                     onMouseOver={() => this.highlightOption(option)}
                     onMouseOut={() => this.highlightOption(selectedOption)}
                     onClick={() => this.selectOption(option)}
-                />
+                >
+                    {option.render ? option.render() : null}
+                </Button>
             </li>
         )
     }
