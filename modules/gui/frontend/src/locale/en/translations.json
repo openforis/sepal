@@ -3040,13 +3040,13 @@
       },
       "operator": {
         "equals": {
-          "label": ">"
+          "label": "="
         },
         "greaterThan": {
           "label": ">"
         },
         "greaterThanOrEquals": {
-          "label": ">"
+          "label": "≥"
         },
         "label": "Operator",
         "lessThan": {
