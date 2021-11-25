@@ -1015,9 +1015,12 @@
               "required": "A destination must be selected",
               "SEPAL": "SEPAL workspace"
             },
-            "scale": {
+            "customScale": {
               "info": "{scale} meters",
-              "label": "Scale"
+              "label": "Custom scale"
+            },
+            "scalePresets": {
+                "label": "Scale presets"
             },
             "segmentBands": {
               "changeProb": {
@@ -2483,9 +2486,12 @@
           "required": "A destination must be selected",
           "SEPAL": "SEPAL workspace"
         },
-        "scale": {
-          "info": "{scale} meters",
-          "label": "Scale"
+        "customScale": {
+            "info": "{scale} meters",
+            "label": "Custom scale"
+        },
+        "scalePresets": {
+          "label": "Scale presets"
         },
         "task": {
           "GEE": "Export {name} as a Google Earth Engine asset",

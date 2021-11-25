@@ -1,4 +1,4 @@
-import {Button} from 'widget/button'
+import {Buttons} from 'widget/buttons'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
@@ -33,10 +33,6 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _Retrieve extends React.Component {
-    state = {
-        customScale: false
-    }
-
     constructor(props) {
         super(props)
         const {recipeId, inputs: {scale}} = this.props
@@ -201,55 +197,23 @@ class _Retrieve extends React.Component {
     }
 
     renderScale() {
-        const {customScale} = this.state
-        return customScale
-            ? this.renderCustomScale()
-            : this.renderPresetScale()
-    }
-
-    renderPresetScale() {
         const {inputs: {scale}} = this.props
         return (
-            <div>
-                <Form.Slider
-                    label={msg('process.retrieve.form.scale.label')}
-                    info={scale => msg('process.retrieve.form.scale.info', {scale})}
-                    input={scale}
-                    minValue={10}
-                    maxValue={100}
-                    scale={'log'}
-                    ticks={[10, 15, 20, 30, 60, 100]}
-                    snap
-                    range='none'
+            <Layout type='horizontal-nowrap'>
+                <Buttons
+                    label={msg('process.retrieve.form.scalePresets.label')}
+                    options={[1, 5, 10, 15, 20, 30, 60, 100]}
+                    spacing='none'
+                    selected={Number(scale.value)}
+                    onChange={value => scale.set(value)}
                 />
-                <div className={styles.scaleChange}>
-                    <Button
-                        shape={'none'}
-                        label={'Custom scale'}
-                        onClick={() => this.setState({customScale: true})}
-                    />
-                </div>
-            </div>
-        )
-    }
-
-    renderCustomScale() {
-        const {inputs: {scale}} = this.props
-        return (
-            <div>
                 <Form.Input
-                    label={msg('process.retrieve.form.scale.label')}
+                    label={msg('process.retrieve.form.customScale.label')}
                     input={scale}
-                    placeholder={msg('process.retrieve.form.scale.label')}
+                    type='number'
+                    placeholder={msg('process.retrieve.form.customScale.label')}
                 />
-                <div className={styles.scaleChange}>
-                    <Button
-                        shape={'none'}
-                        label={'Preset scale'}
-                        onClick={() => this.setState({customScale: false})}
-                    />
-                </div>
-            </div>
+            </Layout>
         )
     }
 
