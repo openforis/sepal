@@ -99,7 +99,8 @@ class _MosaicRetrievePanel extends React.Component {
         const {inputs: {scale}} = this.props
         return (
             <Widget
-                layout='horizontal-nowrap'
+                layout='horizontal'
+                spacing='compact'
                 label={msg('process.retrieve.form.scale.label')}>
                 <Buttons
                     options={[1, 5, 10, 15, 20, 30, 60, 100]}
