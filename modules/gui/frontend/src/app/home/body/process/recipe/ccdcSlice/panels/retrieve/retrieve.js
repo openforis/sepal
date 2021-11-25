@@ -4,6 +4,7 @@ import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../../ccdcSliceRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {currentUser} from 'user'
 import {msg} from 'translate'
@@ -199,21 +200,22 @@ class _Retrieve extends React.Component {
     renderScale() {
         const {inputs: {scale}} = this.props
         return (
-            <Layout type='horizontal-nowrap'>
+            <Widget
+                layout='horizontal-nowrap'
+                label={msg('process.retrieve.form.scale.label')}>
                 <Buttons
-                    label={msg('process.retrieve.form.scalePresets.label')}
                     options={[1, 5, 10, 15, 20, 30, 60, 100]}
                     spacing='none'
                     selected={Number(scale.value)}
                     onChange={value => scale.set(value)}
                 />
                 <Form.Input
-                    label={msg('process.retrieve.form.customScale.label')}
                     input={scale}
                     type='number'
+                    suffix='meters'
                     placeholder={msg('process.retrieve.form.customScale.label')}
                 />
-            </Layout>
+            </Widget>
         )
     }
 
