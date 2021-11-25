@@ -1,16 +1,19 @@
 import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
 import {ListItem} from 'widget/listItem'
-import {MosaicPreview} from '../../../mosaic/mosaicPreview'
+import {MosaicPreview} from 'app/home/body/process/recipe/mosaic/mosaicPreview'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from '../../classificationRecipe'
+import {RecipeActions} from 'app/home/body/process/recipe/classification/classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Subject} from 'rxjs'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
+import {downloadCsv} from 'widget/download'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import ButtonSelect from 'widget/buttonSelect'
+import Confirm from 'widget/confirm'
 import PropTypes from 'prop-types'
 import React from 'react'
 import TrainingDataSet from './trainingDataSet'
@@ -18,10 +21,15 @@ import guid from 'guid'
 import styles from './trainingData.module.css'
 
 const mapRecipeToProps = recipe => ({
-    dataSets: selectFrom(recipe, 'model.trainingData.dataSets') || []
+    dataSets: selectFrom(recipe, 'model.trainingData.dataSets') || [],
+    title: recipe.title || recipe.placeholder
 })
 
 class TrainingData extends React.Component {
+    state = {
+        askConfirmation: false
+    }
+
     constructor(props) {
         super(props)
         this.eeTableChanged$ = new Subject()
@@ -29,8 +37,10 @@ class TrainingData extends React.Component {
         this.preview = MosaicPreview(recipeId)
         this.recipeActions = RecipeActions(recipeId)
     }
+
     render() {
         const {dataSets, dataCollectionManager} = this.props
+        const {askConfirmation} = this.state
         return (
             <React.Fragment>
                 <RecipeFormPanel
@@ -44,11 +54,38 @@ class TrainingData extends React.Component {
                         {this.renderContent()}
                     </Panel.Content>
                     <Form.PanelButtons invalid={!dataSets.length}>
-                        <Panel.Buttons.Add onClick={() => this.addDataSet()}/>
+                        {this.renderAddButton()}
                     </Form.PanelButtons>
                 </RecipeFormPanel>
                 <TrainingDataSet dataCollectionManager={dataCollectionManager}/>
+                {askConfirmation ? this.renderClearConfirmation() : null}
             </React.Fragment>
+        )
+    }
+
+    renderAddButton() {
+        const options = [
+            {
+                value: 'export',
+                label: msg('process.classification.panel.trainingData.export.label'),
+                onSelect: () => this.exportReferenceData()
+            },
+            {
+                value: 'clear',
+                label: msg('process.classification.panel.trainingData.clearCollected.label'),
+                onSelect: () => this.askConfirmation(true)
+            }
+        ]
+        return (
+            <ButtonSelect
+                look={'add'}
+                icon={'plus'}
+                label={msg('button.add')}
+                placement='above'
+                tooltipPlacement='bottom'
+                options={options}
+                onClick={() => this.addDataSet()}
+            />
         )
     }
 
@@ -71,11 +108,10 @@ class TrainingData extends React.Component {
         if (!name)
             return null
         const collected = dataSet.type === 'COLLECTED'
-        const disabled = collected
         return (
             <ListItem
                 key={`${dataSet.type}-${dataSet.dataSetId}`}
-                disabled={disabled}
+                disabled={collected}
                 onClick={() => this.editDataSet(dataSet)}>
                 <CrudItem
                     title={msg(`process.classification.panel.trainingData.type.${dataSet.type}.label`)}
@@ -97,6 +133,21 @@ class TrainingData extends React.Component {
         )
     }
 
+    renderClearConfirmation() {
+        return (
+            <Confirm
+                title={msg('process.classification.panel.trainingData.clearCollected.confirmation.title')}
+                message={msg('process.classification.panel.trainingData.clearCollected.confirmation.message')}
+                label={msg('process.classification.panel.trainingData.clearCollected.confirmation.label')}
+                onConfirm={() => {
+                    this.clearCollectedReferenceData()
+                    this.askConfirmation(false)
+                }}
+                onCancel={() => this.askConfirmation(false)}
+            />
+        )
+    }
+
     addDataSet() {
         const {activator: {activatables: {trainingDataSet}}} = this.props
         trainingDataSet.activate({dataSetId: guid()})
@@ -113,6 +164,34 @@ class TrainingData extends React.Component {
 
     removeDataSet(dataSetToRemove) {
         this.recipeActions.removeTrainingDataSet(dataSetToRemove)
+    }
+
+    clearCollectedReferenceData() {
+        const {dataCollectionManager, dataSets} = this.props
+        dataSets
+            .filter(({type}) => type === 'COLLECTED')
+            .forEach(dataSet => {
+                this.recipeActions.clearTrainingDataSet(dataSet)
+                setTimeout(() => dataCollectionManager.updateAll())
+            })
+    }
+
+    exportReferenceData() {
+        const {dataSets, title} = this.props
+        const csv = [
+            ['XCoordinate,YCoordinate,class'],
+            dataSets
+                .filter(({type}) => type !== 'CLASSIFICATION')
+                .map(({referenceData}) => referenceData)
+                .flat()
+                .map(point => `${point.x},${point.y},${point.class}`)
+        ].flat().join('\n')
+        const filename = `${title}_legend.csv`
+        downloadCsv(csv, filename)
+    }
+
+    askConfirmation(askConfirmation) {
+        this.setState({askConfirmation})
     }
 }
 
