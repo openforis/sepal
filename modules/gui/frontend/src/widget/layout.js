@@ -39,7 +39,7 @@ export const Layout = compose(
 )
 
 Layout.propTypes = {
-    align: PropTypes.oneOf(['left', 'center', 'right', 'spaced', 'fill', 'distribute']),
+    alignment: PropTypes.oneOf(['left', 'center', 'right', 'spaced', 'fill', 'distribute']),
     children: PropTypes.any,
     className: PropTypes.string,
     framed: PropTypes.any,

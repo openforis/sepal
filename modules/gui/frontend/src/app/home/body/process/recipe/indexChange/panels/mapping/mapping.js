@@ -81,18 +81,13 @@ class _Mapping extends React.Component {
                 ]
             }
         ]
-        const title = (
-            <div className={styles.constraintTitle}>
-                <div className={styles.color} style={{'--color': color}}/>
-                <div className={styles.value}>{value}</div>
-                <div className={styles.label}>{label}</div>
-            </div>
-        )
         return (
             <React.Fragment>
                 <ImageConstraints
                     id={`entryMapping-${id}}`}
-                    title={title}
+                    title={
+                        <LegendItem color={color} label={label} value={value}/>
+                    }
                     images={images}
                     constraints={constraints}
                     onChange={({constraints, booleanOperator}) => this.updateConstraints(id, constraints, booleanOperator)}
