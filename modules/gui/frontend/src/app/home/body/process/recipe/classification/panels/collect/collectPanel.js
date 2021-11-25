@@ -102,19 +102,21 @@ class CollectPanel extends React.Component {
     renderOption(legendEntry) {
         const {point} = this.props
         const {color, value, label} = legendEntry
+        const onClick = () =>
+            point['class'] === legendEntry.value
+                ? this.deselectValue({...point, 'class': null})
+                : this.selectValue({...point, 'class': legendEntry.value})
         return (
             <ListItem
                 key={legendEntry.value}
-                onClick={() =>
-                    point['class'] === legendEntry.value
-                        ? this.deselectValue({...point, 'class': null})
-                        : this.selectValue({...point, 'class': legendEntry.value})}
+                onClick={onClick}
             >
                 <LegendItem
                     color={color}
                     value={value}
                     label={label}
                     selected={this.isSelected(legendEntry)}
+                    onClick={onClick}
                 />
             </ListItem>
         )

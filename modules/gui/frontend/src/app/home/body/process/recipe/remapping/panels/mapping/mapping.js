@@ -101,7 +101,11 @@ class _Mapping extends React.Component {
                 <ImageConstraints
                     id={`entryMapping-${id}}`}
                     title={
-                        <LegendItem color={color} label={label} value={value}/>
+                        <LegendItem
+                            color={color}
+                            label={label}
+                            value={value}
+                        />
                     }
                     images={images}
                     constraints={constraints}

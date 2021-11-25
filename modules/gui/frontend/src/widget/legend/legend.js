@@ -70,15 +70,17 @@ class _Legend extends React.Component {
 
     renderEntry({color, value, label}) {
         const {selected = [], onSelectionChange} = this.props
+        const onClick = onSelectionChange ? () => this.select(value) : null
         return (
             <ListItem
                 key={value}
-                onClick={onSelectionChange ? () => this.select(value) : null}>
+                onClick={onClick}>
                 <LegendItem
                     color={color}
                     value={value}
                     label={label}
                     selected={selected.includes(value)}
+                    onClick={onClick}
                 />
             </ListItem>
         )
