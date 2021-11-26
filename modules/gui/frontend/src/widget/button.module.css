@@ -127,8 +127,8 @@
     flex-grow: 1;
 }
 
-.button.width-max > .contents,
-.button.width-fill > .contents {
+.button.width-max > *,
+.button.width-fill > * {
     display: flex;
     flex-grow: 1;
 }
