@@ -347,6 +347,7 @@ class _Textarea extends React.Component {
                 tooltipTrigger={tooltipTrigger}
                 errorMessage={errorMessage}
                 busyMessage={busyMessage}
+                framed
                 border={border}>
                 {this.renderTextArea()}
             </Widget>
@@ -419,6 +420,5 @@ Textarea.propTypes = {
 }
 
 Textarea.defaultProps = {
-    autoFocus: false,
-    border: true
+    autoFocus: false
 }
