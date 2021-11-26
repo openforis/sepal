@@ -230,8 +230,9 @@ class _Button extends React.Component {
     }
 
     renderContents() {
-        const {icon, iconPlacement, label, tail, children} = this.props
-        return children ? children : (
+        const {icon, iconPlacement, label, tail} = this.props
+        const content = this.getContent()
+        return content ? content : (
             <div className={styles.contents}>
                 {icon && iconPlacement === 'left' ? this.renderIcon() : null}
                 {label ? this.renderLabel() : null}
@@ -254,6 +255,11 @@ class _Button extends React.Component {
                 )
             )
         ) : null
+    }
+
+    getContent() {
+        const {content, children} = this.props
+        return content || children
     }
 
     componentDidMount() {
@@ -334,6 +340,7 @@ Button.propTypes = {
     children: PropTypes.any,
     chromeless: PropTypes.any,
     className: PropTypes.string,
+    content: PropTypes.any,
     disabled: PropTypes.any,
     disableTransitions: PropTypes.any,
     downloadFilename: PropTypes.any,
