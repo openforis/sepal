@@ -2403,7 +2403,8 @@
         "success": "Recipe has been removed"
       },
       "export": {
-          "success": "Recipe has been exported."
+          "success": "Recipe has been exported.",
+          "error": "Could not export recipe."
       }
     },
     "remapping": {
