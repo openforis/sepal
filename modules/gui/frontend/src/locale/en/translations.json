@@ -2949,6 +2949,9 @@
       "subject": {
         "label": "Subject",
         "required": "Subject is required"
+      },
+      "preview": {
+          "label": "Preview"
       }
     },
     "publish": {

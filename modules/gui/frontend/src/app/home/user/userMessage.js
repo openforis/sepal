@@ -2,6 +2,7 @@ import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Markdown} from 'widget/markdown'
 import {Panel} from 'widget/panel/panel'
+import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import Label from 'widget/label'
@@ -34,10 +35,12 @@ class UserMessage extends React.Component {
     renderPreview() {
         const {inputs: {contents}} = this.props
         return (
-            <div>
-                <Label msg={'Preview'}/>
+            <Widget
+                label={msg('userMessage.form.preview.label')}
+                framed>
+                <Label/>
                 <Markdown className={styles.contents} source={contents.value}/>
-            </div>
+            </Widget>
         )
     }
 
