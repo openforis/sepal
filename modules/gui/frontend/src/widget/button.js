@@ -45,16 +45,16 @@ class _Button extends React.Component {
     }
 
     classNames() {
-        const {chromeless, className, additionalClassName, look, size, shape, air, content,
+        const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle,
             alignment, width, joinLeft, joinRight, onClickHold, hover, disableTransitions} = this.props
         return className ? className : [
             styles.button,
             styles[`size-${size}`],
             styles[`shape-${shape}`],
             styles[`air-${air}`],
-            styles[`content-${content}`],
             styles[`alignment-${alignment}`],
             styles[`width-${width}`],
+            styles[`labelStyle-${labelStyle}`],
             joinLeft ? styles['join-left'] : null,
             joinRight ? styles['join-right'] : null,
             lookStyles.look,
@@ -334,7 +334,6 @@ Button.propTypes = {
     children: PropTypes.any,
     chromeless: PropTypes.any,
     className: PropTypes.string,
-    content: PropTypes.oneOf(['default', 'smallcaps', 'smallcaps-highlight']),
     disabled: PropTypes.any,
     disableTransitions: PropTypes.any,
     downloadFilename: PropTypes.any,
@@ -351,6 +350,7 @@ Button.propTypes = {
     joinLeft: PropTypes.any,
     joinRight: PropTypes.any,
     label: PropTypes.any,
+    labelStyle: PropTypes.oneOf(['default', 'smallcaps', 'smallcaps-highlight']),
     linkTarget: PropTypes.string,
     linkUrl: PropTypes.string,
     look: PropTypes.oneOf(['default', 'highlight', 'selected', 'transparent', 'add', 'apply', 'cancel']),
@@ -384,7 +384,7 @@ Button.defaultProps = {
     alignment: 'center',
     iconPlacement: 'left',
     iconVariant: 'normal',
-    content: 'default',
+    labelStyle: 'default',
     linkTarget: '_blank',
     look: 'default',
     shape: 'rectangle',

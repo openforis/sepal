@@ -142,8 +142,8 @@ export default class UserList extends React.Component {
                 chromeless
                 look='transparent'
                 shape='none'
-                content={sortingOrder === column ? 'smallcaps-highlight' : 'smallcaps'}
                 label={label}
+                labelStyle={sortingOrder === column ? 'smallcaps-highlight' : 'smallcaps'}
                 icon={this.getSortingHandleIcon(column, defaultSorting)}
                 iconPlacement='right'
                 additionalClassName={classNames.join(' ')}

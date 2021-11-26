@@ -189,11 +189,11 @@ class ClassMappingStep extends Component {
                     </div>
                     <Button
                         label={'Default'}
+                        labelStyle='smallcaps'
                         tooltip={'Class to use for locations where no column value was mapped'}
                         look={defaultValue.value === value ? 'selected' : 'default'}
                         shape='pill'
                         size='small'
-                        content='smallcaps'
                         onClick={() => defaultValue.set(defaultValue.value === value ? null : value)}
                     />
                 </Layout>

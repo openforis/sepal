@@ -96,7 +96,7 @@ export class RecipeListData extends React.Component {
                         look='transparent'
                         shape='pill'
                         label={label}
-                        content={sortingOrder === column ? 'smallcaps-highlight' : 'smallcaps'}
+                        labelStyle={sortingOrder === column ? 'smallcaps-highlight' : 'smallcaps'}
                         icon={this.getHandleIcon({column, sortingOrder, sortingDirection})}
                         iconPlacement='right'
                         onClick={() => setSorting(column)}/>
