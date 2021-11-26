@@ -1,9 +1,10 @@
 import {Activator, activator} from 'widget/activation/activator'
-import {Msg} from 'translate'
+import {Msg, msg} from 'translate'
 import {RecipeState, duplicateRecipe, exportRecipe$} from './recipe'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import Menu, {MenuItem} from 'widget/menu'
+import Notifications from 'widget/notifications'
 import React from 'react'
 
 const mapStateToProps = (state, ownProps) => {
@@ -65,7 +66,12 @@ class ProcessMenu extends React.Component {
 
     exportRecipe() {
         const {recipe, stream} = this.props
-        stream('EXPORT_RECIPE', exportRecipe$(recipe))
+        stream({
+            name: 'EXPORT_RECIPE',
+            stream$: exportRecipe$(recipe),
+            onComplete: () => Notifications.success({message: msg('process.recipe.export.success')}),
+            onError: error => Notifications.error({message: msg('process.recipe.export.error'), error})
+        })
     }
 }
 

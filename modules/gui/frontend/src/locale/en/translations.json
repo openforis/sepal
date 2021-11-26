@@ -2402,7 +2402,9 @@
       "remove": {
         "success": "Recipe has been removed"
       },
-      "type": "Type"
+      "export": {
+          "success": "Recipe has been exported."
+      }
     },
     "remapping": {
       "create": "Remapping",
