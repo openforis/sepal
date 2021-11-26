@@ -1,4 +1,5 @@
 import {Form, form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
@@ -24,33 +25,35 @@ class Revisions extends React.Component {
             : this.renderNoRevisions()
     }
 
-    renderRevisions(revisions) {
-        const {inputs: {revision}} = this.props
-        const options = revisions.map(timestamp => {
+    getOptions(revisions) {
+        return revisions.map(timestamp => {
             const date = moment(+timestamp)
-            const label =
-                <div className={styles.label}>
+            const content =
+                <Layout type='horizontal-nowrap' alignment='spaced'>
                     <div className={styles.date}>{date.format('MMM D YYYY, hh:mm:ss')}</div>
                     <div className={styles.fromNow}>{date.fromNow()}</div>
-                </div>
-            return {value: timestamp, label}
+                </Layout>
+            return {value: timestamp, content}
         })
+    }
+
+    renderRevisions(revisions) {
+        const {inputs: {revision}} = this.props
         return (
             <Form.Buttons
                 layout='vertical'
                 alignment='fill'
                 spacing='tight'
+                width='fill'
                 uppercase={false}
-                options={options}
+                options={this.getOptions(revisions)}
                 input={revision}/>
         )
     }
 
     renderNoRevisions() {
         return (
-            <div>
-                <NoData message={msg('process.revisions.none')}/>
-            </div>
+            <NoData message={msg('process.revisions.none')}/>
         )
     }
 

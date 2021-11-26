@@ -2,22 +2,6 @@
     width: 24rem;
 }
 
-.content {
-    padding: .5rem;
-}
-
-.noRevisions {
-    display: flex;
-    justify-content: center;
-    align-content: center;
-}
-
-.label {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-}
-
 .fromNow {
     color: gray;
 }
