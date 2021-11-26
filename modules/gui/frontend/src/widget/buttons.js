@@ -33,7 +33,7 @@ export class Buttons extends React.Component {
     }
 
     renderButton({value, look: customLook, icon, label, content, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected}) {
-        const {chromeless, air, disabled: allDisabled, look, shape, size, tabIndex} = this.props
+        const {chromeless, air, disabled: allDisabled, look, shape, size, tabIndex, width} = this.props
         const selected = !allDisabled && (alwaysSelected || (!neverSelected && this.isSelected(value)))
         return chromeless
             ? (
@@ -51,6 +51,7 @@ export class Buttons extends React.Component {
                     tooltip={tooltip}
                     tooltipPlacement='bottom'
                     tabIndex={tabIndex}
+                    width={width}
                     onClick={() => this.select(value)}/>
             )
             : (
@@ -68,6 +69,7 @@ export class Buttons extends React.Component {
                     tooltip={tooltip}
                     tooltipPlacement='bottom'
                     tabIndex={tabIndex}
+                    width={width}
                     onClick={() => this.select(value)}/>
             )
 
@@ -146,5 +148,6 @@ Buttons.propTypes = {
     tabIndex: PropTypes.number,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
+    width: PropTypes.any,
     onChange: PropTypes.any
 }
