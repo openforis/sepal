@@ -32,7 +32,7 @@ export class Buttons extends React.Component {
         }
     }
 
-    renderButton({value, look: customLook, icon, label, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected}) {
+    renderButton({value, look: customLook, icon, label, content, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected}) {
         const {chromeless, air, disabled: allDisabled, look, shape, size, tabIndex} = this.props
         const selected = !allDisabled && (alwaysSelected || (!neverSelected && this.isSelected(value)))
         return chromeless
@@ -46,7 +46,8 @@ export class Buttons extends React.Component {
                     disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
                     icon={icon}
                     label={label}
-                    content={selected ? 'smallcaps-highlight' : 'smallcaps'}
+                    labelStyle={selected ? 'smallcaps-highlight' : 'smallcaps'}
+                    content={content}
                     tooltip={tooltip}
                     tooltipPlacement='bottom'
                     tabIndex={tabIndex}
@@ -62,7 +63,8 @@ export class Buttons extends React.Component {
                     disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
                     icon={icon}
                     label={label}
-                    content='smallcaps'
+                    labelStyle='smallcaps'
+                    content={content}
                     tooltip={tooltip}
                     tooltipPlacement='bottom'
                     tabIndex={tabIndex}
