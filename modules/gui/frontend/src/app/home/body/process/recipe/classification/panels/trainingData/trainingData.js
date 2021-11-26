@@ -1,5 +1,6 @@
 import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
 import {MosaicPreview} from 'app/home/body/process/recipe/mosaic/mosaicPreview'
 import {NoData} from 'widget/noData'
@@ -89,17 +90,26 @@ class TrainingData extends React.Component {
         )
     }
 
-    renderContent() {
+    getDataSets() {
         const {dataSets = []} = this.props
+        return dataSets
+            .filter(dataSet => dataSet)
+            .map(dataSet => this.renderDataSet(dataSet))
+    }
+
+    renderContent() {
+        const dataSets = this.getDataSets()
         return dataSets.length
             ? this.renderDataSets(dataSets)
             : this.renderNoDataSetMessage()
     }
 
     renderDataSets(dataSets) {
-        return dataSets
-            .filter(dataSet => dataSet)
-            .map(dataSet => this.renderDataSet(dataSet))
+        return (
+            <Layout type='vertical' spacing='tight'>
+                {dataSets}
+            </Layout>
+        )
     }
 
     renderDataSet(dataSet) {
