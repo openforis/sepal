@@ -420,5 +420,6 @@ Textarea.propTypes = {
 }
 
 Textarea.defaultProps = {
-    autoFocus: false
+    autoFocus: false,
+    border: true
 }
