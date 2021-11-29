@@ -198,8 +198,7 @@ const bandGroups = [
     ['blue', 'green', 'red', 'nir', 'swir1', 'swir2'],
     ['redEdge1', 'redEdge2', 'redEdge3', 'redEdge4'],
     ['aerosol', 'waterVapor', 'pan', 'cirrus', 'thermal', 'thermal2'],
-    ['brightness', 'greenness', 'wetness'],
-    ['fourth', 'fifth', 'sixth'],
+    ['brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'],
     ['ndvi', 'ndmi', 'ndwi', 'mndwi', 'ndfi', 'evi', 'evi2', 'savi', 'nbr', 'ui', 'ndbi', 'ibi', 'nbi', 'ebbi', 'bui'],
     ['dayOfYear', 'daysFromTarget']
 ]
