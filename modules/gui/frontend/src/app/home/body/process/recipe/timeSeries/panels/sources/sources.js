@@ -7,14 +7,8 @@ import {RecipeActions} from 'app/home/body/process/recipe/timeSeries/timeSeriesR
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {
-    isOpticalDataSet,
-    getDataSetOptions as opticalDataSetOptions
-} from 'app/home/body/process/recipe/opticalMosaic/sources'
-import {
-    isRadarDataSet,
-    getDataSetOptions as radarDataSetOptions
-} from 'app/home/body/process/recipe/radarMosaic/sources'
+import {isOpticalDataSet, getDataSetOptions as opticalDataSetOptions} from 'app/home/body/process/recipe/opticalMosaic/sources'
+import {isRadarDataSet, getDataSetOptions as radarDataSetOptions} from 'app/home/body/process/recipe/radarMosaic/sources'
 import {msg} from 'translate'
 import {getDataSetOptions as planetDataSetOptions} from 'app/home/body/process/recipe/planetMosaic/sources'
 import {recipeAccess} from 'app/home/body/process/recipeAccess'

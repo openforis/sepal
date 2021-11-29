@@ -3,15 +3,14 @@ import moment from 'moment'
 
 export const isRadarDataSet = dataSetId => !!dataSetById[dataSetId]
 
-export const getDataSetOptions = ({startDate, endDate}) => {
-    return Object.keys(dataSetById)
+export const getDataSetOptions = ({startDate, endDate}) =>
+    Object.keys(dataSetById)
         .map(dataSetId => ({
             value: dataSetId,
             label: msg(['sources.dataSets', dataSetId, 'label']),
             tooltip: msg(['sources.dataSets', dataSetId, 'tooltip']),
             neverSelected: !isDataSetInDateRange(dataSetId, startDate, endDate)
         }))
-}
 
 export const toSources = dataSetIds =>
     dataSetIds.includes('SENTINEL_1')

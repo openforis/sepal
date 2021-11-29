@@ -8,14 +8,8 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {groupedBandOptions, toDataSetIds, toSources} from 'sources'
-import {
-    isOpticalDataSet,
-    getDataSetOptions as opticalDataSetOptions
-} from 'app/home/body/process/recipe/opticalMosaic/sources'
-import {
-    isRadarDataSet,
-    getDataSetOptions as radarDataSetOptions
-} from 'app/home/body/process/recipe/radarMosaic/sources'
+import {isOpticalDataSet, getDataSetOptions as opticalDataSetOptions} from 'app/home/body/process/recipe/opticalMosaic/sources'
+import {isRadarDataSet, getDataSetOptions as radarDataSetOptions} from 'app/home/body/process/recipe/radarMosaic/sources'
 import {msg} from 'translate'
 import {getDataSetOptions as planetDataSetOptions} from 'app/home/body/process/recipe/planetMosaic/sources'
 import {recipeAccess} from 'app/home/body/process/recipeAccess'
@@ -75,7 +69,6 @@ class Sources extends React.Component {
                         {this.renderAssetId()}
                         {this.renderClassification()}
                         {this.renderBreakpointBands()}
-
                     </Layout>
                 </Panel.Content>
                 <Form.PanelButtons/>
@@ -140,15 +133,8 @@ class Sources extends React.Component {
     }
 
     renderBreakpointBands() {
-        const {corrections, inputs: {breakpointBands, dataSets}} = this.props
-        const {classificationLegend, classifierType} = this.state
+        const {inputs: {breakpointBands}} = this.props
         const options = this.breakpointBandOptions()
-            ? groupedBandOptions({
-                dataSets: toDataSetIds(dataSets),
-                corrections,
-                classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']}
-            })
-            : []
         return (
             <Form.Buttons
                 label={msg('process.ccdc.panel.sources.form.breakpointBands.label')}
@@ -156,6 +142,7 @@ class Sources extends React.Component {
                 options={options}
                 multiple
                 disabled={!options.length}
+                framed
             />
         )
     }

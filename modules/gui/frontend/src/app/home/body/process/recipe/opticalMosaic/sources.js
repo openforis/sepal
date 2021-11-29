@@ -46,15 +46,14 @@ export const getDataSet = dataSetId => {
     return {scale, name, shortName}
 }
 
-export const getDataSetOptions = ({startDate, endDate}) => {
-    return Object.keys(dataSetById)
+export const getDataSetOptions = ({startDate, endDate}) =>
+    Object.keys(dataSetById)
         .map(dataSetId => ({
             value: dataSetId,
             label: msg(['sources.dataSets', dataSetId, 'label']),
             tooltip: msg(['sources.dataSets', dataSetId, 'tooltip']),
             neverSelected: !isDataSetInDateRange(dataSetId, startDate, endDate)
         }))
-}
 
 export const isDataSetInDateRange = (dataSetId, fromDate, toDate) => {
     const dataSet = dataSetById[dataSetId]
