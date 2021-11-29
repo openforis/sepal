@@ -1,8 +1,7 @@
 .panel {
     max-width: 20rem;
-    min-height: 15rem;
+    min-height: 20rem;
 }
-
 
 .form {
     display: flex;
