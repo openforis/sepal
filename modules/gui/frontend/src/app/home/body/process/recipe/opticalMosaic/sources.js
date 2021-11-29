@@ -14,10 +14,7 @@ export const getDataSetBands = recipe => {
     const correction = corrections && corrections.includes('SR') ? 'SR' : 'TOA'
 
     const bandsPerDataSet = dataSetIds.map(dataSetId => dataSetById[dataSetId][correction].bands)
-    return _(...bandsPerDataSet)
-        .intersection()
-        .uniq()
-        .value()
+    return _.uniq(_.intersection(...bandsPerDataSet))
 }
 
 export const toSources = dataSetIds => {
