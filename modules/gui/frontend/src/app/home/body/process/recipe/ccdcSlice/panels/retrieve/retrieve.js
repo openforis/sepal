@@ -82,7 +82,8 @@ class _Retrieve extends React.Component {
                 label={msg('process.ccdcSlice.panel.retrieve.form.baseBands.label')}
                 input={inputs.baseBands}
                 multiple
-                options={bandOptions}/>
+                options={bandOptions}
+                framed/>
         )
     }
 
@@ -151,7 +152,8 @@ class _Retrieve extends React.Component {
                 label={msg('process.ccdcSlice.panel.retrieve.form.bandTypes.label')}
                 input={inputs.bandTypes}
                 multiple
-                options={bandTypeOptions}/>
+                options={bandTypeOptions}
+                framed/>
         )
     }
 
@@ -192,7 +194,8 @@ class _Retrieve extends React.Component {
                     tooltip={msg('process.ccdcSlice.panel.retrieve.form.segmentBands.tooltip')}
                     input={inputs.segmentBands}
                     multiple
-                    options={options}/>
+                    options={options}
+                    framed/>
             )
             : null
     }
