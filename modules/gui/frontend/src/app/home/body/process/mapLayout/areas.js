@@ -120,7 +120,7 @@ class _Areas extends React.Component {
     renderArea(areas, current, area) {
         const {dragging, dropArea} = this.state
         const highlighted = !current && dragging && area === dropArea
-        const sourceId = areas[area]
+        const sourceId = areas[area] && areas[area].imageLayer
             ? areas[area].imageLayer.sourceId
             : null
         return (
@@ -255,7 +255,7 @@ class _Areas extends React.Component {
         }
         this.onRelease()
     }
-   
+
     onAreaDrag({area, dropArea}) {
         const {layers: {areas}} = this.props
         const currentAreas = removeArea({areas, area})

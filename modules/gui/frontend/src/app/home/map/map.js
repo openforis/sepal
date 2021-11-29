@@ -96,15 +96,17 @@ class _Map extends React.Component {
 
     removeMap(id) {
         const {maps} = this.state
-        const {map, area, listeners, subscriptions} = maps[id]
-        const {google} = map.getGoogle()
-        log.debug(() => `Removing ${mapTag(this.state.mapId, id)} (${area})`)
-        listeners.forEach(listener =>
-            google.maps.event.removeListener(listener)
-        )
-        subscriptions.forEach(subscription =>
-            subscription.unsubscribe()
-        )
+        if (maps[id]) {
+            const {map, area, listeners, subscriptions} = maps[id]
+            const {google} = map.getGoogle()
+            log.debug(() => `Removing ${mapTag(this.state.mapId, id)} (${area})`)
+            listeners.forEach(listener =>
+                google.maps.event.removeListener(listener)
+            )
+            subscriptions.forEach(subscription =>
+                subscription.unsubscribe()
+            )
+        }
         this.setState(
             ({maps}) => ({maps: _.omit(maps, id)})
         )
@@ -482,6 +484,13 @@ class _Map extends React.Component {
     renderAreas() {
         const {layers, imageLayerSources} = this.props
         return _.map(layers.areas, (layer, area) => {
+            if (!layer.imageLayer) {
+                return {
+                    key: area,
+                    placement: area,
+                    content: this.renderImageLayer('default-layer', undefined, undefined, 'center')
+                }
+            }
             const {sourceId, layerConfig} = layer.imageLayer
             const source = imageLayerSources.find(({id}) => id === sourceId)
             return ({

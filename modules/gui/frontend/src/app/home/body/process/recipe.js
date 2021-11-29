@@ -21,16 +21,18 @@ const saveToBackend$ = (() => {
         mergeMap(group$ =>
             group$.pipe(
                 map(recipe => _.omit(recipe, ['ui'])),
-                switchMap(recipe => gzip$(recipe).pipe(
-                    switchMap(compressedRecipe =>
-                        api.recipe.save$({
-                            id: recipe.id,
-                            type: recipe.type,
-                            name: recipe.title || recipe.placeholder,
-                            gzippedContents: compressedRecipe
-                        })
+                switchMap(recipe => {
+                    return gzip$(recipe).pipe(
+                        switchMap(compressedRecipe =>
+                            api.recipe.save$({
+                                id: recipe.id,
+                                type: recipe.type,
+                                name: recipe.title || recipe.placeholder,
+                                gzippedContents: compressedRecipe
+                            })
+                        )
                     )
-                ))
+                })
             )
         )
     ).subscribe({
