@@ -19,11 +19,10 @@ export const getAvailableBands = (recipe, select = ['dataSetBands', 'indexes', '
 
 export const getGroupedBandOptions = (recipe, select = ['dataSetBands', 'indexes', 'metadata']) => {
     const availableBands = getAvailableBands(recipe, select)
-    const toOption = band => ({value: band, label: band, ...availableBands[band]})
     return bandGroups
         .map(bands => bands.filter(band => availableBands[band]))
         .filter(bands => bands.length)
-        .map(bands => ({options: bands.map(toOption)}))
+        .map(bands => bands.map(band => ({value: band, label: band, ...availableBands[band]})))
 }
 
 const bandGroups = [

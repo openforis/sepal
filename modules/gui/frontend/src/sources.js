@@ -70,22 +70,34 @@ export const groupedBandOptions = ({
     } = {}
 }) => {
     const dataSetIds = dataSets || (dataSetId ? [dataSetId] : [])
-    const dataSetOptions = dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))
-        ? getGroupedOpticalBandOptions(
+    
+    const isOptical = () => dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))
+    const isRadar = () => dataSetIds.find(dataSetId => isRadarDataSet(dataSetId))
+
+    const getOpticalOptions = () =>
+        getGroupedOpticalBandOptions(
             toOpticalRecipe({dataSetIds, corrections}),
             ['dataSetBands', 'indexes']
         )
-        : dataSetIds.find(dataSetId => isRadarDataSet(dataSetId))
-            ? getGroupedRadarBandOptions(
-                toRadarRecipe(),
-                ['indexes', 'dataSetBands']
-            )
-            : getGroupedPlanetBandOptions(
-                toPlanetRecipe(),
-                ['indexes', 'dataSetBands']
-            )
-    const classificationOptions = getClassificationOptions(classifierType, classificationLegend, include)
-    return [...dataSetOptions, {options: classificationOptions}]
+
+    const getRadarOptions = () =>
+        getGroupedRadarBandOptions(
+            toRadarRecipe(),
+            ['indexes', 'dataSetBands']
+        )
+
+    const getPlanetOptions = () =>
+        getGroupedPlanetBandOptions(
+            toPlanetRecipe(),
+            ['indexes', 'dataSetBands']
+        )
+
+    const classificationOptions =
+        getClassificationOptions(classifierType, classificationLegend, include)
+
+    const dataSetOptions = (isOptical() && getOpticalOptions() || isRadar() && getRadarOptions() || getPlanetOptions())
+    
+    return [...dataSetOptions, classificationOptions]
 }
 
 export const flatBandOptions = ({
@@ -106,10 +118,7 @@ export const flatBandOptions = ({
         classificationLegend,
         include
     }
-}).map(option => option.options
-    ? option.options
-    : [option]
-).flat()
+}).flat()
 
 const toOpticalRecipe = ({dataSetIds, corrections}) =>
     ({model: {

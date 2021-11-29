@@ -72,10 +72,7 @@ class Options extends React.Component {
             corrections,
             classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']}
         })
-            .map(option => option.options
-                ? option.options.filter(({value}) => sources.breakpointBands.includes(value))
-                : [option]
-            )
+            .map(option => option.filter(({value}) => sources.breakpointBands.includes(value)))
             .flat()
         return (
             <Layout>
@@ -104,6 +101,7 @@ class Options extends React.Component {
                     multiple={true}
                     disabled={tmaskBandsOptions.length < 2}
                     options={tmaskBandsOptions}
+                    framed
                     errorMessage
                 />
                 <Form.Input

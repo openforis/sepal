@@ -135,6 +135,8 @@ class Sources extends React.Component {
     renderBreakpointBands() {
         const {inputs: {breakpointBands}} = this.props
         const options = this.breakpointBandOptions()
+            .filter(group => group.length)
+            .map(group => ({options: group}))
         return (
             <Form.Buttons
                 label={msg('process.ccdc.panel.sources.form.breakpointBands.label')}

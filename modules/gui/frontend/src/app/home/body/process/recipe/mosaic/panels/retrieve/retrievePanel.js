@@ -84,12 +84,15 @@ class _MosaicRetrievePanel extends React.Component {
 
     renderBandOptions() {
         const {bandOptions, single, inputs: {bands}} = this.props
+        const options = bandOptions
+            .filter(group => group.length)
+            .map(group => ({options: group}))
         return (
             <Form.Buttons
                 label={msg('process.retrieve.form.bands.label')}
                 input={bands}
                 multiple={!single}
-                options={bandOptions}
+                options={options}
                 framed
             />
         )
