@@ -2481,7 +2481,7 @@
         },
         "destination": {
           "GEE": "Google Earth Engine asset",
-          "label": "Retrieve to",
+          "label": "Destination",
           "required": "A destination must be selected",
           "SEPAL": "SEPAL workspace"
         },
