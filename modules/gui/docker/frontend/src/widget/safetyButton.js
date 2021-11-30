@@ -169,6 +169,13 @@ export class TooltipConfirmationButton extends React.Component {
             />
         )
     }
+
+    componentDidUpdate({disabled: wasDisabled}) {
+        const {disabled} = this.props
+        if (!wasDisabled && disabled) {
+            this.setVisibility(false)
+        }
+    }
 }
 
 TooltipConfirmationButton.defaultProps = {

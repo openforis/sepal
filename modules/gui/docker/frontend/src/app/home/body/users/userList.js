@@ -7,7 +7,7 @@ import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {UserResourceUsage} from 'app/home/user/userResourceUsage'
 import {msg} from 'translate'
-import {simplifyString} from 'string'
+import {simplifyString, splitString} from 'string'
 import Highlight from 'react-highlighter'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
@@ -42,7 +42,8 @@ export default class UserList extends React.Component {
         })
     }
 
-    setTextFilter(textFilterValues) {
+    setTextFilter(textFilterValue) {
+        const textFilterValues = splitString(simplifyString(textFilterValue))
         this.setState({textFilterValues})
     }
 
@@ -222,7 +223,8 @@ export default class UserList extends React.Component {
         return (
             <SearchBox
                 placeholder={msg('users.filter.search.placeholder')}
-                onSearchValues={searchValues => this.setTextFilter(searchValues)}/>
+                onSearchValue={searchValue => this.setTextFilter(searchValue)}
+            />
         )
     }
 
