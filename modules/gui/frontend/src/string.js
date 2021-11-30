@@ -1,5 +1,24 @@
 import _ from 'lodash'
 
-export const simplifyString = s => _.isString(s)
-    ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    : s
+const _trim = s => s.trim()
+
+const _removePunctuation = s => s.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, '')
+
+const _removeNonAlphanumeric = s => s.replace(/[^0-9a-zA-Z\s]/g, '')
+
+const _removeAccents = s => s.replace(/[\u0300-\u036f]/g, '')
+
+const _removeRepeatedSpaces = s => s.replace(/\s{2,}/g, ' ')
+
+export const simplifyString = (s, {trim = true, removeAccents = true, removePunctuation = false, removeNonAlphanumeric = true, removeRepeatedSpaces = true} = {}) => {
+    const replacers = _.compact([
+        trim ? _trim : null,
+        removeAccents ? _removeAccents : null,
+        removePunctuation ? _removePunctuation : null,
+        removeNonAlphanumeric ? _removeNonAlphanumeric : null,
+        removeRepeatedSpaces ? _removeRepeatedSpaces : null
+    ])
+    return replacers.reduce((s, replacer) => replacer(s), removeAccents ? s.normalize('NFD') : s)
+}
+
+export const splitString = s => s ? s.split(/\s/) : []

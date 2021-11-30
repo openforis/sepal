@@ -72,7 +72,8 @@ export class RecipeListData extends React.Component {
                 {({setFilter}) => (
                     <SearchBox
                         placeholder={msg('process.menu.searchRecipes')}
-                        onSearchValues={searchValues => setFilter(searchValues)}/>
+                        onSearchValue={searchValue => setFilter(searchValue)}
+                    />
                 )}
             </Consumer>
         )

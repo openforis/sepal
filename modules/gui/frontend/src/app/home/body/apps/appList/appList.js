@@ -6,7 +6,7 @@ import {compose} from 'compose'
 import {connect, select} from 'store'
 import {loadApps$} from 'apps'
 import {msg} from 'translate'
-import {simplifyString} from 'string'
+import {simplifyString, splitString} from 'string'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -81,7 +81,8 @@ class _AppList extends React.Component {
         return apps && apps.length
     }
 
-    setFilter(filterValues) {
+    setFilter(filterValue) {
+        const filterValues = splitString(simplifyString(filterValue))
         actionBuilder('UPDATE_FILTER_VALUES', filterValues)
             .set('apps.filterValues', filterValues)
             .dispatch()

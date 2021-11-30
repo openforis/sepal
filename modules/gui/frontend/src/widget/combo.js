@@ -8,6 +8,7 @@ import {connect} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
 import {simplifyString} from 'string'
+import {splitString} from 'string'
 import AutoFocus from 'widget/autoFocus'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
@@ -295,12 +296,9 @@ class _Combo extends React.Component {
 
     matcher(filter) {
         // match beginning of multiple words in any order (e.g. both "u k" and "k u" match "United Kingdom")
-        const parts = filter
-            .trim()
-            .split(/\s+/)
-            .map(part => simplifyString(part ? `(?=.*${escapeStringRegexp(part)})` : ''))
-            .join('')
-        return RegExp(`^${parts}.*$`, 'i')
+        const parts = splitString(simplifyString(filter))
+            .map(part => part ? `(?=.*${(part)})` : '')
+        return RegExp(`^${parts.join('')}.*$`, 'i')
     }
 
     updateOptions(inputChanged) {

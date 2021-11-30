@@ -3,13 +3,11 @@ import {ScrollableList} from 'widget/list'
 import {Shape} from 'widget/shape'
 import {Subject, debounceTime, distinctUntilChanged, filter, merge} from 'rxjs'
 import {compose} from 'compose'
-import {simplifyString} from 'string'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import escapeStringRegexp from 'escape-string-regexp'
 import styles from './searchBox.module.css'
 import withSubscriptions from 'subscription'
 
@@ -110,7 +108,7 @@ class _SearchBox extends React.Component {
     }
 
     componentDidMount() {
-        const {value, onSearchValue, onSearchValues, debounce, addSubscription} = this.props
+        const {value, onSearchValue, debounce, addSubscription} = this.props
         const {search$, showOptions$} = this
         this.setValue(value)
 
@@ -141,15 +139,7 @@ class _SearchBox extends React.Component {
                 showOptions => this.setState({showOptions})
             ),
             debouncedSearch$.subscribe(
-                value => {
-                    onSearchValue && onSearchValue(value)
-                    onSearchValues && onSearchValues(
-                        _.chain(value.split(/\s+/))
-                            .map(filter => simplifyString(escapeStringRegexp(filter.trim())))
-                            .compact()
-                            .value()
-                    )
-                }
+                value => onSearchValue && onSearchValue(value)
             )
         )
     }
@@ -170,7 +160,6 @@ SearchBox.propTypes = {
     shape: PropTypes.string,
     value: PropTypes.string,
     onSearchValue: PropTypes.func,
-    onSearchValues: PropTypes.func,
     onSelect: PropTypes.func
 }
 
