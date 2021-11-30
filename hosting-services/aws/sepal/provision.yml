@@ -174,7 +174,7 @@
       ec2:
         key_name: "{{ region }}"
         group: "Sepal"
-        instance_type: m5.xlarge
+        instance_type: "{{ instance_type }}"
         image: "{{ ami }}"
         region: "{{ region }}"
         zone: "{{ availability_zone }}"
