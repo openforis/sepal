@@ -1,3 +1,4 @@
+import {ErrorBoundary} from './errorBoundary'
 import {Provider} from 'react-redux'
 import {Router} from 'react-router-dom'
 import {applyMiddleware, createStore} from 'redux'
@@ -46,12 +47,14 @@ const history = createBrowserHistory()
 syncHistoryAndStore(history, store)
 
 ReactDOM.render(
-    <Provider store={store}>
-        <TranslationProvider>
-            <Router history={history}>
-                <App/>
-            </Router>
-        </TranslationProvider>
-    </Provider>,
+    <ErrorBoundary>
+        <Provider store={store}>
+            <TranslationProvider>
+                <Router history={history}>
+                    <App/>
+                </Router>
+            </TranslationProvider>
+        </Provider>
+    </ErrorBoundary>,
     document.getElementById('app')
 )
