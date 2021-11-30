@@ -1,0 +1,17 @@
+{
+    "port": 5109,
+    "categories": {
+        "config": "info",
+        "default": "info",
+        "http": "info",
+        "logger": "info",
+        "main": "info"
+    },
+    "availableCategories": {
+        "config": "info",
+        "default": "info",
+        "http": "info",
+        "logger": "info",
+        "main": "info"
+    }
+}

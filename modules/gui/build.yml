@@ -1,16 +1,14 @@
 ---
+- name: gui | Create build directory
+  file:
+    path: "{{ module_dir }}/docker/build"
+    state: directory
+  delegate_to: 127.0.0.1
 
-#- name: "gui | Determine if jar should be built"
-#  script: "{{ module_dir }}/should-rebuild.sh {{ module_dir }}"
-#  delegate_to: 127.0.0.1
-#  become: no
-#  register: should_rebuild
-#  changed_when: should_rebuild.stdout_lines[0] == 'true'
-#
-#- name: "gui | Build jar"
-#  shell: "{{ module_dir }}/../../gradlew :sepal-gui:clean :sepal-gui:build -x test -p {{ module_dir }}/../.."
-#  delegate_to: 127.0.0.1
-#  become: no
-#  when: should_rebuild.changed
+- name: gui | Copy sepal lib
+  copy:
+    src: "{{ project_dir }}/lib"
+    dest: "{{ module_dir }}/docker/build"
+  delegate_to: 127.0.0.1
 
 - include_tasks: "{{ build_image_task }}"
