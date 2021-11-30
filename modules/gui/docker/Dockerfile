@@ -1,6 +1,8 @@
 FROM node:14-stretch
 EXPOSE 7667
 ENV FRONTEND /usr/local/src/sepal/modules/gui/docker/frontend
+ENV REACT_APP_GOOGLE_ANALYTICS_ID '${GOOGLE_ANALYTICS_ID}'
+ENV REACT_APP_GOOGLE_MAPS_API_KEY '${GOOGLE_MAPS_API_KEY}'
 
 USER root
 RUN apt-get update && apt-get install -y \

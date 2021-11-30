@@ -57,7 +57,7 @@ function check_data_dir() {
 
 # function build_docker_image() {
 #     echo "Building Docker image..."
-#     docker build -t $IMAGE_NAME $PROJECT_DIR/dev-env 1>/dev/null 
+#     docker build -t $IMAGE_NAME $PROJECT_DIR/dev-env 1>/dev/null
 # }
 
 function docker_container_exists() {
@@ -80,8 +80,12 @@ function start_docker_containers() {
     check_config_dir
     check_data_dir
 
+    eval "$("${PROJECT_DIR}/dev-env/parse-yaml.sh" "${CONFIG_DIR}/secret.yml")"
+    export REACT_APP_GOOGLE_ANALYTICS_ID=${google_analytics_id}
+    export REACT_APP_GOOGLE_MAPS_API_KEY=${google_maps_api_key}
     (cd $PROJECT_DIR/dev-env; \
-        docker-compose up -d --remove-orphans \
+        docker-compose up \
+          -d --remove-orphans
     )
 
     echo "Setting up Docker container..."

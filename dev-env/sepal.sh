@@ -161,7 +161,7 @@ module_clean () {
         (cd $SEPAL/lib/js/shared && rm -rf node_modules/ package-lock.json)
         ;;
     gui)
-        (cd $SEPAL/modules/gui/frontend && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/gui/docker/frontend && rm -rf node_modules package-lock.json)
         ;;
     sepal-server)
         $SEPAL/gradlew \
@@ -197,10 +197,10 @@ module_update () {
         (cd $SEPAL/lib/js/shared && ncu -i)
         ;;
     gui)
-        (cd $SEPAL/modules/gui/frontend && ncu -i)    
+        (cd $SEPAL/modules/gui/docker/frontend && ncu -i)
         ;;
     *)
-        (cd $SEPAL/modules/$MODULE/docker && ncu -i)    
+        (cd $SEPAL/modules/$MODULE/docker && ncu -i)
         ;;
     esac
 }
@@ -213,7 +213,7 @@ module_install () {
         (cd $SEPAL/lib/js/shared && npm install)
         ;;
     gui)
-        (cd $SEPAL/modules/gui/frontend && npm install)
+        (cd $SEPAL/modules/gui/docker/frontend && npm install)
         ;;
     *)
         (cd $SEPAL/modules/$MODULE/docker && npm install)
@@ -227,7 +227,7 @@ run () {
     local ARGS=$@
     case $MODULE in
     gui)
-        (cd $SEPAL/modules/gui/frontend && npm start)
+        (cd $SEPAL/modules/gui/docker/frontend && npm start)
         ;;
     sepal-server)
         $SEPAL/gradlew \

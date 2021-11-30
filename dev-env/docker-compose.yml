@@ -16,6 +16,9 @@ services:
       - $PROJECT_DIR:/usr/local/lib/sepal:delegated
       - $DATA_DIR:/var/sepal:Z,delegated
       - $CONFIG_DIR:/etc/sepal/conf.d:delegated
+    environment:
+      REACT_APP_GOOGLE_ANALYTICS_ID: $REACT_APP_GOOGLE_ANALYTICS_ID
+      REACT_APP_GOOGLE_MAPS_API_KEY: $REACT_APP_GOOGLE_MAPS_API_KEY
   rabbitmq:
       image: rabbitmq:3-management
       container_name: rabbitmq

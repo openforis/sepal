@@ -26,8 +26,8 @@ build
 
 #Sepal frontend
 /modules/*/frontend/build
-/modules/gui/frontend/node-*
-/modules/gui/frontend/node_modules/
+/modules/gui/docker/frontend/node-*
+/modules/gui/docker/frontend/node_modules/
 
 #Vagrant
 .vagrant
