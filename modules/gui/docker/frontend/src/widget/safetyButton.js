@@ -94,10 +94,6 @@ export class TooltipConfirmationButton extends React.Component {
         this.onClickHold = this.onClickHold.bind(this)
     }
 
-    askConfirmation(askConfirmation) {
-        this.setState({askConfirmation})
-    }
-
     renderTooltipConfirmation() {
         const {onConfirm} = this.props
         return (
