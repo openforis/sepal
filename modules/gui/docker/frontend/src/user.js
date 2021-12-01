@@ -1,7 +1,7 @@
 import {EMPTY, catchError, map, of, switchMap, tap} from 'rxjs'
 import {history} from 'route'
 import {msg} from 'translate'
-import {publishEvent} from 'eventPublisher'
+import {publishCurrentUserEvent, publishEvent} from 'eventPublisher'
 import {select} from 'store'
 import Notifications from 'widget/notifications'
 import actionBuilder from 'action-builder'
@@ -27,7 +27,10 @@ export const login$ = ({username, password}) => {
             Notifications.error({message: msg('landing.login.error')})
             return EMPTY
         }),
-        tap(user => publishEvent(user ? 'login' : 'login_failed')),
+        tap(user => {
+            publishEvent(user ? 'login' : 'login_failed')
+            publishCurrentUserEvent(user)
+        }),
         map(user => credentialsPosted(user))
     )
 }
@@ -52,7 +55,8 @@ export const resetPassword$ = ({token, username, password, type}) =>
         })
     )
 
-export const updateUser = user =>
+export const updateUser = user => {
+    publishCurrentUserEvent(user)
     actionBuilder('SET_CURRENT_USER', {user})
         .set('user', {
             currentUser: user,
@@ -60,6 +64,7 @@ export const updateUser = user =>
             loggedOn: !!user
         })
         .dispatch()
+}
 
 export const resetInvalidCredentials = () =>
     actionBuilder('RESET_INVALID_CREDENTIALS')
@@ -94,8 +99,8 @@ export const validateToken$ = token =>
         })
     )
 
-export const updateCurrentUserDetails$ = ({name, email, organization, emailNotificationsEnabled}) =>
-    api.user.updateCurrentUserDetails$({name, email, organization, emailNotificationsEnabled}).pipe(
+export const updateCurrentUserDetails$ = ({name, email, organization, emailNotificationsEnabled}) => {
+    return api.user.updateCurrentUserDetails$({name, email, organization, emailNotificationsEnabled}).pipe(
         map(({name, email, organization}) =>
             actionBuilder('UPDATE_USER_DETAILS', {name, email, organization})
                 .set('user.currentUser.name', name)
@@ -105,6 +110,7 @@ export const updateCurrentUserDetails$ = ({name, email, organization, emailNotif
                 .dispatch()
         )
     )
+}
 
 export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
     api.user.changePassword$({oldPassword, newPassword})
