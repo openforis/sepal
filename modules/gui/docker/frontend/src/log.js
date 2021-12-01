@@ -16,8 +16,8 @@ const defaultLevelName = config.default || 'error'
 const getLevel = (levelName = '') =>
     levels[levelName.toUpperCase()] || levels[defaultLevelName.toUpperCase()]
 
-const isEnabled = (level, minLevel) =>
-    level <= minLevel
+const isEnabled = (minLevel, level) =>
+    level >= minLevel
 
 const log = (func, levelName, loggerName, args = []) =>
     func(`[${new Date().toISOString()}]`, `[${levelName}]`, `${loggerName} -`, ...args)
@@ -26,10 +26,10 @@ const getArg = (arg, level) =>
     _.isFunction(arg)
         ? getArg(arg(level))
         : arg
-    
+
 const getArgs = (args, level) =>
     _.map(args, (arg, index) => getArg(arg, level, index === 0))
-    
+
 export const getLogger = name => {
     const levelName = config[name]
     const level = getLevel(levelName)

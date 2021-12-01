@@ -1,9 +1,12 @@
 import {IntlProvider, injectIntl} from 'react-intl'
+import {getLogger} from 'log'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import flat from 'flat'
 import moment from 'moment'
+
+const log = getLogger('translate')
 
 let intl, intlEn
 const initIntl = intlInstance => intl = intlInstance
@@ -95,7 +98,7 @@ export default class TranslationProvider extends React.Component {
         return (
             <IntlProvider locale={'en'} messages={messagesEn}>
                 <IntlInitEn>
-                    <IntlProvider locale={language} messages={messages}>
+                    <IntlProvider locale={language} messages={messages} onError={error => log.info(error.message)}>
                         <IntlInit>
                             {children}
                         </IntlInit>

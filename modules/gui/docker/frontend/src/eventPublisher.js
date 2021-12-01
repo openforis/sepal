@@ -1,21 +1,31 @@
+import {getLanguage} from 'translate'
 import {getLogger} from 'log'
 
 const log = getLogger('eventPublisher')
 
 export const publishCurrentUserEvent = user => {
     const {admin, organization, googleTokens = null} = user || {}
-    const params = {
-        admin: `${!!admin}`,
-        organization,
-        google_account: user ? `${!!googleTokens}` : undefined
-    }
-    log.debug('Publishing current user event', {params})
-    window.gtag('set', 'user_properties', params)
+    const language = getLanguage()
+    const props = user
+        ? {
+            admin: `${!!admin}`,
+            organization,
+            google_account: `${!!googleTokens}`,
+            language
+        }
+        : {
+            admin: undefined,
+            organization: undefined,
+            google_account: undefined,
+            language
+        }
+    log.debug('Publishing current user event', {props})
+    window.gtag('set', 'user_properties', props)
 }
 
-export const publishEvent = (event, params) => {
-    log.debug('Publishing event', {event, params})
-    return window.gtag('event', event, params)
+export const publishEvent = (event, props) => {
+    log.debug('Publishing event', {event, props})
+    return window.gtag('event', event, props)
 }
 
 export const publishFatalError = error =>

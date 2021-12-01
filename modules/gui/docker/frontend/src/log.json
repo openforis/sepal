@@ -10,5 +10,6 @@
     "map": "info",
     "sepalMap": "info",
     "maps": "info",
-    "splitContent": "info"
+    "splitContent": "info",
+    "translate": "info"
 }
