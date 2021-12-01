@@ -1,6 +1,7 @@
 {
     "default": "info",
     "apps": "info",
+    "eventPublisher": "info",
     "http": "debug",
     "layer": "info",
     "tileManager": "info",

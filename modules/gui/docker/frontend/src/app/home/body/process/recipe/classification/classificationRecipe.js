@@ -1,5 +1,6 @@
 import {getAllVisualizations} from 'app/home/body/process/recipe/visualizations'
 import {msg} from 'translate'
+import {publishEvent} from 'eventPublisher'
 import {recipeActionBuilder} from 'app/home/body/process/recipe'
 import {removeImageLayerSource} from 'app/home/body/process/mapLayout/imageLayerSources'
 import _ from 'lodash'
@@ -170,8 +171,9 @@ const submitRetrieveRecipeTask = recipe => {
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const pyramidingPolicy = {}
     bands.forEach(band => pyramidingPolicy[band] = band === 'class' ? 'mode' : 'mean')
+    const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
     const task = {
-        'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
+        operation,
         'params':
             {
                 title: taskTitle,
@@ -185,6 +187,10 @@ const submitRetrieveRecipeTask = recipe => {
                 }
             }
     }
+    publishEvent('submit_task', {
+        recipe_type: recipe.type,
+        destination
+    })
     return api.tasks.submit$(task).subscribe()
 }
 

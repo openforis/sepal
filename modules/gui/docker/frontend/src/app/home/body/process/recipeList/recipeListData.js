@@ -107,7 +107,7 @@ export class RecipeListData extends React.Component {
     }
 
     getHandleIcon({column, sortingOrder, sortingDirection}) {
-        
+
         const sorted = sortingOrder === column
         return sorted
             ? sortingDirection === 1
@@ -131,7 +131,7 @@ export class RecipeListData extends React.Component {
                     duplicateTooltip={msg('process.menu.duplicateRecipe')}
                     removeTooltip={msg('process.menu.removeRecipe.tooltip')}
                     onDuplicate={onDuplicate ? () => onDuplicate(recipe.id) : null}
-                    onRemove={onRemove ? () => onRemove(recipe.id) : null}
+                    onRemove={onRemove ? () => onRemove(recipe.id, recipe.type) : null}
                 />
             </ListItem>
         )

@@ -1,5 +1,6 @@
 import {msg} from 'translate'
-import {recipeActionBuilder} from '../../recipe'
+import {publishEvent} from 'eventPublisher'
+import {recipeActionBuilder} from 'app/home/body/process/recipe'
 import api from 'api'
 import moment from 'moment'
 
@@ -57,8 +58,9 @@ export const RecipeActions = id => {
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const title = msg(['process.retrieve.form.task.SEPAL'], {name})
+    const operation = 'timeseries.download'
     const task = {
-        'operation': 'timeseries.download',
+        operation,
         'params': {
             title,
             description: name,
@@ -67,6 +69,11 @@ const submitRetrieveRecipeTask = recipe => {
             scale: recipe.ui.retrieveOptions.scale,
         }
     }
+    publishEvent('submit_task', {
+        recipe_type: recipe.type,
+        destination: 'SEPAL',
+        data_set_type: recipe.model.dataSetType
+    })
     return api.tasks.submit$(task).subscribe()
 }
 

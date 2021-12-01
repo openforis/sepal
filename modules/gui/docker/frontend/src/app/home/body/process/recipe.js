@@ -5,6 +5,7 @@ import {connect, select, subscribe} from 'store'
 import {downloadObjectZip$} from 'widget/download'
 import {gzip$, ungzip$} from 'gzip'
 import {msg} from 'translate'
+import {publishEvent} from 'eventPublisher'
 import {selectFrom} from 'stateUtils'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -20,7 +21,12 @@ const saveToBackend$ = (() => {
         groupBy(recipe => recipe.id),
         mergeMap(group$ =>
             group$.pipe(
-                map(recipe => _.omit(recipe, ['ui'])),
+                map(recipe => {
+                    if (recipe.ui.unsaved) {
+                        publishEvent('insert_recipe', {recipe_type: recipe.type})
+                    }
+                    return _.omit(recipe, ['ui'])
+                }),
                 switchMap(recipe => {
                     return gzip$(recipe).pipe(
                         switchMap(compressedRecipe =>
@@ -173,6 +179,7 @@ export const loadRecipes$ = () =>
     )
 
 export const openRecipe = recipe => {
+    publishEvent('load_recipe', {recipe_type: recipe.type})
     const {id, placeholder, title, type} = recipe
     actionBuilder('OPEN_RECIPE')
         .set(tabPath(select('process.selectedTabId')), {id, placeholder, title, type})
@@ -185,14 +192,16 @@ export const selectRecipe = recipeId =>
         .set('process.selectedTabId', recipeId)
         .dispatch()
 
-export const duplicateRecipe = sourceRecipe =>
-    addRecipe({
+export const duplicateRecipe = sourceRecipe => {
+    publishEvent('duplicate_recipe', {recipe_type: sourceRecipe.type})
+    return addRecipe({
         ...sourceRecipe,
         id: guid(),
         placeholder: `${sourceRecipe.title || sourceRecipe.placeholder}_copy`,
         title: null,
         ui: {...sourceRecipe.ui, unsaved: true, initialized: true}
     })
+}
 
 export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
     api.recipe.load$(sourceRecipeId).pipe(

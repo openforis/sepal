@@ -3,6 +3,7 @@ import {compose} from 'compose'
 import {connect, select} from 'store'
 import {simplehash as hash} from 'hash'
 import {msg} from 'translate'
+import {publishError} from 'eventPublisher'
 import {v4 as uuid} from 'uuid'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -228,8 +229,13 @@ Notifications.info = notification =>
 Notifications.warning = notification =>
     publish({...notification, level: 'warning'})
 
-Notifications.error = notification =>
+Notifications.error = notification => {
     publish({...notification, level: 'error'})
+    publishError(typeof notification === 'string'
+        ? notification
+        : (notification.message || notification)
+    )
+}
 
 Notifications.dismiss = notificationId =>
     dismiss(notificationId)

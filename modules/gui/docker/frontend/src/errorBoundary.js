@@ -1,3 +1,4 @@
+import {publishFatalError} from './eventPublisher'
 import React from 'react'
 
 export class ErrorBoundary extends React.Component {
@@ -10,8 +11,8 @@ export class ErrorBoundary extends React.Component {
         return {hasError: true}
     }
 
-    componentDidCatch(_error, _errorInfo) {
-        // TODO: Report error
+    componentDidCatch(error) {
+        publishFatalError(error)
     }
 
     render() {

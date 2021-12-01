@@ -5,11 +5,11 @@ import {Message} from 'widget/message'
 import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {publishEvent} from 'eventPublisher'
 import {select} from 'store'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
 import api from 'api'
 import moment from 'moment'
 import styles from './userBudgetUpdateRequest.module.css'
@@ -172,7 +172,7 @@ export class _BudgetUpdateRequest extends React.Component {
     }
 
     save(budgetUpdateRequest) {
-        api.user.updateBudgetUpdateRequest$(budgetUpdateRequest),
+        api.user.updateBudgetUpdateRequest$(budgetUpdateRequest)
         this.props.stream({
             name: 'UPDATE_BUDGET_UPDATE_REQUEST',
             stream$: api.user.updateBudgetUpdateRequest$(budgetUpdateRequest),
@@ -182,6 +182,7 @@ export class _BudgetUpdateRequest extends React.Component {
             },
             onComplete: () => {
                 Notifications.success({message: msg('user.quotaUpdate.update.success')})
+                publishEvent('requested_budget_update')
                 this.cancel()
             }
         })

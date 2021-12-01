@@ -1,7 +1,6 @@
 import {AssetInput} from 'widget/assetInput'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {NICFI_ASSETS} from '../../../planetMosaic/planetMosaicRecipe'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/ccdc/ccdcRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -248,18 +247,16 @@ class Sources extends React.Component {
 Sources.propTypes = {}
 
 const valuesToModel = ({dataSetType, asset, dataSets, classification, breakpointBands}) => {
-    const nicfiSource = dataSetType === 'NICFI'
     return ({
         dataSetType,
         dataSets: toSources(_.isArray(dataSets) ? dataSets : [dataSets]),
-        assets: nicfiSource ? NICFI_ASSETS : [asset],
+        assets: asset ? [asset] : [],
         classification,
         breakpointBands
     })
 }
 
 const modelToValues = ({dataSetType, assets, dataSets, classification, breakpointBands}) => {
-    const nicfiSource = dataSetType === 'NICFI'
     const dataSetIds = _.uniq(Object.values(dataSets).flat())
     const defaultedDataSetType = dataSetType
         ? dataSetType
@@ -271,7 +268,7 @@ const modelToValues = ({dataSetType, assets, dataSets, classification, breakpoin
     return ({
         dataSetType: defaultedDataSetType,
         dataSets: defaultedDataSetType === 'OPTICAL' || !dataSetIds.length ? dataSetIds : dataSetIds[0],
-        asset: nicfiSource || _.isEmpty(assets) ? null : assets[0],
+        asset: _.isEmpty(assets) ? null : assets[0],
         validAsset: true,
         classification,
         breakpointBands

@@ -11,6 +11,9 @@ const _removeAccents = s => s.replace(/[\u0300-\u036f]/g, '')
 const _removeRepeatedSpaces = s => s.replace(/\s{2,}/g, ' ')
 
 export const simplifyString = (s, {trim = true, removeAccents = true, removePunctuation = false, removeNonAlphanumeric = true, removeRepeatedSpaces = true} = {}) => {
+    if (!_.isString(s)) {
+        return s
+    }
     const replacers = _.compact([
         trim ? _trim : null,
         removeAccents ? _removeAccents : null,

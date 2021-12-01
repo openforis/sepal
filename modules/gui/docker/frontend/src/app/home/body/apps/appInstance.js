@@ -4,6 +4,7 @@ import {connect} from 'store'
 import {forkJoin, timer} from 'rxjs'
 import {getLogger} from 'log'
 import {msg} from 'translate'
+import {publishEvent} from 'eventPublisher'
 import {runApp$} from 'apps'
 import {withTabContext} from 'widget/tabs/tabContext'
 import Notifications from 'widget/notifications'
@@ -25,6 +26,7 @@ class AppInstance extends React.Component {
 
     runApp() {
         const {app} = this.props
+        publishEvent('launch_app', {app: app.id})
         this.props.stream('RUN_APP',
             forkJoin([
                 runApp$(app.path),

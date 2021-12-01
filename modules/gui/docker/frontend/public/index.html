@@ -18,11 +18,12 @@
     <link href="https://fonts.googleapis.com/css?family=Ubuntu+Mono: 400,700" rel="stylesheet">
     <script async src="https://www.googletagmanager.com/gtag/js?id=%REACT_APP_GOOGLE_ANALYTICS_ID%"></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', '%REACT_APP_GOOGLE_ANALYTICS_ID%');
+        window.googleAnalyticsId = '%REACT_APP_GOOGLE_ANALYTICS_ID%'
         window.googleMapsApiKey = '%REACT_APP_GOOGLE_MAPS_API_KEY%'
+        window.dataLayer = window.dataLayer || []
+        function gtag(){dataLayer.push(arguments)}
+        gtag('js', new Date())
+        gtag('config', window.googleAnalyticsId)
     </script>
 
     <title>S E P A L</title>

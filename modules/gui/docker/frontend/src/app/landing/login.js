@@ -5,6 +5,7 @@ import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
 import {msg} from 'translate'
+import {publishEvent} from 'eventPublisher'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './login.module.css'
@@ -16,8 +17,10 @@ const fields = {
         .notBlank('landing.login.password.required')
 }
 
-const signUp = () =>
-    window.location = 'https://docs.google.com/forms/d/e/1FAIpQLSci4hopXNtMOQKJzsUybaJETrAPQp8j6TCqycSBQ0XO37jBwA/viewform?c=0&w=1'
+const signUp = () => {
+    publishEvent('sign_up')
+    return window.location = 'https://docs.google.com/forms/d/e/1FAIpQLSci4hopXNtMOQKJzsUybaJETrAPQp8j6TCqycSBQ0XO37jBwA/viewform?c=0&w=1'
+}
 
 const mapStateToProps = () => ({
     errors: invalidCredentials() ? {password: msg('landing.login.password.invalid')} : {}

@@ -40,8 +40,9 @@ const submitRetrieveRecipeTask = recipe => {
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const pyramidingPolicy = {}
     bands.forEach(band => pyramidingPolicy[band] = band === 'class' ? 'mode' : 'mean')
+    const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
     const task = {
-        'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
+        operation,
         'params':
             {
                 title: taskTitle,

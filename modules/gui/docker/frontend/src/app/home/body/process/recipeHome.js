@@ -7,6 +7,7 @@ import {connect, select} from 'store'
 import {duplicateRecipe$, initializeRecipe, isRecipeOpen, openRecipe, removeRecipe$, selectRecipe} from './recipe'
 import {map, of, tap} from 'rxjs'
 import {msg} from 'translate'
+import {publishEvent} from 'eventPublisher'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -35,7 +36,7 @@ class _RecipeHome extends React.Component {
                         <RecipeList.Data
                             onSelect={recipeId => this.openRecipeId(recipeId)}
                             onDuplicate={recipeId => this.duplicateRecipe(recipeId)}
-                            onRemove={recipeId => this.removeRecipe(recipeId)}
+                            onRemove={(recipeId, type) => this.removeRecipe(recipeId, type)}
                         />
                     </Content>
                     <BottomBar className={styles.bottomBar}>
@@ -86,8 +87,9 @@ class _RecipeHome extends React.Component {
         )
     }
 
-    removeRecipe(recipeId) {
+    removeRecipe(recipeId, type) {
         const {stream} = this.props
+        publishEvent('remove_recipe', {recipe_type: type})
         stream('REMOVE_RECIPE',
             removeRecipe$(recipeId),
             () => {

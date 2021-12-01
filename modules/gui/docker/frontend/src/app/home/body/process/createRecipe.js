@@ -7,6 +7,7 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {getRecipeType, listRecipeTypes} from './recipeTypes'
 import {msg} from 'translate'
+import {publishEvent} from 'eventPublisher'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -34,6 +35,7 @@ export const closePanel = () =>
         .dispatch()
 
 const createRecipe = (recipeId, type, tabPlaceholder) => {
+    publishEvent('create_recipe', {recipe_type: type})
     setTabType(recipeId, type, tabPlaceholder)
     closePanel()
 }

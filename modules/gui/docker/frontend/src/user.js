@@ -1,6 +1,7 @@
 import {EMPTY, catchError, map, of, switchMap, tap} from 'rxjs'
 import {history} from 'route'
 import {msg} from 'translate'
+import {publishEvent} from 'eventPublisher'
 import {select} from 'store'
 import Notifications from 'widget/notifications'
 import actionBuilder from 'action-builder'
@@ -26,7 +27,8 @@ export const login$ = ({username, password}) => {
             Notifications.error({message: msg('landing.login.error')})
             return EMPTY
         }),
-        map(user => credentialsPosted(user)),
+        tap(user => publishEvent(user ? 'login' : 'login_failed')),
+        map(user => credentialsPosted(user))
     )
 }
 
@@ -35,8 +37,9 @@ export const logout$ = () =>
         tap(() => document.location = '/' /* force full state reset*/)
     )
 
-export const resetPassword$ = ({token, username, password}) =>
+export const resetPassword$ = ({token, username, password, type}) =>
     api.user.resetPassword$(token, username, password).pipe(
+        tap(() => publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')),
         switchMap(() => api.user.login$(username, password)),
         tap(user => {
             credentialsPosted(user)
@@ -65,16 +68,20 @@ export const resetInvalidCredentials = () =>
 
 export const revokeGoogleAccess$ = () =>
     api.user.revokeGoogleAccess$().pipe(
+        tap(() => publishEvent('revoked_google_access')),
         switchMap(() => loadUser$())
     )
 
 export const requestUserAccess$ = () =>
     api.user.getGoogleAccessRequestUrl$(window.location).pipe(
+        tap(() => publishEvent('requested_google_access')),
         tap(({url}) => window.location = url)
     )
 
 export const requestPasswordReset$ = email =>
-    api.user.requestPasswordReset$(email)
+    api.user.requestPasswordReset$(email).pipe(
+        tap(() => publishEvent('requested_password_reset')),
+    )
 
 export const validateToken$ = token =>
     api.user.validateToken$(token).pipe(

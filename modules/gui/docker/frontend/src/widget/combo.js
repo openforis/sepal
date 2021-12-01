@@ -15,7 +15,6 @@ import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import escapeStringRegexp from 'escape-string-regexp'
 import styles from './combo.module.css'
 import withSubscriptions from 'subscription'
 

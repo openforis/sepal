@@ -1,8 +1,9 @@
 import {Button} from 'widget/button'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {forkJoin, map, zip} from 'rxjs'
+import {forkJoin, map, tap, zip} from 'rxjs'
 import {msg} from 'translate'
+import {publishEvent} from 'eventPublisher'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import UserDetails from './userDetails'
@@ -99,9 +100,6 @@ class Users extends React.Component {
                         storageQuota: 20
                     }
                 }
-                // monthlyBudgetInstanceSpending: 1,
-                // monthlyBudgetStorageSpending: 1,
-                // monthlyBudgetStorageQuota: 20
             }
         })
     }
@@ -122,8 +120,12 @@ class Users extends React.Component {
 
         const updateUserDetails$ = ({newUser, username, name, email, organization, admin}) =>
             newUser
-                ? api.user.inviteUser$({username, name, email, organization, admin})
-                : api.user.updateUser$({username, name, email, organization, admin})
+                ? api.user.inviteUser$({username, name, email, organization, admin}).pipe(
+                    tap(() => publishEvent('user_invited'))
+                )
+                : api.user.updateUser$({username, name, email, organization, admin}).pipe(
+                    tap(() => publishEvent('user_updated'))
+                )
 
         const updateUserBudget$ = ({username, instanceSpending, storageSpending, storageQuota}) =>
             api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota})

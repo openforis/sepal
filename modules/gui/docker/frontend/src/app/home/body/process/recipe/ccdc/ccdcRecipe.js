@@ -1,5 +1,6 @@
-import {getRecipeType} from '../../recipeTypes'
+import {getRecipeType} from 'app/home/body/process/recipeTypes'
 import {msg} from 'translate'
+import {publishEvent} from 'eventPublisher'
 import {recipeActionBuilder} from 'app/home/body/process/recipe'
 import {getAllVisualizations as recipeVisualizations} from 'app/home/body/process/recipe/visualizations'
 import {selectFrom} from 'stateUtils'
@@ -187,8 +188,9 @@ const submitRetrieveRecipeTask = recipe => {
     const title = msg(['process.retrieve.form.task.GEE'], {name})
     const visualizations = getAllVisualizations(recipe)
     const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
+    const operation = 'ccdc.asset_export'
     const task = {
-        'operation': 'ccdc.asset_export',
+        operation,
         'params': {
             title,
             description: name,
@@ -199,6 +201,11 @@ const submitRetrieveRecipeTask = recipe => {
             properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
         }
     }
+    publishEvent('submit_task', {
+        recipe_type: recipe.type,
+        destination: 'GEE',
+        data_set_type: recipe.model.dataSetType
+    })
     return api.tasks.submit$(task).subscribe()
 }
 

@@ -63,9 +63,9 @@ class SetPassword extends React.Component {
     }
 
     resetPassword({username, password}) {
-        const {stream} = this.props
+        const {stream, type} = this.props
         const token = query().token
-        stream('RESET_PASSWORD', resetPassword$({token, username, password}))
+        stream('RESET_PASSWORD', resetPassword$({token, username, password, type}))
     }
 
     render() {

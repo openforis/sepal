@@ -1,6 +1,7 @@
-import {getRecipeType} from '../../recipeTypes'
+import {getRecipeType} from 'app/home/body/process/recipeTypes'
 import {msg} from 'translate'
-import {recipeActionBuilder} from '../../recipe'
+import {publishEvent} from 'eventPublisher'
+import {recipeActionBuilder} from 'app/home/body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import _ from 'lodash'
 import api from 'api'
@@ -93,8 +94,9 @@ const submitRetrieveRecipeTask = recipe => {
     const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
     const visualizations = getAllVisualizations(recipe)
         .filter(({bands: visBands}) => visBands.every(band => bands.includes(band)))
+    const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
     const task = {
-        'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
+        operation,
         'params':
             {
                 title: taskTitle,
@@ -108,5 +110,9 @@ const submitRetrieveRecipeTask = recipe => {
                 }
             }
     }
+    publishEvent('submit_task', {
+        recipe_type: recipe.type,
+        destination
+    })
     return api.tasks.submit$(task).subscribe()
 }

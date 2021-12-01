@@ -1,5 +1,7 @@
 import {EarthEngineTileProvider} from '../tileProvider/earthEngineTileProvider'
-import {Subject} from 'rxjs'
+import {Subject, tap} from 'rxjs'
+import {publishEvent} from 'eventPublisher'
+import {selectFrom} from 'stateUtils'
 import EarthEngineLayer from './earthEngineLayer'
 import api from 'api'
 
@@ -21,7 +23,12 @@ export default class EarthEngineImageLayer extends EarthEngineLayer {
             map,
             busy$,
             layerIndex,
-            mapId$: api.gee.preview$(previewRequest),
+            mapId$: api.gee.preview$(previewRequest).pipe(
+                tap(() => publishEvent('ee_image_preview', {
+                    recipe_type: previewRequest.recipe.type,
+                    bands: (selectFrom(previewRequest, 'visParams.bands') || []).join(', ')
+                }))
+            ),
             watchedProps: watchedProps || previewRequest
         })
 
