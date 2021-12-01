@@ -196,7 +196,7 @@ class TrainingData extends React.Component {
                 .flat()
                 .map(point => `${point.x},${point.y},${point.class}`)
         ].flat().join('\n')
-        const filename = `${title}_legend.csv`
+        const filename = `${title}_reference_data.csv`
         downloadCsv(csv, filename)
     }
 
