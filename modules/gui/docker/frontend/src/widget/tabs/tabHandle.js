@@ -87,7 +87,6 @@ class _TabHandle extends React.Component {
                     readOnly={!editing}
                     tooltip={title || placeholder}
                     tooltipPlacement='bottom'
-                    transform={value => value.replace(/[^\w-.]/g, '_')}
                     onClick={() => selected
                         ? this.editTitle()
                         : this.selectTab()
@@ -142,14 +141,15 @@ class _TabHandle extends React.Component {
     saveTitle() {
         const {id, statePath, onTitleChanged} = this.props
         const {title} = this.state
+        const normalizedTitle = title.replace(/[^\w-.]/g, '_')
         const tabPath = toTabPath(id, statePath)
         const selectTab = () => select(tabPath)
         const prevTitle = selectTab().title
-        if (prevTitle !== title) {
-            renameTab(title, tabPath, onTitleChanged)
+        if (prevTitle !== normalizedTitle) {
+            renameTab(normalizedTitle, tabPath, onTitleChanged)
         }
         this.setState({
-            prevTitle: title,
+            prevTitle: normalizedTitle,
             editing: false
         }, this.blur)
     }
