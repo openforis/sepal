@@ -261,14 +261,14 @@ class _SliderDynamics extends React.Component {
         // target position by dragging
         const dragPosition$ = panStart$.pipe(
             switchMap(() => {
-                const {position, previewPosition} = this.state
+                const {position} = this.state
                 return merge(
                     panMove$.pipe(
                         map(event => this.clampPosition(position + event.deltaX)),
                         distinctUntilChanged()
                     ),
                     panEnd$.pipe(
-                        map(() => this.snapPosition(previewPosition))
+                        map(() => this.snapPosition(this.state.previewPosition))
                     )
                 )
             })
