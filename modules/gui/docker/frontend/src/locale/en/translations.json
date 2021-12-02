@@ -124,12 +124,6 @@
       },
       "showDotFiles": {
         "tooltip": "Show files beginning with . (dotfiles)"
-      },
-      "defaultSorting": {
-          "tooltip": "Switch to natural (numeric-aware) sorting"
-      },
-      "naturalSorting": {
-          "tooltip": "Switch to default sorting"
       }
     },
     "info": {

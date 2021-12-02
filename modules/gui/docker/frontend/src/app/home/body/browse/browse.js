@@ -2,11 +2,11 @@ import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {compare} from 'natural-orderby'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {dotSafe} from 'stateUtils'
 import {msg} from 'translate'
+import {orderBy} from 'natural-orderby'
 import Icon from 'widget/icon'
 import Path from 'path'
 import PropTypes from 'prop-types'
@@ -20,17 +20,13 @@ import lookStyles from 'style/look.module.css'
 import styles from './browse.module.css'
 import withSubscriptions from 'subscription'
 
-const naturalSortingComparator = ([name]) => compare()(name)
-
 const TREE = 'files.tree'
 const SHOW_DOT_FILES = 'files.showDotFiles'
-const NATURAL_SORTING = 'files.naturalSorting'
 const ANIMATION_DURATION_MS = 1000
 
 const mapStateToProps = () => ({
     tree: select(TREE) || {},
-    showDotFiles: select(SHOW_DOT_FILES),
-    naturalSorting: select(NATURAL_SORTING),
+    showDotFiles: select(SHOW_DOT_FILES)
 })
 
 const pathSections = path =>
@@ -260,15 +256,9 @@ class Browse extends React.Component {
         }
     }
 
-    showDotFiles(enabled) {
-        actionBuilder('SET_SHOW_DOT_FILES', {enabled})
-            .set(SHOW_DOT_FILES, enabled)
-            .dispatch()
-    }
-
-    naturalSorting(enabled) {
-        actionBuilder('SET_NATURAL_SORTING', {enabled})
-            .set(NATURAL_SORTING, enabled)
+    showDotFiles(show) {
+        actionBuilder('SET_SHOW_DOT_FILES', {show})
+            .set(SHOW_DOT_FILES, show)
             .dispatch()
     }
 
@@ -286,7 +276,8 @@ class Browse extends React.Component {
         const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
         const downloadUrl = selectedFile && api.userFiles.downloadUrl(selectedFile)
         const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
-        const {showDotFiles, naturalSorting} = this.props
+        const {showDotFiles} = this.props
+        let dotFilesTooltip = `browse.controls.${showDotFiles ? 'hideDotFiles' : 'showDotFiles'}.tooltip`
         return (
             <div className={styles.toolbar}>
                 <ButtonGroup>
@@ -294,17 +285,8 @@ class Browse extends React.Component {
                         chromeless
                         size='large'
                         shape='circle'
-                        icon={naturalSorting ? 'sort-numeric-down' : 'sort-amount-down-alt'}
-                        tooltip={msg(naturalSorting ? 'browse.controls.naturalSorting.tooltip' : 'browse.controls.defaultSorting.tooltip')}
-                        tooltipPlacement='bottom'
-                        onClick={() => this.naturalSorting(!naturalSorting)}
-                    />
-                    <Button
-                        chromeless
-                        size='large'
-                        shape='circle'
                         icon={showDotFiles ? 'eye' : 'eye-slash'}
-                        tooltip={msg(showDotFiles ? 'browse.controls.hideDotFiles.tooltip' : 'browse.controls.showDotFiles.tooltip')}
+                        tooltip={msg(dotFilesTooltip)}
                         tooltipPlacement='bottom'
                         onClick={() => this.showDotFiles(!showDotFiles)}
                     />
@@ -440,12 +422,12 @@ class Browse extends React.Component {
     }
 
     renderListItems(path, items, depth) {
-        const {showDotFiles, naturalSorting} = this.props
+        const {showDotFiles} = this.props
         return items
             ? _.chain(items)
                 .pickBy(file => file)
                 .toPairs()
-                .sortBy(naturalSorting ? naturalSortingComparator : null)
+                .thru(items => orderBy(items, item => item[0], ['asc']))
                 .filter(([fileName]) => showDotFiles || !fileName.startsWith('.'))
                 .map(([fileName, file]) => this.renderListItem(path, depth, fileName, file)).value()
             : null
