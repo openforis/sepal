@@ -215,8 +215,17 @@ class _SliderDynamics extends React.Component {
         })
     }
 
+    getRelativeEventPosition(e) {
+        const {clickTargetOffset, handleWidth} = this.state
+        return this.clampPosition(e.clientX - clickTargetOffset - handleWidth / 2)
+    }
+
     initialize({handleElement, clickTargetElement}) {
         const {addSubscription} = this.props
+
+        this.setState({
+            handleWidth: handleElement.getBoundingClientRect().width
+        })
 
         this.setHandlePositionByValue()
 
@@ -226,8 +235,6 @@ class _SliderDynamics extends React.Component {
             direction: Hammer.DIRECTION_HORIZONTAL,
             threshold: 1
         })
-
-        const clickableArea = new Hammer(clickTargetElement, {threshold: 1})
 
         const mouseMove$ = fromEvent(clickTargetElement, 'mousemove')
         const mouseLeave$ = fromEvent(clickTargetElement, 'mouseleave')
@@ -239,7 +246,7 @@ class _SliderDynamics extends React.Component {
 
         const hoverPosition$ = merge(
             mouseMove$.pipe(
-                map(e => e.clientX - this.state.clickTargetOffset)
+                map(e => this.getRelativeEventPosition(e))
             ),
             mouseLeave$.pipe(
                 mapTo(null)
@@ -247,21 +254,21 @@ class _SliderDynamics extends React.Component {
         )
 
         // target position by clicking
-        const clickPosition$ = fromEvent(clickableArea, 'tap').pipe(
-            map(tap => this.snapPosition(tap.center.x - this.state.clickTargetOffset))
+        const clickPosition$ = fromEvent(clickTargetElement, 'click').pipe(
+            map(e => this.snapPosition(this.getRelativeEventPosition(e)))
         )
 
         // target position by dragging
         const dragPosition$ = panStart$.pipe(
             switchMap(() => {
-                const {position} = this.state
+                const {position, previewPosition} = this.state
                 return merge(
                     panMove$.pipe(
                         map(event => this.clampPosition(position + event.deltaX)),
                         distinctUntilChanged()
                     ),
                     panEnd$.pipe(
-                        map(() => this.snapPosition(this.state.previewPosition))
+                        map(() => this.snapPosition(previewPosition))
                     )
                 )
             })
@@ -273,9 +280,7 @@ class _SliderDynamics extends React.Component {
             panEnd$.pipe(mapTo(false)),
         )
 
-        const targetPosition$ = merge(clickPosition$, dragPosition$).pipe(
-            map(position => Math.round(position))
-        )
+        const targetPosition$ = merge(clickPosition$, dragPosition$)
 
         const handlePosition$ = targetPosition$.pipe(
             withLatestFrom(handleDragging$),
@@ -373,11 +378,9 @@ class _SliderDynamics extends React.Component {
     }
 
     setHandlePosition(position) {
-        if (position >= 0) {
-            position = Math.round(position)
-            if (position !== this.state.position) {
-                this.setState({position})
-            }
+        const {position: currentPosition} = this.state
+        if (position >= 0 && position !== currentPosition) {
+            this.setState({position})
         }
     }
 
@@ -404,8 +407,9 @@ class _SliderDynamics extends React.Component {
 
     setClickTargetOffset() {
         const {clickTarget} = this.props
+        const {clickTargetOffset: currentClickTargetOffset} = this.state
         const clickTargetOffset = Math.trunc(clickTarget.current.getBoundingClientRect().left)
-        if (this.state.clickTargetOffset !== clickTargetOffset) {
+        if (currentClickTargetOffset !== clickTargetOffset) {
             this.setState({clickTargetOffset})
         }
     }

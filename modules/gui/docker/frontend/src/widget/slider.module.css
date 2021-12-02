@@ -90,7 +90,7 @@
     height: var(--handle-height);
     width: var(--handle-width);
     border-radius: var(--handle-radius);
-    transform: rotateZ(45deg);
+    /* transform: rotateZ(45deg); */
     border: none;
 }
 
