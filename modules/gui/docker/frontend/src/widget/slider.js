@@ -210,27 +210,27 @@ class _SliderDynamics extends React.Component {
 
     componentDidMount() {
         this.initialize({
-            handleRef: this.handle.current,
-            clickableAreaRef: this.props.clickTarget.current
+            handleElement: this.handle.current,
+            clickTargetElement: this.props.clickTarget.current
         })
     }
 
-    initialize({handleRef, clickableAreaRef}) {
+    initialize({handleElement, clickTargetElement}) {
         const {addSubscription} = this.props
 
         this.setHandlePositionByValue()
 
-        const handle = new Hammer(handleRef)
+        const handle = new Hammer(handleElement)
         // limit handle movement to horizontal axis
         handle.get('pan').set({
             direction: Hammer.DIRECTION_HORIZONTAL,
             threshold: 1
         })
 
-        const clickableArea = new Hammer(clickableAreaRef, {threshold: 1})
+        const clickableArea = new Hammer(clickTargetElement, {threshold: 1})
 
-        const mouseMove$ = fromEvent(clickableAreaRef, 'mousemove')
-        const mouseLeave$ = fromEvent(clickableAreaRef, 'mouseleave')
+        const mouseMove$ = fromEvent(clickTargetElement, 'mousemove')
+        const mouseLeave$ = fromEvent(clickTargetElement, 'mouseleave')
         const pan$ = fromEvent(handle, 'panstart panmove panend')
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
