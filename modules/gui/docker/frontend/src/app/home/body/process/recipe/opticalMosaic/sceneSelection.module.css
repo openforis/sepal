@@ -117,10 +117,6 @@
     align-items: center;
 }
 
-.info svg {
-    margin-right: 0.4rem;
-}
-
 /* bar */
 
 .bar {
@@ -239,6 +235,6 @@
     }
 }
 
-.details i {
-    margin-right: .5rem;
+.details svg {
+    margin-right: .4rem;
 }

@@ -113,7 +113,6 @@ FormInput.propTypes = {
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     tooltipTrigger: PropTypes.string,
-    transform: PropTypes.func,
     type: PropTypes.string,
     validate: PropTypes.oneOf(['onChange', 'onBlur']),
     onBlur: PropTypes.func,

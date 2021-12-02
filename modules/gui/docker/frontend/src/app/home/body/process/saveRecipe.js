@@ -23,7 +23,8 @@ const mapStateToProps = (state, ownProps) => ({
 class SaveRecipe extends React.Component {
     saveRecipe() {
         const {inputs: {name}, activatable} = this.props
-        this.saveUpdatedRecipe({...activatable.recipe, title: name.value})
+        const title = name.value.replace(/[^\w-.]/g, '_')
+        this.saveUpdatedRecipe({...activatable.recipe, title})
     }
 
     saveUpdatedRecipe(recipe) {
@@ -47,7 +48,6 @@ class SaveRecipe extends React.Component {
                         label={msg('process.saveRecipe.form.name.label')}
                         autoFocus
                         input={name}
-                        transform={value => value.replace(/[^\w-.]/g, '_')}
                         errorMessage
                     />
                 </Layout>

@@ -13,9 +13,9 @@
     overflow: hidden;
 }
 
-/* 
+/*
     [HACK]
-    Image is needed here for constraining dimensions, but already 
+    Image is needed here for constraining dimensions, but already
     displayed as a background (to get autoscaling), thus hidden.
 */
 .thumbnail > * {
@@ -40,9 +40,10 @@
     color: #aaa;
 }
 
-.label i {
+.label svg {
     width: 1.5rem;
     display: inline-block;
+    margin-right: .4rem;
 }
 
 .value {

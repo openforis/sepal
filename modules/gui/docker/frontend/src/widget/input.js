@@ -34,49 +34,10 @@ class _Input extends React.Component {
         this.onClear = this.onClear.bind(this)
     }
 
-    componentDidMount() {
-        const {value} = this.props
-        const start = value.length
-        const end = value.length
-        this.setState({start, end})
-    }
-
-    componentDidUpdate(prevProps, prevState) {
-        const {value} = this.props
-        const input = this.ref.current
-        input.value = value
-        if (this.isSelectionAllowed()) {
-            const {start, end} = this.state
-            if (prevState.start !== start && input.selectionStart !== start) {
-                input.selectionStart = start
-            }
-            if (prevState.end !== end && input.selectionEnd !== end) {
-                input.selectionEnd = end
-            }
-        }
-    }
-
-    isSelectionAllowed() {
-        const input = this.ref.current
-        return input && /text|search|password|tel|url/.test(input.type)
-    }
-
-    moveCursorToEnd() {
-        const el = this.ref.current
-        if (typeof el.selectionStart === 'number') {
-            el.selectionStart = el.selectionEnd = el.value.length
-        } else if (typeof el.createTextRange != 'undefined') {
-            el.focus()
-            var range = el.createTextRange()
-            range.collapse(false)
-            range.select()
-        }
-    }
-
     checkProtectedKey(e) {
         return checkProtectedKey(e, ['ArrowLeft', 'ArrowRight', 'Home', 'End'])
     }
-    
+
     render() {
         const {className, disabled, label, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border, onClick} = this.props
         return (
@@ -171,17 +132,7 @@ class _Input extends React.Component {
     }
 
     onChange(e) {
-        const {transform, onChange} = this.props
-        const value = transform
-            ? transform(e.target.value)
-            : e.target.value
-
-        if (this.isSelectionAllowed()) {
-            const start = e.target.selectionStart
-            const end = e.target.selectionEnd
-            this.setState({start, end})
-        }
-        e.target.value = value
+        const {onChange} = this.props
         onChange && onChange(e)
     }
 
@@ -296,7 +247,6 @@ Input.propTypes = {
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     tooltipTrigger: PropTypes.string,
-    transform: PropTypes.func,
     type: PropTypes.string,
     value: PropTypes.any,
     onBlur: PropTypes.func,
@@ -318,9 +268,7 @@ Input.defaultProps = {
 
 class _Textarea extends React.Component {
     state = {
-        focused: false,
-        start: null,
-        end: null
+        focused: false
     }
 
     constructor(props) {
@@ -331,7 +279,7 @@ class _Textarea extends React.Component {
     checkProtectedKey(e) {
         return checkProtectedKey(e, ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'])
     }
-    
+
     render() {
         const {className, disabled, label, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border} = this.props
         return (
