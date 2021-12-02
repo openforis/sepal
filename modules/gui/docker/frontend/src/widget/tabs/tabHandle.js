@@ -142,6 +142,7 @@ class _TabHandle extends React.Component {
         const {id, statePath, onTitleChanged} = this.props
         const {title} = this.state
         const normalizedTitle = title.replace(/[^\w-.]/g, '_')
+        this.titleInput.current.value = normalizedTitle
         const tabPath = toTabPath(id, statePath)
         const selectTab = () => select(tabPath)
         const prevTitle = selectTab().title
