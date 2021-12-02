@@ -2,6 +2,7 @@ import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {compare} from 'natural-orderby'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {dotSafe} from 'stateUtils'
@@ -19,13 +20,17 @@ import lookStyles from 'style/look.module.css'
 import styles from './browse.module.css'
 import withSubscriptions from 'subscription'
 
+const naturalSortingComparator = ([name]) => compare()(name)
+
 const TREE = 'files.tree'
 const SHOW_DOT_FILES = 'files.showDotFiles'
+const NATURAL_SORTING = 'files.naturalSorting'
 const ANIMATION_DURATION_MS = 1000
 
 const mapStateToProps = () => ({
     tree: select(TREE) || {},
-    showDotFiles: select(SHOW_DOT_FILES)
+    showDotFiles: select(SHOW_DOT_FILES),
+    naturalSorting: select(NATURAL_SORTING),
 })
 
 const pathSections = path =>
@@ -255,9 +260,15 @@ class Browse extends React.Component {
         }
     }
 
-    showDotFiles(show) {
-        actionBuilder('SET_SHOW_DOT_FILES', {show})
-            .set(SHOW_DOT_FILES, show)
+    showDotFiles(enabled) {
+        actionBuilder('SET_SHOW_DOT_FILES', {enabled})
+            .set(SHOW_DOT_FILES, enabled)
+            .dispatch()
+    }
+
+    naturalSorting(enabled) {
+        actionBuilder('SET_NATURAL_SORTING', {enabled})
+            .set(NATURAL_SORTING, enabled)
             .dispatch()
     }
 
@@ -275,8 +286,7 @@ class Browse extends React.Component {
         const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
         const downloadUrl = selectedFile && api.userFiles.downloadUrl(selectedFile)
         const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
-        const {showDotFiles} = this.props
-        let dotFilesTooltip = `browse.controls.${showDotFiles ? 'hideDotFiles' : 'showDotFiles'}.tooltip`
+        const {showDotFiles, naturalSorting} = this.props
         return (
             <div className={styles.toolbar}>
                 <ButtonGroup>
@@ -284,8 +294,17 @@ class Browse extends React.Component {
                         chromeless
                         size='large'
                         shape='circle'
+                        icon={naturalSorting ? 'sort-numeric-down' : 'sort-amount-down-alt'}
+                        tooltip={msg(naturalSorting ? 'browse.controls.naturalSorting.tooltip' : 'browse.controls.defaultSorting.tooltip')}
+                        tooltipPlacement='bottom'
+                        onClick={() => this.naturalSorting(!naturalSorting)}
+                    />
+                    <Button
+                        chromeless
+                        size='large'
+                        shape='circle'
                         icon={showDotFiles ? 'eye' : 'eye-slash'}
-                        tooltip={msg(dotFilesTooltip)}
+                        tooltip={msg(showDotFiles ? 'browse.controls.hideDotFiles.tooltip' : 'browse.controls.showDotFiles.tooltip')}
                         tooltipPlacement='bottom'
                         onClick={() => this.showDotFiles(!showDotFiles)}
                     />
@@ -421,12 +440,12 @@ class Browse extends React.Component {
     }
 
     renderListItems(path, items, depth) {
-        const {showDotFiles} = this.props
+        const {showDotFiles, naturalSorting} = this.props
         return items
             ? _.chain(items)
                 .pickBy(file => file)
                 .toPairs()
-                .sortBy(0)
+                .sortBy(naturalSorting ? naturalSortingComparator : null)
                 .filter(([fileName]) => showDotFiles || !fileName.startsWith('.'))
                 .map(([fileName, file]) => this.renderListItem(path, depth, fileName, file)).value()
             : null
