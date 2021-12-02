@@ -24,6 +24,9 @@ const TREE = 'files.tree'
 const SHOW_DOT_FILES = 'files.showDotFiles'
 const ANIMATION_DURATION_MS = 1000
 
+const naturalSortingDirectoriesFirst = items =>
+    orderBy(items, [([_, {dir}]) => dir, ([name]) => name], ['desc', 'asc'])
+
 const mapStateToProps = () => ({
     tree: select(TREE) || {},
     showDotFiles: select(SHOW_DOT_FILES)
@@ -427,7 +430,7 @@ class Browse extends React.Component {
             ? _.chain(items)
                 .pickBy(file => file)
                 .toPairs()
-                .thru(items => orderBy(items, item => item[0], ['asc']))
+                .thru(naturalSortingDirectoriesFirst)
                 .filter(([fileName]) => showDotFiles || !fileName.startsWith('.'))
                 .map(([fileName, file]) => this.renderListItem(path, depth, fileName, file)).value()
             : null
