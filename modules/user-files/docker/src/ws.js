@@ -96,7 +96,7 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
                         dir: stat.isDirectory(),
                         file: stat.isFile(),
                         size: stat.size,
-                        mtime: stat.mtimeNs,
+                        mtime: stat.mtime
                     }))
                     .catch(error => {
                         log.warn(() => [`Ignoring unresolvable path: ${path}`, error])

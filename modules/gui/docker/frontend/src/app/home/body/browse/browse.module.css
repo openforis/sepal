@@ -12,12 +12,19 @@
     align-content: center;
 }
 
+.sortingButtons {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-content: center;
+    margin: .5rem 0;
+}
+
 .info {
     justify-content: center;
 }
 
 .fileList {
-    margin: 2rem 0;
     overflow-x: auto;
     line-height: 2rem;
 }

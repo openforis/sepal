@@ -46,8 +46,8 @@ const fullDate = date =>
 const date = date =>
     moment(date).format('DD MMM YYYY')
 
-const fileSize = (size, {scale, precisionDigits} = {}) =>
-    number({value: size, scale, precisionDigits, unit: 'B'})
+const fileSize = (size, {scale, precisionDigits, unit = 'B'} = {}) =>
+    number({value: size, scale, precisionDigits, unit})
 
 // scale: the magnitude of the input value (e.g. 'k')
 // minScale: the minimum magnitude of the output value (e.g. '')
