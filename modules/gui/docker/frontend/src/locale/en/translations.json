@@ -124,6 +124,10 @@
       },
       "showDotFiles": {
         "tooltip": "Show files beginning with . (dotfiles)"
+      },
+      "sorting": {
+          "date.label": "Date",
+          "alphanumeric.label": "Alphanumeric"
       }
     },
     "info": {

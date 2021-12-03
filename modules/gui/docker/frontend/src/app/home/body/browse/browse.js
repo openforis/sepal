@@ -1,6 +1,7 @@
 import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
+import {Buttons} from 'widget/buttons'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -19,13 +20,11 @@ import format from 'format'
 import lookStyles from 'style/look.module.css'
 import styles from './browse.module.css'
 import withSubscriptions from 'subscription'
+const moment = require('moment')
 
 const TREE = 'files.tree'
 const SHOW_DOT_FILES = 'files.showDotFiles'
 const ANIMATION_DURATION_MS = 1000
-
-const naturalSortingDirectoriesFirst = items =>
-    orderBy(items, [([_, {dir}]) => dir, ([name]) => name], ['desc', 'asc'])
 
 const mapStateToProps = () => ({
     tree: select(TREE) || {},
@@ -44,6 +43,10 @@ const treePath = (path = '/') =>
 class Browse extends React.Component {
 
     userFiles = api.userFiles.userFiles()
+
+    state = {
+        sorting: 'alphanum'
+    }
 
     constructor() {
         super()
@@ -324,28 +327,56 @@ class Browse extends React.Component {
         )
     }
 
+    renderSortingButtons() {
+        const {sorting} = this.state
+        const options = [{
+            label: msg('browse.controls.sorting.date.label'),
+            value: 'date'
+        }, {
+            label: msg('browse.controls.sorting.alphanumeric.label'),
+            value: 'alphanum'
+        }]
+        return (
+            <Buttons
+                chromeless
+                layout='horizontal-nowrap'
+                spacing='none'
+                options={options}
+                selected={sorting}
+                onChange={sorting => this.setSorting(sorting)}
+            />
+        )
+    }
+
+    setSorting(sorting) {
+        this.setState({sorting})
+    }
+
     renderNodeInfo(file) {
         return this.isDirectory(file)
-        // ? this.renderDirectoryInfo(file)
-            ? null
+            ? this.renderDirectoryInfo(file)
             : this.renderFileInfo(file)
     }
 
     renderFileInfo(file) {
+        const info = [
+            format.fileSize(file.size, {unit: 'bytes'}),
+            moment(file.mtime).fromNow()
+        ].join(', ')
         return (
             <span className={styles.fileInfo}>
-                ({format.fileSize(file.size)})
+                {info}
             </span>
         )
     }
 
-    // renderDirectoryInfo({itemCount}) {
-    //     return (
-    //         <span className={styles.fileInfo}>
-    //             ({msg('browse.info.directory', {itemCount})})
-    //         </span>
-    //     )
-    // }
+    renderDirectoryInfo(file) {
+        return (
+            <span className={styles.fileInfo}>
+                {moment(file.mtime).fromNow()}
+            </span>
+        )
+    }
 
     renderIcon(path, fileName, file) {
         return this.isDirectory(file)
@@ -424,13 +455,27 @@ class Browse extends React.Component {
         )
     }
 
+    getSorter() {
+        const {sorting} = this.state
+        const naturalSortingDirectoriesFirst = items =>
+            orderBy(items, [([_, {dir}]) => dir, ([name]) => name], ['desc', 'asc'])
+        const dateSortingDirectoriesFirst = items =>
+            orderBy(items, [([_, {dir}]) => dir, ([_, {mtime}]) => mtime], ['desc', 'desc'])
+        const sortingMap = {
+            alphanum: naturalSortingDirectoriesFirst,
+            date: dateSortingDirectoriesFirst
+        }
+        return sortingMap[sorting]
+    }
+
     renderListItems(path, items, depth) {
         const {showDotFiles} = this.props
+        const sorter = this.getSorter()
         return items
             ? _.chain(items)
                 .pickBy(file => file)
                 .toPairs()
-                .thru(naturalSortingDirectoriesFirst)
+                .thru(sorter)
                 .filter(([fileName]) => showDotFiles || !fileName.startsWith('.'))
                 .map(([fileName, file]) => this.renderListItem(path, depth, fileName, file)).value()
             : null
@@ -444,9 +489,12 @@ class Browse extends React.Component {
                 <TopBar label={msg('home.sections.browse')}>
                     {this.renderToolbar(selected, nothingSelected)}
                 </TopBar>
-                <Content menuPadding horizontalPadding>
+                <Content menuPadding horizontalPadding verticalPadding>
                     <ScrollableContainer>
                         <Scrollable direction='xy'>
+                            <div className={styles.sortingButtons}>
+                                {this.renderSortingButtons()}
+                            </div>
                             <div className={styles.fileList}>
                                 {this.renderList('/', this.props.tree)}
                             </div>
