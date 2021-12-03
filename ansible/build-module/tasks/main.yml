@@ -1,6 +1,8 @@
 ---
 - include_tasks: "../../../modules/{{ module }}/build.yml"
   vars:
-    project_dir: "{{role_path}}/../.."
-    module_dir: "{{role_path}}/../../modules/{{ module }}"
-    build_image_task: "{{role_path}}/../build-image/tasks/main.yml"
+    project_dir: "{{ role_path }}/../.."
+    module_dir: "{{ role_path }}/../../modules/{{ module }}"
+    version: "{{ version }}"
+    git_commit: "{{ git_commit }}"
+    build_image_task: "{{ role_path }}/../build-image/tasks/main.yml"
