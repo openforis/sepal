@@ -127,7 +127,7 @@
       },
       "sorting": {
           "date.label": "Date",
-          "alphanumeric.label": "Alphanumeric"
+          "name.label": "Name"
       }
     },
     "info": {

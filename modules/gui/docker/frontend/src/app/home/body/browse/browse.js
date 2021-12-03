@@ -45,7 +45,7 @@ class Browse extends React.Component {
     userFiles = api.userFiles.userFiles()
 
     state = {
-        sorting: 'alphanum'
+        sorting: 'name'
     }
 
     constructor() {
@@ -333,8 +333,8 @@ class Browse extends React.Component {
             label: msg('browse.controls.sorting.date.label'),
             value: 'date'
         }, {
-            label: msg('browse.controls.sorting.alphanumeric.label'),
-            value: 'alphanum'
+            label: msg('browse.controls.sorting.name.label'),
+            value: 'name'
         }]
         return (
             <Buttons
@@ -462,7 +462,7 @@ class Browse extends React.Component {
         const dateSortingDirectoriesFirst = items =>
             orderBy(items, [([_, {dir}]) => dir, ([_, {mtime}]) => mtime], ['desc', 'desc'])
         const sortingMap = {
-            alphanum: naturalSortingDirectoriesFirst,
+            name: naturalSortingDirectoriesFirst,
             date: dateSortingDirectoriesFirst
         }
         return sortingMap[sorting]
