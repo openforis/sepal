@@ -39,7 +39,7 @@ absolute() {
 
 function build_docker_image() {
     echo "Building Docker image..."
-    docker build -t $IMAGE_NAME $PROJECT_DIR/deploy 1>/dev/null
+    docker build --build-arg BUILD_NUMBER=$BUILD_NUMBER --build-arg GIT_COMMIT=$GIT_COMMIT -t $IMAGE_NAME $PROJECT_DIR/deploy 1>/dev/null
 }
 
 function run_docker_image() {
