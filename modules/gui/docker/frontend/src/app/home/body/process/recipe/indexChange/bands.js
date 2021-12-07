@@ -20,9 +20,15 @@ export const getAvailableBands = recipe => {
         }
     }
     const normalizedDifference = {
-        normalizedDifference: {
+        normalized_difference: {
             dataType: {precision: 'float'},
-            label: 'normalizedDifference'
+            label: 'normalized_difference'
+        }
+    }
+    const ratio = {
+        ratio: {
+            dataType: {precision: 'float'},
+            label: 'ratio'
         }
     }
     const error = hasError(recipe)
@@ -46,6 +52,7 @@ export const getAvailableBands = recipe => {
         ...change,
         ...difference,
         ...normalizedDifference,
+        ...ratio,
         ...error,
         ...confidence
     }
