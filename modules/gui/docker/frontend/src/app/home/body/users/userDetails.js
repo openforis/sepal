@@ -4,20 +4,24 @@ import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {select} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
 import styles from './userDetails.module.css'
 
+const isNoMatchingUser = (id, check) => !(select('users') || []).find(user => user.id !== id && check(user))
 const fields = {
+    id: new Form.Field(),
     username: new Form.Field()
         .notBlank('user.userDetails.form.username.required')
-        .match(/^[a-zA-Z_][a-zA-Z0-9]{0,29}$/, 'user.userDetails.form.username.format'),
+        .match(/^[a-zA-Z_][a-zA-Z0-9]{0,29}$/, 'user.userDetails.form.username.format')
+        .predicate((username, {id}) => isNoMatchingUser(id, user => user.username === username), 'user.userDetails.form.username.unique'),
     name: new Form.Field()
         .notBlank('user.userDetails.form.name.required'),
     email: new Form.Field()
         .notBlank('user.userDetails.form.email.required')
-        .email('user.userDetails.form.email.required'),
+        .email('user.userDetails.form.email.required')
+        .predicate((email, {id}) => isNoMatchingUser(id, user => user.email === email), 'user.userDetails.form.email.unique'),
     organization: new Form.Field()
         .notBlank('user.userDetails.form.organization.required'),
     admin: new Form.Field(),
@@ -40,15 +44,14 @@ const fields = {
 
 const mapStateToProps = (state, ownProps) => {
     const {userDetails} = ownProps
-    const {newUser, username, name, email, organization, admin = false} = userDetails
+    const {id, newUser, username, name, email, organization, admin = false} = userDetails
     const {quota: {budget: {instanceSpending, storageSpending, storageQuota}, budgetUpdateRequest}} = userDetails
     const userRequestInstanceSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageQuotaState = budgetUpdateRequest ? null : false
-
     return {
         values: {
-            newUser, username, name, email, organization, admin, instanceSpending, storageSpending, storageQuota,
+            id, newUser, username, name, email, organization, admin, instanceSpending, storageSpending, storageQuota,
             userRequestInstanceSpendingState, userRequestStorageSpendingState, userRequestStorageQuotaState
         }
     }

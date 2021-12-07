@@ -9,8 +9,13 @@ import React from 'react'
 import UserDetails from './userDetails'
 import UserList from './userList'
 import _ from 'lodash'
+import actionBuilder from 'action-builder'
 import api from 'api'
 import styles from './users.module.css'
+
+const mapStateToProps = state => ({
+    users: state.users || []
+})
 
 const getUserList$ = () => forkJoin(
     api.user.getUserList$(),
@@ -33,12 +38,18 @@ class Users extends React.Component {
     componentDidMount() {
         this.props.stream('LOAD_USER_LIST',
             getUserList$(),
-            users => this.setState({users})
+            users => this.updateUsers(users)
         )
     }
 
+    updateUsers(users) {
+        actionBuilder('UPDATE_USERS', {users})
+            .set('users', users)
+            .dispatch()
+    }
+
     render() {
-        const {users} = this.state
+        const {users} = this.props
         return (
             <div className={styles.container}>
                 <UserList users={users} onSelect={user => this.editUser(user)}/>
@@ -73,17 +84,15 @@ class Users extends React.Component {
     }
 
     editUser(user) {
-        const {username, name, email, organization, admin, quota} = user
+        const {id, username, name, email, organization, admin, quota} = user
         this.setState({
             userDetails: {
+                id,
                 username,
                 name,
                 email,
                 organization,
                 admin,
-                // monthlyBudgetInstanceSpending: budget.instanceSpending,
-                // monthlyBudgetStorageSpending: budget.storageSpending,
-                // monthlyBudgetStorageQuota: budget.storageQuota,
                 quota
             }
         })
@@ -130,32 +139,31 @@ class Users extends React.Component {
         const updateUserBudget$ = ({username, instanceSpending, storageSpending, storageQuota}) =>
             api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota})
 
-        const updateLocalState = userDetails =>
-            this.setState(({users}) => {
-                if (userDetails) {
-                    const index = users.findIndex(({username}) => username === userDetails.username)
-                    index === -1
-                        ? users.push(userDetails)
-                        : users[index] = {
-                            ...userDetails,
-                            // Make sure current spending is taken from previous details if not provided in the update.
-                            quota: _.merge(users[index].quota, userDetails.quota)
-                        }
-                }
-                return {users}
-            })
+        const updateUserDetails = userDetails => {
+            const users = [...this.props.users || []]
+            if (userDetails) {
+                const index = users.findIndex(({username}) => username === userDetails.username)
+                index === -1
+                    ? users.push(userDetails)
+                    : users[index] = {
+                        ...userDetails,
+                        // Make sure current spending is taken from previous details if not provided in the update.
+                        quota: _.merge(users[index].quota, userDetails.quota)
+                    }
+                this.updateUsers(users)
+            }
+        }
 
-        const removeFromLocalState = userDetails =>
-            this.setState(({users}) => {
-                if (userDetails) {
-                    _.remove(users, ({username}) => username === userDetails.username)
-                }
-                return {users}
-            })
+        const removeFromLocalState = userDetails => {
+            const users = {...this.props.users || {}}
+            if (userDetails) {
+                this.updateUsers(users.filter(({username}) => username !== userDetails.username))
+            }
+        }
 
         this.cancelUser()
 
-        updateLocalState({
+        updateUserDetails({
             username: userDetails.username,
             name: userDetails.name,
             email: userDetails.email,
@@ -172,7 +180,7 @@ class Users extends React.Component {
         this.props.stream('UPDATE_USER',
             update$(userDetails),
             userDetails => {
-                updateLocalState(userDetails)
+                updateUserDetails(userDetails)
                 Notifications.success({message: msg('user.userDetails.update.success')})
             },
             error => {
@@ -193,5 +201,5 @@ Users.propTypes = {}
 
 export default compose(
     Users,
-    connect()
+    connect(mapStateToProps)
 )

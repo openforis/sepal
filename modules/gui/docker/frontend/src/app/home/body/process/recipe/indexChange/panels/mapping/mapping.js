@@ -84,7 +84,8 @@ class _Mapping extends React.Component {
                 description: 'This recipe',
                 bands: [
                     {name: 'difference', type: 'continuous'},
-                    {name: 'normalizedDifference', type: 'continuous'},
+                    {name: 'normalized_difference', type: 'continuous'},
+                    {name: 'ratio', type: 'continuous'},
                 ]
             }
         ]

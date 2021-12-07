@@ -22,10 +22,20 @@ export const getPreSetVisualizations = recipe => {
     const normalizedDifference = () => {
         return normalize({
             type: 'continuous',
-            bands: ['normalizedDifference'],
+            bands: ['normalized_difference'],
             min: -1,
             max: 1,
             palette: '#a50026, #d73027, #f46d43, #fdae61, #ffffff, #a6d96a, #66bd63, #1a9850, #006837'
+        })
+    }
+
+    const ratio = () => {
+        return normalize({
+            type: 'continuous',
+            bands: ['ratio'],
+            min: -10,
+            max: 10,
+            palette: '#000000, #a50026, #d73027, #f46d43, #fdae61, #ffffff, #a6d96a, #66bd63, #1a9850, #006837'
         })
     }
 
@@ -49,7 +59,8 @@ export const getPreSetVisualizations = recipe => {
             bands: ['confidence'],
             min: 0,
             max: 10,
-            palette: '#042333, #2C3395, #744992, #B15F82, #EB7958, #FBB43D, #E8FA5B'
+            palette: ['#000000', '#480000', '#710101', '#BA0000', '#FF0000', '#FFA500', '#FFFF00',
+                '#79C900', '#006400']
         })
     }
 
@@ -76,6 +87,7 @@ export const getPreSetVisualizations = recipe => {
     return [
         hasDifference ? [difference()] : [],
         hasDifference ? [normalizedDifference()] : [],
+        hasDifference ? [ratio()] : [],
         hasLegend ? [change()] : [],
         hasError ? [error()] : [],
         hasError ? [confidence()] : []
