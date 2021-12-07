@@ -1,0 +1,104 @@
+.verticalWrapper {
+    --border-radius: var(--button-border-radius);
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    border-radius: var(--border-radius);
+    /* flex-grow: 1; */
+    /* flex-shrink: 1; */
+}
+
+.horizontalWrapper {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.dragHandle {
+    width: 1rem;
+    height: 100%;
+    cursor: grab;
+}
+
+.dragHandle::before {
+    content: '.. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..';
+    position: absolute;
+    display: flex;
+    align-items: center;
+    width: 1rem;
+    top: .5rem;
+    bottom: .5rem;
+    left: .25rem;
+    overflow: hidden;
+    line-height: .4rem;
+    color: rgb(40%, 40%, 40%);
+}
+
+.main {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    align-items: center;
+    border-radius: var(--border-radius);
+    padding: .25rem .5rem;
+}
+
+.content {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.draggable {
+    cursor: grab;
+}
+
+.dragging.original {
+    opacity: .5;
+}
+
+.dragging.clone {
+    opacity: .9;
+}
+
+.draggableContainer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    pointer-events: none;
+    cursor: grab;
+}
+
+.draggableClone {
+    position: absolute;
+    top: calc(var(--y) * 1px);
+    left: calc(var(--x) * 1px);
+    width: calc(var(--width) * 1px);
+    height: calc(var(--height) * 1px);
+    display: flex;
+    z-index: 1;
+    opacity: .8;
+}
+
+.draggableClone > * {
+    flex-grow: 1;
+}
+
+.draggablePlaceholder {
+    width: calc(var(--width) * 1px);
+    height: calc(var(--height) * 1px);
+    /* display: flex; */
+    /* z-index: 1; */
+    /* opacity: .8; */
+}
+
+.draggablePlaceholder > * {
+    /* flex-grow: 1; */
+}
