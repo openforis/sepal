@@ -49,7 +49,8 @@ export const getPreSetVisualizations = recipe => {
             bands: ['confidence'],
             min: 0,
             max: 10,
-            palette: '#042333, #2C3395, #744992, #B15F82, #EB7958, #FBB43D, #E8FA5B'
+            palette: ['#000000', '#480000', '#710101', '#BA0000', '#FF0000', '#FFA500', '#FFFF00',
+                '#79C900', '#006400']
         })
     }
 
