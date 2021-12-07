@@ -13,8 +13,8 @@ export class PaletteColor extends React.Component {
                 color={color}
                 size='large'
                 autoPicker
-                tooltip={this.renderTooltip()}
-                tooltipPlacement='top'
+                // tooltip={this.renderTooltip()}
+                // tooltipPlacement='top'
                 edit={edit}
                 onClick={onClick}
                 onChange={value => onChange(value)}
