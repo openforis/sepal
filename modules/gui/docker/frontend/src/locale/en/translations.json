@@ -2846,7 +2846,8 @@
         },
         "email": {
           "label": "Email",
-          "required": "Email is required"
+          "required": "Email is required",
+          "unique": "There is another user with this email"
         },
         "emailNotifications": {
           "disabled.label": "Disabled",
@@ -2904,7 +2905,8 @@
         "username": {
           "format": "Username should start with a letter",
           "label": "Username",
-          "required": "Username is required"
+          "required": "Username is required",
+          "unique": "There is another user with this username"
         }
       },
       "switchingToSEPALGoogleAccount": "Switching to SEPAL's Google Account",
