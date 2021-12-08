@@ -11,7 +11,7 @@ class _DraggableList extends React.Component {
 
     state = {
         items: [],
-        inside: true
+        outside: false
     }
     
     constructor() {
@@ -37,25 +37,30 @@ class _DraggableList extends React.Component {
         this.dragDestination = {}
     }
 
-    render() {
+    isHidden(item) {
         const {dragSource: {value}} = this
         const {itemId} = this.props
-        const {items, inside} = this.state
-        return items
-            .map((item, index) => this.renderItem({item, index, show: inside || itemId(item) !== value}))
+        const {outside} = this.state
+        return outside && itemId(item) === value
     }
 
-    renderItem({item, index, show}) {
+    render() {
+        const {items} = this.state
+        return items
+            .map((item, index) => this.renderItem({item, index, hidden: this.isHidden(item)}))
+    }
+
+    renderItem({item, index, hidden}) {
         const {drag$} = this
-        const {itemId, children} = this.props
+        const {itemId, showHandle, children} = this.props
         const id = itemId(item)
         return (
             <Draggable
                 key={id}
                 drag$={drag$}
                 dragValue={id}
-                show={show}
-            >
+                hidden={hidden}
+                showHandle={showHandle}>
                 {children(item, index)}
             </Draggable>
         )
@@ -75,20 +80,32 @@ class _DraggableList extends React.Component {
         this.setDragSource(value, size)
     }
 
-    onDragMove(value, {coords: {x, y}}) {
-        const {containerElement} = this.props
+    onDragMove(value, {coords: {x, y}, _position}) {
+        const {containerElement, onDragInside, onDragOutside} = this.props
+        const {outside: wasOutside} = this.state
         if (containerElement) {
             const element = document.elementFromPoint(x, y)
-            this.setState({inside: containerElement.contains(element)})
+            const outside = !containerElement.contains(element)
+            if (wasOutside !== outside) {
+                this.setState({outside})
+                outside && onDragOutside && onDragOutside(value)
+                !outside && onDragInside && onDragInside(value)
+            }
         }
     }
 
     onDragEnd(value) {
         const {onDragEnd} = this.props
         const {dragSource: {value: srcValue}, dragDestination: {value: dstValue}} = this
+        const {outside} = this.state
         onDragEnd && onDragEnd(value)
-        if (_.isNil(dstValue)) {
+        if (dstValue == null) {
             this.onRelease(srcValue)
+            if (outside) {
+                this.onReleaseOutside(srcValue)
+            } else {
+                this.onReleaseInside(srcValue)
+            }
         } else {
             this.onDrop(srcValue, dstValue)
         }
@@ -98,16 +115,16 @@ class _DraggableList extends React.Component {
 
     onDragOver(dstValue, {srcValue}) {
         const {onDragOver} = this.props
-        onDragOver && onDragOver(srcValue, dstValue)
-        this.setDragDestination(dstValue)
-        this.move(srcValue, dstValue)
+        if (srcValue !== dstValue) {
+            onDragOver && onDragOver(srcValue, dstValue)
+            this.move(srcValue, dstValue)
+            this.setDragDestination(dstValue)
+        }
     }
 
-    onDragOut(value, {srcValue}) {
+    onDragOut(dstValue, {srcValue}) {
         const {onDragOut} = this.props
-        onDragOut && onDragOut(srcValue, value)
-        this.clearDragDestination()
-        // this.remove(srcValue)
+        onDragOut && onDragOut(srcValue, dstValue)
     }
 
     onDrop(srcValue, dstValue) {
@@ -120,6 +137,16 @@ class _DraggableList extends React.Component {
     onRelease(value) {
         const {onRelease} = this.props
         onRelease && onRelease(value)
+    }
+
+    onReleaseInside(value) {
+        const {onReleaseInside} = this.props
+        onReleaseInside && onReleaseInside(value)
+    }
+
+    onReleaseOutside(value) {
+        const {onReleaseOutside} = this.props
+        onReleaseOutside && onReleaseOutside(value)
     }
 
     move(srcValue, dstValue) {
@@ -170,11 +197,16 @@ DraggableList.propTypes = {
     itemId: PropTypes.func.isRequired,
     items: PropTypes.array.isRequired,
     containerElement: PropTypes.any,
+    showHandle: PropTypes.any,
     onChange: PropTypes.func,
     onDragEnd: PropTypes.func,
+    onDragInside: PropTypes.func,
     onDragOut: PropTypes.func,
+    onDragOutside: PropTypes.func,
     onDragOver: PropTypes.func,
     onDragStart: PropTypes.func,
     onDrop: PropTypes.func,
-    onRelease: PropTypes.func
+    onRelease: PropTypes.func,
+    onReleaseInside: PropTypes.func,
+    onReleaseOutside: PropTypes.func
 }

@@ -44,25 +44,36 @@
     padding: .25rem .5rem;
 }
 
-.content {
-    flex-grow: 1;
-    flex-shrink: 1;
-}
-
 .clickable {
     cursor: pointer;
 }
 
 .draggable {
+    position: relative;
     cursor: grab;
 }
 
 .dragging.original {
-    opacity: .5;
+    opacity: .7;
+}
+
+.dragging.original::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
 }
 
 .dragging.clone {
-    opacity: .9;
+    opacity: 1;
+    box-shadow: 0 0 1rem hsla(0, 0%, 0%, 1);
+}
+
+.dragging.original.hidden {
+    opacity: 0;
 }
 
 .draggableContainer {
@@ -84,21 +95,8 @@
     height: calc(var(--height) * 1px);
     display: flex;
     z-index: 1;
-    opacity: .8;
 }
 
 .draggableClone > * {
     flex-grow: 1;
-}
-
-.draggablePlaceholder {
-    width: calc(var(--width) * 1px);
-    height: calc(var(--height) * 1px);
-    /* display: flex; */
-    /* z-index: 1; */
-    /* opacity: .8; */
-}
-
-.draggablePlaceholder > * {
-    /* flex-grow: 1; */
 }

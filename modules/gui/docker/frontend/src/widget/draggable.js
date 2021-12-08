@@ -15,11 +15,13 @@ class _Draggable extends React.Component {
     placeholder = React.createRef()
 
     state = {
+        // this draggable
         dragging: false,
-        position: null, // position of clone when dragging
-        size: null, // size of current item, used as clone size
-        dragOverValue: null,
-        dragOverSize: null // size of other item, user for placeholder
+        position: null,
+        size: null,
+        // other draggable, when over
+        dragOverSize: null,
+        dragOverValue: null
     }
 
     constructor() {
@@ -58,12 +60,6 @@ class _Draggable extends React.Component {
         return !disabled && dragging
     }
 
-    isDragOver() {
-        const {dragOverValue} = this.state
-        const {dragValue} = this.props
-        return !_.isNil(dragOverValue) && dragOverValue !== dragValue
-    }
-
     isOverItem(element) {
         const draggable = this.draggable.current
         return draggable && draggable.contains(element)
@@ -74,9 +70,14 @@ class _Draggable extends React.Component {
         return placeholder && placeholder.contains(element)
     }
 
-    isOver({x, y}) {
+    isOver({coords: {x, y}}) {
         const element = document.elementFromPoint(x, y)
         return this.isOverItem(element) || this.isOverPlaceholder(element)
+    }
+
+    isHidden() {
+        const {hidden} = this.props
+        return hidden
     }
 
     onMouseOver() {
@@ -97,23 +98,20 @@ class _Draggable extends React.Component {
     }
 
     render() {
-        const {show} = this.props
         return (
             <React.Fragment>
-                {/* {this.isDragOver() ? this.renderPlaceholder() : null} */}
-                {show ? this.renderStatic() : null}
+                {this.renderOriginal()}
                 {this.isDragging() ? this.renderClone() : null}
             </React.Fragment>
         )
     }
 
-    renderStatic() {
+    renderOriginal() {
         return this.renderItem(true)
     }
 
     renderItem(original) {
-        const {showHandle} = this.props
-        const {className} = this.props
+        const {showHandle, className} = this.props
         return (
             <div
                 ref={original ? this.draggable : null}
@@ -121,17 +119,16 @@ class _Draggable extends React.Component {
                     styles.verticalWrapper,
                     original ? styles.original : styles.clone,
                     this.isClickable() ? styles.clickable : null,
-                    (this.isDragging() || this.isDraggable() && !this.isClickable()) ? styles.draggable : null,
-                    this.isDragOver() ? styles.dragOver : null,
+                    (this.isDraggable() && !this.isClickable()) ? styles.draggable : null,
+                    this.isDragging() ? styles.dragging : null,
+                    this.isHidden() ? styles.hidden : null,
                     className
                 ].join(' ')}
                 onClick={this.onClick}
                 onMouseOver={this.onMouseOver}
                 onMouseOut={this.onMouseOut}>
                 {showHandle && this.isDraggable() ? this.renderDragHandle() : null}
-                <div className={styles.content}>
-                    {this.getContent()}
-                </div>
+                {this.getContent()}
             </div>
         )
     }
@@ -165,25 +162,8 @@ class _Draggable extends React.Component {
         }
     }
 
-    renderPlaceholder() {
-        const {dragOverSize} = this.state
-        const {dragPlaceholderClassName} = this.props
-        if (dragOverSize) {
-            return (
-                <div
-                    ref={this.placeholder}
-                    className={[styles.draggablePlaceholder, dragPlaceholderClassName].join(' ')}
-                    style={{
-                        '--width': dragOverSize.width,
-                        '--height': dragOverSize.height
-                    }}>
-                </div>
-            )
-        }
-    }
-
     initializeDraggable() {
-        const {drag$, addSubscription} = this.props
+        const {drag$, dragValue, addSubscription} = this.props
         const draggable = this.draggable.current
 
         const hammer = new Hammer(draggable)
@@ -199,7 +179,7 @@ class _Draggable extends React.Component {
         const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
         const animationFrame$ = interval(0, animationFrameScheduler)
 
-        const dragStart$ = panStart$.pipe(
+        const thisDragStart$ = panStart$.pipe(
             map(({changedPointers}) => changedPointers[0]),
             filter(({pageX, pageY} = {}) => pageX && pageY),
             map(({pageX, pageY}) => {
@@ -226,7 +206,7 @@ class _Draggable extends React.Component {
             })
         )
 
-        const dragMove$ = dragStart$.pipe(
+        const thisDragMove$ = thisDragStart$.pipe(
             switchMap(({offset}) =>
                 animationFrame$.pipe(
                     switchMap(() =>
@@ -247,18 +227,19 @@ class _Draggable extends React.Component {
             )
         )
 
-        const dragEnd$ = panEnd$.pipe(
+        const thisDragEnd$ = panEnd$.pipe(
             delay(50) // prevent click event on drag end
         )
 
+        const otherDrag$ = drag$.pipe(
+            filter(({value}) => value !== dragValue), // ignore self events
+        )
+
         addSubscription(
-            drag$.pipe(
-                // filter(({value}) => value !== dragValue), // ignore self events
-                // distinctUntilChanged()
-            ).subscribe(this.onOtherDrag),
-            dragStart$.subscribe(this.onDragStart),
-            dragMove$.subscribe(this.onDragMove),
-            dragEnd$.subscribe(this.onDragEnd)
+            thisDragStart$.subscribe(this.onDragStart),
+            thisDragMove$.subscribe(this.onDragMove),
+            thisDragEnd$.subscribe(this.onDragEnd),
+            otherDrag$.subscribe(this.onOtherDrag)
         )
     }
 
@@ -272,8 +253,9 @@ class _Draggable extends React.Component {
 
     onDragMove({coords, position}) {
         const {drag$, dragValue} = this.props
-        drag$ && drag$.next({value: dragValue, dragMove: {coords}})
-        this.setState({position})
+        this.setState({position}, () => {
+            drag$ && drag$.next({value: dragValue, dragMove: {coords, position}})
+        })
     }
 
     onDragEnd() {
@@ -292,47 +274,44 @@ class _Draggable extends React.Component {
 
     // other draggable
 
-    onOtherDrag({value, dragStart, dragMove, dragOver, dragEnd}) {
+    onOtherDrag({value, dragStart, dragMove, dragEnd}) {
         dragStart && this.onOtherDragStart(value, dragStart)
         dragMove && this.onOtherDragMove(value, dragMove)
-        dragOver && this.onOtherDragOver(value, dragOver)
         dragEnd && this.onOtherDragEnd(value, dragEnd)
     }
 
     onOtherDragStart(value, {size}) {
         const {onOtherDragStart} = this.props
-        onOtherDragStart && onOtherDragStart(value)
-        this.setState({dragOverSize: size})
+        this.setState({dragOverSize: size}, () => {
+            onOtherDragStart && onOtherDragStart(value)
+        })
     }
 
-    onOtherDragMove(value, {coords}) {
+    onOtherDragMove(value, {coords, position}) {
         const {drag$, dragValue} = this.props
         const {dragOverValue} = this.state
-        if (this.isOver(coords)) {
-            !_.isNil(dragOverValue) || this.setState({dragOverValue: value}, () =>
-                drag$.next({value: dragValue, dragOver: {srcValue: value}})
-            )
+        if (this.isOver({coords, position})) {
+            if (dragOverValue !== value) {
+                this.setState({dragOverValue: value}, () =>
+                    drag$.next({value: dragValue, dragOver: {srcValue: value}})
+                )
+            }
         } else {
-            !_.isNil(dragOverValue) && this.setState({dragOverValue: null}, () =>
-                drag$.next({value: dragValue, dragOut: {srcValue: value}})
-            )
-        }
-    }
-
-    onOtherDragOver(value, {srcValue}) {
-        const {dragOverValue} = this.state
-        const {dragValue} = this.props
-        if (dragOverValue === srcValue && value !== dragValue) {
-            this.setState({dragOverValue: null})
+            if (dragOverValue !== null) {
+                this.setState({dragOverValue: null}, () =>
+                    drag$.next({value: dragValue, dragOut: {srcValue: value}})
+                )
+            }
         }
     }
 
     onOtherDragEnd(value) {
         const {onOtherDragEnd} = this.props
         const {dragOverValue} = this.state
-        onOtherDragEnd && onOtherDragEnd(value)
-        if (!_.isNil(dragOverValue)) {
-            this.setState({dragOverValue: null, dragOverSize: null})
+        if (dragOverValue !== null) {
+            this.setState({dragOverValue: null, dragOverSize: null}, () =>
+                onOtherDragEnd && onOtherDragEnd(value)
+            )
         }
     }
 }
@@ -351,8 +330,8 @@ Draggable.propTypes = {
     dragPlaceholderClassName: PropTypes.string,
     dragTooltip: PropTypes.string,
     dragValue: PropTypes.any,
+    hidden: PropTypes.any,
     main: PropTypes.any,
-    show: PropTypes.any,
     showHandle: PropTypes.any,
     onClick: PropTypes.func,
     onDragEnd: PropTypes.func,
