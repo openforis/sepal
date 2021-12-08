@@ -88,7 +88,8 @@ BlurDetector.propTypes = {
     className: PropTypes.string,
     exclude: PropTypes.oneOfType([
         PropTypes.arrayOf(PropTypes.elementType),
-        PropTypes.elementType
+        PropTypes.elementType,
+        null
     ]),
     style: PropTypes.object,
     onBlur: PropTypes.func
