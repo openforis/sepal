@@ -28,7 +28,7 @@ class FloatingBox extends React.Component {
     }
 
     render() {
-        const {className, alignment, horizontalOverflow, element, children, onBlur} = this.props
+        const {className, alignment, horizontalOverflow, element, elementBlur, children, onBlur} = this.props
         const {contentDimensions: {width}} = this.state
 
         const {left, right} = this.getCorrectedHorizontalPosition()
@@ -47,7 +47,7 @@ class FloatingBox extends React.Component {
             <Portal type='global'>
                 <BlurDetector
                     onBlur={onBlur}
-                    exclude={element}
+                    exclude={elementBlur ? null : element}
                     ref={this.ref}
                     className={[
                         styles.box,
@@ -232,6 +232,7 @@ FloatingBox.propTypes = {
     alignment: PropTypes.oneOf(['fit', 'left', 'center', 'right']),
     className: PropTypes.string,
     element: PropTypes.object,
+    elementBlur: PropTypes.any,
     horizontalOverflow: PropTypes.any,
     placement: PropTypes.oneOf(['above', 'below', 'above-below', 'below-above']),
     onBlur: PropTypes.func
@@ -240,5 +241,6 @@ FloatingBox.propTypes = {
 FloatingBox.defaultProps = {
     alignment: 'left',
     placement: 'below',
-    horizontalOverflow: false
+    horizontalOverflow: false,
+    elementBlur: false
 }
