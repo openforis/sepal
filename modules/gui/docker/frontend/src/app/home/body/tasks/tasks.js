@@ -87,18 +87,17 @@ class Tasks extends React.Component {
     }
 
     renderToolbar() {
-        const {tasks} = this.state
         return (
             <div className={styles.toolbar}>
                 <Button
                     chromeless
                     size='large'
-                    shape='circle'
-                    icon='times'
+                    icon='trash'
+                    label={msg('tasks.removeAll.label')}
                     tooltip={msg('tasks.removeAll.tooltip')}
                     tooltipPlacement='bottom'
                     onClick={() => this.removeAllTasks()}
-                    disabled={!tasks.length}/>
+                    disabled={!this.inactiveTasks().length}/>
             </div>
         )
     }
@@ -135,7 +134,10 @@ class Tasks extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (prevProps.tasks !== this.props.tasks)
+        const {stream} = this.props
+        const notActive = !['REMOVE_TASK', 'REMOVE_ALL_TASKS', 'STOP_TASK']
+            .find(action => stream(action).active)
+        if (prevProps.tasks !== this.props.tasks && notActive)
             this.setState({tasks: this.props.tasks})
     }
 
@@ -144,47 +146,53 @@ class Tasks extends React.Component {
     }
 
     removeTask(task) {
-        const {asyncActionBuilder} = this.props
+        const {stream} = this.props
         const {tasks} = this.state
         this.setState({
             tasks: tasks.filter(t => t.id !== task.id)
         })
-        asyncActionBuilder('REMOVE_TASK',
+        stream('REMOVE_TASK',
             api.tasks.remove$(task.id)
-        ).dispatch()
+        )
     }
 
     removeAllTasks() {
-        const {asyncActionBuilder} = this.props
-        const {tasks} = this.state
-        this.setState(prevState => ({
-            ...prevState,
-            tasks: tasks.filter(t => !['FAILED', 'COMPLETED', 'CANCELED'].includes(t.status))
-        }))
-        asyncActionBuilder('REMOVE_ALL_TASK',
+        const {stream} = this.props
+        this.setState({tasks: this.activeTasks()})
+        stream('REMOVE_ALL_TASK',
             api.tasks.removeAll$()
-        ).dispatch()
+        )
+    }
+
+    activeTasks() {
+        const {tasks} = this.state
+        return tasks.filter(({status}) => ['PENDING', 'ACTIVE'].includes(status))
+    }
+
+    inactiveTasks() {
+        const {tasks} = this.state
+        return tasks.filter(({status}) => !['PENDING', 'ACTIVE'].includes(status))
     }
 
     stopTask(task) {
-        const {asyncActionBuilder} = this.props
+        const {stream} = this.props
         this.updateTaskInState(task, () => ({
             ...task,
             status: 'CANCELED',
             statusDescription: 'Stopping...'
         }))
-        asyncActionBuilder('STOP_TASK',
+        stream('STOP_TASK',
             api.tasks.cancel$(task.id)
-        ).dispatch()
+        )
     }
 
     updateTaskInState(task, onUpdate) {
         const {tasks} = this.state
-        this.setState(prevState => ({
-            ...prevState,
+        this.setState({
             tasks: tasks.map(t =>
-                t.id === task.id ? onUpdate() : t)
-        }))
+                t.id === task.id ? onUpdate() : t
+            )
+        })
     }
 }
 

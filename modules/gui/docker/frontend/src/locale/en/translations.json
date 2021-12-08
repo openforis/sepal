@@ -2719,6 +2719,7 @@
     },
     "none": "You have no background tasks.",
     "removeAll": {
+      "label": "Clear inactive tasks",
       "tooltip": "Remove all completed, failed, or stopped tasks"
     },
     "retrieve": {
