@@ -39,7 +39,7 @@ export class ColorElement extends React.Component {
     }
 
     renderButton() {
-        const {size, tooltip, tooltipPlacement, onClick, onChange, onTooltipVisibleChange} = this.props
+        const {size, tooltip, tooltipPlacement, onTooltipVisibleChange} = this.props
         const {color} = this.state
         return (
             <Button
@@ -54,7 +54,7 @@ export class ColorElement extends React.Component {
                 tooltipDelay={0}
                 tooltipPlacement={tooltipPlacement}
                 tooltipVisible={onTooltipVisibleChange}
-                onClick={(onClick || onChange) && this.onClick}
+                onClick={this.onClick}
             />
         )
     }
@@ -102,23 +102,31 @@ export class ColorElement extends React.Component {
 
     onClick() {
         const {onClick} = this.props
-        this.isInternallyControlled() && this.toggleColorPicker()
+        this.isInternallyControlled() && this.showColorPicker()
         onClick && onClick()
     }
 
     onBlur() {
-        const {onChange} = this.props
-        const {color} = this.state
+        this.updateColor()
         this.isInternallyControlled() && this.hideColorPicker()
-        onChange && onChange(color)
     }
 
     onChange(color) {
         this.setState({color})
     }
 
+    updateColor() {
+        const {onChange} = this.props
+        const {color} = this.state
+        onChange && onChange(color)
+    }
+
     toggleColorPicker() {
         this.setState(({edit}) => ({edit: !edit}))
+    }
+    
+    showColorPicker() {
+        this.setState({edit: true})
     }
     
     hideColorPicker() {

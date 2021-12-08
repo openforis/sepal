@@ -557,17 +557,6 @@
           "add": {
             "tooltip": "Add a color to the palette."
           },
-          "color": {
-            "edit": {
-              "tooltip": "Change color."
-            },
-            "insert": {
-              "tooltip": "Insert color before this one."
-            },
-            "remove": {
-              "tooltip": "Remove color."
-            }
-          },
           "preset": {
             "placeholder": "Load a preset palette...",
             "attribution": "Presets from {url}."

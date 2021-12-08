@@ -1,8 +1,8 @@
 import {Button} from 'widget/button'
+import {ColorElement} from 'widget/colorElement'
 import {DraggableList} from 'widget/draggableList'
 import {Layout} from 'widget/layout'
 import {NoData} from 'widget/noData'
-import {PaletteColor} from './paletteColor'
 import {PalettePreSets} from './palettePreSets'
 import {Textarea} from 'widget/input'
 import {Widget} from 'widget/widget'
@@ -13,7 +13,6 @@ import React from 'react'
 import guid from 'guid'
 
 export class Palette extends React.Component {
-    // drag$ = new Subject()
     ref = React.createRef()
 
     state = {
@@ -28,7 +27,7 @@ export class Palette extends React.Component {
     }
 
     render() {
-        const {edit, showTextInput} = this.state
+        const {showTextInput} = this.state
         return (
             <Layout type='vertical'>
                 <Widget
@@ -42,7 +41,6 @@ export class Palette extends React.Component {
                     {this.renderPalette()}
                     {showTextInput ? this.renderTextInput() : null}
                     <PalettePreSets
-                        disabled={edit}
                         onSelect={this.applyPreset} count={20}
                     />
                 </Widget>
@@ -78,23 +76,26 @@ export class Palette extends React.Component {
                     items={colors}
                     itemId={item => item.id}
                     containerElement={this.ref.current}
+                    onDragStart={() => this.setState({edit: null})}
                     onChange={items => this.updatePalette(items)}
-                    onRelease={id => this.removeColor(id)}>
-                    {({color, id}, index) => (
-                        <PaletteColor
-                            id={id}
+                    onReleaseOutside={id => this.removeColor(id)}>
+                    {({color, id}) => (
+                        <ColorElement
                             color={color}
-                            onInsert={() => this.insertColor(index)}
-                            onRemove={() => this.removeColor(id)}
-                            onClick={() => this.setState(({edit}) => ({edit: edit ? null : id}))}
-                            onChange={color => this.updateColor(color, id)}
+                            size='large'
                             edit={edit === id}
+                            onClick={() => this.onClick(id)}
+                            onChange={color => this.updateColor(color, id)}
                         />
                     )}
                 </DraggableList>
                 {this.renderAddPaletteColorButton()}
             </Layout>
         )
+    }
+
+    onClick(id) {
+        this.setState(({edit}) => ({edit: edit === id ? null : id}))
     }
 
     renderNoData() {
@@ -159,7 +160,6 @@ export class Palette extends React.Component {
     }
 
     updatePalette(palette) {
-        // this.setColors([...palette])
         this.setColors(palette)
     }
 
@@ -194,7 +194,6 @@ export class Palette extends React.Component {
                 color: colorEntry.id === idToUpdate ? color : colorEntry.color
             }))
         )
-        this.setState({edit: null})
     }
 
     setColors(colors) {
