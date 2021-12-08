@@ -4,6 +4,7 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import React from 'react'
 import styles from './options.module.css'
 
@@ -15,6 +16,10 @@ const fields = {
     extrapolateSegment: new Form.Field(),
     extrapolateMaxDays: new Form.Field()
 }
+
+const mapRecipeToProps = recipe => ({
+    dateType: selectFrom(recipe, 'model.date.dateType')
+})
 
 class Options extends React.Component {
     render() {
@@ -34,11 +39,11 @@ class Options extends React.Component {
     }
 
     renderContent() {
-        const {inputs: {gapStrategy}} = this.props
+        const {dateType, inputs: {gapStrategy}} = this.props
         return (
             <Layout>
                 {this.renderHarmonics()}
-                {this.renderGapStrategy()}
+                {dateType !== 'RANGE' ? this.renderGapStrategy() : null}
                 {gapStrategy.value === 'EXTRAPOLATE' && this.renderExtrapolateOptions()}
             </Layout>
         )
@@ -149,5 +154,5 @@ const modelToValues = model => {
 
 export default compose(
     Options,
-    recipeFormPanel({id: 'options', fields, valuesToModel, modelToValues})
+    recipeFormPanel({id: 'options', fields, mapRecipeToProps, valuesToModel, modelToValues})
 )
