@@ -96,7 +96,7 @@ class _Input extends React.Component {
                         ref={this.ref}
                         type={this.isSearchInput() ? 'text' : type}
                         name={name}
-                        defaultValue={value}
+                        value={value}
                         placeholder={placeholder}
                         maxLength={maxLength}
                         tabIndex={disabled || readOnly ? -1 : tabIndex}
@@ -315,7 +315,9 @@ class _Textarea extends React.Component {
                         ref={this.element}
                         className={className}
                         name={name}
-                        value={value || ''}
+                        value={typeof value === 'number' || typeof value === 'boolean' || value
+                            ? value
+                            : ''}
                         placeholder={placeholder}
                         tabIndex={tabIndex}
                         disabled={disabled}

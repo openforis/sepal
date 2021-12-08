@@ -892,10 +892,24 @@
           "form": {
             "date": {
               "label": "Date of slice",
-              "malformed": "Invalid date",
               "range": "The CCDC segments were created with data from {startDate} to {endDate}",
-              "required": "Date is required",
               "tooltip": "The date of the slice"
+            },
+
+            "dateType": {
+              "label": "Date type",
+              "RANGE": "Date range",
+              "SINGLE": "Single date"
+            },
+
+            "endDate": {
+              "label": "End date",
+              "range": "The CCDC segments were created with data from {startDate} to {endDate}",
+              "tooltip": "The end date of the slice"
+            },
+            "startDate": {
+              "label": "Start date",
+              "tooltip": "The start date of the slice"
             }
           },
           "title": "Date",
@@ -2708,6 +2722,7 @@
     },
     "none": "You have no background tasks.",
     "removeAll": {
+      "label": "Clear inactive tasks",
       "tooltip": "Remove all completed, failed, or stopped tasks"
     },
     "retrieve": {
