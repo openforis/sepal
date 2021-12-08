@@ -47,7 +47,7 @@ class FloatingBox extends React.Component {
             <Portal type='global'>
                 <BlurDetector
                     onBlur={onBlur}
-                    excludeElement={element}
+                    exclude={element}
                     ref={this.ref}
                     className={[
                         styles.box,

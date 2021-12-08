@@ -3,6 +3,7 @@ import {filter, fromEvent, merge} from 'rxjs'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import withForwardedRef from 'ref'
 import withSubscriptions from 'subscription'
 
@@ -59,11 +60,19 @@ class BlurDetector extends React.Component {
     }
 
     onEvent(e) {
-        const {excludeElement, onBlur} = this.props
-        const inside = this.ref.current.contains(e.target) || (excludeElement && excludeElement.contains(e.target))
-        if (!inside) {
+        const {onBlur} = this.props
+        if (!this.isRefEvent(e) && !this.isExcludedEvent(e)) {
             onBlur && onBlur(e)
         }
+    }
+
+    isRefEvent(e) {
+        return this.ref.current.contains(e.target)
+    }
+
+    isExcludedEvent(e) {
+        const {exclude} = this.props
+        return _.some(_.castArray(exclude), exclude => exclude && exclude.contains(e.target))
     }
 }
 
@@ -77,7 +86,10 @@ export default compose(
 BlurDetector.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    excludeElement: PropTypes.any,
+    exclude: PropTypes.oneOfType([
+        PropTypes.arrayOf(PropTypes.elementType),
+        PropTypes.elementType
+    ]),
     style: PropTypes.object,
     onBlur: PropTypes.func
 }
