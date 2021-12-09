@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {debounceTime, filter, fromEvent, merge} from 'rxjs'
+import {filter, fromEvent, merge} from 'rxjs'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -57,7 +57,7 @@ class BlurDetector extends React.Component {
                     fromEvent(document, 'focus', {capture: true}),
                 ).pipe(
                     filter(() => this.enabled),
-                    debounceTime(150) // prevent click-through
+                    // debounceTime(150) // prevent click-through
                 ).subscribe(
                     e => this.onEvent(e)
                 )
