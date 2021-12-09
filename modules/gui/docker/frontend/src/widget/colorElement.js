@@ -46,8 +46,10 @@ export class ColorElement extends React.Component {
                 ref={this.ref}
                 air='less'
                 shape='rectangle'
-                size={size}
-                additionalClassName={color ? styles.color : styles.placeholder}
+                additionalClassName={[
+                    color ? styles.color : styles.placeholder,
+                    size ? styles[`size-${size}`] : null
+                ].join(' ')}
                 style={{'--color': color}}
                 tooltip={tooltip}
                 tooltipClickTrigger={isMobile()}
@@ -154,19 +156,19 @@ export class ColorElement extends React.Component {
     }
 }
 
-ColorElement.defaultProps = {
-    color: '',
-    size: 'normal'
-}
- 
 ColorElement.propTypes = {
     color: PropTypes.string,
     edit: PropTypes.any,
     invalid: PropTypes.any,
-    size: PropTypes.any,
+    size: PropTypes.oneOf(['normal', 'tall']),
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any,
     onChange: PropTypes.func,
     onClick: PropTypes.func,
     onTooltipVisibleChange: PropTypes.func
+}
+
+ColorElement.defaultProps = {
+    color: '',
+    size: 'normal'
 }
