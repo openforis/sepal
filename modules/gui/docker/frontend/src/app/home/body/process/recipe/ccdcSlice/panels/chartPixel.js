@@ -24,7 +24,10 @@ const mapRecipeToProps = recipe => ({
     latLng: selectFrom(recipe, 'ui.chartPixel'),
     dateFormat: selectFrom(recipe, 'model.source.dateFormat'),
     baseBands: selectFrom(recipe, 'model.source.baseBands'),
+    dateType: selectFrom(recipe, 'model.date.dateType'),
     date: selectFrom(recipe, 'model.date.date'),
+    startDate: selectFrom(recipe, 'model.date.startDate'),
+    endDate: selectFrom(recipe, 'model.date.endDate'),
     harmonics: selectFrom(recipe, 'model.options.harmonics'),
     gapStrategy: selectFrom(recipe, 'model.options.gapStrategy'),
     extrapolateSegment: selectFrom(recipe, 'model.options.extrapolateSegment'),
@@ -101,9 +104,12 @@ class ChartPixel extends React.Component {
 
     renderChart() {
         const {
-            date, harmonics, gapStrategy, extrapolateSegment, extrapolateMaxDays, dateFormat, inputs: {selectedBand}
+            dateType, date, startDate, endDate, harmonics, gapStrategy, extrapolateSegment, extrapolateMaxDays, dateFormat, inputs: {selectedBand}
         } = this.props
         const {segments} = this.state
+        const [highlightStart, highlightEnd] = dateType === 'RANGE'
+            ? [startDate, endDate]
+            : [date, date]
         const loading = !segments
         if (loading)
             return this.renderSpinner()
@@ -114,9 +120,11 @@ class ChartPixel extends React.Component {
                     dateFormat={dateFormat}
                     segments={segments}
                     highlights={[{
-                        startDate: moment(date, 'YYYY-MM-DD').subtract(0.5, 'days').toDate(),
-                        endDate: moment(date, 'YYYY-MM-DD').add(0.5, 'days').toDate(),
+                        startDate: moment(highlightStart, 'YYYY-MM-DD').subtract(0.5, 'days').toDate(),
+                        endDate: moment(highlightEnd, 'YYYY-MM-DD').add(0.5, 'days').toDate(),
+                        backgroundColor: '#FF000010',
                         color: '#FF0000'
+
                     }]}
                     highlightGaps
                     gapStrategy={gapStrategy}

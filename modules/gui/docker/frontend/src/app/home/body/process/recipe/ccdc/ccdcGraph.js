@@ -229,6 +229,7 @@ export class CCDCGraph extends React.Component {
         const startGap = {
             startDate: new Date(startDate),
             endDate: fromT(segments.tStart[0], dateFormat),
+            backgroundColor: gapColor,
             color: gapColor
         }
         const inBetweenGaps = segments.tEnd
@@ -237,12 +238,14 @@ export class CCDCGraph extends React.Component {
                 return {
                     startDate: fromT(tEnd, dateFormat),
                     endDate: fromT(segments.tStart[segmentIndex + 1], dateFormat),
+                    backgroundColor: gapColor,
                     color: gapColor
                 }
             })
         const endGap = {
             startDate: fromT(segments.tEnd[segments.tEnd.length - 1], dateFormat),
             endDate: new Date(endDate),
+            backgroundColor: gapColor,
             color: gapColor
         }
         return [startGap, ...inBetweenGaps, endGap]
@@ -289,6 +292,7 @@ CCDCGraph.propTypes = {
     harmonics: PropTypes.number,
     highlightGaps: PropTypes.any,
     highlights: PropTypes.arrayOf(PropTypes.shape({
+        backgroundColor: PropTypes.string.isRequired,
         color: PropTypes.string.isRequired,
         endDate: PropTypes.any.isRequired,
         startDate: PropTypes.any.isRequired,
