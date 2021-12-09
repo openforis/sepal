@@ -75,10 +75,10 @@ export class Palette extends React.Component {
                     items={colors}
                     itemId={item => item.id}
                     containerElement={this.ref.current}
+                    itemRenderer={(item, {original}) => this.renderPaletteItem(item, original)}
                     onDragStart={() => this.setState({edit: null})}
                     onChange={items => this.updatePalette(items)}
                     onReleaseOutside={id => this.removeColor(id)}
-                    itemRenderer={(item, {original}) => this.renderPaletteItem(item, original)}
                 />
                 {this.renderAddPaletteColorButton()}
             </Layout>
