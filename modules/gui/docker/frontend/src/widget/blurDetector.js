@@ -11,6 +11,22 @@ const BlurDetectorContext = React.createContext()
 
 const withBlurDetectorContext = withContext(BlurDetectorContext, 'blurDetectorContext')
 
+// const isOver = (e, element) => {
+//     if (e instanceof MouseEvent) {
+//         if (element) {
+//             const {clientX, clientY} = e
+//             const {x, y, width, height} = element.getBoundingClientRect()
+//             return (clientX >= x) && (clientX < x + width) && (clientY >= y) && (clientY < y + height)
+//         }
+//         return false
+//     }
+//     return true
+// }
+
+const isOver = (e, element) => {
+    return element.contains(e.target)
+}
+
 class BlurDetector extends React.Component {
     enabled = true
 
@@ -62,19 +78,20 @@ class BlurDetector extends React.Component {
 
     onEvent(e) {
         const {onBlur} = this.props
-        if (!this.isRefEvent(e) && !this.isExcludedEvent(e)) {
-            onBlur && onBlur(e)
+        if (onBlur && !this.isRefEvent(e) && !this.isExcludedEvent(e)) {
+            onBlur(e)
         }
     }
 
     isRefEvent(e) {
-        return this.ref.current.contains(e.target)
+        return isOver(e, this.ref.current)
     }
 
     isExcludedEvent(e) {
         const {exclude} = this.props
-        return _.some(_.castArray(exclude), exclude => exclude && exclude.contains(e.target))
+        return _.some(_.castArray(exclude), exclude => exclude && isOver(e, exclude))
     }
+
 }
 
 export default compose(
