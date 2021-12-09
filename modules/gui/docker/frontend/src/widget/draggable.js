@@ -36,9 +36,11 @@ class _Draggable extends React.Component {
         this.onDragCancel = this.onDragCancel.bind(this)
     }
 
-    getContent() {
-        const {main, children} = this.props
-        return main || children
+    getContent(original) {
+        const {itemRenderer, item, index} = this.props
+        return _.isFunction(itemRenderer)
+            ? itemRenderer(item, {index, original})
+            : itemRenderer
     }
 
     isDisabled() {
@@ -121,7 +123,7 @@ class _Draggable extends React.Component {
                 onMouseOver={this.onMouseOver}
                 onMouseOut={this.onMouseOut}>
                 {showHandle && this.isDraggable() ? this.renderDragHandle() : null}
-                {this.getContent()}
+                {this.getContent(original)}
             </div>
         )
     }
@@ -330,7 +332,6 @@ export const Draggable = compose(
 
 Draggable.propTypes = {
     drag$: PropTypes.object.isRequired,
-    children: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     dragCloneClassName: PropTypes.string,
@@ -338,7 +339,9 @@ Draggable.propTypes = {
     dragTooltip: PropTypes.string,
     dragValue: PropTypes.any,
     hidden: PropTypes.any,
-    main: PropTypes.any,
+    index: PropTypes.any,
+    item: PropTypes.any,
+    itemRenderer: PropTypes.func,
     showHandle: PropTypes.any,
     onClick: PropTypes.func,
     onDragCancel: PropTypes.func,

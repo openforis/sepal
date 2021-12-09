@@ -10,14 +10,14 @@ class _DraggableList extends React.Component {
     drag$ = new Subject()
 
     state = {
-        items: []
+        items: [],
+        inside: true
     }
     
     constructor() {
         super()
         this.dragSource = {}
         this.dragDestination = {}
-        this.inside = true
         this.onDrag = this.onDrag.bind(this)
     }
 
@@ -28,7 +28,7 @@ class _DraggableList extends React.Component {
     isHidden(item) {
         const {dragSource: {value}} = this
         const {itemId} = this.props
-        const {inside} = this
+        const {inside} = this.state
         return !inside && itemId(item) === value
     }
 
@@ -40,7 +40,7 @@ class _DraggableList extends React.Component {
 
     renderItem({item, index, hidden}) {
         const {drag$} = this
-        const {itemId, showHandle, children} = this.props
+        const {itemRenderer, itemId, showHandle} = this.props
         const id = itemId(item)
         return (
             <Draggable
@@ -48,9 +48,11 @@ class _DraggableList extends React.Component {
                 drag$={drag$}
                 dragValue={id}
                 hidden={hidden}
-                showHandle={showHandle}>
-                {children(item, index)}
-            </Draggable>
+                showHandle={showHandle}
+                itemRenderer={itemRenderer}
+                item={item}
+                index={index}
+            />
         )
     }
 
@@ -71,12 +73,12 @@ class _DraggableList extends React.Component {
 
     onDragMove(value, {coords: {x: otherX, y: otherY}, _position}) {
         const {containerElement, onDragInside, onDragOutside} = this.props
-        const {inside: wasInside} = this
+        const {inside: wasInside} = this.state
         if (containerElement) {
             const {x: thisX, y: thisY, width, height} = containerElement.getBoundingClientRect()
             const inside = (otherX > thisX) && (otherX < thisX + width) && (otherY > thisY) && (otherY < thisY + height)
             if (wasInside !== inside) {
-                this.inside = inside
+                this.setState({inside})
                 !inside && onDragOutside && onDragOutside(value)
                 inside && onDragInside && onDragInside(value)
             }
@@ -86,7 +88,7 @@ class _DraggableList extends React.Component {
     onDragEnd(value) {
         const {onDragEnd} = this.props
         const {dragSource: {value: srcValue}, dragDestination: {value: dstValue}} = this
-        const {inside} = this
+        const {inside} = this.state
         onDragEnd && onDragEnd(value)
 
         if (inside) {
@@ -193,8 +195,8 @@ export const DraggableList = compose(
 )
 
 DraggableList.propTypes = {
-    children: PropTypes.func.isRequired,
     itemId: PropTypes.func.isRequired,
+    itemRenderer: PropTypes.func.isRequired,
     items: PropTypes.array.isRequired,
     containerElement: PropTypes.any,
     showHandle: PropTypes.any,
