@@ -143,10 +143,13 @@ export class ColorElement extends React.Component {
         this.setState({color})
     }
 
-    componentDidUpdate({color: prevColor}) {
-        const {color} = this.props
+    componentDidUpdate({color: prevColor, edit: prevEdit}) {
+        const {color, edit} = this.props
         if (color !== prevColor) {
             this.setState({color})
+        }
+        if (edit === false && prevEdit === true) {
+            this.updateColor()
         }
     }
 }
