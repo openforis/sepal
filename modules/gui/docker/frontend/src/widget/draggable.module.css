@@ -74,6 +74,7 @@
 
 .dragging.original.hidden {
     opacity: 0;
+    width: 0;
 }
 
 .draggableContainer {
