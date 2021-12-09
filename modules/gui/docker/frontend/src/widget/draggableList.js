@@ -10,38 +10,26 @@ class _DraggableList extends React.Component {
     drag$ = new Subject()
 
     state = {
-        items: [],
-        outside: false
+        items: []
     }
     
     constructor() {
         super()
+        this.dragSource = {}
+        this.dragDestination = {}
+        this.inside = true
         this.onDrag = this.onDrag.bind(this)
-        this.clearDragSource()
-        this.clearDragDestination()
-    }
-
-    setDragSource(value, size) {
-        this.dragSource = {size, value}
     }
 
     clearDragSource() {
         this.dragSource = {}
     }
 
-    setDragDestination(value) {
-        this.dragDestination = {value}
-    }
-
-    clearDragDestination() {
-        this.dragDestination = {}
-    }
-
     isHidden(item) {
         const {dragSource: {value}} = this
         const {itemId} = this.props
-        const {outside} = this.state
-        return outside && itemId(item) === value
+        const {inside} = this
+        return !inside && itemId(item) === value
     }
 
     render() {
@@ -66,10 +54,11 @@ class _DraggableList extends React.Component {
         )
     }
 
-    onDrag({value, dragStart, dragMove, dragEnd, dragOver, dragOut}) {
+    onDrag({value, dragStart, dragMove, dragEnd, dragCancel, dragOver, dragOut}) {
         dragStart && this.onDragStart(value, dragStart)
         dragMove && this.onDragMove(value, dragMove)
         dragEnd && this.onDragEnd(value, dragEnd)
+        dragCancel && this.onDragCancel(value, dragCancel)
         dragOver && this.onDragOver(value, dragOver)
         dragOut && this.onDragOut(value, dragOut)
     }
@@ -77,19 +66,19 @@ class _DraggableList extends React.Component {
     onDragStart(value, {size}) {
         const {onDragStart} = this.props
         onDragStart && onDragStart(value)
-        this.setDragSource(value, size)
+        this.dragSource = {size, value}
     }
 
-    onDragMove(value, {coords: {x, y}, _position}) {
+    onDragMove(value, {coords: {x: otherX, y: otherY}, _position}) {
         const {containerElement, onDragInside, onDragOutside} = this.props
-        const {outside: wasOutside} = this.state
+        const {inside: wasInside} = this
         if (containerElement) {
-            const element = document.elementFromPoint(x, y)
-            const outside = !containerElement.contains(element)
-            if (wasOutside !== outside) {
-                this.setState({outside})
-                outside && onDragOutside && onDragOutside(value)
-                !outside && onDragInside && onDragInside(value)
+            const {x: thisX, y: thisY, width, height} = containerElement.getBoundingClientRect()
+            const inside = (otherX > thisX) && (otherX < thisX + width) && (otherY > thisY) && (otherY < thisY + height)
+            if (wasInside !== inside) {
+                this.inside = inside
+                !inside && onDragOutside && onDragOutside(value)
+                inside && onDragInside && onDragInside(value)
             }
         }
     }
@@ -97,20 +86,26 @@ class _DraggableList extends React.Component {
     onDragEnd(value) {
         const {onDragEnd} = this.props
         const {dragSource: {value: srcValue}, dragDestination: {value: dstValue}} = this
-        const {outside} = this.state
+        const {inside} = this
         onDragEnd && onDragEnd(value)
-        if (dstValue == null) {
-            this.onRelease(srcValue)
-            if (outside) {
-                this.onReleaseOutside(srcValue)
-            } else {
+
+        if (inside) {
+            if (dstValue === null) {
                 this.onReleaseInside(srcValue)
+            } else {
+                this.onDrop(srcValue, dstValue)
             }
         } else {
-            this.onDrop(srcValue, dstValue)
+            this.onReleaseOutside(srcValue)
         }
-        this.clearDragSource()
-        this.clearDragDestination()
+
+        this.dragSource = {}
+    }
+
+    onDragCancel(value) {
+        const {onDragCancel} = this.props
+        onDragCancel && onDragCancel(value)
+        this.reloadItems()
     }
 
     onDragOver(dstValue, {srcValue}) {
@@ -118,7 +113,7 @@ class _DraggableList extends React.Component {
         if (srcValue !== dstValue) {
             onDragOver && onDragOver(srcValue, dstValue)
             this.move(srcValue, dstValue)
-            this.setDragDestination(dstValue)
+            this.dragDestination = {value: dstValue}
         }
     }
 
@@ -170,19 +165,24 @@ class _DraggableList extends React.Component {
         return items.findIndex(item => itemId(item) === value)
     }
 
+    reloadItems() {
+        const {items} = this.props
+        this.setState({items})
+    }
+
     componentDidMount() {
         const {drag$, onDrag} = this
-        const {items, addSubscription} = this.props
+        const {addSubscription} = this.props
         addSubscription(
             drag$.subscribe(onDrag)
         )
-        this.setState({items})
+        this.reloadItems()
     }
 
     componentDidUpdate({items: prevItems}) {
         const {items} = this.props
         if (!_.isEqual(items, prevItems)) {
-            this.setState({items})
+            this.reloadItems()
         }
     }
 }

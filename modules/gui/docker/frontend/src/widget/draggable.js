@@ -1,6 +1,7 @@
-import {animationFrameScheduler, debounceTime, delay, distinctUntilChanged, filter, fromEvent, interval, map, switchMap} from 'rxjs'
+import {animationFrameScheduler, debounceTime, distinctUntilChanged, filter, fromEvent, interval, map, switchMap} from 'rxjs'
 import {compose} from 'compose'
 import Hammer from 'hammerjs'
+import Keybinding from 'widget/keybinding'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -12,8 +13,7 @@ const CLICKABLE_PAN_THRESHOLD_PX = 10
 
 class _Draggable extends React.Component {
     draggable = React.createRef()
-    placeholder = React.createRef()
-
+    
     state = {
         // this draggable
         dragging: false,
@@ -33,6 +33,7 @@ class _Draggable extends React.Component {
         this.onDragStart = this.onDragStart.bind(this)
         this.onDragMove = this.onDragMove.bind(this)
         this.onDragEnd = this.onDragEnd.bind(this)
+        this.onDragCancel = this.onDragCancel.bind(this)
     }
 
     getContent() {
@@ -60,19 +61,11 @@ class _Draggable extends React.Component {
         return !disabled && dragging
     }
 
-    isOverItem(element) {
+    isOver({coords: {x: otherX, y: otherY}}) {
         const draggable = this.draggable.current
-        return draggable && draggable.contains(element)
-    }
-
-    isOverPlaceholder(element) {
-        const placeholder = this.placeholder.current
-        return placeholder && placeholder.contains(element)
-    }
-
-    isOver({coords: {x, y}}) {
-        const element = document.elementFromPoint(x, y)
-        return this.isOverItem(element) || this.isOverPlaceholder(element)
+        const {x, y, width, height} = draggable.getBoundingClientRect()
+        return (otherX > x) && (otherX < x + width)
+            && (otherY > y) && (otherY < y + height)
     }
 
     isHidden() {
@@ -144,20 +137,22 @@ class _Draggable extends React.Component {
         const {dragCloneClassName} = this.props
         if (position && size) {
             return (
-                <Portal type='global'>
-                    <div className={styles.draggableContainer}>
-                        <div
-                            className={[styles.draggableClone, dragCloneClassName].join(' ')}
-                            style={{
-                                '--x': position.x,
-                                '--y': position.y,
-                                '--width': size.width,
-                                '--height': size.height
-                            }}>
-                            {this.renderItem(false)}
+                <Keybinding keymap={{'Escape': this.onDragCancel}}>
+                    <Portal type='global'>
+                        <div className={styles.draggableContainer}>
+                            <div
+                                className={[styles.draggableClone, dragCloneClassName].join(' ')}
+                                style={{
+                                    '--x': position.x,
+                                    '--y': position.y,
+                                    '--width': size.width,
+                                    '--height': size.height
+                                }}>
+                                {this.renderItem(false)}
+                            </div>
                         </div>
-                    </div>
-                </Portal>
+                    </Portal>
+                </Keybinding>
             )
         }
     }
@@ -228,7 +223,7 @@ class _Draggable extends React.Component {
         )
 
         const thisDragEnd$ = panEnd$.pipe(
-            delay(50) // prevent click event on drag end
+            // delay(50) // prevent click event on drag end
         )
 
         const otherDrag$ = drag$.pipe(
@@ -247,25 +242,37 @@ class _Draggable extends React.Component {
         const {drag$, dragValue, onDragStart} = this.props
         this.setState({dragging: true, position, size}, () => {
             drag$ && drag$.next({value: dragValue, dragStart: {size}})
-            onDragStart && onDragStart({dragValue})
+            onDragStart && onDragStart(dragValue)
         })
     }
 
     onDragMove({coords, position}) {
-        const {drag$, dragValue} = this.props
+        const {drag$, dragValue, onDragMove} = this.props
         this.setState({position}, () => {
             drag$ && drag$.next({value: dragValue, dragMove: {coords, position}})
+            onDragMove && onDragMove(dragValue, coords)
+        })
+    }
+
+    onDragCancel() {
+        const {drag$, dragValue, onDragCancel} = this.props
+        this.setState({dragging: false, position: null, size: null}, () => {
+            drag$ && drag$.next({value: dragValue, dragCancel: true})
+            onDragCancel && onDragCancel(dragValue)
         })
     }
 
     onDragEnd() {
         const {drag$, dragValue, onDragEnd} = this.props
-        this.setState({dragging: false, position: null, size: null}, () => {
-            drag$ && drag$.next({value: dragValue, dragEnd: true})
-            onDragEnd && onDragEnd({dragValue})
-        })
+        const {dragging} = this.state
+        if (dragging) {
+            this.setState({dragging: false, position: null, size: null}, () => {
+                drag$ && drag$.next({value: dragValue, dragEnd: true})
+                onDragEnd && onDragEnd(dragValue)
+            })
+        }
     }
-    
+
     componentDidMount() {
         if (this.isDraggable()) {
             this.initializeDraggable()
@@ -334,7 +341,9 @@ Draggable.propTypes = {
     main: PropTypes.any,
     showHandle: PropTypes.any,
     onClick: PropTypes.func,
+    onDragCancel: PropTypes.func,
     onDragEnd: PropTypes.func,
+    onDragMove: PropTypes.func,
     onDragStart: PropTypes.func,
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func,

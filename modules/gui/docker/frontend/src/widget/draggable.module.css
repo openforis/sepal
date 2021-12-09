@@ -54,7 +54,7 @@
 }
 
 .dragging.original {
-    opacity: .7;
+    opacity: 0;
 }
 
 .dragging.original::before {
@@ -83,8 +83,8 @@
     left: 0;
     right: 0;
     z-index: 2;
-    pointer-events: none;
-    cursor: grab;
+    pointer-events: all;
+    cursor: grabbing;
 }
 
 .draggableClone {
@@ -94,9 +94,20 @@
     width: calc(var(--width) * 1px);
     height: calc(var(--height) * 1px);
     display: flex;
-    z-index: 1;
+}
+
+.draggableClone::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    pointer-events: all;
+    cursor: grabbing;
 }
 
 .draggableClone > * {
-    flex-grow: 1;
+    /* flex-grow: 1; */
 }
