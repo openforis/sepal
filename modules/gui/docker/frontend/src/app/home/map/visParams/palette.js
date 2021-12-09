@@ -63,7 +63,6 @@ export class Palette extends React.Component {
 
     renderPalette() {
         const {input} = this.props
-        const {edit} = this.state
         const colors = input.value || []
         return (
             <Layout
@@ -78,20 +77,32 @@ export class Palette extends React.Component {
                     containerElement={this.ref.current}
                     onDragStart={() => this.setState({edit: null})}
                     onChange={items => this.updatePalette(items)}
-                    onReleaseOutside={id => this.removeColor(id)}>
-                    {({color, id}) => (
-                        <ColorElement
-                            color={color}
-                            size='large'
-                            edit={edit === id}
-                            onClick={() => this.onClick(id)}
-                            onChange={color => this.updateColor(color, id)}
-                        />
-                    )}
-                </DraggableList>
+                    onReleaseOutside={id => this.removeColor(id)}
+                    itemRenderer={(item, {original}) => this.renderPaletteItem(item, original)}
+                />
                 {this.renderAddPaletteColorButton()}
             </Layout>
         )
+    }
+
+    renderPaletteItem({color, id}, original) {
+        const {edit} = this.state
+        return original
+            ? (
+                <ColorElement
+                    color={color}
+                    size='large'
+                    edit={edit === id}
+                    onClick={() => this.onClick(id)}
+                    onChange={color => this.updateColor(color, id)}
+                />
+            )
+            : (
+                <ColorElement
+                    color={color}
+                    size='large'
+                />
+            )
     }
 
     onClick(id) {
@@ -171,27 +182,19 @@ export class Palette extends React.Component {
         this.setState({edit: color.id})
     }
 
-    insertColor(index) {
-        const {input} = this.props
-        const palette = input.value || []
-        const color = this.createColor()
-        this.setColors([...palette.slice(0, index), color, ...palette.slice(index)])
-        this.setState({edit: color.id})
-    }
-
     removeColor(idToRemove) {
         const {input} = this.props
         const palette = input.value || []
         this.setColors(palette.filter(({id}) => id !== idToRemove))
     }
 
-    updateColor(color, idToUpdate) {
+    updateColor(color, id) {
         const {input} = this.props
         const palette = input.value || []
         this.setColors(
             palette.map(colorEntry => ({
                 ...colorEntry,
-                color: colorEntry.id === idToUpdate ? color : colorEntry.color
+                color: colorEntry.id === id ? color : colorEntry.color
             }))
         )
     }
