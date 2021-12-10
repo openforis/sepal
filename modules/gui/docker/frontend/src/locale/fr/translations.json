@@ -535,17 +535,6 @@
           "add": {
             "tooltip": "Ajoutez une palette de couleurs."
           },
-          "color": {
-            "edit": {
-              "tooltip": "Changez la couleur."
-            },
-            "insert": {
-              "tooltip": "Insérer une couleur avant celle-ci."
-            },
-            "remove": {
-              "tooltip": "Enlever la couleur."
-            }
-          },
           "preset": {
             "placeholder": "Sélectionnez une palette prédéfinie...",
             "attribution": "Pré-réglages de {url}."

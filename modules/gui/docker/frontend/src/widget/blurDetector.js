@@ -3,12 +3,29 @@ import {filter, fromEvent, merge} from 'rxjs'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import withForwardedRef from 'ref'
 import withSubscriptions from 'subscription'
 
 const BlurDetectorContext = React.createContext()
 
 const withBlurDetectorContext = withContext(BlurDetectorContext, 'blurDetectorContext')
+
+// const isOver = (e, element) => {
+//     if (e instanceof MouseEvent) {
+//         if (element) {
+//             const {clientX, clientY} = e
+//             const {x, y, width, height} = element.getBoundingClientRect()
+//             return (clientX >= x) && (clientX < x + width) && (clientY >= y) && (clientY < y + height)
+//         }
+//         return false
+//     }
+//     return true
+// }
+
+const isOver = (e, element) => {
+    return element.contains(e.target)
+}
 
 class BlurDetector extends React.Component {
     enabled = true
@@ -39,7 +56,8 @@ class BlurDetector extends React.Component {
                     fromEvent(document, 'touchstart', {capture: true}),
                     fromEvent(document, 'focus', {capture: true}),
                 ).pipe(
-                    filter(() => this.enabled)
+                    filter(() => this.enabled),
+                    // debounceTime(150) // prevent click-through
                 ).subscribe(
                     e => this.onEvent(e)
                 )
@@ -59,12 +77,21 @@ class BlurDetector extends React.Component {
     }
 
     onEvent(e) {
-        const {excludeElement, onBlur} = this.props
-        const inside = this.ref.current.contains(e.target) || (excludeElement && excludeElement.contains(e.target))
-        if (!inside) {
-            onBlur && onBlur(e)
+        const {onBlur} = this.props
+        if (onBlur && !this.isRefEvent(e) && !this.isExcludedEvent(e)) {
+            onBlur(e)
         }
     }
+
+    isRefEvent(e) {
+        return isOver(e, this.ref.current)
+    }
+
+    isExcludedEvent(e) {
+        const {exclude} = this.props
+        return _.some(_.castArray(exclude), exclude => exclude && isOver(e, exclude))
+    }
+
 }
 
 export default compose(
@@ -77,7 +104,11 @@ export default compose(
 BlurDetector.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    excludeElement: PropTypes.any,
+    exclude: PropTypes.oneOfType([
+        PropTypes.arrayOf(PropTypes.elementType),
+        PropTypes.elementType,
+        null
+    ]),
     style: PropTypes.object,
     onBlur: PropTypes.func
 }

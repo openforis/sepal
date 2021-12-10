@@ -1,16 +1,20 @@
 import {Button} from 'widget/button'
+import {ColorElement} from 'widget/colorElement'
+import {DraggableList} from 'widget/draggableList'
 import {Layout} from 'widget/layout'
 import {NoData} from 'widget/noData'
-import {PaletteColor} from './paletteColor'
 import {PalettePreSets} from './palettePreSets'
 import {Textarea} from 'widget/input'
 import {Widget} from 'widget/widget'
 import {msg} from 'translate'
 import Color from 'color'
+import PropTypes from 'prop-types'
 import React from 'react'
 import guid from 'guid'
 
 export class Palette extends React.Component {
+    ref = React.createRef()
+
     state = {
         text: null,
         edit: null,
@@ -23,7 +27,7 @@ export class Palette extends React.Component {
     }
 
     render() {
-        const {edit, showTextInput} = this.state
+        const {showTextInput} = this.state
         return (
             <Layout type='vertical'>
                 <Widget
@@ -37,7 +41,6 @@ export class Palette extends React.Component {
                     {this.renderPalette()}
                     {showTextInput ? this.renderTextInput() : null}
                     <PalettePreSets
-                        disabled={edit}
                         onSelect={this.applyPreset} count={20}
                     />
                 </Widget>
@@ -59,18 +62,51 @@ export class Palette extends React.Component {
     }
 
     renderPalette() {
+        const {input} = this.props
+        const colors = input.value || []
         return (
-            <Layout type='horizontal' spacing='tight' alignment='left' framed>
-                {this.renderPaletteColors()}
+            <Layout
+                ref={this.ref}
+                type='horizontal'
+                spacing='tight'
+                alignment='left'
+                framed>
+                <DraggableList
+                    items={colors}
+                    itemId={item => item.id}
+                    containerElement={this.ref.current}
+                    itemRenderer={(item, {original}) => this.renderPaletteItem(item, original)}
+                    onDragStart={() => this.setState({edit: null})}
+                    onChange={items => this.updatePalette(items)}
+                    onReleaseOutside={id => this.removeColor(id)}
+                />
                 {this.renderAddPaletteColorButton()}
             </Layout>
         )
     }
 
-    renderPaletteColors() {
-        const {input} = this.props
-        const colors = input.value || []
-        return colors.map(({color, id}, index) => this.renderPaletteColor({color, id, index}))
+    renderPaletteItem({color, id}, original) {
+        const {edit} = this.state
+        return original
+            ? (
+                <ColorElement
+                    color={color}
+                    size='tall'
+                    edit={edit === id}
+                    onClick={() => this.onClick(id)}
+                    onChange={color => this.updateColor(color, id)}
+                />
+            )
+            : (
+                <ColorElement
+                    color={color}
+                    size='tall'
+                />
+            )
+    }
+
+    onClick(id) {
+        this.setState(({edit}) => ({edit: edit === id ? null : id}))
     }
 
     renderNoData() {
@@ -78,22 +114,6 @@ export class Palette extends React.Component {
             <NoData message={msg('map.visParams.form.palette.empty')}/>
         )
     }
-
-    renderPaletteColor({color, id, index}) {
-        const {edit} = this.state
-        return (
-            <PaletteColor
-                key={id}
-                color={color}
-                onInsert={() => this.insertColor(index)}
-                onRemove={() => this.removeColor(id)}
-                onClick={() => this.setState(({edit}) => ({edit: edit ? null : id}))}
-                onChange={color => this.updateColor(color, id)}
-                edit={edit === id}
-            />
-        )
-    }
-
     renderAddPaletteColorButton() {
         const {showTextInput} = this.state
         return (
@@ -150,19 +170,15 @@ export class Palette extends React.Component {
         }
     }
 
+    updatePalette(palette) {
+        this.setColors(palette)
+    }
+
     addColor() {
         const {input} = this.props
         const palette = input.value || []
         const color = this.createColor()
         this.setColors([...palette, color])
-        this.setState({edit: color.id})
-    }
-
-    insertColor(index) {
-        const {input} = this.props
-        const palette = input.value || []
-        const color = this.createColor()
-        this.setColors([...palette.slice(0, index), color, ...palette.slice(index)])
         this.setState({edit: color.id})
     }
 
@@ -172,16 +188,15 @@ export class Palette extends React.Component {
         this.setColors(palette.filter(({id}) => id !== idToRemove))
     }
 
-    updateColor(color, idToUpdate) {
+    updateColor(color, id) {
         const {input} = this.props
         const palette = input.value || []
         this.setColors(
             palette.map(colorEntry => ({
                 ...colorEntry,
-                color: colorEntry.id === idToUpdate ? color : colorEntry.color
+                color: colorEntry.id === id ? color : colorEntry.color
             }))
         )
-        this.setState({edit: null})
     }
 
     setColors(colors) {
@@ -221,4 +236,8 @@ export class Palette extends React.Component {
             input.set([])
         }
     }
+}
+
+Palette.propTypes = {
+    input: PropTypes.object.isRequired
 }

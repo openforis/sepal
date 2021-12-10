@@ -12,6 +12,10 @@
     border-color: var(--wireframe-color) !important;
 }
 
+.size-tall {
+    height: 3rem;
+}
+
 .colorPicker {
     margin-top: .5rem;
 }

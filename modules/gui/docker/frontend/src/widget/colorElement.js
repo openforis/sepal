@@ -39,22 +39,24 @@ export class ColorElement extends React.Component {
     }
 
     renderButton() {
-        const {size, tooltip, tooltipPlacement, onClick, onChange, onTooltipVisibleChange} = this.props
+        const {size, tooltip, tooltipPlacement, onTooltipVisibleChange} = this.props
         const {color} = this.state
         return (
             <Button
                 ref={this.ref}
                 air='less'
                 shape='rectangle'
-                size={size}
-                additionalClassName={color ? styles.color : styles.placeholder}
+                additionalClassName={[
+                    color ? styles.color : styles.placeholder,
+                    size ? styles[`size-${size}`] : null
+                ].join(' ')}
                 style={{'--color': color}}
                 tooltip={tooltip}
                 tooltipClickTrigger={isMobile()}
                 tooltipDelay={0}
                 tooltipPlacement={tooltipPlacement}
                 tooltipVisible={onTooltipVisibleChange}
-                onClick={(onClick || onChange) && this.onClick}
+                onClick={this.onClick}
             />
         )
     }
@@ -102,23 +104,31 @@ export class ColorElement extends React.Component {
 
     onClick() {
         const {onClick} = this.props
-        this.isInternallyControlled() && this.toggleColorPicker()
+        this.isInternallyControlled() && this.showColorPicker()
         onClick && onClick()
     }
 
     onBlur() {
-        const {onChange} = this.props
-        const {color} = this.state
+        this.updateColor()
         this.isInternallyControlled() && this.hideColorPicker()
-        onChange && onChange(color)
     }
 
     onChange(color) {
         this.setState({color})
     }
 
+    updateColor() {
+        const {onChange} = this.props
+        const {color} = this.state
+        onChange && onChange(color)
+    }
+
     toggleColorPicker() {
         this.setState(({edit}) => ({edit: !edit}))
+    }
+    
+    showColorPicker() {
+        this.setState({edit: true})
     }
     
     hideColorPicker() {
@@ -135,27 +145,30 @@ export class ColorElement extends React.Component {
         this.setState({color})
     }
 
-    componentDidUpdate({color: prevColor}) {
-        const {color} = this.props
+    componentDidUpdate({color: prevColor, edit: prevEdit}) {
+        const {color, edit} = this.props
         if (color !== prevColor) {
             this.setState({color})
+        }
+        if (edit === false && prevEdit === true) {
+            this.updateColor()
         }
     }
 }
 
-ColorElement.defaultProps = {
-    color: '',
-    size: 'normal'
-}
- 
 ColorElement.propTypes = {
     color: PropTypes.string,
     edit: PropTypes.any,
     invalid: PropTypes.any,
-    size: PropTypes.any,
+    size: PropTypes.oneOf(['normal', 'tall']),
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any,
     onChange: PropTypes.func,
     onClick: PropTypes.func,
     onTooltipVisibleChange: PropTypes.func
+}
+
+ColorElement.defaultProps = {
+    color: '',
+    size: 'normal'
 }
