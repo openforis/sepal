@@ -112,7 +112,6 @@ class _Draggable extends React.Component {
             <div
                 ref={original ? this.draggable : null}
                 className={[
-                    styles.verticalWrapper,
                     original ? styles.original : styles.clone,
                     this.isClickable() ? styles.clickable : null,
                     (this.isDraggable() && !this.isClickable()) ? styles.draggable : null,
