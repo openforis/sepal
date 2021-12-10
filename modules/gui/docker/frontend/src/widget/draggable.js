@@ -185,6 +185,10 @@ class _Draggable extends React.Component {
                     x: pageX - draggableX,
                     y: pageY - draggableY
                 }
+                const coords = {
+                    x: pageX,
+                    y: pageY
+                }
                 const position = {
                     x: draggableX,
                     y: draggableY
@@ -193,7 +197,7 @@ class _Draggable extends React.Component {
                     width,
                     height
                 }
-                return {offset, position, size}
+                return {offset, coords, position, size}
             }),
             share()
         )
@@ -233,10 +237,11 @@ class _Draggable extends React.Component {
         )
     }
 
-    onDragStart({position, size}) {
+    onDragStart({coords, position, size}) {
         const {drag$, dragValue, onDragStart} = this.props
         this.setState({dragging: true, position, size}, () => {
             drag$ && drag$.next({value: dragValue, dragStart: {size}})
+            drag$ && drag$.next({value: dragValue, dragMove: {coords, position}})
             onDragStart && onDragStart(dragValue)
         })
     }
