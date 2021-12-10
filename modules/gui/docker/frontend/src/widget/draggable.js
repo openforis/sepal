@@ -1,4 +1,4 @@
-import {animationFrameScheduler, debounceTime, distinctUntilChanged, filter, fromEvent, interval, map, switchMap} from 'rxjs'
+import {animationFrameScheduler, debounceTime, distinctUntilChanged, filter, fromEvent, interval, map, share, switchMap} from 'rxjs'
 import {compose} from 'compose'
 import Hammer from 'hammerjs'
 import Keybinding from 'widget/keybinding'
@@ -93,6 +93,7 @@ class _Draggable extends React.Component {
     }
 
     render() {
+        // console.log(this.state.position)
         return (
             <React.Fragment>
                 {this.renderOriginal()}
@@ -170,37 +171,31 @@ class _Draggable extends React.Component {
             threshold: this.isClickable() ? CLICKABLE_PAN_THRESHOLD_PX : 0
         })
 
-        const pan$ = fromEvent(hammer, 'panstart panmove panend')
-        const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
-        const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
-        const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
+        const panStart$ = fromEvent(hammer, 'panstart')
+        const panMove$ = fromEvent(hammer, 'panmove')
+        const panEnd$ = fromEvent(hammer, 'panend')
         const animationFrame$ = interval(0, animationFrameScheduler)
 
         const thisDragStart$ = panStart$.pipe(
             map(({changedPointers}) => changedPointers[0]),
             filter(({pageX, pageY} = {}) => pageX && pageY),
             map(({pageX, pageY}) => {
-                const {x: clientX, y: clientY, width, height} = draggable.getBoundingClientRect()
+                const {x: draggableX, y: draggableY, width, height} = draggable.getBoundingClientRect()
                 const offset = {
-                    x: Math.round(pageX - clientX),
-                    y: Math.round(pageY - clientY)
+                    x: pageX - draggableX,
+                    y: pageY - draggableY
                 }
-                return {
-                    coords: {
-                        x: pageX,
-                        y: pageY
-                    },
-                    position: {
-                        x: pageX - offset.x - 1,
-                        y: pageY - offset.y - 1
-                    },
-                    size: {
-                        width,
-                        height
-                    },
-                    offset
+                const position = {
+                    x: draggableX,
+                    y: draggableY
                 }
-            })
+                const size = {
+                    width,
+                    height
+                }
+                return {offset, position, size}
+            }),
+            share()
         )
 
         const thisDragMove$ = thisDragStart$.pipe(
@@ -216,17 +211,15 @@ class _Draggable extends React.Component {
                     map(coords => ({
                         coords,
                         position: {
-                            x: coords.x - offset.x - 1,
-                            y: coords.y - offset.y - 1
+                            x: coords.x - offset.x,
+                            y: coords.y - offset.y
                         }
                     }))
                 )
             )
         )
 
-        const thisDragEnd$ = panEnd$.pipe(
-            // delay(50) // prevent click event on drag end
-        )
+        const thisDragEnd$ = panEnd$
 
         const otherDrag$ = drag$.pipe(
             filter(({value}) => value !== dragValue), // ignore self events
