@@ -2,9 +2,12 @@ import {Form, form} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
+import {TooltipConfirmationButton} from 'widget/safetyButton'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {requestPasswordReset$} from 'user'
 import {select} from 'store'
+import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './userDetails.module.css'
@@ -149,7 +152,15 @@ class UserDetails extends React.Component {
                         {this.isUserRequest() ? this.renderUserRequest() : null}
                     </Layout>
                 </Panel.Content>
-                <Form.PanelButtons/>
+                <Form.PanelButtons>
+                    <TooltipConfirmationButton
+                        label={msg('user.userDetails.resetPassword.label')}
+                        icon='envelope'
+                        tooltip={msg('user.userDetails.resetPassword.tooltip')}
+                        disabled={email.isInvalid()}
+                        onConfirm={() => this.requestPasswordReset(email.value)}
+                    />
+                </Form.PanelButtons>
             </Form.Panel>
         )
     }
@@ -268,6 +279,13 @@ class UserDetails extends React.Component {
     isUserRequest() {
         const {userDetails: {quota: {budgetUpdateRequest}}} = this.props
         return budgetUpdateRequest
+    }
+
+    requestPasswordReset(email) {
+        this.props.stream('REQUEST_PASSWORD_RESET',
+            requestPasswordReset$(email),
+            () => Notifications.success({message: msg('landing.forgot-password.success', {email})})
+        )
     }
 }
 

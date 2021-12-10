@@ -2913,6 +2913,10 @@
           "unique": "There is another user with this username"
         }
       },
+      "resetPassword": {
+          "label": "Reset password",
+          "tooltip": "Send a password reset email to the user."
+      },
       "switchingToSEPALGoogleAccount": "Switching to SEPAL's Google Account",
       "title": "User details",
       "update": {
