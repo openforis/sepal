@@ -201,7 +201,7 @@ class UserDetails extends React.Component {
         return (
             <Form.FieldSet
                 className={styles.monthlyLimits}
-                layout='horizontal'
+                layout='vertical'
                 label={msg('user.userDetails.form.budgetUpdateRequest.label')}>
                 <div className={styles.message}>
                     {budgetUpdateRequest.message}
