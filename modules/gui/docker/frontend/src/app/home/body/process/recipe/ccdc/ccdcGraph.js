@@ -348,25 +348,27 @@ const segmentsData = ({
         return [date, observationByTimestamp[date.getTime()] || null, NaN]
     }
 
+    // TODO: Temporarily disabled. We're getting offset errors
     const interpolate = ({date, prevSegmentIndex, nextSegmentIndex}) => {
-        const t = toT(date, dateFormat)
-        const tStart = segments.tEnd[prevSegmentIndex]
-        const tEnd = segments.tStart[nextSegmentIndex]
-        const days = moment(fromT(tEnd, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
-        const day = moment(fromT(t, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
-        const endWeight = (day + 1) / (days + 1)
-        const startWeight = 1 - endWeight
-        const startCoefs = bandCoefs[prevSegmentIndex]
-        const endCoefs = bandCoefs[nextSegmentIndex]
-        const coefs = sequence(0, 7).map(coefIndex =>
-            startCoefs[coefIndex] * startWeight + endCoefs[coefIndex] * endWeight
-        )
-        const interpolated = slice({coefs, date, dateFormat, harmonics})
-        const rmse = Math.sqrt(
-            Math.pow(bandRmse[prevSegmentIndex] * startWeight, 2)
-            + Math.pow(bandRmse[nextSegmentIndex] * endWeight, 2)
-        )
-        return [date, observationByTimestamp[date.getTime()] || null, [interpolated, rmse]]
+        return [date, observationByTimestamp[date.getTime()] || null, NaN]
+        // const t = toT(date, dateFormat)
+        // const tStart = segments.tEnd[prevSegmentIndex]
+        // const tEnd = segments.tStart[nextSegmentIndex]
+        // const days = moment(fromT(tEnd, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
+        // const day = moment(fromT(t, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
+        // const endWeight = (day + 1) / (days + 1)
+        // const startWeight = 1 - endWeight
+        // const startCoefs = bandCoefs[prevSegmentIndex]
+        // const endCoefs = bandCoefs[nextSegmentIndex]
+        // const coefs = sequence(0, 7).map(coefIndex =>
+        //     startCoefs[coefIndex] * startWeight + endCoefs[coefIndex] * endWeight
+        // )
+        // const interpolated = slice({coefs, date, dateFormat, harmonics})
+        // const rmse = Math.sqrt(
+        //     Math.pow(bandRmse[prevSegmentIndex] * startWeight, 2)
+        //     + Math.pow(bandRmse[nextSegmentIndex] * endWeight, 2)
+        // )
+        // return [date, observationByTimestamp[date.getTime()] || null, [interpolated, rmse]]
     }
 
     const observationByTimestamp = {}
