@@ -57,7 +57,7 @@ class _MapInfoPanel extends React.Component {
                 position: center,
                 label: null,
                 icon: {
-                    path: 'm 1 -1 h 20 v 2 h -20 v 20 h -2 v -20 h -20 v -2 h 20 v -20 h 2 v 20',
+                    path: 'M 1 -1 H 21 V 1 H 1 V 21 H -1 V 1 H -21 V -1 H -1 V -21 H 1 Z',
                     fillColor: 'white',
                     fillOpacity: .75,
                     strokeColor: 'black',
