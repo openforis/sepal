@@ -381,6 +381,12 @@ update () {
     do_with_modules "module_clean module_install" gui
 }
 
+update-gui () {
+    do_with_modules "module_update" gui
+    do_with_modules "module_stop" gui
+    do_with_modules "module_clean module_install" gui
+}
+
 usage () {
     if [ ! -z "$1" ]; then
         echo ""
@@ -394,6 +400,7 @@ usage () {
     echo "   build                        build SEPAL"
     echo "   build-debug                  build SEPAL w/debug enabled"
     echo "   update                       update all npm packages"
+    echo "   update-gui                   update gui npm packages"
     echo "   clean       [<module>...]    clean module(s)/group(s)"
     echo "   status      [<module>...]    check module(s)/group(s)"
     echo "   start       [<module>...]    start module(s)/group(s)"
@@ -476,6 +483,11 @@ case "$1" in
         shift
         enforce_zero_arguments update $#
         update
+        ;;
+    update-gui)
+        shift
+        enforce_zero_arguments update $#
+        update-gui
         ;;
     log)
         shift
