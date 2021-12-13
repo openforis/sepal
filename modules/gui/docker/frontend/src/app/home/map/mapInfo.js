@@ -31,10 +31,13 @@ class _MapInfoPanel extends React.Component {
             view$.pipe(
                 throttleTime(THROTTLE_TIME_MS, null, {leading: true, trailing: true})
             ).subscribe(
-                view => view && this.setState({view})
+                view => {
+                    this.setState({view})
+                    this.updateMarker()
+                }
             ),
             view$.pipe(
-                debounceTime(250)
+                debounceTime(100)
             ).subscribe(
                 ({center}) => this.updateMarker(center)
             )
