@@ -67,7 +67,7 @@ class _Constraint extends React.Component {
                 }
                 onClick={onClick}>
                 <CrudItem
-                    title={imageSpec && imageSpec.description}
+                    title={imageSpec ? imageSpec.description : msg('widget.imageConstraints.image.notSelected')}
                     description={this.toDescription()}
                     unsafeRemove
                     onRemove={() => onRemove()}>
@@ -84,7 +84,10 @@ class _Constraint extends React.Component {
                 label={msg('widget.imageConstraints.image.label')}
                 input={image}
                 options={imageOptions}
-                onChange={({bands}) => bands.length && band.set(bands[0].name)}
+                onChange={({bands}) => band.set(bands.length === 1
+                    ? bands[0].name
+                    : null
+                )}
             />
         )
     }
@@ -244,6 +247,9 @@ class _Constraint extends React.Component {
 
     toDescription() {
         const {inputs: {band, operator, from, fromInclusive, to, toInclusive, value}} = this.props
+        if (!band.value) {
+            return msg('widget.imageConstraints.band.notSelected')
+        }
         const format = input => _.isFinite(parseFloat(input.value)) ? input.value : '?'
         const isInclusive = input => input.value && input.value.length && input.value[0]
         switch (operator.value) {

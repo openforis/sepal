@@ -90,8 +90,8 @@ class _ImageConstraints extends React.Component {
     addConstraint() {
         const {images = []} = this.props
         const id = guid()
-        const image = images.length ? images[0].id : null
-        const band = image && images[0].bands.length ? images[0].bands[0].name : null
+        const image = images.length === 1 ? images[0].id : null
+        const band = image && images[0].bands.length === 1 ? images[0].bands[0].name : null
         const operator = band && images[0].bands[0].type === 'categorical'
             ? 'class'
             : '<'
