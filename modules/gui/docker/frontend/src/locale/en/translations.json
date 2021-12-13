@@ -3110,10 +3110,12 @@
     },
     "imageConstraints": {
       "band": {
-        "label": "Band"
+        "label": "Band",
+        "notSelected": "[No band selected]"
       },
       "image": {
-        "label": "Image"
+        "label": "Image",
+        "notSelected": "[No image selected]"
       },
       "logicalAnd": {
         "tooltip": "All constraints must be true"
