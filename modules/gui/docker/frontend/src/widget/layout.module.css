@@ -5,6 +5,16 @@
     flex-grow: 0;
     flex-shrink: 0;
     overflow: hidden;
+    /* horizontal spacing */
+    --horizontal-spacing-loose: 1.5rem;
+    --horizontal-spacing-normal: 1rem;
+    --horizontal-spacing-compact: .5rem;
+    --horizontal-spacing-tight: 3px; /* under .5rem spacing is not reliable */
+    /* vertical spacing */
+    --vertical-spacing-loose: 3rem;
+    --vertical-spacing-normal: 2rem;
+    --vertical-spacing-compact: 1rem;
+    --vertical-spacing-tight: .5rem;
 }
 
 .layout > .content {
@@ -47,22 +57,22 @@
 /* vertical/spacing */
 
 .layout.vertical.spacing-loose > .content > * + * {
-    margin-top: 3rem;
+    margin-top: var(--vertical-spacing-loose);
 }
 
 .layout.vertical.spacing-normal > .content > * + * {
-    margin-top: 2rem;
+    margin-top: var(--vertical-spacing-normal);
 }
 
 .layout.vertical.spacing-normal-separated > .content > * + * {
-    margin-top: 2rem;
+    margin-top: var(--vertical-spacing-normal);
     overflow: visible;
 }
 
 .layout.vertical.spacing-normal-separated > .content > * + *::before {
     content: '';
     position: absolute;
-    top: -1rem;
+    top: calc(-.5 * var(--vertical-spacing-normal));
     height: 1px;
     left: 0;
     right: 0;
@@ -70,18 +80,18 @@
 }
 
 .layout.vertical.spacing-compact > .content > * + * {
-    margin-top: 1rem;
+    margin-top: var(--vertical-spacing-compact);
 }
 
 .layout.vertical.spacing-compact-separated > .content > * + * {
-    margin-top: 1rem;
+    margin-top: var(--vertical-spacing-compact);
     overflow: visible;
 }
 
 .layout.vertical.spacing-compact-separated > .content > * + *::before {
     content: '';
     position: absolute;
-    top: -.5rem;
+    top: calc(-.5 * var(--vertical-spacing-compact));
     height: 1px;
     left: 0;
     right: 0;
@@ -89,11 +99,11 @@
 }
 
 .layout.vertical.spacing-tight > .content > * + * {
-    margin-top: .5rem;
+    margin-top: var(--vertical-spacing-tight);
 }
 
 .layout.vertical.spacing-none > .content > * + * {
-    margin-top: 0rem;
+    margin-top: 0;
 }
 
 /* vertical/alignment */
@@ -146,56 +156,56 @@
 /* horizontal/spacing */
 
 .layout.horizontal.spacing-loose > .content > * {
-    margin-bottom: 1.5rem;
-    margin-right: 1.5rem;
+    margin-bottom: var(--horizontal-spacing-loose);
+    margin-right: var(--horizontal-spacing-loose);
 }
 
 .layout.horizontal.spacing-normal > .content > * {
-    margin-bottom: 1rem;
-    margin-right: 1rem;
+    margin-bottom: var(--horizontal-spacing-normal);
+    margin-right: var(--horizontal-spacing-normal);
 }
 
 .layout.horizontal.spacing-compact > .content > * {
-    margin-bottom: .5rem;
-    margin-right: .5rem;
+    margin-bottom: var(--horizontal-spacing-compact);
+    margin-right: var(--horizontal-spacing-compact);
 }
 
 .layout.horizontal.spacing-tight > .content > * {
-    margin-bottom: .25rem;
-    margin-right: .25rem;
+    margin-bottom: var(--horizontal-spacing-tight);
+    margin-right: var(--horizontal-spacing-tight);
 }
 
 .layout.horizontal.spacing-none > .content > * {
-    margin-bottom: 0rem;
-    margin-right: 0rem;
+    margin-bottom: 0;
+    margin-right: 0;
 }
 
 /* horizontal/spacing: compensate bottom margin */
 
 .layout.horizontal.spacing-loose > .content {
-    margin-bottom: -1.5rem;
+    margin-bottom: calc(-1 * var(--horizontal-spacing-loose));
 }
 
 .layout.horizontal.spacing-normal > .content {
-    margin-bottom: -1rem;
+    margin-bottom: calc(-1 * var(--horizontal-spacing-normal));
 }
 
 .layout.horizontal.spacing-compact > .content {
-    margin-bottom: -.5rem;
+    margin-bottom: calc(-1 * var(--horizontal-spacing-compact));
 }
 
 .layout.horizontal.spacing-tight > .content {
-    margin-bottom: -.25rem;
+    margin-bottom: calc(-1 * var(--horizontal-spacing-tight));
 }
 
 .layout.horizontal.spacing-none > .content {
-    margin-bottom: 0rem;
+    margin-bottom: 0;
 }
 
 /* horizontal: compensate right margin */
 
 .layout.horizontal > .content > *:last-child {
-    margin-right: 0rem;
+    margin-right: 0;
 }
  
 /* horizontal/alignment */
