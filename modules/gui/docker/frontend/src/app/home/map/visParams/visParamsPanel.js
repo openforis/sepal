@@ -725,7 +725,6 @@ const Band = ({invertable, onBandSelected, bands, label, inputs: {name, inverted
             busyMessage={!bands && msg('map.visParams.bands.loading')}
             additionalButtons={invertable ? [invertedWidget] : []}
             onChange={({value}) => onBandSelected && onBandSelected(value)}
-            autoFocus
         />
     )
 }
