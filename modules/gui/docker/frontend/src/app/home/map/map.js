@@ -192,16 +192,20 @@ class _Map extends React.Component {
 
     setLocationMarker(options) {
         const id = uuid()
+        const remove = () => this.removeMarker(id)
         this.markers[id] = this.withAllMaps(
-            ({map}) => map.setLocationMarker(options, () => this.removeMarker(id))
+            ({map}) => map.setLocationMarker(options, remove)
         )
+        return remove
     }
 
     setAreaMarker(options) {
         const id = uuid()
+        const remove = () => this.removeMarker(id)
         this.markers[id] = this.withAllMaps(
-            ({map}) => map.setAreaMarker(options, () => this.removeMarker(id))
+            ({map}) => map.setAreaMarker(options, remove)
         )
+        return remove
     }
 
     removeMarker(id) {
@@ -658,6 +662,7 @@ class _Map extends React.Component {
             disableDrawingMode: this.disableDrawingMode,
             setLocationMarker: this.setLocationMarker,
             setAreaMarker: this.setAreaMarker,
+            removeMarker: this.removeMarker,
             getGoogle: () => map.getGoogle()
         }
     }
