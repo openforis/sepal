@@ -7,9 +7,9 @@ import {Panel} from 'widget/panel/panel'
 import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
+import {debounceTime, throttleTime} from 'rxjs'
 import {formatCoordinates} from 'coords'
 import {msg} from 'translate'
-import {throttleTime} from 'rxjs'
 import {withMap} from './mapContext'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -32,8 +32,37 @@ class _MapInfoPanel extends React.Component {
                 throttleTime(THROTTLE_TIME_MS, null, {leading: true, trailing: true})
             ).subscribe(
                 view => view && this.setState({view})
+            ),
+            view$.pipe(
+                debounceTime(250)
+            ).subscribe(
+                ({center}) => this.updateMarker(center)
             )
         )
+    }
+
+    componentWillUnmount() {
+        this.updateMarker()
+    }
+
+    updateMarker(center) {
+        const {map} = this.props
+        const {removeMarker} = this
+        removeMarker && removeMarker()
+        if (center) {
+            this.removeMarker = map.setLocationMarker({
+                position: center,
+                label: null,
+                icon: {
+                    path: 'm 1 -1 h 20 v 2 h -20 v 20 h -2 v -20 h -20 v -2 h 20 v -20 h 2 v 20',
+                    fillColor: 'white',
+                    fillOpacity: .75,
+                    strokeColor: 'black',
+                    strokeOpacity: .75,
+                    scale: 1
+                }
+            })
+        }
     }
 
     render() {
