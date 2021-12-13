@@ -14,11 +14,16 @@ const fields = {
     harmonics: new Form.Field(),
     gapStrategy: new Form.Field(),
     extrapolateSegment: new Form.Field(),
-    extrapolateMaxDays: new Form.Field()
+    extrapolateMaxDays: new Form.Field(),
+    breakAnalysisBand: new Form.Field(),
+    breakMagnitudeDirection: new Form.Field(),
+    minBreakConfidence: new Form.Field(),
+    breakSelection: new Form.Field()
 }
 
 const mapRecipeToProps = recipe => ({
-    dateType: selectFrom(recipe, 'model.date.dateType')
+    dateType: selectFrom(recipe, 'model.date.dateType'),
+    baseBands: selectFrom(recipe, 'model.source.baseBands')
 })
 
 class Options extends React.Component {
@@ -45,6 +50,7 @@ class Options extends React.Component {
                 {this.renderHarmonics()}
                 {dateType !== 'RANGE' ? this.renderGapStrategy() : null}
                 {gapStrategy.value === 'EXTRAPOLATE' && this.renderExtrapolateOptions()}
+                {dateType === 'RANGE' ? this.renderBreakOptions() : null}
             </Layout>
         )
     }
@@ -136,6 +142,90 @@ class Options extends React.Component {
         )
     }
 
+    renderBreakOptions() {
+        const {baseBands, inputs: {breakAnalysisBand, breakMagnitudeDirection, minBreakConfidence, breakSelection}} = this.props
+        const bandOptions = baseBands.map(({name}) => ({
+            value: name,
+            label: name
+        }))
+        return (
+            <React.Fragment>
+                <Form.Combo
+                    label={msg('process.ccdcSlice.panel.options.form.breakAnalysisBand.label')}
+                    placeholder={msg('process.ccdcSlice.panel.options.form.breakAnalysisBand.placeholder')}
+                    tooltip={msg('process.ccdcSlice.panel.options.form.breakAnalysisBand.tooltip')}
+                    input={breakAnalysisBand}
+                    allowClear
+                    disabled={!bandOptions.length}
+                    options={bandOptions}
+                />
+                <Form.Buttons
+                    label={msg('process.ccdcSlice.panel.options.form.breakSelection.label')}
+                    tooltip={msg('process.ccdcSlice.panel.options.form.breakSelection.tooltip')}
+                    input={breakSelection}
+                    options={[
+                        {
+                            value: 'FIRST',
+                            label: msg('process.ccdcSlice.panel.options.form.breakSelection.options.FIRST.label'),
+                            tooltip: msg('process.ccdcSlice.panel.options.form.breakSelection.options.FIRST.tooltip')
+                        },
+                        {
+                            value: 'LAST',
+                            label: msg('process.ccdcSlice.panel.options.form.breakSelection.options.LAST.label'),
+                            tooltip: msg('process.ccdcSlice.panel.options.form.breakSelection.options.LAST.tooltip')
+                        },
+                        {
+                            value: 'MAGNITUDE',
+                            label: msg('process.ccdcSlice.panel.options.form.breakSelection.options.MAGNITUDE.label'),
+                            tooltip: msg('process.ccdcSlice.panel.options.form.breakSelection.options.MAGNITUDE.tooltip'),
+                            disabled: !breakAnalysisBand.value
+                        },
+                        {
+                            value: 'CONFIDENCE',
+                            label: msg('process.ccdcSlice.panel.options.form.breakSelection.options.CONFIDENCE.label'),
+                            tooltip: msg('process.ccdcSlice.panel.options.form.breakSelection.options.CONFIDENCE.tooltip'),
+                            disabled: !breakAnalysisBand.value
+                        }
+                    ]}
+                />
+                <Form.Buttons
+                    label={msg('process.ccdcSlice.panel.options.form.breakMagnitudeDirection.label')}
+                    tooltip={msg('process.ccdcSlice.panel.options.form.breakMagnitudeDirection.tooltip')}
+                    input={breakMagnitudeDirection}
+                    disabled={!breakAnalysisBand.value}
+                    options={[
+                        {
+                            value: 'ANY',
+                            label: msg('process.ccdcSlice.panel.options.form.breakMagnitudeDirection.options.ANY.label'),
+                            tooltip: msg('process.ccdcSlice.panel.options.form.breakMagnitudeDirection.options.ANY.tooltip')
+                        },
+                        {
+                            value: 'DECREASE',
+                            label: msg('process.ccdcSlice.panel.options.form.breakMagnitudeDirection.options.DECREASE.label'),
+                            tooltip: msg('process.ccdcSlice.panel.options.form.breakMagnitudeDirection.options.DECREASE.tooltip')
+                        },
+                        {
+                            value: 'INCREASE',
+                            label: msg('process.ccdcSlice.panel.options.form.breakMagnitudeDirection.options.INCREASE.label'),
+                            tooltip: msg('process.ccdcSlice.panel.options.form.breakMagnitudeDirection.options.INCREASE.tooltip')
+                        }
+                    ]}
+                />
+                <Form.Slider
+                    label={msg('process.ccdcSlice.panel.options.form.minBreakConfidence.label')}
+                    tooltip={msg('process.ccdcSlice.panel.options.form.minBreakConfidence.tooltip')}
+                    input={minBreakConfidence}
+                    minValue={0}
+                    maxValue={50}
+                    decimals={1}
+                    ticks={[0, 1, 3, 5, 10, 20, 50]}
+                    scale='log'
+                    info={value => msg('process.ccdcSlice.panel.options.form.minBreakConfidence.value', {value})}
+                    disabled={!breakAnalysisBand.value}
+                />
+            </React.Fragment>
+        )
+    }
 }
 
 Options.propTypes = {}
@@ -148,7 +238,10 @@ const valuesToModel = values => ({
 const modelToValues = model => {
     return ({
         ...model,
-        extrapolateMaxDays: model.extrapolateMaxDays > 365 ? EXTRAPOLATE_MAX_DAYS : model.extrapolateMaxDays
+        extrapolateMaxDays: model.extrapolateMaxDays > 365 ? EXTRAPOLATE_MAX_DAYS : model.extrapolateMaxDays,
+        breakMagnitudeDirection: model.breakMagnitudeDirection || 'ANY',
+        minBreakConfidence: model.minBreakConfidence || 0,
+        breakSelection: model.breakSelection || 'FIRST'
     })
 }
 

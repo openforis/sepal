@@ -30,8 +30,8 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    startDate: selectFrom(recipe, 'model.source.startDate'),
-    endDate: selectFrom(recipe, 'model.source.endDate')
+    segmentsStartDate: selectFrom(recipe, 'model.source.startDate'),
+    segmentsEndDate: selectFrom(recipe, 'model.source.endDate')
 })
 
 class Date extends React.Component {
@@ -54,8 +54,7 @@ class Date extends React.Component {
     }
 
     renderContent() {
-        const {inputs: {dateType}} = this.props
-        const {startDate, endDate} = this.props
+        const {segmentsStartDate, segmentsEndDate, inputs: {dateType}} = this.props
         return (
             <Layout type='vertical'>
                 {this.renderDateType()}
@@ -63,9 +62,9 @@ class Date extends React.Component {
                     ? this.renderDateRange()
                     : this.renderDate()}
 
-                {startDate && endDate
+                {segmentsStartDate && segmentsEndDate
                     ? <p className={styles.dateRange}>
-                        {msg('process.ccdcSlice.panel.date.form.date.range', {startDate, endDate})}
+                        {msg('process.ccdcSlice.panel.date.form.date.range', {segmentsStartDate, segmentsEndDate})}
                     </p>
                     : null}
             </Layout>
@@ -116,14 +115,14 @@ class Date extends React.Component {
     }
 
     renderDate() {
-        const {startDate, inputs: {date}} = this.props
+        const {segmentsStartDate, inputs: {date}} = this.props
         return (
             <Form.DatePicker
                 label={msg('process.ccdcSlice.panel.date.form.date.label')}
                 tooltip={msg('process.ccdcSlice.panel.date.form.date.tooltip')}
                 tooltipPlacement='top'
                 input={date}
-                startDate={startDate || '1982-08-22'}
+                startDate={segmentsStartDate || '1982-08-22'}
                 endDate={moment().add(1, 'year')}
                 errorMessage
             />
@@ -139,31 +138,37 @@ class Date extends React.Component {
     }
 
     defaultDate() {
-        const {startDate, endDate, inputs: {date}} = this.props
-        if (!date.value && startDate && endDate) {
+        const {segmentsStartDate, segmentsEndDate, inputs: {date, startDate, endDate}} = this.props
+        if (!date.value && segmentsStartDate && segmentsEndDate) {
             const middle = moment((
-                moment(startDate, DATE_FORMAT).valueOf()
-                + moment(endDate, DATE_FORMAT).valueOf()
+                moment(segmentsStartDate, DATE_FORMAT).valueOf()
+                + moment(segmentsEndDate, DATE_FORMAT).valueOf()
             ) / 2).format(DATE_FORMAT)
             date.set(middle)
+        }
+        if (!startDate.value && segmentsStartDate) {
+            startDate.set(moment(segmentsStartDate, DATE_FORMAT).format(DATE_FORMAT))
+        }
+        if (!endDate.value && segmentsEndDate) {
+            endDate.set(moment(segmentsEndDate, DATE_FORMAT).format(DATE_FORMAT))
         }
     }
 
     fromDateRange(toDate) {
-        const {startDate, endDate} = this.props
+        const {segmentsStartDate, segmentsEndDate} = this.props
         const dayBeforeToDate = momentDate(toDate).subtract(1, 'day')
         return [
-            startDate || '1982-08-22',
-            minDate(minDate(moment().add(1, 'year'), dayBeforeToDate), endDate)
+            segmentsStartDate || '1982-08-22',
+            minDate(minDate(moment().add(1, 'year'), dayBeforeToDate), segmentsEndDate || moment().add(1, 'year'))
         ]
     }
 
     toDateRange(fromDate) {
-        const {startDate, endDate} = this.props
+        const {segmentsStartDate, segmentsEndDate} = this.props
         const dayAfterFromDate = momentDate(fromDate).add(1, 'day')
         return [
-            maxDate(maxDate('1982-08-22', dayAfterFromDate), startDate),
-            endDate || moment().add(1, 'year')
+            maxDate(maxDate('1982-08-22', dayAfterFromDate), segmentsStartDate || '1982-08-22'),
+            segmentsEndDate || moment().add(1, 'year')
         ]
     }
 

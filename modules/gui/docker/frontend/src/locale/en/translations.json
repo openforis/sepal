@@ -892,7 +892,7 @@
           "form": {
             "date": {
               "label": "Date of slice",
-              "range": "The CCDC segments were created with data from {startDate} to {endDate}",
+              "range": "The CCDC segments were created with data from {segmentsStartDate} to {segmentsEndDate}",
               "tooltip": "The date of the slice"
             },
 
@@ -918,6 +918,51 @@
         "options": {
           "button": "OPT",
           "form": {
+            "breakAnalysisBand": {
+              "label": "Break analysis band",
+              "placeholder": "Select band...",
+              "tooltip": "The band to use when analyzing which breakpoint to provide data for."
+            },
+            "breakMagnitudeDirection": {
+              "options": {
+                "ANY": {
+                  "label": "Any",
+                  "tooltip": "Include all breakpoints independent on their change magnitude direction."
+                },
+                "DECREASE": {
+                  "label": "Decrease",
+                  "tooltip": "Only include breakpoints with a negative break magnitude in the break analysis band."
+                },
+                "INCREASE": {
+                  "label": "Increase",
+                  "tooltip": "Only include breakpoints with an positive break magnitude in the break analysis band."
+                }
+              },
+              "label": "Break magnitude direction",
+              "tooltip": "Specify which breakpoints to filter out, based on weather the break magnitude for the break analysis band decrease or increase."
+            },
+            "breakSelection": {
+              "options": {
+                "CONFIDENCE": {
+                  "label": "Confidence",
+                  "tooltip": "Select the breakpoint with the highest confidence."
+                },
+                "FIRST": {
+                  "label": "First",
+                  "tooltip": "Select the first breakpoint in the date range."
+                },
+                "LAST": {
+                  "label": "Last",
+                  "tooltip": "Select the last breakpoint in the date range."
+                },
+                "MAGNITUDE": {
+                  "label": "Magnitude",
+                  "tooltip": "Select the breakpoint with the highest break magnitude."
+                }
+              },
+              "label": "Break selection",
+              "tooltip": "Specify which of the break points to provide data for."
+            },
             "extrapolateMaxDays": {
               "label": "Max days to extrapolate",
               "unlimited": "all"
@@ -925,16 +970,16 @@
             "extrapolateSegment": {
               "closest": {
                 "label": "Closest",
-                "tooltip": "Extrapolate the segment closest to the date"
+                "tooltip": "Extrapolate the segment closest to the date."
               },
               "label": "Segment to extrapolate",
               "next": {
                 "label": "Next",
-                "tooltip": "Back-extrapolate the segment after the date"
+                "tooltip": "Back-extrapolate the segment after the date."
               },
               "previous": {
                 "label": "Previous",
-                "tooltip": "Extrapolate the segment before the date"
+                "tooltip": "Extrapolate the segment before the date."
               }
             },
             "gapStrategy": {
@@ -955,7 +1000,12 @@
             },
             "harmonics": {
               "label": "Harmonics",
-              "tooltip": "Specify how many harmonics from the CCDC regression model to use when creating the slice"
+              "tooltip": "Specify how many harmonics from the CCDC regression model to use when creating the slice."
+            },
+            "minBreakConfidence": {
+              "label": "Min break confidence",
+              "tooltip": "The minimum confidence of a breakpoint to be included. This is calculated by the break magnitude divided by the RMSE.",
+              "value": "{value} (magnitude/rmse)"
             }
           },
           "title": "CCDC slice options",
@@ -981,6 +1031,10 @@
               "intercept": {
                 "label": "Intercept",
                 "tooltip": "The intercept of the model's linear component"
+              },
+              "breakConfidence": {
+                "label": "Break confidence",
+                "tooltip": "Confidence of break, defined as magnitude/rmse"
               },
               "label": "Band types",
               "magnitude": {

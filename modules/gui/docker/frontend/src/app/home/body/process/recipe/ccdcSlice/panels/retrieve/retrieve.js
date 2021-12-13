@@ -107,6 +107,11 @@ class _Retrieve extends React.Component {
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.magnitude.tooltip')
             },
             {
+                value: 'breakConfidence',
+                label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.breakConfidence.label'),
+                tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.breakConfidence.tooltip')
+            },
+            {
                 value: 'intercept',
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.intercept.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.intercept.tooltip')
@@ -146,7 +151,10 @@ class _Retrieve extends React.Component {
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.amplitude3.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.amplitude3.tooltip')
             }
-        ].filter(({value}) => bandTypes.includes(value))
+        ].filter(({value}) =>
+            bandTypes.includes(value) ||
+            (value === 'breakConfidence' && bandTypes.includes('rmse') && bandTypes.includes('magnitude'))
+        )
         return (
             <Form.Buttons
                 label={msg('process.ccdcSlice.panel.retrieve.form.bandTypes.label')}
