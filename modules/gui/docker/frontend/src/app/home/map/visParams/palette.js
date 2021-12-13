@@ -93,7 +93,6 @@ export class Palette extends React.Component {
                 <ColorElement
                     className={styles.element}
                     color={color}
-                    size='tall'
                     edit={edit === id}
                     onClick={() => this.onClick(id)}
                     onChange={color => this.updateColor(color, id)}
@@ -101,6 +100,7 @@ export class Palette extends React.Component {
             )
             : (
                 <ColorElement
+                    className={styles.element}
                     color={color}
                     size='tall'
                 />
