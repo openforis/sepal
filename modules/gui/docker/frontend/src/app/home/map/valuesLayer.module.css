@@ -12,6 +12,7 @@
 .value {
     margin: auto;
     color: #ccc;
+    overflow: hidden;
 }
 
 .value.clamping {
