@@ -52,18 +52,13 @@ export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
     api.gee.loadCCDCSegments$({recipe: recipe.model.source, latLng, bands})
 
 export const getAllVisualizations = recipe => {
-    return dateFormatSpecified(recipe)
+    return recipe.ui.initialized
         ? [
             ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
             ...selectFrom(recipe, 'model.source.visualizations') || [],
             ...additionalVisualizations(recipe)
         ]
         : []
-}
-
-export const dateFormatSpecified = recipe => {
-    const dateFormat = selectFrom(recipe, 'model.source.dateFormat')
-    return dateFormat || dateFormat === 0
 }
 
 export const additionalVisualizations = recipe => {
