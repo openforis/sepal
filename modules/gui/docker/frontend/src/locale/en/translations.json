@@ -1006,6 +1006,14 @@
               "label": "Min break confidence",
               "tooltip": "The minimum confidence of a breakpoint to be included. This is calculated by the break magnitude divided by the RMSE.",
               "value": "{value} (magnitude/rmse)"
+            },
+            "skipBreakInLastSegment": {
+              "label": "Breaks at the end",
+              "options": {
+                "EXCLUDE": "Exclude",
+                "INCLUDE": "Include"
+              },
+              "tooltip": "CCDC sometimes detect breaks in the last segment. These can at times be unreliable."
             }
           },
           "title": "CCDC slice options",

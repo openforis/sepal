@@ -17,7 +17,8 @@ export const defaultModel = {
         harmonics: 3,
         gapStrategy: 'INTERPOLATE',
         extrapolateSegment: 'CLOSEST',
-        extrapolateMaxDays: 30
+        extrapolateMaxDays: 30,
+        skipBreakInLastSegment: false
     }
 }
 
