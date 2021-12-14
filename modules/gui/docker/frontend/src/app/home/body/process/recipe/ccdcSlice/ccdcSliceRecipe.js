@@ -61,7 +61,10 @@ export const getAllVisualizations = recipe => {
         : []
 }
 
-export const dateFormatSpecified = recipe => selectFrom(recipe, 'model.source.dateFormat') >= 0
+export const dateFormatSpecified = recipe => {
+    const dateFormat = selectFrom(recipe, 'model.source.dateFormat')
+    return dateFormat || dateFormat === 0
+}
 
 export const additionalVisualizations = recipe => {
     const dateType = selectFrom(recipe, 'model.date.dateType')

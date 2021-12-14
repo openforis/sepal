@@ -20,7 +20,7 @@ const fields = {
     advanced: new Form.Field(),
     breakDetection: new Form.Field(),
     dateFormat: new Form.Field()
-        .predicate(selection => selection >= 0, 'process.ccdc.panel.options.form.dateFormat.required'),
+        .predicate(selection => selection || selection === 0, 'process.ccdc.panel.options.form.dateFormat.required'),
     tmaskBands: new Form.Field()
         .predicate(selection => selection ? [0, 2].includes(selection.length) : true, 'process.ccdc.panel.options.form.tmaskBands.noneOrTwo'),
     minObservations: new Form.Field(),
