@@ -4,6 +4,7 @@ import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {SearchBox} from 'widget/searchBox'
 import {Slider} from 'widget/slider'
+import {ToggleButton} from 'widget/toggleButton'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {formatCoordinates, parseCoordinates} from 'coords'
@@ -18,7 +19,8 @@ class _MapZoomPanel extends React.Component {
     state = {
         coordinateResults: [],
         placeResults: [],
-        view: {}
+        view: {},
+        mouseWheelEnabled: null
     }
 
     constructor() {
@@ -95,6 +97,7 @@ class _MapZoomPanel extends React.Component {
                 {this.renderZoomInButton()}
                 {this.renderZoomAreaButton()}
                 {this.renderFitButton()}
+                {this.renderMouseWheelButton()}
             </ButtonGroup>
         )
     }
@@ -155,6 +158,19 @@ class _MapZoomPanel extends React.Component {
         )
     }
 
+    renderMouseWheelButton() {
+        const {mouseWheelEnabled} = this.state
+        return (
+            <ToggleButton
+                selected={mouseWheelEnabled}
+                onChange={() => this.toggleMouseWheel()}
+                icon={'mouse'}
+                tooltip={msg(mouseWheelEnabled ? 'process.mapZoom.scrollwheel.enabled.tooltip' : 'process.mapZoom.scrollwheel.disabled.tooltip')}
+                tooltipPlacement='top'
+            />
+        )
+    }
+
     renderSearch() {
         const {coordinateResults, placeResults} = this.state
         return (
@@ -172,6 +188,11 @@ class _MapZoomPanel extends React.Component {
         )
     }
 
+    toggleMouseWheel() {
+        const {map: {mouseWheel$}} = this.props
+        mouseWheel$.next(!mouseWheel$.getValue())
+    }
+
     onEscape() {
         const {map, activatable: {deactivate}} = this.props
         map.isZoomArea() ? map.cancelZoomArea() : deactivate()
@@ -185,6 +206,9 @@ class _MapZoomPanel extends React.Component {
         addSubscription(
             map.view$.subscribe(
                 view => this.setState({view})
+            ),
+            map.mouseWheel$.subscribe(
+                mouseWheelEnabled => this.setState({mouseWheelEnabled})
             )
         )
     }

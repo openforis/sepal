@@ -32,6 +32,7 @@ class _Maps extends React.Component {
     }
 
     view$ = new BehaviorSubject()
+    mouseWheel$ = new BehaviorSubject()
     linkedMaps = new Set()
 
     constructor(props) {
@@ -117,6 +118,7 @@ class _Maps extends React.Component {
             zoom: DEFAULT_ZOOM,
             minZoom: MIN_ZOOM,
             maxZoom: MAX_ZOOM,
+            scrollwheel: false,
             center: new google.maps.LatLng(16.7794913, 9.6771556),
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             zoomControl: false,
@@ -175,6 +177,7 @@ class _Maps extends React.Component {
 
         const updateView$ = new Subject()
         const linked$ = new Subject()
+        const mouseWheel$ = this.mouseWheel$
 
         const setLinked = linked => {
             const currentView = this.getCurrentView()
@@ -221,7 +224,7 @@ class _Maps extends React.Component {
             )
         )
 
-        return {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView$, linked$}
+        return {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView$, linked$, mouseWheel$}
     }
 
     render() {
@@ -235,6 +238,22 @@ class _Maps extends React.Component {
             }}>
                 {children(initialized, error)}
             </MapsContext.Provider>
+        )
+    }
+
+    componentDidMount() {
+        this.initializeMouseWheel()
+    }
+
+    initializeMouseWheel() {
+        const {addSubscription} = this.props
+        const LOCAL_STORAGE_KEY = 'mousewheelMapZooming'
+        const enabled = localStorage.getItem(LOCAL_STORAGE_KEY)
+        this.mouseWheel$.next(!enabled || enabled === 'true')
+        addSubscription(
+            this.mouseWheel$.subscribe(
+                enabled => localStorage.setItem(LOCAL_STORAGE_KEY, enabled)
+            )
         )
     }
 }

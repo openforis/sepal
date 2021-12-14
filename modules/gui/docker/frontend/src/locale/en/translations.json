@@ -683,6 +683,14 @@
       },
       "search": {
         "placeholder": "geo search"
+      },
+      "scrollwheel": {
+          "enabled": {
+              "tooltip": "Disable mousewheel zooming"
+          },
+          "disabled": {
+              "tooltip": "Enable mousewheel zooming"
+          } 
       }
     },
     "ccdc": {

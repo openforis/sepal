@@ -437,6 +437,9 @@ class _Map extends React.Component {
             }),
             map.getZoomArea$().subscribe(() =>
                 this.zoomArea(false)
+            ),
+            this.mouseWheel$.subscribe(
+                enabled => googleMap.setOptions({scrollwheel: enabled})
             )
         ]
 
@@ -553,9 +556,10 @@ class _Map extends React.Component {
 
     componentDidMount() {
         const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
-        const {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView$, linked$} = createMapContext()
+        const {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView$, linked$, mouseWheel$} = createMapContext()
 
         this.setLinked(getProcessTabsInfo().single)
+        this.mouseWheel$ = mouseWheel$
 
         this.setState({
             mapId,
@@ -643,6 +647,7 @@ class _Map extends React.Component {
         return {
             view$: this.filteredViewUpdates$,
             linked$: this.linked$,
+            mouseWheel$: this.mouseWheel$,
             toggleLinked: this.toggleLinked,
             zoomIn: () => map.zoomIn(),
             zoomOut: () => map.zoomOut(),
