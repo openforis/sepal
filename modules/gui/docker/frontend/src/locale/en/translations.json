@@ -552,7 +552,7 @@
         },
         "palette": {
           "label": "Palette",
-          "tooltip": "Define a custom palette by picking individual colors, or load a preset palette, which you can further customize. Warning: loading a preset palette will reset any custom colors you might have defined.",
+          "tooltip": "Load a preset palette or create a new one. Use drag and drop for changing the order or removing colors. Warning: loading a palette will overwrite the current one.",
           "empty": "Empty palette, using gray scale.",
           "add": {
             "tooltip": "Add a color to the palette."
