@@ -153,6 +153,74 @@ module_log () {
     less -R +F $(logfile $MODULE)
 }
 
+module_clean () {
+    local MODULE=$1
+    message "CLEANING" $MODULE YELLOW
+    case $MODULE in
+    shared)
+        (cd $SEPAL/lib/js/shared && rm -rf node_modules/ package-lock.json)
+        ;;
+    gui)
+        (cd $SEPAL/modules/gui/docker/frontend && rm -rf node_modules package-lock.json)
+        ;;
+    sepal-server)
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        :sepal-common:clean &>/dev/null
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        :sepal-server:clean &>/dev/null
+        ;;
+    user)
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        :sepal-common:clean &>/dev/null
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        :sepal-user:clean &>/dev/null
+        ;;
+    *)
+        (cd $SEPAL/modules/$MODULE/docker && rm -rf node_modules package-lock.json)
+        ;;
+    esac
+}
+
+module_update () {
+    local MODULE=$1
+    message "UPDATING" $MODULE YELLOW
+    case $MODULE in
+    shared)
+        (cd $SEPAL/lib/js/shared && ncu -i)
+        ;;
+    gui)
+        (cd $SEPAL/modules/gui/docker/frontend && ncu -i)
+        ;;
+    *)
+        (cd $SEPAL/modules/$MODULE/docker && ncu -i)
+        ;;
+    esac
+}
+
+module_install () {
+    local MODULE=$1
+    message "INSTALLING" $MODULE YELLOW
+    case $MODULE in
+    shared)
+        (cd $SEPAL/lib/js/shared && npm install)
+        ;;
+    gui)
+        (cd $SEPAL/modules/gui/docker/frontend && npm install)
+        ;;
+    *)
+        (cd $SEPAL/modules/$MODULE/docker && npm install)
+        ;;
+    esac
+}
+
 run () {
     local MODULE=$1
     shift
@@ -422,4 +490,21 @@ case "$1" in
         update-gui
         ;;
     log)
-     
+        shift
+        enforce_one_argument startlog $#
+        log $1
+        ;;
+    startlog)
+        shift
+        enforce_one_argument startlog $#
+        startlog $1
+        ;;
+    restartlog)
+        shift
+        enforce_one_argument restartlog $#
+        restartlog $1
+        ;;
+    *)
+        usage
+        ;;
+esac
