@@ -32,7 +32,7 @@ class _Maps extends React.Component {
     }
 
     view$ = new BehaviorSubject()
-    mouseWheel$ = new BehaviorSubject()
+    scrollWheel$ = new BehaviorSubject()
     linkedMaps = new Set()
 
     constructor(props) {
@@ -177,7 +177,7 @@ class _Maps extends React.Component {
 
         const updateView$ = new Subject()
         const linked$ = new Subject()
-        const mouseWheel$ = this.mouseWheel$
+        const scrollWheel$ = this.scrollWheel$
 
         const setLinked = linked => {
             const currentView = this.getCurrentView()
@@ -224,7 +224,7 @@ class _Maps extends React.Component {
             )
         )
 
-        return {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView$, linked$, mouseWheel$}
+        return {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView$, linked$, scrollWheel$}
     }
 
     render() {
@@ -242,16 +242,16 @@ class _Maps extends React.Component {
     }
 
     componentDidMount() {
-        this.initializeMouseWheel()
+        this.initializeScrollWheel()
     }
 
-    initializeMouseWheel() {
+    initializeScrollWheel() {
         const {addSubscription} = this.props
-        const LOCAL_STORAGE_KEY = 'mousewheelMapZooming'
+        const LOCAL_STORAGE_KEY = 'ScrollWheelMapZooming'
         const enabled = localStorage.getItem(LOCAL_STORAGE_KEY)
-        this.mouseWheel$.next(!enabled || enabled === 'true')
+        this.scrollWheel$.next(!enabled || enabled === 'true')
         addSubscription(
-            this.mouseWheel$.subscribe(
+            this.scrollWheel$.subscribe(
                 enabled => localStorage.setItem(LOCAL_STORAGE_KEY, enabled)
             )
         )

@@ -686,10 +686,10 @@
       },
       "scrollwheel": {
           "enabled": {
-              "tooltip": "Disable mousewheel zooming"
+              "tooltip": "Disable scroll wheel zooming"
           },
           "disabled": {
-              "tooltip": "Enable mousewheel zooming"
+              "tooltip": "Enable scroll wheel zooming"
           } 
       }
     },

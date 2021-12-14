@@ -20,7 +20,7 @@ class _MapZoomPanel extends React.Component {
         coordinateResults: [],
         placeResults: [],
         view: {},
-        mouseWheelEnabled: null
+        scrollWheelEnabled: null
     }
 
     constructor() {
@@ -97,7 +97,7 @@ class _MapZoomPanel extends React.Component {
                 {this.renderZoomInButton()}
                 {this.renderZoomAreaButton()}
                 {this.renderFitButton()}
-                {this.renderMouseWheelButton()}
+                {this.renderScrollWheelButton()}
             </ButtonGroup>
         )
     }
@@ -158,14 +158,14 @@ class _MapZoomPanel extends React.Component {
         )
     }
 
-    renderMouseWheelButton() {
-        const {mouseWheelEnabled} = this.state
+    renderScrollWheelButton() {
+        const {scrollWheelEnabled} = this.state
         return (
             <ToggleButton
-                selected={mouseWheelEnabled}
-                onChange={() => this.toggleMouseWheel()}
+                selected={scrollWheelEnabled}
+                onChange={() => this.toggleScrollWheel()}
                 icon={'mouse'}
-                tooltip={msg(mouseWheelEnabled ? 'process.mapZoom.scrollwheel.enabled.tooltip' : 'process.mapZoom.scrollwheel.disabled.tooltip')}
+                tooltip={msg(scrollWheelEnabled ? 'process.mapZoom.scrollwheel.enabled.tooltip' : 'process.mapZoom.scrollwheel.disabled.tooltip')}
                 tooltipPlacement='top'
             />
         )
@@ -188,9 +188,9 @@ class _MapZoomPanel extends React.Component {
         )
     }
 
-    toggleMouseWheel() {
-        const {map: {mouseWheel$}} = this.props
-        mouseWheel$.next(!mouseWheel$.getValue())
+    toggleScrollWheel() {
+        const {map: {scrollWheel$}} = this.props
+        scrollWheel$.next(!scrollWheel$.getValue())
     }
 
     onEscape() {
@@ -207,8 +207,8 @@ class _MapZoomPanel extends React.Component {
             map.view$.subscribe(
                 view => this.setState({view})
             ),
-            map.mouseWheel$.subscribe(
-                mouseWheelEnabled => this.setState({mouseWheelEnabled})
+            map.scrollWheel$.subscribe(
+                scrollWheelEnabled => this.setState({scrollWheelEnabled})
             )
         )
     }
