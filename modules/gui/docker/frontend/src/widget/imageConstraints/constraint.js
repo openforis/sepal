@@ -77,17 +77,27 @@ class _Constraint extends React.Component {
     }
 
     renderImage() {
-        const {images, inputs: {image, band}} = this.props
+        const {images, inputs: {image, band, operator}} = this.props
         const imageOptions = images.map(({id, description, bands}) => ({value: id, label: description, bands}))
         return (
             <Form.Combo
                 label={msg('widget.imageConstraints.image.label')}
                 input={image}
                 options={imageOptions}
-                onChange={({bands}) => band.set(bands.length === 1
-                    ? bands[0].name
-                    : null
-                )}
+                onChange={({bands}) => {
+                    const selectDefaultBand = bands.length === 1
+                    band.set(selectDefaultBand
+                        ? bands[0].name
+                        : null)
+                    if (selectDefaultBand) {
+                        if (bands[0].type === 'categorical') {
+                            operator !== 'class' && operator.set('class')
+                        } else {
+                            operator === 'class' && operator.set('<')
+                        }
+                    }
+
+                }}
             />
         )
     }

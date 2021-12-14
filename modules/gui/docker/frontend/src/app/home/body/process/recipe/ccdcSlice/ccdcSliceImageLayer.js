@@ -1,6 +1,6 @@
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
-import {additionalVisualizations, dateFormatSpecified, getAllVisualizations} from './ccdcSliceRecipe'
+import {additionalVisualizations, getAllVisualizations} from './ccdcSliceRecipe'
 import {compose} from 'compose'
 import {getUserDefinedVisualizations} from 'app/home/body/process/recipe/visualizations'
 import {msg} from 'translate'
@@ -33,7 +33,7 @@ class _CCDCSliceImageLayer extends React.Component {
             label: visParams.bands.join(', '),
             visParams
         })
-        const visualizations = dateFormatSpecified(recipe)
+        const visualizations = recipe.ui.initialized
             ? (selectFrom(recipe, 'model.source.visualizations') || [])
                 .concat(additionalVisualizations(recipe))
             : []
@@ -80,7 +80,7 @@ class _CCDCSliceImageLayer extends React.Component {
 
     toAllVis() {
         const {currentRecipe, recipe, sourceId} = this.props
-        return dateFormatSpecified(recipe)
+        return recipe.ui.initialized
             ? [
                 ...getUserDefinedVisualizations(currentRecipe, sourceId),
                 ...getAllVisualizations(recipe),

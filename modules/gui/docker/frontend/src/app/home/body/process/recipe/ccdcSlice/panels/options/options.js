@@ -16,6 +16,8 @@ const fields = {
     extrapolateSegment: new Form.Field(),
     extrapolateMaxDays: new Form.Field(),
     breakAnalysisBand: new Form.Field(),
+    skipBreakInLastSegment: new Form.Field()
+        .notNil(),
     breakMagnitudeDirection: new Form.Field(),
     minBreakConfidence: new Form.Field(),
     breakSelection: new Form.Field()
@@ -143,7 +145,7 @@ class Options extends React.Component {
     }
 
     renderBreakOptions() {
-        const {baseBands, inputs: {breakAnalysisBand, breakMagnitudeDirection, minBreakConfidence, breakSelection}} = this.props
+        const {baseBands, inputs: {breakAnalysisBand, breakMagnitudeDirection, minBreakConfidence, breakSelection, skipBreakInLastSegment}} = this.props
         const bandOptions = baseBands.map(({name}) => ({
             value: name,
             label: name
@@ -158,6 +160,21 @@ class Options extends React.Component {
                     allowClear
                     disabled={!bandOptions.length}
                     options={bandOptions}
+                />
+                <Form.Buttons
+                    label={msg('process.ccdcSlice.panel.options.form.skipBreakInLastSegment.label')}
+                    tooltip={msg('process.ccdcSlice.panel.options.form.skipBreakInLastSegment.tooltip')}
+                    input={skipBreakInLastSegment}
+                    options={[
+                        {
+                            value: false,
+                            label: msg('process.ccdcSlice.panel.options.form.skipBreakInLastSegment.options.INCLUDE')
+                        },
+                        {
+                            value: true,
+                            label: msg('process.ccdcSlice.panel.options.form.skipBreakInLastSegment.options.EXCLUDE')
+                        }
+                    ]}
                 />
                 <Form.Buttons
                     label={msg('process.ccdcSlice.panel.options.form.breakSelection.label')}
@@ -239,9 +256,10 @@ const modelToValues = model => {
     return ({
         ...model,
         extrapolateMaxDays: model.extrapolateMaxDays > 365 ? EXTRAPOLATE_MAX_DAYS : model.extrapolateMaxDays,
+        skipBreakInLastSegment: !model.skipBreakInLastSegment ? false : model.skipBreakInLastSegment,
         breakMagnitudeDirection: model.breakMagnitudeDirection || 'ANY',
         minBreakConfidence: model.minBreakConfidence || 0,
-        breakSelection: model.breakSelection || 'FIRST'
+        breakSelection: model.breakSelection || 'FIRST',
     })
 }
 
