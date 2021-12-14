@@ -1,7 +1,7 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {ViewportResizeDetector} from 'widget/viewportResizeDetector'
 import {Widget} from 'widget/widget'
-import {animationFrameScheduler, combineLatest, distinctUntilChanged, filter, fromEvent, interval, map, mapTo, merge, of, scan, switchMap, withLatestFrom} from 'rxjs'
+import {animationFrameScheduler, combineLatest, distinctUntilChanged, fromEvent, interval, map, mapTo, merge, of, scan, switchMap, withLatestFrom} from 'rxjs'
 import {compose} from 'compose'
 import Hammer from 'hammerjs'
 import Portal from 'widget/portal'
@@ -238,10 +238,9 @@ class _SliderDynamics extends React.Component {
 
         const mouseMove$ = fromEvent(clickTargetElement, 'mousemove')
         const mouseLeave$ = fromEvent(clickTargetElement, 'mouseleave')
-        const pan$ = fromEvent(handle, 'panstart panmove panend')
-        const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
-        const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
-        const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
+        const panStart$ = fromEvent(handle, 'panstart')
+        const panMove$ = fromEvent(handle, 'panmove')
+        const panEnd$ = fromEvent(handle, 'panend')
         const animationFrame$ = interval(0, animationFrameScheduler)
 
         const hoverPosition$ = merge(
@@ -289,13 +288,14 @@ class _SliderDynamics extends React.Component {
                 return animationFrame$.pipe(
                     map(() => targetPosition),
                     scan(lerp(dragging ? .30 : .15), position),
-                    map(position => Math.round(position)),
-                    distinctUntilChanged()
+                    map(position => Math.round(position))
                 )
-            })
+            }),
+            distinctUntilChanged()
         )
 
-        const handleMoving$ = combineLatest(handlePosition$, targetPosition$).pipe(
+        const handleMoving$ = handlePosition$.pipe(
+            withLatestFrom(targetPosition$),
             map(([currentPosition, targetPosition]) => currentPosition !== targetPosition),
             distinctUntilChanged()
         )
@@ -305,9 +305,9 @@ class _SliderDynamics extends React.Component {
             distinctUntilChanged()
         )
 
-        const inhibitInput$ = handleMoving$.pipe(
-            withLatestFrom(handleDragging$),
-            map(([dragging, moving]) => dragging || moving)
+        const inhibitInput$ = combineLatest([handleMoving$, handleDragging$]).pipe(
+            map(([moving, dragging]) => moving || dragging),
+            distinctUntilChanged()
         )
 
         const updateInput$ = merge(clickPosition$, panEnd$)
@@ -366,9 +366,9 @@ class _SliderDynamics extends React.Component {
                 .map(({position}) => ({position, distance: Math.abs(position - value)}))
                 .sortBy('distance')
                 .head()
-            return closest.position
+            return Math.round(closest.position)
         } else {
-            return value
+            return Math.round(value)
         }
     }
 
