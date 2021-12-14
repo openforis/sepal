@@ -349,6 +349,7 @@ const segmentsData = ({
     }
 
     // TODO: Temporarily disabled. We're getting offset errors
+    // eslint-disable-next-line no-unused-vars
     const interpolate = ({date, prevSegmentIndex, nextSegmentIndex}) => {
         return [date, observationByTimestamp[date.getTime()] || null, NaN]
         // const t = toT(date, dateFormat)
