@@ -11,6 +11,7 @@ import Color from 'color'
 import PropTypes from 'prop-types'
 import React from 'react'
 import guid from 'guid'
+import styles from './palette.module.css'
 
 export class Palette extends React.Component {
     ref = React.createRef()
@@ -90,8 +91,8 @@ export class Palette extends React.Component {
         return original
             ? (
                 <ColorElement
+                    className={styles.element}
                     color={color}
-                    size='tall'
                     edit={edit === id}
                     onClick={() => this.onClick(id)}
                     onChange={color => this.updateColor(color, id)}
@@ -99,6 +100,7 @@ export class Palette extends React.Component {
             )
             : (
                 <ColorElement
+                    className={styles.element}
                     color={color}
                     size='tall'
                 />
@@ -120,8 +122,8 @@ export class Palette extends React.Component {
             <Button
                 key={'add'}
                 chromeless
+                additionalClassName={styles.element}
                 icon='plus'
-                shape='circle'
                 disabled={showTextInput}
                 tooltip={msg('map.visParams.form.palette.add.tooltip')}
                 onClick={() => this.addColor()}

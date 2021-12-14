@@ -39,7 +39,7 @@ export class ColorElement extends React.Component {
     }
 
     renderButton() {
-        const {size, tooltip, tooltipPlacement, onTooltipVisibleChange} = this.props
+        const {className, tooltip, tooltipPlacement, onTooltipVisibleChange} = this.props
         const {color} = this.state
         return (
             <Button
@@ -48,7 +48,7 @@ export class ColorElement extends React.Component {
                 shape='rectangle'
                 additionalClassName={[
                     color ? styles.color : styles.placeholder,
-                    size ? styles[`size-${size}`] : null
+                    className
                 ].join(' ')}
                 style={{'--color': color}}
                 tooltip={tooltip}
@@ -157,10 +157,10 @@ export class ColorElement extends React.Component {
 }
 
 ColorElement.propTypes = {
+    className: PropTypes.string,
     color: PropTypes.string,
     edit: PropTypes.any,
     invalid: PropTypes.any,
-    size: PropTypes.oneOf(['normal', 'tall']),
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any,
     onChange: PropTypes.func,
@@ -169,6 +169,5 @@ ColorElement.propTypes = {
 }
 
 ColorElement.defaultProps = {
-    color: '',
-    size: 'normal'
+    color: ''
 }
