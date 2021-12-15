@@ -11,14 +11,13 @@ services:
     container_name: r-package-manager
     ports:
       - "8180:8180"
-    command: '
+    command:
       nodemon
         --watch src
         --watch ../../lib/js/shared
         --inspect=0.0.0.0:9239 src/main.js
         --repo-dir /var/sepal/r-package-manager/repo
         --poll-interval-seconds 86400
-      '
     tty: true
     volumes:
       - ./src:/usr/local/src/sepal/modules/r-package-manager/src
