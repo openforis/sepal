@@ -27,5 +27,5 @@ function template {
 eval $(parse-yaml $config_home/secret.yml)
 
 inventory_file=$(mktemp /tmp/XXXXXX.sepal_aws_ec2.yml)
-template template_aws_ec2.yml $inventory_file
+template ../template_aws_ec2.yml $inventory_file
 echo $inventory_file

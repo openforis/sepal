@@ -47,9 +47,11 @@
         exact_count: 1
         count_tag:
           Type: Operations
+          Environment: "{{ deploy_environment }}"
         instance_tags:
           Name: "Operations"
           Type: Operations
+          Environment: "{{ deploy_environment }}"
         ebs_optimized: true
         volumes:
           - device_name: /dev/xvda

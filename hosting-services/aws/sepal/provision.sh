@@ -20,7 +20,7 @@ export AWS_POLL_DELAY_SECONDS=60
 
 source ../export-aws-keys.sh "$CONFIG_HOME"/secret.yml
 
-inventory=$(./inventory.sh Sepal "$CONFIG_HOME")
+inventory=$(../inventory.sh Sepal "$CONFIG_HOME")
 
 ansible-playbook provision.yml \
     -i "$inventory" \

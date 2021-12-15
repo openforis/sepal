@@ -1,5 +1,5 @@
 - name: Build Operations server
-  hosts: "tag_Type_Operations"
+  hosts: all
   user: ec2-user
   become: yes
   gather_facts: true
