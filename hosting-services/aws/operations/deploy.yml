@@ -32,6 +32,9 @@
     - name: Copy Jenkins Image
       copy: src="../../../modules/jenkins/" dest="/opt/sepal/modules/jenkins/"
 
+    - name: Copy r-package-manager Image
+      copy: src="../../../modules/r-package-manager/" dest="/opt/sepal/modules/r-package-manager/"
+
     - name: Mount Docker volume
       mount:
         path: /var/lib/docker
@@ -89,8 +92,10 @@
     - { role: docker-registry }
     - { role: ansible }
     - { role: build-module, module: jenkins }
+    - { role: build-module, module: r-package-manager }
     - { role: docker-login }
     - { role: run-module, module: jenkins }
+    - { role: run-module, module: r-package-manager }
 
   post_tasks:
     - name: "Clean environment"
