@@ -1,0 +1,8 @@
+{
+    "port": 5109,
+    "categories": {
+        "config": "debug",
+        "package": "debug",
+        "main": "info"
+    }
+}

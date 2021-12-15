@@ -1,0 +1,10 @@
+**
+
+!lib/js/shared/
+!modules/**/
+
+**/node_modules/
+**/build
+
+modules/**/docker/binary
+modules/**/target
