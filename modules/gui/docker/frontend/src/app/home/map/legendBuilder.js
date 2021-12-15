@@ -147,9 +147,10 @@ export class LegendBuilder extends React.Component {
     updateValidation(entry, invalid) {
         const {entries, onChange} = this.props
         this.setState(({invalidEntries}) => {
+            const filteredInvalidEntries = _.pickBy(invalidEntries, entries.map(({id}) => id))
             return invalid
-                ? {invalidEntries: {...invalidEntries, ...{[entry.id]: invalid}}}
-                : {invalidEntries: _.omit(invalidEntries, entry.id)}
+                ? {invalidEntries: {...filteredInvalidEntries, ...{[entry.id]: invalid}}}
+                : {invalidEntries: _.omit(filteredInvalidEntries, entry.id)}
         }, () => onChange(entries, this.hasInvalidEntries()))
 
     }
@@ -161,6 +162,7 @@ export class LegendBuilder extends React.Component {
 
     removeEntry(entry) {
         const {entries, onChange} = this.props
+        this.updateValidation(entry, false)
         onChange(entries.filter(({id}) => id !== entry.id), this.hasInvalidEntries())
     }
 }
@@ -331,7 +333,6 @@ const Entry = compose(
 
 class ColorInput extends React.Component {
     state = {swap: false}
-    colorInputRef = React.createRef()
 
     render() {
         const {input, invalid, onChange} = this.props
