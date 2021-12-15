@@ -13,14 +13,14 @@ RUN chown -R node: ${SHARED}
 USER node
 RUN npm install
 
-ADD modules/r-package-manager/docker/package.json ${MODULE}/
+ADD modules/r-package-manager/package.json ${MODULE}/
 WORKDIR ${MODULE}
 USER root
 RUN mkdir src && chown -R node: ${MODULE}
 USER node
 RUN npm install
 
-ADD modules/r-package-manager/docker/src ${MODULE}/src
+ADD modules/r-package-manager/src ${MODULE}/src
 
 USER root
 CMD node \
