@@ -1,13 +1,13 @@
 <?xml version='1.1' encoding='UTF-8'?>
 <hudson>
   <disabledAdministrativeMonitors>
+    <string>hudsonHomeIsFull</string>
+    <string>jenkins.diagnostics.ControllerExecutorsNoAgents</string>
+    <string>jenkins.diagnostics.RootUrlNotSetMonitor</string>
     <string>jenkins.security.s2m.MasterKillSwitchWarning</string>
     <string>hudson.diagnosis.ReverseProxySetupMonitor</string>
-    <string>hudsonHomeIsFull</string>
-    <string>jenkins.diagnostics.RootUrlNotSetMonitor</string>
   </disabledAdministrativeMonitors>
-  <version>2.220</version>
-  <installStateName>DOWNGRADE</installStateName>
+  <version>2.319.1</version>
   <numExecutors>1</numExecutors>
   <mode>NORMAL</mode>
   <useSecurity>true</useSecurity>
@@ -55,4 +55,5 @@
   </crumbIssuer>
   <nodeProperties/>
   <globalNodeProperties/>
+  <nodeRenameMigrationNeeded>false</nodeRenameMigrationNeeded>
 </hudson>
