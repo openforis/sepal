@@ -425,9 +425,9 @@ class _VisParamsPanel extends React.Component {
         }
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
         const {importedLegendEntries, recipeActionBuilder} = this.props
-        if (importedLegendEntries) {
+        if (importedLegendEntries && !_.isEqual(importedLegendEntries, prevProps.importedLegendEntries)) {
             recipeActionBuilder('CLEAR_IMPORTED_LEGEND_ENTRIES', {importedLegendEntries})
                 .del('ui.importedLegendEntries')
                 .dispatch()
