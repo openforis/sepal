@@ -14,4 +14,4 @@
     volumes:
       - "/data/sepal/home:/sepalUsers"
     env:
-      POLL_INTERVAL_M: "86400"
+      POLL_INTERVAL_S: "86400"
