@@ -1,7 +1,7 @@
 FROM node:14-stretch
 EXPOSE 5999
 
-ENV MODULE /usr/local/src/sepal/modules/user-files/docker
+ENV MODULE /usr/local/src/sepal/modules/user-files
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
 ADD build/lib/js/shared ${SHARED}

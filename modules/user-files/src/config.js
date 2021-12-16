@@ -1,6 +1,5 @@
 const program = require('commander')
 const log = require('sepal/log').getLogger('config')
-const _ = require('lodash')
 
 const DEFAULT_PORT = 5999
 const DEFAULT_POLL_INTERVAL_MS = 1000
