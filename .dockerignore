@@ -9,3 +9,7 @@
 modules/**/binary
 modules/**/build
 modules/**/target
+
+!modules/sepal-server/binary
+!modules/ssh-gateway/binary
+!modules/user/binary
