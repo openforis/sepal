@@ -1,6 +1,7 @@
 FROM node:14-stretch
 
-ENV MODULE /usr/local/src/sepal/modules/user-storage/docker
+ENV MODULE_NAME user-storage
+ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
 # Install diskus
@@ -13,21 +14,21 @@ RUN apt update && \
     adduser node sudo && \
     echo 'node ALL = (root) NOPASSWD: /usr/bin/diskus' >> /etc/sudoers
 
-ADD build/lib/js/shared ${SHARED}
+ADD lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
 USER root
 RUN chown -R node: ${SHARED}
 USER node
 RUN npm install
 
-ADD package.json ${MODULE}/
+ADD modules/${MODULE_NAME}/package.json ${MODULE}/
 WORKDIR ${MODULE}
 USER root
 RUN mkdir src && chown -R node: ${MODULE}
 USER node
 RUN npm install
 
-ADD src ${MODULE}/src
+ADD modules/${MODULE_NAME}/src ${MODULE}/src
 CMD node \
     src/main.js \
     --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \

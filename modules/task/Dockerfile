@@ -2,7 +2,8 @@ FROM ubuntu:bionic
 EXPOSE 1026
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV TASK /usr/local/src/sepal/modules/task/docker
+ENV MODULE_NAME task
+ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV JS_SHARED /usr/local/src/sepal/lib/js/shared
 ENV PYTHON_SHARED /usr/local/src/sepal/lib/python/shared
 RUN apt-get update && apt-get install -y \
@@ -25,26 +26,26 @@ RUN apt-get update && apt-get install -y \
 RUN groupadd --gid 1000 node && \
     useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
-ADD build/lib/js/shared ${JS_SHARED}
+ADD lib/js/shared ${JS_SHARED}
 WORKDIR ${JS_SHARED}/js/shared
 USER root
-ADD build/lib/python/shared ${PYTHON_SHARED}
+ADD lib/python/shared ${PYTHON_SHARED}
 RUN chmod +x ${PYTHON_SHARED}/stack_time_series.py && \
     ln -s ${PYTHON_SHARED}/stack_time_series.py /usr/local/bin/sepal-stack-time-series
 RUN chown -R node: ${JS_SHARED}
 USER node
 RUN npm install
 
-ADD package.json ${TASK}/
-WORKDIR ${TASK}
+ADD modules/${MODULE_NAME}/package.json ${MODULE}/
+WORKDIR ${MODULE}
 USER root
-RUN mkdir src && chown -R node: ${TASK}
+RUN mkdir src && chown -R node: ${MODULE}
 USER node
 RUN npm install
 
 USER root
-ADD src ${TASK}/src
-ADD script /script
+ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/script /script
 RUN chmod -R 500 /script && sync
 
 CMD ["/script/init_container.sh"]

@@ -1,5 +1,5 @@
 {
-    "name": "app-manager",
+    "name": "user-storage",
     "version": "1.0.0",
     "description": "",
     "main": "main.js",
@@ -17,13 +17,16 @@
         "sepal": "node_modules/shared/src"
     },
     "dependencies": {
+        "bull": "^4.1.1",
         "commander": "^8.3.0",
+        "date-fns": "^2.27.0",
+        "ioredis": "^4.28.2",
         "lodash": "^4.17.21",
         "log4js": "^6.3.0",
-        "mime-types": "^2.1.34",
         "moment": "^2.29.1",
         "rxjs": "^7.4.0",
-        "shared": "../../../lib/js/shared"
+        "shared": "../../lib/js/shared",
+        "uuid": "^8.3.2"
     },
     "devDependencies": {
         "eslint": "^8.4.1",

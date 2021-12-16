@@ -1,5 +1,5 @@
 {
-    "name": "gee",
+    "name": "gateway",
     "version": "1.0.0",
     "description": "",
     "main": "main.js",
@@ -18,11 +18,18 @@
     },
     "dependencies": {
         "commander": "^8.3.0",
+        "connect-redis": "^6.0.0",
+        "express": "^4.17.1",
+        "express-session": "^1.17.2",
+        "http-proxy-middleware": "^2.0.1",
+        "ioredis": "^4.28.2",
         "lodash": "^4.17.21",
         "log4js": "^6.3.0",
+        "micromatch": "^4.0.4",
+        "mime-types": "^2.1.34",
         "moment": "^2.29.1",
         "rxjs": "^7.4.0",
-        "shared": "../../../lib/js/shared",
+        "shared": "../../lib/js/shared",
         "uuid": "^8.3.2"
     },
     "devDependencies": {

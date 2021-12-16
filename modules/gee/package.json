@@ -1,5 +1,5 @@
 {
-    "name": "sys-monitor",
+    "name": "gee",
     "version": "1.0.0",
     "description": "",
     "main": "main.js",
@@ -20,9 +20,10 @@
         "commander": "^8.3.0",
         "lodash": "^4.17.21",
         "log4js": "^6.3.0",
+        "moment": "^2.29.1",
         "rxjs": "^7.4.0",
-        "shared": "../../../lib/js/shared",
-        "tail-file": "^1.4.14"
+        "shared": "../../lib/js/shared",
+        "uuid": "^8.3.2"
     },
     "devDependencies": {
         "eslint": "^8.4.1",
