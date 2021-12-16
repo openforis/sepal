@@ -1,4 +1,5 @@
 FROM node:14-stretch
+
 ENV MODULE_NAME gateway
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
@@ -22,7 +23,7 @@ USER node
 RUN npm install
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
-ADD modules.json /etc/sepal/module.d/gateway/modules.json
+ADD ADD modules/${MODULE_NAME}/modules.json /etc/sepal/module.d/gateway/modules.json
 
 CMD node \
     src/main.js \
