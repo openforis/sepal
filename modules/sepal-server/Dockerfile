@@ -2,7 +2,7 @@ FROM openforis/java
 
 EXPOSE 1025
 
-ENV MODULE_NAME user-files
+ENV MODULE_NAME sepal-server
 
 ADD modules/${MODULE_NAME}/config /config
 ADD modules/${MODULE_NAME}/script /script
