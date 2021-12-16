@@ -1,5 +1,5 @@
 FROM openforis/geospatial-toolkit
-MAINTAINER OpenForis
+
 
 ENV MODULE_NAME sandbox
 ENV SEPAL_USERS_GRP_NAME sepalUsers

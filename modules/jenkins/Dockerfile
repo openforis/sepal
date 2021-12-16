@@ -1,17 +1,19 @@
 FROM ubuntu:bionic
-MAINTAINER OpenForis
+
 EXPOSE 8080
 EXPOSE 5000
 
-ADD script/init_image .
-ADD script/init_container .
-ADD script/jenkins.sh .
-ADD script/downloads .
-ADD script/plugins.sh /usr/local/bin/plugins.sh
-ADD config/plugins.txt .
+ENV MODULE_NAME jenkins
+
+ADD modules/${MODULE_NAME}/script/init_image .
+ADD modules/${MODULE_NAME}/script/init_container .
+ADD modules/${MODULE_NAME}/script/jenkins.sh .
+ADD modules/${MODULE_NAME}/script/downloads .
+ADD modules/${MODULE_NAME}/script/plugins.sh /usr/local/bin/plugins.sh
+ADD modules/${MODULE_NAME}/config/plugins.txt .
 
 RUN mkdir -p /usr/share/jenkins/ref/
-ADD ref /usr/share/jenkins/ref/
+ADD modules/${MODULE_NAME}/ref /usr/share/jenkins/ref/
 
 ENV JENKINS_HOME /var/jenkins_home
 ENV JENKINS_SLAVE_AGENT_PORT 50000

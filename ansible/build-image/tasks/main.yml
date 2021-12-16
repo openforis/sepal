@@ -7,8 +7,8 @@
       --build-arg BUILD_NUMBER={{ version }}
       --build-arg GIT_COMMIT={{ git_commit }}
       -t {{ image_name if image_name is defined else 'localhost/openforis/' + module }}
-      {{ '-f ' + workspace + '/modules/' + module + '/Dockerfile' if global_context is defined else '' }}
-      {{ workspace if global_context is defined else workspace + '/modules/' + module + '/docker' }}
+      -f {{ workspace }}/modules/{{ module }}/Dockerfile
+      {{ workspace }}
       | tee /var/log/sepal-build/{{ module }}.log
     "
 

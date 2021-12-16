@@ -6,5 +6,6 @@
 **/node_modules/
 **/build
 
-modules/**/docker/binary
+modules/**/binary
+modules/**/build
 modules/**/target

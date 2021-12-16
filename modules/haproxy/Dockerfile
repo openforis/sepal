@@ -1,11 +1,12 @@
 FROM haproxy:2.4
-MAINTAINER OpenForis
+
 EXPOSE 80 443
 
+ENV MODULE_NAME haproxy
 USER root
 
-ADD config /config
-ADD script/init_container.sh /usr/local/bin/init_container
+ADD modules/${MODULE_NAME}/config /config
+ADD modules/${MODULE_NAME}/script/init_container.sh /usr/local/bin/init_container
 
 RUN apt-get update -y && apt-get install -y \
         supervisor \

@@ -17,14 +17,14 @@ shadowJar {
 
 task copyJar(type: Copy) {
     from file("${buildDir}/libs/${project.name}-${version}.jar")
-    into file("${projectDir}/docker/binary")
+    into file("${projectDir}/binary")
     rename "${project.name}-${version}.jar", "${project.name}.jar"
 }
 
 build.dependsOn(copyJar)
 
 clean.doFirst {
-    delete "${projectDir}/docker/binary/${project.name}.jar"
+    delete "${projectDir}/binary/${project.name}.jar"
 }
 
 task runDev(type: JavaExec) {
