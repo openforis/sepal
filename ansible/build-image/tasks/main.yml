@@ -4,7 +4,6 @@
 - name: "{{ module }} | Building Docker Image: {{ image_name if image_name is defined else 'localhost/openforis/' + module }}"
   shell: "
     set -o pipefail && docker build
-      --build-arg MODULE_NAME={{ module }}
       --build-arg BUILD_NUMBER={{ version }}
       --build-arg GIT_COMMIT={{ git_commit }}
       -t {{ image_name if image_name is defined else 'localhost/openforis/' + module }}

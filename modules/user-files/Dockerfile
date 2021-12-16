@@ -1,6 +1,7 @@
 FROM node:14-stretch
 EXPOSE 5999
 
+ENV MODULE_NAME user-files
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
