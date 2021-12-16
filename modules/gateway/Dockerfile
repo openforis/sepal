@@ -23,7 +23,7 @@ USER node
 RUN npm install
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
-ADD ADD modules/${MODULE_NAME}/modules.json /etc/sepal/module.d/gateway/modules.json
+ADD modules/${MODULE_NAME}/modules.json /etc/sepal/module.d/gateway/modules.json
 
 CMD node \
     src/main.js \
