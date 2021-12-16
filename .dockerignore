@@ -1,6 +1,6 @@
 **
 
-!lib/js/shared/
+!lib/
 !modules/**/
 
 **/node_modules/
