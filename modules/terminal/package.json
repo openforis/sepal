@@ -18,7 +18,7 @@
     },
     "dependencies": {
         "commander": "^8.3.0",
-        "express": "^4.17.1",
+        "express": "^4.17.2",
         "express-ws": "^5.0.2",
         "node-pty": "^0.10.1",
         "rxjs": "^7.4.0",
@@ -26,7 +26,7 @@
     },
     "devDependencies": {
         "eslint": "^8.4.1",
-        "jest": "^27.4.4",
+        "jest": "^27.4.5",
         "jest-expect-message": "^1.0.2",
         "link-module-alias": "^1.2.0"
     }

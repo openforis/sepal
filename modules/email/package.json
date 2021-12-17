@@ -17,7 +17,7 @@
         "sepal": "node_modules/shared/src"
     },
     "dependencies": {
-        "bull": "^4.1.1",
+        "bull": "^4.1.4",
         "commander": "^8.3.0",
         "date-fns": "^2.27.0",
         "handlebars": "^4.7.7",
@@ -33,7 +33,7 @@
     },
     "devDependencies": {
         "eslint": "^8.4.1",
-        "jest": "^27.4.4",
+        "jest": "^27.4.5",
         "jest-expect-message": "^1.0.2",
         "link-module-alias": "^1.2.0"
     }

@@ -17,7 +17,7 @@
     "dygraphs": "^2.1.0",
     "escape-string-regexp": "^5.0.0",
     "expression-eval": "^5.0.0",
-    "fflate": "^0.7.1",
+    "fflate": "^0.7.2",
     "flat": "5.0.2",
     "google-maps": "4.3.3",
     "hammerjs": "2.0.8",
@@ -59,7 +59,7 @@
     "eject": "react-scripts eject"
   },
   "devDependencies": {
-    "@babel/core": "^7.16.0",
+    "@babel/core": "^7.16.5",
     "@types/react": "17.0.37",
     "contains-path": "^1.0.0",
     "eslint": "^7",
