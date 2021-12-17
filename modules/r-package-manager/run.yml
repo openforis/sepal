@@ -1,0 +1,17 @@
+---
+- name: "r-package-manager | Start container"
+  docker_container:
+    container_default_behavior: "{{ container_default_behavior }}"
+    api_version: "{{ api_version }}"
+    name: "{{ name }}"
+    pull: "{{ pull }}"
+    image: "{{ image }}"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
+    networks:
+      - name: 'sepal'
+    volumes:
+      - "/data/sepal/home:/sepalUsers"
+    env:
+      POLL_INTERVAL_S: "86400"

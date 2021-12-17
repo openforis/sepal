@@ -1,0 +1,24 @@
+version: "3"
+services:
+  r-package-manager:
+    # extends:
+    #   file: foo
+    #   service: bar
+    build:
+      context: ../..
+      dockerfile: ./modules/r-package-manager/Dockerfile
+    image: r-package-manager
+    container_name: r-package-manager
+    ports:
+      - "8180:8180"
+    command:
+      nodemon
+        --watch src
+        --watch ../../lib/js/shared
+        --inspect=0.0.0.0:9239
+        src/main.js
+          --repo-dir /var/sepal/r-package-manager/repo
+          --poll-interval-seconds 86400
+    tty: true
+    volumes:
+      - ./src:/usr/local/src/sepal/modules/r-package-manager/src

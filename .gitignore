@@ -19,15 +19,15 @@ build
 .settings
 
 #Sepal binaries
-/modules/ssh-gateway/docker/binary/sepal-ssh-gateway.jar
-/modules/user/docker/binary/sepal-user.jar
-/modules/sepal-server/docker/binary/sepal.jar
-/modules/*/docker/binary/sepal-gui.jar
+/modules/ssh-gateway/binary/sepal-ssh-gateway.jar
+/modules/user/binary/sepal-user.jar
+/modules/sepal-server/binary/sepal.jar
+/modules/*/binary/sepal-gui.jar
 
 #Sepal frontend
 /modules/*/frontend/build
-/modules/gui/docker/frontend/node-*
-/modules/gui/docker/frontend/node_modules/
+/modules/gui/frontend/node-*
+/modules/gui/frontend/node_modules/
 
 #Vagrant
 .vagrant

@@ -2,7 +2,17 @@
 - file: path="/var/log/sepal-build" state=directory
 
 - name: "{{ module }} | Building Docker Image: {{ image_name if image_name is defined else 'localhost/openforis/' + module }}"
-  shell: "set -o pipefail && docker build --build-arg BUILD_NUMBER={{ version }} --build-arg GIT_COMMIT={{ git_commit }} -t {{ image_name if image_name is defined else 'localhost/openforis/' + module }} {{workspace}}/modules/{{ module }}/docker | tee /var/log/sepal-build/{{ module }}.log"
+  shell: "
+    set -o pipefail && docker build
+      --build-arg BUILD_NUMBER={{ version }}
+      --build-arg GIT_COMMIT={{ git_commit }}
+      -t {{ image_name if image_name is defined else 'localhost/openforis/' + module }}
+      -f {{ workspace }}/modules/{{ module }}/Dockerfile
+      {{ workspace }}
+      | tee /var/log/sepal-build/{{ module }}.log
+    "
 
 - name: "{{ module }} | Tagging Docker Image: {{ image_name if image_name is defined else 'localhost/openforis/' + module }}"
-  shell: "set -o pipefail && docker tag {{ image_name if image_name is defined else 'localhost/openforis/' + module }}:latest {{ image_name if image_name is defined else 'localhost/openforis/' + module }}:{{ version }}"
+  shell: "set -o pipefail && docker tag
+    {{ image_name if image_name is defined else 'localhost/openforis/' + module }}:latest
+    {{ image_name if image_name is defined else 'localhost/openforis/' + module }}:{{ version }}"

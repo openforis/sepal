@@ -16,11 +16,11 @@ export ANSIBLE_CONFIG=../ansible.cfg
 source ../export-aws-keys.sh "$CONFIG_HOME"/secret.yml
 
 ansible-playbook deploy.yml \
-    -i "$(./inventory.sh Sepal "${CONFIG_HOME}")" \
+    -i "$(../inventory.sh Sepal "${CONFIG_HOME}")" \
     --private-key="$PRIVATE_KEY" \
     --extra-vars "version=$VERSION secret_vars_file=$CONFIG_HOME/secret.yml config_home=$CONFIG_HOME"
 
 ansible-playbook deploy-sepal-storage.yml \
-    -i "$(./inventory.sh SepalStorage "${CONFIG_HOME}")" \
+    -i "$(../inventory.sh SepalStorage "${CONFIG_HOME}")" \
     --private-key="$PRIVATE_KEY" \
     --extra-vars "version=$VERSION secret_vars_file=$CONFIG_HOME/secret.yml config_home=$CONFIG_HOME"

@@ -10,10 +10,10 @@
     restart_policy: "{{ restart_policy }}"
     network_mode: "{{ network_mode }}"
     networks:
-      - name: 'sepal'
+      - name: "sepal"
     env:
-      CEO_URL: '{{ ceo_url }}'
-      CEO_USERNAME: '{{ ceo_username }}'
-      CEO_PASSWORD: '{{ ceo_password }}'
-      CEO_INSTITUTION_ID: '{{ ceo_institution_id }}'
-      CEO_USER_ID: '{{ ceo_user_id }}'
+      CEO_URL: "{{ ceo_url }}"
+      CEO_USERNAME: "{{ ceo_username }}"
+      CEO_PASSWORD: "{{ ceo_password }}"
+      CEO_INSTITUTION_ID: "{{ ceo_institution_id }}"
+      CEO_USER_ID: "{{ ceo_user_id }}"
