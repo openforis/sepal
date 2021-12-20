@@ -4,6 +4,8 @@ ENV MODULE_NAME gateway
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
+RUN npm install -g nodemon
+
 RUN apt update && \
     apt install sudo && \
     adduser node sudo
@@ -23,11 +25,6 @@ USER node
 RUN npm install
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
-ADD modules/${MODULE_NAME}/modules.json /etc/sepal/module.d/gateway/modules.json
+ADD modules/${MODULE_NAME}/command.sh /usr/local/bin
 
-CMD node \
-    src/main.js \
-    --redis-uri "redis://gateway-redis" \
-    --modules=/etc/sepal/module.d/gateway/modules.json \
-    --sepalHost=${SEPAL_HOST} \
-    --secure
+CMD command.sh

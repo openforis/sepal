@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  gui:
+    build:
+      context: ../..
+      dockerfile: ./modules/gui/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/gui:${SEPAL_VERSION:-latest}"
+    container_name: gui
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      GOOGLE_ANALYTICS_ID: "${GOOGLE_ANALYTICS_ID}"
+      GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal

@@ -1,4 +1,4 @@
-const {modules} = require('./config')
+const modules = require('./modules')
 
 const endpoints = [
     {

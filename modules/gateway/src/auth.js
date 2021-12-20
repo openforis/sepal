@@ -1,6 +1,6 @@
 const {defer, firstValueFrom, of, catchError, map} = require('rxjs')
 const {post$, postJson$} = require('sepal/httpClient')
-const {modules} = require('./config')
+const modules = require('./modules')
 const log = require('sepal/log').getLogger('auth')
 
 const REFRESH_IF_EXPIRES_IN_MINUTES = 10

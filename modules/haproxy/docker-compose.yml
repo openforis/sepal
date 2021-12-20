@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  haproxy:
+    build:
+      context: ../..
+      dockerfile: ./modules/haproxy/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/haproxy:${SEPAL_VERSION:-latest}"
+    container_name: haproxy
+
+    ports:
+      - "${SEPAL_IP_ADDRESS:-127.0.0.1}:80:80"
+      - "${SEPAL_IP_ADDRESS:-127.0.0.1}:443:443"
+    volumes:
+      - "${SEPAL_DATA_DIR}/letsencrypt:/etc/letsencrypt"
+    environment:
+      SEPAL_HOST_SEPAL_ENV: "${SEPAL_HOST:-127.0.0.1}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65536
+        hard: 65536
+    sysctls:
+      net.ipv4.tcp_keepalive_time: 60
+      net.ipv4.tcp_keepalive_intvl: 60
+      net.ipv4.tcp_keepalive_probes: 6
+
+networks:
+  sepal:
+    name: sepal

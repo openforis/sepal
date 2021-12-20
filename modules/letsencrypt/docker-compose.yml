@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  letsencrypt:
+    build:
+      context: ../..
+      dockerfile: ./modules/letsencrypt/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/letsencrypt:${SEPAL_VERSION:-latest}"
+    container_name: letsencrypt
+
+    volumes:
+      - "${SEPAL_DATA_DIR}/letsencrypt:/etc/letsencrypt"
+    environment:
+      SEPAL_HOST: "${SEPAL_HOST:-127.0.0.1}"
+      SEPAL_OPERATOR_EMAIL: "${SEPAL_OPERATOR_EMAIL:-}"
+      # TODO: These are needed for AWS DNS
+      AWS_ACCESS_KEY_ID: "{{ letsencrypt_access_key_id }}"
+      AWS_SECRET_ACCESS_KEY: "{{ letsencrypt_secret_access_key }}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal
+

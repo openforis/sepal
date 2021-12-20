@@ -18,7 +18,7 @@
       volumes:
       - "/data/letsencrypt:/etc/letsencrypt"
       env:
-        SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
-        SEPAL_OPERATOR_EMAIL_SEPAL_ENV: "{{ sepal_operator_email}}"
+        SEPAL_HOST: "{{ sepal_host }}"
+        SEPAL_OPERATOR_EMAIL: "{{ sepal_operator_email}}"
         AWS_ACCESS_KEY_ID: "{{ letsencrypt_access_key_id }}"
         AWS_SECRET_ACCESS_KEY: "{{ letsencrypt_secret_access_key }}"
