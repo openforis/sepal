@@ -1,0 +1,4 @@
+useDynLib(SnowballC, .registration = TRUE)
+
+export(wordStem, getStemLanguages)
+

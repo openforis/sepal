@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Lincoln Mullen" />
+
+
+<title>Introduction to the tokenizers Package</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; position: absolute; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; }
+pre.numberSource a.sourceLine:empty
+  { position: absolute; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: absolute; left: -5em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#header {
+text-align: center;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to the tokenizers Package</h1>
+<h4 class="author"><em>Lincoln Mullen</em></h4>
+
+
+
+<div id="package-overview" class="section level2">
+<h2>Package overview</h2>
+<p>In natural language processing, tokenization is the process of breaking human-readable text into machine readable components. The most obvious way to tokenize a text is to split the text into words. But there are many other ways to tokenize a text, the most useful of which are provided by this package.</p>
+<p>The tokenizers in this package have a consistent interface. They all take either a character vector of any length, or a list where each element is a character vector of length one. The idea is that each element comprises a text. Then each function returns a list with the same length as the input vector, where each element in the list contains the tokens generated by the function. If the input character vector or list is named, then the names are preserved, so that the names can serve as identifiers.</p>
+<p>Using the following sample text, the rest of this vignette demonstrates the different kinds of tokenizers in this package.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">library</span>(tokenizers)</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw">options</span>(<span class="dt">max.print =</span> <span class="dv">25</span>)</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">james &lt;-<span class="st"> </span><span class="kw">paste0</span>(</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">  <span class="st">&quot;The question thus becomes a verbal one</span><span class="ch">\n</span><span class="st">&quot;</span>,</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">  <span class="st">&quot;again; and our knowledge of all these early stages of thought and feeling</span><span class="ch">\n</span><span class="st">&quot;</span>,</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">  <span class="st">&quot;is in any case so conjectural and imperfect that farther discussion would</span><span class="ch">\n</span><span class="st">&quot;</span>,</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8">  <span class="st">&quot;not be worth while.</span><span class="ch">\n</span><span class="st">&quot;</span>,</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9">  <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>,</a>
+<a class="sourceLine" id="cb1-10" data-line-number="10">  <span class="st">&quot;Religion, therefore, as I now ask you arbitrarily to take it, shall mean</span><span class="ch">\n</span><span class="st">&quot;</span>,</a>
+<a class="sourceLine" id="cb1-11" data-line-number="11">  <span class="st">&quot;for us _the feelings, acts, and experiences of individual men in their</span><span class="ch">\n</span><span class="st">&quot;</span>,</a>
+<a class="sourceLine" id="cb1-12" data-line-number="12">  <span class="st">&quot;solitude, so far as they apprehend themselves to stand in relation to</span><span class="ch">\n</span><span class="st">&quot;</span>,</a>
+<a class="sourceLine" id="cb1-13" data-line-number="13">  <span class="st">&quot;whatever they may consider the divine_. Since the relation may be either</span><span class="ch">\n</span><span class="st">&quot;</span>,</a>
+<a class="sourceLine" id="cb1-14" data-line-number="14">  <span class="st">&quot;moral, physical, or ritual, it is evident that out of religion in the</span><span class="ch">\n</span><span class="st">&quot;</span>,</a>
+<a class="sourceLine" id="cb1-15" data-line-number="15">  <span class="st">&quot;sense in which we take it, theologies, philosophies, and ecclesiastical</span><span class="ch">\n</span><span class="st">&quot;</span>,</a>
+<a class="sourceLine" id="cb1-16" data-line-number="16">  <span class="st">&quot;organizations may secondarily grow.</span><span class="ch">\n</span><span class="st">&quot;</span></a>
+<a class="sourceLine" id="cb1-17" data-line-number="17">)</a></code></pre></div>
+</div>
+<div id="character-and-character-shingle-tokenizers" class="section level2">
+<h2>Character and character-shingle tokenizers</h2>
+<p>The character tokenizer splits texts into individual characters.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">tokenize_characters</span>(james)[[<span class="dv">1</span>]] </a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="co">#&gt;  [1] &quot;t&quot; &quot;h&quot; &quot;e&quot; &quot;q&quot; &quot;u&quot; &quot;e&quot; &quot;s&quot; &quot;t&quot; &quot;i&quot; &quot;o&quot; &quot;n&quot; &quot;t&quot; &quot;h&quot; &quot;u&quot; &quot;s&quot; &quot;b&quot; &quot;e&quot;</span></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="co">#&gt; [18] &quot;c&quot; &quot;o&quot; &quot;m&quot; &quot;e&quot; &quot;s&quot; &quot;a&quot; &quot;v&quot; &quot;e&quot;</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="co">#&gt;  [ reached getOption(&quot;max.print&quot;) -- omitted 517 entries ]</span></a></code></pre></div>
+<p>You can also tokenize into character-based shingles.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">tokenize_character_shingles</span>(james, <span class="dt">n =</span> <span class="dv">3</span>, <span class="dt">n_min =</span> <span class="dv">3</span>, </a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">                            <span class="dt">strip_non_alphanum =</span> <span class="ot">FALSE</span>)[[<span class="dv">1</span>]][<span class="dv">1</span><span class="op">:</span><span class="dv">20</span>]</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="co">#&gt;  [1] &quot;the&quot; &quot;he &quot; &quot;e q&quot; &quot; qu&quot; &quot;que&quot; &quot;ues&quot; &quot;est&quot; &quot;sti&quot; &quot;tio&quot; &quot;ion&quot; &quot;on &quot;</span></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"><span class="co">#&gt; [12] &quot;n t&quot; &quot; th&quot; &quot;thu&quot; &quot;hus&quot; &quot;us &quot; &quot;s b&quot; &quot; be&quot; &quot;bec&quot; &quot;eco&quot;</span></a></code></pre></div>
+</div>
+<div id="word-and-word-stem-tokenizers" class="section level2">
+<h2>Word and word-stem tokenizers</h2>
+<p>The word tokenizer splits texts into words.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">tokenize_words</span>(james)</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="co">#&gt; [[1]]</span></a>
+<a class="sourceLine" id="cb4-3" data-line-number="3"><span class="co">#&gt;  [1] &quot;the&quot;       &quot;question&quot;  &quot;thus&quot;      &quot;becomes&quot;   &quot;a&quot;        </span></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4"><span class="co">#&gt;  [6] &quot;verbal&quot;    &quot;one&quot;       &quot;again&quot;     &quot;and&quot;       &quot;our&quot;      </span></a>
+<a class="sourceLine" id="cb4-5" data-line-number="5"><span class="co">#&gt; [11] &quot;knowledge&quot; &quot;of&quot;        &quot;all&quot;       &quot;these&quot;     &quot;early&quot;    </span></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6"><span class="co">#&gt; [16] &quot;stages&quot;    &quot;of&quot;        &quot;thought&quot;   &quot;and&quot;       &quot;feeling&quot;  </span></a>
+<a class="sourceLine" id="cb4-7" data-line-number="7"><span class="co">#&gt; [21] &quot;is&quot;        &quot;in&quot;        &quot;any&quot;       &quot;case&quot;      &quot;so&quot;       </span></a>
+<a class="sourceLine" id="cb4-8" data-line-number="8"><span class="co">#&gt;  [ reached getOption(&quot;max.print&quot;) -- omitted 87 entries ]</span></a></code></pre></div>
+<p>Word stemming is provided by the <a href="https://cran.r-project.org/package=SnowballC">SnowballC</a> package.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">tokenize_word_stems</span>(james)</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="co">#&gt; [[1]]</span></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3"><span class="co">#&gt;  [1] &quot;the&quot;      &quot;question&quot; &quot;thus&quot;     &quot;becom&quot;    &quot;a&quot;        &quot;verbal&quot;  </span></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4"><span class="co">#&gt;  [7] &quot;one&quot;      &quot;again&quot;    &quot;and&quot;      &quot;our&quot;      &quot;knowledg&quot; &quot;of&quot;      </span></a>
+<a class="sourceLine" id="cb5-5" data-line-number="5"><span class="co">#&gt; [13] &quot;all&quot;      &quot;these&quot;    &quot;earli&quot;    &quot;stage&quot;    &quot;of&quot;       &quot;thought&quot; </span></a>
+<a class="sourceLine" id="cb5-6" data-line-number="6"><span class="co">#&gt; [19] &quot;and&quot;      &quot;feel&quot;     &quot;is&quot;       &quot;in&quot;       &quot;ani&quot;      &quot;case&quot;    </span></a>
+<a class="sourceLine" id="cb5-7" data-line-number="7"><span class="co">#&gt; [25] &quot;so&quot;      </span></a>
+<a class="sourceLine" id="cb5-8" data-line-number="8"><span class="co">#&gt;  [ reached getOption(&quot;max.print&quot;) -- omitted 87 entries ]</span></a></code></pre></div>
+<p>You can also provide a vector of stopwords which will be omitted. The <a href="https://github.com/quanteda/stopwords">stopwords package</a>, which contains stopwords for many languages from several sources, is recommended. This argument also works with the n-gram and skip n-gram tokenizers.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">library</span>(stopwords)</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"><span class="kw">tokenize_words</span>(james, <span class="dt">stopwords =</span> stopwords<span class="op">::</span><span class="kw">stopwords</span>(<span class="st">&quot;en&quot;</span>))</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"><span class="co">#&gt; [[1]]</span></a>
+<a class="sourceLine" id="cb6-4" data-line-number="4"><span class="co">#&gt;  [1] &quot;question&quot;    &quot;thus&quot;        &quot;becomes&quot;     &quot;verbal&quot;      &quot;one&quot;        </span></a>
+<a class="sourceLine" id="cb6-5" data-line-number="5"><span class="co">#&gt;  [6] &quot;knowledge&quot;   &quot;early&quot;       &quot;stages&quot;      &quot;thought&quot;     &quot;feeling&quot;    </span></a>
+<a class="sourceLine" id="cb6-6" data-line-number="6"><span class="co">#&gt; [11] &quot;case&quot;        &quot;conjectural&quot; &quot;imperfect&quot;   &quot;farther&quot;     &quot;discussion&quot; </span></a>
+<a class="sourceLine" id="cb6-7" data-line-number="7"><span class="co">#&gt; [16] &quot;worth&quot;       &quot;religion&quot;    &quot;therefore&quot;   &quot;now&quot;         &quot;ask&quot;        </span></a>
+<a class="sourceLine" id="cb6-8" data-line-number="8"><span class="co">#&gt; [21] &quot;arbitrarily&quot; &quot;take&quot;        &quot;shall&quot;       &quot;mean&quot;        &quot;us&quot;         </span></a>
+<a class="sourceLine" id="cb6-9" data-line-number="9"><span class="co">#&gt;  [ reached getOption(&quot;max.print&quot;) -- omitted 33 entries ]</span></a></code></pre></div>
+<p>An alternative word stemmer often used in NLP that preserves punctuation and separates common English contractions is the Penn Treebank tokenizer.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw">tokenize_ptb</span>(james)</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="co">#&gt; [[1]]</span></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3"><span class="co">#&gt;  [1] &quot;The&quot;       &quot;question&quot;  &quot;thus&quot;      &quot;becomes&quot;   &quot;a&quot;        </span></a>
+<a class="sourceLine" id="cb7-4" data-line-number="4"><span class="co">#&gt;  [6] &quot;verbal&quot;    &quot;one&quot;       &quot;again&quot;     &quot;;&quot;         &quot;and&quot;      </span></a>
+<a class="sourceLine" id="cb7-5" data-line-number="5"><span class="co">#&gt; [11] &quot;our&quot;       &quot;knowledge&quot; &quot;of&quot;        &quot;all&quot;       &quot;these&quot;    </span></a>
+<a class="sourceLine" id="cb7-6" data-line-number="6"><span class="co">#&gt; [16] &quot;early&quot;     &quot;stages&quot;    &quot;of&quot;        &quot;thought&quot;   &quot;and&quot;      </span></a>
+<a class="sourceLine" id="cb7-7" data-line-number="7"><span class="co">#&gt; [21] &quot;feeling&quot;   &quot;is&quot;        &quot;in&quot;        &quot;any&quot;       &quot;case&quot;     </span></a>
+<a class="sourceLine" id="cb7-8" data-line-number="8"><span class="co">#&gt;  [ reached getOption(&quot;max.print&quot;) -- omitted 101 entries ]</span></a></code></pre></div>
+</div>
+<div id="n-gram-and-skip-n-gram-tokenizers" class="section level2">
+<h2>N-gram and skip n-gram tokenizers</h2>
+<p>An n-gram is a contiguous sequence of words containing at least <code>n_min</code> words and at most <code>n</code> words. This function will generate all such combinations of n-grams, omitting stopwords if desired.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw">tokenize_ngrams</span>(james, <span class="dt">n =</span> <span class="dv">5</span>, <span class="dt">n_min =</span> <span class="dv">2</span>,</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">                <span class="dt">stopwords =</span> stopwords<span class="op">::</span><span class="kw">stopwords</span>(<span class="st">&quot;en&quot;</span>))</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3"><span class="co">#&gt; [[1]]</span></a>
+<a class="sourceLine" id="cb8-4" data-line-number="4"><span class="co">#&gt;  [1] &quot;question thus&quot;                         </span></a>
+<a class="sourceLine" id="cb8-5" data-line-number="5"><span class="co">#&gt;  [2] &quot;question thus becomes&quot;                 </span></a>
+<a class="sourceLine" id="cb8-6" data-line-number="6"><span class="co">#&gt;  [3] &quot;question thus becomes verbal&quot;          </span></a>
+<a class="sourceLine" id="cb8-7" data-line-number="7"><span class="co">#&gt;  [4] &quot;question thus becomes verbal one&quot;      </span></a>
+<a class="sourceLine" id="cb8-8" data-line-number="8"><span class="co">#&gt;  [5] &quot;thus becomes&quot;                          </span></a>
+<a class="sourceLine" id="cb8-9" data-line-number="9"><span class="co">#&gt;  [6] &quot;thus becomes verbal&quot;                   </span></a>
+<a class="sourceLine" id="cb8-10" data-line-number="10"><span class="co">#&gt;  [7] &quot;thus becomes verbal one&quot;               </span></a>
+<a class="sourceLine" id="cb8-11" data-line-number="11"><span class="co">#&gt;  [8] &quot;thus becomes verbal one knowledge&quot;     </span></a>
+<a class="sourceLine" id="cb8-12" data-line-number="12"><span class="co">#&gt;  [9] &quot;becomes verbal&quot;                        </span></a>
+<a class="sourceLine" id="cb8-13" data-line-number="13"><span class="co">#&gt; [10] &quot;becomes verbal one&quot;                    </span></a>
+<a class="sourceLine" id="cb8-14" data-line-number="14"><span class="co">#&gt; [11] &quot;becomes verbal one knowledge&quot;          </span></a>
+<a class="sourceLine" id="cb8-15" data-line-number="15"><span class="co">#&gt; [12] &quot;becomes verbal one knowledge early&quot;    </span></a>
+<a class="sourceLine" id="cb8-16" data-line-number="16"><span class="co">#&gt; [13] &quot;verbal one&quot;                            </span></a>
+<a class="sourceLine" id="cb8-17" data-line-number="17"><span class="co">#&gt; [14] &quot;verbal one knowledge&quot;                  </span></a>
+<a class="sourceLine" id="cb8-18" data-line-number="18"><span class="co">#&gt; [15] &quot;verbal one knowledge early&quot;            </span></a>
+<a class="sourceLine" id="cb8-19" data-line-number="19"><span class="co">#&gt; [16] &quot;verbal one knowledge early stages&quot;     </span></a>
+<a class="sourceLine" id="cb8-20" data-line-number="20"><span class="co">#&gt; [17] &quot;one knowledge&quot;                         </span></a>
+<a class="sourceLine" id="cb8-21" data-line-number="21"><span class="co">#&gt; [18] &quot;one knowledge early&quot;                   </span></a>
+<a class="sourceLine" id="cb8-22" data-line-number="22"><span class="co">#&gt; [19] &quot;one knowledge early stages&quot;            </span></a>
+<a class="sourceLine" id="cb8-23" data-line-number="23"><span class="co">#&gt; [20] &quot;one knowledge early stages thought&quot;    </span></a>
+<a class="sourceLine" id="cb8-24" data-line-number="24"><span class="co">#&gt; [21] &quot;knowledge early&quot;                       </span></a>
+<a class="sourceLine" id="cb8-25" data-line-number="25"><span class="co">#&gt; [22] &quot;knowledge early stages&quot;                </span></a>
+<a class="sourceLine" id="cb8-26" data-line-number="26"><span class="co">#&gt; [23] &quot;knowledge early stages thought&quot;        </span></a>
+<a class="sourceLine" id="cb8-27" data-line-number="27"><span class="co">#&gt; [24] &quot;knowledge early stages thought feeling&quot;</span></a>
+<a class="sourceLine" id="cb8-28" data-line-number="28"><span class="co">#&gt; [25] &quot;early stages&quot;                          </span></a>
+<a class="sourceLine" id="cb8-29" data-line-number="29"><span class="co">#&gt;  [ reached getOption(&quot;max.print&quot;) -- omitted 197 entries ]</span></a></code></pre></div>
+<p>A skip n-gram is like an n-gram in that it takes the <code>n</code> and <code>n_min</code> parameters. But rather than returning contiguous sequences of words, it will also return sequences of n-grams skipping words with gaps between <code>0</code> and the value of <code>k</code>. This function generates all such sequences, again omitting stopwords if desired. Note that the number of tokens returned can be very large.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">tokenize_skip_ngrams</span>(james, <span class="dt">n =</span> <span class="dv">5</span>, <span class="dt">n_min =</span> <span class="dv">2</span>, <span class="dt">k =</span> <span class="dv">2</span>,</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">                     <span class="dt">stopwords =</span> stopwords<span class="op">::</span><span class="kw">stopwords</span>(<span class="st">&quot;en&quot;</span>))</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3"><span class="co">#&gt; [[1]]</span></a>
+<a class="sourceLine" id="cb9-4" data-line-number="4"><span class="co">#&gt;  [1] &quot;question thus&quot;                    </span></a>
+<a class="sourceLine" id="cb9-5" data-line-number="5"><span class="co">#&gt;  [2] &quot;question becomes&quot;                 </span></a>
+<a class="sourceLine" id="cb9-6" data-line-number="6"><span class="co">#&gt;  [3] &quot;question verbal&quot;                  </span></a>
+<a class="sourceLine" id="cb9-7" data-line-number="7"><span class="co">#&gt;  [4] &quot;question thus becomes&quot;            </span></a>
+<a class="sourceLine" id="cb9-8" data-line-number="8"><span class="co">#&gt;  [5] &quot;question thus verbal&quot;             </span></a>
+<a class="sourceLine" id="cb9-9" data-line-number="9"><span class="co">#&gt;  [6] &quot;question thus one&quot;                </span></a>
+<a class="sourceLine" id="cb9-10" data-line-number="10"><span class="co">#&gt;  [7] &quot;question becomes verbal&quot;          </span></a>
+<a class="sourceLine" id="cb9-11" data-line-number="11"><span class="co">#&gt;  [8] &quot;question becomes one&quot;             </span></a>
+<a class="sourceLine" id="cb9-12" data-line-number="12"><span class="co">#&gt;  [9] &quot;question becomes knowledge&quot;       </span></a>
+<a class="sourceLine" id="cb9-13" data-line-number="13"><span class="co">#&gt; [10] &quot;question verbal one&quot;              </span></a>
+<a class="sourceLine" id="cb9-14" data-line-number="14"><span class="co">#&gt; [11] &quot;question verbal knowledge&quot;        </span></a>
+<a class="sourceLine" id="cb9-15" data-line-number="15"><span class="co">#&gt; [12] &quot;question verbal early&quot;            </span></a>
+<a class="sourceLine" id="cb9-16" data-line-number="16"><span class="co">#&gt; [13] &quot;question thus becomes verbal&quot;     </span></a>
+<a class="sourceLine" id="cb9-17" data-line-number="17"><span class="co">#&gt; [14] &quot;question thus becomes one&quot;        </span></a>
+<a class="sourceLine" id="cb9-18" data-line-number="18"><span class="co">#&gt; [15] &quot;question thus becomes knowledge&quot;  </span></a>
+<a class="sourceLine" id="cb9-19" data-line-number="19"><span class="co">#&gt; [16] &quot;question thus verbal one&quot;         </span></a>
+<a class="sourceLine" id="cb9-20" data-line-number="20"><span class="co">#&gt; [17] &quot;question thus verbal knowledge&quot;   </span></a>
+<a class="sourceLine" id="cb9-21" data-line-number="21"><span class="co">#&gt; [18] &quot;question thus verbal early&quot;       </span></a>
+<a class="sourceLine" id="cb9-22" data-line-number="22"><span class="co">#&gt; [19] &quot;question thus one knowledge&quot;      </span></a>
+<a class="sourceLine" id="cb9-23" data-line-number="23"><span class="co">#&gt; [20] &quot;question thus one early&quot;          </span></a>
+<a class="sourceLine" id="cb9-24" data-line-number="24"><span class="co">#&gt; [21] &quot;question thus one stages&quot;         </span></a>
+<a class="sourceLine" id="cb9-25" data-line-number="25"><span class="co">#&gt; [22] &quot;question becomes verbal one&quot;      </span></a>
+<a class="sourceLine" id="cb9-26" data-line-number="26"><span class="co">#&gt; [23] &quot;question becomes verbal knowledge&quot;</span></a>
+<a class="sourceLine" id="cb9-27" data-line-number="27"><span class="co">#&gt; [24] &quot;question becomes verbal early&quot;    </span></a>
+<a class="sourceLine" id="cb9-28" data-line-number="28"><span class="co">#&gt; [25] &quot;question becomes one knowledge&quot;   </span></a>
+<a class="sourceLine" id="cb9-29" data-line-number="29"><span class="co">#&gt;  [ reached getOption(&quot;max.print&quot;) -- omitted 6083 entries ]</span></a></code></pre></div>
+</div>
+<div id="tweet-tokenizer" class="section level2">
+<h2>Tweet tokenizer</h2>
+<p>Tokenizing tweets requires special attention, since usernames (<code>@whoever</code>) and hashtags (<code>#hashtag</code>) use special characters that might otherwise be stripped away.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="kw">tokenize_tweets</span>(<span class="st">&quot;Welcome, @user, to the tokenizers package. #rstats #forever&quot;</span>)</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2"><span class="co">#&gt; [[1]]</span></a>
+<a class="sourceLine" id="cb10-3" data-line-number="3"><span class="co">#&gt; [1] &quot;welcome&quot;    &quot;@user&quot;      &quot;to&quot;         &quot;the&quot;        &quot;tokenizers&quot;</span></a>
+<a class="sourceLine" id="cb10-4" data-line-number="4"><span class="co">#&gt; [6] &quot;package&quot;    &quot;#rstats&quot;    &quot;#forever&quot;</span></a></code></pre></div>
+</div>
+<div id="sentence-and-paragraph-tokenizers" class="section level2">
+<h2>Sentence and paragraph tokenizers</h2>
+<p>Sometimes it is desirable to split texts into sentences or paragraphs prior to tokenizing into other forms.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw">tokenize_sentences</span>(james) </a></code></pre></div>
+<pre><code>#&gt; [[1]]
+#&gt; [1] &quot;The question thus becomes a verbal one again; and our knowledge of all these early stages of thought and feeling is in any case so conjectural and imperfect that farther discussion would not be worth while.&quot;                                               
+#&gt; [2] &quot;Religion, therefore, as I now ask you arbitrarily to take it, shall mean for us _the feelings, acts, and experiences of individual men in their solitude, so far as they apprehend themselves to stand in relation to whatever they may consider the divine_.&quot;
+#&gt; [3] &quot;Since the relation may be either moral, physical, or ritual, it is evident that out of religion in the sense in which we take it, theologies, philosophies, and ecclesiastical organizations may secondarily grow.&quot;</code></pre>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="kw">tokenize_paragraphs</span>(james)</a></code></pre></div>
+<pre><code>#&gt; [[1]]
+#&gt; [1] &quot;The question thus becomes a verbal one again; and our knowledge of all these early stages of thought and feeling is in any case so conjectural and imperfect that farther discussion would not be worth while.&quot;                                                                                                                                                                                                                                                                   
+#&gt; [2] &quot;Religion, therefore, as I now ask you arbitrarily to take it, shall mean for us _the feelings, acts, and experiences of individual men in their solitude, so far as they apprehend themselves to stand in relation to whatever they may consider the divine_. Since the relation may be either moral, physical, or ritual, it is evident that out of religion in the sense in which we take it, theologies, philosophies, and ecclesiastical organizations may secondarily grow. &quot;</code></pre>
+</div>
+<div id="text-chunking" class="section level2">
+<h2>Text chunking</h2>
+<p>When one has a very long document, sometimes it is desirable to split the document into smaller chunks, each with the same length. This function chunks a document and gives it each of the chunks an ID to show their order. These chunks can then be further tokenized.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1">chunks &lt;-<span class="st"> </span><span class="kw">chunk_text</span>(mobydick, <span class="dt">chunk_size =</span> <span class="dv">100</span>, <span class="dt">doc_id =</span> <span class="st">&quot;mobydick&quot;</span>)</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2"><span class="kw">length</span>(chunks)</a>
+<a class="sourceLine" id="cb15-3" data-line-number="3"><span class="co">#&gt; [1] 2195</span></a>
+<a class="sourceLine" id="cb15-4" data-line-number="4">chunks[<span class="dv">5</span><span class="op">:</span><span class="dv">6</span>]</a>
+<a class="sourceLine" id="cb15-5" data-line-number="5"><span class="co">#&gt; $`mobydick-0005`</span></a>
+<a class="sourceLine" id="cb15-6" data-line-number="6"><span class="co">#&gt; [1] &quot;of a poor devil of a sub sub appears to have gone through the long vaticans and street stalls of the earth picking up whatever random allusions to whales he could anyways find in any book whatsoever sacred or profane therefore you must not in every case at least take the higgledy piggledy whale statements however authentic in these extracts for veritable gospel cetology far from it as touching the ancient authors generally as well as the poets here appearing these extracts are solely valuable or entertaining as affording a glancing bird's eye view of what has been promiscuously said&quot;</span></a>
+<a class="sourceLine" id="cb15-7" data-line-number="7"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb15-8" data-line-number="8"><span class="co">#&gt; $`mobydick-0006`</span></a>
+<a class="sourceLine" id="cb15-9" data-line-number="9"><span class="co">#&gt; [1] &quot;thought fancied and sung of leviathan by many nations and generations including our own so fare thee well poor devil of a sub sub whose commentator i am thou belongest to that hopeless sallow tribe which no wine of this world will ever warm and for whom even pale sherry would be too rosy strong but with whom one sometimes loves to sit and feel poor devilish too and grow convivial upon tears and say to them bluntly with full eyes and empty glasses and in not altogether unpleasant sadness give it up sub subs for by how much the&quot;</span></a>
+<a class="sourceLine" id="cb15-10" data-line-number="10"><span class="kw">tokenize_words</span>(chunks[<span class="dv">5</span><span class="op">:</span><span class="dv">6</span>])</a>
+<a class="sourceLine" id="cb15-11" data-line-number="11"><span class="co">#&gt; $`mobydick-0005`</span></a>
+<a class="sourceLine" id="cb15-12" data-line-number="12"><span class="co">#&gt;  [1] &quot;of&quot;       &quot;a&quot;        &quot;poor&quot;     &quot;devil&quot;    &quot;of&quot;       &quot;a&quot;       </span></a>
+<a class="sourceLine" id="cb15-13" data-line-number="13"><span class="co">#&gt;  [7] &quot;sub&quot;      &quot;sub&quot;      &quot;appears&quot;  &quot;to&quot;       &quot;have&quot;     &quot;gone&quot;    </span></a>
+<a class="sourceLine" id="cb15-14" data-line-number="14"><span class="co">#&gt; [13] &quot;through&quot;  &quot;the&quot;      &quot;long&quot;     &quot;vaticans&quot; &quot;and&quot;      &quot;street&quot;  </span></a>
+<a class="sourceLine" id="cb15-15" data-line-number="15"><span class="co">#&gt; [19] &quot;stalls&quot;   &quot;of&quot;       &quot;the&quot;      &quot;earth&quot;    &quot;picking&quot;  &quot;up&quot;      </span></a>
+<a class="sourceLine" id="cb15-16" data-line-number="16"><span class="co">#&gt; [25] &quot;whatever&quot;</span></a>
+<a class="sourceLine" id="cb15-17" data-line-number="17"><span class="co">#&gt;  [ reached getOption(&quot;max.print&quot;) -- omitted 75 entries ]</span></a>
+<a class="sourceLine" id="cb15-18" data-line-number="18"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb15-19" data-line-number="19"><span class="co">#&gt; $`mobydick-0006`</span></a>
+<a class="sourceLine" id="cb15-20" data-line-number="20"><span class="co">#&gt;  [1] &quot;thought&quot;     &quot;fancied&quot;     &quot;and&quot;         &quot;sung&quot;        &quot;of&quot;         </span></a>
+<a class="sourceLine" id="cb15-21" data-line-number="21"><span class="co">#&gt;  [6] &quot;leviathan&quot;   &quot;by&quot;          &quot;many&quot;        &quot;nations&quot;     &quot;and&quot;        </span></a>
+<a class="sourceLine" id="cb15-22" data-line-number="22"><span class="co">#&gt; [11] &quot;generations&quot; &quot;including&quot;   &quot;our&quot;         &quot;own&quot;         &quot;so&quot;         </span></a>
+<a class="sourceLine" id="cb15-23" data-line-number="23"><span class="co">#&gt; [16] &quot;fare&quot;        &quot;thee&quot;        &quot;well&quot;        &quot;poor&quot;        &quot;devil&quot;      </span></a>
+<a class="sourceLine" id="cb15-24" data-line-number="24"><span class="co">#&gt; [21] &quot;of&quot;          &quot;a&quot;           &quot;sub&quot;         &quot;sub&quot;         &quot;whose&quot;      </span></a>
+<a class="sourceLine" id="cb15-25" data-line-number="25"><span class="co">#&gt;  [ reached getOption(&quot;max.print&quot;) -- omitted 75 entries ]</span></a></code></pre></div>
+</div>
+<div id="counting-words-characters-sentences" class="section level2">
+<h2>Counting words, characters, sentences</h2>
+<p>The package also offers functions for counting words, characters, and sentences in a format which works nicely with the rest of the functions.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="kw">count_words</span>(mobydick)</a>
+<a class="sourceLine" id="cb16-2" data-line-number="2"><span class="co">#&gt; mobydick </span></a>
+<a class="sourceLine" id="cb16-3" data-line-number="3"><span class="co">#&gt;   219415</span></a>
+<a class="sourceLine" id="cb16-4" data-line-number="4"><span class="kw">count_characters</span>(mobydick)</a>
+<a class="sourceLine" id="cb16-5" data-line-number="5"><span class="co">#&gt; mobydick </span></a>
+<a class="sourceLine" id="cb16-6" data-line-number="6"><span class="co">#&gt;  1235185</span></a>
+<a class="sourceLine" id="cb16-7" data-line-number="7"><span class="kw">count_sentences</span>(mobydick)</a>
+<a class="sourceLine" id="cb16-8" data-line-number="8"><span class="co">#&gt; mobydick </span></a>
+<a class="sourceLine" id="cb16-9" data-line-number="9"><span class="co">#&gt;    29076</span></a></code></pre></div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

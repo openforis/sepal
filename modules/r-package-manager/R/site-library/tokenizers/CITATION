@@ -1,0 +1,26 @@
+citHeader(paste0(
+  "To cite the tokenizers package in publications, please cite the ",
+  "paper in the Journal of Open Source Software:"
+))
+
+citEntry(
+  entry = "Article",
+  title = "Fast, Consistent Tokenization of Natural Language Text",
+  author = personList(as.person("Lincoln A. Mullen"),
+                      as.person("Kenneth Benoit"),
+                      as.person("Os Keyes"),
+                      as.person("Dmitry Selivanov"),
+                      as.person("Jeffrey Arnold")),
+  journal = "Journal of Open Source Software",
+  year = "2018",
+  volume = "3",
+  issue = "23",
+  pages = "655",
+  url = "https://doi.org/10.21105/joss.00655",
+  doi = "10.21105/joss.00655",
+
+  textVersion = paste('Lincoln A. Mullen et al.,',
+                      '"Fast, Consistent Tokenization of Natural Language',
+                      'Text," Journal of Open Source Software 3, no. 23',
+                      '(2018): 655, https://doi.org/10.21105/joss.00655.')
+)

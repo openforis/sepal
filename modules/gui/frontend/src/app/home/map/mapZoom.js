@@ -111,7 +111,7 @@ class _MapZoomPanel extends React.Component {
                 onClick={() => map.zoomIn()}
                 icon={'plus'}
                 tooltip={msg('process.mapZoom.zoomIn.tooltip')}
-                tooltipPlacement='top'
+                tooltipPlacement='topRight'
             />
         )
     }
@@ -125,7 +125,7 @@ class _MapZoomPanel extends React.Component {
                 onClick={() => map.zoomOut()}
                 icon={'minus'}
                 tooltip={msg('process.mapZoom.zoomOut.tooltip')}
-                tooltipPlacement='top'
+                tooltipPlacement='topRight'
             />
         )
     }
@@ -140,7 +140,7 @@ class _MapZoomPanel extends React.Component {
                 onClick={() => map.toggleZoomArea()}
                 icon={'crop-alt'}
                 tooltip={msg('process.mapZoom.zoomArea.tooltip')}
-                tooltipPlacement='top'
+                tooltipPlacement='topRight'
             />
         )
     }
@@ -153,7 +153,7 @@ class _MapZoomPanel extends React.Component {
                 onClick={() => map.fit()}
                 icon={'bullseye'}
                 tooltip={msg('process.mapZoom.fit.tooltip')}
-                tooltipPlacement='top'
+                tooltipPlacement='topRight'
             />
         )
     }
@@ -166,7 +166,7 @@ class _MapZoomPanel extends React.Component {
                 onChange={() => this.toggleScrollWheel()}
                 icon={'mouse'}
                 tooltip={msg(scrollWheelEnabled ? 'process.mapZoom.scrollwheel.enabled.tooltip' : 'process.mapZoom.scrollwheel.disabled.tooltip')}
-                tooltipPlacement='top'
+                tooltipPlacement='topRight'
             />
         )
     }

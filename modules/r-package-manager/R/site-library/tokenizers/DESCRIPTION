@@ -1,0 +1,48 @@
+Package: tokenizers
+Type: Package
+Title: Fast, Consistent Tokenization of Natural Language Text
+Version: 0.2.1
+Date: 2018-03-29
+Description: Convert natural language text into tokens. Includes tokenizers for
+    shingled n-grams, skip n-grams, words, word stems, sentences, paragraphs,
+    characters, shingled characters, lines, tweets, Penn Treebank, regular
+    expressions, as well as functions for counting characters, words, and sentences,
+    and a function for splitting longer texts into separate documents, each with
+    the same number of words.  The tokenizers have a consistent interface, and
+    the package is built on the 'stringi' and 'Rcpp' packages for  fast
+    yet correct tokenization in 'UTF-8'. 
+License: MIT + file LICENSE
+LazyData: yes
+Authors@R: c(person("Lincoln", "Mullen", role = c("aut", "cre"),
+        email = "lincoln@lincolnmullen.com",
+        comment = c(ORCID = "0000-0001-5103-6917")),
+        person("Os", "Keyes", role = c("ctb"),
+        email = "ironholds@gmail.com",
+        comment = c(ORCID = "0000-0001-5196-609X")),
+        person("Dmitriy", "Selivanov", role = c("ctb"),
+        email = "selivanov.dmitriy@gmail.com"),
+        person("Jeffrey", "Arnold", role = c("ctb"),
+        email = "jeffrey.arnold@gmail.com",
+        comment = c(ORCID = "0000-0001-9953-3904")),
+        person("Kenneth", "Benoit", role = c("ctb"),
+        email = "kbenoit@lse.ac.uk",
+        comment = c(ORCID = "0000-0002-0797-564X")))
+URL: https://lincolnmullen.com/software/tokenizers/
+BugReports: https://github.com/ropensci/tokenizers/issues
+RoxygenNote: 6.0.1
+Depends: R (>= 3.1.3)
+Imports: stringi (>= 1.0.1), Rcpp (>= 0.12.3), SnowballC (>= 0.5.1)
+LinkingTo: Rcpp
+Suggests: covr, knitr, rmarkdown, stopwords (>= 0.9.0), testthat
+VignetteBuilder: knitr
+NeedsCompilation: yes
+Packaged: 2018-03-29 17:26:00 UTC; lmullen
+Author: Lincoln Mullen [aut, cre] (<https://orcid.org/0000-0001-5103-6917>),
+  Os Keyes [ctb] (<https://orcid.org/0000-0001-5196-609X>),
+  Dmitriy Selivanov [ctb],
+  Jeffrey Arnold [ctb] (<https://orcid.org/0000-0001-9953-3904>),
+  Kenneth Benoit [ctb] (<https://orcid.org/0000-0002-0797-564X>)
+Maintainer: Lincoln Mullen <lincoln@lincolnmullen.com>
+Repository: CRAN
+Date/Publication: 2018-03-29 20:07:40 UTC
+Built: R 3.6.3; x86_64-pc-linux-gnu; 2021-12-16 11:10:52 UTC; unix

@@ -1,0 +1,10 @@
+basic-tokenizers        Basic tokenizers
+chunk_text              Chunk text into smaller segments
+count_words             Count words, sentences, characters
+mobydick                The text of Moby Dick
+ngram-tokenizers        N-gram tokenizers
+tokenize_character_shingles
+                        Character shingle tokenizers
+tokenize_ptb            Penn Treebank Tokenizer
+tokenize_word_stems     Word stem tokenizer
+tokenizers              Tokenizers

@@ -1,0 +1,83 @@
+Type: Package
+Package: tidytext
+Title: Text Mining using 'dplyr', 'ggplot2', and Other Tidy Tools
+Version: 0.3.2
+Authors@R: 
+    c(person(given = "Gabriela",
+             family = "De Queiroz",
+             role = "ctb",
+             email = "gabidequeiroz@gmail.com"),
+      person(given = "Colin",
+             family = "Fay",
+             role = "ctb",
+             email = "contact@colinfay.me",
+             comment = c(ORCID = "0000-0001-7343-1846")),
+      person(given = "Emil",
+             family = "Hvitfeldt",
+             role = "ctb",
+             email = "emilhhvitfeldt@gmail.com"),
+      person(given = "Os",
+             family = "Keyes",
+             role = "ctb",
+             email = "ironholds@gmail.com",
+             comment = c(ORCID = "0000-0001-5196-609X")),
+      person(given = "Kanishka",
+             family = "Misra",
+             role = "ctb",
+             email = "kmisra@purdue.edu"),
+      person(given = "Tim",
+             family = "Mastny",
+             role = "ctb",
+             email = "tim.mastny@gmail.com"),
+      person(given = "Jeff",
+             family = "Erickson",
+             role = "ctb",
+             email = "jeff@erick.so"),
+      person(given = "David",
+             family = "Robinson",
+             role = "aut",
+             email = "admiral.david@gmail.com"),
+      person(given = "Julia",
+             family = "Silge",
+             role = c("aut", "cre"),
+             email = "julia.silge@gmail.com",
+             comment = c(ORCID = "0000-0002-3671-836X")))
+Description: Using tidy data principles can make many text mining tasks
+    easier, more effective, and consistent with tools already in wide use.
+    Much of the infrastructure needed for text mining with tidy data
+    frames already exists in packages like 'dplyr', 'broom', 'tidyr', and
+    'ggplot2'. In this package, we provide functions and supporting data
+    sets to allow conversion of text to and from tidy formats, and to
+    switch seamlessly between tidy tools and existing text mining
+    packages.
+License: MIT + file LICENSE
+URL: https://github.com/juliasilge/tidytext
+BugReports: https://github.com/juliasilge/tidytext/issues
+Depends: R (>= 2.10)
+Imports: dplyr, generics, hunspell, janeaustenr, lifecycle, Matrix,
+        methods, purrr (>= 0.1.1), rlang (>= 0.4.10), stringr, tibble,
+        tokenizers, vctrs
+Suggests: broom, covr, data.table, ggplot2, knitr, mallet, NLP,
+        quanteda, readr, reshape2, rmarkdown, scales, stm, stopwords,
+        testthat (>= 2.1.0), textdata, tidyr, tm, topicmodels, vdiffr,
+        wordcloud, XML
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: TRUE
+RoxygenNote: 7.1.2
+NeedsCompilation: no
+Packaged: 2021-09-30 19:42:15 UTC; juliasilge
+Author: Gabriela De Queiroz [ctb],
+  Colin Fay [ctb] (<https://orcid.org/0000-0001-7343-1846>),
+  Emil Hvitfeldt [ctb],
+  Os Keyes [ctb] (<https://orcid.org/0000-0001-5196-609X>),
+  Kanishka Misra [ctb],
+  Tim Mastny [ctb],
+  Jeff Erickson [ctb],
+  David Robinson [aut],
+  Julia Silge [aut, cre] (<https://orcid.org/0000-0002-3671-836X>)
+Maintainer: Julia Silge <julia.silge@gmail.com>
+Repository: CRAN
+Date/Publication: 2021-09-30 20:10:02 UTC
+Built: R 3.6.3; ; 2021-12-16 11:11:42 UTC; unix

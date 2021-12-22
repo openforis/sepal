@@ -1,5 +1,5 @@
-const {getPackage} = require('./foo')
+const {getPackage} = require('./package')
 
 module.exports = router =>
     router
-        .get('/', ctx => getPackage(ctx))
+        .get('/src/contrib/:name', ctx => getPackage(ctx))

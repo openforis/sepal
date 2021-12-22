@@ -1,0 +1,6 @@
+version: "3.9"
+
+services:
+  gateway:
+    volumes:
+      - ./src:/usr/local/src/sepal/modules/r-package-manager/src # To allow dynamic reloading in dev

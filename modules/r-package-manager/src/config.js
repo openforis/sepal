@@ -14,7 +14,10 @@ program.exitOverride()
 
 try {
     program
-        .requiredOption('--repo-dir <value>', 'Base directory of repository')
+        .requiredOption('--cran-repo <value>', 'CRAN repository')
+        .requiredOption('--cran-root <value>', 'CRAN root')
+        .requiredOption('--redis-uri <value>', 'Redis URI')
+        .requiredOption('--lib <value>', 'lib path')
         .option('--port <number>', 'Port', DEFAULT_PORT)
         .option('--poll-interval-seconds <number>', 'Poll interval (s)', DEFAULT_POLL_INTERVAL_S)
         .parse(process.argv)
@@ -25,7 +28,10 @@ try {
 const config = program.opts()
 
 const {
-    repoDir,
+    cranRepo,
+    cranRoot,
+    redisUri,
+    lib,
     port,
     pollIntervalSeconds,
 } = config
@@ -34,7 +40,10 @@ log.info('Configuration loaded')
 log.debug(config)
 
 module.exports = {
-    repoDir,
+    cranRepo,
+    cranRoot,
+    redisUri,
+    lib,
     port,
     pollIntervalSeconds
 }

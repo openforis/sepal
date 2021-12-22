@@ -1,0 +1,75 @@
+---
+title: "The Text Interchange Formats and the tokenizers Package"
+author: "Lincoln Mullen"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{The Text Interchange Formats and the tokenizers Package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The [Text Interchange Formats](https://github.com/ropensci/tif) are a set of standards defined at an [rOpenSci](https://ropensci.org/) sponsored [meeting in London](http://textworkshop17.ropensci.org/) in 2017. The formats allow R text analysis packages to target defined inputs and outputs for corpora, tokens, and document-term matrices. By adhering to these recommendations, R packages can buy into an interoperable ecosystem.
+
+The TIF recommendations are still a draft, but the tokenizers package implements its recommendation to accept both of the corpora formats and to output one of its recommended tokens formats. 
+
+Consider these two recommended forms of a corpus. One (`corpus_c`) is a named character vector; the other (`corpus_d`) is a data frame. They both include a document ID and the full text for each item. The data frame format obviously allows for the use of other metadata fields besides the document ID, whereas the other format does not. Using the coercion functions in the tif package, one could switch back and forth between these formats. Tokenizers also supports a corpus formatted as a named list where each element is a character vector of length one (`corpus_l`), though this is not a part of the draft TIF standards.
+
+```{r}
+# Named list
+(corpus_l <- list(man_comes_around = "There's a man goin' 'round takin' names",
+                  wont_back_down = "Well I won't back down, no I won't back down",
+                  bird_on_a_wire = "Like a bird on a wire"))
+
+# Named character vector
+(corpus_c <- unlist(corpus_l))
+
+# Data frame
+(corpus_d <- data.frame(doc_id = names(corpus_c), text = unname(corpus_c),
+                        stringsAsFactors = FALSE))
+```
+
+All of the tokenizers in this package can accept any of those formats and will return an identical output for each.
+
+```{r}
+library(tokenizers)
+
+tokens_l <- tokenize_ngrams(corpus_l, n = 2)
+tokens_c <- tokenize_ngrams(corpus_c, n = 2)
+tokens_d <- tokenize_ngrams(corpus_c, n = 2)
+
+# Are all these identical?
+all(identical(tokens_l, tokens_c),
+    identical(tokens_c, tokens_d),
+    identical(tokens_l, tokens_d))
+```
+
+The output of all of the tokenizers is a named list, where each element of the list corresponds to a document in the corpus. The names of the list are the document IDs, and the elements are character vectors containing the tokens.
+
+```{r}
+tokens_l
+```
+
+This format can be coerced to a data frame of document IDs and tokens, one row per token, using the coercion functions in the tif package. That tokens data frame would look like this.
+
+```{r, echo=FALSE}
+sample_tokens_df <- structure(list(doc_id = c("man_comes_around", "man_comes_around", 
+"man_comes_around", "man_comes_around", "man_comes_around", "man_comes_around", 
+"wont_back_down", "wont_back_down", "wont_back_down", "wont_back_down", 
+"wont_back_down", "wont_back_down", "wont_back_down", "wont_back_down", 
+"wont_back_down", "bird_on_a_wire", "bird_on_a_wire", "bird_on_a_wire", 
+"bird_on_a_wire", "bird_on_a_wire"), token = c("there's a", "a man", 
+"man goin", "goin round", "round takin", "takin names", "well i", 
+"i won't", "won't back", "back down", "down no", "no i", "i won't", 
+"won't back", "back down", "like a", "a bird", "bird on", "on a", 
+"a wire")), .Names = c("doc_id", "token"), row.names = c(NA, 
+-20L), class = "data.frame")
+head(sample_tokens_df, 10)
+```
+

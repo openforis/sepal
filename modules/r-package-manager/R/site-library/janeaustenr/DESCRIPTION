@@ -1,0 +1,22 @@
+Package: janeaustenr
+Title: Jane Austen's Complete Novels
+Version: 0.1.5
+Authors@R: person("Julia", "Silge", email = "julia.silge@gmail.com", role = c("aut", "cre"))
+Description: Full texts for Jane Austen's 6 completed novels, ready for text
+    analysis. These novels are "Sense and Sensibility", "Pride and Prejudice",
+    "Mansfield Park", "Emma", "Northanger Abbey", and "Persuasion".
+URL: https://github.com/juliasilge/janeaustenr
+BugReports: https://github.com/juliasilge/janeaustenr/issues
+Depends: R (>= 3.1.2)
+Suggests: dplyr, testthat
+License: MIT + file LICENSE
+LazyData: true
+RoxygenNote: 6.0.1
+Encoding: UTF-8
+NeedsCompilation: no
+Packaged: 2017-06-09 16:56:07 UTC; juliasilge
+Author: Julia Silge [aut, cre]
+Maintainer: Julia Silge <julia.silge@gmail.com>
+Repository: CRAN
+Date/Publication: 2017-06-10 06:29:05 UTC
+Built: R 3.6.3; ; 2021-12-16 11:09:43 UTC; unix

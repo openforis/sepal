@@ -18,12 +18,14 @@
     },
     "dependencies": {
         "commander": "^8.3.0",
+        "compare-versions": "^4.1.2",
         "date-fns": "^2.27.0",
+        "http-proxy": "^1.18.1",
         "lodash": "^4.17.21",
         "log4js": "^6.3.0",
         "moment": "^2.29.1",
         "rxjs": "^7.4.0",
-        "shared": "../../../lib/js/shared",
+        "shared": "../../lib/js/shared",
         "uuid": "^8.3.2"
     },
     "devDependencies": {

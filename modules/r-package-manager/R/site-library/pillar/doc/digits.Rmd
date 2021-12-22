@@ -1,0 +1,10 @@
+---
+title: "Comparison with data frames"
+output: html_vignette
+vignette: >
+  %\VignetteIndexEntry{Comparison with data frames}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+This content has moved to `vignette("digits", packages = "tibble)`.

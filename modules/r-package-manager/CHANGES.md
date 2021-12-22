@@ -1,0 +1,2 @@
+- move docker/ dir one level up
+- fix package.json shared lib path (remove one level up)

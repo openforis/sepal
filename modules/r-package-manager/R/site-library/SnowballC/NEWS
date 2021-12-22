@@ -1,0 +1,13 @@
+Version 0.7.0 - 2020-04-01
+    * Update Snowball library to version 2.0. This adds support
+      for Arabic, Basque, Catalan, Greek, Hindi, Indonesian, Irish,
+      Lithuanian, Nepali and Tamil.
+
+Version 0.6.0 - 2019-01-07
+    * Fix wordStem(NA) to return NA instead of "NA".
+
+Version 0.5.1 - 2014-08-08
+    * Clarify license.
+
+Version 0.5 - 2013-05-22
+    * Initial release.
