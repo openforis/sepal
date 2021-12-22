@@ -27,4 +27,26 @@ ldapadd -x -D cn=admin,dc=sepal,dc=org -w "$LDAP_ADMIN_PASSWORD" -f /config/add_
 
 touch /data/module_initialized
 echo "LDAP initialized"
+
+CA_FILE=/container/service/slapd/assets/certs/ldap-ca.crt.pem
+for i in {50..0}; do
+    if [ ! -f "${CA_FILE}" ]; then
+        echo "Waiting for ${CA_FILE} to be created"
+        /bin/sleep 1
+    else
+	    break
+    fi
+done
+if [[ -L "${CA_FILE}" ]]
+then
+  echo
+  echo "**** Replacing soft-link: ${CA_FILE}"
+  cp -Lf "${CA_FILE}" "${CA_FILE}.temp"
+  mv -f "${CA_FILE}.temp" "${CA_FILE}"
+  chown openldap: "${CA_FILE}"
+else
+  echo
+  echo "**** Not a soft-link: ${CA_FILE}"
+fi
+
 exit 0

@@ -2,7 +2,9 @@
 
 # Wait for ldap to initialize
 for i in {30..0}; do
-    if [ $(lsldap | wc -l ) -gt 1 ]; then
+    lsldap > /dev/null
+    STATUS=$?
+    if [ ${STATUS} -eq 0 ]; then
         break
     fi
     echo "Waiting for LDAP to initialize..."

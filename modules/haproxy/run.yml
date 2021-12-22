@@ -22,4 +22,4 @@
     - "{{ sepal_http_ip }}:80:80"
     - "{{ sepal_http_ip }}:443:443"
     env:
-      SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
+      SEPAL_HOST: "{{ sepal_host }}"

@@ -3,6 +3,7 @@ FROM openforis/java
 EXPOSE 80
 
 ENV MODULE_NAME user
+ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV USER_GROUP "sepalUsers"
 
 ADD modules/${MODULE_NAME}/config /config
@@ -12,6 +13,11 @@ RUN chmod -R 500 /script && \
     chmod -R 400 /config && sync && \
     /script/init_image.sh
 
-ADD modules/${MODULE_NAME}/binary/sepal-user.jar /opt/sepal/bin/sepal-user.jar
+ADD common /usr/local/src/sepal/common
+ADD common-test /usr/local/src/sepal/common-test
+ADD modules/${MODULE_NAME}/build.gradle ${MODULE}/build.gradle
+ADD modules/${MODULE_NAME}/src ${MODULE}/src
+WORKDIR /usr/local/src/sepal
+RUN gradle :sepal-user:build
 
 CMD ["/script/init_container.sh"]

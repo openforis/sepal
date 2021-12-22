@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  sepal:
+    build:
+      context: ../..
+      dockerfile: ./modules/sepal-server/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/sepal:${SEPAL_VERSION:-latest}"
+    container_name: sepal
+    volumes:
+      - "${SEPAL_DATA_DIR}/sepal:/data"
+      - "${SEPAL_DATA_DIR}/sepal/etc:/etc/sepal"
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      HOSTING_SERVICE: "${HOSTING_SERVICE}"
+      SEPAL_VERSION: "${SEPAL_VERSION:-latest}"
+      SEPAL_HOST: "${SEPAL_HOST}"
+      SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
+      LDAP_HOST: "${LDAP_HOST}"
+      LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+#      IMAGE_NAME: "${DOCKER_REPOSITORY_HOST}/openforis/sandbox:${SEPAL_VERSION:-latest}}"
+#      DOCKER_REGISTRY_HOST: "${DOCKER_REGISTRY_HOST}"
+      GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
+      GOOGLE_REGION: "${GOOGLE_REGION}"
+#      EE_ACCOUNT: "${EE_ACCOUNT}"
+#      EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
+      GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY}"
+      NORWAY_PLANET_API_KEY: "${NORWAY_PLANET_API_KEY}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal

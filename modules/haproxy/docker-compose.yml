@@ -7,14 +7,13 @@ services:
       dockerfile: ./modules/haproxy/Dockerfile
     image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/haproxy:${SEPAL_VERSION:-latest}"
     container_name: haproxy
-
     ports:
       - "${SEPAL_IP_ADDRESS:-127.0.0.1}:80:80"
       - "${SEPAL_IP_ADDRESS:-127.0.0.1}:443:443"
     volumes:
       - "${SEPAL_DATA_DIR}/letsencrypt:/etc/letsencrypt"
     environment:
-      SEPAL_HOST_SEPAL_ENV: "${SEPAL_HOST:-127.0.0.1}"
+      SEPAL_HOST: "${SEPAL_HOST}"
     deploy:
       restart_policy:
         condition: on-failure

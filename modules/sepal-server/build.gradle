@@ -21,14 +21,14 @@ shadowJar {
 
 task copyJar(type: Copy) {
     from file("${buildDir}/libs/${project.name}-${version}.jar")
-    into file("${projectDir}/binary")
+    into file("${projectDir}/bin")
     rename "${project.name}-${version}.jar", "sepal.jar"
 }
 
 build.dependsOn(copyJar)
 
 clean.doFirst {
-    delete "${projectDir}/binary/sepal.jar"
+    delete "${projectDir}/bin/sepal.jar"
 }
 
 task runDev(type: JavaExec) {
@@ -37,4 +37,3 @@ task runDev(type: JavaExec) {
     systemProperties(System.getProperties())
     systemProperties.remove("java.endorsed.dirs")
 }
-//  ./gradlew :sepal-server:runDev -DconfigDir=/path/to/sepal-config/sepal-server

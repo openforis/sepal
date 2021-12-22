@@ -1,7 +1,5 @@
 #!/bin/bash
-
-cp -R /script/sqlScripts/* /opt/flyway/sql/
-
+rm -f /data/module_initialized
 touch /var/log/mysql/error.log
 chmod 666 /var/log/mysql/error.log
 

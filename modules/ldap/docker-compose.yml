@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  ldap:
+    build:
+      context: ../..
+      dockerfile: ./modules/ldap/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/ldap:${SEPAL_VERSION:-latest}"
+    container_name: ldap
+    ports:
+      - "389:389"
+      - "636:636"
+    volumes:
+      - "${SEPAL_DATA_DIR}/ldap:/data"
+      # Parent image volumes
+      - "${SEPAL_DATA_DIR}/ldap/database:/var/lib/ldap"
+      - "${SEPAL_DATA_DIR}/ldap/config:/etc/ldap/slapd.d"
+      - "${SEPAL_DATA_DIR}/ldap/certificates:/container/service/slapd/assets/certs"
+    environment:
+      LDAP_ORGANISATION: 'SEPAL'
+      LDAP_DOMAIN: 'sepal.org'
+      LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
+      LDAP_TLS_CRT_FILENAME: ldap-crt.pem
+      LDAP_TLS_KEY_FILENAME: ldap-key.pem
+      LDAP_TLS_CA_CRT_FILENAME: ldap-ca.crt.pem
+      LDAP_TLS_CIPHER_SUITE: SECURE256:-VERS-SSL3.0
+      LDAP_TLS_VERIFY_CLIENT: never
+    deploy:
+      restart_policy:
+        condition: on-failure
+    hostname: "${LDAP_HOST}"
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal

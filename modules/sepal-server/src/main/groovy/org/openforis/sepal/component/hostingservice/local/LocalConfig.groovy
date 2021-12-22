@@ -8,7 +8,6 @@ class LocalConfig {
     final String host
 
     LocalConfig() {
-        def c = new Config('local.properties')
-        host = c.string('host')
+        host = System.getProperty('SEPAL_HOST')
     }
 }

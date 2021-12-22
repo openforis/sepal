@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  mysql:
+    build:
+      context: ../..
+      dockerfile: ./modules/mysql/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/mysql:${SEPAL_VERSION:-latest}"
+    container_name: mysql
+    volumes:
+      - "${SEPAL_DATA_DIR}/mysql:/data"
+      # Parent image volume
+      - "${SEPAL_DATA_DIR}/mysql/db:/var/lib/mysql"
+    environment:
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal

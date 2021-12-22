@@ -1,0 +1,8 @@
+version: "3.9"
+
+services:
+  java:
+    build:
+      context: ../..
+      dockerfile: ./modules/java/Dockerfile
+    image: "openforis/java:${SEPAL_VERSION:-latest}"
