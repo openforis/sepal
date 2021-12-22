@@ -1,35 +1,26 @@
 plugins {
-    id 'java'
-    id 'application'
-    id 'com.github.johnrengelman.shadow' version '4.0.1'
+    id "application"
+}
+apply plugin : "java"
+ext {
+    javaMainClass = "org.openforis.sepal.component.user.Main"
 }
 
-mainClassName = 'org.openforis.sepal.component.user.Main'
+application {
+    mainClassName = javaMainClass
+}
 
 dependencies {
     compile project(':sepal-common')
     testCompile project(':sepal-common-test')
 }
 
-shadowJar {
-    mergeGroovyExtensionModules()
+task runModule(type: JavaExec) {
+    group = "Execution"
+    description = "Run the main class with JavaExecTask"
+    classpath = sourceSets.main.runtimeClasspath
+    main = javaMainClass
+    if (System.getenv('DEPLOY_ENVIRONMENT') == 'DEV')
+        jvmArgs = ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005']
 }
 
-task copyJar(type: Copy) {
-    from file("${buildDir}/libs/${project.name}-${version}.jar")
-    into file("${projectDir}/bin")
-    rename "${project.name}-${version}.jar", "${project.name}.jar"
-}
-
-build.dependsOn(copyJar)
-
-clean.doFirst {
-    delete "${projectDir}/bin/${project.name}.jar"
-}
-
-task runDev(type: JavaExec) {
-    classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
-    main = 'manual.UserTestMain'
-    systemProperties(System.getProperties())
-    systemProperties.remove("java.endorsed.dirs")
-}

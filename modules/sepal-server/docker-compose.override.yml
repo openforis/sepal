@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  sepal:
+    ports:
+      - "127.0.0.1:5005:5005"
+    volumes:
+      - "./src:/usr/local/src/sepal/modules/sepal-server/src"
+      - "./build:/usr/local/src/sepal/modules/sepal-server/build"

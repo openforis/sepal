@@ -1,6 +1,7 @@
 FROM openforis/java
 
 EXPOSE 1025
+EXPOSE 5005
 
 ENV MODULE_NAME sepal-server
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
@@ -16,6 +17,6 @@ ADD common-test /usr/local/src/sepal/common-test
 ADD modules/${MODULE_NAME}/build.gradle ${MODULE}/build.gradle
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
 WORKDIR /usr/local/src/sepal
-RUN gradle :sepal-server:build
+RUN gradle :sepal-server:classes
 
 CMD ["/script/init_container.sh"]
