@@ -37,7 +37,7 @@ const download = async (homeDir, ctx) => {
             ctx.attachment(filename)
         } else {
             log.warn(() => `Cannot download non-file: ${absolutePath}`)
-            ctx.response = 404
+            ctx.response.status = 404
         }
     } else {
         log.warn(() => 'Cannot download: unauthenticated user')
