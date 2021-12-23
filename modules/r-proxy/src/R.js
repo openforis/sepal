@@ -41,7 +41,7 @@ const installPackage = async (name, version, repo) => {
 const bundlePackage = async (name, version) => {
     try {
         log.debug(`Bundling ${name}/${version}`, {lib, cranRoot})
-        log.debug(await runScript('src/R/bundle_package.sh', [name, version, lib, cranRoot]))
+        await runScript('src/R/bundle_package.sh', [name, version, lib, cranRoot])
         log.debug(`Bundled ${name}/${version}`)
         return true
     } catch (error) {
