@@ -1,0 +1,23 @@
+# FROM node:14-stretch
+FROM ubuntu:focal
+
+EXPOSE 8180
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV MODULE_NAME r-proxy
+ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
+ENV SHARED /usr/local/src/sepal/lib/js/shared
+
+# Install packages
+RUN apt-get update && apt-get install -y \
+    curl \
+    gcc \
+    git \
+    software-properties-common \
+    sudo \
+    r-base\
+    r-base-dev \
+    nano
+
+# Install R packages
+RUN R -e 'install.packages("remotes", lib = "/usr/lib/R/site-library")'
