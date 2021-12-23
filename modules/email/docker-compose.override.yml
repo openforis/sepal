@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  gateway:
+  email:
     volumes:  # To allow dynamic reloading in dev
       - ../../lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src
-      - ./src:/usr/local/src/sepal/modules/gateway/src
+      - ./src:/usr/local/src/sepal/modules/email/src

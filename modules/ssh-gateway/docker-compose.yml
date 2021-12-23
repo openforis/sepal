@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  ssh-gateway:
+    build:
+      context: ../..
+      dockerfile: ./modules/ssh-gateway/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/ssh-gateway:${SEPAL_VERSION:-latest}"
+    container_name: ssh-gateway
+    volumes:
+      - "${SEPAL_DATA_DIR}/ssh-gateway:/data"
+      - "${SEPAL_DATA_DIR}/ldap/certificates/ldap-ca.crt.pem:/etc/ldap/certificates/ldap-ca.crt.pem"
+      - "${SEPAL_DATA_DIR}/user/home:/home" # Users home directories with ssh keys
+    ports:
+      - "${SEPAL_SSH_IP:-0.0.0.0}:${SEPAL_SSH_PORT_1:-22}:22"
+      - "${SEPAL_SSH_IP:-0.0.0.0}:${SEPAL_SSH_PORT_2:-443}:22"
+    environment:
+      SEPAL_ADMIN_PASSWORD: "{{ sepal_machine_admin_password }}"
+      LDAP_ADMIN_PASSWORD: "{{ ldap_admin_password }}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - ssh-gateway
+
+networks:
+  ssh-gateway:
+    name: ssh-gateway

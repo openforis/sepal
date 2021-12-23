@@ -23,7 +23,7 @@
         "log4js": "^6.3.0",
         "moment": "^2.29.1",
         "rxjs": "^7.4.0",
-        "shared": "../../../lib/js/shared",
+        "shared": "../../lib/js/shared",
         "uuid": "^8.3.2"
     },
     "devDependencies": {

@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  gee:
+    build:
+      context: ../..
+      dockerfile: ./modules/gee/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/gee:${SEPAL_VERSION:-latest}"
+    container_name: gee
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      SEPAL_HOST: "${SEPAL_HOST}"
+      SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
+      EE_ACCOUNT: "${EE_ACCOUNT}"
+      EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal

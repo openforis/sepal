@@ -38,6 +38,8 @@ USER node
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 RUN bash -c "source /home/node/.nvm/nvm.sh && nvm install node 14"
 
+RUN bash -c "source /home/node/.nvm/nvm.sh && npm install -g nodemon"
+
 ADD lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
 USER root
@@ -53,4 +55,6 @@ USER node
 RUN bash -c "source /home/node/.nvm/nvm.sh && npm install"
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
-CMD bash -c "sudo cp -rn /etc/sepal/app-manager/kernels-templates/* /usr/local/share/jupyter/kernels/ && source /home/node/.nvm/nvm.sh && node src/main.js"
+ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
+
+CMD start.sh

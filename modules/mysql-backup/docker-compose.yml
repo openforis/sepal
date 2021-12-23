@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  mysql-backup:
+    build:
+      context: ../..
+      dockerfile: ./modules/mysql-backup/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/mysql-backup:${SEPAL_VERSION:-latest}"
+    container_name: mysql-backup
+    volumes:
+      - "${SEPAL_BACKUP_DIR}/mysql:/backup"
+      - "${SEPAL_DATA_DIR}/mysql-backup:/module"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      BACKUP_CRON_EXP: '0 0 * * *'
+      RESTORE_BACKUP: "${RESTORE_BACKUP}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal

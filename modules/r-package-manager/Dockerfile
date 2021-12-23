@@ -1,6 +1,7 @@
 FROM node:14-stretch
 EXPOSE 8180
 
+ENV MODULE_NAME r-package-manager
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
@@ -21,9 +22,7 @@ USER node
 RUN npm install
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 
 USER root
-CMD node \
-    src/main.js \
-    --repo-dir /var/sepal/${MODULE_NAME}/repo \
-    --poll-interval-seconds ${POLL_INTERVAL_S}
+CMD start.sh
