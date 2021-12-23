@@ -20,7 +20,7 @@ const getRepoPath = path => {
 
 const getPackageInfo = path => {
     const {dir, base} = Path.parse(path)
-    const VERSION_REGEX = /(.*?)(?:_([\d\.]+))?(\..*)/
+    const VERSION_REGEX = /(.*?)(?:_([\d\.-]+))?(\..*)/
     const result = base.match(VERSION_REGEX)
     return result ? {
         path,
