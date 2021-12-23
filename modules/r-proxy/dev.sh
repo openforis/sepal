@@ -6,5 +6,5 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     --watch $LIBS/shared \
     --inspect=0.0.0.0:9239 \
     src/main.js \
-    --repo-dir '/var/sepal/r-package-manager/repo' \
+    --repo-dir '/var/sepal/r-proxy/repo' \
     --poll-interval-seconds 86400

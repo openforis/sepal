@@ -4,7 +4,7 @@ FROM ubuntu:focal
 EXPOSE 8180
 
 ENV DEBIAN_FRONTEND noninteractive
-ENV MODULE_NAME r-package-manager
+ENV MODULE_NAME r-proxy
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
@@ -48,7 +48,7 @@ RUN mkdir src && chown -R node: ${MODULE}
 USER node
 RUN npm install
 
-ENV REPO_PATH /var/sepal/r-package-manager/repo
+ENV REPO_PATH /var/sepal/r-proxy/repo
 USER root
 RUN mkdir -p ${REPO_PATH}
 RUN chown -R node: ${REPO_PATH}

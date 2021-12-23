@@ -1,5 +1,5 @@
 ---
-- name: "r-package-manager | Start container"
+- name: "r-proxy | Start container"
   docker_container:
     container_default_behavior: "{{ container_default_behavior }}"
     api_version: "{{ api_version }}"

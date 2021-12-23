@@ -1,22 +1,22 @@
 version: "3.9"
 
 services:
-  r-package-manager-redis:
+  r-proxy-redis:
     image: "redis:6"
-    container_name: r-package-manager-redis
+    container_name: r-proxy-redis
     volumes:
-      - "${SEPAL_DATA_DIR}/r-package-manager-redis:/data"
+      - "${SEPAL_DATA_DIR}/r-proxy-redis:/data"
     deploy:
       restart_policy:
         condition: on-failure
     networks:
       - sepal
-  r-package-manager:
+  r-proxy:
     build:
       context: ../..
-      dockerfile: ./modules/r-package-manager/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r-package-manager:${SEPAL_VERSION:-latest}"
-    container_name: r-package-manager
+      dockerfile: ./modules/r-proxy/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r-proxy:${SEPAL_VERSION:-latest}"
+    container_name: r-proxy
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       SEPAL_HOST: "${SEPAL_HOST}"
@@ -35,19 +35,19 @@ services:
         src/main.js
           --cran-repo https://cran.r-project.org
           --cran-root /R/cranroot
-          --redis-uri redis://r-package-manager-redis
+          --redis-uri redis://r-proxy-redis
           --lib /usr/local/lib/R/site-library
     tty: true
     volumes:
-      - ./src:/usr/local/src/sepal/modules/r-package-manager/src
-      - ${SEPAL_DATA_DIR}/r-package-manager/site-library:/usr/local/lib/R/site-library
-      - ${SEPAL_DATA_DIR}/r-package-manager/cranroot:/R/cranroot
-  r-package-manager-test:
+      - ./src:/usr/local/src/sepal/modules/r-proxy/src
+      - ${SEPAL_DATA_DIR}/r-proxy/site-library:/usr/local/lib/R/site-library
+      - ${SEPAL_DATA_DIR}/r-proxy/cranroot:/R/cranroot
+  r-proxy-test:
     build:
       context: ../..
-      dockerfile: ./modules/r-package-manager/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r-package-manager-r:${SEPAL_VERSION:-latest}"
-    container_name: r-package-manager-test
+      dockerfile: ./modules/r-proxy/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r-proxy-r:${SEPAL_VERSION:-latest}"
+    container_name: r-proxy-test
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       SEPAL_HOST: "${SEPAL_HOST}"
