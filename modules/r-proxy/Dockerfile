@@ -27,7 +27,7 @@ RUN adduser node && adduser node sudo && echo 'node      ALL=(ALL) NOPASSWD:ALL'
 
 # Install node.js
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash
-RUN apt-get -y install nodejs
+RUN apt-get update && apt-get -y install nodejs
 
 # Install node global packages
 RUN npm install -g nodemon
@@ -47,11 +47,6 @@ USER root
 RUN mkdir src && chown -R node: ${MODULE}
 USER node
 RUN npm install
-
-ENV REPO_PATH /var/sepal/r-proxy/repo
-USER root
-RUN mkdir -p ${REPO_PATH}
-RUN chown -R node: ${REPO_PATH}
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
 
