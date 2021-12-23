@@ -25,6 +25,6 @@ USER node
 RUN npm install
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
-ADD modules/${MODULE_NAME}/command.sh /usr/local/bin
+ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 
-CMD command.sh
+CMD start.sh

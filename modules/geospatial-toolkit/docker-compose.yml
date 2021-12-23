@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  geospatial-toolkit:
+    build:
+      context: ../..
+      dockerfile: ./modules/geospatial-toolkit/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/geospatial-toolkit:${SEPAL_VERSION:-latest}"
+    container_name: geospatial-toolkit
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal

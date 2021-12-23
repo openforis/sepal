@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  email-redis:
+    image: "redis:6"
+    container_name: email-redis
+    volumes:
+      - "${SEPAL_DATA_DIR}/email-redis:/data"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+  email:
+    build:
+      context: ../..
+      dockerfile: ./modules/email/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/email:${SEPAL_VERSION:-latest}"
+    container_name: email
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      SEPAL_HOST: "${SEPAL_HOST}"
+      SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: "5672"
+      SMTP_HOST: "${SMTP_HOST}"
+      SMTP_PORT: "${SMTP_PORT}"
+      SMTP_SECURE: "false"
+      SMTP_USERNAME: "${SMTP_USERNAME}"
+      SMTP_PASSWORD: "${SMTP_PASSWORD}"
+      SMTP_FROM_DOMAIN: "${SMTP_FROM_DOMAIN}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal

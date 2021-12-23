@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  ssh-gateway:
+    ports:
+      - "127.0.0.1:5007:5005"
+    volumes:
+      - "./src:/usr/local/src/sepal/modules/ssh-gateway/src"
+      - "./build:/usr/local/src/sepal/modules/ssh-gateway/build"

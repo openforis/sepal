@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  ldap-backup:
+    build:
+      context: ../..
+      dockerfile: ./modules/ldap-backup/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/ldap-backup:${SEPAL_VERSION:-latest}"
+    container_name: ldap-backup
+    volumes:
+      - "${SEPAL_DATA_DIR}/ldap/database:/var/lib/ldap"
+      - "${SEPAL_DATA_DIR}/ldap/config:/etc/ldap/slapd.d"
+      - "${SEPAL_DATA_DIR}/ldap-backup:/module"
+      - "${SEPAL_BACKUP_DIR}/ldap:/data/backup"
+    environment:
+      LDAP_BACKUP_DATA_CRON_EXP: '0 0 * * *'
+      LDAP_BACKUP_CONFIG_CRON_EXP: '0 0 * * *'
+      LDAP_BACKUP_TTL: '365'
+      RESTORE_BACKUP: "${RESTORE_BACKUP}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal

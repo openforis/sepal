@@ -11,6 +11,10 @@ RUN chmod -R 500 /script && \
     chmod -R 400 /config && sync && \
     /script/init_image.sh
 
-ADD modules/${MODULE_NAME}/binary/sepal-ssh-gateway.jar /opt/sepal/bin/sepal-ssh-gateway.jar
+ADD common /usr/local/src/sepal/common
+ADD modules/${MODULE_NAME}/build.gradle ${MODULE}/build.gradle
+ADD modules/${MODULE_NAME}/src ${MODULE}/src
+WORKDIR /usr/local/src/sepal
+RUN gradle :sepal-ssh-gateway:classes
 
 CMD ["/script/init_container.sh"]

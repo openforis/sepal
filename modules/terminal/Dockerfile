@@ -10,6 +10,8 @@ RUN apt update && \
     adduser node sudo && \
     echo 'node    ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
 
+RUN npm install -g nodemon
+
 ADD lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
 USER root
@@ -30,9 +32,7 @@ RUN chmod +x /usr/local/bin/ssh_gateway.sh
 
 USER node
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
-CMD node \
-    src/main.js \
-    --ip '0.0.0.0' \
-    --port 8000 \
-    --home-dir '/sepalUsers' \
-    --ssh-script-path '/usr/local/bin/ssh_gateway.sh'
+ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
+
+CMD start.sh
+

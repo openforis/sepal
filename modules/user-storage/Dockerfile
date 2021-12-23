@@ -14,6 +14,8 @@ RUN apt update && \
     adduser node sudo && \
     echo 'node ALL = (root) NOPASSWD: /usr/bin/diskus' >> /etc/sudoers
 
+RUN npm install -g nodemon
+
 ADD lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
 USER root
@@ -29,6 +31,9 @@ USER node
 RUN npm install
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
+CMD start.sh
+
 CMD node \
     src/main.js \
     --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \

@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  app-manager:
+    build:
+      context: ../..
+      dockerfile: ./modules/app-manager/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/app-manager:${SEPAL_VERSION:-latest}"
+    container_name: app-manager
+    volumes:
+      - "${SEPAL_DATA_DIR}/sepal/shiny:/shiny"
+      - "${SEPAL_DATA_DIR}/sepal/kernels:/usr/local/share/jupyter/kernels"
+      - "${SEPAL_DATA_DIR}/app-manager/apps.json:/var/sepal/app-manager/apps.json"
+      - "${SEPAL_DATA_DIR}/sepal/shared/apps:/var/sepal/app-manager/apps"
+      - "${SEPAL_DATA_DIR}/app-manager/images:/var/sepal/app-manager/images"
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal

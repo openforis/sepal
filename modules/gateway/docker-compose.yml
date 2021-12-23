@@ -11,6 +11,7 @@ services:
         condition: on-failure
     networks:
       - sepal
+
   gateway:
     build:
       context: ../..

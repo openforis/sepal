@@ -49,12 +49,7 @@ USER node
 RUN npm install
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 
 USER node
-
-# USER root
-
-# CMD node \
-#     src/main.js \
-#     --repo-dir /var/sepal/${MODULE_NAME}/repo \
-#     --poll-interval-seconds ${POLL_INTERVAL_S}
+CMD start.sh

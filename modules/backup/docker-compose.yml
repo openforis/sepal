@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  backup:
+    build:
+      context: ../..
+      dockerfile: ./modules/backup/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/backup:${SEPAL_VERSION:-latest}"
+    container_name: backup
+    volumes:
+      - "${SEPAL_DATA_DIR}:/data"
+      - "${SEPAL_BACKUP_DIR}:/backup"
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      S3_BACKUP_BUCKET: "${S3_BACKUP_BUCKET}"
+      BACKUP_CRON_EXP: "0 2 * * *"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal

@@ -26,6 +26,8 @@ RUN apt-get update && apt-get install -y \
 RUN groupadd --gid 1000 node && \
     useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
+RUN npm install -g nodemon
+
 ADD lib/js/shared ${JS_SHARED}
 WORKDIR ${JS_SHARED}/js/shared
 USER root
@@ -44,8 +46,9 @@ USER node
 RUN npm install
 
 USER root
-ADD modules/${MODULE_NAME}/src ${MODULE}/src
 ADD modules/${MODULE_NAME}/script /script
 RUN chmod -R 500 /script && sync
+ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 
-CMD ["/script/init_container.sh"]
+CMD start.sh

@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 
-entryPoint="org.openforis.sepal.sshgateway.NonInteractive"
+runTask="runInteractive"
 if [ -z "$SSH_ORIGINAL_COMMAND" ]; then
-    entryPoint="org.openforis.sepal.sshgateway.Interactive"
+    runTask="runNonInteractive"
 fi
 sshScriptFile=$(mktemp /tmp/$USER-ssh.XXXXXX) > /dev/null 2>&1
 chmod +x $sshScriptFile
 password=$(cat /etc/sepalAdmin.passwd)
-java \
-    -cp /opt/sepal/bin/sepal-ssh-gateway.jar \
-    "$entryPoint" \
+gradle :ssh-gateway:${runTask} \
+    --args \
     "$USER" \
     "http://sepal:1025/api/" \
     "/home/$USER/.ssh/id_rsa" \

@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  user-storage-redis:
+    image: "redis:6"
+    container_name: user-storage-redis
+    volumes:
+      - "${SEPAL_DATA_DIR}/user-storage-redis:/data"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+  user-storage:
+    build:
+      context: ../..
+      dockerfile: ./modules/user-storage/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/user-storage:${SEPAL_VERSION:-latest}"
+    container_name: user-storage
+    volumes:
+      - "${SEPAL_DATA_DIR}/sepal/home:/sepalUsers"
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      RABBITMQ_HOST: "${RABBITMQ_HOST}"
+      RABBITMQ_PORT: "${RABBITMQ_PORT}"
+      MIN_DELAY_SECONDS: "300"
+      MAX_DELAY_SECONDS: "86400"
+      DELAY_INCREASE_FACTOR: "2"
+      CONCURRENCY: "5"
+      MAX_RETRIES: "10"
+      INITIAL_RETRY_DELAY_SECONDS: "30"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal

@@ -1,28 +1,28 @@
 plugins {
-  id 'java'
-  id 'application'
-  id 'com.github.johnrengelman.shadow' version '4.0.1'
+  id "application"
 }
+apply plugin : "java"
 
-mainClassName = 'org.openforis.sepal.sshgateway.Interactive'
 dependencies {
   compile project(':sepal-common')
-    compile group: 'com.ocpsoft', name: 'ocpsoft-pretty-time', version:'1.0.7'
-    compile group: 'com.jcraft', name: 'jsch', version:'0.1.53'
+  compile group: 'com.ocpsoft', name: 'ocpsoft-pretty-time', version:'1.0.7'
+  compile group: 'com.jcraft', name: 'jsch', version:'0.1.53'
 }
 
-shadowJar {
-  mergeGroovyExtensionModules()
+task runInteractive(type: JavaExec) {
+  group = "Execution"
+  description = "Run the main class with JavaExecTask"
+  classpath = sourceSets.main.runtimeClasspath
+  main = 'org.openforis.sepal.sshgateway.Interactive'
+  if (System.getenv('DEPLOY_ENVIRONMENT') == 'DEV')
+    jvmArgs = ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005']
 }
 
-task copyJar(type: Copy) {
-  from file("${buildDir}/libs/${project.name}-${version}.jar")
-  into file("${projectDir}/binary")
-  rename "${project.name}-${version}.jar", "${project.name}.jar"
+task runNonInteractive(type: JavaExec) {
+  group = "Execution"
+  description = "Run the main class with JavaExecTask"
+  classpath = sourceSets.main.runtimeClasspath
+  main = 'org.openforis.sepal.sshgateway.NonInteractive'
+  if (System.getenv('DEPLOY_ENVIRONMENT') == 'DEV')
+    jvmArgs = ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005']
 }
-
-clean.doFirst {
-  delete "${projectDir}/binary/${project.name}.jar"
-}
-
-build.dependsOn(copyJar)

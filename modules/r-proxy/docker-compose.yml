@@ -27,21 +27,10 @@ services:
       - sepal
     ports:
       - "8180:8180"
-    command:
-      nodemon
-        --watch src
-        --watch ../../lib/js/shared
-        --inspect=0.0.0.0:9239
-        src/main.js
-          --cran-repo https://cran.r-project.org
-          --cran-root /R/cranroot
-          --redis-uri redis://r-proxy-redis
-          --lib /usr/local/lib/R/site-library
-    tty: true
-    volumes:
-      - ./src:/usr/local/src/sepal/modules/r-proxy/src
-      - ${SEPAL_DATA_DIR}/r-proxy/site-library:/usr/local/lib/R/site-library
-      - ${SEPAL_DATA_DIR}/r-proxy/cranroot:/R/cranroot
+    # volumes:
+    #   - ./src:/usr/local/src/sepal/modules/r-proxy/src
+    #   - ${SEPAL_DATA_DIR}/r-proxy/site-library:/usr/local/lib/R/site-library
+    #   - ${SEPAL_DATA_DIR}/r-proxy/cranroot:/R/cranroot
   r-proxy-test:
     build:
       context: ../..
