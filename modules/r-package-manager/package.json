@@ -1,5 +1,5 @@
 {
-    "name": "user-files",
+    "name": "r-package-manager",
     "version": "1.0.0",
     "description": "",
     "main": "main.js",
@@ -17,14 +17,12 @@
         "sepal": "node_modules/shared/src"
     },
     "dependencies": {
+        "bull": "^4.1.4",
         "commander": "^8.3.0",
-        "date-fns": "^2.27.0",
+        "http-proxy": "^1.18.1",
         "lodash": "^4.17.21",
         "log4js": "^6.3.0",
-        "moment": "^2.29.1",
-        "rxjs": "^7.4.0",
-        "shared": "../../../lib/js/shared",
-        "uuid": "^8.3.2"
+        "shared": "../../lib/js/shared"
     },
     "devDependencies": {
         "eslint": "^8.4.1",

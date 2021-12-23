@@ -2,8 +2,7 @@ const program = require('commander')
 const log = require('sepal/log').getLogger('config')
 const _ = require('lodash')
 
-const DEFAULT_PORT = 8180
-const DEFAULT_POLL_INTERVAL_S = 86400
+const DEFAULT_HTTP_PORT = 8180
 
 const fatalError = error => {
     log.fatal(error)
@@ -14,9 +13,11 @@ program.exitOverride()
 
 try {
     program
-        .requiredOption('--repo-dir <value>', 'Base directory of repository')
-        .option('--port <number>', 'Port', DEFAULT_PORT)
-        .option('--poll-interval-seconds <number>', 'Poll interval (s)', DEFAULT_POLL_INTERVAL_S)
+        .requiredOption('--cran-repo <value>', 'CRAN repository')
+        .requiredOption('--cran-root <value>', 'CRAN root')
+        .requiredOption('--redis-uri <value>', 'Redis URI')
+        .requiredOption('--lib <value>', 'lib path')
+        .option('--http-port <number>', 'HTTP port', DEFAULT_HTTP_PORT)
         .parse(process.argv)
 } catch (error) {
     fatalError(error)
@@ -25,16 +26,20 @@ try {
 const config = program.opts()
 
 const {
-    repoDir,
-    port,
-    pollIntervalSeconds,
+    cranRepo,
+    cranRoot,
+    redisUri,
+    lib,
+    httpPort
 } = config
 
 log.info('Configuration loaded')
 log.debug(config)
 
 module.exports = {
-    repoDir,
-    port,
-    pollIntervalSeconds
+    cranRepo,
+    cranRoot,
+    redisUri,
+    lib,
+    httpPort
 }

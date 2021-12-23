@@ -1,14 +1,30 @@
-version: "3"
+version: "3.9"
+
 services:
+  r-package-manager-redis:
+    image: "redis:6"
+    container_name: r-package-manager-redis
+    volumes:
+      - "${SEPAL_DATA_DIR}/r-package-manager-redis:/data"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
   r-package-manager:
-    # extends:
-    #   file: foo
-    #   service: bar
     build:
       context: ../..
       dockerfile: ./modules/r-package-manager/Dockerfile
-    image: r-package-manager
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r-package-manager:${SEPAL_VERSION:-latest}"
     container_name: r-package-manager
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      SEPAL_HOST: "${SEPAL_HOST}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
     ports:
       - "8180:8180"
     command:
@@ -17,8 +33,31 @@ services:
         --watch ../../lib/js/shared
         --inspect=0.0.0.0:9239
         src/main.js
-          --repo-dir /var/sepal/r-package-manager/repo
-          --poll-interval-seconds 86400
+          --cran-repo https://cran.r-project.org
+          --cran-root /R/cranroot
+          --redis-uri redis://r-package-manager-redis
+          --lib /usr/local/lib/R/site-library
     tty: true
     volumes:
       - ./src:/usr/local/src/sepal/modules/r-package-manager/src
+      - ${SEPAL_DATA_DIR}/r-package-manager/site-library:/usr/local/lib/R/site-library
+      - ${SEPAL_DATA_DIR}/r-package-manager/cranroot:/R/cranroot
+  r-package-manager-test:
+    build:
+      context: ../..
+      dockerfile: ./modules/r-package-manager/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r-package-manager-r:${SEPAL_VERSION:-latest}"
+    container_name: r-package-manager-test
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      SEPAL_HOST: "${SEPAL_HOST}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+    tty: true
+
+networks:
+  sepal:
+    name: sepal

@@ -1,8 +1,10 @@
 {
     "port": 5109,
     "categories": {
-        "config": "debug",
-        "package": "debug",
+        "config": "info",
+        "proxy": "debug",
+        "queue": "debug",
+        "R": "debug",
         "main": "info"
     }
 }
