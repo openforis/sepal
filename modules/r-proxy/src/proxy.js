@@ -65,7 +65,6 @@ const init = () => {
                 if (requestStat.isFile()) {
                     log.debug(`Serving ${type}:`, repoPath)
                     fs.createReadStream(repoPath).pipe(res)
-                    // type === 'source' && makeBinaryPackage(repoPath)
                     return true
                 }
             } catch (error) {
