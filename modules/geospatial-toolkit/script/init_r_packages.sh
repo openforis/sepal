@@ -23,7 +23,8 @@ apt-get install -y \
     libgeos++-dev \
     libmagick++-dev \
     libv8-dev \
-    libcgal-dev libglu1-mesa-dev libglu1-mesa-dev \
+    libcgal-dev \
+    libglu1-mesa-dev \
     libnetcdf-dev \
     libpq-dev
 
