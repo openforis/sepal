@@ -5,11 +5,15 @@ VERSION=$2
 LIB=$3
 CRANROOT=$4
 
-FILENAME="${PACKAGE}_${VERSION}.tar.gz"
+SRC=${CRANROOT}/src/contrib/
+BIN=${CRANROOT}/bin/contrib/
+PACKAGE_FILENAME="${PACKAGE}_${VERSION}.tar.gz"
+TMP_PACKAGE_FILENAME="${PACKAGE_FILENAME}.tmp"
 
-if [[ ! -f "${CRANROOT}/bin/contrib/${FILENAME}" ]]; then
-    mkdir -p ${CRANROOT}/bin/contrib/
-    tar czf ${CRANROOT}/bin/contrib/${FILENAME}.tmp -C ${LIB} ${PACKAGE}
-    mv ${CRANROOT}/bin/contrib/${FILENAME}.tmp ${CRANROOT}/bin/contrib/${FILENAME}
+if [[ ! -f "${PACKAGE_PATH}" ]]; then
+    mkdir -p ${BIN} \
+        && tar czf ${BIN}/${TMP_PACKAGE_FILENAME} -C ${LIB} ${PACKAGE} \
+        && mv ${BIN}/${TMP_PACKAGE_FILENAME} ${BIN}/${PACKAGE_FILENAME} \
+        && rm ${SRC}/${PACKAGE_FILENAME}
     exit $?
 fi
