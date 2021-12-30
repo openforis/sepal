@@ -10,6 +10,9 @@ const isChildOf = (parent, dir) => {
 const isCranRepoPath = path =>
     isChildOf(cranRoot, path)
 
+const getTmpPath = path =>
+    getRepoPath(path) + '.tmp'
+
 const getRepoPath = path => {
     const repoPath = Path.join(cranRoot, path)
     if (!isCranRepoPath(repoPath)) {
@@ -20,7 +23,10 @@ const getRepoPath = path => {
 
 const getPackageInfo = path => {
     const {dir, base} = Path.parse(path)
-    const VERSION_REGEX = /(.*?)(?:_([\d\.-]+))?(\..*)/
+    // const VERSION_REGEX = /^(.+)(?:_(.+?))?(\.tar\.gz|\.gz|\.rds)$/
+    // const VERSION_REGEX = /(.*?)(?:_([\d\.-]+))?([\.\w]+?)/
+    // const VERSION_REGEX = /^(.*?)(?:_(.*?))?(\.[a-zA-Z\.]*)$/
+    const VERSION_REGEX = /^(.+?)(?:_(.+?))?(\.[a-zA-Z\.]+)$/
     const result = base.match(VERSION_REGEX)
     return result ? {
         path,
@@ -45,4 +51,4 @@ const isBinaryPackage = async requestPath => {
     }
 }
 
-module.exports = {getRepoPath, getPackageInfo, toBinaryPackagePath, isBinaryPackage}
+module.exports = {getTmpPath, getRepoPath, getPackageInfo, toBinaryPackagePath, isBinaryPackage}

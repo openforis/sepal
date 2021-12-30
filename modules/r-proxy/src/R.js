@@ -29,8 +29,8 @@ const runScript = (script, args) =>
 const installPackage = async (name, version, repo) => {
     try {
         log.debug(`Installing ${name}/${version} from ${repo}`)
-        await runScript('src/R/install_package.r', [name, version, repo])
-        log.debug(`Installed ${name}/${version} from ${repo}`)
+        log.trace(await runScript('src/R/install_package.r', [name, version, lib, repo]))
+        log.info(`Installed ${name}/${version} from ${repo}`)
         return true
     } catch (error) {
         log.warn(`Could not install ${name}/${version}`, error)
@@ -40,9 +40,9 @@ const installPackage = async (name, version, repo) => {
     
 const bundlePackage = async (name, version) => {
     try {
-        log.debug(`Bundling ${name}/${version}`, {lib, cranRoot})
-        await runScript('src/R/bundle_package.sh', [name, version, lib, cranRoot])
-        log.debug(`Bundled ${name}/${version}`)
+        log.debug(`Bundling ${name}/${version}`)
+        log.trace(await runScript('src/R/bundle_package.sh', [name, version, lib, cranRoot]))
+        log.info(`Bundled ${name}/${version}`)
         return true
     } catch (error) {
         log.warn(`Could not bundle ${name}/${version}`, error)

@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# remove locked libs
+# rm -rf /usr/local/lib/R/site-library/00LOCK-*
+
 if [[ "${DEPLOY_ENVIRONMENT}" == "DEV" ]]
 then
   echo "Starting nodemon"

@@ -3,7 +3,7 @@
     "categories": {
         "config": "info",
         "proxy": "debug",
-        "queue": "debug",
+        "queue": "info",
         "R": "debug",
         "main": "info"
     }

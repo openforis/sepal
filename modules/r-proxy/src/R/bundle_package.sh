@@ -9,6 +9,7 @@ FILENAME="${PACKAGE}_${VERSION}.tar.gz"
 
 if [[ ! -f "${CRANROOT}/bin/contrib/${FILENAME}" ]]; then
     mkdir -p ${CRANROOT}/bin/contrib/
-    tar czf ${CRANROOT}/bin/contrib/${FILENAME} -C ${LIB} ${PACKAGE}
+    tar czf ${CRANROOT}/bin/contrib/${FILENAME}.tmp -C ${LIB} ${PACKAGE}
+    mv ${CRANROOT}/bin/contrib/${FILENAME}.tmp ${CRANROOT}/bin/contrib/${FILENAME}
     exit $?
 fi

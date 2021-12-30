@@ -40,7 +40,7 @@ queue.on('completed', async (job, {success}) => {
     if (success) {
         log.debug(`Completed ${name}/${version}`)
     } else {
-        log.debug(`Failed ${name}/${version}`)
+        log.warn(`Failed ${name}/${version}`)
     }
 })
 

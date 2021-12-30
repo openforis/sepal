@@ -6,7 +6,7 @@ const fs = require('fs')
 const {mkdir, stat} = require('fs/promises')
 const path = require('path')
 const {httpPort, cranRepo} = require('./config')
-const {getRepoPath, getPackageInfo, toBinaryPackagePath} = require('./filesystem')
+const {getTmpPath, getRepoPath, getPackageInfo, toBinaryPackagePath} = require('./filesystem')
 const {enqueueMakeBinaryPackage} = require('./queue')
 
 const makeBinaryPackage = requestPath => {
@@ -26,16 +26,22 @@ const init = () => {
 
     proxy.on('proxyRes', (proxyRes, req, res, _options) => {
         const requestPath = req.url
+        const tmpPath = getTmpPath(requestPath)
         const repoPath = getRepoPath(requestPath)
         const repoDir = path.dirname(repoPath)
         if (proxyRes.statusCode === 200) {
             mkdir(repoDir, {recursive: true})
                 .then(() => {
-                    const stream = fs.createWriteStream(repoPath)
-                    stream.on('finish', () => makeBinaryPackage(requestPath))
+                    const stream = fs.createWriteStream(tmpPath)
+                    stream.on('finish', () => {
+                        log.debug('Moving to:', repoPath)
+                        fs.renameSync(tmpPath, repoPath)
+                        makeBinaryPackage(requestPath)
+                        log.debug('Proxied:', req.url)
+                    })
+                    log.debug('Saving to:', tmpPath)
                     proxyRes.pipe(res)
                     proxyRes.pipe(stream)
-                    log.debug('Proxied:', req.url)
                 })
                 .catch(error => log.error('Cannot create dir:', error))
         } else {
@@ -108,7 +114,7 @@ const init = () => {
 
     const serveProxiedFile = async (req, res, target) => {
         if (await checkTarget(target)) {
-            log.debug('Proxying:', req.url, target)
+            log.debug(`Proxying ${req.url} to ${target}`)
             proxy.web(req, res, {
                 target,
                 secure: false,
@@ -118,7 +124,7 @@ const init = () => {
             })
             return true
         } else {
-            log.debug('Cannot proxy (404):', req.url)
+            log.debug(`Cannot proxy (404) ${req.url} to ${target}`, )
         }
         return false
     }
