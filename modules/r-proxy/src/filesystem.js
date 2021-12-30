@@ -23,9 +23,6 @@ const getRepoPath = path => {
 
 const getPackageInfo = path => {
     const {dir, base} = Path.parse(path)
-    // const VERSION_REGEX = /^(.+)(?:_(.+?))?(\.tar\.gz|\.gz|\.rds)$/
-    // const VERSION_REGEX = /(.*?)(?:_([\d\.-]+))?([\.\w]+?)/
-    // const VERSION_REGEX = /^(.*?)(?:_(.*?))?(\.[a-zA-Z\.]*)$/
     const VERSION_REGEX = /^(.+?)(?:_(.+?))?(\.[a-zA-Z\.]+)$/
     const result = base.match(VERSION_REGEX)
     return result ? {
