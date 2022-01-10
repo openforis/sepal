@@ -61,7 +61,7 @@ RUN apt-get update && apt-get install -y \
     r-cran-rmpi
 
 # Configure R Java home
-RUN R CMD javareconf
+RUN bash -c "source $SDKMAN_DIR/bin/sdkman-init.sh && JAVA_HOME=$(sdk home java) && R CMD javareconf"
 
 # Install R packages
 RUN R -e 'install.packages("remotes", lib = "/usr/lib/R/site-library")'
