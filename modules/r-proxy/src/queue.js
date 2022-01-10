@@ -30,7 +30,7 @@ queue.on('failed', (job, error) => {
 
 queue.on('stalled', job => {
     const {name, version} = job.data
-    log.warn(`Job stalled while rescanning ${name}/${version}`, job)
+    log.warn(`Job stalled while rescanning ${name}/${version}`)
 })
 
 queue.on('drained', async () => await logStats())

@@ -28,9 +28,9 @@ const runScript = (script, args) =>
 
 const installPackage = async (name, version, repo) => {
     try {
-        log.debug(`Installing ${name}/${version} from ${repo}`)
+        log.debug(`Installing ${name}/${version}`)
         log.trace(await runScript('src/R/install_package.r', [name, version, lib, repo]))
-        log.info(`Installed ${name}/${version} from ${repo}`)
+        log.info(`Installed ${name}/${version}`)
         return true
     } catch (error) {
         log.warn(`Could not install ${name}/${version}`, error)

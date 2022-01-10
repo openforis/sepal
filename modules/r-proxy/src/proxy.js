@@ -5,8 +5,8 @@ const httpProxy = require('http-proxy')
 const fs = require('fs')
 const {mkdir, stat} = require('fs/promises')
 const path = require('path')
-const {httpPort, cranRepo} = require('./config')
-const {getTmpPath, getRepoPath, getPackageInfo, toBinaryPackagePath} = require('./filesystem')
+const {httpPort} = require('./config')
+const {getTmpPath, getRepoPath, getPackageInfo, toBinaryPackagePath, getTarget} = require('./filesystem')
 const {enqueueMakeBinaryPackage} = require('./queue')
 
 const makeBinaryPackage = requestPath => {
@@ -22,7 +22,7 @@ const makeBinaryPackage = requestPath => {
 }
 
 const init = () => {
-    const proxy = httpProxy.createProxyServer({})
+    const proxy = httpProxy.createProxyServer()
 
     proxy.on('proxyRes', (proxyRes, req, res, _options) => {
         const requestPath = req.url
@@ -86,19 +86,6 @@ const init = () => {
     const serveCached = async (req, res) =>
         await serveCachedBinary(req, res) || await serveCachedSource(req, res)
 
-    const getPackageTarget = (base, name, archive) =>
-        archive
-            ? `${cranRepo}/src/contrib/Archive/${name}/${base}`
-            : `${cranRepo}/src/contrib/${base}`
-
-    const getPackagesTarget = base =>
-        `${cranRepo}/src/contrib/${base}`
-
-    const getTarget = (base, name, archive = false) =>
-        name === 'PACKAGES'
-            ? getPackagesTarget(base)
-            : getPackageTarget(base, name, archive)
-
     const checkTarget = url =>
         new Promise((resolve, reject) => {
             try {
@@ -131,8 +118,8 @@ const init = () => {
     const serveProxied = async (req, res) => {
         const packageInfo = getPackageInfo(req.url)
         const {base, name} = packageInfo
-        return await serveProxiedFile(req, res, getTarget(base, name, false))
-            || await serveProxiedFile(req, res, getTarget(base, name, true))
+        return await serveProxiedFile(req, res, getTarget(base, name, {archive: false}))
+            || await serveProxiedFile(req, res, getTarget(base, name, {archive: true}))
     }
 
     const serveError = async (req, res) => {

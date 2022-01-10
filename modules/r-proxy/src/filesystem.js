@@ -1,6 +1,6 @@
 const Path = require('path')
 const {stat} = require('fs/promises')
-const {cranRoot} = require('./config')
+const {cranRoot, cranRepo} = require('./config')
 
 const isChildOf = (parent, dir) => {
     const relative = Path.relative(parent, dir)
@@ -48,4 +48,17 @@ const isBinaryPackage = async requestPath => {
     }
 }
 
-module.exports = {getTmpPath, getRepoPath, getPackageInfo, toBinaryPackagePath, isBinaryPackage}
+const getPackageTarget = (base, name, {archive = false}) =>
+archive
+    ? `${cranRepo}/src/contrib/Archive/${name}/${base}`
+    : `${cranRepo}/src/contrib/${base}`
+
+const getPackagesTarget = base =>
+`${cranRepo}/src/contrib/${base}`
+
+const getTarget = (base, name, options) =>
+name === 'PACKAGES'
+    ? getPackagesTarget(base)
+    : getPackageTarget(base, name, options)
+
+module.exports = {getTmpPath, getRepoPath, getPackageInfo, toBinaryPackagePath, isBinaryPackage, getTarget}
