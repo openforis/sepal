@@ -18,6 +18,7 @@ apt-get update -y
 
 wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu2004/x86_64/nvidia-machine-learning-repo-ubuntu2004_1.0.0-1_amd64.deb
 apt install -y ./nvidia-machine-learning-repo-ubuntu2004_1.0.0-1_amd64.deb
+rm nvidia-machine-learning-repo-ubuntu2004_1.0.0-1_amd64.deb
 apt-get update -y
 
 # Ensure same nvidia driver version is used both in init_gpu.sh and in init-gpu-drivers.sh
