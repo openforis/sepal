@@ -5,6 +5,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/geospatial-toolkit/Dockerfile
+      network: sepal
     image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/geospatial-toolkit:${SEPAL_VERSION:-latest}"
     container_name: geospatial-toolkit
     deploy:

@@ -1,36 +1,11 @@
 #!/bin/bash
 set -e
 echo
-echo "********************"
-echo "*** Installing R ***"
-echo "********************"
-
-#echo "options(Ncpus = `nproc`)" > /root/.Rprofile
-
-apt-get update -y && apt-get install -y\
- r-base\
- r-base-dev
-
-echo
 echo "*****************************************"
 echo "*** Installing R packages ***"
 echo "*****************************************"
-# libudunits2-dev required for udunits, needed by mapview
-apt-get install -y \
-    libudunits2-dev \
-    r-cran-rmpi \
-    libopenmpi-dev \
-    libgeos++-dev \
-    libmagick++-dev \
-    libv8-dev \
-    libcgal-dev \
-    libglu1-mesa-dev \
-    libnetcdf-dev \
-    libpq-dev
-
-R -e "install.packages('devtools', dependencies=TRUE, repos='http://cran.rstudio.com/')"
-R -e "install.packages('pacman', dependencies=TRUE, repos='http://cran.rstudio.com/')"
-R -e "pacman::p_load(\
+R -e "install.packages('devtools', dependencies=TRUE, repos='http://r-proxy:8180/')"
+R -e "install.packages(c(\
         'abind',\
         'askpass',\
         'assertthat',\
@@ -296,7 +271,7 @@ R -e "pacman::p_load(\
         'yaml',\
         'zeallot',\
         'zoo'\
-    )"
+    ), repos='http://r-proxy:8180/')"
 
 apt-get -y clean
 apt-get -y autoremove
