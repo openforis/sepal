@@ -9,12 +9,13 @@ echo "SEPAL_ENV_FILE=${SEPAL_ENV_FILE}"
 echo
 
 function build {
+  local DOCKER_BUILDKIT=$2
   local MODULE=$1
   echo
   echo "*** Building ${MODULE} ***"
   echo
   cd "${DIR}/modules/${MODULE}"
-  docker compose --env-file="$SEPAL_ENV_FILE" build # --progress plain
+  DOCKER_BUILDKIT=${DOCKER_BUILDKIT:-1} docker compose --env-file="$SEPAL_ENV_FILE" build # --progress plain
   cd -
 }
 function run {
@@ -34,7 +35,6 @@ run mysql
 build rabbitmq
 run rabbitmq
 build java
-run java
 build ceo-gateway
 run ceo-gateway
 build ssh-gateway
@@ -60,8 +60,8 @@ build gui
 run gui
 build r-proxy
 run r-proxy
-#build geospatial-toolkit
-#build sandbox
+build geospatial-toolkit 0
+build sandbox
 build gateway
 run gateway
 build letsencrypt
