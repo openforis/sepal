@@ -14,6 +14,6 @@ if [[ ! -f "${PACKAGE_PATH}" ]]; then
     mkdir -p ${BIN} \
         && tar czf ${BIN}/${TMP_PACKAGE_FILENAME} -C ${LIB} ${PACKAGE} \
         && mv ${BIN}/${TMP_PACKAGE_FILENAME} ${BIN}/${PACKAGE_FILENAME} \
-        && rm ${SRC}/${PACKAGE_FILENAME}
+        && rm -f ${SRC}/${PACKAGE_FILENAME}
     exit $?
 fi
