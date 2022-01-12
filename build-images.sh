@@ -58,8 +58,8 @@ build user-storage
 run user-storage
 build gui
 run gui
-build r-package-manager
-run r-package-manager
+build r-proxy
+run r-proxy
 #build geospatial-toolkit
 #build sandbox
 build gateway
