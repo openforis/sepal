@@ -1,6 +1,5 @@
 FROM openforis/geospatial-toolkit
 
-
 ENV MODULE_NAME sandbox
 ENV SEPAL_USERS_GRP_NAME sepalUsers
 ENV VERSION 2021-09-07

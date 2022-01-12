@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  geospatial-toolkit:
+    build:
+      context: ../..
+      dockerfile: ./modules/sandbox/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/sandbox:${SEPAL_VERSION:-latest}"
+    container_name: sandbox
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal
