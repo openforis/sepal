@@ -43,8 +43,6 @@ const initProxy = () => {
                         })
                         log.debug('Saving to:', tmpPath)
                         proxyRes.pipe(stream)
-                    } else {
-                        log.debug('')
                     }
                     proxyRes.pipe(res)
                 })
