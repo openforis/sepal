@@ -12,6 +12,7 @@ TMP_PACKAGE_FILENAME="${PACKAGE_FILENAME}.tmp"
 
 if [[ ! -f "${PACKAGE_PATH}" ]]; then
     mkdir -p ${BIN} \
+        && rm -f ${BIN}/${TMP_PACKAGE_FILENAME} \
         && tar czf ${BIN}/${TMP_PACKAGE_FILENAME} -C ${LIB} ${PACKAGE} \
         && mv ${BIN}/${TMP_PACKAGE_FILENAME} ${BIN}/${PACKAGE_FILENAME} \
         && rm -f ${SRC}/${PACKAGE_FILENAME}
