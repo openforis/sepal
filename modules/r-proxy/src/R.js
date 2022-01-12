@@ -1,6 +1,6 @@
 const {spawn} = require('child_process')
 const {cranRoot, lib} = require('./config')
-const {isBinaryPackage} = require('./filesystem')
+const {isBinaryPackageCached} = require('./filesystem')
 const log = require('sepal/log').getLogger('R')
 
 const runScript = (script, args) =>
@@ -50,8 +50,8 @@ const bundlePackage = async (name, version) => {
     }
 }
 
-const makeBinaryPackage = async (requestPath, name, version, repo) =>
-    await isBinaryPackage(requestPath) || await installPackage(name, version, repo) && await bundlePackage(name, version)
+const makeBinaryPackage = async (name, version, repo) =>
+    await isBinaryPackageCached(name, version) || await installPackage(name, version, repo) && await bundlePackage(name, version)
 
 module.exports = {
     makeBinaryPackage

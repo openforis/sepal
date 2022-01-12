@@ -7,21 +7,21 @@ const {mkdir, stat} = require('fs/promises')
 const path = require('path')
 const {httpPort} = require('./config')
 const {getTmpPath, getRepoPath, getPackageInfo, toBinaryPackagePath, getTarget} = require('./filesystem')
-const {enqueueMakeBinaryPackage} = require('./queue')
+const {enqueueBuildBinaryPackage} = require('./queue')
 
-const makeBinaryPackage = requestPath => {
+const buildBinaryPackage = requestPath => {
     const packageInfo = getPackageInfo(requestPath)
     if (packageInfo) {
         const {name, version} = packageInfo
         if (name !== 'PACKAGES') {
-            enqueueMakeBinaryPackage(requestPath, name, version, `http://localhost:${httpPort}`)
+            enqueueBuildBinaryPackage(name, version, `http://localhost:${httpPort}`)
         } else {
             log.debug(`Skipping ${name}`)
         }
     }
 }
 
-const init = () => {
+const initProxy = () => {
     const proxy = httpProxy.createProxyServer()
 
     proxy.on('proxyRes', (proxyRes, req, res, _options) => {
@@ -29,19 +29,24 @@ const init = () => {
         const tmpPath = getTmpPath(requestPath)
         const repoPath = getRepoPath(requestPath)
         const repoDir = path.dirname(repoPath)
+        const {name} = getPackageInfo(requestPath)
         if (proxyRes.statusCode === 200) {
             mkdir(repoDir, {recursive: true})
                 .then(() => {
-                    const stream = fs.createWriteStream(tmpPath)
-                    stream.on('finish', () => {
-                        log.debug('Moving to:', repoPath)
-                        fs.renameSync(tmpPath, repoPath)
-                        makeBinaryPackage(requestPath)
-                        log.debug('Proxied:', req.url)
-                    })
-                    log.debug('Saving to:', tmpPath)
+                    if (name !== 'PACKAGES') {
+                        const stream = fs.createWriteStream(tmpPath)
+                        stream.on('finish', () => {
+                            log.debug('Moving to:', repoPath)
+                            fs.renameSync(tmpPath, repoPath)
+                            buildBinaryPackage(requestPath)
+                            log.debug('Proxied:', req.url)
+                        })
+                        log.debug('Saving to:', tmpPath)
+                        proxyRes.pipe(stream)
+                    } else {
+                        log.debug('')
+                    }
                     proxyRes.pipe(res)
-                    proxyRes.pipe(stream)
                 })
                 .catch(error => log.error('Cannot create dir:', error))
         } else {
@@ -141,4 +146,4 @@ const init = () => {
     }
 }
 
-module.exports = {init}
+module.exports = {initProxy}

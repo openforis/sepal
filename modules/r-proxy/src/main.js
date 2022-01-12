@@ -1,9 +1,11 @@
 require('sepal/log').configureServer(require('./log.json'))
 const log = require('sepal/log').getLogger('main')
-const {init} = require('./proxy')
+const {initProxy} = require('./proxy')
+const {initQueue} = require('./queue')
 
 const main = async () => {
-    init()
+    initProxy()
+    await initQueue()
     log.info('Initialized')
 }
 

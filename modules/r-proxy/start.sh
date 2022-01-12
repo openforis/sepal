@@ -14,7 +14,8 @@ then
     --cran-repo https://cran.r-project.org \
     --cran-root /R/cranroot \
     --lib /usr/local/lib/R/site-library \
-    --redis-uri redis://r-proxy-redis
+    --redis-uri redis://r-proxy-redis \
+    --auto-update-interval-hours 24
 else
   echo "Starting node"
   exec node \
@@ -22,5 +23,6 @@ else
     --cran-repo https://cran.r-project.org \
     --cran-root /R/cranroot \
     --lib /usr/local/lib/R/site-library \
-    --redis-uri redis://r-proxy-redis
+    --redis-uri redis://r-proxy-redis \
+    --auto-update-interval-hours 24
 fi

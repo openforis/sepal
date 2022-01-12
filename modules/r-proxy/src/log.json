@@ -4,6 +4,7 @@
         "config": "info",
         "proxy": "debug",
         "queue": "info",
+        "packages": "debug",
         "R": "debug",
         "main": "info"
     }
