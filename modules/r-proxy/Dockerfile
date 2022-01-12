@@ -3,6 +3,7 @@ FROM ubuntu:focal
 EXPOSE 8180
 
 ENV DEBIAN_FRONTEND noninteractive
+ENV JAVA_VERSION 11.0.11.hs-adpt
 ENV MODULE_NAME r-proxy
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
@@ -35,7 +36,8 @@ RUN curl -s https://get.sdkman.io | bash
 RUN sed -ie 's/sdkman_auto_answer=false/sdkman_auto_answer=true/' ${SDKMAN_DIR}/etc/config
 
 # Install Adoption Java 11
-RUN bash -c "source $SDKMAN_DIR/bin/sdkman-init.sh && sdk install java 11.0.11.hs-adpt"
+RUN bash -c 'source ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install java ${JAVA_VERSION}'
+RUN bash -c 'source ${SDKMAN_DIR}/bin/sdkman-init.sh && update-alternatives --install /usr/local/bin/java java $(sdk home java ${JAVA_VERSION})/bin/java 1'
 
 # Install extra apt packages
 RUN apt-get update && apt-get install -y \
@@ -61,7 +63,7 @@ RUN apt-get update && apt-get install -y \
     r-cran-rmpi
 
 # Configure R Java home
-RUN bash -c "source $SDKMAN_DIR/bin/sdkman-init.sh && JAVA_HOME=$(sdk home java) && R CMD javareconf"
+RUN bash -c 'source ${SDKMAN_DIR}/bin/sdkman-init.sh && JAVA_HOME=$(sdk home java) R CMD javareconf'
 
 # Install R packages
 RUN R -e 'install.packages("remotes", lib = "/usr/lib/R/site-library")'
