@@ -27,21 +27,35 @@ const logStats = async () =>
         `failed: ${await queue.getFailedCount()}`,
     ].join(', '))
 
-queue.process('build-package', async ({data: {name, version}}) => {
+queue.process(async ({data}) => {
+    if (data.buildPackage) {
+        return await buildPackage(data.buildPackage)
+    }
+    if (data.updatePackages) {
+        return await updatePackages(data.updatePackages)
+    }
+    if (data.updatePackage) {
+        return await updatePackage(data.updatePackage)
+    }
+    log.warn('Unsupported job:', data)
+    return {success: true}
+})
+
+const buildPackage = async ({name, version}) => {
     log.debug(`Processing build:${name}/${version}`)
     const success = await makeBinaryPackage(name, version, LOCAL_CRAN_REPO)
     log.debug(`Processed build:${name}/${version}`)
     return {success}
-})
+}
 
-queue.process('update-packages', async () => {
+const updatePackages = async () => {
     log.debug(`Processing update-packages`)
     await checkUpdates(enqueueUpdateBinaryPackage)
     log.debug(`Processed update-packages`)
     return {success: true}
-})
+}
 
-queue.process('update-package', async ({data: {name, version}}) => {
+const updatePackage = async ({name, version}) => {
     log.debug(`Processing update:${name}/${version}`)
     if (await isUpdatable(name, version)) {
         const success = await makeBinaryPackage(name, version, cranRepo)
@@ -51,7 +65,7 @@ queue.process('update-package', async ({data: {name, version}}) => {
         log.debug(`Skipped update:${name}/${version}`)
         return {success: true}
     }
-})
+}
 
 queue.on('error', error => log.error(error))
 
@@ -80,7 +94,7 @@ queue.on('completed', async ({id}, {success}) => {
 const enqueueBuildBinaryPackage = (name, version) => {
     const jobId = `build-package-${name}/${version}`
     log.debug(`Enqueuing job: ${jobId}`)
-    return queue.add('build-package', {name, version}, {
+    return queue.add({buildPackage: {name, version}}, {
         ...QUEUE_OPTIONS,
         jobId,
         priority: 1
@@ -90,7 +104,7 @@ const enqueueBuildBinaryPackage = (name, version) => {
 const enqueueUpdateBinaryPackage = (name, version) => {
     const jobId = `update-package-${name}/${version}`
     log.debug(`Enqueuing job ${jobId}`)
-    return queue.add('update-package', {name, version}, {
+    return queue.add({updatePackage: {name, version}}, {
         ...QUEUE_OPTIONS,
         jobId,
         priority: 2
@@ -100,7 +114,7 @@ const enqueueUpdateBinaryPackage = (name, version) => {
 const enqueueUpdateBinaryPackages = () => {
     const jobId = 'update-packages'
     log.debug(`Enqueuing job ${jobId}`)
-    return queue.add('update-packages', {}, {
+    return queue.add({updatePackages: {}}, {
         jobId,
         priority: 3,
         repeat: {
