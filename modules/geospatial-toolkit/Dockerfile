@@ -14,9 +14,6 @@ RUN chmod u+x /script/init_apt.sh && sync && /script/init_apt.sh
 ADD modules/${MODULE_NAME}/script/init_r.sh /script/
 RUN chmod u+x /script/init_r.sh && sync && /script/init_r.sh
 
-ADD modules/${MODULE_NAME}/script/init_r_packages.sh /script/
-RUN chmod u+x /script/init_r_packages.sh && sync && /script/init_r_packages.sh
-
 ADD modules/${MODULE_NAME}/script/init_apt_packages.sh /script/
 RUN chmod u+x /script/init_apt_packages.sh && sync && /script/init_apt_packages.sh
 
@@ -51,8 +48,8 @@ RUN chmod u+x /script/init_gpu.sh && sync && /script/init_gpu.sh
 ADD modules/${MODULE_NAME}/script/init_python_packages.sh /script/
 RUN chmod u+x /script/init_python_packages.sh && sync && /script/init_python_packages.sh
 
-ADD modules/${MODULE_NAME}/script/init_additional_r_packages.sh /script/
-RUN chmod u+x /script/init_additional_r_packages.sh && sync && /script/init_additional_r_packages.sh
+ADD modules/${MODULE_NAME}/script/init_r_packages.sh /script/
+RUN chmod u+x /script/init_r_packages.sh && sync && /script/init_r_packages.sh
 
 ADD modules/${MODULE_NAME}/script/init_biota.sh /script/
 RUN chmod u+x /script/init_biota.sh && sync && /script/init_biota.sh

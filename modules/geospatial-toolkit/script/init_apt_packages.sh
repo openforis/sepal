@@ -56,3 +56,6 @@ apt-get update -y && apt-get install -y --fix-missing \
     tmux \
     unrar-free \
     xml-twig-tools
+
+apt-get -y clean
+apt-get -y autoremove

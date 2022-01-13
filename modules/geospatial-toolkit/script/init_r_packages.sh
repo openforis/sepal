@@ -1,10 +1,21 @@
 #!/bin/bash
 set -e
+
 echo
-echo "*****************************************"
+echo "*****************************"
 echo "*** Installing R packages ***"
-echo "*****************************************"
+echo "*****************************"
+
+export JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current
+export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
+export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
+
+R CMD javareconf
+
+R -e "install.packages('rgdal', version='1.3-9', dependencies=TRUE, repos='http://r-proxy:8180/')"
+
 R -e "install.packages('devtools', dependencies=TRUE, repos='http://r-proxy:8180/')"
+
 R -e "install.packages(c(\
         'abind',\
         'askpass',\
@@ -13,6 +24,7 @@ R -e "install.packages(c(\
         'base64enc',\
         'BH',\
         'BiodiversityR',\
+        'BIOMASS',\
         'bit',\
         'bit64',\
         'blob',\
@@ -124,6 +136,7 @@ R -e "install.packages(c(\
         'mapproj',\
         'maps',\
         'maptools',\
+        'mapview',\
         'markdown',\
         'MASS',\
         'memoise',\
@@ -150,6 +163,7 @@ R -e "install.packages(c(\
         'permutate',\
         'pillar',\
         'pkgconfig',\
+        'pkgdown',\
         'pkgKitten',\
         'plotly',\
         'plyr',\
@@ -166,6 +180,7 @@ R -e "install.packages(c(\
         'purrr',\
         'quantmod',\
         'R6',\
+        'ragg',\
         'random',\
         'randomForest',\
         'raster',\
@@ -190,6 +205,8 @@ R -e "install.packages(c(\
         'rgexf',\
         'RgoogleMaps',\
         'rhandsontable',\
+        'rJava',\
+        'rknn',\
         'rlang',\
         'rmarkdown',\
         'Rmpi',\
@@ -200,6 +217,7 @@ R -e "install.packages(c(\
         'rprojroot',\
         'rsconnect',\
         'RSQLite',\
+        'RStoolbox',\
         'rstudioapi',\
         'rticles',\
         'RUnit',\
@@ -209,6 +227,7 @@ R -e "install.packages(c(\
         'samplingbook',\
         'scales',\
         'selectr',\
+        'sf',\
         'shiny',\
         'shinyBS',\
         'shinycssloaders',\
@@ -235,11 +254,13 @@ R -e "install.packages(c(\
         'testit',\
         'testthat',\
         'textclean',\
+        'textshaping',\
         'tibble',\
         'tictoc',\
         'tidyr',\
         'tidyselect',\
         'tidyverse',\
+        'tigris',\
         'tikzDevice',\
         'tint',\
         'tinytex',\
@@ -264,6 +285,9 @@ R -e "install.packages(c(\
         'WorldFlora',\
         'writexl',\
         'xfun',\
+        'XLConnect',\
+        'xlsx',\
+        'xlsxjars',\
         'XML',\
         'xml2',\
         'xtable',\
@@ -273,5 +297,8 @@ R -e "install.packages(c(\
         'zoo'\
     ), repos='http://r-proxy:8180/')"
 
-apt-get -y clean
-apt-get -y autoremove
+R -e "devtools::install_github('r-barnes/dggridR', dependencies=TRUE, repos='http://r-proxy:8180/')"
+R -e "devtools::install_github('bfast2/bfast', dependencies=TRUE, repos='http://r-proxy:8180/')"
+R -e "devtools::install_github('azvoleff/gfcanalysis', dependencies=TRUE, repos='http://r-proxy:8180/')"
+R -e "devtools::install_github('loicdtx/bfastSpatial', dependencies=TRUE, repos='http://r-proxy:8180/')"
+R -e "devtools::install_github('jreiche/bayts', dependencies=TRUE, repos='http://r-proxy:8180/')"
