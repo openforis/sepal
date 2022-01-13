@@ -25,7 +25,7 @@ apt-get update && apt-get install -y \
 	 perl \
 	 spatialite-bin
 
-wget -nv http://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run
+wget -nv https://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run
 chmod u+x OpenForisToolkit.run
 ln -sf /usr/bin/python3 /usr/bin/python
 yes 1 | ./OpenForisToolkit.run
