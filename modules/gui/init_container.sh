@@ -11,7 +11,7 @@ function template {
 }
 
 if [ "${DEPLOY_ENVIRONMENT}" == "DEV" ]; then
-  exec  npm start
+  exec npm start
 else
   if [ ! -f "${MODULE}/build/index-template.html" ]; then
       mv "${MODULE}/build/index.html" "${MODULE}/build/index-template.html"
