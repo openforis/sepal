@@ -18,6 +18,7 @@ services:
       dockerfile: ./modules/gateway/Dockerfile
     image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/gateway:${SEPAL_VERSION:-latest}"
     container_name: gateway
+    init: true
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       SEPAL_HOST: "${SEPAL_HOST}"

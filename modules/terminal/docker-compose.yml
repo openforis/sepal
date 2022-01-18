@@ -7,6 +7,7 @@ services:
       dockerfile: ./modules/terminal/Dockerfile
     image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/terminal:${SEPAL_VERSION:-latest}"
     container_name: terminal
+    init: true
     volumes:
       - "${SEPAL_DATA_DIR}/user/home:/sepalUsers" # Users home directories with ssh keys
     environment:
