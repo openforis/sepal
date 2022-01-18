@@ -16,8 +16,8 @@ services:
       context: ../..
       dockerfile: ./modules/r-proxy/Dockerfile.r-proxy
     image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r-proxy:${SEPAL_VERSION:-latest}"
-    init: true
     container_name: r-proxy
+    init: true
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       SEPAL_HOST: "${SEPAL_HOST}"
@@ -28,6 +28,24 @@ services:
       - sepal
     ports:
       - "8180:8180"
+  r-proxy-test:
+    # build:
+    #   context: ../..
+    #   dockerfile: ./modules/r-proxy/Dockerfile-test
+    # image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r-proxy-test:${SEPAL_VERSION:-latest}"
+    image: localhost/openforis/r:latest
+    container_name: r-proxy-test
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      SEPAL_HOST: "${SEPAL_HOST}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - sepal
+    tty: true
+
+networks:      
 networks:
   sepal:
     name: sepal

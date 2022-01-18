@@ -7,6 +7,7 @@ services:
       dockerfile: ./modules/app-manager/Dockerfile
     image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/app-manager:${SEPAL_VERSION:-latest}"
     container_name: app-manager
+    init: true
     volumes:
       - "${SEPAL_DATA_DIR}/sepal/shiny:/shiny"
       - "${SEPAL_DATA_DIR}/sepal/kernels:/usr/local/share/jupyter/kernels"

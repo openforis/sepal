@@ -18,6 +18,7 @@ services:
       dockerfile: ./modules/email/Dockerfile
     image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/email:${SEPAL_VERSION:-latest}"
     container_name: email
+    init: true
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       SEPAL_HOST: "${SEPAL_HOST}"

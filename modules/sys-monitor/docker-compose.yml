@@ -7,6 +7,7 @@ services:
       dockerfile: ./modules/sys-monitor/Dockerfile
     image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/sys-monitor:${SEPAL_VERSION:-latest}"
     container_name: sys-monitor
+    init: true
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
