@@ -39,7 +39,7 @@ const getPackageFilename = (name, version) =>
 
 const getPackageInfo = path => {
     const {dir, base} = Path.parse(path)
-    const VERSION_REGEX = /^(.+?)(?:_(.+?))?(\.[a-zA-Z\.]+)$/
+    const VERSION_REGEX = /^(.+?)(?:_(.+?))?(\.[a-zA-Z\.]+)?$/
     const result = base.match(VERSION_REGEX)
     return result ? {
         path,
