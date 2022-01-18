@@ -15,14 +15,14 @@ services:
       - "${SEPAL_SSH_IP:-0.0.0.0}:${SEPAL_SSH_PORT_1:-22}:22"
       - "${SEPAL_SSH_IP:-0.0.0.0}:${SEPAL_SSH_PORT_2:-443}:22"
     environment:
-      SEPAL_ADMIN_PASSWORD: "{{ sepal_machine_admin_password }}"
-      LDAP_ADMIN_PASSWORD: "{{ ldap_admin_password }}"
+      SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
+      LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
     deploy:
       restart_policy:
         condition: on-failure
     networks:
-      - ssh-gateway
+      - sepal
 
 networks:
-  ssh-gateway:
-    name: ssh-gateway
+  sepal:
+    name: sepal
