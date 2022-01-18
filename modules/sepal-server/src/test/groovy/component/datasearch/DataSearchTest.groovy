@@ -40,7 +40,7 @@ class DataSearchTest extends Specification {
         usgs,
         sentinel2,
         'some-google-maps-api-key',
-        'some-norway-planet-api-key',
+        'some-nicfi-planet-api-key',
         new SynchronousEventDispatcher()
     )
 

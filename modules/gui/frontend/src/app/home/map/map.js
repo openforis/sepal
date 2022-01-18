@@ -53,7 +53,7 @@ class _Map extends React.Component {
         maps: {}, // [id]: {id, map, listeners, subscriptions}
         mapId: null,
         googleMapsApiKey: null,
-        norwayPlanetApiKey: null,
+        nicfiPlanetApiKey: null,
         zoomArea: null,
         selectedZoomArea: null,
         overlay: null,
@@ -457,7 +457,7 @@ class _Map extends React.Component {
 
     render() {
         const {recipe, layers, imageLayerSources} = this.props
-        const {googleMapsApiKey, norwayPlanetApiKey, selectedZoomArea} = this.state
+        const {googleMapsApiKey, nicfiPlanetApiKey, selectedZoomArea} = this.state
 
         const imageLayerSourceComponents = imageLayerSources
             .map(source =>
@@ -469,7 +469,7 @@ class _Map extends React.Component {
                 <MapContext.Provider value={{
                     map: this.mapDelegate(),
                     googleMapsApiKey,
-                    norwayPlanetApiKey
+                    nicfiPlanetApiKey
                 }}>
                     {imageLayerSourceComponents}
                     <SplitView
@@ -556,7 +556,7 @@ class _Map extends React.Component {
 
     componentDidMount() {
         const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
-        const {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView$, linked$, scrollWheel$} = createMapContext()
+        const {mapId, googleMapsApiKey, nicfiPlanetApiKey, view$, updateView$, linked$, scrollWheel$} = createMapContext()
 
         this.setLinked(getProcessTabsInfo().single)
         this.scrollWheel$ = scrollWheel$
@@ -564,7 +564,7 @@ class _Map extends React.Component {
         this.setState({
             mapId,
             googleMapsApiKey,
-            norwayPlanetApiKey
+            nicfiPlanetApiKey
         }, () => {
             this.subscribe({view$, updateView$, linked$})
             onEnable(() => this.setVisibility(true))

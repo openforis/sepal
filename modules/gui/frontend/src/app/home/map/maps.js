@@ -55,13 +55,13 @@ class _Maps extends React.Component {
     initialize$() {
         return api.map.loadApiKeys$().pipe(
             switchMap(
-                ({google: googleMapsApiKey, norwayPlanet: norwayPlanetApiKey}) =>
+                ({google: googleMapsApiKey, nicfiPlanet: nicfiPlanetApiKey}) =>
                     zip(
                         this.initGoogleMaps$(googleMapsApiKey),
-                        this.initNorwayPlanet$(norwayPlanetApiKey)
+                        this.initNicfiPlanet$(nicfiPlanetApiKey)
                     )
             ),
-            map(([google, norwayPlanet]) => ({google, norwayPlanet}))
+            map(([google, nicfiPlanet]) => ({google, nicfiPlanet}))
         )
     }
 
@@ -81,8 +81,8 @@ class _Maps extends React.Component {
         )
     }
 
-    initNorwayPlanet$(norwayPlanetApiKey) {
-        return of({norwayPlanetApiKey})
+    initNicfiPlanet$(nicfiPlanetApiKey) {
+        return of({nicfiPlanetApiKey})
     }
 
     handleError(error) {
@@ -162,7 +162,7 @@ class _Maps extends React.Component {
 
     createMapContext(mapId = uuid()) {
         const {addSubscription} = this.props
-        const {google: {googleMapsApiKey}, norwayPlanet: {norwayPlanetApiKey}} = this.state
+        const {google: {googleMapsApiKey}, nicfiPlanet: {nicfiPlanetApiKey}} = this.state
         const requestedView$ = new Subject()
 
         const view$ = merge(
@@ -224,7 +224,7 @@ class _Maps extends React.Component {
             )
         )
 
-        return {mapId, googleMapsApiKey, norwayPlanetApiKey, view$, updateView$, linked$, scrollWheel$}
+        return {mapId, googleMapsApiKey, nicfiPlanetApiKey, view$, updateView$, linked$, scrollWheel$}
     }
 
     render() {

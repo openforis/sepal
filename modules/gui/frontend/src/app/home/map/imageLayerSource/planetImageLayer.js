@@ -199,8 +199,8 @@ class _PlanetImageLayer extends React.Component {
     }
 
     getApiKey(props) {
-        const {planetApiKey, mapContext: {norwayPlanetApiKey}} = props || this.props
-        return planetApiKey || norwayPlanetApiKey
+        const {planetApiKey, mapContext: {nicfiPlanetApiKey}} = props || this.props
+        return planetApiKey || nicfiPlanetApiKey
     }
 }
 

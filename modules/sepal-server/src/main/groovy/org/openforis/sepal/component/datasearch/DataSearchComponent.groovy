@@ -28,7 +28,7 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
     private final Component taskComponent
     private final GoogleEarthEngineGateway geeGateway
     private final String googleMapsApiKey
-    private final String norwayPlanetApiKey
+    private final String nicfiPlanetApiKey
 
     static DataSearchComponent create(
         Component processingRecipeComponent,
@@ -43,7 +43,7 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
             CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory)),
             CsvBackedSentinel2Gateway.create(new File(config.downloadWorkingDirectory)),
             config.googleMapsApiKey,
-            config.norwayPlanetApiKey,
+            config.nicfiPlanetApiKey,
             new AsynchronousEventDispatcher()
         )
     }
@@ -56,13 +56,13 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
         DataSetMetadataGateway landsatMetadata,
         DataSetMetadataGateway sentinel2Metadata,
         String googleMapsApiKey,
-        String norwayPlanetApiKey,
+        String nicfiPlanetApiKey,
         HandlerRegistryEventDispatcher eventDispatcher) {
         super(connectionManager, eventDispatcher)
         this.taskComponent = taskComponent
         this.geeGateway = geeGateway
         this.googleMapsApiKey = googleMapsApiKey
-        this.norwayPlanetApiKey = norwayPlanetApiKey
+        this.nicfiPlanetApiKey = nicfiPlanetApiKey
         def sceneMetaDataRepository = new JdbcSceneMetaDataRepository(connectionManager)
 
         command(UpdateSceneMetaData, new UpdateSceneMetaDataHandler([
@@ -91,7 +91,7 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
             this,
             geeGateway,
             googleMapsApiKey,
-            norwayPlanetApiKey,
+            nicfiPlanetApiKey,
         ).registerWith(controller)
     }
 }

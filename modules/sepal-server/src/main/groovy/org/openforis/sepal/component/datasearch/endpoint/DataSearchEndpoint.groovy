@@ -21,15 +21,15 @@ class DataSearchEndpoint {
     private final Component component
     private final GoogleEarthEngineGateway geeGateway
     private final String googleMapsApiKey
-    private final String norwayPlanetApiKey
+    private final String nicfiPlanetApiKey
 
     DataSearchEndpoint(Component component,
                        GoogleEarthEngineGateway geeGateway,
                        String googleMapsApiKey,
-                       String norwayPlanetApiKey) {
+                       String nicfiPlanetApiKey) {
         this.component = component
         this.googleMapsApiKey = googleMapsApiKey
-        this.norwayPlanetApiKey = norwayPlanetApiKey
+        this.nicfiPlanetApiKey = nicfiPlanetApiKey
         this.geeGateway = geeGateway
     }
 
@@ -37,7 +37,7 @@ class DataSearchEndpoint {
         controller.with {
             get('/data/map-api-keys') {
                 response.contentType = "application/json"
-                send toJson(google: googleMapsApiKey, norwayPlanet: norwayPlanetApiKey)
+                send toJson(google: googleMapsApiKey, nicfiPlanet: nicfiPlanetApiKey)
             }
             post('/data/sceneareas') {
                 response.contentType = "application/json"
