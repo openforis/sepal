@@ -1,0 +1,32 @@
+{
+    "name": "ssh-gateway",
+    "version": "1.0.0",
+    "description": "",
+    "main": "main.js",
+    "scripts": {
+        "postinstall": "link-module-alias",
+        "preinstall": "command -v link-module-alias && link-module-alias clean || true",
+        "test": "jest",
+        "testWatch": "jest --watchAll"
+    },
+    "author": "",
+    "license": "ISC",
+    "_moduleAliases": {
+        "root": "src",
+        "sepal": "node_modules/shared/src"
+    },
+    "dependencies": {
+        "commander": "^8.3.0",
+        "lodash": "^4.17.21",
+        "moment": "^2.29.1",
+        "rxjs": "^7.4.0",
+        "shared": "../../lib/js/shared",
+        "uuid": "^8.3.2"
+    },
+    "devDependencies": {
+        "eslint": "^8.4.1",
+        "jest": "^27.4.5",
+        "jest-expect-message": "^1.0.2",
+        "link-module-alias": "^1.2.0"
+    }
+}

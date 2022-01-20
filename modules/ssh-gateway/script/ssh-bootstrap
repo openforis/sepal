@@ -1,19 +1,18 @@
 #!/usr/bin/env bash
-
-runTask="runInteractive"
+interactive="interactive"
 if [ -z "$SSH_ORIGINAL_COMMAND" ]; then
-    runTask="runNonInteractive"
+    interactive="non-interactive"
 fi
 sshScriptFile=$(mktemp /tmp/$USER-ssh.XXXXXX) > /dev/null 2>&1
 chmod +x $sshScriptFile
-password=$(cat /etc/sepalAdmin.passwd)
-gradle :ssh-gateway:${runTask} \
-    --args \
-    "$USER" \
-    "http://sepal:1025/api/" \
-    "/home/$USER/.ssh/id_rsa" \
-    "$sshScriptFile" \
-    "$password" 2> /dev/null
+cd /usr/local/src/sepal/modules/ssh-gateway
+node src/main.js \
+    --${interactive} \
+    --username="${USER}" \
+    --user-key-file="/home/${USER}/.ssh/id_rsa" \
+    --endpoint="http://sepal:1025/api/" \
+    --endpoint-password="$(cat /etc/sepalAdmin.passwd)" \
+    --ssh-command-path="${sshScriptFile}"
 
 if [ -s $sshScriptFile ]; then
   n=0

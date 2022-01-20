@@ -8,8 +8,8 @@ services:
     image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/ldap:${SEPAL_VERSION:-latest}"
     container_name: ldap
     ports:
-      - "389:389"
-      - "636:636"
+      - "0.0.0.0:389:389"
+      - "0.0.0.0:636:636"
     volumes:
       - "${SEPAL_DATA_DIR}/ldap:/data"
       # Parent image volumes
@@ -17,8 +17,9 @@ services:
       - "${SEPAL_DATA_DIR}/ldap/config:/etc/ldap/slapd.d"
       - "${SEPAL_DATA_DIR}/ldap/certificates:/container/service/slapd/assets/certs"
     environment:
-      LDAP_ORGANISATION: 'SEPAL'
-      LDAP_DOMAIN: 'sepal.org'
+      LDAP_HOST: "$LDAP_HOST"
+      LDAP_ORGANISATION: "SEPAL"
+      LDAP_DOMAIN: "sepal.org"
       LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
       LDAP_TLS_CRT_FILENAME: ldap-crt.pem
       LDAP_TLS_KEY_FILENAME: ldap-key.pem
@@ -28,7 +29,6 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-    hostname: "${LDAP_HOST}"
     networks:
       - sepal
 

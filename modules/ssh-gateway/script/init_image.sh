@@ -48,7 +48,7 @@ printf '%s\n' \
 
 # Configure locale
 echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
-apt-get install locales
+apt-get install -y locales
 locale-gen en_US.utf8
 update-locale LC_ALL=en_US.UTF-8
 update-locale LANG=en_US.UTF-8

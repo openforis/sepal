@@ -15,7 +15,9 @@ services:
       - "${SEPAL_SSH_IP:-0.0.0.0}:${SEPAL_SSH_PORT_1:-22}:22"
       - "${SEPAL_SSH_IP:-0.0.0.0}:${SEPAL_SSH_PORT_2:-443}:22"
     environment:
+      SEPAL_HOST: "${SEPAL_HOST}"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
+      LDAP_HOST: "${LDAP_HOST}"
       LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
     deploy:
       restart_policy:

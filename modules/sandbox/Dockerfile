@@ -4,10 +4,9 @@ ENV MODULE_NAME sandbox
 ENV SEPAL_USERS_GRP_NAME sepalUsers
 ENV VERSION 2021-09-07
 
-ADD modules/${MODULE_NAME}/config /config
 ADD modules/${MODULE_NAME}/templates /templates
 
-RUN chmod +x /usr/local/bin/* && sync && chmod -R 400 /config && sync && mkdir -p /script
+RUN chmod +x /usr/local/bin/* && sync && sync && mkdir -p /script
 
 ADD modules/${MODULE_NAME}/script/init_image.sh /script/
 RUN chmod u+x /script/init_image.sh && sync && /script/init_image.sh

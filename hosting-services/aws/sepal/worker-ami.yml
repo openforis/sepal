@@ -34,6 +34,11 @@
         path: "/data/sepal"
         state: directory
 
+    - name: Create /data/ldap
+      file:
+        path: "/data/sepal"
+        state: directory
+
     - name: Create /data/sepal/home
       file:
         path: "/data/sepal/home"
@@ -54,7 +59,7 @@
         path: "/data/sepal/kernels"
         state: directory
 
-    - name: Create /data/sepal/certificates
+    - name: Create /data/ldap/certificates
       file:
         path: "/data/sepal/certificates"
         state: directory
@@ -106,7 +111,7 @@
     - name: Copy LDAP Certificate
       copy:
        src: "{{ config_home }}/certificates/ldap-ca.crt.pem"
-       dest: "/data/sepal/certificates/ldap-ca.crt.pem"
+       dest: "/data/ldap/certificates/ldap-ca.crt.pem"
 
     - name: Create filesystem on Docker volume
       filesystem:

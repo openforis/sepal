@@ -16,10 +16,13 @@ function template {
     chmod $3 $2
 }
 
-template /templates/ldap.secret /etc/ldap.secret 0600
-template /templates/sssd.conf /etc/sssd/sssd.conf 0600
-template /templates/shiny-server.conf /etc/shiny-server/shiny-server.conf 0644
-template /templates/supervisord.conf /etc/supervisor/conf.d/supervisord.conf 0600
+template /templates/ldap.secret /etc/ldap.secret 0400
+template /templates/sssd.conf /etc/sssd/sssd.conf 0400
+template /templates/shiny-server.conf /etc/shiny-server/shiny-server.conf 0444
+template /templates/supervisord.conf /etc/supervisor/conf.d/supervisord.conf 0400
+template /templates/ldap.conf /etc/ldap.conf 0400
+mkdir -p /etc/ldap
+ln -sf /etc/ldap.conf /etc/ldap/ldap.conf
 
 sandbox_user_id=`stat -c '%u' /home/$sandbox_user`
 home_group_id=`stat -c '%g' /home/$sandbox_user`
@@ -38,11 +41,6 @@ printf '%s\n' \
 cp /etc/environment /etc/R/Renviron.site
 # LD_LIBRARY_PATH includes /usr/lib/x86_64-linux-gnu. Make sure /lib/x86_64-linux-gnu is also included
 sed -i -e 's/\/usr\/lib\/x86_64-linux-gnu/\/usr\/lib\/x86_64-linux-gnu:\/lib\/x86_64-linux-gnu/g' /usr/lib/R/etc/ldpaths
-
-ln -sf /config/ldap.conf /etc/ldap.conf
-ln -sf /config/ldap.conf /etc/ldap/ldap.conf
-
-echo "$ldap_host ldap" >> /etc/hosts
 
 TOT_MEM=$(awk '/MemFree/ { printf "%i\n", $2/1024 }' /proc/meminfo)
 if [[ (TOT_MEM -lt 3000) ]] ;then

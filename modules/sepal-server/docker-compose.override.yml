@@ -7,3 +7,13 @@ services:
     volumes:
       - "./src:/usr/local/src/sepal/modules/sepal-server/src"
       - "./build:/usr/local/src/sepal/modules/sepal-server/build"
+  socat:
+    image: bobrik/socat
+    container_name: docker-api
+    command: TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "2375:2375"
+    networks:
+      - sepal

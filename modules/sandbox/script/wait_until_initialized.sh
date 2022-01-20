@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-porst=$(echo $1 | tr ";" "\n")
+ports=$(echo $1 | tr ";" "\n")
 username=$2
-for port in $porst;
+for port in $ports;
 do
     for i in {30..0}; do
         if netstat -ntlp | grep ":$port"  >/dev/null 2>&1; then
