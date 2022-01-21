@@ -8,6 +8,6 @@ class LocalConfig {
     final String host
 
     LocalConfig() {
-        host = System.getProperty('SEPAL_HOST')
+        host = System.getProperty('sepalHost')
     }
 }

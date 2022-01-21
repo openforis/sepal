@@ -4,6 +4,7 @@ const log = require('sepal/log').getLogger('config')
 const _ = require('lodash')
 
 program
+    .option('--interactive')
     .option('--non-interactive')
     .option('--username <value>')
     .option('--user-key-file <value>')

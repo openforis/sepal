@@ -4,63 +4,81 @@ import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.api.WorkerReservation
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class LocalInstanceProvider implements InstanceProvider {
+    private static final Logger LOG = LoggerFactory.getLogger(this)
+    private final String host
     private final InstanceType instanceType
-    private WorkerInstance instance
+    private final Map<String, WorkerInstance> workerInstanceById = [:]
     private final List<Closure> launchListeners = []
 
     LocalInstanceProvider(String host, InstanceType instanceType) {
-        instance = new WorkerInstance(
-                id: 'vagrant-box',
-                type: instanceType.id,
-                host: host,
-                launchTime: new Date(),
-                running: true)
+        this.host = host
         this.instanceType = instanceType
     }
 
     WorkerInstance launchReserved(String instanceType, WorkerReservation reservation) {
-        instance = instance.reserve(reservation)
+        LOG.info("launchReserved(instanceType: ${instanceType}, reservation: ${reservation})")
+        def instance = new WorkerInstance(
+                id: "instance-${UUID.randomUUID().toString()}",
+                type: instanceType,
+                host: host,
+                launchTime: new Date(),
+                running: true
+        ).reserve(reservation)
+        updateInstance(instance)
         notifyLaunchListeners(instance)
         return instance
     }
 
     List<WorkerInstance> launchIdle(String instanceType, int count) {
-        instance = instance.release()
+        LOG.info("launchIdle(instanceType: ${instanceType}, count: ${count})")
+        def instance = new WorkerInstance(
+                id: "instance-${UUID.randomUUID().toString()}",
+                type: instanceType,
+                host: host,
+                launchTime: new Date(),
+                running: true
+        )
+        updateInstance(instance)
         notifyLaunchListeners(instance)
         return [instance]
     }
 
     void terminate(String instanceId) {
-        // Do nothing
+        LOG.info("terminate(instanceId: ${instanceId})")
+        workerInstanceById.remove(instanceId)
     }
 
     void reserve(WorkerInstance instance) {
-        this.instance = instance
+        LOG.info("reserve(instance: ${instance})")
+        updateInstance(instance)
     }
 
     void release(String instanceId) {
-        instance = instance.release()
+        LOG.info("release(instanceId: ${instanceId})")
+        def instance = getInstance(instanceId)
+        if (instance) {
+            updateInstance(instance.release())
+        }
     }
 
     List<WorkerInstance> idleInstances(String instanceType) {
-        idleInstances()
-                .findAll { instance.type == instanceType }
+        workerInstanceById.values().findAll() {it.isIdle() } as List
     }
 
     List<WorkerInstance> idleInstances() {
-        [instance].findAll()
-                .findAll { it.idle }
+        workerInstanceById.values() as List
     }
 
     List<WorkerInstance> reservedInstances() {
-        [instance].findAll()
-                .findAll { instance.reserved }
+        workerInstanceById.values().findAll() {it.isReserved() } as List
     }
 
     WorkerInstance getInstance(String instanceId) {
-        instance.id == instanceId ? instance : null
+        workerInstanceById[instanceId]
     }
 
     void onInstanceLaunched(Closure listener) {
@@ -78,6 +96,12 @@ class LocalInstanceProvider implements InstanceProvider {
     private Thread notifyLaunchListeners(instance) {
         Thread.start {
             launchListeners*.call(instance)
+        }
+    }
+
+    private void updateInstance(WorkerInstance instance) {
+        if (instance) {
+            workerInstanceById[instance.id] = instance
         }
     }
 }

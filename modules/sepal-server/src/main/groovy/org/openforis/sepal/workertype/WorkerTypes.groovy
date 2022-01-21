@@ -24,7 +24,7 @@ final class WorkerTypes {
         WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
             def taskExecutorPublishedPorts = [(1026): 1026]
             def username = instance.reservation.username
-            def userHome = "$config.userHomes/${username}" as String
+            def userHome = "${config.sepalHostDataDir}/sepal/home/${username}" as String
             def userTmp = tempDir(instance, config)
             def eePrivateKey = config.googleEarthEnginePrivateKey.replaceAll(
                     '\n', '-----LINE BREAK-----')
@@ -55,21 +55,22 @@ final class WorkerTypes {
         WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
             def publishedPorts = [(222): 22, (8787): 8787, (3838): 3838, (8888): 8888]
             def username = instance.reservation.username
-            def userHome = "$config.userHomes/${username}" as String
+            def userHome = "${config.sepalHostDataDir}/sepal/home/${username}" as String
             def userTmp = tempDir(instance, config)
-            def ldapPem = '/data/sepal/certificates/ldap-ca.crt.pem'
+            def ldapPem = "${config.sepalHostDataDir}/ldap/certificates/ldap-ca.crt.pem"
             new WorkerType(SANDBOX, [
                     new Image(
                             name: 'sandbox',
                             exposedPorts: [22, 8787, 3838, 8888],
                             publishedPorts: publishedPorts,
                             volumes: [
-                                    '/data/sepal/shiny': '/shiny',
-                                    '/data/sepal/shared': "/home/${username}/shared",
-                                    '/data/sepal/kernels': "/usr/local/share/jupyter/kernels/",
+                                    ("${config.sepalHostDataDir}/sepal/shiny"): '/shiny',
+                                    ("${config.sepalHostDataDir}/sepal/shared"): "/home/${username}/shared",
+                                    ("${config.sepalHostDataDir}/sepal/kernels"): "/usr/local/share/jupyter/kernels/",
                                     (userHome): "/home/${username}",
                                     (userTmp): ["/tmp", "/home/${username}/tmp"],
-                                    (ldapPem): "/etc/ldap/certificates/ldap-ca.crt.pem"],
+                                    (ldapPem): "/etc/ldap/certificates/ldap-ca.crt.pem"
+                            ],
                             runCommand: [
                                     '/script/init_container.sh',
                                     username,
@@ -98,7 +99,7 @@ final class WorkerTypes {
         def localTmp = "/data/home/$username/tmp/$instance.id" as String
         new File(localTmp).mkdirs()
         Terminal.execute(new File('/'), '/bin/chmod', '1777', localTmp)
-        return "$config.userHomes/${username}/tmp/$instance.id" as String
+        return "$config.sepalHostDataDir/sepal/home/${username}/tmp/$instance.id" as String
     }
 }
 

@@ -88,15 +88,15 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                                         ]
                                 ]
                         ],
-                        LogConfig: [
-                                "Type": "syslog",
-                                "Config": [
-                                        "syslog-address": syslogAddress,
-                                        "tag": "worker-docker/{{.Name}}",
-                                        "labels": "dev",
-                                        "syslog-facility": "daemon"
-                                ]
-                        ],
+//                        LogConfig: [ // TODO: Try to remove this - the worker-daemon should have pre-configured this
+//                                "Type": "syslog",
+//                                "Config": [
+//                                        "syslog-address": syslogAddress,
+//                                        "tag": "worker-docker/{{.Name}}",
+//                                        "labels": "dev",
+//                                        "syslog-facility": "daemon"
+//                                ]
+//                        ],
                         Devices: (instanceType.devices ?: []).collect {
                             [PathOnHost: it, PathInContainer: it, CgroupPermissions: "mrw"]
                         },
@@ -132,7 +132,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                 path: "containers/${image.containerName(instance)}/start",
                 requestContentType: JSON
         ]
-        LOG.debug("Starting container from image $image on instance $instance with request $request")
+        LOG.warn("Starting container from image $image on instance $instance with request $request")
         withClient(instance) {
             post(request)
         }

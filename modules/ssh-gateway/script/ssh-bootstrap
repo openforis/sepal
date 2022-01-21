@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-interactive="interactive"
+interactive="non-interactive"
 if [ -z "$SSH_ORIGINAL_COMMAND" ]; then
-    interactive="non-interactive"
+    interactive="interactive"
 fi
 sshScriptFile=$(mktemp /tmp/$USER-ssh.XXXXXX) > /dev/null 2>&1
 chmod +x $sshScriptFile
