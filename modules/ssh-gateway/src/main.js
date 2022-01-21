@@ -7,7 +7,6 @@ const {
 } = require('./config')
 const {interactive$} = require('./interactive')
 const {nonInteractive$} = require('./nonInteractive')
-const {println} = require('./console')
 
 process.on('uncaughtException', error => {
     console.error('Something went wrong, please try again', error)
