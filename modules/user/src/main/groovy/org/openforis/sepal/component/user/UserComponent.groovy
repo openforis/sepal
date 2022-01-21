@@ -43,7 +43,10 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
                 new RmbMessageBroker(connectionManager),
                 new AsynchronousEventDispatcher(),
                 new RestBackedGoogleOAuthClient(
-                        serverConfig.host, serverConfig.googleOAuthClientId, serverConfig.googleOAuthClientSecret),
+                        serverConfig.googleOAuthCallbackBaseUrl,
+                        serverConfig.googleOAuthClientId,
+                        serverConfig.googleOAuthClientSecret
+                ),
                 new RestGoogleEarthEngineWhitelistChecker(serverConfig.googleEarthEngineEndpoint),
                 new GoogleAccessTokenFileGatewayImpl(serverConfig.homeDirectory),
                 new TopicPublishingUserChangeListener(

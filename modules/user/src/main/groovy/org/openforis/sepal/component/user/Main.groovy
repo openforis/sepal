@@ -57,6 +57,7 @@ class ServerConfig {
     final int port
     final String host
     final String ldapHost
+    final String googleOAuthCallbackBaseUrl
     final String googleOAuthClientId
     final String googleOAuthClientSecret
     final String googleEarthEngineEndpoint
@@ -69,6 +70,7 @@ class ServerConfig {
         port = c.integer('port')
         host = c.host
         ldapHost = c.ldapHost
+        googleOAuthCallbackBaseUrl = c.googleOAuthCallbackBaseUrl
         googleOAuthClientId = c.googleOAuthClientId
         googleOAuthClientSecret = c.googleOAuthClientSecret
         googleEarthEngineEndpoint = c.googleEarthEngineEndpoint

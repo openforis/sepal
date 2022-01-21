@@ -33,18 +33,18 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
             'https://www.googleapis.com/auth/earthengine ' +
             'https://www.googleapis.com/auth/drive ' +
             'https://www.googleapis.com/auth/fusiontables'
-    private final String sepalHost
+    private final String googleOAuthCallbackBaseUrl
     private final String clientId
     private final String clientSecret
 
-    RestBackedGoogleOAuthClient(String sepalHost, String clientId, String clientSecret) {
-        this.sepalHost = sepalHost
+    RestBackedGoogleOAuthClient(String googleOAuthCallbackBaseUrl, String clientId, String clientSecret) {
+        this.googleOAuthCallbackBaseUrl = googleOAuthCallbackBaseUrl
         this.clientId = clientId
         this.clientSecret = clientSecret
     }
 
     URI redirectUrl(String destinationUrl) {
-        def redirectUrl = "https://$sepalHost/api/user/google/access-request-callback"
+        def redirectUrl = "${googleOAuthCallbackBaseUrl}/api/user/google/access-request-callback"
         def baseUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
         def params = [
                 scope                 : SCOPE,
@@ -69,7 +69,7 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
                         code         : authorizationCode,
                         client_id    : clientId,
                         client_secret: clientSecret,
-                        redirect_uri : "https://$sepalHost/api/user/google/access-request-callback",
+                        redirect_uri : "${googleOAuthCallbackBaseUrl}/api/user/google/access-request-callback",
                         grant_type   : 'authorization_code'
                 ]
         )
@@ -88,7 +88,7 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
                         refresh_token: tokens.refreshToken,
                         client_id    : clientId,
                         client_secret: clientSecret,
-                        redirect_uri : "https://$sepalHost/api/user/google/access-request-callback",
+                        redirect_uri : "${googleOAuthCallbackBaseUrl}/api/user/google/access-request-callback",
                         grant_type   : 'refresh_token'
                 ]
         )
