@@ -34,3 +34,4 @@ sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.
 apt-get update && apt-get install -y jenkins ansible
 
 pip2 install boto six
+ansible-galaxy collection install community.docker

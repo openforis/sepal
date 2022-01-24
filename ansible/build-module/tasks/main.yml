@@ -1,8 +1,14 @@
 ---
-- include_tasks: "../../../modules/{{ module }}/build.yml"
-  vars:
-    project_dir: "{{ role_path }}/../.."
-    module_dir: "{{ role_path }}/../../modules/{{ module }}"
-    version: "{{ version }}"
-    git_commit: "{{ git_commit }}"
-    build_image_task: "{{ role_path }}/../build-image/tasks/main.yml"
+#- include_tasks: "../../../modules/{{ module }}/build.yml"
+#  vars:
+#    project_dir: "{{ role_path }}/../.."
+#    module_dir: "{{ role_path }}/../../modules/{{ module }}"
+#    version: "{{ version }}"
+#    git_commit: "{{ git_commit }}"
+#    build_image_task: "{{ role_path }}/../build-image/tasks/main.yml"
+- name: "email-redis | Start container"
+  community.docker.docker_compose:
+    project_src: "{{ role_path }}/../../modules/{{ module }}"
+    files: "{{ role_path }}/../../modules/{{ module }}/docker-compose.yml"
+    build: yes
+    env_file: "" # Needed for building anywhere?

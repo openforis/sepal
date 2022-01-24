@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 VERSION=${1:-"latest"}
-GIT_COMMIT=$2
+export BUILD_NUMBER=${1:-"latest"}
+export GIT_COMMIT=$2
 WORKSPACE=$3
 ANSIBLE_WORKSPACE=$4
 

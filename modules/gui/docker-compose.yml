@@ -5,6 +5,9 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/gui/Dockerfile
+      args:
+        BUILD_NUMBER: "${BUILD_NUMBER}"
+        GIT_COMMIT: "${GIT_COMMIT}"
     image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/gui:${SEPAL_VERSION:-latest}"
     container_name: gui
     environment:
