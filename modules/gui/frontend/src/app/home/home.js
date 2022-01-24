@@ -1,8 +1,9 @@
 import {ActivationContext} from 'widget/activation/activationContext'
 import {PortalContainer} from 'widget/portal'
+import {catchError, exhaustMap, map, of, retry, timer} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {exhaustMap, map, timer} from 'rxjs'
+import {getLogger} from 'log'
 import {isFloating} from './menu/menuMode'
 import {msg} from 'translate'
 import Body from './body/body'
@@ -16,18 +17,25 @@ import api from 'api'
 import moment from 'moment'
 import styles from './home.module.css'
 
+const log = getLogger('schedule')
+
 const mapStateToProps = () => ({
     floatingMenu: isFloating(),
     floatingFooter: false
 })
 
-const timedRefresh$ = (api$, refreshSeconds = 60) =>
+const timedRefresh$ = (api$, refreshSeconds = 60, name) =>
     timer(0, refreshSeconds * 1000).pipe(
-        exhaustMap(() => api$())
+        exhaustMap(() => api$()),
+        catchError(error => {
+            log.warn(`Failed to refresh ${name}`, error)
+            throw error
+        }),
+        retry()
     )
 
 const updateUserReport$ = () =>
-    timedRefresh$(api.user.loadCurrentUserReport$, 10).pipe(
+    timedRefresh$(api.user.loadCurrentUserReport$, 10, 'user report').pipe(
         map(currentUserReport => {
             const projectedStorageSpending = projectStorageSpending(currentUserReport.spending)
             currentUserReport.spending.projectedStorageSpending = projectedStorageSpending
@@ -62,7 +70,7 @@ const isBudgetExceeded = currentUserReport => {
 }
 
 const updateUserMessages$ = () =>
-    timedRefresh$(api.user.loadUserMessages$, 60).pipe(
+    timedRefresh$(api.user.loadUserMessages$, 60, 'user messages').pipe(
         map(userMessages =>
             actionBuilder('UPDATE_USER_MESSAGES')
                 .set('user.userMessages', userMessages)
@@ -71,7 +79,7 @@ const updateUserMessages$ = () =>
     )
 
 const updateTasks$ = () =>
-    timedRefresh$(api.tasks.loadAll$, 5).pipe(
+    timedRefresh$(api.tasks.loadAll$, 5, 'tasks').pipe(
         map(tasks =>
             actionBuilder('UPDATE_TASKS')
                 .set('tasks', tasks)
