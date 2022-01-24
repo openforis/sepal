@@ -25,7 +25,7 @@ then
     --gee-key "$EE_PRIVATE_KEY" \
     --google-project-id "$GOOGLE_PROJECT_ID" \
     --google-region "$GOOGLE_REGION_SEPAL_KEY" \
-    --sepal-host "$SEPAL_HOST" \
+    --sepal-endpoint "$SEPAL_ENDPOINT" \
     --sepal-username "sepalAdmin" \
     --sepal-password "$SEPAL_ADMIN_PASSWORD" \
     --home-dir $HOME_DIR \
@@ -38,7 +38,7 @@ else
     --gee-key "$EE_PRIVATE_KEY" \
     --google-project-id "$GOOGLE_PROJECT_ID" \
     --google-region "$GOOGLE_REGION_SEPAL_KEY" \
-    --sepal-host "$SEPAL_HOST" \
+    --sepal-endpoint "$SEPAL_ENDPOINT" \
     --sepal-username "sepalAdmin" \
     --sepal-password "$SEPAL_ADMIN_PASSWORD" \
     --home-dir $HOME_DIR \

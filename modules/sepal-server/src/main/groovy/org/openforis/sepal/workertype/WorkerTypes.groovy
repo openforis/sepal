@@ -23,6 +23,7 @@ final class WorkerTypes {
     private static class TaskExecutorFactory implements Factory {
         WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
             def taskExecutorPublishedPorts = [(1026): 1026]
+            def sepalEndpoint = "https://${config.sepalHost}:${config.sepalHttpsPort ?: 443}"
             def username = instance.reservation.username
             def userHome = "${config.sepalHostDataDir}/sepal/home/${username}" as String
             def userTmp = tempDir(instance, config)
@@ -41,11 +42,12 @@ final class WorkerTypes {
                             GOOGLE_REGION_SEPAL_KEY: config.googleRegion,
                             EE_ACCOUNT: config.googleEarthEngineAccount,
                             EE_PRIVATE_KEY: eePrivateKey,
-                            SEPAL_HOST: config.sepalHost,
+                            SEPAL_ENDPOINT: sepalEndpoint,
                             SEPAL_ADMIN_PASSWORD: config.sepalPassword,
                             USERNAME: username,
+                            NODE_TLS_REJECT_UNAUTHORIZED: config.deployEnvironment == 'DEV' ? 0 : 1,
                     ],
-                    waitCommand: ["/script/wait_until_initialized.sh"]
+                    waitCommand: ["wait_until_initialized.sh"]
             )
             new WorkerType(TASK_EXECUTOR, [task])
         }

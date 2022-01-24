@@ -12,7 +12,7 @@ const taskTag = id => tag('Task', id)
 const MIN_TIME_BETWEEN_NOTIFICATIONS = 1 * 1000
 const MAX_TIME_BETWEEN_NOTIFICATIONS = 60 * 1000
 
-const {sepalHost, sepalUsername, sepalPassword} = getConfig()
+const {sepalEndpoint, sepalUsername, sepalPassword} = getConfig()
 
 const task$ = new Subject()
 const cancel$ = new Subject()
@@ -31,7 +31,7 @@ const cancelTask = id => {
 
 const taskStateChanged$ = (id, state, message) => {
     log.debug(() => msg(id, `notifying state change: ${state}`))
-    return post$(`https://${sepalHost}/api/tasks/task/${id}/state-updated`, {
+    return post$(`${sepalEndpoint}/api/tasks/task/${id}/state-updated`, {
         body: {
             state,
             statusDescription: message
@@ -52,7 +52,7 @@ const taskStateChanged$ = (id, state, message) => {
 
 const taskProgressed$ = (id, progress) => {
     log.debug(() => msg(id, `notifying progress update: ${progress.defaultMessage}`))
-    return post$(`https://${sepalHost}/api/tasks/active`, {
+    return post$(`${sepalEndpoint}/api/tasks/active`, {
         query: {progress: {[id]: progress}},
         username: sepalUsername,
         password: sepalPassword

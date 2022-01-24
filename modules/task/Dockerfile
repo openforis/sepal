@@ -46,9 +46,8 @@ USER node
 RUN npm install
 
 USER root
-ADD modules/${MODULE_NAME}/script /script
-RUN chmod -R 500 /script && sync
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/wait_until_initialized.sh /usr/local/bin
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
-
+RUN chmod +x -R /usr/local/bin && sync
 CMD start.sh

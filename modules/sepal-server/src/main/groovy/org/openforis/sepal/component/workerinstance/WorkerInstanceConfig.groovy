@@ -9,6 +9,7 @@ class WorkerInstanceConfig {
     final String sepalUser
     final String sepalPassword
     final String sepalHost
+    final String sepalHttpsPort
     final String sepalHostDataDir
     final String ldapHost
     final String ldapPassword
@@ -21,6 +22,7 @@ class WorkerInstanceConfig {
     final String googleEarthEnginePrivateKey
     final String rabbitMQHost
     final int rabbitMQPort
+    final String deployEnvironment
 
     WorkerInstanceConfig() {
         def c = new Config('workerInstance.properties')
@@ -28,6 +30,7 @@ class WorkerInstanceConfig {
         sepalUser = c.string('sepalUser')
         sepalPassword = c.string('sepalPassword')
         sepalHost = c.string('sepalHost')
+        sepalHttpsPort = c.string('sepalHttpsPort')
         sepalHostDataDir = c.string('sepalHostDataDir')
         ldapHost = c.string('ldapHost')
         ldapPassword = c.string('ldapPassword')
@@ -40,6 +43,7 @@ class WorkerInstanceConfig {
         googleEarthEnginePrivateKey = c.string('googleEarthEnginePrivateKey')
         rabbitMQHost = c.string('rabbitMQHost')
         rabbitMQPort = c.integer('rabbitMQPort')
+        deployEnvironment = c.string('deployEnvironment')
     }
 
     static boolean isOlderVersion(String sepalVersion1, String sepalVersion2) {

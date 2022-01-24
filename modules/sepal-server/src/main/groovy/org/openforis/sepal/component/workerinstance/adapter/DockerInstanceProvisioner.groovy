@@ -61,6 +61,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void createContainer(WorkerInstance instance, Image image) {
+        // TODO: Getting warning: Specifying a kernel memory limit is deprecated and will be removed in a future release., Your kernel does not support kernel memory limit capabilities or the cgroup is not mounted. Limitation discarded.
         def memoryBytes = (instanceTypeById[instance.type].ramGiB * Math.pow(10, 9) - MIN_HOST_RAM_GiB * Math.pow(10, 9)) as long
         def instanceType = instanceTypeById[instance.type]
         def body = toJson(
@@ -132,7 +133,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                 path: "containers/${image.containerName(instance)}/start",
                 requestContentType: JSON
         ]
-        LOG.warn("Starting container from image $image on instance $instance with request $request")
+        LOG.debug("Starting container from image $image on instance $instance with request $request")
         withClient(instance) {
             post(request)
         }
