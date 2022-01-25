@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  dev-env:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: dev-env-v2
+    container_name: dev-env
+    init: true
+    # environment:
+      # BASE_DIR: "/home/luca/Workspace/FAO/sepal"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./src:/dev-env/src
+      - ..:/usr/local/src/sepal
+      - ../../sepal-dev-env:/usr/local/lib/sepal-dev-env

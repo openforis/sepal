@@ -1,0 +1,66 @@
+{
+    "app-manager": {
+        "build": [],
+        "run": []
+    },
+    "ceo-gateway": {
+        "build": [],
+        "run": []
+    },
+    "email": {
+        "build": [],
+        "run": ["rabbitmq"]
+    },
+    "gateway": {
+        "build": [],
+        "run": []
+    },
+    "gee": {
+        "build": [],
+        "run": []
+    },
+    "gui": {
+        "build": [],
+        "run": []
+    },
+    "haproxy": {
+        "build": [],
+        "run": []
+    },
+    "rabbitmq": {
+        "build": [],
+        "run": []
+    },
+    "sepal-server": {
+        "build": [],
+        "run": []
+    },
+    "ssh-gateway": {
+        "build": [],
+        "run": []
+    },
+    "sys-monitor": {
+        "build": [],
+        "run": ["email"]
+    },
+    "task": {
+        "build": [],
+        "run": []
+    },
+    "terminal": {
+        "build": [],
+        "run": []
+    },
+    "user": {
+        "build": [],
+        "run": []
+    },
+    "user-files": {
+        "build": [],
+        "run": []
+    },
+    "user-storage": {
+        "build": [],
+        "run": ["email"]
+    }
+}
