@@ -1,12 +1,8 @@
 ---
-#- include_tasks: "../../../modules/{{ module }}/build.yml"
-#  vars:
-#    project_dir: "{{ role_path }}/../.."
-#    module_dir: "{{ role_path }}/../../modules/{{ module }}"
-#    version: "{{ version }}"
-#    git_commit: "{{ git_commit }}"
-#    build_image_task: "{{ role_path }}/../build-image/tasks/main.yml"
-- name: "{{ module }} | Building Docker Image: {{ image_name if image_name is defined else 'localhost/openforis/' + module }}"
-  shell: "
-    docker compose --file {{ role_path }}/../../modules/{{ module }}/docker-compose.yml build | tee /var/log/sepal-build/{{ module }}.log
-    "
+- include_tasks: "../../../modules/{{ module }}/build.yml"
+  vars:
+    project_dir: "{{ role_path }}/../.."
+    module_dir: "{{ role_path }}/../../modules/{{ module }}"
+    version: "{{ version }}"
+    git_commit: "{{ git_commit }}"
+    build_image_task: "{{ role_path }}/../build-image/tasks/main.yml"

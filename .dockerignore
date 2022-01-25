@@ -8,6 +8,7 @@
 
 modules/**/binary
 modules/**/build
+modules/gui/frontend/node_modules
 modules/**/target
 
 !common/**
@@ -15,3 +16,5 @@ modules/**/target
 !build.gradle
 !settings.gradle
 !modules/**/build.gradle
+
+docs
