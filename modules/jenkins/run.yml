@@ -47,9 +47,12 @@
       - "8080:8080"
       - "5000:5000"
     volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
       - "/data/jenkins:/var/jenkins_home"
       - "/etc/sepal:/etc/sepal"
       - "/home/ec2-user/.ssh/jenkins:/root/.ssh"
     env:
       JENKINS_PASSWD: "{{ jenkins_password }}"
       GITHUB_ACCOUNT_PASSWD: "{{ jenkins_github_user_password }}"
+      DOCKER_REGISTRY_USERNAME: "{{ docker_username }}"
+      DOCKER_REGISTRY_PASSWORD: "{{ docker_password }}"

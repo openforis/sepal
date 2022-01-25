@@ -20,7 +20,6 @@ services:
     init: true
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-      SEPAL_HOST: "${SEPAL_HOST}"
     deploy:
       restart_policy:
         condition: on-failure
@@ -45,7 +44,7 @@ services:
       - sepal
     tty: true
 
-networks:      
+networks:
 networks:
   sepal:
     name: sepal

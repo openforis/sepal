@@ -5,4 +5,3 @@
 
 - name: Pushing the images to the local repo
   shell: "/data/ansible/push_images.sh"
-
