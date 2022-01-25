@@ -11,10 +11,6 @@ modules/**/build
 modules/gui/frontend/node_modules
 modules/**/target
 
-!common/**
-!common-test/**
 !build.gradle
 !settings.gradle
 !modules/**/build.gradle
-
-docs

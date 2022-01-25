@@ -27,6 +27,9 @@ services:
       - sepal
     ports:
       - "8180:8180"
+    volumes:
+      - ${SEPAL_DATA_DIR}/r-proxy/site-library:/usr/local/lib/R/site-library
+      - ${SEPAL_DATA_DIR}/r-proxy/cranroot:/R/cranroot
   r-proxy-test:
     # build:
     #   context: ../..
