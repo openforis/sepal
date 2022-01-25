@@ -5,8 +5,11 @@ VERSION=$1
 
 function build {
   local MODULE=$1
+  local MODULE_DIR=${WORKSPACE}/modules/${MODULE}
+  echo "******* Building ${MODULE} *******"
+  cd ${MODULE_DIR}
   docker-compose \
-    --file ${WORKSPACE}/modules/${MODULE}/docker-compose.yml \
+    --file ${MODULE_DIR}/docker-compose.yml \
     build \
     --build-arg BUILD_NUMBER=${VERSION} \
     --build-arg GIT_COMMIT=${GIT_COMMIT} \

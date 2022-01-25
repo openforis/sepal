@@ -48,6 +48,7 @@
       - "5000:5000"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/var/log/sepal-build:/var/log/sepal-build"
       - "/data/jenkins:/var/jenkins_home"
       - "/etc/sepal:/etc/sepal"
       - "/home/ec2-user/.ssh/jenkins:/root/.ssh"
