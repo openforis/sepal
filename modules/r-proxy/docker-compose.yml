@@ -45,6 +45,5 @@ services:
     tty: true
 
 networks:
-networks:
   sepal:
     name: sepal
