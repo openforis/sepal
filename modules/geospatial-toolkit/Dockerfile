@@ -45,6 +45,9 @@ RUN chmod u+x /script/init_gpu.sh && sync && /script/init_gpu.sh
 ADD modules/${MODULE_NAME}/script/init_python_packages.sh /script/
 RUN chmod u+x /script/init_python_packages.sh && sync && /script/init_python_packages.sh
 
+ADD modules/${MODULE_NAME}/script/init_r.sh /script/
+RUN chmod u+x /script/init_r.sh && sync && /script/init_r.sh
+
 ADD modules/${MODULE_NAME}/script/init_r_packages.sh /script/
 RUN chmod u+x /script/init_r_packages.sh && sync && /script/init_r_packages.sh
 
