@@ -1,35 +1,22 @@
 #!/bin/bash
 set -e
-echo
-echo "********************"
-echo "*** Installing R ***"
-echo "********************"
-
-#echo "options(Ncpus = `nproc`)" > /root/.Rprofile
-
-apt-get update -y && apt-get install -y\
- r-base\
- r-base-dev
 
 echo
-echo "*****************************************"
+echo "*****************************"
 echo "*** Installing R packages ***"
-echo "*****************************************"
-# libudunits2-dev required for udunits, needed by mapview
-apt-get install -y \
-    libudunits2-dev \
-    r-cran-rmpi \
-    libopenmpi-dev \
-    libgeos++-dev \
-    libmagick++-dev \
-    libv8-dev \
-    libcgal-dev libglu1-mesa-dev libglu1-mesa-dev \
-    libnetcdf-dev \
-    libpq-dev
+echo "*****************************"
 
-R -e "install.packages('devtools', dependencies=TRUE, repos='http://cran.rstudio.com/')"
-R -e "install.packages('pacman', dependencies=TRUE, repos='http://cran.rstudio.com/')"
-R -e "pacman::p_load(\
+export JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current
+export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
+export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
+
+R CMD javareconf
+
+R -e "install.packages('rgdal', version='1.3-9', dependencies=TRUE, repos='http://r-proxy:8180/')"
+
+R -e "install.packages('devtools', dependencies=TRUE, repos='http://r-proxy:8180/')"
+
+R -e "install.packages(c(\
         'abind',\
         'askpass',\
         'assertthat',\
@@ -37,6 +24,7 @@ R -e "pacman::p_load(\
         'base64enc',\
         'BH',\
         'BiodiversityR',\
+        'BIOMASS',\
         'bit',\
         'bit64',\
         'blob',\
@@ -148,6 +136,7 @@ R -e "pacman::p_load(\
         'mapproj',\
         'maps',\
         'maptools',\
+        'mapview',\
         'markdown',\
         'MASS',\
         'memoise',\
@@ -174,6 +163,7 @@ R -e "pacman::p_load(\
         'permutate',\
         'pillar',\
         'pkgconfig',\
+        'pkgdown',\
         'pkgKitten',\
         'plotly',\
         'plyr',\
@@ -190,6 +180,7 @@ R -e "pacman::p_load(\
         'purrr',\
         'quantmod',\
         'R6',\
+        'ragg',\
         'random',\
         'randomForest',\
         'raster',\
@@ -214,6 +205,8 @@ R -e "pacman::p_load(\
         'rgexf',\
         'RgoogleMaps',\
         'rhandsontable',\
+        'rJava',\
+        'rknn',\
         'rlang',\
         'rmarkdown',\
         'Rmpi',\
@@ -224,6 +217,7 @@ R -e "pacman::p_load(\
         'rprojroot',\
         'rsconnect',\
         'RSQLite',\
+        'RStoolbox',\
         'rstudioapi',\
         'rticles',\
         'RUnit',\
@@ -233,6 +227,7 @@ R -e "pacman::p_load(\
         'samplingbook',\
         'scales',\
         'selectr',\
+        'sf',\
         'shiny',\
         'shinyBS',\
         'shinycssloaders',\
@@ -259,11 +254,13 @@ R -e "pacman::p_load(\
         'testit',\
         'testthat',\
         'textclean',\
+        'textshaping',\
         'tibble',\
         'tictoc',\
         'tidyr',\
         'tidyselect',\
         'tidyverse',\
+        'tigris',\
         'tikzDevice',\
         'tint',\
         'tinytex',\
@@ -288,6 +285,9 @@ R -e "pacman::p_load(\
         'WorldFlora',\
         'writexl',\
         'xfun',\
+        'XLConnect',\
+        'xlsx',\
+        'xlsxjars',\
         'XML',\
         'xml2',\
         'xtable',\
@@ -295,7 +295,10 @@ R -e "pacman::p_load(\
         'yaml',\
         'zeallot',\
         'zoo'\
-    )"
+    ), repos='http://r-proxy:8180/')"
 
-apt-get -y clean
-apt-get -y autoremove
+R -e "devtools::install_github('r-barnes/dggridR', dependencies=TRUE, repos='http://r-proxy:8180/')"
+R -e "devtools::install_github('bfast2/bfast', dependencies=TRUE, repos='http://r-proxy:8180/')"
+R -e "devtools::install_github('azvoleff/gfcanalysis', dependencies=TRUE, repos='http://r-proxy:8180/')"
+R -e "devtools::install_github('loicdtx/bfastSpatial', dependencies=TRUE, repos='http://r-proxy:8180/')"
+R -e "devtools::install_github('jreiche/bayts', dependencies=TRUE, repos='http://r-proxy:8180/')"
