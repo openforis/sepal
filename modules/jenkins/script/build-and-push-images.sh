@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 set -e
 
-VERSION=$1
+export SEPAL_VERSION=$1
 
 function build {
   local MODULE=$1
   local MODULE_DIR=${WORKSPACE}/modules/${MODULE}
   echo "******* Building ${MODULE} *******"
   cd ${MODULE_DIR}
-  docker-compose \
+  set -o pipefail && docker-compose \
     --file ${MODULE_DIR}/docker-compose.yml \
     build \
-    --build-arg BUILD_NUMBER=${VERSION} \
+    --build-arg BUILD_NUMBER=${SEPAL_VERSION} \
     --build-arg GIT_COMMIT=${GIT_COMMIT} \
     | tee /var/log/sepal-build/${MODULE}.log
 }
@@ -19,7 +19,7 @@ function build {
 function push {
   local MODULE=$1
   echo "******* Pushing ${MODULE} *******"
-  docker push localhost/openforis/${MODULE}:${VERSION}
+  docker push localhost/openforis/${MODULE}:${SEPAL_VERSION}
 }
 
 build email
