@@ -8,7 +8,8 @@ export SEPAL_BACKUP_DIR=/tmp/sepal-backup
 function build {
   local MODULE=$1
   local MODULE_DIR=${WORKSPACE}/modules/${MODULE}
-  echo "\n******* Building ${MODULE} *******"
+  echo
+  echo "******* Building ${MODULE} *******"
   cd ${MODULE_DIR}
   set -o pipefail && docker-compose \
     --file ${MODULE_DIR}/docker-compose.yml \
@@ -20,7 +21,8 @@ function build {
 
 function push {
   local MODULE=$1
-  echo "\n******* Pushing ${MODULE} *******"
+  echo
+  echo "******* Pushing ${MODULE} *******"
   docker push localhost/openforis/${MODULE}:${SEPAL_VERSION}
 }
 
