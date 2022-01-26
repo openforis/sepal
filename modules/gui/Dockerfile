@@ -1,7 +1,5 @@
 FROM node:14-stretch
 EXPOSE 3000
-ARG BUILD_NUMBER
-ARG GIT_COMMIT
 ENV MODULE_NAME gui
 ENV MODULE /usr/local/src/sepal/modules/gui/frontend
 
@@ -16,6 +14,9 @@ RUN mkdir src
 RUN npm install
 
 ADD modules/${MODULE_NAME}/frontend ${MODULE}
+# ARG just before it is being used, to rebuild as few layers as possible.
+ARG BUILD_NUMBER
+ARG GIT_COMMIT
 RUN npm run build
 
 ADD modules/${MODULE_NAME}/nginx.conf /etc/nginx/sites-enabled/default
