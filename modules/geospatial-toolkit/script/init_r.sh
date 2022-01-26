@@ -24,6 +24,3 @@ apt-get install -y \
     libnetcdf-dev \
     libpq-dev \
     libharfbuzz-dev
-
-apt-get -y clean
-apt-get -y autoremove
