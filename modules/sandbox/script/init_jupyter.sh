@@ -15,6 +15,8 @@ R -e "pacman::p_load('IRkernel')"
 R -e "IRkernel::installspec(user = FALSE)"
 /usr/bin/python3 -m pip install ipywidgets
 /usr/bin/python3 -m pip install jupyterlab
+/usr/bin/python3 -m pip install jupyterlab-language-pack-fr-FR
+/usr/bin/python3 -m pip install jupyterlab-language-pack-es-ES
 /usr/bin/python3 -m pip install folium
 /usr/bin/python3 -m pip install ipyleaflet==0.13.3
 /usr/bin/python3 -m pip install ipyvuetify
