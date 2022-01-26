@@ -14,13 +14,12 @@ RUN mkdir src
 RUN npm install
 
 ADD modules/${MODULE_NAME}/frontend ${MODULE}
-# ARG just before it is being used, to rebuild as few layers as possible.
-ARG BUILD_NUMBER
-ARG GIT_COMMIT
 RUN npm run build
 
 ADD modules/${MODULE_NAME}/nginx.conf /etc/nginx/sites-enabled/default
 ADD modules/${MODULE_NAME}/init_container.sh /usr/local/bin/init_container
 RUN chmod 500 /usr/local/bin/init_container
 
+ARG BUILD_NUMBER
+ARG GIT_COMMIT
 CMD ["/usr/local/bin/init_container"]
