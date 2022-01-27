@@ -15,7 +15,7 @@ printf '%s\n' \
     'GDAL_DATA="/usr/share/gdal"' \
     'SHELL="/bin/bash"' \
     'SEPAL="true"' \
-    'PROJ_LIB="/usr/share/proj"'
+    'PROJ_LIB="/usr/share/proj"' \
     >> /etc/environment
 
 # Remove redundant files
