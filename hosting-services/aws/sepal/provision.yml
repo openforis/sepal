@@ -7,13 +7,22 @@
     - "{{ secret_vars_file }}"
 
   tasks:
+#    - name: Create letsencrypt AWS user
+#      community.aws.iam:
+#        iam_type: user
+#        name: letsencrypt
+#        state: present
+#        access_key_state: create
+#      register: letsencrypt_user
+
     - name: Create letsencrypt AWS user
-      community.aws.iam:
-        iam_type: user
+      community.aws.iam_user:
         name: letsencrypt
         state: present
-        access_key_state: create
       register: letsencrypt_user
+
+    - debug:
+        var: letsencrypt_user
 
     - name: Create letsencrypt user policy
       community.aws.iam_policy:
@@ -40,11 +49,11 @@
           }
         state: present
 
-    - name: Store letsencrypt keys
-      copy:
-        content: "letsencrypt_access_key_id: {{ letsencrypt_user['created_keys'][0]['access_key_id'] }}\nletsencrypt_secret_access_key: {{ letsencrypt_user['created_keys'][0]['secret_access_key'] }}\n"
-        dest: "{{ letsencrypt_aws_keys_file }}"
-      when: letsencrypt_user['created_keys']
+#    - name: Store letsencrypt keys
+#      copy:
+#        content: "letsencrypt_access_key_id: {{ letsencrypt_user['created_keys'][0]['access_key_id'] }}\nletsencrypt_secret_access_key: {{ letsencrypt_user['created_keys'][0]['secret_access_key'] }}\n"
+#        dest: "{{ letsencrypt_aws_keys_file }}"
+#      when: letsencrypt_user['created_keys']
 
     - name: Create Sepal-Storage security group
       ec2_group:
