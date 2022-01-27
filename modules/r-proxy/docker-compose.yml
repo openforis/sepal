@@ -14,7 +14,7 @@ services:
   r-proxy:
     build:
       context: ../..
-      dockerfile: ./modules/r-proxy/Dockerfile.r-proxy
+      dockerfile: ./modules/r-proxy/Dockerfile
     image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r-proxy:${SEPAL_VERSION:-latest}"
     container_name: r-proxy
     init: true
@@ -31,11 +31,7 @@ services:
       - ${SEPAL_DATA_DIR}/r-proxy/site-library:/usr/local/lib/R/site-library
       - ${SEPAL_DATA_DIR}/r-proxy/cranroot:/R/cranroot
   r-proxy-test:
-    # build:
-    #   context: ../..
-    #   dockerfile: ./modules/r-proxy/Dockerfile-test
-    # image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r-proxy-test:${SEPAL_VERSION:-latest}"
-    image: localhost/openforis/r:latest
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r:${SEPAL_VERSION:-latest}"
     container_name: r-proxy-test
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"

@@ -43,4 +43,3 @@ WORKDIR /dev-env
 RUN npm install
 
 WORKDIR /dev-env/src
-CMD tail -f /dev/null

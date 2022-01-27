@@ -1,0 +1,8 @@
+version: "3.9"
+
+services:
+  r:
+    build:
+      context: ../..
+      dockerfile: ./modules/r/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r:${SEPAL_VERSION:-latest}"

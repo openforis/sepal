@@ -1,66 +1,126 @@
 {
     "app-manager": {
-        "build": [],
+        "build": {},
+        "run": []
+    },
+    "backup": {
+        "build": {},
         "run": []
     },
     "ceo-gateway": {
-        "build": [],
+        "build": {},
         "run": []
     },
     "email": {
-        "build": [],
+        "build": {},
         "run": ["rabbitmq"]
     },
     "gateway": {
-        "build": [],
+        "build": {},
         "run": []
     },
     "gee": {
-        "build": [],
+        "build": {},
+        "run": []
+    },
+    "geospatial-toolkit": {
+        "build": {
+            "r-proxy": "run"
+        },
         "run": []
     },
     "gui": {
-        "build": [],
+        "build": {},
         "run": []
     },
     "haproxy": {
-        "build": [],
+        "build": {},
+        "run": []
+    },
+    "java": {
+        "build": {},
+        "run": false
+    },
+    "jenkins": {
+        "build": {},
+        "run": []
+    },
+    "ldap": {
+        "build": {},
+        "run": []
+    },
+    "ldap-backup": {
+        "build": {},
+        "run": []
+    },
+    "letsencrypt": {
+        "build": {},
+        "run": []
+    },
+    "mysql": {
+        "build": {},
+        "run": []
+    },
+    "mysql-backup": {
+        "build": {},
+        "run": []
+    },
+    "r": {
+        "build": {},
+        "run": false
+    },
+    "r-proxy": {
+        "build": {
+            "r": "build"
+        },
         "run": []
     },
     "rabbitmq": {
-        "build": [],
+        "build": {},
+        "run": []
+    },
+    "sandbox": {
+        "build": {},
         "run": []
     },
     "sepal-server": {
-        "build": [],
+        "build": {
+            "java": "build"
+        },
         "run": []
     },
     "ssh-gateway": {
-        "build": [],
+        "build": {},
         "run": []
     },
     "sys-monitor": {
-        "build": [],
+        "build": {},
         "run": ["email"]
     },
     "task": {
-        "build": [],
+        "build": {},
         "run": []
     },
     "terminal": {
-        "build": [],
+        "build": {},
         "run": []
     },
     "user": {
-        "build": [],
+        "build": {
+            "java": "build"
+        },
         "run": []
     },
     "user-files": {
-        "build": [],
+        "build": {},
         "run": []
     },
     "user-storage": {
-        "build": [],
+        "build": {},
         "run": ["email"]
+    },
+    "user-storage-backup": {
+        "build": {},
+        "run": []
     }
 }
