@@ -1,0 +1,28 @@
+---
+
+- name: Install binutils
+  yum:
+    name: binutils
+    state: latest
+
+- name: Install yum-plugin-kernel-livepatch
+  yum:
+    name: yum-plugin-kernel-livepatch
+    state: latest
+
+- name: Enable yum-plugin-kernel-livepatch
+  yum:
+    enable_plugin: yum-plugin-kernel-livepatch
+
+- name: Install kpatch-runtime
+  yum:
+    name: kpatch-runtime
+    state: latest
+
+- name: Enable kpatch.service
+  ansible.builtin.systemd:
+    name: kpatch.service
+    enabled: yes
+
+- name: Enable livepatch
+  command: amazon-linux-extras enable livepatch
