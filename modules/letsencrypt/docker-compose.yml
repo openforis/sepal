@@ -12,11 +12,9 @@ services:
       - "${SEPAL_DATA_DIR}/letsencrypt:/etc/letsencrypt"
     environment:
       SEPAL_HOST: "${SEPAL_HOST}"
-      SEPAL_OPERATOR_EMAIL: "${SEPAL_OPERATOR_EMAIL:-}"
       LETSENCRYPT_EMAIL: "${LETSENCRYPT_EMAIL}"
-      # TODO: These are needed for AWS DNS
-      AWS_ACCESS_KEY_ID: "{{ letsencrypt_access_key_id }}"
-      AWS_SECRET_ACCESS_KEY: "{{ letsencrypt_secret_access_key }}"
+      AWS_ACCESS_KEY_ID: "${LETSENCRYPT_AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${LETSENCRYPT_AWS_SECRET_ACCESS_KEY}"
     deploy:
       restart_policy:
         condition: on-failure
