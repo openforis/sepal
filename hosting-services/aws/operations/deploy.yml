@@ -93,6 +93,7 @@
 #      shell: /usr/local/bin/docker-compose --file  /opt/sepal/modules/r-proxy/docker-compose.yml up --build
 
   roles:
+    - { role: live-patching }
     - { role: docker-registry }
     - { role: ansible }
     - { role: build-module, module: jenkins }
