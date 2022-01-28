@@ -21,6 +21,7 @@ openssl req -x509 -out localhost.crt -keyout localhost.key \
    printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth")
 
 
+~/.acme.sh/acme.sh --register-account -m $LETSENCRYPT_EMAIL
 ~/.acme.sh/acme.sh --issue --dns dns_aws -d $SEPAL_HOST
 
 ~/.acme.sh/acme.sh --install-cert -d $SEPAL_HOST \
