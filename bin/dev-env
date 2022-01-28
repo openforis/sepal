@@ -21,6 +21,7 @@ function start() {
       docker exec -it sepal-dev bash
     else
       >&2 echo "Configuration directory not found: ${SEPAL_CONFIG}. Create a directory at this location, or select a different directorywith the -c option or by setting the SEPAL_CONFIG env variable."
+      exit 1
     fi
   fi
 }
