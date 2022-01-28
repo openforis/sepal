@@ -32,7 +32,13 @@ RUN chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 # Install node.js
 
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash
-RUN apt-get update && apt-get -y install nodejs
+RUN apt-get update && apt-get -y install \
+    nodejs \
+    nano
+
+# Add shell script to path
+ADD sepal.sh /usr/local/bin/sepal
+RUN chmod +x /usr/local/bin/sepal
 
 # Add source code
 
