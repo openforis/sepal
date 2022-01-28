@@ -1,5 +1,5 @@
 ---
-
+# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/al2-live-patching.html
 - name: Install binutils
   yum:
     name: binutils
