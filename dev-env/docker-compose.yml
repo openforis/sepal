@@ -1,45 +1,17 @@
-version: "3"
+version: "3.9"
+
 services:
-  sepal-dev-env:
-    build: .
-    image: $IMAGE_NAME
-    container_name: $CONTAINER_NAME
-    hostname: sepal-dev-env
-    ports:
-      - "3000:3000"
-      - "8001:8001"
-      - "9230-9249:9230-9249"
-    command: bash
+  sepal-dev:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: sepal-dev
     tty: true
+    stdin_open: true
+    container_name: sepal-dev
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - $PROJECT_DIR:/usr/local/lib/sepal:delegated
-      - $DATA_DIR:/var/sepal:Z,delegated
-      - $CONFIG_DIR:/etc/sepal/conf.d:delegated
-    environment:
-      REACT_APP_GOOGLE_ANALYTICS_ID: $REACT_APP_GOOGLE_ANALYTICS_ID
-      REACT_APP_GOOGLE_MAPS_API_KEY: $REACT_APP_GOOGLE_MAPS_API_KEY
-  rabbitmq:
-      image: rabbitmq:3-management
-      container_name: rabbitmq
-      ports:
-        - "15671-15672:15671-15672"
-      hostname: rabbitmq
-  gateway-redis:
-      image: redis:6
-      container_name: gateway-redis
-      hostname: gateway-redis
-      volumes:
-        - $DATA_DIR/gateway-redis:/data:delegated
-  user-storage-redis:
-      image: redis:6
-      container_name: user-storage-redis
-      hostname: user-storage-redis
-      volumes:
-        - $DATA_DIR/user-storage-redis:/data:delegated
-  email-redis:
-      image: redis:6
-      container_name: email-redis
-      hostname: email-redis
-      volumes:
-        - $DATA_DIR/email-redis:/data:delegated
+      - ./src:/dev-env/src
+      - ..:/usr/local/src/sepal
+      - ${SEPAL_ENV:-~/.sepal}:/usr/local/lib/sepal-env
+    

@@ -1,133 +1,36 @@
 #!/bin/bash
 
-set -e
-
-export IMAGE_NAME=sepal-dev-env
-export CONTAINER_NAME=sepal-dev-env
-
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-export PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-
-# Default data directory
-export DATA_DIR="$PROJECT_DIR/sepal-data"
-
-POSITIONAL=()
-while [[ $# -gt 0 ]]
-do
-key="$1"
-
-case $key in
-    -c|--config)
-    export CONFIG_DIR="$2"
-    shift # past argument
-    shift # past value
-    ;;
-    -d|--data)
-    export DATA_DIR="$2"
-    shift # past argument
-    shift # past value
-    ;;
-    *)    # unknown option
-    POSITIONAL+=("$1") # save it in an array for later
-    shift # past argument
-    ;;
-esac
-done
-set -- "${POSITIONAL[@]}" # restore positional parameters
-
 COMMAND=$1
-
-# Check directories
-
-function check_config_dir() {
-    [ -z "$CONFIG_DIR" ] && usage "Config directory is required"
-    [ ! -d "$CONFIG_DIR" ] && usage "Config directory doesn't exist: $CONFIG_DIR"
-    export CONFIG_DIR=$(cd $CONFIG_DIR && pwd)
-    echo "Config directory: $CONFIG_DIR"
-}
-
-function check_data_dir() {
-    if [ ! -d "$DATA_DIR" ]; then
-        echo "Creating data dir: $DATA_DIR"
-        mkdir -p $DATA_DIR
-    fi
-    export DATA_DIR=$(cd $DATA_DIR && pwd)
-    echo "Data directory: $DATA_DIR"
-}
-
-# function build_docker_image() {
-#     echo "Building Docker image..."
-#     docker build -t $IMAGE_NAME $PROJECT_DIR/dev-env 1>/dev/null
-# }
-
-function docker_container_exists() {
-    docker ps -a --format "{{.Names}}" --filter "name=$CONTAINER_NAME"
-}
-
-function docker_container_running() {
-    docker ps --format "{{.Names}}" --filter "name=$CONTAINER_NAME"
-}
-
-function stop_docker_containers() {
-    echo "Stopping Docker containers..."
-    (cd $PROJECT_DIR/dev-env; \
-        docker-compose down --remove-orphans; \
-    )
-}
-
-function start_docker_containers() {
-    echo "Starting Docker containers..."
-    check_config_dir
-    check_data_dir
-
-    eval "$("${PROJECT_DIR}/dev-env/parse-yaml.sh" "${CONFIG_DIR}/secret.yml")"
-    export REACT_APP_GOOGLE_ANALYTICS_ID=${google_analytics_id}
-    export REACT_APP_GOOGLE_MAPS_API_KEY=${google_maps_api_key}
-    (cd $PROJECT_DIR/dev-env; \
-        docker-compose up \
-          -d --remove-orphans
-    )
-
-    echo "Setting up Docker container..."
-    docker exec sepal-dev-env /usr/local/lib/sepal/dev-env/sepal-setup.sh
-}
-
-function start_shell() {
-    docker exec -u sepal -it sepal-dev-env bash
-}
-
-# Main
+WORKING_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 function start() {
-    # if [ ! "$(docker_container_exists)" ]; then
-    #     build_docker_image
-    # fi
-    # if [ ! "$(docker_container_running)" ]; then
-        start_docker_containers
-    # else
-        # echo "Already started"
-    # fi
+  cd "$WORKING_DIR/../dev-env" || exit
+  local RUNNING="$(docker compose ls | grep -e '^dev-env[ ]*running'| wc -l)"
+  if [ "$RUNNING" -eq 1 ]
+  then
+    echo 'Joining already running dev-env...'
+  else
+    echo 'Starting dev-env...'
+    docker compose up --build --remove-orphans -d
+  fi
+  docker exec -it sepal-dev bash
+  cd - || exit
 }
 
 function stop() {
-    if [ "$(docker_container_exists)" ]; then
-        stop_docker_containers
-    else
-        echo "Already stopped"
-    fi
+  cd "$WORKING_DIR/../dev-env" || exit
+  echo 'Stopping dev-env...'
+  docker compose down --remove-orphans
+  cd - || exit
 }
 
 function usage() {
-    local ERROR=$1
-    if [ ! -z "$ERROR" ]; then
-        echo ""
-        echo "Error: $ERROR"
-    fi
     echo ""
     echo "Usage:"
     echo ""
-    echo "  $(basename $0) [OPTIONS] start      Build and start Docker containers"
-    echo "  $(basename $0) stop                 Stop Docker containers"
+    echo "  $(basename $0) start                Start the dev-env"
+    echo "  $(basename $0) stop                 Stop the dev-env"
+    echo "  $(basename $0) restart              Restart the dev-env"
     echo ""
     echo "Options:"
     echo ""
@@ -140,11 +43,15 @@ function usage() {
 case "$COMMAND" in
     start)
         start
-        start_shell
         RETVAL=$?
         ;;
     stop)
         stop
+        RETVAL=$?
+        ;;
+    restart)
+        stop
+        start
         RETVAL=$?
         ;;
     *)
