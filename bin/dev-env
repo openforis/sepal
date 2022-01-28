@@ -11,11 +11,18 @@ function start() {
   if [ "$RUNNING" -eq 1 ]
   then
     echo 'Joining already running dev-env...'
+    docker exec -it sepal-dev bash
   else
-    echo 'Starting dev-env...'
-    docker compose up --build --remove-orphans -d >&6 2>&1
+    SEPAL_CONFIG=${SEPAL_ENV:-~/.sepal}
+    if [ -d "$SEPAL_CONFIG" ]
+    then
+      echo "Starting dev-env with configuration from $SEPAL_CONFIG..."
+      docker compose up --build --remove-orphans -d >&6 2>&1
+      docker exec -it sepal-dev bash
+    else
+      >&2 echo "Configuration directory not found: ${SEPAL_CONFIG}. Create a directory at this location, or select a different directorywith the -c option or by setting the SEPAL_CONFIG env variable."
+    fi
   fi
-  docker exec -it sepal-dev bash
 }
 
 function stop() {
@@ -35,6 +42,7 @@ function usage() {
     echo "Options:"
     echo ""
     echo "  -v, --verbose                Enable verbose output"
+    echo "  -c, --verbose                Enable verbose output"
     echo ""
     exit 1
 }
@@ -47,6 +55,11 @@ key="$1"
 case $key in
     -v|--verbose)
     exec 6>&1
+    shift # past argument
+    shift # past value
+    ;;
+    -c|--config)
+    SEPAL_ENV="$2"
     shift # past argument
     shift # past value
     ;;

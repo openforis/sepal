@@ -7,7 +7,7 @@ const _ = require('lodash')
 const deps = require('./deps.json')
 
 const SEPAL_SRC = '/usr/local/src/sepal'
-const ENV_FILE = '/usr/local/lib/sepal-env/env'
+const ENV_FILE = '/etc/sepal/config/env'
 
 const NAME_SIZE = 30
 const STATUS_SIZE = 40
@@ -114,7 +114,7 @@ const getStatus = async modules => {
     const statusModules = getModules(modules)
     try {
         const result = JSON.parse(await runScript({command: './script/docker-compose-ls.sh'}))
-        return result 
+        return result
             .map(({Name: name, Status: status}) => ({name, status}))
             .filter(
                 ({name}) => statusModules.length === 0 || statusModules.includes(name)
@@ -345,13 +345,13 @@ const runScript = ({command, args, showOut, showErr}) =>
 
         let stdout = ''
         let stderr = ''
-    
+
         cmd.stdout.on('data', data => {
             const out = data.toString('utf8')
             showOut && process.stdout.write(out)
             stdout += out
         })
-    
+
         cmd.stderr.on('data', data => {
             const err = data.toString('utf8')
             showErr && process.stderr.write(err)

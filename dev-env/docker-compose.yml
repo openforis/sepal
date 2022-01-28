@@ -13,5 +13,4 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./src:/dev-env/src
       - ..:/usr/local/src/sepal
-      - ${SEPAL_ENV:-~/.sepal}:/usr/local/lib/sepal-env
-    
+      - ${SEPAL_CONFIG:-~/.sepal}:/etc/sepal/config
