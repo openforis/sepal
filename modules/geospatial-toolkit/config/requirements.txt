@@ -39,6 +39,7 @@ Wand
 PyPDF2 # more recent version are avaiable (PyPDF4)
 rasterio==1.1.5
 openpyxl
+pre-commit
 
 ########  web api  ########
 falcon
