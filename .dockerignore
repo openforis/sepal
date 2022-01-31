@@ -16,3 +16,5 @@ modules/**/target
 !build.gradle
 !settings.gradle
 !modules/**/build.gradle
+
+.DS_Store
