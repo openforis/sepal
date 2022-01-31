@@ -5,4 +5,4 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/sandbox-base/Dockerfile
-    image: "openforis/sandbox-base:${SEPAL_VERSION:-latest}"
+    image: "openforis/sandbox-base:latest"
