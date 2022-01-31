@@ -32,7 +32,7 @@
             "sandbox-base": "build",
             "r-proxy": "run"
         },
-        "run": []
+        "run": false
     },
     "gui": {
         "build": {},
@@ -48,7 +48,7 @@
     },
     "jenkins": {
         "build": {},
-        "run": []
+        "run": false
     },
     "ldap": {
         "build": {},
@@ -84,7 +84,7 @@
         "build": {
             "sandbox-base": "build"
         },
-        "run": []
+        "run": false
     },
     "sandbox-base": {
         "build": {},
@@ -108,7 +108,7 @@
     },
     "task": {
         "build": {},
-        "run": []
+        "run": false
     },
     "terminal": {
         "build": {},
