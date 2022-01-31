@@ -9,7 +9,7 @@ then
   echo "Starting nodemon"
   exec nodemon \
     --watch "${MODULE}/src" \
-    --watch "${SHARED}"" \
+    --watch "${SHARED}" \
     --inspect=0.0.0.0:9232 \
     src/main.js \
     --gee-email "$EE_ACCOUNT" \

@@ -1,4 +1,4 @@
-const {job} = require('root/jobs/job')
+const {job} = require('gee/jobs/job')
 const {eeLimiterService} = require('sepal/ee/eeLimiterService')
 
 const worker$ = () => {

@@ -1,4 +1,4 @@
-const {job} = require('root/jobs/job')
+const {job} = require('gee/jobs/job')
 
 const MAX_PIXELS = 1e5
 const MAX_VALUE_COUNT = 256

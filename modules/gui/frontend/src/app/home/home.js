@@ -1,6 +1,6 @@
 import {ActivationContext} from 'widget/activation/activationContext'
 import {PortalContainer} from 'widget/portal'
-import {catchError, exhaustMap, map, of, retry, timer} from 'rxjs'
+import {catchError, exhaustMap, map, retry, timer} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {getLogger} from 'log'

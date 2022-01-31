@@ -1,9 +1,9 @@
-const {job} = require('root/jobs/job')
-const contextService = require('root/jobs/service/context').contextService
+const {job} = require('task/jobs/job')
+const contextService = require('task/jobs/service/context').contextService
 
 const worker$ = () => {
     const {configure} = require('sepal/context')
-    const {getCurrentContext$} = require('root/jobs/service/context')
+    const {getCurrentContext$} = require('task/jobs/service/context')
     const {tap} = require('rxjs')
     const {swallow} = require('sepal/rxjs')
     return getCurrentContext$().pipe(

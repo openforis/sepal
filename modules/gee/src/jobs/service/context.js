@@ -6,7 +6,7 @@ const contextService = {
     serviceName: 'ContextService',
     serviceHandler$: () => {
         const {of} = require('rxjs')
-        return of(require('root/config'))
+        return of(require('gee/config'))
     }
 }
 

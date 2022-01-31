@@ -1,5 +1,5 @@
 const Job = require('sepal/worker/job')
-const logConfig = require('root/log.json')
+const logConfig = require('gee/log.json')
 
 module.exports = {
     job: ({
@@ -10,7 +10,7 @@ module.exports = {
         minIdleCount,
         maxIdleMilliseconds,
         ctx,
-        before = [require('root/jobs/ee/initialize')],
+        before = [require('gee/jobs/ee/initialize')],
         services,
         args = ctx => [ctx.request.body],
         worker$,

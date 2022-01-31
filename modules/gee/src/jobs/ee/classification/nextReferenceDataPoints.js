@@ -1,4 +1,4 @@
-const {job} = require('root/jobs/job')
+const {job} = require('gee/jobs/job')
 
 const PROBABILITY_THRESHOLD = 75
 const NUMBER_OF_POINTS = 5

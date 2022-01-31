@@ -50,7 +50,7 @@ function usage() {
     echo ""
     echo "Options:"
     echo ""
-    echo "  -c, --verbose                Enable verbose output"
+    echo "  -c, --config                 Specify config directory"
     echo "  -f, --force-rebuild          Rebuild dev-env from scratch"
     echo "  -v, --verbose                Enable verbose output"
     echo ""

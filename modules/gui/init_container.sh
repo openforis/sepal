@@ -11,6 +11,10 @@ function template {
 }
 
 if [ "${DEPLOY_ENVIRONMENT}" == "DEV" ]; then
+  if [ ! -d "node_modules" ]; then
+    echo 'Missing node_modules. Installing...'
+    npm install
+  fi
   exec npm start
 else
   if [ ! -f "${MODULE}/build/index-template.html" ]; then

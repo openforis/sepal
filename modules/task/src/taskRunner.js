@@ -1,14 +1,14 @@
 const {BehaviorSubject, concat, of, throwError, catchError, distinctUntilChanged, first, map, takeUntil, tap} = require('rxjs')
 const {finalize$} = require('sepal/rxjs')
-const {job} = require('root/jobs/job')
+const {job} = require('task/jobs/job')
 const log = require('sepal/log').getLogger('task')
 const _ = require('lodash')
 
-const {contextService} = require('root/jobs/service/context')
-const {exportLimiterService} = require('root/jobs/service/exportLimiter')
-const {driveLimiterService} = require('root/jobs/service/driveLimiter')
-const {driveSerializerService} = require('root/jobs/service/driveSerializer')
-const {gcsSerializerService} = require('root/jobs/service/gcsSerializer')
+const {contextService} = require('task/jobs/service/context')
+const {exportLimiterService} = require('task/jobs/service/exportLimiter')
+const {driveLimiterService} = require('task/jobs/service/driveLimiter')
+const {driveSerializerService} = require('task/jobs/service/driveSerializer')
+const {gcsSerializerService} = require('task/jobs/service/gcsSerializer')
 
 const tasks = {
     'image.asset_export': () => require('./tasks/imageAssetExport'),
@@ -96,7 +96,7 @@ const executeTask$ = ({id, name, params}, {cmd$}) => {
 module.exports = job({
     jobName: 'execute task',
     jobPath: __filename,
-    before: [require('root/jobs/configure'), require('root/jobs/ee/initialize')],
+    before: [require('task/jobs/configure'), require('task/jobs/ee/initialize')],
     services: [contextService, exportLimiterService, driveLimiterService, driveSerializerService, gcsSerializerService],
     args: ({task}) => [task],
     worker$: executeTask$

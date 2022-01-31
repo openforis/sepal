@@ -4,7 +4,7 @@ const {first} = require('rxjs')
 
 const contextService = {
     serviceName: 'ContextService',
-    serviceHandler$: () => require('root/context').getContext$()
+    serviceHandler$: () => require('task/context').getContext$()
 }
 
 module.exports = {

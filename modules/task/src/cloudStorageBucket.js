@@ -3,7 +3,7 @@ const {retry} = require('sepal/rxjs')
 const {fromPromise} = require('sepal/rxjs')
 const crypto = require('crypto')
 const http = require('sepal/httpClient')
-const {getCurrentContext$} = require('root/jobs/service/context')
+const {getCurrentContext$} = require('task/jobs/service/context')
 const {cloudStorage$} = require('./cloudStorage')
 const log = require('sepal/log').getLogger('cloudStorage')
 

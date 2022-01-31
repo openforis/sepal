@@ -1,15 +1,15 @@
 const ee = require('sepal/ee')
 const {concat, defer, switchMap} = require('rxjs')
 const {finalize, swallow} = require('sepal/rxjs')
-const drive = require('root/drive')
-const {initUserBucket$} = require('root/cloudStorageBucket')
-const cloudStorage = require('root/cloudStorageDownload')
+const drive = require('task/drive')
+const {initUserBucket$} = require('task/cloudStorageBucket')
+const cloudStorage = require('task/cloudStorageDownload')
 const log = require('sepal/log').getLogger('ee')
-const {getCurrentContext$} = require('root/jobs/service/context')
-const {exportLimiter$} = require('root/jobs/service/exportLimiter')
-const {driveSerializer$} = require('root/jobs/service/driveSerializer')
-const {gcsSerializer$} = require('root/jobs/service/gcsSerializer')
-const task$ = require('root/ee/task')
+const {getCurrentContext$} = require('task/jobs/service/context')
+const {exportLimiter$} = require('task/jobs/service/exportLimiter')
+const {driveSerializer$} = require('task/jobs/service/driveSerializer')
+const {gcsSerializer$} = require('task/jobs/service/gcsSerializer')
+const task$ = require('task/ee/task')
 
 const CONCURRENT_FILE_DOWNLOAD = 3
 

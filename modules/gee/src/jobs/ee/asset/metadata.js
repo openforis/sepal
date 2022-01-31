@@ -1,4 +1,4 @@
-const {job} = require('root/jobs/job')
+const {job} = require('gee/jobs/job')
 
 const worker$ = ({asset, expectedType}) => {
     const {throwError, of, catchError, switchMap} = require('rxjs')

@@ -1,4 +1,4 @@
-const {job} = require('root/jobs/job')
+const {job} = require('gee/jobs/job')
 
 const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
     const ee = require('sepal/ee')

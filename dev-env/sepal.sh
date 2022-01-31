@@ -1,5 +1,5 @@
 #!/bin/bash
 set -e
 
-cd /dev-env/src/
+cd /usr/local/src/sepal/dev-env/src
 node sepal.js "$@"

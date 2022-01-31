@@ -2,6 +2,7 @@ FROM ubuntu:focal
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV DOCKER_BUILDKIT=0
+ENV PROJECT_DIR /usr/local/src/sepal
 
 # update and install base packages
 
@@ -11,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     ca-certificates \
+    git \
     gnupg \
     lsb-release \
     nano
@@ -33,8 +35,12 @@ RUN chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 # Install node.js
 
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash
+RUN curl -sL https://deb.nodesource.com/setup_17.x | bash
 RUN apt-get update && apt-get -y install nodejs
+
+# Set bash prompt
+
+RUN echo "export PS1='[\[\033[1;34m\]\u@dev-env\[\033[0m\]:\w]\$ '" >> /root/.bashrc
 
 # Add shell script to path
 ADD sepal.sh /usr/local/bin/sepal
@@ -42,10 +48,10 @@ RUN chmod +x /usr/local/bin/sepal
 
 # Add source code
 
-ADD ./package.json /dev-env/
-ADD ./src /dev-env/src/
+ADD ./package.json $PROJECT_DIR/dev-env/
+ADD ./package-lock.json $PROJECT_DIR/dev-env/
+ADD ./src $PROJECT_DIR/dev-env/src/
 
-WORKDIR /dev-env
+WORKDIR $PROJECT_DIR/dev-env
 RUN npm install
-
-WORKDIR /dev-env/src
+WORKDIR $PROJECT_DIR

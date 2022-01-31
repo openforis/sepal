@@ -1,4 +1,4 @@
-const {job} = require('root/jobs/job')
+const {job} = require('gee/jobs/job')
 
 const worker$ = ({recipe, bands, latLng}) => {
     const {getCollection$} = require('sepal/ee/timeSeries/collection')

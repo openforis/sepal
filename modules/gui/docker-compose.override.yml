@@ -3,4 +3,4 @@ version: "3.9"
 services:
   gui:
     volumes:
-      - ${SEPAL_PROJECT_DIR}/modules/gui/frontend/src:/usr/local/src/sepal/modules/gui/frontend/src # To allow dynamic reloading in dev
+      - ${SEPAL_PROJECT_DIR}/modules/gui/frontend:/usr/local/src/sepal/modules/gui/frontend # To allow dynamic reloading in dev

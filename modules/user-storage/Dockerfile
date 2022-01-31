@@ -1,4 +1,4 @@
-FROM node:14-stretch
+FROM node:17-bullseye
 
 ENV MODULE_NAME user-storage
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
@@ -9,12 +9,19 @@ RUN wget -q https://github.com/sharkdp/diskus/releases/download/v0.6.0/diskus_0.
 RUN dpkg -i diskus_0.6.0_amd64.deb && rm diskus_0.6.0_amd64.deb
 
 # RUN groupadd --gid 9999 sepal && adduser node sepal
-RUN apt update && \
-    apt install sudo && \
+RUN apt-get update && \
+    apt-get install sudo && \
     adduser node sudo && \
     echo 'node ALL = (root) NOPASSWD: /usr/bin/diskus' >> /etc/sudoers
 
 RUN npm install -g nodemon
+
+# Set bash prompt
+RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
+RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /root/.bashrc
+
+ADD modules/${MODULE_NAME}/start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
 
 ADD lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
@@ -24,6 +31,7 @@ USER node
 RUN npm install
 
 ADD modules/${MODULE_NAME}/package.json ${MODULE}/
+ADD modules/${MODULE_NAME}/package-lock.json ${MODULE}/
 WORKDIR ${MODULE}
 USER root
 RUN mkdir src && chown -R node: ${MODULE}
@@ -31,17 +39,4 @@ USER node
 RUN npm install
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
-ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
-CMD start.sh
-
-CMD node \
-    src/main.js \
-    --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
-    --redis-uri redis://user-storage-redis \
-    --home-dir /sepalUsers \
-    --min-delay-seconds ${MIN_DELAY_SECONDS} \
-    --max-delay-seconds ${MAX_DELAY_SECONDS} \
-    --delay-increase-factor ${DELAY_INCREASE_FACTOR} \
-    --concurrency ${CONCURRENCY} \
-    --max-retries ${MAX_RETRIES} \
-    --initial-retry-delay-seconds ${INITIAL_RETRY_DELAY_SECONDS}
+CMD /usr/local/bin/start.sh
