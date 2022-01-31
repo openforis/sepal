@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
 # remove locked libs
-# rm -rf /usr/local/lib/R/site-library/00LOCK-*
+rm -rf /usr/local/lib/R/site-library/00LOCK-*
+
+# remove cached sources
+rm -rf /R/cranroot/src/contrib/*
 
 if [[ "${DEPLOY_ENVIRONMENT}" == "DEV" ]]
 then
