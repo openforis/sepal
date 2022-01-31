@@ -1,4 +1,4 @@
-FROM localhost/openforis/sandbox-base:latest
+FROM openforis/sandbox-base
 
 EXPOSE 5011
 
