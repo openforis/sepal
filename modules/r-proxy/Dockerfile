@@ -1,4 +1,4 @@
-FROM localhost/openforis/r:latest
+FROM localhost/openforis/sandbox-base:latest
 
 EXPOSE 8180
 

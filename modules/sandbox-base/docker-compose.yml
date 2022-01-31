@@ -1,0 +1,8 @@
+version: "3.9"
+
+services:
+  sandbox-base:
+    build:
+      context: ../..
+      dockerfile: ./modules/sandbox-base/Dockerfile
+    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/sandbox-base:${SEPAL_VERSION:-latest}"

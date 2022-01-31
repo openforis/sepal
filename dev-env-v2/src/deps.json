@@ -1,6 +1,8 @@
 {
     "app-manager": {
-        "build": {},
+        "build": {
+            "sandbox-base": "build"
+        },
         "run": []
     },
     "backup": {
@@ -13,7 +15,9 @@
     },
     "email": {
         "build": {},
-        "run": ["rabbitmq"]
+        "run": [
+            "rabbitmq"
+        ]
     },
     "gateway": {
         "build": {},
@@ -25,6 +29,7 @@
     },
     "geospatial-toolkit": {
         "build": {
+            "sandbox-base": "build",
             "r-proxy": "run"
         },
         "run": []
@@ -65,13 +70,9 @@
         "build": {},
         "run": []
     },
-    "r": {
-        "build": {},
-        "run": false
-    },
     "r-proxy": {
         "build": {
-            "r": "build"
+            "sandbox-base": "build"
         },
         "run": []
     },
@@ -80,8 +81,14 @@
         "run": []
     },
     "sandbox": {
-        "build": {},
+        "build": {
+            "sandbox-base": "build"
+        },
         "run": []
+    },
+    "sandbox-base": {
+        "build": {},
+        "run": false
     },
     "sepal-server": {
         "build": {
@@ -95,7 +102,9 @@
     },
     "sys-monitor": {
         "build": {},
-        "run": ["email"]
+        "run": [
+            "email"
+        ]
     },
     "task": {
         "build": {},
@@ -117,7 +126,9 @@
     },
     "user-storage": {
         "build": {},
-        "run": ["email"]
+        "run": [
+            "email"
+        ]
     },
     "user-storage-backup": {
         "build": {},
