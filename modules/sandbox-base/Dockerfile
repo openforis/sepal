@@ -3,6 +3,7 @@
 FROM ubuntu:focal
 
 ARG DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND noninteractive
 
 # Use specific Java version
 ARG JAVA_VERSION 11.0.11.hs-adpt
@@ -13,7 +14,7 @@ RUN apt-get -y update && apt-get install -y \
     apt-utils \
     ca-certificates
 
-# Enforce https-only Ubuntu apt repositories 
+# Enforce https-only Ubuntu apt repositories
 # RUN sed -i 's|http://archive.ubuntu.com/ubuntu|https://mirrors.kernel.org/ubuntu|g' /etc/apt/sources.list
 
 # Install support for managing locales
@@ -163,7 +164,7 @@ RUN sed -ie 's/sdkman_auto_answer=false/sdkman_auto_answer=true/' ${SDKMAN_DIR}/
 RUN bash -c 'source ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install java ${JAVA_VERSION}'
 
 # Configure R Java home
-RUN bash -c 'source ${SDKMAN_DIR}/bin/sdkman-init.sh && R CMD javareconf' 
+RUN bash -c 'source ${SDKMAN_DIR}/bin/sdkman-init.sh && R CMD javareconf'
 
 # Cleanup
 RUN apt-get -y clean
