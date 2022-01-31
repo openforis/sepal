@@ -1,68 +1,51 @@
-FROM ubuntu:bionic
+FROM ubuntu:focal
+
 ARG DEBIAN_FRONTEND=noninteractive
+ENV DOCKER_BUILDKIT=0
 
 # update and install base packages
+
 RUN apt-get update && apt-get install -y \
-  apt-utils  \
-  curl \
-  dnsutils \
-  gettext \
-  git \
-  gnupg \
-  htop \
-  jq \
-  libssl-dev \
-  libffi-dev \
-  multitail \
-  nano \
-  net-tools \
-  packer \
-  procps \
-  python3 \
-  python3-dev \
-  python3-pip \
-  python3-venv \
-  python3-wheel \
-  screen \
-  software-properties-common \
-  sudo \
-  unzip \
-  wget \
-  zip
+    apt-utils \
+    curl \
+    build-essential \
+    cmake \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    nano
 
-RUN pip3 install --upgrade pip
+# Install docker-cli
 
-# fix "mesg: ttyname failed: Inappropriate ioctl for device" warning
-RUN cp /etc/profile /root/.profile
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
-# install gdal
-RUN apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y
-RUN apt-get update && apt-get install -y \
-  libgdal-dev \
-  gdal-bin \
-  python3-gdal
+RUN echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+    $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# install diskus
-RUN wget -q https://github.com/sharkdp/diskus/releases/download/v0.6.0/diskus_0.6.0_amd64.deb
-RUN dpkg -i diskus_0.6.0_amd64.deb && rm diskus_0.6.0_amd64.deb
+RUN apt-get update && apt-get install -y docker-ce-cli
 
-# create sepal user
-RUN useradd sepal -m && usermod -aG sudo sepal && echo 'sepal     ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
+# Install docker compose
 
-# switch to sepal user
-USER sepal
+RUN mkdir -p /usr/local/lib/docker/cli-plugins
+RUN curl -SL https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
+RUN chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
-# install sdkman and java
-RUN curl -s "https://get.sdkman.io" | bash
-RUN bash -c "source '/home/sepal/.sdkman/bin/sdkman-init.sh' && sdk install java 11.0.11.hs-adpt"
+# Install node.js
 
-# install nvm, nodejs (stable) and global npm packages
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
-RUN bash -c "source /home/sepal/.nvm/nvm.sh && nvm install 14 && npm install -g nodemon npm-check-updates"
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash
+RUN apt-get update && apt-get -y install nodejs
 
-# setup sepal
-ENV SEPAL_HOME=/usr/local/lib/sepal
-RUN echo 'PATH="$HOME/.local/bin:$PATH"' >> /home/sepal/.bashrc
+# Add shell script to path
+ADD sepal.sh /usr/local/bin/sepal
+RUN chmod +x /usr/local/bin/sepal
 
-# rabbitmqctl alias via docker
-RUN echo 'alias rabbitmqctl="sudo docker exec -it rabbitmq rabbitmqctl"' >> /home/sepal/.bash_aliases
+# Add source code
+
+ADD ./package.json /dev-env/
+ADD ./src /dev-env/src/
+
+WORKDIR /dev-env
+RUN npm install
+
+WORKDIR /dev-env/src

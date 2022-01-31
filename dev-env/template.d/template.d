@@ -1,1 +1,0 @@
-/usr/local/lib/sepal/dev-env/template.d

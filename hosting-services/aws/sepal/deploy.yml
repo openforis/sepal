@@ -193,6 +193,7 @@
         masked: no
 
   roles:
+    - { role: live-patching }
     - { role: aws-mount-efs }
     - { role: docker-login }
 
