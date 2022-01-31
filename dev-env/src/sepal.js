@@ -87,6 +87,7 @@ const usage = () => {
     npmupdate   [<module>...]    update npm packages for module(s)
 
     Flags:
+    -nc, --no-cache      No-cache (for "build" command)
     -d, --dependencies  Show direct and inverse dependencies
     -r, --recursive     Recursively process dependencies (for "stop" command)
     -v, --verbose       Show docker compose output when suppressed by default
@@ -99,6 +100,7 @@ program.exitOverride()
 
 try {
     program
+        .option('-nc, --no-cache', 'No cache')
         .option('-d, --dependencies', 'Show dependencies')
         .option('-r, --recursive', 'Recursive')
         .option('-v, --verbose', 'Verbose')
@@ -193,7 +195,7 @@ const restart = async modules => {
     await start(modules)
 }
 
-const buildModule = async module => {
+const buildModule = async (module, parent) => {
     try {
         if (isModule(module)) {
             if (await isRunning(module)) {
@@ -202,10 +204,14 @@ const buildModule = async module => {
             await buildDeps(module)
             await startBuildDeps(module)
             showModuleStatus(module, BUILDING)
+            log.info(options)
+            const buildOptions = _.compact([
+                !options.cache && (!parent || options.recursive) ? '--no-cache' : null
+            ])
             await runScript({
                 command: './script/docker-compose-build.sh',
-                args: [module, SEPAL_SRC, ENV_FILE],
-                showOut: !options.quiet
+                args: [module, SEPAL_SRC, ENV_FILE, ...buildOptions],
+                showStdOut: !options.quiet
             })
             showModuleStatus(module, BUILT)
             return true
@@ -218,7 +224,7 @@ const buildModule = async module => {
     }
 }
 
-const startModule = async module => {
+const startModule = async (module, _parent) => {
     try {
         if (isRunnable(module)) {
             await startDeps(module)
@@ -227,7 +233,7 @@ const startModule = async module => {
                 await runScript({
                     command: './script/docker-compose-up.sh',
                     args: [module, SEPAL_SRC, ENV_FILE],
-                    showOut: options.verbose
+                    showStdOut: options.verbose
                 })
                 await showStatus([module])
             }
@@ -241,7 +247,7 @@ const startModule = async module => {
     }
 }
 
-const stopModule = async module => {
+const stopModule = async (module, _parent) => {
     try {
         if (isRunnable(module)) {
             if (options.recursive) {
@@ -252,7 +258,7 @@ const stopModule = async module => {
                 await runScript({
                     command: './script/docker-compose-down.sh',
                     args: [module, SEPAL_SRC, ENV_FILE],
-                    showOut: options.verbose
+                    showStdOut: options.verbose
                 })
                 await showStatus([module])
             }
@@ -334,7 +340,7 @@ const getModules = modules =>
 const getAllModules = () =>
     Object.keys(deps)
 
-const runScript = ({command, args, showOut, showErr}) =>
+const runScript = ({command, args, showStdOut, showStdErr}) =>
     new Promise((resolve, reject) => {
         if (args) {
             log.trace(`Running command ${command} with args:`, args)
@@ -348,13 +354,13 @@ const runScript = ({command, args, showOut, showErr}) =>
 
         cmd.stdout.on('data', data => {
             const out = data.toString('utf8')
-            showOut && process.stdout.write(out)
+            showStdOut && process.stdout.write(out)
             stdout += out
         })
 
         cmd.stderr.on('data', data => {
             const err = data.toString('utf8')
-            showErr && process.stderr.write(err)
+            showStdErr && process.stderr.write(err)
             stderr += err
         })
 

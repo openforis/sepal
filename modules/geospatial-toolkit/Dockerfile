@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM localhost/openforis/sandbox-base:latest
 
 ENV MODULE_NAME geospatial-toolkit
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
@@ -6,23 +6,24 @@ ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     SDKMAN_DIR=/usr/local/lib/sdkman \
     GDAL_DATA=/usr/share/gdal
 
-ARG DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND noninteractive
 
-ADD modules/${MODULE_NAME}/script/init_apt.sh /script/
-RUN chmod u+x /script/init_apt.sh && sync && /script/init_apt.sh
+# ADD modules/${MODULE_NAME}/script/init_apt.sh /script/
+# RUN chmod u+x /script/init_apt.sh && sync && /script/init_apt.sh
 
-ADD modules/${MODULE_NAME}/script/init_r.sh /script/
-RUN chmod u+x /script/init_r.sh && sync && /script/init_r.sh
+# ADD modules/${MODULE_NAME}/script/init_r.sh /script/
+# RUN chmod u+x /script/init_r.sh && sync && /script/init_r.sh
 
-ADD modules/${MODULE_NAME}/script/init_apt_packages.sh /script/
-RUN chmod u+x /script/init_apt_packages.sh && sync && /script/init_apt_packages.sh
+# ADD modules/${MODULE_NAME}/script/init_apt_packages.sh /script/
+# RUN chmod u+x /script/init_apt_packages.sh && sync && /script/init_apt_packages.sh
 
-ADD modules/${MODULE_NAME}/script/init_java.sh /script/
-RUN chmod u+x /script/init_java.sh && sync && /script/init_java.sh
+# ADD modules/${MODULE_NAME}/script/init_java.sh /script/
+# RUN chmod u+x /script/init_java.sh && sync && /script/init_java.sh
 
 ADD modules/${MODULE_NAME}/config /config
 ADD modules/${MODULE_NAME}/config/OFGTMethod /usr/local/share/OFGTMethod
-RUN chmod +x /usr/local/bin/* && sync && chmod -R 400 /config && sync
+# RUN chmod +x /usr/local/bin/* && sync && chmod -R 400 /config && sync
+RUN chmod -R 400 /config && sync
 
 ADD modules/${MODULE_NAME}/script/init_oft.sh /script/
 RUN chmod u+x /script/init_oft.sh && sync && /script/init_oft.sh
@@ -62,5 +63,7 @@ RUN chmod u+x /script/init_azure_cli.sh && sync && /script/init_azure_cli.sh
 
 ADD modules/${MODULE_NAME}/script/init_post.sh /script/
 RUN chmod u+x /script/init_post.sh && sync && /script/init_post.sh
+
+ENV DEBIAN_FRONTEND text
 
 CMD ["/bin/bash"]
