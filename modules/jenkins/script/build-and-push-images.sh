@@ -56,6 +56,7 @@ build sepal-server
 
 echo "${DOCKER_REGISTRY_PASSWORD}" | docker login localhost -u "${DOCKER_REGISTRY_USERNAME}" --password-stdin
 
+push sandbox-base
 push sys-monitor
 push email
 push backup
