@@ -87,7 +87,7 @@ const usage = () => {
     npmupdate   [<module>...]    update npm packages for module(s)
 
     Flags:
-    -nc, --no-cache      No-cache (for "build" command)
+    -nc, --no-cache     No-cache (for "build" command)
     -d, --dependencies  Show direct and inverse dependencies
     -r, --recursive     Recursively process dependencies (for "stop" command)
     -v, --verbose       Show docker compose output when suppressed by default
@@ -204,7 +204,6 @@ const buildModule = async (module, parent) => {
             await buildDeps(module)
             await startBuildDeps(module)
             showModuleStatus(module, BUILDING)
-            log.info(options)
             const buildOptions = _.compact([
                 !options.cache && (!parent || options.recursive) ? '--no-cache' : null
             ])
