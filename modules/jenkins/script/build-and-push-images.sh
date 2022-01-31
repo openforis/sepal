@@ -26,11 +26,11 @@ function push {
   docker push localhost/openforis/${MODULE}:${SEPAL_VERSION}
 }
 
+build sandbox-base
 build email
 build sys-monitor
 build letsencrypt
 build java
-build r
 build rabbitmq
 build ldap-backup
 build ldap
