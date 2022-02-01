@@ -5,4 +5,4 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/java/Dockerfile
-    image: "openforis/java:${SEPAL_VERSION:-latest}"
+    image: "openforis/java:latest"
