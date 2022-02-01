@@ -44,6 +44,7 @@ RUN chmod +x /usr/local/bin/sepal
 
 ADD ./package.json /dev-env/
 ADD ./src /dev-env/src/
+ADD ./config /dev-env/config/
 
 WORKDIR /dev-env
 RUN npm install

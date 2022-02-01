@@ -1,0 +1,19 @@
+{
+    "default": [
+        "app-manager",
+        "email",
+        "gateway",
+        "gee",
+        "gui",
+        "haproxy",
+        "ldap",
+        "mysql",
+        "rabbitmq",
+        "sepal-server",
+        "ssh-gateway",
+        "terminal",
+        "user",
+        "user-files",
+        "user-storage"
+    ]
+}
