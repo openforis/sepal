@@ -4,23 +4,17 @@
     "description": "",
     "main": "main.js",
     "scripts": {
-        "dev": "bash dev.sh",
-        "postinstall": "link-module-alias",
-        "preinstall": "command -v link-module-alias && link-module-alias clean || true",
         "test": "jest",
         "testWatch": "jest --watchAll"
     },
     "author": "",
     "license": "ISC",
-    "_moduleAliases": {
-        "root": "src",
-        "sepal": "node_modules/shared/src"
-    },
     "dependencies": {
         "commander": "^8.3.0",
         "connect-redis": "^6.0.0",
         "express": "^4.17.2",
         "express-session": "^1.17.2",
+        "gateway": "./src",
         "http-proxy-middleware": "^2.0.1",
         "ioredis": "^4.28.2",
         "lodash": "^4.17.21",
@@ -29,13 +23,12 @@
         "mime-types": "^2.1.34",
         "moment": "^2.29.1",
         "rxjs": "^7.4.0",
-        "shared": "../../lib/js/shared",
+        "sepal": "../../lib/js/shared/src",
         "uuid": "^8.3.2"
     },
     "devDependencies": {
         "eslint": "^8.4.1",
         "jest": "^27.4.5",
-        "jest-expect-message": "^1.0.2",
-        "link-module-alias": "^1.2.0"
+        "jest-expect-message": "^1.0.2"
     }
 }

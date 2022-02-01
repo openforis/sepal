@@ -15,12 +15,13 @@ dependencies {
     testCompile project(':sepal-common-test')
 }
 
-task runModule(type: JavaExec) {
+task runModule(type: Exec) {
     group = "Execution"
-    description = "Run the main class with JavaExecTask"
-    classpath = sourceSets.main.runtimeClasspath
-    main = javaMainClass
+    description = "Run main class"
+    def jvmArgs = []
     if (System.getenv('DEPLOY_ENVIRONMENT') == 'DEV')
         jvmArgs = ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005']
+    def commandLineArgs = ["java", "-classpath", sourceSets.main.runtimeClasspath.getAsPath(), javaMainClass] + jvmArgs
+    commandLine(*commandLineArgs)
 }
 

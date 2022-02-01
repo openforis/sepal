@@ -2,7 +2,7 @@ const {defer, EMPTY, ReplaySubject, concat, from, of, throwError, catchError, ex
 const {google} = require('googleapis')
 const {NotFoundException} = require('sepal/exception')
 const log = require('sepal/log').getLogger('drive')
-const {getCurrentContext$} = require('root/jobs/service/context')
+const {getCurrentContext$} = require('task/jobs/service/context')
 const fs = require('fs')
 const Path = require('path')
 const {retry, swallow} = require('sepal/rxjs')

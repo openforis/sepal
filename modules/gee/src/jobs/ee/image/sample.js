@@ -1,4 +1,4 @@
-const {job} = require('root/jobs/job')
+const {job} = require('gee/jobs/job')
 
 const worker$ = ({asset, count, scale, classBand}) => {
     const ee = require('sepal/ee')

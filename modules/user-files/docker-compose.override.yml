@@ -3,5 +3,5 @@ version: "3.9"
 services:
   user-files:
     volumes:  # To allow dynamic reloading in dev
-      - ${SEPAL_PROJECT_DIR}/lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src
-      - ${SEPAL_PROJECT_DIR}/modules/user-files/src:/usr/local/src/sepal/modules/user-files/src
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared:/usr/local/src/sepal/lib/js/shared
+      - ${SEPAL_PROJECT_DIR}/modules/user-files:/usr/local/src/sepal/modules/user-files

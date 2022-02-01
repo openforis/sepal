@@ -2,13 +2,14 @@
 
 COMMAND=$1
 WORKING_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+FORCE_REBUILD=0
 
 exec 6>/dev/null
 
 function start() {
   cd "$WORKING_DIR/../dev-env" || exit
   local RUNNING="$(docker compose ls | grep -e '^dev-env[ ]*running'| wc -l)"
-  if [ "$RUNNING" -eq 1 ]
+  if [ "$RUNNING" -eq 1 ] && [ "$FORCE_REBUILD" -eq 0 ]
   then
     echo 'Joining already running dev-env...'
     docker exec -it sepal-dev bash
@@ -16,8 +17,15 @@ function start() {
     SEPAL_CONFIG=${SEPAL_ENV:-~/.sepal}
     if [ -d "$SEPAL_CONFIG" ]
     then
-      echo "Starting dev-env with configuration from $SEPAL_CONFIG..."
-      docker compose up --build --remove-orphans -d >&6 2>&1
+      if [ "$FORCE_REBUILD" -eq 1 ]
+      then
+        echo "Rebuilding dev-env with configuration from $SEPAL_CONFIG..."
+        docker compose build --no-cache >&6 2>&1
+        docker compose up --remove-orphans -d >&6 2>&1
+      else
+        echo "Starting dev-env with configuration from $SEPAL_CONFIG..."
+        docker compose up --build --remove-orphans -d >&6 2>&1
+      fi
       docker exec -it sepal-dev bash
     else
       >&2 echo "Configuration directory not found: ${SEPAL_CONFIG}. Create a directory at this location, or select a different directorywith the -c option or by setting the SEPAL_CONFIG env variable."
@@ -42,8 +50,9 @@ function usage() {
     echo ""
     echo "Options:"
     echo ""
+    echo "  -c, --config                 Specify config directory"
+    echo "  -f, --force-rebuild          Rebuild dev-env from scratch"
     echo "  -v, --verbose                Enable verbose output"
-    echo "  -c, --verbose                Enable verbose output"
     echo ""
     exit 1
 }
@@ -54,15 +63,18 @@ do
 key="$1"
 
 case $key in
-    -v|--verbose)
-    exec 6>&1
-    shift # past argument
-    shift # past value
-    ;;
     -c|--config)
     SEPAL_ENV="$2"
     shift # past argument
     shift # past value
+    ;;
+    -f|--force-rebuild)
+    FORCE_REBUILD=1
+    shift # past argument
+    ;;
+    -v|--verbose)
+    exec 6>&1
+    shift # past argument
     ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later

@@ -1,4 +1,4 @@
-const {job} = require('root/jobs/job')
+const {job} = require('gee/jobs/job')
 
 const worker$ = ({recipe, visParams, panSharpen, bands}) => {
     const ImageFactory = require('sepal/ee/imageFactory')

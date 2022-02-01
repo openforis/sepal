@@ -1,4 +1,4 @@
-const {job} = require('root/jobs/job')
+const {job} = require('gee/jobs/job')
 
 const worker$ = ({select, from, where = [], distinct = [], orderBy = []}) => {
     const ee = require('sepal/ee')

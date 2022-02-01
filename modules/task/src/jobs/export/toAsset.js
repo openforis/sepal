@@ -2,9 +2,9 @@ const ee = require('sepal/ee')
 const {EMPTY, concat, of, catchError, map, switchMap} = require('rxjs')
 const {swallow} = require('sepal/rxjs')
 const Path = require('path')
-const {exportLimiter$} = require('root/jobs/service/exportLimiter')
-const task$ = require('root/ee/task')
-const {progress} = require('root/rxjs/operators')
+const {exportLimiter$} = require('task/jobs/service/exportLimiter')
+const task$ = require('task/ee/task')
+const {progress} = require('task/rxjs/operators')
 
 const deleteAsset$ = assetId =>
     ee.deleteAsset$(assetId, 3).pipe(
