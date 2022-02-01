@@ -43,6 +43,7 @@ RUN apt-get update && apt-get -y install nodejs
 RUN echo "export PS1='[\[\033[1;34m\]\u@dev-env\[\033[0m\]:\w]\$ '" >> /root/.bashrc
 
 # Add shell script to path
+
 ADD sepal.sh /usr/local/bin/sepal
 RUN chmod +x /usr/local/bin/sepal
 
@@ -51,8 +52,9 @@ RUN chmod +x /usr/local/bin/sepal
 ADD ./package.json $PROJECT_DIR/dev-env/
 ADD ./package-lock.json $PROJECT_DIR/dev-env/
 ADD ./src $PROJECT_DIR/dev-env/src/
-ADD ./config /dev-env/config/
+ADD ./config $PROJECT_DIR/dev-env/config/
 
-WORKDIR $PROJECT_DIR/dev-env
+WORKDIR $PROJECT_DIR/dev-env/
 RUN npm install
+
 WORKDIR $PROJECT_DIR
