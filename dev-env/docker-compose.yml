@@ -13,3 +13,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ..:/usr/local/src/sepal
       - ${SEPAL_CONFIG:-~/.sepal}:/etc/sepal/config
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    name: sepal
