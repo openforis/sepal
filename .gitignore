@@ -75,3 +75,5 @@ node_modules/
 
 # SEPAL data
 sepal-data/
+
+supervisord.pid
