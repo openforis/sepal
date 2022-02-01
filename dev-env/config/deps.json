@@ -40,7 +40,7 @@
     },
     "haproxy": {
         "build": {},
-        "run": []
+        "run": ["letsencrypt", "gateway"]
     },
     "java": {
         "build": {},
@@ -94,7 +94,7 @@
         "build": {
             "java": "build"
         },
-        "run": []
+        "run": ["mysql"]
     },
     "ssh-gateway": {
         "build": {},
@@ -118,7 +118,7 @@
         "build": {
             "java": "build"
         },
-        "run": []
+        "run": ["mysql", "ldap"]
     },
     "user-files": {
         "build": {},
