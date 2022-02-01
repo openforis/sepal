@@ -178,6 +178,8 @@ class _TabHandle extends React.Component {
         if (!inputElement || !scrollableElement)
             return
         const tabElement = inputElement.closest(`.${styles.tab}`)
+        if (!tabElement)
+            return
         const tabLeft = tabElement.offsetLeft
         const tabWidth = tabElement.clientWidth
         const tabRight = tabLeft + tabWidth

@@ -18,6 +18,7 @@
     <link href="https://fonts.googleapis.com/css?family=Ubuntu+Mono: 400,700" rel="stylesheet">
     <script async src="https://www.googletagmanager.com/gtag/js?id=%REACT_APP_GOOGLE_ANALYTICS_ID%"></script>
     <script>
+        window.process = {} // HACK: temporary fix after switching to create-react-app 5
         window.googleAnalyticsId = '%REACT_APP_GOOGLE_ANALYTICS_ID%'
         window.googleMapsApiKey = '%REACT_APP_GOOGLE_MAPS_API_KEY%'
         window.dataLayer = window.dataLayer || []
