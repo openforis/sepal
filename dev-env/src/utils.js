@@ -158,7 +158,7 @@ export const isModule = name => {
     const module = _(deps)
         .find((_, moduleName) => moduleName === name)
     if (!module) {
-        showModuleStatus(name, UNDEFINED)
+        showModuleStatus(name, STATUS.UNDEFINED)
     }
     return module
 }
