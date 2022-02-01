@@ -38,6 +38,10 @@ RUN chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 RUN curl -sL https://deb.nodesource.com/setup_17.x | bash
 RUN apt-get update && apt-get -y install nodejs
 
+# Install npm-check-updates
+
+RUN npm install -g npm-check-updates
+
 # Set bash prompt
 
 RUN echo "export PS1='[\[\033[1;34m\]\u@dev-env\[\033[0m\]:\w]\$ '" >> /root/.bashrc
@@ -55,7 +59,6 @@ ADD ./src $PROJECT_DIR/dev-env/src/
 ADD ./config $PROJECT_DIR/dev-env/config/
 
 WORKDIR $PROJECT_DIR/dev-env/
-RUN npm install -g npm-check-updates
 RUN npm install
 
 WORKDIR $PROJECT_DIR
