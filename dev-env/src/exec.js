@@ -15,14 +15,20 @@ export const exec = ({command, args, showStdOut, showStdErr}) =>
 
         cmd.stdout.on('data', data => {
             const out = data.toString('utf8')
-            showStdOut && process.stdout.write(out)
-            stdout += out
+            if (showStdOut) {
+                process.stdout.write(out)
+            } else {
+                stdout += out
+            }
         })
 
         cmd.stderr.on('data', data => {
             const err = data.toString('utf8')
-            showStdErr && process.stderr.write(err)
-            stderr += err
+            if (showStdErr) {
+                process.stderr.write(err)
+            } else {
+                stderr += err
+            }
         })
 
         cmd.on('close', code =>

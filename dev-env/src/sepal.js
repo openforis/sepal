@@ -6,6 +6,7 @@ import {build} from './build.js'
 import {start} from './start.js'
 import {stop} from './stop.js'
 import {restart} from './restart.js'
+import {run} from './run.js'
 import {log} from './log.js'
 
 const main = async () => {
@@ -59,6 +60,13 @@ const main = async () => {
         .option('-q, --quiet', 'Quiet')
         .argument('[module...]', 'Modules to restart')
         .action(restart)
+    
+    program.command('run')
+        .description('Run a single module with log tail')
+        .option('-d, --dependencies', 'Show dependencies')
+        .option('-r, --recursive', 'Recursive', true)
+        .argument('<module>', 'Module to run')
+        .action(run)
     
     try {
         await program.parseAsync(process.argv)
