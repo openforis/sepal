@@ -55,6 +55,7 @@ ADD ./src $PROJECT_DIR/dev-env/src/
 ADD ./config $PROJECT_DIR/dev-env/config/
 
 WORKDIR $PROJECT_DIR/dev-env/
+RUN npm install -g npm-check-updates
 RUN npm install
 
 WORKDIR $PROJECT_DIR
