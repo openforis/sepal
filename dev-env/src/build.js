@@ -10,7 +10,7 @@ const buildModule = async (module, options = {}, parent) => {
     try {
         if (isModule(module)) {
             await stop(module)
-            await buildDeps(module)
+            await buildDeps(module, options)
             await startBuildDeps(module)
             showModuleStatus(module, STATUS.BUILDING)
             const buildOptions = _.compact([
@@ -33,22 +33,22 @@ const buildModule = async (module, options = {}, parent) => {
     }
 }
 
-const buildDeps = async module => {
+const buildDeps = async (module, options) => {
     const deps = getBuildDeps(module)
     if (deps.length) {
         log.debug(`Build dependencies for module ${module}:`, deps)
         for (const dep of deps) {
-            await buildModule(dep, module)
+            await buildModule(dep, options, module)
         }
     }
 }
 
-const startBuildDeps = async module => {
+const startBuildDeps = async (module, options) => {
     const deps = getBuildRunDeps(module)
     if (deps.length) {
         log.debug(`Start build dependencies for module ${module}:`, deps)
         for (const dep of deps) {
-            await startModule(dep, module)
+            await startModule(dep, options, module)
         }
     }
 }
