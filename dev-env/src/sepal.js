@@ -10,7 +10,10 @@ import {run} from './run.js'
 import {log} from './log.js'
 
 const main = async () => {
-    process.on('SIGINT', () => reset())
+    process.on('SIGINT', () => {
+        reset()
+        exit(0)
+    })
 
     program.exitOverride()
 
