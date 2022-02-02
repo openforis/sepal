@@ -147,7 +147,7 @@ export const showModuleStatus = (module, status, options) => {
         .horizontalAbsolute(DEPS_COLUMN)
         .write(getDepInfo(module, options))
 
-    if ([STATUS.BUILDING, STATUS.STARTING, STATUS.STOPPING].includes(status)) {
+    if ([STATUS.STARTING, STATUS.STOPPING].includes(status)) {
         cursor.horizontalAbsolute(0)
     } else {
         cursor.write('\n')
