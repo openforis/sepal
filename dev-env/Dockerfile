@@ -44,7 +44,7 @@ RUN npm install -g npm-check-updates
 
 # Set bash prompt
 
-RUN echo "export PS1='[\[\033[1;34m\]\u@dev-env\[\033[0m\]:\w]\$ '" >> /root/.bashrc
+RUN echo "export PS1='[\[\033[1;35m\]\u@dev-env\[\033[0m\]:\w]\$ '" >> /root/.bashrc
 
 # Add shell script to path
 
