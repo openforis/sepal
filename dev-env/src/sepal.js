@@ -12,7 +12,7 @@ import {log} from './log.js'
 const main = async () => {
     process.on('SIGINT', () => {
         reset()
-        exit(0)
+        process.exit(0)
     })
 
     program.exitOverride()
