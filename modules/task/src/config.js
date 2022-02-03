@@ -11,6 +11,7 @@ program
     .option('--gee-key-path <value>')
     .option('--google-project-id <value>')
     .option('--google-region <value>')
+    .option('--sepal-host <value>')
     .option('--sepal-endpoint <value>')
     .option('--sepal-username <value>')
     .option('--sepal-password <value>')
@@ -25,6 +26,7 @@ const {
     geeKeyPath,
     googleProjectId,
     googleRegion,
+    sepalHost,
     sepalEndpoint,
     sepalUsername,
     sepalPassword,
@@ -55,6 +57,7 @@ module.exports = {
     googleProjectId,
     googleRegion,
     serviceAccountCredentials,
+    sepalHost,
     sepalEndpoint,
     sepalUsername,
     sepalPassword,
