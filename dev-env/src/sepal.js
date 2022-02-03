@@ -5,7 +5,6 @@ import {showStatus, exit} from './utils.js'
 import {build} from './build.js'
 import {start} from './start.js'
 import {stop} from './stop.js'
-import {restart} from './restart.js'
 import {run} from './run.js'
 import {log} from './log.js'
 
@@ -31,7 +30,7 @@ const main = async () => {
     program.command('build')
         .description('Build modules')
         .option('-nc, --no-cache', 'No cache')
-        .option('-r, --recursive', 'Recursive', false)
+        .option('-r, --recursive', 'Recursive')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .argument('[module...]', 'Modules to build')
@@ -39,8 +38,8 @@ const main = async () => {
     
     program.command('start')
         .description('Start modules')
-        .option('-d, --dependencies', 'Show dependencies')
-        .option('-r, --recursive', 'Recursive', true)
+        .option('-s, --stop', 'Stop and restart')
+        .option('-sd, --stop-dependencies', 'Stop and restart dependencies too')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .argument('[module...]', 'Modules to start')
@@ -48,24 +47,14 @@ const main = async () => {
     
     program.command('stop')
         .description('Stop modules')
-        .option('-d, --dependencies', 'Show dependencies')
-        .option('-r, --recursive', 'Recursive', false)
+        .option('-r, --recursive', 'Stop dependencies too')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .argument('[module...]', 'Modules to stop')
         .action(stop)
     
-    program.command('restart')
-        .description('Restart modules')
-        .option('-d, --dependencies', 'Show dependencies')
-        .option('-v, --verbose', 'Verbose')
-        .option('-q, --quiet', 'Quiet')
-        .argument('[module...]', 'Modules to restart')
-        .action(restart)
-    
     program.command('run')
         .description('Run a single module with log tail')
-        .option('-d, --dependencies', 'Show dependencies')
         .option('-r, --recursive', 'Recursive', true)
         .argument('<module>', 'Module to run')
         .action(run)

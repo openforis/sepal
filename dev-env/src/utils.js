@@ -106,22 +106,29 @@ const getDepInfo = (module, options = {}) =>
     ]).join(', ')
 
 const expandGroup = group =>
-    groups[group] || []
+    group === 'all' ? getAllModules() : groups[group] || []
 
 const expandGroups = modules =>
     _(modules)
         .map(moduleOrGroup =>
-                moduleOrGroup.startsWith(GROUP_PREFIX)
-                    ? expandGroup(moduleOrGroup.substring(GROUP_PREFIX.length)) 
-                    : moduleOrGroup
+            moduleOrGroup.startsWith(GROUP_PREFIX)
+                ? expandGroup(moduleOrGroup.substring(GROUP_PREFIX.length)) 
+                : moduleOrGroup
         )
         .flatten()
         .uniq()
+        .value()
 
-export const getModules = modules =>
-    _.isEmpty(modules)
-        ? getAllModules()
-        : expandGroups(_.castArray(modules))
+export const getModules = modules => {
+    if (_.isEmpty(modules)) {
+        const modules = expandGroups([':default'])
+        return modules.length
+            ? modules
+            : getAllModules()
+    } else {
+        return expandGroups(_.castArray(modules))
+    }
+}
 
 export const showStatus = async (modules, options) => {
     const result = await getStatus(modules)

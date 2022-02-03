@@ -1,5 +1,5 @@
 import {SEPAL_SRC, ENV_FILE} from './config.js'
-import {restart} from './restart.js'
+import {start} from './start.js'
 import {exec} from './exec.js'
 import {exit, getModules, isModule, showModuleStatus, STATUS} from './utils.js'
 import {getBuildDeps, getBuildRunDeps} from './deps.js'
@@ -26,26 +26,6 @@ const buildModule = async (module, options = {}, parent) => {
     }
 }
 
-export const build = async (modules, options) => {
-    const buildActions = _(getModules(modules))
-        .map(module => getBuildActions(module))
-        .flatten()
-        .uniqWith(_.isEqual)
-        .value()
-
-    for (const buildAction of buildActions) {
-        const {module, action} = buildAction
-        log.info('***', {module, action})
-        if (action === 'build') {
-            await buildModule(module)
-        } else if (action === 'run') {
-            await restart(module)
-        } else {
-            log.error('Unsupported action:', action)
-        }
-    }
-}
-
 const getBuildActions = module => {
     const buildActions = _(getBuildDeps(module))
         .map(module => getBuildActions(module))
@@ -61,4 +41,22 @@ const getBuildActions = module => {
         ...runActions,
         {module, action: 'build'}
     ]
+}
+
+export const build = async (modules, options) => {
+    const buildActions = _(getModules(modules))
+        .map(module => getBuildActions(module))
+        .flatten()
+        .uniqWith(_.isEqual)
+        .value()
+
+    for (const {module, action} of buildActions) {
+        if (action === 'build') {
+            await buildModule(module, options)
+        } else if (action === 'run') {
+            await start(module, {stop: true})
+        } else {
+            log.error('Unsupported action:', action)
+        }
+    }
 }

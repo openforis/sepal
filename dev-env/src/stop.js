@@ -3,23 +3,12 @@ import {getModules, isModule, isRunnable, isRunning, showModuleStatus, showStatu
 import {getInverseRunDeps} from './deps.js'
 import {SEPAL_SRC, ENV_FILE} from './config.js'
 import {log} from './log.js'
-
-const stopDeps = async (module, options) => {
-    const deps = getInverseRunDeps(module)
-    if (deps.length) {
-        for (const dep of deps) {
-            await stopModule(dep, options, module)
-        }
-    }
-}
+import _ from 'lodash'
 
 export const stopModule = async (module, options = {}, _parent) => {
     try {
         if (isModule(module)) {
             if (isRunnable(module)) {
-                if (options.recursive) {
-                    await stopDeps(module, options)
-                }
                 if (await isRunning(module)) {
                     showModuleStatus(module, STATUS.STOPPING)
                     await exec({
@@ -39,8 +28,31 @@ export const stopModule = async (module, options = {}, _parent) => {
     }
 }
 
+const getStopActions = (modules, options = {}, parent) => {
+    const stopActions = !parent || options.recursive
+        ? modules.map(module => ({module, action: 'stop'}))
+        : []
+    const depActions = _.flatten(
+        modules.map(
+            module => getStopActions(getInverseRunDeps(module), options, module)
+        )
+    )
+    return [
+        ...stopActions,
+        ...depActions
+    ]
+}
+
 export const stop = async (modules, options) => {
-    for (const module of getModules(modules)) {
-        await stopModule(module, options)
+    const stopActions = _(getStopActions(getModules(modules), options))
+        .uniqWith(_.isEqual)
+        .value()
+
+    for (const {module, action} of stopActions) {
+        if (action === 'stop') {
+            await stopModule(module, _.pick(options, ['verbose', 'quiet']))
+        } else {
+            log.error('Unsupported action:', action)
+        }
     }
 }
