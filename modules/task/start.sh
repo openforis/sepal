@@ -16,6 +16,7 @@ fi
 if [[ "${DEPLOY_ENVIRONMENT}" == "DEV" ]]
 then
   echo "Starting nodemon"
+  [[ -d node_modules ]] || npm install
   exec sudo -Eu $USERNAME "PATH=$PATH" nodemon \
     --watch "${MODULE}"/src \
     --watch "${SHARED}" \

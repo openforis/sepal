@@ -6,6 +6,7 @@ source /home/node/.nvm/nvm.sh
 if [[ "${DEPLOY_ENVIRONMENT}" == "DEV" ]]
 then
   echo "Starting nodemon"
+  [[ -d node_modules ]] || npm install
   exec nodemon \
     --watch "${MODULE}/src" \
     --watch "${SHARED}" \
