@@ -15,5 +15,16 @@
         "user",
         "user-files",
         "user-storage"
+    ],
+    "process": [
+        "gateway",
+        "gee",
+        "gui",
+        "haproxy",
+        "ldap",
+        "mysql",
+        "rabbitmq",
+        "sepal-server",
+        "user"
     ]
 }
