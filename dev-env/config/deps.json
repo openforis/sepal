@@ -25,7 +25,7 @@
     },
     "gee": {
         "build": {},
-        "run": []
+        "run": ["sepal-server"]
     },
     "geospatial-toolkit": {
         "build": {
