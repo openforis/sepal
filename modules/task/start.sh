@@ -17,7 +17,7 @@ if [[ "${DEPLOY_ENVIRONMENT}" == "DEV" ]]
 then
   echo "Starting nodemon"
   [[ -d node_modules ]] || npm install
-  exec sudo -Eu $USERNAME "PATH=$PATH" nodemon \
+  exec sudo -Eu $USERNAME "PATH=$PATH NODE_TLS_REJECT_UNAUTHORIZED=0" nodemon \
     --watch "${MODULE}"/src \
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9234 \
