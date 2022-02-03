@@ -9,11 +9,13 @@ import {restart} from './restart.js'
 import {run} from './run.js'
 import {log} from './log.js'
 
+const exit = code => {
+    reset()
+    process.exit(code)
+}
+
 const main = async () => {
-    process.on('SIGINT', () => {
-        reset()
-        process.exit(0)
-    })
+    process.on('SIGINT', () => exit(2))
 
     program.exitOverride()
 
@@ -79,9 +81,11 @@ const main = async () => {
     } catch (error) {
         if (!['commander.helpDisplayed', 'commander.help', 'commander.version', 'commander.unknownOption', 'commander.unknownCommand'].includes(error.code)) {
             log.error(error)
+            exit(1)
         }
     }
-    reset()
 }
 
 main().catch(log.error)
+
+exit(0)
