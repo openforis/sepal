@@ -78,6 +78,7 @@ const main = async () => {
     
     try {
         await program.parseAsync(process.argv)
+        exit(0)
     } catch (error) {
         if (!['commander.helpDisplayed', 'commander.help', 'commander.version', 'commander.unknownOption', 'commander.unknownCommand'].includes(error.code)) {
             log.error(error)
@@ -87,5 +88,3 @@ const main = async () => {
 }
 
 main().catch(log.error)
-
-exit(0)
