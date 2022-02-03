@@ -82,7 +82,7 @@
     },
     "sandbox": {
         "build": {
-            "sandbox-base": "build"
+            "geospatial-toolkit": "build"
         },
         "run": false
     },
