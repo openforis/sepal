@@ -1,4 +1,5 @@
 import {SEPAL_SRC, ENV_FILE} from './config.js'
+import {start} from './start.js'
 import {stop} from './stop.js'
 import {exec} from './exec.js'
 import {getModules, isModule, showModuleStatus, STATUS} from './utils.js'
@@ -43,13 +44,11 @@ const buildDeps = async (module, options) => {
     }
 }
 
-const startBuildDeps = async (module, options) => {
+const startBuildDeps = async module => {
     const deps = getBuildRunDeps(module)
     if (deps.length) {
         log.debug(`Start build dependencies for module ${module}:`, deps)
-        for (const dep of deps) {
-            await startModule(dep, options, module)
-        }
+        await start(deps, {recursive: true})
     }
 }
 
