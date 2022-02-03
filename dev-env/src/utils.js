@@ -130,7 +130,9 @@ export const showStatus = async (modules, options) => {
             const info = _.find(result, ({name}) => name === module)
             const status = info
                 ? started(info.status)
-                : 'STOPPED'
+                : isRunnable(module)
+                    ? STATUS.STOPPED
+                    : STATUS.NON_RUNNABLE
             showModuleStatus(module, status, options)
         }
     }
