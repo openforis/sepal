@@ -4,6 +4,7 @@ import {stopModule} from './stop.js'
 
 export const restart = async (modules, options) => {
     for (const module of getModules(modules)) {
-        await stopModule(module, options) && await startModule(module, options)
+        await stopModule(module, options)
+        await startModule(module, options)
     }
 }

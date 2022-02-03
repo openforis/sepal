@@ -1,8 +1,7 @@
 import {exec} from './exec.js'
-import {isModule, isRunnable, isRunning, showModuleStatus, STATUS} from './utils.js'
+import {exit, isModule, isRunnable, isRunning, showModuleStatus, STATUS} from './utils.js'
 import {restart} from './restart.js'
 import {SEPAL_SRC, ENV_FILE} from './config.js'
-import {log} from './log.js'
 
 const runModule = async (module, options = {}, _parent) => {
     try {
@@ -15,16 +14,13 @@ const runModule = async (module, options = {}, _parent) => {
                         showStdOut: true
                     })
                 }
-                return true
             } else {
                 showModuleStatus(module, STATUS.NON_RUNNABLE)
-                return false
             }
         }
     } catch (error) {
         showModuleStatus(module, STATUS.ERROR)
-        log.error(error.stderr || error)
-        return false
+        exit({error})
     }
 }
 

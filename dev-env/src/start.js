@@ -1,5 +1,5 @@
 import {exec} from './exec.js'
-import {getModules, isModule, isRunnable, isRunning, showModuleStatus, showStatus, STATUS} from './utils.js'
+import {exit, getModules, isModule, isRunnable, isRunning, showModuleStatus, showStatus, STATUS} from './utils.js'
 import {getDirectRunDeps} from './deps.js'
 import {SEPAL_SRC, ENV_FILE} from './config.js'
 import {log} from './log.js'
@@ -29,16 +29,13 @@ export const startModule = async (module, options = {}, _parent) => {
                     })
                 }
                 await showStatus([module], options)
-                return true
             } else {
                 showModuleStatus(module, STATUS.NON_RUNNABLE)
-                return false
             }
         }
     } catch (error) {
         showModuleStatus(module, STATUS.ERROR)
-        log.error(error.stderr || error)
-        return false
+        exit({error})
     }
 }
 

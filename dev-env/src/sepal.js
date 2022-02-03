@@ -1,7 +1,7 @@
 #!/usr/bin/node
 
 import {program} from 'commander'
-import {showStatus, reset} from './utils.js'
+import {showStatus, exit} from './utils.js'
 import {build} from './build.js'
 import {start} from './start.js'
 import {stop} from './stop.js'
@@ -9,13 +9,8 @@ import {restart} from './restart.js'
 import {run} from './run.js'
 import {log} from './log.js'
 
-const exit = code => {
-    reset()
-    process.exit(code)
-}
-
 const main = async () => {
-    process.on('SIGINT', () => exit(2))
+    process.on('SIGINT', () => exit({interrupted: true}))
 
     program.exitOverride()
 
@@ -78,11 +73,10 @@ const main = async () => {
     
     try {
         await program.parseAsync(process.argv)
-        exit(0)
+        exit({normal: true})
     } catch (error) {
         if (!['commander.helpDisplayed', 'commander.help', 'commander.version', 'commander.unknownOption', 'commander.unknownCommand'].includes(error.code)) {
-            log.error(error)
-            exit(1)
+            exit({error})
         }
     }
 }

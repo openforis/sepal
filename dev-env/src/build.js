@@ -2,7 +2,7 @@ import {SEPAL_SRC, ENV_FILE} from './config.js'
 import {start} from './start.js'
 import {stop} from './stop.js'
 import {exec} from './exec.js'
-import {getModules, isModule, showModuleStatus, STATUS} from './utils.js'
+import {exit, getModules, isModule, showModuleStatus, STATUS} from './utils.js'
 import {getBuildDeps, getBuildRunDeps} from './deps.js'
 import {log} from './log.js'
 import _ from 'lodash'
@@ -23,14 +23,10 @@ const buildModule = async (module, options = {}, parent) => {
                 showStdOut: !options.quiet
             })
             showModuleStatus(module, STATUS.BUILT)
-            return true
-        } else {
-            return false
         }
     } catch (error) {
         showModuleStatus(module, STATUS.ERROR)
-        log.error(error.stderr || error)
-        return false
+        exit({error})
     }
 }
 

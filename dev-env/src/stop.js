@@ -29,16 +29,13 @@ export const stopModule = async (module, options = {}, _parent) => {
                     })
                 }
                 await showStatus([module], options)
-                return true
             } else {
                 showModuleStatus(module, STATUS.NON_RUNNABLE)
-                return false
             }
         }
     } catch (error) {
         showModuleStatus(module, STATUS.ERROR)
         log.error(error.stderr || error)
-        return false
     }
 }
 

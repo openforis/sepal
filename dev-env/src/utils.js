@@ -171,5 +171,23 @@ export const isRunning = async module => {
     return result.length === 1
 }
 
-export const reset = () =>
+export const exit = reason => {
     cursor.reset().write('\n').show()
+    if (reason.normal) {
+        log.info(chalk.greenBright('Completed'))
+        process.exit(0)
+    }
+    else if (reason.error) {
+        const error = reason.error
+        log.error(chalk.bgRed('Error'), error.stderr || error)
+        process.exit(1)
+    }
+    else if (reason.interrupted) {
+        log.info(chalk.yellow('Interrupted (SIGINT)'))
+        process.exit(2)
+    }
+    else {
+        log.info(chalk.redBright('Unsupported exit reason:'), reason)
+        process.exit(3)
+    }
+}
