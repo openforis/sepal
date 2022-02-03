@@ -9,7 +9,7 @@ program
     .option('--gee-email <value>')
     .option('--gee-key-path <value>')
     .option('--gee-key <value>')
-    .option('--sepal-host <value>')
+    .option('--sepal-endpoint <value>')
     .option('--sepal-username <value>')
     .option('--sepal-password <value>')
     .option('--port <number>', 'Port', DEFAULT_PORT)
@@ -18,7 +18,7 @@ program
 const {geeEmail,
     geeKey,
     geeKeyPath,
-    sepalHost,
+    sepalEndpoint,
     sepalUsername,
     sepalPassword,
     port
@@ -44,7 +44,7 @@ log.info('Configuration loaded')
 
 module.exports = {
     serviceAccountCredentials,
-    sepalHost,
+    sepalEndpoint,
     sepalUsername,
     sepalPassword,
     port

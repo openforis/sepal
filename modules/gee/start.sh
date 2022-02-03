@@ -15,7 +15,7 @@ then
     src/main.js \
     --gee-email "$EE_ACCOUNT" \
     --gee-key "$EE_PRIVATE_KEY" \
-    --sepal-host "$SEPAL_HOST" \
+    --sepal-endpoint "$SEPAL_ENDPOINT" \
     --sepal-username "sepalAdmin" \
     --sepal-password "$SEPAL_ADMIN_PASSWORD"
 else
@@ -24,7 +24,7 @@ else
     src/main.js \
     --gee-email "$EE_ACCOUNT" \
     --gee-key "$EE_PRIVATE_KEY" \
-    --sepal-host "$SEPAL_HOST" \
+    --sepal-endpoint "$SEPAL_ENDPOINT" \
     --sepal-username "sepalAdmin" \
     --sepal-password "$SEPAL_ADMIN_PASSWORD"
 fi
