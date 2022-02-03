@@ -2,9 +2,8 @@ import {exec} from './exec.js'
 import {exit, getModules, isModule, isRunnable, isRunning, showModuleStatus, showStatus, STATUS} from './utils.js'
 import {getDirectRunDeps} from './deps.js'
 import {SEPAL_SRC, ENV_FILE} from './config.js'
-import {log} from './log.js'
 
-const startDeps = async (module, options) => {
+export const startDeps = async (module, options) => {
     const deps = getDirectRunDeps(module)
     if (deps.length) {
         for (const dep of deps) {
@@ -13,7 +12,7 @@ const startDeps = async (module, options) => {
     }
 }
 
-export const startModule = async (module, options = {}, _parent) => {
+const startModule = async (module, options = {}, _parent) => {
     try {
         if (isModule(module)) {
             if (isRunnable(module)) {

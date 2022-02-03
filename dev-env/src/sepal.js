@@ -58,7 +58,6 @@ const main = async () => {
     program.command('restart')
         .description('Restart modules')
         .option('-d, --dependencies', 'Show dependencies')
-        .option('-r, --recursive', 'Recursive')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .argument('[module...]', 'Modules to restart')
