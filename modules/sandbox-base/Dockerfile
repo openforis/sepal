@@ -165,7 +165,3 @@ RUN bash -c 'source ${SDKMAN_DIR}/bin/sdkman-init.sh && sdk install java ${JAVA_
 
 # Configure R Java home
 RUN bash -c 'source ${SDKMAN_DIR}/bin/sdkman-init.sh && R CMD javareconf'
-
-# Cleanup
-RUN apt-get -y clean
-RUN apt-get -y autoremove
