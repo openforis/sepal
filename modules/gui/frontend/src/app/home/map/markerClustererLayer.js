@@ -1,7 +1,6 @@
+import {MarkerClusterer} from '@googlemaps/markerclusterer'
 import Layer from './layer/layer'
-import MarkerClusterer from '@googlemaps/markerclustererplus'
 import _ from 'lodash'
-import styles from './markerClustererLayer.module.css'
 
 const DEFAULT_COLOR = '#FFFFFF'
 const DEFAULT_STROKE_COLOR = '#000000'
@@ -36,13 +35,35 @@ export default class MarkerClustererLayer extends Layer {
             scale: DEFAULT_SCALE
         }
 
-        this.markerCluster = new MarkerClusterer(null, [], {
-            clusterClass: styles.cluster,
-            maxZoom: 14
+        const renderer = {render: ({count, position}) => {
+            const svg = window.btoa(`
+  <svg fill="hsla(0, 0%, 0%, 0.4)" stroke="#FF0000" stroke-width="10" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+    <circle cx="120" cy="120" opacity=".6" r="70" stroke="hsla(0, 0%, 49%, 0.8)" stroke-width="10" />
+    <circle cx="120" cy="120" opacity=".3" r="90" stroke="hsla(0, 0%, 49%, 0.8)" stroke-width="10" />
+    <circle cx="120" cy="120" opacity=".2" r="110" stroke="hsla(0, 0%, 49%, 0.8)" stroke-width="10" />
+  </svg>`)
+
+            return new google.maps.Marker({
+                position,
+                icon: {
+                    url: `data:image/svg+xml;base64,${svg}`,
+                    scaledSize: new google.maps.Size(45, 45),
+                },
+                label: {
+                    text: String(count),
+                    color: 'rgba(255,255,255,0.9)',
+                    fontSize: '12px',
+                },
+                title: `Cluster of ${count} markers`,
+                zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
+            })
+        }}
+
+        this.markerCluster = new MarkerClusterer({
+            map: null,
+            markers: [],
+            renderer
         })
-        this.markerCluster.setStyles(
-            this.markerCluster.getStyles().map(style => _.omit({...style, textColor: 'white'}, 'url'))
-        )
     }
 
     setMarkers(markers) {
