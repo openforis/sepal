@@ -1,6 +1,5 @@
 import {SEPAL_SRC, ENV_FILE} from './config.js'
-import {start} from './start.js'
-import {stop} from './stop.js'
+import {restart} from './restart.js'
 import {exec} from './exec.js'
 import {exit, getModules, isModule, showModuleStatus, STATUS} from './utils.js'
 import {getBuildDeps, getBuildRunDeps} from './deps.js'
@@ -10,9 +9,6 @@ import _ from 'lodash'
 const buildModule = async (module, options = {}, parent) => {
     try {
         if (isModule(module)) {
-            await stop(module)
-            await buildDeps(module, options)
-            await startBuildDeps(module)
             showModuleStatus(module, STATUS.BUILDING)
             const buildOptions = _.compact([
                 !options.cache && (!parent || options.recursive) ? '--no-cache' : null
@@ -30,26 +26,39 @@ const buildModule = async (module, options = {}, parent) => {
     }
 }
 
-const buildDeps = async (module, options) => {
-    const deps = getBuildDeps(module)
-    if (deps.length) {
-        log.debug(`Build dependencies for module ${module}:`, deps)
-        for (const dep of deps) {
-            await buildModule(dep, options, module)
+export const build = async (modules, options) => {
+    const buildActions = _(getModules(modules))
+        .map(module => getBuildActions(module))
+        .flatten()
+        .uniqWith(_.isEqual)
+        .value()
+
+    for (const buildAction of buildActions) {
+        const {module, action} = buildAction
+        log.info('***', {module, action})
+        if (action === 'build') {
+            await buildModule(module)
+        } else if (action === 'run') {
+            await restart(module)
+        } else {
+            log.error('Unsupported action:', action)
         }
     }
 }
 
-const startBuildDeps = async module => {
-    const deps = getBuildRunDeps(module)
-    if (deps.length) {
-        log.debug(`Start build dependencies for module ${module}:`, deps)
-        await start(deps, {recursive: true})
-    }
-}
+const getBuildActions = module => {
+    const buildActions = _(getBuildDeps(module))
+        .map(module => getBuildActions(module))
+        .flatten()
+        .value()
 
-export const build = async (modules, options) => {
-    for (const module of getModules(modules)) {
-        await buildModule(module, options)
-    }
+    const runActions = _(getBuildRunDeps(module))
+        .map(module => ({module, action: 'run'}))
+        .value()
+
+    return [
+        ...buildActions,
+        ...runActions,
+        {module, action: 'build'}
+    ]
 }
