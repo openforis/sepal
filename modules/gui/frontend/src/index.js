@@ -34,7 +34,7 @@ const batchActions = () => next => action => {
 
 const useDevTools = middleware =>
     process.env.NODE_ENV === 'development'
-        ? require('redux-devtools-extension').composeWithDevTools(middleware)
+        ? require('@redux-devtools/extension').composeWithDevTools(middleware)
         : middleware
 
 const store = createStore(
