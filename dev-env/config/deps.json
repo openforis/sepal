@@ -46,10 +46,6 @@
         "build": {},
         "run": false
     },
-    "jenkins": {
-        "build": {},
-        "run": false
-    },
     "ldap": {
         "build": {},
         "run": []
@@ -94,11 +90,11 @@
         "build": {
             "java": "build"
         },
-        "run": ["mysql"]
+        "run": ["mysql", "user"]
     },
     "ssh-gateway": {
         "build": {},
-        "run": []
+        "run": ["ldap"]
     },
     "sys-monitor": {
         "build": {},
