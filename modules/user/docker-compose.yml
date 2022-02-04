@@ -36,4 +36,5 @@ services:
 
 networks:
   sepal:
+    external: true
     name: sepal
