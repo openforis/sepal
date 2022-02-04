@@ -26,5 +26,18 @@
         "rabbitmq",
         "sepal-server",
         "user"
+    ],
+    "apps": [
+        "app-manager",
+        "gateway",
+        "gui",
+        "haproxy",
+        "ldap",
+        "mysql",
+        "rabbitmq",
+        "sepal-server",
+        "ssh-gateway",
+        "terminal",
+        "user"
     ]
 }
