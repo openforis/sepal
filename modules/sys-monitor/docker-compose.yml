@@ -10,6 +10,12 @@ services:
     init: true
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: "5672"
+      SEPAL_SERVER_LOG: "/log/messages"
+      INITIAL_DELAY_MINUTES: "10"
+      AUTO_REARM_DELAY_HOURS: "24"
+      SEPAL_MONITORING_EMAIL: "${SEPAL_MONITORING_EMAIL}"
     deploy:
       restart_policy:
         condition: on-failure
