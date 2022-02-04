@@ -51,16 +51,19 @@ class RemappingToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='inputImagery'
                         label={msg('process.remapping.panel.inputImagery.button')}
-                        tooltip={msg('process.remapping.panel.inputImagery.tooltip')}/>
+                        tooltip={msg('process.remapping.panel.inputImagery.tooltip')}
+                        disabled={!initialized}/>
 
                     <Toolbar.ActivationButton
                         id='legend'
                         label={msg('process.remapping.panel.legend.button')}
-                        tooltip={msg('process.remapping.panel.legend.tooltip')}/>
+                        tooltip={msg('process.remapping.panel.legend.tooltip')}
+                        disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id='mapping'
                         label={msg('process.remapping.panel.mapping.button.label')}
-                        tooltip={msg('process.remapping.panel.mapping.button.tooltip')}/>
+                        tooltip={msg('process.remapping.panel.mapping.button.tooltip')}
+                        disabled={!initialized}/>
                 </Toolbar>
             </PanelWizard>
         )

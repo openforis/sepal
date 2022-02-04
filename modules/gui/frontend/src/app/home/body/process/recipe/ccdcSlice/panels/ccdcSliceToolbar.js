@@ -62,11 +62,13 @@ class CcdcSliceToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='source'
                         label={msg('process.ccdcSlice.panel.source.button')}
-                        tooltip={msg('process.ccdcSlice.panel.source.tooltip')}/>
+                        tooltip={msg('process.ccdcSlice.panel.source.tooltip')}
+                        disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id='date'
                         label={msg('process.ccdcSlice.panel.date.button')}
-                        tooltip={msg('process.ccdcSlice.panel.date.tooltip')}/>
+                        tooltip={msg('process.ccdcSlice.panel.date.tooltip')}
+                        disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id='options'
                         label={msg('process.ccdcSlice.panel.options.button')}

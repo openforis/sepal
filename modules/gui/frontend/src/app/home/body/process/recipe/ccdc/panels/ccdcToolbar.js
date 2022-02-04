@@ -72,15 +72,18 @@ class CcdcToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
-                        tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}/>
+                        tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}
+                        disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id='dates'
                         label={msg('process.ccdc.panel.dates.button')}
-                        tooltip={msg('process.ccdc.panel.dates.tooltip')}/>
+                        tooltip={msg('process.ccdc.panel.dates.tooltip')}
+                        disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id='sources'
                         label={msg('process.ccdc.panel.sources.button')}
-                        tooltip={msg('process.ccdc.panel.sources.tooltip')}/>
+                        tooltip={msg('process.ccdc.panel.sources.tooltip')}
+                        disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id='options'
                         label={msg('process.ccdc.panel.preprocess.button')}

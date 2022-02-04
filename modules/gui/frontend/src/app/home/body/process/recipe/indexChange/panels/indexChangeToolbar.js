@@ -57,11 +57,13 @@ class IndexChangeToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id="fromImage"
                         label={msg('process.indexChange.panel.inputImage.from.button.label')}
-                        tooltip={msg('process.indexChange.panel.inputImage.from.button.tooltip')}/>
+                        tooltip={msg('process.indexChange.panel.inputImage.from.button.tooltip')}
+                        disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id="toImage"
                         label={msg('process.indexChange.panel.inputImage.to.button.label')}
-                        tooltip={msg('process.indexChange.panel.inputImage.to.button.tooltip')}/>
+                        tooltip={msg('process.indexChange.panel.inputImage.to.button.tooltip')}
+                        disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id="legend"
                         label={msg('process.indexChange.panel.legend.button.label')}

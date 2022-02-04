@@ -63,12 +63,14 @@ class ClassificationToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='inputImagery'
                         label={msg('process.classification.panel.inputImagery.button')}
-                        tooltip={msg('process.classification.panel.inputImagery.tooltip')}/>
+                        tooltip={msg('process.classification.panel.inputImagery.tooltip')}
+                        disabled={!initialized}/>
 
                     <Toolbar.ActivationButton
                         id='legend'
                         label={msg('process.classification.panel.legend.button')}
-                        tooltip={msg('process.classification.panel.legend.tooltip')}/>
+                        tooltip={msg('process.classification.panel.legend.tooltip')}
+                        disabled={!initialized}/>
 
                     <Toolbar.ActivationButton
                         id='trainingData'

@@ -53,11 +53,13 @@ class RadarMosaicToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
-                        tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}/>
+                        tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}
+                        disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id='dates'
                         label={msg('process.radarMosaic.panel.dates.button')}
-                        tooltip={msg('process.radarMosaic.panel.dates.tooltip')}/>
+                        tooltip={msg('process.radarMosaic.panel.dates.tooltip')}
+                        disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id='options'
                         label={msg('process.radarMosaic.panel.options.button')}
