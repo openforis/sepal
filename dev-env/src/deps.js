@@ -13,7 +13,7 @@ export const getBuildRunDeps = module =>
         .value()
 
 export const getDirectRunDeps = module =>
-    (deps[module] || {}).run
+    (deps[module] || {}).run || []
 
 export const getInverseRunDeps = module =>
     _(deps)
