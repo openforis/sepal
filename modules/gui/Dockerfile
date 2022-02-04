@@ -26,5 +26,7 @@ ADD modules/${MODULE_NAME}/init_container.sh /usr/local/bin/init_container
 RUN chmod 500 /usr/local/bin/init_container
 
 ARG BUILD_NUMBER
+ENV BUILD_NUMBER=$BUILD_NUMBER
 ARG GIT_COMMIT
+ENV GIT_COMMIT=$GIT_COMMIT
 CMD ["/usr/local/bin/init_container"]
