@@ -32,7 +32,7 @@ function start {
   echo "******* Starting ${MODULE} *******"
   cd ${MODULE_DIR}
   docker-compose --file ${MODULE_DIR}/docker-compose.yml down
-  docker-compose --file ${MODULE_DIR}/docker-compose.yml up
+  docker-compose --file ${MODULE_DIR}/docker-compose.yml up -d
 }
 
 build r-proxy
