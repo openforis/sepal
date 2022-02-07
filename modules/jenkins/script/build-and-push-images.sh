@@ -4,6 +4,7 @@ set -e
 export SEPAL_VERSION=$1
 export SEPAL_DATA_DIR=/tmp/sepal-data
 export SEPAL_BACKUP_DIR=/tmp/sepal-backup
+export DEPLOY_ENVIRONMENT=OPS
 
 function build {
   local MODULE=$1
@@ -11,11 +12,9 @@ function build {
   echo
   echo "******* Building ${MODULE} *******"
   cd ${MODULE_DIR}
-  set -o pipefail && docker-compose \
+  set -o pipefail && BUILD_NUMBER=${SEPAL_VERSION} GIT_COMMIT=${GIT_COMMIT} docker-compose \
     --file ${MODULE_DIR}/docker-compose.yml \
     build \
-    --build-arg BUILD_NUMBER=${SEPAL_VERSION} \
-    --build-arg GIT_COMMIT=${GIT_COMMIT} \
     | tee /var/log/sepal-build/${MODULE}.log
 }
 
@@ -25,6 +24,17 @@ function push {
   echo "******* Pushing ${MODULE} *******"
   docker push localhost/openforis/${MODULE}:${SEPAL_VERSION}
 }
+
+function start {
+  local MODULE=$1
+  echo
+  echo "******* Starting ${MODULE} *******"
+  docker-compose --file ${MODULE_DIR}/docker-compose.yml down
+  docker-compose --file ${MODULE_DIR}/docker-compose.yml up
+}
+
+build r-proxy
+start r-proxy
 
 build sandbox-base
 build email
