@@ -27,8 +27,10 @@ function push {
 
 function start {
   local MODULE=$1
+  local MODULE_DIR=${WORKSPACE}/modules/${MODULE}
   echo
   echo "******* Starting ${MODULE} *******"
+  cd ${MODULE_DIR}
   docker-compose --file ${MODULE_DIR}/docker-compose.yml down
   docker-compose --file ${MODULE_DIR}/docker-compose.yml up
 }
