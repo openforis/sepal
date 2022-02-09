@@ -30,20 +30,20 @@ services:
       - "8180:8180"
     volumes:
       - ${SEPAL_DATA_DIR}/r-proxy/site-library:/usr/local/lib/R/site-library
-      - ${SEPAL_DATA_DIR}/r-proxy/cranroot:/R/cranroot
+      - ${SEPAL_DATA_DIR}/r-proxy/repo:/R
 
-#  r-proxy-test:
-#    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r:${SEPAL_VERSION:-latest}"
-#    container_name: r-proxy-test
-#    environment:
-#      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-#      SEPAL_HOST: "${SEPAL_HOST}"
-#    deploy:
-#      restart_policy:
-#        condition: on-failure
-#    networks:
-#      - sepal
-#    tty: true
+  # r-proxy-test:
+  #   image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r:${SEPAL_VERSION:-latest}"
+  #   container_name: r-proxy-test
+  #   environment:
+  #     DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+  #     SEPAL_HOST: "${SEPAL_HOST}"
+  #   deploy:
+  #     restart_policy:
+  #       condition: on-failure
+  #   networks:
+  #     - sepal
+  #   tty: true
 
 networks:
   sepal:

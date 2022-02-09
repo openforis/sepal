@@ -1,13 +1,13 @@
 const readline = require('readline')
 const https = require('https')
-const {getTarget} = require('./filesystem')
+const {getCranTarget} = require('./filesystem')
 const log = require('sepal/log').getLogger('packages')
 
 const getAvailablePackages = () =>
     new Promise((resolve, reject) => {
         log.debug('Requesting PACKAGES file')
         try {
-            const request = https.request(getTarget('PACKAGES', 'PACKAGES'), {
+            const request = https.request(getCranTarget('PACKAGES', 'PACKAGES'), {
                 method: 'GET'
             }, res => {
                 if (res.statusCode === 200) {
@@ -23,15 +23,15 @@ const getAvailablePackages = () =>
         }
     })
     
-const checkUpdates = async (enqueueUpdateBinaryPackage) => {
+const checkUpdates = async enqueueUpdateBinaryPackage => {
     log.info('Checking available packages')
     const res = await getAvailablePackages()
-    const rl = readline.createInterface({input: res});
+    const rl = readline.createInterface({input: res})
 
-    let name = null                     
+    let name = null
     let version = null
 
-    rl.on('line', (line) => {
+    rl.on('line', line => {
         if (line.startsWith('Package: ')) {
             name = line.substring(9)
         }

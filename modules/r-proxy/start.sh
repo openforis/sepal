@@ -16,8 +16,8 @@ then
     --inspect=0.0.0.0:9239 \
     src/main.js \
     --cran-repo https://cran.r-project.org \
-    --cran-root /R/cranroot \
-    --lib /usr/local/lib/R/site-library \
+    --repo-path /R \
+    --lib-path /usr/local/lib/R/site-library \
     --redis-uri redis://r-proxy-redis \
     --auto-update-interval-hours 24
 else
@@ -25,8 +25,8 @@ else
   exec node \
     src/main.js \
     --cran-repo https://cran.r-project.org \
-    --cran-root /R/cranroot \
-    --lib /usr/local/lib/R/site-library \
+    --repo-path /R \
+    --lib-path /usr/local/lib/R/site-library \
     --redis-uri redis://r-proxy-redis \
     --auto-update-interval-hours 24
 fi

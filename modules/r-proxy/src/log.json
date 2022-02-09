@@ -3,6 +3,8 @@
     "categories": {
         "config": "info",
         "proxy": "debug",
+        "proxy/cran": "debug",
+        "proxy/github": "debug",
         "queue": "info",
         "packages": "debug",
         "R": "debug",

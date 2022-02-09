@@ -6,4 +6,4 @@ services:
       - ${SEPAL_PROJECT_DIR}/lib/js/shared:/usr/local/src/sepal/lib/js/shared
       - ${SEPAL_PROJECT_DIR}/modules/r-proxy:/usr/local/src/sepal/modules/r-proxy
       - ${SEPAL_DATA_DIR}/r-proxy/site-library:/usr/local/lib/R/site-library
-      - ${SEPAL_DATA_DIR}/r-proxy/cranroot:/R/cranroot
+      - ${SEPAL_DATA_DIR}/r-proxy/repo:/R

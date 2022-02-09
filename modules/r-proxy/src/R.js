@@ -1,9 +1,9 @@
 const {spawn} = require('child_process')
-const {cranRoot, lib} = require('./config')
-const {isBinaryPackageCached} = require('./filesystem')
+const {CRAN_ROOT, GITHUB_ROOT, libPath, LOCAL_CRAN_REPO} = require('./config')
+const {isCranPackageCached, isGitHubPackageCached, getGitHubRepoPath} = require('./filesystem')
 const log = require('sepal/log').getLogger('R')
 
-const runScript = (script, args) =>
+const runScript = (script, args, {showStdOut, showStdErr} = {}) =>
     new Promise((resolve, reject) => {
         log.trace(`Running script ${script} with args:`, args)
         const cmd = spawn(script, args)
@@ -11,37 +11,59 @@ const runScript = (script, args) =>
         let stdout = ''
         let stderr = ''
     
-        cmd.stdout.on('data', data =>
-            stdout += data.toString('utf8')
-        )
+        cmd.stdout.on('data', data => {
+            const out = data.toString('utf8')
+            if (showStdOut) {
+                process.stdout.write(out)
+            } else {
+                stdout += out
+            }
+        })
     
-        cmd.stderr.on('data', data =>
-            stderr += data.toString('utf8')
-        )
+        cmd.stderr.on('data', data => {
+            const err = data.toString('utf8')
+            if (showStdErr) {
+                process.stdout.write(err)
+            } else {
+                stderr += err
+            }
+        })
     
         cmd.on('close', code =>
             code
-                ? reject({code, stderr})
+                ? reject({code, stdout, stderr})
                 : resolve(stdout)
         )
     })
 
-const installPackage = async (name, version, repo) => {
+const installCranPackage = async (name, version, repo) => {
     try {
-        log.debug(`Installing ${name}/${version}`)
-        log.trace(await runScript('src/R/install_package.r', [name, version, lib, repo]))
+        log.debug(`Installing ${name}/${version} from CRAN reposirory`)
+        await runScript('src/R/install_cran_package.r', [name, version, libPath, repo])
         log.info(`Installed ${name}/${version}`)
         return true
     } catch (error) {
-        log.warn(`Could not install ${name}/${version}`, error)
+        log.warn(`Could not install ${name}/${version} from CRAN repository`, error)
         return false
     }
 }
     
-const bundlePackage = async (name, version) => {
+const installLocalPackage = async (name, path) => {
+    try {
+        log.debug(`Installing ${name} (${path})`)
+        await runScript('src/R/install_local_package.r', [name, path, libPath, LOCAL_CRAN_REPO])
+        log.info(`Installed ${name} (${path})`)
+        return true
+    } catch (error) {
+        log.warn(`Could not install ${name} (${path})`, error)
+        return false
+    }
+}
+    
+const bundleCranPackage = async (name, version) => {
     try {
         log.debug(`Bundling ${name}/${version}`)
-        log.trace(await runScript('src/R/bundle_package.sh', [name, version, lib, cranRoot]))
+        await runScript('src/R/bundle_cran_package.sh', [name, version, libPath, CRAN_ROOT], {showStdOut: true, showStdErr: true})
         log.info(`Bundled ${name}/${version}`)
         return true
     } catch (error) {
@@ -50,9 +72,25 @@ const bundlePackage = async (name, version) => {
     }
 }
 
-const makeBinaryPackage = async (name, version, repo) =>
-    await isBinaryPackageCached(name, version) || await installPackage(name, version, repo) && await bundlePackage(name, version)
+const bundleGitHubPackage = async (name, path) => {
+    try {
+        log.debug(`Bundling ${name} (${path})`)
+        await runScript('src/R/bundle_github_package.sh', [name, path, libPath, GITHUB_ROOT], {showStdOut: true, showStdErr: true})
+        log.info(`Bundled ${name} (${path})`)
+        return true
+    } catch (error) {
+        log.warn(`Could not bundle ${name} (${path})`, error)
+        return false
+    }
+}
+
+const makeCranPackage = async (name, version, repo) =>
+    await isCranPackageCached(name, version) || await installCranPackage(name, version, repo) && await bundleCranPackage(name, version)
+    
+const makeGitHubPackage = async (name, path) =>
+    await isGitHubPackageCached(path) || await installLocalPackage(name, getGitHubRepoPath('src', path)) && await bundleGitHubPackage(name, path)
 
 module.exports = {
-    makeBinaryPackage
+    makeCranPackage,
+    makeGitHubPackage
 }
