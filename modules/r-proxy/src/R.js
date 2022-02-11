@@ -98,9 +98,14 @@ const bundleGitHubPackage = async (name, path) => {
 
 const makeCranPackage = async (name, version, repo) =>
     await isCranPackageCached(name, version) || await installCranPackage(name, version, repo) && await bundleCranPackage(name, version)
+
+const ensureGitHubPackageInstalled = async (name, path) =>
+    await isGitHubPackageSourceCached(path)
+        ? await installLocalPackage(name, getGitHubRepoPath('src', path))
+        : await installRemotePackage(name, getGitHubTarget(path))
     
 const makeGitHubPackage = async (name, path) =>
-    (await isGitHubPackageSourceCached(path) && await installLocalPackage(name, getGitHubRepoPath('src', path)) || await installRemotePackage(name, getGitHubTarget(path))) && await bundleGitHubPackage(name, path)
+    await ensureGitHubPackageInstalled(name, path) && await bundleGitHubPackage(name, path)
 
 module.exports = {
     makeCranPackage,
