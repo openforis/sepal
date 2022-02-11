@@ -5,7 +5,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/app-manager/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/app-manager:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/app-manager:${SEPAL_VERSION:-latest}"
     container_name: app-manager
     init: true
     volumes:

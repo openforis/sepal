@@ -5,7 +5,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/task/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/task:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/task:${SEPAL_VERSION:-latest}"
     container_name: task
     init: true
     environment:

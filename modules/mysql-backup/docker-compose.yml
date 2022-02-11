@@ -5,7 +5,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/mysql-backup/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/mysql-backup:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/mysql-backup:${SEPAL_VERSION:-latest}"
     container_name: mysql-backup
     volumes:
       - "${SEPAL_BACKUP_DIR}/mysql:/backup"

@@ -5,10 +5,97 @@
   become: yes
   gather_facts: true
 
-  vars_files:
-    - "{{ secret_vars_file }}"
-
   tasks:
+    - name: Create /data/sepal
+      file:
+        path: "/data/sepal"
+        state: directory
+
+    - name: Create /data/ldap
+      file:
+        path: "/data/sepal"
+        state: directory
+
+    - name: Create /data/ldap/certificates
+      file:
+        path: "/data/ldap/certificates"
+        state: directory
+
+    - name: Copy LDAP Certificate
+      copy:
+       src: "{{ CONFIG_HOME }}/certificates/ldap-ca.crt.pem"
+       dest: "/data/ldap/certificates/ldap-ca.crt.pem"
+
+    # EFS setup
+    - name: Install nfs-utils
+      yum:
+        name: "nfs-utils"
+
+    - name: Install amazon-efs-utils
+      yum:
+        name: 'amazon-efs-utils'
+
+    - name: Create /data/sepal/home
+      file:
+        path: "/data/sepal/home"
+        state: directory
+
+    - name: Mount EFS to /data/sepal/home
+      mount:
+        name: "/data/sepal/home"
+        fstype: "efs"
+        state: "mounted"
+        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/home"
+        opts: "defaults,_netdev"
+        dump: 0
+        passno: 0
+
+    - name: Create /data/sepal/shiny
+      file:
+        path: "/data/sepal/shiny"
+        state: directory
+
+    - name: Mount EFS to /data/sepal/shiny
+      mount:
+        name: "/data/sepal/shiny"
+        fstype: "efs"
+        state: "mounted"
+        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/shiny"
+        opts: "defaults,_netdev"
+        dump: 0
+        passno: 0
+
+    - name: Create /data/sepal/shared
+      file:
+        path: "/data/sepal/shared"
+        state: directory
+
+    - name: Mount EFS to /data/sepal/shared
+      mount:
+        name: "/data/sepal/shared"
+        fstype: "efs"
+        state: "mounted"
+        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/shared"
+        opts: "defaults,_netdev"
+        dump: 0
+        passno: 0
+
+    - name: Create /data/sepal/kernels
+      file:
+        path: "/data/sepal/kernels"
+        state: directory
+
+    - name: Mount EFS to /data/sepal/kernels
+      mount:
+        name: "/data/sepal/kernels"
+        fstype: "efs"
+        state: "mounted"
+        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/kernels"
+        opts: "defaults,_netdev"
+        dump: 0
+        passno: 0
+
+    # GPU setup
     - name: Copy GPU drivers init script
       copy:
         src: "gpu/init-gpu-drivers.sh"
@@ -22,97 +109,10 @@
     - name: Install GPU drivers
       script: "gpu/install-gpu-drivers.sh"
       environment:
-        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
-        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+        AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+        AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
 
-    - name: Install nfs-utils
-      yum:
-        name: "nfs-utils"
-
-    - name: Create /data/sepal
-      file:
-        path: "/data/sepal"
-        state: directory
-
-    - name: Create /data/ldap
-      file:
-        path: "/data/sepal"
-        state: directory
-
-    - name: Create /data/sepal/home
-      file:
-        path: "/data/sepal/home"
-        state: directory
-
-    - name: Create /data/sepal/shiny
-      file:
-        path: "/data/sepal/shiny"
-        state: directory
-
-    - name: Create /data/sepal/shared
-      file:
-        path: "/data/sepal/shared"
-        state: directory
-
-    - name: Create /data/sepal/kernels
-      file:
-        path: "/data/sepal/kernels"
-        state: directory
-
-    - name: Create /data/ldap/certificates
-      file:
-        path: "/data/sepal/certificates"
-        state: directory
-
-    - name: Install amazon-efs-utils
-      yum:
-        name: 'amazon-efs-utils'
-
-    - name: Mount EFS Sepal Home Dir
-      mount:
-        name: "/data/sepal/home"
-        fstype: "efs"
-        state: "mounted"
-        src: "{{ efs_id }}:/data/sepal/home"
-        opts: "defaults,_netdev"
-        dump: 0
-        passno: 0
-
-    - name: Mount EFS Sepal Shiny Dir
-      mount:
-        name: "/data/sepal/shiny"
-        fstype: "efs"
-        state: "mounted"
-        src: "{{ efs_id }}:/data/sepal/shiny"
-        opts: "defaults,_netdev"
-        dump: 0
-        passno: 0
-
-    - name: Mount EFS Sepal Shared Dir
-      mount:
-        name: "/data/sepal/shared"
-        fstype: "efs"
-        state: "mounted"
-        src: "{{ efs_id }}:/data/sepal/shared"
-        opts: "defaults,_netdev"
-        dump: 0
-        passno: 0
-
-    - name: Mount EFS Sepal Kernels Dir
-      mount:
-        name: "/data/sepal/kernels"
-        fstype: "efs"
-        state: "mounted"
-        src: "{{ efs_id }}:/data/sepal/kernels"
-        opts: "defaults,_netdev"
-        dump: 0
-        passno: 0
-
-    - name: Copy LDAP Certificate
-      copy:
-       src: "{{ config_home }}/certificates/ldap-ca.crt.pem"
-       dest: "/data/ldap/certificates/ldap-ca.crt.pem"
-
+    # Docker setup
     - name: Create filesystem on Docker volume
       filesystem:
         fstype: xfs
@@ -127,13 +127,13 @@
 
     - name: Create docker-registry certificate dir
       file:
-        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+        path: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
         state: directory
 
     - name: Copy docker-registry certificate
       copy:
-        src: "{{ config_home }}/certificates/docker-registry.crt"
-        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+        src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
+        dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
     - name: Install docker
       command: "amazon-linux-extras install docker -y"
@@ -166,13 +166,13 @@
         masked: no
 
     - name: Login to docker registry
-      command: "docker login -p '{{ docker_password }}' -u '{{ docker_username }}' {{ docker_repository_host }}"
+      command: "docker login -p '{{ lookup('env', 'DOCKER_REGISTRY_PASSWORD') }}' -u '{{ lookup('env', 'DOCKER_REGISTRY_USERNAME') }}' {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
 
     - name: Pull sandbox
-      command: "docker pull {{ docker_repository_host }}/openforis/sandbox:{{ version }}"
+      command: "docker pull {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/sandbox:{{ VERSION }}"
 
     - name: Pull task
-      command: "docker pull {{ docker_repository_host }}/openforis/task:{{ version }}"
+      command: "docker pull {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/task:{{ VERSION }}"
 
     - name: Logout from docker registry
-      command: "docker logout {{ docker_repository_host }}"
+      command: "docker logout {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"

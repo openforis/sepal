@@ -4,7 +4,7 @@
     name: "/data/sepal/home"
     fstype: "efs"
     state: "mounted"
-    src: "{{ efs_id }}:/data/sepal/home"
+    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/home"
     opts: "defaults,_netdev"
     dump: 0
     passno: 0
@@ -14,7 +14,7 @@
     name: "/data/sepal/shiny"
     fstype: "efs"
     state: "mounted"
-    src: "{{ efs_id }}:/data/sepal/shiny"
+    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/shiny"
     opts: "defaults,_netdev"
     dump: 0
     passno: 0
@@ -24,7 +24,7 @@
     name: "/data/sepal/shared"
     fstype: "efs"
     state: "mounted"
-    src: "{{ efs_id }}:/data/sepal/shared"
+    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/shared"
     opts: "defaults,_netdev"
     dump: 0
     passno: 0
@@ -34,7 +34,7 @@
     name: "/data/sepal/kernels"
     fstype: "efs"
     state: "mounted"
-    src: "{{ efs_id }}:/data/sepal/kernels"
+    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/kernels"
     opts: "defaults,_netdev"
     dump: 0
     passno: 0
@@ -44,7 +44,7 @@
     name: "/var/log/worker-instance"
     fstype: "efs"
     state: "mounted"
-    src: "{{ efs_id }}:/data/sepal/worker-instance-log"
+    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/worker-instance-log"
     opts: "defaults,_netdev"
     dump: 0
     passno: 0

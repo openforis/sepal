@@ -3,9 +3,6 @@
   connection: local
   gather_facts: false
 
-  vars_files:
-    - "{{ secret_vars_file }}"
-
   tasks:
 #    - name: Create letsencrypt AWS user
 #      community.aws.iam:
@@ -20,9 +17,6 @@
         name: letsencrypt
         state: present
       register: letsencrypt_user
-
-    - debug:
-        var: letsencrypt_user
 
     - name: Create letsencrypt user policy
       community.aws.iam_policy:
@@ -59,7 +53,7 @@
       ec2_group:
         name: "Sepal-Storage"
         description: The Sepal-Storage Security Group
-        region: "{{ region }}"
+        region: "{{ lookup('env', 'AWS_REGION') }}"
         rules:
           - proto: tcp
             from_port: 22
@@ -80,21 +74,21 @@
 
     - name: Provision Sepal-Storage instance
       ec2:
-        key_name: "{{ region }}"
+        key_name: "{{ lookup('env', 'AWS_REGION') }}"
         group: "Sepal-Storage"
         instance_type: m5a.large
-        image: "{{ ami }}"
-        region: "{{ region }}"
-        zone: "{{ availability_zone }}"
+        image: "{{ lookup('env', 'AWS_AMI') }}"
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        zone: "{{ lookup('env', 'AWS_AVAILABILITY_ZONE') }}"
         wait: true
         instance_tags:
-          Name: "Sepal-Storage - {{ deploy_environment}}"
+          Name: "Sepal-Storage - {{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
           Type: "SepalStorage"
-          Environment: "{{ deploy_environment }}"
+          Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
         exact_count: 1
         count_tag:
           Type: "SepalStorage"
-          Environment: "{{ deploy_environment }}"
+          Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
         volumes:
           - device_name: /dev/xvda
             delete_on_termination: false
@@ -107,10 +101,10 @@
       register: started_ec2_sepal_storage
 
     - ec2_instance_info:
-        region: "{{ region }}"
+        region: "{{ lookup('env', 'AWS_REGION') }}"
         filters:
           "tag:Type": "SepalStorage"
-          "tag:Environment": "{{ deploy_environment }}"
+          "tag:Environment": "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
       register: ec2_sepal_storage
 
     - set_fact:
@@ -120,7 +114,7 @@
       ec2_group:
         name: "Sepal"
         description: The Sepal Security Group
-        region: "{{ region }}"
+        region: "{{ lookup('env', 'AWS_REGION') }}"
         rules:
           - proto: tcp
             from_port: 22
@@ -167,7 +161,7 @@
       ec2_group:
         name: EFS
         description: The EFS Security Group
-        region: "{{ region }}"
+        region: "{{ lookup('env', 'AWS_REGION') }}"
         rules:
           - proto: tcp
             from_port: 2049
@@ -181,21 +175,21 @@
 
     - name: Provision Sepal instance
       ec2:
-        key_name: "{{ region }}"
+        key_name: "{{ lookup('env', 'AWS_REGION') }}"
         group: "Sepal"
-        instance_type: "{{ instance_type }}"
-        image: "{{ ami }}"
-        region: "{{ region }}"
-        zone: "{{ availability_zone }}"
+        instance_type: "{{ lookup('env', 'AWS_INSTANCE_TYPE') }}"
+        image: "{{ lookup('env', 'AWS_AMI') }}"
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        zone: "{{ lookup('env', 'AWS_AVAILABILITY_ZONE') }}"
         wait: true
         exact_count: 1
         count_tag:
           Type: Sepal
-          Environment: "{{ deploy_environment }}"
+          Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
         instance_tags:
-          Name: "Sepal - {{ deploy_environment}}"
+          Name: "Sepal - {{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
           Type: Sepal
-          Environment: "{{ deploy_environment }}"
+          Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
         ebs_optimized: true
         volumes:
           - device_name: /dev/xvda

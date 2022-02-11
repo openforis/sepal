@@ -5,7 +5,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/user-files/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/user-files:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/user-files:${SEPAL_VERSION:-latest}"
     container_name: user-files
     init: true
     volumes:

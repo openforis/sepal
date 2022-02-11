@@ -5,7 +5,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/ceo-gateway/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/ceo-gateway:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/ceo-gateway:${SEPAL_VERSION:-latest}"
     container_name: ceo-gateway
     init: true
     volumes:

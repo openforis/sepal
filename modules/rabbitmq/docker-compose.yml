@@ -5,10 +5,10 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/rabbitmq/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/rabbitmq:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/rabbitmq:${SEPAL_VERSION:-latest}"
     container_name: rabbitmq
     ports:
-      - "${SEPAL_IP_ADDRESS:-0.0.0.0}:5672:5672"
+      - "${SEPAL_IP:-0.0.0.0}:5672:5672"
       - "127.0.0.1:15672:15672"
     volumes:
       - "${SEPAL_DATA_DIR}/rabbitmq:/var/lib/rabbitmq"

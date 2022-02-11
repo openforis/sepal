@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 set -e
 
-VERSION=$1
-CONFIG_HOME=$2
-PRIVATE_KEY=$CONFIG_HOME/certificates/aws.pem
-LOCAL_IP_ADDRESS=$(curl -s api.ipify.org)
+export VERSION=$1
+export CONFIG_HOME=$2
+export PRIVATE_KEY=$CONFIG_HOME/certificates/aws.pem
+export LOCAL_IP_ADDRESS=$(curl -s api.ipify.org)
+
+# Export all in env file
+set -a
+source $CONFIG_HOME/env
+set +a
+
 cd "$( dirname "${BASH_SOURCE[0]}" )"
 
 echo "Provisioning Sepal on AWS [\
@@ -18,32 +24,28 @@ export ANSIBLE_CONFIG=../ansible.cfg
 export AWS_MAX_ATTEMPTS=150
 export AWS_POLL_DELAY_SECONDS=60
 
-source ../export-aws-keys.sh "$CONFIG_HOME"/secret.yml
-
-inventory=$(../inventory.sh Sepal "$CONFIG_HOME")
+inventory=$(../inventory.sh Sepal)
 
 ansible-playbook provision.yml \
     -i "$inventory" \
-    --private-key="${PRIVATE_KEY}"  \
-    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml local_ip_address=$LOCAL_IP_ADDRESS letsencrypt_aws_keys_file=$CONFIG_HOME/letsencrypt-aws-keys.yml"
+    --private-key="${PRIVATE_KEY}" \
+    --extra-vars "env_file=$CONFIG_HOME/env local_ip_address=$LOCAL_IP_ADDRESS"
 
 ansible-playbook provision-security-groups.yml \
     -i "$inventory" \
-    --private-key="${PRIVATE_KEY}"  \
-    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml local_ip_address=$LOCAL_IP_ADDRESS"
+    --private-key="${PRIVATE_KEY}" \
+    --extra-vars "env_file=$CONFIG_HOME/env local_ip_address=$LOCAL_IP_ADDRESS"
 
 ansible-playbook configure-efs.yml \
     -i "$inventory" \
-    --private-key="${PRIVATE_KEY}"  \
-    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml"
+    --private-key="${PRIVATE_KEY}" \
+    --extra-vars "env_file=$CONFIG_HOME/env"
 
-jsonConfig=$(mktemp /tmp/sepal-json-config.XXXXXX)
-python3 -c 'import sys, yaml, json; json.dump(yaml.safe_load(sys.stdin), sys.stdout, indent=4)' < "$CONFIG_HOME"/secret.yml > "$jsonConfig"
 packer build \
-    --var-file "$jsonConfig" \
-    --var "version=$VERSION"  \
-    --var "userHome=$HOME" \
-    --var "config_home=$CONFIG_HOME"\
-      packer.json
-
-rm "$jsonConfig"
+  --var AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+  --var AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+  --var AWS_REGION="$AWS_REGION" \
+  --var AWS_WORKER_AMI="$AWS_WORKER_AMI" \
+  --var VERSION="$VERSION" \
+  --var CONFIG_HOME="$CONFIG_HOME" \
+  packer.json

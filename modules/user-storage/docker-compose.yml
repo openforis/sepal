@@ -16,7 +16,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/user-storage/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/user-storage:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/user-storage:${SEPAL_VERSION:-latest}"
     container_name: user-storage
     init: true
     volumes:

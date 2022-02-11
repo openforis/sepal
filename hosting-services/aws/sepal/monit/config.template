@@ -2,10 +2,10 @@ set daemon 60 with start delay 300
 
 set log /var/log/monit.log
 
-set mailserver {{ smtp_host }} port {{ smtp_port }}
-        username {{ smtp_username }} password {{ smtp_password }}
+set mailserver {{ lookup('env', 'SMTP_HOST') }} port {{ lookup('env', 'SMTP_PORT') }}
+        username {{ lookup('env', 'SMTP_USERNAME') }} password {{ lookup('env', 'SMTP_PASSWORD') }}
         using TLSV1 with timeout 30 seconds
 
-set mail-format { from: monit@{{ sepal_host }} }
+set mail-format { from: monit@{{ lookup('env', 'SEPAL_HOST') }} }
 
-set alert {{ sepal_monitoring_email }}
+set alert {{ lookup('env', 'SEPAL_MONITORING_EMAIL') }}
