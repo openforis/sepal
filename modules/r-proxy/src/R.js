@@ -1,6 +1,6 @@
 const {spawn} = require('child_process')
 const {CRAN_ROOT, GITHUB_ROOT, libPath, LOCAL_CRAN_REPO} = require('./config')
-const {isCranPackageCached, isGitHubPackageCached, getGitHubRepoPath} = require('./filesystem')
+const {isCranPackageCached, isGitHubPackageSourceCached, getGitHubRepoPath, getGitHubTarget} = require('./filesystem')
 const log = require('sepal/log').getLogger('R')
 
 const runScript = (script, args, {showStdOut, showStdErr} = {}) =>
@@ -51,11 +51,23 @@ const installCranPackage = async (name, version, repo) => {
 const installLocalPackage = async (name, path) => {
     try {
         log.debug(`Installing ${name} (${path})`)
-        await runScript('src/R/install_local_package.r', [name, path, libPath, LOCAL_CRAN_REPO])
+        await runScript('src/R/install_local_package.r', [name, path, libPath, LOCAL_CRAN_REPO], {showStdOut: true, showStdErr: true})
         log.info(`Installed ${name} (${path})`)
         return true
     } catch (error) {
         log.warn(`Could not install ${name} (${path})`, error)
+        return false
+    }
+}
+    
+const installRemotePackage = async (name, url) => {
+    try {
+        log.debug(`Installing ${name} (${url})`)
+        await runScript('src/R/install_remote_package.r', [name, url, libPath, LOCAL_CRAN_REPO], {showStdOut: true, showStdErr: true})
+        log.info(`Installed ${name} (${url})`)
+        return true
+    } catch (error) {
+        log.warn(`Could not install ${name} (${url})`, error)
         return false
     }
 }
@@ -88,7 +100,7 @@ const makeCranPackage = async (name, version, repo) =>
     await isCranPackageCached(name, version) || await installCranPackage(name, version, repo) && await bundleCranPackage(name, version)
     
 const makeGitHubPackage = async (name, path) =>
-    await isGitHubPackageCached(path) || await installLocalPackage(name, getGitHubRepoPath('src', path)) && await bundleGitHubPackage(name, path)
+    (await isGitHubPackageSourceCached(path) && await installLocalPackage(name, getGitHubRepoPath('src', path)) || await installRemotePackage(name, getGitHubTarget(path))) && await bundleGitHubPackage(name, path)
 
 module.exports = {
     makeCranPackage,

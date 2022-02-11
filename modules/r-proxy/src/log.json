@@ -6,7 +6,7 @@
         "proxy/cran": "debug",
         "proxy/github": "debug",
         "queue": "info",
-        "packages": "debug",
+        "update": "debug",
         "R": "debug",
         "main": "info"
     }

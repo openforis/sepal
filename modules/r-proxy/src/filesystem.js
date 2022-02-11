@@ -24,7 +24,7 @@ const getCranRepoPath = path => {
     return repoPath
 }
 
-const getGitHubRepoPath = (section, path) => {
+const getGitHubRepoPath = (section, path = '') => {
     if (!['src', 'bin'].includes(section)) {
         throw new Error('Illegal section:', section)
     }
@@ -58,6 +58,9 @@ const isCranPackageCached = async (name, version) => {
 const isGitHubPackageCached = async path =>
     isFile(getGitHubRepoPath('bin', path))
 
+const isGitHubPackageSourceCached = async path =>
+    isFile(getGitHubRepoPath('src', path))
+
 const getBinaryPackages = async () =>
     await readdir(BIN)
 
@@ -86,4 +89,4 @@ const isUpdatable = async (name, version) => {
         && matchingPackages.filter(packageVersionFilter).length === 0
 }
 
-module.exports = {getCranRepoPath, getGitHubRepoPath, toBinaryPackagePath, isCranPackageCached, isGitHubPackageCached, getCranTarget, getGitHubTarget, isUpdatable}
+module.exports = {getCranRepoPath, getGitHubRepoPath, toBinaryPackagePath, isCranPackageCached, isGitHubPackageCached, getCranTarget, getGitHubTarget, isUpdatable, isGitHubPackageSourceCached}
