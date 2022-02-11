@@ -2,7 +2,7 @@
   "storage-driver": "overlay2",
   "log-driver": "syslog",
   "log-opts": {
-      "syslog-address": "{{ syslog_address }}",
+      "syslog-address": "{{ lookup('env', 'SYSLOG_ADDRESS') }}",
       "tag": "docker/{{ '{{.Name}}' }}"
   }
 }

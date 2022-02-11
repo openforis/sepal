@@ -5,7 +5,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/terminal/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/terminal:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/terminal:${SEPAL_VERSION:-latest}"
     container_name: terminal
     init: true
     volumes:

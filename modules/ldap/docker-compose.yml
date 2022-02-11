@@ -5,7 +5,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/ldap/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/ldap:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/ldap:${SEPAL_VERSION:-latest}"
     container_name: ldap
     ports:
       - "0.0.0.0:389:389"

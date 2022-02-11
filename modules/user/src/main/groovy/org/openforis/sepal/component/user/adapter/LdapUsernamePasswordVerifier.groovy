@@ -20,7 +20,7 @@ class LdapUsernamePasswordVerifier implements UsernamePasswordVerifier {
     boolean verify(String username, String password) {
         def env = [
                 (INITIAL_CONTEXT_FACTORY): 'com.sun.jndi.ldap.LdapCtxFactory',
-                (PROVIDER_URL)           : "ldap://$ldapHost" as String,
+                (PROVIDER_URL)           : 'ldap://ldap',
                 (SECURITY_AUTHENTICATION): 'simple',
                 (SECURITY_PRINCIPAL)     : "uid=${escapeDN(username)},ou=People,dc=sepal,dc=org" as String,
                 (SECURITY_CREDENTIALS)   : password

@@ -5,7 +5,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/sepal-server/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/sepal:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/sepal:${SEPAL_VERSION:-latest}"
     container_name: sepal
     volumes:
       - "${SEPAL_DATA_DIR}/sepal:/data"

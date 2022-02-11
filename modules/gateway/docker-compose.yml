@@ -16,7 +16,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/gateway/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/gateway:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/gateway:${SEPAL_VERSION:-latest}"
     container_name: gateway
     init: true
     environment:

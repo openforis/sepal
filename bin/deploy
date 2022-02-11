@@ -46,6 +46,7 @@ function run_docker_image() {
   echo "Running Docker image..."
 
   echo "BUILD_NUMBER: $BUILD_NUMBER"
+  echo "PROJECT_DIR: $PROJECT_DIR"
   echo "CONFIG_DIR: $CONFIG_DIR"
   echo "PLATFORM: $PLATFORM"
   echo "OPERATION: $OPERATION"
@@ -54,8 +55,8 @@ function run_docker_image() {
   docker run \
     --rm \
     -it \
-    -v $PROJECT_DIR:/usr/local/lib/sepal:Z \
-    -v $CONFIG_DIR:/etc/sepal/conf.d:Z \
+    -v $PROJECT_DIR:/usr/local/lib/sepal \
+    -v $CONFIG_DIR:/etc/sepal/conf.d \
     sepal-deploy \
     bash -c "/usr/local/lib/sepal/hosting-services/$SCRIPT_PATH $BUILD_NUMBER /etc/sepal/conf.d"
 }

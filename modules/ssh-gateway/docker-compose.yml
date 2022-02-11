@@ -5,7 +5,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/ssh-gateway/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/ssh-gateway:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/ssh-gateway:${SEPAL_VERSION:-latest}"
     container_name: ssh-gateway
     volumes:
       - "${SEPAL_DATA_DIR}/ssh-gateway:/data"

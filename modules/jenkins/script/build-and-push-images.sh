@@ -2,7 +2,7 @@
 set -e
 
 export SEPAL_VERSION=$1
-export SEPAL_DATA_DIR=/tmp/sepal-data
+export SEPAL_DATA_DIR=/data
 export SEPAL_BACKUP_DIR=/tmp/sepal-backup
 export DEPLOY_ENVIRONMENT=OPS
 
@@ -35,10 +35,11 @@ function start {
   docker-compose --file ${MODULE_DIR}/docker-compose.yml up -d
 }
 
+build sandbox-base
+
 build r-proxy
 start r-proxy
 
-build sandbox-base
 build email
 build sys-monitor
 build letsencrypt

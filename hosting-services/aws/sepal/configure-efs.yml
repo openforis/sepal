@@ -4,9 +4,6 @@
   become: yes
   gather_facts: true
 
-  vars_files:
-    - "{{ secret_vars_file }}"
-
   tasks:
     - name: Install amazon-efs-utils
       yum:
@@ -22,7 +19,7 @@
         name: "/efs"
         fstype: "efs"
         state: "mounted"
-        src: "{{ efs_id }}:/"
+        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/"
         opts: "defaults,_netdev"
         dump: 0
         passno: 0
@@ -72,7 +69,7 @@
           name: "/efs"
           fstype: "efs"
           state: "unmounted"
-          src: "{{ efs_id }}:/"
+          src: "{{ lookup('env', 'AWS_EFS_ID') }}:/"
 
     - name: Delete temp mount dir
       file:

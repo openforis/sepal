@@ -5,7 +5,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/sys-monitor/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/sys-monitor:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/sys-monitor:${SEPAL_VERSION:-latest}"
     container_name: sys-monitor
     init: true
     environment:

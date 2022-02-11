@@ -3,15 +3,12 @@
   user: ec2-user
   gather_facts: true
 
-  vars_files:
-    - "{{ secret_vars_file }}"
-
   tasks:
     - name: Create Sandbox Security Group
       ec2_group:
         name: Sandbox
         description: The Sandbox Security Group
-        region: "{{ region }}"
+        region: "{{ lookup('env', 'AWS_REGION') }}"
         rules:
           - proto: tcp
             from_port: 22

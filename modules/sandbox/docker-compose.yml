@@ -5,7 +5,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/sandbox/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/sandbox:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/sandbox:${SEPAL_VERSION:-latest}"
     container_name: sandbox
     deploy:
       restart_policy:

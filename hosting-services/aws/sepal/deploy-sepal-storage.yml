@@ -4,12 +4,9 @@
   become: yes
   gather_facts: true
 
-  vars_files:
-    - "{{ secret_vars_file }}"
-
   pre_tasks:
     - set_fact:
-        syslog_address: "udp://{{ ec2_private_ip_address }}"
+        SYSLOG_ADDRESS: "udp://{{ ec2_private_ip_address }}"
 
     # bash prompt
     - name: Set bash prompt
@@ -17,7 +14,7 @@
         path: /etc/profile
         block: |
           # Bash prompt
-          PS1='{{bash_prompt_storage}}'
+          PS1='{{ lookup('env', 'BASH_PROMPT_STORAGE') }}'
 
     # set locale
     - name: Set locale
@@ -72,13 +69,13 @@
 
     - name: Create docker-registry certificate dir
       file:
-        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+        path: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
         state: directory
 
     - name: Copy docker-registry certificate
       copy:
-        src: "{{ config_home }}/certificates/docker-registry.crt"
-        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+        src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
+        dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
     - name: Install docker
       command: "amazon-linux-extras install docker -y"
@@ -90,10 +87,6 @@
     - name: Install pip
       yum:
         name: python-pip
-
-    - name: Install docker-compose
-      pip:
-        name: docker-compose
 
     - name: Create /etc/docker
       file:
@@ -140,10 +133,37 @@
         name: "/data/sepal/home"
         fstype: "efs"
         state: "mounted"
-        src: "{{ efs_id }}:/data/sepal/home"
+        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/home"
         opts: "defaults,_netdev"
         dump: 0
         passno: 0
+
+    - docker_network: name=sepal
+
+    - file: path="/usr/local/lib/docker/cli-plugins" state=directory
+    - uri:
+        url: https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-x86_64
+        dest: /usr/local/lib/docker/cli-plugins/docker-compose
+        mode: +x
+        status_code: [200, 304]
+
+    - file: path="/etc/sepal/env.d" state=directory
+    - name: Copy env file to env-config
+      copy:
+        src: "{{ env_file }}"
+        dest: "/etc/sepal/env.d/env-config"
+
+    - name: Creating env-current file
+      copy:
+        dest: "/etc/sepal/env.d/env-current"
+        content: |
+          SEPAL_VERSION={{ VERSION }}
+          SYSLOG_ADDRESS={{ SYSLOG_ADDRESS }}
+
+    - name: Assemble a single env file
+      ansible.builtin.assemble:
+        src: /etc/sepal/env.d
+        dest: /etc/sepal/env
 
   roles:
     - { role: live-patching }

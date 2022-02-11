@@ -1,24 +1,17 @@
----
-- name: "Checking start time of {{ container_name | default(module) }}"
-  script: "start_time.sh {{ container_name | default(module) }}"
-  register: start_time_before_docker_container
+- name: "{{ module }} | Create runtime dir"
+  file: path="/var/sepal/{{ module }}" state=directory
 
+- name: "{{ module }} | Copy compose file"
+  copy:
+      src: "{{ role_path }}/../../modules/{{ module }}/docker-compose.yml"
+      dest: "/var/sepal/{{ module }}/docker-compose.yml"
 
-- docker_network: name=sepal
-
-- name: "Run {{ module }}"
-  include_tasks: "../../../modules/{{ module }}/run.yml"
-  vars:
-    container_default_behavior: "compatibility"
-    api_version: "1.38"
-    name: "{{ container_name | default(module) }}"
-    pull: "{{ docker_repository_host != 'localhost' }}"
-    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/{{ container_name | default(module) }}:{{ version }}"
-    state: "started"
-    restart_policy: "always"
-    network_mode: "bridge"
-    start_timestamp: "{{ start_time_before_docker_container.stdout | regex_replace('[\\r\\n]+', '') }}"
-
-
-
-
+- name: "{{ module }} | Up"
+  shell: "docker compose \
+      --env-file /etc/sepal/env \
+      --file /var/sepal/{{ module }}/docker-compose.yml \
+      up \
+      -d \
+      --no-deps \
+      --no-build \
+      --wait"

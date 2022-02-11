@@ -5,7 +5,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/letsencrypt/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/letsencrypt:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/letsencrypt:${SEPAL_VERSION:-latest}"
     container_name: letsencrypt
 
     volumes:

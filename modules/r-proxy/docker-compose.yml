@@ -16,7 +16,7 @@ services:
     build:
       context: ../..
       dockerfile: ./modules/r-proxy/Dockerfile
-    image: "${SEPAL_DOCKER_REPOSITORY:-localhost}/openforis/r-proxy:${SEPAL_VERSION:-latest}"
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/r-proxy:${SEPAL_VERSION:-latest}"
     container_name: r-proxy
     init: true
     environment:
