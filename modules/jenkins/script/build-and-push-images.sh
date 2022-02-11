@@ -2,7 +2,7 @@
 set -e
 
 export SEPAL_VERSION=$1
-export SEPAL_DATA_DIR=/tmp/sepal-data
+export SEPAL_DATA_DIR=/data
 export SEPAL_BACKUP_DIR=/tmp/sepal-backup
 export DEPLOY_ENVIRONMENT=OPS
 
