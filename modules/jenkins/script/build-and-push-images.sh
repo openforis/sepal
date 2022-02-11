@@ -35,10 +35,11 @@ function start {
   docker-compose --file ${MODULE_DIR}/docker-compose.yml up -d
 }
 
+build sandbox-base
+
 build r-proxy
 start r-proxy
 
-build sandbox-base
 build email
 build sys-monitor
 build letsencrypt
