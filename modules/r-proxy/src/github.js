@@ -37,7 +37,7 @@ const getGitHubTarget = path =>
 const installLocalPackage = async (name, path) => {
     try {
         log.debug(`Installing ${name} (${path})`)
-        await runScript('src/R/install_local_package.r', [name, path, libPath, LOCAL_CRAN_REPO])
+        await runScript('install_local_package.r', [name, path, libPath, LOCAL_CRAN_REPO])
         log.info(`Installed ${name} (${path})`)
         return true
     } catch (error) {
@@ -49,7 +49,7 @@ const installLocalPackage = async (name, path) => {
 const installRemotePackage = async (name, url) => {
     try {
         log.debug(`Installing ${name} (${url})`)
-        await runScript('src/R/install_remote_package.r', [name, url, libPath, LOCAL_CRAN_REPO])
+        await runScript('install_remote_package.r', [name, url, libPath, LOCAL_CRAN_REPO])
         log.info(`Installed ${name} (${url})`)
         return true
     } catch (error) {
@@ -61,7 +61,7 @@ const installRemotePackage = async (name, url) => {
 const bundleGitHubPackage = async (name, path) => {
     try {
         log.debug(`Bundling ${name} (${path})`)
-        await runScript('src/R/bundle_github_package.sh', [name, path, libPath, GITHUB_ROOT], {showStdOut: true, showStdErr: true})
+        await runScript('bundle_github_package.sh', [name, path, libPath, GITHUB_ROOT], {showStdOut: true, showStdErr: true})
         log.info(`Bundled ${name} (${path})`)
         return true
     } catch (error) {

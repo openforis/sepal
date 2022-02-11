@@ -68,7 +68,7 @@ const isCranPackageCached = async (name, version) => {
 const installCranPackage = async (name, version, repo) => {
     try {
         log.debug(`Installing ${name}/${version}`)
-        await runScript('src/R/install_cran_package.r', [name, version, libPath, repo])
+        await runScript('install_cran_package.r', [name, version, libPath, repo])
         log.info(`Installed ${name}/${version}`)
         return true
     } catch (error) {
@@ -80,7 +80,7 @@ const installCranPackage = async (name, version, repo) => {
 const bundleCranPackage = async (name, version) => {
     try {
         log.debug(`Bundling ${name}/${version}`)
-        await runScript('src/R/bundle_cran_package.sh', [name, version, libPath, CRAN_ROOT], {showStdOut: true, showStdErr: true})
+        await runScript('bundle_cran_package.sh', [name, version, libPath, CRAN_ROOT], {showStdOut: true, showStdErr: true})
         log.info(`Bundled ${name}/${version}`)
         return true
     } catch (error) {
