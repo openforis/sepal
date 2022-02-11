@@ -51,7 +51,7 @@ const installCranPackage = async (name, version, repo) => {
 const installLocalPackage = async (name, path) => {
     try {
         log.debug(`Installing ${name} (${path})`)
-        await runScript('src/R/install_local_package.r', [name, path, libPath, LOCAL_CRAN_REPO], {showStdOut: true, showStdErr: true})
+        await runScript('src/R/install_local_package.r', [name, path, libPath, LOCAL_CRAN_REPO])
         log.info(`Installed ${name} (${path})`)
         return true
     } catch (error) {
@@ -63,7 +63,7 @@ const installLocalPackage = async (name, path) => {
 const installRemotePackage = async (name, url) => {
     try {
         log.debug(`Installing ${name} (${url})`)
-        await runScript('src/R/install_remote_package.r', [name, url, libPath, LOCAL_CRAN_REPO], {showStdOut: true, showStdErr: true})
+        await runScript('src/R/install_remote_package.r', [name, url, libPath, LOCAL_CRAN_REPO])
         log.info(`Installed ${name} (${url})`)
         return true
     } catch (error) {
