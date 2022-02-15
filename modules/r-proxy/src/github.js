@@ -1,4 +1,5 @@
 const Path = require('path')
+const {opendir} = require('fs/promises')
 const {isChildOf, isFile} = require('./filesystem')
 const {GITHUB_ROOT, LOCAL_CRAN_REPO, libPath} = require('./config')
 const {runScript} = require('./script')
@@ -19,11 +20,11 @@ const getGitHubRepoPath = (section, path = '') => {
 }
 
 const getGitHubPackageInfo = path => {
-    const GITHUB_MATCHER = /^\/github\/(([^/]+)\/([^/]*)(.*)\.tar\.gz)/
+    const GITHUB_MATCHER = /^(([^/]+)\/([^/]*)(.*)(\.tar\.gz))/
     const result = path.match(GITHUB_MATCHER)
     if (result) {
-        const [_, path, user, name, ref] = result
-        return {path, user, name, ref}
+        const [_, path, user, name, ref, ext] = result
+        return {path, user, name, ref, ext}
     }
     return null
 }
@@ -78,4 +79,33 @@ const ensureGitHubPackageInstalled = async (name, path) =>
 const makeGitHubPackage = async (name, path) =>
     await ensureGitHubPackageInstalled(name, path) && await bundleGitHubPackage(name, path)
     
-module.exports = {getGitHubRepoPath, getGitHubPackageInfo, getGitHubTarget, makeGitHubPackage}
+const updateGitHubPackage = async ({name, path}) => {
+    log.debug(`Updating: ${path}`)
+    const success = await makeGitHubPackage(name, path, {force: true})
+    return {success}
+}
+    
+const checkGitHubUpdates = async enqueueUpdateGitHubPackage => {
+    scanDir(enqueueUpdateGitHubPackage, getGitHubRepoPath('bin'))
+}
+
+const scanDir = async (enqueueUpdateGitHubPackage, baseDir, dir = '') => {
+    try {
+        for await (const dirent of await opendir(Path.join(baseDir, dir))) {
+            const path = Path.join(dir, dirent.name)
+            if (dirent.isDirectory()) {
+                await scanDir(enqueueUpdateGitHubPackage, baseDir, path)
+            } else if (dirent.isFile()) {
+                const packageInfo = getGitHubPackageInfo(path)
+                if (packageInfo) {
+                    const {name} = packageInfo
+                    enqueueUpdateGitHubPackage(name, path)
+                }
+            }
+        }
+    } catch (error) {
+        log.error(error)
+    }
+}
+
+module.exports = {getGitHubRepoPath, getGitHubPackageInfo, getGitHubTarget, makeGitHubPackage, updateGitHubPackage, checkGitHubUpdates}

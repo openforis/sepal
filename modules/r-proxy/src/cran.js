@@ -3,6 +3,8 @@ const minimatch = require('minimatch')
 const {isChildOf, isFile, getFiles} = require('./filesystem')
 const {cranRepo, CRAN_ROOT, libPath} = require('./config')
 const {runScript} = require('./script')
+const readline = require('readline')
+const https = require('https')
 const log = require('sepal/log').getLogger('cran')
 
 const BIN = Path.join(CRAN_ROOT, 'bin/contrib')
@@ -91,5 +93,60 @@ const bundleCranPackage = async (name, version) => {
 
 const makeCranPackage = async (name, version, repo) =>
     await isCranPackageCached(name, version) || await installCranPackage(name, version, repo) && await bundleCranPackage(name, version)
+
+const updateCranPackage = async ({name, version}) => {
+    if (await isUpdatable(name, version)) {
+        log.debug(`Updating: ${name}/${version}`)
+        const success = await makeCranPackage(name, version, cranRepo)
+        return {success}
+    } else {
+        log.trace(`Skipping: ${name}/${version}`)
+        return {success: true}
+    }
+}
     
-module.exports = {getCranRepoPath, getCranPackageInfo, isUpdatable, toBinaryPackagePath, getCranTarget, makeCranPackage}
+const getAvailablePackages = () =>
+    new Promise((resolve, reject) => {
+        log.debug('Requesting PACKAGES file')
+        try {
+            const request = https.request(getCranTarget('PACKAGES', 'PACKAGES'), {
+                method: 'GET'
+            }, res => {
+                if (res.statusCode === 200) {
+                    log.debug('Loading PACKAGES file')
+                    resolve(res)
+                } else {
+                    reject(res.statusCode)
+                }
+            })
+            request.end()
+        } catch (error) {
+            reject(error)
+        }
+    })
+    
+const checkCranUpdates = async enqueueUpdateCranPackage => {
+    log.info('Checking updated CRAN packages')
+    const res = await getAvailablePackages()
+    const rl = readline.createInterface({input: res})
+
+    let name = null
+    let version = null
+
+    rl.on('line', line => {
+        if (line.startsWith('Package: ')) {
+            name = line.substring(9)
+        }
+        if (name && line.startsWith('Version: ')) {
+            version = line.substring(9)
+            enqueueUpdateCranPackage(name, version)
+            name = null
+        }
+    })
+
+    rl.on('close', () => {
+        log.info('Checked availables packages')
+    })
+}
+
+module.exports = {getCranRepoPath, getCranPackageInfo, isUpdatable, toBinaryPackagePath, getCranTarget, makeCranPackage, updateCranPackage, checkCranUpdates}

@@ -8,7 +8,6 @@
         "proxy/cran": "debug",
         "proxy/github": "debug",
         "queue": "info",
-        "update": "debug",
         "R": "debug",
         "main": "info"
     }
