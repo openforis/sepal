@@ -11,7 +11,7 @@ library(remotes)
 
 # install requested library from local file
 
-install_url(url, repos = repo, lib = lib)
+install_url(url, repos = repo, lib = lib, upgrade = 'never')
 
 # check if library can be loaded
 

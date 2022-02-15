@@ -11,7 +11,7 @@ library(remotes)
 
 # install requested library from CRAN repository
 
-install_version(name, version = version, repos = repo, lib = lib)
+install_version(name, version = version, repos = repo, lib = lib, upgrade = 'never')
 
 # check if library can be loaded
 
