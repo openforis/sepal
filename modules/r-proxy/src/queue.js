@@ -46,16 +46,16 @@ queue.process(async ({data}) => {
 })
 
 const buildCranPackage = async ({name, version}) => {
-    log.debug(`Processing build/CRAN:${name}/${version}`)
+    log.debug(`Processing build/CRAN: ${name}/${version}`)
     const success = await makeCranPackage(name, version, LOCAL_CRAN_REPO)
-    log.debug(`Processed build/CRAN:${name}/${version}`)
+    log.debug(`Processed build/CRAN: ${name}/${version}`)
     return {success}
 }
 
 const buildGitHubPackage = async ({name, path}) => {
-    log.debug(`Processing build/GitHub:${path}`)
+    log.debug(`Processing build/GitHub: ${path}`)
     const success = await makeGitHubPackage(name, path, LOCAL_CRAN_REPO)
-    log.debug(`Processed build/GitHub:${path}`)
+    log.debug(`Processed build/GitHub: ${path}`)
     return {success}
 }
 

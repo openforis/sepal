@@ -91,7 +91,7 @@ const updateCranPackage = async ({name, version}) => {
         log.debug(`Processed CRAN update: ${name}/${version}`)
         return {success}
     } else {
-        log.debug(`Skipped CRAN update:${name}/${version}`)
+        log.debug(`Skipped CRAN update: ${name}/${version}`)
         return {success: true}
     }
 }
