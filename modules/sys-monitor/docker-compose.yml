@@ -8,6 +8,8 @@ services:
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/sys-monitor:${SEPAL_VERSION:-latest}"
     container_name: sys-monitor
     init: true
+    volumes:
+      - "/var/log:/log:ro"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       RABBITMQ_HOST: "rabbitmq"
