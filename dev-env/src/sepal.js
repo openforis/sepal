@@ -6,6 +6,7 @@ import {build} from './build.js'
 import {start} from './start.js'
 import {stop} from './stop.js'
 import {run} from './run.js'
+import {logs} from './logs.js'
 import {log} from './log.js'
 
 const main = async () => {
@@ -58,6 +59,12 @@ const main = async () => {
         .option('-r, --recursive', 'Recursive', true)
         .argument('<module>', 'Module to run')
         .action(run)
+    
+    program.command('logs')
+        .description('Show module log')
+        .option('-f, --follow', 'Follow')
+        .argument('<module>', 'Module')
+        .action(logs)
     
     try {
         await program.parseAsync(process.argv)

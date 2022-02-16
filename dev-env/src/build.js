@@ -12,10 +12,10 @@ const buildModule = async (module, options = {}, parent) => {
             showModuleStatus(module, STATUS.BUILDING)
             const buildOptions = _.compact([
                 !options.cache && (!parent || options.recursive) ? '--no-cache' : null
-            ])
+            ]).join(' ')
             await exec({
                 command: './script/docker-compose-build.sh',
-                args: [module, SEPAL_SRC, ENV_FILE, ...buildOptions],
+                args: [module, SEPAL_SRC, ENV_FILE, buildOptions],
                 showStdOut: !options.quiet
             })
             showModuleStatus(module, STATUS.BUILT)
