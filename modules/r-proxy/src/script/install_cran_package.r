@@ -3,15 +3,15 @@
 args = commandArgs(trailingOnly = TRUE)
 
 name <- args[1]
-path <- args[2]
+version <- args[2]
 lib <- args[3]
 repo <- args[4]
 
 library(remotes)
 
-# install requested library from local file
+# install requested library from CRAN repository
 
-install_local(path, repos = repo, lib = lib)
+install_version(name, version = version, repos = repo, lib = lib, upgrade = 'never')
 
 # check if library can be loaded
 

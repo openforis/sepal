@@ -1,9 +1,9 @@
-const {redisUri, cranRepo, autoUpdateIntervalHours, LOCAL_CRAN_REPO} = require('./config')
+const {redisUri, autoUpdateIntervalHours, LOCAL_CRAN_REPO} = require('./config')
 const Bull = require('bull')
 const log = require('sepal/log').getLogger('queue')
-const {makeCranPackage, makeGitHubPackage} = require('./R')
-const {isUpdatable} = require('./filesystem')
-const {checkUpdates} = require('./packages')
+const {makeCranPackage, checkCranUpdates, updateCranPackage} = require('./cran')
+const {makeGitHubPackage, checkGitHubUpdates, updateGitHubPackage} = require('./github')
+// const {checkCranUpdates, checkGitHubUpdates} = require('./update')
 
 const queue = new Bull('build-queue', redisUri)
 
@@ -35,44 +35,36 @@ queue.process(async ({data}) => {
     if (data.updatePackages) {
         return await updatePackages(data.updatePackages)
     }
-    if (data.updatePackage) {
-        return await updatePackage(data.updatePackage)
+    if (data.updateCranPackage) {
+        return await updateCranPackage(data.updateCranPackage)
+    }
+    if (data.updateGitHubPackage) {
+        return await updateGitHubPackage(data.updateGitHubPackage)
     }
     log.warn('Unsupported job:', data)
     return {success: true}
 })
 
 const buildCranPackage = async ({name, version}) => {
-    log.debug(`Processing build/CRAN:${name}/${version}`)
+    log.debug(`Processing build/CRAN: ${name}/${version}`)
     const success = await makeCranPackage(name, version, LOCAL_CRAN_REPO)
-    log.debug(`Processed build/CRAN:${name}/${version}`)
+    log.debug(`Processed build/CRAN: ${name}/${version}`)
     return {success}
 }
 
 const buildGitHubPackage = async ({name, path}) => {
-    log.debug(`Processing build/GitHub:${path}`)
+    log.debug(`Processing build/GitHub: ${path}`)
     const success = await makeGitHubPackage(name, path, LOCAL_CRAN_REPO)
-    log.debug(`Processed build/GitHub:${path}`)
+    log.debug(`Processed build/GitHub: ${path}`)
     return {success}
 }
 
 const updatePackages = async () => {
     log.debug('Processing update-packages')
-    await checkUpdates(enqueueUpdateBinaryPackage)
+    await checkCranUpdates(enqueueUpdateCranPackage)
+    await checkGitHubUpdates(enqueueUpdateGitHubPackage)
     log.debug('Processed update-packages')
     return {success: true}
-}
-
-const updatePackage = async ({name, version}) => {
-    log.debug(`Processing update:${name}/${version}`)
-    if (await isUpdatable(name, version)) {
-        const success = await makeCranPackage(name, version, cranRepo)
-        log.debug(`Processed update:${name}/${version}`)
-        return {success}
-    } else {
-        log.debug(`Skipped update:${name}/${version}`)
-        return {success: true}
-    }
 }
 
 queue.on('error', error => log.error(error))
@@ -119,10 +111,20 @@ const enqueueBuildGitHubPackage = (name, path) => {
     })
 }
 
-const enqueueUpdateBinaryPackage = (name, version) => {
-    const jobId = `update-package-${name}/${version}`
+const enqueueUpdateCranPackage = (name, version) => {
+    const jobId = `update-cran-package-${name}/${version}`
     log.debug(`Enqueuing job ${jobId}`)
-    return queue.add({updatePackage: {name, version}}, {
+    return queue.add({updateCranPackage: {name, version}}, {
+        ...QUEUE_OPTIONS,
+        jobId,
+        priority: 2
+    })
+}
+
+const enqueueUpdateGitHubPackage = (name, path) => {
+    const jobId = `update-github-package-${path}`
+    log.debug(`Enqueuing job ${jobId}`)
+    return queue.add({updateGitHubPackage: {name, path}}, {
         ...QUEUE_OPTIONS,
         jobId,
         priority: 2
@@ -149,4 +151,4 @@ const initQueue = async () => {
     enqueueUpdateBinaryPackages()
 }
 
-module.exports = {enqueueBuildCranPackage, enqueueBuildGitHubPackage, enqueueUpdateBinaryPackage, logStats, initQueue}
+module.exports = {enqueueBuildCranPackage, enqueueBuildGitHubPackage, logStats, initQueue}

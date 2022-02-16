@@ -2,11 +2,12 @@
     "port": 5109,
     "categories": {
         "config": "info",
+        "cran": "debug",
+        "github": "debug",
         "proxy": "debug",
         "proxy/cran": "debug",
         "proxy/github": "debug",
         "queue": "info",
-        "packages": "debug",
         "R": "debug",
         "main": "info"
     }

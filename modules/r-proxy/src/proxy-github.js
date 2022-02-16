@@ -3,12 +3,12 @@ const httpProxy = require('http-proxy')
 const fs = require('fs')
 const {mkdir} = require('fs/promises')
 const Path = require('path')
-const {getGitHubRepoPath, getGitHubTarget} = require('./filesystem')
+const {getGitHubRepoPath, getGitHubTarget, getGitHubPackageInfo} = require('./github')
 const {enqueueBuildGitHubPackage} = require('./queue')
 const {serveFile, checkTarget, serveError} = require('./proxy-utils')
 
 const buildBinaryPackage = req => {
-    const requestData = getRequestData(req)
+    const requestData = getGitHubPackageInfo(req.url)
     if (requestData) {
         const {name, path} = requestData
         enqueueBuildGitHubPackage(name, path)
@@ -24,7 +24,7 @@ const proxy = httpProxy.createProxyServer({
 })
 
 proxy.on('proxyRes', (proxyRes, req, res, _options) => {
-    const requestData = getRequestData(req)
+    const requestData = getGitHubPackageInfo(req.url)
     if (requestData) {
         const {path} = requestData
         const repoPath = getGitHubRepoPath('src', path)
@@ -35,12 +35,12 @@ proxy.on('proxyRes', (proxyRes, req, res, _options) => {
                 .then(() => {
                     const stream = fs.createWriteStream(tmpPath)
                     stream.on('finish', () => {
-                        log.debug('Moving to:', repoPath)
+                        log.trace('Moving to', repoPath)
                         fs.renameSync(tmpPath, repoPath)
                         buildBinaryPackage(req)
-                        log.debug('Proxied:', req.url)
+                        log.debug('Proxied', req.url)
                     })
-                    log.debug('Saving to:', tmpPath)
+                    log.trace('Saving to', tmpPath)
                     proxyRes.pipe(stream)
                     proxyRes.pipe(res)
                 })
@@ -93,7 +93,7 @@ const serveProxied = async (req, res, path) =>
     await serveProxiedFile(req, res, getGitHubTarget(path))
 
 const serveGitHub = async (req, res) => {
-    const requestData = getRequestData(req)
+    const requestData = getGitHubPackageInfo(req.url)
     if (requestData) {
         const {path} = requestData
         return await serveCached(req, res, path)
@@ -101,16 +101,6 @@ const serveGitHub = async (req, res) => {
             || await serveError(req, res)
     }
     return await serveError(req, res)
-}
-
-const getRequestData = req => {
-    const GITHUB_MATCHER = /^\/github\/(([^/]+)\/([^/]*)(.*)\.tar\.gz)/
-    const result = req.url.match(GITHUB_MATCHER)
-    if (result) {
-        const [_, path, user, name, ref] = result
-        return {path, user, name, ref}
-    }
-    return null
 }
 
 module.exports = {serveGitHub}

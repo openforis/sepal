@@ -3,12 +3,12 @@ const httpProxy = require('http-proxy')
 const fs = require('fs')
 const {mkdir} = require('fs/promises')
 const Path = require('path')
-const {getCranRepoPath, toBinaryPackagePath, getCranTarget} = require('./filesystem')
+const {getCranRepoPath, getCranTarget, toBinaryPackagePath, getCranPackageInfo} = require('./cran')
 const {enqueueBuildCranPackage} = require('./queue')
 const {serveFile, checkTarget, serveError} = require('./proxy-utils')
 
 const buildBinaryPackage = req => {
-    const requestData = getRequestData(req)
+    const requestData = getCranPackageInfo(req.url)
     if (requestData) {
         const {name, version} = requestData
         if (name !== 'PACKAGES') {
@@ -28,7 +28,7 @@ const proxy = httpProxy.createProxyServer({
 
 proxy.on('proxyRes', (proxyRes, req, res, _options) => {
     const requestPath = req.url
-    const {name} = getRequestData(req)
+    const {name} = getCranPackageInfo(requestPath)
     const repoPath = getCranRepoPath(requestPath)
     const tmpPath = `${repoPath}.tmp`
     const repoDir = Path.dirname(repoPath)
@@ -38,12 +38,12 @@ proxy.on('proxyRes', (proxyRes, req, res, _options) => {
                 if (name !== 'PACKAGES') {
                     const stream = fs.createWriteStream(tmpPath)
                     stream.on('finish', () => {
-                        log.debug('Moving to:', repoPath)
+                        log.debug('Moving to', repoPath)
                         fs.renameSync(tmpPath, repoPath)
                         buildBinaryPackage(req)
-                        log.debug('Proxied:', req.url)
+                        log.debug('Proxied', req.url)
                     })
-                    log.debug('Saving to:', tmpPath)
+                    log.debug('Saving to', tmpPath)
                     proxyRes.pipe(stream)
                 }
                 proxyRes.pipe(res)
@@ -83,7 +83,7 @@ const serveProxiedFile = async (req, res, target) => {
 }
 
 const serveProxied = async (req, res) => {
-    const packageInfo = getRequestData(req)
+    const packageInfo = getCranPackageInfo(req.url)
     const {base, name} = packageInfo
     return await serveProxiedFile(req, res, getCranTarget(base, name, {archive: false}))
         || await serveProxiedFile(req, res, getCranTarget(base, name, {archive: true}))
@@ -91,20 +91,5 @@ const serveProxied = async (req, res) => {
 
 const serveCran = async (req, res) =>
     await serveCached(req, res) || await serveProxied(req, res) || await serveError(req, res)
-
-const getRequestData = req => {
-    const path = req.url
-    const {dir, base} = Path.parse(path)
-    const VERSION_REGEX = /^(.+?)(?:_(.+?))?(\.[a-zA-Z.]+)?$/
-    const result = base.match(VERSION_REGEX)
-    return result ? {
-        path,
-        dir,
-        base,
-        name: result[1],
-        version: result[2],
-        extension: result[3],
-    } : {}
-}
 
 module.exports = {serveCran}
