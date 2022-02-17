@@ -89,15 +89,15 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                                         ]
                                 ]
                         ],
-//                        LogConfig: [ // TODO: Try to remove this - the worker-daemon should have pre-configured this
-//                                "Type": "syslog",
-//                                "Config": [
-//                                        "syslog-address": syslogAddress,
-//                                        "tag": "worker-docker/{{.Name}}",
-//                                        "labels": "dev",
-//                                        "syslog-facility": "daemon"
-//                                ]
-//                        ],
+                        LogConfig: [
+                                "Type": "syslog",
+                                "Config": [
+                                        "syslog-address": syslogAddress,
+                                        "tag": "worker-docker/{{.Name}}",
+                                        "labels": "dev",
+                                        "syslog-facility": "daemon"
+                                ]
+                        ],
                         Devices: (instanceType.devices ?: []).collect {
                             [PathOnHost: it, PathInContainer: it, CgroupPermissions: "mrw"]
                         },
