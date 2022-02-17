@@ -69,6 +69,6 @@ class Local implements HostingServiceAdapter {
     }
 
     InstanceProvisioner getInstanceProvisioner() {
-        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, 'udp://syslog')
+        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, null)
     }
 }

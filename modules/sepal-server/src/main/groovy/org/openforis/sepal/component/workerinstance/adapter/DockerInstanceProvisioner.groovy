@@ -64,6 +64,15 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         // TODO: Getting warning: Specifying a kernel memory limit is deprecated and will be removed in a future release., Your kernel does not support kernel memory limit capabilities or the cgroup is not mounted. Limitation discarded.
         def memoryBytes = (instanceTypeById[instance.type].ramGiB * Math.pow(10, 9) - MIN_HOST_RAM_GiB * Math.pow(10, 9)) as long
         def instanceType = instanceTypeById[instance.type]
+        def logConfig = syslogAddress
+                ? [
+                "Type": "syslog",
+                "Config": [
+                        "syslog-address": syslogAddress,
+                        "tag": "worker-docker/{{.Name}}",
+                        "labels": "dev",
+                        "syslog-facility": "daemon"]]
+                : null
         def body = toJson(
                 Image: "$config.dockerRegistryHost/openforis/$image.name:$config.sepalVersion",
                 Tty: true,
@@ -89,15 +98,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                                         ]
                                 ]
                         ],
-                        LogConfig: [
-                                "Type": "syslog",
-                                "Config": [
-                                        "syslog-address": syslogAddress,
-                                        "tag": "worker-docker/{{.Name}}",
-                                        "labels": "dev",
-                                        "syslog-facility": "daemon"
-                                ]
-                        ],
+                        LogConfig: logConfig,
                         Devices: (instanceType.devices ?: []).collect {
                             [PathOnHost: it, PathInContainer: it, CgroupPermissions: "mrw"]
                         },
