@@ -21,10 +21,8 @@ build
 .settings
 
 #Sepal binaries
-/modules/ssh-gateway/binary/sepal-ssh-gateway.jar
 /modules/user/binary/sepal-user.jar
 /modules/sepal-server/binary/sepal.jar
-/modules/*/binary/sepal-gui.jar
 
 #Sepal frontend
 /modules/*/frontend/build
@@ -58,17 +56,9 @@ node_modules/
 /common/out/production/classes/
 /common-test/out/
 /common-test/out/production/classes/
-/modules/gui/out/
-/modules/gui/out/production/classes/
-/modules/gui/out/test/classes/
 /modules/sepal-server/out/
 /modules/sepal-server/out/production/classes/
 /modules/sepal-server/out/test/classes/
-/modules/ssh-gateway/out/
-/modules/ssh-gateway/out/production/classes/
-/modules/task-executor/out/
-/modules/task-executor/out/production/classes/
-/modules/task-executor/out/test/classes/
 /modules/user/out/
 /modules/user/out/production/classes/
 /modules/user/out/test/classes/

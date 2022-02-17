@@ -3,10 +3,8 @@ include ':sepal-common'
 include ':sepal-common-test'
 include ':sepal-user'
 include ':sepal-server'
-include ':sepal-ssh-gateway'
 
 project(':sepal-common').projectDir = "$rootDir/common" as File
 project(':sepal-common-test').projectDir = "$rootDir/common-test" as File
 project(':sepal-user').projectDir = "$rootDir/modules/user" as File
 project(':sepal-server').projectDir = "$rootDir/modules/sepal-server" as File
-project(':sepal-ssh-gateway').projectDir = "$rootDir/modules/ssh-gateway" as File

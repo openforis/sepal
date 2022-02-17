@@ -1,3 +1,0 @@
-- include_tasks: "{{ build_image_task }}"
-  vars:
-    image_name: "openforis/java"
