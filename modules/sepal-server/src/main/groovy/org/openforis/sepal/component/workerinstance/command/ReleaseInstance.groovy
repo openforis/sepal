@@ -39,7 +39,7 @@ class ReleaseInstanceHandler implements CommandHandler<Void, ReleaseInstance> {
             def raceCondition = !instanceRepository.released(command.instanceId)
             if (raceCondition) {
                 LOG.info("Encountered race-condition when releasing instance. instance: $instance")
-            } else if (instance.host) // Host might be unknown at this point, and there will be nothing to undeploy on the instance
+            } else if (instance?.host) // Host might be unknown at this point, and there will be nothing to undeploy on the instance
                 instanceProvisioner.undeploy(instance)
             instanceProvider.release(command.instanceId)
             eventDispatcher.publish(new InstanceReleased(instance.release()))
