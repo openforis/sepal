@@ -23,7 +23,7 @@ services:
       - "${SEPAL_DATA_DIR}/sepal/home:/sepalUsers"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-      RABBITMQ_HOST: "${RABBITMQ_HOST}"
+      RABBITMQ_HOST: "${RABBITMQ_HOST:-rabbitmq}"
       RABBITMQ_PORT: "5672"
       MIN_DELAY_SECONDS: "300"
       MAX_DELAY_SECONDS: "86400"
