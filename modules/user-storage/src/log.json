@@ -2,11 +2,11 @@
     "port": 5103,
     "categories": {
         "config": "info",
-        "filesystem": "info",
-        "jobQueue": "info",
+        "filesystem": "debug",
+        "jobQueue": "debug",
         "main": "info",
-        "messageHanlder": "info",
-        "messageQueue": "info",
+        "messageHanlder": "debug",
+        "messageQueue": "debug",
         "persistence": "info",
         "scan": "info"
     }
