@@ -70,18 +70,5 @@ class Local implements HostingServiceAdapter {
 
     InstanceProvisioner getInstanceProvisioner() {
         new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, 'udp://syslog')
-//
-//        new InstanceProvisioner() {
-//            void provisionInstance(WorkerInstance instance) {
-//                // TODO: Get race-condition if provisioning is too fast
-//                Thread.sleep(1000)
-//            }
-//
-//            void undeploy(WorkerInstance instance) {}
-//
-//            boolean isProvisioned(WorkerInstance instance) {
-//                return true
-//            }
-//        }
     }
 }
