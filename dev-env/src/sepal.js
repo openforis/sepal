@@ -40,8 +40,6 @@ const main = async () => {
     
     program.command('start')
         .description('Start modules')
-        .option('-s, --stop', 'Stop and restart')
-        .option('-sd, --stop-dependencies', 'Stop and restart dependencies too')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .argument('[module...]', 'Modules to start')
@@ -49,7 +47,7 @@ const main = async () => {
     
     program.command('stop')
         .description('Stop modules')
-        .option('-r, --recursive', 'Stop dependencies too')
+        .option('-d, --dependencies', 'Stop dependencies too')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .argument('[module...]', 'Modules to stop')
@@ -64,9 +62,9 @@ const main = async () => {
         .action(restart)
     
     program.command('run')
-        .description('Run a single module with log tail')
+        .description('Restart a single module and show log tail')
+        .option('-d, --dependencies', 'Restart dependencies too')
         .option('-b, --build', 'Build')
-        .option('-r, --recursive', 'Recursive', true)
         .argument('<module>', 'Module to run')
         .action(run)
     

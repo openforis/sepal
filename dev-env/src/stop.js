@@ -1,6 +1,6 @@
 import {exec} from './exec.js'
 import {getModules, isModule, isRunnable, isRunning, showModuleStatus, showStatus, STATUS} from './utils.js'
-import {getInverseRunDeps} from './deps.js'
+import {getDirectRunDeps} from './deps.js'
 import {SEPAL_SRC, ENV_FILE} from './config.js'
 import {log} from './log.js'
 import _ from 'lodash'
@@ -29,17 +29,17 @@ export const stopModule = async (module, options = {}, _parent) => {
 }
 
 const getStopActions = (modules, options = {}, parent) => {
-    const stopActions = !parent || options.recursive
+    const stopActions = options.dependencies || !parent
         ? modules.map(module => ({module, action: 'stop'}))
         : []
-    const depActions = _.flatten(
+    const directDepActions = _.flatten(
         modules.map(
-            module => getStopActions(getInverseRunDeps(module), options, module)
+            module => getStopActions(getDirectRunDeps(module), options, module)
         )
     )
     return [
         ...stopActions,
-        ...depActions
+        ...directDepActions
     ]
 }
 

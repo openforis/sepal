@@ -30,9 +30,6 @@ const startModule = async (module, options = {}, _parent) => {
 }
 
 const getStartActions = (modules, options = {}, parent) => {
-    const stopActions = options.stopDependencies || (options.stop && !parent)
-        ? modules.map(module => ({module, action: 'stop'}))
-        : []
     const startActions = modules.map(
         module => ({module, action: 'start'})
     )
@@ -42,21 +39,14 @@ const getStartActions = (modules, options = {}, parent) => {
         )
     )
     return [
-        ...stopActions,
         ...depActions,
         ...startActions
     ]
 }
 
 export const start = async (modules, options) => {
-    const actionOrder = {
-        stop: 1,
-        start: 2
-    }
-
     const startActions = _(getStartActions(getModules(modules), options))
         .uniqWith(_.isEqual)
-        .sortBy(({action}) => actionOrder[action])
         .value()
 
     for (const {module, action} of startActions) {
