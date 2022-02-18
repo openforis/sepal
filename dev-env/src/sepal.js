@@ -5,6 +5,7 @@ import {showStatus, exit} from './utils.js'
 import {build} from './build.js'
 import {start} from './start.js'
 import {stop} from './stop.js'
+import {restart} from './restart.js'
 import {run} from './run.js'
 import {logs} from './logs.js'
 import {log} from './log.js'
@@ -53,6 +54,14 @@ const main = async () => {
         .option('-q, --quiet', 'Quiet')
         .argument('[module...]', 'Modules to stop')
         .action(stop)
+    
+    program.command('restart')
+        .description('Restart modules')
+        .option('-d, --dependencies', 'Restart dependencies too')
+        .option('-v, --verbose', 'Verbose')
+        .option('-q, --quiet', 'Quiet')
+        .argument('[module...]', 'Modules to start')
+        .action(restart)
     
     program.command('run')
         .description('Run a single module with log tail')
