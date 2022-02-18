@@ -56,6 +56,7 @@ const main = async () => {
     
     program.command('run')
         .description('Run a single module with log tail')
+        .option('-b, --build', 'Build')
         .option('-r, --recursive', 'Recursive', true)
         .argument('<module>', 'Module to run')
         .action(run)
