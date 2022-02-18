@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     git \
     gnupg \
+    inetutils-ping \
     lsb-release \
     nano
 
@@ -40,7 +41,7 @@ RUN apt-get update && apt-get -y install nodejs
 
 # Install npm-check-updates
 
-RUN npm install -g npm-check-updates
+RUN npm install -g npm-check-updates wscat
 
 # Set bash prompt
 
