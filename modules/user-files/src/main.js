@@ -1,11 +1,19 @@
 require('sepal/log').configureServer(require('./log.json'))
 const log = require('sepal/log').getLogger('main')
 
-const {port} = require('./config')
+const {amqpUri, port} = require('./config')
 const routes = require('./routes')
+const {initMessageQueue} = require('sepal/messageQueue')
+const {message$} = require('./messageService')
 const server = require('sepal/httpServer')
 
 const main = async () => {
+    await initMessageQueue(amqpUri, {
+        publishers: [
+            {key: 'userStorage.files', publish$: message$},
+        ]
+    })
+
     await server.start({
         port,
         routes

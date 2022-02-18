@@ -12,6 +12,8 @@ services:
       - "${SEPAL_DATA_DIR}/sepal/home:/sepalUsers"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: "5672"
       POLL_INTERVAL_MS: "6000"
     deploy:
       restart_policy:

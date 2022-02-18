@@ -1,4 +1,5 @@
 const Job = require('sepal/worker/job')
+const {messageService, sendMessage$} = require('./messageService')
 const logConfig = require('./log.json')
 
 const getSepalUser = request => {
@@ -16,7 +17,7 @@ const getInitArgs = () => {
 const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}}) => {
     const Path = require('path')
     const {realpath, readdir, stat, rm} = require('fs/promises')
-    const {EMPTY, concat, timer, Subject, finalize, from, exhaustMap, distinctUntilChanged, takeUntil, takeWhile, switchMap} = require('rxjs')
+    const {EMPTY, catchError, concat, timer, Subject, finalize, from, exhaustMap, distinctUntilChanged, takeUntil, takeWhile, switchMap} = require('rxjs')
     const {minDuration$} = require('sepal/rxjs')
     const _ = require('lodash')
     const {resolvePath} = require('./filesystem')
@@ -60,7 +61,10 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
             ),
             exhaustMap(() => from(scanDirs())),
             distinctUntilChanged(_.isEqual),
-            takeUntil(stop$)
+            takeUntil(stop$),
+            catchError(error => {
+                log.error(error)
+            })
         ).subscribe(
             data => out$.next(JSON.stringify(data))
         )
@@ -115,13 +119,23 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
         const removePaths = (paths, options) =>
             Promise.all(
                 paths.map(path => removePath(path, options))
+            ).then(
+                () => sendMessage$({username}).subscribe()
             )
     
         const removePath = (path, options) => {
             unmonitor(path, options)
             log.debug(() => `Removing path: ${path}`)
-            const {absolutePath} = resolvePath(userHomeDir, path)
-            return rm(absolutePath, {recursive: true})
+            try {
+                const {absolutePath} = resolvePath(userHomeDir, path)
+                return rm(absolutePath, {recursive: true})
+            } catch (error) {
+                if (error.code === 'ENOENT') {
+                    log.debug(() => `Ignored non-existing path: ${path}`)
+                } else {
+                    log.error(error)
+                }
+            }
         }
     
         const isMonitored = path =>
@@ -169,7 +183,7 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
     }
 
     const init = async () => {
-        const userHomeDir = await realpath(Path.join(homeDir, username))
+        const userHomeDir = await realpath(Path.join(homeDir, username = 'admin'))
         const watcher = await createWatcher({out$, stop$, userHomeDir, pollIntervalMilliseconds})
 
         watcher.monitor('/')
@@ -218,6 +232,7 @@ module.exports = Job(logConfig)({
     jobPath: __filename,
     before: [],
     initArgs: () => getInitArgs(),
+    services: [messageService],
     args: request => [getSepalUser(request).username],
     worker$
 })
