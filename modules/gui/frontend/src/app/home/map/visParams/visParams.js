@@ -105,6 +105,10 @@ export const normalize = visParams => {
         })
     }
 
+    if (normalized.gamma) {
+        normalized.palette = undefined // Cannot have gamma and palette
+    }
+
     Object.keys(normalized).forEach(key => {
         if (_.isNil(normalized[key])) {
             delete normalized[key]
