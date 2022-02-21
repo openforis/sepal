@@ -8,6 +8,7 @@ import {stop} from './stop.js'
 import {restart} from './restart.js'
 import {run} from './run.js'
 import {logs} from './logs.js'
+import {shell} from './shell.js'
 import {log} from './log.js'
 import {update} from './update.js'
 
@@ -74,6 +75,12 @@ const main = async () => {
         .option('-f, --follow', 'Follow')
         .argument('<module>', 'Module')
         .action(logs)
+    
+    program.command('shell')
+        .description('Start module shell')
+        .option('-r, --root', 'Start as root')
+        .argument('<module>', 'Module')
+        .action(shell)
     
     program.command('update')
         .description('Update modules')
