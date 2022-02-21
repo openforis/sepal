@@ -42,6 +42,9 @@ const MESSAGE = {
     SKIPPED: chalk.grey('SKIPPED')
 }
 
+export const formatPackageVersion = (pkg, version) =>
+    `    ${chalk.whiteBright(pkg)} → ${chalk.yellow(version)}`
+
 const formatModule = (module, {pad = true} = {}) =>
     chalk.cyanBright(pad ? module : module)
 

@@ -1,6 +1,6 @@
 import {exec} from './exec.js'
 import {stopModule} from './stop.js'
-import {exit, getModules, isNodeModule, showModuleStatus, STATUS} from './utils.js'
+import {exit, formatPackageVersion, getModules, isNodeModule, isRunnable, isRunning, showModuleStatus, STATUS} from './utils.js'
 import {SEPAL_SRC} from './config.js'
 import {log} from './log.js'
 import ncu from 'npm-check-updates'
@@ -24,22 +24,26 @@ const updateModule = async (module, path, {check, target} = {}) => {
                 interactive,
                 silent: true
             })
+            _.forEach(upgraded, (version, pck) => {
+                log.info(formatPackageVersion(pck, version))
+            })
             showModuleStatus(module, STATUS.UPDATED)
     
-            if (upgrade && _.size(upgraded) > 0) {
-                _.forEach(upgraded, (version, pck) => {
-                    log.info(`- updated ${pck} to version ${version}`)
-                })
-                await stopModule(module)
-                showModuleStatus(module, STATUS.INSTALLING)
-                await exec({
-                    command: './script/npm-install.sh',
-                    args: [modulePath],
-                    enableStdIn: true,
-                    showStdOut: true,
-                    showStdErr: true
-                })
-                showModuleStatus(module, STATUS.INSTALLED)
+            if (_.size(upgraded) > 0) {
+                if (upgrade) {
+                    if (isRunnable(module) && isRunning(module)) {
+                        await stopModule(module)
+                    }
+                    showModuleStatus(module, STATUS.INSTALLING)
+                    await exec({
+                        command: './script/npm-install.sh',
+                        args: [modulePath],
+                        enableStdIn: true,
+                        showStdOut: true,
+                        showStdErr: true
+                    })
+                    showModuleStatus(module, STATUS.INSTALLED)
+                }
             }
         } else {
             showModuleStatus(module, STATUS.SKIPPED)
