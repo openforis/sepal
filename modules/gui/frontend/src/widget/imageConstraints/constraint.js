@@ -68,7 +68,7 @@ class _Constraint extends React.Component {
                 onClick={onClick}>
                 <CrudItem
                     title={imageSpec ? imageSpec.description : msg('widget.imageConstraints.image.notSelected')}
-                    description={this.toDescription()}
+                    description={selected ? null : this.toDescription()}
                     unsafeRemove
                     onRemove={() => onRemove()}>
                 </CrudItem>
@@ -330,3 +330,4 @@ export const Constraint = compose(
     _Constraint,
     form({fields})
 )
+
