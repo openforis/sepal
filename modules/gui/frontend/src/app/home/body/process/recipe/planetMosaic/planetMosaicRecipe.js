@@ -15,10 +15,14 @@ export const NICFI_ASSETS = [
     'projects/planet-nicfi/assets/basemaps/americas'
 ]
 
+const defaultFromDate = moment().subtract(2, 'month').startOf('year')
 export const defaultModel = {
     dates: {
-        fromDate: moment().startOf('year').format(DATE_FORMAT),
-        toDate: moment().add(1, 'years').startOf('year').format(DATE_FORMAT)
+        fromDate: defaultFromDate.format(DATE_FORMAT),
+        toDate: moment.min(
+            moment(),
+            defaultFromDate.add(1, 'year')
+        ).format(DATE_FORMAT)
     },
     sources: {
         source: 'BASEMAPS',
