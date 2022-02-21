@@ -152,7 +152,6 @@ export class LegendBuilder extends React.Component {
                 ? {invalidEntries: {...filteredInvalidEntries, ...{[entry.id]: invalid}}}
                 : {invalidEntries: _.omit(filteredInvalidEntries, entry.id)}
         }, () => onChange(entries, this.hasInvalidEntries()))
-
     }
 
     hasInvalidEntries() {
@@ -162,8 +161,12 @@ export class LegendBuilder extends React.Component {
 
     removeEntry(entry) {
         const {entries, onChange} = this.props
-        this.updateValidation(entry, false)
-        onChange(entries.filter(({id}) => id !== entry.id), this.hasInvalidEntries())
+        this.setState(({invalidEntries}) => {
+            const filteredInvalidEntries = _.omit(invalidEntries, [entry.id])
+            return {invalidEntries: filteredInvalidEntries}
+        }, () => {
+            onChange(entries.filter(({id}) => id !== entry.id), this.hasInvalidEntries())
+        })
     }
 }
 

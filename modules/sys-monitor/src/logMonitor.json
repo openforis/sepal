@@ -21,10 +21,10 @@
     },
     "UpdateUserSpendingReport": {
         "match": "Completed command org.openforis.sepal.component.budget.command.UpdateUserSpendingReport",
-        "timeout": 3600
+        "timeout": 86400
     },
     "UpdateUserStorageUsage": {
         "match": "Completed command org.openforis.sepal.component.budget.command.UpdateUserStorageUsage",
-        "timeout": 3600
+        "timeout": 86400
     }
 }

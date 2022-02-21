@@ -54,25 +54,29 @@ export default class Label extends React.Component {
 
     renderRight() {
         const {error, buttons} = this.props
-        return error
+        return error || buttons
             ? (
-                <Icon
-                    className={styles.error}
-                    name='exclamation-triangle'
-                    variant='error'
-                    tooltip={error}
-                    tooltipPlacement='left'
-                    tooltipDelay={0}
-                    pulse
-                />
+                <ButtonGroup spacing='tight'>
+                    {buttons ? buttons : null}
+                    {error ? this.renderError() : null}
+                </ButtonGroup>
             )
-            : buttons
-                ? (
-                    <ButtonGroup spacing='tight'>
-                        {buttons}
-                    </ButtonGroup>
-                )
-                : null
+            : null
+    }
+
+    renderError() {
+        const {error} = this.props
+        return (
+            <Icon
+                className={styles.error}
+                name='exclamation-triangle'
+                variant='error'
+                tooltip={error}
+                tooltipPlacement='left'
+                tooltipDelay={0}
+                pulse
+            />
+        )
     }
 }
 

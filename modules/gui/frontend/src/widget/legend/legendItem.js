@@ -10,12 +10,16 @@ export class LegendItem extends React.Component {
         const {color, value, label, selected, onClick} = this.props
         return (
             <Layout type='horizontal-nowrap'>
-                <Layout type='horizontal-nowrap' spacing='compact'>
+                <div className={styles.properties}>
                     <ColorElement color={color} onClick={onClick}/>
                     <div className={styles.label}>{label}</div>
                     <div className={styles.value}>({value})</div>
-                </Layout>
-                {selected ? <Icon name={'check'}/> : null}
+                </div>
+                {onClick
+                    ? selected
+                        ? <Icon name={'check'}/>
+                        : <div style={{visibility: 'hidden'}}><Icon name={'check'}/></div>
+                    : null}
             </Layout>
         )
     }

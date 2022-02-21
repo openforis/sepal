@@ -10,6 +10,8 @@ import React from 'react'
 import RecipeSection from './recipeSection'
 import styles from './inputImage.module.css'
 
+const MAX_LEGEND_ENTRIES = 10
+
 export const fields = {
     section: new Form.Field()
         .notBlank(),
@@ -25,7 +27,12 @@ export const fields = {
         .notBlank(),
     metadata: new Form.Field(),
     legendEntries: new Form.Field()
-        .notEmpty(),
+        .notEmpty()
+        .predicate(legendEntries =>
+            !legendEntries || legendEntries.length <= MAX_LEGEND_ENTRIES,
+        'process.classChange.panel.inputImage.legend.tooLong',
+        () => ({max: MAX_LEGEND_ENTRIES})
+        ),
     visualizations: new Form.Field()
 }
 

@@ -19,11 +19,12 @@ const mapRecipeToProps = (recipe, {componentId}) => ({
 
 class _Legend extends React.Component {
     render() {
-        const {label, entries, disabled} = this.props
+        const {label, entries, disabled, errorMessage} = this.props
         return (
             <Widget
                 label={label}
                 disabled={disabled}
+                errorMessage={errorMessage}
                 labelButtons={this.renderLabelButtons()}>
                 <EditLegendPanel/>
                 {entries && entries.length ? this.renderEntries() : this.renderNoEntries()}
@@ -124,6 +125,7 @@ Legend.propTypes = {
     activator: PropTypes.any,
     band: PropTypes.any,
     disabled: PropTypes.any,
+    errorMessage: PropTypes.any,
     label: PropTypes.any,
     recipe: PropTypes.any,
     selected: PropTypes.array,
