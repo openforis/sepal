@@ -18,10 +18,12 @@ const mapStateToProps = () => {
 class _RecipeSection extends React.Component {
     render() {
         const {stream, recipes, input} = this.props
-        const options = recipes.map(recipe => ({
-            value: recipe.id,
-            label: recipe.name
-        }))
+        const options = recipes
+            .filter(({type}) => !getRecipeType(type).noImageOutput)
+            .map(recipe => ({
+                value: recipe.id,
+                label: recipe.name
+            }))
         return (
             <Form.Combo
                 label={msg('process.indexChange.panel.inputImage.recipe.label')}

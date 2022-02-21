@@ -86,6 +86,7 @@ export default () => ({
     components: {
         recipe: TimeSeries
     },
+    noImageOutput: true,
     getDependentRecipeIds,
     getDateRange: recipe => [
         moment.utc(recipe.model.dates.startDate, 'YYYY-MM-DD'),

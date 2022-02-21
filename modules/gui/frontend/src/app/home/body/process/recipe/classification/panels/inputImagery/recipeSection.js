@@ -1,6 +1,7 @@
 import {Form} from 'widget/form/form'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {getRecipeType} from 'app/home/body/process/recipeTypes'
 import {msg} from 'translate'
 import {recipeAccess} from '../../../../recipeAccess'
 import {switchMap} from 'rxjs'
@@ -17,10 +18,12 @@ const mapStateToProps = () => {
 class _RecipeSection extends React.Component {
     render() {
         const {stream, recipes, input} = this.props
-        const options = recipes.map(recipe => ({
-            value: recipe.id,
-            label: recipe.name
-        }))
+        const options = recipes
+            .filter(({type}) => !getRecipeType(type).noImageOutput)
+            .map(recipe => ({
+                value: recipe.id,
+                label: recipe.name
+            }))
         return (
             <Form.Combo
                 label={msg('process.classification.panel.inputImagery.form.recipe.label')}
