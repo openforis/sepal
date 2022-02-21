@@ -1,14 +1,17 @@
 import {spawn} from 'child_process'
 import {log} from './log.js'
 
-export const exec = ({command, args, showStdOut, showStdErr}) =>
+export const exec = ({command, args, enableStdIn, showStdOut, showStdErr}) =>
     new Promise((resolve, reject) => {
         if (args) {
             log.trace(`Running command ${command} with args:`, args)
         } else {
             log.trace(`Running command ${command} with no args:`)
         }
-        const cmd = spawn(command, args)
+        const cmd = spawn(command, args, {
+            stdio: [enableStdIn ? 'inherit' : 'pipe', 'pipe', 'pipe'],
+            // shell: true
+        })
 
         let stdout = ''
         let stderr = ''
