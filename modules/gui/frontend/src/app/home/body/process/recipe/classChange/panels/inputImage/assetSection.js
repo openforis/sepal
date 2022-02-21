@@ -32,6 +32,7 @@ export default class AssetSection extends React.Component {
             bands[bandName] = {
                 values: visualization.values || [],
                 labels: visualization.labels || [],
+                palette: visualization.palette
             }
         })
         onLoaded({
