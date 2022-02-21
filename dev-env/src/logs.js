@@ -9,8 +9,7 @@ const logsModule = async (module, options = {}, _parent) => {
             if (isRunnable(module)) {
                 if (await isRunning(module)) {
                     const logsOptions = _.compact([
-                        options.follow ? '--follow' : null,
-                        options.test ? '--test' : null,
+                        options.follow ? '--follow' : null
                     ]).join(' ')
                     await exec({
                         command: './script/docker-compose-logs.sh',
