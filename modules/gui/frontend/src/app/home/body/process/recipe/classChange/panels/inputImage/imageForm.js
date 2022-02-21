@@ -46,6 +46,7 @@ class ImageForm extends Component {
                     entries={legendEntries.value || []}
                     disabled={!band.value}
                     onUpdate={updatedEntries => legendEntries.set(updatedEntries)}
+                    errorMessage={legendEntries.error}
                 />
             </Layout>
         )

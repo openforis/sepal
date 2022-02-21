@@ -690,7 +690,7 @@
           },
           "disabled": {
               "tooltip": "Enable scroll wheel zooming"
-          } 
+          }
       }
     },
     "ccdc": {
@@ -1709,7 +1709,8 @@
             "title": "From image"
           },
           "legend": {
-            "label": "Legend"
+            "label": "Legend",
+            "tooLong": "The legend is too long. It cannot contain more than {max} entries."
           },
           "recipe": {
             "label": "Recipe",
