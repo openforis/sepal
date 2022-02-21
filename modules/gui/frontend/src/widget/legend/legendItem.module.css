@@ -1,7 +1,14 @@
+.properties {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
 .label {
-    margin-left: .25rem;
+    margin-left: .75rem;
 }
 
 .value {
+    margin-left: .5rem;
     color: #808080;
 }
