@@ -1,6 +1,6 @@
 #!/usr/bin/node
 
-import {program} from 'commander'
+import {program, Option} from 'commander'
 import {showStatus, exit} from './utils.js'
 import {build} from './build.js'
 import {start} from './start.js'
@@ -8,7 +8,9 @@ import {stop} from './stop.js'
 import {restart} from './restart.js'
 import {run} from './run.js'
 import {logs} from './logs.js'
+import {shell} from './shell.js'
 import {log} from './log.js'
+import {update} from './update.js'
 
 const main = async () => {
     process.on('SIGINT', () => exit({interrupted: true}))
@@ -74,11 +76,24 @@ const main = async () => {
         .argument('<module>', 'Module')
         .action(logs)
     
+    program.command('shell')
+        .description('Start module shell')
+        .option('-r, --root', 'Start as root')
+        .argument('<module>', 'Module')
+        .action(shell)
+    
+    program.command('update')
+        .description('Update modules')
+        .option('-c, --check', 'Check only')
+        .addOption(new Option('-t, --target <target>', 'Update target').choices(['patch', 'minor', 'latest']).default('patch'))
+        .argument('[module...]', 'Modules to update')
+        .action(update)
+
     try {
         await program.parseAsync(process.argv)
         exit({normal: true})
     } catch (error) {
-        if (!['commander.helpDisplayed', 'commander.help', 'commander.version', 'commander.unknownOption', 'commander.unknownCommand'].includes(error.code)) {
+        if (!['commander.helpDisplayed', 'commander.help', 'commander.version', 'commander.unknownOption', 'commander.unknownCommand', 'commander.invalidArgument'].includes(error.code)) {
             exit({error})
         }
     }

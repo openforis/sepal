@@ -5,6 +5,8 @@ import {log} from './log.js'
 import {exec} from './exec.js'
 import {getBuildDeps, getDirectRunDeps, getInverseRunDeps} from './deps.js'
 import _ from 'lodash'
+import {stat} from 'fs/promises'
+import Path from 'path'
 
 const cursor = ansi(process.stdout)
 
@@ -16,7 +18,12 @@ export const STATUS = {
     STARTING: 'STARTING',
     STOPPING: 'STOPPING',
     STOPPED: 'STOPPED',
-    ERROR: 'ERROR'
+    ERROR: 'ERROR',
+    UPDATING: 'UPDATING',
+    UPDATED: 'UPDATED',
+    INSTALLING: 'INSTALLING',
+    INSTALLED: 'INSTALLED',
+    SKIPPED: 'SKIPPED',
 }
 
 const MESSAGE = {
@@ -27,8 +34,16 @@ const MESSAGE = {
     STARTING: chalk.green('STARTING...'),
     STOPPING: chalk.red('STOPPING...'),
     STOPPED: chalk.redBright('STOPPED'),
-    ERROR: chalk.bgRed('ERROR')
+    ERROR: chalk.bgRed('ERROR'),
+    UPDATING: chalk.magenta('UPDATING...'),
+    UPDATED: chalk.magentaBright('UPDATED'),
+    INSTALLING: chalk.magenta('INSTALLING...'),
+    INSTALLED: chalk.magentaBright('INSTALLED'),
+    SKIPPED: chalk.grey('SKIPPED')
 }
+
+export const formatPackageVersion = (pkg, version) =>
+    `    ${chalk.whiteBright(pkg)} → ${chalk.yellow(version)}`
 
 const formatModule = (module, {pad = true} = {}) =>
     chalk.cyanBright(pad ? module : module)
@@ -72,7 +87,7 @@ const getStatus = async modules => {
                 ({name}) => statusModules.length === 0 || statusModules.includes(name)
             )
     } catch (error) {
-        log.error(`Could not get status`, error)
+        log.error('Could not get status', error)
         return null
     }
 }
@@ -112,7 +127,7 @@ const expandGroups = modules =>
     _(modules)
         .map(moduleOrGroup =>
             moduleOrGroup.startsWith(GROUP_PREFIX)
-                ? expandGroup(moduleOrGroup.substring(GROUP_PREFIX.length)) 
+                ? expandGroup(moduleOrGroup.substring(GROUP_PREFIX.length))
                 : moduleOrGroup
         )
         .flatten()
@@ -180,22 +195,31 @@ export const isRunning = async module => {
     return result.length === 1
 }
 
+export const isNodeModule = async absolutePath => {
+    try {
+        const stats = await stat(Path.join(absolutePath, 'package.json'))
+        return stats.isFile()
+    } catch (error) {
+        if (error.code !== 'ENOENT') {
+            log.error(error)
+        }
+        return false
+    }
+}
+
 export const exit = reason => {
     cursor.reset().write('\n').show()
     if (reason.normal) {
         log.info(chalk.greenBright('Completed'))
         process.exit(0)
-    }
-    else if (reason.error) {
+    } else if (reason.error) {
         const error = reason.error
         log.error(chalk.bgRed('Error'), error.stderr || error)
         process.exit(1)
-    }
-    else if (reason.interrupted) {
+    } else if (reason.interrupted) {
         log.info(chalk.yellow('Interrupted (SIGINT)'))
         process.exit(2)
-    }
-    else {
+    } else {
         log.info(chalk.redBright('Unsupported exit reason:'), reason)
         process.exit(3)
     }

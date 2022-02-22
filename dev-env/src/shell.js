@@ -3,18 +3,20 @@ import {exit, isModule, isRunnable, isRunning, showModuleStatus, STATUS} from '.
 import {SEPAL_SRC, ENV_FILE} from './config.js'
 import _ from 'lodash'
 
-const logsModule = async (module, options = {}, _parent) => {
+const shellModule = async (module, options = {}, _parent) => {
     try {
         if (isModule(module)) {
             if (isRunnable(module)) {
                 if (await isRunning(module)) {
-                    const logsOptions = _.compact([
-                        options.follow ? '--follow' : null
+                    const shellOptions = _.compact([
+                        options.root ? '--user=root' : null
                     ]).join(' ')
                     await exec({
-                        command: './script/docker-compose-logs.sh',
-                        args: [module, SEPAL_SRC, ENV_FILE, logsOptions],
-                        showStdOut: true
+                        command: './script/docker-compose-shell.sh',
+                        args: [module, SEPAL_SRC, ENV_FILE, shellOptions],
+                        enableStdIn: true,
+                        showStdOut: true,
+                        showStdErr: true
                     })
                 }
             } else {
@@ -27,6 +29,6 @@ const logsModule = async (module, options = {}, _parent) => {
     }
 }
 
-export const logs = async (module, options) => {
-    await logsModule(module, options)
+export const shell = async (module, options) => {
+    await shellModule(module, options)
 }
