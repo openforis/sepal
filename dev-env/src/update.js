@@ -1,6 +1,6 @@
 import {exec} from './exec.js'
 import {stopModule} from './stop.js'
-import {exit, formatPackageVersion, getModules, isNodeModule, isRunnable, isRunning, showModuleStatus, STATUS} from './utils.js'
+import {exit, formatPackageVersion, getModules, isNodeModule, isRunning, showModuleStatus, STATUS} from './utils.js'
 import {SEPAL_SRC} from './config.js'
 import {log} from './log.js'
 import ncu from 'npm-check-updates'
