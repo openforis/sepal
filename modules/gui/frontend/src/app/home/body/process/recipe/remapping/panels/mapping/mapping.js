@@ -89,7 +89,7 @@ class _Mapping extends React.Component {
     renderMappingOverview({id, color, value, label, constraints = [], booleanOperator}) {
         const {recipeNameById, inputImagery} = this.props
         const images = inputImagery.map(inputImage => {
-            const id = inputImage.id
+            const id = inputImage.imageId
             const description = inputImage.type === 'RECIPE_REF'
                 ? recipeNameById[inputImage.id]
                 : inputImage.id

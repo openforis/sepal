@@ -27,7 +27,8 @@ class ProcessingRecipeComponent extends DataSourceBackedComponent implements End
         CHANGE_DETECTION: new ChangeDetectionMigrations(),
         TIME_SERIES: new TimeSeriesMigrations(),
         CCDC: new CcdcMigrations(),
-        CCDC_SLICE: new CcdcSliceMigrations()
+        CCDC_SLICE: new CcdcSliceMigrations(),
+        REMAPPING: new RemappingMigrations()
     ]
 
     static ProcessingRecipeComponent create() {
