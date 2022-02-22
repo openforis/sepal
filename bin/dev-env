@@ -23,7 +23,7 @@ function start() {
       if [ "$FORCE_REBUILD" -eq 1 ]
       then
         echo "Rebuilding dev-env with configuration from $SEPAL_CONFIG..."
-        docker compose build --no-cache >&6 2>&1
+        docker compose build >&6 2>&1
         docker compose up --remove-orphans -d >&6 2>&1
       else
         echo "Starting dev-env with configuration from $SEPAL_CONFIG..."
