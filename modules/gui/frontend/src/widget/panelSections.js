@@ -27,7 +27,7 @@ export default class PanelSections extends React.Component {
     }
 
     renderSelect() {
-        const {sections, selected, label} = this.props
+        const {sections, selected, label, step} = this.props
         const options = _.chain(sections)
             .filter(section => section.value)
             .map(section => ({
@@ -44,6 +44,7 @@ export default class PanelSections extends React.Component {
                 tooltipPlacement='bottom'
                 options={options}
                 label={label}
+                onSelect={() => step && step.set(0)}
             />
         )
     }
