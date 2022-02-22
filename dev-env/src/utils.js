@@ -19,10 +19,10 @@ export const STATUS = {
     STOPPING: 'STOPPING',
     STOPPED: 'STOPPED',
     ERROR: 'ERROR',
-    UPDATING: 'UPDATING',
-    UPDATED: 'UPDATED',
-    INSTALLING: 'INSTALLING',
-    INSTALLED: 'INSTALLED',
+    UPDATING_PACKAGES: 'UPDATING_PACKAGES',
+    UPDATED_PACKAGES: 'UPDATED_PACKAGES',
+    INSTALLING_PACKAGES: 'INSTALLING_PACKAGES',
+    INSTALLED_PACKAGES: 'INSTALLED_PACKAGES',
     SKIPPED: 'SKIPPED',
 }
 
@@ -35,10 +35,10 @@ const MESSAGE = {
     STOPPING: chalk.red('STOPPING...'),
     STOPPED: chalk.redBright('STOPPED'),
     ERROR: chalk.bgRed('ERROR'),
-    UPDATING: chalk.magenta('UPDATING...'),
-    UPDATED: chalk.magentaBright('UPDATED'),
-    INSTALLING: chalk.magenta('INSTALLING...'),
-    INSTALLED: chalk.magentaBright('INSTALLED'),
+    UPDATING_PACKAGES: chalk.magenta('UPDATING PACKAGES...'),
+    UPDATED_PACKAGES: chalk.magentaBright('UPDATED PACKAGES'),
+    INSTALLING_PACKAGES: chalk.magenta('INSTALLING PACKAGES...'),
+    INSTALLED_PACKAGES: chalk.magentaBright('INSTALLED PACKAGES'),
     SKIPPED: chalk.grey('SKIPPED')
 }
 

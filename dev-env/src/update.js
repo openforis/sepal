@@ -7,43 +7,46 @@ import ncu from 'npm-check-updates'
 import Path from 'path'
 import _ from 'lodash'
 
+const updatePackageList = async (module, path, {check, target}) => {
+    showModuleStatus(module, STATUS.UPDATING_PACKAGES)
+    const upgraded = await ncu.run({
+        cwd: Path.join(SEPAL_SRC, path),
+        color: true,
+        upgrade: !check,
+        target,
+        interactive: !check,
+        silent: true
+    })
+    _.forEach(upgraded, (version, pck) => {
+        log.info(formatPackageVersion(pck, version))
+    })
+    showModuleStatus(module, STATUS.UPDATED_PACKAGES)
+}
+
+const installPackages = async (module, modulePath) => {
+    if (await isRunning(module)) {
+        await stopModule(module)
+    }
+    showModuleStatus(module, STATUS.INSTALLING_PACKAGES)
+    await exec({
+        command: './script/npm-install.sh',
+        args: [modulePath],
+        enableStdIn: true,
+        showStdOut: true,
+        showStdErr: true
+    })
+    showModuleStatus(module, STATUS.INSTALLED_PACKAGES)
+}
+
 const updateModule = async (module, path, {check, target} = {}) => {
     try {
         const modulePath = Path.join(SEPAL_SRC, path)
         if (await isNodeModule(modulePath)) {
-            const upgrade = !check
-            const majorUpgrade = !['patch', 'minor'].includes(target)
-            const interactive = upgrade && majorUpgrade
-    
-            showModuleStatus(module, STATUS.UPDATING)
-            const upgraded = await ncu.run({
-                cwd: Path.join(SEPAL_SRC, path),
-                color: true,
-                upgrade,
-                target,
-                interactive,
-                silent: true
-            })
-            _.forEach(upgraded, (version, pck) => {
-                log.info(formatPackageVersion(pck, version))
-            })
-            showModuleStatus(module, STATUS.UPDATED)
-    
-            if (_.size(upgraded) > 0) {
-                if (upgrade) {
-                    if (isRunnable(module) && isRunning(module)) {
-                        await stopModule(module)
-                    }
-                    showModuleStatus(module, STATUS.INSTALLING)
-                    await exec({
-                        command: './script/npm-install.sh',
-                        args: [modulePath],
-                        enableStdIn: true,
-                        showStdOut: true,
-                        showStdErr: true
-                    })
-                    showModuleStatus(module, STATUS.INSTALLED)
-                }
+            if (target) {
+                await updatePackageList(module, path, {check, target})
+            }
+            if (!check) {
+                await installPackages(module, modulePath)
             }
         } else {
             showModuleStatus(module, STATUS.SKIPPED)
