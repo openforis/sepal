@@ -13,7 +13,7 @@
         "bull": "^4.1.4",
         "commander": "^8.3.0",
         "date-fns": "^2.27.0",
-        "ioredis": "^4.28.2",
+        "ioredis": "^4.28.5",
         "lodash": "^4.17.21",
         "log4js": "^6.3.0",
         "moment": "^2.29.1",
@@ -24,7 +24,7 @@
     },
     "devDependencies": {
         "eslint": "^8.4.1",
-        "jest": "^27.4.5",
+        "jest": "^27.4.7",
         "jest-expect-message": "^1.0.2"
     }
 }
