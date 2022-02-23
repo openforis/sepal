@@ -42,7 +42,8 @@ cp /etc/environment /etc/R/Renviron.site
 # LD_LIBRARY_PATH includes /usr/lib/x86_64-linux-gnu. Make sure /lib/x86_64-linux-gnu is also included
 sed -i -e 's/\/usr\/lib\/x86_64-linux-gnu/\/usr\/lib\/x86_64-linux-gnu:\/lib\/x86_64-linux-gnu/g' /usr/lib/R/etc/ldpaths
 
-echo "$ldap_host ldap" >> /etc/hosts
+ldap_ip=$(getent hosts $ldap_host | awk '{ print $1 }' | head -n 1)
+echo "$ldap_ip ldap" >> /etc/hosts
 
 TOT_MEM=$(awk '/MemFree/ { printf "%i\n", $2/1024 }' /proc/meminfo)
 if [[ (TOT_MEM -lt 3000) ]] ;then
