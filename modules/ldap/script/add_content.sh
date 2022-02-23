@@ -25,9 +25,6 @@ fi
 echo "Setting up content..."
 ldapadd -x -D cn=admin,dc=sepal,dc=org -w "$LDAP_ADMIN_PASSWORD" -f /config/add_content.ldif
 
-touch /data/module_initialized
-echo "LDAP initialized"
-
 CA_FILE=/container/service/slapd/assets/certs/ldap-ca.crt.pem
 for i in {50..0}; do
     if [ ! -f "${CA_FILE}" ]; then
@@ -48,5 +45,8 @@ else
   echo
   echo "**** Not a soft-link: ${CA_FILE}"
 fi
+
+touch /data/module_initialized
+echo "LDAP initialized"
 
 exit 0
