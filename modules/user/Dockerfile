@@ -1,7 +1,7 @@
 FROM openforis/java
 
 EXPOSE 80
-EXPOSE 5005
+EXPOSE 5006
 
 ENV MODULE_NAME user
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
