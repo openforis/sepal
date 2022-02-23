@@ -42,6 +42,7 @@ const main = async () => {
     
     program.command('start')
         .description('Start modules')
+        .option('-d, --dependencies', 'Start dependencies too', true)
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .argument('[module...]', 'Modules to start')

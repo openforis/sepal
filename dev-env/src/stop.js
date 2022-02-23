@@ -28,31 +28,26 @@ export const stopModule = async (module, options = {}, _parent) => {
     }
 }
 
-const getStopActions = (modules, options = {}, parent) => {
-    const stopActions = options.dependencies || !parent
-        ? modules.map(module => ({module, action: 'stop'}))
-        : []
-    const directDepActions = _.flatten(
-        modules.map(
-            module => getStopActions(getDirectRunDeps(module), options, module)
+const getModulesToStop = (modules, options = {}, parentModules = []) => {
+    const dependencies = options.dependencies
+        ? _.flatten(
+            modules.map(module =>
+                parentModules.includes(module)
+                    ? []
+                    : getModulesToStop(getDirectRunDeps(module), options, _.uniq([...parentModules, ...modules]))
+            )
         )
-    )
+        : []
+
     return [
-        ...stopActions,
-        ...directDepActions
+        ...modules,
+        ...dependencies
     ]
 }
 
 export const stop = async (modules, options) => {
-    const stopActions = _(getStopActions(getModules(modules), options))
-        .uniqWith(_.isEqual)
-        .value()
-
-    for (const {module, action} of stopActions) {
-        if (action === 'stop') {
-            await stopModule(module, _.pick(options, ['verbose', 'quiet']))
-        } else {
-            log.error('Unsupported action:', action)
-        }
+    const stopActions = _.uniq(getModulesToStop(getModules(modules), options))
+    for (const module of stopActions) {
+        await stopModule(module, _.pick(options, ['verbose', 'quiet']))
     }
 }

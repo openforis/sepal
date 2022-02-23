@@ -29,33 +29,26 @@ const startModule = async (module, options = {}, _parent) => {
     }
 }
 
-const getStartActions = (modules, options = {}, parent) => {
-    const startActions = modules.map(
-        module => ({module, action: 'start'})
-    )
-    const depActions = _.flatten(
-        modules.map(
-            module => getStartActions(getDirectRunDeps(module), options, module)
+const getModulesToStart = (modules, options = {}, parentModules = []) => {
+    const dependencies = options.dependencies
+        ? _.flatten(
+            modules.map(module =>
+                parentModules.includes(module)
+                    ? []
+                    : getModulesToStart(getDirectRunDeps(module), options, _.uniq([...parentModules, ...modules]))
+            )
         )
-    )
+        : []
+
     return [
-        ...depActions,
-        ...startActions
+        ...dependencies,
+        ...modules
     ]
 }
 
 export const start = async (modules, options) => {
-    const startActions = _(getStartActions(getModules(modules), options))
-        .uniqWith(_.isEqual)
-        .value()
-
-    for (const {module, action} of startActions) {
-        if (action === 'start') {
-            await startModule(module, _.pick(options, ['verbose', 'quiet']))
-        } else if (action === 'stop') {
-            await stopModule(module, _.pick(options, ['verbose', 'quiet']))
-        } else {
-            log.error('Unsupported action:', action)
-        }
+    const startModules = _.uniq(getModulesToStart(getModules(modules), options))
+    for (const module of startModules) {
+        await startModule(module, _.pick(options, ['verbose', 'quiet']))
     }
 }
