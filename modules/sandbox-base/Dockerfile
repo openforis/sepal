@@ -49,6 +49,7 @@ RUN apt-get -y update && apt-get install -y \
     bc \
     bison \
     build-essential \
+    cmake \
     csh \
     curl \
     dbview \
