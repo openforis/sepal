@@ -1,5 +1,7 @@
 #!/bin/bash
 
+rm -f /data/module_initialized
+
 function template {
     local template=$1
     local destination=$2
@@ -24,5 +26,4 @@ if [ ! -f /container/service/slapd/assets/certs/ldap-key.pem ]; then
   cp -f ./*.pem /container/service/slapd/assets/certs/
 fi
 
-rm -f /data/module_initialized
 exec /usr/bin/supervisord -c /config/supervisord.conf

@@ -11,7 +11,7 @@
     "license": "ISC",
     "dependencies": {
         "commander": "^8.3.0",
-        "express": "^4.17.2",
+        "express": "^4.17.3",
         "express-ws": "^5.0.2",
         "node-pty": "^0.10.1",
         "rxjs": "^7.4.0",
@@ -20,7 +20,7 @@
     },
     "devDependencies": {
         "eslint": "^8.4.1",
-        "jest": "^27.4.5",
+        "jest": "^27.4.7",
         "jest-expect-message": "^1.0.2"
     }
 }
