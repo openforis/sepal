@@ -3,7 +3,7 @@ version: "3.9"
 services:
   user:
     ports:
-      - "127.0.0.1:5006:5005"
+      - "127.0.0.1:5006:5006"
     volumes:
       - "${SEPAL_PROJECT_DIR}/modules/user/src:/usr/local/src/sepal/modules/user/src"
       - "${SEPAL_PROJECT_DIR}/modules/user/build:/usr/local/src/sepal/modules/user/build"
