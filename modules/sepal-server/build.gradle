@@ -25,6 +25,6 @@ task runModule(type: Exec) {
     def jvmArgs = []
     if (System.getenv('DEPLOY_ENVIRONMENT') == 'DEV')
         jvmArgs = ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005']
-    def commandLineArgs = ["java", "-classpath", sourceSets.main.runtimeClasspath.getAsPath(), javaMainClass] + jvmArgs
+    def commandLineArgs = ["java", "-classpath", sourceSets.main.runtimeClasspath.getAsPath()] + jvmArgs +  [javaMainClass]
     commandLine(*commandLineArgs)
 }
