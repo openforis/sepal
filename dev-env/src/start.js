@@ -1,9 +1,7 @@
 import {exec} from './exec.js'
-import {stopModule} from './stop.js'
 import {exit, getModules, isModule, isRunnable, isRunning, showModuleStatus, showStatus, STATUS} from './utils.js'
 import {getDirectRunDeps} from './deps.js'
 import {SEPAL_SRC, ENV_FILE} from './config.js'
-import {log} from './log.js'
 import _ from 'lodash'
 
 const startModule = async (module, options = {}, _parent) => {
@@ -18,7 +16,7 @@ const startModule = async (module, options = {}, _parent) => {
                         showStdOut: options.verbose
                     })
                 }
-                await showStatus([module], options)
+                await showStatus([module], {extended: true})
             } else {
                 showModuleStatus(module, STATUS.NON_RUNNABLE)
             }

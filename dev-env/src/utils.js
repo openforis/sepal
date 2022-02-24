@@ -1,6 +1,6 @@
 import ansi from 'ansi'
 import chalk from 'chalk'
-import {deps, groups, NAME_COLUMN, STATUS_COLUMN, DEPS_COLUMN, GROUP_PREFIX} from './config.js'
+import {deps, groups, NAME_COLUMN, STATUS_COLUMN, DEPS_COLUMN, GROUP_PREFIX, SEPAL_SRC, ENV_FILE} from './config.js'
 import {log} from './log.js'
 import {exec} from './exec.js'
 import {getBuildDeps, getDirectRunDeps, getInverseRunDeps} from './deps.js'
@@ -39,7 +39,18 @@ const MESSAGE = {
     UPDATED_PACKAGES: chalk.magentaBright('UPDATED PACKAGES'),
     INSTALLING_PACKAGES: chalk.magenta('INSTALLING PACKAGES...'),
     INSTALLED_PACKAGES: chalk.magentaBright('INSTALLED PACKAGES'),
-    SKIPPED: chalk.grey('SKIPPED')
+    SKIPPED: chalk.grey('SKIPPED'),
+    STARTED: {
+        RUNNING: chalk.greenBright('RUNNING'),
+        EXITED: chalk.redBright('EXITED'),
+        RESTARTING: chalk.yellowBright('RESTARTING'),
+    },
+    HEALTH: {
+        HEALTHY: chalk.greenBright('HEALTHY'),
+        UNHEALTHY: chalk.redBright('UNHEALTHY'),
+        STARTING: chalk.yellowBright('STARTING'),
+    },
+    DEFAULT: msg => chalk.grey(msg)
 }
 
 export const formatPackageVersion = (pkg, version) =>
@@ -57,40 +68,6 @@ const formatDeps = modules => {
 
 const getAllModules = () =>
     Object.keys(deps)
-
-const started = info => {
-    const statusColors = {
-        RUNNING: chalk.greenBright,
-        EXITED: chalk.redBright,
-        RESTARTING: chalk.yellowBright
-    }
-    const defaultColor = chalk.grey
-    const itemMatcher = /^(.+?)\((.+?)\)$/
-    return info
-        .toUpperCase()
-        .split(', ')
-        .map(item => {
-            const [_, status, count] = item.match(itemMatcher)
-            const statusColor = statusColors[status] || defaultColor
-            return `${statusColor(`${status}:${count}`)}`
-        })
-        .join(', ')
-}
-
-const getStatus = async modules => {
-    const statusModules = getModules(modules)
-    try {
-        const result = JSON.parse(await exec({command: './script/docker-compose-ls.sh'}))
-        return result
-            .map(({Name: name, Status: status}) => ({name, status}))
-            .filter(
-                ({name}) => statusModules.length === 0 || statusModules.includes(name)
-            )
-    } catch (error) {
-        log.error('Could not get status', error)
-        return null
-    }
-}
 
 const getBuildDependencyInfo = module => {
     const deps = getBuildDeps(module)
@@ -145,13 +122,69 @@ export const getModules = modules => {
     }
 }
 
-export const showStatus = async (modules, options) => {
-    const result = await getStatus(modules)
-    for (const module of getModules(modules)) {
+export const getServices = async module => {
+    try {
+        const result = JSON.parse(await exec({command: './script/docker-compose-ps.sh', args: [module, SEPAL_SRC, ENV_FILE]}))
+        return result.map(
+            ({Name: name, State: state, Health: health}) => ({name, state: state.toUpperCase(), health: health.toUpperCase()})
+        )
+    } catch (error) {
+        log.error('Could not get health', error)
+        return null
+    }
+}
+
+const getBaseStatus = async modules => {
+    try {
+        return JSON.parse(await exec({command: './script/docker-compose-ls.sh'}))
+            .map(
+                ({Name: module, Status: status}) => ({module, status: status.toUpperCase()})
+            )
+            .filter(
+                // ({module}) => modules.length === 0 || modules.includes(module)
+                ({module}) => modules.includes(module)
+            )
+    } catch (error) {
+        log.error('Could not get status', error)
+        return null
+    }
+}
+
+const getExtendedStatus = async modules =>
+    await Promise.all(
+        modules
+            .map(async module => {
+                const services = await getServices(module)
+                const status = _(services)
+                    .groupBy('state')
+                    .mapValues(
+                        services => services.map(
+                            ({name, health}) => `${name}${health ? `: ${health}` : ''}`
+                        )
+                    )
+                    .map((services, module) => `${module} [${services.join(', ')}]`)
+                    .sort()
+                    .value()
+                    .join(', ')
+                return {module, services, status}
+            })
+    )
+
+const getStatus = async (modules, extended) => {
+    const status = extended
+        ? await getExtendedStatus(modules)
+        : await getBaseStatus(modules)
+    return status.filter(({status}) => status.length)
+}
+
+export const showStatus = async (modules, options = {}) => {
+    const sanitizedModules = getModules(modules)
+    const result = (await getStatus(sanitizedModules, options.extended))
+    for (const module of sanitizedModules) {
         if (isModule(module)) {
-            const info = _.find(result, ({name}) => name === module)
-            const status = info
-                ? started(info.status)
+            const moduleStatus = _.find(result, ({module: currentModule}) => currentModule === module)
+            const status = moduleStatus
+                ? renderStarted(moduleStatus)
                 : isRunnable(module)
                     ? STATUS.STOPPED
                     : STATUS.NON_RUNNABLE
@@ -159,6 +192,15 @@ export const showStatus = async (modules, options) => {
         }
     }
 }
+
+const renderStarted = ({status}) =>
+    status
+        .replace('RUNNING', MESSAGE.STARTED.RUNNING)
+        .replace('EXITED', MESSAGE.STARTED.EXITED)
+        .replace('RESTARTING', MESSAGE.STARTED.RESTARTING)
+        .replace('HEALTHY', MESSAGE.HEALTH.HEALTHY)
+        .replace('UNHEALTHY', MESSAGE.HEALTH.UNHEALTHY)
+        .replace('STARTING', MESSAGE.HEALTH.STARTING)
         
 export const showModuleStatus = (module, status, options) => {
     cursor

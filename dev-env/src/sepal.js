@@ -25,6 +25,7 @@ const main = async () => {
     program.command('status')
         .description('Show modules status')
         .option('-d, --dependencies', 'Show all dependencies')
+        .option('-x, --extended', 'Include health information')
         .option('-bd, --build-dependencies', 'Show build dependencies')
         .option('-dd, --direct-dependencies', 'Show direct dependencies')
         .option('-id, --inverse-dependencies', 'Show inverse dependencies')

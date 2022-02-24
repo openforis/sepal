@@ -17,7 +17,7 @@ export const stopModule = async (module, options = {}, _parent) => {
                         showStdOut: options.verbose
                     })
                 }
-                await showStatus([module], options)
+                await showStatus([module])
             } else {
                 showModuleStatus(module, STATUS.NON_RUNNABLE)
             }

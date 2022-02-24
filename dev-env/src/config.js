@@ -5,7 +5,7 @@ export const ENV_FILE = '/etc/sepal/config/env'
 
 export const NAME_COLUMN = 0
 export const STATUS_COLUMN = 30
-export const DEPS_COLUMN = 60
+export const DEPS_COLUMN = 100
 
 export const GROUP_PREFIX = ':'
 
