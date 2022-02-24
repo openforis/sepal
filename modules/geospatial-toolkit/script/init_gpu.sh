@@ -44,34 +44,17 @@ apt-get install -y --no-install-recommends \--no-install-recommends \
   libnvidia-common-470=470.82.01-0ubuntu1 \
   nvidia-dkms-470=470.82.01-0ubuntu1 \
   nvidia-kernel-common-470=470.82.01-0ubuntu1 \
-  cuda-toolkit-11-0 \
   cuda-toolkit-11-4 \
   libcudnn8=8.2.4.15-1+cuda11.4 \
   libcudnn8-dev=8.2.4.15-1+cuda11.4
 
 echo -n "/usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.1">/etc/OpenCL/vendors/nvidia.icd
 
-cd /usr/local/src/
-git clone https://github.com/pyopencl/pyopencl --branch v2021.1.1
-cd pyopencl
-git submodule update --init
-python3 configure.py
-printf '%s\n' \
-  "CL_TRACE = False" \
-  "CL_ENABLE_GL = False" \
-  "CL_USE_SHIPPED_EXT = False" \
-  "CL_INC_DIR = ['/usr/local/cuda/targets/x86_64-linux/include']" \
-  "CL_LIB_DIR = ['/usr/local/cuda-11.4/targets/x86_64-linux/lib']" \
-  "CL_LIBNAME = ['OpenCL']" \
-  "CL_LIBNAME = ['OpenCL']" \
-  "CXXFLAGS = ['-fvisibility=hidden']" \
-  "LDFLAGS = ['-Wl,--no-as-needed']" \
-  > siteconf.py
-pip3 install pybind11
-pip3 install mako
-su -c "make install"
+ln -sf cuda-11.4/ cuda
+ln -sf cuda-11.4/ cuda-11
 
 pip3 install --upgrade pip
 pip3 install numpy --upgrade --force-reinstall
+pip3 install pyopencl
 pip3 install testresources
 pip3 install tensorflow==2.7.0
