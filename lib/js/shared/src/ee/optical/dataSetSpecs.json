@@ -327,7 +327,7 @@
         "SENTINEL_2": {
             "reflectance": "TOA",
             "dataSetName": "SENTINEL_2",
-            "collectionName": "COPERNICUS/S2",
+            "collectionName": "COPERNICUS/S2_HARMONIZED",
             "maxZenith": 10.3,
             "calibrationCoefs": {"slopes": [1], "intercepts": [0]},
             "bands": {
@@ -771,7 +771,7 @@
         "SENTINEL_2": {
             "reflectance": "SR",
             "dataSetName": "SENTINEL_2",
-            "collectionName": "COPERNICUS/S2_SR",
+            "collectionName": "COPERNICUS/S2_SR_HARMONIZED",
             "maxZenith": 10.3,
             "bands": {
                 "aerosol": {
