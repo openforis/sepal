@@ -66,8 +66,8 @@ const updateKernel$ = ({name, path, label}) => {
     const venvPath = join(kernelPath, 'venv')
     return exists$({path: kernelPath}).pipe(
         switchMap(kernelExists => kernelExists ? of(true) : createKernel$({path: kernelPath, label})),
-        switchMap(() => exists$(venvPath)),
-        switchMap(venvExists => venvExists ? of(true) : createVenv$({path: venvPath})),
+        switchMap(() => remove$({path: venvPath})),
+        switchMap(() => createVenv$({path: venvPath})),
         switchMap(() => installRequirements$({venvPath, requirementsPath: join(path, 'requirements.txt')}))
     )
 }
@@ -131,6 +131,14 @@ const installRequirements$ = ({venvPath, requirementsPath}) => {
                 return EMPTY
             }
         })
+    )
+}
+
+const remove$ = ({path}) => {
+    return exec$(
+        path,
+        'sudo',
+        ['rm', '-rf', path]
     )
 }
 
