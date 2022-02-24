@@ -16,6 +16,7 @@ export const STATUS = {
     BUILDING: 'BUILDING',
     BUILT: 'BUILT',
     STARTING: 'STARTING',
+    RUNNING: 'RUNNING',
     STOPPING: 'STOPPING',
     STOPPED: 'STOPPED',
     ERROR: 'ERROR',
@@ -212,7 +213,7 @@ export const showModuleStatus = (module, status, options) => {
         .horizontalAbsolute(DEPS_COLUMN)
         .write(getDepInfo(module, options))
 
-    if ([STATUS.STARTING, STATUS.STOPPING].includes(status)) {
+    if ([STATUS.STARTING, STATUS.STOPPING, STATUS.RUNNING].includes(status)) {
         cursor.horizontalAbsolute(0)
     } else {
         cursor.write('\n')
@@ -236,6 +237,15 @@ export const isServiceRunning = async (module, serviceName) => {
     if (services) {
         const service = services.find(({name}) => name === serviceName)
         return service && service.state === 'RUNNING'
+    }
+    return false
+}
+
+export const isModuleRunning = async module => {
+    const result = await getStatus([module], true)
+    const services = _(result).get(['0', 'services'])
+    if (services) {
+        return _.every(services, ({state, health}) => state === 'RUNNING' && (health === '' || health === 'HEALTHY'))
     }
     return false
 }
