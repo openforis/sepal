@@ -16,6 +16,7 @@ export const STATUS = {
     BUILDING: 'BUILDING',
     BUILT: 'BUILT',
     STARTING: 'STARTING',
+    RUNNING: 'RUNNING',
     STOPPING: 'STOPPING',
     STOPPED: 'STOPPED',
     ERROR: 'ERROR',
@@ -23,7 +24,7 @@ export const STATUS = {
     UPDATED_PACKAGES: 'UPDATED_PACKAGES',
     INSTALLING_PACKAGES: 'INSTALLING_PACKAGES',
     INSTALLED_PACKAGES: 'INSTALLED_PACKAGES',
-    SKIPPED: 'SKIPPED',
+    SKIPPED: 'SKIPPED'
 }
 
 const MESSAGE = {
@@ -43,14 +44,13 @@ const MESSAGE = {
     STARTED: {
         RUNNING: chalk.greenBright('RUNNING'),
         EXITED: chalk.redBright('EXITED'),
-        RESTARTING: chalk.yellowBright('RESTARTING'),
+        RESTARTING: chalk.yellowBright('RESTARTING')
     },
     HEALTH: {
         HEALTHY: chalk.greenBright('HEALTHY'),
         UNHEALTHY: chalk.redBright('UNHEALTHY'),
-        STARTING: chalk.yellowBright('STARTING'),
-    },
-    DEFAULT: msg => chalk.grey(msg)
+        STARTING: chalk.yellowBright('STARTING')
+    }
 }
 
 export const formatPackageVersion = (pkg, version) =>
@@ -124,10 +124,10 @@ export const getModules = modules => {
 
 export const getServices = async module => {
     try {
-        const result = JSON.parse(await exec({command: './script/docker-compose-ps.sh', args: [module, SEPAL_SRC, ENV_FILE]}))
-        return result.map(
-            ({Name: name, State: state, Health: health}) => ({name, state: state.toUpperCase(), health: health.toUpperCase()})
-        )
+        return JSON.parse(await exec({command: './script/docker-compose-ps.sh', args: [module, SEPAL_SRC, ENV_FILE]}))
+            .map(
+                ({Name: name, State: state, Health: health}) => ({name, state: state.toUpperCase(), health: health.toUpperCase()})
+            )
     } catch (error) {
         log.error('Could not get health', error)
         return null
@@ -179,16 +179,16 @@ const getStatus = async (modules, extended) => {
 
 export const showStatus = async (modules, options = {}) => {
     const sanitizedModules = getModules(modules)
-    const result = (await getStatus(sanitizedModules, options.extended))
+    const status = await getStatus(sanitizedModules, options.extended)
     for (const module of sanitizedModules) {
         if (isModule(module)) {
-            const moduleStatus = _.find(result, ({module: currentModule}) => currentModule === module)
-            const status = moduleStatus
+            const moduleStatus = _.find(status, ({module: currentModule}) => currentModule === module)
+            const displayStatus = moduleStatus
                 ? renderStarted(moduleStatus)
                 : isRunnable(module)
                     ? STATUS.STOPPED
                     : STATUS.NON_RUNNABLE
-            showModuleStatus(module, status, options)
+            showModuleStatus(module, displayStatus, options)
         }
     }
 }
@@ -213,7 +213,7 @@ export const showModuleStatus = (module, status, options) => {
         .horizontalAbsolute(DEPS_COLUMN)
         .write(getDepInfo(module, options))
 
-    if ([STATUS.STARTING, STATUS.STOPPING].includes(status)) {
+    if ([STATUS.STARTING, STATUS.STOPPING, STATUS.RUNNING].includes(status)) {
         cursor.horizontalAbsolute(0)
     } else {
         cursor.write('\n')
@@ -221,8 +221,7 @@ export const showModuleStatus = (module, status, options) => {
 }
         
 export const isModule = name => {
-    const module = _(deps)
-        .find((_, moduleName) => moduleName === name)
+    const module = _.find(deps, (_, moduleName) => moduleName === name)
     if (!module) {
         showModuleStatus(name, STATUS.UNDEFINED)
     }
@@ -232,9 +231,23 @@ export const isModule = name => {
 export const isRunnable = module =>
     (isModule(module) || {}).run
 
-export const isRunning = async module => {
-    const result = await getStatus([module])
-    return result.length === 1
+export const isServiceRunning = async (module, serviceName) => {
+    const result = await getStatus([module], true)
+    const services = _(result).get(['0', 'services'])
+    if (services) {
+        const service = services.find(({name}) => name === serviceName)
+        return service && service.state === 'RUNNING'
+    }
+    return false
+}
+
+export const isModuleRunning = async module => {
+    const result = await getStatus([module], true)
+    const services = _(result).get(['0', 'services'])
+    if (services) {
+        return _.every(services, ({state, health}) => state === 'RUNNING' && (health === '' || health === 'HEALTHY'))
+    }
+    return false
 }
 
 export const isNodeModule = async absolutePath => {

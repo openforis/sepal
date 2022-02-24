@@ -1,6 +1,6 @@
 import {exec} from './exec.js'
 import {stopModule} from './stop.js'
-import {exit, formatPackageVersion, getModules, isNodeModule, isRunning, showModuleStatus, STATUS} from './utils.js'
+import {exit, formatPackageVersion, getModules, isNodeModule, showModuleStatus, STATUS} from './utils.js'
 import {SEPAL_SRC} from './config.js'
 import {log} from './log.js'
 import ncu from 'npm-check-updates'
@@ -24,9 +24,7 @@ const updatePackageList = async (module, path, {check, target}) => {
 }
 
 const installPackages = async (module, modulePath) => {
-    if (await isRunning(module)) {
-        await stopModule(module)
-    }
+    await stopModule(module)
     showModuleStatus(module, STATUS.INSTALLING_PACKAGES)
     await exec({
         command: './script/npm-install.sh',
