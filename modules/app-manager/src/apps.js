@@ -116,7 +116,7 @@ const installRequirements$ = ({venvPath, requirementsPath}) => {
     // If $venvPath/.installed exists, compare modified timestamp. If requirements are newer, install, otherwise, do nothing
     return zip(
         lastModifiedDate$(requirementsPath),
-        lastModifiedDate$(join(venvPath, '.installed'))
+        lastModifiedDate$(join(venvPath,'..', '.installed'))
     ).pipe(
         switchMap(([requirementsTime, installTime]) => {
             if (installTime < requirementsTime) {
