@@ -57,6 +57,9 @@ export const formatPackageVersion = (pkg, version) =>
 const formatModule = (module, {pad = true} = {}) =>
     chalk.cyanBright(pad ? module : module)
 
+const formatService = service =>
+    chalk.whiteBright(service)
+
 const formatDeps = modules => {
     const deps = modules.map(
         module => formatModule(module, {pad: false})
@@ -164,7 +167,7 @@ const getExtendedStatus = async modules =>
                     .groupBy('state')
                     .mapValues(
                         services => services.map(
-                            ({name, health}) => `${name}${health ? `: ${MESSAGE.HEALTH[health]}` : ''}`
+                            ({name, health}) => `${formatService(name)}${health ? `: ${MESSAGE.HEALTH[health]}` : ''}`
                         )
                     )
                     .map(
@@ -185,7 +188,10 @@ const getStatus = async (modules, extended) => {
 }
 
 export const showStatus = async (modules, options = {}) => {
-    const sanitizedModules = getDirectRunDepList(getModules(modules), options.dependencies)
+    const sanitizedModules = _(getDirectRunDepList(getModules(modules), options.dependencies))
+        .sort()
+        .sortedUniq()
+        .value()
     const status = await getStatus(sanitizedModules, options.extended)
     for (const module of sanitizedModules) {
         if (isModule(module)) {
