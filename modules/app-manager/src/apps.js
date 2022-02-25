@@ -64,11 +64,13 @@ const useCustomKernel$ = ({endpoint, path}) =>
 const updateKernel$ = ({name, path, label}) => {
     const kernelPath = join('/usr/local/share/jupyter/kernels', `venv-${name}`)
     const venvPath = join(kernelPath, 'venv')
+    const requirementsPath= join(path, 'requirements.txt')
     return exists$({path: kernelPath}).pipe(
         switchMap(kernelExists => kernelExists ? of(true) : createKernel$({path: kernelPath, label})),
+        switchMap(() => meedVenvUpdate$({venvPath, requirementsPath})),
         switchMap(() => remove$({path: venvPath})),
         switchMap(() => createVenv$({path: venvPath})),
-        switchMap(() => installRequirements$({venvPath, requirementsPath: join(path, 'requirements.txt')}))
+        switchMap(() => installRequirements$({venvPath, requirementsPath}))
     )
 }
 
@@ -112,7 +114,7 @@ const createVenv$ = ({path}) =>
         ))
     )
 
-const installRequirements$ = ({venvPath, requirementsPath}) => {
+const meedVenvUpdate$ = ({venvPath, requirementsPath}) => {
     // If $venvPath/.installed exists, compare modified timestamp. If requirements are newer, install, otherwise, do nothing
     return zip(
         lastModifiedDate$(requirementsPath),
@@ -121,11 +123,7 @@ const installRequirements$ = ({venvPath, requirementsPath}) => {
         switchMap(([requirementsTime, installTime]) => {
             if (installTime < requirementsTime) {
                 log.info(`${requirementsPath} modified since last installation. ${installTime} >= ${requirementsTime}`)
-                return exec$(
-                    '/',
-                    'sudo',
-                    ['install-requirements', venvPath, requirementsPath]
-                )
+                return of(true)
             } else {
                 log.info(`${requirementsPath} not modified since last installation. ${installTime} < ${requirementsTime}`)
                 return EMPTY
@@ -134,7 +132,17 @@ const installRequirements$ = ({venvPath, requirementsPath}) => {
     )
 }
 
+const installRequirements$ = ({venvPath, requirementsPath}) => {
+    log.info('Installing requirements', {venvPath, requirementsPath})
+    return exec$(
+        '/',
+        'sudo',
+        ['install-requirements', venvPath, requirementsPath]
+    )
+}
+
 const remove$ = ({path}) => {
+    log.info('Removing', {path})
     return exec$(
         path,
         'sudo',
