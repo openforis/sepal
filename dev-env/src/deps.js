@@ -20,3 +20,18 @@ export const getInverseRunDeps = module =>
         .pickBy(({run}) => run && run.includes(module))
         .keys()
         .value()
+
+export const getDirectRunDepList = (modules, recursive) => {
+    const dependencies = recursive
+        ? _.flatten(
+            modules.map(
+                module => getDirectRunDepList(getDirectRunDeps(module), recursive)
+            )
+        )
+        : []
+
+    return [
+        ...dependencies,
+        ...modules
+    ]
+}

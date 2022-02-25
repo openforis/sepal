@@ -3,7 +3,7 @@ import chalk from 'chalk'
 import {deps, groups, NAME_COLUMN, STATUS_COLUMN, DEPS_COLUMN, GROUP_PREFIX, SEPAL_SRC, ENV_FILE} from './config.js'
 import {log} from './log.js'
 import {exec} from './exec.js'
-import {getBuildDeps, getDirectRunDeps, getInverseRunDeps} from './deps.js'
+import {getBuildDeps, getDirectRunDepList, getDirectRunDeps, getInverseRunDeps} from './deps.js'
 import _ from 'lodash'
 import {stat} from 'fs/promises'
 import Path from 'path'
@@ -185,12 +185,11 @@ const getStatus = async (modules, extended) => {
 }
 
 export const showStatus = async (modules, options = {}) => {
-    const sanitizedModules = getModules(modules)
+    const sanitizedModules = getDirectRunDepList(getModules(modules), options.dependencies)
     const status = await getStatus(sanitizedModules, options.extended)
     for (const module of sanitizedModules) {
         if (isModule(module)) {
             const moduleStatus = _.find(status, ({module: currentModule}) => currentModule === module)
-            // console.log({moduleStatus})
             if (moduleStatus) {
                 showModuleStatus(module, moduleStatus.status, {...options, sameLine: false})
             } else if (isRunnable(module)) {
@@ -212,8 +211,6 @@ export const showModuleStatus = (module, status, options = {}) => {
         .write(status)
         .horizontalAbsolute(DEPS_COLUMN)
         .write(getDepInfo(module, options))
-
-    // if ([STATUS.STARTING, STATUS.STOPPING].includes(status)) {
     if (options.sameLine) {
         cursor.horizontalAbsolute(0)
     } else {
