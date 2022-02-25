@@ -30,9 +30,10 @@ const getModulesToStop = (modules, options = {}, parentModules = []) => {
     const dependencies = options.dependencies
         ? _.flatten(
             modules.map(module =>
-                parentModules.includes(module)
-                    ? []
-                    : getModulesToStop(getDirectRunDeps(module), options, _.uniq([...parentModules, ...modules]))
+                getModulesToStop(getDirectRunDeps(module), options, _.uniq([...parentModules, ...modules]))
+                // parentModules.includes(module)
+                //     ? []
+                //     : getModulesToStop(getDirectRunDeps(module), options, _.uniq([...parentModules, ...modules]))
             )
         )
         : []

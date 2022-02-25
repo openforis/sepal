@@ -30,9 +30,10 @@ const getModulesToStart = (modules, options = {}, parentModules = []) => {
     const dependencies = options.dependencies
         ? _.flatten(
             modules.map(module =>
-                parentModules.includes(module)
-                    ? []
-                    : getModulesToStart(getDirectRunDeps(module), options, _.uniq([...parentModules, ...modules]))
+                getModulesToStart(getDirectRunDeps(module), options, _.uniq([...parentModules, ...modules]))
+                // parentModules.includes(module)
+                //     ? []
+                //     : getModulesToStart(getDirectRunDeps(module), options, _.uniq([...parentModules, ...modules]))
             )
         )
         : []
