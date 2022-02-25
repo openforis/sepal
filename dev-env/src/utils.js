@@ -273,7 +273,6 @@ export const isNodeModule = async absolutePath => {
 export const exit = reason => {
     cursor.reset().write('\n').show()
     if (reason.normal) {
-        log.info(chalk.greenBright('Completed'))
         process.exit(0)
     } else if (reason.error) {
         const error = reason.error
