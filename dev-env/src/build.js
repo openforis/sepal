@@ -1,7 +1,7 @@
 import {SEPAL_SRC, ENV_FILE} from './config.js'
 import {start} from './start.js'
 import {exec} from './exec.js'
-import {exit, getModules, isModule, showModuleStatus, STATUS} from './utils.js'
+import {exit, getModules, isModule, showModuleStatus, MESSAGE} from './utils.js'
 import {getBuildDeps, getBuildRunDeps} from './deps.js'
 import {log} from './log.js'
 import _ from 'lodash'
@@ -9,7 +9,7 @@ import _ from 'lodash'
 const buildModule = async (module, options = {}, parent) => {
     try {
         if (isModule(module)) {
-            showModuleStatus(module, STATUS.BUILDING)
+            showModuleStatus(module, MESSAGE.BUILDING, {sameLine: true})
             const buildOptions = _.compact([
                 !options.cache && (!parent || options.recursive) ? '--no-cache' : null
             ]).join(' ')
@@ -18,10 +18,10 @@ const buildModule = async (module, options = {}, parent) => {
                 args: [module, SEPAL_SRC, ENV_FILE, buildOptions],
                 showStdOut: !options.quiet
             })
-            showModuleStatus(module, STATUS.BUILT)
+            showModuleStatus(module, MESSAGE.BUILT)
         }
     } catch (error) {
-        showModuleStatus(module, STATUS.ERROR)
+        showModuleStatus(module, MESSAGE.ERROR)
         exit({error})
     }
 }

@@ -1,6 +1,6 @@
 import {exec} from './exec.js'
 import {stopModule} from './stop.js'
-import {exit, formatPackageVersion, getModules, isNodeModule, showModuleStatus, STATUS} from './utils.js'
+import {exit, formatPackageVersion, getModules, isNodeModule, showModuleStatus, MESSAGE} from './utils.js'
 import {SEPAL_SRC} from './config.js'
 import {log} from './log.js'
 import ncu from 'npm-check-updates'
@@ -8,7 +8,7 @@ import Path from 'path'
 import _ from 'lodash'
 
 const updatePackageList = async (module, path, {check, target}) => {
-    showModuleStatus(module, STATUS.UPDATING_PACKAGES)
+    showModuleStatus(module, MESSAGE.UPDATING_PACKAGES)
     const upgraded = await ncu.run({
         cwd: Path.join(SEPAL_SRC, path),
         color: true,
@@ -20,12 +20,12 @@ const updatePackageList = async (module, path, {check, target}) => {
     _.forEach(upgraded, (version, pck) => {
         log.info(formatPackageVersion(pck, version))
     })
-    showModuleStatus(module, STATUS.UPDATED_PACKAGES)
+    showModuleStatus(module, MESSAGE.UPDATED_PACKAGES)
 }
 
 const installPackages = async (module, modulePath) => {
     await stopModule(module)
-    showModuleStatus(module, STATUS.INSTALLING_PACKAGES)
+    showModuleStatus(module, MESSAGE.INSTALLING_PACKAGES)
     await exec({
         command: './script/npm-install.sh',
         args: [modulePath],
@@ -33,7 +33,7 @@ const installPackages = async (module, modulePath) => {
         showStdOut: true,
         showStdErr: true
     })
-    showModuleStatus(module, STATUS.INSTALLED_PACKAGES)
+    showModuleStatus(module, MESSAGE.INSTALLED_PACKAGES)
 }
 
 const updateModule = async (module, path, {check, target} = {}) => {
@@ -47,10 +47,10 @@ const updateModule = async (module, path, {check, target} = {}) => {
                 await installPackages(module, modulePath)
             }
         } else {
-            showModuleStatus(module, STATUS.SKIPPED)
+            showModuleStatus(module, MESSAGE.SKIPPED)
         }
     } catch (error) {
-        showModuleStatus(module, STATUS.ERROR)
+        showModuleStatus(module, MESSAGE.ERROR)
         exit({error})
     }
 }

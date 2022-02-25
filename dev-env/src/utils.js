@@ -27,7 +27,7 @@ export const STATUS = {
     SKIPPED: 'SKIPPED'
 }
 
-const MESSAGE = {
+export const MESSAGE = {
     UNDEFINED: chalk.grey('UNDEFINED'),
     NON_RUNNABLE: chalk.grey('NON-RUNNABLE'),
     BUILDING: chalk.green('BUILDING...'),
@@ -41,11 +41,9 @@ const MESSAGE = {
     INSTALLING_PACKAGES: chalk.magenta('INSTALLING PACKAGES...'),
     INSTALLED_PACKAGES: chalk.magentaBright('INSTALLED PACKAGES'),
     SKIPPED: chalk.grey('SKIPPED'),
-    STARTED: {
-        RUNNING: chalk.greenBright('RUNNING'),
-        EXITED: chalk.redBright('EXITED'),
-        RESTARTING: chalk.yellowBright('RESTARTING')
-    },
+    RUNNING: chalk.greenBright('RUNNING'),
+    EXITED: chalk.redBright('EXITED'),
+    RESTARTING: chalk.yellowBright('RESTARTING'),
     HEALTH: {
         HEALTHY: chalk.greenBright('HEALTHY'),
         UNHEALTHY: chalk.redBright('UNHEALTHY'),
@@ -135,13 +133,20 @@ export const getServices = async module => {
 }
 
 const getBaseStatus = async modules => {
+    const STATUS_MATCHER = /(\w+)\((\d+)\)/
     try {
         return JSON.parse(await exec({command: './script/docker-compose-ls.sh'}))
             .map(
-                ({Name: module, Status: status}) => ({module, status: status.toUpperCase()})
+                ({Name: module, Status: status}) => ({
+                    module,
+                    status: status
+                        .toUpperCase()
+                        .split(', ')
+                        .map(foo => foo.replace(STATUS_MATCHER, (_ignore, state, count) => `${MESSAGE[state]} (${count})`))
+                        .join(', ')
+                })
             )
             .filter(
-                // ({module}) => modules.length === 0 || modules.includes(module)
                 ({module}) => modules.includes(module)
             )
     } catch (error) {
@@ -159,10 +164,12 @@ const getExtendedStatus = async modules =>
                     .groupBy('state')
                     .mapValues(
                         services => services.map(
-                            ({name, health}) => `${name}${health ? `: ${health}` : ''}`
+                            ({name, health}) => `${name}${health ? `: ${MESSAGE.HEALTH[health]}` : ''}`
                         )
                     )
-                    .map((services, module) => `${module} [${services.join(', ')}]`)
+                    .map(
+                        (services, state) => `${MESSAGE[state]} [${services.join(', ')}]`
+                    )
                     .sort()
                     .value()
                     .join(', ')
@@ -183,37 +190,31 @@ export const showStatus = async (modules, options = {}) => {
     for (const module of sanitizedModules) {
         if (isModule(module)) {
             const moduleStatus = _.find(status, ({module: currentModule}) => currentModule === module)
-            const displayStatus = moduleStatus
-                ? renderStarted(moduleStatus)
-                : isRunnable(module)
-                    ? STATUS.STOPPED
-                    : STATUS.NON_RUNNABLE
-            showModuleStatus(module, displayStatus, options)
+            // console.log({moduleStatus})
+            if (moduleStatus) {
+                showModuleStatus(module, moduleStatus.status, {...options, sameLine: false})
+            } else if (isRunnable(module)) {
+                showModuleStatus(module, MESSAGE.STOPPED, options)
+            } else {
+                showModuleStatus(module, MESSAGE.NON_RUNNABLE, options)
+            }
         }
     }
 }
 
-const renderStarted = ({status}) =>
-    status
-        .replace('RUNNING', MESSAGE.STARTED.RUNNING)
-        .replace('EXITED', MESSAGE.STARTED.EXITED)
-        .replace('RESTARTING', MESSAGE.STARTED.RESTARTING)
-        .replace('HEALTHY', MESSAGE.HEALTH.HEALTHY)
-        .replace('UNHEALTHY', MESSAGE.HEALTH.UNHEALTHY)
-        .replace('STARTING', MESSAGE.HEALTH.STARTING)
-        
-export const showModuleStatus = (module, status, options) => {
+export const showModuleStatus = (module, status, options = {}) => {
     cursor
         .hide()
         .eraseLine()
         .horizontalAbsolute(NAME_COLUMN)
         .write(formatModule(module))
         .horizontalAbsolute(STATUS_COLUMN)
-        .write(MESSAGE[status] || status)
+        .write(status)
         .horizontalAbsolute(DEPS_COLUMN)
         .write(getDepInfo(module, options))
 
-    if ([STATUS.STARTING, STATUS.STOPPING, STATUS.RUNNING].includes(status)) {
+    // if ([STATUS.STARTING, STATUS.STOPPING].includes(status)) {
+    if (options.sameLine) {
         cursor.horizontalAbsolute(0)
     } else {
         cursor.write('\n')
@@ -223,7 +224,7 @@ export const showModuleStatus = (module, status, options) => {
 export const isModule = name => {
     const module = _.find(deps, (_, moduleName) => moduleName === name)
     if (!module) {
-        showModuleStatus(name, STATUS.UNDEFINED)
+        showModuleStatus(name, MESSAGE.UNDEFINED)
     }
     return module
 }
@@ -241,14 +242,24 @@ export const isServiceRunning = async (module, serviceName) => {
     return false
 }
 
-export const isModuleRunning = async module => {
-    const result = await getStatus([module], true)
-    const services = _(result).get(['0', 'services'])
-    if (services) {
-        return _.every(services, ({state, health}) => state === 'RUNNING' && (health === '' || health === 'HEALTHY'))
-    }
-    return false
-}
+export const waitModuleRunning = async module =>
+    new Promise((resolve, reject) => {
+        const wait = async () => {
+            const result = await getStatus([module], true)
+            const services = _(result).get(['0', 'services'])
+            await showStatus([module], {extended: true})
+            if (services) {
+                if (_.some(services, ({state, health}) => state === 'RUNNING' && health === 'UNHEALTHY')) {
+                    return reject(`Cannot start module ${module}`)
+                }
+                if (_.every(services, ({state, health}) => state === 'RUNNING' && (health === '' || health === 'HEALTHY'))) {
+                    return resolve()
+                }
+            }
+            setTimeout(wait, 1000)
+        }
+        wait()
+    })
 
 export const isNodeModule = async absolutePath => {
     try {

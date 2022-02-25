@@ -1,5 +1,5 @@
 import {exec} from './exec.js'
-import {exit, isModule, isRunnable, isServiceRunning, showModuleStatus, STATUS} from './utils.js'
+import {exit, isModule, isRunnable, isServiceRunning, showModuleStatus, MESSAGE} from './utils.js'
 import {SEPAL_SRC, ENV_FILE} from './config.js'
 import _ from 'lodash'
 
@@ -20,11 +20,11 @@ const shellModule = async (module, options = {}, _parent) => {
                     })
                 }
             } else {
-                showModuleStatus(module, STATUS.NON_RUNNABLE)
+                showModuleStatus(module, MESSAGE.NON_RUNNABLE)
             }
         }
     } catch (error) {
-        showModuleStatus(module, STATUS.ERROR)
+        showModuleStatus(module, MESSAGE.ERROR)
         exit({error})
     }
 }

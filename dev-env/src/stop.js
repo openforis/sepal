@@ -1,5 +1,5 @@
 import {exec} from './exec.js'
-import {getModules, isModule, isRunnable, showModuleStatus, showStatus, STATUS} from './utils.js'
+import {getModules, isModule, isRunnable, showModuleStatus, showStatus, MESSAGE} from './utils.js'
 import {getDirectRunDeps} from './deps.js'
 import {SEPAL_SRC, ENV_FILE} from './config.js'
 import {log} from './log.js'
@@ -9,7 +9,7 @@ export const stopModule = async (module, options = {}, _parent) => {
     try {
         if (isModule(module)) {
             if (isRunnable(module)) {
-                showModuleStatus(module, STATUS.STOPPING)
+                showModuleStatus(module, MESSAGE.STOPPING, {sameLine: true})
                 await exec({
                     command: './script/docker-compose-down.sh',
                     args: [module, SEPAL_SRC, ENV_FILE],
@@ -17,11 +17,11 @@ export const stopModule = async (module, options = {}, _parent) => {
                 })
                 await showStatus([module])
             } else {
-                showModuleStatus(module, STATUS.NON_RUNNABLE)
+                showModuleStatus(module, MESSAGE.NON_RUNNABLE)
             }
         }
     } catch (error) {
-        showModuleStatus(module, STATUS.ERROR)
+        showModuleStatus(module, MESSAGE.ERROR)
         log.error(error.stderr || error)
     }
 }
