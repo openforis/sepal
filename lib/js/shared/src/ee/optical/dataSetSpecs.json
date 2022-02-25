@@ -3,7 +3,7 @@
         "LANDSAT_4": {
             "reflectance": "TOA",
             "dataSetName": "LANDSAT_4",
-            "collectionName": "LANDSAT/LT04/C01/T1_TOA",
+            "collectionName": "LANDSAT/LT04/C02/T1_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
                 "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
@@ -32,14 +32,14 @@
                     "name": "B7"
                 },
                 "qa": {
-                    "name": "BQA"
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_4_T2": {
             "reflectance": "TOA",
             "dataSetName": "LANDSAT_4_T2",
-            "collectionName": "LANDSAT/LT04/C01/T2_TOA",
+            "collectionName": "LANDSAT/LT04/C02/T2_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
                 "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
@@ -68,14 +68,14 @@
                     "name": "B7"
                 },
                 "qa": {
-                    "name": "BQA"
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_5": {
             "reflectance": "TOA",
             "dataSetName": "LANDSAT_5",
-            "collectionName": "LANDSAT/LT05/C01/T1_TOA",
+            "collectionName": "LANDSAT/LT05/C02/T1_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
                 "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
@@ -104,14 +104,14 @@
                     "name": "B7"
                 },
                 "qa": {
-                    "name": "BQA"
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_5_T2": {
             "reflectance": "TOA",
             "dataSetName": "LANDSAT_5_T2",
-            "collectionName": "LANDSAT/LT05/C01/T2_TOA",
+            "collectionName": "LANDSAT/LT05/C02/T2_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
                 "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
@@ -140,14 +140,14 @@
                     "name": "B7"
                 },
                 "qa": {
-                    "name": "BQA"
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_7": {
             "reflectance": "TOA",
             "dataSetName": "LANDSAT_7",
-            "collectionName": "LANDSAT/LE07/C01/T1_TOA",
+            "collectionName": "LANDSAT/LE07/C02/T1_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
                 "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
@@ -182,14 +182,14 @@
                     "name": "B8"
                 },
                 "qa": {
-                    "name": "BQA"
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_7_T2": {
             "reflectance": "TOA",
             "dataSetName": "LANDSAT_7_T2",
-            "collectionName": "LANDSAT/LE07/C01/T2_TOA",
+            "collectionName": "LANDSAT/LE07/C02/T2_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
                 "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
@@ -224,14 +224,14 @@
                     "name": "B8"
                 },
                 "qa": {
-                    "name": "BQA"
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_8": {
             "reflectance": "TOA",
             "dataSetName": "LANDSAT_8",
-            "collectionName": "LANDSAT/LC08/C01/T1_TOA",
+            "collectionName": "LANDSAT/LC08/C02/T1_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
                 "slopes": [1.0946, 1.0043, 1.0524, 0.8954, 1.0049, 1.0002],
@@ -272,14 +272,14 @@
                     "name": "B11"
                 },
                 "qa": {
-                    "name": "BQA"
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "LANDSAT_8_T2": {
             "reflectance": "TOA",
             "dataSetName": "LANDSAT_8_T2",
-            "collectionName": "LANDSAT/LC08/C01/T2_TOA",
+            "collectionName": "LANDSAT/LC08/C02/T1_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
                 "slopes": [1.0946, 1.0043, 1.0524, 0.8954, 1.0049, 1.0002],
@@ -320,14 +320,14 @@
                     "name": "B11"
                 },
                 "qa": {
-                    "name": "BQA"
+                    "name": "QA_PIXEL"
                 }
             }
         },
         "SENTINEL_2": {
             "reflectance": "TOA",
             "dataSetName": "SENTINEL_2",
-            "collectionName": "COPERNICUS/S2",
+            "collectionName": "COPERNICUS/S2_HARMONIZED",
             "maxZenith": 10.3,
             "calibrationCoefs": {"slopes": [1], "intercepts": [0]},
             "bands": {
@@ -771,7 +771,7 @@
         "SENTINEL_2": {
             "reflectance": "SR",
             "dataSetName": "SENTINEL_2",
-            "collectionName": "COPERNICUS/S2_SR",
+            "collectionName": "COPERNICUS/S2_SR_HARMONIZED",
             "maxZenith": 10.3,
             "bands": {
                 "aerosol": {
