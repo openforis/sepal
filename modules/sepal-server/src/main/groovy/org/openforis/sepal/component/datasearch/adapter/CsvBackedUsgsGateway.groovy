@@ -4,9 +4,12 @@ import org.openforis.sepal.component.datasearch.api.DataSetMetadataGateway
 import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.util.CsvReader
 import org.openforis.sepal.util.CsvUriReader
+import org.openforis.sepal.util.DateTime
 import org.openforis.sepal.util.GzCsvUriReader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import java.text.SimpleDateFormat
 
 import static org.openforis.sepal.component.datasearch.adapter.CsvBackedUsgsGateway.Sensor.*
 import static org.openforis.sepal.util.DateTime.parseDateString
@@ -88,20 +91,21 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
     private SceneMetaData toSceneMetaData(Sensor sensor, data) {
         try {
             if (isSceneIncluded(data)) {
-                def sensorId = data.COLLECTION_CATEGORY == 'T2' ? sensor.name() + '_T2' : sensor.name()
-                return new SceneMetaData(
-                        id: data.sceneID,
+                def sensorId = data['Collection Category'] == 'T2' ? sensor.name() + '_T2' : sensor.name()
+                def metadata = new SceneMetaData(
+                        id: data['Landsat Scene Identifier'],
                         source: 'LANDSAT',
-                        sceneAreaId: "${data.path}_${data.row}",
+                        sceneAreaId: "${data['WRS Path']}_${data['WRS Row']}",
                         dataSet: sensorId,
-                        acquisitionDate: parseDateString(data.acquisitionDate),
+                        acquisitionDate: new SimpleDateFormat('yy/MM/dd').parse(data['Date Acquired'] as String),
                         cloudCover: cloudCover(sensor, data),
                         coverage: 100,
-                        sunAzimuth: data.sunAzimuth ? data.sunAzimuth.toDouble() : 0d,
-                        sunElevation: data.sunAzimuth ? data.sunElevation.toDouble() : 0d,
-                        browseUrl: URI.create(data.browseURL),
-                        updateTime: parseDateString(data.dateUpdated)
+                        sunAzimuth: data['Sun Azimuth L0RA'] ? data['Sun Azimuth L0RA'].toDouble() : 0d,
+                        sunElevation: data['Sun Elevation L0RA'] ? data['Sun Elevation L0RA'].toDouble() : 0d,
+                        browseUrl: URI.create(data['Browse Link'] as String),
+                        updateTime: new SimpleDateFormat('yy/MM/dd').parse(data['Date Product Generated L1'] as String)
                 )
+                return metadata
             }
         } catch (Exception e) {
             LOG.error("${e.message}: ${data}")
@@ -110,45 +114,44 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
     }
 
     private Double cloudCover(Sensor sensor, data) {
-        def result = data.cloudCover.toDouble() as Double
-        // LANDSAT_7 with SLC off always miss about 22% of its data. Consider that cloud cover.
-        if (result && sensor == LANDSAT_7 && data.SCAN_GAP_INTERPOLATION != '-1')
+        def result = data['Scene Cloud Cover L1'].toDouble() as Double
+        if (result && sensor == LANDSAT_7 && data['Scan Gap Interpolation'] != '-1')
             result = Math.min(100, result + 22)
         return result
     }
 
     private boolean isSceneIncluded(data) {
-        def prefix = (data.sceneID as String).substring(0, 3)
-        return data.COLLECTION_CATEGORY in ['T1', 'T2'] &&
-                data.dayOrNight.toUpperCase() == 'DAY' &&
-                data.cloudCover.toDouble() >= 0d &&
+        def prefix = (data['Landsat Scene Identifier'] as String).substring(0, 3)
+        return data['Collection Category'] in ['T1', 'T2'] &&
+                data['Day/Night Indicator'].toUpperCase() == 'DAY' &&
+                data['Scene Cloud Cover L1'].toDouble() >= 0d &&
                 prefix in ['LT4', 'LT5', 'LE7', 'LC8']
     }
 
     static DataSetMetadataGateway create(File workingDir) {
-        // From https://landsat.usgs.gov/download-entire-collection-metadata
+        // From https://www.usgs.gov/landsat-missions/bulk-metadata-service
         new CsvBackedUsgsGateway(workingDir, [
                 (LANDSAT_8.name()) : [
                         new GzCsvUriReader(
-                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8_C1.csv.gz',
+                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_OT_C2_L1.csv.gz',
                                 workingDir,
                                 'LANDSAT_8')],
                 (LANDSAT_7.name()) : [
                         new GzCsvUriReader(
-                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM_C1.csv.gz',
+                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM_C2_L1.csv.gz',
                                 workingDir,
                                 'LANDSAT_7')],
                 (LANDSAT_TM.name()): [
                         new GzCsvUriReader(
-                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_TM_C1.csv.gz',
+                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_TM_C2_L1.csv.gz',
                                 workingDir,
                                 'LANDSAT_TM')]
         ], [
                 (LANDSAT_8.name()): [
-                        new CsvUriReader('https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8_C1.csv')
+                        new CsvUriReader('https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_OT_C2_L1.csv')
                 ],
                 (LANDSAT_7.name()): [
-                        new CsvUriReader('https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM_C1.csv')
+                        new CsvUriReader('https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM_C2_L1.csv')
                 ]
         ])
     }
