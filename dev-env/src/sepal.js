@@ -75,8 +75,9 @@ const main = async () => {
     
     program.command('logs')
         .description('Show module log')
+        .option('-s, --since <time>', 'Since relative or absolute time')
         .option('-f, --follow', 'Follow')
-        .argument('<module>', 'Module')
+        .argument('[module...]', 'Modules')
         .action(logs)
     
     program.command('shell')

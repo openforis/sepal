@@ -1,14 +1,15 @@
 import {exec} from './exec.js'
-import {exit, isModule, isRunnable, showModuleStatus, MESSAGE} from './utils.js'
+import {exit, isModule, isRunnable, showModuleStatus, MESSAGE, getModules} from './utils.js'
 import {SEPAL_SRC, ENV_FILE} from './config.js'
 import _ from 'lodash'
 
-const logsModule = async (module, options = {}, _parent) => {
+const logsModule = async (module, {follow, since} = {}) => {
     try {
         if (isModule(module)) {
             if (isRunnable(module)) {
                 const logsOptions = _.compact([
-                    options.follow ? '--follow' : null
+                    follow ? '--follow' : null,
+                    since ? `--since ${since}` : ''
                 ]).join(' ')
                 await exec({
                     command: './script/docker-compose-logs.sh',
@@ -25,6 +26,8 @@ const logsModule = async (module, options = {}, _parent) => {
     }
 }
 
-export const logs = async (module, options) => {
-    await logsModule(module, options)
+export const logs = async (modules, options) => {
+    for (const module of getModules(modules)) {
+        await logsModule(module, options)
+    }
 }
