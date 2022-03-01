@@ -3,13 +3,14 @@ import {exit, isModule, isRunnable, showModuleStatus, MESSAGE, getModules} from 
 import {SEPAL_SRC, ENV_FILE} from './config.js'
 import _ from 'lodash'
 
-const logsModule = async (module, {follow, since} = {}) => {
+const logsModule = async (module, {follow, since, until} = {}) => {
     try {
         if (isModule(module)) {
             if (isRunnable(module)) {
                 const logsOptions = _.compact([
                     follow ? '--follow' : null,
-                    since ? `--since ${since}` : ''
+                    since ? `--since ${since}` : '',
+                    until ? `--until ${until}` : ''
                 ]).join(' ')
                 await exec({
                     command: './script/docker-compose-logs.sh',
