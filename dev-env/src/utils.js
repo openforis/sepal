@@ -50,10 +50,6 @@ export const MESSAGE = {
         STARTING: chalk.yellowBright('STARTING')
     }
 }
-
-export const formatPackageVersion = (pkg, version) =>
-    `    ${chalk.whiteBright(pkg)} → ${chalk.yellow(version)}`
-
 const formatModule = (module, {pad = true} = {}) =>
     chalk.cyanBright(pad ? module : module)
 
