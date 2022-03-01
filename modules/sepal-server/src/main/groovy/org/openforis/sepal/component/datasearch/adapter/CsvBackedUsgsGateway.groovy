@@ -4,7 +4,6 @@ import org.openforis.sepal.component.datasearch.api.DataSetMetadataGateway
 import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.util.CsvReader
 import org.openforis.sepal.util.CsvUriReader
-import org.openforis.sepal.util.DateTime
 import org.openforis.sepal.util.GzCsvUriReader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -12,7 +11,6 @@ import org.slf4j.LoggerFactory
 import java.text.SimpleDateFormat
 
 import static org.openforis.sepal.component.datasearch.adapter.CsvBackedUsgsGateway.Sensor.*
-import static org.openforis.sepal.util.DateTime.parseDateString
 import static org.openforis.sepal.util.DateTime.startOfDay
 
 class CsvBackedUsgsGateway implements DataSetMetadataGateway {
