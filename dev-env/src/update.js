@@ -8,18 +8,30 @@ import Path from 'path'
 import _ from 'lodash'
 
 const updatePackageList = async (module, path, {check, target}) => {
+    const modulePath = Path.join(SEPAL_SRC, path)
     showModuleStatus(module, MESSAGE.UPDATING_PACKAGES)
-    const upgraded = await ncu.run({
-        cwd: Path.join(SEPAL_SRC, path),
-        color: true,
-        upgrade: !check,
-        target,
-        interactive: !check,
-        silent: true
-    })
-    _.forEach(upgraded, (version, pck) => {
-        log.info(formatPackageVersion(pck, version))
-    })
+    if (check) {
+        await exec({
+            command: './script/npm-check-updates.sh',
+            args: [modulePath],
+            enableStdIn: true,
+            showStdOut: true,
+            showStdErr: true
+        })
+    } else {
+        const upgraded = await ncu.run({
+            cwd: modulePath,
+            target,
+            color: true,
+            upgrade: true,
+            interactive: true,
+            silent: false,
+            jsonUpgraded: true
+        })
+        _.forEach(upgraded, (version, pck) => {
+            log.info(formatPackageVersion(pck, version))
+        })
+    }
     showModuleStatus(module, MESSAGE.UPDATED_PACKAGES)
 }
 
