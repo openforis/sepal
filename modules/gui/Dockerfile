@@ -1,8 +1,7 @@
 FROM node:17-bullseye
 EXPOSE 3000
 ENV MODULE_NAME gui
-ENV MODULE /usr/local/src/sepal/modules/gui/frontend
-
+ENV MODULE /usr/local/src/sepal/modules/gui
 USER root
 RUN apt-get update && apt-get install -y \
   nginx \
@@ -12,13 +11,13 @@ RUN apt-get update && apt-get install -y \
 RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
 RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /root/.bashrc
 
-ADD modules/${MODULE_NAME}/frontend/package.json ${MODULE}/
-ADD modules/${MODULE_NAME}/frontend/package-lock.json ${MODULE}/
+ADD modules/${MODULE_NAME}/package.json ${MODULE}/
+ADD modules/${MODULE_NAME}/package-lock.json ${MODULE}/
 WORKDIR ${MODULE}
 RUN mkdir src
 RUN npm install
 
-ADD modules/${MODULE_NAME}/frontend ${MODULE}
+ADD modules/${MODULE_NAME} ${MODULE}
 RUN npm run build
 
 ADD modules/${MODULE_NAME}/nginx.conf /etc/nginx/sites-enabled/default
