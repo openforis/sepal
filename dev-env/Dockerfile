@@ -39,9 +39,9 @@ RUN chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 RUN curl -sL https://deb.nodesource.com/setup_17.x | bash
 RUN apt-get update && apt-get -y install nodejs
 
-# Install wscat
+# Install global npm packages
 
-RUN npm install -g wscat
+RUN npm install -g npm-check-updates wscat
 
 # Set bash prompt
 
