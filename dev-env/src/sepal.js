@@ -10,7 +10,8 @@ import {run} from './run.js'
 import {logs} from './logs.js'
 import {shell} from './shell.js'
 import {log} from './log.js'
-import {update} from './update.js'
+import {npmUpdate} from './npm-update.js'
+import {npmInstall} from './npm-install.js'
 
 const main = async () => {
     process.on('SIGINT', () => exit({interrupted: true}))
@@ -74,8 +75,10 @@ const main = async () => {
     
     program.command('logs')
         .description('Show module log')
+        .option('-s, --since <time>', 'Since relative or absolute time')
+        .option('-u, --until <time>', 'Until relative or absolute time')
         .option('-f, --follow', 'Follow')
-        .argument('<module>', 'Module')
+        .argument('[module...]', 'Modules')
         .action(logs)
     
     program.command('shell')
@@ -83,13 +86,18 @@ const main = async () => {
         .option('-r, --root', 'Start as root')
         .argument('<module>', 'Module')
         .action(shell)
-    
-    program.command('update')
-        .description('Update modules')
+
+    program.command('npm-update')
+        .description('Update npm modules')
         .option('-c, --check', 'Check packages to update')
         .addOption(new Option('-t, --target <target>', 'Update target').choices(['patch', 'minor', 'latest']))
         .argument('[module...]', 'Modules to update')
-        .action(update)
+        .action(npmUpdate)
+
+    program.command('npm-install')
+        .description('Install npm modules')
+        .argument('[module...]', 'Modules to install')
+        .action(npmInstall)
 
     try {
         await program.parseAsync(process.argv)
