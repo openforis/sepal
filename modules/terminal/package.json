@@ -10,17 +10,17 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "commander": "^8.3.0",
+        "commander": "^9.0.0",
         "express": "^4.17.3",
         "express-ws": "^5.0.2",
         "node-pty": "^0.10.1",
-        "rxjs": "^7.4.0",
+        "rxjs": "^7.5.4",
         "sepal": "../../lib/js/shared/src",
         "terminal": "./src"
     },
     "devDependencies": {
-        "eslint": "^8.4.1",
-        "jest": "^27.4.7",
+        "eslint": "^8.10.0",
+        "jest": "^27.5.1",
         "jest-expect-message": "^1.0.2"
     }
 }

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+sudo chmod +rx /sepalUsers
 
 if [[ "${DEPLOY_ENVIRONMENT}" == "DEV" ]]
 then

@@ -12,7 +12,8 @@ RUN dpkg -i diskus_0.6.0_amd64.deb && rm diskus_0.6.0_amd64.deb
 RUN apt-get update && \
     apt-get install sudo && \
     adduser node sudo && \
-    echo 'node ALL = (root) NOPASSWD: /usr/bin/diskus' >> /etc/sudoers
+    echo 'node ALL = (root) NOPASSWD: /usr/bin/diskus' >> /etc/sudoers && \
+    echo 'node ALL = (root) NOPASSWD: chmod +rx /sepalUsers' >> /etc/sudoers
 
 RUN npm install -g nodemon
 
