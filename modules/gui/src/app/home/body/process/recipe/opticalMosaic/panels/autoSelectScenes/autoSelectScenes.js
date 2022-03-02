@@ -28,7 +28,7 @@ class AutoSelectScenes extends React.Component {
                 placement='top-right'
                 onApply={values => this.recipeActions.autoSelectScenes(values).dispatch()}>
                 <Panel.Header
-                    icon='magic'
+                    icon='wand-sparkles'
                     title={msg('process.mosaic.panel.autoSelectScenes.title')}/>
 
                 <Panel.Content>

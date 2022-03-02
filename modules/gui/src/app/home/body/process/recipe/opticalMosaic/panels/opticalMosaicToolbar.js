@@ -58,7 +58,7 @@ class MosaicToolbar extends React.Component {
 
                     <Toolbar.ActivationButton
                         id='autoSelectScenes'
-                        icon='magic'
+                        icon='wand-sparkles'
                         tooltip={msg('process.mosaic.panel.autoSelectScenes.tooltip')}
                         disabled={!sceneAreasLoaded || !selectScenes}/>
                     <Toolbar.ActivationButton
