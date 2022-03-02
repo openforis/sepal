@@ -39,5 +39,18 @@
         "ssh-gateway",
         "terminal",
         "user"
+    ],
+    "node": [
+        "app-manager",
+        "ceo-gateway",
+        "email",
+        "gateway",
+        "r-proxy",
+        "ssh-gateway",
+        "sys-monitor",
+        "task",
+        "terminal",
+        "user-files",
+        "user-storage"
     ]
 }
