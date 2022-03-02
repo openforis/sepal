@@ -2,7 +2,7 @@
 bucket=$(cat ~/bucket)
 
 echo "Creating system backup"
-python /script/system_backup.py $bucket $(date "+%Y-%m-%d") \
+python3 /script/system_backup.py $bucket $(date "+%Y-%m-%d") \
  '/data/ldap/certificates:ldap/certificates' \
  '/data/letsencrypt:letsencrypt' \
  '/data/mysql:mysql --exclude * --include *.pem' \

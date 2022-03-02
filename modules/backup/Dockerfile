@@ -1,4 +1,4 @@
-FROM ubuntu:bionic
+FROM ubuntu:focal
 
 ENV MODULE_NAME backup
 ADD modules/${MODULE_NAME}/script /script

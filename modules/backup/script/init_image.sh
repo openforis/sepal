@@ -3,6 +3,6 @@ echo "Initing backup image"
 
 apt-get -y update && apt-get install -y \
  cron \
- python-pip
+ python3-pip
 
-pip2 install awscli
+pip3 install awscli
