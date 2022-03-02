@@ -51,7 +51,7 @@
             <passAllAsProjectProperties>false</passAllAsProjectProperties>
         </hudson.plugins.gradle.Gradle>
         <hudson.tasks.Shell>
-            <command>${WORKSPACE}/hosting-services/common/operations/build-and-push-images.sh $BUILD_NUMBER $GIT_COMMIT $WORKSPACE /opt/sepal</command>
+            <command>${WORKSPACE}/modules/jenkins/script/build-and-push-images.sh $BUILD_NUMBER</command>
             <configuredLocalRules/>
         </hudson.tasks.Shell>
     </builders>
