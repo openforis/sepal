@@ -36,8 +36,7 @@ RUN chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 # Install node.js
 
-RUN curl -sL https://deb.nodesource.com/setup_17.x | bash
-RUN apt-get update && apt-get -y install nodejs
+RUN curl -sL https://deb.nodesource.com/setup_17.x | bash && apt-get update && apt-get -y install nodejs
 
 # Install global npm packages
 
