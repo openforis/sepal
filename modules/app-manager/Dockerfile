@@ -24,13 +24,6 @@ RUN apt-get update && apt-get install -y \
     software-properties-common \
     sudo
 
-RUN apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y
-
-RUN apt-get update && apt-get install -y \
-    libgdal-dev \
-    gdal-bin \
-    python3-gdal
-
 RUN pip3 install --upgrade pip
 
 RUN adduser node && adduser node sudo && echo 'node      ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
