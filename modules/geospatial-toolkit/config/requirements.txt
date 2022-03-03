@@ -8,7 +8,7 @@ tqdm
 xarray-leaflet
 GDAL==$GDAL_VERSION
 bqplot
-numpy
+numpy==$NUMPY_VERSION
 geopandas
 matplotlib
 pandas
@@ -49,7 +49,7 @@ awscli
 
 ########  other deps  ########
 requests
-llvmlite==0.31.0
+llvmlite
 coverage
 
 ########  OSK requirements  ########

@@ -6,6 +6,10 @@ echo "***************************"
 echo "*** Installing GPU libs ***"
 echo "***************************"
 
+pip3 install --upgrade pip
+pip3 uninstall -y numpy
+pip3 install numpy
+
 # Based on https://www.tensorflow.org/install/gpu, but with CUDA 11.4
 # Trying with cuda-toolkit instead of cuda, to prevent wrong nvidia-driver to be installed.
 # That version must match the version on the host machine.
@@ -27,7 +31,7 @@ apt-get update -y
 #   https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver
 # Find download URL:
 #   https://www.nvidia.com/Download/Find.aspx
-apt-get install -y --no-install-recommends \--no-install-recommends \
+apt-get install -y --no-install-recommends \
   nvidia-driver-470=470.82.01-0ubuntu1 \
   libnvidia-gl-470=470.82.01-0ubuntu1 \
   nvidia-kernel-source-470=470.82.01-0ubuntu1 \
@@ -53,8 +57,6 @@ echo -n "/usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.1">/etc/OpenCL/vendors/nv
 ln -sf cuda-11.4/ cuda
 ln -sf cuda-11.4/ cuda-11
 
-pip3 install --upgrade pip
-pip3 install numpy --upgrade --force-reinstall
 pip3 install pyopencl
 pip3 install testresources
 pip3 install tensorflow==2.7.0

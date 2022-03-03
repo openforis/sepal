@@ -1,21 +1,23 @@
-# Base Ubuntu Focal image with preinstalled Java, Python and R
+# Image with preinstalled Java, Python, and R
 
 FROM ubuntu:focal
 
-ARG DEBIAN_FRONTEND noninteractive
-ENV DEBIAN_FRONTEND noninteractive
+# [HACK] glibc fails with kernel revision >= 255. This hack fakes the revision.
+# Remove once a new glibc verison in inclued in the ubuntu parent image.
+# https://bugs.launchpad.net/ubuntu/+source/glibc/+bug/1962225
+RUN mv /bin/uname /bin/uname.orig && printf '#!/bin/bash\n\nif [[ "$1" == "-r" ]] ;then\n echo '4.9.250'\n exit\nelse\n uname.orig "$@"\nfi' > /bin/uname && chmod 755 /bin/uname
+
+ARG DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Use specific Java version
-ARG JAVA_VERSION 11.0.11.hs-adpt
+ARG JAVA_VERSION=11.0.11.hs-adpt
 
 # Add support for https apt repositories
 RUN apt-get -y update && apt-get install -y \
     apt-transport-https \
     apt-utils \
     ca-certificates
-
-# Enforce https-only Ubuntu apt repositories
-# RUN sed -i 's|http://archive.ubuntu.com/ubuntu|https://mirrors.kernel.org/ubuntu|g' /etc/apt/sources.list
 
 # Install support for managing locales
 RUN apt-get -y update && apt-get install -y \
@@ -29,7 +31,8 @@ RUN echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
 
 # Install support for add-apt-repository
 RUN apt-get -y update && apt-get install -y \
-    software-properties-common
+    software-properties-common \
+    gnupg
 
 # Upgrade installed packages
 RUN apt-get -y upgrade
@@ -126,7 +129,6 @@ RUN apt-get -y update && apt-get install -y \
     libffi-dev \
     libfribidi-dev \
     libgdal-dev \
-    libgdal-dev \
     libgeos++-dev \
     libgfortran5 \
     libglade2-dev \
@@ -145,7 +147,6 @@ RUN apt-get -y update && apt-get install -y \
     libspatialindex-dev \
     libssl-dev \
     libudunits2-dev \
-    libv8-dev \
     libxcursor-dev \
     libxinerama-dev \
     libxml2-dev \
