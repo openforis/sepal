@@ -1,4 +1,4 @@
 #!/bin/bash
 
 apt-get update && \
-    apt-get install -y --no-install-recommends mysql-client
+    apt-get install -y --no-install-recommends mysql-client cron

@@ -1,4 +1,4 @@
-FROM ubuntu:trusty
+FROM ubuntu:focal
 
 ENV MODULE_NAME mysql-backup
 

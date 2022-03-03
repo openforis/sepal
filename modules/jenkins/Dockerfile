@@ -1,4 +1,4 @@
-FROM ubuntu:bionic
+FROM ubuntu:focal
 
 EXPOSE 8080
 EXPOSE 5000
