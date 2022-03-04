@@ -4,7 +4,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV DOCKER_BUILDKIT=0
 ENV PROJECT_DIR /usr/local/src/sepal
 
-# update and install base packages
+# Update and install base packages
 
 RUN apt-get update && apt-get install -y \
     apt-utils \
@@ -17,6 +17,14 @@ RUN apt-get update && apt-get install -y \
     inetutils-ping \
     lsb-release \
     nano
+
+# Setup git aliases
+RUN git config --global alias.st status \
+    && git config --global alias.ci commit \
+    && git config --global alias.br branch \
+    && git config --global alias.co checkout \
+    && git config --global alias.unstage 'reset HEAD --' \
+    && git config --global alias.last 'log -1 HEAD'
 
 # Install docker-cli
 
