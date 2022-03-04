@@ -24,11 +24,6 @@ build
 /modules/user/binary/sepal-user.jar
 /modules/sepal-server/binary/sepal.jar
 
-#Sepal frontend
-/modules/*/frontend/build
-/modules/gui/frontend/node-*
-/modules/gui/frontend/node_modules/
-
 #Vagrant
 .vagrant
 
