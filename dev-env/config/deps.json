@@ -114,7 +114,7 @@
         "build": {
             "java": "build"
         },
-        "run": ["mysql", "ldap"]
+        "run": ["mysql", "ldap", "rabbitmq"]
     },
     "user-files": {
         "build": {},
