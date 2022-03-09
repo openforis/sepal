@@ -183,7 +183,7 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
     }
 
     const init = async () => {
-        const userHomeDir = await realpath(Path.join(homeDir, username = 'admin'))
+        const userHomeDir = await realpath(Path.join(homeDir, username))
         const watcher = await createWatcher({out$, stop$, userHomeDir, pollIntervalMilliseconds})
 
         watcher.monitor('/')
