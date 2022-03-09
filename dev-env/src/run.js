@@ -4,8 +4,8 @@ import {logs} from './logs.js'
 
 export const run = async (module, options) => {
     if (options.build) {
-        await build(module, {cache: true}) 
+        await build(module, {cache: true})
     }
-    await restart(module, options) 
+    await restart(module, options)
     await logs(module, {follow: true})
 }
