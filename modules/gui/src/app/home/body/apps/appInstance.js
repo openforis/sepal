@@ -1,7 +1,7 @@
 import {ContentPadding} from 'widget/sectionLayout'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {forkJoin, timer} from 'rxjs'
+import {forkJoin, of, timer} from 'rxjs'
 import {getLogger} from 'log'
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
@@ -16,18 +16,76 @@ const log = getLogger('apps')
 
 class AppInstance extends React.Component {
     state = {
-        appState: 'REQUESTED'
+        appState: 'REQUESTED',
+        src: undefined
     }
 
-    constructor(props) {
-        super(props)
-        this.runApp()
+    render() {
+        const {app: {label, alt}} = this.props
+        return (
+            <ContentPadding
+                menuPadding
+                className={styles.appInstance}>
+                <div className={styles.content}>
+                    <div className={styles.backdrop}>
+                        {label || alt}
+                    </div>
+                    <div className={styles.status}>
+                        {this.renderStatus()}
+                    </div>
+                    {this.renderIFrame()}
+                </div>
+            </ContentPadding>
+        )
+    }
+
+    renderIFrame() {
+        const {app: {label, alt}, stream} = this.props
+        const {appState, src} = this.state
+        console.log('renderIFrame', src)
+        return stream('RUN_APP').completed
+            ? (
+                <iframe
+                    width='100%'
+                    height='100%'
+                    frameBorder='0'
+                    src={src}
+                    title={label || alt}
+                    style={{border: 'none', display: appState === 'READY' ? 'block' : 'none'}}
+                    onLoad={() => this.ready()}
+                />
+            )
+            : null
+    }
+
+    renderStatus() {
+        const {app} = this.props
+        const {appState} = this.state
+        return appState === 'REQUESTED'
+            ? msg('apps.initializing')
+            : appState === 'FAILED'
+                ? msg('apps.run.error', {label: app.label || app.alt})
+                : msg('apps.loading.progress')
+    }
+
+    componentDidMount() {
+        const {app: {endpoint, path}, busy$, stream} = this.props
+        if (endpoint) {
+            this.setState({src: `/api${path}`}, () => {
+                busy$.next(true)
+                this.runApp()
+            })
+        } else {
+            this.setState({appState: 'INITIALIZED', src: path}, () =>
+                stream('RUN_APP', of())
+            )
+        }
     }
 
     runApp() {
-        const {app} = this.props
+        const {app, stream} = this.props
         publishEvent('launch_app', {app: app.id})
-        this.props.stream('RUN_APP',
+        stream('RUN_APP',
             forkJoin([
                 runApp$(app.path),
                 timer(500)
@@ -51,58 +109,6 @@ class AppInstance extends React.Component {
                 ? null
                 : {appState: 'INITIALIZED'}
         )
-    }
-
-    componentDidMount() {
-        const {busy$} = this.props
-        busy$.next(true)
-    }
-
-    render() {
-        const {app: {label, alt}} = this.props
-        return (
-            <ContentPadding
-                menuPadding
-                className={styles.appInstance}>
-                <div className={styles.content}>
-                    <div className={styles.backdrop}>
-                        {label || alt}
-                    </div>
-                    <div className={styles.status}>
-                        {this.renderStatus()}
-                    </div>
-                    {this.renderIFrame()}
-                </div>
-            </ContentPadding>
-        )
-    }
-
-    renderIFrame() {
-        const {app: {path, label, alt}} = this.props
-        const {appState} = this.state
-        return this.props.stream('RUN_APP').completed
-            ? (
-                <iframe
-                    width='100%'
-                    height='100%'
-                    frameBorder='0'
-                    src={`/api${path}`}
-                    title={label || alt}
-                    style={{display: appState === 'READY' ? 'block' : 'none'}}
-                    onLoad={() => this.ready()}
-                />
-            )
-            : null
-    }
-
-    renderStatus() {
-        const {app} = this.props
-        const {appState} = this.state
-        return appState === 'REQUESTED'
-            ? msg('apps.initializing')
-            : appState === 'FAILED'
-                ? msg('apps.run.error', {label: app.label || app.alt})
-                : msg('apps.loading.progress')
     }
 
     ready() {
