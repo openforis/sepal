@@ -324,6 +324,102 @@
                 }
             }
         },
+        "LANDSAT_9": {
+            "reflectance": "TOA",
+            "dataSetName": "LANDSAT_9",
+            "collectionName": "LANDSAT/LC09/C02/T1_TOA",
+            "maxZenith": 7.5,
+            "calibrationCoefs": {
+                "slopes": [1.0946, 1.0043, 1.0524, 0.8954, 1.0049, 1.0002],
+                "intercepts": [-0.0107, 0.0026, -0.0015, 0.0033, 0.0065, 0.0046]
+            },
+            "bands": {
+                "aerosol": {
+                    "name": "B1"
+                },
+                "blue": {
+                    "name": "B2"
+                },
+                "green": {
+                    "name": "B3"
+                },
+                "red": {
+                    "name": "B4"
+                },
+                "nir": {
+                    "name": "B5"
+                },
+                "swir1": {
+                    "name": "B6"
+                },
+                "swir2": {
+                    "name": "B7"
+                },
+                "pan": {
+                    "name": "B8"
+                },
+                "cirrus": {
+                    "name": "B9"
+                },
+                "thermal": {
+                    "name": "B10"
+                },
+                "thermal2": {
+                    "name": "B11"
+                },
+                "qa": {
+                    "name": "QA_PIXEL"
+                }
+            }
+        },
+        "LANDSAT_9_T2": {
+            "reflectance": "TOA",
+            "dataSetName": "LANDSAT_9_T2",
+            "collectionName": "LANDSAT/LC09/C02/T2_TOA",
+            "maxZenith": 7.5,
+            "calibrationCoefs": {
+                "slopes": [1.0946, 1.0043, 1.0524, 0.8954, 1.0049, 1.0002],
+                "intercepts": [-0.0107, 0.0026, -0.0015, 0.0033, 0.0065, 0.0046]
+            },
+            "bands": {
+                "aerosol": {
+                    "name": "B1"
+                },
+                "blue": {
+                    "name": "B2"
+                },
+                "green": {
+                    "name": "B3"
+                },
+                "red": {
+                    "name": "B4"
+                },
+                "nir": {
+                    "name": "B5"
+                },
+                "swir1": {
+                    "name": "B6"
+                },
+                "swir2": {
+                    "name": "B7"
+                },
+                "pan": {
+                    "name": "B8"
+                },
+                "cirrus": {
+                    "name": "B9"
+                },
+                "thermal": {
+                    "name": "B10"
+                },
+                "thermal2": {
+                    "name": "B11"
+                },
+                "qa": {
+                    "name": "QA_PIXEL"
+                }
+            }
+        },
         "SENTINEL_2": {
             "reflectance": "TOA",
             "dataSetName": "SENTINEL_2",
@@ -721,6 +817,108 @@
             "reflectance": "SR",
             "dataSetName": "LANDSAT_8_T2",
             "collectionName": "LANDSAT/LC08/C02/T2_L2",
+            "maxZenith": 7.5,
+            "bands": {
+                "aerosol": {
+                    "name": "SR_B1",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
+                },
+                "blue": {
+                    "name": "SR_B2",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
+                },
+                "green": {
+                    "name": "SR_B3",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
+                },
+                "red": {
+                    "name": "SR_B4",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
+                },
+                "nir": {
+                    "name": "SR_B5",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
+                },
+                "swir1": {
+                    "name": "SR_B6",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
+                },
+                "swir2": {
+                    "name": "SR_B7",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
+                },
+                "thermal": {
+                    "name": "ST_B10",
+                    "scale": 0.00341802,
+                    "offset": 149
+                },
+                "qa": {
+                    "name": "QA_PIXEL"
+                }
+            }
+        },
+        "LANDSAT_9": {
+            "reflectance": "SR",
+            "dataSetName": "LANDSAT_9",
+            "collectionName": "LANDSAT/LC09/C02/T1_L2",
+            "maxZenith": 7.5,
+            "bands": {
+                "aerosol": {
+                    "name": "SR_B1",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
+                },
+                "blue": {
+                    "name": "SR_B2",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
+                },
+                "green": {
+                    "name": "SR_B3",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
+                },
+                "red": {
+                    "name": "SR_B4",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
+                },
+                "nir": {
+                    "name": "SR_B5",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
+                },
+                "swir1": {
+                    "name": "SR_B6",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
+                },
+                "swir2": {
+                    "name": "SR_B7",
+                    "scale": 2.75e-05,
+                    "offset": -0.2
+                },
+                "thermal": {
+                    "name": "ST_B10",
+                    "scale": 0.00341802,
+                    "offset": 149
+                },
+                "qa": {
+                    "name": "QA_PIXEL"
+                }
+            }
+        },
+        "LANDSAT_9_T2": {
+            "reflectance": "SR",
+            "dataSetName": "LANDSAT_9_T2",
+            "collectionName": "LANDSAT/LC09/C02/T2_L2",
             "maxZenith": 7.5,
             "bands": {
                 "aerosol": {

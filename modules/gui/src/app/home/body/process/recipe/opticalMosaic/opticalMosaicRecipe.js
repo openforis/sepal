@@ -24,7 +24,7 @@ export const defaultModel = {
         yearsBefore: 0,
         yearsAfter: 0
     },
-    sources: {LANDSAT: ['LANDSAT_8']},
+    sources: {LANDSAT: ['LANDSAT_9', 'LANDSAT_8']},
     sceneSelectionOptions: {
         type: SceneSelectionType.ALL,
         targetDateWeight: 0

@@ -72,9 +72,11 @@ export const minScale = recipe => {
 const imageSourceById = {
     LANDSAT: {
         dataSets: [
+            'LANDSAT_9',
             'LANDSAT_8',
             'LANDSAT_7',
             'LANDSAT_TM',
+            'LANDSAT_9_T2',
             'LANDSAT_8_T2',
             'LANDSAT_7_T2',
             'LANDSAT_TM_T2'
@@ -88,6 +90,27 @@ const imageSourceById = {
 }
 
 const dataSetById = {
+    LANDSAT_9: {
+        fromYear: 2021,
+        quality: 1,
+        scale: 30,
+        name: 'Landsat 9',
+        shortName: 'L9',
+        SR: {
+            bands: [
+                'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
+                'aerosol', 'thermal', 'thermal2',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
+            ]
+        },
+        TOA: {
+            bands: [
+                'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
+                'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
+            ]
+        }
+    },
     LANDSAT_8: {
         fromYear: 2013,
         quality: 1,
@@ -158,6 +181,27 @@ const dataSetById = {
         scale: 30,
         name: 'Landsat 8, tier 2',
         shortName: 'L8 T2',
+        SR: {
+            bands: [
+                'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
+                'aerosol', 'thermal',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
+            ]
+        },
+        TOA: {
+            bands: [
+                'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
+                'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2',
+                'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
+            ]
+        }
+    },
+    LANDSAT_9_T2: {
+        fromYear: 2021,
+        quality: 3,
+        scale: 30,
+        name: 'Landsat 9, tier 2',
+        shortName: 'L9 T2',
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',

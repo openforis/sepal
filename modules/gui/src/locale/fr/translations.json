@@ -2044,6 +2044,14 @@
 									"label": "L8 T2",
 									"tooltip": "Landsat 8 Tier 2"
 								},
+								"LANDSAT_9": {
+									"label": "L9",
+									"tooltip": "Landsat 9"
+								},
+								"LANDSAT_9_T2": {
+									"label": "L9 T2",
+									"tooltip": "Landsat 9 Tier 2"
+								},
 								"LANDSAT_TM": {
 									"label": "L4-5",
 									"tooltip": "Landsat 4-5"
@@ -2358,6 +2366,14 @@
 									"label": "L8 T2",
 									"tooltip": "Landsat 8 Tier 2"
 								},
+								"LANDSAT_9": {
+									"label": "L9",
+									"tooltip": "Landsat 9"
+								},
+								"LANDSAT_9_T2": {
+									"label": "L9 T2",
+									"tooltip": "Landsat 9 Tier 2"
+								},
 								"LANDSAT_TM": {
 									"label": "L4-5",
 									"tooltip": "Landsat 4-5"
@@ -2405,6 +2421,14 @@
 			"LANDSAT_8_T2": {
 				"label": "L8 T2",
 				"tooltip": "Landsat 8 Tier 2"
+			},
+			"LANDSAT_9": {
+				"label": "L9",
+				"tooltip": "Landsat 9"
+			},
+			"LANDSAT_9_T2": {
+				"label": "L9 T2",
+				"tooltip": "Landsat 9 Tier 2"
 			},
 			"LANDSAT_TM": {
 				"label": "L4-5",

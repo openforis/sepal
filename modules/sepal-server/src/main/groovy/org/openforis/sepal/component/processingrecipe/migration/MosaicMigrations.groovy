@@ -127,6 +127,7 @@ class MosaicMigrations extends AbstractMigrations {
         if (sensorGroup == 'LANDSAT') {
             def prefix = id.substring(0, 3)
             switch (prefix) {
+                case 'LC9': return 'LANDSAT_9'
                 case 'LC8': return 'LANDSAT_8'
                 case 'LE7': return 'LANDSAT_7'
                 case 'LT5': return 'LANDSAT_TM'

@@ -47,7 +47,7 @@ export const defaultModel = {
     },
     sources: {
         dataSets: {
-            LANDSAT: ['LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM']
+            LANDSAT: ['LANDSAT_9', 'LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM']
         },
         breakpointBands: ['ndfi']
     },

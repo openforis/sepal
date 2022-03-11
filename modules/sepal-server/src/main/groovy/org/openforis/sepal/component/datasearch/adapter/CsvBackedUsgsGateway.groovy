@@ -123,17 +123,17 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
         return data['Collection Category'] in ['T1', 'T2'] &&
                 data['Day/Night Indicator'].toUpperCase() == 'DAY' &&
                 data['Scene Cloud Cover L1'].toDouble() >= 0d &&
-                prefix in ['LT4', 'LT5', 'LE7', 'LC8']
+                prefix in ['LT4', 'LT5', 'LE7', 'LC8', 'LC9']
     }
 
     static DataSetMetadataGateway create(File workingDir) {
         // From https://www.usgs.gov/landsat-missions/bulk-metadata-service
         new CsvBackedUsgsGateway(workingDir, [
-                (LANDSAT_8.name()) : [
+                (LANDSAT_OT.name()) : [
                         new GzCsvUriReader(
                                 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_OT_C2_L1.csv.gz',
                                 workingDir,
-                                'LANDSAT_8')],
+                                'LANDSAT_OT')],
                 (LANDSAT_7.name()) : [
                         new GzCsvUriReader(
                                 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM_C2_L1.csv.gz',
@@ -145,7 +145,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
                                 workingDir,
                                 'LANDSAT_TM')]
         ], [
-                (LANDSAT_8.name()): [
+                (LANDSAT_OT.name()): [
                         new CsvUriReader('https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_OT_C2_L1.csv')
                 ],
                 (LANDSAT_7.name()): [
@@ -155,7 +155,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
     }
 
     static enum Sensor {
-        LANDSAT_8,
+        LANDSAT_OT,
         LANDSAT_7,
         LANDSAT_TM
     }
