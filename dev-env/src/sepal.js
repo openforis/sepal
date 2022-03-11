@@ -54,8 +54,7 @@ const main = async () => {
         .option('-d, --dependencies', 'Start dependencies too', true)
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
-        .option('-l, --show-logs', 'Show logs')
-        // .option('-nw, --no-wait', 'Don\'t wait for healthy status.')
+        .option('-l, --log-tail', 'Show log tail')
         .argument('[module...]', 'Modules to start')
         .action(start)
     
@@ -64,15 +63,16 @@ const main = async () => {
         .option('-d, --dependencies', 'Restart dependencies too')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
-        .option('-l, --show-logs', 'Show logs')
+        .option('-l, --log-tail', 'Show log tail')
         .argument('[module...]', 'Modules to start')
         .action(restart)
     
     program.command('logs')
         .description('Show module log')
+        .option('-f, --follow', 'Follow')
+        .option('-t, --tail', 'Tail')
         .option('-s, --since <time>', 'Since relative or absolute time')
         .option('-u, --until <time>', 'Until relative or absolute time')
-        .option('-f, --follow', 'Follow')
         .argument('[module...]', 'Modules')
         .action(logs)
     
