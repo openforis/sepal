@@ -1,5 +1,7 @@
 FROM ubuntu:focal
 
+SHELL ["/bin/bash", "-c"]
+
 ARG DEBIAN_FRONTEND=noninteractive
 ENV DOCKER_BUILDKIT=0
 ENV PROJECT_DIR /usr/local/src/sepal
@@ -16,7 +18,9 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     inetutils-ping \
     lsb-release \
-    nano
+    nano \
+    unzip \
+    zip
 
 # Setup git aliases
 RUN git config --global alias.st status \
@@ -68,5 +72,18 @@ ADD ./config $PROJECT_DIR/dev-env/config/
 
 WORKDIR $PROJECT_DIR/dev-env/
 RUN npm install
+
+# Install Java and Gradle
+
+ENV SDKMAN_DIR=/usr/local/lib/sdkman
+RUN curl -s get.sdkman.io | bash && \
+    source "$SDKMAN_DIR/bin/sdkman-init.sh" && \
+    yes | sdk install java 11.0.11.hs-adpt && \
+    sdk install gradle 6.9.1
+RUN source "$SDKMAN_DIR/bin/sdkman-init.sh" && \    
+    ln -s "$(which java)" /usr/local/bin/java && \
+    ln -s "$(which gradle)" /usr/local/bin/gradle && \
+    JAVA_HOME=$(sdk home java current) && \
+    sed -i 's/jdk.tls.disabledAlgorithms=.*/jdk.tls.disabledAlgorithms=SSLv3, RC4, DES, MD5withRSA, /' "$JAVA_HOME/conf/security/java.security"
 
 WORKDIR $PROJECT_DIR
