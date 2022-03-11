@@ -6,15 +6,6 @@ apt-get update -y && apt-get install -y \
     wget \
     procps
 
-wget -nv --no-check-certificate \
-    -O "flyway.tar.gz" \
-    "https://bintray.com/artifact/download/business/maven/flyway-commandline-$FLYWAY_VERSION-linux-x64.tar.gz"
-tar -zxvf "flyway.tar.gz"  -C /opt/
-ln -s "/opt/flyway-${FLYWAY_VERSION}" "/opt/flyway"
-
-wget -nv "http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.38/mysql-connector-java-5.1.38.jar"
-mv "mysql-connector-java-5.1.38.jar" "/opt/flyway/drivers"
-
 mkdir -p /home/mysql
 
 # append to my.cnf for logging:
