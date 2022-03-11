@@ -3,12 +3,13 @@ import {exit, isModule, isRunnable, showModuleStatus, MESSAGE, getModules} from 
 import {SEPAL_SRC, ENV_FILE} from './config.js'
 import _ from 'lodash'
 
-const logsModule = async (module, {follow, since, until} = {}) => {
+const logsModule = async (module, {follow, tail, since, until} = {}) => {
     try {
         if (isModule(module)) {
             if (isRunnable(module)) {
                 const logsOptions = _.compact([
                     follow ? '--follow' : null,
+                    tail ? '--since 0s' : '',
                     since ? `--since ${since}` : '',
                     until ? `--until ${until}` : ''
                 ]).join(' ')

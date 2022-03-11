@@ -70,9 +70,10 @@ const main = async () => {
     
     program.command('logs')
         .description('Show module log')
+        .option('-f, --follow', 'Follow')
+        .option('-t, --tail', 'Tail')
         .option('-s, --since <time>', 'Since relative or absolute time')
         .option('-u, --until <time>', 'Until relative or absolute time')
-        .option('-f, --follow', 'Follow')
         .argument('[module...]', 'Modules')
         .action(logs)
     
