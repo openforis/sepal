@@ -64,7 +64,7 @@ const useCustomKernel$ = ({endpoint, path}) =>
 const updateKernel$ = ({name, path, label}) => {
     const kernelPath = join('/usr/local/share/jupyter/kernels', `venv-${name}`)
     const venvPath = join(kernelPath, 'venv')
-    const requirementsPath= join(path, 'requirements.txt')
+    const requirementsPath = join(path, 'requirements.txt')
     return exists$({path: kernelPath}).pipe(
         switchMap(kernelExists => kernelExists ? of(true) : createKernel$({path: kernelPath, label})),
         switchMap(() => meedVenvUpdate$({venvPath, requirementsPath})),
@@ -118,7 +118,7 @@ const meedVenvUpdate$ = ({venvPath, requirementsPath}) => {
     // If $venvPath/.installed exists, compare modified timestamp. If requirements are newer, install, otherwise, do nothing
     return zip(
         lastModifiedDate$(requirementsPath),
-        lastModifiedDate$(join(venvPath,'..', '.installed'))
+        lastModifiedDate$(join(venvPath, '..', '.installed'))
     ).pipe(
         switchMap(([requirementsTime, installTime]) => {
             if (installTime < requirementsTime) {
