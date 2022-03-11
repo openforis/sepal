@@ -15,9 +15,9 @@ const startModule = async (module, options = {}, rootModule) => {
                     args: [module, SEPAL_SRC, ENV_FILE],
                     showStdOut: options.verbose
                 })
-                if (rootModule && options.showLogs) {
+                if (rootModule && options.logTail) {
                     await showStatus([module])
-                    await logs(module, {follow: true})
+                    await logs(module, {follow: true, tail: true})
                 } else {
                     await waitModuleRunning(module)
                 }
