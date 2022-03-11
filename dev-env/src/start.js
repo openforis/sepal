@@ -1,10 +1,11 @@
 import {exec} from './exec.js'
-import {exit, getModules, isModule, isRunnable, showModuleStatus, MESSAGE, waitModuleRunning} from './utils.js'
+import {exit, getModules, isModule, isRunnable, showModuleStatus, MESSAGE, waitModuleRunning, showStatus} from './utils.js'
+import {logs} from './logs.js'
 import {getDirectRunDeps} from './deps.js'
 import {SEPAL_SRC, ENV_FILE} from './config.js'
 import _ from 'lodash'
 
-const startModule = async (module, options = {}, _parent) => {
+const startModule = async (module, options = {}, rootModule) => {
     try {
         if (isModule(module)) {
             if (isRunnable(module)) {
@@ -14,7 +15,12 @@ const startModule = async (module, options = {}, _parent) => {
                     args: [module, SEPAL_SRC, ENV_FILE],
                     showStdOut: options.verbose
                 })
-                await waitModuleRunning(module)
+                if (rootModule && options.showLogs) {
+                    await showStatus([module])
+                    await logs(module, {follow: true})
+                } else {
+                    await waitModuleRunning(module)
+                }
             } else {
                 showModuleStatus(module, MESSAGE.NON_RUNNABLE)
             }
@@ -25,14 +31,11 @@ const startModule = async (module, options = {}, _parent) => {
     }
 }
 
-const getModulesToStart = (modules, options = {}, parentModules = []) => {
+const getModulesToStart = (modules, options = {}) => {
     const dependencies = options.dependencies
         ? _.flatten(
             modules.map(module =>
-                getModulesToStart(getDirectRunDeps(module), options, _.uniq([...parentModules, ...modules]))
-                // parentModules.includes(module)
-                //     ? []
-                //     : getModulesToStart(getDirectRunDeps(module), options, _.uniq([...parentModules, ...modules]))
+                getModulesToStart(getDirectRunDeps(module), options)
             )
         )
         : []
@@ -44,8 +47,9 @@ const getModulesToStart = (modules, options = {}, parentModules = []) => {
 }
 
 export const start = async (modules, options) => {
-    const startModules = _.uniq(getModulesToStart(getModules(modules), options))
+    const rootModules = getModules(modules)
+    const startModules = _.uniq(getModulesToStart(rootModules, options))
     for (const module of startModules) {
-        await startModule(module, _.pick(options, ['verbose', 'quiet']))
+        await startModule(module, options, rootModules.includes(module))
     }
 }

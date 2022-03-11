@@ -6,7 +6,6 @@ import {build} from './build.js'
 import {start} from './start.js'
 import {stop} from './stop.js'
 import {restart} from './restart.js'
-import {run} from './run.js'
 import {logs} from './logs.js'
 import {shell} from './shell.js'
 import {log} from './log.js'
@@ -42,14 +41,6 @@ const main = async () => {
         .argument('[module...]', 'Modules to build')
         .action(build)
     
-    program.command('start')
-        .description('Start modules')
-        .option('-d, --dependencies', 'Start dependencies too', true)
-        .option('-v, --verbose', 'Verbose')
-        .option('-q, --quiet', 'Quiet')
-        .argument('[module...]', 'Modules to start')
-        .action(start)
-    
     program.command('stop')
         .description('Stop modules')
         .option('-d, --dependencies', 'Stop dependencies too')
@@ -58,20 +49,24 @@ const main = async () => {
         .argument('[module...]', 'Modules to stop')
         .action(stop)
     
+    program.command('start')
+        .description('Start modules')
+        .option('-d, --dependencies', 'Start dependencies too', true)
+        .option('-v, --verbose', 'Verbose')
+        .option('-q, --quiet', 'Quiet')
+        .option('-l, --show-logs', 'Show logs')
+        // .option('-nw, --no-wait', 'Don\'t wait for healthy status.')
+        .argument('[module...]', 'Modules to start')
+        .action(start)
+    
     program.command('restart')
         .description('Restart modules')
         .option('-d, --dependencies', 'Restart dependencies too')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
+        .option('-l, --show-logs', 'Show logs')
         .argument('[module...]', 'Modules to start')
         .action(restart)
-    
-    program.command('run')
-        .description('Restart a single module and show log tail')
-        .option('-d, --dependencies', 'Restart dependencies too')
-        .option('-b, --build', 'Build')
-        .argument('<module>', 'Module to run')
-        .action(run)
     
     program.command('logs')
         .description('Show module log')
