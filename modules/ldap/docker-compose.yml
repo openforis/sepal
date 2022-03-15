@@ -37,7 +37,6 @@ services:
       interval: 1s
       retries: 60
 
-
 networks:
   sepal:
     external: true
