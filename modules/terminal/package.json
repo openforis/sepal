@@ -14,12 +14,12 @@
         "express": "^4.17.3",
         "express-ws": "^5.0.2",
         "node-pty": "^0.10.1",
-        "rxjs": "^7.5.4",
+        "rxjs": "^7.5.5",
         "sepal": "../../lib/js/shared/src",
         "terminal": "./src"
     },
     "devDependencies": {
-        "eslint": "^8.10.0",
+        "eslint": "^8.11.0",
         "jest": "^27.5.1",
         "jest-expect-message": "^1.0.2"
     }
