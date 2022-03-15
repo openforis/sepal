@@ -32,10 +32,11 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
     void eachSceneUpdatedSince(Map<String, Date> lastUpdateBySensor, Closure callback)
             throws DataSetMetadataGateway.SceneMetaDataRetrievalFailed {
         Sensor.values().each { sensor ->
-            if (sensorInitializedFile(sensor).exists())
+            if (sensorInitializedFile(sensor).exists()) {
                 updatedSince(sensor, lastUpdateBySensor[sensor.name()], callback)
-            else
+            } else {
                 initializeSensor(sensor, callback)
+            }
         }
     }
 
@@ -89,12 +90,12 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
     private SceneMetaData toSceneMetaData(Sensor sensor, data) {
         try {
             if (isSceneIncluded(data)) {
-                def sensorId = data['Collection Category'] == 'T2' ? sensor.name() + '_T2' : sensor.name()
+                def dataSet = getDataSet(data)
                 def metadata = new SceneMetaData(
                         id: data['Landsat Scene Identifier'],
                         source: 'LANDSAT',
                         sceneAreaId: "${data['WRS Path']}_${data['WRS Row']}",
-                        dataSet: sensorId,
+                        dataSet: dataSet,
                         acquisitionDate: new SimpleDateFormat('yy/MM/dd').parse(data['Date Acquired'] as String),
                         cloudCover: cloudCover(sensor, data),
                         coverage: 100,
@@ -119,11 +120,14 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
     }
 
     private boolean isSceneIncluded(data) {
-        def prefix = (data['Landsat Scene Identifier'] as String).substring(0, 3)
-        return data['Collection Category'] in ['T1', 'T2'] &&
+        data['Collection Category'] in ['T1', 'T2'] &&
                 data['Day/Night Indicator'].toUpperCase() == 'DAY' &&
                 data['Scene Cloud Cover L1'].toDouble() >= 0d &&
-                prefix in ['LT4', 'LT5', 'LE7', 'LC8', 'LC9']
+                getPrefix(data) in ['LT4', 'LT5', 'LE7', 'LC8', 'LC9']
+    }
+
+    private String getPrefix(data) {
+        (data['Landsat Scene Identifier'] as String).substring(0, 3)
     }
 
     static DataSetMetadataGateway create(File workingDir) {
@@ -154,6 +158,20 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
         ])
     }
 
+    private String getDataSet(data) {
+        def prefix = getPrefix(data)
+        def dataSetBase = dataSetByPrefix[prefix]
+        def dataSet = data['Collection Category'] == 'T2' ? dataSetBase + '_T2' : dataSetBase
+    }
+
+    private Map<String, String> dataSetByPrefix = [
+       LT4: 'LANDSAT_TM', 
+       LT5: 'LANDSAT_TM', 
+       LE7: 'LANDSAT_7', 
+       LC8: 'LANDSAT_8', 
+       LC9: 'LANDSAT_9'
+    ]
+    
     static enum Sensor {
         LANDSAT_OT,
         LANDSAT_7,

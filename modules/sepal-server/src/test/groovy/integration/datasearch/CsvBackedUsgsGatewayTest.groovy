@@ -5,11 +5,10 @@ import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.util.CsvReader
 import spock.lang.Ignore
 import spock.lang.Specification
+import java.text.SimpleDateFormat
 
-import static org.openforis.sepal.component.datasearch.adapter.CsvBackedUsgsGateway.Sensor.LANDSAT_8
-import static org.openforis.sepal.util.DateTime.toDateString
+import static org.openforis.sepal.component.datasearch.adapter.CsvBackedUsgsGateway.Sensor.LANDSAT_OT
 
-@Ignore
 class CsvBackedUsgsGatewayTest extends Specification {
     def workingDir = File.createTempDir()
     def sceneId = 'LC80390222013076EDC00'
@@ -32,22 +31,24 @@ class CsvBackedUsgsGatewayTest extends Specification {
     }
 
     def 'Uninitialized and init source, when iterating, scenes are returned'() {
-        def gateway = new CsvBackedUsgsGateway(workingDir, [(LANDSAT_8.name()): [new FakeCsvReader((sceneId): new Date())]], [:])
+        def gateway = new CsvBackedUsgsGateway(workingDir, [(LANDSAT_OT.name()): [new FakeCsvReader((sceneId): new Date())]], [:])
 
         when:
-        def updates = iterate(gateway, [:])
+        def updates = iterate(gate∫way, [:])
 
         then:
         updates.size() == 1
         def scenes = updates.first()
         scenes.size() == 1
-        scenes.first().id == sceneId
+        def scene = scenes.first()
+        scene.id == sceneId
+        scene.dataSet == 'LANDSAT_8'
     }
 
     def 'Uninitialized and sources, when iterating, only init sources are used'() {
         def gateway = new CsvBackedUsgsGateway(workingDir,
-                [(LANDSAT_8.name()): [new FakeCsvReader((sceneId): new Date())]],
-                [(LANDSAT_8.name()): [new FakeCsvReader((sceneId2): new Date())]])
+                [(LANDSAT_OT.name()): [new FakeCsvReader((sceneId): new Date())]],
+                [(LANDSAT_OT.name()): [new FakeCsvReader((sceneId2): new Date())]])
 
         when:
         def updates = iterate(gateway, [:])
@@ -64,10 +65,10 @@ class CsvBackedUsgsGatewayTest extends Specification {
         def acquisitionDate = new Date()
         def gateway = new CsvBackedUsgsGateway(workingDir,
                 [:],
-                [(LANDSAT_8.name()): [new FakeCsvReader((sceneId): acquisitionDate)]])
+                [(LANDSAT_OT.name()): [new FakeCsvReader((sceneId): acquisitionDate)]])
 
         when:
-        def updates = iterate(gateway, [(LANDSAT_8.name()): acquisitionDate])
+        def updates = iterate(gateway, [(LANDSAT_OT.name()): acquisitionDate])
 
         then:
         updates.size() == 1
@@ -81,13 +82,13 @@ class CsvBackedUsgsGatewayTest extends Specification {
         def lastUpdated = new Date() - 10
         def gateway = new CsvBackedUsgsGateway(workingDir,
                 [:],
-                [(LANDSAT_8.name()): [new FakeCsvReader(
+                [(LANDSAT_OT.name()): [new FakeCsvReader(
                         (sceneId): lastUpdated + 1,
                         (sceneId2): lastUpdated - 1,
                 )]])
 
         when:
-        def updates = iterate(gateway, [(LANDSAT_8.name()): lastUpdated])
+        def updates = iterate(gateway, [(LANDSAT_OT.name()): lastUpdated])
 
         then:
         updates.size() == 1
@@ -98,13 +99,13 @@ class CsvBackedUsgsGatewayTest extends Specification {
 
     def 'Given successfully iterated unititialized, when iterating, initialized sources are used'() {
         def gateway = new CsvBackedUsgsGateway(workingDir,
-                [(LANDSAT_8.name()): [new FakeCsvReader((sceneId): new Date())]],
-                [(LANDSAT_8.name()): [new FakeCsvReader((sceneId2): new Date())]])
+                [(LANDSAT_OT.name()): [new FakeCsvReader((sceneId): new Date())]],
+                [(LANDSAT_OT.name()): [new FakeCsvReader((sceneId2): new Date())]])
 
         iterate(gateway, [:])
 
         when:
-        def updates = iterate(gateway, [(LANDSAT_8.name()): new Date() - 10])
+        def updates = iterate(gateway, [(LANDSAT_OT.name()): new Date() - 10])
 
         then:
         updates.size() == 1
@@ -141,18 +142,22 @@ class CsvBackedUsgsGatewayTest extends Specification {
 
         private Map metaData(String id, Date acquisitionDate) {
             [
-                    sceneID        : id,
-                    path           : '123',
-                    row            : '123',
-                    acquisitionDate: toDateString(acquisitionDate),
-                    cloudCoverFull : 1.2,
-                    sunAzimuth     : 100.2,
-                    sunElevation   : 40.2,
-                    browseURL      : 'http://browse.url',
-                    dateUpdated    : toDateString(acquisitionDate),
-                    DATA_TYPE_L1   : 'L1T',
-                    dayOrNight     : 'DAY'
+                    'Landsat Scene Identifier': id,
+                    'WRS Path': '123',
+                    'WRS Row': '123',
+                    'Date Acquired': toDateString(acquisitionDate),
+                    'Scene Cloud Cover L1': 1.2,
+                    'Sun Azimuth L0RA': 100.2,
+                    'Sun Elevation L0RA': 40.2,
+                    'Browse Link': 'http://browse.url',
+                    'Date Product Generated L1': toDateString(acquisitionDate),
+                    'Collection Category': 'T1',
+                    'Day/Night Indicator': 'DAY'
             ]
+        }
+
+        private String toDateString(date) {
+            new SimpleDateFormat('yy/MM/dd').format(date)
         }
     }
 }
