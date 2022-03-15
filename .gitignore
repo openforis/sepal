@@ -15,14 +15,17 @@ target
 #bin
 build
 
+
 #Eclipse
 .classpath
 .project
 .settings
 
 #Sepal binaries
-/modules/user/binary/sepal-user.jar
-/modules/sepal-server/binary/sepal.jar
+/common/bin
+/common-test/bin
+/modules/user/bin
+/modules/sepal-server/bin
 
 #Vagrant
 .vagrant
