@@ -93,22 +93,25 @@ class FloatingBox extends React.Component {
         const {viewportDimensions: {height: viewportHeight}} = this.props
         const {elementDimensions: {top: elementTop, bottom: elementBottom}, contentDimensions: {height: contentHeight}} = this.state
 
-        if (placement === 'above') {
-            return {
-                top: elementTop - contentHeight,
-                bottom: viewportHeight - elementTop,
-                height: elementTop,
-                placement
+        if (contentHeight) {
+            if (placement === 'above') {
+                return {
+                    top: elementTop - contentHeight,
+                    bottom: viewportHeight - elementTop,
+                    height: elementTop,
+                    placement
+                }
+            }
+            if (placement === 'below') {
+                return {
+                    top: elementBottom,
+                    bottom: viewportHeight - elementBottom - contentHeight,
+                    height: viewportHeight - elementBottom,
+                    placement
+                }
             }
         }
-        if (placement === 'below') {
-            return {
-                top: elementBottom,
-                bottom: viewportHeight - elementBottom - contentHeight,
-                height: viewportHeight - elementBottom,
-                placement
-            }
-        }
+        return {}
     }
 
     getCorrectedHorizontalPosition() {
@@ -141,28 +144,31 @@ class FloatingBox extends React.Component {
 
         const elementCenter = (elementRight + elementLeft) / 2
         
-        switch (alignment) {
-        case 'fit':
-            return {
-                left: elementLeft,
-                right: viewportWidth - elementRight
+        if (contentWidth) {
+            switch (alignment) {
+                case 'fit':
+                    return {
+                        left: elementLeft,
+                        right: viewportWidth - elementRight
+                    }
+                case 'center':
+                    return {
+                        left: elementCenter - contentWidth / 2,
+                        right: viewportWidth - elementCenter - contentWidth / 2
+                    }
+                case 'left':
+                    return {
+                        left: elementLeft,
+                        right: viewportWidth - elementLeft - contentWidth
+                    }
+                case 'right':
+                    return {
+                        left: elementRight - contentWidth,
+                        right: viewportWidth - elementRight
+                    }
+                }
             }
-        case 'center':
-            return {
-                left: elementCenter - contentWidth / 2,
-                right: viewportWidth - elementCenter - contentWidth / 2
-            }
-        case 'left':
-            return {
-                left: elementLeft,
-                right: viewportWidth - elementLeft - contentWidth
-            }
-        case 'right':
-            return {
-                left: elementRight - contentWidth,
-                right: viewportWidth - elementRight
-            }
-        }
+            return {}
     }
 
     onResize(contentDimensions) {
