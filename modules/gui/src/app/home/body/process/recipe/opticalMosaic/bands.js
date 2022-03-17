@@ -125,63 +125,67 @@ const getBands = () => ({
     },
     ndvi: {
         dataType: int10000,
-        tooltip: '(nir - red) / (nir + red)'
+        tooltip: msg('bands.ndvi')
     },
     ndmi: {
         dataType: int10000,
-        tooltip: '(nir - swir1) / (nir + swir1)',
+        tooltip: msg('bands.ndmi'),
     },
     ndwi: {
         dataType: int10000,
-        tooltip: '(green - nir) / (green + nir)',
+        tooltip: msg('bands.ndwi'),
     },
     mndwi: {
         dataType: int10000,
-        tooltip: '(green - swir1) / (green + swir1)',
+        tooltip: msg('bands.mndwi'),
     },
     ndfi: {
         dataType: intFullRange,
-        tooltip: 'Normalized Difference Fraction Index',
+        tooltip: msg('bands.ndfi'),
     },
     evi: {
         dataType: intFullRange,
-        tooltip: '2.5 * (nir - red) / (nir + 6 * red - 7.5 * blue + 1)',
+        tooltip: msg('bands.evi'),
     },
     evi2: {
         dataType: intFullRange,
-        tooltip: '2.5 * (nir - red) / (nir + 2.4 * red + 1)',
+        tooltip: msg('bands.evi2'),
     },
     savi: {
         dataType: intFullRange,
-        tooltip: '(1.5 * (nir - red) / (nir + red + 0.5)',
+        tooltip: msg('bands.savi'),
     },
     nbr: {
         dataType: int10000,
-        tooltip: '(nir - swir2) / (nir + swir2)',
+        tooltip: msg('bands.nbr'),
+    },
+    mvi: {
+        dataType: intFullRange,
+        tooltip: msg('bands.mvi'),
     },
     ui: {
         dataType: int10000,
-        tooltip: '(swir2 - nir) / (swir2 + nir)',
+        tooltip: msg('bands.ui'),
     },
     ndbi: {
         dataType: int10000,
-        tooltip: '(swir1 - nir) / (swir1 + nir)',
+        tooltip: msg('bands.ndbi'),
     },
     ibi: {
         dataType: intFullRange,
-        tooltip: '(ndbi - (savi + mndwi) / 2) / (ndbi + (savi + mndwi) / 2)',
+        tooltip: msg('bands.ibi'),
     },
     nbi: {
         dataType: intFullRange,
-        tooltip: 'red * swir1 / nir',
+        tooltip: msg('bands.nbi'),
     },
     ebbi: {
         dataType: intFullRange,
-        tooltip: '(swir1 - nir) / (10 * sqrt(swir1 + thermal))',
+        tooltip: msg('bands.ebbi'),
     },
     bui: {
         dataType: intFullRange,
-        tooltip: '(red - swir1) / (red + swir1) + (swir2 - swir1) / (swir2 + swir1)',
+        tooltip: msg('bands.bui'),
     },
     dayOfYear: {
         dataType: {precision: 'int', min: 0, max: 366},
@@ -198,7 +202,7 @@ const bandGroups = [
     ['redEdge1', 'redEdge2', 'redEdge3', 'redEdge4'],
     ['aerosol', 'waterVapor', 'pan', 'cirrus', 'thermal', 'thermal2'],
     ['brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'],
-    ['ndvi', 'ndmi', 'ndwi', 'mndwi', 'ndfi', 'evi', 'evi2', 'savi', 'nbr', 'ui', 'ndbi', 'ibi', 'nbi', 'ebbi', 'bui'],
+    ['ndvi', 'ndmi', 'ndwi', 'mndwi', 'ndfi', 'evi', 'evi2', 'savi', 'nbr', 'mvi', 'ui', 'ndbi', 'ibi', 'nbi', 'ebbi', 'bui'],
     ['dayOfYear', 'daysFromTarget']
 ]
 

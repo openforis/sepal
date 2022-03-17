@@ -53,11 +53,15 @@ class _OpticalMosaicImageLayer extends React.Component {
 
     renderBandSelection() {
         const {recipe, source, layerConfig = {}} = this.props
-        const visParamsToOption = visParams => ({
-            value: visParams.bands.join(','),
-            label: visParams.bands.join(', '),
-            visParams
-        })
+        const visParamsToOption = visParams => {
+            const value = visParams.bands.join(', ')
+            return {
+                value,
+                label: value,
+                tooltip: msg(`bands.${value}`, {}, value),
+                visParams
+            }
+        }
         const bandCombinationOptions = {
             label: msg('process.mosaic.bands.combinations'),
             options: visualizations[this.reflectance()].map(visParamsToOption)
