@@ -61,7 +61,7 @@ class Sources extends React.Component {
                 <Panel.Header
                     icon='cog'
                     title={msg('process.ccdc.panel.sources.title')}/>
-                <Panel.Content className={styles.content}>
+                <Panel.Content>
                     <Layout>
                         {this.renderDataSetTypes()}
                         {this.renderDataSets()}
