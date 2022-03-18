@@ -144,6 +144,7 @@ export const visualizations = {
         normalize({type: 'continuous', bands: ['evi2'], min: [-10000], max: [10000], palette: ['#112040', '#1c67a0', '#6db6b3', '#fffccc', '#abac21', '#177228', '#172313']}),
         normalize({type: 'continuous', bands: ['savi'], min: [-10000], max: [10000], palette: ['#112040', '#1c67a0', '#6db6b3', '#fffccc', '#abac21', '#177228', '#172313']}),
         normalize({type: 'continuous', bands: ['nbr'], min: [-10000], max: [10000], palette: ['#0034F5', '#1E7D83', '#4DA910', '#B3C120', '#FCC228', '#FF8410', '#FD3000']}),
+        normalize({type: 'continuous', bands: ['mvi'], min: [-10000], max: [10000], palette: ['#112040', '#1c67a0', '#6db6b3', '#fffccc', '#abac21', '#177228', '#172313']}),
         normalize({type: 'continuous', bands: ['ui'], min: [-10000], max: [0], palette: ['#0034F5', '#1E7D83', '#4DA910', '#B3C120', '#FCC228', '#FF8410', '#FD3000']}),
         normalize({type: 'continuous', bands: ['ndbi'], min: [-6000], max: [2000], palette: ['#0034F5', '#1E7D83', '#4DA910', '#B3C120', '#FCC228', '#FF8410', '#FD3000']}),
         normalize({type: 'continuous', bands: ['ibi'], min: [-32800], max: [32800], palette: ['#FD3000', '#FF8410', '#FCC228', '#B3C120', '#4DA910', '#1E7D83', '#0034F5']}),

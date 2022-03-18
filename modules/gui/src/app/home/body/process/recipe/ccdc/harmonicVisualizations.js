@@ -21,6 +21,7 @@ const bandDefs = {
     evi2: {amplitude: [0, 10000], rmse: [0, 6500]},
     savi: {amplitude: [0, 10000], rmse: [0, 4000]},
     nbr: {amplitude: [0, 5000], rmse: [0, 2000]},
+    mvi: {amplitude: [0, 10000], rmse: [0, 4000]},
     ui: {amplitude: [0, 5000], rmse: [0, 2000]},
     ndbi: {amplitude: [0, 5000], rmse: [0, 2000]},
     ibi: {amplitude: [0, 5000], rmse: [0, 2000]},
