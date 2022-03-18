@@ -84,8 +84,8 @@ const main = async () => {
 
     program.command('npm-update')
         .description('Update npm modules')
-        .option('-c, --check', 'Check packages to update')
-        .addOption(new Option('-t, --target <target>', 'Update target').choices(['patch', 'minor', 'latest']))
+        .option('-u, --upgrade', 'Upgrade')
+        .addOption(new Option('-t, --target <target>', 'Update target').choices(['patch', 'minor', 'latest']).default('latest'))
         .argument('[module...]', 'Modules to update')
         .action(npmUpdate)
 
