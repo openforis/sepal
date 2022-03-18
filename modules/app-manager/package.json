@@ -11,7 +11,7 @@
     "license": "ISC",
     "dependencies": {
         "app-manager": "./src",
-        "commander": "^9.0.0",
+        "commander": "^9.1.0",
         "lodash": "^4.17.21",
         "log4js": "^6.4.3",
         "mime-types": "^2.1.35",

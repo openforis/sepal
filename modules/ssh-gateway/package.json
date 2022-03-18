@@ -10,7 +10,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "commander": "^9.0.0",
+        "commander": "^9.1.0",
         "lodash": "^4.17.21",
         "moment": "^2.29.1",
         "rxjs": "^7.5.5",
