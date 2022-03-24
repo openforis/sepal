@@ -14,7 +14,7 @@ program
     .option('--sepal-password <value>')
     .option('--port <number>', 'Port', DEFAULT_PORT)
     .parse(process.argv)
-
+    
 const {geeEmail,
     geeKey,
     geeKeyPath,

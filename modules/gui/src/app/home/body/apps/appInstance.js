@@ -42,7 +42,6 @@ class AppInstance extends React.Component {
     renderIFrame() {
         const {app: {label, alt}, stream} = this.props
         const {appState, src} = this.state
-        console.log('renderIFrame', src)
         return stream('RUN_APP').completed
             ? (
                 <iframe

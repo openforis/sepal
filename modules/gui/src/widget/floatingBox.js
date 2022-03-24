@@ -146,29 +146,29 @@ class FloatingBox extends React.Component {
         
         if (contentWidth) {
             switch (alignment) {
-                case 'fit':
-                    return {
-                        left: elementLeft,
-                        right: viewportWidth - elementRight
-                    }
-                case 'center':
-                    return {
-                        left: elementCenter - contentWidth / 2,
-                        right: viewportWidth - elementCenter - contentWidth / 2
-                    }
-                case 'left':
-                    return {
-                        left: elementLeft,
-                        right: viewportWidth - elementLeft - contentWidth
-                    }
-                case 'right':
-                    return {
-                        left: elementRight - contentWidth,
-                        right: viewportWidth - elementRight
-                    }
+            case 'fit':
+                return {
+                    left: elementLeft,
+                    right: viewportWidth - elementRight
+                }
+            case 'center':
+                return {
+                    left: elementCenter - contentWidth / 2,
+                    right: viewportWidth - elementCenter - contentWidth / 2
+                }
+            case 'left':
+                return {
+                    left: elementLeft,
+                    right: viewportWidth - elementLeft - contentWidth
+                }
+            case 'right':
+                return {
+                    left: elementRight - contentWidth,
+                    right: viewportWidth - elementRight
                 }
             }
-            return {}
+        }
+        return {}
     }
 
     onResize(contentDimensions) {
