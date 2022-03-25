@@ -7,7 +7,8 @@
     /* HACK: hide mysterious blue border around the map (in Google Maps markup)
         <div style="pointer-events: none; width: 100%; height: 100%; box-sizing: border-box; position: absolute; z-index: 1000002; opacity: 0; border: 2px solid rgb(26, 115, 232);"></div>
     */
-    --attribution-mask-size: 2px;
+    /* It looks like the blue border is gone... */
+    --attribution-mask-size: 0px;
 
     --half-margin-size: 1px;
     --top: var(--y);
@@ -18,6 +19,7 @@
     --half-center-handle-size: 15px;
     --half-axis-handle-size: 1px;
     --handle-comfort-margin: -.25rem;
+    --half-area-marker-size: 2.5rem;
     --idle-color: #808080;
     --dragging-color: #c0c0c0;
     --color: var(--idle-color);
@@ -126,18 +128,76 @@
 
 .area.top {
     --area-bottom: calc(var(--bottom) - var(--clip-offset));
+    margin-bottom: calc(var(--half-axis-handle-size)); 
 }
 
 .area.bottom {
     --area-top: calc(var(--top) + var(--clip-offset));
+    margin-top: calc(var(--half-axis-handle-size) + 1px); 
 }
 
 .area.left {
     --area-right: calc(var(--right) - var(--clip-offset));
+    margin-right: calc(var(--half-axis-handle-size)); 
 }
 
 .area.right {
     --area-left: calc(var(--left) + var(--clip-offset));
+    margin-left: calc(var(--half-axis-handle-size) + 1px); 
+}
+
+/* active area indicator */
+
+.area:not(.center):hover::after {
+    content: '';
+    position: absolute;
+    width: calc(2 * var(--half-area-marker-size) + 1px);
+    height: calc(2 * var(--half-area-marker-size) + 1px);
+    background-color: rgba(255, 0, 0, .6);
+    border-color:  rgba(0, 0, 0, .6);
+    box-sizing: border-box;
+    border-radius: 100%;
+    pointer-events: none;
+}
+
+.area.top:not(.left):not(.right):hover::after {
+    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    left: calc(var(--left) - var(--half-area-marker-size));
+}
+
+.area.bottom:not(.left):not(.right):hover::after {
+    top: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    left: calc(var(--left) - var(--half-area-marker-size));
+}
+
+.area.left:not(.top):not(.bottom):hover::after {
+    top: calc(var(--top) - var(--half-area-marker-size));
+    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+}
+
+.area.right:not(.top):not(.bottom):hover::after {
+    top: calc(var(--top) - var(--half-area-marker-size));
+    left: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+}
+
+.area.top.left:hover::after {
+    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+}
+
+.area.top.right:hover::after {
+    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    left: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+}
+
+.area.bottom.left:hover::after {
+    top: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+}
+
+.area.bottom.right:hover::after {
+    top: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    left: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
 }
 
 /* areaOverlay */
@@ -204,7 +264,6 @@
     left: calc(var(--left) - var(--half-center-handle-size));
     width: calc(2 * var(--half-center-handle-size) + 1px);
     height: calc(2 * var(--half-center-handle-size) + 1px);
-    /* border: calc(2 * var(--half-axis-handle-size)) solid var(--color); */
     border-radius: var(--half-center-handle-size);
     cursor: move;
     z-index: 2;
