@@ -12,9 +12,6 @@ services:
       - "127.0.0.1:15672:15672"
     volumes:
       - "${SEPAL_DATA_DIR}/rabbitmq:/var/lib/rabbitmq"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

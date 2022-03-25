@@ -14,9 +14,6 @@ services:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
       BACKUP_CRON_EXP: '0 0 * * *'
       RESTORE_BACKUP: "${RESTORE_BACKUP}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

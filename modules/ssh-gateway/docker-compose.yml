@@ -21,9 +21,6 @@ services:
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
       LDAP_HOST: "${LDAP_HOST}"
       LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

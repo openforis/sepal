@@ -15,9 +15,6 @@ services:
       LETSENCRYPT_EMAIL: "${LETSENCRYPT_EMAIL}"
       AWS_ACCESS_KEY_ID: "${LETSENCRYPT_AWS_ACCESS_KEY_ID}"
       AWS_SECRET_ACCESS_KEY: "${LETSENCRYPT_AWS_SECRET_ACCESS_KEY}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

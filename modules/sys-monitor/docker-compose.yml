@@ -18,9 +18,6 @@ services:
       INITIAL_DELAY_MINUTES: "10"
       AUTO_REARM_DELAY_HOURS: "24"
       SEPAL_MONITORING_EMAIL: "${SEPAL_MONITORING_EMAIL}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

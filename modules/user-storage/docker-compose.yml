@@ -6,9 +6,6 @@ services:
     container_name: user-storage-redis
     volumes:
       - "${SEPAL_DATA_DIR}/user-storage-redis:/data"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 
@@ -31,9 +28,6 @@ services:
       CONCURRENCY: "5"
       MAX_RETRIES: "10"
       INITIAL_RETRY_DELAY_SECONDS: "30"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

@@ -16,9 +16,6 @@ services:
       AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
       S3_BACKUP_BUCKET: "${S3_BACKUP_BUCKET}"
       BACKUP_CRON_EXP: "0 2 * * *"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

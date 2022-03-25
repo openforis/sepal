@@ -6,9 +6,6 @@ services:
     container_name: gateway-redis
     volumes:
       - "${SEPAL_DATA_DIR}/gateway-redis:/data"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 
@@ -22,9 +19,6 @@ services:
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       SEPAL_HOST: "${SEPAL_HOST}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
     ulimits:

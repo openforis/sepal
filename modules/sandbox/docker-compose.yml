@@ -7,9 +7,6 @@ services:
       dockerfile: ./modules/sandbox/Dockerfile
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/sandbox:${SEPAL_VERSION:-latest}"
     container_name: sandbox
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

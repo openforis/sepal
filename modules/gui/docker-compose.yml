@@ -14,9 +14,6 @@ services:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       GOOGLE_ANALYTICS_ID: "${GOOGLE_ANALYTICS_ID}"
       GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 
