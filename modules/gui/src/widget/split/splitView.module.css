@@ -154,7 +154,7 @@
     width: calc(2 * var(--half-area-marker-size) + 1px);
     height: calc(2 * var(--half-area-marker-size) + 1px);
     background-color: rgba(255, 0, 0, .6);
-    border-color:  rgba(0, 0, 0, .6);
+    border: 1px solid rgba(0, 0, 0, .9);
     box-sizing: border-box;
     border-radius: 100%;
     pointer-events: none;
