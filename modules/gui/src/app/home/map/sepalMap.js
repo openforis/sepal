@@ -10,29 +10,43 @@ export class SepalMap {
         this.google = google
         this.googleMap = googleMap
 
-        const svgMarker = {
-            path: `
-                M 1 -3 L 0 -2 L -1 -3 H -1 V -15 H 1 V -3 Z 
-                M 3 -1 L 2 0 L 3 1 V 1 H 15 V -1 H 15 Z 
-                M 1 3 L 0 2 L -1 3 H -1 V 15 H 1 Z 
-                M -3 1 L -2 0 L -3 -1 V -1 H -15 V 1 Z 
-                M -15 -15 H -7 V -13 H -13 V -7 H -15 V -7 Z 
-                M 15 -15 H 7 V -13 H 13 V -7 H 15 V -12 Z 
-                M 15 15 V 7 H 13 V 13 H 7 V 15 H 7 Z 
-                M -15 15 H -7 V 13 H -13 V 7 H -15 V 7 Z
-            `,
-            fillColor: 'white',
-            fillOpacity: 1,
-            strokeColor: 'black',
-            strokeOpacity: 1
-        }
-
-        this.marker = new google.maps.Marker({
+        this.cursor = new google.maps.Marker({
             clickable: false,
             draggable: false,
-            icon: svgMarker
+            icon: {
+                path: `
+                    M 1 -3 L 0 -2 L -1 -3 H -1 V -15 H 1 V -3 Z 
+                    M 3 -1 L 2 0 L 3 1 V 1 H 15 V -1 H 15 Z 
+                    M 1 3 L 0 2 L -1 3 H -1 V 15 H 1 Z 
+                    M -3 1 L -2 0 L -3 -1 V -1 H -15 V 1 Z 
+                    M -15 -15 H -7 V -13 H -13 V -7 H -15 V -7 Z 
+                    M 15 -15 H 7 V -13 H 13 V -7 H 15 V -12 Z 
+                    M 15 15 V 7 H 13 V 13 H 7 V 15 H 7 Z 
+                    M -15 15 H -7 V 13 H -13 V 7 H -15 V 7 Z
+                `,
+                fillColor: 'white',
+                fillOpacity: 1,
+                strokeColor: 'black',
+                strokeOpacity: 1
+            }
         })
-        this.marker.setMap(googleMap)
+        this.cursor.setMap(googleMap)
+
+        this.crosshair = new google.maps.Marker({
+            icon: {
+                path: `
+                    M 0 0 L 100 0
+                    M 0 0 L 0 -100
+                    M 0 0 L -100 0
+                    M 0 0 L 0 100
+                `,
+                // fillColor: 'white',
+                // fillOpacity: 1,
+                strokeColor: 'white',
+                strokeOpacity: 1
+            }
+        })
+        this.crosshair.setMap(googleMap)
 
         this.overlay = new google.maps.OverlayView()
         this.overlay.draw = () => {}
@@ -88,7 +102,11 @@ export class SepalMap {
     // Cursor
 
     setCursor(latLng) {
-        this.marker.setPosition(latLng)
+        this.cursor.setPosition(latLng)
+    }
+
+    setcrosshair(latLng) {
+        this.crosshair.setPosition(latLng)
     }
 
     latLngToPixel(latLng) {
