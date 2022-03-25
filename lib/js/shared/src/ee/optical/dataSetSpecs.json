@@ -3,7 +3,7 @@
         "LANDSAT_4": {
             "reflectance": "TOA",
             "dataSetName": "LANDSAT_4",
-            "collectionName": "LANDSAT/LT04/C02/T1_TOA",
+            "collectionName": "LANDSAT/LT04/C01/T1_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
                 "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
@@ -32,14 +32,14 @@
                     "name": "B7"
                 },
                 "qa": {
-                    "name": "QA_PIXEL"
+                    "name": "BQA"
                 }
             }
         },
         "LANDSAT_4_T2": {
             "reflectance": "TOA",
             "dataSetName": "LANDSAT_4_T2",
-            "collectionName": "LANDSAT/LT04/C02/T2_TOA",
+            "collectionName": "LANDSAT/LT04/C01/T2_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {
                 "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
@@ -68,7 +68,7 @@
                     "name": "B7"
                 },
                 "qa": {
-                    "name": "QA_PIXEL"
+                    "name": "BQA"
                 }
             }
         },

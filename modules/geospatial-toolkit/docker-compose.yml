@@ -8,9 +8,6 @@ services:
       network: sepal
     image: "openforis/geospatial-toolkit:latest"
     container_name: geospatial-toolkit
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

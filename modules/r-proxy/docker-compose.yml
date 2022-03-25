@@ -6,9 +6,6 @@ services:
     container_name: r-proxy-redis
     volumes:
       - "${SEPAL_DATA_DIR}/r-proxy-redis:/data"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 
@@ -21,9 +18,6 @@ services:
     init: true
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
     ports:

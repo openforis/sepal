@@ -29,4 +29,4 @@ chown -R sepal: /data/workDir
 mkdir -p /data/home -m 770
 chown sepal: /data/home
 
-exec /usr/bin/supervisord -c /config/supervisord.conf
+exec gradle :sepal-server:runModule -DDEPLOY_ENVIRONMENT=${DEPLOY_ENVIRONMENT}

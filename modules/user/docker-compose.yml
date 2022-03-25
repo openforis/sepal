@@ -28,9 +28,6 @@ services:
       GOOGLE_OAUTH_CALLBACK_BASE_URL: "${GOOGLE_OAUTH_CALLBACK_BASE_URL}"
       GOOGLE_OAUTH_CLIENT_ID: "${GOOGLE_OAUTH_CLIENT_ID}"
       GOOGLE_OAUTH_CLIENT_SECRET: "${GOOGLE_OAUTH_CLIENT_SECRET}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
     healthcheck:

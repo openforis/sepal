@@ -17,9 +17,6 @@ services:
       LDAP_BACKUP_CONFIG_CRON_EXP: '0 0 * * *'
       LDAP_BACKUP_TTL: '365'
       RESTORE_BACKUP: "${RESTORE_BACKUP}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

@@ -6,9 +6,6 @@ services:
     container_name: email-redis
     volumes:
       - "${SEPAL_DATA_DIR}/email-redis:/data"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 
@@ -31,9 +28,6 @@ services:
       SMTP_USERNAME: "${SMTP_USERNAME}"
       SMTP_PASSWORD: "${SMTP_PASSWORD}"
       SMTP_FROM_DOMAIN: "${SMTP_FROM_DOMAIN}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

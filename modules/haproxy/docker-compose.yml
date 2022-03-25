@@ -14,9 +14,6 @@ services:
       - "${SEPAL_DATA_DIR}/letsencrypt:/etc/letsencrypt"
     environment:
       SEPAL_HOST: "${SEPAL_HOST}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
     ulimits:

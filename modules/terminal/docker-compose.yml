@@ -13,9 +13,6 @@ services:
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       SSH_GATEWAY_HOST: 'ssh-gateway'
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

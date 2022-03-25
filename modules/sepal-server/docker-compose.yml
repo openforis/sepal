@@ -29,9 +29,6 @@ services:
       GOOGLE_REGION: "${GOOGLE_REGION}"
       GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY}"
       NICFI_PLANET_API_KEY: "${NICFI_PLANET_API_KEY}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

@@ -15,9 +15,6 @@ services:
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
       EE_ACCOUNT: "${EE_ACCOUNT}"
       EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

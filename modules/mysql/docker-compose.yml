@@ -14,9 +14,6 @@ services:
     environment:
       MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
     healthcheck:

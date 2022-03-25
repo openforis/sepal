@@ -16,9 +16,6 @@ services:
       - "${SEPAL_DATA_DIR}/app-manager/images:/var/sepal/app-manager/images"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 

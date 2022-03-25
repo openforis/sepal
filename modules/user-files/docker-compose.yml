@@ -15,9 +15,6 @@ services:
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
       POLL_INTERVAL_MS: "6000"
-    deploy:
-      restart_policy:
-        condition: on-failure
     networks:
       - sepal
 
