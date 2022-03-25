@@ -88,6 +88,10 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 case "$COMMAND" in
+    "")
+        start
+        RETVAL=$?
+        ;;
     start)
         start
         RETVAL=$?

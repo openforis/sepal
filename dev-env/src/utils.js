@@ -176,7 +176,7 @@ const getExtendedStatus = async modules =>
             })
     )
 
-const getStatus = async (modules, extended) => {
+export const getStatus = async (modules, extended) => {
     const status = extended
         ? await getExtendedStatus(modules)
         : await getBaseStatus(modules)
@@ -240,25 +240,6 @@ export const isServiceRunning = async (module, serviceName) => {
     }
     return false
 }
-
-export const waitModuleRunning = async module =>
-    new Promise((resolve, reject) => {
-        const wait = async () => {
-            const result = await getStatus([module], true)
-            const services = _(result).get(['0', 'services'])
-            await showStatus([module], {extended: true})
-            if (services) {
-                if (_.some(services, ({state, health}) => state === 'RUNNING' && health === 'UNHEALTHY')) {
-                    return reject(`Cannot start module ${module}`)
-                }
-                if (_.every(services, ({state, health}) => state === 'RUNNING' && (health === '' || health === 'HEALTHY'))) {
-                    return resolve()
-                }
-            }
-            setTimeout(wait, 1000)
-        }
-        wait()
-    })
 
 export const isNodeModule = async absolutePath => {
     try {

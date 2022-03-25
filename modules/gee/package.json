@@ -10,7 +10,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "commander": "^9.0.0",
+        "commander": "^9.1.0",
         "gee": "./src",
         "lodash": "^4.17.21",
         "log4js": "^6.4.3",
