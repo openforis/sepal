@@ -17,4 +17,4 @@ modules/**/target
 !modules/**/build.gradle
 
 .DS_Store
-.node-xmlhttprequest-sync
+.node-xmlhttprequest-*
