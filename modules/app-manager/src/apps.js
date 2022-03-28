@@ -66,33 +66,34 @@ const updateKernel$ = ({name, path, label}) => {
     const venvPath = join(kernelPath, 'venv')
     const requirementsPath = join(path, 'requirements.txt')
     return exists$({path: kernelPath}).pipe(
-        switchMap(kernelExists => kernelExists ? of(true) : createKernel$({path: kernelPath, label})),
-        switchMap(() => meedVenvUpdate$({venvPath, requirementsPath})),
-        switchMap(() => remove$({path: venvPath})),
+        switchMap(pathExists => pathExists ? of(true) : createKernelDir$({path: kernelPath})),
+        switchMap(() => exists$({path: venvPath})),
+        switchMap(hasVenv => hasVenv ? needVenvUpdate$({path: venvPath}) : of(true)),
         switchMap(() => createVenv$({path: venvPath})),
-        switchMap(() => installRequirements$({venvPath, requirementsPath}))
+        switchMap(() => installRequirements$({venvPath, requirementsPath})),
+        switchMap(() => createKernel$({path: kernelPath, label, name}))
     )
 }
 
-const createKernel$ = ({path, label}) => {
-    const venvPath = join(path, 'venv')
-    const kernel = {
-        'argv': [join(venvPath, 'bin/python3'), '-m', 'ipykernel_launcher', '-f', '{connection_file}'],
-        'display_name': ` (venv) ${label}`,
-        'language': 'python'
-    }
 
+const createKernelDir$ = ({path}) => {
     return exec$(
         '/',
         'sudo',
         ['mkdir', '-p', path]
-    ).pipe(
-        switchMap(() => exec$(
-            '/',
-            'sudo',
-            ['chown', `${userInfo().username}:`, path]
-        )),
-        switchMap(() => from(writeFile(join(path, 'kernel.json'), JSON.stringify(kernel))))
+    )
+}
+
+const createKernel$ = ({path, label, name}) => {
+    const venvPath = join(path, 'venv')
+    const venvName = `venv-${name}`
+    const displayName = ` (venv) ${label}`
+    const python3 = join(venvPath, 'bin/python3')
+
+    return exec$(
+        '/',
+        'sudo',
+        [python3, '-m', 'ipykernel', 'install', '--name', venvName, '--display-name', displayName]
     )
 }
 
@@ -111,11 +112,17 @@ const createVenv$ = ({path}) =>
             '/',
             'sudo',
             [join(path, 'bin/python3'), '-m', 'pip', 'install', '--cache-dir', '/root/.cache/pip', '--upgrade', 'pip']
+        )),
+        switchMap(() => exec$(
+            '/',
+            'sudo',
+            [join(path, 'bin/python3'), '-m', 'pip', 'install', '--cache-dir', '/root/.cache/pip', '--upgrade', 'ipykernel']
         ))
     )
 
-const meedVenvUpdate$ = ({venvPath, requirementsPath}) => {
-    // If $venvPath/.installed exists, compare modified timestamp. If requirements are newer, install, otherwise, do nothing
+const needVenvUpdate$ = ({venvPath, requirementsPath}) => {
+    // If $venvPath/.installed exists, compare modified timestamp. 
+    // If requirements are newer, remove all files and install, otherwise, do nothing
     return zip(
         lastModifiedDate$(requirementsPath),
         lastModifiedDate$(join(venvPath, '..', '.installed'))
@@ -123,7 +130,11 @@ const meedVenvUpdate$ = ({venvPath, requirementsPath}) => {
         switchMap(([requirementsTime, installTime]) => {
             if (installTime < requirementsTime) {
                 log.info(`${requirementsPath} modified since last installation. ${installTime} >= ${requirementsTime}`)
-                return of(true)
+                return exec$(
+                    path,
+                    'sudo',
+                    ['rm', '-rf', venvPath]
+                )
             } else {
                 log.info(`${requirementsPath} not modified since last installation. ${installTime} < ${requirementsTime}`)
                 return EMPTY
@@ -138,15 +149,6 @@ const installRequirements$ = ({venvPath, requirementsPath}) => {
         '/',
         'sudo',
         ['install-requirements', venvPath, requirementsPath]
-    )
-}
-
-const remove$ = ({path}) => {
-    log.info('Removing', {path})
-    return exec$(
-        path,
-        'sudo',
-        ['rm', '-rf', path]
     )
 }
 
