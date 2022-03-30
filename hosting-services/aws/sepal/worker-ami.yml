@@ -66,7 +66,7 @@
     - name: Mount /data/sepal/shiny from FSx
       lineinfile:
         path: '/etc/fstab'
-        line: "{{ lookup('env', 'AWS_ESX_ID') }}/data/sepal/shiny /data/sepal/shiny fsx lustre noatime,flock 0 0"
+        line: "{{ lookup('env', 'AWS_ESX_ID') }}/data/sepal/shiny /data/sepal/shiny lustre noatime,flock 0 0"
 
     # - name: Mount FSX to /data/sepal/shiny
     #   mount:
@@ -86,7 +86,7 @@
     - name: Mount /data/sepal/shared from FSx
       lineinfile:
         path: '/etc/fstab'
-        line: "{{ lookup('env', 'AWS_ESX_ID') }}/data/sepal/shared /data/sepal/shared fsx lustre noatime,flock 0 0"
+        line: "{{ lookup('env', 'AWS_ESX_ID') }}/data/sepal/shared /data/sepal/shared lustre noatime,flock 0 0"
 
     # - name: Mount FSX to /data/sepal/shared
     #   mount:
@@ -106,7 +106,7 @@
     - name: Mount /data/sepal/jupyter from FSx
       lineinfile:
         path: '/etc/fstab'
-        line: "{{ lookup('env', 'AWS_ESX_ID') }}/data/sepal/jupyter /data/sepal/jupyter fsx lustre noatime,flock 0 0"
+        line: "{{ lookup('env', 'AWS_ESX_ID') }}/data/sepal/jupyter /data/sepal/jupyter lustre noatime,flock 0 0"
 
     # - name: Mount FSX to /data/sepal/jupyter
     #   mount:
