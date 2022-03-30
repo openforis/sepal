@@ -14,9 +14,6 @@
         path: "/efs"
         state: "directory"
 
-    - name: Install Lustre
-      command: amazon-linux-extras install lustre2.10 -y
-
     - name: Temporarily Mount EFS Nfs4 For Setting Up Folders
       mount:
         name: "/efs"
@@ -47,7 +44,6 @@
           path: "/efs"
           state: "absent"
 
-
     - name: Install Lustre
       command: amazon-linux-extras install lustre2.10 -y
 
@@ -59,7 +55,7 @@
     - name: Temporarily Mount EFS Nfs4 For Setting Up Folders
       mount:
         name: "/fsx"
-        fstype: "fsx"
+        fstype: "lustre"
         state: "mounted"
         src: "{{ lookup('env', 'AWS_FSX_ID') }}:/"
         opts: "noatime,flock"
@@ -109,6 +105,6 @@
     - name: Unmount FSx
       mount:
           name: "/fsx"
-          fstype: "fsx"
+          fstype: "lustre"
           state: "unmounted"
           src: "{{ lookup('env', 'AWS_FSX_ID') }}:/"
