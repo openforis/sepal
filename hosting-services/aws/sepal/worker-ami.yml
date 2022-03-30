@@ -48,16 +48,6 @@
         path: '/etc/fstab'
         line: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/home /data/sepal/home efs defaults,_netdev 0 0"
 
-    # - name: Mount EFS to /data/sepal/home
-    #   mount:
-    #     name: "/data/sepal/home"
-    #     fstype: "efs"
-    #     state: "mounted"
-    #     src: "{{ lookup('env', 'AWS_EFS_ID') }}/data/sepal/home"
-    #     opts: "defaults,_netdev"
-    #     dump: 0
-    #     passno: 0
-
     - name: Create /data/sepal/shiny
       file:
         path: "/data/sepal/shiny"
@@ -67,16 +57,6 @@
       lineinfile:
         path: '/etc/fstab'
         line: "{{ lookup('env', 'AWS_ESX_ID') }}/data/sepal/shiny /data/sepal/shiny lustre noatime,flock 0 0"
-
-    # - name: Mount FSX to /data/sepal/shiny
-    #   mount:
-    #     name: "/data/sepal/shiny"
-    #     fstype: "lustre"
-    #     state: "mounted"
-    #     src: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/shiny"
-    #     opts: "noatime,flock"
-    #     dump: 0
-    #     passno: 0
 
     - name: Create /data/sepal/shared
       file:
@@ -88,16 +68,6 @@
         path: '/etc/fstab'
         line: "{{ lookup('env', 'AWS_ESX_ID') }}/data/sepal/shared /data/sepal/shared lustre noatime,flock 0 0"
 
-    # - name: Mount FSX to /data/sepal/shared
-    #   mount:
-    #     name: "/data/sepal/shared"
-    #     fstype: "lustre"
-    #     state: "mounted"
-    #     src: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/shared"
-    #     opts: "noatime,flock"
-    #     dump: 0
-    #     passno: 0
-
     - name: Create /data/sepal/jupyter
       file:
         path: "/data/sepal/jupyter"
@@ -107,16 +77,6 @@
       lineinfile:
         path: '/etc/fstab'
         line: "{{ lookup('env', 'AWS_ESX_ID') }}/data/sepal/jupyter /data/sepal/jupyter lustre noatime,flock 0 0"
-
-    # - name: Mount FSX to /data/sepal/jupyter
-    #   mount:
-    #     name: "/data/sepal/jupyter"
-    #     fstype: "lustre"
-    #     state: "mounted"
-    #     src: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/jupyter"
-    #     opts: "noatime,flock"
-    #     dump: 0
-    #     passno: 0
 
     # GPU setup
     - name: Copy GPU drivers init script
