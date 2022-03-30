@@ -52,12 +52,12 @@
         path: "/fsx"
         state: "directory"
 
-    - name: Temporarily Mount EFS Nfs4 For Setting Up Folders
+    - name: Temporarily Mount FSx For Setting Up Folders
       mount:
         name: "/fsx"
         fstype: "lustre"
         state: "mounted"
-        src: "{{ lookup('env', 'AWS_FSX_ID') }}:/"
+        src: "{{ lookup('env', 'AWS_FSX_ID') }}"
         opts: "noatime,flock"
         dump: 0
         passno: 0
