@@ -34,7 +34,7 @@ class CsvBackedUsgsGatewayTest extends Specification {
         def gateway = new CsvBackedUsgsGateway(workingDir, [(LANDSAT_OT.name()): [new FakeCsvReader((sceneId): new Date())]], [:])
 
         when:
-        def updates = iterate(gate∫way, [:])
+        def updates = iterate(gateway, [:])
 
         then:
         updates.size() == 1
