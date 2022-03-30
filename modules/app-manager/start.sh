@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
-sudo cp -rn /etc/sepal/app-manager/kernels-templates/* /usr/local/share/jupyter/kernels/
+sudo mkdir -p /usr/local/share/jupyter/current-kernels
+sudo mkdir -p /usr/local/share/jupyter/kernels
+sudo mkdir -p /usr/local/share/jupyter/log
 
-source /home/node/.nvm/nvm.sh
+sudo cp -rn /etc/sepal/app-manager/kernels-templates/* /usr/local/share/jupyter/current-kernels
+
+source /home/node/.nvm/nvm.sh 
 
 if [[ "${DEPLOY_ENVIRONMENT}" == "DEV" ]]
 then

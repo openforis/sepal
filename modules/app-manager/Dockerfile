@@ -55,5 +55,6 @@ RUN bash -c "source /home/node/.nvm/nvm.sh && npm install"
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
+ADD modules/${MODULE_NAME}/update-app.sh /usr/local/bin
 
 CMD start.sh

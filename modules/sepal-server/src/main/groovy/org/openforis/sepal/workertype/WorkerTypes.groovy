@@ -68,7 +68,7 @@ final class WorkerTypes {
                             volumes: [
                                     ("${config.sepalHostDataDir}/sepal/shiny"): '/shiny',
                                     ("${config.sepalHostDataDir}/sepal/shared"): "/home/${username}/shared",
-                                    ("${config.sepalHostDataDir}/sepal/kernels"): "/usr/local/share/jupyter/kernels/",
+                                    ("${config.sepalHostDataDir}/sepal/jupyter/current-kernels"): "/usr/local/share/jupyter/kernels/",
                                     (userHome): "/home/${username}",
                                     (userTmp): ["/tmp", "/home/${username}/tmp"],
                                     (ldapPem): "/etc/ldap/certificates/ldap-ca.crt.pem"

@@ -9,42 +9,32 @@
     dump: 0
     passno: 0
 
-- name: Mount EFS Sepal Shiny Dir
+- name: Mount /data/sepal/jupyter
   mount:
-    name: "/data/sepal/shiny"
-    fstype: "efs"
+    name: "/data/sepal/jupyter"
+    fstype: "fsx"
     state: "mounted"
-    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/shiny"
-    opts: "defaults,_netdev"
+    src: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/jupyter"
+    opts: "noatime,flock"
     dump: 0
     passno: 0
 
-- name: Mount EFS Sepal Shared Dir
+- name: Mount /data/sepal/shared
   mount:
     name: "/data/sepal/shared"
-    fstype: "efs"
+    fstype: "fsx"
     state: "mounted"
-    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/shared"
-    opts: "defaults,_netdev"
+    src: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/shared"
+    opts: "noatime,flock"
     dump: 0
     passno: 0
 
-- name: Mount EFS Sepal Kernels Dir
+- name: Mount /data/sepal/shiny
   mount:
-    name: "/data/sepal/kernels"
-    fstype: "efs"
+    name: "/data/sepal/shiny"
+    fstype: "fsx"
     state: "mounted"
-    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/kernels"
-    opts: "defaults,_netdev"
-    dump: 0
-    passno: 0
-
-- name: Mount EFS Sepal worker instance log Dir
-  mount:
-    name: "/var/log/worker-instance"
-    fstype: "efs"
-    state: "mounted"
-    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/worker-instance-log"
-    opts: "defaults,_netdev"
+    src: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/shiny"
+    opts: "noatime,flock"
     dump: 0
     passno: 0
