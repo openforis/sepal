@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:bionic
 
 EXPOSE 80
 
