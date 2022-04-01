@@ -6,6 +6,11 @@
   gather_facts: true
 
   tasks:
+    - name: Update packages
+      yum: 
+        name: '*'
+        state: latest
+  
     - name: Create /data/sepal
       file:
         path: "/data/sepal"
