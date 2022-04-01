@@ -3,7 +3,6 @@ apt-get update -y && apt-get install -y \
  curl \
  cron \
  wget \
- supervisor \
  python \
  python-dev \
  python-virtualenv \

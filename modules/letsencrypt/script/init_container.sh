@@ -13,8 +13,6 @@ then
   cat privkey.pem cert.pem > fullchain.pem
 fi
 
-sleep 30 # Make sure HAproxy had time to start
-
 ~/.acme.sh/acme.sh --register-account -m $LETSENCRYPT_EMAIL
 ~/.acme.sh/acme.sh --issue --dns dns_aws -d $SEPAL_HOST
 
@@ -23,4 +21,4 @@ sleep 30 # Make sure HAproxy had time to start
   --key-file       $KEY_DIR/privkey.pem  \
   --fullchain-file $KEY_DIR/fullchain.pem
 
-exec /usr/bin/supervisord -c /config/supervisord.conf
+exec cron -f
