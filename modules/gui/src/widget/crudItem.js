@@ -122,6 +122,9 @@ export class CrudItem extends React.Component {
         return onRemove
             ? (
                 <RemoveButton
+                    chromeless
+                    shape='circle'
+                    size='large'
                     message={removeMessage}
                     tooltip={removeTooltip}
                     tooltipPlacement={tooltipPlacement}

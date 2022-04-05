@@ -54,6 +54,8 @@ class _VisualizationSelector extends React.Component {
                     />,
                     <RemoveButton
                         key='remove'
+                        chromeless
+                        shape='circle'
                         size='small'
                         tooltip={msg('map.visualizationSelector.remove.tooltip')}
                         disabled={!selectedOption || editMode === 'clone'}

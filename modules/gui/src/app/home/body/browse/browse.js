@@ -308,6 +308,9 @@ class Browse extends React.Component {
                         disabled={!oneFileSelected}
                     />
                     <RemoveButton
+                        chromeless
+                        size='large'
+                        shape='circle'
                         tooltip={msg('browse.controls.remove.tooltip')}
                         tooltipPlacement='bottom'
                         onRemove={() => this.removeSelected()}

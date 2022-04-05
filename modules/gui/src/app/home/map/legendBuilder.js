@@ -85,6 +85,8 @@ export class LegendBuilder extends React.Component {
         const {locked} = this.props
         return (
             <RemoveButton
+                chromeless
+                shape='circle'
                 size='small'
                 disabled={locked}
                 tooltip={msg('map.legendBuilder.entry.remove.tooltip')}
