@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-sudo chmod +rx /sepalUsers
+sudo /usr/local/bin/fix_sepal_users_permissions
 
 if [[ "${DEPLOY_ENVIRONMENT}" == "DEV" ]]
 then
