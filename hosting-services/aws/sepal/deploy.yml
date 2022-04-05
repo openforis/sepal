@@ -177,6 +177,11 @@
         enabled: yes
         masked: no
 
+    - name: pip install docker
+      pip:
+        name: "docker"
+        executable: pip3
+
     - docker_network: name=sepal
 
     - file: path="/usr/local/lib/docker/cli-plugins" state=directory
@@ -216,8 +221,8 @@
         masked: no
 
   roles:
-    - { role: live-patching }
-    - { role: aws-mount-efs }
+    # - { role: live-patching }
+    # - { role: aws-mount-efs }
     - { role: docker-login }
 
     - { role: run-module, module: backup }

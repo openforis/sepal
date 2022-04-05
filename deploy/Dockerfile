@@ -13,7 +13,8 @@ RUN pip3 install \
   ansible \
   boto \
   boto3 \
-  pyyaml==5.4.1
+  pyyaml==5.4.1 \
+  requests
 
 RUN ansible-galaxy collection install community.aws
 RUN ansible-galaxy collection install amazon.aws

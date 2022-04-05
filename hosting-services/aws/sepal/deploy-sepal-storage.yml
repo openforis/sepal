@@ -108,6 +108,11 @@
         enabled: yes
         masked: no
 
+    - name: pip install docker
+      pip:
+        name: "docker"
+        executable: pip3
+
     # EFS
     - name: Install amazon-efs-utils
       yum:
