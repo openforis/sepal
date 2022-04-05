@@ -20,6 +20,7 @@ services:
       CEO_USER_ID: "${CEO_USER_ID}"
     networks:
       - sepal
+    restart: always
 
 networks:
   sepal:

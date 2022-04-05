@@ -15,6 +15,7 @@ services:
       SSH_GATEWAY_HOST: 'ssh-gateway'
     networks:
       - sepal
+    restart: always
 
 networks:
   sepal:

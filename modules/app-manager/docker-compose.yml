@@ -18,6 +18,7 @@ services:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
     networks:
       - sepal
+    restart: always
 
 networks:
   sepal:

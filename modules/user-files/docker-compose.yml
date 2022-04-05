@@ -17,6 +17,7 @@ services:
       POLL_INTERVAL_MS: "6000"
     networks:
       - sepal
+    restart: always
 
 networks:
   sepal:
