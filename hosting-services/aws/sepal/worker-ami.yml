@@ -152,6 +152,11 @@
         state: started
         enabled: yes
         masked: no
+        
+    - name: pip install docker
+      pip:
+        name: "docker"
+        executable: pip3
 
     - name: Login to docker registry
       command: "docker login -p '{{ lookup('env', 'DOCKER_REGISTRY_PASSWORD') }}' -u '{{ lookup('env', 'DOCKER_REGISTRY_USERNAME') }}' {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
