@@ -126,7 +126,10 @@ class ButtonPopup extends React.Component {
             <FloatingBox
                 ref={this.popupRef}
                 element={this.buttonRef.current}
-                className={styles.popup}
+                className={[
+                    styles.popup,
+                    styles[`placement-${placement}`]
+                ].join(' ')}
                 placement={placement}
                 alignment={alignment}
                 onBlur={this.handleBlur}>
@@ -176,7 +179,7 @@ ButtonPopup.propTypes = {
     icon: PropTypes.string,
     label: PropTypes.any,
     look: PropTypes.string,
-    placement: PropTypes.oneOf(['above', 'below']),
+    placement: PropTypes.oneOf(['above', 'below', 'over']),
     shape: PropTypes.oneOf(['rectangle', 'pill']),
     stayOpenOnBlur: PropTypes.any,
     tooltip: PropTypes.string,
