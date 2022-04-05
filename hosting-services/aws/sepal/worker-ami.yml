@@ -6,6 +6,11 @@
   gather_facts: true
 
   tasks:
+    - name: Update packages
+      yum: 
+        name: '*'
+        state: latest
+  
     - name: Create /data/sepal
       file:
         path: "/data/sepal"
@@ -35,65 +40,48 @@
       yum:
         name: 'amazon-efs-utils'
 
+    - name: Install Lustre
+      command: amazon-linux-extras install lustre2.10 -y
+
     - name: Create /data/sepal/home
       file:
         path: "/data/sepal/home"
         state: directory
 
-    - name: Mount EFS to /data/sepal/home
-      mount:
-        name: "/data/sepal/home"
-        fstype: "efs"
-        state: "mounted"
-        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/home"
-        opts: "defaults,_netdev"
-        dump: 0
-        passno: 0
+    - name: Mount /data/sepal/home from EFS
+      lineinfile:
+        path: '/etc/fstab'
+        line: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/home /data/sepal/home efs defaults,_netdev 0 0"
 
     - name: Create /data/sepal/shiny
       file:
         path: "/data/sepal/shiny"
         state: directory
 
-    - name: Mount EFS to /data/sepal/shiny
-      mount:
-        name: "/data/sepal/shiny"
-        fstype: "efs"
-        state: "mounted"
-        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/shiny"
-        opts: "defaults,_netdev"
-        dump: 0
-        passno: 0
+    - name: Mount /data/sepal/shiny from FSx
+      lineinfile:
+        path: '/etc/fstab'
+        line: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/shiny /data/sepal/shiny lustre noatime,flock 0 0"
 
     - name: Create /data/sepal/shared
       file:
         path: "/data/sepal/shared"
         state: directory
 
-    - name: Mount EFS to /data/sepal/shared
-      mount:
-        name: "/data/sepal/shared"
-        fstype: "efs"
-        state: "mounted"
-        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/shared"
-        opts: "defaults,_netdev"
-        dump: 0
-        passno: 0
+    - name: Mount /data/sepal/shared from FSx
+      lineinfile:
+        path: '/etc/fstab'
+        line: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/shared /data/sepal/shared lustre noatime,flock 0 0"
 
-    - name: Create /data/sepal/kernels
+    - name: Create /data/sepal/jupyter
       file:
-        path: "/data/sepal/kernels"
+        path: "/data/sepal/jupyter"
         state: directory
 
-    - name: Mount EFS to /data/sepal/kernels
-      mount:
-        name: "/data/sepal/kernels"
-        fstype: "efs"
-        state: "mounted"
-        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/kernels"
-        opts: "defaults,_netdev"
-        dump: 0
-        passno: 0
+    - name: Mount /data/sepal/jupyter from FSx
+      lineinfile:
+        path: '/etc/fstab'
+        line: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/jupyter /data/sepal/jupyter lustre noatime,flock 0 0"
 
     # GPU setup
     - name: Copy GPU drivers init script
