@@ -110,6 +110,22 @@ class FloatingBox extends React.Component {
                     placement
                 }
             }
+            if (placement === 'over-above') {
+                return {
+                    top: elementBottom - contentHeight,
+                    bottom: viewportHeight - elementBottom,
+                    height: elementBottom,
+                    placement
+                }
+            }
+            if (placement === 'over-below') {
+                return {
+                    top: elementTop,
+                    bottom: viewportHeight - elementTop - contentHeight,
+                    height: viewportHeight - elementTop,
+                    placement
+                }
+            }
         }
         return {}
     }
@@ -240,7 +256,7 @@ FloatingBox.propTypes = {
     element: PropTypes.object,
     elementBlur: PropTypes.any,
     horizontalOverflow: PropTypes.any,
-    placement: PropTypes.oneOf(['above', 'below', 'above-below', 'below-above']),
+    placement: PropTypes.oneOf(['above', 'below', 'above-below', 'below-above', 'over-above', 'over-below']),
     onBlur: PropTypes.func
 }
 
