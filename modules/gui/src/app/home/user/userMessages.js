@@ -292,7 +292,7 @@ class _UserMessagesButton extends React.Component {
                             size='large'
                             air='less'
                             icon='bell'
-                            iconAttributes={{fade: unreadUserMessages}}
+                            iconAttributes={{fade: unreadUserMessages > 0}}
                             disabled={active}
                             onClick={() => activate()}
                             tooltip={msg('home.sections.user.messages')}
