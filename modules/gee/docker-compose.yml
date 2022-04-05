@@ -16,6 +16,7 @@ services:
       EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
     networks:
       - sepal
+    restart: always
 
 networks:
   sepal:

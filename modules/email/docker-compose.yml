@@ -8,6 +8,7 @@ services:
       - "${SEPAL_DATA_DIR}/email-redis:/data"
     networks:
       - sepal
+    restart: always
 
   email:
     build:
@@ -30,6 +31,7 @@ services:
       SMTP_FROM_DOMAIN: "${SMTP_FROM_DOMAIN}"
     networks:
       - sepal
+    restart: always
 
 networks:
   sepal:

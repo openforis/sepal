@@ -8,6 +8,7 @@ services:
       - "${SEPAL_DATA_DIR}/user-storage-redis:/data"
     networks:
       - sepal
+    restart: always
 
   user-storage:
     build:
@@ -30,6 +31,7 @@ services:
       INITIAL_RETRY_DELAY_SECONDS: "30"
     networks:
       - sepal
+    restart: always
 
 networks:
   sepal:

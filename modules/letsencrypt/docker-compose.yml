@@ -17,6 +17,7 @@ services:
       AWS_SECRET_ACCESS_KEY: "${LETSENCRYPT_AWS_SECRET_ACCESS_KEY}"
     networks:
       - sepal
+    restart: always
 
 networks:
   sepal:

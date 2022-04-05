@@ -16,6 +16,7 @@ services:
       RESTORE_BACKUP: "${RESTORE_BACKUP}"
     networks:
       - sepal
+    restart: always
 
 networks:
   sepal:

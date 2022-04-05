@@ -21,10 +21,11 @@ services:
       timeout: 60s
       interval: 1s
       retries: 60
+    restart: always
+
   mysql-admin:
     image: phpmyadmin/phpmyadmin:latest
     container_name: mysql-admin
-    restart: always
     environment:
       PMA_HOST: mysql
     ports:
@@ -33,6 +34,8 @@ services:
       - sepal
     depends_on:
       - mysql
+    restart: always
+
 networks:
   sepal:
     external: true

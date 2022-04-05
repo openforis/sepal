@@ -18,6 +18,7 @@ services:
       BACKUP_CRON_EXP: "0 2 * * *"
     networks:
       - sepal
+    restart: always
 
 networks:
   sepal:

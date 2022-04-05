@@ -20,6 +20,7 @@ services:
       SEPAL_MONITORING_EMAIL: "${SEPAL_MONITORING_EMAIL}"
     networks:
       - sepal
+    restart: always
 
 networks:
   sepal:

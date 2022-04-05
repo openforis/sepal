@@ -16,6 +16,7 @@ services:
       GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY}"
     networks:
       - sepal
+    restart: always
 
 networks:
   sepal:

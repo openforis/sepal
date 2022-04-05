@@ -35,6 +35,7 @@ services:
       timeout: 60s
       interval: 1s
       retries: 60
+    restart: always
 
 networks:
   sepal:
