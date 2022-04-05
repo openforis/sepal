@@ -151,10 +151,13 @@ class ButtonPopup extends React.Component {
     }
 
     handleBlur(e) {
-        const isButtonClick = e => this.buttonRef.current && this.buttonRef.current.contains(e.target)
-        const isPopupClick = e => this.popupRef.current && this.popupRef.current && this.popupRef.current.contains(e.target)
-        if (!isButtonClick(e) && !isPopupClick(e)) {
-            this.hidePopup()
+        const {stayOpenOnBlur} = this.props
+        if (!stayOpenOnBlur) {
+            const isButtonClick = e => this.buttonRef.current && this.buttonRef.current.contains(e.target)
+            const isPopupClick = e => this.popupRef.current && this.popupRef.current && this.popupRef.current.contains(e.target)
+            if (!isButtonClick(e) && !isPopupClick(e)) {
+                this.hidePopup()
+            }
         }
     }
 }
@@ -175,6 +178,7 @@ ButtonPopup.propTypes = {
     look: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
     shape: PropTypes.oneOf(['rectangle', 'pill']),
+    stayOpenOnBlur: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     width: PropTypes.string,
