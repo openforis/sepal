@@ -88,7 +88,9 @@
     },
     "sepal-server": {
         "build": {
-            "java": "build"
+            "java": "build",
+            "sandbox": "build",
+            "task": "build"
         },
         "run": ["mysql", "user"]
     },
@@ -103,7 +105,7 @@
         ]
     },
     "task": {
-        "build": {},
+        "build": {"sandbox-base": "build"},
         "run": false
     },
     "terminal": {
