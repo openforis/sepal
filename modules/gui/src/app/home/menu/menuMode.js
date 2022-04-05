@@ -29,7 +29,9 @@ class MenuMode extends React.Component {
                 size='small'
                 additionalClassName={className}
                 icon={floating ? 'lock-open' : 'lock'}
-                iconFlipHorizontal={floating}
+                iconAttributes={{
+                    flip: 'horizontal'
+                }}
                 onClick={() => this.toggle(floating)}
                 tooltip={msg(floating ? 'home.sections.expand' : 'home.sections.collapse')}
                 tooltipPlacement='right'/>

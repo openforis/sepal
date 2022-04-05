@@ -86,7 +86,7 @@ class ChartPixel extends React.Component {
     renderSpinner() {
         return (
             <div className={styles.spinner}>
-                <Icon name={'spinner'} size={'2x'}/>
+                <Icon name='spinner' size='2x'/>
             </div>
         )
     }

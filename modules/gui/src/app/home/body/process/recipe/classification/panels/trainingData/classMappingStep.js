@@ -120,7 +120,7 @@ class ClassMappingStep extends Component {
         return (
             <div className={styles.count}>
                 {active
-                    ? <Icon name={'spinner'}/>
+                    ? <Icon name='spinner'/>
                     : referenceData.value ?
                         (referenceData.value.counts[legendValue] || 0)
                         : null

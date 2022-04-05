@@ -194,7 +194,9 @@ class _Input extends React.Component {
                     shape='none'
                     air='none'
                     icon='times'
-                    iconFixedWidth
+                    iconAttributes={{
+                        fixedWidth: true
+                    }}
                     onClick={this.onClear}
                     // [TODO] change signature from event to value
                 />

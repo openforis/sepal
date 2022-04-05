@@ -411,7 +411,7 @@ class Browse extends React.Component {
     renderSpinner() {
         return (
             <span className={styles.icon}>
-                <Icon name={'spinner'}/>
+                <Icon name='spinner'/>
             </span>
         )
     }

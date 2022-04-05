@@ -204,22 +204,17 @@ class _Button extends React.Component {
     }
 
     renderIcon() {
-        const {busy, icon, iconType, iconVariant, iconSpin, iconFlipHorizontal, iconFlipVertical, iconFixedWidth} = this.props
-        return busy
-            ? <Icon
-                name='spinner'
-                variant={iconVariant}
-                spin
-            />
-            : <Icon
-                name={icon}
+        const {busy, icon, iconType, iconVariant, iconDimmed, iconClassName, iconAttributes} = this.props
+        return (
+            <Icon
+                name={busy ? 'spinner' : icon}
                 type={iconType}
                 variant={iconVariant}
-                spin={iconSpin}
-                fixedWidth={iconFixedWidth}
-                flipHorizontal={iconFlipHorizontal}
-                flipVertical={iconFlipVertical}
+                dimmed={iconDimmed}
+                className={iconClassName}
+                attributes={iconAttributes}
             />
+        )
     }
 
     renderLabel() {
@@ -347,11 +342,10 @@ Button.propTypes = {
     downloadUrl: PropTypes.any,
     hover: PropTypes.any,
     icon: PropTypes.string,
-    iconFixedWidth: PropTypes.any,
-    iconFlipHorizontal: PropTypes.any,
-    iconFlipVertical: PropTypes.any,
+    iconAttributes: PropTypes.any,
+    iconClassName: PropTypes.any,
+    iconDimmed: PropTypes.any,
     iconPlacement: PropTypes.oneOf(['left', 'right']),
-    iconSpin: PropTypes.any,
     iconType: PropTypes.string,
     iconVariant: PropTypes.string,
     joinLeft: PropTypes.any,

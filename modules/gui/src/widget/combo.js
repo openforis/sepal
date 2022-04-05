@@ -147,7 +147,9 @@ class _Combo extends React.Component {
                     shape='none'
                     air='none'
                     icon='times'
-                    iconFixedWidth
+                    iconAttributes={{
+                        fixedWidth: true
+                    }}
                     tabIndex={-1}
                     onClick={() => this.select$.next()}
                 />
@@ -169,8 +171,10 @@ class _Combo extends React.Component {
                 shape='none'
                 air='none'
                 icon={icon[placement]}
-                iconFlipVertical={showOptions}
-                iconFixedWidth
+                iconAttributes={{
+                    fixedWidth: true,
+                    flip: showOptions ? 'vertical' : null
+                }}
                 tabIndex={-1}
                 disabled={!this.isActive()}
                 onClick={() => showOptions

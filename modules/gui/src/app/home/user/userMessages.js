@@ -160,14 +160,15 @@ class _UserMessages extends React.Component {
 
     renderStatusButton(userMessage) {
         const {state} = userMessage
+        const unread = state === 'UNREAD'
         return (
             <Button
                 key='status'
                 chromeless
                 shape='circle'
                 size='large'
-                icon={state === 'UNREAD' ? 'bell' : 'check'}
-                additionalClassName={[styles.subject, styles[state]].join(' ')}
+                icon={unread ? 'bell' : 'check'}
+                iconAttributes={{fade: unread}}
                 onClick={() => this.toggleReadState(userMessage)}
                 tooltip={msg(`userMessages.state.${state}`)}
                 tooltipPlacement='top'
@@ -279,7 +280,7 @@ class _UserMessagesButton extends React.Component {
     }
 
     render() {
-        const {className, unreadUserMessages} = this.props
+        const {unreadUserMessages} = this.props
         return (
             <React.Fragment>
                 <UserMessages/>
@@ -290,8 +291,8 @@ class _UserMessagesButton extends React.Component {
                             look='transparent'
                             size='large'
                             air='less'
-                            additionalClassName={[className, unreadUserMessages ? styles.unread : null].join(' ')}
                             icon='bell'
+                            iconAttributes={{fade: unreadUserMessages}}
                             disabled={active}
                             onClick={() => activate()}
                             tooltip={msg('home.sections.user.messages')}

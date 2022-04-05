@@ -152,7 +152,7 @@ class CollectPanel extends React.Component {
     renderLoadingNextPoint() {
         return (
             <div className={styles.loadingNextPoint}>
-                <Icon name={'spinner'} size='2x'/>
+                <Icon name='spinner' size='2x'/>
             </div>
         )
     }
