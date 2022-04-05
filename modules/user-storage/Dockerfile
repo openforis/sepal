@@ -8,7 +8,7 @@ ENV SHARED /usr/local/src/sepal/lib/js/shared
 RUN wget -q https://github.com/sharkdp/diskus/releases/download/v0.6.0/diskus_0.6.0_amd64.deb
 RUN dpkg -i diskus_0.6.0_amd64.deb && rm diskus_0.6.0_amd64.deb
 
-RUN printf '#!/bin/bash \n\\n\
+RUN printf '#!/bin/bash \n\
 chmod +rx /sepalUsers \n\
 ' > /usr/local/bin/fix_sepal_users_permissions
 
