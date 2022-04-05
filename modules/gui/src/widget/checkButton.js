@@ -10,7 +10,7 @@ export class CheckButton extends React.Component {
     }
 
     render() {
-        const {chromeless, size, shape, tooltip, tooltipPlacement, disabled, checked, onToggle} = this.props
+        const {chromeless, size, shape, tooltip, tooltipPlacement, disabled, checked} = this.props
         return (
             <Button
                 chromeless={chromeless}
