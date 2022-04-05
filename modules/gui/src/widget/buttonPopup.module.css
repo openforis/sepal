@@ -1,0 +1,31 @@
+.container {
+    position: relative;
+}
+
+.container input.fakePlaceholder::placeholder {
+    font-style: inherit;
+    color: #fff;
+}
+
+.popup {
+    background-color: var(--panel-default-background-color);
+    border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
+    padding: .5rem;
+    margin: .5rem 0;
+    border-radius: .5rem;
+}
+
+.content {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+.fill {
+    justify-content: space-between;
+    flex-grow: 1;
+}
+
+.content > *:not(:first-child) {
+    margin-left: .5rem;
+}
