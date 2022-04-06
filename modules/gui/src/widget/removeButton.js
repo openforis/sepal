@@ -23,9 +23,9 @@ export default class RemoveButton extends React.Component {
                 tooltipPlacement={tooltipPlacement}
                 disabled={disabled}
                 skipConfirmation={unsafe}
-                onConfirm={onRemove}
                 title={title}
                 message={message}
+                onConfirm={onRemove}
             />
         )
     }
