@@ -75,7 +75,7 @@ export default class Label extends React.Component {
                 tooltipPlacement='left'
                 tooltipDelay={0}
                 attributes={{
-                    pulse: true
+                    fade: true
                 }}
             />
         )
