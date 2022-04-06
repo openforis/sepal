@@ -11,7 +11,11 @@ html {
 
     /* overlay */
 
-    --look-overlay-a: .5;
+    /* --look-overlay-a: .5; */
+
+    /* disabled */
+
+    --look-disabled-opacity: .5;
 
     /* default */
 
