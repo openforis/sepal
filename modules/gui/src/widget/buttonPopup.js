@@ -179,7 +179,7 @@ ButtonPopup.propTypes = {
     icon: PropTypes.string,
     label: PropTypes.any,
     look: PropTypes.string,
-    placement: PropTypes.oneOf(['above', 'below', 'over']),
+    placement: PropTypes.oneOf(['above', 'below', 'over-above', 'over-below']),
     shape: PropTypes.oneOf(['rectangle', 'pill']),
     stayOpenOnBlur: PropTypes.any,
     tooltip: PropTypes.string,
