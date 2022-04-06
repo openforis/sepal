@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
 set -e
 
-export BUILD_NUMBER=$1
-export GIT_COMMIT=$2
+export SEPAL_VERSION=$1
 export SEPAL_DATA_DIR=/data
 export SEPAL_BACKUP_DIR=/tmp/sepal-backup
 export DEPLOY_ENVIRONMENT=OPS
+
+echo "\$1: $1"
+echo "\$2: $2"
+echo "\$3: $3"
+echo "\$BUILD_NUMBER: $BUILD_NUMBER"
+echo "\$SEPAL_VERSION: $SEPAL_VERSION"
+echo "\$GIT_COMMIT: $GIT_COMMIT"
 
 function build {
   local MODULE=$1
@@ -13,7 +19,7 @@ function build {
   echo
   echo "******* Building ${MODULE} *******"
   cd ${MODULE_DIR}
-  set -o pipefail && BUILD_NUMBER=${BUILD_NUMBER} GIT_COMMIT=${GIT_COMMIT} docker-compose \
+  set -o pipefail && BUILD_NUMBER=${SEPAL_VERSION} GIT_COMMIT=${GIT_COMMIT} docker-compose \
     --file ${MODULE_DIR}/docker-compose.yml \
     build \
     | tee /var/log/sepal-build/${MODULE}.log
@@ -23,7 +29,7 @@ function push {
   local MODULE=$1
   echo
   echo "******* Pushing ${MODULE} *******"
-  docker push localhost/openforis/${MODULE}:${BUILD_NUMBER}
+  docker push localhost/openforis/${MODULE}:${SEPAL_VERSION}
 }
 
 function start {
