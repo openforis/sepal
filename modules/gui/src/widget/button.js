@@ -2,6 +2,7 @@ import {EMPTY, combineLatest, distinctUntilChanged, fromEvent, switchMap, take, 
 import {Link} from 'route'
 import {compose} from 'compose'
 import {download} from 'widget/download'
+import {withButtonGroupContext} from './buttonGroup'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -46,7 +47,7 @@ class _Button extends React.Component {
 
     classNames() {
         const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle,
-            alignment, width, joinLeft, joinRight, onClickHold, hover, disableTransitions} = this.props
+            alignment, width, onClickHold, hover, disableTransitions, buttonGroupContext: {joinLeft, joinRight} = {}} = this.props
         return className ? className : [
             styles.button,
             styles[`size-${size}`],
@@ -324,7 +325,8 @@ class _Button extends React.Component {
 export const Button = compose(
     _Button,
     withSubscriptions(),
-    withForwardedRef()
+    withForwardedRef(),
+    withButtonGroupContext()
 )
 
 Button.propTypes = {
@@ -348,8 +350,6 @@ Button.propTypes = {
     iconPlacement: PropTypes.oneOf(['left', 'right']),
     iconType: PropTypes.string,
     iconVariant: PropTypes.string,
-    joinLeft: PropTypes.any,
-    joinRight: PropTypes.any,
     label: PropTypes.any,
     labelStyle: PropTypes.oneOf(['default', 'smallcaps', 'smallcaps-highlight']),
     linkTarget: PropTypes.string,

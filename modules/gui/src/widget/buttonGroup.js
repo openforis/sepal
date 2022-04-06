@@ -1,15 +1,24 @@
 import {Widget} from './widget'
 import {compose} from 'compose'
+import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
 import withForwardedRef from 'ref'
 
+const Context = React.createContext()
+
+export const withButtonGroupContext = withContext(Context, 'buttonGroupContext')
+
 const _ButtonGroup = ({className, layout, alignment, spacing, framed, label, disabled, onMouseOver, onMouseOut, forwardedRef, children}) => {
-    const mapChild = (child, index, childrenCount) =>
-        React.cloneElement(child, {
-            joinLeft: index !== 0,
-            joinRight: index !== childrenCount - 1
-        })
+    const mapChild = (child, index, childrenCount) => {
+        const joinLeft = index !== 0
+        const joinRight = index !== childrenCount - 1
+        return (
+            <Context.Provider value={{joinLeft, joinRight}}>
+                {child}
+            </Context.Provider>
+        )
+    }
 
     const mapChildren = children =>
         React.Children.map(children, (child, index) =>
