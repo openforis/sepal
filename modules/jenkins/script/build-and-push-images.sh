@@ -6,13 +6,6 @@ export SEPAL_DATA_DIR=/data
 export SEPAL_BACKUP_DIR=/tmp/sepal-backup
 export DEPLOY_ENVIRONMENT=OPS
 
-echo "\$1: $1"
-echo "\$2: $2"
-echo "\$3: $3"
-echo "\$BUILD_NUMBER: $BUILD_NUMBER"
-echo "\$SEPAL_VERSION: $SEPAL_VERSION"
-echo "\$GIT_COMMIT: $GIT_COMMIT"
-
 function build {
   local MODULE=$1
   local MODULE_DIR=${WORKSPACE}/modules/${MODULE}
