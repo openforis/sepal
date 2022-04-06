@@ -10,7 +10,7 @@ export class CheckButton extends React.Component {
     }
 
     render() {
-        const {chromeless, size, shape, tooltip, tooltipPlacement, disabled, checked} = this.props
+        const {chromeless, size, shape, label, tooltip, tooltipPlacement, disabled, checked} = this.props
         return (
             <Button
                 chromeless={chromeless}
@@ -21,6 +21,7 @@ export class CheckButton extends React.Component {
                 iconAttributes={{
                     transform: checked ? 'grow-3' : null
                 }}
+                label={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 disabled={disabled}
@@ -38,6 +39,7 @@ CheckButton.propTypes = {
     checked: PropTypes.any,
     chromeless: PropTypes.any,
     disabled: PropTypes.any,
+    label: PropTypes.any,
     size: PropTypes.any,
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any,
