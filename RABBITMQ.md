@@ -1,3 +1,9 @@
+RabbitMQ "sepal.topic" exchange documentation
+
+# (module name)
+    S: [topic]                          Q: [queue]
+    P: [topic]                          M: [message shape]
+
 # email
     S: email.send                       Q: email.send
     S: user.emailNotificationsEnabled   Q: email.emailNotificationsEnabled
@@ -15,8 +21,8 @@
 
 # sepal-storage:budget
     P: budget.?
-    S: user.*               Q: budget.user
-    S: userStorage.*        Q: budget.userStorage
+    S: user.*                           Q: budget.user
+    S: userStorage.*                    Q: budget.userStorage
 
 # sepal-storage:workerInstance
     P: workerInstance.?
