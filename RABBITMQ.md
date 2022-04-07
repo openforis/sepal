@@ -1,8 +1,7 @@
 # user-files
-    P userStorage.files
-
+    P: files.update         M: {username}
+    
 # user-storage
-    P userStorage.size
-    S workerSession.#       Q: userStorage.workerSession
-    S files.#               Q: userStorage.files
-
+    P: userStorage.size     M: {username, size}
+    S: workerSession.#      Q: userStorage.workerSession
+    S: files.#              Q: userStorage.files
