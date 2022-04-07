@@ -1,6 +1,6 @@
 # email
     S: email.send                       Q: email.send
-    S: user.emailNotificationsEnabled   Q: user.emailNotificationsEnabled
+    S: user.emailNotificationsEnabled   Q: email.emailNotificationsEnabled
 
 # sys-monitor
     P: email.send                       M: {from, to, subject, content}
