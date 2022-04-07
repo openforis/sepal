@@ -35,25 +35,27 @@ class _VisualizationSelector extends React.Component {
                 labelButtons={[
                     <Button
                         key='add'
-                        tooltip={msg('map.visualizationSelector.add.tooltip')}
-                        icon='plus'
                         chromeless
                         shape='circle'
                         size='small'
+                        icon='plus'
+                        tooltip={msg('map.visualizationSelector.add.tooltip')}
                         onClick={() => this.addVisParams()}
                     />,
                     <Button
                         key='edit'
-                        tooltip={msg(`map.visualizationSelector.${editMode}.tooltip`)}
-                        icon={editMode}
                         chromeless
                         shape='circle'
                         size='small'
+                        icon={editMode}
+                        tooltip={msg(`map.visualizationSelector.${editMode}.tooltip`)}
                         disabled={!selectedOption}
                         onClick={() => this.editVisParams(selectedOption.visParams, editMode)}
                     />,
                     <RemoveButton
                         key='remove'
+                        chromeless
+                        shape='circle'
                         size='small'
                         tooltip={msg('map.visualizationSelector.remove.tooltip')}
                         disabled={!selectedOption || editMode === 'clone'}

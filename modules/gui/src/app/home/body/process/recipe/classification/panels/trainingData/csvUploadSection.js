@@ -21,7 +21,7 @@ export default class CsvUploadSection extends Component {
                     {name.value
                         ? <div className={styles.name}>
                             {stream('LOAD_CSV_ROWS').active
-                                ? <Icon name={'spinner'} className={styles.spinner}/>
+                                ? <Icon name='spinner' className={styles.spinner}/>
                                 : null}
                             {name.value}
                         </div>

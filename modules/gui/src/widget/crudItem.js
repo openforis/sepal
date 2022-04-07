@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
+import {CheckButton} from './checkButton'
 import {Item} from 'widget/item'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -54,6 +55,7 @@ export class CrudItem extends React.Component {
                 {this.renderEditButton()}
                 {this.renderDuplicateButton()}
                 {this.renderRemoveButton()}
+                {this.renderSelectButton()}
             </ButtonGroup>
         )
     }
@@ -122,12 +124,32 @@ export class CrudItem extends React.Component {
         return onRemove
             ? (
                 <RemoveButton
+                    chromeless
+                    shape='circle'
+                    size='large'
                     message={removeMessage}
                     tooltip={removeTooltip}
                     tooltipPlacement={tooltipPlacement}
                     unsafe={unsafeRemove}
                     disabled={removeDisabled}
                     onRemove={onRemove}/>
+            )
+            : null
+    }
+
+    renderSelectButton() {
+        const {onSelect, selectTooltip, tooltipPlacement, selectDisabled, selected} = this.props
+        return onSelect
+            ? (
+                <CheckButton
+                    chromeless
+                    shape='circle'
+                    size='large'
+                    checked={selected}
+                    tooltip={selectTooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    disabled={selectDisabled}
+                    onToggle={onSelect}/>
             )
             : null
     }
@@ -153,13 +175,17 @@ CrudItem.propTypes = {
     removeDisabled: PropTypes.any,
     removeMessage: PropTypes.string,
     removeTooltip: PropTypes.string,
+    selectDisabled: PropTypes.any,
+    selected: PropTypes.any,
+    selectTooltip: PropTypes.string,
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     tooltipPlacement: PropTypes.string,
     unsafeRemove: PropTypes.any,
     onDuplicate: PropTypes.func,
     onEdit: PropTypes.func,
     onInfo: PropTypes.func,
-    onRemove: PropTypes.func
+    onRemove: PropTypes.func,
+    onSelect: PropTypes.func
 }
 
 CrudItem.defaultProps = {

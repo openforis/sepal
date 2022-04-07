@@ -11,18 +11,6 @@ const BlurDetectorContext = React.createContext()
 
 const withBlurDetectorContext = withContext(BlurDetectorContext, 'blurDetectorContext')
 
-// const isOver = (e, element) => {
-//     if (e instanceof MouseEvent) {
-//         if (element) {
-//             const {clientX, clientY} = e
-//             const {x, y, width, height} = element.getBoundingClientRect()
-//             return (clientX >= x) && (clientX < x + width) && (clientY >= y) && (clientY < y + height)
-//         }
-//         return false
-//     }
-//     return true
-// }
-
 const isOver = (e, element) => {
     return element.contains(e.target)
 }

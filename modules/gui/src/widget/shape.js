@@ -50,12 +50,12 @@ class _Shape extends React.Component {
     }
 
     renderIcon() {
-        const {icon, iconType, iconFlipHorizontal} = this.props
+        const {icon, iconType, iconAttributes} = this.props
         return (
             <Icon
                 name={icon}
                 type={iconType}
-                flip={iconFlipHorizontal ? 'horizontal' : null}
+                attributes={iconAttributes}
             />
         )
     }
@@ -108,7 +108,7 @@ Shape.propTypes = {
     disableHover: PropTypes.any,
     disableTransitions: PropTypes.any,
     icon: PropTypes.string,
-    iconFlipHorizontal: PropTypes.any,
+    iconAttributes: PropTypes.any,
     iconPlacement: PropTypes.oneOf(['left', 'right']),
     iconType: PropTypes.string,
     look: PropTypes.oneOf(['default', 'highlight', 'selected', 'transparent', 'add', 'apply', 'cancel']),

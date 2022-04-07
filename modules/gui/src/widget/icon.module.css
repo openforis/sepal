@@ -1,5 +1,3 @@
-/* style */
-
 .variant-error {
     color: var(--error-color);
 }
@@ -16,15 +14,6 @@
     color: var(--warning-color);
 }
 
-.pulse {
-    animation: pulse 500ms cubic-bezier(1, 0, 0, 1) 5;
-}
-
-@keyframes pulse {
-    0% {
-        opacity: 1;
-    }
-    100% {
-        opacity: .2;
-    }
+.dimmed {
+    opacity: .5;
 }

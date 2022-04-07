@@ -2,6 +2,7 @@ import {EMPTY, combineLatest, distinctUntilChanged, fromEvent, switchMap, take, 
 import {Link} from 'route'
 import {compose} from 'compose'
 import {download} from 'widget/download'
+import {withButtonGroupContext} from './buttonGroup'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -46,7 +47,7 @@ class _Button extends React.Component {
 
     classNames() {
         const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle,
-            alignment, width, joinLeft, joinRight, onClickHold, hover, disableTransitions} = this.props
+            alignment, width, onClickHold, hover, disableTransitions, buttonGroupContext: {joinLeft, joinRight} = {}} = this.props
         return className ? className : [
             styles.button,
             styles[`size-${size}`],
@@ -204,22 +205,17 @@ class _Button extends React.Component {
     }
 
     renderIcon() {
-        const {busy, icon, iconType, iconVariant, iconSpin, iconFlipHorizontal, iconFlipVertical, iconFixedWidth} = this.props
-        return busy
-            ? <Icon
-                name='spinner'
-                variant={iconVariant}
-                spin
-            />
-            : <Icon
-                name={icon}
+        const {busy, icon, iconType, iconVariant, iconDimmed, iconClassName, iconAttributes} = this.props
+        return (
+            <Icon
+                name={busy ? 'spinner' : icon}
                 type={iconType}
                 variant={iconVariant}
-                spin={iconSpin}
-                fixedWidth={iconFixedWidth}
-                flipHorizontal={iconFlipHorizontal}
-                flipVertical={iconFlipVertical}
+                dimmed={iconDimmed}
+                className={iconClassName}
+                attributes={iconAttributes}
             />
+        )
     }
 
     renderLabel() {
@@ -329,7 +325,8 @@ class _Button extends React.Component {
 export const Button = compose(
     _Button,
     withSubscriptions(),
-    withForwardedRef()
+    withForwardedRef(),
+    withButtonGroupContext()
 )
 
 Button.propTypes = {
@@ -347,15 +344,12 @@ Button.propTypes = {
     downloadUrl: PropTypes.any,
     hover: PropTypes.any,
     icon: PropTypes.string,
-    iconFixedWidth: PropTypes.any,
-    iconFlipHorizontal: PropTypes.any,
-    iconFlipVertical: PropTypes.any,
+    iconAttributes: PropTypes.any,
+    iconClassName: PropTypes.any,
+    iconDimmed: PropTypes.any,
     iconPlacement: PropTypes.oneOf(['left', 'right']),
-    iconSpin: PropTypes.any,
     iconType: PropTypes.string,
     iconVariant: PropTypes.string,
-    joinLeft: PropTypes.any,
-    joinRight: PropTypes.any,
     label: PropTypes.any,
     labelStyle: PropTypes.oneOf(['default', 'smallcaps', 'smallcaps-highlight']),
     linkTarget: PropTypes.string,

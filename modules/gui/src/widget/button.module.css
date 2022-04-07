@@ -97,8 +97,19 @@
 
 .shape-pill {
     border-radius: 500px;
-    min-width: calc(4 * var(--size));
     padding: calc(var(--size) * var(--vertical-padding-factor)) calc(var(--size) * var(--horizontal-padding-factor));
+}
+
+.shape-pill.join-right {
+    border-right: .5px solid;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.shape-pill.join-left {
+    border-left: .5px solid;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
 .shape-circle {

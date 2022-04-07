@@ -7,6 +7,10 @@
     flex-grow: 0;
 }
 
+.container.disabled {
+    opacity: var(--look-disabled-opacity);
+}
+
 .container.disabled::after {
     content: '';
     position: absolute;
@@ -14,7 +18,7 @@
     right: 0;
     bottom: 0;
     left: 0;
-    background-color: var(--panel-default-overlay-color);
+    /* background-color: var(--panel-default-overlay-color); */
     z-index: 1;
     pointer-events: all;
 }

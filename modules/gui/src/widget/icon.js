@@ -6,6 +6,7 @@ import {library} from '@fortawesome/fontawesome-svg-core'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
+import _ from 'lodash'
 import styles from './icon.module.css'
 
 library.add(faGoogle)
@@ -40,31 +41,26 @@ export default class Icon extends React.Component {
     }
 
     classNames() {
-        const {className, variant, pulse} = this.props
+        const {className, variant, dimmed} = this.props
         return [
             styles[`variant-${variant}`],
-            pulse ? styles.pulse : null,
+            dimmed ? styles.dimmed : null,
             className
         ].join(' ')
     }
 
     renderIcon() {
-        const {name, type, size, spin, flipHorizontal, flipVertical, fixedWidth} = this.props
-        const flip = flipHorizontal
-            ? flipVertical
-                ? 'both'
-                : 'horizontal'
-            : flipVertical
-                ? 'vertical'
-                : null
+        const {name, type, size, attributes} = this.props
+        const filteredAttributes = _.omit({spin: name === 'spinner', ...attributes}, [
+            'icon', 'name', 'type', 'className', 'variant'
+        ])
+        const icon = [fontAwesomeCollection(type), name]
         return (
             <FontAwesomeIcon
-                icon={[fontAwesomeCollection(type), name]}
-                fixedWidth={fixedWidth}
-                spin={spin || name === 'spinner'}
-                flip={flip}
+                icon={icon}
                 size={size}
                 className={this.classNames()}
+                {...filteredAttributes}
             />
         )
     }
@@ -72,13 +68,10 @@ export default class Icon extends React.Component {
 
 Icon.propTypes = {
     name: PropTypes.string.isRequired,
+    attributes: PropTypes.object,
     className: PropTypes.string,
-    fixedWidth: PropTypes.any,
-    flipHorizontal: PropTypes.any,
-    flipVertical: PropTypes.any,
-    pulse: PropTypes.any,
+    dimmed: PropTypes.any,
     size: PropTypes.string,
-    spin: PropTypes.any,
     tooltip: PropTypes.any,
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
@@ -88,7 +81,7 @@ Icon.propTypes = {
 }
 
 Icon.defaultProps = {
-    fixedWidth: false,
+    size: '1x',
     type: 'solid',
     variant: 'normal'
 }

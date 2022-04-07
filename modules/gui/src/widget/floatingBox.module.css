@@ -9,12 +9,14 @@
     z-index: 2;
 }
 
-.box.above {
+.box.above,
+.box.over-above {
     bottom: calc(var(--bottom) * 1px);
     max-height: calc(var(--height) * 1px);
 }
 
-.box.below {
+.box.below,
+.box.over-below {
     top: calc(var(--top) * 1px);
     max-height: calc(var(--height) * 1px);
 }

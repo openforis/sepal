@@ -4,37 +4,6 @@
     width: 40rem;
 }
 
-button.unread i {
-    color: var(--warning-color);
-    animation: pulse 1000ms ease-out infinite;
-}
-
-@keyframes pulse {
-    0% {
-        opacity: 1;
-    }
-    10% {
-        opacity: 1;
-    }
-    100% {
-        opacity: .2;
-    }
-}
-
-.subject {
-    font-size: 1.0rem;
-    font-weight: bold;
-    margin-top: .5rem;
-}
-
-.subject.UNREAD i {
-    color: var(--unread-color);
-}
-
-.subject.READ i {
-    color: var(--read-color);
-}
-
 /* markdown */
 
 .contents {

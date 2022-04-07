@@ -148,7 +148,7 @@ class _LegendImport extends React.Component {
                     {name.value
                         ? <div>
                             {stream('LOAD_CSV_ROWS').active
-                                ? <Icon name={'spinner'} className={styles.spinner}/>
+                                ? <Icon name='spinner' className={styles.spinner}/>
                                 : null}
                             {name.value}
                         </div>
