@@ -5,3 +5,17 @@
     P: userStorage.size     M: {username, size}
     S: workerSession.#      Q: userStorage.workerSession
     S: files.#              Q: userStorage.files
+
+# sepal-storage:budget
+    P: budget.?
+    S: user.*               Q: budget.user
+    S: userStorage.*        Q: budget.userStorage
+
+# sepal-storage:workerInstance
+    P: workerInstance.?
+
+# sepal-storage:workerSession
+    P: workerSession.?
+
+# user
+    P: user.?
