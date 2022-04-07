@@ -248,7 +248,6 @@ class UserEndpoint {
                                 tokens: sepalUser.googleTokens
                         ))
                 response.addHeader('sepal-user-updated', 'true')
-                println('tokens: ' + tokens)
                 if (tokens) 
                     send toJson(tokens)
                 else
