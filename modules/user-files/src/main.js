@@ -10,7 +10,7 @@ const server = require('sepal/httpServer')
 const main = async () => {
     await initMessageQueue(amqpUri, {
         publishers: [
-            {key: 'userStorage.files', publish$: message$},
+            {key: 'files.update', publish$: message$},
         ]
     })
 
