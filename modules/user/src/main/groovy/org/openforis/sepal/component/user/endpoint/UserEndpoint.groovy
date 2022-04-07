@@ -248,7 +248,10 @@ class UserEndpoint {
                                 tokens: sepalUser.googleTokens
                         ))
                 response.addHeader('sepal-user-updated', 'true')
-                send toJson(tokens)
+                if (tokens) 
+                    send toJson(tokens)
+                else
+                    response.status = 204
             }
         }
     }
