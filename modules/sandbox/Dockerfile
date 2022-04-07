@@ -30,6 +30,8 @@ RUN chmod +x /usr/local/lib/sepal/python/shared/stack_time_series.py && \
 ADD modules/${MODULE_NAME}/script/init_ost.sh /script/
 RUN chmod u+x /script/init_ost.sh && sync && /script/init_ost.sh
 
+RUN apt-get update && apt-get install -y htop
+
 ADD modules/${MODULE_NAME}/script/init_sepal_ui.sh /script/
 RUN chmod u+x /script/init_sepal_ui.sh && sync && /script/init_sepal_ui.sh
 
