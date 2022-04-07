@@ -79,6 +79,8 @@ class NonTransactionalComponent implements Component {
 }
 
 abstract class DataSourceBackedComponent implements Component {
+    private static final LOG = LoggerFactory.getLogger(this)
+    
     private final HandlerRegistryEventDispatcher eventDispatcher
     private final HandlerRegistryCommandDispatcher commandDispatcher
     private final HandlerRegistryQueryDispatcher queryDispatcher
@@ -140,7 +142,11 @@ abstract class DataSourceBackedComponent implements Component {
             connectionManager.withTransaction {
                 connectionManager.registerAfterCommitCallback { ack() }
             }
-            callback(message, type)
+            try {
+                callback(message, type)
+            } catch(Throwable e) {
+                LOG.error("Failed to handle message of type ${type}: ${message}", e)
+            } 
         }
     }
 

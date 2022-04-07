@@ -59,7 +59,11 @@ class RabbitMQTopic implements Topic {
                 def ack = { channel.basicAck(envelope.deliveryTag, false) }
                 def body = new JsonSlurper().parse(bytes, 'UTF-8')
                 LOG.debug("Message of type ${type} delivered to queue ${queueName}: ${body}")
-                callback(body, type, ack)
+                try {
+                    callback(body, type, ack)
+                } catch(Exception e) {
+                    LOG.error("Failed to handle message: envelope = ${envelope}", e)
+                } 
             }
         }
         channel.basicConsume(queueName, false, deliverCallback)
