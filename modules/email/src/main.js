@@ -12,7 +12,7 @@ const main = async () => {
     await initMessageQueue(amqpUri, {
         subscribers: [
             {queue: 'email.send', topic: 'email.send', handler: messageHandler},
-            {queue: 'user.emailNotificationsEnabled', topic: 'user.emailNotificationsEnabled', handler: messageHandler}
+            {queue: 'email.emailNotificationsEnabled', topic: 'user.emailNotificationsEnabled', handler: messageHandler}
         ]
     })
 
