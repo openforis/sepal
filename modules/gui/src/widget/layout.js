@@ -56,3 +56,13 @@ Layout.defaultProps = {
     spacing: 'normal',
     type: 'vertical'
 }
+
+class LayoutSpacer extends React.Component {
+    render() {
+        return (
+            <div className={styles.spacer}/>
+        )
+    }
+}
+
+Layout.Spacer = LayoutSpacer

@@ -246,3 +246,8 @@
 .layout.horizontal .layout.horizontal > .content > *:last-child {
     margin-right: 0;
 }
+
+.spacer {
+    display: flex;
+    flex-grow: 1;
+}
