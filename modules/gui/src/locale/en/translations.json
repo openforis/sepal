@@ -3142,7 +3142,8 @@
       "loading": "Loading..."
     },
     "confirm": {
-      "title": "Confirmation required"
+      "title": "Confirmation required",
+      "label": "Confirm"
     },
     "error": "Error",
     "fileSelect": {

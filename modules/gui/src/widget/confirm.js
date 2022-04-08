@@ -24,7 +24,7 @@ export default class Confirm extends React.Component {
                 <Panel.Buttons onEnter={confirm} onEscape={cancel}>
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Confirm
-                            label={label}
+                            label={label || msg('widget.confirm.label')}
                             onClick={confirm}/>
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
@@ -37,10 +37,10 @@ export default class Confirm extends React.Component {
 }
 
 Confirm.propTypes = {
-    label: PropTypes.string.isRequired,
     onCancel: PropTypes.func.isRequired,
     onConfirm: PropTypes.func.isRequired,
     children: PropTypes.any,
+    label: PropTypes.string,
     message: PropTypes.string,
     title: PropTypes.string
 }
