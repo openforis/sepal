@@ -325,8 +325,8 @@ class _Button extends React.Component {
 export const Button = compose(
     _Button,
     withSubscriptions(),
-    withForwardedRef(),
-    withButtonGroupContext()
+    withButtonGroupContext(),
+    withForwardedRef()
 )
 
 Button.propTypes = {
