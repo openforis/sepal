@@ -8,6 +8,7 @@
 }
 
 .popup {
+    --vertical-margin-from-element: .25rem;
     background-color: var(--panel-default-background-color);
     border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
     padding: .5rem;
@@ -16,11 +17,11 @@
 }
 
 .placement-above {
-    margin-bottom: .5rem;
+    margin-bottom: var(--vertical-margin-from-element);
 }
 
 .placement-below {
-    margin-top: .5rem;
+    margin-top: var(--vertical-margin-from-element);
 }
 
 .content {

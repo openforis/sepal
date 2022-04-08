@@ -122,7 +122,7 @@ class ButtonPopup extends React.Component {
 
     renderPopup() {
         const {placement, alignment} = this.props
-        return (
+        return this.buttonRef.current && (
             <FloatingBox
                 ref={this.popupRef}
                 element={this.buttonRef.current}
