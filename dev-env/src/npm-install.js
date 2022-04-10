@@ -5,12 +5,15 @@ import {SEPAL_SRC} from './config.js'
 import Path from 'path'
 import _ from 'lodash'
 
-const installPackages = async (module, modulePath) => {
+const installPackages = async (module, modulePath, {verbose}) => {
     await stopModule(module)
     showModuleStatus(module, MESSAGE.INSTALLING_PACKAGES)
+    const npmInstallOptions = [
+        verbose ? '--verbose' : ''
+    ].join(' ')
     await exec({
         command: './script/npm-install.sh',
-        args: [modulePath],
+        args: [modulePath, npmInstallOptions],
         enableStdIn: true,
         showStdOut: true,
         showStdErr: true
@@ -18,11 +21,11 @@ const installPackages = async (module, modulePath) => {
     showModuleStatus(module, MESSAGE.INSTALLED_PACKAGES)
 }
 
-const updateModule = async (module, path) => {
+const updateModule = async (module, path, options) => {
     try {
         const modulePath = Path.join(SEPAL_SRC, path)
         if (await isNodeModule(modulePath)) {
-            await installPackages(module, modulePath)
+            await installPackages(module, modulePath, options)
         }
     } catch (error) {
         showModuleStatus(module, MESSAGE.ERROR)

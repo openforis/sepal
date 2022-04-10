@@ -91,6 +91,7 @@ const main = async () => {
 
     program.command('npm-install')
         .description('Install npm modules')
+        .option('-v, --verbose', 'Verbose')
         .argument('[module...]', 'Modules to install')
         .action(npmInstall)
 
