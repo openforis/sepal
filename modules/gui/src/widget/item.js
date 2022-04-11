@@ -1,4 +1,4 @@
-import Highlight from 'react-highlighter'
+import Highlight from '@lpaolini/react-highlighter'
 import PropTypes from 'prop-types'
 import React from 'react'
 import moment from 'moment'
