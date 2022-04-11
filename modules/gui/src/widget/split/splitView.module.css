@@ -148,7 +148,7 @@
 
 /* active area indicator */
 
-.area:not(.center):hover::after {
+.area.partial:not(.center):hover::after {
     content: '';
     position: absolute;
     width: calc(2 * var(--half-area-marker-size) + 1px);
@@ -160,42 +160,42 @@
     pointer-events: none;
 }
 
-.area.top:not(.left):not(.right):hover::after {
+.area.partial.top:not(.left):not(.right):hover::after {
     bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
     left: calc(var(--left) - var(--half-area-marker-size));
 }
 
-.area.bottom:not(.left):not(.right):hover::after {
+.area.partial.bottom:not(.left):not(.right):hover::after {
     top: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
     left: calc(var(--left) - var(--half-area-marker-size));
 }
 
-.area.left:not(.top):not(.bottom):hover::after {
+.area.partial.left:not(.top):not(.bottom):hover::after {
     top: calc(var(--top) - var(--half-area-marker-size));
     right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
 }
 
-.area.right:not(.top):not(.bottom):hover::after {
+.area.partial.right:not(.top):not(.bottom):hover::after {
     top: calc(var(--top) - var(--half-area-marker-size));
     left: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
 }
 
-.area.top.left:hover::after {
+.area.partial.top.left:hover::after {
     bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
     right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
 }
 
-.area.top.right:hover::after {
+.area.partial.top.right:hover::after {
     bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
     left: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
 }
 
-.area.bottom.left:hover::after {
+.area.partial.bottom.left:hover::after {
     top: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
     right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
 }
 
-.area.bottom.right:hover::after {
+.area.partial.bottom.right:hover::after {
     top: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
     left: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
 }
