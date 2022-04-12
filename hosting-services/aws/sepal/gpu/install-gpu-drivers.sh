@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 yum install -y gcc kernel-devel-$(uname -r)
 #aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
 
