@@ -10,11 +10,11 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "commander": "^9.1.0",
+        "commander": "^9.2.0",
         "gee": "./src",
         "lodash": "^4.17.21",
-        "log4js": "^6.4.4",
-        "moment": "^2.29.2",
+        "log4js": "^6.4.5",
+        "moment": "^2.29.3",
         "rxjs": "^7.5.5",
         "sepal": "../../lib/js/shared/src",
         "uuid": "^8.3.2"

@@ -11,11 +11,11 @@
     "license": "ISC",
     "dependencies": {
         "app-manager": "./src",
-        "commander": "^9.1.0",
+        "commander": "^9.2.0",
         "lodash": "^4.17.21",
-        "log4js": "^6.4.4",
+        "log4js": "^6.4.5",
         "mime-types": "^2.1.35",
-        "moment": "^2.29.2",
+        "moment": "^2.29.3",
         "rxjs": "^7.5.5",
         "sepal": "../../lib/js/shared/src"
     },
