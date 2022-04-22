@@ -4,6 +4,7 @@ import {compose} from 'compose'
 import {download} from 'widget/download'
 import {withButtonGroupContext} from './buttonGroup'
 import Icon from 'widget/icon'
+import Keybinding from './keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
@@ -23,6 +24,7 @@ class _Button extends React.Component {
         super(props)
         const {onClickHold} = props
         this.button = onClickHold && React.createRef()
+        this.handleClick = this.handleClick.bind(this)
     }
 
     stopPropagation() {
@@ -184,6 +186,23 @@ class _Button extends React.Component {
         ) : contents
     }
 
+    getKeymap(keybinding) {
+        return _.isArray(keybinding)
+            ? _.reduce(keybinding, (keymap, key) => ({...keymap, [key]: this.handleClick}), {})
+            : {[keybinding]: this.handleClick}
+    }
+
+    renderKeybinding(contents) {
+        const {keybinding} = this.props
+        return keybinding
+            ? (
+                <Keybinding keymap={this.getKeymap(keybinding)}>
+                    {contents}
+                </Keybinding>
+            )
+            : contents
+    }
+
     renderButton(contents) {
         const {type, style, tabIndex, onClickHold, forwardedRef} = this.props
         return (
@@ -244,8 +263,10 @@ class _Button extends React.Component {
             this.renderWrapper(
                 this.renderLink(
                     this.renderTooltip(
-                        this.renderButton(
-                            this.renderContents()
+                        this.renderKeybinding(
+                            this.renderButton(
+                                this.renderContents()
+                            )
                         )
                     )
                 )
@@ -350,6 +371,7 @@ Button.propTypes = {
     iconPlacement: PropTypes.oneOf(['left', 'right']),
     iconType: PropTypes.string,
     iconVariant: PropTypes.string,
+    keybinding: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
     label: PropTypes.any,
     labelStyle: PropTypes.oneOf(['default', 'smallcaps', 'smallcaps-highlight']),
     linkTarget: PropTypes.string,

@@ -8,7 +8,6 @@ import {connect} from 'store'
 import {getRecipeType, listRecipeTypes} from './recipeTypes'
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
-import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -74,17 +73,16 @@ class _CreateRecipe extends React.Component {
         const {modal} = this.props
         return (
             <div className={styles.createButton}>
-                <Keybinding keymap={{'Ctrl+n': () => showRecipeTypes()}}>
-                    <Button
-                        look='add'
-                        size='xx-large'
-                        icon='plus'
-                        shape='circle'
-                        onClick={() => showRecipeTypes()}
-                        tooltip={msg('process.recipe.newRecipe.tooltip')}
-                        tooltipPlacement='left'
-                        tooltipDisabled={modal}/>
-                </Keybinding>
+                <Button
+                    look='add'
+                    size='xx-large'
+                    icon='plus'
+                    shape='circle'
+                    keybinding='Ctrl+n'
+                    onClick={() => showRecipeTypes()}
+                    tooltip={msg('process.recipe.newRecipe.tooltip')}
+                    tooltipPlacement='left'
+                    tooltipDisabled={modal}/>
             </div>
         )
     }

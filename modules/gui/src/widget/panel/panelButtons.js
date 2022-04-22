@@ -7,7 +7,7 @@ import React from 'react'
 import styles from './panelButtons.module.css'
 
 export class PanelButtons extends React.Component {
-    static renderButton({template, type, look, icon, label, dots, shown = true, disabled = false, onClick}, key) {
+    static renderButton({template, type, look, icon, label, dots, shown = true, disabled = false, keybinding, onClick}, key) {
         const defaultByTemplate = {
             cancel: {
                 look: 'cancel',
@@ -81,6 +81,7 @@ export class PanelButtons extends React.Component {
                 label={[label || defaultByTemplate[template].label, dots ? '...' : null].join('')}
                 shown={shown}
                 disabled={disabled}
+                keybinding={keybinding}
                 onClick={e => {
                     e.preventDefault()
                     onClick && onClick()
@@ -203,6 +204,7 @@ const buttonPropTypes = {
     disabled: PropTypes.any,
     dots: PropTypes.any,
     icon: PropTypes.string,
+    keybinding: PropTypes.any,
     label: PropTypes.string,
     look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'cancel', 'apply', 'add']),
     shown: PropTypes.any,

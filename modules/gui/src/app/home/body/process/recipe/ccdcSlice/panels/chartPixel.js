@@ -8,7 +8,6 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from '../../../recipeContext'
 import Icon from 'widget/icon'
-import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
@@ -74,9 +73,10 @@ class ChartPixel extends React.Component {
 
                 <Panel.Buttons>
                     <Panel.Buttons.Main>
-                        <Keybinding keymap={{'Escape': () => this.close()}}>
-                            <Panel.Buttons.Close onClick={() => this.close()}/>
-                        </Keybinding>
+                        <Panel.Buttons.Close
+                            keybinding='Escape'
+                            onClick={() => this.close()}
+                        />
                     </Panel.Buttons.Main>
                 </Panel.Buttons>
             </Panel>

@@ -12,7 +12,6 @@ import {selectFrom} from 'stateUtils'
 import {withMap} from 'app/home/map/mapContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import Icon from 'widget/icon'
-import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -136,15 +135,11 @@ class CollectPanel extends React.Component {
                         disabled={!hasTrainingData(recipe) || loadingNextPoint}
                     />
                 </Panel.Buttons.Main>
-                <Keybinding keymap={{
-                    Delete: () => this.remove(),
-                    Backspace: () => this.remove()
-                }}>
-                    <Panel.Buttons.Remove
-                        onClick={() => this.remove()}
-                        disabled={loadingNextPoint}
-                    />
-                </Keybinding>
+                <Panel.Buttons.Remove
+                    keybinding={['Delete', 'Backspace']}
+                    onClick={() => this.remove()}
+                    disabled={loadingNextPoint}
+                />
             </Panel.Buttons>
         )
     }
