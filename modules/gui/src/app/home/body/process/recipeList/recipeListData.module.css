@@ -24,3 +24,7 @@
 .sortingHandle {
     margin-left: .25rem;
 }
+
+.moveDestination {
+    background-color: black;
+}

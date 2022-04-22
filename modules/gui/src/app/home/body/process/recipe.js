@@ -171,6 +171,13 @@ export const exportRecipe$ = recipe =>
         data: JSON.stringify(_.omit(recipe, ['ui']), null, 2)
     })
 
+export const loadProjects$ = () =>
+    api.project.loadAll$().pipe(
+        map(projects => actionBuilder('SET_PROJECTS', {projects})
+            .set('process.projects', projects)
+            .dispatch())
+    )
+
 export const loadRecipes$ = () =>
     api.recipe.loadAll$().pipe(
         map(recipes => actionBuilder('SET_RECIPES', {recipes})

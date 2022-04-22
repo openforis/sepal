@@ -34,7 +34,7 @@ class _RecipeHome extends React.Component {
                             recipeId={recipeId}
                             trigger={recipes && !recipes.length}/>
                         <RecipeList.Data
-                            onSelect={recipeId => this.openRecipeId(recipeId)}
+                            onClick={recipeId => this.openRecipe(recipeId)}
                             onDuplicate={recipeId => this.duplicateRecipe(recipeId)}
                             onRemove={(recipeId, type) => this.removeRecipe(recipeId, type)}
                         />
@@ -52,7 +52,7 @@ class _RecipeHome extends React.Component {
         )
     }
 
-    openRecipeId(recipeId) {
+    openRecipe(recipeId) {
         const {stream} = this.props
         if (isRecipeOpen(recipeId)) {
             selectRecipe(recipeId)
@@ -96,6 +96,12 @@ class _RecipeHome extends React.Component {
                 closeTab(recipeId, 'process')
                 Notifications.success({message: msg('process.recipe.remove.success')})
             })
+    }
+
+    selectRecipe(recipe) {
+        actionBuilder('SELECT_RECIPE', recipe.id)
+            .assign(['process.recipes', {id: recipe.id}], {selected: !recipe.selected})
+            .dispatch()
     }
 }
 

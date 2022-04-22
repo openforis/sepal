@@ -1,3 +1,8 @@
+import {withContext} from 'context'
 import React from 'react'
 
-export const {Provider, Consumer} = React.createContext()
+const Context = React.createContext()
+
+export const {Provider, Consumer} = Context
+
+export const withRecipeListContext = withContext(Context, 'recipeListContext')

@@ -1831,13 +1831,12 @@
       "tabPlaceholder": "Index_change"
     },
     "menu": {
-      "duplicateRecipe": "Duplicate recipe",
+      "duplicateRecipe.tooltip": "Duplicate recipe",
       "exportRecipe": "Export recipe",
       "noSavedRecipes": "No saved recipes",
       "recipeNotSaved": "Recipe is not saved.",
-      "removeRecipe": {
-        "tooltip": "Remove recipe"
-      },
+      "removeRecipe.tooltip": "Remove recipe",
+      "selectRecipe.tooltip": "Select recipe",
       "revertToOldRevision": "Revert to old revision...",
       "savedRecipies": "Saved recipies",
       "saveRecipe": "Save recipe...",
@@ -2484,6 +2483,29 @@
         "label": "Radar mosaic"
       },
       "tabPlaceholder": "Radar_mosaic"
+    },
+    "projects": {
+      "title": "Projects",
+      "noProjects": "No projects",
+      "add": "Add"
+    },
+    "project": {
+      "title": "Project",
+      "form": {
+          "name.label": "Name"
+      },
+      "edit": {
+        "tooltip": "Edit project"
+      },
+      "remove": {
+        "tooltip": "Remove project",
+        "error": "Cannot remove project",
+        "success": "Project has been removed"
+      },
+      "update": {
+        "error": "Cannot update project",
+        "success": "Project has been updated"
+      }
     },
     "recipe": {
       "lastUpdate": "Last update",

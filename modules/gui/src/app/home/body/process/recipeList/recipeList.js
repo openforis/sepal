@@ -4,7 +4,7 @@ import {RecipeListData} from './recipeListData'
 import {RecipeListPagination} from './recipeListPagination'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {loadRecipes$} from '../recipe'
+import {loadProjects$, loadRecipes$} from '../recipe'
 import {msg} from 'translate'
 import {simplifyString, splitString} from 'string'
 import Notifications from 'widget/notifications'
@@ -13,9 +13,11 @@ import React from 'react'
 import _ from 'lodash'
 
 const mapStateToProps = () => {
+    const projects = select('process.projects')
     const recipes = select('process.recipes')
     return {
-        recipes: recipes ? recipes : null
+        projects: projects ?? null,
+        recipes: recipes ? recipes.map(recipe => ({...recipe, projectId: 1})) : null
     }
 }
 
@@ -23,20 +25,57 @@ class _RecipeList extends React.Component {
     state = {
         sortingOrder: 'updateTime',
         sortingDirection: -1,
-        filterValues: []
+        filterValues: [],
+        selectedIds: [],
+        edit: false,
+        move: false
+    }
+    
+    constructor() {
+        super()
+        this.isLoading = this.isLoading.bind(this)
+        this.hasData = this.hasData.bind(this)
+        this.setSorting = this.setSorting.bind(this)
+        this.setFilter = this.setFilter.bind(this)
+        this.isSelected = this.isSelected.bind(this)
+        this.toggleOne = this.toggleOne.bind(this)
+        this.toggleAll = this.toggleAll.bind(this)
+        this.moveSelected = this.moveSelected.bind(this)
+        this.removeSelected = this.removeSelected.bind(this)
+        this.setEdit = this.setEdit.bind(this)
+        this.setMove = this.setMove.bind(this)
+    }
+
+    setEdit(edit) {
+        this.setState({edit})
+    }
+
+    setMove(move) {
+        this.setState({move})
     }
 
     render() {
-        const {children} = this.props
-        const {sortingOrder, sortingDirection, filterValues} = this.state
+        const {projects, children} = this.props
+        const {sortingOrder, sortingDirection, filterValues, selectedIds, edit, move} = this.state
         return (
             <Provider value={{
+                selectedIds,
+                projects,
                 sortingOrder,
                 sortingDirection,
-                isLoading: this.isLoading.bind(this),
-                hasData: this.hasData.bind(this),
-                setSorting: this.setSorting.bind(this),
-                setFilter: this.setFilter.bind(this),
+                isLoading: this.isLoading,
+                hasData: this.hasData,
+                setSorting: this.setSorting,
+                setFilter: this.setFilter,
+                isSelected: this.isSelected,
+                toggleOne: this.toggleOne,
+                toggleAll: this.toggleAll,
+                moveSelected: this.moveSelected,
+                removeSelected: this.removeSelected,
+                setEdit: this.setEdit,
+                setMove: this.setMove,
+                edit,
+                move,
                 highlightMatcher: filterValues.length
                     ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
                     : null
@@ -49,7 +88,14 @@ class _RecipeList extends React.Component {
     }
 
     componentDidMount() {
-        const {recipes, stream} = this.props
+        const {projects, recipes, stream} = this.props
+        if (!projects) {
+            stream('LOAD_PROJECTS',
+                loadProjects$(),
+                null,
+                () => Notifications.error({message: msg('process.project.loadingError'), timeout: -1})
+            )
+        }
         if (!recipes) {
             stream('LOAD_RECIPES',
                 loadRecipes$(),
@@ -86,10 +132,48 @@ class _RecipeList extends React.Component {
         })
     }
 
-    getRecipes() {
+    isSelected(recipeId) {
+        const {selectedIds} = this.state
+        return recipeId
+            ? selectedIds.includes(recipeId)
+            : selectedIds.length
+    }
+
+    toggleOne(recipeId) {
+        this.setState(({selectedIds}) => ({
+            selectedIds: selectedIds.includes(recipeId)
+                ? selectedIds.filter(currentRecipeId => currentRecipeId !== recipeId)
+                : [...selectedIds, recipeId]
+        }))
+    }
+
+    toggleAll() {
         const {recipes} = this.props
+        this.setState(({selectedIds}) => ({
+            selectedIds: selectedIds.length
+                ? []
+                : recipes.map(recipe => recipe.id)
+        }))
+    }
+
+    moveSelected(projectId) {
+        const {selectedIds} = this.state
+        console.log(`move to ${projectId}:`, selectedIds)
+    }
+
+    removeSelected() {
+        const {selectedIds} = this.state
+        console.log('remove:', selectedIds)
+    }
+
+    getRecipes() {
+        const {projects, recipes} = this.props
         const {sortingOrder, sortingDirection} = this.state
         return _.chain(recipes)
+            .map(recipe => {
+                const project = projects.find(project => project.id === recipe.projectId)
+                return {...recipe, project: project?.name}
+            })
             .filter(recipe => this.recipeMatchesFilter(recipe))
             .orderBy(recipe => {
                 const item = _.get(recipe, sortingOrder)
@@ -101,7 +185,7 @@ class _RecipeList extends React.Component {
     recipeMatchesFilter(recipe) {
         const {filterValues} = this.state
         const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
-        const searchProperties = ['name']
+        const searchProperties = ['project', 'name']
         return filterValues
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
