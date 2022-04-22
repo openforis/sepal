@@ -14,18 +14,21 @@ RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /r
 ADD modules/${MODULE_NAME}/package.json ${MODULE}/
 ADD modules/${MODULE_NAME}/package-lock.json ${MODULE}/
 WORKDIR ${MODULE}
-RUN mkdir src
 RUN npm install
 
-ADD modules/${MODULE_NAME} ${MODULE}
+ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/public ${MODULE}/public
+ADD modules/${MODULE_NAME}/.env ${MODULE}/.env
+ADD modules/${MODULE_NAME}/jsconfig.json ${MODULE}/jsconfig.json
+
 RUN npm run build
 
-ADD modules/${MODULE_NAME}/nginx.conf /etc/nginx/sites-enabled/default
-ADD modules/${MODULE_NAME}/init_container.sh /usr/local/bin/init_container
-RUN chmod 500 /usr/local/bin/init_container
+ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
+RUN chmod 700 /usr/local/bin/start.sh
+ADD modules/${MODULE_NAME}/nginx.conf ${MODULE}/nginx.conf
 
 ARG BUILD_NUMBER
 ENV BUILD_NUMBER=$BUILD_NUMBER
 ARG GIT_COMMIT
 ENV GIT_COMMIT=$GIT_COMMIT
-CMD ["/usr/local/bin/init_container"]
+CMD start.sh

@@ -17,6 +17,8 @@ if [ "${DEPLOY_ENVIRONMENT}" == "DEV" ]; then
   fi
   exec npm start
 else
+  ln -sf ${MODULE}/nginx.conf /etc/nginx/sites-enabled/default
+
   if [ ! -f "${MODULE}/build/index-template.html" ]; then
       mv "${MODULE}/build/index.html" "${MODULE}/build/index-template.html"
   fi
@@ -26,4 +28,4 @@ else
   service nginx start
   pid=$(ps aux | grep '[/]usr/sbin/nginx' | awk '{ print $2 }')
   exec tail --pid="${pid}" -f /dev/null
-fi
+# fi
