@@ -1,5 +1,8 @@
 {
     "app-manager": {
+        "lib": [
+            "shared"
+        ],
         "build": {
             "sandbox-base": "build"
         },
@@ -14,18 +17,29 @@
         "run": []
     },
     "email": {
+        "lib": [
+            "shared"
+        ],
         "build": {},
         "run": [
             "rabbitmq"
         ]
     },
     "gateway": {
+        "lib": [
+            "shared"
+        ],
         "build": {},
         "run": []
     },
     "gee": {
+        "lib": [
+            "shared"
+        ],
         "build": {},
-        "run": ["sepal-server"]
+        "run": [
+            "sepal-server"
+        ]
     },
     "geospatial-toolkit": {
         "build": {
@@ -40,7 +54,10 @@
     },
     "haproxy": {
         "build": {},
-        "run": ["letsencrypt", "gateway"]
+        "run": [
+            "letsencrypt",
+            "gateway"
+        ]
     },
     "java": {
         "build": {},
@@ -67,6 +84,9 @@
         "run": []
     },
     "r-proxy": {
+        "lib": [
+            "shared"
+        ],
         "build": {
             "sandbox-base": "build"
         },
@@ -92,23 +112,42 @@
             "sandbox": "build",
             "task": "build"
         },
-        "run": ["mysql", "user"]
+        "run": [
+            "mysql",
+            "user"
+        ]
     },
     "ssh-gateway": {
+        "lib": [
+            "shared"
+        ],
         "build": {},
-        "run": ["ldap"]
+        "run": [
+            "ldap"
+        ]
     },
     "sys-monitor": {
+        "lib": [
+            "shared"
+        ],
         "build": {},
         "run": [
             "email"
         ]
     },
     "task": {
-        "build": {"sandbox-base": "build"},
+        "lib": [
+            "shared"
+        ],
+        "build": {
+            "sandbox-base": "build"
+        },
         "run": false
     },
     "terminal": {
+        "lib": [
+            "shared"
+        ],
         "build": {},
         "run": []
     },
@@ -116,13 +155,23 @@
         "build": {
             "java": "build"
         },
-        "run": ["mysql", "ldap", "rabbitmq"]
+        "run": [
+            "mysql",
+            "ldap",
+            "rabbitmq"
+        ]
     },
     "user-files": {
+        "lib": [
+            "shared"
+        ],
         "build": {},
         "run": []
     },
     "user-storage": {
+        "lib": [
+            "shared"
+        ],
         "build": {},
         "run": [
             "email"
