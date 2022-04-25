@@ -15,7 +15,7 @@
         "date-fns": "^2.28.0",
         "ioredis": "^5.0.4",
         "lodash": "^4.17.21",
-        "log4js": "^6.4.5",
+        "log4js": "^6.4.6",
         "moment": "^2.29.3",
         "rxjs": "^7.5.5",
         "sepal": "../../lib/js/shared/src",
@@ -23,7 +23,7 @@
         "uuid": "^8.3.2"
     },
     "devDependencies": {
-        "eslint": "^8.13.0",
+        "eslint": "^8.14.0",
         "jest": "^27.5.1",
         "jest-expect-message": "^1.0.2"
     }

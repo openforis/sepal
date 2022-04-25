@@ -18,7 +18,7 @@
         "http-proxy-middleware": "^2.0.6",
         "ioredis": "^5.0.4",
         "lodash": "^4.17.21",
-        "log4js": "^6.4.5",
+        "log4js": "^6.4.6",
         "micromatch": "^4.0.5",
         "mime-types": "^2.1.35",
         "moment": "^2.29.3",
@@ -27,7 +27,7 @@
         "uuid": "^8.3.2"
     },
     "devDependencies": {
-        "eslint": "^8.13.0",
+        "eslint": "^8.14.0",
         "jest": "^27.5.1",
         "jest-expect-message": "^1.0.2"
     }
