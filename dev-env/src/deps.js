@@ -1,6 +1,9 @@
 import {deps} from './config.js'
 import _ from 'lodash'
 
+export const getLibDeps = module =>
+    (deps[module] || {}).lib || []
+
 export const getBuildDeps = module =>
     _((deps[module] || {}).build || [])
         .keys()
@@ -21,6 +24,13 @@ export const getInverseRunDeps = module =>
         .keys()
         .value()
 
+export const getLibDepList = modules =>
+    _(modules)
+        .map(module => getLibDeps(module))
+        .flatten()
+        .uniq()
+        .value()
+    
 export const getDirectRunDepList = (modules, recursive) => {
     const dependencies = recursive
         ? _.flatten(

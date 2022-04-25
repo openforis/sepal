@@ -1,6 +1,7 @@
 import {exec} from './exec.js'
 import {exit, getModules, isNodeModule, showModuleStatus, MESSAGE} from './utils.js'
 import {SEPAL_SRC} from './config.js'
+import {getLibDepList} from './deps.js'
 import Path from 'path'
 import _ from 'lodash'
 
@@ -38,8 +39,12 @@ const updateModule = async (module, path, {upgrade, target} = {}) => {
 }
 
 export const npmUpdate = async (modules, options) => {
-    await updateModule('shared', 'lib/js/shared', options)
-    for (const module of getModules(modules)) {
+    const rootModules = getModules(modules)
+    const libs = getLibDepList(rootModules)
+    for (const lib of libs) {
+        await updateModule(lib, `lib/js/${lib}`, options)
+    }
+    for (const module of rootModules) {
         await updateModule(module, `modules/${module}`, options)
     }
 }
