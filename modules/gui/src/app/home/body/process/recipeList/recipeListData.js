@@ -91,25 +91,18 @@ class _RecipeListData extends React.Component {
 
     renderEditButtons() {
         const {edit} = this.state
-        return edit
-            ? this.renderActionButtons()
-            : (
+        return (
+            <ButtonGroup spacing='none'>
                 <Button
                     icon='pen-to-square'
                     label='Edit'
                     shape='pill'
-                    onClick={() => this.setEdit(true)}
+                    keybinding={edit ? 'Escape' : ''}
+                    onClick={() => this.setEdit(!edit)}
                 />
-            )
-    }
-
-    renderActionButtons() {
-        return (
-            <ButtonGroup spacing='none'>
-                {this.renderSelectButton()}
-                {this.renderMoveButton()}
-                {this.renderRemoveButton()}
-                {this.renderExitButton()}
+                {edit && this.renderSelectButton()}
+                {edit && this.renderMoveButton()}
+                {edit && this.renderRemoveButton()}
             </ButtonGroup>
         )
     }
@@ -184,18 +177,6 @@ class _RecipeListData extends React.Component {
                 message={`Remove ${isSelected()} recipes?`}
                 disabled={!isSelected()}
                 onRemove={removeSelected}/>
-        )
-    }
-
-    renderExitButton() {
-        return (
-            <Button
-                icon='times'
-                label='Exit'
-                shape='pill'
-                keybinding='Escape'
-                onClick={() => this.setEdit(false)}
-            />
         )
     }
 
