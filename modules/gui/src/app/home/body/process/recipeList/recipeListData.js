@@ -16,6 +16,7 @@ import {msg} from 'translate'
 import {withRecipeListContext} from './recipeListContext'
 import ButtonPopup from 'widget/buttonPopup'
 import Confirm from 'widget/confirm'
+import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
@@ -97,6 +98,9 @@ class _RecipeListData extends React.Component {
                     icon='pen-to-square'
                     label='Edit'
                     shape='pill'
+                    tail={
+                        <Icon name={edit ? 'chevron-left' : 'chevron-right'}/>
+                    }
                     keybinding={edit ? 'Escape' : ''}
                     onClick={() => this.setEdit(!edit)}
                 />
