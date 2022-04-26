@@ -22,10 +22,18 @@ import RemoveButton from 'widget/removeButton'
 import styles from './recipeListData.module.css'
 
 class _RecipeListData extends React.Component {
-    // state = {
-    //     edit: false,
-    //     move: false
-    // }
+    state = {
+        edit: false,
+        move: false
+    }
+
+    setEdit(edit) {
+        this.setState({edit})
+    }
+
+    setMove(move) {
+        this.setState({move})
+    }
 
     render() {
         const {recipeListContext: {isLoading}} = this.props
@@ -39,8 +47,8 @@ class _RecipeListData extends React.Component {
     }
 
     renderData() {
-        const {recipeListContext: {hasData, highlightMatcher, move}} = this.props
-        // const {move} = this.state
+        const {recipeListContext: {hasData, highlightMatcher}} = this.props
+        const {move} = this.state
         return hasData()
             ? (
                 <ScrollableContainer>
@@ -82,8 +90,7 @@ class _RecipeListData extends React.Component {
     }
 
     renderEditButtons() {
-        const {recipeListContext: {setEdit, edit}} = this.props
-        // const {edit} = this.state
+        const {edit} = this.state
         return edit
             ? this.renderActionButtons()
             : (
@@ -91,7 +98,7 @@ class _RecipeListData extends React.Component {
                     icon='pen-to-square'
                     label='Edit'
                     shape='pill'
-                    onClick={() => setEdit(true)}
+                    onClick={() => this.setEdit(true)}
                 />
             )
     }
@@ -113,7 +120,7 @@ class _RecipeListData extends React.Component {
         return (
             <CheckButton
                 shape='pill'
-                label='All'
+                label='Select'
                 checked={selected}
                 tooltip={selected ? 'Deselect all recipes' : 'Select all recipes'}
                 onToggle={toggleAll}/>
@@ -121,7 +128,7 @@ class _RecipeListData extends React.Component {
     }
 
     renderMoveButton() {
-        const {recipeListContext: {isSelected, moveSelected, setMove}} = this.props
+        const {recipeListContext: {isSelected, moveSelected}} = this.props
         return moveSelected && (
             <ButtonPopup
                 shape='pill'
@@ -141,7 +148,7 @@ class _RecipeListData extends React.Component {
                         autoFocus
                         onCancel={onBlur}
                         onChange={option => {
-                            setMove(option)
+                            this.setMove(option)
                             onBlur()
                         }}
                     />
@@ -151,16 +158,17 @@ class _RecipeListData extends React.Component {
     }
 
     renderMoveConfirmation() {
-        const {recipeListContext: {isSelected, moveSelected, setMove, move: {value: projectId, label: projectName}}} = this.props
+        const {recipeListContext: {isSelected, moveSelected}} = this.props
+        const {move: {value: projectId, label: projectName}} = this.state
         return moveSelected && (
             <Confirm
                 title={'Move recipes'}
                 message={`Move ${isSelected()} recipes to project ${projectName}?`}
                 onConfirm={() => {
-                    setMove(false)
+                    this.setMove(false)
                     moveSelected(projectId)
                 }}
-                onCancel={() => setMove(false)}
+                onCancel={() => this.setMove(false)}
             />
         )
     }
@@ -180,14 +188,13 @@ class _RecipeListData extends React.Component {
     }
 
     renderExitButton() {
-        const {recipeListContext: {setEdit}} = this.props
         return (
             <Button
                 icon='times'
                 label='Exit'
                 shape='pill'
                 keybinding='Escape'
-                onClick={() => setEdit(false)}
+                onClick={() => this.setEdit(false)}
             />
         )
     }
@@ -231,9 +238,8 @@ class _RecipeListData extends React.Component {
     }
 
     renderRecipe(recipe, highlightMatcher) {
-        // const {onClick, onDuplicate, onRemove, recipeListContext: {isSelected, toggleOne}} = this.props
-        const {onClick, onDuplicate, onRemove, recipeListContext: {isSelected, toggleOne, edit}} = this.props
-        // const {edit} = this.state
+        const {onClick, onDuplicate, onRemove, recipeListContext: {isSelected, toggleOne}} = this.props
+        const {edit} = this.state
         const project = recipe.project || 'ungrouped'
         const name = recipe.name
         const path = `${project} / ${name}`
@@ -253,8 +259,7 @@ class _RecipeListData extends React.Component {
                     selected={isSelected(recipe.id)}
                     onDuplicate={onDuplicate ? () => onDuplicate(recipe.id) : null}
                     onRemove={onRemove ? () => onRemove(recipe.id, recipe.type) : null}
-                    // onSelect={(edit && toggleOne) ? () => toggleOne(recipe.id) : null}
-                    onSelect={toggleOne ? () => toggleOne(recipe.id) : null}
+                    onSelect={(edit && toggleOne) ? () => toggleOne(recipe.id) : null}
                 />
             </ListItem>
         )

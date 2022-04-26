@@ -26,9 +26,7 @@ class _RecipeList extends React.Component {
         sortingOrder: 'updateTime',
         sortingDirection: -1,
         filterValues: [],
-        selectedIds: [],
-        edit: false,
-        move: false
+        selectedIds: []
     }
     
     constructor() {
@@ -42,21 +40,11 @@ class _RecipeList extends React.Component {
         this.toggleAll = this.toggleAll.bind(this)
         this.moveSelected = this.moveSelected.bind(this)
         this.removeSelected = this.removeSelected.bind(this)
-        this.setEdit = this.setEdit.bind(this)
-        this.setMove = this.setMove.bind(this)
-    }
-
-    setEdit(edit) {
-        this.setState({edit})
-    }
-
-    setMove(move) {
-        this.setState({move})
     }
 
     render() {
         const {projects, children} = this.props
-        const {sortingOrder, sortingDirection, filterValues, selectedIds, edit, move} = this.state
+        const {sortingOrder, sortingDirection, filterValues, selectedIds} = this.state
         return (
             <Provider value={{
                 selectedIds,
@@ -72,10 +60,6 @@ class _RecipeList extends React.Component {
                 toggleAll: this.toggleAll,
                 moveSelected: this.moveSelected,
                 removeSelected: this.removeSelected,
-                setEdit: this.setEdit,
-                setMove: this.setMove,
-                edit,
-                move,
                 highlightMatcher: filterValues.length
                     ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
                     : null
