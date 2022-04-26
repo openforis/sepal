@@ -19,7 +19,7 @@ export class CheckButton extends React.Component {
                 icon='check'
                 iconClassName={checked ? styles.checked : null}
                 iconAttributes={{
-                    transform: checked ? 'grow-3' : null
+                    transform: checked ? 'grow-2' : null
                 }}
                 label={label}
                 tooltip={tooltip}
