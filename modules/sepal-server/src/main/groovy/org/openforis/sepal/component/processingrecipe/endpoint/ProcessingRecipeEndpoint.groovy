@@ -102,7 +102,7 @@ class ProcessingRecipeEndpoint {
         return toJson(recipes.collect {
             [
                     id          : it.id,
-                    projectId   : it.projectId
+                    projectId   : it.projectId,
                     name        : it.name,
                     type        : it.type,
                     creationTime: it.creationTime,
