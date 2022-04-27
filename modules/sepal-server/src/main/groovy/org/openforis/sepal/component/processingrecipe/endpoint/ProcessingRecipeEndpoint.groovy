@@ -4,10 +4,8 @@ import groovy.json.JsonSlurper
 import groovymvc.Controller
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.processingrecipe.api.Recipe
-import org.openforis.sepal.component.processingrecipe.command.RemoveRecipe
-import org.openforis.sepal.component.processingrecipe.command.SaveRecipe
-import org.openforis.sepal.component.processingrecipe.query.ListRecipes
-import org.openforis.sepal.component.processingrecipe.query.LoadRecipe
+import org.openforis.sepal.component.processingrecipe.command.*
+import org.openforis.sepal.component.processingrecipe.query.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -25,6 +23,40 @@ class ProcessingRecipeEndpoint {
 
     void registerWith(Controller controller) {
         controller.with {
+            post('/processing-recipes/project/{id}') {
+                def recipeIds = jsonBody(List)
+                component.submit(new MoveRecipes(
+                    projectId: params.id, 
+                    recipeIds: recipeIds, 
+                    username: sepalUser.username
+                ))
+                send(recipesJson(sepalUser.username))
+            }
+
+            delete('/processing-recipes/project/{id}') {
+                component.submit(new RemoveProject(
+                        id: params.id,
+                        username: sepalUser.username
+                ))
+                def projects = component.submit(new ListProjects(sepalUser.username))
+                send(toJson(projects))
+            }
+
+            post('/processing-recipes/project') {
+                component.submit(new SaveProject([
+                        id: params.id,
+                        name: params.name,
+                        username: sepalUser.username
+                ]))
+                def projects = component.submit(new ListProjects(sepalUser.username))
+                send(toJson(projects))
+            }
+
+            get('/processing-recipes/project') {
+                def projects = component.submit(new ListProjects(sepalUser.username))
+                send(toJson(projects))
+            }
+            
             post('/processing-recipes/{id}') {
                 def contents = new GZIPInputStream(request.inputStream).getText('UTF-8')
                 component.submit(new SaveRecipe(new Recipe(
@@ -38,12 +70,12 @@ class ProcessingRecipeEndpoint {
             }
 
             delete('/processing-recipes/{id}') {
-                component.submit(new RemoveRecipe(params.id))
+                component.submit(new RemoveRecipe(params.id, sepalUser.username))
                 send(recipesJson(sepalUser.username))
             }
 
             get('/processing-recipes/{id}') {
-                def recipe = component.submit(new LoadRecipe(params.id))
+                def recipe = component.submit(new LoadRecipe(params.id, sepalUser.username))
                 if (!recipe)
                     return halt(404)
                 if (recipe.username != sepalUser.username && !sepalUser.admin) {
@@ -56,6 +88,12 @@ class ProcessingRecipeEndpoint {
             get('/processing-recipes') {
                 send(recipesJson(sepalUser.username))
             }
+
+            delete('/processing-recipes') {
+                def ids = jsonBody(List)
+                component.submit(new RemoveRecipes(ids: ids, username: sepalUser.username))
+                send(recipesJson(sepalUser.username))
+            }
         }
     }
 
@@ -64,6 +102,7 @@ class ProcessingRecipeEndpoint {
         return toJson(recipes.collect {
             [
                     id          : it.id,
+                    projectId   : it.projectId
                     name        : it.name,
                     type        : it.type,
                     creationTime: it.creationTime,

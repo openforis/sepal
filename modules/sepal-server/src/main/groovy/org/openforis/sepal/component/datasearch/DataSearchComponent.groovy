@@ -73,7 +73,6 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
         query(FindSceneAreasForAoi, new FindSceneAreasForAoiHandler(geeGateway))
         query(FindScenesForSceneArea, new FindScenesForSceneAreaHandler(sceneMetaDataRepository))
         query(FindBestScenes, new FindBestScenesHandler(sceneMetaDataRepository))
-        query(ToImageMap, new ToImageMapHandler(processingRecipeComponent))
     }
 
     void onStart() {

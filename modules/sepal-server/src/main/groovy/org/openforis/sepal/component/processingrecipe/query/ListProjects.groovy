@@ -7,19 +7,18 @@ import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
 
 @Canonical
-class LoadRecipe implements Query<Recipe> {
-    String id
+class ListProjects implements Query<List<Map>> {
     String username
 }
 
-class LoadRecipeHandler implements QueryHandler<Recipe, LoadRecipe> {
+class ListProjectsHandler implements QueryHandler<List<Map>, ListProjects> {
     private final RecipeRepository repository
 
-    LoadRecipeHandler(RecipeRepository repository) {
+    ListProjectsHandler(RecipeRepository repository) {
         this.repository = repository
     }
 
-    Recipe execute(LoadRecipe query) {
-        return repository.getById(query.id, query.username)
+    List<Map> execute(ListProjects query) {
+        return repository.listProjects(query.username)
     }
 }

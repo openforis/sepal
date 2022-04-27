@@ -8,19 +8,20 @@ import org.openforis.sepal.component.processingrecipe.api.RecipeRepository
 
 @EqualsAndHashCode(callSuper = true)
 @Canonical
-class RemoveRecipe extends AbstractCommand<Void> {
-    String id
+class MoveRecipes extends AbstractCommand<Void> {
+    String projectId
+    List<String> recipeIds
 }
 
-class RemoveRecipeHandler implements CommandHandler<Void, RemoveRecipe> {
+class MoveRecipesHandler implements CommandHandler<Void, MoveRecipes> {
     private final RecipeRepository repository
 
-    RemoveRecipeHandler(RecipeRepository repository) {
+    MoveRecipesHandler(RecipeRepository repository) {
         this.repository = repository
     }
 
-    Void execute(RemoveRecipe command) {
-        repository.remove(command.id, command.username)
+    Void execute(MoveRecipes command) {
+        repository.moveRecipes(command.projectId, command.recipeIds, command.username)
         return null
     }
 }

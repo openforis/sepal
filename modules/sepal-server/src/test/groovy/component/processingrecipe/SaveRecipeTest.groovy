@@ -33,4 +33,17 @@ class SaveRecipeTest extends RecipeTest {
         then:
         getRecipeById(recipe.id).typeVersion == 1
     }
+
+    def 'When saving, project id is set'() {
+        clock.set()
+        def recipe = newRecipe(projectId: 'some-project-id')
+
+        when:
+        saveRecipe(recipe)
+
+        then:
+
+        getRecipeById(recipe.id).typeVersion == currentTypeVersion
+        recipe.projectId == 'some-project-id'
+    }
 }

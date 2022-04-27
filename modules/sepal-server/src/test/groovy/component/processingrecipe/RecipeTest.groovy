@@ -6,13 +6,10 @@ import groovy.json.JsonSlurper
 import groovy.transform.ToString
 import org.openforis.sepal.component.processingrecipe.ProcessingRecipeComponent
 import org.openforis.sepal.component.processingrecipe.api.Recipe
-import org.openforis.sepal.component.processingrecipe.command.MigrateRecipes
-import org.openforis.sepal.component.processingrecipe.command.RemoveRecipe
-import org.openforis.sepal.component.processingrecipe.command.SaveRecipe
+import org.openforis.sepal.component.processingrecipe.command.*
 import org.openforis.sepal.component.processingrecipe.migration.AbstractMigrations
 import org.openforis.sepal.component.processingrecipe.migration.Migrations
-import org.openforis.sepal.component.processingrecipe.query.ListRecipes
-import org.openforis.sepal.component.processingrecipe.query.LoadRecipe
+import org.openforis.sepal.component.processingrecipe.query.*
 import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.sql.SqlConnectionManager
 import spock.lang.Specification
@@ -42,16 +39,24 @@ abstract class RecipeTest extends Specification {
         return recipe
     }
 
-    void removeRecipe(String id) {
-        component.submit(new RemoveRecipe(id: id))
+    void removeRecipe(String id, String username = testUsername) {
+        component.submit(new RemoveRecipe(id: id, username: username))
     }
 
-    Recipe getRecipeById(String id) {
-        component.submit(new LoadRecipe(id: id))
+    void removeRecipes(List<String> ids, String username = testUsername) {
+        component.submit(new RemoveRecipes(ids: ids, username: username))
+    }
+
+    Recipe getRecipeById(String id, String username = testUsername) {
+        component.submit(new LoadRecipe(id: id, username: username))
     }
 
     List<Recipe> listRecipes(String username = testUsername) {
         component.submit(new ListRecipes(username: username))
+    }
+
+    void moveRecipes(String projectId, List<String> recipeIds, String username = testUsername) {
+        component.submit(new MoveRecipes(projectId: projectId, recipeIds: recipeIds, username: username))
     }
 
     Recipe newRecipe(Map args = [:]) {
@@ -60,6 +65,7 @@ abstract class RecipeTest extends Specification {
             type = 'MOSAIC'
         new Recipe(
             id: args.id ?: UUID.randomUUID().toString(),
+            projectId: args.projectId ?: 'test-project-id',
             name: args.name ?: 'some-name',
             type: type,
             typeVersion: args.typeVersion ?: currentTypeVersion,
@@ -68,6 +74,27 @@ abstract class RecipeTest extends Specification {
             creationTime: clock.now(),
             updateTime: clock.now()
         )
+    }
+
+    List<Map> listProjects(String username = testUsername) {
+        component.submit(new ListProjects(username: username))
+    }
+
+    Map saveProject(Map project) {
+        component.submit(new SaveProject(project))
+        return project
+    }
+
+    void removeProject(String id, String username = testUsername) {
+        component.submit(new RemoveProject(id: id, username: username))
+    }
+
+    Map newProject(Map args = [:]) {
+        [
+            id: args.id ?: UUID.randomUUID().toString(),
+            name: args.name ?: 'some-name',
+            username: args.username ?: testUsername
+        ]
     }
 
     int getCurrentTypeVersion() {
