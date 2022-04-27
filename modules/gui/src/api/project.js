@@ -1,31 +1,14 @@
-// import {delete$, get$, postBinary$} from 'http-client'
-import {of} from 'rxjs'
+import {delete$, get$, post$} from 'http-client'
 
 export default {
     loadAll$: () =>
-        of([
-            {id: 1, name: 'Foo'},
-            {id: 2, name: 'Bar'},
-            {id: 3, name: 'Baz'}
-        ]),
+        get$('/api/processing-recipes/project'),
 
     save$: ({id, name}) =>
-        of(true),
+        post$('/api/processing-recipes/project', {
+            body: {id, name}
+        }),
 
-    remove$: ({id}) =>
-        of(true)
-
-    // get$('/api/processing-projects'),
-
-    // save$: ({id, type, name, gzippedContents}) =>
-    //     postBinary$(`/api/processing-recipes/${id}`, {
-    //         query: {type, name},
-    //         body: gzippedContents
-    //     }),
-
-    // delete$: recipeId =>
-    //     delete$(`/api/processing-recipes/${recipeId}`),
-
-    // load$: recipeId =>
-    //     get$(`/api/processing-recipes/${recipeId}`),
+    remove$: projectId =>
+        delete$(`/api/processing-recipes/project/${projectId}`)
 }

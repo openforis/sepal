@@ -20,27 +20,9 @@ import actionBuilder from 'action-builder'
 import api from 'api'
 import styles from './projects.module.css'
 
-const mapStateToProps = () => {
-    const projects = select('process.projects')
-    // const recipes = select('process.recipes')
-    return {
-        projects
-        // projects: recipes ? _(recipes).map(({project}) => project || 'foo').uniq().value() : null
-    }
-}
-
-// export const showUserMessages = () =>
-//     actionBuilder('USER_MESSAGES')
-//         .set('ui.userMessages', 'SHOW_MESSAGES')
-//         .dispatch()
-
-// export const closePanel = () =>
-//     actionBuilder('USER_MESSAGES')
-//         .del('ui.userMessages')
-//         .dispatch()
-
-// const unreadMessagesCount = userMessages =>
-//     _.filter(userMessages, {state: 'UNREAD'}).length
+const mapStateToProps = () => ({
+    projects: select('process.projects')
+})
 
 class _Projects extends React.Component {
     state = {
@@ -48,16 +30,15 @@ class _Projects extends React.Component {
     }
 
     newProject() {
-        this.editProject({})
+        this.editProject({id: uuid()})
     }
 
     updateProject(project) {
-        const {id = uuid()} = project
-        this.props.stream('REQUEST_UPDATE_PROJECTS',
+        this.props.stream('REQUEST_UPDATE_PROJECT',
             api.project.save$(project),
-            () => {
-                actionBuilder('UPDATE_PROJECT', {...project, id})
-                    .assign(['process.projects', {id: project.id}], project)
+            projects => {
+                actionBuilder('UPDATE_PROJECT', {project})
+                    .set('process.projects', projects)
                     .dispatch()
                 Notifications.success({message: msg('process.project.update.success')})
             },
@@ -69,10 +50,10 @@ class _Projects extends React.Component {
     removeProject(project) {
         const {id} = project
         this.props.stream('REQUEST_REMOVE_PROJECT',
-            api.project.remove$(project),
-            () => {
-                actionBuilder('REMOVE_PROJECT')
-                    .del(['process.projects', {id}])
+            api.project.remove$(id),
+            projects => {
+                actionBuilder('REMOVE_PROJECT', {project})
+                    .set('process.projects', projects)
                     .dispatch()
                 Notifications.success({message: msg('process.project.remove.success')})
             },
@@ -88,9 +69,7 @@ class _Projects extends React.Component {
 
     renderProjects() {
         const {projects} = this.props
-        console.log({projects})
         if (projects.length) {
-            // const sortedUserMessages = _.orderBy(userMessages, userMessage => moment(userMessage.message.creationTime) || moment(), 'desc')
             return (
                 <Layout type='vertical' spacing='tight'>
                     {projects.map((project, index) => this.renderProject(project, index))}
@@ -106,8 +85,7 @@ class _Projects extends React.Component {
     renderProject(project, index) {
         return (
             <ListItem
-                key={index}
-                onClick={() => console.log('select')}>
+                key={index}>
                 <CrudItem
                     title={project.name}
                     // timestamp={creationTime}
@@ -129,7 +107,7 @@ class _Projects extends React.Component {
                 className={styles.panel}
                 type='modal'>
                 <Panel.Header
-                    icon='diagram-project'
+                    icon='folder-tree'
                     title={msg('process.projects.title')}
                 />
                 <Panel.Content>
@@ -177,9 +155,11 @@ class _Projects extends React.Component {
         if (!projects) {
             stream('LOAD_PROJECTS',
                 api.project.loadAll$().pipe(
-                    map(projects => actionBuilder('SET_PROJECTS', {projects})
-                        .set('process.projects', projects)
-                        .dispatch())
+                    map(projects =>
+                        actionBuilder('SET_PROJECTS', {projects})
+                            .set('process.projects', projects)
+                            .dispatch()
+                    )
                 ),
                 null,
                 () => Notifications.error({message: msg('process.project.loadingError'), timeout: -1})
@@ -212,12 +192,13 @@ class _ProjectsButton extends React.Component {
                             size='large'
                             shape='pill'
                             icon='folder-tree'
-                            label={msg('process.projects.title')}
+                            label={msg('process.projects.label')}
+                            tooltip={msg('process.projects.tooltip')}
+                            tooltipPlacement='top'
+                            tooltipDisabled={active}
                             disabled={active}
                             onClick={() => activate()}
-                            // tooltip={msg('home.sections.user.messages')}
-                            tooltipPlacement='top'
-                            tooltipDisabled={active}/>
+                        />
                     }
                 </Activator>
             </React.Fragment>

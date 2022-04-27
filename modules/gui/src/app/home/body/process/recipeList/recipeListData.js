@@ -20,6 +20,7 @@ import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
+import _ from 'lodash'
 import styles from './recipeListData.module.css'
 
 class _RecipeListData extends React.Component {
@@ -96,7 +97,7 @@ class _RecipeListData extends React.Component {
             <ButtonGroup spacing='none'>
                 <Button
                     icon='pen-to-square'
-                    label='Edit'
+                    label={msg('process.recipe.edit.label')}
                     shape='pill'
                     tail={
                         <Icon name={edit ? 'chevron-left' : 'chevron-right'}/>
@@ -117,9 +118,9 @@ class _RecipeListData extends React.Component {
         return (
             <CheckButton
                 shape='pill'
-                label='Select'
+                label={msg('process.recipe.select.label')}
                 checked={selected}
-                tooltip={selected ? 'Deselect all recipes' : 'Select all recipes'}
+                tooltip={msg(selected ? 'process.recipe.select.tooltip.deselect' : 'process.recipe.select.tooltip.select')}
                 onToggle={toggleAll}/>
         )
     }
@@ -130,16 +131,16 @@ class _RecipeListData extends React.Component {
             <ButtonPopup
                 shape='pill'
                 icon='shuffle'
-                label='Move'
+                label={msg('process.recipe.move.label')}
                 placement='below'
                 alignment='left'
                 disabled={!isSelected()}
-                tooltip='Move selected recipes to project'>
+                tooltip={msg('process.recipe.move.tooltip')}>
                 {onBlur => (
                     <Combo
                         placement='below'
                         alignment='left'
-                        placeholder='Destination project'
+                        placeholder={msg('process.recipe.move.destinationProject')}
                         options={this.getDestinations()}
                         standalone
                         autoFocus
@@ -159,8 +160,8 @@ class _RecipeListData extends React.Component {
         const {move: {value: projectId, label: projectName}} = this.state
         return moveSelected && (
             <Confirm
-                title={'Move recipes'}
-                message={`Move ${isSelected()} recipes to project ${projectName}?`}
+                title={msg('process.recipe.move.title')}
+                message={msg('process.recipe.move.confirm', {count: isSelected(), project: projectName})}
                 onConfirm={() => {
                     this.setMove(false)
                     moveSelected(projectId)
@@ -176,9 +177,9 @@ class _RecipeListData extends React.Component {
             <RemoveButton
                 shape='pill'
                 icon='trash'
-                label='Remove'
-                tooltip='Remove selected recipes'
-                message={`Remove ${isSelected()} recipes?`}
+                label={msg('process.recipe.remove.label')}
+                tooltip={msg('process.recipe.remove.tooltip')}
+                message={msg('process.recipe.remove.confirm', {count: isSelected()})}
                 disabled={!isSelected()}
                 onRemove={removeSelected}/>
         )
@@ -223,11 +224,11 @@ class _RecipeListData extends React.Component {
     }
 
     renderRecipe(recipe, highlightMatcher) {
-        const {onClick, onDuplicate, onRemove, recipeListContext: {isSelected, toggleOne}} = this.props
+        const {onClick, onDuplicate, onRemove, recipeListContext: {projects, isSelected, toggleOne}} = this.props
         const {edit} = this.state
-        const project = recipe.project || 'ungrouped'
         const name = recipe.name
-        const path = `${project} / ${name}`
+        const project = _.find(projects, ({id}) => id === recipe.projectId)
+        const path = `${project ? project.name : '*'} / ${name}`
         return (
             <ListItem
                 key={recipe.id}
@@ -243,7 +244,7 @@ class _RecipeListData extends React.Component {
                     selectTooltip={msg('process.menu.selectRecipe.tooltip')}
                     selected={isSelected(recipe.id)}
                     onDuplicate={onDuplicate ? () => onDuplicate(recipe.id) : null}
-                    onRemove={onRemove ? () => onRemove(recipe.id, recipe.type) : null}
+                    onRemove={onRemove ? () => onRemove(recipe.id) : null}
                     onSelect={(edit && toggleOne) ? () => toggleOne(recipe.id) : null}
                 />
             </ListItem>

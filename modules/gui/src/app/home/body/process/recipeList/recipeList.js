@@ -17,7 +17,7 @@ const mapStateToProps = () => {
     const recipes = select('process.recipes')
     return {
         projects: projects ?? null,
-        recipes: recipes ? recipes.map(recipe => ({...recipe, projectId: 1})) : null
+        recipes: recipes ?? null
     }
 }
 
@@ -141,13 +141,15 @@ class _RecipeList extends React.Component {
     }
 
     moveSelected(projectId) {
+        const {onMove} = this.props
         const {selectedIds} = this.state
-        console.log(`move to ${projectId}:`, selectedIds)
+        onMove(selectedIds, projectId)
     }
 
     removeSelected() {
+        const {onRemove} = this.props
         const {selectedIds} = this.state
-        console.log('remove:', selectedIds)
+        onRemove(selectedIds)
     }
 
     getRecipes() {
@@ -189,7 +191,9 @@ export const RecipeList = compose(
 )
 
 RecipeList.propTypes = {
-    children: PropTypes.any.isRequired
+    children: PropTypes.any.isRequired,
+    onMove: PropTypes.func,
+    onRemove: PropTypes.func
 }
 
 RecipeList.Data = RecipeListData

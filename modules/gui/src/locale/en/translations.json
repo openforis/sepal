@@ -2486,6 +2486,8 @@
     },
     "projects": {
       "title": "Projects",
+      "label": "Projects",
+      "tooltip": "Manage projects",
       "noProjects": "No projects",
       "add": "Add"
     },
@@ -2516,8 +2518,29 @@
         "title": "Create recipe",
         "tooltip": "Create a new SEPAL recipe"
       },
+      "edit": {
+          "label": "Edit"
+      },
+      "select": {
+          "label": "Select",
+          "tooltip": {
+              "select": "Select all recipes",
+              "deselect": "Deselect all recipes"
+          }
+      },
       "remove": {
-        "success": "Recipe has been removed"
+          "label": "Remove",
+          "tooltip": "Remove selected recipes",
+          "confirm": "Remove {count} {count, plural, one {recipe} other {recipes}}?",
+          "success": "Recipes have been removed"
+      },
+      "move": {
+        "label": "Move",
+        "tooltip": "Move selected recipes to a project",
+        "title": "Move recipes",
+        "success": "Recipes have been moved",
+        "destinationProject": "Destination project",
+        "confirm": "Move {count} {count, plural, one {recipe} other {recipes}} to project {project}?"
       },
       "export": {
           "success": "Recipe has been exported.",

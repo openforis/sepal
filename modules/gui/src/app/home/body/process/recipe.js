@@ -215,15 +215,25 @@ export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
         map(sourceRecipe => duplicateRecipe(sourceRecipe, destinationRecipeId))
     )
 
-export const removeRecipe$ = recipeId =>
-    api.recipe.delete$(recipeId).pipe(
-        map(() => {
-            removeAllRevisions(recipeId)
-            actionBuilder('REMOVE_RECIPE', {recipeId})
-                .del(['process.recipes', {id: recipeId}])
-                .del(['process.loadedRecipes', recipeId])
+export const removeRecipes$ = recipeIds =>
+    api.recipe.remove$(recipeIds).pipe(
+        map(() =>
+            _.transform(recipeIds, (actions, recipeId) => {
+                removeAllRevisions(recipeId)
+                actions
+                    .del(['process.recipes', {id: recipeId}])
+                    .del(['process.loadedRecipes', recipeId])
+            }, actionBuilder('REMOVE_RECIPES', {recipeIds})).dispatch()
+        )
+    )
+
+export const moveRecipes$ = (recipeIds, projectId) =>
+    api.recipe.move$(recipeIds, projectId).pipe(
+        map(recipes =>
+            actionBuilder('MOVE_RECIPES', {recipeIds, projectId})
+                .set('process.recipes', recipes)
                 .dispatch()
-        })
+        )
     )
 
 export const addRecipe = recipe => {
