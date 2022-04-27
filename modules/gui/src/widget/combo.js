@@ -129,7 +129,7 @@ class _Combo extends React.Component {
         const {onBlur} = this.props
         const {showOptions} = this.state
         if (showOptions) {
-            this.input.current.focus()
+            this.input.current && this.input.current.focus()
         } else {
             onBlur && onBlur(e)
             this.setState({focused: false})
