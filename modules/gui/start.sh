@@ -28,4 +28,4 @@ else
   service nginx start
   pid=$(ps aux | grep '[/]usr/sbin/nginx' | awk '{ print $2 }')
   exec tail --pid="${pid}" -f /dev/null
-# fi
+fi
