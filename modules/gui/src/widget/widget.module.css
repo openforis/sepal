@@ -50,13 +50,13 @@
 }
 
 .widget.border:focus-within,
-.widget.border:not(:disabled):hover,
-.widget.border:focus:not(:disabled):hover {
+.widget.border:not(:disabled):not(.widget.busy):hover,
+.widget.border:focus:not(:disabled):not(.widget.busy):hover {
     border-bottom-style: solid;
 }
 
-.widget.border.normal:not(:disabled):hover,
-.widget.border.normal:focus:not(:disabled):hover {
+.widget.border.normal:not(:disabled):not(.widget.busy):hover,
+.widget.border.normal:focus:not(:disabled):not(.widget.busy):hover {
     --input-border-color: var(--input-border-hover-color);
 }
 

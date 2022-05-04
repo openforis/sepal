@@ -46,8 +46,8 @@ class _Combo extends React.Component {
     }
 
     isActive() {
-        const {busyMessage, disabled} = this.props
-        return !(disabled || busyMessage)
+        const {disabled} = this.props
+        return !disabled
     }
 
     render() {
