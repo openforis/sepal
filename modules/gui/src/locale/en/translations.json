@@ -1722,8 +1722,6 @@
             "tooLong": "The legend is too long. It cannot contain more than {max} entries."
           },
           "recipe": {
-            "label": "Recipe",
-            "placeholder": "Select a recipe...",
             "title": "Saved SEPAL Recipe"
           },
           "to": {
@@ -3274,6 +3272,13 @@
       "warning": {
         "title": "Warning"
       }
+    },
+    "recipeInput": {
+        "label": "Recipe",
+        "placeholder": "Select a recipe...",
+        "all": {
+            "tooltip": "Show all recipes or only recipes in current project"
+        }
     },
     "safetyButton": {
       "label": "Proceed"

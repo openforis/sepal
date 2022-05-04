@@ -1,66 +1,32 @@
-import {Form} from 'widget/form/form'
-import {compose} from 'compose'
-import {connect, select} from 'store'
+import {RecipeInput} from 'widget/recipeInput'
 import {getAllVisualizations} from 'app/home/body/process/recipe/visualizations'
-import {getRecipeType} from 'app/home/body/process/recipeTypes'
-import {map, switchMap} from 'rxjs'
-import {msg} from 'translate'
-import {recipeAccess} from 'app/home/body/process/recipeAccess'
 import PropTypes from 'prop-types'
 import React from 'react'
-import api from 'api'
 
-const mapStateToProps = () => {
-    return {
-        recipes: select('process.recipes')
-    }
-}
-
-class _RecipeSection extends React.Component {
+export class RecipeSection extends React.Component {
     render() {
-        const {stream, recipes, input} = this.props
-        const options = recipes
-            .filter(({type}) => !getRecipeType(type).noImageOutput)
-            .map(recipe => ({
-                value: recipe.id,
-                label: recipe.name
-            }))
+        const {input, onLoading} = this.props
         return (
-            <Form.Combo
-                label={msg('process.classChange.panel.inputImage.recipe.label')}
+            <RecipeInput
                 input={input}
-                placeholder={msg('process.classChange.panel.inputImage.recipe.placeholder')}
-                options={options}
+                filter={type => !type.noImageOutput}
                 autoFocus
-                onChange={({value}) => this.onRecipeSelected(value)}
-                errorMessage
-                busyMessage={stream('LOAD_RECIPE_BANDS').active}
+                onLoading={onLoading}
+                onLoaded={value => this.onRecipeLoaded(value)}
             />
         )
     }
 
-    onRecipeSelected(recipeId) {
-        const {stream, onLoading, onLoaded, loadRecipe$} = this.props
-        if (recipeId) {
-            onLoading(recipeId)
-            stream('LOAD_RECIPE_BANDS',
-                loadRecipe$(recipeId).pipe(
-                    switchMap(recipe =>
-                        api.gee.bands$({recipe}).pipe(
-                            map(bandNames => this.extractBands(recipe, bandNames))
-                        )
-                    )
-                ),
-                bands => onLoaded({
-                    id: recipeId,
-                    bands,
-                    recipe: {
-                        type: 'RECIPE_REF',
-                        id: recipeId
-                    }
-                })
-            )
-        }
+    onRecipeLoaded({recipe, bandNames}) {
+        const {onLoaded} = this.props
+        onLoaded({
+            id: recipe.id,
+            bands: this.extractBands(recipe, bandNames),
+            recipe: {
+                type: 'RECIPE_REF',
+                id: recipe.id
+            }
+        })
     }
 
     extractBands(recipe, bandNames) {
@@ -77,18 +43,7 @@ class _RecipeSection extends React.Component {
     }
 }
 
-export const RecipeSection = compose(
-    _RecipeSection,
-    connect(),
-    recipeAccess()
-)
-
 RecipeSection.propTypes = {
     input: PropTypes.object.isRequired,
     recipes: PropTypes.array
 }
-
-export default compose(
-    RecipeSection,
-    connect(mapStateToProps)
-)
