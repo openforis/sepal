@@ -44,7 +44,7 @@ class _RecipeInput extends React.Component {
                 label: recipe.name
             }))
 
-        const additionalButtons = (
+        const additionalButtons = [
             <Buttons
                 key={'inverted'}
                 selected={[all]}
@@ -61,7 +61,7 @@ class _RecipeInput extends React.Component {
                     this.setState({all: !all})
                 }}
             />
-        )
+        ]
         
         return (
             <Form.Combo
