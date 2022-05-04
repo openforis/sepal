@@ -8,7 +8,7 @@ interface RecipeRepository {
 
     void removeRecipes(List<String> ids, String username)
 
-    Recipe getById(String id, String username)
+    Recipe getById(String id)
 
     List<Recipe> list(String username)
 

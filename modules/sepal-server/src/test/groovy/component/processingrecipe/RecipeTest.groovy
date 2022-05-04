@@ -48,7 +48,7 @@ abstract class RecipeTest extends Specification {
     }
 
     Recipe getRecipeById(String id, String username = testUsername) {
-        component.submit(new LoadRecipe(id: id, username: username))
+        component.submit(new LoadRecipe(id: id))
     }
 
     List<Recipe> listRecipes(String username = testUsername) {

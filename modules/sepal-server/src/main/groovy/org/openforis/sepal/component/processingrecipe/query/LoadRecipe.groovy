@@ -9,7 +9,6 @@ import org.openforis.sepal.query.QueryHandler
 @Canonical
 class LoadRecipe implements Query<Recipe> {
     String id
-    String username
 }
 
 class LoadRecipeHandler implements QueryHandler<Recipe, LoadRecipe> {
@@ -20,6 +19,6 @@ class LoadRecipeHandler implements QueryHandler<Recipe, LoadRecipe> {
     }
 
     Recipe execute(LoadRecipe query) {
-        return repository.getById(query.id, query.username)
+        return repository.getById(query.id)
     }
 }

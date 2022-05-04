@@ -75,7 +75,7 @@ class ProcessingRecipeEndpoint {
             }
 
             get('/processing-recipes/{id}') {
-                def recipe = component.submit(new LoadRecipe(params.id, sepalUser.username))
+                def recipe = component.submit(new LoadRecipe(params.id))
                 if (!recipe)
                     return halt(404)
                 if (recipe.username != sepalUser.username && !sepalUser.admin) {

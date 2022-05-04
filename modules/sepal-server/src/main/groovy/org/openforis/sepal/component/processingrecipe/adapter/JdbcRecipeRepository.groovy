@@ -35,12 +35,12 @@ class JdbcRecipeRepository implements RecipeRepository {
         sql.execute("UPDATE recipe SET removed = TRUE WHERE id in (${placeholders(ids)}) AND username = ? ", [ids, username].flatten())
     }
 
-    Recipe getById(String id, String username) {
+    Recipe getById(String id) {
         def recipe = null
         sql.eachRow('''
                 SELECT id, project_id, name, type, type_version, username, contents, creation_time, update_time 
                 FROM recipe 
-                WHERE id = ? AND NOT removed AND username = ? ''', [id, username]) {
+                WHERE id = ? AND NOT removed ''', [id]) {
             recipe = toRecipe(it)
         }
         return recipe
