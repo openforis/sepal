@@ -83,7 +83,7 @@ class _Combo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, standalone, readOnly, inputClassName, additionalButtons = []} = this.props
+        const {placeholder, autoFocus, standalone, readOnly, border, inputClassName, additionalButtons = []} = this.props
         const {focused, filter, selectedOption, showOptions} = this.state
         const showOptionsKeyBinding = showOptions ? undefined : () => this.showOptions()
         const keymap = {
@@ -107,6 +107,7 @@ class _Combo extends React.Component {
                             selectedOption && !showOptions ? styles.fakePlaceholder : null,
                             inputClassName
                         ].join(' ')}
+                        border={border}
                         value={filter}
                         placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
                         disabled={!this.isActive()}
@@ -373,6 +374,7 @@ Combo.propTypes = {
     alignment: PropTypes.oneOf(['left', 'center', 'right', 'fit']),
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
+    border: PropTypes.any,
     busyMessage: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
@@ -397,6 +399,7 @@ Combo.propTypes = {
 
 Combo.defaultProps = {
     alignment: 'left',
+    border: 'true',
     placement: 'below',
     tooltipPlacement: 'top'
 }
