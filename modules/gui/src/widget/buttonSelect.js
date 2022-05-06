@@ -83,6 +83,7 @@ class ButtonSelect extends React.Component {
             <ButtonGroup
                 ref={this.input}
                 spacing='none'
+                layout='horizontal-nowrap'
                 onMouseOver={onMouseOver}
                 onMouseOut={onMouseOut}
             >
@@ -105,7 +106,6 @@ class ButtonSelect extends React.Component {
                     icon={this.getChevronIcon()}
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
-                    width={width}
                     onClick={() => this.toggleOptions()}
                     disabled={disabled}
                 />
