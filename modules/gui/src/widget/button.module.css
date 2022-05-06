@@ -131,6 +131,7 @@
 
 .width-fill {
     flex-grow: 1;
+    flex-shrink: 1;
 }
 
 .width-max {
@@ -169,6 +170,7 @@
 .button > * {
     white-space: nowrap;
     position: relative;
+    overflow: hidden;
 }
 
 /* spacing between icon and label */
