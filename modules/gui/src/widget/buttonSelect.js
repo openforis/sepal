@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from './buttonGroup'
 import {ScrollableList} from 'widget/list'
-import {Subject, delay} from 'rxjs'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
@@ -13,7 +13,7 @@ import _ from 'lodash'
 import styles from './buttonSelect.module.css'
 import withSubscriptions from 'subscription'
 
-const SELECTION_DELAY_MS = 350
+// const SELECTION_DELAY_MS = 350
 
 const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
@@ -186,16 +186,24 @@ class ButtonSelect extends React.Component {
         addSubscription(
             this.select$.subscribe(
                 option => {
+                    this.setState({selected: false}, this.hideOptions)
                     this.setSelectedOption(option)
                     input && input.set(option.value)
                     onSelect && onSelect(option)
                 }
-            ),
-            this.select$.pipe(
-                delay(SELECTION_DELAY_MS)
-            ).subscribe(
-                () => this.setState({selected: false}, this.hideOptions)
             )
+            // this.select$.subscribe(
+            //     option => {
+            //         this.setSelectedOption(option)
+            //         input && input.set(option.value)
+            //         onSelect && onSelect(option)
+            //     }
+            // ),
+            // this.select$.pipe(
+            //     delay(SELECTION_DELAY_MS)
+            // ).subscribe(
+            //     () => this.setState({selected: false}, this.hideOptions)
+            // )
         )
     }
 

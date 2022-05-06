@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {ScrollableList} from 'widget/list'
-import {Subject, delay} from 'rxjs'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {isMobile} from 'widget/userAgent'
@@ -18,7 +18,7 @@ import _ from 'lodash'
 import styles from './combo.module.css'
 import withSubscriptions from 'subscription'
 
-const SELECTION_DELAY_MS = 350
+// const SELECTION_DELAY_MS = 350
 
 const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
@@ -260,15 +260,22 @@ class _Combo extends React.Component {
         addSubscription(
             this.select$.subscribe(
                 option => {
+                    this.setState({selected: false}, this.setFilter)
                     this.setSelectedOption(option)
                     onChange && onChange(option)
                 }
-            ),
-            this.select$.pipe(
-                delay(SELECTION_DELAY_MS)
-            ).subscribe(
-                () => this.setState({selected: false}, this.setFilter)
             )
+            // this.select$.subscribe(
+            //     option => {
+            //         this.setSelectedOption(option)
+            //         onChange && onChange(option)
+            //     }
+            // ),
+            // this.select$.pipe(
+            //     delay(SELECTION_DELAY_MS)
+            // ).subscribe(
+            //     () => this.setState({selected: false}, this.setFilter)
+            // )
         )
     }
 
