@@ -25,7 +25,7 @@ then
     --gee-email "$EE_ACCOUNT" \
     --gee-key "$EE_PRIVATE_KEY" \
     --google-project-id "$GOOGLE_PROJECT_ID" \
-    --google-region "$GOOGLE_REGION_SEPAL_KEY" \
+    --google-region "$GOOGLE_REGION" \
     --sepal-host "$SEPAL_HOST" \
     --sepal-endpoint "$SEPAL_ENDPOINT" \
     --sepal-username "sepalAdmin" \
@@ -39,7 +39,7 @@ else
     --gee-email "$EE_ACCOUNT" \
     --gee-key "$EE_PRIVATE_KEY" \
     --google-project-id "$GOOGLE_PROJECT_ID" \
-    --google-region "$GOOGLE_REGION_SEPAL_KEY" \
+    --google-region "$GOOGLE_REGION" \
     --sepal-host "$SEPAL_HOST" \
     --sepal-endpoint "$SEPAL_ENDPOINT" \
     --sepal-username "sepalAdmin" \

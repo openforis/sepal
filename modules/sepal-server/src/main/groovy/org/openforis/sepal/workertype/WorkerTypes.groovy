@@ -39,7 +39,7 @@ final class WorkerTypes {
                     ],
                     environment: [
                             GOOGLE_PROJECT_ID: config.googleProjectId,
-                            GOOGLE_REGION_SEPAL_KEY: config.googleRegion,
+                            GOOGLE_REGION: config.googleRegion,
                             EE_ACCOUNT: config.googleEarthEngineAccount,
                             EE_PRIVATE_KEY: eePrivateKey,
                             SEPAL_ENDPOINT: sepalEndpoint,
