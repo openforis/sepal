@@ -48,11 +48,11 @@ RUN chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 # Install node.js
 
-RUN curl -sL https://deb.nodesource.com/setup_17.x | bash && apt-get update && apt-get -y install nodejs
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash && apt-get update && apt-get -y install nodejs
 
 # Install global npm packages
 
-RUN npm install -g npm-check-updates wscat
+RUN npm install -g npm npm-check-updates wscat
 
 # Set bash prompt
 
