@@ -261,9 +261,11 @@ class _Combo extends React.Component {
         addSubscription(
             this.select$.subscribe(
                 option => {
-                    this.setState({selected: false}, this.setFilter)
                     this.setSelectedOption(option)
                     onChange && onChange(option)
+                    this.setState({selected: false}, () => {
+                        this.setFilter()
+                    })
                 }
             )
             // this.select$.subscribe(

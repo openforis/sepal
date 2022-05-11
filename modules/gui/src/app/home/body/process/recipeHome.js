@@ -1,5 +1,4 @@
 import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
-import {CreateRecipe} from './createRecipe'
 import {RecipeList} from './recipeList/recipeList'
 import {closeTab} from 'widget/tabs/tabs'
 import {compose} from 'compose'
@@ -29,13 +28,11 @@ class _RecipeHome extends React.Component {
         const {recipeId, recipes} = this.props
         return (
             <RecipeList
+                recipeId={recipeId}
                 onRemove={recipeIds => this.removeRecipes(recipeIds)}
                 onMove={(recipeIds, projectId) => this.moveRecipes(recipeIds, projectId)}>
                 <SectionLayout>
                     <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
-                        <CreateRecipe
-                            recipeId={recipeId}
-                            trigger={recipes && !recipes.length}/>
                         <RecipeList.Data
                             onClick={recipeId => this.openRecipe(recipeId)}
                             onDuplicate={recipeId => this.duplicateRecipe(recipeId)}

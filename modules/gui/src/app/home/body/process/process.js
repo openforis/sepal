@@ -6,11 +6,12 @@ import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {getRecipeType} from './recipeTypes'
 import {getTabsInfo} from 'widget/tabs/tabs'
+import {loadProjects$, loadRecipes$, recipePath, saveRecipe} from './recipe'
 import {msg} from 'translate'
-import {recipePath, saveRecipe} from './recipe'
 import {select} from '../../../../store'
 import {withLeaveAlert} from 'widget/leaveAlert'
 import CloseRecipe from './closeRecipe'
+import Notifications from 'widget/notifications'
 import ProcessMenu from './processMenu'
 import React from 'react'
 import Revisions from 'app/home/body/process/revisions'
@@ -83,6 +84,24 @@ class Process extends React.Component {
             closeRecipeDialog.activate({recipe})
         } else {
             close()
+        }
+    }
+
+    componentDidMount() {
+        const {projects, recipes, stream} = this.props
+        if (!projects) {
+            stream('LOAD_PROJECTS',
+                loadProjects$(),
+                null,
+                () => Notifications.error({message: msg('process.project.loadingError'), timeout: -1})
+            )
+        }
+        if (!recipes) {
+            stream('LOAD_RECIPES',
+                loadRecipes$(),
+                null,
+                () => Notifications.error({message: msg('process.recipe.loadingError'), timeout: -1})
+            )
         }
     }
 }

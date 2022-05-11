@@ -61,6 +61,7 @@ class ProcessingRecipeEndpoint {
                 def contents = new GZIPInputStream(request.inputStream).getText('UTF-8')
                 component.submit(new SaveRecipe(new Recipe(
                         id: params.id,
+                        projectId: params.projectId,
                         name: params.name,
                         type: params.type,
                         username: sepalUser.username,

@@ -2487,6 +2487,7 @@
       "label": "Projects",
       "tooltip": "Manage projects",
       "noProjects": "No projects",
+      "selected": "Currently selected",
       "add": "Add"
     },
     "project": {

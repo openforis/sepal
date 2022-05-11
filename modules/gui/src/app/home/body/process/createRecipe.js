@@ -8,6 +8,7 @@ import {connect} from 'store'
 import {getRecipeType, listRecipeTypes} from './recipeTypes'
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
+import {select} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -16,6 +17,7 @@ import styles from './createRecipe.module.css'
 
 const mapStateToProps = state => {
     return {
+        projectId: select('process.projectId'),
         panel: state.ui && state.ui.createRecipe,
         modal: state.ui && state.ui.modal
     }
@@ -33,22 +35,23 @@ export const closePanel = () =>
         .del('ui.modal')
         .dispatch()
 
-const createRecipe = (recipeId, type, tabPlaceholder) => {
+const createRecipe = ({projectId, recipeId, type, tabPlaceholder}) => {
     publishEvent('create_recipe', {recipe_type: type})
-    setTabType(recipeId, type, tabPlaceholder)
+    setTabType({projectId, recipeId, type, tabPlaceholder})
     closePanel()
 }
 
-const setTabType = (recipeId, type, tabPlaceholder) => {
+const setTabType = ({projectId, recipeId, type, tabPlaceholder}) => {
     const placeholder = `${tabPlaceholder}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`
     const recipe = {
         id: recipeId,
+        projectId,
         type,
         placeholder,
         ui: {unsaved: true}
     }
-    return actionBuilder('SET_TAB_TYPE')
-        .merge(['process.tabs', {id: recipeId}], {placeholder, type})
+    return actionBuilder('SET_TAB_TYPE', {projectId, recipeId, type, tabPlaceholder})
+        .merge(['process.tabs', {id: recipeId}], {projectId, placeholder, type})
         .merge(['process.loadedRecipes', recipeId], recipe)
         .dispatch()
 }
@@ -72,18 +75,16 @@ class _CreateRecipe extends React.Component {
     renderButton() {
         const {modal} = this.props
         return (
-            <div className={styles.createButton}>
-                <Button
-                    look='add'
-                    size='xx-large'
-                    icon='plus'
-                    shape='circle'
-                    keybinding='Ctrl+n'
-                    onClick={() => showRecipeTypes()}
-                    tooltip={msg('process.recipe.newRecipe.tooltip')}
-                    tooltipPlacement='left'
-                    tooltipDisabled={modal}/>
-            </div>
+            <Button
+                look='add'
+                icon='plus'
+                shape='pill'
+                label='Add recipe'
+                keybinding='Ctrl+n'
+                onClick={() => showRecipeTypes()}
+                tooltip={msg('process.recipe.newRecipe.tooltip')}
+                tooltipPlacement='left'
+                tooltipDisabled={modal}/>
         )
     }
 
@@ -135,10 +136,11 @@ class _CreateRecipe extends React.Component {
     }
 
     renderRecipeType(recipeType) {
-        const {recipeId} = this.props
+        const {projectId, recipeId} = this.props
         return (
             <RecipeType
                 key={recipeType.id}
+                projectId={projectId}
                 recipeId={recipeId}
                 type={recipeType}
                 onInfo={() => this.showRecipeTypeInfo(recipeType.id)}/>
@@ -183,14 +185,14 @@ CreateRecipe.propTypes = {
 
 class RecipeType extends React.Component {
     render() {
-        const {recipeId, type: {id, labels: {name, tabPlaceholder, creationDescription}, beta}} = this.props
+        const {projectId, recipeId, type: {id: recipeTypeId, labels: {name, tabPlaceholder, creationDescription}, beta}} = this.props
         const title = beta
             ? <span>{name}<sup className={styles.beta}>Beta</sup></span>
             : name
         return (
             <ListItem
-                key={id}
-                onClick={() => createRecipe(recipeId, id, tabPlaceholder)}>
+                key={recipeTypeId}
+                onClick={() => createRecipe({projectId, recipeId, type: recipeTypeId, tabPlaceholder})}>
                 <CrudItem
                     className={styles.recipe}
                     title={title}

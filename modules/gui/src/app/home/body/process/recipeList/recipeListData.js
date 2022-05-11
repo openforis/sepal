@@ -3,20 +3,21 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {CenteredProgress} from 'widget/progress'
 import {CheckButton} from 'widget/checkButton'
 import {Combo} from 'widget/combo'
+import {CreateRecipe} from '../createRecipe'
 import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
 import {Pageable} from 'widget/pageable/pageable'
-import {ProjectsButton} from './projects'
+import {ProjectsButton} from './projectsButton'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
+import {SelectProject} from './selectProject'
 import {compose} from 'compose'
 import {getRecipeType} from '../recipeTypes'
 import {msg} from 'translate'
 import {withRecipeListContext} from './recipeListContext'
 import ButtonPopup from 'widget/buttonPopup'
 import Confirm from 'widget/confirm'
-import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
@@ -70,21 +71,30 @@ class _RecipeListData extends React.Component {
     }
 
     renderHeader() {
+        const {recipeListContext: {projectId, recipeId}} = this.props
         return (
-            <Layout type='horizontal' spacing='compact' className={styles.header}>
-                <ProjectsButton/>
-                {this.renderSearch()}
-                {this.renderEditButtons()}
-                <Layout.Spacer/>
-                {this.renderSortButtons()}
+            <Layout type='vertical' spacing='compact' className={styles.header}>
+                <Layout type='horizontal' spacing='compact'>
+                    {this.renderSearch()}
+                    <Layout.Spacer/>
+                    {this.renderEditButtons()}
+                </Layout>
+                <Layout type='horizontal' spacing='compact'>
+                    <CreateRecipe recipeId={recipeId}/>
+                    <ProjectsButton/>
+                    <SelectProject/>
+                    <Layout.Spacer/>
+                    {this.renderSortButtons()}
+                </Layout>
             </Layout>
         )
     }
 
     renderSearch() {
-        const {recipeListContext: {setFilter}} = this.props
+        const {recipeListContext: {filterValue, setFilter}} = this.props
         return (
             <SearchBox
+                value={filterValue}
                 placeholder={msg('process.menu.searchRecipes')}
                 onSearchValue={searchValue => setFilter(searchValue)}
             />
@@ -95,19 +105,16 @@ class _RecipeListData extends React.Component {
         const {edit} = this.state
         return (
             <ButtonGroup spacing='none'>
+                {edit && this.renderSelectButton()}
+                {edit && this.renderMoveButton()}
+                {edit && this.renderRemoveButton()}
                 <Button
                     icon='pen-to-square'
                     label={msg('process.recipe.edit.label')}
                     shape='pill'
-                    tail={
-                        <Icon name={edit ? 'chevron-left' : 'chevron-right'}/>
-                    }
                     keybinding={edit ? 'Escape' : ''}
                     onClick={() => this.setEdit(!edit)}
                 />
-                {edit && this.renderSelectButton()}
-                {edit && this.renderMoveButton()}
-                {edit && this.renderRemoveButton()}
             </ButtonGroup>
         )
     }

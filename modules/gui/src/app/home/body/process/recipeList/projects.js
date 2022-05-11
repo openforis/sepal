@@ -1,5 +1,3 @@
-import {Activator, activator} from 'widget/activation/activator'
-import {Button} from 'widget/button'
 import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
@@ -15,18 +13,25 @@ import Notifications from 'widget/notifications'
 import Project from './project'
 import PropTypes from 'prop-types'
 import React from 'react'
+import Tag from 'widget/tag'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
 import styles from './projects.module.css'
 
 const mapStateToProps = () => ({
-    projects: select('process.projects')
+    projects: select('process.projects'),
+    projectId: select('process.projectId')
 })
 
 class _Projects extends React.Component {
     state = {
-        selectedProject: null
+        editProject: null
+    }
+
+    constructor() {
+        super()
+        this.close = this.close.bind(this)
     }
 
     newProject() {
@@ -63,8 +68,19 @@ class _Projects extends React.Component {
 
     editProject(project) {
         this.setState({
-            selectedProject: project
+            editProject: project
         })
+    }
+
+    selectProject(projectId) {
+        projectId
+            ? actionBuilder('SELECT_PROJECT', {projectId})
+                .set('process.projectId', projectId)
+                .dispatch()
+            : actionBuilder('DESELECT_PROJECT')
+                .del('process.projectId')
+                .dispatch()
+        this.close()
     }
 
     renderProjects() {
@@ -82,15 +98,23 @@ class _Projects extends React.Component {
         }
     }
 
+    renderSelected() {
+        return (
+            <Tag size='small' label={msg('process.projects.selected')}/>
+        )
+    }
+
     renderProject(project, index) {
+        const {projectId} = this.props
         return (
             <ListItem
-                key={index}>
+                key={index}
+                onClick={() => this.selectProject(project.id)}>
                 <CrudItem
                     title={project.name}
-                    // timestamp={creationTime}
                     editTooltip={msg('process.project.edit.tooltip')}
                     removeTooltip={msg('process.project.remove.tooltip')}
+                    inlineComponents={projectId === project.id && this.renderSelected()}
                     onEdit={() => this.editProject(project)}
                     onRemove={() => this.removeProject(project)}
                 />
@@ -99,8 +123,6 @@ class _Projects extends React.Component {
     }
 
     renderProjectsPanel() {
-        const {activatable: {deactivate}} = this.props
-        const close = deactivate
         const add = () => this.newProject()
         return (
             <Panel
@@ -113,9 +135,9 @@ class _Projects extends React.Component {
                 <Panel.Content>
                     {this.renderProjects()}
                 </Panel.Content>
-                <Panel.Buttons onEnter={close} onEscape={close}>
+                <Panel.Buttons onEnter={this.close} onEscape={this.close}>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Close onClick={close}/>
+                        <Panel.Buttons.Close onClick={this.close}/>
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
                         <Panel.Buttons.Add
@@ -140,14 +162,19 @@ class _Projects extends React.Component {
 
     render() {
         const {projects} = this.props
-        const {selectedProject} = this.state
+        const {editProject} = this.state
         if (projects) {
-            return selectedProject
-                ? this.renderProjectPanel(selectedProject)
+            return editProject
+                ? this.renderProjectPanel(editProject)
                 : this.renderProjectsPanel()
         } else {
             return null
         }
+    }
+
+    close() {
+        const {activatable: {deactivate}} = this.props
+        deactivate()
     }
 
     componentDidMount() {
@@ -170,7 +197,7 @@ class _Projects extends React.Component {
 
 const policy = () => ({_: 'disallow'})
 
-const Projects = compose(
+export const Projects = compose(
     _Projects,
     connect(mapStateToProps),
     activatable({id: 'projects', policy, alwaysAllow: true})
@@ -179,34 +206,3 @@ const Projects = compose(
 Projects.propTypes = {
     className: PropTypes.string
 }
-
-class _ProjectsButton extends React.Component {
-    render() {
-        return (
-            <React.Fragment>
-                <Projects/>
-                <Activator id='projects'>
-                    {({active, activate}) =>
-                        <Button
-                            look='transparent'
-                            size='large'
-                            shape='pill'
-                            icon='folder-tree'
-                            label={msg('process.projects.label')}
-                            tooltip={msg('process.projects.tooltip')}
-                            tooltipPlacement='top'
-                            tooltipDisabled={active}
-                            disabled={active}
-                            onClick={() => activate()}
-                        />
-                    }
-                </Activator>
-            </React.Fragment>
-        )
-    }
-}
-
-export const ProjectsButton = compose(
-    _ProjectsButton,
-    activator('projects')
-)

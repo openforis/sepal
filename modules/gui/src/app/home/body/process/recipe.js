@@ -27,18 +27,19 @@ const saveToBackend$ = (() => {
                     }
                     return _.omit(recipe, ['ui'])
                 }),
-                switchMap(recipe => {
-                    return gzip$(recipe).pipe(
+                switchMap(recipe =>
+                    gzip$(recipe).pipe(
                         switchMap(compressedRecipe =>
                             api.recipe.save$({
                                 id: recipe.id,
+                                projectId: recipe.projectId,
                                 type: recipe.type,
                                 name: recipe.title || recipe.placeholder,
                                 gzippedContents: compressedRecipe
                             })
                         )
                     )
-                })
+                )
             )
         )
     ).subscribe({
@@ -138,6 +139,7 @@ const updateRecipeList = recipe =>
     actionBuilder('SET_RECIPES')
         .assign(['process.recipes', {id: recipe.id}], {
             id: recipe.id,
+            projectId: recipe.projectId,
             name: recipe.title || recipe.placeholder,
             type: recipe.type
         })
