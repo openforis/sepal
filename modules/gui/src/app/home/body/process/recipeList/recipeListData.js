@@ -66,7 +66,7 @@ class _RecipeListData extends React.Component {
     }
 
     renderData() {
-        const {filterValues} = this.props
+        const {recipeId, filterValues} = this.props
         const {move} = this.state
         const highlightMatcher = filterValues.length
             ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
@@ -84,7 +84,9 @@ class _RecipeListData extends React.Component {
                     {move && this.renderMoveConfirmation()}
                 </Unscrollable>
             </ScrollableContainer>
-        ) : null
+        ) : (
+            <CreateRecipe recipeId={recipeId} trigger={true}/>
+        )
     }
 
     renderHeader() {
