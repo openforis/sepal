@@ -15,28 +15,24 @@ import actionBuilder from 'action-builder'
 import api from 'api'
 import styles from './recipeHome.module.css'
 
-const mapStateToProps = () => {
-    const recipes = select('process.recipes')
-    return {
-        recipes: recipes ? recipes : null,
-        loadedRecipes: select('process.loadedRecipes') || {}
-    }
-}
+const mapStateToProps = () => ({
+    recipes: select('process.recipes'),
+    loadedRecipes: select('process.loadedRecipes') || {}
+})
 
 class _RecipeHome extends React.Component {
     render() {
         const {recipeId, recipes} = this.props
         return (
-            <RecipeList
-                recipeId={recipeId}
-                onRemove={recipeIds => this.removeRecipes(recipeIds)}
-                onMove={(recipeIds, projectId) => this.moveRecipes(recipeIds, projectId)}>
+            <RecipeList>
                 <SectionLayout>
                     <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
                         <RecipeList.Data
+                            recipeId={recipeId}
                             onClick={recipeId => this.openRecipe(recipeId)}
                             onDuplicate={recipeId => this.duplicateRecipe(recipeId)}
-                            onRemove={recipeId => this.removeRecipes(recipeId)}
+                            onMove={(recipeIds, projectId) => this.moveRecipes(recipeIds, projectId)}
+                            onRemove={recipeIds => this.removeRecipes(recipeIds)}
                         />
                     </Content>
                     <BottomBar className={styles.bottomBar}>
