@@ -1,5 +1,6 @@
 import ccdc from './recipe/ccdc/ccdc'
 import ccdcSlice from './recipe/ccdcSlice/ccdcSlice'
+import changeAlerts from './recipe/changeAlerts/changeAlerts'
 import classChange from './recipe/classChange/classChange'
 import classification from './recipe/classification/classification'
 import indexChange from './recipe/indexChange/indexChange'
@@ -19,7 +20,8 @@ export const listRecipeTypes = () => ([
     ccdcSlice(),
     classChange(),
     indexChange(),
-    remapping()
+    remapping(),
+    changeAlerts()
 ])
 
 export const getRecipeType = id => listRecipeTypes().find(recipeType => recipeType.id === id)

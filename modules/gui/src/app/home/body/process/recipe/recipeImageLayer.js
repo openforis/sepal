@@ -1,4 +1,5 @@
 import {CCDCSliceImageLayer} from './ccdcSlice/ccdcSliceImageLayer'
+import {ChangeAlertsImageLayer} from './changeAlerts/changeAlertsImageLayer'
 import {ClassChangeImageLayer} from './classChange/classChangeImageLayer'
 import {ClassificationImageLayer} from './classification/classificationImageLayer'
 import {CursorValue} from 'app/home/map/cursorValue'
@@ -82,6 +83,10 @@ class _RecipeImageLayer extends React.Component {
         case 'REMAPPING':
             return (
                 <RemappingImageLayer {...props}/>
+            )
+        case 'CHANGE_ALERTS':
+            return (
+                <ChangeAlertsImageLayer {...props}/>
             )
         case 'CCDC_SLICE':
             return (
