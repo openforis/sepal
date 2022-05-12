@@ -428,6 +428,10 @@ class _RecipeListData extends React.Component {
             .dispatch()
     }
 
+    componentDidMount() {
+        this.updateFilteredRecipes()
+    }
+    
     componentDidUpdate(prevProps) {
         if (!_.isEqual(this.props, prevProps)) {
             this.updateFilteredRecipes()
