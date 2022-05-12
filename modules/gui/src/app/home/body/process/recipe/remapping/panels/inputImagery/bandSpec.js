@@ -67,7 +67,8 @@ export class BandSpec extends React.Component {
                 options={bandOptions}
                 className={styles.bandSelector}
                 onChange={({value}) => this.updateBand(value)}
-            />)
+            />
+        )
     }
 
     renderTypeSelector() {

@@ -1,10 +1,10 @@
-FROM node:17-bullseye
+FROM node:18-bullseye
 
 ENV MODULE_NAME email
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
-RUN npm install -g nodemon
+RUN npm install -g npm nodemon
 
 RUN apt-get update && \
     apt-get install sudo && \

@@ -1369,14 +1369,11 @@
 			"tabPlaceholder": "RLCMS"
 		},
 		"menu": {
-			"duplicateRecipe": "Duplicar flujo de trabajo",
+			"duplicateRecipe.tooltip": "Duplicar flujo de trabajo",
 			"exportRecipe": "Exportar flujo de trabajo",
 			"noSavedRecipes": "Ningún flujo de trabajo guardado",
 			"recipeNotSaved": "Flujo de trabajo no guardado.",
-			"removeRecipe": {
-				"message": "¿Quieres eliminar la {recipe}?",
-				"tooltip": "Eliminar flujo de trabajo"
-			},
+			"removeRecipe.tooltip": "Eliminar flujo de trabajo",
 			"revertToOldRevision": "Volver a una antigua revisión...",
 			"savedRecipies": "Flujos de trabajo guardados",
 			"saveRecipe": "Guarda el flujo de trabajo...",

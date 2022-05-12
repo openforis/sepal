@@ -105,14 +105,15 @@ class _EETableSection extends React.Component {
 
         const eeTableColumnDisabled = !this.hasColumns() || eeTableRowSelection.value === 'INCLUDE_ALL'
         const eeTableRowDisabled = !rows || eeTableColumnDisabled
+        const loading = stream('LOAD_EE_TABLE_ROWS').active
 
         return (
             <React.Fragment>
                 <Form.Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.eeTable.column.label')}
                     input={eeTableColumn}
-                    busyMessage={stream('LOAD_EE_TABLE_ROWS').active && msg('widget.loading')}
-                    disabled={eeTableColumnDisabled}
+                    busyMessage={loading && msg('widget.loading')}
+                    disabled={eeTableColumnDisabled|| loading}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.eeTable.column.placeholder.${columnState}`)}
                     options={(columns || []).map(column => ({value: column, label: column}))}
                     onChange={column => {

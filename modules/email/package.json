@@ -18,15 +18,15 @@
         "ioredis": "^5.0.4",
         "lodash": "^4.17.21",
         "log4js": "^6.4.6",
-        "marked": "^4.0.14",
+        "marked": "^4.0.15",
         "moment": "^2.29.3",
-        "nodemailer": "^6.7.3",
+        "nodemailer": "^6.7.5",
         "rxjs": "^7.5.5",
         "sepal": "../../lib/js/shared/src",
         "short-unique-id": "^4.4.4"
     },
     "devDependencies": {
-        "eslint": "^8.14.0",
+        "eslint": "^8.15.0",
         "jest": "^27.5.1",
         "jest-expect-message": "^1.0.2"
     }

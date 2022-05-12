@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {ScrollableList} from 'widget/list'
-import {Subject, delay} from 'rxjs'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {isMobile} from 'widget/userAgent'
@@ -18,7 +18,7 @@ import _ from 'lodash'
 import styles from './combo.module.css'
 import withSubscriptions from 'subscription'
 
-const SELECTION_DELAY_MS = 350
+// const SELECTION_DELAY_MS = 350
 
 const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
@@ -46,8 +46,8 @@ class _Combo extends React.Component {
     }
 
     isActive() {
-        const {busyMessage, disabled} = this.props
-        return !(disabled || busyMessage)
+        const {disabled} = this.props
+        return !disabled
     }
 
     render() {
@@ -83,7 +83,7 @@ class _Combo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, standalone, readOnly, inputClassName, additionalButtons = []} = this.props
+        const {placeholder, autoFocus, standalone, readOnly, border, inputClassName, additionalButtons = []} = this.props
         const {focused, filter, selectedOption, showOptions} = this.state
         const showOptionsKeyBinding = showOptions ? undefined : () => this.showOptions()
         const keymap = {
@@ -107,6 +107,7 @@ class _Combo extends React.Component {
                             selectedOption && !showOptions ? styles.fakePlaceholder : null,
                             inputClassName
                         ].join(' ')}
+                        border={border}
                         value={filter}
                         placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
                         disabled={!this.isActive()}
@@ -129,7 +130,7 @@ class _Combo extends React.Component {
         const {onBlur} = this.props
         const {showOptions} = this.state
         if (showOptions) {
-            this.input.current.focus()
+            this.input.current && this.input.current.focus()
         } else {
             onBlur && onBlur(e)
             this.setState({focused: false})
@@ -262,13 +263,22 @@ class _Combo extends React.Component {
                 option => {
                     this.setSelectedOption(option)
                     onChange && onChange(option)
+                    this.setState({selected: false}, () => {
+                        this.setFilter()
+                    })
                 }
-            ),
-            this.select$.pipe(
-                delay(SELECTION_DELAY_MS)
-            ).subscribe(
-                () => this.setState({selected: false}, this.setFilter)
             )
+            // this.select$.subscribe(
+            //     option => {
+            //         this.setSelectedOption(option)
+            //         onChange && onChange(option)
+            //     }
+            // ),
+            // this.select$.pipe(
+            //     delay(SELECTION_DELAY_MS)
+            // ).subscribe(
+            //     () => this.setState({selected: false}, this.setFilter)
+            // )
         )
     }
 
@@ -366,6 +376,7 @@ Combo.propTypes = {
     alignment: PropTypes.oneOf(['left', 'center', 'right', 'fit']),
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
+    border: PropTypes.any,
     busyMessage: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
@@ -390,6 +401,7 @@ Combo.propTypes = {
 
 Combo.defaultProps = {
     alignment: 'left',
+    border: 'true',
     placement: 'below',
     tooltipPlacement: 'top'
 }

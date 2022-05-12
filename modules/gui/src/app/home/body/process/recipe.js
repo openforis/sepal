@@ -27,18 +27,19 @@ const saveToBackend$ = (() => {
                     }
                     return _.omit(recipe, ['ui'])
                 }),
-                switchMap(recipe => {
-                    return gzip$(recipe).pipe(
+                switchMap(recipe =>
+                    gzip$(recipe).pipe(
                         switchMap(compressedRecipe =>
                             api.recipe.save$({
                                 id: recipe.id,
+                                projectId: recipe.projectId,
                                 type: recipe.type,
                                 name: recipe.title || recipe.placeholder,
                                 gzippedContents: compressedRecipe
                             })
                         )
                     )
-                })
+                )
             )
         )
     ).subscribe({
@@ -138,6 +139,7 @@ const updateRecipeList = recipe =>
     actionBuilder('SET_RECIPES')
         .assign(['process.recipes', {id: recipe.id}], {
             id: recipe.id,
+            projectId: recipe.projectId,
             name: recipe.title || recipe.placeholder,
             type: recipe.type
         })
@@ -170,6 +172,13 @@ export const exportRecipe$ = recipe =>
         filename: `${recipe.title || recipe.placeholder}.json`,
         data: JSON.stringify(_.omit(recipe, ['ui']), null, 2)
     })
+
+export const loadProjects$ = () =>
+    api.project.loadAll$().pipe(
+        map(projects => actionBuilder('SET_PROJECTS', {projects})
+            .set('process.projects', projects)
+            .dispatch())
+    )
 
 export const loadRecipes$ = () =>
     api.recipe.loadAll$().pipe(
@@ -208,15 +217,25 @@ export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
         map(sourceRecipe => duplicateRecipe(sourceRecipe, destinationRecipeId))
     )
 
-export const removeRecipe$ = recipeId =>
-    api.recipe.delete$(recipeId).pipe(
-        map(() => {
-            removeAllRevisions(recipeId)
-            actionBuilder('REMOVE_RECIPE', {recipeId})
-                .del(['process.recipes', {id: recipeId}])
-                .del(['process.loadedRecipes', recipeId])
+export const removeRecipes$ = recipeIds =>
+    api.recipe.remove$(recipeIds).pipe(
+        map(() =>
+            _.transform(recipeIds, (actions, recipeId) => {
+                removeAllRevisions(recipeId)
+                actions
+                    .del(['process.recipes', {id: recipeId}])
+                    .del(['process.loadedRecipes', recipeId])
+            }, actionBuilder('REMOVE_RECIPES', {recipeIds})).dispatch()
+        )
+    )
+
+export const moveRecipes$ = (recipeIds, projectId) =>
+    api.recipe.move$(recipeIds, projectId).pipe(
+        map(recipes =>
+            actionBuilder('MOVE_RECIPES', {recipeIds, projectId})
+                .set('process.recipes', recipes)
                 .dispatch()
-        })
+        )
     )
 
 export const addRecipe = recipe => {

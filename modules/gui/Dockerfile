@@ -1,4 +1,4 @@
-FROM node:17-bullseye
+FROM node:18-bullseye
 EXPOSE 3000
 ENV MODULE_NAME gui
 ENV MODULE /usr/local/src/sepal/modules/gui

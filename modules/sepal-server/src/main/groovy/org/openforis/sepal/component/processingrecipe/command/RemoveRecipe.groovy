@@ -20,7 +20,7 @@ class RemoveRecipeHandler implements CommandHandler<Void, RemoveRecipe> {
     }
 
     Void execute(RemoveRecipe command) {
-        repository.remove(command.id)
+        repository.remove(command.id, command.username)
         return null
     }
 }

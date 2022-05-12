@@ -3,6 +3,7 @@ import {compose} from 'compose'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import withForwardedRef from 'ref'
 
 const Context = React.createContext()
@@ -11,8 +12,8 @@ export const withButtonGroupContext = withContext(Context, 'buttonGroupContext')
 
 const _ButtonGroup = ({className, layout, alignment, spacing, framed, label, disabled, onMouseOver, onMouseOut, forwardedRef, children}) => {
     const mapChild = (child, index, childrenCount) => {
-        const joinLeft = index !== 0
-        const joinRight = index !== childrenCount - 1
+        const joinLeft = childrenCount > 1 && index !== 0
+        const joinRight = childrenCount > 1 && index !== childrenCount - 1
         return (
             <Context.Provider value={{joinLeft, joinRight}}>
                 {child}
@@ -37,7 +38,7 @@ const _ButtonGroup = ({className, layout, alignment, spacing, framed, label, dis
             disabled={disabled}
             onMouseOver={onMouseOver}
             onMouseOut={onMouseOut}>
-            {spacing === 'none' ? mapChildren(children) : children}
+            {spacing === 'none' ? mapChildren(_.compact(children)) : children}
         </Widget>
     )
 }

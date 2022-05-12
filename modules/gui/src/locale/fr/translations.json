@@ -1666,14 +1666,11 @@
 			"tabPlaceholder": "RLCMS"
 		},
 		"menu": {
-			"duplicateRecipe": "Dupliquer une formule",
+			"duplicateRecipe.tooltip": "Dupliquer une formule",
 			"exportRecipe": "Exporter une formule",
 			"noSavedRecipes": "Pas de formules sauvegardées",
 			"recipeNotSaved": "formule non sauvegardée",
-			"removeRecipe": {
-				"message": "Voulez-vous supprimer {recipe} ?",
-				"tooltip": "Supprimer la formule"
-			},
+			"removeRecipe.tooltip": "Supprimer la formule",
 			"revertToOldRevision": "Retour à la révision précédente",
 			"savedRecipies": "Formules sauvegardées",
 			"saveRecipe": "Sauvegarder la formule...",

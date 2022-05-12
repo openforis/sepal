@@ -6,10 +6,7 @@ import org.openforis.sepal.component.processingrecipe.adapter.JdbcRecipeReposito
 import org.openforis.sepal.component.processingrecipe.command.*
 import org.openforis.sepal.component.processingrecipe.endpoint.ProcessingRecipeEndpoint
 import org.openforis.sepal.component.processingrecipe.migration.*
-import org.openforis.sepal.component.processingrecipe.query.ListRecipes
-import org.openforis.sepal.component.processingrecipe.query.ListRecipesHandler
-import org.openforis.sepal.component.processingrecipe.query.LoadRecipe
-import org.openforis.sepal.component.processingrecipe.query.LoadRecipeHandler
+import org.openforis.sepal.component.processingrecipe.query.*
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
@@ -53,10 +50,15 @@ class ProcessingRecipeComponent extends DataSourceBackedComponent implements End
 
         command(SaveRecipe, new SaveRecipeHandler(repository, migrationsByRecipeType, clock))
         command(RemoveRecipe, new RemoveRecipeHandler(repository))
+        command(RemoveRecipes, new RemoveRecipesHandler(repository))
         command(MigrateRecipes, new MigrateRecipesHandler(repository))
+        command(SaveProject, new SaveProjectHandler(repository))
+        command(RemoveProject, new RemoveProjectHandler(repository))
+        command(MoveRecipes, new MoveRecipesHandler(repository))
 
         query(LoadRecipe, new LoadRecipeHandler(repository))
         query(ListRecipes, new ListRecipesHandler(repository))
+        query(ListProjects, new ListProjectsHandler(repository))
 
     }
 

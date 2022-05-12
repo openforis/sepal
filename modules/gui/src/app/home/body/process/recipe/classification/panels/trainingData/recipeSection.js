@@ -1,38 +1,18 @@
-import {Form} from 'widget/form/form'
-import {compose} from 'compose'
-import {connect, select} from 'store'
-import {msg} from 'translate'
+import {RecipeInput} from 'widget/recipeInput'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-const mapStateToProps = () => {
-    return {
-        recipes: select('process.recipes')
-    }
-}
-
-class RecipeSection extends React.Component {
+export default class RecipeSection extends React.Component {
     render() {
-        const {recipes, inputs: {name, recipe}} = this.props
-        const options = recipes
-            .filter(({type}) => type === 'CLASSIFICATION')
-            .map(recipe => ({
-                value: recipe.id,
-                label: recipe.name
-            }))
-
-        const getName = recipeId => {
-            const recipe = recipes.find(({id}) => id === recipeId)
-            return recipe && recipe.name
-        }
+        const {recipeId, inputs: {name, recipe}, onLoading} = this.props
+        console.log({recipeId})
         return (
-            <Form.Combo
-                label={msg('process.classification.panel.inputImagery.form.recipe.label')}
+            <RecipeInput
                 input={recipe}
-                placeholder={msg('process.classification.panel.inputImagery.form.recipe.placeholder')}
-                options={options}
-                onChange={option => name.set(getName(option.value))}
+                filter={(type, recipe) => type.id === 'CLASSIFICATION' && recipe.id !== recipeId}
                 autoFocus
+                onLoading={onLoading}
+                onLoaded={({recipe}) => name.set(recipe.title || recipe.placeholder)}
                 errorMessage
             />
         )
@@ -43,10 +23,4 @@ class RecipeSection extends React.Component {
 
 RecipeSection.propTypes = {
     inputs: PropTypes.object.isRequired,
-    recipes: PropTypes.array
 }
-
-export default compose(
-    RecipeSection,
-    connect(mapStateToProps)
-)

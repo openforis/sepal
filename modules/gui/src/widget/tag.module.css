@@ -1,0 +1,7 @@
+.contents {
+    text-transform: uppercase;
+}
+
+.contents > * + * {
+    margin-left: .5rem;
+}

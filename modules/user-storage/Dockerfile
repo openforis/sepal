@@ -1,4 +1,4 @@
-FROM node:17-bullseye
+FROM node:18-bullseye
 
 ENV MODULE_NAME user-storage
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
@@ -21,7 +21,7 @@ RUN apt-get update && \
     echo 'node ALL=(root) NOPASSWD: /usr/bin/diskus' >> /etc/sudoers && \
     echo 'node ALL=(root) NOPASSWD: /usr/local/bin/fix_sepal_users_permissions' >> /etc/sudoers
 
-RUN npm install -g nodemon
+RUN npm install -g npm nodemon
 
 # Set bash prompt
 RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc

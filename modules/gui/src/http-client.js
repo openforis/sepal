@@ -62,10 +62,28 @@ export const postBinary$ = (url, {retries = DEFAULT_RETRIES, query, body, header
         ...args
     }).pipe(toResponse)
 
-export const delete$ = (url, {retries = DEFAULT_RETRIES, headers, validStatuses, ...args} = {}) =>
+export const delete$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'DELETE', {
         retries,
-        headers,
+        query,
+        body,
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+            ...headers
+        },
+        validStatuses,
+        ...args
+    }).pipe(toResponse)
+
+export const deleteJson$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
+    execute$(url, 'DELETE', {
+        retries,
+        query,
+        body: body && JSON.stringify(body),
+        headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            ...headers
+        },
         validStatuses,
         ...args
     }).pipe(toResponse)

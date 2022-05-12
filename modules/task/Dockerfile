@@ -10,13 +10,13 @@ ENV JS_SHARED /usr/local/src/sepal/lib/js/shared
 ENV PYTHON_SHARED /usr/local/src/sepal/lib/python/shared
 
 
-RUN curl -fsSL https://deb.nodesource.com/setup_17.x | bash -
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get install -y nodejs
 
 RUN groupadd --gid 1000 node && \
     useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
-RUN npm install -g nodemon
+RUN npm install -g npm nodemon
 
 # Set bash prompt
 RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc

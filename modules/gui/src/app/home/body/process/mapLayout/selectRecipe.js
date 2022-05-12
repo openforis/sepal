@@ -23,7 +23,7 @@ class _SelectRecipe extends React.Component {
                 <Panel type='modal' className={styles.panel}>
                     <Panel.Header title={msg('map.layout.addImageLayerSource.types.Recipe.description')}/>
                     <Panel.Content scrollable={false}>
-                        <RecipeList.Data onSelect={recipeId => this.selectRecipe(recipeId)}/>
+                        <RecipeList.Data onClick={recipeId => this.selectRecipe(recipeId)}/>
                     </Panel.Content>
                     <Panel.Buttons onEscape={deactivate}>
                         <Panel.Buttons.Main>

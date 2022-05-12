@@ -25,6 +25,7 @@
 
 .input input,
 .input textarea {
+    font-size: .9rem;
     display: flex;
     flex-grow: 1;
     width: 100%; /* required by Firefox */

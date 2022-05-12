@@ -3,6 +3,7 @@ import {Layout} from 'widget/layout'
 import OverflowDetector from 'widget/overflowDetector'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 
 export class PageableData extends React.Component {
     ref = React.createRef()
@@ -83,6 +84,6 @@ class PageItem extends React.Component {
     }
 
     shouldComponentUpdate(nextProps) {
-        return nextProps.item !== this.props.item
+        return _.isEqual(nextProps.item, this.props.item)
     }
 }

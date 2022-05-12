@@ -8,7 +8,6 @@ import org.openforis.sepal.component.datasearch.api.*
 import org.openforis.sepal.component.datasearch.query.FindBestScenes
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
-import org.openforis.sepal.component.datasearch.query.ToImageMap
 import org.openforis.sepal.component.task.command.SubmitTask
 
 import static groovy.json.JsonOutput.toJson
@@ -48,34 +47,6 @@ class DataSearchEndpoint {
                     toAoi(params)))
                 def data = sceneAreas.collect { [sceneAreaId: it.id, polygon: polygonData(it)] }
                 send(toJson(data))
-            }
-
-            post('/data/mosaic/preview') {
-                response.contentType = "application/json"
-                def mapLayer = geeGateway.preview(toPreselectedScenesImageMap(params), sepalUser)
-
-                send(toJson(
-                    mapId: mapLayer.id,
-                    token: mapLayer.token
-                ))
-            }
-
-            post('/data/classification/preview') {
-                def mapLayer = geeGateway.preview(toClassificationMap(params), sepalUser)
-
-                send(toJson(
-                    mapId: mapLayer.id,
-                    token: mapLayer.token
-                ))
-            }
-
-            post('/data/change-detection/preview') {
-                def mapLayer = geeGateway.preview(toChangeDetectionMap(params), sepalUser)
-
-                send(toJson(
-                    mapId: mapLayer.id,
-                    token: mapLayer.token
-                ))
             }
 
             post('/data/best-scenes') {
@@ -119,51 +90,6 @@ class DataSearchEndpoint {
 
         }
     }
-
-    private Map toClassificationMap(params) {
-        component.submit(new ToImageMap(
-            new ClassificationQuery(
-                imageRecipeId: params.imageRecipeId,
-                assetId: params.assetId,
-                tableName: params.required('tableName', String),
-                classProperty: params.required('classProperty', String),
-                algorithm: params.required('algorithm', String)
-            )))
-    }
-
-    private Map toChangeDetectionMap(params) {
-        component.submit(new ToImageMap(
-            new ChangeDetectionQuery(
-                fromImageRecipeId: params.fromImageRecipeId,
-                toImageRecipeId: params.toImageRecipeId,
-                fromAssetId: params.fromAssetId,
-                toAssetId: params.toAssetId,
-                tableName: params.required('tableName', String),
-                classProperty: params.required('classProperty', String),
-                algorithm: params.required('algorithm', String)
-            )))
-    }
-
-    private Map toPreselectedScenesImageMap(params) {
-        component.submit(new ToImageMap(
-            new PreselectedScenesMapQuery([
-                source: params.required('source', String),
-                sceneIds: params.required('sceneIds', String).split(',')*.trim(),
-                aoi: toAoi(params),
-                targetDayOfYear: (params.targetDayOfYear ?: 1) as int,
-                targetDayOfYearWeight: (params.targetDayOfYearWeight ?: 0) as double,
-                shadowTolerance: (params.shadowTolerance ?: 0) as double,
-                hazeTolerance: (params.hazeTolerance ?: 0.05) as double,
-                greennessWeight: (params.greennessWeight ?: 0) as double,
-                medianComposite: params.medianComposite == 'true',
-                brdfCorrect: params.brdfCorrect == 'true',
-                maskClouds: params.maskClouds == 'true',
-                maskSnow: params.maskSnow == 'true',
-                bands: params.required('bands', String).split(',')*.trim(),
-                panSharpening: params.panSharpening == 'true'
-            ])))
-    }
-
 
     private Aoi toAoi(Params params) {
         def polygon = params.polygon as String

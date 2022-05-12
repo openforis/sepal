@@ -1,11 +1,11 @@
-FROM node:17-bullseye
+FROM node:18-bullseye
 EXPOSE 5999
 
 ENV MODULE_NAME user-files
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
-RUN npm install -g nodemon
+RUN npm install -g npm nodemon
 
 # Set bash prompt
 RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc

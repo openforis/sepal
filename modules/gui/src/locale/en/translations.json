@@ -2139,8 +2139,6 @@
             "tooLong": "The legend is too long. It cannot contain more than {max} entries."
           },
           "recipe": {
-            "label": "Recipe",
-            "placeholder": "Select a recipe...",
             "title": "Saved SEPAL Recipe"
           },
           "to": {
@@ -2248,13 +2246,12 @@
       "tabPlaceholder": "Index_change"
     },
     "menu": {
-      "duplicateRecipe": "Duplicate recipe",
+      "duplicateRecipe.tooltip": "Duplicate recipe",
       "exportRecipe": "Export recipe",
       "noSavedRecipes": "No saved recipes",
       "recipeNotSaved": "Recipe is not saved.",
-      "removeRecipe": {
-        "tooltip": "Remove recipe"
-      },
+      "removeRecipe.tooltip": "Remove recipe",
+      "selectRecipe.tooltip": "Select recipe",
       "revertToOldRevision": "Revert to old revision...",
       "savedRecipies": "Saved recipies",
       "saveRecipe": "Save recipe...",
@@ -2902,6 +2899,32 @@
       },
       "tabPlaceholder": "Radar_mosaic"
     },
+    "projects": {
+      "title": "Projects",
+      "label": "Projects",
+      "tooltip": "Manage projects",
+      "noProjects": "No projects",
+      "selected": "Currently selected",
+      "add": "Add"
+    },
+    "project": {
+      "title": "Project",
+      "form": {
+          "name.label": "Name"
+      },
+      "edit": {
+        "tooltip": "Edit project"
+      },
+      "remove": {
+        "tooltip": "Remove project",
+        "error": "Cannot remove project",
+        "success": "Project has been removed"
+      },
+      "update": {
+        "error": "Cannot update project",
+        "success": "Project has been updated"
+      }
+    },
     "recipe": {
       "lastUpdate": "Last update",
       "loading": "Loading recipes",
@@ -2911,8 +2934,29 @@
         "title": "Create recipe",
         "tooltip": "Create a new SEPAL recipe"
       },
+      "edit": {
+          "label": "Edit"
+      },
+      "select": {
+          "label": "Select",
+          "tooltip": {
+              "select": "Select all recipes",
+              "deselect": "Deselect all recipes"
+          }
+      },
       "remove": {
-        "success": "Recipe has been removed"
+          "label": "Remove",
+          "tooltip": "Remove selected recipes",
+          "confirm": "Remove {count} {count, plural, one {recipe} other {recipes}}?",
+          "success": "Recipes have been removed"
+      },
+      "move": {
+        "label": "Move",
+        "tooltip": "Move selected recipes to a project",
+        "title": "Move recipes",
+        "success": "Recipes have been moved",
+        "destinationProject": "Destination project",
+        "confirm": "Move {count} {count, plural, one {recipe} other {recipes}} to project {project}?"
       },
       "export": {
           "success": "Recipe has been exported.",
@@ -3646,6 +3690,13 @@
       "warning": {
         "title": "Warning"
       }
+    },
+    "recipeInput": {
+        "label": "Recipe",
+        "placeholder": "Select a recipe...",
+        "all": {
+            "tooltip": "Show all recipes or only recipes in current project"
+        }
     },
     "safetyButton": {
       "label": "Proceed"

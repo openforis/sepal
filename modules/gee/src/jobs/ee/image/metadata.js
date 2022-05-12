@@ -11,7 +11,6 @@ const worker$ = ({asset, recipe}) => {
         ee.getAsset$(asset, 0).pipe(
             catchError(() => of(null)),
             switchMap(asset => {
-                console.log({asset})
                 return throwError(
                     () => asset
                         ? asset.type === 'Image'

@@ -5,7 +5,6 @@ const log = require('sepal/log').getLogger('http')
 
 const getEmailNotificationsEnabled = async emailAddress => {
     log.debug(() => `Getting email notifications preference for address <${emailAddress}> from origin`)
-
     const response = await firstValueFrom(
         get$(`https://${sepalHost}/api/user/email-notifications-enabled/${emailAddress}`, {
             username: sepalUsername,
