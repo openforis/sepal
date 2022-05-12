@@ -100,6 +100,8 @@ class _CountrySection extends React.Component {
                 : 'noCountry'
         const countryPlaceholder = msg(`process.mosaic.panel.areaOfInterest.form.country.country.placeholder.${countriesState}`)
         const areaPlaceholder = msg(`process.mosaic.panel.areaOfInterest.form.country.area.placeholder.${areasState}`)
+        const loadingCountries = loadCountries.active || stream('LOAD_COUNTRY_FOR_AREA').active
+        const loadingAreas = loadCountryAreas.active
         return (
             <Layout>
                 <Form.Combo
@@ -108,8 +110,8 @@ class _CountrySection extends React.Component {
                     placement='below'
                     options={countries || []}
                     placeholder={countryPlaceholder}
-                    busyMessage={loadCountries.active || stream('LOAD_COUNTRY_FOR_AREA').active}
-                    disabled={loadCountries.failed}
+                    busyMessage={loadingCountries}
+                    disabled={loadCountries.failed || loadingCountries}
                     autoFocus
                     onChange={option => {
                         area.set('')
@@ -123,8 +125,8 @@ class _CountrySection extends React.Component {
                     placement='below'
                     options={(countryAreas || [])}
                     placeholder={areaPlaceholder}
-                    busyMessage={loadCountryAreas.active || stream('LOAD_COUNTRY_FOR_AREA').active}
-                    disabled={loadCountryAreas.failed || !countryAreas || countryAreas.length === 0}
+                    busyMessage={loadingAreas}
+                    disabled={loadCountryAreas.failed || !countryAreas || countryAreas.length === 0 || loadingCountries || loadingAreas}
                     autoFocus
                     onChange={() => this.aoiChanged$.next()}
                     allowClear
