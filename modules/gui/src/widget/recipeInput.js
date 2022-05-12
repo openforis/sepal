@@ -36,8 +36,9 @@ class _RecipeInput extends React.Component {
         const options = recipes
             .filter(recipe => {
                 const {projectId: p, type} = recipe
+                const recipeType = getRecipeType(type)
                 return (all || p === projectId || (!p && !projectId))
-                   && (filter ? filter(getRecipeType(type), recipe) : true)
+                   && (filter && recipeType ? filter(recipeType, recipe) : true)
             })
             .map(recipe => ({
                 value: recipe.id,
