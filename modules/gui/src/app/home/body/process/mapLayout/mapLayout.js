@@ -61,9 +61,12 @@ class _MapLayoutPanel extends React.Component {
                     className={styles.panelContent}>
                     {this.renderContent()}
                 </Panel.Content>
-                <Panel.Buttons onEnter={close} onEscape={close}>
+                <Panel.Buttons>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Close onClick={close}/>
+                        <Panel.Buttons.Close
+                            keybinding={['Enter', 'Escape']}
+                            onClick={close}
+                        />
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
                         <Panel.Buttons.Add onClick={() => this.addImageLayerSource()}/>

@@ -258,8 +258,8 @@ class _Button extends React.Component {
     }
 
     render() {
-        const {shown} = this.props
-        return shown ? (
+        const {hidden} = this.props
+        return !hidden ? (
             this.renderWrapper(
                 this.renderLink(
                     this.renderTooltip(
@@ -363,6 +363,7 @@ Button.propTypes = {
     disableTransitions: PropTypes.any,
     downloadFilename: PropTypes.any,
     downloadUrl: PropTypes.any,
+    hidden: PropTypes.any,
     hover: PropTypes.any,
     icon: PropTypes.string,
     iconAttributes: PropTypes.any,
@@ -379,7 +380,6 @@ Button.propTypes = {
     look: PropTypes.oneOf(['default', 'highlight', 'selected', 'transparent', 'add', 'apply', 'cancel']),
     route: PropTypes.string,
     shape: PropTypes.oneOf(['rectangle', 'pill', 'circle', 'none']),
-    shown: PropTypes.any,
     size: PropTypes.oneOf(['x-small', 'small', 'normal', 'large', 'x-large', 'xx-large']),
     stopPropagation: PropTypes.any,
     style: PropTypes.object,
@@ -411,7 +411,6 @@ Button.defaultProps = {
     linkTarget: '_blank',
     look: 'default',
     shape: 'rectangle',
-    shown: true,
     size: 'normal',
     type: 'button',
     width: 'fit'

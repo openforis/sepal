@@ -33,10 +33,17 @@ class CloseRecipe extends React.Component {
                         {msg('process.closeRecipe.message')}
                     </div>
                 </Panel.Content>
-                <Panel.Buttons onEnter={save} onEscape={cancel}>
+                <Panel.Buttons>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Cancel onClick={cancel}/>
-                        <Panel.Buttons.Save dots onClick={save}/>
+                        <Panel.Buttons.Cancel
+                            keybinding='Escape'
+                            onClick={cancel}
+                        />
+                        <Panel.Buttons.Save
+                            dots
+                            keybinding='Enter'
+                            onClick={save}
+                        />
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
                         <Panel.Buttons.Discard onClick={discard}/>

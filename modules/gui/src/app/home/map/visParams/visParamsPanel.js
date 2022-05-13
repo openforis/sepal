@@ -109,6 +109,7 @@ class _VisParamsPanel extends React.Component {
         super(props)
         this.importLegend = this.importLegend.bind(this)
         this.loadDistinctBandValues = this.loadDistinctBandValues.bind(this)
+        this.check = this.check.bind(this)
     }
 
     render() {
@@ -132,15 +133,19 @@ class _VisParamsPanel extends React.Component {
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-                <Panel.Buttons onEscape={deactivate} onEnter={() => invalid || this.check()}>
+                <Panel.Buttons>
                     {type.value === 'categorical'
                         ? this.renderLegendBuilderButtons()
                         : this.renderStretchButton()}
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Cancel onClick={deactivate}/>
+                        <Panel.Buttons.Cancel
+                            keybinding='Escape'
+                            onClick={deactivate}
+                        />
                         <Panel.Buttons.Apply
                             disabled={invalid}
-                            onClick={() => this.check()}
+                            keybinding='Enter'
+                            onClick={this.check}
                         />
                     </Panel.Buttons.Main>
                 </Panel.Buttons>

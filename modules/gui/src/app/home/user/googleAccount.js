@@ -22,6 +22,11 @@ const mapStateToProps = state => {
 }
 
 class GoogleAccount extends React.Component {
+    constructor(props) {
+        super(props)
+        this.close = this.close.bind(this)
+    }
+
     useUserGoogleAccount() {
         // e.preventDefault()
         this.props.stream('USE_USER_GOOGLE_ACCOUNT', requestUserAccess$())
@@ -129,8 +134,7 @@ class GoogleAccount extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                type='modal'
-                onClose={() => this.close()}>
+                type='modal'>
                 <Panel.Header
                     icon='key'
                     title={msg('user.googleAccount.title')}
@@ -138,10 +142,12 @@ class GoogleAccount extends React.Component {
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-                <Panel.Buttons
-                    onEscape={() => this.close()}>
+                <Panel.Buttons>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Close onClick={() => this.close()}/>
+                        <Panel.Buttons.Close
+                            keybinding='Escape'
+                            onClick={this.close}
+                        />
                     </Panel.Buttons.Main>
                 </Panel.Buttons>
             </Panel>

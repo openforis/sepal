@@ -21,7 +21,13 @@ class _SelectAsset extends React.Component {
         metadata: null,
         visualizations: null
     }
+
     assetChanged$ = new Subject()
+
+    constructor(props) {
+        super(props)
+        this.add = this.add.bind(this)
+    }
 
     render() {
         const {activatable: {deactivate}} = this.props
@@ -32,12 +38,16 @@ class _SelectAsset extends React.Component {
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-                <Panel.Buttons onEnter={() => this.add()} onEscape={deactivate}>
+                <Panel.Buttons>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Cancel onClick={deactivate}/>
+                        <Panel.Buttons.Cancel
+                            keybinding='Escape'
+                            onClick={deactivate}
+                        />
                         <Panel.Buttons.Add
                             disabled={!loadedAsset}
-                            onClick={() => this.add()}
+                            keybinding='Enter'
+                            onClick={this.add}
                         />
                     </Panel.Buttons.Main>
                 </Panel.Buttons>

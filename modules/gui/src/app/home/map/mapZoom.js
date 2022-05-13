@@ -30,20 +30,17 @@ class _MapZoomPanel extends React.Component {
     }
 
     render() {
-        const {map} = this.props
         return (
-            <Keybinding keymap={{'Plus': () => map.zoomIn(), 'Minus': () => map.zoomOut()}}>
-                <Panel className={styles.panel} type='top-right'>
-                    <Panel.Content>
-                        <Layout spacing='compact'>
-                            {this.renderZoomButtons()}
-                            {this.renderZoomLevelIndicator()}
-                            {this.renderSearch()}
-                        </Layout>
-                    </Panel.Content>
-                    <Panel.Buttons onEscape={this.onEscape} shown={false}/>
-                </Panel>
-            </Keybinding>
+            <Panel className={styles.panel} type='top-right'>
+                <Panel.Content>
+                    <Layout spacing='compact'>
+                        {this.renderZoomButtons()}
+                        {this.renderZoomLevelIndicator()}
+                        {this.renderSearch()}
+                    </Layout>
+                </Panel.Content>
+                <Keybinding keymap={{'Escape': this.onEscape}}/>
+            </Panel>
         )
     }
 

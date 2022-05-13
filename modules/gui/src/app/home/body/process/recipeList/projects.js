@@ -135,9 +135,13 @@ class _Projects extends React.Component {
                 <Panel.Content>
                     {this.renderProjects()}
                 </Panel.Content>
-                <Panel.Buttons onEnter={this.close} onEscape={this.close}>
+                <Panel.Buttons>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Close onClick={this.close}/>
+                        <Panel.Buttons.Close
+                            keybinding='Escape'
+                            disabled={this.isBusy()}
+                            onClick={this.close}
+                        />
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
                         <Panel.Buttons.Add
@@ -148,6 +152,11 @@ class _Projects extends React.Component {
                 </Panel.Buttons>
             </Panel>
         )
+    }
+
+    isBusy() {
+        const {stream} = this.props
+        return stream('REQUEST_UPDATE_PROJECT').active || stream('REQUEST_REMOVE_PROJECT').active
     }
 
     renderProjectPanel(project) {

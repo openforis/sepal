@@ -48,6 +48,11 @@ class _LegendImport extends React.Component {
         validMappings: undefined
     }
 
+    constructor(props) {
+        super(props)
+        this.save = this.save.bind(this)
+    }
+
     render() {
         const {activatable: {deactivate}, form} = this.props
         const invalid = form.isInvalid()
@@ -60,12 +65,16 @@ class _LegendImport extends React.Component {
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-                <Panel.Buttons onEscape={deactivate} onEnter={() => invalid || this.save()}>
+                <Panel.Buttons>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Cancel onClick={deactivate}/>
+                        <Panel.Buttons.Cancel
+                            keybinding='Escape'
+                            onClick={deactivate}
+                        />
                         <Panel.Buttons.Apply
                             disabled={invalid}
-                            onClick={() => this.save()}
+                            keybinding='Enter'
+                            onClick={this.save}
                         />
                     </Panel.Buttons.Main>
                 </Panel.Buttons>

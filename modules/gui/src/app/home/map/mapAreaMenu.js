@@ -12,6 +12,7 @@ import {recipePath} from '../body/process/recipe'
 import {withLayers} from '../body/process/withLayers'
 import {withRecipe} from '../body/process/recipeContext'
 import FloatingBox from 'widget/floatingBox'
+import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -37,7 +38,7 @@ class _MapAreaMenuPanel extends React.Component {
                             {this.renderFeatureLayers()}
                         </Layout>
                     </Panel.Content>
-                    <Panel.Buttons onEscape={deactivate} shown={false}/>
+                    <Keybinding keymap={{'Escape': deactivate}}/>
                 </Panel>
             </FloatingBox>
 

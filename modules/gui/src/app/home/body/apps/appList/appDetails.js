@@ -22,9 +22,12 @@ export const AppDetails = props => {
                     {app.projectLink ? <ProjectLink app={app}/> : null}
                 </div>
             </Panel.Content>
-            <Panel.Buttons onEnter={onClose} onEscape={onClose}>
+            <Panel.Buttons>
                 <Panel.Buttons.Main>
-                    <Panel.Buttons.Close onClick={onClose}/>
+                    <Panel.Buttons.Close
+                        keybinding={['Enter', 'Escape']}
+                        onClick={onClose}
+                    />
                 </Panel.Buttons.Main>
             </Panel.Buttons>
         </Panel>

@@ -25,9 +25,12 @@ class _SelectRecipe extends React.Component {
                     <Panel.Content scrollable={false}>
                         <RecipeList.Data onClick={recipeId => this.selectRecipe(recipeId)}/>
                     </Panel.Content>
-                    <Panel.Buttons onEscape={deactivate}>
+                    <Panel.Buttons>
                         <Panel.Buttons.Main>
-                            <Panel.Buttons.Close onClick={deactivate}/>
+                            <Panel.Buttons.Close
+                                keybinding='Escape'
+                                onClick={deactivate}
+                            />
                         </Panel.Buttons.Main>
                         <Panel.Buttons.Extra>
                             <RecipeList.Pagination/>

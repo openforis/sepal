@@ -28,7 +28,6 @@ class _Usage extends React.Component {
 
     renderOverview() {
         const {activatable: {deactivate}} = this.props
-        const close = () => deactivate()
         return (
             <Panel
                 className={styles.panel}
@@ -42,9 +41,12 @@ class _Usage extends React.Component {
                         {this.renderSessions()}
                     </Layout>
                 </Panel.Content>
-                <Panel.Buttons onEnter={close} onEscape={close}>
+                <Panel.Buttons>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Close onClick={close}/>
+                        <Panel.Buttons.Close
+                            keybinding={['Enter', 'Escape']}
+                            onClick={deactivate}
+                        />
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
                         <Panel.Buttons.Add

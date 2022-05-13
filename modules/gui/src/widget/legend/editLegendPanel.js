@@ -35,6 +35,7 @@ class _EditLegendPanel extends React.Component {
         super(props)
         this.importLegend = this.importLegend.bind(this)
         this.loadDistinctBandValues = this.loadDistinctBandValues.bind(this)
+        this.apply = this.apply.bind(this)
     }
 
     render() {
@@ -50,13 +51,17 @@ class _EditLegendPanel extends React.Component {
                 <Panel.Content scrollable={false}>
                     {this.renderContent()}
                 </Panel.Content>
-                <Panel.Buttons onEscape={deactivate} onEnter={() => invalid || this.apply()}>
+                <Panel.Buttons>
                     {this.renderLegendBuilderButtons()}
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Cancel onClick={deactivate}/>
+                        <Panel.Buttons.Cancel
+                            keybinding='Escape'
+                            onClick={deactivate}
+                        />
                         <Panel.Buttons.Apply
                             disabled={invalid}
-                            onClick={() => this.apply()}
+                            keybinding='Enter'
+                            onClick={this.apply}
                         />
                     </Panel.Buttons.Main>
                 </Panel.Buttons>

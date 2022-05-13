@@ -19,26 +19,25 @@ export class FormPanelButtons extends React.Component {
     renderForm({isActionForm, dirty, invalid, onOk, onCancel}) {
         const {applyLabel} = this.props
         const canSubmit = isActionForm || dirty
-        const onEnter = invalid ? null : onOk
-        const onEscape = invalid || canSubmit ? onCancel : onOk
         return (
-            <Panel.Buttons
-                onEnter={onEnter}
-                onEscape={onEscape}>
+            <Panel.Buttons>
                 <Panel.Buttons.Main>
                     <Panel.Buttons.Cancel
-                        shown={canSubmit}
+                        hidden={!canSubmit}
+                        keybinding='Escape'
                         onClick={onCancel}/>
                     <Panel.Buttons.Apply
                         type={'submit'}
                         label={applyLabel}
-                        shown={canSubmit}
+                        hidden={!canSubmit}
                         disabled={invalid}
+                        keybinding='Enter'
                         onClick={onOk}/>
                     <Panel.Buttons.Close
                         type={'submit'}
                         label={applyLabel}
-                        shown={!canSubmit}
+                        hidden={canSubmit}
+                        keybinding={['Enter', 'Escape']}
                         onClick={onOk}/>
                 </Panel.Buttons.Main>
                 {this.renderExtraButtons()}
@@ -49,43 +48,32 @@ export class FormPanelButtons extends React.Component {
     renderWizard({closable, isActionForm, dirty, invalid, first, last, onBack, onNext, onDone, onCancel}) {
         const {applyLabel} = this.props
         const canSubmit = isActionForm || dirty
-        const onEnter =
-            invalid
-                ? null
-                : last
-                    ? onDone
-                    : onNext
-        const onEscape = invalid || canSubmit ? onCancel : onDone
         return (
-            <Panel.Buttons
-                onEnter={onEnter}
-                onEscape={closable && onEscape}>
+            <Panel.Buttons>
                 <Panel.Buttons.Main>
-                    {closable
-                        ? <Panel.Buttons.Cancel
-                            shown={canSubmit}
-                            onClick={onCancel}/>
-                        : null
-                    }
-                    {closable
-                        ? <Panel.Buttons.Close
-                            type={'submit'}
-                            label={applyLabel}
-                            shown={!canSubmit}
-                            onClick={onDone}/>
-                        : null
-                    }
+                    <Panel.Buttons.Cancel
+                        hidden={!closable || !canSubmit}
+                        keybinding='Escape'
+                        onClick={onCancel}/>
+                    <Panel.Buttons.Close
+                        type={'submit'}
+                        label={applyLabel}
+                        hidden={!closable || canSubmit}
+                        keybinding='Enter'
+                        onClick={onDone}/>
                     <Panel.Buttons.Back
-                        shown={!first || closable}
+                        hidden={!closable && first}
                         disabled={first}
                         onClick={onBack}/>
                     <Panel.Buttons.Done
-                        shown={last}
+                        hidden={!last}
                         disabled={invalid}
+                        keybinding='Enter'
                         onClick={onDone}/>
                     <Panel.Buttons.Next
-                        shown={!last}
+                        hidden={last}
                         disabled={invalid}
+                        keybinding='Enter'
                         onClick={onNext}/>
                 </Panel.Buttons.Main>
                 {this.renderExtraButtons()}

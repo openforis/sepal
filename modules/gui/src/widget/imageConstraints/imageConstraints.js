@@ -21,6 +21,8 @@ class _ImageConstraints extends React.Component {
 
     constructor(props) {
         super(props)
+        this.addConstraint = this.addConstraint.bind(this)
+        this.apply = this.apply.bind(this)
     }
 
     render() {
@@ -36,16 +38,20 @@ class _ImageConstraints extends React.Component {
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-                <Panel.Buttons onEscape={deactivate} onEnter={() => invalid || this.apply()}>
+                <Panel.Buttons>
                     <Panel.Buttons.Add
                         disabled={invalid}
-                        onClick={() => this.addConstraint()}
+                        onClick={this.addConstraint}
                     />
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Cancel onClick={deactivate}/>
+                        <Panel.Buttons.Cancel
+                            keybinding='Escape'
+                            onClick={deactivate}
+                        />
                         <Panel.Buttons.Apply
+                            keybinding='Enter'
                             disabled={invalid}
-                            onClick={() => this.apply()}
+                            onClick={this.apply}
                         />
                     </Panel.Buttons.Main>
                 </Panel.Buttons>
