@@ -14,12 +14,16 @@ pip3 install numpy
 # Trying with cuda-toolkit instead of cuda, to prevent wrong nvidia-driver to be installed.
 # That version must match the version on the host machine.
 
+# GPG update: https://developer.nvidia.com/blog/updating-the-cuda-linux-gpg-repository-key/
+
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
 mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
-apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
-add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
+dpkg -i cuda-keyring_1.0-1_all.deb
 apt-get update -y
 
+
+apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu2004/x86_64/7fa2af80.pub
 wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu2004/x86_64/nvidia-machine-learning-repo-ubuntu2004_1.0.0-1_amd64.deb
 apt install -y ./nvidia-machine-learning-repo-ubuntu2004_1.0.0-1_amd64.deb
 rm nvidia-machine-learning-repo-ubuntu2004_1.0.0-1_amd64.deb
