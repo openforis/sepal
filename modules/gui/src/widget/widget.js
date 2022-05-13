@@ -15,8 +15,7 @@ export class _Widget extends React.Component {
                 ref={forwardedRef}
                 className={[
                     styles.container,
-                    styles[widgetState],
-                    onClick && !disabled ? styles.clickable : null,
+                    onClick ? styles.clickable : null,
                     disabled ? styles.disabled : null,
                     ['vertical-scrollable', 'vertical-fill'].includes(layout) ? styles.scrollable : null,
                     className
@@ -30,8 +29,9 @@ export class _Widget extends React.Component {
                     framed={framed}
                     className={[
                         styles.widget,
-                        disabled ? styles.normal : styles[widgetState],
-                        border ? styles.border : null
+                        disabled ? styles.disabled : null,
+                        border ? styles.border : null,
+                        styles[widgetState]
                     ].join(' ')}
                     onMouseOver={onMouseOver}
                     onMouseOut={onMouseOut}
