@@ -23,7 +23,7 @@ RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /h
 RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /root/.bashrc
 
 ADD lib/js/shared ${JS_SHARED}
-WORKDIR ${JS_SHARED}/js/shared
+WORKDIR ${JS_SHARED}
 USER root
 ADD lib/python/shared ${PYTHON_SHARED}
 RUN chmod +x ${PYTHON_SHARED}/stack_time_series.py && \
