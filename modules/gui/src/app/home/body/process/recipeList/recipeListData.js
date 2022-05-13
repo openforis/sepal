@@ -290,8 +290,8 @@ class _RecipeListData extends React.Component {
     }
 
     isLoading() {
-        const {recipes, stream} = this.props
-        return !recipes && stream('LOAD_RECIPES').active
+        const {recipes} = this.props
+        return _.isUndefined(recipes)
     }
 
     hasData() {
