@@ -194,7 +194,7 @@ class _Button extends React.Component {
 
     renderKeybinding(contents) {
         const {keybinding} = this.props
-        return keybinding
+        return this.active() && keybinding
             ? (
                 <Keybinding keymap={this.getKeymap(keybinding)}>
                     {contents}
