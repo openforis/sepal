@@ -6,7 +6,7 @@ import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {map} from 'rxjs'
+import {map, switchMap} from 'rxjs'
 import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'
 import Notifications from 'widget/notifications'
@@ -45,7 +45,6 @@ class _Projects extends React.Component {
                 actionBuilder('UPDATE_PROJECT', {project})
                     .set('process.projects', projects)
                     .dispatch()
-                Notifications.success({message: msg('process.project.update.success')})
             },
             error => Notifications.error({message: msg('process.project.update.error'), error})
         )
@@ -55,12 +54,18 @@ class _Projects extends React.Component {
     removeProject(project) {
         const {id} = project
         this.props.stream('REQUEST_REMOVE_PROJECT',
-            api.project.remove$(id),
-            projects => {
-                actionBuilder('REMOVE_PROJECT', {project})
+            api.project.remove$(id).pipe(
+                switchMap(projects =>
+                    api.recipe.loadAll$().pipe(
+                        map(recipes => ({projects, recipes}))
+                    )
+                )
+            ),
+            ({projects, recipes}) => {
+                actionBuilder('REMOVE_PROJECT', {project, recipes})
                     .set('process.projects', projects)
+                    .set('process.recipes', recipes)
                     .dispatch()
-                Notifications.success({message: msg('process.project.remove.success')})
             },
             error => Notifications.error({message: msg('process.project.remove.error'), error})
         )
@@ -114,6 +119,7 @@ class _Projects extends React.Component {
                     title={project.name}
                     editTooltip={msg('process.project.edit.tooltip')}
                     removeTooltip={msg('process.project.remove.tooltip')}
+                    removeMessage={msg('process.project.remove.confirm')}
                     inlineComponents={projectId === project.id && this.renderSelected()}
                     onEdit={() => this.editProject(project)}
                     onRemove={() => this.removeProject(project)}

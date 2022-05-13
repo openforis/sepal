@@ -2500,12 +2500,11 @@
       },
       "remove": {
         "tooltip": "Remove project",
-        "error": "Cannot remove project",
-        "success": "Project has been removed"
+        "confirm": "All recipes belonging to this project will be removed as well.",
+        "error": "Cannot remove project"
       },
       "update": {
-        "error": "Cannot update project",
-        "success": "Project has been updated"
+        "error": "Cannot update project"
       }
     },
     "recipe": {
@@ -2530,14 +2529,12 @@
       "remove": {
           "label": "Remove",
           "tooltip": "Remove selected recipes",
-          "confirm": "Remove {count} {count, plural, one {recipe} other {recipes}}?",
-          "success": "Recipes have been removed"
+          "confirm": "Remove {count} {count, plural, one {recipe} other {recipes}}?"
       },
       "move": {
         "label": "Move",
         "tooltip": "Move selected recipes to a project",
         "title": "Move recipes",
-        "success": "Recipes have been moved",
         "destinationProject": "Destination project",
         "confirm": "Move {count} {count, plural, one {recipe} other {recipes}} to project {project}?"
       },
