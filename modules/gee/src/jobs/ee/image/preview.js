@@ -1,6 +1,6 @@
 const {job} = require('gee/jobs/job')
 
-const worker$ = ({recipe, visParams, panSharpen, bands}) => {
+const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('sepal/ee')
     const {switchMap} = require('rxjs')
@@ -8,7 +8,7 @@ const worker$ = ({recipe, visParams, panSharpen, bands}) => {
     const log = require('sepal/log').getLogger('ee')
     const _ = require('lodash')
     if (visParams) {
-        const {getImage$} = ImageFactory(recipe, {selection: visParams.bands, baseBands: visParams.baseBands, panSharpen})
+        const {getImage$} = ImageFactory(recipe, {selection: visParams.bands, baseBands: visParams.baseBands, ...otherArgs})
         const getMap$ = (image, visualization) => {
             const {type, bands, min, max, inverted, gamma, palette} = visualization
             const range = () => ({
