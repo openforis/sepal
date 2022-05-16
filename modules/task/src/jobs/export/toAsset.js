@@ -41,6 +41,7 @@ const exportImageToAsset$ = ({
     crs,
     crsTransform,
     maxPixels = 1e13,
+    shardSize = 256,
     retries = 0
 }) => {
     const exportToAsset$ = ({task, description, assetId, _retries}) => {
@@ -57,7 +58,7 @@ const exportImageToAsset$ = ({
     return assetDestination$(description, assetId).pipe(
         switchMap(({description, assetId}) => {
             const serverConfig = ee.batch.Export.convertToServerParams(
-                {image, description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels},
+                {image, description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize},
                 ee.data.ExportDestination.ASSET,
                 ee.data.ExportType.IMAGE
             )
