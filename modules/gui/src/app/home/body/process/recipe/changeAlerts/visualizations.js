@@ -1,4 +1,8 @@
+import {msg} from 'translate'
 import {normalize} from 'app/home/map/visParams/visParams'
+import {visualizationOptions as opticalVisualizationOptions} from 'app/home/body/process/recipe/opticalMosaic/visualizations'
+import {visualizationOptions as planetVisualizationOptions} from 'app/home/body/process/recipe/planetMosaic/visualizations'
+import {visualizationOptions as radarVisualizationOptions} from 'app/home/body/process/recipe/radarMosaic/visualizations'
 import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -13,16 +17,79 @@ const toFractionalYear = date => {
     return year + fraction
 }
 
-export const getPreSetVisualizations = recipe => {
+export const visualizationOptions = (recipe, visualizationType, mosaicType) => {
+    return visualizationType === 'changes'
+        ? getChangeVisualizations(recipe)
+        : getMosaicVisualizations(recipe, visualizationType, mosaicType)
+}
+
+const getMosaicVisualizations = (recipe, visualizationType, mosaicType) => {
+    const dataSetType = recipe.model.sources.dataSetType
+    switch(dataSetType) {
+    case 'OPTICAL': return toOpticalVisualizations(recipe)
+    case 'RADAR': return toRadarVisualizations(recipe, visualizationType, mosaicType)
+    case 'PLANET': return toPlanetVisualizations(recipe)
+    default: throw Error(`Unexpected dataSetType: ${dataSetType}`)
+    }
+}
+
+const toOpticalVisualizations = recipe => {
+    const opticalRecipe = {
+        model: {
+            sources: recipe.model.sources.dataSets,
+            compositeOptions: {
+                corrections: recipe.model.options.corrections,
+                compose: 'MEDIAN',
+            }
+        }
+    }
+    return opticalVisualizationOptions(opticalRecipe)
+}
+
+const toRadarVisualizations = (recipe, visualizationType, mosaicType) => {
+    const model = recipe.model
+    const monitoringEnd = model.date.monitoringEnd
+    const monitoringStart = moment(monitoringEnd, DATE_FORMAT).subtract(model.date.monitoringDuration, model.date.monitoringDurationUnit).format(DATE_FORMAT)
+    const calibrationStart = moment(monitoringStart, DATE_FORMAT).subtract(model.date.calibrationDuration, model.date.calibrationDurationUnit).format(DATE_FORMAT)
+    const radarRecipe = {
+        model: {
+            dates: {
+                targetDate: mosaicType === 'latest'
+                    ? visualizationType === 'monitoring'
+                        ? monitoringEnd
+                        : monitoringStart
+                    : undefined,
+                fromDate: mosaicType === 'latest'
+                    ? undefined
+                    : visualizationType === 'monitoring'
+                        ? monitoringStart
+                        : calibrationStart,
+                toDate: mosaicType === 'latest'
+                    ? undefined
+                    : visualizationType === 'monitoring'
+                        ? monitoringEnd
+                        : monitoringStart
+            },
+        }
+    }
+    return radarVisualizationOptions(radarRecipe)
+}
+
+const toPlanetVisualizations = () => {
+    const planetRecipe = {}
+    return planetVisualizationOptions(planetRecipe)
+}
+
+const getChangeVisualizations = recipe => {
     const date = recipe.model.date
     const monitoringEnd = date.monitoringEnd
     const monitoringStart = moment(monitoringEnd, DATE_FORMAT).subtract(date.monitoringDuration, date.monitoringDurationUnit).format(DATE_FORMAT)
     const calibrationStart = moment(monitoringStart, DATE_FORMAT).subtract(date.calibrationDuration, date.calibrationDurationUnit).format(DATE_FORMAT)
+    // TODO: Difference - can we figure out a reasonable min/max somehow?
     const fractionalMonitoringEnd = toFractionalYear(monitoringEnd)
-    const fractionalMonitoringStart = toFractionalYear(monitoringStart)
     const fractionalCalibrationStart = toFractionalYear(calibrationStart)
 
-    return [
+    var options = [
         normalize({
             type: 'continuous',
             bands: ['confidence'],
@@ -61,31 +128,38 @@ export const getPreSetVisualizations = recipe => {
         normalize({
             type: 'continuous',
             bands: ['last_stable_date'],
-            min: [calibrationStart],
-            max: [monitoringEnd],
+            min: [fractionalCalibrationStart],
+            max: [fractionalMonitoringEnd],
             palette: ['#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
         }),
         normalize({
             type: 'continuous',
             bands: ['first_detection_date'],
-            min: [calibrationStart],
-            max: [monitoringEnd],
+            min: [fractionalCalibrationStart],
+            max: [fractionalMonitoringEnd],
             palette: ['#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
         }),
         normalize({
             type: 'continuous',
             bands: ['confirmation_date'],
-            min: [calibrationStart],
-            max: [monitoringEnd],
+            min: [fractionalCalibrationStart],
+            max: [fractionalMonitoringEnd],
             palette: ['#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
         }),
         normalize({
             type: 'continuous',
             bands: ['last_detection_date'],
-            min: [calibrationStart],
-            max: [monitoringEnd],
+            min: [fractionalCalibrationStart],
+            max: [fractionalMonitoringEnd],
             palette: ['#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
         })
-    ]
+    ].map(visParams => {
+        const band = visParams.bands[0]
+        return {value: band, label: band, visParams}
+    })
+    return [{
+        label: msg('process.indexChange.layers.imageLayer.preSets'),
+        options
+    }]
 }
 

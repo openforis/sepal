@@ -1,9 +1,7 @@
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
 import {compose} from 'compose'
-import {msg} from 'translate'
-import {selectFrom} from 'stateUtils'
-import {visualizations} from './visualizations'
+import {visualizationOptions} from './visualizations'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -25,25 +23,7 @@ class _RadarMosaicImageLayer extends React.Component {
 
     renderImageLayerForm() {
         const {recipe, source, layerConfig = {}} = this.props
-        const visParamsToOption = visParams => ({
-            value: visParams.bands.join(','),
-            label: visParams.bands.join(', '),
-            visParams
-        })
-        const type = selectFrom(recipe, 'model.dates').targetDate
-            ? 'POINT_IN_TIME'
-            : 'TIME_SCAN'
-        const bandCombinationOptions = {
-            label: msg('process.mosaic.bands.combinations'),
-            options: visualizations[type].map(visParamsToOption),
-        }
-        const metadataOptions = {
-            label: msg('process.mosaic.bands.metadata'),
-            options: visualizations.METADATA.map(visParamsToOption)
-        }
-        const options = type === 'TIME_SCAN'
-            ? [bandCombinationOptions]
-            : [bandCombinationOptions, metadataOptions]
+        const options = visualizationOptions(recipe)
         return (
             <VisualizationSelector
                 source={source}

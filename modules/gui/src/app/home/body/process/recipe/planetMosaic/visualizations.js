@@ -1,6 +1,25 @@
+import {msg} from 'translate'
 import {normalize} from 'app/home/map/visParams/visParams'
 
 export const getPreSetVisualizations = () => Object.values(visualizations).flat()
+
+export const visualizationOptions = () => {
+    const visParamsToOption = visParams => ({
+        value: visParams.bands.join(','),
+        label: visParams.bands.join(', '),
+        visParams
+    })
+
+    const bandCombinationOptions = {
+        label: msg('process.mosaic.bands.combinations'),
+        options: visualizations.BAND_COMBINATIONS.map(visParamsToOption)
+    }
+    const indexOptions = {
+        label: msg('process.mosaic.bands.indexes'),
+        options: visualizations.INDEXES.map(visParamsToOption)
+    }
+    return [bandCombinationOptions, indexOptions]
+}
 
 export const visualizations = {
     BAND_COMBINATIONS: [

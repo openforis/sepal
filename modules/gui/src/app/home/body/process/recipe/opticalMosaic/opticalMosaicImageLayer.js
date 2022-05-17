@@ -4,11 +4,12 @@ import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {SceneSelectionType} from './opticalMosaicRecipe'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
 import {compose} from 'compose'
-import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {visualizations} from './visualizations'
+import {visualizationOptions} from './visualizations'
+import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 
 const defaultLayerConfig = {
     panSharpen: false
@@ -53,30 +54,7 @@ class _OpticalMosaicImageLayer extends React.Component {
 
     renderBandSelection() {
         const {recipe, source, layerConfig = {}} = this.props
-        const visParamsToOption = visParams => {
-            const value = visParams.bands.join(', ')
-            return {
-                value,
-                label: value,
-                tooltip: msg(`bands.${value}`, {}, value),
-                visParams
-            }
-        }
-        const bandCombinationOptions = {
-            label: msg('process.mosaic.bands.combinations'),
-            options: visualizations[this.reflectance()].map(visParamsToOption)
-        }
-        const indexOptions = {
-            label: msg('process.mosaic.bands.indexes'),
-            options: visualizations.INDEXES.map(visParamsToOption)
-        }
-        const metadataOptions = {
-            label: msg('process.mosaic.bands.metadata'),
-            options: visualizations.METADATA.map(visParamsToOption)
-        }
-        const options = this.median()
-            ? [bandCombinationOptions, indexOptions]
-            : [bandCombinationOptions, indexOptions, metadataOptions]
+        const options = visualizationOptions(recipe)
         return (
             <VisualizationSelector
                 source={source}
@@ -85,6 +63,13 @@ class _OpticalMosaicImageLayer extends React.Component {
                 selectedVisParams={layerConfig.visParams}
             />
         )
+    }
+
+    componentDidMount() {
+        const {layerConfig, mapAreaContext: {updateLayerConfig}} = this.props
+        if (_.isUndefined(layerConfig.panSharpen)) {
+            updateLayerConfig(defaultLayerConfig)
+        }
     }
 
     hasScenes() {
@@ -99,12 +84,6 @@ class _OpticalMosaicImageLayer extends React.Component {
         const {recipe} = this.props
         const corrections = selectFrom(recipe, 'model.compositeOptions.corrections')
         return corrections.includes('SR') ? 'SR' : 'TOA'
-    }
-
-    median() {
-        const {recipe} = this.props
-        const compositeOptions = selectFrom(recipe, 'model.compositeOptions')
-        return compositeOptions.compose === 'MEDIAN'
     }
 
     canPanSharpen() {
@@ -123,7 +102,8 @@ class _OpticalMosaicImageLayer extends React.Component {
 }
 
 export const OpticalMosaicImageLayer = compose(
-    _OpticalMosaicImageLayer
+    _OpticalMosaicImageLayer,
+    withMapAreaContext()
 )
 
 OpticalMosaicImageLayer.defaultProps = {

@@ -182,8 +182,8 @@ class _RecipeImageLayer extends React.Component {
     }
 
     selectVisualization(visParams) {
-        const {layerConfig: {panSharpen}, mapAreaContext: {updateLayerConfig}} = this.props
-        updateLayerConfig({visParams, panSharpen})
+        const {layerConfig, mapAreaContext: {updateLayerConfig}} = this.props
+        updateLayerConfig({...layerConfig, visParams})
     }
 }
 

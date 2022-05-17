@@ -1180,6 +1180,34 @@
     "changeAlerts": {
         "create": "Change Alerts",
         "description": "Generate change alerts using a CCDC as baseline.",
+        "imageLayerForm": {
+          "mosaicType": {
+            "label": "Mosaic",
+            "latest": {
+                "label": "Latest",
+                "tooltip": "Render a composite of the latest available imagery in the period"
+            },
+            "median": {
+                "label": "Median",
+                "tooltip": "Render a median composite of the period"
+            }
+          },
+          "visualizationType": {
+            "calibration": {
+                "label": "Calibration",
+                "tooltip": "Render a composite of the calibration period"
+            },
+              "changes": {
+                  "label": "Changes",
+                  "tooltip": "Render change in the monitoring period"
+              },
+              "label": "Type",
+              "monitoring": {
+                  "label": "Monitoring",
+                  "tooltip": "Render a composite of the monitoring period"
+              }
+          }
+        },
         "panel": {
           "date": {
             "button": "DAT",
@@ -1508,7 +1536,7 @@
             "title": "Retrieve",
             "tooltip": "Retrieve time-series"
           },
-        "sources": {
+          "sources": {
             "button": "SRC",
             "classificationLoadError": "Failed to load classification: {error}",
             "form": {
@@ -1577,10 +1605,10 @@
           }
         },
         "preview": {
-          "description": "Preview of a CCDC slice, generated on the fly by EE.",
+          "description": "Preview of change alerts, generated on the fly by EE.",
           "error": "Failed to generate preview",
           "initializing": "Loading preview...",
-          "label": "CCDC slice",
+          "label": "Change alerts",
           "loading": "Loading tiles: {pending}",
           "tilesFailed": "{failed} failed"
         },
