@@ -71,7 +71,7 @@ class _Input extends React.Component {
                 {this.renderPrefix()}
                 {this.renderInput()}
                 {this.renderSuffix()}
-                {this.renderbuttons()}
+                {this.renderButtons()}
             </Layout>
         )
     }
@@ -168,7 +168,7 @@ class _Input extends React.Component {
             : null
     }
 
-    renderbuttons() {
+    renderButtons() {
         const {value, additionalButtons, buttons} = this.props
         return value && this.isSearchInput()
             ? this.renderClearButton()
@@ -178,7 +178,7 @@ class _Input extends React.Component {
                         <ButtonGroup layout='horizontal-nowrap'>
                             {additionalButtons}
                         </ButtonGroup>
-                        <ButtonGroup layout='horizontal-nowrap' className={styles.dim}>
+                        <ButtonGroup layout='horizontal-nowrap' contentClassName={styles.dim}>
                             {buttons}
                         </ButtonGroup>
                     </ButtonGroup>

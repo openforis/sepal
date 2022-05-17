@@ -2,18 +2,13 @@
     position: relative;
 }
 
-.dim:not(:hover) {
+.dim > :not(:hover) {
     opacity: .5;
 }
 
 .search {
     padding-right: .25rem;
 }
-
-/* .inputWrapper {
-    display: flex;
-    flex-grow: 1;
-} */
 
 .prefix {
     padding-right: .25rem;
