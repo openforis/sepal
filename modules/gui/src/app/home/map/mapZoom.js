@@ -174,6 +174,7 @@ class _MapZoomPanel extends React.Component {
             <SearchBox
                 placeholder={msg('process.mapZoom.search.placeholder')}
                 className={styles.search}
+                width='fill'
                 onSearchValue={this.search}
                 options={[
                     ...coordinateResults,
