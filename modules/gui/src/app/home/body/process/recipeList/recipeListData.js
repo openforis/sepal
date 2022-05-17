@@ -413,7 +413,7 @@ class _RecipeListData extends React.Component {
     }
 
     updateFilteredRecipes() {
-        const {projects, recipes, filterValues} = this.props
+        const {projects = [], recipes, filterValues} = this.props
         const {sortingOrder, sortingDirection} = this.props
         const filteredRecipes = _.chain(recipes)
             .map(recipe => {
