@@ -182,7 +182,11 @@ class _RecipeListData extends React.Component {
         return (
             <Confirm
                 title={msg('process.recipe.move.title')}
-                message={msg('process.recipe.move.confirm', {count: this.isSelected(), project: projectName})}
+                message={
+                    this.renderConfirmationMessage(
+                        msg('process.recipe.move.confirm', {count: this.isSelected(), project: projectName})
+                    )
+                }
                 onConfirm={() => {
                     this.setMove(false)
                     this.moveSelected(projectId)
@@ -199,9 +203,51 @@ class _RecipeListData extends React.Component {
                 icon='trash'
                 label={msg('process.recipe.remove.label')}
                 tooltip={msg('process.recipe.remove.tooltip')}
-                message={msg('process.recipe.remove.confirm', {count: this.isSelected()})}
+                message={
+                    this.renderConfirmationMessage(
+                        msg('process.recipe.remove.confirm', {count: this.isSelected()})
+                    )
+                }
                 disabled={!this.isSelected()}
                 onRemove={this.removeSelected}/>
+        )
+    }
+
+    rendeRemoveConfirmationMessage() {
+        return (
+            <div>
+                <div>
+                    {msg('process.recipe.remove.confirm', {count: this.isSelected()})}
+                </div>
+                {this.renderSelectedRecipes()}
+            </div>
+        )
+    }
+
+    renderConfirmationMessage(message) {
+        return (
+            <div>
+                <div>
+                    {message}
+                </div>
+                {this.renderSelectedRecipes()}
+            </div>
+        )
+    }
+
+    renderSelectedRecipes() {
+        const {recipes, selectedIds} = this.props
+        const selectedRecipes = recipes.filter(({id}) => selectedIds.includes(id))
+        return (
+            <ul>
+                {selectedRecipes.map(recipe => this.renderSelectedRecipe(recipe))}
+            </ul>
+        )
+    }
+
+    renderSelectedRecipe(recipe) {
+        return (
+            <li>{this.getRecipePath(recipe)}</li>
         )
     }
 
@@ -235,21 +281,15 @@ class _RecipeListData extends React.Component {
     }
 
     renderRecipe(recipe, highlightMatcher) {
-        const {projects, onClick, onDuplicate, onRemove} = this.props
+        const {onClick, onDuplicate, onRemove} = this.props
         const {edit} = this.state
-        const name = recipe.name
-        const project = _.find(projects, ({id}) => id === recipe.projectId)
-        const path = [
-            project?.name ?? NO_PROJECT_SYMBOL,
-            name
-        ].join(PROJECT_RECIPE_SEPARATOR)
         return (
             <ListItem
                 key={recipe.id}
                 onClick={onClick ? () => onClick(recipe.id) : null}>
                 <CrudItem
                     title={this.getRecipeTypeName(recipe.type)}
-                    description={path}
+                    description={this.getRecipePath(recipe)}
                     timestamp={recipe.updateTime}
                     highlight={highlightMatcher}
                     highlightTitle={false}
@@ -263,6 +303,16 @@ class _RecipeListData extends React.Component {
                 />
             </ListItem>
         )
+    }
+
+    getRecipePath(recipe) {
+        const {projects} = this.props
+        const name = recipe.name
+        const project = _.find(projects, ({id}) => id === recipe.projectId)
+        return [
+            project?.name ?? NO_PROJECT_SYMBOL,
+            name
+        ].join(PROJECT_RECIPE_SEPARATOR)
     }
 
     setEdit(edit) {
