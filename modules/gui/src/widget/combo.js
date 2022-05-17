@@ -18,8 +18,6 @@ import _ from 'lodash'
 import styles from './combo.module.css'
 import withSubscriptions from 'subscription'
 
-// const SELECTION_DELAY_MS = 350
-
 const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
 })
@@ -29,6 +27,7 @@ class _Combo extends React.Component {
     input = React.createRef()
     list = React.createRef()
     select$ = new Subject()
+    
     state = {
         showOptions: false,
         filter: '',
@@ -41,8 +40,12 @@ class _Combo extends React.Component {
 
     constructor() {
         super()
-        this.onBlur = this.onBlur.bind(this)
-        this.handleBlur = this.handleBlur.bind(this)
+        this.onClick = this.onClick.bind(this)
+        this.onInputBlur = this.onInputBlur.bind(this)
+        this.onOptionsBlur = this.onOptionsBlur.bind(this)
+        this.showOptions = this.showOptions.bind(this)
+        this.toggleOptions = this.toggleOptions.bind(this)
+        this.setFilter = this.setFilter.bind(this)
     }
 
     isActive() {
@@ -50,18 +53,35 @@ class _Combo extends React.Component {
         return !disabled
     }
 
-    render() {
-        const {errorMessage, busyMessage, standalone, disabled, className, label, labelButtons, tooltip, tooltipPlacement, onCancel} = this.props
-        const {showOptions} = this.state
-        const onClick = e => {
-            if (this.isActive()) {
-                return standalone
-                    ? onCancel && onCancel(e)
-                    : showOptions
-                        ? this.hideOptions()
-                        : this.showOptions()
-            }
+    isFocused() {
+        const {focused} = this.state
+        return focused
+    }
+
+    setFocused(focused) {
+        this.setState({focused})
+    }
+
+    showOptions() {
+        this.setState({showOptions: true})
+    }
+
+    toggleOptions() {
+        this.setState(({showOptions}) => ({showOptions: !showOptions}))
+    }
+
+    onClick(e) {
+        const {standalone, onCancel} = this.props
+        if (this.isActive()) {
+            standalone
+                ? onCancel && onCancel(e)
+                : this.toggleOptions()
         }
+    }
+
+    render() {
+        const {errorMessage, busyMessage, disabled, className, label, labelButtons, tooltip, tooltipPlacement} = this.props
+        const {showOptions} = this.state
         return (
             <Form.FieldSet
                 className={[styles.container, className].join(' ')}
@@ -74,7 +94,7 @@ class _Combo extends React.Component {
                 busyMessage={busyMessage}>
                 <div
                     ref={this.inputContainer}
-                    onClick={onClick}>
+                    onClick={this.onClick}>
                     {this.renderInput()}
                 </div>
                 {showOptions ? this.renderOptions() : null}
@@ -84,20 +104,18 @@ class _Combo extends React.Component {
 
     renderInput() {
         const {placeholder, autoFocus, standalone, readOnly, border, inputClassName, additionalButtons = []} = this.props
-        const {focused, filter, selectedOption, showOptions} = this.state
-        const showOptionsKeyBinding = showOptions ? undefined : () => this.showOptions()
-        const keymap = {
-            ArrowUp: showOptionsKeyBinding,
-            ArrowDown: showOptionsKeyBinding,
-            ArrowLeft: showOptionsKeyBinding,
-            ArrowRight: showOptionsKeyBinding,
-            Home: showOptionsKeyBinding,
-            End: showOptionsKeyBinding
-        }
+        const {filter, selectedOption, showOptions} = this.state
         return (
             <Keybinding
-                disabled={!this.isActive() || !focused}
-                keymap={keymap}>
+                disabled={!this.isActive() || !this.isFocused()}
+                keymap={{
+                    ArrowUp: this.showOptions,
+                    ArrowDown: this.showOptions,
+                    ArrowLeft: this.showOptions,
+                    ArrowRight: this.showOptions,
+                    Home: this.showOptions,
+                    End: this.showOptions
+                }}>
                 <AutoFocus element={this.input.current} focusEnabled={autoFocus}>
                     <Input
                         ref={this.input}
@@ -118,22 +136,22 @@ class _Combo extends React.Component {
                         ]}
                         additionalButtons={additionalButtons}
                         onChange={e => this.setFilter(e.target.value)}
-                        onFocus={() => this.setState({focused: true})}
-                        onBlur={this.onBlur}
+                        onFocus={() => this.setFocused(true)}
+                        onBlur={this.onInputBlur}
                     />
                 </AutoFocus>
             </Keybinding>
         )
     }
 
-    onBlur(e) {
+    onInputBlur(e) {
         const {onBlur} = this.props
         const {showOptions} = this.state
         if (showOptions) {
             this.input.current && this.input.current.focus()
         } else {
             onBlur && onBlur(e)
-            this.setState({focused: false})
+            this.setFocused(false)
         }
     }
 
@@ -178,10 +196,7 @@ class _Combo extends React.Component {
                 }}
                 tabIndex={-1}
                 disabled={!this.isActive()}
-                onClick={() => showOptions
-                    ? this.hideOptions()
-                    : this.showOptions()
-                }
+                onClick={this.toggleOptions}
             />
         )
     }
@@ -194,7 +209,7 @@ class _Combo extends React.Component {
                 element={this.inputContainer.current}
                 placement={placement}
                 alignment='fit'
-                onBlur={this.handleBlur}>
+                onBlur={this.onOptionsBlur}>
                 <ScrollableList
                     ref={this.list}
                     air='more'
@@ -213,20 +228,12 @@ class _Combo extends React.Component {
         )
     }
 
-    showOptions() {
-        this.setState({showOptions: true})
-    }
-
-    hideOptions() {
-        this.setState({showOptions: false})
-    }
-
     setFilter(filter = '') {
         const {standalone} = this.props
         this.setState({
             showOptions: !!filter || standalone,
             filter
-        }, this.updateOptions)
+        })
     }
 
     resetFilter() {
@@ -240,20 +247,10 @@ class _Combo extends React.Component {
     }
 
     setSelectedOption(selectedOption) {
-        this.updateState({
+        this.setState({
             selectedOption,
             selected: !!selectedOption
         })
-    }
-
-    updateState(state, callback) {
-        const updatedState = (prevState, state) =>
-            _.isEqual(_.pick(prevState, _.keys(state)), state) ? null : state
-        this.setState(
-            prevState =>
-                updatedState(prevState, _.isFunction(state) ? state(prevState) : state),
-            callback
-        )
     }
 
     handleSelect() {
@@ -263,26 +260,13 @@ class _Combo extends React.Component {
                 option => {
                     this.setSelectedOption(option)
                     onChange && onChange(option)
-                    this.setState({selected: false}, () => {
-                        this.setFilter()
-                    })
+                    this.setState({selected: false}, this.setFilter)
                 }
             )
-            // this.select$.subscribe(
-            //     option => {
-            //         this.setSelectedOption(option)
-            //         onChange && onChange(option)
-            //     }
-            // ),
-            // this.select$.pipe(
-            //     delay(SELECTION_DELAY_MS)
-            // ).subscribe(
-            //     () => this.setState({selected: false}, this.setFilter)
-            // )
         )
     }
 
-    handleBlur(e) {
+    onOptionsBlur(e) {
         const {onCancel} = this.props
         const isInputClick = e => this.inputContainer.current && this.inputContainer.current.contains(e.target)
         const isListClick = e => this.list.current && this.list.current.contains && this.list.current.contains(e.target)
@@ -302,9 +286,36 @@ class _Combo extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
+        const {value, options} = this.props
+        const {value: prevValue, selectedOption: prevSelectedOption} = prevProps
+        const inputChanged = value !== prevValue
+        const filteredOptions = this.getFilteredOptions(options)
+        const flattenedOptions = this.getFlattenedOptions(filteredOptions)
+
+        const validatedSelectedOption = prevSelectedOption && flattenedOptions.find(option => !option.group && option.value === prevSelectedOption.value)
+
+        const selectedOption = inputChanged
+            ? this.getInputOption(flattenedOptions)
+            : validatedSelectedOption || this.getInputOption(flattenedOptions)
+
+        this.setStateIfUpdated({
+            filteredOptions,
+            flattenedOptions,
+            selectedOption
+        })
+    }
+
+    setStateIfUpdated(state) {
+        const updatedStateOrNull = (prevState, state) =>
+            _.isEqual(_.pick(prevState, _.keys(state)), state) ? null : state
+        this.setState(prevState =>
+            updatedStateOrNull(prevState, _.isFunction(state) ? state(prevState) : state)
+        )
+    }
+
+    getInputOption(flattenedOptions) {
         const {value} = this.props
-        const {value: prevValue} = prevProps
-        this.updateOptions(value !== prevValue && value)
+        return flattenedOptions.find(option => !option.group && option.value === value)
     }
 
     matcher(filter) {
@@ -314,53 +325,34 @@ class _Combo extends React.Component {
         return RegExp(`^${parts.join('')}.*$`, 'i')
     }
 
-    updateOptions(inputChanged) {
-        const {options} = this.props
+    filterGroup(group) {
+        const filtered = {...group, options: this.getFilteredOptions(group.options)}
+        return filtered.options.length ? filtered : null
+    }
+
+    getFilteredOptions(options) {
         const {filter} = this.state
         const matcher = this.matcher(filter)
-        const filterGroup = group => {
-            const filtered = {...group, options: getFilteredOptions(group.options)}
-            return filtered.options.length ? filtered : null
-        }
-        const getFilteredOptions = options =>
-            _.compact(
-                options.map(option =>
-                    option.options
-                        ? filterGroup(option)
-                        : matcher.test(simplifyString(option.searchableText || option.label))
-                            ? option
-                            : null
-                )
+        return _.compact(
+            options.map(option =>
+                option.options
+                    ? this.filterGroup(option)
+                    : matcher.test(simplifyString(option.searchableText || option.label))
+                    // : matcher.test(option.searchableText || option.label)
+                        ? option
+                        : null
             )
-        const getFlattenedOptions = options =>
-            _.flatten(
-                options.map(option =>
-                    option.options
-                        ? [{..._.omit(option, 'options'), group: true}, ...option.options]
-                        : option
-                )
+        )
+    }
+
+    getFlattenedOptions(options) {
+        return _.flatten(
+            options.map(option =>
+                option.options
+                    ? [{..._.omit(option, 'options'), group: true}, ...option.options]
+                    : option
             )
-        const filteredOptions = getFilteredOptions(options)
-        const flattenedOptions = getFlattenedOptions(filteredOptions)
-
-        const getInputOption = () => {
-            const {value} = this.props
-            return flattenedOptions && flattenedOptions.find(option => !option.group && option.value === value)
-        }
-
-        const getSelectedOption = selectedOption => {
-            const validatedSelectedOption = selectedOption && flattenedOptions.find(option => option.value === selectedOption.value)
-            return inputChanged
-                ? getInputOption()
-                : validatedSelectedOption || getInputOption()
-        }
-
-        this.updateState(prevState =>
-            ({
-                filteredOptions,
-                flattenedOptions,
-                selectedOption: getSelectedOption.bind(this)(prevState.selectedOption)
-            }))
+        )
     }
 }
 
