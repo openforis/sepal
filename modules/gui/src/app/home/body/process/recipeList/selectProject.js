@@ -7,11 +7,6 @@ import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 
-const NO_PROJECT_OPTION = {
-    label: NO_PROJECT_SYMBOL,
-    value: NO_PROJECT_SYMBOL
-}
-
 const mapStateToProps = () => ({
     projects: select('process.projects') ?? [],
     projectId: select('process.projectId')
@@ -40,6 +35,10 @@ class _SelectProject extends React.Component {
 
     render() {
         const {projects, projectId} = this.props
+        const NO_PROJECT_OPTION = {
+            label: NO_PROJECT_SYMBOL,
+            value: NO_PROJECT_SYMBOL
+        }
         const options = [NO_PROJECT_OPTION, ...projects.map(project => ({value: project.id, label: project.name}))]
         return (
             <Shape
