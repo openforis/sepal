@@ -89,77 +89,90 @@ const getChangeVisualizations = recipe => {
     const fractionalMonitoringEnd = toFractionalYear(monitoringEnd)
     const fractionalCalibrationStart = toFractionalYear(calibrationStart)
 
-    var options = [
-        normalize({
-            type: 'continuous',
-            bands: ['confidence'],
-            min: [0],
-            max: [10],
-            palette: ['#000000', '#480000', '#710101', '#BA0000', '#FF0000', '#FFA500', '#FFFF00', '#79C900', '#006400']
-        }),
-        normalize({
-            type: 'continuous',
-            bands: ['difference'],
-            min: [-5000],
-            max: [5000],
-            palette: ['#a50026', '#d73027', '#f46d43', '#fdae61', '#ffffff', '#a6d96a', '#66bd63', '#1a9850', '#006837']
-        }),
-        normalize({
-            type: 'continuous',
-            bands: ['detection_count'],
-            min: [0],
-            max: [15],
-            palette: ['#000000', '#480000', '#710101', '#BA0000', '#FF0000', '#FFA500', '#FFFF00', '#79C900', '#006400']
-        }),
-        normalize({
-            type: 'continuous',
-            bands: ['monitoring_observation_count'],
-            min: [0],
-            max: [15],
-            palette: ['#000000', '#480000', '#710101', '#BA0000', '#FF0000', '#FFA500', '#FFFF00', '#79C900', '#006400']
-        }),
-        normalize({
-            type: 'continuous',
-            bands: ['calibration_observation_count'],
-            min: [0],
-            max: [15],
-            palette: ['#000000', '#480000', '#710101', '#BA0000', '#FF0000', '#FFA500', '#FFFF00', '#79C900', '#006400']
-        }),
-        normalize({
-            type: 'continuous',
-            bands: ['last_stable_date'],
-            min: [fractionalCalibrationStart],
-            max: [fractionalMonitoringEnd],
-            palette: ['#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
-        }),
-        normalize({
-            type: 'continuous',
-            bands: ['first_detection_date'],
-            min: [fractionalCalibrationStart],
-            max: [fractionalMonitoringEnd],
-            palette: ['#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
-        }),
-        normalize({
-            type: 'continuous',
-            bands: ['confirmation_date'],
-            min: [fractionalCalibrationStart],
-            max: [fractionalMonitoringEnd],
-            palette: ['#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
-        }),
-        normalize({
-            type: 'continuous',
-            bands: ['last_detection_date'],
-            min: [fractionalCalibrationStart],
-            max: [fractionalMonitoringEnd],
-            palette: ['#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
+    const toOptions = visualizations => visualizations
+        .map(visParams => {
+            const band = visParams.bands[0]
+            return {value: band, label: band, visParams}
         })
-    ].map(visParams => {
-        const band = visParams.bands[0]
-        return {value: band, label: band, visParams}
-    })
+
     return [{
-        label: msg('process.indexChange.layers.imageLayer.preSets'),
-        options
-    }]
+        label: msg('process.changeAlerts.layers.imageLayer.changes'),
+        options: toOptions([
+            normalize({
+                type: 'continuous',
+                bands: ['confidence'],
+                min: [0],
+                max: [10],
+                palette: ['#000000', '#480000', '#710101', '#BA0000', '#FF0000', '#FFA500', '#FFFF00', '#79C900', '#006400']
+            }),
+            normalize({
+                type: 'continuous',
+                bands: ['difference'],
+                min: [-5000],
+                max: [5000],
+                palette: ['#a50026', '#d73027', '#f46d43', '#fdae61', '#ffffff', '#a6d96a', '#66bd63', '#1a9850', '#006837']
+            }),
+            normalize({
+                type: 'continuous',
+                bands: ['detection_count'],
+                min: [0],
+                max: [15],
+                palette: ['#000000', '#480000', '#710101', '#BA0000', '#FF0000', '#FFA500', '#FFFF00', '#79C900', '#006400']
+            })
+        ])
+    },
+    {
+        label: msg('process.changeAlerts.layers.imageLayer.dates'),
+        options: toOptions([
+            normalize({
+                type: 'continuous',
+                bands: ['last_stable_date'],
+                min: [fractionalCalibrationStart],
+                max: [fractionalMonitoringEnd],
+                palette: ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
+            }),
+            normalize({
+                type: 'continuous',
+                bands: ['first_detection_date'],
+                min: [fractionalCalibrationStart],
+                max: [fractionalMonitoringEnd],
+                palette: ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
+            }),
+            normalize({
+                type: 'continuous',
+                bands: ['confirmation_date'],
+                min: [fractionalCalibrationStart],
+                max: [fractionalMonitoringEnd],
+                palette: ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
+            }),
+            normalize({
+                type: 'continuous',
+                bands: ['last_detection_date'],
+                min: [fractionalCalibrationStart],
+                max: [fractionalMonitoringEnd],
+                palette: ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
+            })
+        ])
+    },
+    {
+        label: msg('process.changeAlerts.layers.imageLayer.observations'),
+        options: toOptions([
+            normalize({
+                type: 'continuous',
+                bands: ['monitoring_observation_count'],
+                min: [0],
+                max: [15],
+                palette: ['#000000', '#480000', '#710101', '#BA0000', '#FF0000', '#FFA500', '#FFFF00', '#79C900', '#006400']
+            }),
+            normalize({
+                type: 'continuous',
+                bands: ['calibration_observation_count'],
+                min: [0],
+                max: [15],
+                palette: ['#000000', '#480000', '#710101', '#BA0000', '#FF0000', '#FFA500', '#FFFF00', '#79C900', '#006400']
+            })
+        ])
+    }
+    ]
 }
 

@@ -3,6 +3,7 @@ import {Layout} from 'widget/layout'
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
 import {compose} from 'compose'
+import {getAvailableBands} from './bands'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {visualizationOptions} from './visualizations'
@@ -10,16 +11,18 @@ import {withMapAreaContext} from 'app/home/map/mapAreaContext'
 import {withRecipe} from '../../recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 
 const defaultLayerConfig = {
     visualizationType: 'changes',
     mosaicType: 'latest'
 }
 
-const mapRecipeToProps = recipe => {
+const mapRecipeToProps = (recipe, {source}) => {
     return {
         initialized: selectFrom(recipe, 'ui.initialized'),
-        sources: selectFrom(recipe, 'model.sources')
+        sources: selectFrom(recipe, 'model.sources'),
+        userDefinedVisualizations: selectFrom(recipe, ['layers.userDefinedVisualizations', source.id]) || []
     }
 }
 
@@ -88,21 +91,72 @@ class _ChangeAlertsImageLayer extends React.Component {
     renderVisualizationSelector() {
         const {layerConfig: {visualizationType, mosaicType}, recipe, source, layerConfig = {}} = this.props
         const options = visualizationOptions(recipe, visualizationType, mosaicType)
+        const availableBands = getAvailableBands(recipe, visualizationType)
         return (
             <VisualizationSelector
                 source={source}
                 recipe={recipe}
                 presetOptions={options}
+                availableBands={Object.keys(availableBands)}
                 selectedVisParams={layerConfig.visParams}
             />
         )
     }
 
     componentDidMount() {
-        const {layerConfig, mapAreaContext: {updateLayerConfig}} = this.props
-        if (!layerConfig.visualizationType) {
+        const {layerConfig: {visParams, visualizationType}, mapAreaContext: {updateLayerConfig}} = this.props
+
+        if (!visualizationType) {
             updateLayerConfig(defaultLayerConfig)
         }
+        this.update(visParams)
+    }
+
+    componentDidUpdate(prevProps) {
+        const {layerConfig: {visParams: prevVisParams}} = prevProps
+        this.update(prevVisParams)
+    }
+
+    update(prevVisParams) {
+        const {recipe} = this.props
+        if (!recipe) return
+        const allVisualizations = this.toAllVis()
+        if (!allVisualizations.length) return
+        if (prevVisParams) {
+            const visParams = allVisualizations
+                .find(({
+                    id,
+                    bands
+                }) => id === prevVisParams.id && (prevVisParams.id || _.isEqual(bands, prevVisParams.bands)))
+            if (!visParams) {
+                this.selectVisualization(allVisualizations[0])
+            } else if (!_.isEqual(visParams, prevVisParams)) {
+                this.selectVisualization(visParams)
+            }
+        } else {
+            this.selectVisualization(allVisualizations[0])
+        }
+    }
+
+    toAllVis() {
+        const {userDefinedVisualizations, layerConfig: {visualizationType, mosaicType}, recipe} = this.props
+        const options = visualizationOptions(recipe, visualizationType, mosaicType)
+        const availableBands = getAvailableBands(recipe, visualizationType)
+        const flatten = options => options
+            .map(option => option.options
+                ? flatten(option.options)
+                : option.visParams
+            )
+            .flat()
+        return [
+            ...userDefinedVisualizations,
+            ...flatten(options)
+        ].filter(visParams => visParams.bands.every(band => Object.keys(availableBands).includes(band)))
+    }
+
+    selectVisualization(visParams) {
+        const {layerConfig, mapAreaContext: {updateLayerConfig}} = this.props
+        updateLayerConfig({...layerConfig, visParams})
     }
 
     selectVisualizationType(visualizationType) {

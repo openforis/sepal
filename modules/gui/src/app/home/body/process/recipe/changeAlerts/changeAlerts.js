@@ -4,6 +4,8 @@ import {RecipeActions} from './changeAlertsRecipe'
 import {ReferenceSync} from './referenceSync'
 import {compose} from 'compose'
 import {defaultModel} from './changeAlertsRecipe'
+import {getAvailableBands} from './bands'
+// import {getPreSetVisualizations} from './visualizations'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
@@ -92,6 +94,5 @@ export default () => ({
         const date = moment.utc(recipe.model.date.date, 'YYYY-MM-DD')
         return [date, date]
     },
-    getAvailableBands: recipe => selectFrom(recipe, 'model.reference.bands') || [],
-    getPreSetVisualizations: recipe => selectFrom(recipe, 'model.reference.visualizations') || []
+    getAvailableBands
 })

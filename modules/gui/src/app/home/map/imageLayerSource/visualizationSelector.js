@@ -9,6 +9,7 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
+import _ from 'lodash'
 import guid from 'guid'
 
 const mapRecipeToProps = (recipe, {source}) => ({
@@ -71,12 +72,14 @@ class _VisualizationSelector extends React.Component {
     }
 
     getOptions() {
-        const {userDefinedVisualizations, presetOptions} = this.props
-        const userDefinedOptions = userDefinedVisualizations.map(visParams => ({
-            value: visParams.id,
-            label: visParams.bands.join(', '),
-            visParams
-        }))
+        const {userDefinedVisualizations, presetOptions, availableBands} = this.props
+        const userDefinedOptions = userDefinedVisualizations
+            .filter(({bands}) => _.isUndefined(availableBands) || bands.every(band => availableBands.includes(band)))
+            .map(visParams => ({
+                value: visParams.id,
+                label: visParams.bands.join(', '),
+                visParams
+            }))
         return [
             {label: msg('map.visualizationSelector.userDefined.label'), options: userDefinedOptions},
             ...presetOptions
@@ -135,6 +138,7 @@ VisualizationSelector.defaultProps = {
 
 VisualizationSelector.propTypes = {
     source: PropTypes.any.isRequired,
+    availableBands: PropTypes.array,
     presetOptions: PropTypes.array,
     recipe: PropTypes.object
 }
