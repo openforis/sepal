@@ -9,7 +9,7 @@ const typeClassNames = type =>
 
 class _Layout extends React.Component {
     render() {
-        const {forwardedRef, type, spacing, alignment, framed, className, style, onClick, onMouseOver, onMouseOut, children} = this.props
+        const {forwardedRef, type, spacing, alignment, framed, className, contentClassName, style, onClick, onMouseOver, onMouseOut, children} = this.props
         return (
             <div
                 ref={forwardedRef}
@@ -25,7 +25,10 @@ class _Layout extends React.Component {
                 onClick={onClick}
                 onMouseEnter={onMouseOver}
                 onMouseLeave={onMouseOut}>
-                <div className={styles.content}>
+                <div className={[
+                    styles.content,
+                    contentClassName
+                ].join(' ')}>
                     {children}
                 </div>
             </div>
@@ -42,6 +45,7 @@ Layout.propTypes = {
     alignment: PropTypes.oneOf(['left', 'center', 'right', 'spaced', 'fill', 'distribute']),
     children: PropTypes.any,
     className: PropTypes.string,
+    contentClassName: PropTypes.string,
     framed: PropTypes.any,
     spacing: PropTypes.oneOf(['loose', 'normal', 'normal-separated', 'compact', 'compact-separated', 'tight', 'none']),
     style: PropTypes.object,
