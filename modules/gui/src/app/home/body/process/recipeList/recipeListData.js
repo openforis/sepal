@@ -7,6 +7,7 @@ import {CreateRecipe} from '../createRecipe'
 import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
+import {NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeList'
 import {Pageable} from 'widget/pageable/pageable'
 import {ProjectsButton} from './projectsButton'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
@@ -25,9 +26,6 @@ import RemoveButton from 'widget/removeButton'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import styles from './recipeListData.module.css'
-
-const NO_PROJECT_SYMBOL = '#'
-const PROJECT_RECIPE_SEPARATOR = ' / '
 
 const mapStateToProps = () => ({
     projects: select('process.projects'),
@@ -375,7 +373,11 @@ class _RecipeListData extends React.Component {
 
     recipeMatchesProject(recipe) {
         const {projectId} = this.props
-        return !projectId || projectId === recipe.projectId
+        return projectId
+            ? projectId === NO_PROJECT_SYMBOL
+                ? _.isEmpty(recipe.projectId)
+                : recipe.projectId === projectId
+            : true
     }
 
     recipeMatchesFilter(recipe, filterValues) {
