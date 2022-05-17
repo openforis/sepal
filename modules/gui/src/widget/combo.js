@@ -158,7 +158,7 @@ class _Combo extends React.Component {
     renderClearButton() {
         const {allowClear} = this.props
         const {selectedOption} = this.state
-        return allowClear && selectedOption
+        return allowClear
             ? (
                 <Button
                     key='clear'
@@ -170,6 +170,7 @@ class _Combo extends React.Component {
                         fixedWidth: true
                     }}
                     tabIndex={-1}
+                    disabled={!selectedOption}
                     onClick={() => this.select$.next()}
                 />
             )
