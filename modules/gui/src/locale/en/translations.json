@@ -1208,6 +1208,13 @@
               }
           }
         },
+        "layers": {
+            "imageLayer": {
+                "changes": "Changes",
+                "dates": "Dates",
+                "observations": "Observations"
+            }
+        },
         "panel": {
           "date": {
             "button": "DAT",
