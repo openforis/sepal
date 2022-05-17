@@ -7,6 +7,9 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 
+export const NO_PROJECT_SYMBOL = '<no project>'
+export const PROJECT_RECIPE_SEPARATOR = ' / '
+
 const mapStateToProps = () => ({
     filteredRecipes: select('process.filteredRecipes') ?? []
 })

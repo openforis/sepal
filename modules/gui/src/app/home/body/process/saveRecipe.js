@@ -52,11 +52,14 @@ class SaveRecipe extends React.Component {
                     />
                 </Layout>
             </Panel.Content>
-            <Panel.Buttons onEnter={save} onEscape={cancel}>
+            <Panel.Buttons>
                 <Panel.Buttons.Main>
-                    <Panel.Buttons.Cancel onClick={cancel}/>
+                    <Panel.Buttons.Cancel
+                        keybinding='Escape'
+                        onClick={cancel}/>
                     <Panel.Buttons.Save
                         disabled={form.isInvalid()}
+                        keybinding='Enter'
                         onClick={save}/>
                 </Panel.Buttons.Main>
             </Panel.Buttons>

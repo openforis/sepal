@@ -11,6 +11,7 @@ import {debounceTime, throttleTime} from 'rxjs'
 import {formatCoordinates} from 'coords'
 import {msg} from 'translate'
 import {withMap} from './mapContext'
+import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import clipboard from 'clipboard'
@@ -78,11 +79,7 @@ class _MapInfoPanel extends React.Component {
                         {center && zoom && this.renderCenter(center, zoom)}
                     </Layout>
                 </Panel.Content>
-                <Panel.Buttons onEnter={deactivate} onEscape={deactivate}>
-                    <Panel.Buttons.Main>
-                        <Panel.Buttons.Close onClick={deactivate}/>
-                    </Panel.Buttons.Main>
-                </Panel.Buttons>
+                <Keybinding keymap={{'Escape': deactivate}}/>
             </Panel>
         )
     }

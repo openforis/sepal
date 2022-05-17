@@ -1,13 +1,12 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {msg} from 'translate'
-import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './panelButtons.module.css'
 
 export class PanelButtons extends React.Component {
-    static renderButton({template, type, look, icon, label, dots, shown = true, disabled = false, keybinding, onClick}, key) {
+    static renderButton({template, type, look, icon, label, dots, hidden, disabled, keybinding, onClick}, key) {
         const defaultByTemplate = {
             cancel: {
                 look: 'cancel',
@@ -79,7 +78,7 @@ export class PanelButtons extends React.Component {
                 look={look || defaultByTemplate[template].look}
                 icon={icon || defaultByTemplate[template].icon}
                 label={[label || defaultByTemplate[template].label, dots ? '...' : null].join('')}
-                shown={shown}
+                hidden={hidden}
                 disabled={disabled}
                 keybinding={keybinding}
                 onClick={e => {
@@ -156,18 +155,11 @@ export class PanelButtons extends React.Component {
     }
 
     render() {
-        const {className, shown = true, onEnter, onEscape, children} = this.props
+        const {className, children} = this.props
         return (
-            <Keybinding keymap={{
-                Enter: onEnter,
-                Escape: onEscape
-            }}>
-                {shown ? (
-                    <div className={[styles.buttons, className].join(' ')}>
-                        {children ? children : this.renderButtons()}
-                    </div>
-                ) : null}
-            </Keybinding>
+            <div className={[styles.buttons, className].join(' ')}>
+                {children ? children : this.renderButtons()}
+            </div>
         )
     }
 
@@ -203,11 +195,11 @@ const buttonPropTypes = {
     onClick: PropTypes.func.isRequired,
     disabled: PropTypes.any,
     dots: PropTypes.any,
+    hidden: PropTypes.any,
     icon: PropTypes.string,
     keybinding: PropTypes.any,
     label: PropTypes.string,
     look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'cancel', 'apply', 'add']),
-    shown: PropTypes.any,
     template: PropTypes.oneOf(['cancel', 'apply', 'confirm', 'close', 'add', 'back', 'next', 'done']),
     type: PropTypes.string
 }
@@ -217,17 +209,14 @@ const buttonsPropTypes = PropTypes.arrayOf(
 )
 
 PanelButtons.propTypes = {
+    children: PropTypes.any.isRequired,
     buttons: buttonsPropTypes,
-    children: PropTypes.any,
     className: PropTypes.string,
-    extraButtons: buttonsPropTypes,
-    shown: PropTypes.any
+    extraButtons: buttonsPropTypes
 }
 
 PanelButtons.Main.propTypes = {
-    children: PropTypes.any.isRequired,
-    onEnter: PropTypes.func,
-    onEscape: PropTypes.func
+    children: PropTypes.any.isRequired
 }
 
 PanelButtons.Extra.propTypes = {

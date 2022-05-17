@@ -40,6 +40,9 @@ class CollectPanel extends React.Component {
         super(props)
         const {recipeId} = props
         this.recipeActions = RecipeActions(recipeId)
+        this.findNext = this.findNext.bind(this)
+        this.close = this.close.bind(this)
+        this.remove = this.remove.bind(this)
     }
 
     render() {
@@ -125,20 +128,22 @@ class CollectPanel extends React.Component {
         const {stream, recipe} = this.props
         const loadingNextPoint = stream('LOAD_NEXT_POINTS').active
         return (
-            <Panel.Buttons
-                onEnter={() => this.findNext()}
-                onEscape={() => this.close()}>
+            <Panel.Buttons>
                 <Panel.Buttons.Main>
-                    <Panel.Buttons.Close onClick={() => this.close()}/>
+                    <Panel.Buttons.Close
+                        keybinding='Escape'
+                        onClick={this.close}
+                    />
                     <Panel.Buttons.Next
-                        onClick={() => this.findNext()}
                         disabled={!hasTrainingData(recipe) || loadingNextPoint}
+                        keybinding='Enter'
+                        onClick={this.findNext}
                     />
                 </Panel.Buttons.Main>
                 <Panel.Buttons.Remove
-                    keybinding={['Delete', 'Backspace']}
-                    onClick={() => this.remove()}
                     disabled={loadingNextPoint}
+                    keybinding={['Delete', 'Backspace']}
+                    onClick={this.remove}
                 />
             </Panel.Buttons>
         )

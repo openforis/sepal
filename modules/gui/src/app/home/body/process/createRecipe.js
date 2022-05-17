@@ -101,12 +101,17 @@ class _CreateRecipe extends React.Component {
                 <Panel.Content>
                     {recipeType ? recipeType.details : null}
                 </Panel.Content>
-                <Panel.Buttons onEnter={close} onEscape={close}>
+                <Panel.Buttons>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Close onClick={close}/>
+                        <Panel.Buttons.Close
+                            keybinding={['Enter', 'Escape']}
+                            onClick={close}
+                        />
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
-                        <Panel.Buttons.Back onClick={back}/>
+                        <Panel.Buttons.Back
+                            onClick={back}
+                        />
                     </Panel.Buttons.Extra>
                 </Panel.Buttons>
             </React.Fragment>
@@ -126,9 +131,13 @@ class _CreateRecipe extends React.Component {
                         {listRecipeTypes().map(recipeType => this.renderRecipeType(recipeType))}
                     </Layout>
                 </Panel.Content>
-                <Panel.Buttons shown={!trigger} onEnter={close} onEscape={close}>
+                <Panel.Buttons>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Close onClick={close}/>
+                        <Panel.Buttons.Close
+                            hidden={trigger}
+                            keybinding={['Enter', 'Escape']}
+                            onClick={close}
+                        />
                     </Panel.Buttons.Main>
                 </Panel.Buttons>
             </React.Fragment>

@@ -28,9 +28,12 @@ class _AddImageLayerSourcePanel extends React.Component {
                 <Panel.Content>
                     {this.renderOptions()}
                 </Panel.Content>
-                <Panel.Buttons onEscape={deactivate}>
+                <Panel.Buttons>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Close onClick={deactivate}/>
+                        <Panel.Buttons.Close
+                            keybinding='Escape'
+                            onClick={deactivate}
+                        />
                     </Panel.Buttons.Main>
                 </Panel.Buttons>
             </Panel>

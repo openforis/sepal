@@ -128,6 +128,12 @@ FormDatePicker.propTypes = {
 class _DatePickerPanel extends React.Component {
     state = {}
 
+    constructor(props) {
+        super(props)
+        this.select = this.select.bind(this)
+        this.close = this.close.bind(this)
+    }
+
     render() {
         const {title} = this.props
         const {date} = this.state
@@ -149,7 +155,7 @@ class _DatePickerPanel extends React.Component {
                         </div>
                     </div>
                 </Panel.Content>
-                <Panel.Buttons onEnter={() => this.select()} onEscape={() => this.close()}>
+                <Panel.Buttons>
                     <Panel.Buttons.Main>
                         {this.renderButtons()}
                     </Panel.Buttons.Main>
@@ -269,11 +275,24 @@ class _DatePickerPanel extends React.Component {
 
     renderButtons() {
         return this.isDirty()
-            ? <React.Fragment>
-                <Panel.Buttons.Cancel onClick={() => this.close()}/>
-                <Panel.Buttons.Select onClick={() => this.select()}/>
-            </React.Fragment>
-            : <Panel.Buttons.Close onClick={() => this.close()}/>
+            ? (
+                <React.Fragment>
+                    <Panel.Buttons.Cancel
+                        keybinding='Escape'
+                        onClick={this.close}
+                    />
+                    <Panel.Buttons.Select
+                        keybinding='Enter'
+                        onClick={this.select}
+                    />
+                </React.Fragment>
+            )
+            : (
+                <Panel.Buttons.Close
+                    keybinding={['Enter', 'Escape']}
+                    onClick={this.close}
+                />
+            )
     }
 
     componentDidMount() {

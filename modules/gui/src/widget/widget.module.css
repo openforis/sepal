@@ -1,3 +1,5 @@
+/* container */
+
 .container {
     display: flex;
     flex-direction: column;
@@ -28,7 +30,7 @@
     display: none !important;
 }
 
-.container.clickable {
+.container.clickable:not(.disabled) {
     cursor: pointer;
 }
 
@@ -37,9 +39,13 @@
     flex-grow: 1;
 }
 
+/* widget */
+
 .widget {
     position: relative;
 }
+
+/* widget border */
 
 .widget.border {
     --input-border-default-color: #606060;
@@ -49,32 +55,24 @@
     transition: 100ms ease-in-out;
 }
 
-.widget.border:focus-within,
-.widget.border:not(:disabled):not(.widget.busy):hover,
-.widget.border:focus:not(:disabled):not(.widget.busy):hover {
-    border-bottom-style: solid;
-}
-
-.widget.border.normal:not(:disabled):not(.widget.busy):hover,
-.widget.border.normal:focus:not(:disabled):not(.widget.busy):hover {
-    --input-border-color: var(--input-border-hover-color);
+.widget.border.normal {
+    --input-border-color: var(--input-border-default-color);
 }
 
 .widget.border.normal:focus-within {
     --input-border-color: var(--input-border-focus-color);
 }
 
-.widget.border.normal {
-    --input-border-color: var(--input-border-default-color);
+.widget.border.normal:hover,
+.widget.border.normal:hover {
+    --input-border-color: var(--input-border-hover-color);
 }
 
 .widget.border.error {
     --input-border-color: #e81351;
 }
 
-.widget.border.busy {
-    --input-border-color: var(--input-border-default-color);
-}
+/* widget state */
 
 .widget.error {
     --error-background-color: rgba(232, 19, 81, 0.1);
@@ -89,7 +87,8 @@
     bottom: 0;
     height: 1px;
     z-index: 2; /* make sure busy spinner is above the overlay */
-    background-color: #b0b0b0;
+    background-color: #c0c0c0;
+    mix-blend-mode: screen;
     animation: busy 600ms linear infinite alternate;
 }
 

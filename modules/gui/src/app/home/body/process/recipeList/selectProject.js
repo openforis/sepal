@@ -1,4 +1,5 @@
 import {Combo} from 'widget/combo'
+import {NO_PROJECT_SYMBOL} from './recipeList'
 import {Shape} from 'widget/shape'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -34,15 +35,17 @@ class _SelectProject extends React.Component {
 
     render() {
         const {projects, projectId} = this.props
-        const options = projects.map(project => ({value: project.id, label: project.name}))
-        const selectedOption = _.find(options, ({value: currentProjectId}) => currentProjectId === projectId)
+        const NO_PROJECT_OPTION = {
+            label: NO_PROJECT_SYMBOL,
+            value: NO_PROJECT_SYMBOL
+        }
+        const options = [NO_PROJECT_OPTION, ...projects.map(project => ({value: project.id, label: project.name}))]
         return (
             <Shape
                 look='transparent'
-                size='large'
                 shape='pill'>
                 <Combo
-                    value={selectedOption ? selectedOption.value : {}}
+                    value={projectId}
                     options={options}
                     placeholder='All projects'
                     allowClear

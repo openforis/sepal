@@ -10,7 +10,7 @@ const Context = React.createContext()
 
 export const withButtonGroupContext = withContext(Context, 'buttonGroupContext')
 
-const _ButtonGroup = ({className, layout, alignment, spacing, framed, label, disabled, onMouseOver, onMouseOut, forwardedRef, children}) => {
+const _ButtonGroup = ({className, contentClassName, layout, alignment, spacing, framed, label, disabled, onMouseOver, onMouseOut, forwardedRef, children}) => {
     const mapChild = (child, index, childrenCount) => {
         const joinLeft = childrenCount > 1 && index !== 0
         const joinRight = childrenCount > 1 && index !== childrenCount - 1
@@ -30,6 +30,7 @@ const _ButtonGroup = ({className, layout, alignment, spacing, framed, label, dis
         <Widget
             ref={forwardedRef}
             className={className}
+            contentClassName={contentClassName}
             label={label}
             layout={layout}
             alignment={alignment}
@@ -52,6 +53,7 @@ ButtonGroup.propTypes = {
     alignment: PropTypes.any,
     children: PropTypes.any,
     className: PropTypes.string,
+    contentClassName: PropTypes.string,
     disabled: PropTypes.any,
     framed: PropTypes.any,
     label: PropTypes.any,

@@ -7,7 +7,6 @@ import {duplicateRecipe$, initializeRecipe, isRecipeOpen, moveRecipes$, openReci
 import {map, of, tap} from 'rxjs'
 import {msg} from 'translate'
 // import {publishEvent} from 'eventPublisher'
-import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -89,20 +88,14 @@ class _RecipeHome extends React.Component {
         // publishEvent('remove_recipe', {recipe_type: type})
         stream('REMOVE_RECIPES',
             removeRecipes$(recipeIds),
-            () => {
-                recipeIds.forEach(recipeId => closeTab(recipeId, 'process'))
-                Notifications.success({message: msg('process.recipe.remove.success')})
-            }
+            () => recipeIds.forEach(recipeId => closeTab(recipeId, 'process'))
         )
     }
 
     moveRecipes(recipeIds, projectId) {
         const {stream} = this.props
         stream('MOVE_RECIPES',
-            moveRecipes$(recipeIds, projectId),
-            () => {
-                Notifications.success({message: msg('process.recipe.move.success')})
-            }
+            moveRecipes$(recipeIds, projectId)
         )
     }
 

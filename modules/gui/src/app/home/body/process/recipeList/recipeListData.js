@@ -7,6 +7,7 @@ import {CreateRecipe} from '../createRecipe'
 import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
+import {NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeList'
 import {Pageable} from 'widget/pageable/pageable'
 import {ProjectsButton} from './projectsButton'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
@@ -25,9 +26,6 @@ import RemoveButton from 'widget/removeButton'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import styles from './recipeListData.module.css'
-
-const NO_PROJECT_SYMBOL = '#'
-const PROJECT_RECIPE_SEPARATOR = ' / '
 
 const mapStateToProps = () => ({
     projects: select('process.projects'),
@@ -66,7 +64,7 @@ class _RecipeListData extends React.Component {
     }
 
     renderData() {
-        const {filterValues} = this.props
+        const {recipeId, filterValues} = this.props
         const {move} = this.state
         const highlightMatcher = filterValues.length
             ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
@@ -84,7 +82,9 @@ class _RecipeListData extends React.Component {
                     {move && this.renderMoveConfirmation()}
                 </Unscrollable>
             </ScrollableContainer>
-        ) : null
+        ) : (
+            <CreateRecipe recipeId={recipeId} trigger={true}/>
+        )
     }
 
     renderHeader() {
@@ -182,7 +182,11 @@ class _RecipeListData extends React.Component {
         return (
             <Confirm
                 title={msg('process.recipe.move.title')}
-                message={msg('process.recipe.move.confirm', {count: this.isSelected(), project: projectName})}
+                message={
+                    this.renderConfirmationMessage(
+                        msg('process.recipe.move.confirm', {count: this.isSelected(), project: projectName})
+                    )
+                }
                 onConfirm={() => {
                     this.setMove(false)
                     this.moveSelected(projectId)
@@ -199,9 +203,51 @@ class _RecipeListData extends React.Component {
                 icon='trash'
                 label={msg('process.recipe.remove.label')}
                 tooltip={msg('process.recipe.remove.tooltip')}
-                message={msg('process.recipe.remove.confirm', {count: this.isSelected()})}
+                message={
+                    this.renderConfirmationMessage(
+                        msg('process.recipe.remove.confirm', {count: this.isSelected()})
+                    )
+                }
                 disabled={!this.isSelected()}
                 onRemove={this.removeSelected}/>
+        )
+    }
+
+    rendeRemoveConfirmationMessage() {
+        return (
+            <div>
+                <div>
+                    {msg('process.recipe.remove.confirm', {count: this.isSelected()})}
+                </div>
+                {this.renderSelectedRecipes()}
+            </div>
+        )
+    }
+
+    renderConfirmationMessage(message) {
+        return (
+            <div>
+                <div>
+                    {message}
+                </div>
+                {this.renderSelectedRecipes()}
+            </div>
+        )
+    }
+
+    renderSelectedRecipes() {
+        const {recipes, selectedIds} = this.props
+        const selectedRecipes = recipes.filter(({id}) => selectedIds.includes(id))
+        return (
+            <ul>
+                {selectedRecipes.map(recipe => this.renderSelectedRecipe(recipe))}
+            </ul>
+        )
+    }
+
+    renderSelectedRecipe(recipe) {
+        return (
+            <li>{this.getRecipePath(recipe)}</li>
         )
     }
 
@@ -235,21 +281,15 @@ class _RecipeListData extends React.Component {
     }
 
     renderRecipe(recipe, highlightMatcher) {
-        const {projects, onClick, onDuplicate, onRemove} = this.props
+        const {onClick, onDuplicate, onRemove} = this.props
         const {edit} = this.state
-        const name = recipe.name
-        const project = _.find(projects, ({id}) => id === recipe.projectId)
-        const path = [
-            project?.name ?? NO_PROJECT_SYMBOL,
-            name
-        ].join(PROJECT_RECIPE_SEPARATOR)
         return (
             <ListItem
                 key={recipe.id}
                 onClick={onClick ? () => onClick(recipe.id) : null}>
                 <CrudItem
                     title={this.getRecipeTypeName(recipe.type)}
-                    description={path}
+                    description={this.getRecipePath(recipe)}
                     timestamp={recipe.updateTime}
                     highlight={highlightMatcher}
                     highlightTitle={false}
@@ -263,6 +303,16 @@ class _RecipeListData extends React.Component {
                 />
             </ListItem>
         )
+    }
+
+    getRecipePath(recipe) {
+        const {projects} = this.props
+        const name = recipe.name
+        const project = _.find(projects, ({id}) => id === recipe.projectId)
+        return [
+            project?.name ?? NO_PROJECT_SYMBOL,
+            name
+        ].join(PROJECT_RECIPE_SEPARATOR)
     }
 
     setEdit(edit) {
@@ -288,8 +338,8 @@ class _RecipeListData extends React.Component {
     }
 
     isLoading() {
-        const {recipes, stream} = this.props
-        return !recipes && stream('LOAD_RECIPES').active
+        const {recipes} = this.props
+        return _.isUndefined(recipes)
     }
 
     hasData() {
@@ -373,7 +423,11 @@ class _RecipeListData extends React.Component {
 
     recipeMatchesProject(recipe) {
         const {projectId} = this.props
-        return !projectId || projectId === recipe.projectId
+        return projectId
+            ? projectId === NO_PROJECT_SYMBOL
+                ? _.isEmpty(recipe.projectId)
+                : recipe.projectId === projectId
+            : true
     }
 
     recipeMatchesFilter(recipe, filterValues) {
@@ -428,6 +482,10 @@ class _RecipeListData extends React.Component {
             .dispatch()
     }
 
+    componentDidMount() {
+        this.updateFilteredRecipes()
+    }
+    
     componentDidUpdate(prevProps) {
         if (!_.isEqual(this.props, prevProps)) {
             this.updateFilteredRecipes()

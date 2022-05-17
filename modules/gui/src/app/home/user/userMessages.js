@@ -48,6 +48,11 @@ class _UserMessages extends React.Component {
         selectedMessage: null
     }
 
+    constructor(props) {
+        super(props)
+        this.newMessage = this.newMessage.bind(this)
+    }
+
     updateMessage(message) {
         const {id = uuid()} = message
         this.props.stream('REQUEST_UPDATE_USER_MESSAGE',
@@ -212,8 +217,6 @@ class _UserMessages extends React.Component {
     renderMessagesPanel() {
         const {isAdmin, activatable: {deactivate}} = this.props
         const isClosable = !this.isUnread() || isAdmin
-        const close = () => isClosable && deactivate()
-        const add = () => this.newMessage()
         return (
             <Panel
                 className={styles.panel}
@@ -224,16 +227,20 @@ class _UserMessages extends React.Component {
                 <Panel.Content>
                     {this.renderMessages()}
                 </Panel.Content>
-                <Panel.Buttons onEnter={close} onEscape={close}>
+                <Panel.Buttons>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Close onClick={close} disabled={!isClosable}/>
+                        <Panel.Buttons.Close
+                            keybinding={['Enter', 'Escape']}
+                            disabled={!isClosable}
+                            onClick={deactivate}
+                        />
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
                         <Panel.Buttons.Add
                             label={msg('userMessages.post')}
                             icon='pencil-alt'
-                            onClick={add}
-                            shown={isAdmin}/>
+                            onClick={this.newMessage}
+                            hidden={!isAdmin}/>
                     </Panel.Buttons.Extra>
                 </Panel.Buttons>
             </Panel>

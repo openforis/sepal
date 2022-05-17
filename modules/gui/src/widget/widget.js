@@ -8,15 +8,14 @@ import withForwardedRef from 'ref'
 
 export class _Widget extends React.Component {
     render() {
-        const {forwardedRef, layout, spacing, alignment, framed, border, disabled, className, onMouseOver, onMouseOut, onClick} = this.props
+        const {forwardedRef, layout, spacing, alignment, framed, border, disabled, className, contentClassName, onMouseOver, onMouseOut, onClick} = this.props
         const widgetState = this.getWidgetState()
         return (
             <div
                 ref={forwardedRef}
                 className={[
                     styles.container,
-                    styles[widgetState],
-                    onClick && !disabled ? styles.clickable : null,
+                    onClick ? styles.clickable : null,
                     disabled ? styles.disabled : null,
                     ['vertical-scrollable', 'vertical-fill'].includes(layout) ? styles.scrollable : null,
                     className
@@ -30,9 +29,11 @@ export class _Widget extends React.Component {
                     framed={framed}
                     className={[
                         styles.widget,
-                        disabled ? styles.normal : styles[widgetState],
-                        border ? styles.border : null
+                        disabled ? styles.disabled : null,
+                        border ? styles.border : null,
+                        styles[widgetState]
                     ].join(' ')}
+                    contentClassName={contentClassName}
                     onMouseOver={onMouseOver}
                     onMouseOut={onMouseOut}
                 >
@@ -89,6 +90,7 @@ Widget.propTypes = {
     border: PropTypes.any,
     busyMessage: PropTypes.any,
     className: PropTypes.string,
+    contentClassName: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,
     framed: PropTypes.any,

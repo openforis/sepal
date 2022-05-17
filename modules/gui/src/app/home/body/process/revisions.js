@@ -74,15 +74,19 @@ class Revisions extends React.Component {
                 <Panel.Content className={styles.content}>
                     {this.renderContent()}
                 </Panel.Content>
-                <Panel.Buttons onEnter={confirm} onEscape={cancel}>
+                <Panel.Buttons>
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Confirm
                             label={msg('process.revisions.revert')}
                             disabled={form.isInvalid()}
+                            keybinding='Enter'
                             onClick={confirm}/>
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
-                        <Panel.Buttons.Cancel onClick={cancel}/>
+                        <Panel.Buttons.Cancel
+                            keybinding='Escape'
+                            onClick={cancel}
+                        />
                     </Panel.Buttons.Extra>
                 </Panel.Buttons>
             </Form.Panel>

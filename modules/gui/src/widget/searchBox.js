@@ -33,7 +33,7 @@ class _SearchBox extends React.Component {
     }
 
     render() {
-        const {placeholder, className} = this.props
+        const {placeholder, className, size, width} = this.props
         const {value, showOptions} = this.state
         return (
             <Keybinding keymap={{
@@ -41,10 +41,11 @@ class _SearchBox extends React.Component {
                 ArrowDown: () => this.showOptions()
             }}>
                 <Shape
-                    look='transparent'
-                    size='large'
                     ref={this.containerRef}
-                    shape='pill'>
+                    shape='pill'
+                    look='transparent'
+                    size={size}
+                    width={width}>
                     <Input
                         className={[styles.search, className].join(' ')}
                         type='search'
@@ -158,7 +159,9 @@ SearchBox.propTypes = {
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,
     shape: PropTypes.string,
+    size: PropTypes.string,
     value: PropTypes.string,
+    width: PropTypes.any,
     onSearchValue: PropTypes.func,
     onSelect: PropTypes.func
 }
