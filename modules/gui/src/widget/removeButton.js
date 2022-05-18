@@ -1,4 +1,5 @@
-import {ModalConfirmationButton, TooltipConfirmationButton} from './safetyButton'
+import {ModalConfirmationButton} from './modalConfirmationButton'
+import {TooltipConfirmationButton} from './tooltipConfirmationButton'
 import PropTypes from 'prop-types'
 import React from 'react'
 
