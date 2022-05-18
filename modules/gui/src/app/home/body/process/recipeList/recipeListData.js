@@ -179,10 +179,11 @@ class _RecipeListData extends React.Component {
 
     renderMoveConfirmation() {
         const {move: {value: projectId, label: projectName}} = this.state
-        return (
+        const count = this.isSelected()
+        return count ? (
             <Confirm
                 title={msg('process.recipe.move.title')}
-                message={msg('process.recipe.move.confirm', {count: this.isSelected(), project: projectName})}
+                message={msg('process.recipe.move.confirm', {count, project: projectName})}
                 onConfirm={() => {
                     this.setMove(false)
                     this.moveSelected(projectId)
@@ -190,22 +191,23 @@ class _RecipeListData extends React.Component {
                 onCancel={() => this.setMove(false)}>
                 {this.renderSelectedRecipes()}
             </Confirm>
-        )
+        ) : null
     }
 
     renderRemoveButton() {
-        return (
+        const count = this.isSelected()
+        return count ? (
             <RemoveButton
                 shape='pill'
                 icon='trash'
                 label={msg('process.recipe.remove.label')}
-                message={msg('process.recipe.remove.confirm', {count: this.isSelected()})}
+                message={msg('process.recipe.remove.confirm', {count})}
                 tooltip={msg('process.recipe.remove.tooltip')}
                 disabled={!this.isSelected()}
                 onRemove={this.removeSelected}>
                 {this.renderSelectedRecipes()}
             </RemoveButton>
-        )
+        ) : null
     }
 
     renderSelectedRecipes() {
