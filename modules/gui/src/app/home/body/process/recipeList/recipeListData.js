@@ -56,7 +56,6 @@ class _RecipeListData extends React.Component {
     }
 
     render() {
-        console.log(this.props, this.state)
         return this.isLoading()
             ? this.renderProgress()
             : this.renderData()
