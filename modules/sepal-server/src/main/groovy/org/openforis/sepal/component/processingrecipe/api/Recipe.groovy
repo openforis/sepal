@@ -1,5 +1,6 @@
 package org.openforis.sepal.component.processingrecipe.api
 
+import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.transform.Immutable
 
@@ -11,12 +12,24 @@ class Recipe {
     String name
     String type
     String username
-    String contents
+    private String contents
     Date creationTime
     Date updateTime
 
     def getParsedContents() {
         contents == null ? null : new JsonSlurper().parseText(contents)
+    }
+
+    String getContents() {
+        def parsed = getParsedContents()
+        parsed.typeVersion = typeVersion
+        parsed.projectId = projectId
+        parsed.name = name
+        return new JsonOutput().toJson(parsed)
+    }
+
+    void setContents(contents) {
+        this.contents = contents
     }
 
     Recipe created(Date date) {
