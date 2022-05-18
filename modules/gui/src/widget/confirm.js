@@ -1,3 +1,4 @@
+import {Layout} from './layout'
 import {Panel} from 'widget/panel/panel'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
@@ -15,9 +16,12 @@ export default class Confirm extends React.Component {
                     icon='exclamation-triangle'
                     title={title || msg('widget.confirm.title')}/>
                 <Panel.Content>
-                    <div className={styles.message}>
-                        {message || children}
-                    </div>
+                    <Layout type='vertical' spacing='compact'>
+                        <div className={styles.message}>
+                            {message}
+                        </div>
+                        {children}
+                    </Layout>
                 </Panel.Content>
                 <Panel.Buttons>
                     <Panel.Buttons.Main>
