@@ -230,14 +230,17 @@ export const removeRecipes$ = recipeIds =>
     )
 
 export const moveRecipes$ = (recipeIds, projectId) => {
+    const loadedRecipes = select('process.loadedRecipes')
     return api.recipe.move$(recipeIds, projectId).pipe(
-        map(recipes => recipeIds.reduce(
-            (builder, id) => {
-                return builder.set(['process.loadedRecipes', id, 'projectId'], projectId)
-            },
-            actionBuilder('MOVE_RECIPES', {recipeIds, projectId})
-                .set('process.recipes', recipes)
-        ).dispatch()
+        map(recipes => recipeIds
+            .filter(id => loadedRecipes[id])
+            .reduce(
+                (builder, id) => {
+                    return builder.set(['process.loadedRecipes', id, 'projectId'], projectId)
+                },
+                actionBuilder('MOVE_RECIPES', {recipeIds, projectId})
+                    .set('process.recipes', recipes)
+            ).dispatch()
         )
     )
 }

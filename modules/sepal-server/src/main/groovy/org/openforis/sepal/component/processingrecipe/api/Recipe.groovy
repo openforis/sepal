@@ -22,10 +22,12 @@ class Recipe {
 
     String getContents() {
         def parsed = getParsedContents()
-        parsed.typeVersion = typeVersion
-        parsed.projectId = projectId
-        parsed.name = name
-        return new JsonOutput().toJson(parsed)
+        if (parsed instanceof Map) {
+            parsed.projectId = projectId
+            return new JsonOutput().toJson(parsed)
+        } else {
+            return contents
+        }
     }
 
     void setContents(contents) {

@@ -19,7 +19,7 @@ class MigrateRecipesTest extends RecipeTest {
         then:
         def migrated = getRecipeById(recipe.id)
         migrated.typeVersion == 2
-        migrated.parsedContents == [migrated: true]
+        migrated.parsedContents == [migrated: true, projectId: recipe.projectId]
     }
 
     def 'Given a migration and a recipe with newer version, migration is not run'() {
