@@ -229,14 +229,18 @@ export const removeRecipes$ = recipeIds =>
         )
     )
 
-export const moveRecipes$ = (recipeIds, projectId) =>
-    api.recipe.move$(recipeIds, projectId).pipe(
-        map(recipes =>
+export const moveRecipes$ = (recipeIds, projectId) => {
+    return api.recipe.move$(recipeIds, projectId).pipe(
+        map(recipes => recipeIds.reduce(
+            (builder, id) => {
+                return builder.set(['process.loadedRecipes', id, 'projectId'], projectId)
+            },
             actionBuilder('MOVE_RECIPES', {recipeIds, projectId})
                 .set('process.recipes', recipes)
-                .dispatch()
+        ).dispatch()
         )
     )
+}
 
 export const addRecipe = recipe => {
     const tab = addTab('process')
