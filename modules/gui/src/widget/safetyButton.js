@@ -56,6 +56,13 @@ export class ModalConfirmationButton extends React.Component {
             </React.Fragment>
         )
     }
+
+    componentDidUpdate({disabled: prevDisabled}) {
+        const {disabled} = this.props
+        if (!prevDisabled && disabled) {
+            this.askConfirmation(false)
+        }
+    }
 }
 
 ModalConfirmationButton.defaultProps = {

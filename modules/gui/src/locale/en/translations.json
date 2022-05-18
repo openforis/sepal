@@ -2980,13 +2980,14 @@
       },
       "remove": {
           "label": "Remove",
+          "title": "Remove recipes",
           "tooltip": "Remove selected recipes",
           "confirm": "Remove {count} {count, plural, one {recipe} other {recipes}}?"
       },
       "move": {
         "label": "Move",
-        "tooltip": "Move selected recipes to a project",
         "title": "Move recipes",
+        "tooltip": "Move selected recipes to a project",
         "destinationProject": "Destination project",
         "confirm": "Move {count} {count, plural, one {recipe} other {recipes}} to project {project}?"
       },

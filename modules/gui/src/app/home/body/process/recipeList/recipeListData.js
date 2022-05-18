@@ -22,7 +22,6 @@ import ButtonPopup from 'widget/buttonPopup'
 import Confirm from 'widget/confirm'
 import PropTypes from 'prop-types'
 import React from 'react'
-import RemoveButton from 'widget/removeButton'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import styles from './recipeListData.module.css'
@@ -42,7 +41,10 @@ const mapStateToProps = () => ({
 class _RecipeListData extends React.Component {
     state = {
         edit: false,
-        move: false
+        move: false,
+        remove: false,
+        preselectedIds: null,
+        confirmedIds: null
     }
 
     constructor() {
@@ -54,6 +56,7 @@ class _RecipeListData extends React.Component {
     }
 
     render() {
+        console.log(this.props, this.state)
         return this.isLoading()
             ? this.renderProgress()
             : this.renderData()
@@ -65,7 +68,7 @@ class _RecipeListData extends React.Component {
 
     renderData() {
         const {recipeId, filterValues} = this.props
-        const {move} = this.state
+        const {move, remove} = this.state
         const highlightMatcher = filterValues.length
             ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
             : null
@@ -80,6 +83,7 @@ class _RecipeListData extends React.Component {
                         {recipe => this.renderRecipe(recipe, highlightMatcher)}
                     </Pageable.Data>
                     {move && this.renderMoveConfirmation()}
+                    {remove && this.renderRemoveConfirmation()}
                 </Unscrollable>
             </ScrollableContainer>
         ) : (
@@ -167,8 +171,8 @@ class _RecipeListData extends React.Component {
                         standalone
                         autoFocus
                         onCancel={onBlur}
-                        onChange={option => {
-                            this.setMove(option)
+                        onChange={({value: projectId, label: projectName}) => {
+                            this.setMove({projectId, projectName})
                             onBlur()
                         }}
                     />
@@ -178,41 +182,58 @@ class _RecipeListData extends React.Component {
     }
 
     renderMoveConfirmation() {
-        const {move: {value: projectId, label: projectName}} = this.state
-        const count = this.isSelected()
-        return count ? (
+        const {move: {projectId, projectName}, confirmedIds} = this.state
+        const selected = confirmedIds?.length
+        return (
             <Confirm
                 title={msg('process.recipe.move.title')}
-                message={msg('process.recipe.move.confirm', {count, project: projectName})}
+                message={msg('process.recipe.move.confirm', {count: selected, project: projectName})}
+                disabled={!selected}
                 onConfirm={() => {
-                    this.setMove(false)
                     this.moveSelected(projectId)
+                    this.setMove(false)
                 }}
                 onCancel={() => this.setMove(false)}>
                 {this.renderSelectedRecipes()}
             </Confirm>
-        ) : null
+        )
     }
 
     renderRemoveButton() {
-        const count = this.isSelected()
-        return count ? (
-            <RemoveButton
+        return (
+            <Button
                 shape='pill'
                 icon='trash'
                 label={msg('process.recipe.remove.label')}
-                message={msg('process.recipe.remove.confirm', {count})}
                 tooltip={msg('process.recipe.remove.tooltip')}
                 disabled={!this.isSelected()}
-                onRemove={this.removeSelected}>
+                onClick={() => this.setRemove(true)}
+            />
+        )
+    }
+
+    renderRemoveConfirmation() {
+        const {confirmedIds} = this.state
+        const selected = confirmedIds?.length
+        return (
+            <Confirm
+                title={msg('process.recipe.remove.title')}
+                message={msg('process.recipe.remove.confirm', {count: selected})}
+                disabled={!selected}
+                onConfirm={() => {
+                    this.removeSelected()
+                    this.setRemove(false)
+                }}
+                onCancel={() => this.setRemove(false)}>
                 {this.renderSelectedRecipes()}
-            </RemoveButton>
-        ) : null
+            </Confirm>
+        )
     }
 
     renderSelectedRecipes() {
-        const {recipes, selectedIds} = this.props
-        const selectedRecipes = recipes.filter(({id}) => selectedIds.includes(id))
+        const {filteredRecipes} = this.props
+        const {preselectedIds} = this.state
+        const selectedRecipes = filteredRecipes.filter(({id}) => preselectedIds.includes(id))
         return (
             <Layout type='vertical' spacing='tight'>
                 {selectedRecipes.map(recipe => this.renderSelectedRecipe(recipe))}
@@ -227,8 +248,8 @@ class _RecipeListData extends React.Component {
                     title={this.getRecipeTypeName(recipe.type)}
                     description={this.getRecipePath(recipe)}
                     timestamp={recipe.updateTime}
-                    selected={this.isSelected(recipe.id)}
-                    onSelect={() => this.toggleOne(recipe.id)}
+                    selected={this.isConfirmed(recipe.id)}
+                    onSelect={() => this.toggleConfirmed(recipe.id)}
                 />
             </ListItem>
         )
@@ -303,7 +324,21 @@ class _RecipeListData extends React.Component {
     }
 
     setMove(move) {
-        this.setState({move})
+        const filteredSelectedIds = this.getFilteredSelectedIds()
+        if (move) {
+            this.setState({move, preselectedIds: filteredSelectedIds, confirmedIds: filteredSelectedIds})
+        } else {
+            this.setState({move: false, preselectedIds: null, confirmedIds: null})
+        }
+    }
+    
+    setRemove(remove) {
+        const filteredSelectedIds = this.getFilteredSelectedIds()
+        if (remove) {
+            this.setState({remove, preselectedIds: filteredSelectedIds, confirmedIds: filteredSelectedIds})
+        } else {
+            this.setState({remove: false, preselectedIds: null, confirmedIds: null})
+        }
     }
 
     getHandleIcon({column, sortingOrder, sortingDirection}) {
@@ -362,6 +397,19 @@ class _RecipeListData extends React.Component {
             .dispatch()
     }
 
+    isConfirmed(recipeId) {
+        const {confirmedIds} = this.state
+        return confirmedIds.includes(recipeId)
+    }
+
+    toggleConfirmed(recipeId) {
+        const {confirmedIds: prevConfirmedIds} = this.state
+        const confirmedIds = prevConfirmedIds.includes(recipeId)
+            ? prevConfirmedIds.filter(currentRecipeId => currentRecipeId !== recipeId)
+            : [...prevConfirmedIds, recipeId]
+        this.setState({confirmedIds})
+    }
+
     toggleOne(recipeId) {
         const {selectedIds: prevSelectedIds} = this.props
         const selectedIds = prevSelectedIds.includes(recipeId)
@@ -382,14 +430,14 @@ class _RecipeListData extends React.Component {
 
     moveSelected(projectId) {
         const {onMove} = this.props
-        const selectedIds = this.getFilteredSelectedIds()
-        onMove(selectedIds, projectId)
+        const {confirmedIds} = this.state
+        onMove(confirmedIds, projectId)
     }
 
     removeSelected() {
         const {onRemove} = this.props
-        const selectedIds = this.getFilteredSelectedIds()
-        onRemove(selectedIds)
+        const {confirmedIds} = this.state
+        onRemove(confirmedIds)
     }
 
     getFilteredIds() {
@@ -399,8 +447,8 @@ class _RecipeListData extends React.Component {
 
     getFilteredSelectedIds() {
         const {selectedIds} = this.props
-        const filteredIds = this.getFilteredIds()
-        const filteredSelectedIds = _.intersection(selectedIds, filteredIds)
+        const filteredSelectedIds = this.getFilteredIds().filter(id => selectedIds.includes(id))
+        // const filteredSelectedIds = _.intersection(filteredIds, selectedIds)
         return filteredSelectedIds
     }
 
@@ -450,7 +498,7 @@ class _RecipeListData extends React.Component {
     }
 
     updateFilteredRecipes() {
-        const {projects = [], recipes, filterValues} = this.props
+        const {projects = [], recipes, filterValues, selectedIds} = this.props
         const {sortingOrder, sortingDirection} = this.props
         const filteredRecipes = _.chain(recipes)
             .map(recipe => {
@@ -463,6 +511,9 @@ class _RecipeListData extends React.Component {
         actionBuilder('SET_FILTERED_RECIPES', {filteredRecipes})
             .set(['process.filteredRecipes'], filteredRecipes)
             .dispatch()
+        if (recipes) {
+            this.setSelectedIds(_.intersection(selectedIds, recipes.map(({id}) => id)))
+        }
     }
 
     componentDidMount() {
