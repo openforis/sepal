@@ -129,7 +129,8 @@ class _RecipeListData extends React.Component {
                 {edit && this.renderMoveButton()}
                 {edit && this.renderRemoveButton()}
                 <Button
-                    icon='pen-to-square'
+                    look={edit ? 'apply' : 'default'}
+                    icon={edit ? 'xmark' : 'pen-to-square'}
                     label={msg('process.recipe.edit.label')}
                     shape='pill'
                     keybinding={edit ? 'Escape' : ''}
