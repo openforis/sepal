@@ -89,7 +89,7 @@ class ChangeAlertsToolbar extends React.Component {
                         label={msg('process.timeSeries.panel.preprocess.button')}
                         tooltip={msg('process.timeSeries.panel.preprocess.tooltip')}/>
                     <Toolbar.ActivationButton
-                        id='changeAlertOptions'
+                        id='changeAlertsOptions'
                         label={msg('process.changeAlerts.panel.options.button')}
                         tooltip={msg('process.changeAlerts.panel.options.tooltip')}/>
                 </Toolbar>

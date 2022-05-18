@@ -4,29 +4,14 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {selectFrom} from 'stateUtils'
 import React from 'react'
 import styles from './options.module.css'
 
-const EXTRAPOLATE_MAX_DAYS = 800
-
 const fields = {
-    harmonics: new Form.Field(),
-    gapStrategy: new Form.Field(),
-    extrapolateSegment: new Form.Field(),
-    extrapolateMaxDays: new Form.Field(),
-    breakAnalysisBand: new Form.Field(),
-    skipBreakInLastSegment: new Form.Field()
-        .notNil(),
-    breakMagnitudeDirection: new Form.Field(),
-    minBreakConfidence: new Form.Field(),
-    breakSelection: new Form.Field()
+    minConfidence: new Form.Field(),
+    numberOfObservations: new Form.Field(),
+    minNumberOfChanges: new Form.Field()
 }
-
-const mapRecipeToProps = recipe => ({
-    dateType: selectFrom(recipe, 'model.date.dateType'),
-    baseBands: selectFrom(recipe, 'model.reference.baseBands')
-})
 
 class Options extends React.Component {
     render() {
@@ -46,224 +31,70 @@ class Options extends React.Component {
     }
 
     renderContent() {
-        const {dateType, inputs: {gapStrategy}} = this.props
         return (
             <Layout>
-                {this.renderHarmonics()}
-                {dateType !== 'RANGE' ? this.renderGapStrategy() : null}
-                {gapStrategy.value === 'EXTRAPOLATE' && this.renderExtrapolateOptions()}
-                {dateType === 'RANGE' ? this.renderBreakOptions() : null}
+                {this.renderMinConfidence()}
+                {this.renderNumberOfObservations()}
+                {this.renderMinNumberOfChanges()}
             </Layout>
         )
     }
 
-    renderHarmonics() {
-        const {inputs: {harmonics}} = this.props
+    renderMinConfidence() {
+        const {inputs: {minConfidence}} = this.props
         return (
             <Form.Slider
-                label={msg('process.changeAlerts.panel.options.form.harmonics.label')}
-                tooltip={msg('process.changeAlerts.panel.options.form.harmonics.tooltip')}
-                input={harmonics}
-                multiple={false}
+                label={msg('process.changeAlerts.panel.options.form.minConfidence.label')}
+                tooltip={msg('process.changeAlerts.panel.options.form.minConfidence.tooltip')}
+                input={minConfidence}
                 minValue={0}
-                maxValue={3}
-                ticks={[0, 1, 2, 3]}
+                maxValue={10}
+                decimals={1}
+                ticks={[0, 1, 3, 5, 10]}
+                scale='log'
+                info={value => msg('process.changeAlerts.panel.options.form.minConfidence.value', {value})}
+            />
+        )
+    }
+
+    renderNumberOfObservations() {
+        const {inputs: {numberOfObservations}} = this.props
+        return (
+            <Form.Slider
+                label={msg('process.changeAlerts.panel.options.form.numberOfObservations.label')}
+                tooltip={msg('process.changeAlerts.panel.options.form.numberOfObservations.tooltip')}
+                input={numberOfObservations}
+                minValue={1}
+                maxValue={10}
+                ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
                 snap
             />
         )
     }
 
-    renderGapStrategy() {
-        const {inputs: {gapStrategy}} = this.props
+    renderMinNumberOfChanges() {
+        const {inputs: {numberOfObservations, minNumberOfChanges}} = this.props
+        const count = numberOfObservations.value || 0
+        const minValue = Math.ceil(count / 2)
+        const maxValue = count
+
         return (
-            <Form.Buttons
-                label={msg('process.changeAlerts.panel.options.form.gapStrategy.label')}
-                tooltip={msg('process.changeAlerts.panel.options.form.gapStrategy.tooltip')}
-                input={gapStrategy}
-                multiple={false}
-                options={[
-                    {
-                        value: 'INTERPOLATE',
-                        label: msg('process.changeAlerts.panel.options.form.gapStrategy.interpolate.label'),
-                        tooltip: msg('process.changeAlerts.panel.options.form.gapStrategy.interpolate.tooltip')
-                    },
-                    {
-                        value: 'EXTRAPOLATE',
-                        label: msg('process.changeAlerts.panel.options.form.gapStrategy.extrapolate.label'),
-                        tooltip: msg('process.changeAlerts.panel.options.form.gapStrategy.extrapolate.tooltip')
-                    },
-                    {
-                        value: 'MASK',
-                        label: msg('process.changeAlerts.panel.options.form.gapStrategy.mask.label'),
-                        tooltip: msg('process.changeAlerts.panel.options.form.gapStrategy.mask.tooltip')
-                    }
-                ]}
+            <Form.Slider
+                label={msg('process.changeAlerts.panel.options.form.minNumberOfChanges.label')}
+                tooltip={msg('process.changeAlerts.panel.options.form.minNumberOfChanges.tooltip')}
+                input={minNumberOfChanges}
+                minValue={minValue}
+                maxValue={maxValue}
+                ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                snap
             />
-        )
-    }
-
-    renderExtrapolateOptions() {
-        const {inputs: {extrapolateSegment, extrapolateMaxDays}} = this.props
-        return (
-            <React.Fragment>
-                <Form.Buttons
-                    label={msg('process.changeAlerts.panel.options.form.extrapolateSegment.label')}
-                    input={extrapolateSegment}
-                    multiple={false}
-                    options={[
-                        {
-                            value: 'CLOSEST',
-                            label: msg('process.changeAlerts.panel.options.form.extrapolateSegment.closest.label'),
-                            tooltip: msg('process.changeAlerts.panel.options.form.extrapolateSegment.closest.tooltip')
-                        },
-                        {
-                            value: 'PREVIOUS',
-                            label: msg('process.changeAlerts.panel.options.form.extrapolateSegment.previous.label'),
-                            tooltip: msg('process.changeAlerts.panel.options.form.extrapolateSegment.previous.tooltip')
-                        },
-                        {
-                            value: 'NEXT',
-                            label: msg('process.changeAlerts.panel.options.form.extrapolateSegment.next.label'),
-                            tooltip: msg('process.changeAlerts.panel.options.form.extrapolateSegment.next.tooltip')
-                        }
-                    ]}
-                />
-                <Form.Slider
-                    label={msg('process.changeAlerts.panel.options.form.extrapolateMaxDays.label')}
-                    input={extrapolateMaxDays}
-                    multiple={false}
-                    minValue={1}
-                    ticks={[1, 3, 7, 14, 30, 60, 90, 180, 365, {
-                        value: EXTRAPOLATE_MAX_DAYS,
-                        label: msg('process.changeAlerts.panel.options.form.extrapolateMaxDays.unlimited')
-                    }]}
-                    snap
-                    scale={'log'}
-                />
-            </React.Fragment>
-        )
-    }
-
-    renderBreakOptions() {
-        const {baseBands, inputs: {breakAnalysisBand, breakMagnitudeDirection, minBreakConfidence, breakSelection, skipBreakInLastSegment}} = this.props
-        const bandOptions = baseBands.map(({name}) => ({
-            value: name,
-            label: name
-        }))
-        return (
-            <React.Fragment>
-                <Form.Combo
-                    label={msg('process.changeAlerts.panel.options.form.breakAnalysisBand.label')}
-                    placeholder={msg('process.changeAlerts.panel.options.form.breakAnalysisBand.placeholder')}
-                    tooltip={msg('process.changeAlerts.panel.options.form.breakAnalysisBand.tooltip')}
-                    input={breakAnalysisBand}
-                    allowClear
-                    disabled={!bandOptions.length}
-                    options={bandOptions}
-                />
-                <Form.Buttons
-                    label={msg('process.changeAlerts.panel.options.form.skipBreakInLastSegment.label')}
-                    tooltip={msg('process.changeAlerts.panel.options.form.skipBreakInLastSegment.tooltip')}
-                    input={skipBreakInLastSegment}
-                    options={[
-                        {
-                            value: false,
-                            label: msg('process.changeAlerts.panel.options.form.skipBreakInLastSegment.options.INCLUDE')
-                        },
-                        {
-                            value: true,
-                            label: msg('process.changeAlerts.panel.options.form.skipBreakInLastSegment.options.EXCLUDE')
-                        }
-                    ]}
-                />
-                <Form.Buttons
-                    label={msg('process.changeAlerts.panel.options.form.breakSelection.label')}
-                    tooltip={msg('process.changeAlerts.panel.options.form.breakSelection.tooltip')}
-                    input={breakSelection}
-                    options={[
-                        {
-                            value: 'FIRST',
-                            label: msg('process.changeAlerts.panel.options.form.breakSelection.options.FIRST.label'),
-                            tooltip: msg('process.changeAlerts.panel.options.form.breakSelection.options.FIRST.tooltip')
-                        },
-                        {
-                            value: 'LAST',
-                            label: msg('process.changeAlerts.panel.options.form.breakSelection.options.LAST.label'),
-                            tooltip: msg('process.changeAlerts.panel.options.form.breakSelection.options.LAST.tooltip')
-                        },
-                        {
-                            value: 'MAGNITUDE',
-                            label: msg('process.changeAlerts.panel.options.form.breakSelection.options.MAGNITUDE.label'),
-                            tooltip: msg('process.changeAlerts.panel.options.form.breakSelection.options.MAGNITUDE.tooltip'),
-                            disabled: !breakAnalysisBand.value
-                        },
-                        {
-                            value: 'CONFIDENCE',
-                            label: msg('process.changeAlerts.panel.options.form.breakSelection.options.CONFIDENCE.label'),
-                            tooltip: msg('process.changeAlerts.panel.options.form.breakSelection.options.CONFIDENCE.tooltip'),
-                            disabled: !breakAnalysisBand.value
-                        }
-                    ]}
-                />
-                <Form.Buttons
-                    label={msg('process.changeAlerts.panel.options.form.breakMagnitudeDirection.label')}
-                    tooltip={msg('process.changeAlerts.panel.options.form.breakMagnitudeDirection.tooltip')}
-                    input={breakMagnitudeDirection}
-                    disabled={!breakAnalysisBand.value}
-                    options={[
-                        {
-                            value: 'ANY',
-                            label: msg('process.changeAlerts.panel.options.form.breakMagnitudeDirection.options.ANY.label'),
-                            tooltip: msg('process.changeAlerts.panel.options.form.breakMagnitudeDirection.options.ANY.tooltip')
-                        },
-                        {
-                            value: 'DECREASE',
-                            label: msg('process.changeAlerts.panel.options.form.breakMagnitudeDirection.options.DECREASE.label'),
-                            tooltip: msg('process.changeAlerts.panel.options.form.breakMagnitudeDirection.options.DECREASE.tooltip')
-                        },
-                        {
-                            value: 'INCREASE',
-                            label: msg('process.changeAlerts.panel.options.form.breakMagnitudeDirection.options.INCREASE.label'),
-                            tooltip: msg('process.changeAlerts.panel.options.form.breakMagnitudeDirection.options.INCREASE.tooltip')
-                        }
-                    ]}
-                />
-                <Form.Slider
-                    label={msg('process.changeAlerts.panel.options.form.minBreakConfidence.label')}
-                    tooltip={msg('process.changeAlerts.panel.options.form.minBreakConfidence.tooltip')}
-                    input={minBreakConfidence}
-                    minValue={0}
-                    maxValue={50}
-                    decimals={1}
-                    ticks={[0, 1, 3, 5, 10, 20, 50]}
-                    scale='log'
-                    info={value => msg('process.changeAlerts.panel.options.form.minBreakConfidence.value', {value})}
-                    disabled={!breakAnalysisBand.value}
-                />
-            </React.Fragment>
         )
     }
 }
 
 Options.propTypes = {}
 
-const valuesToModel = values => ({
-    ...values,
-    extrapolateMaxDays: values.extrapolateMaxDays > 365 ? Number.MAX_SAFE_INTEGER : values.extrapolateMaxDays
-})
-
-const modelToValues = model => {
-    return ({
-        ...model,
-        extrapolateMaxDays: model.extrapolateMaxDays > 365 ? EXTRAPOLATE_MAX_DAYS : model.extrapolateMaxDays,
-        skipBreakInLastSegment: !model.skipBreakInLastSegment ? false : model.skipBreakInLastSegment,
-        breakMagnitudeDirection: model.breakMagnitudeDirection || 'ANY',
-        minBreakConfidence: model.minBreakConfidence || 0,
-        breakSelection: model.breakSelection || 'FIRST',
-    })
-}
-
 export default compose(
     Options,
-    recipeFormPanel({id: 'changeAlertOptions', fields, mapRecipeToProps, valuesToModel, modelToValues})
+    recipeFormPanel({id: 'changeAlertsOptions', fields})
 )

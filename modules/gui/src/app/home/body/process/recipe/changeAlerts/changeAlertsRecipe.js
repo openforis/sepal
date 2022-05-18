@@ -35,7 +35,9 @@ export const defaultModel = {
         outlierRemoval: 'NONE'
     },
     changeAlertsOptions: {
-
+        minConfidence: 5,
+        numberOfObservations: 3,
+        minNumberOfChanges: 3
     }
 }
 
