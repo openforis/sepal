@@ -19,6 +19,7 @@ export const defaultModel = {
         
     },
     sources: {
+        cloudPercentageThreshold: 75,
         dataSets: {
             LANDSAT: ['LANDSAT_9', 'LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM'],
             SENTINEL_2: ['SENTINEL_2']

@@ -29,7 +29,7 @@ const getMosaicVisualizations = (recipe, visualizationType, mosaicType) => {
     case 'OPTICAL': return toOpticalVisualizations(recipe)
     case 'RADAR': return toRadarVisualizations(recipe, visualizationType, mosaicType)
     case 'PLANET': return toPlanetVisualizations(recipe)
-    default: throw Error(`Unexpected dataSetType: ${dataSetType}`)
+    default: return []
     }
 }
 

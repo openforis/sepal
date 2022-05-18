@@ -31,6 +31,7 @@ const fields = {
     validAsset: new Form.Field()
         .skip((v, {dataSets}) => !['BASEMAPS', 'DAILY'].includes(dataSets))
         .notBlank(),
+    cloudPercentageThreshold: new Form.Field(),
     classification: new Form.Field(),
     band: new Form.Field()
         .notBlank()
@@ -57,6 +58,7 @@ class Sources extends React.Component {
     }
 
     render() {
+        const {inputs: {dataSetType}} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -68,6 +70,7 @@ class Sources extends React.Component {
                     <Layout>
                         {this.renderDataSetTypes()}
                         {this.renderDataSets()}
+                        {dataSetType.value === 'OPTICAL' ? this.renderCloudPercentageThreshold() : null}
                         {this.renderAssetId()}
                         {this.renderClassification()}
                         {this.renderBand()}
@@ -81,13 +84,13 @@ class Sources extends React.Component {
     renderDataSetTypes() {
         const {inputs: {dataSetType}} = this.props
         const options = [
-            {value: 'OPTICAL', label: msg('process.ccdc.panel.sources.form.dataSetTypes.OPTICAL')},
-            {value: 'RADAR', label: msg('process.ccdc.panel.sources.form.dataSetTypes.RADAR')},
-            {value: 'PLANET', label: msg('process.ccdc.panel.sources.form.dataSetTypes.PLANET')},
+            {value: 'OPTICAL', label: msg('process.changeAlerts.panel.sources.form.dataSetTypes.OPTICAL')},
+            {value: 'RADAR', label: msg('process.changeAlerts.panel.sources.form.dataSetTypes.RADAR')},
+            {value: 'PLANET', label: msg('process.changeAlerts.panel.sources.form.dataSetTypes.PLANET')},
         ]
         return (
             <Form.Buttons
-                label={msg('process.ccdc.panel.sources.form.dataSetType.label')}
+                label={msg('process.changeAlerts.panel.sources.form.dataSetType.label')}
                 input={dataSetType}
                 options={options}
             />
@@ -101,10 +104,28 @@ class Sources extends React.Component {
         }
         return (
             <Form.Buttons
-                label={msg('process.ccdc.panel.sources.form.dataSets.label')}
+                label={msg('process.changeAlerts.panel.sources.form.dataSets.label')}
                 input={dataSets}
                 options={this.dataSetOptions()}
                 multiple={dataSetType.value === 'OPTICAL'}
+            />
+        )
+    }
+    
+    renderCloudPercentageThreshold() {
+        const {inputs: {cloudPercentageThreshold}} = this.props
+        return (
+            <Form.Slider
+                label={msg('process.changeAlerts.panel.sources.form.cloudPercentageThreshold.label')}
+                tooltip={msg('process.changeAlerts.panel.sources.form.cloudPercentageThreshold.tooltip')}
+                input={cloudPercentageThreshold}
+                minValue={0}
+                maxValue={100}
+                ticks={[0, 10, 25, 50, 75, 90, 100]}
+                range='high'
+                info={value =>
+                    msg('process.changeAlerts.panel.sources.form.cloudPercentageThreshold.value', {value})
+                }
             />
         )
     }
@@ -251,17 +272,18 @@ class Sources extends React.Component {
 
 Sources.propTypes = {}
 
-const valuesToModel = ({dataSetType, asset, dataSets, classification, band}) => {
+const valuesToModel = ({dataSetType, asset, dataSets, cloudPercentageThreshold, classification, band}) => {
     return ({
         dataSetType,
         dataSets: toSources(_.isArray(dataSets) ? dataSets : [dataSets]),
+        cloudPercentageThreshold,
         assets: asset ? [asset] : [],
         classification,
         band
     })
 }
 
-const modelToValues = ({dataSetType, assets, dataSets, classification, band}) => {
+const modelToValues = ({dataSetType, assets, dataSets, cloudPercentageThreshold, classification, band}) => {
     const dataSetIds = _.uniq(Object.values(dataSets).flat())
     const defaultedDataSetType = dataSetType
         ? dataSetType
@@ -273,6 +295,7 @@ const modelToValues = ({dataSetType, assets, dataSets, classification, band}) =>
     return ({
         dataSetType: defaultedDataSetType,
         dataSets: defaultedDataSetType === 'OPTICAL' || !dataSetIds.length ? dataSetIds : dataSetIds[0],
+        cloudPercentageThreshold,
         asset: _.isEmpty(assets) ? null : assets[0],
         validAsset: true,
         classification,

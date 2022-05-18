@@ -1471,7 +1471,13 @@
               "band": {
                 "label": "Analysis band"
               },
+              "cloudPercentageThreshold": {
+                "label": "Max cloud cover %",
+                "value": "{value}%",
+                "tooltip": "Filter out scenes with higher cloud cover higher than this threshold"
+              },
               "dataSets": {
+                "label": "Data sets",
                 "optical": {
                   "label": "Optical"
                 },
@@ -1520,6 +1526,14 @@
                 "radar": {
                   "label": "Radar"
                 }
+              },
+              "dataSetType": {
+                  "label": "Type"
+              },
+              "dataSetTypes": {
+                "OPTICAL": "Optical",
+                "PLANET": "Planet",
+                "RADAR": "Radar"
               },
               "required": "A data source must be selected"
             },

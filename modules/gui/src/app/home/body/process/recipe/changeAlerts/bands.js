@@ -34,6 +34,6 @@ const mosaicBands = recipe => {
     })
     case 'RADAR': return radarBands(recipe)
     case 'PLANET': return planetBands()
-    default: throw Error(`Unexpected dataSetType: ${dataSetType}`)
+    default: return {}
     }
 }
