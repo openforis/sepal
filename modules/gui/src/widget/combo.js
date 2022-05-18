@@ -208,7 +208,7 @@ class _Combo extends React.Component {
         return (
             <FloatingBox
                 element={this.inputContainer.current}
-                placement={placement}
+                verticalPlacement={placement}
                 alignment='fit'
                 onBlur={this.onOptionsBlur}>
                 <ScrollableList

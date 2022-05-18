@@ -130,7 +130,7 @@ class ButtonPopup extends React.Component {
                     styles.popup,
                     styles[`placement-${placement}`]
                 ].join(' ')}
-                placement={placement}
+                verticalPlacement={placement}
                 alignment={alignment}
                 onBlur={this.handleBlur}>
                 {this.renderContent()}

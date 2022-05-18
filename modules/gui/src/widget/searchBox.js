@@ -70,7 +70,7 @@ class _SearchBox extends React.Component {
             ? (
                 <FloatingBox
                     element={this.containerRef.current}
-                    placement={placement}
+                    verticalPlacement={placement}
                     alignment='fit'
                     onBlur={this.hideOptions}>
                     <ScrollableList

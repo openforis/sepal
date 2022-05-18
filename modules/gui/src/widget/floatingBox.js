@@ -32,7 +32,7 @@ class FloatingBox extends React.Component {
         const {contentDimensions: {width}} = this.state
 
         const {left, right} = this.getCorrectedHorizontalPosition()
-        const {top, bottom, height, placement} = this.getCorrectedVerticalPosition()
+        const {top, bottom, height, verticalPlacement} = this.getCorrectedVerticalPosition()
 
         const style = {
             '--top': top,
@@ -51,7 +51,7 @@ class FloatingBox extends React.Component {
                     ref={this.ref}
                     className={[
                         styles.box,
-                        styles[placement],
+                        styles[verticalPlacement],
                         styles[alignment],
                         horizontalOverflow ? styles.horizontalOverflow : null,
                         className
@@ -63,21 +63,21 @@ class FloatingBox extends React.Component {
         )
     }
 
-    getPlacement() {
-        const {placement} = this.props
-        switch (placement) {
+    getVerticalPlacement() {
+        const {verticalPlacement} = this.props
+        switch (verticalPlacement) {
         case 'above-below':
             return {preferred: 'above', alternate: 'below'}
         case 'below-above':
             return {preferred: 'below', alternate: 'above'}
         default:
-            return {preferred: placement}
+            return {preferred: verticalPlacement}
         }
     }
 
     getCorrectedVerticalPosition() {
-        const {preferred, alternate} = this.getPlacement()
-        const {top, bottom, height, placement} = this.getVerticalPosition(preferred)
+        const {preferred, alternate} = this.getVerticalPlacement()
+        const {top, bottom, height, verticalPlacement} = this.getVerticalPosition(preferred)
         
         const topOverflow = Math.max(MARGIN, top) - top
         const bottomOverflow = Math.max(MARGIN, bottom) - bottom
@@ -86,44 +86,44 @@ class FloatingBox extends React.Component {
             return this.getVerticalPosition(alternate)
         }
 
-        return {top, bottom, height, placement}
+        return {top, bottom, height, verticalPlacement}
     }
 
-    getVerticalPosition(placement) {
+    getVerticalPosition(verticalPlacement) {
         const {viewportDimensions: {height: viewportHeight}} = this.props
         const {elementDimensions: {top: elementTop, bottom: elementBottom}, contentDimensions: {height: contentHeight}} = this.state
 
         if (contentHeight) {
-            if (placement === 'above') {
+            if (verticalPlacement === 'above') {
                 return {
                     top: elementTop - contentHeight,
                     bottom: viewportHeight - elementTop,
                     height: elementTop,
-                    placement
+                    verticalPlacement
                 }
             }
-            if (placement === 'below') {
+            if (verticalPlacement === 'below') {
                 return {
                     top: elementBottom,
                     bottom: viewportHeight - elementBottom - contentHeight,
                     height: viewportHeight - elementBottom,
-                    placement
+                    verticalPlacement
                 }
             }
-            if (placement === 'over-above') {
+            if (verticalPlacement === 'over-above') {
                 return {
                     top: elementBottom - contentHeight,
                     bottom: viewportHeight - elementBottom,
                     height: elementBottom,
-                    placement
+                    verticalPlacement
                 }
             }
-            if (placement === 'over-below') {
+            if (verticalPlacement === 'over-below') {
                 return {
                     top: elementTop,
                     bottom: viewportHeight - elementTop - contentHeight,
                     height: viewportHeight - elementTop,
-                    placement
+                    verticalPlacement
                 }
             }
         }
@@ -256,13 +256,13 @@ FloatingBox.propTypes = {
     element: PropTypes.object,
     elementBlur: PropTypes.any,
     horizontalOverflow: PropTypes.any,
-    placement: PropTypes.oneOf(['above', 'below', 'above-below', 'below-above', 'over-above', 'over-below']),
+    verticalPlacement: PropTypes.oneOf(['above', 'below', 'above-below', 'below-above', 'over-above', 'over-below']),
     onBlur: PropTypes.func
 }
 
 FloatingBox.defaultProps = {
     alignment: 'left',
-    placement: 'below',
+    verticalPlacement: 'below',
     horizontalOverflow: false,
     elementBlur: false
 }
