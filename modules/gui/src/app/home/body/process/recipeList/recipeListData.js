@@ -7,7 +7,7 @@ import {CreateRecipe} from '../createRecipe'
 import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
-import {NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeList'
+import {NO_PROJECT_OPTION, NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeList'
 import {Pageable} from 'widget/pageable/pageable'
 import {ProjectsButton} from './projectsButton'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
@@ -250,7 +250,7 @@ class _RecipeListData extends React.Component {
 
     getDestinations() {
         const {projects} = this.props
-        return projects.map(({id, name}) => ({value: id, label: name}))
+        return [NO_PROJECT_OPTION, ...projects.map(({id, name}) => ({value: id, label: name}))]
     }
 
     renderSortButtons() {

@@ -2505,7 +2505,8 @@
       },
       "update": {
         "error": "Cannot update project"
-      }
+      },
+      "noProject": "no project"
     },
     "recipe": {
       "lastUpdate": "Last update",
