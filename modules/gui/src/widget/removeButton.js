@@ -4,14 +4,14 @@ import React from 'react'
 
 export default class RemoveButton extends React.Component {
     render() {
-        const {message} = this.props
-        return message
+        const {message, children} = this.props
+        return message || children
             ? this.renderModalConfirmationButton()
             : this.renderTooltipConfirmationButton()
     }
 
     renderModalConfirmationButton() {
-        const {chromeless, icon, label, tooltip, tooltipPlacement, title, message, shape, size, onRemove, disabled, unsafe} = this.props
+        const {chromeless, icon, label, tooltip, tooltipPlacement, title, message, shape, size, onRemove, disabled, unsafe, children} = this.props
         return (
             <ModalConfirmationButton
                 chromeless={chromeless}
@@ -26,7 +26,9 @@ export default class RemoveButton extends React.Component {
                 title={title}
                 message={message}
                 onConfirm={onRemove}
-            />
+            >
+                {children}
+            </ModalConfirmationButton>
         )
     }
 
@@ -51,6 +53,7 @@ export default class RemoveButton extends React.Component {
 
 RemoveButton.propTypes = {
     onRemove: PropTypes.func.isRequired,
+    children: PropTypes.any,
     chromeless: PropTypes.any,
     disabled: PropTypes.any,
     label: PropTypes.any,

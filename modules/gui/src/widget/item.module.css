@@ -48,7 +48,7 @@
 .timestamp {
     pointer-events: none; /* avoid interfering with click target */
     font-size: small;
-    margin-right: 2rem;
+    /* margin-right: 2rem; */
     color: gray;
     flex-shrink: 0;
 }

@@ -179,75 +179,58 @@ class _RecipeListData extends React.Component {
 
     renderMoveConfirmation() {
         const {move: {value: projectId, label: projectName}} = this.state
-        return (
+        const count = this.isSelected()
+        return count ? (
             <Confirm
                 title={msg('process.recipe.move.title')}
-                message={
-                    this.renderConfirmationMessage(
-                        msg('process.recipe.move.confirm', {count: this.isSelected(), project: projectName})
-                    )
-                }
+                message={msg('process.recipe.move.confirm', {count, project: projectName})}
                 onConfirm={() => {
                     this.setMove(false)
                     this.moveSelected(projectId)
                 }}
-                onCancel={() => this.setMove(false)}
-            />
-        )
+                onCancel={() => this.setMove(false)}>
+                {this.renderSelectedRecipes()}
+            </Confirm>
+        ) : null
     }
 
     renderRemoveButton() {
-        return (
+        const count = this.isSelected()
+        return count ? (
             <RemoveButton
                 shape='pill'
                 icon='trash'
                 label={msg('process.recipe.remove.label')}
+                message={msg('process.recipe.remove.confirm', {count})}
                 tooltip={msg('process.recipe.remove.tooltip')}
-                message={
-                    this.renderConfirmationMessage(
-                        msg('process.recipe.remove.confirm', {count: this.isSelected()})
-                    )
-                }
                 disabled={!this.isSelected()}
-                onRemove={this.removeSelected}/>
-        )
-    }
-
-    rendeRemoveConfirmationMessage() {
-        return (
-            <div>
-                <div>
-                    {msg('process.recipe.remove.confirm', {count: this.isSelected()})}
-                </div>
+                onRemove={this.removeSelected}>
                 {this.renderSelectedRecipes()}
-            </div>
-        )
-    }
-
-    renderConfirmationMessage(message) {
-        return (
-            <div>
-                <div>
-                    {message}
-                </div>
-                {this.renderSelectedRecipes()}
-            </div>
-        )
+            </RemoveButton>
+        ) : null
     }
 
     renderSelectedRecipes() {
         const {recipes, selectedIds} = this.props
         const selectedRecipes = recipes.filter(({id}) => selectedIds.includes(id))
         return (
-            <ul>
+            <Layout type='vertical' spacing='tight'>
                 {selectedRecipes.map(recipe => this.renderSelectedRecipe(recipe))}
-            </ul>
+            </Layout>
         )
     }
 
     renderSelectedRecipe(recipe) {
         return (
-            <li>{this.getRecipePath(recipe)}</li>
+            <ListItem key={recipe.id}>
+                <CrudItem
+                    title={this.getRecipeTypeName(recipe.type)}
+                    description={this.getRecipePath(recipe)}
+                    timestamp={recipe.updateTime}
+                    selected={this.isSelected(recipe.id)}
+                    onSelect={() => this.toggleOne(recipe.id)}
+                />
+            </ListItem>
         )
     }
 
