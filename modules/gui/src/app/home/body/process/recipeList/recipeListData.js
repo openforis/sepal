@@ -56,7 +56,6 @@ class _RecipeListData extends React.Component {
     }
 
     render() {
-        console.log(this.props, this.state)
         return this.isLoading()
             ? this.renderProgress()
             : this.renderData()
@@ -189,10 +188,7 @@ class _RecipeListData extends React.Component {
                 title={msg('process.recipe.move.title')}
                 message={msg('process.recipe.move.confirm', {count: selected, project: projectName})}
                 disabled={!selected}
-                onConfirm={() => {
-                    this.moveSelected(projectId)
-                    this.setMove(false)
-                }}
+                onConfirm={() => this.moveSelected(projectId)}
                 onCancel={() => this.setMove(false)}>
                 {this.renderSelectedRecipes()}
             </Confirm>
@@ -220,10 +216,7 @@ class _RecipeListData extends React.Component {
                 title={msg('process.recipe.remove.title')}
                 message={msg('process.recipe.remove.confirm', {count: selected})}
                 disabled={!selected}
-                onConfirm={() => {
-                    this.removeSelected()
-                    this.setRemove(false)
-                }}
+                onConfirm={() => this.removeSelected()}
                 onCancel={() => this.setRemove(false)}>
                 {this.renderSelectedRecipes()}
             </Confirm>
@@ -432,12 +425,14 @@ class _RecipeListData extends React.Component {
         const {onMove} = this.props
         const {confirmedIds} = this.state
         onMove(confirmedIds, projectId)
+        this.setMove(false)
     }
 
     removeSelected() {
         const {onRemove} = this.props
         const {confirmedIds} = this.state
         onRemove(confirmedIds)
+        this.setRemove(false)
     }
 
     getFilteredIds() {
@@ -448,7 +443,6 @@ class _RecipeListData extends React.Component {
     getFilteredSelectedIds() {
         const {selectedIds} = this.props
         const filteredSelectedIds = this.getFilteredIds().filter(id => selectedIds.includes(id))
-        // const filteredSelectedIds = _.intersection(filteredIds, selectedIds)
         return filteredSelectedIds
     }
 
