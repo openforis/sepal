@@ -66,6 +66,7 @@ ModalConfirmationButton.propTypes = {
     message: PropTypes.string.isRequired,
     onConfirm: PropTypes.func.isRequired,
     busy: PropTypes.any,
+    children: PropTypes.any,
     chromeless: PropTypes.any,
     confirmLabel: PropTypes.string,
     disabled: PropTypes.any,
