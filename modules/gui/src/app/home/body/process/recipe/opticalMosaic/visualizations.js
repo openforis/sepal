@@ -1,5 +1,7 @@
 import {getAvailableBands} from './bands'
+import {msg} from 'translate'
 import {normalize} from 'app/home/map/visParams/visParams'
+import {selectFrom} from 'stateUtils'
 
 export const getPreSetVisualizations = recipe => {
     const {model: {compositeOptions: {corrections}}} = recipe
@@ -11,6 +13,36 @@ export const getPreSetVisualizations = recipe => {
         ...visualizations.INDEXES,
         ...visualizations.METADATA
     ].filter(({bands}) => bands.every(band => availableBands[band]))
+}
+
+export const visualizationOptions = recipe => {
+    const compositeOptions = selectFrom(recipe, 'model.compositeOptions')
+    const reflectance = compositeOptions.corrections.includes('SR') ? 'SR' : 'TOA'
+    const median = compositeOptions.compose === 'MEDIAN'
+    const visParamsToOption = visParams => {
+        const value = visParams.bands.join(', ')
+        return {
+            value,
+            label: value,
+            tooltip: msg(`bands.${value}`, {}, value),
+            visParams
+        }
+    }
+    const bandCombinationOptions = {
+        label: msg('process.mosaic.bands.combinations'),
+        options: visualizations[reflectance].map(visParamsToOption)
+    }
+    const indexOptions = {
+        label: msg('process.mosaic.bands.indexes'),
+        options: visualizations.INDEXES.map(visParamsToOption)
+    }
+    const metadataOptions = {
+        label: msg('process.mosaic.bands.metadata'),
+        options: visualizations.METADATA.map(visParamsToOption)
+    }
+    return median
+        ? [bandCombinationOptions, indexOptions]
+        : [bandCombinationOptions, indexOptions, metadataOptions]
 }
 
 export const visualizations = {

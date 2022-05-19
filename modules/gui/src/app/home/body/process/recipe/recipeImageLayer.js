@@ -1,4 +1,5 @@
 import {CCDCSliceImageLayer} from './ccdcSlice/ccdcSliceImageLayer'
+import {ChangeAlertsImageLayer} from './changeAlerts/changeAlertsImageLayer'
 import {ClassChangeImageLayer} from './classChange/classChangeImageLayer'
 import {ClassificationImageLayer} from './classification/classificationImageLayer'
 import {CursorValue} from 'app/home/map/cursorValue'
@@ -83,6 +84,10 @@ class _RecipeImageLayer extends React.Component {
             return (
                 <RemappingImageLayer {...props}/>
             )
+        case 'CHANGE_ALERTS':
+            return (
+                <ChangeAlertsImageLayer {...props}/>
+            )
         case 'CCDC_SLICE':
             return (
                 <CCDCSliceImageLayer {...props}/>
@@ -129,7 +134,7 @@ class _RecipeImageLayer extends React.Component {
 
     selfManagedVisualiations() {
         const {recipe} = this.props
-        return recipe && recipe.type === 'CCDC_SLICE'
+        return recipe && ['CCDC_SLICE', 'CHANGE_ALERTS'].includes(recipe.type)
     }
 
     toAllVis() {
@@ -177,8 +182,8 @@ class _RecipeImageLayer extends React.Component {
     }
 
     selectVisualization(visParams) {
-        const {layerConfig: {panSharpen}, mapAreaContext: {updateLayerConfig}} = this.props
-        updateLayerConfig({visParams, panSharpen})
+        const {layerConfig, mapAreaContext: {updateLayerConfig}} = this.props
+        updateLayerConfig({...layerConfig, visParams})
     }
 }
 

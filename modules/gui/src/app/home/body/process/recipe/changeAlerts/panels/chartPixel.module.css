@@ -1,0 +1,31 @@
+.panel {
+}
+
+.form {
+    height: 23rem;
+}
+
+@media screen and (max-height: 500px) {
+    .form {
+        height: 10rem;
+    }
+}
+
+.spinner {
+    flex-grow: 1;
+    display: flex;
+    align-self: center;
+    justify-content: space-around;
+    flex-direction: column;
+    color: #ccc;
+}
+
+.chart {
+    flex-grow: 1;
+    display: flex;
+}
+
+.bandSelection {
+    width: fit-content;
+    margin: 1rem 0 1rem 1rem;
+}

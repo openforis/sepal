@@ -1,10 +1,34 @@
 import {getAvailableBands} from './bands'
+import {msg} from 'translate'
 import {normalize} from 'app/home/map/visParams/visParams'
+import {selectFrom} from 'stateUtils'
 
 export const getPreSetVisualizations = recipe => {
     const availableBands = getAvailableBands(recipe)
     return Object.values(visualizations).flat()
         .filter(({bands}) => bands.every(band => availableBands[band]))
+}
+
+export const visualizationOptions = recipe => {
+    const visParamsToOption = visParams => ({
+        value: visParams.bands.join(','),
+        label: visParams.bands.join(', '),
+        visParams
+    })
+    const type = selectFrom(recipe, 'model.dates.fromDate')
+        ? 'TIME_SCAN'
+        : 'POINT_IN_TIME'
+    const bandCombinationOptions = {
+        label: msg('process.mosaic.bands.combinations'),
+        options: visualizations[type].map(visParamsToOption),
+    }
+    const metadataOptions = {
+        label: msg('process.mosaic.bands.metadata'),
+        options: visualizations.METADATA.map(visParamsToOption)
+    }
+    return type === 'TIME_SCAN'
+        ? [bandCombinationOptions]
+        : [bandCombinationOptions, metadataOptions]
 }
 
 export const visualizations = {

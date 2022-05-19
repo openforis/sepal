@@ -7,6 +7,8 @@ services:
     volumes:
       - "${SEPAL_PROJECT_DIR}/modules/sepal-server/src:/usr/local/src/sepal/modules/sepal-server/src"
       - "${SEPAL_PROJECT_DIR}/modules/sepal-server/build:/usr/local/src/sepal/modules/sepal-server/build"
+    environment:
+      SEPAL_HOST_PROJECT_DIR: "${SEPAL_PROJECT_DIR}"
   socat:
     image: bobrik/socat
     container_name: docker-api

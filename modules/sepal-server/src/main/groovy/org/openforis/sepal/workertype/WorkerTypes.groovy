@@ -29,14 +29,19 @@ final class WorkerTypes {
             def userTmp = tempDir(instance, config)
             def eePrivateKey = config.googleEarthEnginePrivateKey.replaceAll(
                     '\n', '-----LINE BREAK-----')
+            def volumes = [
+                (userHome): "/home/${username}",
+                (userTmp): ["/tmp", "/home/${username}/tmp"]
+            ]
+            if (config.deployEnvironment == 'DEV') { // Allow hot-reload of task in DEV
+                volumes["${config.sepalHostProjectDir}/modules/task/src"] = '/usr/local/src/sepal/modules/task/src'
+                volumes["${config.sepalHostProjectDir}/lib/js/shared/src"] = '/usr/local/src/sepal/lib/js/shared/src'
+            }
             def task = new Image(
                     name: 'task',
                     exposedPorts: [1026],
                     publishedPorts: taskExecutorPublishedPorts,
-                    volumes: [
-                            (userHome): "/home/${username}",
-                            (userTmp): ["/tmp", "/home/${username}/tmp"]
-                    ],
+                    volumes: volumes,
                     environment: [
                             GOOGLE_PROJECT_ID: config.googleProjectId,
                             GOOGLE_REGION: config.googleRegion,
@@ -46,6 +51,7 @@ final class WorkerTypes {
                             SEPAL_ADMIN_PASSWORD: config.sepalPassword,
                             USERNAME: username,
                             NODE_TLS_REJECT_UNAUTHORIZED: config.deployEnvironment == 'DEV' ? 0 : 1,
+                            DEPLOY_ENVIRONMENT: config.deployEnvironment
                     ],
                     waitCommand: ["wait_until_initialized.sh"]
             )

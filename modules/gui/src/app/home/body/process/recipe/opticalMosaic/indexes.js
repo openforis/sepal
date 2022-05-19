@@ -1,11 +1,12 @@
 import {getDataSetBands} from './sources'
 
-export const getIndexes = recipe => {
-    const dataSetBands = getDataSetBands(recipe)
-    return Object.keys(requiredBandsByOpticalIndex).filter(opticalIndex =>
-        requiredBandsByOpticalIndex[opticalIndex].every(requiredBand => dataSetBands.includes(requiredBand))
+export const getIndexes = recipe =>
+    getIndexesForBands(getDataSetBands(recipe))
+
+export const getIndexesForBands = bands =>
+    Object.keys(requiredBandsByOpticalIndex).filter(opticalIndex =>
+        requiredBandsByOpticalIndex[opticalIndex].every(requiredBand => bands.includes(requiredBand))
     )
-}
 
 const requiredBandsByOpticalIndex = {
     ndvi: ['red', 'nir'],

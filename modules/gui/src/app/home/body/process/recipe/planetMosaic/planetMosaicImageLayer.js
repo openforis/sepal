@@ -1,8 +1,7 @@
 import {MapAreaLayout} from 'app/home/map/mapAreaLayout'
 import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualizationSelector'
 import {compose} from 'compose'
-import {msg} from 'translate'
-import {visualizations} from './visualizations'
+import {visualizationOptions} from './visualizations'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -24,21 +23,7 @@ class _PlanetMosaicImageLayer extends React.Component {
 
     renderImageLayerForm() {
         const {recipe, source, layerConfig = {}} = this.props
-        const visParamsToOption = visParams => ({
-            value: visParams.bands.join(','),
-            label: visParams.bands.join(', '),
-            visParams
-        })
-
-        const bandCombinationOptions = {
-            label: msg('process.mosaic.bands.combinations'),
-            options: visualizations.BAND_COMBINATIONS.map(visParamsToOption)
-        }
-        const indexOptions = {
-            label: msg('process.mosaic.bands.indexes'),
-            options: visualizations.INDEXES.map(visParamsToOption)
-        }
-        const options = [bandCombinationOptions, indexOptions]
+        const options = visualizationOptions(recipe)
         return (
             <VisualizationSelector
                 source={source}

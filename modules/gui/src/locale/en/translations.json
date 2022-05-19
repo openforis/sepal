@@ -1177,6 +1177,388 @@
       },
       "tabPlaceholder": "CCDC_slice"
     },
+    "changeAlerts": {
+        "create": "Change Alerts",
+        "description": "Generate change alerts using a CCDC as baseline.",
+        "imageLayerForm": {
+          "mosaicType": {
+            "label": "Mosaic",
+            "latest": {
+                "label": "Latest",
+                "tooltip": "Render a composite of the latest available imagery in the period"
+            },
+            "median": {
+                "label": "Median",
+                "tooltip": "Render a median composite of the period"
+            }
+          },
+          "visualizationType": {
+            "calibration": {
+                "label": "Calibration",
+                "tooltip": "Render a composite of the calibration period"
+            },
+              "changes": {
+                  "label": "Changes",
+                  "tooltip": "Render change in the monitoring period"
+              },
+              "label": "Type",
+              "monitoring": {
+                  "label": "Monitoring",
+                  "tooltip": "Render a composite of the monitoring period"
+              }
+          }
+        },
+        "layers": {
+            "imageLayer": {
+                "changes": "Changes",
+                "dates": "Dates",
+                "observations": "Observations"
+            }
+        },
+        "panel": {
+          "date": {
+            "button": "DAT",
+            "form": {
+              "calibration": {
+                "duration": {
+                  "label": "Calibration duration",
+                  "placeholder": "Duration..."
+                }
+              },
+              "durationUnit": {
+                "placeholder": "Unit...",
+                "DAYS": "Days",
+                "MONTHS": "Months",
+                "WEEKS": "Weeks"
+              },
+              "monitoring": {
+                "duration": {
+                "label": "Monitoring duration",
+                "placeholder": "Duration..."
+                }
+              },
+              "monitoringEnd": {
+                "label": "Monitoring end",
+                "tooltip": "The date when monitoring ends. You typically set this to today's date"
+              },            
+              "range": "The CCDC segments were created with data from {segmentsStartDate} to {segmentsEndDate}.",
+              "noRange": "The CCDC segments doesn't specify any date range."
+            },
+            "title": "Date range",
+            "tooltip": "Specify date range to get alerts for"
+          },
+          "options": {
+            "button": "OPT",
+            "form": {
+              "minConfidence": {
+                "label": "Min confidence",
+                "tooltip": "Minimum number of errors from reference model to consider observation a change.",
+                "value": "{value} (difference/rmse)"
+              },
+              "numberOfObservations": {
+                "label": "Number of observations",
+                "tooltip": "Number of observations in window when looking at consecutive changes"
+              },
+              "minNumberOfChanges": {
+                "label": "Min number of changes",
+                "tooltip": "Minimum number of change observations in window to consider the window a change, or minimum number of stable observations to consider the window stable"
+              }
+            },
+            "title": "Change alert options",
+            "tooltip": "Configure sensitivity in detecting changes"
+          },
+          "preprocess": {
+            "button": "PRC",
+            "form": {
+              "cloudDetection": {
+                "label": "Cloud detection",
+                "cloudScore": {
+                  "label": "Cloud score",
+                  "tooltip": "Use cloud scoring algorithm"
+                },
+                "pino26": {
+                  "label": "PINO 26",
+                  "tooltip": "Use Pan-Tropical S2 cloud detection algorithm developed by Dario Simonetti"
+                },
+                "qa": {
+                  "label": "QA bands",
+                  "tooltip": "Use pre-created QA bands"
+                }
+              },
+              "cloudMasking": {
+                "aggressive": {
+                  "label": "Aggressive",
+                  "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
+                },
+                "label": "Cloud masking",
+                "moderate": {
+                  "label": "Moderate",
+                  "tooltip": "Rely only on image source QA bands for cloud masking"
+                },
+                "none": {
+                  "label": "Off",
+                  "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
+                }
+              },
+              "corrections": {
+                "brdf": {
+                  "label": "BRDF correction",
+                  "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
+                },
+                "label": "Corrections",
+                "surfaceReflectance": {
+                  "label": "Surface reflectance",
+                  "tooltip": "Use scenes atmospherically corrected surface reflectance."
+                }
+              },
+              "shadowMasking": {
+                "label": "Shadow masking",
+                "off": {
+                  "label": "Off",
+                  "tooltip": "Don't apply aggressive shadow masking."
+                },
+                "on": {
+                  "label": "On",
+                  "tooltip": "Apply aggressive shadow masking. This can inadvertently remove some dynamics and lead to missing changes"
+                }
+              },
+              "snowMasking": {
+                "label": "Snow masking",
+                "off": {
+                  "label": "Off",
+                  "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
+                },
+                "on": {
+                  "label": "On",
+                  "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
+                }
+              }
+            },
+            "title": "Pre-process",
+            "tooltip": "Configure imagery pre-processing"
+          },          
+          "reference": {
+            "asset": {
+              "label": "Earth Engine CCDC Asset",
+              "title": "Earth Engine CCDC Asset",
+              "notCcdc": "Asset does not contain CCDC segments"
+            },
+            "button": "REF",
+            "form": {
+              "asset": {
+                "invalid": "Asset must be an exported CCDC asset",
+                "label": "CCDC asset",
+                "placeholder": "Enter CCDC asset ID",
+                "required": "An asset ID must be specified"
+              }
+            },
+            "recipe": {
+              "label": "Saved SEPAL CCDC recipe",
+              "title": "Saved SEPAL CCDC recipe"
+            },
+            "title": "Source",
+            "tooltip": "Select CCDC asset or recipe to use as reference for alerts"
+          },
+          "retrieve": {
+            "apply": "Retrieve",
+            "form": {
+              "bandTypes": {
+                "amplitude1": {
+                  "label": "Amplitude 1",
+                  "tooltip": "The amplitude of the model's first order harmonic"
+                },
+                "amplitude2": {
+                  "label": "Amplitude 2",
+                  "tooltip": "The amplitude of the model's second order harmonic"
+                },
+                "amplitude3": {
+                  "label": "Amplitude 3",
+                  "tooltip": "The amplitude of the model's third order harmonic"
+                },
+                "atLeastOne": "At least one band type must be selected",
+                "intercept": {
+                  "label": "Intercept",
+                  "tooltip": "The intercept of the model's linear component"
+                },
+                "breakConfidence": {
+                  "label": "Break confidence",
+                  "tooltip": "Confidence of break, defined as magnitude/rmse"
+                },
+                "label": "Band types",
+                "magnitude": {
+                  "label": "Magnitude",
+                  "tooltip": "Break magnitude of segment"
+                },
+                "phase1": {
+                  "label": "Phase 1",
+                  "tooltip": "The phase of the model's first order harmonic"
+                },
+                "phase2": {
+                  "label": "Phase 2",
+                  "tooltip": "The phase of the model's second order harmonic"
+                },
+                "phase3": {
+                  "label": "Phase 3",
+                  "tooltip": "The phase of the model's third order harmonic"
+                },
+                "rmse": {
+                  "label": "RMSE",
+                  "tooltip": "RMSE of the harmonic models"
+                },
+                "slope": {
+                  "label": "Slope",
+                  "tooltip": "The slope of the model's linear component"
+                },
+                "value": {
+                  "label": "Value",
+                  "tooltip": "The evaluated value of the harmonic models for the specified date"
+                }
+              },
+              "baseBands": {
+                "atLeastOne": "At least one base band must be selected",
+                "label": "Base bands"
+              },
+              "destination": {
+                "GEE": "Google Earth Engine asset",
+                "label": "Destination",
+                "required": "A destination must be selected",
+                "SEPAL": "SEPAL workspace"
+              },
+              "scale": {
+                  "label": "Scale"
+              },
+              "segmentBands": {
+                "changeProb": {
+                  "label": "Probability",
+                  "tooltip": "Probability of detected break being accurate"
+                },
+                "label": "Segment bands",
+                "numObs": {
+                  "label": "Observations",
+                  "tooltip": "Number of observations in segment"
+                },
+                "tBreak": {
+                  "label": "Break",
+                  "tooltip": "Date of detected break"
+                },
+                "tEnd": {
+                  "label": "End",
+                  "tooltip": "End date of segment"
+                },
+                "tooltip": "Bands with information about the segment the slice falls in. If a pixel falls in a gap, the previous segment will be used",
+                "tStart": {
+                  "label": "Start",
+                  "tooltip": "Start date of segment"
+                }
+              }
+            },
+            "task": {
+              "GEE": "Export {name} as a Google Earth Engine asset",
+              "SEPAL": "Retrieve {name} to SEPAL workspace"
+            },
+            "title": "Retrieve",
+            "tooltip": "Retrieve time-series"
+          },
+          "sources": {
+            "button": "SRC",
+            "classificationLoadError": "Failed to load classification: {error}",
+            "form": {
+              "classification": {
+                "label": "Classification",
+                "placeholder": "Select a classification...",
+                "tooltip": "(Optional) Select a classification recipe and apply the classifier to every acquisition in the time-series."
+              },
+              "band": {
+                "label": "Analysis band"
+              },
+              "cloudPercentageThreshold": {
+                "label": "Max cloud cover %",
+                "value": "{value}%",
+                "tooltip": "Filter out scenes with higher cloud cover higher than this threshold"
+              },
+              "dataSets": {
+                "label": "Data sets",
+                "optical": {
+                  "label": "Optical"
+                },
+                "options": {
+                  "LANDSAT_7": {
+                    "label": "L7",
+                    "tooltip": "Landsat 7"
+                  },
+                  "LANDSAT_7_T2": {
+                    "label": "L7 T2",
+                    "tooltip": "Landsat 7 Tier 2"
+                  },
+                  "LANDSAT_8": {
+                    "label": "L8",
+                    "tooltip": "Landsat 8"
+                  },
+                  "LANDSAT_8_T2": {
+                    "label": "L8 T2",
+                    "tooltip": "Landsat 8 Tier 2"
+                  },
+                  "LANDSAT_9": {
+                    "label": "L9",
+                    "tooltip": "Landsat 9"
+                  },
+                  "LANDSAT_9_T2": {
+                    "label": "L9 T2",
+                    "tooltip": "Landsat 9 Tier 2"
+                  },
+                  "LANDSAT_TM": {
+                    "label": "L4-5",
+                    "tooltip": "Landsat 4-5"
+                  },
+                  "LANDSAT_TM_T2": {
+                    "label": "L4-5 T2",
+                    "tooltip": "Landsat 4-5 Tier 2"
+                  },
+                  "SENTINEL_1": {
+                    "label": "S1",
+                    "tooltip": "Sentinel 1 A+B"
+                  },
+                  "SENTINEL_2": {
+                    "label": "S2",
+                    "tooltip": "Sentinel 2 A+B"
+                  }
+                },
+                "radar": {
+                  "label": "Radar"
+                }
+              },
+              "dataSetType": {
+                  "label": "Type"
+              },
+              "dataSetTypes": {
+                "OPTICAL": "Optical",
+                "PLANET": "Planet",
+                "RADAR": "Radar"
+              },
+              "required": "A data source must be selected"
+            },
+            "title": "Sources",
+            "tooltip": "Select image source"
+          }
+        },
+        "preview": {
+          "description": "Preview of change alerts, generated on the fly by EE.",
+          "error": "Failed to generate preview",
+          "initializing": "Loading preview...",
+          "label": "Change alerts",
+          "loading": "Loading tiles: {pending}",
+          "tilesFailed": "{failed} failed"
+        },
+        "reference": {
+          "asset": {
+            "loadError": "Failed to load asset"
+          },
+          "recipe": {
+            "loadError": "Failed to load recipe"
+          }
+        },
+        "tabPlaceholder": "Change_alerts"
+      },
     "classification": {
       "bands": {
         "class": "Class",

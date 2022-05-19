@@ -30,6 +30,12 @@ const assetDestination$ = (description, assetId) => {
             })
         )
 }
+
+const formatRegion$ = region =>
+    ee.getInfo$(region, 'format region for export').pipe(
+        map(geometry => ee.Geometry(geometry))
+    )
+
 const exportImageToAsset$ = ({
     image,
     description,
@@ -41,8 +47,10 @@ const exportImageToAsset$ = ({
     crs,
     crsTransform,
     maxPixels = 1e13,
+    shardSize = 256,
     retries = 0
 }) => {
+    region = region || image.geometry().bounds()
     const exportToAsset$ = ({task, description, assetId, _retries}) => {
         if (ee.sepal.getAuthType() === 'SERVICE_ACCOUNT')
             throw new Error('Cannot export to asset using service account.')
@@ -55,20 +63,24 @@ const exportImageToAsset$ = ({
     }
 
     return assetDestination$(description, assetId).pipe(
-        switchMap(({description, assetId}) => {
-            const serverConfig = ee.batch.Export.convertToServerParams(
-                {image, description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels},
-                ee.data.ExportDestination.ASSET,
-                ee.data.ExportType.IMAGE
+        switchMap(({description, assetId}) => 
+            formatRegion$(region).pipe(
+                switchMap(region => {
+                    const serverConfig = ee.batch.Export.convertToServerParams(
+                        {image, description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize},
+                        ee.data.ExportDestination.ASSET,
+                        ee.data.ExportType.IMAGE
+                    )
+                    const task = ee.batch.ExportTask.create(serverConfig)
+                    return exportToAsset$({
+                        task,
+                        description: `exportImageToAsset(assetId: ${assetId}, description: ${description})`,
+                        assetId,
+                        retries
+                    })
+                })
             )
-            const task = ee.batch.ExportTask.create(serverConfig)
-            return exportToAsset$({
-                task,
-                description: `exportImageToAsset(assetId: ${assetId}, description: ${description})`,
-                assetId,
-                retries
-            })
-        })
+        )
     )
 }
 
