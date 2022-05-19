@@ -6,6 +6,9 @@ import {selectFrom} from 'stateUtils'
 import {visualizationOptions} from './visualizations'
 import _ from 'lodash'
 import api from 'api'
+import moment from 'moment'
+
+const DATE_FORMAT = 'YYYY-MM-DD'
 
 export const defaultModel = {
     reference: {},
@@ -74,6 +77,31 @@ export const RecipeActions = id => {
 
 export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
     api.gee.loadCCDCSegments$({recipe: recipe.model.reference, latLng, bands})
+
+// TODO: Might need to tweak the recipe for this
+export const loadCCDCObservations$ = ({recipe, latLng, bands}) => {
+    const {monitoringEnd, calibrationStart} = toDates(recipe)
+    return api.gee.loadTimeSeriesObservations$({
+        recipe: {model: {
+            dates: {
+                startDate: calibrationStart,
+                endDate: monitoringEnd
+            },
+            sources: recipe.model.sources,
+            options: recipe.model.options
+        }},
+        latLng,
+        bands
+    })
+}
+
+export const toDates = recipe => {
+    const model = recipe.model
+    const monitoringEnd = model.date.monitoringEnd
+    const monitoringStart = moment(monitoringEnd, DATE_FORMAT).subtract(model.date.monitoringDuration, model.date.monitoringDurationUnit).format(DATE_FORMAT)
+    const calibrationStart = moment(monitoringStart, DATE_FORMAT).subtract(model.date.calibrationDuration, model.date.calibrationDurationUnit).format(DATE_FORMAT)
+    return {monitoringEnd, monitoringStart, calibrationStart}
+}
 
 export const getAllVisualizations = recipe => {
     const changesVisualizations = visualizationOptions(recipe, 'changes')

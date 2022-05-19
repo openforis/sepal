@@ -6,7 +6,6 @@ import {RecipeActions} from 'app/home/body/process/recipe/changeAlerts/changeAle
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {getIndexesForBands} from 'app/home/body/process/recipe/opticalMosaic/indexes'
 import {groupedBandOptions} from 'sources'
 import {isOpticalDataSet, getDataSetOptions as opticalDataSetOptions} from 'app/home/body/process/recipe/opticalMosaic/sources'
 import {isRadarDataSet, getDataSetOptions as radarDataSetOptions} from 'app/home/body/process/recipe/radarMosaic/sources'

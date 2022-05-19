@@ -52,7 +52,7 @@ class ChartPixel extends React.Component {
     renderPanel() {
         const {latLng} = this.props
         const {segments, observations} = this.state
-        const loading = !segments && !observations
+        const loading = (!segments || !segments.length) && (!observations || !observations.length)
         return (
             <Panel
                 className={styles.panel}

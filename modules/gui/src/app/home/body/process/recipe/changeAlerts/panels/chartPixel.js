@@ -1,11 +1,13 @@
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {Form, form} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions, loadCCDCSegments$} from '../changeAlertsRecipe'
+import {RecipeActions, loadCCDCObservations$, loadCCDCSegments$} from '../changeAlertsRecipe'
 import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'
+import {getAvailableBands} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {toDates} from '../changeAlertsRecipe'
 import {withRecipe} from '../../../recipeContext'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
@@ -22,11 +24,12 @@ const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     latLng: selectFrom(recipe, 'ui.chartPixel'),
     dateFormat: selectFrom(recipe, 'model.reference.dateFormat'),
+    classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
+    classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
+    corrections: selectFrom(recipe, 'model.options.corrections'),
+    dataSets: selectFrom(recipe, 'model.sources.dataSets'),
+    bands: selectFrom(recipe, 'model.reference.bands'),
     baseBands: selectFrom(recipe, 'model.reference.baseBands'),
-    dateType: selectFrom(recipe, 'model.date.dateType'),
-    date: selectFrom(recipe, 'model.date.date'),
-    startDate: selectFrom(recipe, 'model.date.startDate'),
-    endDate: selectFrom(recipe, 'model.date.endDate'),
     harmonics: selectFrom(recipe, 'model.options.harmonics'),
     gapStrategy: selectFrom(recipe, 'model.options.gapStrategy'),
     extrapolateSegment: selectFrom(recipe, 'model.options.extrapolateSegment'),
@@ -52,8 +55,8 @@ class ChartPixel extends React.Component {
 
     renderPanel() {
         const {latLng} = this.props
-        const {segments} = this.state
-        const loading = !segments || !segments.length
+        const {segments, observations} = this.state
+        const loading = (!segments || !segments.length) && (!observations || !observations.length)
         return (
             <Panel
                 className={styles.panel}
@@ -92,8 +95,8 @@ class ChartPixel extends React.Component {
     }
 
     renderBandOptions() {
-        const {recipe: {model: {reference: {baseBands}}}, inputs: {selectedBand}} = this.props
-        const options = baseBands.map(({name}) => ({value: name, label: name}))
+        const {inputs: {selectedBand}} = this.props
+        const options = this.bandOptions()
         return (
             <Form.Combo
                 className={styles.bandSelection}
@@ -104,12 +107,24 @@ class ChartPixel extends React.Component {
 
     renderChart() {
         const {
-            dateType, date, startDate, endDate, harmonics, gapStrategy, extrapolateSegment, extrapolateMaxDays, dateFormat, inputs: {selectedBand}
+            recipe, harmonics, gapStrategy, extrapolateSegment, extrapolateMaxDays, dateFormat, inputs: {selectedBand}
         } = this.props
-        const {segments} = this.state
-        const [highlightStart, highlightEnd] = dateType === 'RANGE'
-            ? [startDate, endDate]
-            : [date, date]
+        const {segments, observations} = this.state
+        const {monitoringEnd, monitoringStart, calibrationStart} = toDates(recipe)
+        const highlights = [
+            {
+                startDate: moment.utc(calibrationStart, 'YYYY-MM-DD').subtract(0.5, 'days').toDate(),
+                endDate: moment.utc(monitoringStart, 'YYYY-MM-DD').toDate(),
+                backgroundColor: '#00FF0010',
+                color: '#00FF00'
+            },
+            {
+                startDate: moment.utc(monitoringStart, 'YYYY-MM-DD').toDate(),
+                endDate: moment.utc(monitoringEnd, 'YYYY-MM-DD').add(0.5, 'days').toDate(),
+                backgroundColor: '#FF000010',
+                color: '#FF0000'
+            }
+        ]
         const loading = !segments
         if (loading)
             return this.renderSpinner()
@@ -117,15 +132,12 @@ class ChartPixel extends React.Component {
             return (
                 <CCDCGraph
                     band={selectedBand.value}
+                    startDate={moment.utc(calibrationStart, 'YYYY-MM-DD').subtract(1, 'year').toDate()}
+                    endDate={moment.utc(monitoringEnd, 'YYYY-MM-DD').add(2, 'days').toDate()}
                     dateFormat={dateFormat}
                     segments={segments}
-                    highlights={[{
-                        startDate: moment(highlightStart, 'YYYY-MM-DD').subtract(0.5, 'days').toDate(),
-                        endDate: moment(highlightEnd, 'YYYY-MM-DD').add(0.5, 'days').toDate(),
-                        backgroundColor: '#FF000010',
-                        color: '#FF0000'
-
-                    }]}
+                    observations={observations}
+                    highlights={highlights}
                     highlightGaps
                     gapStrategy={gapStrategy}
                     extrapolateMaxDays={extrapolateMaxDays}
@@ -160,12 +172,40 @@ class ChartPixel extends React.Component {
                     })
                 }
             )
+            stream('LOAD_CCDC_OBSERVATIONS',
+                loadCCDCObservations$({recipe, latLng, bands: [selectedBand.value]}).pipe(
+                    takeUntil(this.cancel$)
+                ),
+                observations => this.setState({observations}),
+                error => {
+                    this.close()
+                    Notifications.error(msg('process.ccdc.chartPixel.loadObservations.error', {error}))
+                }
+            )
         }
+    }
+
+    bandOptions() {
+        const {bands, baseBands, classificationLegend, classifierType, corrections, dataSets} = this.props
+        const classification = {classificationLegend, classifierType, include: ['regression', 'probabilities']}
+        const rmseBands = bands
+            .filter(band => band.endsWith('_rmse'))
+            .map(band => band.slice(0, -5))
+        const ccdcBands = baseBands
+            .map(({name}) => name)
+            .filter(band => rmseBands.includes(band))
+        const observationBands = getAvailableBands({
+            dataSets: Object.values(dataSets).flat(),
+            corrections,
+            classification
+        })
+        const intersection = _.intersection(ccdcBands, observationBands)
+        return intersection.map(name => ({value: name, label: name}))
     }
 
     close() {
         this.cancel$.next(true)
-        this.setState({segments: undefined})
+        this.setState({segments: undefined, observations: undefined})
         this.recipeActions.setChartPixel(null)
     }
 }
