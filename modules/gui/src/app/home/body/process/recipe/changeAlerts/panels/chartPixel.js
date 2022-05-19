@@ -28,6 +28,7 @@ const mapRecipeToProps = recipe => ({
     classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
     corrections: selectFrom(recipe, 'model.options.corrections'),
     dataSets: selectFrom(recipe, 'model.sources.dataSets'),
+    band: selectFrom(recipe, 'model.sources.band'),
     bands: selectFrom(recipe, 'model.reference.bands'),
     baseBands: selectFrom(recipe, 'model.reference.baseBands'),
     harmonics: selectFrom(recipe, 'model.options.harmonics'),
@@ -114,7 +115,7 @@ class ChartPixel extends React.Component {
         const highlights = [
             {
                 startDate: moment.utc(calibrationStart, 'YYYY-MM-DD').subtract(0.5, 'days').toDate(),
-                endDate: moment.utc(monitoringStart, 'YYYY-MM-DD').toDate(),
+                endDate: moment.utc(monitoringStart, 'YYYY-MM-DD').subtract(0.5, 'days').toDate(),
                 backgroundColor: '#00FF0010',
                 color: '#00FF00'
             },
@@ -149,10 +150,10 @@ class ChartPixel extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {baseBands, stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        const {band, stream, recipe, latLng, inputs: {selectedBand}} = this.props
 
         if (!selectedBand.value)
-            selectedBand.set(baseBands[0].name)
+            selectedBand.set(band)
 
         if (latLng && selectedBand.value && !_.isEqual(
             [recipe.model, latLng, selectedBand.value],
