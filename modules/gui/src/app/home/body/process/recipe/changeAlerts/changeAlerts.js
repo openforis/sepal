@@ -90,8 +90,10 @@ export default () => ({
     },
     getDependentRecipeIds,
     getDateRange(recipe) {
-        const date = moment.utc(recipe.model.date.date, 'YYYY-MM-DD')
-        return [date, date]
+        const monitoringEnd = moment.utc(recipe.model.date.monitoringEnd, 'YYYY-MM-DD')
+        const monitoringStart = moment(monitoringEnd)
+            .subtract(recipe.model.date.monitoringDuration, recipe.model.date.monitoringDurationUnit)
+        return [monitoringStart, monitoringEnd]
     },
     getAvailableBands
 })

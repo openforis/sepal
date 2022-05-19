@@ -3,6 +3,7 @@ import {normalize} from 'app/home/map/visParams/visParams'
 import {visualizationOptions as opticalVisualizationOptions} from 'app/home/body/process/recipe/opticalMosaic/visualizations'
 import {visualizationOptions as planetVisualizationOptions} from 'app/home/body/process/recipe/planetMosaic/visualizations'
 import {visualizationOptions as radarVisualizationOptions} from 'app/home/body/process/recipe/radarMosaic/visualizations'
+import {selectFrom} from 'stateUtils'
 import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -24,7 +25,7 @@ export const visualizationOptions = (recipe, visualizationType, mosaicType) => {
 }
 
 const getMosaicVisualizations = (recipe, visualizationType, mosaicType) => {
-    const dataSetType = recipe.model.sources.dataSetType
+    const dataSetType = selectFrom(recipe, 'model.sources.dataSetType')
     switch(dataSetType) {
     case 'OPTICAL': return toOpticalVisualizations(recipe)
     case 'RADAR': return toRadarVisualizations(recipe, visualizationType, mosaicType)
@@ -36,9 +37,9 @@ const getMosaicVisualizations = (recipe, visualizationType, mosaicType) => {
 const toOpticalVisualizations = recipe => {
     const opticalRecipe = {
         model: {
-            sources: recipe.model.sources.dataSets,
+            sources: selectFrom(recipe, 'model.sources.dataSets'),
             compositeOptions: {
-                corrections: recipe.model.options.corrections,
+                corrections: selectFrom(recipe, 'model.options.corrections'),
                 compose: 'MEDIAN',
             }
         }
@@ -47,10 +48,17 @@ const toOpticalVisualizations = recipe => {
 }
 
 const toRadarVisualizations = (recipe, visualizationType, mosaicType) => {
-    const model = recipe.model
-    const monitoringEnd = model.date.monitoringEnd
-    const monitoringStart = moment(monitoringEnd, DATE_FORMAT).subtract(model.date.monitoringDuration, model.date.monitoringDurationUnit).format(DATE_FORMAT)
-    const calibrationStart = moment(monitoringStart, DATE_FORMAT).subtract(model.date.calibrationDuration, model.date.calibrationDurationUnit).format(DATE_FORMAT)
+    const {
+        monitoringEnd,
+        monitoringDuration, monitoringDurationUnit,
+        calibrationDuration, calibrationDurationUnit
+    } = selectFrom(recipe, 'model.date')
+    const monitoringStart = moment(monitoringEnd, DATE_FORMAT)
+        .subtract(monitoringDuration, monitoringDurationUnit)
+        .format(DATE_FORMAT)
+    const calibrationStart = moment(monitoringStart, DATE_FORMAT)
+        .subtract(calibrationDuration, calibrationDurationUnit)
+        .format(DATE_FORMAT)
     const radarRecipe = {
         model: {
             dates: {
@@ -81,10 +89,13 @@ const toPlanetVisualizations = () => {
 }
 
 const getChangeVisualizations = recipe => {
-    const date = recipe.model.date
-    const monitoringEnd = date.monitoringEnd
-    const monitoringStart = moment(monitoringEnd, DATE_FORMAT).subtract(date.monitoringDuration, date.monitoringDurationUnit).format(DATE_FORMAT)
-    const calibrationStart = moment(monitoringStart, DATE_FORMAT).subtract(date.calibrationDuration, date.calibrationDurationUnit).format(DATE_FORMAT)
+    const {
+        monitoringEnd,
+        monitoringDuration, monitoringDurationUnit,
+        calibrationDuration, calibrationDurationUnit
+    } = selectFrom(recipe, 'model.date')
+    const monitoringStart = moment(monitoringEnd, DATE_FORMAT).subtract(monitoringDuration, monitoringDurationUnit).format(DATE_FORMAT)
+    const calibrationStart = moment(monitoringStart, DATE_FORMAT).subtract(calibrationDuration, calibrationDurationUnit).format(DATE_FORMAT)
     // TODO: Difference - can we figure out a reasonable min/max somehow?
     const fractionalMonitoringEnd = toFractionalYear(monitoringEnd)
     const fractionalCalibrationStart = toFractionalYear(calibrationStart)
