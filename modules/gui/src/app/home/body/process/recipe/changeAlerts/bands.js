@@ -37,3 +37,24 @@ const mosaicBands = recipe => {
     default: return {}
     }
 }
+
+export const getGroupedBandOptions = () => {
+    const toOption = band => ({value: band, label: band})
+    return [
+        [
+            toOption('confidence'),
+            toOption('difference'),
+            toOption('detection_count')
+        ],
+        [
+            toOption('last_stable_date'),
+            toOption('first_detection_date'),
+            toOption('confirmation_date'),
+            toOption('last_detection_date')
+        ],
+        [
+            toOption('monitoring_observation_count'),
+            toOption('calibration_observation_count'),
+        ]
+    ]
+}

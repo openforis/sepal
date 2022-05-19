@@ -9,6 +9,8 @@ import _ from 'lodash'
 import api from 'api'
 import moment from 'moment'
 
+const DATE_FORMAT = 'YYYY-MM-DD'
+
 export const defaultModel = {
     reference: {},
     date: {
@@ -58,13 +60,13 @@ export const RecipeActions = id => {
                 .dispatch()
         },
         retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_CCDC_SLICE_RETRIEVAL', {retrieveOptions})
+            return actionBuilder('REQUEST_CHANGE_ALERTS_RETRIEVAL', {retrieveOptions})
                 .setAll({
                     'ui.retrieveState': 'SUBMITTED',
                     'ui.retrieveOptions': retrieveOptions
                 })
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .build()
+                .dispatch()
         },
         setClassification({classificationLegend, classifierType} = {}) {
             actionBuilder('SET_CLASSIFICATION', {classificationLegend, classifierType})
@@ -94,8 +96,6 @@ export const additionalVisualizations = recipe => {
     const endDate = selectFrom(recipe, 'model.date.endDate')
     const segmentsEndDate = selectFrom(recipe, 'model.reference.endDate')
     const dateFormat = selectFrom(recipe, 'model.reference.dateFormat')
-
-    const DATE_FORMAT = 'YYYY-MM-DD'
 
     const getBreakMinMax = () => {
         if (dateType === 'RANGE') {
@@ -130,42 +130,12 @@ const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
-    const taskTitle = msg(['process.changeAlerts.panel.retrieve.task', destination], {name})
-    const {baseBands, bandTypes, segmentBands} = recipe.ui.retrieveOptions
-    const bandTypeSuffixes = {
-        value: '',
-        rmse: '_rmse',
-        magnitude: '_magnitude',
-        breakConfidence: '_breakConfidence',
-        intercept: '_intercept',
-        slope: '_slope',
-        phase_1: '_phase_1',
-        phase_2: '_phase_2',
-        phase_3: '_phase_3',
-        amplitude_1: '_amplitude_1',
-        amplitude_2: '_amplitude_2',
-        amplitude_3: '_amplitude_3',
-    }
-    const allBands = [
-        ...recipe.model.reference.bands,
-        ...recipe.model.reference.baseBands
-            .map(({name}) => Object.values(bandTypeSuffixes)
-                .map(suffix => `${name}${suffix}`)
-            )
-            .flat()
-    ]
-    const bands = [
-        ...baseBands
-            .map(name => bandTypes
-                .map(bandType => `${name}${bandTypeSuffixes[bandType]}`)
-            )
-            .flat(),
-        ...baseBands.map(({name}) => name),
-        ...segmentBands
-    ].filter(band => allBands.includes(band))
-    const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
+    const taskTitle = msg(['process.retrieve.form.task', destination], {name})
+    const bands = recipe.ui.retrieveOptions.bands
     const visualizations = getAllVisualizations(recipe)
-        .filter(({bands: visBands}) => visBands.every(band => bands.includes(band)))
+    const monitoringEnd = recipe.model.date.monitoringEnd
+    const monitoringStart = moment(monitoringEnd, DATE_FORMAT).subtract(recipe.model.date.monitoringDuration, recipe.model.date.monitoringDurationUnit).format(DATE_FORMAT)
+    const pyramidingPolicy = {'.default': 'sample'}
     const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
     const task = {
         operation,
@@ -175,10 +145,11 @@ const submitRetrieveRecipeTask = recipe => {
                 description: name,
                 image: {
                     recipe: _.omit(recipe, ['ui']),
-                    bands: {selection: bands, baseBands},
+                    bands: {selection: bands},
                     visualizations,
                     scale,
-                    properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
+                    pyramidingPolicy,
+                    properties: {'system:time_start': monitoringStart, 'system:time_end': monitoringEnd}
                 }
             }
     }
@@ -186,5 +157,6 @@ const submitRetrieveRecipeTask = recipe => {
         recipe_type: recipe.type,
         destination
     })
+    console.log({task})
     return api.tasks.submit$(task).subscribe()
 }
