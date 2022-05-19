@@ -45,6 +45,7 @@ const mapStateToProps = () => {
 
 const mapRecipeToProps = recipe => ({
     dates: selectFrom(recipe, 'model.dates'),
+    bands: selectFrom(recipe, 'model.reference.bands'),
     baseBands: selectFrom(recipe, 'model.reference.baseBands'),
     corrections: selectFrom(recipe, 'model.options.corrections')
 })
@@ -156,7 +157,7 @@ class Sources extends React.Component {
     }
 
     renderBand() {
-        const {baseBands, corrections, inputs: {dataSets, band}} = this.props
+        const {bands, baseBands, corrections, inputs: {dataSets, band}} = this.props
         const {classificationLegend, classifierType} = this.state
         var dataSetArray = dataSets.value && _.isArray(dataSets.value)
             ? dataSets.value
@@ -168,9 +169,12 @@ class Sources extends React.Component {
             classification
         })
         
-        const ccdcBaseBands = baseBands.map(({name}) => name)
-        const ccdcIndexes = getIndexesForBands(ccdcBaseBands)
-        const ccdcBands = ccdcBaseBands.concat(ccdcIndexes)
+        const rmseBands = bands
+            .filter(band => band.endsWith('_rmse'))
+            .map(band => band.slice(0, -5))
+        const ccdcBands = baseBands
+            .map(({name}) => name)
+            .filter(band => rmseBands.includes(band))
         const options = collectionGrouped
             .map(group => group
                 .filter(({value}) => ccdcBands.includes(value))
