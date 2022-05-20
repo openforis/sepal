@@ -38,7 +38,6 @@ export class InlineConfirmationButton extends React.Component {
                             <Button
                                 shape='pill'
                                 look='cancel'
-                                // icon='trash'
                                 icon='exclamation-triangle'
                                 label={confirmationLabel || msg('button.confirm')}
                                 onClick={onConfirm}/>
