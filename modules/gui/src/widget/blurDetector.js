@@ -24,9 +24,14 @@ class BlurDetector extends React.Component {
     }
 
     render() {
-        const {className, style, children} = this.props
+        const {className, style, children, onClick} = this.props
         return (
-            <div ref={this.ref} className={className} style={style}>
+            <div
+                ref={this.ref}
+                className={className}
+                style={style}
+                onClick={onClick}
+            >
                 <BlurDetectorContext.Provider value={{enabled: enabled => this.enabled = enabled}}>
                     {children}
                 </BlurDetectorContext.Provider>
@@ -98,5 +103,6 @@ BlurDetector.propTypes = {
         null
     ]),
     style: PropTypes.object,
-    onBlur: PropTypes.func
+    onBlur: PropTypes.func,
+    onClick: PropTypes.func
 }
