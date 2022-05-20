@@ -130,8 +130,8 @@ class ButtonSelect extends React.Component {
         return (
             <FloatingBox
                 element={this.input.current}
-                verticalPlacement={placement}
-                alignment='left'
+                vPlacement={placement}
+                hPlacement='over-right'
                 onBlur={this.handleBlur}>
                 <ScrollableList
                     ref={this.list}

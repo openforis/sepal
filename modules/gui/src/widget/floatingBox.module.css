@@ -3,24 +3,58 @@
     --element-clearance: .3rem;
     --edge-clearance: .5rem;
     position: absolute;
-    left: calc(var(--left) * 1px);
-    right: calc(var(--right) * 1px);
-    /* width: calc(var(--width) * 1px); */
+    /* overflow: hidden; */
     z-index: 2;
 }
 
-.box.above,
-.box.over-above {
-    bottom: calc(var(--bottom) * 1px);
-    max-height: calc(var(--height) * 1px);
-}
+/* vertical */
 
-.box.below,
-.box.over-below {
+.box.vertical-center {
     top: calc(var(--top) * 1px);
-    max-height: calc(var(--height) * 1px);
+    bottom: calc(var(--bottom) * 1px);
+    max-height: calc(var(--max-height) * 1px);
 }
 
-.box:not(.horizontalOverflow) > * {
-    max-width: calc(100vw - 2 * var(--edge-clearance));
+.box.vertical-above,
+.box.vertical-over-above {
+    bottom: calc(var(--bottom) * 1px);
+    max-height: calc(var(--max-height) * 1px);
+}
+
+.box.vertical-over {
+    top: calc(var(--top) * 1px);
+    bottom: calc(var(--bottom) * 1px);
+    max-height: calc(var(--max-height) * 1px);
+}
+
+.box.vertical-over-below,
+.box.vertical-below {
+    top: calc(var(--top) * 1px);
+    max-height: calc(var(--max-height) * 1px);
+}
+
+/* horizontal */
+
+.box.horizontal-center {
+    left: calc(var(--left) * 1px);
+    right: calc(var(--right) * 1px);
+    max-width: calc(var(--max-width) * 1px);
+}
+
+.box.horizontal-left,
+.box.horizontal-over-left {
+    right: calc(var(--right) * 1px);
+    max-width: calc(var(--max-width) * 1px);
+}
+
+.box.horizontal-over {
+    left: calc(var(--left) * 1px);
+    right: calc(var(--right) * 1px);
+    max-width: calc(var(--max-width) * 1px);
+}
+
+.box.horizontal-over-right,
+.box.horizontal-right {
+    left: calc(var(--left) * 1px);
+    max-width: calc(var(--max-width) * 1px);
 }
