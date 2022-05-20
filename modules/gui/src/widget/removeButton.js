@@ -1,18 +1,19 @@
+import {InlineConfirmationButton} from './inlineConfirmationButton'
 import {ModalConfirmationButton} from './modalConfirmationButton'
-import {TooltipConfirmationButton} from './tooltipConfirmationButton'
+import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 
 export default class RemoveButton extends React.Component {
     render() {
-        const {message, children} = this.props
-        return message || children
+        const {message} = this.props
+        return message
             ? this.renderModalConfirmationButton()
             : this.renderTooltipConfirmationButton()
     }
 
     renderModalConfirmationButton() {
-        const {chromeless, icon, label, tooltip, tooltipPlacement, title, message, shape, size, onRemove, disabled, unsafe, children} = this.props
+        const {chromeless, icon, label, tooltip, tooltipPlacement, title, message, shape, size, onRemove, disabled, unsafe} = this.props
         return (
             <ModalConfirmationButton
                 chromeless={chromeless}
@@ -27,21 +28,20 @@ export default class RemoveButton extends React.Component {
                 title={title}
                 message={message}
                 onConfirm={onRemove}
-            >
-                {children}
-            </ModalConfirmationButton>
+            />
         )
     }
 
     renderTooltipConfirmationButton() {
-        const {chromeless, icon, label, tooltip, tooltipPlacement, shape, size, onRemove, disabled, unsafe} = this.props
+        const {chromeless, icon, label, confirmationLabel, tooltip, tooltipPlacement, shape, size, onRemove, disabled, unsafe} = this.props
         return (
-            <TooltipConfirmationButton
+            <InlineConfirmationButton
                 chromeless={chromeless}
                 shape={shape}
                 size={size}
                 icon={icon}
                 label={label}
+                confirmationLabel={confirmationLabel}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 disabled={disabled}
@@ -54,8 +54,8 @@ export default class RemoveButton extends React.Component {
 
 RemoveButton.propTypes = {
     onRemove: PropTypes.func.isRequired,
-    children: PropTypes.any,
     chromeless: PropTypes.any,
+    confirmationLabel: PropTypes.any,
     disabled: PropTypes.any,
     label: PropTypes.any,
     message: PropTypes.any,
@@ -69,5 +69,6 @@ RemoveButton.propTypes = {
 
 RemoveButton.defaultProps = {
     unsafe: false,
-    icon: 'trash'
+    icon: 'trash',
+    confirmationLabel: msg('button.remove')
 }
