@@ -1,8 +1,8 @@
 import {Form, form} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
+import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
 import {Panel} from 'widget/panel/panel'
-import {TooltipConfirmationButton} from 'widget/tooltipConfirmationButton'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
@@ -153,10 +153,11 @@ class UserDetails extends React.Component {
                     </Layout>
                 </Panel.Content>
                 <Form.PanelButtons>
-                    <TooltipConfirmationButton
+                    <ModalConfirmationButton
                         label={msg('user.userDetails.resetPassword.label')}
                         icon='envelope'
                         tooltip={msg('user.userDetails.resetPassword.tooltip')}
+                        message={msg('user.userDetails.resetPassword.message')}
                         disabled={email.isInvalid()}
                         onConfirm={() => this.requestPasswordReset(email.value)}
                     />
