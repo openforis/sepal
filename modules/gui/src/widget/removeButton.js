@@ -41,7 +41,7 @@ export default class RemoveButton extends React.Component {
                 size={size}
                 icon={icon}
                 label={label}
-                confirmationLabel={confirmationLabel}
+                confirmationLabel={confirmationLabel || msg('button.remove')}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 disabled={disabled}
@@ -69,6 +69,5 @@ RemoveButton.propTypes = {
 
 RemoveButton.defaultProps = {
     unsafe: false,
-    icon: 'trash',
-    confirmationLabel: msg('button.remove')
+    icon: 'trash'
 }
