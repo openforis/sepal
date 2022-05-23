@@ -1,4 +1,3 @@
-import {Modal} from 'widget/modal'
 import {PanelButtons} from './panelButtons'
 import {PanelContent} from './panelContent'
 import {PanelHeader} from './panelHeader'
@@ -40,9 +39,13 @@ class _Panel extends React.Component {
 
     renderModal() {
         return (
-            <Modal>
-                {this.renderContent()}
-            </Modal>
+            <Portal type='global' center>
+                <div
+                    className={styles.modalWrapper}
+                    onClick={e => e.stopPropagation()}>
+                    {this.renderContent()}
+                </div>
+            </Portal>
         )
     }
 
