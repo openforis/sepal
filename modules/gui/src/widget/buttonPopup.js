@@ -121,17 +121,17 @@ class ButtonPopup extends React.Component {
     }
 
     renderPopup() {
-        const {placement, alignment} = this.props
+        const {vPlacement, hPlacement} = this.props
         return this.buttonRef.current && (
             <FloatingBox
                 ref={this.popupRef}
                 element={this.buttonRef.current}
                 className={[
                     styles.popup,
-                    styles[`placement-${placement}`]
+                    styles[`placement-${vPlacement}`]
                 ].join(' ')}
-                placement={placement}
-                alignment={alignment}
+                vPlacement={vPlacement}
+                hPlacement={hPlacement}
                 onBlur={this.handleBlur}>
                 {this.renderContent()}
             </FloatingBox>
@@ -175,19 +175,19 @@ export default compose(
 )
 
 ButtonPopup.propTypes = {
-    alignment: PropTypes.any,
     children: PropTypes.any,
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
+    hPlacement: PropTypes.any,
     icon: PropTypes.string,
     label: PropTypes.any,
     look: PropTypes.string,
-    placement: PropTypes.oneOf(['above', 'below', 'over-above', 'over-below']),
     shape: PropTypes.oneOf(['rectangle', 'pill']),
     stayOpenOnBlur: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
+    vPlacement: PropTypes.oneOf(['above', 'below', 'over-above', 'over-below']),
     width: PropTypes.string,
     onClick: PropTypes.func,
     onMouseOut: PropTypes.func,
@@ -195,6 +195,6 @@ ButtonPopup.propTypes = {
 }
 
 ButtonPopup.defaultProps = {
-    placement: 'below',
-    alignment: 'left'
+    vPlacement: 'below',
+    hPlacement: 'over-right'
 }

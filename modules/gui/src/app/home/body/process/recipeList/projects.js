@@ -144,7 +144,7 @@ class _Projects extends React.Component {
                 <Panel.Buttons>
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close
-                            keybinding='Escape'
+                            keybinding={['Escape', 'Enter']}
                             disabled={this.isBusy()}
                             onClick={this.close}
                         />

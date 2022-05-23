@@ -24,8 +24,8 @@ class _MapAreaMenuPanel extends React.Component {
         return (
             <FloatingBox
                 element={element}
-                alignment='center'
-                placement='above-below'
+                vPlacement='above-otherwise-below'
+                hPlacement='center'
                 onBlur={deactivate}
             >
                 <Panel className={styles.panel} type='normal'>
@@ -41,7 +41,6 @@ class _MapAreaMenuPanel extends React.Component {
                     <Keybinding keymap={{'Escape': deactivate}}/>
                 </Panel>
             </FloatingBox>
-
         )
     }
 

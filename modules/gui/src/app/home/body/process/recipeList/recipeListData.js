@@ -158,8 +158,8 @@ class _RecipeListData extends React.Component {
                 shape='pill'
                 icon='shuffle'
                 label={msg('process.recipe.move.label')}
-                placement='below'
-                alignment='left'
+                vPlacement='below'
+                hPlacement='over-right'
                 disabled={!this.isSelected()}
                 tooltip={msg('process.recipe.move.tooltip')}>
                 {onBlur => (

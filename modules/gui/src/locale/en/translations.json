@@ -3454,7 +3454,8 @@
       },
       "resetPassword": {
           "label": "Reset password",
-          "tooltip": "Send a password reset email to the user."
+          "tooltip": "Send a password reset email to the user.",
+          "message": "If proceeding, the user will receive an email for setting a new password. Until that, the current password will still be valid."
       },
       "switchingToSEPALGoogleAccount": "Switching to SEPAL's Google Account",
       "title": "User details",

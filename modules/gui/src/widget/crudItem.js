@@ -79,7 +79,8 @@ export class CrudItem extends React.Component {
                     tooltip={infoTooltip}
                     tooltipPlacement={tooltipPlacement}
                     disabled={infoDisabled}
-                    onClick={onInfo}/>
+                    onClick={onInfo}
+                />
             )
             : null
     }
@@ -114,7 +115,8 @@ export class CrudItem extends React.Component {
                     tooltip={duplicateTooltip}
                     tooltipPlacement={tooltipPlacement}
                     disabled={duplicateDisabled}
-                    onClick={onDuplicate}/>
+                    onClick={onDuplicate}
+                />
             )
             : null
     }
@@ -132,7 +134,8 @@ export class CrudItem extends React.Component {
                     tooltipPlacement={tooltipPlacement}
                     unsafe={unsafeRemove}
                     disabled={removeDisabled}
-                    onRemove={onRemove}/>
+                    onRemove={onRemove}
+                />
             )
             : null
     }
@@ -149,7 +152,8 @@ export class CrudItem extends React.Component {
                     tooltip={selectTooltip}
                     tooltipPlacement={tooltipPlacement}
                     disabled={selectDisabled}
-                    onToggle={onSelect}/>
+                    onToggle={onSelect}
+                />
             )
             : null
     }

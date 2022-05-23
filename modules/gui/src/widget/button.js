@@ -170,7 +170,7 @@ class _Button extends React.Component {
         const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
         const message = tooltipPanel || tooltip
         const visibility = _.isNil(tooltipVisible) ? {} : {visible: tooltipVisible}
-        return this.active() && message && !tooltipDisabled ? (
+        return this.active() && message ? (
             <Tooltip
                 msg={message}
                 placement={tooltipPlacement}
@@ -178,6 +178,7 @@ class _Button extends React.Component {
                 hoverTrigger={!tooltipPanel}
                 clickTrigger={tooltipClickTrigger || !this.linked()}
                 overlayInnerStyle={overlayInnerStyle}
+                overlayStyle={{visibility: tooltipDisabled ? 'hidden' : 'visible'}}
                 onVisibleChange={tooltipOnVisible}
                 {...visibility}
             >

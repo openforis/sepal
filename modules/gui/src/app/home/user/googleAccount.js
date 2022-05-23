@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
-import {ModalConfirmationButton} from 'widget/safetyButton'
+import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
 import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'

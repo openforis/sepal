@@ -28,32 +28,30 @@ class FloatingBox extends React.Component {
     }
 
     render() {
-        const {className, alignment, horizontalOverflow, element, elementBlur, children, onBlur} = this.props
-        const {contentDimensions: {width}} = this.state
-
-        const {left, right} = this.getCorrectedHorizontalPosition()
-        const {top, bottom, height, placement} = this.getCorrectedVerticalPosition()
+        const {className, element, elementBlur, children, onBlur} = this.props
+        const {left, right, maxWidth, hPlacement} = this.getCorrectedHorizontalPosition()
+        const {top, bottom, maxHeight, vPlacement} = this.getCorrectedVerticalPosition()
 
         const style = {
             '--top': top,
             '--bottom': bottom,
-            '--height': height,
+            '--max-height': maxHeight,
             '--left': left,
             '--right': right,
-            '--width': width
+            '--max-width': maxWidth
         }
 
         return (
             <Portal type='global'>
                 <BlurDetector
+                    onClick={e => e.stopPropagation()}
                     onBlur={onBlur}
                     exclude={elementBlur ? null : element}
                     ref={this.ref}
                     className={[
                         styles.box,
-                        styles[placement],
-                        styles[alignment],
-                        horizontalOverflow ? styles.horizontalOverflow : null,
+                        styles[`vertical-${vPlacement}`],
+                        styles[`horizontal-${hPlacement}`],
                         className
                     ].join(' ')}
                     style={style}>
@@ -63,124 +61,200 @@ class FloatingBox extends React.Component {
         )
     }
 
-    getPlacement() {
-        const {placement} = this.props
-        switch (placement) {
-        case 'above-below':
-            return {preferred: 'above', alternate: 'below'}
-        case 'below-above':
-            return {preferred: 'below', alternate: 'above'}
-        default:
-            return {preferred: placement}
+    fixVerticalOverflow(vertical) {
+        // top overflow has the priority
+        return this.fixTopOverflow(this.fixBottomOverflow(vertical))
+    }
+
+    fixTopOverflow({top, bottom, maxHeight, vPlacement}) {
+        if (top < MARGIN) {
+            return {
+                top: MARGIN,
+                bottom: Math.max(bottom + top - MARGIN, MARGIN),
+                maxHeight,
+                vPlacement
+            }
+        } else {
+            return {top, bottom, maxHeight, vPlacement}
+        }
+    }
+
+    fixBottomOverflow({top, bottom, maxHeight, vPlacement}) {
+        if (bottom < MARGIN) {
+            return {
+                top: Math.max(top + bottom - MARGIN, MARGIN),
+                bottom: MARGIN,
+                maxHeight,
+                vPlacement
+            }
+        } else {
+            return {top, bottom, maxHeight, vPlacement}
         }
     }
 
     getCorrectedVerticalPosition() {
-        const {preferred, alternate} = this.getPlacement()
-        const {top, bottom, height, placement} = this.getVerticalPosition(preferred)
-        
-        const topOverflow = Math.max(MARGIN, top) - top
-        const bottomOverflow = Math.max(MARGIN, bottom) - bottom
-
-        if (alternate && (topOverflow || bottomOverflow)) {
-            return this.getVerticalPosition(alternate)
-        }
-
-        return {top, bottom, height, placement}
+        const {vPlacement} = this.props
+        return this.fixVerticalOverflow(this.getVerticalPosition(vPlacement))
     }
 
-    getVerticalPosition(placement) {
+    getVerticalPosition(vPlacement) {
         const {viewportDimensions: {height: viewportHeight}} = this.props
         const {elementDimensions: {top: elementTop, bottom: elementBottom}, contentDimensions: {height: contentHeight}} = this.state
+        const verticalElementCenter = (elementBottom + elementTop) / 2
 
         if (contentHeight) {
-            if (placement === 'above') {
+            switch (vPlacement) {
+            case 'center':
+                return {
+                    top: verticalElementCenter - contentHeight / 2,
+                    bottom: viewportHeight - verticalElementCenter - contentHeight / 2,
+                    maxHeight: viewportHeight,
+                    vPlacement
+                }
+            case 'above':
                 return {
                     top: elementTop - contentHeight,
                     bottom: viewportHeight - elementTop,
-                    height: elementTop,
-                    placement
+                    maxHeight: elementTop,
+                    vPlacement
                 }
-            }
-            if (placement === 'below') {
-                return {
-                    top: elementBottom,
-                    bottom: viewportHeight - elementBottom - contentHeight,
-                    height: viewportHeight - elementBottom,
-                    placement
-                }
-            }
-            if (placement === 'over-above') {
+            case 'over-above':
                 return {
                     top: elementBottom - contentHeight,
                     bottom: viewportHeight - elementBottom,
-                    height: elementBottom,
-                    placement
+                    maxHeight: elementBottom,
+                    vPlacement
                 }
-            }
-            if (placement === 'over-below') {
+            case 'over':
+                return {
+                    top: elementTop,
+                    bottom: viewportHeight - elementBottom,
+                    maxHeight: elementBottom - elementTop,
+                    vPlacement
+                }
+            case 'over-below':
                 return {
                     top: elementTop,
                     bottom: viewportHeight - elementTop - contentHeight,
-                    height: viewportHeight - elementTop,
-                    placement
+                    maxHeight: viewportHeight - elementTop,
+                    vPlacement
                 }
+            case 'below':
+                return {
+                    top: elementBottom,
+                    bottom: viewportHeight - elementBottom - contentHeight,
+                    maxHeight: viewportHeight - elementBottom,
+                    vPlacement
+                }
+            case 'above-otherwise-below':
+                return this.getAboveOrBelowVerticalPosition(contentHeight)
+            case 'below-otherwise-above':
+                return this.getBelowOrAboveVerticalPosition(contentHeight)
             }
         }
         return {}
     }
 
-    getCorrectedHorizontalPosition() {
-        const {left, right} = this.getHorizontalPosition()
+    getAboveOrBelowVerticalPosition(contentHeight) {
+        const above = this.getVerticalPosition('above')
+        const below = this.getVerticalPosition('below')
+        return above.maxHeight >= contentHeight || above.maxHeight >= below.maxHeight
+            ? above
+            : below
+    }
 
-        const leftOverflow = Math.max(MARGIN, left) - left
-        const rightOverflow = Math.max(MARGIN, right) - right
+    getBelowOrAboveVerticalPosition(contentHeight) {
+        const below = this.getVerticalPosition('below')
+        const above = this.getVerticalPosition('above')
+        return below.maxHeight >= contentHeight || below.maxHeight >= above.maxHeight
+            ? below
+            : above
+    }
 
-        if (rightOverflow && !leftOverflow) {
-            return {
-                left: left - rightOverflow,
-                right: MARGIN
-            }
-        }
-        if (leftOverflow && !rightOverflow) {
+    fixHorizontalOverflow(horizontal) {
+        // left overflow has the priority
+        return this.fixLeftOverflow(this.fixRightOverflow(horizontal))
+    }
+
+    fixLeftOverflow({left, right, maxWidth, hPlacement}) {
+        if (left < MARGIN) {
             return {
                 left: MARGIN,
-                right: right - leftOverflow
+                right: Math.max(right + left - MARGIN, MARGIN),
+                maxWidth,
+                hPlacement
             }
-        }
-        return {
-            left,
-            right
+        } else {
+            return {left, right, maxWidth, hPlacement}
         }
     }
 
-    getHorizontalPosition() {
-        const {alignment, viewportDimensions: {width: viewportWidth}} = this.props
-        const {elementDimensions: {left: elementLeft, right: elementRight}, contentDimensions: {width: contentWidth}} = this.state
+    fixRightOverflow({left, right, maxWidth, hPlacement}) {
+        if (right < MARGIN) {
+            return {
+                left: Math.max(left + right - MARGIN, MARGIN),
+                right: MARGIN,
+                maxWidth,
+                hPlacement
+            }
+        } else {
+            return {left, right, maxWidth, hPlacement}
+        }
+    }
 
-        const elementCenter = (elementRight + elementLeft) / 2
-        
+    getCorrectedHorizontalPosition() {
+        const {hPlacement} = this.props
+        return this.fixHorizontalOverflow(this.getHorizontalPosition(hPlacement))
+    }
+
+    getHorizontalPosition(hPlacement) {
+        const {viewportDimensions: {width: viewportWidth}} = this.props
+        const {elementDimensions: {left: elementLeft, right: elementRight}, contentDimensions: {width: contentWidth}} = this.state
+        const horizontalElementCenter = (elementRight + elementLeft) / 2
+
         if (contentWidth) {
-            switch (alignment) {
-            case 'fit':
-                return {
-                    left: elementLeft,
-                    right: viewportWidth - elementRight
-                }
+            switch (hPlacement) {
             case 'center':
                 return {
-                    left: elementCenter - contentWidth / 2,
-                    right: viewportWidth - elementCenter - contentWidth / 2
+                    left: horizontalElementCenter - contentWidth / 2,
+                    right: viewportWidth - horizontalElementCenter - contentWidth / 2,
+                    maxWidth: viewportWidth,
+                    hPlacement
                 }
             case 'left':
                 return {
+                    left: elementLeft - contentWidth,
+                    right: viewportWidth - elementLeft,
+                    maxWidth: elementLeft,
+                    hPlacement
+                }
+            case 'over-left':
+                return {
+                    left: elementRight - contentWidth,
+                    right: viewportWidth - elementRight,
+                    maxWidth: elementRight,
+                    hPlacement
+                }
+            case 'over':
+                return {
                     left: elementLeft,
-                    right: viewportWidth - elementLeft - contentWidth
+                    right: viewportWidth - elementRight,
+                    maxWidth: elementRight - elementLeft,
+                    hPlacement
+                }
+            case 'over-right':
+                return {
+                    left: elementLeft,
+                    right: viewportWidth - elementLeft - contentWidth,
+                    maxWidth: viewportWidth - elementLeft,
+                    hPlacement
                 }
             case 'right':
                 return {
-                    left: elementRight - contentWidth,
-                    right: viewportWidth - elementRight
+                    left: elementRight,
+                    right: viewportWidth - elementRight - contentWidth,
+                    maxWidth: viewportWidth - elementRight,
+                    hPlacement
                 }
             }
         }
@@ -191,13 +265,11 @@ class FloatingBox extends React.Component {
         this.setState({contentDimensions})
     }
 
-    updateState(state, callback) {
+    updateState(state) {
         const updatedState = (prevState, state) =>
             _.isEqual(_.pick(prevState, _.keys(state)), state) ? null : state
         this.setState(
-            prevState =>
-                updatedState(prevState, _.isFunction(state) ? state(prevState) : state),
-            callback
+            prevState => updatedState(prevState, _.isFunction(state) ? state(prevState) : state)
         )
     }
 
@@ -251,18 +323,16 @@ export default compose(
 
 FloatingBox.propTypes = {
     children: PropTypes.any.isRequired,
-    alignment: PropTypes.oneOf(['fit', 'left', 'center', 'right']),
     className: PropTypes.string,
     element: PropTypes.object,
     elementBlur: PropTypes.any,
-    horizontalOverflow: PropTypes.any,
-    placement: PropTypes.oneOf(['above', 'below', 'above-below', 'below-above', 'over-above', 'over-below']),
+    hPlacement: PropTypes.oneOf(['center', 'left', 'over-left', 'over', 'over-right', 'right']),
+    vPlacement: PropTypes.oneOf(['center', 'above', 'over-above', 'over', 'over-below', 'below', 'above-otherwise-below', 'below-otherwise-above']),
     onBlur: PropTypes.func
 }
 
 FloatingBox.defaultProps = {
-    alignment: 'left',
-    placement: 'below',
-    horizontalOverflow: false,
+    hPlacement: 'over-right',
+    vPlacement: 'below',
     elementBlur: false
 }

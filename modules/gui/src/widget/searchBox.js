@@ -70,8 +70,8 @@ class _SearchBox extends React.Component {
             ? (
                 <FloatingBox
                     element={this.containerRef.current}
-                    placement={placement}
-                    alignment='fit'
+                    vPlacement={placement}
+                    hPlacement='over'
                     onBlur={this.hideOptions}>
                     <ScrollableList
                         air='more'
@@ -158,6 +158,7 @@ SearchBox.propTypes = {
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,
+    placement: PropTypes.oneOf(['above', 'below']),
     shape: PropTypes.string,
     size: PropTypes.string,
     value: PropTypes.string,

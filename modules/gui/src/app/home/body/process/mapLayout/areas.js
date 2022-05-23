@@ -151,7 +151,6 @@ class _Areas extends React.Component {
                         <CrudItem
                             title={msg(`imageLayerSources.${source.type}.label`)}
                             description={description}
-                            // removeMessage={msg('map.layout.area.remove.message')}
                             removeTooltip={msg('map.layout.area.remove.tooltip')}
                         />
                     </ListItem>

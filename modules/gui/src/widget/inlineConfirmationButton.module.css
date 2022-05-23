@@ -1,0 +1,16 @@
+.wrapper {
+    --padding: .5rem;
+    position: relative;
+}
+
+.wrapper::before {
+    content: '';
+    position: absolute;
+    top: calc(-1 * var(--padding));
+    bottom: calc(-1 * var(--padding));
+    left: calc(-1 * var(--padding));
+    right: calc(-1 * var(--padding));
+    background-color: var(--panel-default-background-color);
+    border: var(--wireframe);
+    border-radius: 500px;
+}
