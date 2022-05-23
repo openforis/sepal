@@ -31,6 +31,7 @@
     "devDependencies": {
         "@alex_neo/jest-expect-message": "^1.0.5",
         "eslint": "^8.15.0",
+        "eslint-plugin-jest": "^26.2.2",
         "jest": "^28.1.0"
     },
     "jest": {
