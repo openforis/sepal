@@ -6,8 +6,19 @@ const {exportLimiter$} = require('task/jobs/service/exportLimiter')
 const task$ = require('task/ee/task')
 const {progress} = require('task/rxjs/operators')
 
+const createAssetFolders$ = assetId => {
+        return ee.createAssetFolders$(assetId, 1).pipe(
+            progress({
+                defaultMessage: `Create asset asset '${assetId}'`,
+                messageKey: 'tasks.ee.export.asset.delete',
+                messageArgs: { assetId }
+            }),
+            catchError(() => EMPTY)
+        )
+    }
+
 const deleteAsset$ = assetId =>
-    ee.deleteAsset$(assetId, 3).pipe(
+    ee.deleteAsset$(assetId, 1).pipe(
         progress({
             defaultMessage: `Deleted asset '${assetId}'`,
             messageKey: 'tasks.ee.export.asset.delete',
@@ -56,6 +67,7 @@ const exportImageToAsset$ = ({
             throw new Error('Cannot export to asset using service account.')
         return exportLimiter$(
             concat(
+                createAssetFolders$(assetId, 0).pipe(swallow()),
                 deleteAsset$(assetId).pipe(swallow()),
                 task$(task, description)
             )

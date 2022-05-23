@@ -7,11 +7,13 @@ const ImageFactory = require('sepal/ee/imageFactory')
 const {getCurrentContext$} = require('task/jobs/service/context')
 
 module.exports = {
-    submit$: (id, {image: {recipe, bands, scale, pyramidingPolicy}}) =>
+    submit$: (id, {image: {recipe, bands, scale, pyramidingPolicy}, downloadPath}) =>
         getCurrentContext$().pipe(
             switchMap(({config}) => {
                 const description = recipe.title || recipe.placeholder
-                const preferredDownloadDir = `${config.homeDir}/downloads/${description}/`
+                const preferredDownloadDir = downloadPath 
+                    ? `${config.homeDir}/${downloadPath}/`
+                    : `${config.homeDir}/downloads/${description}/`
                 return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
                     switchMap(downloadDir =>
                         concat(

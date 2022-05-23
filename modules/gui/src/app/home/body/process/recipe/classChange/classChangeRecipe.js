@@ -79,19 +79,20 @@ const submitRetrieveRecipeTask = recipe => {
     const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
     const task = {
         operation,
-        'params':
-            {
-                title: taskTitle,
-                description: name,
-                image: {
-                    recipe: _.omit(recipe, ['ui']),
-                    bands: {selection: bands},
-                    visualizations,
-                    scale,
-                    pyramidingPolicy,
-                    properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
-                }
-            }
+        params: {
+            title: taskTitle,
+            description: name,
+            image: {
+                recipe: _.omit(recipe, ['ui']),
+                bands: {selection: bands},
+                visualizations,
+                scale,
+                pyramidingPolicy,
+                properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
+            },
+            assetId: recipe.ui.retrieveOptions.assetId,
+            downloadPath: recipe.ui.retrieveOptions.downloadPath
+        }
     }
     publishEvent('submit_task', {
         recipe_type: recipe.type,

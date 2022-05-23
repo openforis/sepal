@@ -191,14 +191,16 @@ const submitRetrieveRecipeTask = recipe => {
     const operation = 'ccdc.asset_export'
     const task = {
         operation,
-        'params': {
+        params: {
             title,
             description: name,
             recipe: _.omit(recipe, ['ui']),
             bands: recipe.ui.retrieveOptions.bands,
             visualizations,
             scale: recipe.ui.retrieveOptions.scale,
-            properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
+            properties: {'system:time_start': timeStart, 'system:time_end': timeEnd},
+            assetId: recipe.ui.retrieveOptions.assetId,
+            downloadPath: recipe.ui.retrieveOptions.downloadPath
         }
     }
     publishEvent('submit_task', {
