@@ -3005,6 +3005,16 @@
           "required": "A destination must be selected",
           "SEPAL": "SEPAL workspace"
         },
+        "downloadPath": {
+          "label": "Workspace path",
+          "placeholder": "Enter workspace path...",
+          "tooltip": "Relative path in your workspace home directory where the image should be retrieved to."
+        },
+        "assetId": {
+          "label": "Asset ID",
+          "placeholder": "Enter Asset ID...",
+          "tooltip": "The Asset ID your image should be exported to."
+        },
         "scale": {
           "label": "Scale"
         },

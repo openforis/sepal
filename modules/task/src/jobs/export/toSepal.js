@@ -23,8 +23,7 @@ const createDriveFolder$ = folder =>
         swallow()
     )
 
-const exportImageToSepal$ = (
-    {
+const exportImageToSepal$ = ({
         image,
         folder,
         description,

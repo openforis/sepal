@@ -61,12 +61,14 @@ const submitRetrieveRecipeTask = recipe => {
     const operation = 'timeseries.download'
     const task = {
         operation,
-        'params': {
+        params: {
             title,
             description: name,
             recipe,
             indicator: recipe.ui.retrieveOptions.bands,
             scale: recipe.ui.retrieveOptions.scale,
+            assetId: recipe.ui.retrieveOptions.assetId,
+            downloadPath: recipe.ui.retrieveOptions.downloadPath
         }
     }
     publishEvent('submit_task', {

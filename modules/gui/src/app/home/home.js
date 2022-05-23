@@ -1,8 +1,8 @@
 import {ActivationContext} from 'widget/activation/activationContext'
 import {PortalContainer} from 'widget/portal'
-import {catchError, exhaustMap, map, retry, timer} from 'rxjs'
+import {catchError, exhaustMap, map, of, retry, timer} from 'rxjs'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect, select} from 'store'
 import {getLogger} from 'log'
 import {isFloating} from './menu/menuMode'
 import {msg} from 'translate'
@@ -46,6 +46,20 @@ const updateUserReport$ = () =>
                 .dispatch()
         })
     )
+
+const updateAssetRoots$ = () => {
+    const assetRoots$ = () =>
+        select('user.currentUser.googleTokens')
+            ? api.gee.assetRoots$()
+            : of([])
+    return timedRefresh$(assetRoots$, 60, 'asset roots').pipe(
+        map(assetRoots =>
+            actionBuilder('UPDATE_ASSET_ROOTS')
+                .set('gee.assetRoots', assetRoots)
+                .dispatch()
+        )
+    )
+}
 
 const projectStorageSpending = spending => {
     const storageUsed = spending.storageUsed
@@ -92,6 +106,7 @@ class Home extends React.Component {
         super(props)
         const {stream} = props
         const errorHandler = () => Notifications.error({message: msg('home.connectivityError')})
+        stream('SCHEDULE_UPDATE_ASSET_ROOTS', updateAssetRoots$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_USER_REPORT', updateUserReport$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_USER_MESSAGES', updateUserMessages$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_TASKS', updateTasks$(), null, errorHandler)

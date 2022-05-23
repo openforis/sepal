@@ -6,6 +6,7 @@ import {RecipeActions} from '../../ccdcSliceRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
+import {connect} from 'store'
 import {currentUser} from 'user'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -24,8 +25,19 @@ const fields = {
         .notBlank()
         .number(),
     destination: new Form.Field()
-        .notEmpty('process.ccdcSlice.panel.retrieve.form.destination.required')
+        .notEmpty('process.ccdcSlice.panel.retrieve.form.destination.required'),
+    downloadPath: new Form.Field()
+        .skip((v, {destination}) => destination !== 'SEPAL')
+        .notBlank(),
+    assetId: new Form.Field()
+        .skip((v, {destination}) => destination !== 'GEE')
+        .notBlank(),
 }
+
+const mapStateToProps = state => ({
+    projects: selectFrom(state, 'process.projects'),
+    assetRoots: selectFrom(state, 'gee.assetRoots')
+})
 
 const mapRecipeToProps = recipe => ({
     baseBands: selectFrom(recipe, 'model.source.baseBands'),
@@ -62,6 +74,7 @@ class _Retrieve extends React.Component {
     }
 
     renderContent() {
+        const {inputs: {destination}} = this.props
         return (
             <Layout>
                 {this.renderBaseBands()}
@@ -69,6 +82,8 @@ class _Retrieve extends React.Component {
                 {this.renderSegmentBands()}
                 {this.renderScale()}
                 {this.renderDestination()}
+                {destination.value === 'SEPAL' ? this.renderDownloadPath() : null}
+                {destination.value === 'GEE' ? this.renderAssetId() : null}
             </Layout>
         )
     }
@@ -252,10 +267,56 @@ class _Retrieve extends React.Component {
                 options={destinationOptions}/>
         )
     }
+
+    renderDownloadPath() {
+        const {inputs: {downloadPath}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.retrieve.form.downloadPath.label')}
+                placeholder={msg('process.retrieve.form.downloadPath.tooltip')}
+                tooltip={msg('process.retrieve.form.downloadPath.tooltip')}
+                input={downloadPath}
+            />
+        )
+    }
+
+    renderAssetId() {
+        const {assetRoots, inputs: {assetId}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.retrieve.form.assetId.label')}
+                placeholder={msg('process.retrieve.form.assetId.tooltip')}
+                tooltip={msg('process.retrieve.form.assetIt.tooltip')}
+                input={assetId}
+                busyMessage={!assetRoots}
+                disabled={!assetRoots}
+            />
+        )
+    }
+    componentDidMount() {
+        this.update()
+    }
+
+    componentDidUpdate() {
+        this.update()
+    }
+
+    defaultPath() {
+        const {projects, projectId, title, placeholder} = this.props
+        const projectDir = projects
+            .find(({id}) => id === projectId)
+            ?.name
+            ?.replace(/[^\w-.]/g, '_')
+        const recipeName = title || placeholder
+        return projectDir
+            ? `${projectDir}/${recipeName}`
+            : recipeName
+    }
 }
 
 export const Retrieve = compose(
     _Retrieve,
+    connect(mapStateToProps),
     recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})
 )
 
