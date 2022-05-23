@@ -13,7 +13,7 @@ export default class RemoveButton extends React.Component {
     }
 
     renderModalConfirmationButton() {
-        const {chromeless, icon, label, tooltip, tooltipPlacement, title, message, shape, size, onRemove, disabled, unsafe} = this.props
+        const {chromeless, icon, label, tooltip, tooltipPlacement, title, message, shape, size, onRemove, disabled, unsafe, children} = this.props
         return (
             <ModalConfirmationButton
                 chromeless={chromeless}
@@ -28,7 +28,9 @@ export default class RemoveButton extends React.Component {
                 title={title}
                 message={message}
                 onConfirm={onRemove}
-            />
+            >
+                {children}
+            </ModalConfirmationButton>
         )
     }
 
@@ -54,6 +56,7 @@ export default class RemoveButton extends React.Component {
 
 RemoveButton.propTypes = {
     onRemove: PropTypes.func.isRequired,
+    children: PropTypes.any,
     chromeless: PropTypes.any,
     confirmationLabel: PropTypes.any,
     disabled: PropTypes.any,

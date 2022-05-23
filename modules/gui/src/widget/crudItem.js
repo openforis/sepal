@@ -122,27 +122,30 @@ export class CrudItem extends React.Component {
     }
 
     renderRemoveButton() {
-        const {onRemove, removeTooltip, removeMessage, removeDisabled, tooltipPlacement, unsafeRemove} = this.props
+        const {onRemove, removeTooltip, removeTitle, removeMessage, removeDisabled, removeContent, tooltipPlacement, unsafeRemove} = this.props
         return onRemove
             ? (
                 <RemoveButton
                     chromeless
                     shape='circle'
                     size='large'
+                    title={removeTitle}
                     message={removeMessage}
                     tooltip={removeTooltip}
                     tooltipPlacement={tooltipPlacement}
                     unsafe={unsafeRemove}
                     disabled={removeDisabled}
                     onRemove={onRemove}
-                />
+                >
+                    {removeContent}
+                </RemoveButton>
             )
             : null
     }
 
     renderSelectButton() {
         const {onSelect, selectTooltip, tooltipPlacement, selectDisabled, selected} = this.props
-        return onSelect
+        return selected !== undefined || onSelect
             ? (
                 <CheckButton
                     chromeless
@@ -151,7 +154,7 @@ export class CrudItem extends React.Component {
                     checked={selected}
                     tooltip={selectTooltip}
                     tooltipPlacement={tooltipPlacement}
-                    disabled={selectDisabled}
+                    disabled={selectDisabled || !onSelect}
                     onToggle={onSelect}
                 />
             )
@@ -176,8 +179,10 @@ CrudItem.propTypes = {
     infoDisabled: PropTypes.any,
     infoTooltip: PropTypes.string,
     inlineComponents: PropTypes.any,
+    removeContent: PropTypes.any,
     removeDisabled: PropTypes.any,
     removeMessage: PropTypes.string,
+    removeTitle: PropTypes.string,
     removeTooltip: PropTypes.string,
     selectDisabled: PropTypes.any,
     selected: PropTypes.any,
