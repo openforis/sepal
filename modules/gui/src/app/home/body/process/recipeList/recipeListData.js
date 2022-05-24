@@ -10,6 +10,7 @@ import {ListItem} from 'widget/listItem'
 import {NO_PROJECT_OPTION, NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeList'
 import {Pageable} from 'widget/pageable/pageable'
 import {ProjectsButton} from './projectsButton'
+import {RecipeListConfirm} from './recipeListConfirm'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {SelectProject} from './selectProject'
@@ -53,6 +54,7 @@ class _RecipeListData extends React.Component {
         this.toggleAll = this.toggleAll.bind(this)
         this.moveSelected = this.moveSelected.bind(this)
         this.removeSelected = this.removeSelected.bind(this)
+        this.toggleConfirmed = this.toggleConfirmed.bind(this)
     }
 
     render() {
@@ -191,7 +193,11 @@ class _RecipeListData extends React.Component {
                 disabled={!selected}
                 onConfirm={() => this.moveSelected(projectId)}
                 onCancel={() => this.setMove(false)}>
-                {this.renderSelectedRecipes()}
+                <RecipeListConfirm
+                    recipes={this.getFilteredPreselectedIds()}
+                    isSelected={recipeId => this.isConfirmed(recipeId)}
+                    onSelect={recipeId => this.toggleConfirmed(recipeId)}
+                />
             </Confirm>
         )
     }
@@ -219,34 +225,19 @@ class _RecipeListData extends React.Component {
                 disabled={!selected}
                 onConfirm={() => this.removeSelected()}
                 onCancel={() => this.setRemove(false)}>
-                {this.renderSelectedRecipes()}
+                <RecipeListConfirm
+                    recipes={this.getFilteredPreselectedIds()}
+                    isSelected={recipeId => this.isConfirmed(recipeId)}
+                    onSelect={recipeId => this.toggleConfirmed(recipeId)}
+                />
             </Confirm>
         )
     }
 
-    renderSelectedRecipes() {
+    getFilteredPreselectedIds() {
         const {filteredRecipes} = this.props
         const {preselectedIds} = this.state
-        const selectedRecipes = filteredRecipes.filter(({id}) => preselectedIds.includes(id))
-        return (
-            <Layout type='vertical' spacing='tight'>
-                {selectedRecipes.map(recipe => this.renderSelectedRecipe(recipe))}
-            </Layout>
-        )
-    }
-
-    renderSelectedRecipe(recipe) {
-        return (
-            <ListItem key={recipe.id}>
-                <CrudItem
-                    title={this.getRecipeTypeName(recipe.type)}
-                    description={this.getRecipePath(recipe)}
-                    timestamp={recipe.updateTime}
-                    selected={this.isConfirmed(recipe.id)}
-                    onSelect={() => this.toggleConfirmed(recipe.id)}
-                />
-            </ListItem>
-        )
+        return filteredRecipes.filter(({id}) => preselectedIds.includes(id))
     }
 
     getDestinations() {
@@ -294,10 +285,10 @@ class _RecipeListData extends React.Component {
                     duplicateTooltip={msg('process.menu.duplicateRecipe.tooltip')}
                     removeTooltip={msg('process.menu.removeRecipe.tooltip')}
                     selectTooltip={msg('process.menu.selectRecipe.tooltip')}
-                    selected={this.isSelected(recipe.id)}
-                    onDuplicate={onDuplicate ? () => onDuplicate(recipe.id) : null}
-                    onRemove={onRemove ? () => onRemove(recipe.id) : null}
-                    onSelect={edit ? () => this.toggleOne(recipe.id) : null}
+                    selected={edit ? this.isSelected(recipe.id) : undefined}
+                    onDuplicate={onDuplicate ? () => onDuplicate(recipe.id) : undefined}
+                    onRemove={onRemove ? () => onRemove(recipe.id) : undefined}
+                    onSelect={edit ? () => this.toggleOne(recipe.id) : undefined}
                 />
             </ListItem>
         )

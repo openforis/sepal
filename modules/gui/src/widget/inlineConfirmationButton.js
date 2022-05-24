@@ -24,7 +24,7 @@ export class InlineConfirmationButton extends React.Component {
     }
 
     renderConfirmationButton() {
-        const {confirmationLabel, onConfirm} = this.props
+        const {icon, confirmationLabel, onConfirm} = this.props
         const {showConfirmation} = this.state
         return showConfirmation ? (
             <FloatingBox
@@ -38,7 +38,7 @@ export class InlineConfirmationButton extends React.Component {
                             <Button
                                 shape='pill'
                                 look='cancel'
-                                icon='exclamation-triangle'
+                                icon={icon}
                                 label={confirmationLabel || msg('button.confirm')}
                                 onClick={onConfirm}/>
                             {this.renderExitButton()}

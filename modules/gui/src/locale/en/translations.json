@@ -2882,6 +2882,7 @@
       },
       "remove": {
         "tooltip": "Remove project",
+        "title": "Remove project",
         "confirm": "All recipes belonging to this project will be removed as well.",
         "error": "Cannot remove project"
       },

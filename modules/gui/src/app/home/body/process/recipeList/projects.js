@@ -3,6 +3,7 @@ import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
+import {RecipeListConfirm} from './recipeListConfirm'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -21,7 +22,8 @@ import styles from './projects.module.css'
 
 const mapStateToProps = () => ({
     projects: select('process.projects'),
-    projectId: select('process.projectId')
+    projectId: select('process.projectId'),
+    recipes: select('process.recipes'),
 })
 
 class _Projects extends React.Component {
@@ -111,6 +113,7 @@ class _Projects extends React.Component {
 
     renderProject(project, index) {
         const {projectId} = this.props
+        const projectRecipes = this.getProjectRecipes(project)
         return (
             <ListItem
                 key={index}
@@ -119,7 +122,12 @@ class _Projects extends React.Component {
                     title={project.name}
                     editTooltip={msg('process.project.edit.tooltip')}
                     removeTooltip={msg('process.project.remove.tooltip')}
+                    removeTitle={msg('process.project.remove.title')}
                     removeMessage={msg('process.project.remove.confirm')}
+                    removeContent={
+                        <RecipeListConfirm recipes={projectRecipes}/>
+                    }
+                    unsafeRemove={!projectRecipes.length}
                     inlineComponents={projectId === project.id && this.renderSelected()}
                     onEdit={() => this.editProject(project)}
                     onRemove={() => this.removeProject(project)}
@@ -185,6 +193,11 @@ class _Projects extends React.Component {
         } else {
             return null
         }
+    }
+
+    getProjectRecipes(project) {
+        const {recipes} = this.props
+        return recipes.filter(({projectId}) => projectId === project.id)
     }
 
     close() {
