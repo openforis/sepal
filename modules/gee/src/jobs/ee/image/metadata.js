@@ -43,9 +43,10 @@ const worker$ = ({asset, recipe}) => {
             )
         )
 
-    const image$ = asset
-        ? of(ee.Image(asset))
-        : ImageFactory(recipe).getImage$()
+    const image$ = ImageFactory(asset
+        ? {type: 'ASSET', id: asset}
+        : recipe
+    ).getImage$()
     return image$.pipe(
         switchMap(image => ee.getInfo$(image, 'get image metadata')),
         map(({bands, properties}) => {

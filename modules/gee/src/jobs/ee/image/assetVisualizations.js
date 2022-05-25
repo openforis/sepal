@@ -2,8 +2,9 @@ const {job} = require('gee/jobs/job')
 
 const worker$ = ({asset}) => {
     const ee = require('sepal/ee')
-    const {map} = require('rxjs')
+    const {map, switchMap} = require('rxjs')
     const {v4: guid} = require('uuid')
+    const ImageFactory = require('sepal/ee/imageFactory')
 
     const extractLandcover = image => {
         const properties = image.toDictionary()
@@ -143,13 +144,15 @@ const worker$ = ({asset}) => {
     const formatVisualizations = visualizations =>
         visualizations.map(formatVisualization)
 
-    const image = ee.Image(asset)
-    return ee.getInfo$(
-        extractVisualizations(image).cat(extractLandcover(image)),
-        'asset visualizations'
-    ).pipe(
+    ImageFactory({type: 'ASSET', id: asset}).getImage$().pipe(
+        switchMap(image =>
+            ee.getInfo$(
+                extractVisualizations(image).cat(extractLandcover(image)),
+                'asset visualizations'
+            ),
         map(formatVisualizations)
-    )
+        )
+    ).getImage$()
 }
 
 module.exports = job({

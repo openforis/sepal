@@ -2,6 +2,7 @@ const {job} = require('gee/jobs/job')
 
 const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
     const ImageFactory = require('sepal/ee/imageFactory')
+    
     const ee = require('sepal/ee')
     const {switchMap} = require('rxjs')
     const {sequence} = require('sepal/utils/array')

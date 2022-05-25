@@ -1,16 +1,20 @@
 const {job} = require('gee/jobs/job')
 
 const worker$ = ({asset, count, scale, classBand}) => {
-    const ee = require('sepal/ee')
+    const ImageFactory = require('sepal/ee/imageFactory')
+    const {switchMap} = require('rxjs')
     const {getRows$} = require('sepal/ee/table')
-    const image = ee.Image(asset)
-    const samples = image.stratifiedSample({
-        numPoints: parseInt(count),
-        classBand: classBand || undefined,
-        scale: parseInt(scale),
-        geometries: true
-    })
-    return getRows$(samples, 'sample image')
+    return ImageFactory({type: 'ASSET', id: asset}).getImage$().pipe(
+        switchMap(image => {
+            const samples = image.stratifiedSample({
+                numPoints: parseInt(count),
+                classBand: classBand || undefined,
+                scale: parseInt(scale),
+                geometries: true
+            })
+            return getRows$(samples, 'sample image')
+        })
+    )
 }
 
 module.exports = job({

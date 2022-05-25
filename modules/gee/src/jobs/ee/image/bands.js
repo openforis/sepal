@@ -6,16 +6,18 @@ const worker$ = ({asset, recipe}) => {
     const {switchMap} = require('rxjs')
 
     if (asset) {
-        return assetBands()
+        return assetBands$()
     } else {
-        return recipeBands()
+        return recipeBands$()
     }
 
-    function assetBands() {
-        return ee.getInfo$(ee.Image(asset).bandNames(), 'asset band names')
+    function assetBands$() {
+        return ImageFactory({type: 'ASSET', id: asset}).getImage$().pipe(
+            switchMap(image => ee.getInfo$(image.bandNames(), 'asset band names'))
+        )
     }
 
-    function recipeBands() {
+    function recipeBands$() {
         const {getBands$, getImage$} = ImageFactory(recipe)
         return getBands$
             ? getBands$()
