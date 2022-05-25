@@ -6,7 +6,6 @@ const {UNSUBMITTED, READY, RUNNING, FAILED} = ee.data.ExportState
 const log = require('sepal/log').getLogger('ee')
 
 const runTask$ = (task, description) => {
-
     const start$ = task =>
         ee.$({
             operation: `start task (${description})`,
