@@ -3266,6 +3266,9 @@
       "tooltip": "Remove all completed, failed, or stopped tasks"
     },
     "retrieve": {
+      "collection_to_asset": {
+        "progress": "Exported {completedTiles} of out of {totalTiles} tiles."
+      },
       "time_series_to_sepal": {
         "assembling": "Assembling tile {currentTile} out of {totalTiles}...",
         "creating_drive_folder": "Creating Google Drive Folders...",
