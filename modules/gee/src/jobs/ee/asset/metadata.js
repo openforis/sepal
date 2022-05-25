@@ -21,9 +21,9 @@ const worker$ = ({asset, expectedType}) => {
 
     return ee.getAsset$(asset, 0).pipe(
         switchMap(asset =>
-            asset.type === expectedType
+            !expectedType || asset.type === expectedType
                 ? of(asset)
-                : throwError(new ClientException(`Asset is of type ${asset.type} while ${expectedType} is expected.`, {
+                : throwError(() => new ClientException(`Asset is of type ${asset.type} while ${expectedType} is expected.`, {
                     userMessage: {
                         message: `Not an ${expectedType}`,
                         key: 'gee.asset.error.wrongType',

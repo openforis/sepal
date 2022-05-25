@@ -56,7 +56,7 @@ const imageToAssetCollection$ = ({
             ? ee.deleteAssetRecursive$(assetId, ['ImageCollection', 'Image'], 0)
             : asset.type === 'Image'
                 ? deleteAsset$(assetId)
-                : throwError("Asset ID already exists, but isn't an image or image collection")
+                : throwError(() => "Asset ID already exists, but isn't an image or image collection")
             return concat(
                 delete$(),
                 ee.createImageCollection$(assetId, {}, 1)
