@@ -4,9 +4,9 @@ export default {
     loadAll$: () =>
         get$('/api/processing-recipes/project'),
 
-    save$: ({id, name}) =>
+    save$: project =>
         post$('/api/processing-recipes/project', {
-            body: {id, name}
+            body: project
         }),
 
     remove$: projectId =>

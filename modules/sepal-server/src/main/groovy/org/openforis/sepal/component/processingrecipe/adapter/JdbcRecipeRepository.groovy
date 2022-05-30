@@ -49,13 +49,13 @@ class JdbcRecipeRepository implements RecipeRepository {
     void saveProject(Map project) {
         def updated = sql.executeUpdate('''
                 UPDATE project
-                SET name = ?
-                WHERE id = ? AND username = ? ''', [project.name, project.id, project.username])
+                SET name = ?, default_asset_folder = ?, default_workspace_folder = ?
+                WHERE id = ? AND username = ? ''', [project.name, project.defaultAssetFolder, project.defaultWorkspaceFolder, project.id, project.username])
         if (!updated)
             sql.executeInsert('''
-                INSERT INTO project(id, name, username) 
-                VALUES(?, ?, ?)''', [
-                    project.id, project.name, project.username
+                INSERT INTO project(id, name, username, default_asset_folder, default_workspace_folder) 
+                VALUES(?, ?, ?, ?, ?)''', [
+                    project.id, project.name, project.username, project.defaultAssetFolder, project.defaultWorkspaceFolder
             ])
     }
 
@@ -81,11 +81,21 @@ class JdbcRecipeRepository implements RecipeRepository {
     }
 
     List<Map> listProjects(String username) {
-        sql.rows('''
-                SELECT id, name, username
+        def projects = []
+        sql.eachRow('''
+                SELECT id, name, username, default_asset_folder, default_workspace_folder
                 FROM project
                 WHERE username = ?
-                ORDER BY name ''', [username])
+                ORDER BY name ''', [username]) {
+            projects << [
+                id: it.id, 
+                name: it.name, 
+                username: it.username,
+                defaultAssetFolder: it.default_asset_folder ? it.longText('default_asset_folder') : null,
+                defaultWorkspaceFolder: it.default_workspace_folder ? it.longText('default_workspace_folder') : null
+            ]
+        }
+        return projects
     }
 
     void eachOfTypeBeforeVersion(String type, int version, Closure callback) {

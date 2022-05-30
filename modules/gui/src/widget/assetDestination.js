@@ -18,8 +18,7 @@ const mapStateToProps = state => ({
 const mapRecipeToProps = recipe => ({
     user: currentUser(),
     projectId: recipe.projectId,
-    title: recipe.title,
-    placeholder: recipe.placeholder
+    recipeName: recipe.title || recipe.placeholder
 })
 
 class _AssetDestination extends React.Component {
@@ -87,9 +86,9 @@ class _AssetDestination extends React.Component {
     }
 
     componentDidMount() {
-        const {assetInput, assetRoots} = this.props
-        if (assetRoots && assetRoots.length && !assetInput.value) {
-            assetInput.set(`${assetRoots[0]}/${this.defaultPath()}`)
+        const {assetInput} = this.props
+        if (!assetInput.value) {
+            assetInput.set(this.defaultAssetId() || null)
         }
     }
 
@@ -106,16 +105,24 @@ class _AssetDestination extends React.Component {
         }
     }
 
-    defaultPath() {
-        const {projects, projectId, title, placeholder} = this.props
-        const projectDir = projects
-            .find(({id}) => id === projectId)
-            ?.name
-            ?.replace(/[^\w-.]/g, '_')
-        const recipeName = title || placeholder
-        return projectDir
-            ? `${projectDir}/${recipeName}`
-            : recipeName
+    defaultAssetId() {
+        const {assetRoots, recipeName} = this.props
+        const project = this.findProject()
+        if (project?.defaultAssetFolder) {
+            return `${project.defaultAssetFolder}/${recipeName}`
+        } else if (assetRoots && assetRoots.length) {
+            if (project) {
+                const projectDir = project?.name?.replace(/[^\w-.]/g, '_')
+                return `${assetRoots[0]}/${projectDir}/${recipeName}`
+            } else {
+                return `${assetRoots[0]}/${recipeName}`
+            }
+        }
+    }
+
+    findProject() {
+        const {projects, projectId} = this.props
+        return projects.find(({id}) => id === projectId)
     }
 
     onLoading() {
@@ -164,6 +171,6 @@ AssetDestination.propTypes = {
     strategyInput: PropTypes.object.isRequired,
     type: PropTypes.any.isRequired,
     label: PropTypes.any,
-    tooltip: PropTypes.any,
-    placeholder: PropTypes.string
+    placeholder: PropTypes.string,
+    tooltip: PropTypes.any
 }

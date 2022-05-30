@@ -1,17 +1,18 @@
 import {AssetDestination} from 'widget/assetDestination'
 import {Button} from 'widget/button'
-import {Buttons} from 'widget/buttons'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {NumberButtons} from 'widget/numberButtons'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {Widget} from 'widget/widget'
+import {WorkspaceDestination} from 'widget/workspaceDestination'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser} from 'user'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {updateProject} from 'app/home/body/process/recipeList/projects'
+import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -25,7 +26,7 @@ const fields = {
         .number(),
     destination: new Form.Field()
         .notEmpty('process.retrieve.form.destination.required'),
-    downloadPath: new Form.Field()
+    workspacePath: new Form.Field()
         .skip((v, {destination}) => destination !== 'SEPAL')
         .notBlank(),
     assetId: new Form.Field()
@@ -63,14 +64,13 @@ class _MosaicRetrievePanel extends React.Component {
     state = {more: false}
 
     render() {
-        const {onRetrieve} = this.props
         const {more} = this.state
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 isActionForm
                 placement='top-right'
-                onApply={values => onRetrieve && onRetrieve(values)}>
+                onApply={values => this.retrieve(values)}>
                 <Panel.Header
                     icon='cloud-download-alt'
                     title={msg('process.retrieve.title')}/>
@@ -96,7 +96,7 @@ class _MosaicRetrievePanel extends React.Component {
                 {this.renderBandOptions()}
                 {this.renderScale()}
                 {toEE && toSepal && this.renderDestination()}
-                {destination.value === 'SEPAL' ? this.renderDownloadPath() : null}
+                {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
                 {destination.value === 'GEE' ? this.renderAssetType() : null}
                 {destination.value === 'GEE' ? this.renderAssetDestination() : null}
                 {more && destination.value === 'GEE' && assetType.value === 'ImageCollection' ? this.renderTileSize() : null}
@@ -112,7 +112,7 @@ class _MosaicRetrievePanel extends React.Component {
     renderCrs() {
         const {inputs: {crs}} = this.props
         return (
-            <Form.Input
+            <Form.input
                 label={msg('process.retrieve.form.crs.label')}
                 placeholder={msg('process.retrieve.form.crs.placeholder')}
                 tooltip={msg('process.retrieve.form.crs.tooltip')}
@@ -130,6 +130,7 @@ class _MosaicRetrievePanel extends React.Component {
                 placeholder={msg('process.retrieve.form.crsTransform.placeholder')}
                 tooltip={msg('process.retrieve.form.crsTransform.tooltip')}
                 input={crsTransform}
+                errorMessage
             />
         )
     }
@@ -188,14 +189,14 @@ class _MosaicRetrievePanel extends React.Component {
         )
     }
 
-    renderDownloadPath() {
-        const {inputs: {downloadPath}} = this.props
+    renderWorkspaceDestination() {
+        const {inputs: {workspacePath}} = this.props
         return (
-            <Form.Input
-                label={msg('process.retrieve.form.downloadPath.label')}
-                placeholder={msg('process.retrieve.form.downloadPath.tooltip')}
-                tooltip={msg('process.retrieve.form.downloadPath.tooltip')}
-                input={downloadPath}
+            <WorkspaceDestination
+                label={msg('process.retrieve.form.workspacePath.label')}
+                placeholder={msg('process.retrieve.form.workspacePath.placeholder')}
+                tooltip={msg('process.retrieve.form.workspacePath.tooltip')}
+                workspacePathInput={workspacePath}
             />
         )
     }
@@ -295,31 +296,34 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     update() {
-        const {toEE, toSepal, user, inputs: {destination, assetType, downloadPath}} = this.props
+        const {toEE, toSepal, user, inputs: {destination, assetType}} = this.props
         if (toSepal && !destination.value) {
             destination.set('SEPAL')
         } else if (user.googleTokens && toEE && !destination.value) {
             destination.set('GEE')
-        }
-        if (!downloadPath.value && destination.value === 'SEPAL') {
-            downloadPath.set(`downloads/${this.defaultPath()}`)
         }
         if (!assetType.value && destination.value === 'GEE') {
             assetType.set('Image')
         }
     }
 
-    defaultPath() {
-        const {projects, projectId, title, placeholder} = this.props
-        const projectDir = projects
-            .find(({id}) => id === projectId)
-            ?.name
-            ?.replace(/[^\w-.]/g, '_')
-        const recipeName = title || placeholder
-        return projectDir
-            ? `${projectDir}/${recipeName}`
-            : recipeName
+    retrieve(values) {
+        const {onRetrieve} = this.props
+        const project = this.findProject()
+        const {assetId, workspacePath} = values
+        updateProject({
+            ...project,
+            defaultAssetFolder: assetId ? Path.dirname(assetId) : project.defaultAssetFolder,
+            defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : project.defaultWorkspaceFolder
+        })
+        onRetrieve && onRetrieve(values)
     }
+
+    findProject() {
+        const {projects, projectId} = this.props
+        return projects.find(({id}) => id === projectId)
+    }
+
 }
 
 export const MosaicRetrievePanel = compose(

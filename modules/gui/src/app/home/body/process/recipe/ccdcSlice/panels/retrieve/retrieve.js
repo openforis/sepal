@@ -26,7 +26,7 @@ const fields = {
         .number(),
     destination: new Form.Field()
         .notEmpty('process.ccdcSlice.panel.retrieve.form.destination.required'),
-    downloadPath: new Form.Field()
+    workspacePath: new Form.Field()
         .skip((v, {destination}) => destination !== 'SEPAL')
         .notBlank(),
     assetId: new Form.Field()
@@ -82,7 +82,7 @@ class _Retrieve extends React.Component {
                 {this.renderSegmentBands()}
                 {this.renderScale()}
                 {this.renderDestination()}
-                {destination.value === 'SEPAL' ? this.renderDownloadPath() : null}
+                {destination.value === 'SEPAL' ? this.renderWorkspacePath() : null}
                 {destination.value === 'GEE' ? this.renderAssetId() : null}
             </Layout>
         )
@@ -268,14 +268,14 @@ class _Retrieve extends React.Component {
         )
     }
 
-    renderDownloadPath() {
-        const {inputs: {downloadPath}} = this.props
+    renderWorkspacePath() {
+        const {inputs: {workspacePath}} = this.props
         return (
             <Form.Input
-                label={msg('process.retrieve.form.downloadPath.label')}
-                placeholder={msg('process.retrieve.form.downloadPath.tooltip')}
-                tooltip={msg('process.retrieve.form.downloadPath.tooltip')}
-                input={downloadPath}
+                label={msg('process.retrieve.form.workspacePath.label')}
+                placeholder={msg('process.retrieve.form.workspacePath.tooltip')}
+                tooltip={msg('process.retrieve.form.workspacePath.tooltip')}
+                input={workspacePath}
             />
         )
     }

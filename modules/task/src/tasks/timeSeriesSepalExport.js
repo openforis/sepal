@@ -24,11 +24,11 @@ const DATE_DELTA = 3
 const DATE_DELTA_UNIT = 'months'
 
 module.exports = {
-    submit$: (id, {downloadPath, description, recipe, indicator, scale}) =>
+    submit$: (id, {workspacePath, description, recipe, indicator, scale}) =>
         getCurrentContext$().pipe(
             switchMap(({config}) => {
-                const preferredDownloadDir = downloadPath 
-                    ? `${config.homeDir}/${downloadPath}/`
+                const preferredDownloadDir = workspacePath 
+                    ? `${config.homeDir}/${workspacePath}/`
                     : `${config.homeDir}/downloads/${description}/`
                 return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
                     switchMap(downloadDir =>

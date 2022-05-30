@@ -7,7 +7,7 @@ import {RecipeListConfirm} from './recipeListConfirm'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {map, switchMap} from 'rxjs'
+import {map, switchMap, tap} from 'rxjs'
 import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'
 import Notifications from 'widget/notifications'
@@ -42,12 +42,8 @@ class _Projects extends React.Component {
 
     updateProject(project) {
         this.props.stream('REQUEST_UPDATE_PROJECT',
-            api.project.save$(project),
-            projects => {
-                actionBuilder('UPDATE_PROJECT', {project})
-                    .set('process.projects', projects)
-                    .dispatch()
-            },
+            updateProject$(project),
+            () => {},
             error => Notifications.error({message: msg('process.project.update.error'), error})
         )
         this.editProject(null)
@@ -224,6 +220,21 @@ class _Projects extends React.Component {
 }
 
 const policy = () => ({_: 'disallow'})
+
+const updateProject$ = project =>
+    api.project.save$(project).pipe(
+        tap(projects => {
+            actionBuilder('UPDATE_PROJECT', {project})
+                .set('process.projects', projects)
+                .dispatch()
+        })
+    )
+
+export const updateProject = project =>
+    updateProject$(project)
+        .subscribe({
+            error: error => Notifications.error({message: msg('process.project.update.error'), error})
+        })
 
 export const Projects = compose(
     _Projects,

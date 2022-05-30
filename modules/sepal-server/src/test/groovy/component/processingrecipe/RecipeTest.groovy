@@ -93,7 +93,9 @@ abstract class RecipeTest extends Specification {
         [
             id: args.id ?: UUID.randomUUID().toString(),
             name: args.name ?: 'some-name',
-            username: args.username ?: testUsername
+            username: args.username ?: testUsername,
+            defaultAssetFolder: args.defaultAssetFolder ?: null,
+            defaultWorkspaceFolder: args.defaultWorkspaceFolder ?: null,
         ]
     }
 

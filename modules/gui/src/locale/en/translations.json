@@ -3007,11 +3007,6 @@
           "required": "A destination must be selected",
           "SEPAL": "SEPAL workspace"
         },
-        "downloadPath": {
-          "label": "Workspace path",
-          "placeholder": "Enter workspace path...",
-          "tooltip": "Relative path in your workspace home directory where the image should be retrieved to."
-        },
         "assetId": {
           "label": "Asset ID",
           "placeholder": "Enter Asset ID...",
@@ -3058,6 +3053,11 @@
             "placeholder": "Size...",
             "suffix": "degrees",
             "tooltip": "The size to tile the images into. If you're running out of memory, try with a smaller value."
+        },
+        "workspacePath": {
+          "label": "Workspace path",
+          "placeholder": "Enter workspace path...",
+          "tooltip": "Relative path in your workspace home directory where the image should be retrieved to."
         }
       },
       "title": "Retrieve",

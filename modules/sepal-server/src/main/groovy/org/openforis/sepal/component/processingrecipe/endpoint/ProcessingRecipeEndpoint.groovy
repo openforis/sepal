@@ -46,7 +46,9 @@ class ProcessingRecipeEndpoint {
                 component.submit(new SaveProject([
                         id: params.id,
                         name: params.name,
-                        username: sepalUser.username
+                        username: sepalUser.username,
+                        defaultAssetFolder: params.defaultAssetFolder,
+                        defaultWorkspaceFolder: params.defaultWorkspaceFolder
                 ]))
                 def projects = component.submit(new ListProjects(sepalUser.username))
                 send(toJson(projects))
