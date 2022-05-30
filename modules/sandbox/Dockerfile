@@ -11,6 +11,9 @@ RUN chmod +x /usr/local/bin/* && sync && sync && mkdir -p /script
 ADD modules/${MODULE_NAME}/script/init_image.sh /script/
 RUN chmod u+x /script/init_image.sh && sync && /script/init_image.sh
 
+ADD modules/${MODULE_NAME}/script/init_dggrid.sh /script/
+RUN chmod u+x /script/init_dggrid.sh && sync && /script/init_dggrid.sh
+
 ADD modules/${MODULE_NAME}/script/init_rstudio.sh /script/
 RUN chmod u+x /script/init_rstudio.sh && sync && /script/init_rstudio.sh
 
