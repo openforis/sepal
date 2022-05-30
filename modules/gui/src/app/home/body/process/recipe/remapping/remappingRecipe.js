@@ -35,7 +35,6 @@ export const RecipeActions = id => {
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const bands = recipe.ui.retrieveOptions.bands
-    const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const pyramidingPolicy = {}
@@ -48,13 +47,11 @@ const submitRetrieveRecipeTask = recipe => {
             description: name,
             image: {
                 recipe: _.omit(recipe, ['ui']),
+                ...recipe.ui.retrieveOptions,
                 bands: {selection: bands},
                 visualizations: getAllVisualizations(recipe),
-                scale,
                 pyramidingPolicy
-            },
-            assetId: recipe.ui.retrieveOptions.assetId,
-            downloadPath: recipe.ui.retrieveOptions.downloadPath
+            }
         }
     }
     return api.tasks.submit$(task).subscribe()

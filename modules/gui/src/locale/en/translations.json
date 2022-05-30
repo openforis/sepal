@@ -1102,7 +1102,8 @@
               "SEPAL": "SEPAL workspace"
             },
             "scale": {
-                "label": "Scale"
+                "label": "Scale",
+                "placeholder": "Scale..."
             },
             "segmentBands": {
               "changeProb": {
@@ -3016,12 +3017,47 @@
           "placeholder": "Enter Asset ID...",
           "tooltip": "The Asset ID your image should be exported to."
         },
+        "assetType": {
+          "label": "Asset type",
+          "Image": {
+              "label": "Image",
+              "tooltip": "Export recipe as a single image asset."
+          },
+          "ImageCollection": {
+              "label": "Image collection",
+              "tooltip": "Export recipe tiled into an image collection. This is good for larger exports as it gives you feedback on the progress, and will allow you to resume failed or canceled export tasks."
+          }
+        },
+        "crs": {
+            "label": "CRS",
+            "placeholder": "Enter CRS...",
+            "tooltip": "CRS to use for the exported image"
+        },
+        "crsTransform": {
+            "label": "CRS transform",
+            "placeholder": "Enter transform...",
+            "tooltip": "Optionally specity affine transform to use for the exported image"
+        },
         "scale": {
-          "label": "Scale"
+          "label": "Scale",
+          "placeholder": "Scale...",
+          "suffix": "meters"
+        },
+        "shardSize": {
+            "label": "Shard size",
+            "placeholder": "Size...",
+            "suffix": "pixels",
+            "tooltip": "The size Earth Engine should break down the image into for processing. If you're running out of memory, try with a smaller value."
         },
         "task": {
           "GEE": "Export {name} as a Google Earth Engine asset",
           "SEPAL": "Retrieve {name} to SEPAL workspace"
+        },
+        "tileSize": {
+            "label": "Tile size",
+            "placeholder": "Size...",
+            "suffix": "degrees",
+            "tooltip": "The size to tile the images into. If you're running out of memory, try with a smaller value."
         }
       },
       "title": "Retrieve",
@@ -3575,6 +3611,24 @@
     "page": "Page {pageNumber} of {pageCount}"
   },
   "widget": {
+    "assetDestination": {
+      "exists": {
+        "notReplacable": "This asset already exists, but isn't an image or image collection, so you cannot overwrite it",
+        "replacable": "This asset already exists, you have to confirm if you want to overwrite it or not"
+      },
+      "loadError": "Unable to load asset",
+      "replace": {
+        "label": "Replace",
+        "tooltip": "Replace previous asset with this one."
+      },
+      "resume": {
+        "label": "Resume",
+        "tooltip": "Keep existing images in the collection and only export missing ones."
+      },
+      "strategy": {
+          "label": "Strategy"
+      }
+    },
     "assetInput": {
       "loadError": "Unable to load asset"
     },

@@ -14,7 +14,8 @@ const exportImageToAsset$ = ({
     image,
     description,
     assetId,
-    strategy = 'replace',
+    assetType,
+    strategy,
     pyramidingPolicy,
     dimensions,
     region,
@@ -26,10 +27,12 @@ const exportImageToAsset$ = ({
     tileSize,
     retries = 0
 }) =>  {
+    crsTransform = crsTransform || undefined
+    console.log({assetType, strategy, scale, crs, crsTransform, shardSize, tileSize})
     region = region || image.geometry()
     if (ee.sepal.getAuthType() === 'SERVICE_ACCOUNT')
         throw new Error('Cannot export to asset using service account.')
-    const export$ = ({description, assetId}) => tileSize
+    const export$ = ({description, assetId}) => assetType === 'ImageCollection'
         ? imageToAssetCollection$({
             image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, tileSize, retries
         })
@@ -164,7 +167,6 @@ const imageToAssetCollection$ = ({
         tilesToAssets$()
     )
 }
-
 
 
 const imageToAsset$ = ({

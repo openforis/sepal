@@ -1,4 +1,4 @@
-import {AssetInput} from 'widget/assetInput'
+import {AssetSelect} from 'widget/assetSelect'
 import {Form, form} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
 import {Subject} from 'rxjs'
@@ -58,10 +58,11 @@ class _SelectAsset extends React.Component {
     renderContent() {
         const {inputs: {asset}} = this.props
         return (
-            <AssetInput
+            <AssetSelect
                 input={asset}
                 label={msg('map.layout.addImageLayerSource.types.Asset.form.asset.label')}
                 autoFocus
+                expectedType={['Image', 'ImageCollection']}
                 onLoading={() => this.setState({
                     loadedAsset: false,
                     asset: null,

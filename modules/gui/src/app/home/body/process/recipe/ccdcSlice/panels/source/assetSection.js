@@ -1,4 +1,4 @@
-import {AssetInput} from 'widget/assetInput'
+import {AssetSelect} from 'widget/assetSelect'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Subject} from 'rxjs'
@@ -24,10 +24,11 @@ class AssetSection extends React.Component {
         const {inputs: {asset, dateFormat}} = this.props
         return (
             <Layout>
-                <AssetInput
+                <AssetSelect
                     input={asset}
                     label={msg('process.ccdcSlice.panel.source.form.asset.label')}
                     placeholder={msg('process.ccdcSlice.panel.source.form.asset.placeholder')}
+                    expectedType={['Image', 'ImageCollection']}
                     autoFocus
                     onLoaded={this.onLoaded}
                 />
@@ -60,7 +61,9 @@ class AssetSection extends React.Component {
         const {bands, properties: {dateFormat}} = metadata
         const assetBands = _.intersection(...['coefs', 'magnitude', 'rmse']
             .map(postfix => bands
-                .map(assetBand => assetBand.match(`(.*)_${postfix}`))
+                .map(assetBand => {
+                    return assetBand.id.match(`(.*)_${postfix}`)
+                })
                 .map(match => match && match[1])
                 .filter(band => band)
             )

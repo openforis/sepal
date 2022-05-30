@@ -103,7 +103,6 @@ export const hasError = recipe => {
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
-    const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
@@ -119,14 +118,12 @@ const submitRetrieveRecipeTask = recipe => {
             description: name,
             image: {
                 recipe: _.omit(recipe, ['ui']),
+                ...recipe.ui.retrieveOptions,
                 bands: {selection: bands},
                 visualizations,
-                scale,
                 pyramidingPolicy,
                 properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
-            },
-            assetId: recipe.ui.retrieveOptions.assetId,
-            downloadPath: recipe.ui.retrieveOptions.downloadPath
+            }
         }
     }
     publishEvent('submit_task', {

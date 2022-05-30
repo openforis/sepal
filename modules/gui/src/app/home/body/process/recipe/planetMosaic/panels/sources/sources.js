@@ -1,4 +1,4 @@
-import {AssetInput} from 'widget/assetInput'
+import {AssetSelect} from 'widget/assetSelect'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {NICFI_ASSETS} from 'app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
@@ -71,7 +71,7 @@ class Sources extends React.Component {
     renderAssetId() {
         const {inputs: {asset, validAsset}} = this.props
         return (
-            <AssetInput
+            <AssetSelect
                 input={asset}
                 label={msg('process.planetMosaic.panel.sources.form.asset.label')}
                 placeholder={msg('process.planetMosaic.panel.sources.form.asset.placeholder')}

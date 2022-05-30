@@ -65,10 +65,8 @@ const submitRetrieveRecipeTask = recipe => {
             title,
             description: name,
             recipe,
-            indicator: recipe.ui.retrieveOptions.bands,
-            scale: recipe.ui.retrieveOptions.scale,
-            assetId: recipe.ui.retrieveOptions.assetId,
-            downloadPath: recipe.ui.retrieveOptions.downloadPath
+            ...recipe.ui.retrieveOptions,
+            indicator: recipe.ui.retrieveOptions.bands
         }
     }
     publishEvent('submit_task', {

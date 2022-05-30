@@ -195,12 +195,10 @@ const submitRetrieveRecipeTask = recipe => {
             title,
             description: name,
             recipe: _.omit(recipe, ['ui']),
+            ...recipe.ui.retrieveOptions,
             bands: recipe.ui.retrieveOptions.bands,
             visualizations,
-            scale: recipe.ui.retrieveOptions.scale,
-            properties: {'system:time_start': timeStart, 'system:time_end': timeEnd},
-            assetId: recipe.ui.retrieveOptions.assetId,
-            downloadPath: recipe.ui.retrieveOptions.downloadPath
+            properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
         }
     }
     publishEvent('submit_task', {

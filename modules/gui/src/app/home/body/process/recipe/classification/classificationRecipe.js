@@ -166,7 +166,6 @@ export const supportProbability = classifierType =>
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const bands = recipe.ui.retrieveOptions.bands
-    const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const pyramidingPolicy = {}
@@ -181,11 +180,9 @@ const submitRetrieveRecipeTask = recipe => {
                 recipe: _.omit(recipe, ['ui']),
                 bands: {selection: bands},
                 visualizations: getAllVisualizations(recipe),
-                scale,
-                pyramidingPolicy
-            },
-            assetId: recipe.ui.retrieveOptions.assetId,
-            downloadPath: recipe.ui.retrieveOptions.downloadPath
+                pyramidingPolicy,
+                ...recipe.ui.retrieveOptions
+            }
         }
     }
     publishEvent('submit_task', {

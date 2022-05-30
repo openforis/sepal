@@ -4,6 +4,7 @@ const worker$ = ({asset, expectedType}) => {
     const {throwError, of, catchError, switchMap} = require('rxjs')
     const {ClientException, NotFoundException} = require('sepal/exception')
     const ee = require('sepal/ee')
+    const _ = require('lodash')
 
     const handleError$ = error =>
         throwError(
@@ -21,7 +22,7 @@ const worker$ = ({asset, expectedType}) => {
 
     return ee.getAsset$(asset, 0).pipe(
         switchMap(asset =>
-            !expectedType || asset.type === expectedType
+            !expectedType || asset.type === expectedType || (_.isArray(expectedType) && expectedType.includes(asset.type))
                 ? of(asset)
                 : throwError(() => new ClientException(`Asset is of type ${asset.type} while ${expectedType} is expected.`, {
                     userMessage: {

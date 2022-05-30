@@ -1,4 +1,4 @@
-import {AssetInput} from 'widget/assetInput'
+import {AssetSelect} from 'widget/assetSelect'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -8,12 +8,13 @@ export default class AssetSection extends React.Component {
     render() {
         const {input, onLoading} = this.props
         return (
-            <AssetInput
+            <AssetSelect
                 className={style.inputComponent}
                 input={input}
                 label={msg('process.classChange.panel.inputImage.asset.label')}
                 placeholder={msg('process.classChange.panel.inputImage.asset.placeholder')}
                 autoFocus
+                expectedType={['Image', 'ImageCollection']}
                 onLoading={onLoading}
                 onLoaded={({asset, metadata, visualizations}) => {
                     this.onLoaded({asset, metadata, visualizations})

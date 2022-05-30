@@ -1,6 +1,9 @@
+import {AssetDestination} from 'widget/assetDestination'
+import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
+import {NumberButtons} from 'widget/numberButtons'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Widget} from 'widget/widget'
@@ -28,11 +31,25 @@ const fields = {
     assetId: new Form.Field()
         .skip((v, {destination}) => destination !== 'GEE')
         .notBlank(),
+    assetType: new Form.Field()
+        .skip((v, {destination}) => destination !== 'GEE')
+        .notBlank(),
+    strategy: new Form.Field()
+        .skip((v, {destination}) => destination !== 'GEE')
+        .notBlank(),
+    shardSize: new Form.Field()
+        .skip((v, {destination}) => destination !== 'GEE')
+        .notBlank(),
+    tileSize: new Form.Field()
+        .skip((v, {destination}) => destination !== 'GEE')
+        .notBlank(),
+    crs: new Form.Field()
+        .notBlank(),
+    crsTransform: new Form.Field()
 }
 
 const mapStateToProps = state => ({
-    projects: selectFrom(state, 'process.projects'),
-    assetRoots: selectFrom(state, 'gee.assetRoots')
+    projects: selectFrom(state, 'process.projects')
 })
 
 const mapRecipeToProps = recipe => ({
@@ -43,8 +60,11 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _MosaicRetrievePanel extends React.Component {
+    state = {more: false}
+
     render() {
         const {onRetrieve} = this.props
+        const {more} = this.state
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -58,21 +78,89 @@ class _MosaicRetrievePanel extends React.Component {
                     {this.renderContent()}
                 </Panel.Content>
                 <Form.PanelButtons
-                    applyLabel={msg('process.retrieve.apply')}/>
+                    applyLabel={msg('process.retrieve.apply')}>
+                    <Button
+                        label={more ? msg('button.less') : msg('button.more')}
+                        onClick={() => this.setState({more: !more})}
+                    />
+                </Form.PanelButtons>
             </RecipeFormPanel>
         )
     }
 
     renderContent() {
-        const {toSepal, toEE, inputs: {destination}} = this.props
+        const {toSepal, toEE, inputs: {destination, assetType}} = this.props
+        const {more} = this.state
         return (
             <Layout>
                 {this.renderBandOptions()}
                 {this.renderScale()}
                 {toEE && toSepal && this.renderDestination()}
                 {destination.value === 'SEPAL' ? this.renderDownloadPath() : null}
-                {destination.value === 'GEE' ? this.renderAssetId() : null}
+                {destination.value === 'GEE' ? this.renderAssetType() : null}
+                {destination.value === 'GEE' ? this.renderAssetDestination() : null}
+                {more && destination.value === 'GEE' && assetType.value === 'ImageCollection' ? this.renderTileSize() : null}
+                {more && destination.value === 'GEE' ? this.renderShardSize() : null}
+                <Layout type='horizontal'>
+                    {more ? this.renderCrs() : null}
+                    {more ? this.renderCrsTransform() : null}
+                </Layout>
             </Layout>
+        )
+    }
+
+    renderCrs() {
+        const {inputs: {crs}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.retrieve.form.crs.label')}
+                placeholder={msg('process.retrieve.form.crs.placeholder')}
+                tooltip={msg('process.retrieve.form.crs.tooltip')}
+                input={crs}
+                errorMessage
+            />
+        )
+    }
+
+    renderCrsTransform() {
+        const {inputs: {crsTransform}} = this.props
+        return (
+            <Form.Input
+                label={msg('process.retrieve.form.crsTransform.label')}
+                placeholder={msg('process.retrieve.form.crsTransform.placeholder')}
+                tooltip={msg('process.retrieve.form.crsTransform.tooltip')}
+                input={crsTransform}
+            />
+        )
+    }
+
+    renderShardSize() {
+        const {inputs: {shardSize}} = this.props
+        return (
+            <NumberButtons
+                label={msg('process.retrieve.form.shardSize.label')}
+                placeholder={msg('process.retrieve.form.shardSize.placeholder')}
+                tooltip={msg('process.retrieve.form.shardSize.tooltip')}
+                input={shardSize}
+                options={[4, 16, 32, 64, 128, 256, 512, {value: 1024, label: '1k'}]}
+                suffix={msg('process.retrieve.form.shardSize.suffix')}
+                errorMessage
+            />
+        )
+    }
+
+    renderTileSize() {
+        const {inputs: {tileSize}} = this.props
+        return (
+            <NumberButtons
+                label={msg('process.retrieve.form.tileSize.label')}
+                placeholder={msg('process.retrieve.form.tileSize.placeholder')}
+                tooltip={msg('process.retrieve.form.tileSize.tooltip')}
+                input={tileSize}
+                options={[0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10]}
+                suffix={msg('process.retrieve.form.tileSize.suffix')}
+                errorMessage
+            />
         )
     }
 
@@ -112,17 +200,40 @@ class _MosaicRetrievePanel extends React.Component {
         )
     }
 
-    renderAssetId() {
-        const {assetRoots, inputs: {assetId}} = this.props
+    renderAssetDestination() {
+        const {inputs: {assetId, assetType, strategy}} = this.props
         return (
-            <Form.Input
+            <AssetDestination
+                type={assetType.value}
                 label={msg('process.retrieve.form.assetId.label')}
                 placeholder={msg('process.retrieve.form.assetId.tooltip')}
                 tooltip={msg('process.retrieve.form.assetIt.tooltip')}
-                input={assetId}
-                busyMessage={!assetRoots}
-                disabled={!assetRoots}
+                assetInput={assetId}
+                strategyInput={strategy}
             />
+        )
+    }
+
+    renderAssetType() {
+        const {inputs: {assetType}} = this.props
+        const options = [
+            {
+                value: 'Image',
+                label: msg('process.retrieve.form.assetType.Image.label'),
+                tooltip: msg('process.retrieve.form.assetType.Image.tooltip')
+            },
+            {
+                value: 'ImageCollection',
+                label: msg('process.retrieve.form.assetType.ImageCollection.label'),
+                tooltip: msg('process.retrieve.form.assetType.ImageCollection.tooltip')
+            }
+        ]
+        return (
+            <Form.Buttons
+                label={msg('process.retrieve.form.assetType.label')}
+                input={assetType}
+                multiple={false}
+                options={options}/>
         )
     }
 
@@ -145,30 +256,36 @@ class _MosaicRetrievePanel extends React.Component {
     renderScale() {
         const {inputs: {scale}} = this.props
         return (
-            <Widget
-                layout='horizontal'
-                spacing='compact'
-                label={msg('process.retrieve.form.scale.label')}>
-                <Buttons
-                    options={[1, 5, 10, 15, 20, 30, 60, 100]}
-                    spacing='none'
-                    selected={Number(scale.value)}
-                    onChange={value => scale.set(value)}
-                />
-                <Form.Input
-                    input={scale}
-                    type='number'
-                    suffix='meters'
-                    placeholder={msg('process.retrieve.form.customScale.label')}
-                />
-            </Widget>
+            <NumberButtons
+                label={msg('process.retrieve.form.scale.label')}
+                placeholder={msg('process.retrieve.form.scale.placeholder')}
+                input={scale}
+                options={[1, 5, 10, 15, 20, 30, 60, 100]}
+                suffix={msg('process.retrieve.form.scale.suffix')}
+                errorMessage
+            />
         )
     }
     
     componentDidMount() {
-        const {defaultScale, inputs: {scale}} = this.props
+        const {defaultCrs, defaultScale, defaultShardSize, defaultTileSize, inputs: {crs, crsTransform, scale, shardSize, tileSize}} = this.props
+        this.setState({more: !!((crs.value || crsTransform.value || scale.value || shardSize.value || tileSize.value) &&
+            !_.isEqual(
+                [defaultCrs, defaultScale, defaultShardSize, defaultTileSize],
+                [crs.value, scale.value, shardSize.value, tileSize.value]
+            )
+        )})
+        if (!crs.value) {
+            crs.set(defaultCrs)
+        }
         if (!scale.value) {
             scale.set(defaultScale)
+        }
+        if (!shardSize.value) {
+            shardSize.set(defaultShardSize)
+        }
+        if (!tileSize.value) {
+            tileSize.set(defaultTileSize)
         }
         this.update()
     }
@@ -178,7 +295,7 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     update() {
-        const {assetRoots, toEE, toSepal, user, inputs: {destination, downloadPath, assetId}} = this.props
+        const {toEE, toSepal, user, inputs: {destination, assetType, downloadPath}} = this.props
         if (toSepal && !destination.value) {
             destination.set('SEPAL')
         } else if (user.googleTokens && toEE && !destination.value) {
@@ -186,8 +303,9 @@ class _MosaicRetrievePanel extends React.Component {
         }
         if (!downloadPath.value && destination.value === 'SEPAL') {
             downloadPath.set(`downloads/${this.defaultPath()}`)
-        } else if (assetRoots && assetRoots.length && !assetId.value && destination.value === 'GEE') {
-            assetId.set(`${assetRoots[0]}/${this.defaultPath()}`)
+        }
+        if (!assetType.value && destination.value === 'GEE') {
+            assetType.set('Image')
         }
     }
 
@@ -211,11 +329,18 @@ export const MosaicRetrievePanel = compose(
 )
 
 MosaicRetrievePanel.defaultProps = {
-    ticks: [10, 15, 20, 30, 60, 100]
+    ticks: [10, 15, 20, 30, 60, 100],
+    defaultCrs: 'EPSG:4326',
+    defaultScale: 30,
+    defaultShardSize: 256,
+    defaultTileSize: 2
 }
 MosaicRetrievePanel.propTypes = {
     bandOptions: PropTypes.array.isRequired,
+    defaultCrs: PropTypes.string.isRequired,
     defaultScale: PropTypes.number.isRequired,
+    defaultShardSize: PropTypes.number.isRequired,
+    defaultTileSize: PropTypes.number.isRequired,
     onRetrieve: PropTypes.func.isRequired,
     single: PropTypes.any,
     ticks: PropTypes.array,

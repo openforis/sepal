@@ -1,5 +1,5 @@
 import * as PropTypes from 'prop-types'
-import {AssetInput} from 'widget/assetInput'
+import {AssetSelect} from 'widget/assetSelect'
 import {Form} from 'widget/form/form'
 import {FormCombo} from 'widget/form/combo'
 import {Layout} from 'widget/layout'
@@ -79,12 +79,12 @@ class SampleClassificationSection extends Component {
 
     renderAssetToSample() {
         const {inputs: {assetToSample}} = this.props
-        return <AssetInput
+        return <AssetSelect
             label={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.label')}
             autoFocus
             input={assetToSample}
             placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.placeholder')}
-            spellCheck={false}
+            expectedType={['Image', 'ImageCollection']}
             errorMessage
             onLoading={() => this.setState({bands: []})}
             onLoaded={({metadata}) => {

@@ -41,6 +41,7 @@ const exportImageToSepal$ = ({
         formatOptions,
         retries
     }) => {
+    crsTransform = crsTransform || undefined
     image = castToLargest(image)
     const prefix = description
 

@@ -1,5 +1,5 @@
 import {Form} from './form/form'
-import {Subject, takeUntil} from 'rxjs'
+import {Subject, takeUntil, tap} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
@@ -11,26 +11,52 @@ import guid from 'guid'
 
 class _AssetInput extends React.Component {
     assetChanged$ = new Subject()
+    state = {
+        loading: null
+    }
 
     render() {
-        const {className, input, label, placeholder, autoFocus} = this.props
+        const {className, input, label, placeholder, tooltip, autoFocus, busyMessage, disabled} = this.props
         return (
             <Form.Input
                 className={className}
                 label={label}
                 placeholder={placeholder}
+                tooltip={tooltip}
                 input={input}
                 autoFocus={autoFocus}
                 spellCheck={false}
                 onChangeDebounced={asset => asset.length && this.loadMetadata(asset)}
-                busyMessage={this.props.stream('LOAD_ASSET_METADATA').active && msg('widget.loading')}
+                busyMessage={(busyMessage || this.props.stream('LOAD_ASSET_METADATA').active) && msg('widget.loading')}
+                disabled={disabled}
                 errorMessage
             />
         )
     }
 
+    componentDidMount() {
+        const {input} = this.props
+        if (input.value) {
+            this.loadMetadata(input.value)
+        }
+
+    }
+    
+    componentDidUpdate(prevProps) {
+        const {input: prevInput} = prevProps
+        const {input} = this.props
+        if (!prevInput?.value && input.value) {
+            this.loadMetadata(input.value)
+        }
+    }
+
     loadMetadata(asset) {
-        const {expectedType, input, onError, onLoading, onLoaded, stream} = this.props
+        const {expectedType, onError, onLoading, onLoaded, stream} = this.props
+        const {loading} = this.state
+        if (loading === asset) {
+            return
+        }
+        this.setState({loading: asset})
         onLoading && onLoading(asset)
         this.assetChanged$.next()
         stream('LOAD_ASSET_METADATA',
@@ -38,24 +64,20 @@ class _AssetInput extends React.Component {
                 ? api.gee.imageMetadata$({asset})
                 : api.gee.assetMetadata$({asset, expectedType})
             ).pipe(
-                takeUntil(this.assetChanged$)
+                takeUntil(this.assetChanged$.pipe()),
+                tap(() => this.setState({loading: null}))
             ),
-            metadata => onLoaded && onLoaded({
-                asset,
-                metadata,
-                visualizations: metadata.bands
-                    ? toVisualizations(metadata.properties, metadata.bands)
-                        .map(visualization => ({...visualization, id: guid()}))
-                    : undefined
-            }),
-            error => {
-                onError && onError(error)
-                input.setInvalid(
-                    error.response && error.response.messageKey
-                        ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                        : msg('widget.assetInput.loadError')
-                )
-            }
+            metadata => {
+                return onLoaded && onLoaded(metadata ? {
+                    asset,
+                    metadata,
+                    visualizations: metadata.bands
+                        ? toVisualizations(metadata.properties, metadata.bands)
+                            .map(visualization => ({...visualization, id: guid()}))
+                        : undefined
+                } : null)
+            },
+            onError
         )
     }
 }
@@ -65,16 +87,16 @@ export const AssetInput = compose(
     connect()
 )
 
-AssetInput.defaultProps = {
-    expectedType: 'Image'
-}
-
 AssetInput.propTypes = {
     input: PropTypes.object.isRequired,
+    autoFocus: PropTypes.any,
+    busyMessage: PropTypes.any,
     className: PropTypes.any,
-    expectedType: PropTypes.string,
+    disabled: PropTypes.any,
+    expectedType: PropTypes.any,
     label: PropTypes.any,
     placeholder: PropTypes.string,
+    tooltip: PropTypes.any,
     onError: PropTypes.func,
     onLoaded: PropTypes.func,
     onLoading: PropTypes.func,

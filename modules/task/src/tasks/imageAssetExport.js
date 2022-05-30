@@ -5,13 +5,15 @@ const {toVisualizationProperties} = require('../ee/visualizations')
 const {formatProperties} = require('./formatProperties')
 
 module.exports = {
-    submit$: (id, {assetId, image: {recipe, bands, scale, pyramidingPolicy, properties, visualizations}}) => {
+    submit$: (_id, {
+        image: {recipe, ...retrieveOptions}
+    }) => {
         const description = recipe.title || recipe.placeholder
-        return export$({assetId, description, recipe, bands, scale, pyramidingPolicy, properties, visualizations})
+        return export$({description, recipe, ...retrieveOptions})
     }
 }
 
-const export$ = ({assetId, description, recipe, bands, scale, pyramidingPolicy, properties, visualizations}) =>
+const export$ = ({recipe, bands, visualizations, scale, properties, ...retrieveOptions}) =>
     ImageFactory(recipe, bands).getImage$().pipe(
         switchMap(image => {
             const formattedProperties = formatProperties({...properties, scale})
@@ -21,12 +23,8 @@ const export$ = ({assetId, description, recipe, bands, scale, pyramidingPolicy, 
                 .set(visualizationProperties)
             return exportImageToAsset$({
                 image: imageWithProperties,
-                assetId,
-                description,
                 scale,
-                crs: 'EPSG:4326',
-                maxPixels: 1e13,
-                pyramidingPolicy
+                ...retrieveOptions
             })
         }
         )

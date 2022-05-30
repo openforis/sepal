@@ -149,12 +149,10 @@ const submitRetrieveRecipeTask = recipe => {
             description: name,
             image: {
                 recipe: _.omit(recipe, ['ui']),
+                ...recipe.ui.retrieveOptions,
                 bands: {selection: bands, baseBands},
                 visualizations,
-                scale,
-                properties: {'system:time_start': timeStart, 'system:time_end': timeEnd},
-                assetId: recipe.ui.retrieveOptions.assetId,
-                downloadPath: recipe.ui.retrieveOptions.downloadPath
+                properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
             }
         }
     }

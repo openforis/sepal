@@ -5,7 +5,7 @@ const {toVisualizationProperties} = require('../ee/visualizations')
 const {formatProperties} = require('./formatProperties')
 
 module.exports = {
-    submit$: (id, {recipe, bands, scale, assetId, description, visualizations, properties}) => {
+    submit$: (id, {recipe, bands, scale, assetId, description, visualizations, properties, ...other}) => {
         return ccdc(recipe, {selection: bands}).getImage$().pipe(
             switchMap(segments => {
                 const formattedProperties = formatProperties({...properties, scale})
@@ -18,11 +18,10 @@ module.exports = {
                         .set('dateFormat', recipe.model.ccdcOptions.dateFormat)
                         .set('surfaceReflectance', recipe.model.options.corrections.includes('SR') && 1)
                         .set(toVisualizationProperties(visualizations, {selection: allBands})),
-                    assetId,
                     description,
-                    pyramidingPolicy: {'.default': 'sample'},
+                    ...other,
                     scale,
-                    crs: 'EPSG:4326',
+                    pyramidingPolicy: {'.default': 'sample'},
                     maxPixels: 1e13
                 })
             })

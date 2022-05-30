@@ -50,7 +50,6 @@ export const RecipeActions = id => {
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
-    const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
@@ -66,11 +65,9 @@ const submitRetrieveRecipeTask = recipe => {
                 recipe: _.omit(recipe, ['ui']),
                 bands: {selection: bands},
                 visualizations,
-                scale,
-                properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
-            },
-            assetId: recipe.ui.retrieveOptions.assetId,
-            downloadPath: recipe.ui.retrieveOptions.downloadPath
+                properties: {'system:time_start': timeStart, 'system:time_end': timeEnd},
+                ...recipe.ui.retrieveOptions
+            }
         }
     }
     publishEvent('submit_task', {
