@@ -8,6 +8,7 @@ const {exportLimiter$} = require('task/jobs/service/exportLimiter')
 const task$ = require('task/ee/task')
 const {progress} = require('task/rxjs/operators')
 const log = require('sepal/log').getLogger('task')
+const _ = require('lodash')
 
 
 const exportImageToAsset$ = ({
@@ -187,6 +188,7 @@ const imageToAssetCollection$ = ({
 const imageToAsset$ = ({
     image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, retries
 }) => {
+    console.log('imageToAsset$', {pyramidingPolicy})
     const exportToAsset$ = ({task, description, assetId, _retries}) => {
         return exportLimiter$(
             concat(
@@ -199,8 +201,9 @@ const imageToAsset$ = ({
     }
     return formatRegion$(region).pipe(
         switchMap(region => {
+            console.log('switchMap', {pyramidingPolicy})
             const serverConfig = ee.batch.Export.convertToServerParams(
-                {image, description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize},
+                _.cloneDeep({image, description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize}), // It seems like EE modifies the pyramidingPolicy
                 ee.data.ExportDestination.ASSET,
                 ee.data.ExportType.IMAGE
             )
