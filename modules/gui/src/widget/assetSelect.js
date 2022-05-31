@@ -10,7 +10,7 @@ export class AssetSelect extends React.Component {
     }
 
     render() {
-        const {className, input, label, placeholder, autoFocus, expectedType, disabled, onLoading, onLoaded, onError} = this.props
+        const {className, input, label, placeholder, autoFocus, expectedType, disabled, onLoading, onLoaded} = this.props
         return (
             <AssetInput
                 className={className}
