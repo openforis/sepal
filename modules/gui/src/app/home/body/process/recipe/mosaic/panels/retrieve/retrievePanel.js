@@ -55,9 +55,7 @@ const mapStateToProps = state => ({
 
 const mapRecipeToProps = recipe => ({
     user: currentUser(),
-    projectId: recipe.projectId,
-    title: recipe.title,
-    placeholder: recipe.placeholder
+    projectId: recipe.projectId
 })
 
 class _MosaicRetrievePanel extends React.Component {
@@ -255,13 +253,13 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     renderScale() {
-        const {inputs: {scale}} = this.props
+        const {scaleTicks, inputs: {scale}} = this.props
         return (
             <NumberButtons
                 label={msg('process.retrieve.form.scale.label')}
                 placeholder={msg('process.retrieve.form.scale.placeholder')}
                 input={scale}
-                options={[1, 5, 10, 15, 20, 30, 60, 100]}
+                options={scaleTicks}
                 suffix={msg('process.retrieve.form.scale.suffix')}
                 errorMessage
             />
@@ -333,7 +331,7 @@ export const MosaicRetrievePanel = compose(
 )
 
 MosaicRetrievePanel.defaultProps = {
-    ticks: [10, 15, 20, 30, 60, 100],
+    scaleTicks: [10, 15, 20, 30, 60, 100],
     defaultCrs: 'EPSG:4326',
     defaultScale: 30,
     defaultShardSize: 256,
@@ -346,8 +344,8 @@ MosaicRetrievePanel.propTypes = {
     defaultShardSize: PropTypes.number.isRequired,
     defaultTileSize: PropTypes.number.isRequired,
     onRetrieve: PropTypes.func.isRequired,
+    scaleTicks: PropTypes.array,
     single: PropTypes.any,
-    ticks: PropTypes.array,
     toEE: PropTypes.any,
     toSepal: PropTypes.any
 }

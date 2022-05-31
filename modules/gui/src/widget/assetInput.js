@@ -26,7 +26,9 @@ class _AssetInput extends React.Component {
                 input={input}
                 autoFocus={autoFocus}
                 spellCheck={false}
-                onChangeDebounced={asset => asset.length && this.loadMetadata(asset)}
+                onChangeDebounced={asset => {
+                    return asset.length && this.loadMetadata(asset)
+                }}
                 busyMessage={(busyMessage || this.props.stream('LOAD_ASSET_METADATA').active) && msg('widget.loading')}
                 disabled={disabled}
                 errorMessage

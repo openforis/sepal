@@ -30,13 +30,17 @@ class _WorkspaceDestination extends React.Component {
     }
 
     render() {
-        const {currentType} = this.state
-        return (
-            <Layout spacing='tight'>
-                {this.renderInput()}
-                {['Image', 'ImageCollection'].includes(currentType) ? this.renderStrategy() : null}
-            </Layout>
-        )
+        return this.renderInput()
+        // const {currentType} = this.state
+        // const showStrategy = ['Image', 'ImageCollection'].includes(currentType)
+        // return showStrategy
+        //     ? (
+        //         <Layout spacing='tight'>
+        //             {this.renderInput()}
+        //             {this.renderStrategy()}
+        //         </Layout>
+        //     )
+        //     : this.renderInput()
     }
 
     renderInput() {

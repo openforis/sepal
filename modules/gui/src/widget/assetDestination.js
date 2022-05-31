@@ -34,10 +34,11 @@ class _AssetDestination extends React.Component {
 
     render() {
         const {currentType} = this.state
+        const showStrategy = ['Image', 'ImageCollection'].includes(currentType)
         return (
             <Layout spacing='tight'>
                 {this.renderAssetInput()}
-                {['Image', 'ImageCollection'].includes(currentType) ? this.renderStrategy() : null}
+                {showStrategy ? this.renderStrategy() : null}
             </Layout>
         )
     }
@@ -59,13 +60,11 @@ class _AssetDestination extends React.Component {
 
     renderStrategy() {
         const {strategyInput, type} = this.props
-        const {currentType} = this.state
         const options = [
             {
                 value: 'resume',
                 label: msg('widget.assetDestination.resume.label'),
-                tooltip: msg('widget.assetDestination.resume.tooltip'),
-                disabled: !currentType || type !== 'ImageCollection'
+                tooltip: msg('widget.assetDestination.resume.tooltip')
             },
             {
                 value: 'replace',

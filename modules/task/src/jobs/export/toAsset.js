@@ -28,7 +28,6 @@ const exportImageToAsset$ = ({
     retries = 0
 }) =>  {
     crsTransform = crsTransform || undefined
-    console.log({assetType, strategy, scale, crs, crsTransform, shardSize, tileSize})
     region = region || image.geometry()
     if (ee.sepal.getAuthType() === 'SERVICE_ACCOUNT')
         throw new Error('Cannot export to asset using service account.')
@@ -220,8 +219,8 @@ const assetDestination$ = (description, assetId) => {
 const createAssetFolders$ = assetId => {
     return ee.createAssetFolders$(assetId, 1).pipe(
         progress({
-            defaultMessage: `Create asset asset '${assetId}'`,
-            messageKey: 'tasks.ee.export.asset.delete',
+            defaultMessage: `Create asset folder '${assetId}'`,
+            messageKey: 'tasks.ee.export.asset.createFolder',
             messageArgs: {assetId}
         }),
         catchError(() => EMPTY)
