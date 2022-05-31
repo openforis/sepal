@@ -64,7 +64,7 @@ export default class UserList extends React.Component {
             .filter(user => this.userMatchesFilters(user))
             .orderBy(user => {
                 const item = _.get(user, sortingOrder)
-                return _.isString(item) ? item.toUpperCase() : item
+                return _.isString(item) ? simplifyString(item) : item
             }, sortingDirection === 1 ? 'asc' : 'desc')
             .value()
     }
