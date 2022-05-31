@@ -110,7 +110,7 @@ class _MosaicRetrievePanel extends React.Component {
     renderCrs() {
         const {inputs: {crs}} = this.props
         return (
-            <Form.input
+            <Form.Input
                 label={msg('process.retrieve.form.crs.label')}
                 placeholder={msg('process.retrieve.form.crs.placeholder')}
                 tooltip={msg('process.retrieve.form.crs.tooltip')}

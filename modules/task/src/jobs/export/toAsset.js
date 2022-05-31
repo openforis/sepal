@@ -28,6 +28,22 @@ const exportImageToAsset$ = ({
     retries = 0
 }) =>  {
     crsTransform = crsTransform || undefined
+    console.log({
+        image,
+        description,
+        assetId,
+        assetType,
+        strategy,
+        pyramidingPolicy,
+        dimensions,
+        region,
+        scale,
+        crs,
+        crsTransform,
+        maxPixels,
+        shardSize,
+        tileSize,
+        retries})
     region = region || image.geometry()
     if (ee.sepal.getAuthType() === 'SERVICE_ACCOUNT')
         throw new Error('Cannot export to asset using service account.')
