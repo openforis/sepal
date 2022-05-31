@@ -26,7 +26,7 @@ class ProcessMenu extends React.Component {
                         ? this.renderUnsavedRecipeItems()
                         : this.renderSavedRecipeItems()}
                     <MenuItem onSelect={() => duplicateRecipe(this.props.recipe)}>
-                        <Msg id='process.menu.duplicateRecipe'/>
+                        <Msg id='process.menu.duplicateRecipe.label'/>
                     </MenuItem>
                     <MenuItem onSelect={() => this.exportRecipe(recipe)}>
                         <Msg id='process.menu.exportRecipe'/>
