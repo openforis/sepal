@@ -61,7 +61,7 @@ class AssetSection extends React.Component {
         const {bands, properties: {dateFormat}} = metadata
         const assetBands = _.intersection(...['coefs', 'magnitude', 'rmse']
             .map(postfix => bands
-                .map(assetBand => assetBand.match(`(.*)_${postfix}`))
+                .map(({id}) => id.match(`(.*)_${postfix}`))
                 .map(match => match && match[1])
                 .filter(band => band)
             )
