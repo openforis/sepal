@@ -266,7 +266,7 @@ const deleteAsset$ = assetId =>
 
 
 const formatRegion$ = region =>
-    ee.getInfo$(region, 'format region for export').pipe(
+    ee.getInfo$(region.bounds(1), 'format region for export').pipe(
         map(geometry => ee.Geometry(geometry))
     )
 
