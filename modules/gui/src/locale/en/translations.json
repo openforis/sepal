@@ -3302,7 +3302,9 @@
         "asset": {
           "createFolder": "Create asset folder {assetId}",
           "delete": "Delete asset {assetId}",
-          "prepareImageCollection": "Prepare image collection {assetId}"
+          "prepareImageCollection": "Prepare image collection {assetId}",
+          "startExport": "Start export of {tileCount} tiles",
+          "tilingImage": "Tiling image"
 
         },
         "pending": "Submitting export task to Google Earth Engine",
