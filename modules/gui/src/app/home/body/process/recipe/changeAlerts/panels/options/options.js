@@ -51,7 +51,6 @@ class Options extends React.Component {
                 maxValue={10}
                 decimals={1}
                 ticks={[0, 1, 3, 5, 10]}
-                range='high'
                 scale='log'
                 info={value => msg('process.changeAlerts.panel.options.form.minConfidence.value', {value})}
             />
@@ -87,7 +86,6 @@ class Options extends React.Component {
                 minValue={minValue}
                 maxValue={maxValue}
                 ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                range='high'
                 snap
             />
         )
