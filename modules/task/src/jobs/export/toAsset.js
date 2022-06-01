@@ -29,22 +29,6 @@ const exportImageToAsset$ = ({
     retries = 0
 }) =>  {
     crsTransform = crsTransform || undefined
-    console.log({
-        image,
-        description,
-        assetId,
-        assetType,
-        strategy,
-        pyramidingPolicy,
-        dimensions,
-        region,
-        scale,
-        crs,
-        crsTransform,
-        maxPixels,
-        shardSize,
-        tileSize,
-        retries})
     region = region || image.geometry()
     if (ee.sepal.getAuthType() === 'SERVICE_ACCOUNT')
         throw new Error('Cannot export to asset using service account.')
@@ -179,7 +163,12 @@ const imageToAssetCollection$ = ({
     })
 
     return concat(
-        prepareCollection$().pipe(swallow()),
+        progress({
+            defaultMessage: `Prepare image collection '${assetId}'`,
+            messageKey: 'tasks.ee.export.asset.prepareImageCollection',
+            messageArgs: {assetId}
+        }),
+        prepareCollection$(),
         tilesToAssets$()
     )
 }
@@ -188,7 +177,6 @@ const imageToAssetCollection$ = ({
 const imageToAsset$ = ({
     image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, retries
 }) => {
-    console.log('imageToAsset$', {pyramidingPolicy})
     const exportToAsset$ = ({task, description, assetId, _retries}) => {
         return exportLimiter$(
             concat(
@@ -201,7 +189,6 @@ const imageToAsset$ = ({
     }
     return formatRegion$(region).pipe(
         switchMap(region => {
-            console.log('switchMap', {pyramidingPolicy})
             const serverConfig = ee.batch.Export.convertToServerParams(
                 _.cloneDeep({image, description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize}), // It seems like EE modifies the pyramidingPolicy
                 ee.data.ExportDestination.ASSET,
