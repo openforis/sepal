@@ -29,6 +29,7 @@ const fields = {
     validAsset: new Form.Field()
         .skip((v, {dataSets}) => !['BASEMAPS', 'DAILY'].includes(dataSets))
         .notBlank(),
+    cloudPercentageThreshold: new Form.Field(),
     classification: new Form.Field(),
     breakpointBands: new Form.Field()
         .notEmpty()
@@ -54,6 +55,7 @@ class Sources extends React.Component {
     }
 
     render() {
+        const {inputs: {dataSetType}} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -65,6 +67,7 @@ class Sources extends React.Component {
                     <Layout>
                         {this.renderDataSetTypes()}
                         {this.renderDataSets()}
+                        {dataSetType.value === 'OPTICAL' ? this.renderCloudPercentageThreshold() : null}
                         {this.renderAssetId()}
                         {this.renderClassification()}
                         {this.renderBreakpointBands()}
@@ -102,6 +105,24 @@ class Sources extends React.Component {
                 input={dataSets}
                 options={this.dataSetOptions()}
                 multiple={dataSetType.value === 'OPTICAL'}
+            />
+        )
+    }
+    
+    renderCloudPercentageThreshold() {
+        const {inputs: {cloudPercentageThreshold}} = this.props
+        return (
+            <Form.Slider
+                label={msg('process.ccdc.panel.sources.form.cloudPercentageThreshold.label')}
+                tooltip={msg('process.ccdc.panel.sources.form.cloudPercentageThreshold.tooltip')}
+                input={cloudPercentageThreshold}
+                minValue={0}
+                maxValue={100}
+                ticks={[0, 10, 25, 50, 75, 90, 100]}
+                range='low'
+                info={value =>
+                    msg('process.ccdc.panel.sources.form.cloudPercentageThreshold.value', {value})
+                }
             />
         )
     }
@@ -214,12 +235,15 @@ class Sources extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {dataSetType, classification}} = this.props
+        const {inputs: {dataSetType, cloudPercentageThreshold, classification}} = this.props
         if (!dataSetType.value) {
             dataSetType.set('OPTICAL')
         }
         if (classification.value) {
             this.loadClassification(classification.value)
+        }
+        if (_.isUndefined(cloudPercentageThreshold)) {
+            cloudPercentageThreshold.set(100)
         }
     }
 
@@ -246,17 +270,18 @@ class Sources extends React.Component {
 
 Sources.propTypes = {}
 
-const valuesToModel = ({dataSetType, asset, dataSets, classification, breakpointBands}) => {
+const valuesToModel = ({dataSetType, asset, dataSets, cloudPercentageThreshold, classification, breakpointBands}) => {
     return ({
         dataSetType,
         dataSets: toSources(_.isArray(dataSets) ? dataSets : [dataSets]),
+        cloudPercentageThreshold,
         assets: asset ? [asset] : [],
         classification,
         breakpointBands
     })
 }
 
-const modelToValues = ({dataSetType, assets, dataSets, classification, breakpointBands}) => {
+const modelToValues = ({dataSetType, assets, dataSets, cloudPercentageThreshold, classification, breakpointBands}) => {
     const dataSetIds = _.uniq(Object.values(dataSets).flat())
     const defaultedDataSetType = dataSetType
         ? dataSetType
@@ -268,6 +293,7 @@ const modelToValues = ({dataSetType, assets, dataSets, classification, breakpoin
     return ({
         dataSetType: defaultedDataSetType,
         dataSets: defaultedDataSetType === 'OPTICAL' || !dataSetIds.length ? dataSetIds : dataSetIds[0],
+        cloudPercentageThreshold,
         asset: _.isEmpty(assets) ? null : assets[0],
         validAsset: true,
         classification,

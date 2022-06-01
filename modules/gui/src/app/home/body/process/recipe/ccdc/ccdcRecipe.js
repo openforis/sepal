@@ -46,6 +46,7 @@ export const defaultModel = {
         endDate: moment().format(DATE_FORMAT)
     },
     sources: {
+        cloudPercentageThreshold: 75,
         dataSets: {
             LANDSAT: ['LANDSAT_9', 'LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM']
         },
