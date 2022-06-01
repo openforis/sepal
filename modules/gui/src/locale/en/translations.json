@@ -874,6 +874,11 @@
               "placeholder": "Select a classification...",
               "tooltip": "(Optional) Select a classification recipe and apply the classifier to every acquisition in the time-series."
             },
+            "cloudPercentageThreshold": {
+                "label": "Max cloud cover %",
+                "value": "{value}%",
+                "tooltip": "Filter out scenes with higher cloud cover higher than this threshold"
+              },
             "dataSets": {
               "label": "Data set"
             },
@@ -3296,7 +3301,10 @@
       "export": {
         "asset": {
           "createFolder": "Create asset folder {assetId}",
-          "delete": "Delete asset {assetId}"
+          "delete": "Delete asset {assetId}",
+          "prepareImageCollection": "Prepare image collection {assetId}",
+          "startExport": "Start export of {tileCount} tiles",
+          "tilingImage": "Tiling image"
 
         },
         "pending": "Submitting export task to Google Earth Engine",

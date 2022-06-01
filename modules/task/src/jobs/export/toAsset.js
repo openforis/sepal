@@ -1,7 +1,6 @@
 const ee = require('sepal/ee')
 const {EMPTY, concat, from, catchError, last, map, merge, mergeMap, of, scan, switchMap, tap, throwError} = require('rxjs')
 const {swallow} = require('sepal/rxjs')
-const {toFeatureCollection} = require('sepal/ee/aoi')
 const tile = require('sepal/ee/tile')
 const Path = require('path')
 const {exportLimiter$} = require('task/jobs/service/exportLimiter')
@@ -29,22 +28,6 @@ const exportImageToAsset$ = ({
     retries = 0
 }) =>  {
     crsTransform = crsTransform || undefined
-    console.log({
-        image,
-        description,
-        assetId,
-        assetType,
-        strategy,
-        pyramidingPolicy,
-        dimensions,
-        region,
-        scale,
-        crs,
-        crsTransform,
-        maxPixels,
-        shardSize,
-        tileSize,
-        retries})
     region = region || image.geometry()
     if (ee.sepal.getAuthType() === 'SERVICE_ACCOUNT')
         throw new Error('Cannot export to asset using service account.')
@@ -111,23 +94,44 @@ const imageToAssetCollection$ = ({
             tileFeatures.aggregate_array('system:index'), 
             'load tile ids'
         )
-        return tileIds$.pipe(
-            switchMap(tileIds => exportTiles$(tileIds).pipe(
-                tap(progress => log.trace(() => `collection-export: ${JSON.stringify(progress)}`)),
-                scan(
-                    (acc, progress) => {
-                        return ({
-                            ...acc,
-                            ...progress,
-                            completedTiles: progress.completedTiles === undefined
-                                ? acc.completedTiles + (progress.completedTile ? 1 : 0)
-                                : progress.completedTiles
-                        })
-                    },
-                    { completedTiles: 0 }
-                ),
-                map(progress => toProgress(progress, tileIds.length))
-            ))
+        const export$ = tileIds$.pipe(
+            switchMap(tileIds => {
+                const tileCount = tileIds.length
+                const startingExport$ = of(true).pipe(progress({
+                    defaultMessage: `Start export of ${tileCount} tiles`,
+                    messageKey: 'tasks.ee.export.asset.startExport',
+                    messageArgs: {tileCount}
+                }))
+                const export$ = exportTiles$(tileIds).pipe(
+                    tap(progress => log.trace(() => `collection-export: ${JSON.stringify(progress)}`)),
+                    scan(
+                        (acc, progress) => {
+                            return ({
+                                ...acc,
+                                ...progress,
+                                completedTiles: progress.completedTiles === undefined
+                                    ? acc.completedTiles + (progress.completedTile ? 1 : 0)
+                                    : progress.completedTiles
+                            })
+                        },
+                        { completedTiles: 0 }
+                    ),
+                    map(progress => toProgress(progress, tileIds.length))
+                )
+                return concat(
+                    startingExport$,
+                    export$
+                )
+            })
+        )
+        const progress$ = of(true).pipe(progress({
+            defaultMessage: `Tiling image`,
+            messageKey: 'tasks.ee.export.asset.tilingImage'
+        }))
+
+        return concat(
+            progress$, 
+            export$
         )
     }
     
@@ -138,7 +142,7 @@ const imageToAssetCollection$ = ({
             )
         )
         return tile$.pipe(
-            mergeMap(({tileId, tileIndex}) => exportTile$({tileId, tileIndex}))
+            mergeMap(({tileId, tileIndex}) => exportTile$({tileId, tileIndex}), 3)
         )
     }
     
@@ -177,9 +181,14 @@ const imageToAssetCollection$ = ({
         messageKey: 'tasks.retrieve.collection_to_asset.progress',
         messageArgs: {completedTiles, totalTiles}
     })
-
+    const prepareProgress$ = of(true).pipe(progress({
+        defaultMessage: `Prepare image collection '${assetId}'`,
+        messageKey: 'tasks.ee.export.asset.prepareImageCollection',
+        messageArgs: {assetId}
+    }))
     return concat(
-        prepareCollection$().pipe(swallow()),
+        prepareProgress$,
+        prepareCollection$(),
         tilesToAssets$()
     )
 }
@@ -188,7 +197,6 @@ const imageToAssetCollection$ = ({
 const imageToAsset$ = ({
     image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, retries
 }) => {
-    console.log('imageToAsset$', {pyramidingPolicy})
     const exportToAsset$ = ({task, description, assetId, _retries}) => {
         return exportLimiter$(
             concat(
@@ -201,7 +209,6 @@ const imageToAsset$ = ({
     }
     return formatRegion$(region).pipe(
         switchMap(region => {
-            console.log('switchMap', {pyramidingPolicy})
             const serverConfig = ee.batch.Export.convertToServerParams(
                 _.cloneDeep({image, description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize}), // It seems like EE modifies the pyramidingPolicy
                 ee.data.ExportDestination.ASSET,
