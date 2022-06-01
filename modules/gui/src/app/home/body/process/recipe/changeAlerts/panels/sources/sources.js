@@ -122,7 +122,7 @@ class Sources extends React.Component {
                 minValue={0}
                 maxValue={100}
                 ticks={[0, 10, 25, 50, 75, 90, 100]}
-                range='high'
+                range='low'
                 info={value =>
                     msg('process.changeAlerts.panel.sources.form.cloudPercentageThreshold.value', {value})
                 }
