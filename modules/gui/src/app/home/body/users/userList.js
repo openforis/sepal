@@ -1,8 +1,8 @@
-import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
+import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import {FastList} from 'widget/fastList'
 import {Layout} from 'widget/layout'
-import {Pageable} from 'widget/pageable/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {UserResourceUsage} from 'app/home/user/userResourceUsage'
@@ -28,6 +28,12 @@ export default class UserList extends React.Component {
     }
 
     search = React.createRef()
+
+    constructor(props) {
+        super(props)
+        this.renderUser = this.renderUser.bind(this)
+        this.onSelect = this.onSelect.bind(this)
+    }
 
     setSorting(sortingOrder, defaultSorting) {
         this.setState(prevState => {
@@ -58,7 +64,7 @@ export default class UserList extends React.Component {
             .filter(user => this.userMatchesFilters(user))
             .orderBy(user => {
                 const item = _.get(user, sortingOrder)
-                return _.isString(item) ? item.toUpperCase() : item
+                return _.isString(item) ? simplifyString(item).toUpperCase() : item
             }, sortingDirection === 1 ? 'asc' : 'desc')
             .value()
     }
@@ -152,14 +158,14 @@ export default class UserList extends React.Component {
         )
     }
 
-    renderHeader() {
+    renderHeader(users) {
         return (
             <div className={[styles.grid, styles.header].join(' ')}>
                 <Label className={styles.instanceBudget} msg={msg('user.report.resources.instanceSpending')}/>
                 <Label className={styles.storageBudget} msg={msg('user.report.resources.storageSpending')}/>
                 <Label className={styles.storage} msg={msg('user.report.resources.storageSpace')}/>
                 <div className={styles.info}>
-                    {this.renderInfo()}
+                    {this.renderInfo(users)}
                 </div>
                 {this.renderColumnHeader({
                     column: 'name',
@@ -258,71 +264,72 @@ export default class UserList extends React.Component {
         )
     }
 
-    renderInfo() {
-        const results = (count, start, stop, isSinglePage) =>
-            isSinglePage
-                ? msg('users.count.onePage', {count})
-                : msg('users.count.morePages', {count, start, stop})
+    renderInfo(users) {
         return (
-            <Pageable.Info>
-                {({count, start, stop, isSinglePage}) =>
-                    <div className={styles.pageInfo}>
-                        {results(count, start, stop, isSinglePage)}
-                    </div>
-                }
-            </Pageable.Info>
+            <div className={styles.pageInfo}>
+                {msg('users.count.onePage', {count: users.length})}
+            </div>
         )
     }
 
-    renderUsers() {
-        const {onSelect} = this.props
+    renderUsers(users) {
+        return (
+            <FastList
+                items={users}
+                itemKey={user => _.compact([user.id, user.username, this.getHighLightMatcher()]).join('|')}>
+                {this.renderUser}
+            </FastList>
+        )
+    }
+
+    renderUser(user) {
+        return (
+            <UserItem
+                user={user}
+                highlight={this.getHighLightMatcher()}
+                onClick={this.onSelect}
+            />
+        )
+    }
+
+    getHighLightMatcher() {
         const {textFilterValues} = this.state
-        const highlightMatcher = textFilterValues.length
+        return textFilterValues.length
             ? new RegExp(`(?:${textFilterValues.join('|')})`, 'i')
             : ''
-        const key = user => _.compact([user.id, user.username, highlightMatcher]).join('|')
-        return (
-            <Pageable.Data itemKey={user => key(user)}>
-                {user =>
-                    <UserItem
-                        user={user}
-                        highlight={highlightMatcher}
-                        onClick={() => onSelect(user)}/>
-                }
-            </Pageable.Data>
-        )
+    }
+
+    onSelect(user) {
+        const {onSelect} = this.props
+        onSelect(user)
     }
 
     render() {
+        const users = this.getUsers()
         return (
-            <Pageable items={this.getUsers()}>
-                <SectionLayout>
-                    <TopBar label={msg('home.sections.users')}/>
-                    <Content horizontalPadding verticalPadding menuPadding>
-                        <ScrollableContainer>
-                            <Unscrollable>
-                                <Layout type='horizontal' spacing='compact'>
-                                    {this.renderTextFilter()}
-                                    {this.renderStatusFilter()}
-                                </Layout>
-                            </Unscrollable>
-                            <Scrollable direction='x'>
-                                <ScrollableContainer className={styles.content}>
-                                    <Unscrollable>
-                                        {this.renderHeader()}
-                                    </Unscrollable>
-                                    <Scrollable direction='y' className={styles.users}>
-                                        {this.renderUsers()}
-                                    </Scrollable>
-                                </ScrollableContainer>
-                            </Scrollable>
-                        </ScrollableContainer>
-                    </Content>
-                    <BottomBar className={styles.bottomBar}>
-                        <Pageable.Controls/>
-                    </BottomBar>
-                </SectionLayout>
-            </Pageable>
+            <SectionLayout>
+                <TopBar label={msg('home.sections.users')}/>
+                <Content horizontalPadding verticalPadding menuPadding>
+                    <ScrollableContainer>
+                        <Unscrollable>
+                            <Layout type='horizontal' spacing='compact'>
+                                {this.renderTextFilter()}
+                                {this.renderStatusFilter()}
+                            </Layout>
+                        </Unscrollable>
+                        <Scrollable direction='x'>
+                            <ScrollableContainer className={styles.content}>
+                                <Unscrollable>
+                                    {this.renderHeader(users)}
+                                </Unscrollable>
+                                <Scrollable direction='xy' className={styles.users}>
+                                    {this.renderUsers(users)}
+                                </Scrollable>
+                            </ScrollableContainer>
+                        </Scrollable>
+                    </ScrollableContainer>
+                </Content>
+            </SectionLayout>
         )
     }
 }
@@ -332,9 +339,19 @@ UserList.propTypes = {
     onSelect: PropTypes.func.isRequired
 }
 
-class UserItem extends React.Component {
-    render() {
+class UserItem extends React.PureComponent {
+    constructor(props) {
+        super(props)
+        this.onClick = this.onClick.bind(this)
+    }
+
+    onClick() {
         const {user, onClick} = this.props
+        user.status ? onClick(user) : null
+    }
+
+    render() {
+        const {user} = this.props
         const {name, status, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
         return (
             <div
@@ -347,7 +364,7 @@ class UserItem extends React.Component {
                     styles.user,
                     status ? styles.clickable : null
                 ].join(' ')}
-                onClick={() => status ? onClick() : null}>
+                onClick={this.onClick}>
                 {this.renderName(name)}
                 {this.renderStatus(status)}
                 {this.renderLastUpdate(updateTime)}

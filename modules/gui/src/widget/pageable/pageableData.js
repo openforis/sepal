@@ -6,7 +6,6 @@ import React from 'react'
 import _ from 'lodash'
 
 export class PageableData extends React.Component {
-    ref = React.createRef()
     render() {
         const {itemKey, direction, className, children} = this.props
         return (

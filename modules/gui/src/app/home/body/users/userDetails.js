@@ -94,6 +94,7 @@ class UserDetails extends React.Component {
                             label={msg('user.userDetails.form.username.label')}
                             input={username}
                             disabled={!newUser}
+                            autoComplete={false}
                             spellCheck={false}
                             autoFocus={newUser}
                             errorMessage
@@ -101,6 +102,7 @@ class UserDetails extends React.Component {
                         <Form.Input
                             label={msg('user.userDetails.form.name.label')}
                             input={name}
+                            autoComplete={false}
                             spellCheck={false}
                             autoFocus={!newUser}
                             errorMessage
@@ -108,12 +110,14 @@ class UserDetails extends React.Component {
                         <Form.Input
                             label={msg('user.userDetails.form.email.label')}
                             input={email}
+                            autoComplete={false}
                             spellCheck={false}
                             errorMessage
                         />
                         <Form.Input
                             label={msg('user.userDetails.form.organization.label')}
                             input={organization}
+                            autoComplete={false}
                             spellCheck={false}
                             errorMessage
                         />

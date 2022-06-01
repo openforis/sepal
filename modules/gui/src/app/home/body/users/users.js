@@ -35,6 +35,14 @@ class Users extends React.Component {
         userDetails: null
     }
 
+    constructor(props) {
+        super(props)
+        this.editUser = this.editUser.bind(this)
+        this.cancelUser = this.cancelUser.bind(this)
+        this.updateUser = this.updateUser.bind(this)
+        this.inviteUser = this.inviteUser.bind(this)
+    }
+
     componentDidMount() {
         this.props.stream('LOAD_USER_LIST',
             getUserList$(),
@@ -52,7 +60,9 @@ class Users extends React.Component {
         const {users} = this.props
         return (
             <div className={styles.container}>
-                <UserList users={users} onSelect={user => this.editUser(user)}/>
+                <UserList
+                    users={users}
+                    onSelect={this.editUser}/>
                 {this.renderInviteUser()}
                 {this.renderUserDetails()}
             </div>
@@ -69,7 +79,7 @@ class Users extends React.Component {
                 icon='plus'
                 tooltip={msg('users.invite.label')}
                 tooltipPlacement='left'
-                onClick={() => this.inviteUser()}/>
+                onClick={this.inviteUser}/>
         )
     }
 
@@ -78,8 +88,8 @@ class Users extends React.Component {
         return userDetails ? (
             <UserDetails
                 userDetails={userDetails}
-                onCancel={() => this.cancelUser()}
-                onSave={userDetails => this.updateUser(userDetails)}/>
+                onCancel={this.cancelUser}
+                onSave={this.updateUser}/>
         ) : null
     }
 
