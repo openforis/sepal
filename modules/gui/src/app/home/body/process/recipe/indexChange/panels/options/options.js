@@ -45,9 +45,10 @@ class Options extends React.Component {
                     tooltip={msg('process.indexChange.panel.options.minConfidence.tooltip')}
                     input={minConfidence}
                     minValue={0}
-                    maxValue={5}
+                    maxValue={20}
                     decimals={1}
-                    ticks={[0, 1, 2, 3, 4, 5]}
+                    ticks={[0, 1, 2, 3, 5, 10, 20]}
+                    scale='log'
                     info={value => msg('process.indexChange.panel.options.minConfidence.value', {value})}
                     disabled={!hasError(recipe)}
                 />
