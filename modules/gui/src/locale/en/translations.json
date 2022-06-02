@@ -2898,7 +2898,8 @@
       "update": {
         "error": "Cannot update project"
       },
-      "noProject": "no project"
+      "noProject": "no project",
+      "noProjectOption": "[no project]"
     },
     "recipe": {
       "lastUpdate": "Last update",
