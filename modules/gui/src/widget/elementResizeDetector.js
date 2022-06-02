@@ -1,4 +1,4 @@
-import {Subject, distinctUntilChanged, first, throttleTime} from 'rxjs'
+import {Subject, distinctUntilChanged, throttleTime} from 'rxjs'
 import {compose} from 'compose'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -29,9 +29,11 @@ export class _ElementResizeDetector extends React.Component {
 
     renderContent() {
         const {children} = this.props
-        const {width, height} = this.state
-        if (width && height) {
-            return _.isFunction(children) ? children({width, height}) : children
+        if (_.isFunction(children)) {
+            const {width, height} = this.state
+            return (width && height) ? children({width, height}) : null
+        } else {
+            return children
         }
     }
 
