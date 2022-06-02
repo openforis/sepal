@@ -98,7 +98,7 @@ class _MosaicRetrievePanel extends React.Component {
                 {destination.value === 'GEE' ? this.renderAssetType() : null}
                 {destination.value === 'GEE' ? this.renderAssetDestination() : null}
                 {more && destination.value === 'GEE' && assetType.value === 'ImageCollection' ? this.renderTileSize() : null}
-                {more && destination.value === 'GEE' ? this.renderShardSize() : null}
+                {more ? this.renderShardSize() : null}
                 <Layout type='horizontal'>
                     {more ? this.renderCrs() : null}
                     {more ? this.renderCrsTransform() : null}
@@ -268,10 +268,10 @@ class _MosaicRetrievePanel extends React.Component {
     
     componentDidMount() {
         const {defaultCrs, defaultScale, defaultShardSize, defaultTileSize, inputs: {crs, crsTransform, scale, shardSize, tileSize}} = this.props
-        const more = !_.isEqual(
-            [defaultCrs, null, defaultShardSize, defaultTileSize].map(value => value || null),
-            [crs.value, crsTransform.value, shardSize.value, tileSize.value].map(value => value || null)
-        )
+        const more = (crs.value && crs.value !== defaultCrs)
+            || (crsTransform.value)
+            || (shardSize.value && shardSize.value !== defaultShardSize)
+            || (tileSize.value && tileSize.value !== defaultTileSize)
         this.setState({more})
         if (!crs.value) {
             crs.set(defaultCrs)
