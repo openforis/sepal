@@ -276,7 +276,8 @@ export default class UserList extends React.Component {
         return (
             <FastList
                 items={users}
-                itemKey={user => _.compact([user.id, user.username, this.getHighLightMatcher()]).join('|')}>
+                itemKey={user => _.compact([user.id, user.username, this.getHighLightMatcher()]).join('|')}
+                overflow={50}>
                 {this.renderUser}
             </FastList>
         )
