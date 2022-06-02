@@ -329,7 +329,6 @@ class _Combo extends React.Component {
 
     filterGroup(group) {
         const {matchGroups} = this.props
-        console.log({matchGroups})
         const {matcher} = this.state
         const filtered = {
             ...group,
