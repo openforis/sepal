@@ -86,7 +86,7 @@ class _RecipeList extends React.Component {
                 </Unscrollable>
                 <Unscrollable className={styles.recipes}>
                     <FastList
-                        items={[...filteredRecipes, ...filteredRecipes, ...filteredRecipes, ...filteredRecipes]}
+                        items={filteredRecipes}
                         itemKey={recipe => `${recipe.id}|${highlightMatcher}`}
                         spacing='tight'
                         overflow={50}>
