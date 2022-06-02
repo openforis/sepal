@@ -2222,7 +2222,6 @@
           "tooltip": "Duplicate this recipe."
       },
       "exportRecipe": "Export recipe",
-      "noSavedRecipes": "No saved recipes",
       "recipeNotSaved": "Recipe is not saved.",
       "removeRecipe.tooltip": "Remove recipe",
       "selectRecipe.tooltip": "Select recipe",
