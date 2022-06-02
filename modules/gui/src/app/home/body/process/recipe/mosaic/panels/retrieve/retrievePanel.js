@@ -22,8 +22,8 @@ const fields = {
     bands: new Form.Field()
         .predicate(bands => bands && bands.length, 'process.retrieve.form.bands.atLeastOne'),
     scale: new Form.Field()
-        .notBlank()
-        .number(),
+        .int()
+        .notBlank(),
     destination: new Form.Field()
         .notEmpty('process.retrieve.form.destination.required'),
     workspacePath: new Form.Field()
@@ -39,14 +39,27 @@ const fields = {
         .skip((v, {destination}) => destination !== 'GEE')
         .notBlank(),
     shardSize: new Form.Field()
-        .skip((v, {destination}) => destination !== 'GEE')
+        .int()
+        .notBlank(),
+    fileDimensionsMultiple: new Form.Field()
+        .skip((v, {destination}) => destination !== 'SEPAL')
+        .int()
         .notBlank(),
     tileSize: new Form.Field()
         .skip((v, {destination}) => destination !== 'GEE')
+        .number()
         .notBlank(),
     crs: new Form.Field()
         .notBlank(),
     crsTransform: new Form.Field()
+}
+
+const constraints = {
+    fileDimensionsMultipleSize: new Form.Constraint(['fileDimensionsMultiple', 'shardSize'])
+        .skip(({destination}) => destination !== 'SEPAL')
+        .predicate(({fileDimensionsMultiple, shardSize}) =>
+            fileDimensionsMultiple * shardSize <= 131072, 'process.retrieve.form.fileDimensionsMultiple.tooLarge'
+        )
 }
 
 const mapStateToProps = state => ({
@@ -68,7 +81,10 @@ class _MosaicRetrievePanel extends React.Component {
                 className={styles.panel}
                 isActionForm
                 placement='top-right'
-                onApply={values => this.retrieve(values)}>
+                onApply={values => {
+                    const {fileDimensionsMultiple, shardSize} = values
+                    return this.retrieve({...values, fileDimensions: fileDimensionsMultiple * shardSize})
+                }}>
                 <Panel.Header
                     icon='cloud-download-alt'
                     title={msg('process.retrieve.title')}/>
@@ -87,7 +103,7 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     renderContent() {
-        const {toSepal, toEE, inputs: {destination, assetType}} = this.props
+        const {allowTiling, toSepal, toEE, inputs: {destination, assetType}} = this.props
         const {more} = this.state
         return (
             <Layout>
@@ -97,8 +113,9 @@ class _MosaicRetrievePanel extends React.Component {
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
                 {destination.value === 'GEE' ? this.renderAssetType() : null}
                 {destination.value === 'GEE' ? this.renderAssetDestination() : null}
-                {more && destination.value === 'GEE' && assetType.value === 'ImageCollection' ? this.renderTileSize() : null}
+                {more && allowTiling || (destination.value === 'GEE' && assetType.value === 'ImageCollection') ? this.renderTileSize() : null}
                 {more ? this.renderShardSize() : null}
+                {more && destination.value === 'SEPAL' ? this.renderFileDimensionsMultiple() : null}
                 <Layout type='horizontal'>
                     {more ? this.renderCrs() : null}
                     {more ? this.renderCrsTransform() : null}
@@ -144,6 +161,21 @@ class _MosaicRetrievePanel extends React.Component {
                 options={[4, 16, 32, 64, 128, 256, 512, {value: 1024, label: '1k'}]}
                 suffix={msg('process.retrieve.form.shardSize.suffix')}
                 errorMessage
+            />
+        )
+    }
+
+    renderFileDimensionsMultiple() {
+        const {inputs: {fileDimensionsMultiple}} = this.props
+        return (
+            <NumberButtons
+                label={msg('process.retrieve.form.fileDimensionsMultiple.label')}
+                placeholder={msg('process.retrieve.form.fileDimensionsMultiple.placeholder')}
+                tooltip={msg('process.retrieve.form.fileDimensionsMultiple.tooltip')}
+                input={fileDimensionsMultiple}
+                options={[1, 2, 3, 4, 5, 10, 20, 50, 100]}
+                suffix={msg('process.retrieve.form.fileDimensionsMultiple.suffix')}
+                errorMessage={[fileDimensionsMultiple, 'fileDimensionsMultipleSize']}
             />
         )
     }
@@ -267,10 +299,11 @@ class _MosaicRetrievePanel extends React.Component {
     }
     
     componentDidMount() {
-        const {defaultCrs, defaultScale, defaultShardSize, defaultTileSize, inputs: {crs, crsTransform, scale, shardSize, tileSize}} = this.props
+        const {defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize, inputs: {assetType, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize}} = this.props
         const more = (crs.value && crs.value !== defaultCrs)
             || (crsTransform.value)
             || (shardSize.value && shardSize.value !== defaultShardSize)
+            || (fileDimensionsMultiple.value && fileDimensionsMultiple.value !== defaultFileDimensionsMultiple)
             || (tileSize.value && tileSize.value !== defaultTileSize)
         this.setState({more})
         if (!crs.value) {
@@ -282,8 +315,14 @@ class _MosaicRetrievePanel extends React.Component {
         if (!shardSize.value) {
             shardSize.set(defaultShardSize)
         }
+        if (!fileDimensionsMultiple.value) {
+            fileDimensionsMultiple.set(defaultFileDimensionsMultiple)
+        }
         if (!tileSize.value) {
             tileSize.set(defaultTileSize)
+        }
+        if (defaultAssetType && !assetType.value) {
+            assetType.set(defaultAssetType)
         }
         this.update()
     }
@@ -320,13 +359,12 @@ class _MosaicRetrievePanel extends React.Component {
         const {projects, projectId} = this.props
         return projects.find(({id}) => id === projectId)
     }
-
 }
 
 export const MosaicRetrievePanel = compose(
     _MosaicRetrievePanel,
     connect(mapStateToProps),
-    recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})
+    recipeFormPanel({id: 'retrieve', fields, constraints, mapRecipeToProps})
 )
 
 MosaicRetrievePanel.defaultProps = {
@@ -334,15 +372,20 @@ MosaicRetrievePanel.defaultProps = {
     defaultCrs: 'EPSG:4326',
     defaultScale: 30,
     defaultShardSize: 256,
+    defaultFileDimensionsMultiple: 10,
     defaultTileSize: 2
 }
+
 MosaicRetrievePanel.propTypes = {
     bandOptions: PropTypes.array.isRequired,
     defaultCrs: PropTypes.string.isRequired,
+    defaultFileDimensionsMultiple: PropTypes.number.isRequired,
     defaultScale: PropTypes.number.isRequired,
     defaultShardSize: PropTypes.number.isRequired,
     defaultTileSize: PropTypes.number.isRequired,
     onRetrieve: PropTypes.func.isRequired,
+    allowTiling: PropTypes.any,
+    defaultAssetType: PropTypes.any,
     scaleTicks: PropTypes.array,
     single: PropTypes.any,
     toEE: PropTypes.any,

@@ -17,14 +17,11 @@ const {getCollection$} = require('sepal/ee/timeSeries/collection')
 const _ = require('lodash')
 const log = require('sepal/log').getLogger('task')
 
-const TILE_DEGREES = 2
-const EE_EXPORT_SHARD_SIZE = 256
-const EE_EXPORT_FILE_DIMENSIONS = 512
 const DATE_DELTA = 3
 const DATE_DELTA_UNIT = 'months'
 
 module.exports = {
-    submit$: (id, {workspacePath, description, recipe, indicator, scale}) =>
+    submit$: (_id, {workspacePath, description, ...retrieveOptions}) =>
         getCurrentContext$().pipe(
             switchMap(({config}) => {
                 const preferredDownloadDir = workspacePath 
@@ -32,20 +29,32 @@ module.exports = {
                     : `${config.homeDir}/downloads/${description}/`
                 return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
                     switchMap(downloadDir =>
-                        export$({description, downloadDir, recipe, indicator, scale})
+                        export$({description, downloadDir, ...retrieveOptions})
                     )
                 )
             })
         )
 }
 
-const export$ = ({downloadDir, description, recipe, indicator, scale}) => {
+const export$ = ({
+    downloadDir, 
+    description, 
+    recipe, 
+    indicator, 
+    scale,
+    tileSize,
+    shardSize,
+    fileDimensions,
+    crs,
+    crsTransform
+}) => {
+    console.log({tileSize, crs})
     const aoi = recipe.model.aoi
     const sources = recipe.model.sources
     const dataSets = sources.dataSets
     const {startDate, endDate} = recipe.model.dates
     const reflectance = recipe.model.options.corrections.includes('SR') ? 'SR' : 'TOA'
-    const tiles = tile(toFeatureCollection(aoi), TILE_DEGREES) // synchronous EE
+    const tiles = tile(toFeatureCollection(aoi), tileSize) // synchronous EE
 
     const exportTiles$ = tileIds => {
         const totalTiles = tileIds.length
@@ -165,9 +174,10 @@ const export$ = ({downloadDir, description, recipe, indicator, scale}) => {
             description: chunkDescription,
             downloadDir: chunkDownloadDir,
             scale,
-            crs: 'EPSG:4326',
-            shardSize: EE_EXPORT_SHARD_SIZE,
-            fileDimensions: EE_EXPORT_FILE_DIMENSIONS
+            crs,
+            crsTransform,
+            shardSize,
+            fileDimensions
         }).pipe(swallow())
         return concat(
             export$,
