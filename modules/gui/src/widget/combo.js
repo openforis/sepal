@@ -233,7 +233,8 @@ class _Combo extends React.Component {
         const {standalone} = this.props
         this.setState({
             showOptions: !!filter || standalone,
-            filter
+            filter,
+            matcher: this.matcher(filter)
         })
     }
 
@@ -327,13 +328,22 @@ class _Combo extends React.Component {
     }
 
     filterGroup(group) {
-        const filtered = {...group, options: this.getFilteredOptions(group.options)}
+        const {matchGroups} = this.props
+        console.log({matchGroups})
+        const {matcher} = this.state
+        const filtered = {
+            ...group,
+            options: matchGroups
+                ? matcher.test(simplifyString(group.searchableText || group.label))
+                    ? group.options
+                    : this.getFilteredOptions(group.options)
+                : this.getFilteredOptions(group.options)
+        }
         return filtered.options.length ? filtered : null
     }
 
     getFilteredOptions(options) {
-        const {filter} = this.state
-        const matcher = this.matcher(filter)
+        const {matcher} = this.state
         return _.compact(
             options.map(option =>
                 option.options
@@ -378,6 +388,7 @@ Combo.propTypes = {
     keyboard: PropTypes.any,
     label: PropTypes.any,
     labelButtons: PropTypes.any,
+    matchGroups: PropTypes.any,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,

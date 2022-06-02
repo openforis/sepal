@@ -5,7 +5,7 @@ import React from 'react'
 export const FormCombo = (
     {
         input, options, additionalButtons, alignment, allowClear, autoFocus, busyMessage, className, disabled,
-        errorMessage, inputClassName, keyboard, label, optionsClassName, optionTooltipPlacement, placeholder, placement,
+        errorMessage, inputClassName, keyboard, label, matchGroups, optionsClassName, optionTooltipPlacement, placeholder, placement,
         readOnly, standalone, tooltip, tooltipPlacement, onCancel, onChange
     }) =>
     <Combo
@@ -22,6 +22,7 @@ export const FormCombo = (
         inputClassName={inputClassName}
         keyboard={keyboard}
         label={label}
+        matchGroups={matchGroups}
         optionsClassName={optionsClassName}
         optionTooltipPlacement={optionTooltipPlacement}
         placeholder={placeholder}
@@ -51,6 +52,7 @@ FormCombo.propTypes = {
     inputClassName: PropTypes.string,
     keyboard: PropTypes.any,
     label: PropTypes.string,
+    matchGroups: PropTypes.any,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,

@@ -10,11 +10,13 @@ import {recipeAccess} from 'app/home/body/process/recipeAccess'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import api from 'api'
 
 const mapStateToProps = () => {
     return {
-        recipes: select('process.recipes')
+        recipes: select('process.recipes'),
+        projects: select('process.projects')
     }
 }
 
@@ -31,19 +33,9 @@ class _RecipeInput extends React.Component {
     cancel$ = new Subject()
 
     render() {
-        const {projectId, stream, recipes, filter, input, label, placeholder, autoFocus} = this.props
+        const {stream, input, label, placeholder, autoFocus} = this.props
         const {all} = this.state
-        const options = recipes
-            .filter(recipe => {
-                const {projectId: p, type} = recipe
-                const recipeType = getRecipeType(type)
-                return (all || p === projectId || (!p && !projectId))
-                   && (filter && recipeType ? filter(recipeType, recipe) : true)
-            })
-            .map(recipe => ({
-                value: recipe.id,
-                label: recipe.name
-            }))
+        const options = this.getOptions()
 
         const additionalButtons = [
             <Buttons
@@ -73,10 +65,41 @@ class _RecipeInput extends React.Component {
                 autoFocus={autoFocus}
                 additionalButtons={additionalButtons}
                 errorMessage
+                matchGroups
                 busyMessage={stream('LOAD_RECIPE').active}
                 onChange={({value}) => this.loadRecipe(value)}
             />
         )
+    }
+
+    getOptions() {
+        const {projectId, projects, recipes, filter} = this.props
+        const {all} = this.state
+        const filteredRecipes = recipes
+            .map(recipe => ({...recipe, projectId: recipe.projectId || ''}))
+            .filter(recipe => {
+                const {projectId: p, type} = recipe
+                const recipeType = getRecipeType(type)
+                return all || (p === projectId || (!p && !projectId))
+                   && (filter && recipeType ? filter(recipeType, recipe) : true)
+            })
+        const groups = _.groupBy(filteredRecipes, 'projectId')
+        const options = Object.keys(groups)
+            .map(projectId => {
+                const project = projects.find(({id}) => id === projectId)
+                const group = project
+                    ? project.name
+                    : msg('process.project.noProjectOption')
+                return {
+                    label: group,
+                    options: groups[projectId]
+                        .map(recipe => ({
+                            value: recipe.id,
+                            label: recipe.name
+                        }))
+                }
+            })
+        return _.sortBy(options, 'label')
     }
 
     loadRecipe(recipeId) {
