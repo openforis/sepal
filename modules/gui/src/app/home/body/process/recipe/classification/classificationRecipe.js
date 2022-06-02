@@ -178,10 +178,10 @@ const submitRetrieveRecipeTask = recipe => {
             description: name,
             image: {
                 recipe: _.omit(recipe, ['ui']),
+                ...recipe.ui.retrieveOptions,
                 bands: {selection: bands},
                 visualizations: getAllVisualizations(recipe),
                 pyramidingPolicy,
-                ...recipe.ui.retrieveOptions
             }
         }
     }

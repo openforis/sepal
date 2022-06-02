@@ -22,6 +22,8 @@ class _Retrieve extends React.Component {
             <MosaicRetrievePanel
                 bandOptions={this.bandOptions()}
                 defaultScale={30}
+                defaultAssetType='ImageCollection'
+                defaultTileSize={0.5}
                 toEE
                 onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
             />

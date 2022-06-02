@@ -22,8 +22,12 @@ class _Retrieve extends React.Component {
             <MosaicRetrievePanel
                 bandOptions={this.bandOptions()}
                 defaultScale={30}
+                defaultTileSize={2}
+                defaultShardSize={256}
+                defaultFileDimensionsMultiple={2}
                 single
                 toSepal
+                allowTiling
                 onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
             />
         )
