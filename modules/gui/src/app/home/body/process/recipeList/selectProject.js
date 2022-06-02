@@ -35,7 +35,7 @@ class _SelectProject extends React.Component {
 
     render() {
         const {projects, projectId} = this.props
-        const options = [NO_PROJECT_OPTION, ...projects.map(project => ({value: project.id, label: project.name}))]
+        const options = [NO_PROJECT_OPTION(), ...projects.map(project => ({value: project.id, label: project.name}))]
         return (
             <Shape
                 look='transparent'

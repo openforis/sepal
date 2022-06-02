@@ -3,16 +3,17 @@ import {RecipeListData} from './recipeListData'
 import {RecipeListPagination} from './recipeListPagination'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 
 export const PROJECT_RECIPE_SEPARATOR = ' / '
 export const NO_PROJECT_SYMBOL = '<no project>'
-export const NO_PROJECT_OPTION = {
+export const NO_PROJECT_OPTION = () => ({
     value: NO_PROJECT_SYMBOL,
-    label: '<no project>'
-}
+    label: msg('process.project.noProjectOption')
+})
 
 const mapStateToProps = () => ({
     filteredRecipes: select('process.filteredRecipes') ?? []

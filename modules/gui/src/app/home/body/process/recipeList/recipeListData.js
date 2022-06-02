@@ -242,7 +242,7 @@ class _RecipeListData extends React.Component {
 
     getDestinations() {
         const {projects} = this.props
-        return [NO_PROJECT_OPTION, ...projects.map(({id, name}) => ({value: id, label: name}))]
+        return [(NO_PROJECT_OPTION()), ...projects.map(({id, name}) => ({value: id, label: name}))]
     }
 
     renderSortButtons() {
