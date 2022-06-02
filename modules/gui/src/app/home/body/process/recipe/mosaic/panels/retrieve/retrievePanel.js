@@ -268,12 +268,11 @@ class _MosaicRetrievePanel extends React.Component {
     
     componentDidMount() {
         const {defaultCrs, defaultScale, defaultShardSize, defaultTileSize, inputs: {crs, crsTransform, scale, shardSize, tileSize}} = this.props
-        this.setState({more: !!((crs.value || crsTransform.value || scale.value || shardSize.value || tileSize.value) &&
-            !_.isEqual(
-                [defaultCrs, defaultScale, defaultShardSize, defaultTileSize],
-                [crs.value, scale.value, shardSize.value, tileSize.value]
-            )
-        )})
+        const more = !_.isEqual(
+            [defaultCrs, null, defaultShardSize, defaultTileSize].map(value => value || null),
+            [crs.value, crsTransform.value, shardSize.value, tileSize.value].map(value => value || null)
+        )
+        this.setState({more})
         if (!crs.value) {
             crs.set(defaultCrs)
         }
