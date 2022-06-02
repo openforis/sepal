@@ -2220,41 +2220,11 @@
         "duplicateRecipe": {
           "label": "Duplicate recipe",
           "tooltip": "Duplicate this recipe."
-      },
-      "exportRecipe": "Export recipe",
-      "recipeNotSaved": "Recipe is not saved.",
-      "removeRecipe.tooltip": "Remove recipe",
-      "selectRecipe.tooltip": "Select recipe",
-      "revertToOldRevision": "Revert to old revision...",
-      "savedRecipies": "Saved recipies",
-      "saveRecipe": "Save recipe...",
-      "searchRecipes": "Search recipes"
-    },
-    "mosaic": {
-      "bands": {
-        "combinations": "Combinations",
-        "indexes": "Indexes",
-        "label": "Bands",
-        "metadata": "Metadata",
-        "panSharpen": "Pan sharpen",
-        "placeholder": "Select preview bands"
-      },
-      "create": "Optical mosaic",
-      "description": "Create a mosaic using Landsat or Sentinel 2.",
-      "mapToolbar": {
-        "zoom": {
-          "tooltip": "Zoom"
-        },
-        "layers": {
-          "tooltip": "Select layers to show"
         },
         "exportRecipe": "Export recipe",
-        "noSavedRecipes": "No saved recipes",
-        "recipeNotSaved": "Recipe is not saved.",
         "removeRecipe.tooltip": "Remove recipe",
         "selectRecipe.tooltip": "Select recipe",
         "revertToOldRevision": "Revert to old revision...",
-        "savedRecipies": "Saved recipies",
         "saveRecipe": "Save recipe...",
         "searchRecipes": "Search recipes"
       },
