@@ -1,16 +1,16 @@
 .container {
     position: absolute;
     top: 0;
-    left: 0;
-    right: 0;
     bottom: 0;
+    right: 0;
+    width: 0; /* width set to zero to avoid weird interference with FastList scrolling */
     pointer-events: none;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     z-index: 2;
     padding: .5rem;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .notification {
