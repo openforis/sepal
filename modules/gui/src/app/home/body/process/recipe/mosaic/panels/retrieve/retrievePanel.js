@@ -346,12 +346,14 @@ class _MosaicRetrievePanel extends React.Component {
     retrieve(values) {
         const {onRetrieve} = this.props
         const project = this.findProject()
-        const {assetId, workspacePath} = values
-        updateProject({
-            ...project,
-            defaultAssetFolder: assetId ? Path.dirname(assetId) : project.defaultAssetFolder,
-            defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : project.defaultWorkspaceFolder
-        })
+        if (project) {
+            const {assetId, workspacePath} = values
+            updateProject({
+                ...project,
+                defaultAssetFolder: assetId ? Path.dirname(assetId) : project.defaultAssetFolder,
+                defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : project.defaultWorkspaceFolder
+            })
+        }
         onRetrieve && onRetrieve(values)
     }
 
