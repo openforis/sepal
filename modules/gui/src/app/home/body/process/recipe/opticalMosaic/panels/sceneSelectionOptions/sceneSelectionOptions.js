@@ -1,6 +1,5 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {SceneSelectionType} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
@@ -23,18 +22,11 @@ const mapRecipeToProps = recipe => ({
 })
 
 class SceneSelectionOptions extends React.Component {
-    constructor(props) {
-        super(props)
-        const {recipeId} = props
-        this.preview = MosaicPreview(recipeId)
-    }
-
     render() {
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement='bottom-right'
-                onClose={() => this.preview.show()}>
+                placement='bottom-right'>
                 <Panel.Header
                     icon='images'
                     title={msg('process.mosaic.panel.scenes.title')}/>
@@ -87,10 +79,6 @@ class SceneSelectionOptions extends React.Component {
                 options={options}
                 disabled={type.value !== SceneSelectionType.SELECT}/>
         )
-    }
-
-    componentDidMount() {
-        this.preview.hide()
     }
 }
 

@@ -1,6 +1,5 @@
 import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
-import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -69,8 +68,7 @@ const fields = {
 class Dates extends React.Component {
     constructor(props) {
         super(props)
-        const {recipeId, inputs: {targetYear, targetDate}} = props
-        this.preview = MosaicPreview(recipeId)
+        const {inputs: {targetYear, targetDate}} = props
         targetYear.onChange(yearString => this.handleYearChange(yearString))
         targetDate.onChange(dateString => this.handleDateChange(dateString))
     }
@@ -102,8 +100,7 @@ class Dates extends React.Component {
         return (
             <RecipeFormPanel
                 className={advanced.value ? styles.advanced : styles.simple}
-                placement='bottom-right'
-                onClose={() => this.preview.show()}>
+                placement='bottom-right'>
                 <Panel.Header
                     icon='calendar-alt'
                     title={msg('process.mosaic.panel.dates.title')}/>
@@ -188,10 +185,6 @@ class Dates extends React.Component {
                 </div>
             </div>
         )
-    }
-
-    componentDidMount() {
-        this.preview.hide()
     }
 }
 

@@ -1,6 +1,5 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {MosaicPreview} from 'app/home/body/process/recipe/mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/classification/classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -18,7 +17,6 @@ class AuxiliaryImagery extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId} = props
-        this.preview = MosaicPreview(recipeId)
         this.recipeActions = RecipeActions(recipeId)
     }
 
@@ -26,8 +24,7 @@ class AuxiliaryImagery extends React.Component {
         return (
             <RecipeFormPanel
                 placement='bottom-right'
-                className={styles.panel}
-                onClose={() => this.preview.show()}>
+                className={styles.panel}>
                 <Panel.Header
                     icon='cog'
                     title={msg('process.classification.panel.auxiliaryImagery.title')}/>
@@ -69,10 +66,6 @@ class AuxiliaryImagery extends React.Component {
                     multiple/>
             </Layout>
         )
-    }
-
-    componentDidMount() {
-        this.preview.hide()
     }
 }
 

@@ -1,6 +1,5 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {MosaicPreview} from 'app/home/body/process/recipe/mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions, dateRange} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -32,7 +31,6 @@ class Sources extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId} = props
-        this.preview = MosaicPreview(recipeId)
         this.recipeActions = RecipeActions(recipeId)
     }
 
@@ -46,8 +44,7 @@ class Sources extends React.Component {
                         this.recipeActions.enableBandCalibration().dispatch()
                         this.recipeActions.useAllScenes().dispatch()
                     }
-                }}
-                onClose={() => this.preview.show()}>
+                }}>
                 <Panel.Header
                     icon='satellite-dish'
                     title={msg('process.mosaic.panel.sources.title')}/>
@@ -89,10 +86,6 @@ class Sources extends React.Component {
             />
         )
 
-    }
-
-    componentDidMount() {
-        this.preview.hide()
     }
 
     componentDidUpdate() {

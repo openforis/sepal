@@ -1,6 +1,5 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {MosaicPreview} from 'app/home/body/process/recipe/mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Widget} from 'widget/widget'
@@ -30,18 +29,11 @@ const mapRecipeToProps = recipe => ({
 })
 
 class CompositeOptions extends React.Component {
-    constructor(props) {
-        super(props)
-        const {recipeId} = props
-        this.preview = MosaicPreview(recipeId)
-    }
-
     render() {
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement='bottom-right'
-                onClose={() => this.preview.show()}>
+                placement='bottom-right'>
                 <Panel.Header
                     icon='layer-group'
                     title={msg('process.mosaic.panel.composite.title')}/>
@@ -230,7 +222,6 @@ class CompositeOptions extends React.Component {
 
     componentDidMount() {
         const {inputs: {cloudBuffer}} = this.props
-        this.preview.hide()
         if (cloudBuffer.value === undefined)
             cloudBuffer.set(0)
     }

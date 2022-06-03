@@ -2,7 +2,6 @@ import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
-import {MosaicPreview} from 'app/home/body/process/recipe/mosaic/mosaicPreview'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/classification/classificationRecipe'
@@ -35,7 +34,6 @@ class TrainingData extends React.Component {
         super(props)
         this.eeTableChanged$ = new Subject()
         const {recipeId} = props
-        this.preview = MosaicPreview(recipeId)
         this.recipeActions = RecipeActions(recipeId)
     }
 
@@ -46,8 +44,7 @@ class TrainingData extends React.Component {
             <React.Fragment>
                 <RecipeFormPanel
                     className={styles.panel}
-                    placement='bottom-right'
-                    onClose={() => this.preview.show()}>
+                    placement='bottom-right'>
                     <Panel.Header
                         icon='table'
                         title={msg('process.classification.panel.trainingData.title')}/>
@@ -166,10 +163,6 @@ class TrainingData extends React.Component {
     editDataSet(dataSet) {
         const {activator: {activatables: {trainingDataSet}}} = this.props
         trainingDataSet.activate({dataSetId: dataSet.dataSetId})
-    }
-
-    componentDidMount() {
-        this.preview.hide()
     }
 
     removeDataSet(dataSetToRemove) {
