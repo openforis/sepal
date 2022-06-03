@@ -60,7 +60,7 @@ class _FastList extends React.PureComponent {
         return items && items.length
             ? (
                 <div ref={element => element && callback(element.getBoundingClientRect())}>
-                    {this.renderItemsRange(0, count)}
+                    {this.renderItems(0, count)}
                 </div>
             )
             : null
@@ -71,32 +71,35 @@ class _FastList extends React.PureComponent {
     }
 
     renderList() {
+        const {firstVisibleItem, lastVisibleItem, marginTop, marginBottom} = this.state
         return (
             <ElementResizeDetector onResize={this.onResize}>
-                {this.renderItems()}
+                <div
+                    ref={this.initScrollable}
+                    className={styles.container}>
+                    <div className={styles.scrollable}>
+                        {this.renderFiller(marginTop)}
+                        {this.renderItems(firstVisibleItem, lastVisibleItem)}
+                        {this.renderFiller(marginBottom)}
+                    </div>
+                </div>
             </ElementResizeDetector>
         )
     }
 
-    renderItems() {
-        const {firstVisibleItem, lastVisibleItem, marginTop, marginBottom} = this.state
+    renderFiller(height) {
+        const itemHeight = this.getItemHeight()
         return (
             <div
-                className={styles.container}
-                ref={this.initScrollable}>
-                <div
-                    className={styles.scrollable}
-                    style={{
-                        '--margin-top': marginTop,
-                        '--margin-bottom': marginBottom,
-                    }}>
-                    {this.renderItemsRange(firstVisibleItem, lastVisibleItem)}
-                </div>
-            </div>
+                className={styles.filler}
+                style={{
+                    '--height': height,
+                    '--itemHeight': itemHeight
+                }}/>
         )
     }
 
-    renderItemsRange(firstVisibleItem, lastVisibleItem) {
+    renderItems(firstVisibleItem, lastVisibleItem) {
         const {items, spacing} = this.props
         return (
             <Layout type='vertical' spacing={spacing}>
@@ -145,10 +148,14 @@ class _FastList extends React.PureComponent {
         }
     }
 
+    getItemHeight() {
+        const {singleItemHeight, spacedItemHeight} = this.state
+        return spacedItemHeight || singleItemHeight
+    }
+
     update(scrollTop, clientHeight) {
         const {items, overflow} = this.props
-        const {singleItemHeight, spacedItemHeight} = this.state
-        const itemHeight = spacedItemHeight || singleItemHeight
+        const itemHeight = this.getItemHeight()
         const firstVisibleItem = Math.max(0, Math.ceil(scrollTop / itemHeight) - overflow)
         const lastVisibleItem = Math.min(items.length, Math.floor((scrollTop + clientHeight) / itemHeight) + overflow)
         const marginTop = firstVisibleItem * itemHeight
