@@ -30,6 +30,7 @@ class _SearchBox extends React.Component {
         this.showOptions = this.showOptions.bind(this)
         this.hideOptions = this.hideOptions.bind(this)
         this.selectOption = this.selectOption.bind(this)
+        this.focus = this.focus.bind(this)
     }
 
     render() {
@@ -38,7 +39,9 @@ class _SearchBox extends React.Component {
         return (
             <Keybinding keymap={{
                 Escape: () => this.setValue(''),
-                ArrowDown: () => this.showOptions()
+                ArrowDown: () => this.showOptions(),
+                'Ctrl+f': this.focus,
+                'Meta+f': this.focus
             }}>
                 <Shape
                     ref={this.containerRef}
@@ -86,6 +89,10 @@ class _SearchBox extends React.Component {
                 </FloatingBox>
             )
             : null
+    }
+
+    focus() {
+        this.inputRef?.current?.focus()
     }
 
     showOptions() {
