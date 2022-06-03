@@ -4,6 +4,7 @@ import groovy.json.JsonSlurper
 import org.openforis.sepal.component.processingrecipe.migration.v3.V3Migration
 import org.openforis.sepal.component.processingrecipe.migration.v4.V4Migration
 import org.openforis.sepal.component.processingrecipe.migration.v5.V5Migration
+import org.openforis.sepal.component.processingrecipe.migration.v6.V6Migration
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -63,6 +64,7 @@ class MosaicMigrations extends AbstractMigrations {
         addMigration(3, { return V3Migration.migrate(it) })
         addMigration(4, { return V4Migration.migrate(it) })
         addMigration(5, { return V5Migration.migrate(it) })
+        addMigration(6, { return V6Migration.migrate(it) })
     }
 
     private static sources(sensorGroup, sensors) {

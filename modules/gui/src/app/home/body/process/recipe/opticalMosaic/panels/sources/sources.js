@@ -4,23 +4,19 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeActions, dateRange} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
-import {getDataSets, isDataSetInDateRange, sources} from 'app/home/body/process/recipe/opticalMosaic/sources'
+import {getDataSetOptions} from 'app/home/body/process/recipe/opticalMosaic/sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {toSources} from 'sources'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './sources.module.css'
 
-const fields = _.transform(sources,
-    (fields, source) => fields[source] = new Form.Field(),
-    {})
-
-const constraints = {
-    dataSetSelected: new Form.Constraint(sources)
-        .predicate(values =>
-            Object.values(values).find(value =>
-                _.isArray(value) && value.length), 'process.mosaic.panel.sources.form.required')
+const fields = {
+    dataSets: new Form.Field()
+        .notEmpty(),
+    cloudPercentageThreshold: new Form.Field()
 }
 
 const mapRecipeToProps = recipe => ({
@@ -49,58 +45,45 @@ class Sources extends React.Component {
                     icon='satellite-dish'
                     title={msg('process.mosaic.panel.sources.title')}/>
                 <Panel.Content>
-                    {this.renderSources()}
+                    <Layout>
+                        {this.renderDataSets()}
+                        {this.renderCloudPercentageThreshold()}
+                    </Layout>
                 </Panel.Content>
                 <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }
 
-    renderSources() {
-        return (
-            <Layout>
-                {sources.map(source => this.renderSource(source, getDataSets(source)))}
-            </Layout>
-        )
-    }
-
-    renderSource(source, dataSets) {
-        const {dates, inputs} = this.props
-        const [from, to] = dateRange(dates)
-        const options = (dataSets || []).map(value =>
-            ({
-                value,
-                label: msg(['process.mosaic.panel.sources.form.dataSets.options', value, 'label']),
-                tooltip: msg(['process.mosaic.panel.sources.form.dataSets.options', value, 'tooltip']),
-                disabled: !isDataSetInDateRange(value, from, to)
-            })
-        )
+    renderDataSets() {
+        const {dates, inputs: {dataSets}} = this.props
+        const [startDate, endDate] = dateRange(dates)
         return (
             <Form.Buttons
-                key={source}
-                label={msg(['process.mosaic.panel.sources.form.source.options', source])}
-                className={styles.dataSets}
-                input={inputs[source]}
-                options={options}
+                label={msg('process.changeAlerts.panel.sources.form.dataSets.label')}
+                input={dataSets}
+                options={getDataSetOptions({startDate, endDate})}
                 multiple
             />
         )
-
     }
-
-    componentDidUpdate() {
-        this.removeOutOfDateRangeSelection()
-    }
-
-    removeOutOfDateRangeSelection() {
-        const {dates, inputs} = this.props
-        const [from, to] = dateRange(dates)
-        Object.values(inputs)
-            .filter(({value}) => value)
-            .forEach(input =>
-                input.set(
-                    input.value.filter(dataSet => isDataSetInDateRange(dataSet, from, to))
-                ))
+    
+    renderCloudPercentageThreshold() {
+        const {inputs: {cloudPercentageThreshold}} = this.props
+        return (
+            <Form.Slider
+                label={msg('process.changeAlerts.panel.sources.form.cloudPercentageThreshold.label')}
+                tooltip={msg('process.changeAlerts.panel.sources.form.cloudPercentageThreshold.tooltip')}
+                input={cloudPercentageThreshold}
+                minValue={0}
+                maxValue={100}
+                ticks={[0, 10, 25, 50, 75, 90, 100]}
+                range='low'
+                info={value =>
+                    msg('process.changeAlerts.panel.sources.form.cloudPercentageThreshold.value', {value})
+                }
+            />
+        )
     }
 }
 
@@ -108,17 +91,24 @@ Sources.propTypes = {
     recipeId: PropTypes.string
 }
 
-const valuesToModel = values => {
-    const model = {}
-    Object.keys(values)
-        .filter(source => _.isArray(values[source]) && values[source].length)
-        .forEach(source => model[source] = values[source])
-    return model
+const valuesToModel = ({dataSets, cloudPercentageThreshold}) => {
+    return ({
+        dataSets: toSources(_.isArray(dataSets) ? dataSets : [dataSets]),
+        cloudPercentageThreshold
+    })
+}
+
+const modelToValues = ({dataSets, cloudPercentageThreshold}) => {
+    const dataSetIds = _.uniq(Object.values(dataSets).flat())
+    return ({
+        dataSets: dataSetIds,
+        cloudPercentageThreshold
+    })
 }
 
 const additionalPolicy = () => ({sceneSelection: 'allow'})
 
 export default compose(
     Sources,
-    recipeFormPanel({id: 'sources', fields, constraints, mapRecipeToProps, valuesToModel, additionalPolicy})
+    recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel, additionalPolicy})
 )

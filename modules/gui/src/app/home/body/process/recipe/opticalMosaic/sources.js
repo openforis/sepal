@@ -8,9 +8,9 @@ export const sources = ['LANDSAT', 'SENTINEL_2']
 export const isOpticalDataSet = dataSetId => !!dataSetById[dataSetId]
 
 export const getDataSetBands = recipe => {
-    const sources = selectFrom(recipe, 'model.sources')
+    const dataSets = selectFrom(recipe, 'model.sources.dataSets')
     const corrections = selectFrom(recipe, 'model.compositeOptions.corrections')
-    const dataSetIds = Object.values(sources).flat()
+    const dataSetIds = Object.values(dataSets).flat()
     const correction = corrections && corrections.includes('SR') ? 'SR' : 'TOA'
 
     const bandsPerDataSet = dataSetIds.map(dataSetId => dataSetById[dataSetId][correction].bands)
@@ -60,8 +60,8 @@ export const isDataSetInDateRange = (dataSetId, fromDate, toDate) => {
 }
 
 export const minScale = recipe => {
-    const sources = selectFrom(recipe, 'model.sources') || {}
-    return _(sources)
+    const dataSets = selectFrom(recipe, 'model.sources.dataSets') || {}
+    return _(dataSets)
         .keys()
         .map(sourceId => imageSourceById[sourceId].dataSets)
         .flatten()
