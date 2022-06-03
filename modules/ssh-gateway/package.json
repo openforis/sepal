@@ -10,7 +10,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "commander": "^9.2.0",
+        "commander": "^9.3.0",
         "lodash": "^4.17.21",
         "moment": "^2.29.3",
         "rxjs": "^7.5.5",
@@ -19,8 +19,8 @@
         "uuid": "^8.3.2"
     },
     "devDependencies": {
-        "eslint": "^8.15.0",
-        "jest": "^27.5.1",
+        "eslint": "^8.16.0",
+        "jest": "^28.1.0",
         "jest-expect-message": "^1.0.2"
     }
 }
