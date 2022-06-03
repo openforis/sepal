@@ -18,11 +18,6 @@ import React from 'react'
 import _ from 'lodash'
 import styles from './retrieve.module.css'
 
-const defaultCrs = 'EPSG:4326'
-const defaultScale = 30
-const defaultShardSize = 256
-const defaultTileSize = 2
-
 const fields = {
     baseBands: new Form.Field()
         .predicate(selection => selection && selection.length, 'process.ccdcSlice.panel.retrieve.form.baseBands.atLeastOne'),
@@ -30,10 +25,10 @@ const fields = {
         .predicate(selection => selection && selection.length, 'process.ccdcSlice.panel.retrieve.form.bandTypes.atLeastOne'),
     segmentBands: new Form.Field(),
     scale: new Form.Field()
-        .notBlank()
-        .number(),
+        .int()
+        .notBlank(),
     destination: new Form.Field()
-        .notEmpty('process.ccdcSlice.panel.retrieve.form.destination.required'),
+        .notEmpty('process.retrieve.form.destination.required'),
     workspacePath: new Form.Field()
         .skip((v, {destination}) => destination !== 'SEPAL')
         .notBlank(),
@@ -47,14 +42,27 @@ const fields = {
         .skip((v, {destination}) => destination !== 'GEE')
         .notBlank(),
     shardSize: new Form.Field()
-        .skip((v, {destination}) => destination !== 'GEE')
+        .int()
+        .notBlank(),
+    fileDimensionsMultiple: new Form.Field()
+        .skip((v, {destination}) => destination !== 'SEPAL')
+        .int()
         .notBlank(),
     tileSize: new Form.Field()
         .skip((v, {destination}) => destination !== 'GEE')
+        .number()
         .notBlank(),
     crs: new Form.Field()
         .notBlank(),
     crsTransform: new Form.Field()
+}
+
+const constraints = {
+    fileDimensionsMultipleSize: new Form.Constraint(['fileDimensionsMultiple', 'shardSize'])
+        .skip(({destination}) => destination !== 'SEPAL')
+        .predicate(({fileDimensionsMultiple, shardSize}) =>
+            fileDimensionsMultiple * shardSize <= 131072, 'process.retrieve.form.fileDimensionsMultiple.tooLarge'
+        )
 }
 
 const mapStateToProps = state => ({
@@ -86,7 +94,10 @@ class _Retrieve extends React.Component {
                 className={styles.panel}
                 isActionForm
                 placement='top-right'
-                onApply={values => this.retrieve(values)}>
+                onApply={values => {
+                    const {fileDimensionsMultiple, shardSize} = values
+                    return this.retrieve({...values, fileDimensions: fileDimensionsMultiple * shardSize})
+                }}>
                 <Panel.Header
                     icon='cloud-download-alt'
                     title={msg('process.ccdcSlice.panel.retrieve.title')}/>
@@ -120,6 +131,7 @@ class _Retrieve extends React.Component {
                 {destination.value === 'GEE' ? this.renderAssetDestination() : null}
                 {more && destination.value === 'GEE' && assetType.value === 'ImageCollection' ? this.renderTileSize() : null}
                 {more && destination.value === 'GEE' ? this.renderShardSize() : null}
+                {more && destination.value === 'SEPAL' ? this.renderFileDimensionsMultiple() : null}
                 <Layout type='horizontal'>
                     {more ? this.renderCrs() : null}
                     {more ? this.renderCrsTransform() : null}
@@ -165,6 +177,21 @@ class _Retrieve extends React.Component {
                 options={[4, 16, 32, 64, 128, 256, 512, {value: 1024, label: '1k'}]}
                 suffix={msg('process.retrieve.form.shardSize.suffix')}
                 errorMessage
+            />
+        )
+    }
+
+    renderFileDimensionsMultiple() {
+        const {inputs: {fileDimensionsMultiple}} = this.props
+        return (
+            <NumberButtons
+                label={msg('process.retrieve.form.fileDimensionsMultiple.label')}
+                placeholder={msg('process.retrieve.form.fileDimensionsMultiple.placeholder')}
+                tooltip={msg('process.retrieve.form.fileDimensionsMultiple.tooltip')}
+                input={fileDimensionsMultiple}
+                options={[1, 2, 3, 4, 5, 10, 20, 50, 100]}
+                suffix={msg('process.retrieve.form.fileDimensionsMultiple.suffix')}
+                errorMessage={[fileDimensionsMultiple, 'fileDimensionsMultipleSize']}
             />
         )
     }
@@ -430,16 +457,13 @@ class _Retrieve extends React.Component {
         )
     }
     componentDidMount() {
-        const {inputs: {destination, crs, crsTransform, scale, shardSize, tileSize}} = this.props
-        this.setState({more: !!((crs.value || crsTransform.value || scale.value || shardSize.value || tileSize.value) &&
-        !_.isEqual(
-            [defaultCrs, defaultScale, defaultShardSize, defaultTileSize],
-            [crs.value, scale.value, shardSize.value, tileSize.value]
-        )
-        )})
-        if (!destination.value) {
-            destination.set('SEPAL')
-        }
+        const {defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize, inputs: {assetType, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize}} = this.props
+        const more = (crs.value && crs.value !== defaultCrs)
+        || (crsTransform.value)
+        || (shardSize.value && shardSize.value !== defaultShardSize)
+        || (fileDimensionsMultiple.value && fileDimensionsMultiple.value !== defaultFileDimensionsMultiple)
+        || (tileSize.value && tileSize.value !== defaultTileSize)
+        this.setState({more})
         if (!crs.value) {
             crs.set(defaultCrs)
         }
@@ -449,10 +473,17 @@ class _Retrieve extends React.Component {
         if (!shardSize.value) {
             shardSize.set(defaultShardSize)
         }
+        if (!fileDimensionsMultiple.value) {
+            fileDimensionsMultiple.set(defaultFileDimensionsMultiple)
+        }
         if (!tileSize.value) {
             tileSize.set(defaultTileSize)
         }
+        if (defaultAssetType && !assetType.value) {
+            assetType.set(defaultAssetType)
+        }
         this.update()
+
     }
 
     componentDidUpdate() {
@@ -460,11 +491,9 @@ class _Retrieve extends React.Component {
     }
 
     update() {
-        const {toEE, toSepal, user, inputs: {destination, assetType}} = this.props
-        if (toSepal && !destination.value) {
-            destination.set('SEPAL')
-        } else if (user.googleTokens && toEE && !destination.value) {
-            destination.set('GEE')
+        const {user, inputs: {destination, assetType}} = this.props
+        if (!destination.value) {
+            destination.set(user.googleTokens ? 'GEE' : 'SEPAL')
         }
         if (!assetType.value && destination.value === 'GEE') {
             assetType.set('Image')
@@ -486,11 +515,19 @@ class _Retrieve extends React.Component {
         const {projects, projectId} = this.props
         return projects.find(({id}) => id === projectId)
     }
-
 }
 
 export const Retrieve = compose(
     _Retrieve,
     connect(mapStateToProps),
-    recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})
+    recipeFormPanel({id: 'retrieve', fields, constraints, mapRecipeToProps})
 )
+
+Retrieve.defaultProps = {
+    scaleTicks: [10, 15, 20, 30, 60, 100],
+    defaultCrs: 'EPSG:4326',
+    defaultScale: 30,
+    defaultShardSize: 256,
+    defaultFileDimensionsMultiple: 10,
+    defaultTileSize: 2
+}
