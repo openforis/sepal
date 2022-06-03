@@ -64,10 +64,6 @@ class _FastList extends React.PureComponent {
         )
     }
 
-    onResize() {
-        this.resize$.next(true)
-    }
-
     renderList() {
         const {firstVisibleItem, lastVisibleItem, marginTop, marginBottom} = this.state
         return (
@@ -137,6 +133,10 @@ class _FastList extends React.PureComponent {
             )
             this.reset(element)
         }
+    }
+
+    onResize() {
+        this.resize$.next(true)
     }
 
     reset(element) {

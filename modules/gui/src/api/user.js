@@ -1,5 +1,4 @@
 import {delete$, get$, post$} from 'http-client'
-import {of} from 'rxjs'
 
 export default {
     loadCurrentUser$: () =>
@@ -82,12 +81,10 @@ export default {
         delete$(`/api/sessions/session/${session.id}`),
 
     getUserList$: () =>
-        of(require('./user-test-list.json')),
-    // get$('/api/user/list'),
+        get$('/api/user/list'),
     
     getBudgetReport$: () =>
-        of(require('./user-test-report.json')),
-    // get$('/api/budget/report'),
+        get$('/api/budget/report'),
 
     inviteUser$: userDetails =>
         post$('/api/user/invite', {
