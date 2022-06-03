@@ -1,6 +1,5 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {MosaicPreview} from '../../mosaicPreview'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -19,18 +18,11 @@ const fields = {
 }
 
 class Options extends React.Component {
-    constructor(props) {
-        super(props)
-        const {recipeId} = props
-        this.preview = MosaicPreview(recipeId)
-    }
-    
     render() {
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement='bottom-right'
-                onClose={() => this.preview.show()}>
+                placement='bottom-right'>
                 <Panel.Header
                     icon='layer-group'
                     title={msg('process.radarMosaic.panel.options.title')}/>
@@ -128,10 +120,6 @@ class Options extends React.Component {
                 />
             </Layout>
         )
-    }
-
-    componentDidMount() {
-        this.preview.hide()
     }
 }
 

@@ -105,7 +105,7 @@ const allOpticalMosaicVisualizations = recipe => {
     const opticalMosaicRecipe = {
         type: 'MOSAIC',
         model: {
-            sources: selectFrom(recipe, 'model.sources.dataSets'),
+            sources: selectFrom(recipe, 'model.sources'),
             compositeOptions: selectFrom(recipe, 'model.options')
         }
     }

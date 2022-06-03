@@ -123,7 +123,7 @@ export const flatBandOptions = ({
 const toOpticalRecipe = ({dataSetIds, corrections}) =>
     ({model: {
         type: 'MOSAIC',
-        sources: toSources(dataSetIds),
+        sources: {dataSets: toSources(dataSetIds)},
         classificationOptions: {
             corrections,
             compose: 'MEDIAN'

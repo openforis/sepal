@@ -2,7 +2,6 @@ import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
-import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../../classificationRecipe'
@@ -33,20 +32,13 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class InputImagery extends React.Component {
-    constructor(props) {
-        super(props)
-        const {recipeId} = props
-        this.preview = MosaicPreview(recipeId)
-    }
-
     render() {
         const {images} = this.props
         return (
             <React.Fragment>
                 <RecipeFormPanel
                     className={styles.panel}
-                    placement='bottom-right'
-                    onClose={() => this.preview.show()}>
+                    placement='bottom-right'>
                     <Panel.Header
                         icon='image'
                         title={msg('process.classification.panel.inputImagery.title')}/>
@@ -113,10 +105,6 @@ class InputImagery extends React.Component {
     editImage(image) {
         const {activator: {activatables: {inputImage}}} = this.props
         inputImage.activate({imageId: image.imageId})
-    }
-
-    componentDidMount() {
-        this.preview.hide()
     }
 
     removeImage(imageToRemove) {

@@ -28,7 +28,7 @@ const mosaicBands = recipe => {
     switch(dataSetType) {
     case 'OPTICAL': return opticalBands({
         model: {
-            sources: recipe.model.sources.dataSets
+            sources: recipe.model.sources
         },
         compositeOptions: recipe.model.options
     })
