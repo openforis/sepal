@@ -1,5 +1,5 @@
 const ee = require('sepal/ee')
-const {interval, of, throwError, catchError, distinctUntilChanged, map, mapTo, exhaustMap, switchMap, takeWhile, tap} = require('rxjs')
+const {interval, of, throwError, catchError, distinctUntilChanged, map, exhaustMap, switchMap, takeWhile, tap} = require('rxjs')
 const {finalize} = require('sepal/rxjs')
 const MONITORING_FREQUENCY = 10000
 const {UNSUBMITTED, READY, RUNNING, FAILED} = ee.data.ExportState
@@ -88,7 +88,7 @@ const runTask$ = (task, description) => {
             switchMap(running =>
                 running
                     ? cancel$(taskId, 3).pipe(
-                        mapTo(true)
+                        map(() => true)
                     )
                     : of(false)
             ),

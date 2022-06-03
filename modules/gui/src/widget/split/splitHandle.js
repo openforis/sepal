@@ -1,4 +1,4 @@
-import {animationFrames, distinctUntilChanged, filter, fromEvent, map, mapTo, merge, scan, switchMap} from 'rxjs'
+import {animationFrames, distinctUntilChanged, filter, fromEvent, map, merge, scan, switchMap} from 'rxjs'
 import {compose} from 'compose'
 import {getLogger} from 'log'
 import Hammer from 'hammerjs'
@@ -110,10 +110,10 @@ class _SplitHandle extends React.Component {
         )
 
         const dragging$ = merge(
-            hold$.pipe(mapTo(true)),
-            release$.pipe(mapTo(false)),
-            panStart$.pipe(mapTo(true)),
-            panEnd$.pipe(mapTo(false)),
+            hold$.pipe(map(() => true)),
+            release$.pipe(map(() => false)),
+            panStart$.pipe(map(() => true)),
+            panEnd$.pipe(map(() => false)),
         )
 
         addSubscription(

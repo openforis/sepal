@@ -1,6 +1,6 @@
 const log = require('sepal/log').getLogger('terminal')
 const {exec} = require('child_process')
-const {interval, merge, Subject, map, mapTo, filter, bufferTime} = require('rxjs')
+const {interval, merge, Subject, map, filter, bufferTime} = require('rxjs')
 
 const Session = require('./session')
 
@@ -34,7 +34,7 @@ const start = (websocket, req) => {
             const data$ = new Subject()
     
             const heartbeat$ = interval(3000).pipe(
-                mapTo('')
+                map(() => '')
             )
             
             const bufferedData$ = data$.pipe(

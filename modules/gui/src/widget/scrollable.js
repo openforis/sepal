@@ -1,4 +1,4 @@
-import {EMPTY, Subject, animationFrames, debounceTime, distinctUntilChanged, fromEvent, map, mapTo, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs'
+import {EMPTY, Subject, animationFrames, debounceTime, distinctUntilChanged, fromEvent, map, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs'
 import {compose} from 'compose'
 import {v4 as uuid} from 'uuid'
 import Keybinding from 'widget/keybinding'
@@ -233,7 +233,7 @@ class _Scrollable extends Component {
                 Math.round(this.getOffset(direction)) === targetOffset
                     ? EMPTY
                     : animationFrames().pipe(
-                        mapTo(targetOffset),
+                        map(() => targetOffset),
                         scan(lerp(ANIMATION_SPEED), this.getOffset(direction)),
                         map(offset => Math.round(offset)),
                         distinctUntilChanged(),

@@ -1,4 +1,4 @@
-const {defer, of, first, map, mapTo, switchMap} = require('rxjs')
+const {defer, of, first, map, switchMap} = require('rxjs')
 const {retry} = require('sepal/rxjs')
 const {fromPromise} = require('sepal/rxjs')
 const crypto = require('crypto')
@@ -68,7 +68,7 @@ const initUserBucket$ = () =>
                         )
                     ),
                     switchMap(() => setBucketPermissions$(user)),
-                    mapTo(user)
+                    map(() => user)
                 )
 
             const setBucketPermissions$ = user => {
