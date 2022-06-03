@@ -17,7 +17,7 @@ const fields = {
         .email('landing.forgot-password.invalid')
 }
 
-export class ForgotPassword extends React.Component {
+class _ForgotPassword extends React.Component {
     cancel() {
         const {onCancel} = this.props
         onCancel()
@@ -86,13 +86,13 @@ export class ForgotPassword extends React.Component {
     }
 }
 
+export const ForgotPassword = compose(
+    _ForgotPassword,
+    form({fields})
+)
+
 ForgotPassword.propTypes = {
     onCancel: PropTypes.func.isRequired,
     form: PropTypes.object,
     inputs: PropTypes.object
 }
-
-export default compose(
-    ForgotPassword,
-    form({fields})
-)
