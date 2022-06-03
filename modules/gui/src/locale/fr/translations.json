@@ -1668,11 +1668,8 @@
 		"menu": {
 			"duplicateRecipe.tooltip": "Dupliquer une formule",
 			"exportRecipe": "Exporter une formule",
-			"noSavedRecipes": "Pas de formules sauvegardées",
-			"recipeNotSaved": "formule non sauvegardée",
 			"removeRecipe.tooltip": "Supprimer la formule",
 			"revertToOldRevision": "Retour à la révision précédente",
-			"savedRecipies": "Formules sauvegardées",
 			"saveRecipe": "Sauvegarder la formule...",
 			"searchRecipes": "Chercher une formule"
 		},

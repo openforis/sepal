@@ -1,12 +1,11 @@
-import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
-import {RecipeList} from './recipeList/recipeList'
+import {Content, SectionLayout} from 'widget/sectionLayout'
 import {closeTab} from 'widget/tabs/tabs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {duplicateRecipe$, initializeRecipe, isRecipeOpen, moveRecipes$, openRecipe, removeRecipes$, selectRecipe} from './recipe'
 import {map, of, tap} from 'rxjs'
-import {msg} from 'translate'
 // import {publishEvent} from 'eventPublisher'
+import {RecipeList} from './recipeList/recipeList'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -21,29 +20,19 @@ const mapStateToProps = () => ({
 
 class _RecipeHome extends React.Component {
     render() {
-        const {recipeId, recipes} = this.props
+        const {recipeId} = this.props
         return (
-            <RecipeList>
-                <SectionLayout>
-                    <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
-                        <RecipeList.Data
-                            recipeId={recipeId}
-                            onClick={recipeId => this.openRecipe(recipeId)}
-                            onDuplicate={recipeId => this.duplicateRecipe(recipeId)}
-                            onMove={(recipeIds, projectId) => this.moveRecipes(recipeIds, projectId)}
-                            onRemove={recipeIds => this.removeRecipes(recipeIds)}
-                        />
-                    </Content>
-                    <BottomBar className={styles.bottomBar}>
-                        {recipes && recipes.length
-                            ? <RecipeList.Pagination/>
-                            : !recipes
-                                ? null
-                                : <div>{msg('process.menu.noSavedRecipes')}</div>
-                        }
-                    </BottomBar>
-                </SectionLayout>
-            </RecipeList>
+            <SectionLayout>
+                <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
+                    <RecipeList
+                        recipeId={recipeId}
+                        onClick={recipeId => this.openRecipe(recipeId)}
+                        onDuplicate={recipeId => this.duplicateRecipe(recipeId)}
+                        onMove={(recipeIds, projectId) => this.moveRecipes(recipeIds, projectId)}
+                        onRemove={recipeIds => this.removeRecipes(recipeIds)}
+                    />
+                </Content>
+            </SectionLayout>
         )
     }
 

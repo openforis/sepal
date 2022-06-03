@@ -1,12 +1,23 @@
-import {AppListData} from './appListData'
-import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
-import {Pageable} from 'widget/pageable/pageable'
-import {Provider} from './appListContext'
+import {AppDetails} from './appDetails'
+import {AppItem} from './appItem'
+import {Button} from 'widget/button'
+import {Buttons} from 'widget/buttons'
+import {CenteredProgress} from 'widget/progress'
+import {Content, SectionLayout} from 'widget/sectionLayout'
+import {CrudItem} from 'widget/crudItem'
+import {FastList} from 'widget/fastList'
+import {Layout} from 'widget/layout'
+import {ListItem} from 'widget/listItem'
+import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {SearchBox} from 'widget/searchBox'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {currentUser} from 'user'
+import {getLanguage} from 'translate'
 import {loadApps$} from 'apps'
 import {msg} from 'translate'
 import {simplifyString, splitString} from 'string'
+import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -15,6 +26,7 @@ import actionBuilder from 'action-builder'
 import styles from './appList.module.css'
 
 const mapStateToProps = () => ({
+    user: currentUser(),
     apps: select('apps.list'),
     tags: select('apps.tags'),
     tabs: select('apps.tabs'),
@@ -28,70 +40,206 @@ class _AppList extends React.Component {
     }
 
     render() {
-        const {filterValues, tagFilter, tags, onSelect} = this.props
         return (
-            <Provider value={{
-                isLoading: this.isLoading.bind(this),
-                hasData: this.hasData.bind(this),
-                tags,
-                setFilter: this.setFilter.bind(this),
-                setTagFilter: this.setTagFilter.bind(this),
-                tagFilter,
-                highlightMatcher: filterValues.length
-                    ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
-                    : null
-            }}>
-                <Pageable items={this.getApps()}>
-                    <SectionLayout>
-                        <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
-                            <AppListData onSelect={onSelect} searchValues={filterValues.join(' ')}/>
-                        </Content>
-                        <BottomBar className={styles.bottomBar}>
-                            <Pageable.Controls/>
-                        </BottomBar>
-                    </SectionLayout>
-                </Pageable>
-            </Provider>
+            <SectionLayout>
+                <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
+                    {this.isLoading()
+                        ? this.renderProgress()
+                        : this.renderData()}
+                    {this.renderAppDetails()}
+                </Content>
+            </SectionLayout>
         )
     }
 
-    componentDidMount() {
-        const {apps, stream} = this.props
-        if (!apps) {
-            stream('LOAD_APPS',
-                loadApps$(),
-                null,
-                () => Notifications.error({message: msg('apps.loading.error')})
+    getHighlightMatcher() {
+        const {filterValues} = this.props
+        return filterValues.length
+            ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
+            : null
+    }
+
+    closeAppDetails() {
+        this.setState({app: null})
+    }
+
+    renderAppDetails() {
+        const {app} = this.state
+        return app
+            ? <AppDetails app={app} onClose={() => this.closeAppDetails()}/>
+            : null
+    }
+
+    renderProgress() {
+        return <CenteredProgress title={msg('apps.loading.progress')}/>
+    }
+
+    renderData() {
+        const {tags} = this.props
+        const highlightMatcher = this.getHighlightMatcher()
+        const key = app => _.compact([app.path, highlightMatcher]).join('|')
+        return this.hasData()
+            ? (
+                <ScrollableContainer>
+                    <Unscrollable>
+                        {this.renderSearchAndFilter(tags)}
+                    </Unscrollable>
+                    <Unscrollable className={styles.apps}>
+                        <FastList
+                            items={this.getApps()}
+                            itemKey={app => key(app)}
+                            spacing='tight'
+                            overflow={50}>
+                            {app => this.renderApp(app, highlightMatcher)}
+                        </FastList>
+                    </Unscrollable>
+                </ScrollableContainer>
             )
-        }
+            : null
     }
 
-    isLoading() {
-        const {apps, stream} = this.props
-        return !apps && stream('LOAD_APPS').active
+    renderSearchAndFilter(tags) {
+        return (
+            <div className={styles.header}>
+                <Layout type='horizontal' spacing='compact'>
+                    {this.renderSearch()}
+                    {this.renderTagFilter(tags)}
+                </Layout>
+            </div>
+        )
     }
 
-    isRunning(app) {
-        const {tabs} = this.props
-        return _.find(tabs, tab => tab.path === app.path)
+    renderSearch() {
+        const {searchValues} = this.props
+        return (
+            <SearchBox
+                value={searchValues}
+                placeholder={msg('apps.filter.search.placeholder')}
+                onSearchValue={searchValue => this.setFilter(searchValue)}
+            />
+        )
     }
 
-    hasData() {
-        const {apps} = this.props
-        return apps && apps.length
+    renderTagFilter(tags) {
+        const {tagFilter} = this.props
+        const toOption = ({label, value}) => ({
+            label: label[getLanguage()]
+                || label['en']
+                || Object.values(label)[0],
+            value
+        })
+        const options = [
+            {
+                label: msg('apps.filter.tag.ignore.label'),
+                value: null
+            },
+            ...tags.map(toOption)
+        ]
+        return (
+            <Buttons
+                chromeless
+                layout='horizontal'
+                spacing='tight'
+                options={options}
+                selected={tagFilter}
+                onChange={tagFilter => this.setTagFilter(tagFilter)}
+            />
+        )
     }
 
-    setFilter(filterValue) {
-        const filterValues = splitString(simplifyString(filterValue))
-        actionBuilder('UPDATE_FILTER_VALUES', filterValues)
-            .set('apps.filterValues', filterValues)
-            .dispatch()
+    renderGoogleAccountRequiredButton({googleAccountRequired}) {
+        return googleAccountRequired
+            ? (
+                <Button
+                    key={'renderGoogleAccountRequiredButton'}
+                    chromeless
+                    shape='circle'
+                    icon='google'
+                    iconType='brands'
+                    iconStyle='warning'
+                    tooltip={msg('apps.googleAccountRequired')}
+                    tooltipPlacement='left'
+                    onClick={() => null}
+                />
+            )
+            : null
     }
 
-    setTagFilter(tagFilter) {
-        actionBuilder('UPDATE_TAG_FILTER', tagFilter)
-            .set('apps.tagFilter', tagFilter)
-            .dispatch()
+    renderAppRunningIcon() {
+        return (
+            <Icon
+                key={'statusIcon'}
+                name='circle'
+                size='xs'
+                variant='info'
+                tooltip={msg('apps.running')}
+                tooltipPlacement='left'
+            />
+        )
+    }
+
+    renderAppStoppedIcon() {
+        return (
+            <Icon
+                key={'statusIcon'}
+                name='circle'
+                type='regular'
+                size='xs'
+                variant='info'
+                tooltip={msg('apps.notRunning')}
+                tooltipPlacement='left'
+            />
+        )
+    }
+
+    renderStatusIcon(app) {
+        return app.running
+            ? this.renderAppRunningIcon()
+            : this.renderAppStoppedIcon()
+    }
+
+    renderApp(app, highlightMatcher) {
+        const {onSelect} = this.props
+        const unavailable = this.isDisabled(app) || this.isDisallowed(app)
+        return (
+            <ListItem
+                disabled={unavailable}
+                onClick={() => onSelect(app)}
+            >
+                <CrudItem
+                    infoTooltip={msg('apps.info')}
+                    tooltipPlacement='left'
+                    inlineComponents={[
+                        this.renderGoogleAccountRequiredButton(app),
+                        this.renderStatusIcon(app)
+                    ]}
+                    infoDisabled={false}
+                    onInfo={() => this.showInfo(app)}
+                >
+                    <AppItem
+                        app={app}
+                        highlight={highlightMatcher}
+                    />
+                </CrudItem>
+            </ListItem>
+        )
+    }
+
+    isDisabled(app) {
+        return app.disabled
+    }
+
+    isDisallowed(app) {
+        return app.googleAccountRequired && this.isUsingServiceAccount()
+    }
+
+    isUsingServiceAccount() {
+        const {user} = this.props
+        return !user.googleTokens
+    }
+
+    showInfo(app) {
+        this.setState({app})
     }
 
     getApps() {
@@ -100,6 +248,11 @@ class _AppList extends React.Component {
             .filter(app => this.appMatchesFilters(app))
             .map(app => ({...app, running: this.isRunning(app)}))
             .value()
+    }
+
+    isRunning(app) {
+        const {tabs} = this.props
+        return _.find(tabs, tab => tab.path === app.path)
     }
 
     appMatchesFilters(app) {
@@ -122,6 +275,39 @@ class _AppList extends React.Component {
                 )
             )
             : true
+    }
+    isLoading() {
+        const {apps, stream} = this.props
+        return !apps && stream('LOAD_APPS').active
+    }
+
+    hasData() {
+        const {apps} = this.props
+        return apps && apps.length
+    }
+
+    setFilter(filterValue) {
+        const filterValues = splitString(simplifyString(filterValue))
+        actionBuilder('UPDATE_FILTER_VALUES', filterValues)
+            .set('apps.filterValues', filterValues)
+            .dispatch()
+    }
+
+    setTagFilter(tagFilter) {
+        actionBuilder('UPDATE_TAG_FILTER', tagFilter)
+            .set('apps.tagFilter', tagFilter)
+            .dispatch()
+    }
+
+    componentDidMount() {
+        const {apps, stream} = this.props
+        if (!apps) {
+            stream('LOAD_APPS',
+                loadApps$(),
+                null,
+                () => Notifications.error({message: msg('apps.loading.error')})
+            )
+        }
     }
 }
 

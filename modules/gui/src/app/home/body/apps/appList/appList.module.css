@@ -3,6 +3,10 @@
     pointer-events: all;
 }
 
-.bottomBar {
-    justify-content: center;
+.header {
+    margin-bottom: 1rem;
+}
+
+.apps {
+    flex-shrink: 1;
 }

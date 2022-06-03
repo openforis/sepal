@@ -230,7 +230,7 @@ export const removeRecipes$ = recipeIds =>
     )
 
 export const moveRecipes$ = (recipeIds, projectId) => {
-    const loadedRecipes = select('process.loadedRecipes')
+    const loadedRecipes = select('process.loadedRecipes') || []
     return api.recipe.move$(recipeIds, projectId).pipe(
         map(recipes => recipeIds
             .filter(id => loadedRecipes[id])

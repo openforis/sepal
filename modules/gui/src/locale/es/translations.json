@@ -1371,11 +1371,8 @@
 		"menu": {
 			"duplicateRecipe.tooltip": "Duplicar flujo de trabajo",
 			"exportRecipe": "Exportar flujo de trabajo",
-			"noSavedRecipes": "Ningún flujo de trabajo guardado",
-			"recipeNotSaved": "Flujo de trabajo no guardado.",
 			"removeRecipe.tooltip": "Eliminar flujo de trabajo",
 			"revertToOldRevision": "Volver a una antigua revisión...",
-			"savedRecipies": "Flujos de trabajo guardados",
 			"saveRecipe": "Guarda el flujo de trabajo...",
 			"searchRecipes": "Buscar flujo de trabajo"
 		},
