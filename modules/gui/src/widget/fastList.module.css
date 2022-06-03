@@ -6,12 +6,21 @@
 }
 
 .scrollable {
-    --margin-top: 0;
-    --margin-bottom: 0;
     width: 100%;
     height: 100%;
-    margin: 0;
-    padding: 0;
-    padding-top: calc(1px * var(--margin-top));
-    padding-bottom: calc(1px * var(--margin-bottom));
+}
+
+.filler {
+    --height: 0;
+    --itemHeight: 0;
+    --stripeColor: hsla(0, 0%, 0%, .1);
+    width: 100%;
+    height: calc(1px * var(--height));
+    background-image: repeating-linear-gradient(
+        0deg,
+        var(--stripeColor) 0,
+        var(--stripeColor) calc(1px * var(--itemHeight)),
+        transparent calc(1px * var(--itemHeight)),
+        transparent calc(2px * var(--itemHeight))
+    );
 }
