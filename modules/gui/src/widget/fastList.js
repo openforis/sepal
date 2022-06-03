@@ -36,8 +36,9 @@ class _FastList extends React.PureComponent {
     }
 
     renderSingleItemSampler() {
+        const {items} = this.props
         const {singleItemHeight} = this.state
-        if (!singleItemHeight) {
+        if (items.length > 0 && !singleItemHeight) {
             return this.renderSampler(1, ({height: singleItemHeight}) => {
                 this.setState({singleItemHeight})
             })
@@ -56,14 +57,11 @@ class _FastList extends React.PureComponent {
     }
 
     renderSampler(count, callback) {
-        const {items} = this.props
-        return items && items.length
-            ? (
-                <div ref={element => element && callback(element.getBoundingClientRect())}>
-                    {this.renderItems(0, count)}
-                </div>
-            )
-            : null
+        return (
+            <div ref={element => element && callback(element.getBoundingClientRect())}>
+                {this.renderItems(0, count)}
+            </div>
+        )
     }
 
     onResize() {
