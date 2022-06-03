@@ -1,4 +1,4 @@
-import {EMPTY, Subject, animationFrameScheduler, debounceTime, distinctUntilChanged, fromEvent, interval, map, mapTo, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs'
+import {EMPTY, Subject, animationFrames, debounceTime, distinctUntilChanged, fromEvent, map, mapTo, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs'
 import {compose} from 'compose'
 import {v4 as uuid} from 'uuid'
 import Keybinding from 'widget/keybinding'
@@ -226,14 +226,13 @@ class _Scrollable extends Component {
 
     handleScroll() {
         const {addSubscription} = this.props
-        const animationFrame$ = interval(0, animationFrameScheduler)
 
         const scroll$ = (scroll$, direction) => scroll$.pipe(
             map(targetOffset => Math.round(targetOffset)),
             switchMap(targetOffset =>
                 Math.round(this.getOffset(direction)) === targetOffset
                     ? EMPTY
-                    : animationFrame$.pipe(
+                    : animationFrames().pipe(
                         mapTo(targetOffset),
                         scan(lerp(ANIMATION_SPEED), this.getOffset(direction)),
                         map(offset => Math.round(offset)),

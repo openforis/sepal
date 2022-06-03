@@ -1,7 +1,7 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {ViewportResizeDetector} from 'widget/viewportResizeDetector'
 import {Widget} from 'widget/widget'
-import {animationFrameScheduler, combineLatest, distinctUntilChanged, fromEvent, interval, map, mapTo, merge, of, scan, switchMap, withLatestFrom} from 'rxjs'
+import {animationFrames, combineLatest, distinctUntilChanged, fromEvent, map, mapTo, merge, of, scan, switchMap, withLatestFrom} from 'rxjs'
 import {compose} from 'compose'
 import Hammer from 'hammerjs'
 import Portal from 'widget/portal'
@@ -241,7 +241,6 @@ class _SliderDynamics extends React.Component {
         const panStart$ = fromEvent(handle, 'panstart')
         const panMove$ = fromEvent(handle, 'panmove')
         const panEnd$ = fromEvent(handle, 'panend')
-        const animationFrame$ = interval(0, animationFrameScheduler)
 
         const hoverPosition$ = merge(
             mouseMove$.pipe(
@@ -285,7 +284,7 @@ class _SliderDynamics extends React.Component {
             withLatestFrom(handleDragging$),
             switchMap(([targetPosition, dragging]) => {
                 const {position} = this.state
-                return animationFrame$.pipe(
+                return animationFrames().pipe(
                     map(() => targetPosition),
                     scan(lerp(dragging ? .30 : .15), position),
                     map(position => Math.round(position))

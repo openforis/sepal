@@ -1,6 +1,6 @@
 import * as PropTypes from 'prop-types'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
-import {Subject, animationFrameScheduler, distinctUntilChanged, interval, map, of, scan, switchMap} from 'rxjs'
+import {Subject, animationFrames, distinctUntilChanged, map, of, scan, switchMap} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
@@ -139,21 +139,19 @@ class _CursorValue extends React.Component {
 
     componentDidMount() {
         const {addSubscription} = this.props
-        const animationFrame$ = interval(0, animationFrameScheduler)
 
         addSubscription(
             this.targetPosition$.pipe(
                 switchMap(targetPosition => {
                     const {position} = this.state
-                    if (position === null) {
-                        return of(targetPosition)
-                    }
-                    return animationFrame$.pipe(
-                        map(() => targetPosition),
-                        scan(lerp(.1), position),
-                        map(position => Math.round(position)),
-                        distinctUntilChanged()
-                    )
+                    return position === null
+                        ? of(targetPosition)
+                        : animationFrames().pipe(
+                            map(() => targetPosition),
+                            scan(lerp(.1), position),
+                            map(position => Math.round(position)),
+                            distinctUntilChanged()
+                        )
                 })
             ).subscribe(position =>
                 this.setPosition(position)

@@ -1,4 +1,4 @@
-import {animationFrameScheduler, distinctUntilChanged, filter, fromEvent, interval, map, mapTo, merge, scan, switchMap} from 'rxjs'
+import {animationFrames, distinctUntilChanged, filter, fromEvent, map, mapTo, merge, scan, switchMap} from 'rxjs'
 import {compose} from 'compose'
 import {getLogger} from 'log'
 import Hammer from 'hammerjs'
@@ -77,7 +77,6 @@ class _SplitHandle extends React.Component {
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
         const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
-        const animationFrame$ = interval(0, animationFrameScheduler)
 
         const dragPosition$ =
             panStart$.pipe(
@@ -98,7 +97,7 @@ class _SplitHandle extends React.Component {
         const handlePosition$ = dragPosition$.pipe(
             switchMap(targetPosition => {
                 const {position} = this.props
-                return animationFrame$.pipe(
+                return animationFrames().pipe(
                     map(() => targetPosition),
                     scan(dragLerp, position),
                     map(({x, y}) => ({

@@ -1,4 +1,4 @@
-import {Subject, animationFrameScheduler, debounceTime, delay, distinctUntilChanged, filter, fromEvent, interval, map, switchMap, takeUntil, timer} from 'rxjs'
+import {Subject, animationFrames, debounceTime, delay, distinctUntilChanged, filter, fromEvent, map, switchMap, takeUntil, timer} from 'rxjs'
 import {compose} from 'compose'
 import Hammer from 'hammerjs'
 import Portal from 'widget/portal'
@@ -265,7 +265,6 @@ class _ListItem extends React.Component {
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
         const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
-        const animationFrame$ = interval(0, animationFrameScheduler)
 
         const dragStart$ = panStart$.pipe(
             map(({changedPointers}) => changedPointers[0]),
@@ -296,7 +295,7 @@ class _ListItem extends React.Component {
 
         const dragMove$ = dragStart$.pipe(
             switchMap(({offset}) =>
-                animationFrame$.pipe(
+                animationFrames().pipe(
                     switchMap(() =>
                         panMove$.pipe(
                             map(e => e.center)

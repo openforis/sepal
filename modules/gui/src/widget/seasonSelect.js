@@ -1,5 +1,5 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
-import {animationFrameScheduler, distinctUntilChanged, filter, fromEvent, interval, map, scan, switchMap, takeUntil} from 'rxjs'
+import {animationFrames, distinctUntilChanged, filter, fromEvent, map, scan, switchMap, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {intersect} from 'collections'
 import Hammer from 'hammerjs'
@@ -357,7 +357,6 @@ class _Handle extends React.Component {
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
         const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
-        const animationFrame$ = interval(0, animationFrameScheduler)
         const lerp = (rate, speed) => {
             return (value, targetValue) => {
                 const delta = (targetValue - value) * (rate * speed)
@@ -378,7 +377,7 @@ class _Handle extends React.Component {
             }),
             switchMap(({cursor, speed}) => {
                 const start = this.props.position
-                return animationFrame$.pipe(
+                return animationFrames().pipe(
                     map(() => cursor),
                     scan(lerp(.3, speed), start),
                     distinctUntilChanged((a, b) => Math.abs(a - b) < .01),

@@ -1,4 +1,4 @@
-import {animationFrameScheduler, debounceTime, distinctUntilChanged, filter, fromEvent, interval, map, share, switchMap} from 'rxjs'
+import {animationFrames, debounceTime, distinctUntilChanged, filter, fromEvent, map, share, switchMap} from 'rxjs'
 import {compose} from 'compose'
 import Hammer from 'hammerjs'
 import Keybinding from 'widget/keybinding'
@@ -173,7 +173,6 @@ class _Draggable extends React.Component {
         const panStart$ = fromEvent(hammer, 'panstart')
         const panMove$ = fromEvent(hammer, 'panmove')
         const panEnd$ = fromEvent(hammer, 'panend')
-        const animationFrame$ = interval(0, animationFrameScheduler)
 
         const thisDragStart$ = panStart$.pipe(
             map(({changedPointers}) => changedPointers[0]),
@@ -203,7 +202,7 @@ class _Draggable extends React.Component {
 
         const thisDragMove$ = thisDragStart$.pipe(
             switchMap(({offset}) =>
-                animationFrame$.pipe(
+                animationFrames().pipe(
                     switchMap(() =>
                         panMove$.pipe(
                             map(e => e.center)
