@@ -113,7 +113,7 @@ class _MosaicRetrievePanel extends React.Component {
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
                 {destination.value === 'GEE' ? this.renderAssetType() : null}
                 {destination.value === 'GEE' ? this.renderAssetDestination() : null}
-                {more && allowTiling || (destination.value === 'GEE' && assetType.value === 'ImageCollection') ? this.renderTileSize() : null}
+                {more && (allowTiling || (destination.value === 'GEE' && assetType.value === 'ImageCollection')) ? this.renderTileSize() : null}
                 {more ? this.renderShardSize() : null}
                 {more && destination.value === 'SEPAL' ? this.renderFileDimensionsMultiple() : null}
                 <Layout type='horizontal'>
