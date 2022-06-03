@@ -1,6 +1,6 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Graph} from 'widget/graph'
-import {animationFrameScheduler, distinctUntilChanged, filter, fromEvent, interval, map, mapTo, merge, scan, switchMap} from 'rxjs'
+import {animationFrames, distinctUntilChanged, filter, fromEvent, map, merge, scan, switchMap} from 'rxjs'
 import {compose} from 'compose'
 import Hammer from 'hammerjs'
 import Icon from 'widget/icon'
@@ -246,7 +246,6 @@ class _Handle extends React.Component {
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
         const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
-        const animationFrame$ = interval(0, animationFrameScheduler)
 
         const dragPosition$ =
             panStart$.pipe(
@@ -264,7 +263,7 @@ class _Handle extends React.Component {
         const handlePosition$ = dragPosition$.pipe(
             switchMap(targetPosition => {
                 const {position} = this.props
-                return animationFrame$.pipe(
+                return animationFrames().pipe(
                     map(() => targetPosition),
                     scan(dragLerp, position),
                     map(position => Math.round(position)),
@@ -274,10 +273,10 @@ class _Handle extends React.Component {
         )
 
         const dragging$ = merge(
-            hold$.pipe(mapTo(true)),
-            release$.pipe(mapTo(false)),
-            panStart$.pipe(mapTo(true)),
-            panEnd$.pipe(mapTo(false)),
+            hold$.pipe(map(() => true)),
+            release$.pipe(map(() => false)),
+            panStart$.pipe(map(() => true)),
+            panEnd$.pipe(map(() => false)),
         )
 
         addSubscription(

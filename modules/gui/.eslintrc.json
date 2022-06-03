@@ -9,6 +9,7 @@
     },
     "extends": [
         "eslint:recommended",
+        "plugin:import/recommended",
         "plugin:react/recommended"
     ],
     "parserOptions": {
@@ -55,6 +56,7 @@
             "warn",
             "always"
         ],
+        "import/no-unresolved": "off",
         "indent": [
             "warn",
             4

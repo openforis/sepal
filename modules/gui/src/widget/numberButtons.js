@@ -36,6 +36,6 @@ NumberButtons.propTypes = {
     errorMessage: PropTypes.any,
     label: PropTypes.any,
     placeholder: PropTypes.any,
-    tooltip: PropTypes.any,
-    suffix: PropTypes.any
+    suffix: PropTypes.any,
+    tooltip: PropTypes.any
 }

@@ -1,4 +1,4 @@
-const {Subject, EMPTY, merge, of, mergeMap, shareReplay, filter, tap, switchMap, catchError, switchMapTo} = require('rxjs')
+const {Subject, EMPTY, merge, of, mergeMap, shareReplay, filter, tap, switchMap, catchError} = require('rxjs')
 const log = require('sepal/log').getLogger('task')
 const executeTask$ = require('./taskRunner')
 const {lastInWindow, repeating} = require('sepal/rxjs')
@@ -46,7 +46,7 @@ const taskStateChanged$ = (id, state, message) => {
         tap(() =>
             log.trace(() => msg(id, `notified state change: ${state}`))
         ),
-        switchMapTo(EMPTY)
+        switchMap(() => EMPTY)
     )
 }
 
@@ -64,7 +64,7 @@ const taskProgressed$ = (id, progress) => {
         tap(() =>
             log.trace(() => msg(id, `notified progress update: ${progress.defaultMessage}`))
         ),
-        switchMapTo(EMPTY)
+        switchMap(() => EMPTY)
     )
 }
 

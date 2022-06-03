@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {delay, distinctUntilChanged, fromEvent, map, mapTo, merge, of, switchMap, takeUntil, zipWith} from 'rxjs'
+import {delay, distinctUntilChanged, fromEvent, map, merge, of, switchMap, takeUntil, zipWith} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -28,10 +28,10 @@ class _HoverDetector extends React.Component {
 
         const mouseStatus$ = merge(
             mouseOver$.pipe(
-                mapTo(true)
+                map(() => true)
             ),
             mouseLeave$.pipe(
-                mapTo(false)
+                map(() => false)
             ),
             windowTouchMove$.pipe(
                 map(e => {

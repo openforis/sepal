@@ -1,5 +1,4 @@
 import {Form} from 'widget/form/form'
-import {Layout} from './layout'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser} from 'user'

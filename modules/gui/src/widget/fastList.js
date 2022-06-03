@@ -1,6 +1,6 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Layout} from './layout'
-import {Subject, animationFrames, distinctUntilChanged, fromEvent, map, mergeWith, switchMap} from 'rxjs'
+import {Subject, animationFrames, distinctUntilChanged, fromEvent, map, mergeWith, switchMap, takeUntil, timer} from 'rxjs'
 import {compose} from 'compose'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -13,7 +13,7 @@ class _FastList extends React.PureComponent {
     reset$ = new Subject()
 
     state = {
-        itemHeight: null,
+        singleItemHeight: null,
         spacedItemHeight: null,
         firstVisibleItem: 0,
         lastVisibleItem: 0,
@@ -31,24 +31,25 @@ class _FastList extends React.PureComponent {
     render() {
         const {items} = this.props
         return items
-            ? this.renderItemSampler() || this.renderSpacingSampler() || this.renderList()
+            ? this.renderSingleItemSampler() || this.renderSpacedItemSampler() || this.renderList()
             : null
     }
 
-    renderItemSampler() {
-        const {itemHeight} = this.state
-        if (!itemHeight) {
-            return this.renderSampler(1, ({height: itemHeight}) => {
-                this.setState({itemHeight})
+    renderSingleItemSampler() {
+        const {singleItemHeight} = this.state
+        if (!singleItemHeight) {
+            return this.renderSampler(1, ({height: singleItemHeight}) => {
+                this.setState({singleItemHeight})
             })
         }
     }
 
-    renderSpacingSampler() {
-        const {itemHeight, spacedItemHeight} = this.state
-        if (!spacedItemHeight) {
+    renderSpacedItemSampler() {
+        const {items} = this.props
+        const {singleItemHeight, spacedItemHeight} = this.state
+        if (items.length > 1 && !spacedItemHeight) {
             return this.renderSampler(2, ({height}) => {
-                const spacedItemHeight = height - itemHeight
+                const spacedItemHeight = height - singleItemHeight
                 this.setState({spacedItemHeight})
             })
         }
@@ -121,7 +122,8 @@ class _FastList extends React.PureComponent {
                 mergeWith(this.resize$),
                 switchMap(() => animationFrames().pipe(
                     map(() => element.scrollTop),
-                    distinctUntilChanged()
+                    distinctUntilChanged(),
+                    takeUntil(timer(100))
                 ))
             )
             addSubscription(
@@ -145,11 +147,12 @@ class _FastList extends React.PureComponent {
 
     update(scrollTop, clientHeight) {
         const {items, overflow} = this.props
-        const {spacedItemHeight} = this.state
-        const firstVisibleItem = Math.max(0, Math.ceil(scrollTop / spacedItemHeight) - overflow)
-        const lastVisibleItem = Math.min(items.length, Math.floor((scrollTop + clientHeight) / spacedItemHeight) + overflow)
-        const marginTop = firstVisibleItem * spacedItemHeight
-        const marginBottom = (items.length - lastVisibleItem) * spacedItemHeight
+        const {singleItemHeight, spacedItemHeight} = this.state
+        const itemHeight = spacedItemHeight || singleItemHeight
+        const firstVisibleItem = Math.max(0, Math.ceil(scrollTop / itemHeight) - overflow)
+        const lastVisibleItem = Math.min(items.length, Math.floor((scrollTop + clientHeight) / itemHeight) + overflow)
+        const marginTop = firstVisibleItem * itemHeight
+        const marginBottom = (items.length - lastVisibleItem) * itemHeight
         this.setState({firstVisibleItem, lastVisibleItem, marginTop, marginBottom})
     }
 

@@ -29,8 +29,8 @@ export const recipeFormPanel = (
         additionalPolicy = () => ({})
     }) => {
     path = path || (() => id)
-    const createMapRecipeToProps = mapRecipeToProps =>
-        (recipe, props) => {
+    const createMapRecipeToProps = mapRecipeToProps => {
+        return (recipe, props) => {
             const evaluatedPath = path(props)
             if (!evaluatedPath) {
                 return null
@@ -40,6 +40,7 @@ export const recipeFormPanel = (
             const values = selectFrom(recipe, ['ui', evaluatedPath])
             return {recipeId: recipe.id, model, values, ...additionalProps}
         }
+    }
 
     const valuesSpec = {
         getModel: props => props.model,
