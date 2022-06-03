@@ -11,7 +11,7 @@ module.exports = {
         getCurrentContext$().pipe(
             switchMap(({config}) => {
                 const description = recipe.title || recipe.placeholder
-                const preferredDownloadDir = workspacePath 
+                const preferredDownloadDir = workspacePath
                     ? `${config.homeDir}/${workspacePath}/`
                     : `${config.homeDir}/downloads/${description}/`
                 return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(

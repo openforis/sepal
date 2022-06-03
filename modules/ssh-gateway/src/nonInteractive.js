@@ -1,4 +1,4 @@
-const {first, of, switchMap} = require('rxjs')
+const {of, switchMap} = require('rxjs')
 const {sandboxInfo$, createSession$, joinSession$} = require('./endpoint')
 
 const getSession$ = ({sessions, instanceTypes}) => {

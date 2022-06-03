@@ -24,7 +24,7 @@ module.exports = {
     submit$: (_id, {workspacePath, description, ...retrieveOptions}) =>
         getCurrentContext$().pipe(
             switchMap(({config}) => {
-                const preferredDownloadDir = workspacePath 
+                const preferredDownloadDir = workspacePath
                     ? `${config.homeDir}/${workspacePath}/`
                     : `${config.homeDir}/downloads/${description}/`
                 return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
@@ -37,10 +37,10 @@ module.exports = {
 }
 
 const export$ = ({
-    downloadDir, 
-    description, 
-    recipe, 
-    indicator, 
+    downloadDir,
+    description,
+    recipe,
+    indicator,
     scale,
     tileSize,
     shardSize,
@@ -48,7 +48,6 @@ const export$ = ({
     crs,
     crsTransform
 }) => {
-    console.log({tileSize, crs})
     const aoi = recipe.model.aoi
     const sources = recipe.model.sources
     const dataSets = sources.dataSets

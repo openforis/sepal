@@ -1,5 +1,5 @@
 const ee = require('sepal/ee')
-const {EMPTY, concat, from, catchError, last, map, merge, mergeMap, of, scan, switchMap, tap, throwError} = require('rxjs')
+const {EMPTY, concat, from, catchError, last, map, mergeMap, of, scan, switchMap, tap, throwError} = require('rxjs')
 const {swallow} = require('sepal/rxjs')
 const tile = require('sepal/ee/tile')
 const Path = require('path')
@@ -8,7 +8,6 @@ const task$ = require('task/ee/task')
 const {progress} = require('task/rxjs/operators')
 const log = require('sepal/log').getLogger('task')
 const _ = require('lodash')
-
 
 const exportImageToAsset$ = ({
     image,
@@ -26,7 +25,7 @@ const exportImageToAsset$ = ({
     shardSize = 256,
     tileSize,
     retries = 0
-}) =>  {
+}) => {
     crsTransform = crsTransform || undefined
     region = region || image.geometry()
     if (ee.sepal.getAuthType() === 'SERVICE_ACCOUNT')
@@ -39,7 +38,7 @@ const exportImageToAsset$ = ({
             image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, retries
         })
     return assetDestination$(description, assetId).pipe(
-        switchMap(({description, assetId}) => 
+        switchMap(({description, assetId}) =>
             concat(
                 createAssetFolders$(assetId),
                 export$({description, assetId})
@@ -58,12 +57,12 @@ const imageToAssetCollection$ = ({
             ? ee.deleteAssetRecursive$(assetId, ['ImageCollection', 'Image'], 0)
             : asset.type === 'Image'
                 ? deleteAsset$(assetId)
-                : throwError(() => "Asset ID already exists, but isn't an image or image collection")
-            return concat(
-                delete$(),
-                ee.createImageCollection$(assetId, {}, 1)
-            )
-        }
+                : throwError(() => 'Asset ID already exists, but isn\'t an image or image collection')
+        return concat(
+            delete$(),
+            ee.createImageCollection$(assetId, {}, 1)
+        )
+    }
 
     const prepareCollection$ = () => {
         return ee.getAsset$(assetId).pipe(
@@ -75,10 +74,10 @@ const imageToAssetCollection$ = ({
                     return of(true)
                 } else {
                     return ee.createImageCollection$(assetId, {}, 1)
-                } 
+                }
             }),
             last(),
-            switchMap(() => 
+            switchMap(() =>
                 ee.replaceAssetProperties$(
                     assetId,
                     image.toDictionary(image.propertyNames()),
@@ -89,9 +88,9 @@ const imageToAssetCollection$ = ({
         )
     }
     
-    const tilesToAssets$ = () => {    
+    const tilesToAssets$ = () => {
         const tileIds$ = ee.getInfo$(
-            tileFeatures.aggregate_array('system:index'), 
+            tileFeatures.aggregate_array('system:index'),
             'load tile ids'
         )
         const export$ = tileIds$.pipe(
@@ -114,7 +113,7 @@ const imageToAssetCollection$ = ({
                                     : progress.completedTiles
                             })
                         },
-                        { completedTiles: 0 }
+                        {completedTiles: 0}
                     ),
                     map(progress => toProgress(progress, tileIds.length))
                 )
@@ -125,12 +124,12 @@ const imageToAssetCollection$ = ({
             })
         )
         const progress$ = of(true).pipe(progress({
-            defaultMessage: `Tiling image`,
+            defaultMessage: 'Tiling image',
             messageKey: 'tasks.ee.export.asset.tilingImage'
         }))
 
         return concat(
-            progress$, 
+            progress$,
             export$
         )
     }
@@ -147,22 +146,22 @@ const imageToAssetCollection$ = ({
     }
     
     const exportTile$ = ({tileId, tileIndex}) => {
-        const tileAssetId = assetId + '/' + tileIndex
+        const tileAssetId = `${assetId}/${tileIndex}`
         const tileGeometry = tileFeatures
             .filter(ee.Filter.eq('system:index', tileId))
             .geometry()
         const export$ = () => imageToAsset$({
             image,
-            description: description + '_' + tileIndex, 
-            assetId: tileAssetId, 
-            strategy: 'resume', 
-            pyramidingPolicy, 
-            dimensions, 
-            region: tileGeometry, 
-            scale, 
-            crs, crsTransform, 
-            maxPixels, 
-            shardSize, 
+            description: `${description}_${tileIndex}`,
+            assetId: tileAssetId,
+            strategy: 'resume',
+            pyramidingPolicy,
+            dimensions,
+            region: tileGeometry,
+            scale,
+            crs, crsTransform,
+            maxPixels,
+            shardSize,
             retries
         })
         return concat(
@@ -192,7 +191,6 @@ const imageToAssetCollection$ = ({
         tilesToAssets$()
     )
 }
-
 
 const imageToAsset$ = ({
     image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, retries
@@ -225,7 +223,6 @@ const imageToAsset$ = ({
     )
 }
 
-
 const assetDestination$ = (description, assetId) => {
     if (!assetId && !description)
         throw new Error('description or assetId must be specified')
@@ -240,7 +237,6 @@ const assetDestination$ = (description, assetId) => {
             })
         )
 }
-
 
 const createAssetFolders$ = assetId => {
     return ee.createAssetFolders$(assetId, 1).pipe(
@@ -263,12 +259,9 @@ const deleteAsset$ = assetId =>
         catchError(() => EMPTY)
     )
 
-
-
 const formatRegion$ = region =>
     ee.getInfo$(region.bounds(1), 'format region for export').pipe(
         map(geometry => ee.Geometry(geometry))
     )
-
 
 module.exports = {exportImageToAsset$}

@@ -24,24 +24,23 @@ const createDriveFolder$ = folder =>
     )
 
 const exportImageToSepal$ = ({
-        image,
-        folder,
-        description,
-        downloadDir,
-        dimensions,
-        region,
-        scale,
-        crs,
-        crsTransform,
-        maxPixels = 1e13,
-        shardSize,
-        fileDimensions,
-        skipEmptyTiles,
-        fileFormat,
-        formatOptions,
-        retries
-    }) => {
-    console.log({shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions})
+    image,
+    folder,
+    description,
+    downloadDir,
+    dimensions,
+    region,
+    scale,
+    crs,
+    crsTransform,
+    maxPixels = 1e13,
+    shardSize,
+    fileDimensions,
+    skipEmptyTiles,
+    fileFormat,
+    formatOptions,
+    retries
+}) => {
     crsTransform = crsTransform || undefined
     image = castToLargest(image)
     const prefix = description
@@ -159,7 +158,7 @@ const castToLargest = image => {
             ee.Dictionary(
                 ee.Algorithms.Describe(image)
             ).get('bands')
-        ).map((band) => {
+        ).map(band => {
             const dataType = ee.Dictionary(
                 ee.Dictionary(band).get('data_type')
             )
@@ -174,9 +173,9 @@ const castToLargest = image => {
                 .values()
                 .reduce(ee.Reducer.first())
             return ee.Feature(null, {
-                precisionIndex: precisionIndex,
-                minValue: minValue,
-                maxValue: maxValue
+                precisionIndex,
+                minValue,
+                maxValue
             })
         })
     )
@@ -193,9 +192,9 @@ const castToLargest = image => {
     )
 
     const pixelType = ee.PixelType({
-        precision: precision,
-        minValue: minValue,
-        maxValue: maxValue
+        precision,
+        minValue,
+        maxValue
     })
     return image.cast(
         ee.Dictionary.fromLists(

@@ -20,7 +20,7 @@ const getGitHubRepoPath = (section, path = '') => {
 }
 
 const getGitHubPackageInfo = path => {
-    const GITHUB_MATCHER = /^(?:\/github\/)?(([^\/]+)\/([^\/]*)(.*)(\.tar\.gz))/
+    const GITHUB_MATCHER = /^(?:\/github\/)?(([^/]+)\/([^/]*)(.*)(\.tar\.gz))/
     const result = path.match(GITHUB_MATCHER)
     if (result) {
         const [_, path, user, name, ref, ext] = result
