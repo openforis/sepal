@@ -5,7 +5,6 @@ import React from 'react'
 export default class RecipeSection extends React.Component {
     render() {
         const {recipeId, inputs: {name, recipe}, onLoading} = this.props
-        console.log({recipeId})
         return (
             <RecipeInput
                 input={recipe}

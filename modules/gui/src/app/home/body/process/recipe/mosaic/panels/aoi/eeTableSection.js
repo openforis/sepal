@@ -113,7 +113,7 @@ class _EETableSection extends React.Component {
                     label={msg('process.mosaic.panel.areaOfInterest.form.eeTable.column.label')}
                     input={eeTableColumn}
                     busyMessage={loading && msg('widget.loading')}
-                    disabled={eeTableColumnDisabled|| loading}
+                    disabled={eeTableColumnDisabled || loading}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.eeTable.column.placeholder.${columnState}`)}
                     options={(columns || []).map(column => ({value: column, label: column}))}
                     onChange={column => {
