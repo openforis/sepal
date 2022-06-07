@@ -74,7 +74,7 @@ class _RecipeList extends React.Component {
     }
 
     renderData() {
-        const {filteredRecipes, recipeId, filterValues} = this.props
+        const {filteredRecipes, filterValues} = this.props
         const {move, remove} = this.state
         const highlightMatcher = filterValues.length
             ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
@@ -143,6 +143,7 @@ class _RecipeList extends React.Component {
                     label={msg('process.recipe.edit.label')}
                     shape='pill'
                     keybinding={edit ? 'Escape' : ''}
+                    disabled={!this.hasData()}
                     onClick={() => this.setEdit(!edit)}
                 />
             </ButtonGroup>
@@ -517,6 +518,15 @@ class _RecipeList extends React.Component {
         if (!_.isEqual(this.props, prevProps)) {
             this.updateFilteredRecipes()
         }
+    }
+
+    static getDerivedStateFromProps({recipes}) {
+        if (!recipes || !recipes.length) {
+            return {
+                edit: false
+            }
+        }
+        return {}
     }
 }
 
