@@ -118,7 +118,6 @@ class _CreateRecipe extends React.Component {
     }
 
     renderRecipeTypes() {
-        const {trigger} = this.props
         const close = () => this.closePanel()
         return (
             <React.Fragment>
@@ -133,7 +132,6 @@ class _CreateRecipe extends React.Component {
                 <Panel.Buttons>
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close
-                            hidden={trigger}
                             keybinding={['Enter', 'Escape']}
                             onClick={close}
                         />
@@ -157,12 +155,10 @@ class _CreateRecipe extends React.Component {
 
     renderPanel() {
         const {selectedRecipeType} = this.state
-        const {trigger} = this.props
-        const modal = !trigger
         return (
             <Panel
-                className={[styles.panel, modal ? styles.modal : null].join(' ')}
-                type={modal ? 'modal' : 'center'}>
+                className={[styles.panel, styles.modal].join(' ')}
+                type={'modal'}>
                 {selectedRecipeType
                     ? this.renderRecipeTypeInfo(selectedRecipeType)
                     : this.renderRecipeTypes()}
@@ -171,11 +167,11 @@ class _CreateRecipe extends React.Component {
     }
 
     render() {
-        const {panel, trigger} = this.props
+        const {panel} = this.props
         return (
             <React.Fragment>
-                {trigger ? null : this.renderButton()}
-                {panel || trigger ? this.renderPanel() : null}
+                {this.renderButton()}
+                {panel ? this.renderPanel() : null}
             </React.Fragment>
         )
     }
@@ -187,8 +183,7 @@ export const CreateRecipe = compose(
 )
 
 CreateRecipe.propTypes = {
-    recipeId: PropTypes.string.isRequired,
-    trigger: PropTypes.any
+    recipeId: PropTypes.string.isRequired
 }
 
 class RecipeType extends React.Component {
