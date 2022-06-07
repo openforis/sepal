@@ -79,7 +79,7 @@ class _RecipeList extends React.Component {
         const highlightMatcher = filterValues.length
             ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
             : null
-        return this.hasData() ? (
+        return (
             <ScrollableContainer>
                 <Unscrollable>
                     {this.renderHeader()}
@@ -96,8 +96,6 @@ class _RecipeList extends React.Component {
                     {remove && this.renderRemoveConfirmation()}
                 </Unscrollable>
             </ScrollableContainer>
-        ) : (
-            <CreateRecipe recipeId={recipeId} trigger={true}/>
         )
     }
 
