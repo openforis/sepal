@@ -5,6 +5,8 @@ const endpoints = [
         prefix: true,
         path: '/api/gee',
         target: `http://${modules.gee}`,
+        proxyTimeout: 10 * 60 * 1000,
+        timeout: 11 * 60 * 1000,
         authenticate: true
     },
     {
