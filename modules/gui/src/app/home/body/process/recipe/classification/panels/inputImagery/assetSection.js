@@ -17,7 +17,8 @@ export default class AssetSection extends React.Component {
                 expectedType={['Image', 'ImageCollection']}
                 onLoading={onLoading}
                 onLoaded={({asset, metadata, visualizations}) => {
-                    onLoaded({id: asset, bands: metadata.bands, metadata, visualizations})
+                    const bands = metadata.bands.map(({id}) => id)
+                    onLoaded({id: asset, bands, metadata, visualizations})
                 }}
             />
         )
