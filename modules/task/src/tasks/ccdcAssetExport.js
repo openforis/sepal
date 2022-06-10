@@ -1,16 +1,21 @@
 const {exportImageToAsset$} = require('../jobs/export/toAsset')
-const {switchMap} = require('rxjs')
+const {forkJoin, switchMap} = require('rxjs')
 const ccdc = require('sepal/ee/timeSeries/ccdc')
 const {toVisualizationProperties} = require('../ee/visualizations')
 const {formatProperties} = require('./formatProperties')
 
 module.exports = {
     submit$: (_id, {recipe, bands, scale, visualizations, properties, ...other}) => {
-        return ccdc(recipe, {selection: bands}).getImage$().pipe(
-            switchMap(segments => {
+        const segments = ccdc(recipe, {selection: bands})
+        return forkJoin({
+            segments: segments.getImage$(),
+            geometry: segments.getGeometry$()
+        }).pipe(
+            switchMap(({segments, geometry}) => {
                 const formattedProperties = formatProperties({...properties, scale})
                 const allBands = getAllBands(bands)
                 return exportImageToAsset$({
+                    ...other,
                     image: segments
                         .set(formattedProperties)
                         .set('startDate', recipe.model.dates.startDate)
@@ -18,7 +23,7 @@ module.exports = {
                         .set('dateFormat', recipe.model.ccdcOptions.dateFormat)
                         .set('surfaceReflectance', recipe.model.options.corrections.includes('SR') && 1)
                         .set(toVisualizationProperties(visualizations, {selection: allBands})),
-                    ...other,
+                    region: geometry.bounds(),
                     scale,
                     pyramidingPolicy: {'.default': 'sample'},
                     maxPixels: 1e13
