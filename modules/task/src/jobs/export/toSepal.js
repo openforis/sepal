@@ -118,12 +118,13 @@ const exportImageToSepal$ = ({
                 deleteAfterDownload: true
             })
 
-        const serverConfig = ee.batch.Export.convertToServerParams({
-            image, description, folder, fileNamePrefix: prefix, dimensions, region, scale, crs,
-            crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
-        },
-        ee.data.ExportDestination.DRIVE,
-        ee.data.ExportType.IMAGE
+        const serverConfig = ee.batch.Export.convertToServerParams(
+            {
+                image, description, folder, fileNamePrefix: prefix, dimensions, region, scale, crs,
+                crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+            },
+            ee.data.ExportDestination.DRIVE,
+            ee.data.ExportType.IMAGE
         )
         const task = ee.batch.ExportTask.create(serverConfig)
         return concat(
