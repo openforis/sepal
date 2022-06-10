@@ -3,6 +3,7 @@ import {AssetSelect} from 'widget/assetSelect'
 import {Form} from 'widget/form/form'
 import {FormCombo} from 'widget/form/combo'
 import {Layout} from 'widget/layout'
+import {NumberButtons} from 'widget/numberButtons'
 import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -10,7 +11,7 @@ import React, {Component} from 'react'
 import api from 'api'
 
 class SampleClassificationSection extends Component {
-    eeTableChanged$ = new Subject()
+    cancel$ = new Subject()
     state = {bands: []}
 
     render() {
@@ -26,55 +27,55 @@ class SampleClassificationSection extends Component {
 
     renderSamplesPerClass() {
         const {inputs: {samplesPerClass}} = this.props
-        return <Form.Slider
-            label={msg('process.classification.panel.trainingData.form.sampleClassification.samplesPerClass.label')}
-            info={(countLabel, count) => msg('process.classification.panel.trainingData.form.sampleClassification.samplesPerClass.info', {count})}
-            input={samplesPerClass}
-            minValue={100}
-            maxValue={5000}
-            ticks={[
-                {value: 100, label: '100'},
-                {value: 500, label: '500'},
-                {value: 1000, label: '1K'},
-                {value: 1500, label: '1.5K'},
-                {value: 2000, label: '2K'},
-                {value: 2500, label: '2.5K'},
-                {value: 3000, label: '3K'},
-                {value: 3500, label: '3.4K'},
-                {value: 4000, label: '4K'},
-                {value: 4500, label: '4.5K'},
-                {value: 5000, label: '5K'}
-            ]}
-            snap
-            range='none'
-            onChange={count => this.loadInputData({
-                asset: this.props.inputs.assetToSample.value,
-                count,
-                scale: this.props.inputs.sampleScale.value,
-                classBand: this.props.inputs.valueColumn.value
-            })}
-        />
+        const options = [
+            {value: 20, label: '20'},
+            {value: 50, label: '50'},
+            {value: 100, label: '100'},
+            {value: 250, label: '250'},
+            {value: 500, label: '500'},
+            {value: 1000, label: '1K'},
+            {value: 2000, label: '2K'},
+            {value: 3000, label: '3K'},
+            {value: 5000, label: '5K'},
+        ]
+        return (
+            <NumberButtons
+                label={msg('process.classification.panel.trainingData.form.sampleClassification.samplesPerClass.label')}
+                placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.samplesPerClass.placeholder')}
+                tooltip={msg('process.classification.panel.trainingData.form.sampleClassification.samplesPerClass.tooltip')}
+                input={samplesPerClass}
+                options={options}
+                suffix={msg('process.classification.panel.trainingData.form.sampleClassification.samplesPerClass.suffix')}
+                errorMessage
+                onChange={count => this.loadInputData({
+                    asset: this.props.inputs.assetToSample.value,
+                    count,
+                    scale: this.props.inputs.sampleScale.value,
+                    classBand: this.props.inputs.valueColumn.value
+                })}
+            />
+        )
     }
 
     renderSampleScale() {
         const {inputs: {sampleScale}} = this.props
-        return <Form.Slider
-            label={msg('process.classification.panel.trainingData.form.sampleClassification.sampleScale.label')}
-            info={scale => msg('process.classification.panel.trainingData.form.sampleClassification.sampleScale.info', {scale})}
-            input={sampleScale}
-            minValue={10}
-            maxValue={100}
-            scale={'log'}
-            ticks={[10, 15, 20, 30, 60, 100]}
-            snap
-            range='none'
-            onChange={scale => this.loadInputData({
-                asset: this.props.inputs.assetToSample.value,
-                count: this.props.inputs.samplesPerClass.value,
-                scale,
-                classBand: this.props.inputs.valueColumn.value
-            })}
-        />
+        return (
+            <NumberButtons
+                label={msg('process.classification.panel.trainingData.form.sampleClassification.sampleScale.label')}
+                placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.sampleScale.placeholder')}
+                tooltip={msg('process.classification.panel.trainingData.form.sampleClassification.sampleScale.tooltip')}
+                input={sampleScale}
+                options={[3, 5, 10, 15, 20, 30, 60, 100, 200, 500]}
+                suffix={msg('process.classification.panel.trainingData.form.sampleClassification.sampleScale.suffix')}
+                errorMessage
+                onChange={scale => this.loadInputData({
+                    asset: this.props.inputs.assetToSample.value,
+                    count: this.props.inputs.samplesPerClass.value,
+                    scale,
+                    classBand: this.props.inputs.valueColumn.value
+                })}
+            />
+        )
     }
 
     renderAssetToSample() {
@@ -88,7 +89,8 @@ class SampleClassificationSection extends Component {
             errorMessage
             onLoading={() => this.setState({bands: []})}
             onLoaded={({metadata}) => {
-                this.setState({bands: metadata.bands || []})
+                const bands = metadata.bands.map(({id}) => id) || []
+                this.setState({bands})
             }}
             busyMessage={this.props.stream('SAMPLE_IMAGE').active && msg('widget.loading')}
         />
@@ -121,7 +123,7 @@ class SampleClassificationSection extends Component {
 
     componentDidMount() {
         const {inputs: {assetToSample, samplesPerClass, sampleScale, valueColumn}} = this.props
-        const count = samplesPerClass.value || '1000'
+        const count = samplesPerClass.value || '100'
         const scale = sampleScale.value || '30'
         samplesPerClass.set(count)
         sampleScale.set(scale)
@@ -133,13 +135,13 @@ class SampleClassificationSection extends Component {
         if (!asset || !count || !scale)
             return
         const {stream, inputs: {name, inputData, columns, valueColumn}} = this.props
-        this.eeTableChanged$.next()
+        this.cancel$.next()
         name.set(null)
         inputData.set(null)
         columns.set(null)
         stream('SAMPLE_IMAGE',
             api.gee.sampleImage$({asset, count, scale, classBand}).pipe(
-                takeUntil(this.eeTableChanged$)
+                takeUntil(this.cancel$)
             ),
             featureCollection => {
                 name.set(asset.substring(asset.lastIndexOf('/') + 1))

@@ -2016,14 +2016,18 @@
                   "required": "You must enter an asset ID"
                 },
                 "sampleScale": {
-                  "info": "{scale} meters",
-                  "label": "Scale to sample in (m)",
-                  "required": "You must specify the scale to sample in"
+                  "label": "Scale to sample in",
+                  "placeholder": "Scale...",
+                  "required": "You must specify the scale to sample in",
+                  "suffix": "meters",
+                  "tooltip": "The scale to sample the asset in"
                 },
                 "samplesPerClass": {
-                  "info": "{count} samples",
                   "label": "Samples per class",
-                  "required": "You must specify the number of samples to collect for each class"
+                  "placeholder": "Count...",
+                  "required": "You must specify the number of samples to collect for each class",
+                  "suffix": "samples",
+                  "tooltip": "The number of samples to extract from the asset"
                 },
                 "valueColumn": {
                   "label": "Class band",
