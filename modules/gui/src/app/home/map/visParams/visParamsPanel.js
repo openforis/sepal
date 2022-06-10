@@ -558,7 +558,7 @@ class _VisParamsPanel extends React.Component {
         const toEntries = values => values.map(value => ({
             id: guid(),
             value,
-            label: value,
+            label: `${value}`,
             color: '#000000'
         }))
 

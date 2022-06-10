@@ -171,7 +171,7 @@ class _EditLegendPanel extends React.Component {
         const toEntries = values => values.map(value => ({
             id: guid(),
             value,
-            label: value,
+            label: `${value}`,
             color: '#000000'
         }))
         if (!stream('LOAD_DISTINCT_IMAGE_VALUES').active) {
