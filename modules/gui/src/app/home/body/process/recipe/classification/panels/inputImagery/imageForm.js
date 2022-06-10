@@ -145,7 +145,6 @@ class ImageForm extends Component {
     }
 
     onLoaded(id, loadedBands, loadedMetadata, loadedVisualizations) {
-        console.log({id, loadedBands, loadedMetadata, loadedVisualizations})
         const {form, inputs: {bands, bandSetSpecs, metadata, visualizations}} = this.props
         if (!id || !form.isDirty()) {
             return
