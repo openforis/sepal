@@ -41,8 +41,8 @@ NumberButtons.propTypes = {
     options: PropTypes.array.isRequired,
     errorMessage: PropTypes.any,
     label: PropTypes.any,
-    onChange: PropTypes.func,
     placeholder: PropTypes.any,
     suffix: PropTypes.any,
-    tooltip: PropTypes.any
+    tooltip: PropTypes.any,
+    onChange: PropTypes.func
 }
