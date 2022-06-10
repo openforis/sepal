@@ -1,6 +1,5 @@
 import * as PropTypes from 'prop-types'
 import {AssetSelect} from 'widget/assetSelect'
-import {Form} from 'widget/form/form'
 import {FormCombo} from 'widget/form/combo'
 import {Layout} from 'widget/layout'
 import {NumberButtons} from 'widget/numberButtons'
