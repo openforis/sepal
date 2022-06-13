@@ -13,9 +13,9 @@ const DATE_FORMAT = 'YYYY-MM-DD'
 export const defaultModel = {
     reference: {},
     date: {
-        monitoringDuration: 1,
+        monitoringDuration: 2,
         monitoringDurationUnit: 'months',
-        calibrationDuration: 2,
+        calibrationDuration: 3,
         calibrationDurationUnit: 'months',
         
     },
