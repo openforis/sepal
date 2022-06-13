@@ -24,8 +24,6 @@ class ImageForm extends Component {
                         input,
                         onLoading: () => {
                             bands.set(undefined)
-                            band.set(undefined)
-                            errorBand.set(undefined)
                         },
                         onLoaded: ({id, bands, metadata, visualizations}) => this.onLoaded(id, bands, metadata, visualizations)
                     })}

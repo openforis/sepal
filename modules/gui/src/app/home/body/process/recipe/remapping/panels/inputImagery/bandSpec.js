@@ -12,12 +12,13 @@ import styles from './bandSpec.module.css'
 
 export class BandSpec extends React.Component {
     render() {
-        const {selected, spec: {id, band, type}, onClick, onRemove} = this.props
+        const {selected, spec: {id, band, type}, disabled, onClick, onRemove} = this.props
         return (
             <ListItem
                 expansion={this.renderExpansion()}
                 expanded={selected}
                 expansionClickable={false}
+                disabled={disabled}
                 onClick={() => onClick(id)}>
                 <CrudItem
                     title={msg(['process.remapping.panel.inputImagery.form.type', type])}

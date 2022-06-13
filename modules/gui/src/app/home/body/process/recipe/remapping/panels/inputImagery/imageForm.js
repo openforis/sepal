@@ -23,21 +23,19 @@ class ImageForm extends Component {
     }
 
     renderImageSelector() {
-        const {input, inputComponent, inputs: {includedBands, bands}} = this.props
+        const {input, inputComponent, inputs: {bands}} = this.props
         return <div ref={this.element}>
             {React.createElement(inputComponent, {
                 input,
                 onLoading: () => {
-                    includedBands.set([])
                     bands.set({})
                 },
                 onLoaded: ({
                     id,
                     bands,
-                    metadata,
                     visualizations,
                     recipe
-                }) => this.onLoaded(id, bands, metadata, visualizations, recipe)
+                }) => this.onLoaded(id, bands, visualizations, recipe)
             })}
         </div>
     }
@@ -52,15 +50,14 @@ class ImageForm extends Component {
                     <BandSpec
                         key={bandSpec.band}
                         bands={_.omit(bands.value, Object.keys(bands.value)
-                            .filter(b => ![bandSpec.band, ...availableBands].includes(b))) || {}
-                        }
+                            .filter(b => ![bandSpec.band, ...availableBands].includes(b))) || {}}
                         recipe={loadedRecipe}
                         spec={bandSpec}
                         selected={selected === bandSpec.id}
+                        disabled={!Object.keys(bands.value).length}
                         onClick={id => this.selectBandSpec(id)}
                         onUpdate={spec => this.updateSpec(spec)}
-                        onRemove={id => this.removeBandSpec(id)}
-                    />
+                        onRemove={id => this.removeBandSpec(id)}/>
                 )}
             </Layout>
         )
@@ -97,17 +94,19 @@ class ImageForm extends Component {
         )
     }
 
-    onLoaded(id, loadedBands, loadedMetadata, loadedVisualizations, loadedRecipe) {
-        const {form, inputs: {bands, metadata, visualizations, recipe}} = this.props
+    onLoaded(id, loadedBands, loadedVisualizations, loadedRecipe) {
+        const {form, inputs: {bands, visualizations, recipe, includedBands}} = this.props
         if (!id || !form.isDirty()) {
             return
         }
         bands.set(loadedBands)
-        metadata.set(loadedMetadata)
         visualizations.set(loadedVisualizations)
         recipe.set(loadedRecipe.id)
         this.setState({loadedRecipe})
-        this.addFirstBand(loadedBands)
+        if (!includedBands.value?.length) {
+            this.addFirstBand(loadedBands)
+        }
+        
     }
 
     addFirstBand(loadedBands) {
