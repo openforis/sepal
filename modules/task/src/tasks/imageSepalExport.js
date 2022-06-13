@@ -1,4 +1,4 @@
-const {concat, switchMap} = require('rxjs')
+const {concat, forkJoin, switchMap} = require('rxjs')
 const moment = require('moment')
 const {mkdirSafe$} = require('task/rxjs/fileSystem')
 const {createVrt$, setBandNames$} = require('sepal/gdal')
@@ -26,17 +26,24 @@ module.exports = {
         )
 }
 
-const export$ = ({description, recipe, bands, ...retrieveOptions}) =>
-    ImageFactory(recipe, bands).getImage$().pipe(
-        switchMap(image =>
+const export$ = ({description, recipe, bands, scale, ...retrieveOptions}) => {
+    const factory = ImageFactory(recipe, bands)
+    return forkJoin({
+        image: factory.getImage$(),
+        geometry: factory.getGeometry$()
+    }).pipe(
+        switchMap(({image, geometry}) => 
             exportImageToSepal$({
                 image,
                 folder: `${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}`,
+                ...retrieveOptions,
                 description,
-                ...retrieveOptions
+                region: geometry.bounds(scale),
+                scale
             })
         )
     )
+}
 
 const postProcess$ = ({description, downloadDir, bands}) => {
     const vrtPath = `${downloadDir}/${description}.vrt`
