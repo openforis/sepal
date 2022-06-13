@@ -25,8 +25,7 @@ export default class AssetSection extends React.Component {
 
     onLoaded({asset, metadata, visualizations}) {
         const {onLoaded} = this.props
-        const bands = metadata.bands
-        onLoaded({id: asset, bands, metadata, visualizations})
+        const bands = metadata.bands.map(({id}) => id)
         onLoaded({id: asset, bands, metadata, visualizations})
     }
 }
