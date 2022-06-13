@@ -15,23 +15,23 @@ module.exports = {
 
 const export$ = ({recipe, bands, visualizations, scale, properties, ...retrieveOptions}) => {
     const factory = ImageFactory(recipe, bands)
-        return forkJoin({
-            image: factory.getImage$(),
-            geometry: factory.getGeometry$()
-        }).pipe(
-            switchMap(({image, geometry}) => {
-                const formattedProperties = formatProperties({ ...properties, scale })
-                const visualizationProperties = toVisualizationProperties(visualizations, bands)
-                const imageWithProperties = image
-                    .set(formattedProperties)
-                    .set(visualizationProperties)
-                return exportImageToAsset$({
-                    ...retrieveOptions,
-                    image: imageWithProperties,
-                    region: geometry.bounds(scale),
-                    scale
-                })
-            }
-            )
+    return forkJoin({
+        image: factory.getImage$(),
+        geometry: factory.getGeometry$()
+    }).pipe(
+        switchMap(({image, geometry}) => {
+            const formattedProperties = formatProperties({ ...properties, scale })
+            const visualizationProperties = toVisualizationProperties(visualizations, bands)
+            const imageWithProperties = image
+                .set(formattedProperties)
+                .set(visualizationProperties)
+            return exportImageToAsset$({
+                ...retrieveOptions,
+                image: imageWithProperties,
+                region: geometry.bounds(scale),
+                scale
+            })
+        }
         )
-    }
+    )
+}
