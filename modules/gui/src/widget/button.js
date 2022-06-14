@@ -48,7 +48,7 @@ class _Button extends React.Component {
     }
 
     classNames() {
-        const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle,
+        const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle, hint,
             alignment, width, onClickHold, hover, disableTransitions, buttonGroupContext: {joinLeft, joinRight} = {}} = this.props
         return className ? className : [
             styles.button,
@@ -68,6 +68,7 @@ class _Button extends React.Component {
             disableTransitions ? lookStyles.noTransitions : null,
             this.nonInteractive() ? lookStyles.nonInteractive : null,
             onClickHold ? styles.hold : null,
+            hint ? styles.hint : null,
             additionalClassName
         ].join(' ')
     }
@@ -365,6 +366,7 @@ Button.propTypes = {
     downloadFilename: PropTypes.any,
     downloadUrl: PropTypes.any,
     hidden: PropTypes.any,
+    hint: PropTypes.any,
     hover: PropTypes.any,
     icon: PropTypes.string,
     iconAttributes: PropTypes.any,

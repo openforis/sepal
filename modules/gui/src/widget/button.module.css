@@ -236,3 +236,21 @@
         background-color: hsla(var(--look-cancel-h), 70%, var(--look-cancel-l), 1);
     }
 }
+
+.button.hint {
+    animation-name: hint;
+    animation-duration: 1000ms;
+    animation-delay: 500ms;
+    animation-timing-function: cubic-bezier(0, .5, .5, 1);
+    animation-iteration-count: infinite;
+    animation-fill-mode: forwards;
+}
+
+@keyframes hint {
+    0% {
+        background-color: lime;
+    }
+    100% {
+        background-color: inherit;
+    }
+}
