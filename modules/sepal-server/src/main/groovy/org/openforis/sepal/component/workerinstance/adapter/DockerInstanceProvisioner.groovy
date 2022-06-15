@@ -89,15 +89,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                             ["$exposedPort/tcp", [[HostPort: "$publishedPort"]]]
                         },
                         Links: image.links.collect { "$it.key:$it.value" },
-                        Mounts: [
-                                [
-                                        "Type": "tmpfs",
-                                        "Target": "/ram",
-                                        "TmpfsOptions": [
-                                                "SizeBytes": (long) instanceType.ramBytes / 2
-                                        ]
-                                ]
-                        ],
+                        Tmpfs: ["/ram": "rw,exec,nosuid,size=${(long) instanceType.ramBytes / 2}"],
                         LogConfig: logConfig,
                         Devices: (instanceType.devices ?: []).collect {
                             [PathOnHost: it, PathInContainer: it, CgroupPermissions: "mrw"]

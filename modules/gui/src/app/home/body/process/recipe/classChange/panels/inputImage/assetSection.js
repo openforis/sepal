@@ -27,7 +27,7 @@ export default class AssetSection extends React.Component {
         const {onLoaded} = this.props
         const bands = {}
         const categoricalVisualizations = visualizations.filter(({type}) => type === 'categorical')
-        metadata.bands.forEach(bandName => {
+        metadata.bands.forEach(({id: bandName}) => {
             const visualization = categoricalVisualizations
                 .find(({bands}) => bands[0] === bandName) || {}
             bands[bandName] = {

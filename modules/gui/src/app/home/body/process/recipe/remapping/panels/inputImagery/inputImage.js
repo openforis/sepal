@@ -25,7 +25,6 @@ const fields = {
         .notBlank(),
     bands: new Form.Field()
         .notEmpty(),
-    metadata: new Form.Field(),
     visualizations: new Form.Field(),
     includedBands: new Form.Field()
         .notEmpty()
@@ -102,7 +101,7 @@ class InputImage extends React.Component {
         }
     }
 
-    updateImageLayerSources({section, asset, recipe: recipeId, metadata, visualizations}) {
+    updateImageLayerSources({section, asset, recipe: recipeId, visualizations}) {
         const {recipeActionBuilder} = this.props
 
         const toImageLayerSource = () => {
@@ -122,7 +121,6 @@ class InputImage extends React.Component {
                     sourceConfig: {
                         description: asset,
                         asset,
-                        metadata,
                         visualizations
                     }
                 }
@@ -170,7 +168,6 @@ const modelToValues = model => {
         recipe: model.recipe,
         asset: model.asset,
         bands: model.bands,
-        metadata: model.metadata,
         visualizations: model.visualizations,
         includedBands: model.includedBands
     }
@@ -191,7 +188,6 @@ const valuesToModel = values => {
         recipe: values.recipe,
         asset: values.asset,
         bands: values.bands,
-        metadata: values.metadata,
         visualizations: values.visualizations,
         includedBands: values.includedBands
     }

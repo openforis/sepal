@@ -26,9 +26,7 @@ class ImageForm extends Component {
                     {React.createElement(inputComponent, {
                         input,
                         onLoading: () => {
-                            band.set(null)
                             bands.set({})
-                            legendEntries.set(null)
                         },
                         onLoaded: ({id, bands, metadata, visualizations, recipe}) => this.onLoaded(id, bands, metadata, visualizations, recipe)
                     })}

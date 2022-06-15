@@ -28,7 +28,7 @@ export default class AssetSection extends React.Component {
         const bands = {}
         const categoricalVisualizations = visualizations.filter(({type}) => type === 'categorical')
 
-        metadata.bands.forEach(bandName => {
+        metadata.bands.forEach(({id: bandName}) => {
             const visualization = categoricalVisualizations
                 .find(({bands}) => bands[0] === bandName) || {}
             bands[bandName] = {
@@ -40,7 +40,6 @@ export default class AssetSection extends React.Component {
         onLoaded({
             id: asset,
             bands,
-            metadata,
             visualizations,
             recipe: {
                 type: 'ASSET',

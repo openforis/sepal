@@ -1,5 +1,5 @@
 const ee = require('sepal/ee')
-const {concat, defer, switchMap} = require('rxjs')
+const {concat, defer, map, switchMap} = require('rxjs')
 const {finalize, swallow} = require('sepal/rxjs')
 const drive = require('task/drive')
 const {initUserBucket$} = require('task/cloudStorageBucket')
@@ -42,10 +42,11 @@ const exportImageToSepal$ = ({
     retries
 }) => {
     crsTransform = crsTransform || undefined
+    region = region || image.geometry()
     image = castToLargest(image)
     const prefix = description
 
-    const throughCloudStorage$ = () => {
+    const throughCloudStorage$ = region => {
         const exportToCloudStorage$ = ({task, description, _retries}) => {
             log.debug(() => ['Earth Engine <to Cloud Storage>:', description])
             return exportLimiter$(
@@ -101,7 +102,7 @@ const exportImageToSepal$ = ({
         )
     }
 
-    const throughDrive$ = () => {
+    const throughDrive$ = region => {
         const exportToDrive$ = ({task, description, folder, _retries}) => {
             log.debug(() => ['Earth Engine <to Google Drive>:', description])
             return exportLimiter$(
@@ -118,12 +119,13 @@ const exportImageToSepal$ = ({
                 deleteAfterDownload: true
             })
 
-        const serverConfig = ee.batch.Export.convertToServerParams({
-            image, description, folder, fileNamePrefix: prefix, dimensions, region, scale, crs,
-            crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
-        },
-        ee.data.ExportDestination.DRIVE,
-        ee.data.ExportType.IMAGE
+        const serverConfig = ee.batch.Export.convertToServerParams(
+            {
+                image, description, folder, fileNamePrefix: prefix, dimensions, region, scale, crs,
+                crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+            },
+            ee.data.ExportDestination.DRIVE,
+            ee.data.ExportType.IMAGE
         )
         const task = ee.batch.ExportTask.create(serverConfig)
         return concat(
@@ -142,12 +144,14 @@ const exportImageToSepal$ = ({
         )
     }
 
-    return getCurrentContext$().pipe(
-        switchMap(({isUserAccount}) =>
-            isUserAccount
-                ? throughDrive$()
-                : throughCloudStorage$()
-        )
+    return formatRegion$(region).pipe(
+        switchMap(region => getCurrentContext$().pipe(
+            switchMap(({isUserAccount}) =>
+                isUserAccount
+                    ? throughDrive$(region)
+                    : throughCloudStorage$(region)
+            )
+        ))
     )
 }
 
@@ -203,4 +207,10 @@ const castToLargest = image => {
         )
     )
 }
+
+const formatRegion$ = region =>
+    ee.getInfo$(region.bounds(1), 'format region for export').pipe(
+        map(geometry => ee.Geometry(geometry))
+    )
+
 module.exports = {exportImageToSepal$}

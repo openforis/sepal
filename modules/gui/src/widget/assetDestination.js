@@ -60,6 +60,7 @@ class _AssetDestination extends React.Component {
 
     renderStrategy() {
         const {strategyInput, type} = this.props
+        const {currentType} = this.state
         const options = [
             {
                 value: 'resume',
@@ -71,7 +72,7 @@ class _AssetDestination extends React.Component {
                 label: msg('widget.assetDestination.replace.label'),
                 tooltip: msg('widget.assetDestination.replace.tooltip')
             }
-        ].filter(({value}) => value !== 'resume' || type === 'ImageCollection')
+        ].filter(({value}) => value !== 'resume' || (type === 'ImageCollection' && currentType === 'ImageCollection'))
         return (
             <Form.Buttons
                 input={strategyInput}

@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 
-export const NumberButtons = ({input, options, label, placeholder, tooltip, suffix, errorMessage}) =>
+export const NumberButtons = ({input, options, label, placeholder, tooltip, suffix, errorMessage, onChange}) =>
     <Widget
         layout='horizontal'
         spacing='compact'
@@ -15,7 +15,10 @@ export const NumberButtons = ({input, options, label, placeholder, tooltip, suff
             options={options}
             spacing='none'
             selected={Number(input.value)}
-            onChange={value => input.set(value)}
+            onChange={value => {
+                input.set(value)
+                onChange && onChange(value)
+            }}
         />
         <Form.Input
             input={input}
@@ -24,7 +27,10 @@ export const NumberButtons = ({input, options, label, placeholder, tooltip, suff
             placeholder={placeholder}
             onChange={element => {
                 const value = parseFloat(element.target.value)
-                _.isFinite(value) && input.set(value)
+                if (_.isFinite(value)) {
+                    input.set(value)
+                    onChange && onChange(value)
+                }
             }}
             errorMessage={errorMessage}
         />
@@ -37,5 +43,6 @@ NumberButtons.propTypes = {
     label: PropTypes.any,
     placeholder: PropTypes.any,
     suffix: PropTypes.any,
-    tooltip: PropTypes.any
+    tooltip: PropTypes.any,
+    onChange: PropTypes.func
 }
