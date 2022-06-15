@@ -255,7 +255,7 @@ export default class UserList extends React.Component {
         return (
             <Buttons
                 chromeless
-                layout='horizontal-nowrap'
+                layout='horizontal'
                 spacing='tight'
                 options={options}
                 selected={statusFilter}
@@ -320,10 +320,8 @@ export default class UserList extends React.Component {
                         </Unscrollable>
                         <Scrollable direction='x'>
                             <ScrollableContainer className={styles.content}>
-                                <Unscrollable>
+                                <Scrollable direction='x' className={styles.users}>
                                     {this.renderHeader(users)}
-                                </Unscrollable>
-                                <Scrollable direction='xy' className={styles.users}>
                                     {this.renderUsers(users)}
                                 </Scrollable>
                             </ScrollableContainer>

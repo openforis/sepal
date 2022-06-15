@@ -2,10 +2,6 @@
     margin-bottom: 1rem;
 }
 
-.recipes {
-    flex-shrink: 1;
-}
-
 @media only screen and (max-width: 500px) {
     .updateTime {
         display: none;

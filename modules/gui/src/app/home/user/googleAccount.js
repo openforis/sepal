@@ -1,15 +1,16 @@
+import {Activator, activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
 import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser, requestUserAccess$, revokeGoogleAccess$} from 'user'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
+import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './googleAccount.module.css'
 
@@ -21,7 +22,7 @@ const mapStateToProps = state => {
     }
 }
 
-class GoogleAccount extends React.Component {
+class _GoogleAccount extends React.Component {
     constructor(props) {
         super(props)
         this.close = this.close.bind(this)
@@ -155,16 +156,33 @@ class GoogleAccount extends React.Component {
     }
 }
 
-GoogleAccount.propTypes = {}
-
 const policy = () => ({
     _: 'disallow',
     userDetails: 'allow-then-deactivate'
 })
 
-export default compose(
-    GoogleAccount,
+export const GoogleAccount = compose(
+    _GoogleAccount,
     connect(mapStateToProps),
     activator('userDetails'),
     activatable({id: 'googleAccount', policy, alwaysAllow: true})
 )
+
+GoogleAccount.propTypes = {}
+
+export const GoogleAccountButton = ({disabled}) => (
+    <Activator id='googleAccount'>
+        {({canActivate, activate}) =>
+            <Button
+                icon='google'
+                iconType='brands'
+                label={msg('user.googleAccount.label')}
+                disabled={!canActivate || disabled}
+                onClick={() => activate()}/>
+        }
+    </Activator>
+)
+
+GoogleAccountButton.propTypes = {
+    disabled: PropTypes.any,
+}

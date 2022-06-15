@@ -42,7 +42,7 @@
           "ignore.label": "All"
         }
       },
-      "googleAccountRequired": "SEPAL needs to be connected to your Google Account to use this app",
+      "googleAccountRequired": "Some apps are unavailable. To enable them, connect your SEPAL account to your Google account.",
       "info": "Show information about this app",
       "initializing": "Starting session...",
       "loading": {
