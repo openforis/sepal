@@ -10,7 +10,7 @@ import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
 import {ProjectsButton} from './projectsButton'
 import {RecipeListConfirm} from './recipeListConfirm'
-import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {SelectProject} from './selectProject'
 import {compose} from 'compose'
@@ -84,7 +84,7 @@ class _RecipeList extends React.Component {
                 <Unscrollable>
                     {this.renderHeader()}
                 </Unscrollable>
-                <Unscrollable className={styles.recipes}>
+                <Scrollable direction='x'>
                     <FastList
                         items={filteredRecipes}
                         itemKey={recipe => `${recipe.id}|${highlightMatcher}`}
@@ -94,7 +94,7 @@ class _RecipeList extends React.Component {
                     </FastList>
                     {move && this.renderMoveConfirmation()}
                     {remove && this.renderRemoveConfirmation()}
-                </Unscrollable>
+                </Scrollable>
             </ScrollableContainer>
         )
     }
