@@ -18,6 +18,10 @@
     padding-left: .25rem;
 }
 
+.input input {
+    width: 0;
+}
+
 .input input,
 .input textarea {
     font-size: .9rem;
