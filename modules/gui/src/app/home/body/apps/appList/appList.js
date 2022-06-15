@@ -8,7 +8,7 @@ import {CrudItem} from 'widget/crudItem'
 import {FastList} from 'widget/fastList'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
-import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -16,6 +16,7 @@ import {currentUser} from 'user'
 import {getLanguage, msg} from 'translate'
 import {loadApps$} from 'apps'
 import {simplifyString, splitString} from 'string'
+import {userDetailsHint} from 'app/home/user/userDetails'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
@@ -30,7 +31,8 @@ const mapStateToProps = () => ({
     tags: select('apps.tags'),
     tabs: select('apps.tabs'),
     filterValues: select('apps.filterValues') || [],
-    tagFilter: select('apps.tagFilter')
+    tagFilter: select('apps.tagFilter'),
+    googleAccountFilter: select('apps.googleAccountFilter')
 })
 
 class _AppList extends React.Component {
@@ -44,7 +46,7 @@ class _AppList extends React.Component {
                 <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
                     {this.isLoading()
                         ? this.renderProgress()
-                        : this.renderData()}
+                        : this.renderAppList()}
                     {this.renderAppDetails()}
                 </Content>
             </SectionLayout>
@@ -73,17 +75,16 @@ class _AppList extends React.Component {
         return <CenteredProgress title={msg('apps.loading.progress')}/>
     }
 
-    renderData() {
-        const {tags} = this.props
+    renderAppList() {
         const highlightMatcher = this.getHighlightMatcher()
         const key = app => _.compact([app.path, highlightMatcher]).join('|')
         return this.hasData()
             ? (
                 <ScrollableContainer>
                     <Unscrollable>
-                        {this.renderSearchAndFilter(tags)}
+                        {this.renderHeader()}
                     </Unscrollable>
-                    <Unscrollable className={styles.apps}>
+                    <Scrollable direction='x'>
                         <FastList
                             items={this.getApps()}
                             itemKey={app => key(app)}
@@ -91,20 +92,24 @@ class _AppList extends React.Component {
                             overflow={50}>
                             {app => this.renderApp(app, highlightMatcher)}
                         </FastList>
-                    </Unscrollable>
+                    </Scrollable>
                 </ScrollableContainer>
             )
             : null
     }
 
-    renderSearchAndFilter(tags) {
+    renderHeader() {
+        const {tags} = this.props
         return (
-            <div className={styles.header}>
+            <Layout className={styles.header} type='vertical' spacing='compact'>
                 <Layout type='horizontal' spacing='compact'>
                     {this.renderSearch()}
+                    {this.renderGoogleAccountFilter()}
+                </Layout>
+                <Layout type='horizontal' spacing='compact' alignment='right'>
                     {this.renderTagFilter(tags)}
                 </Layout>
-            </div>
+            </Layout>
         )
     }
 
@@ -117,6 +122,23 @@ class _AppList extends React.Component {
                 onSearchValue={searchValue => this.setFilter(searchValue)}
             />
         )
+    }
+
+    renderGoogleAccountFilter() {
+        const {googleAccountFilter} = this.props
+        return this.isUsingServiceAccount() ? (
+            <Button
+                look={googleAccountFilter ? 'cancel' : 'default'}
+                shape='pill'
+                icon='google'
+                iconType='brands'
+                label={googleAccountFilter ? 'Hide unavailable' : 'Show unavailable'}
+                tooltip={msg('apps.googleAccountRequired')}
+                tooltipPlacement='left'
+                tooltipOnVisible={visible => userDetailsHint(visible)}
+                onClick={() => this.toggleGoogleAccountFilter()}
+            />
+        ) : null
     }
 
     renderTagFilter(tags) {
@@ -151,13 +173,14 @@ class _AppList extends React.Component {
             ? (
                 <Button
                     key={'renderGoogleAccountRequiredButton'}
-                    chromeless
+                    look='cancel'
                     shape='circle'
                     icon='google'
                     iconType='brands'
                     iconStyle='warning'
                     tooltip={msg('apps.googleAccountRequired')}
                     tooltipPlacement='left'
+                    tooltipOnVisible={visible => userDetailsHint(visible)}
                     onClick={() => null}
                 />
             )
@@ -202,9 +225,7 @@ class _AppList extends React.Component {
         const unavailable = this.isDisabled(app) || this.isDisallowed(app)
         return (
             <ListItem
-                disabled={unavailable}
-                onClick={() => onSelect(app)}
-            >
+                onClick={unavailable ? null : () => onSelect(app)}>
                 <CrudItem
                     infoTooltip={msg('apps.info')}
                     tooltipPlacement='left'
@@ -213,8 +234,7 @@ class _AppList extends React.Component {
                         this.renderStatusIcon(app)
                     ]}
                     infoDisabled={false}
-                    onInfo={() => this.showInfo(app)}
-                >
+                    onInfo={() => this.showInfo(app)}>
                     <AppItem
                         app={app}
                         highlight={highlightMatcher}
@@ -255,7 +275,7 @@ class _AppList extends React.Component {
     }
 
     appMatchesFilters(app) {
-        return this.appMatchesFilterValues(app) && this.appMatchesTagFilter(app)
+        return this.appMatchesFilterValues(app) && this.appMatchesTagFilter(app) && this.appMatcherGoogleAccountFilter(app)
     }
 
     appMatchesTagFilter(app) {
@@ -275,6 +295,14 @@ class _AppList extends React.Component {
             )
             : true
     }
+
+    appMatcherGoogleAccountFilter({googleAccountRequired}) {
+        const {googleAccountFilter} = this.props
+        return googleAccountFilter
+            ? true
+            : !googleAccountRequired
+    }
+
     isLoading() {
         const {apps, stream} = this.props
         return !apps && stream('LOAD_APPS').active
@@ -295,6 +323,13 @@ class _AppList extends React.Component {
     setTagFilter(tagFilter) {
         actionBuilder('UPDATE_TAG_FILTER', tagFilter)
             .set('apps.tagFilter', tagFilter)
+            .dispatch()
+    }
+
+    toggleGoogleAccountFilter() {
+        const {googleAccountFilter} = this.props
+        actionBuilder('UPDATE_GOOGLE_ACCOUNT_FILTER', !googleAccountFilter)
+            .set('apps.googleAccountFilter', !googleAccountFilter)
             .dispatch()
     }
 
