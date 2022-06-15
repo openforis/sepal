@@ -45,7 +45,7 @@ const mapStateToProps = () => {
 
 export class _BudgetUpdateRequest extends React.Component {
     render() {
-        const {budgetUpdateRequest, form} = this.props
+        const {form} = this.props
         return (
             <Form.Panel
                 className={styles.panel}
@@ -59,11 +59,8 @@ export class _BudgetUpdateRequest extends React.Component {
                     title={msg('user.quotaUpdate.title')}/>
                 <Panel.Content>
                     <Layout>
-                        <Layout type='horizontal'>
-                            {this.renderCreationTime(budgetUpdateRequest)}
-                            {this.renderUpdateTime(budgetUpdateRequest)}
-                        </Layout>
                         {this.renderMessage()}
+                        {this.renderUpdateRequest()}
                         {this.renderMonthlyLimits()}
                         {this.renderJustificationMessage()}
                     </Layout>
@@ -73,40 +70,42 @@ export class _BudgetUpdateRequest extends React.Component {
         )
     }
 
-    renderCreationTime() {
+    renderUpdateRequest() {
         const {budgetUpdateRequest} = this.props
-        if (budgetUpdateRequest) {
-            const {creationTime} = budgetUpdateRequest
-            if (creationTime) {
-                return (
-                    <Input
-                        label={msg('user.quotaUpdate.form.created')}
-                        readOnly
-                        // value={moment(creationTime).format('LLLL')}
-                        value={moment(creationTime).fromNow()}
-                    />
-                )
-            }
+        return budgetUpdateRequest ? (
+            <Layout type='horizontal'>
+                {this.renderCreationTime()}
+                {this.renderUpdateTime()}
+            </Layout>
+        ) : null
+    }
+
+    renderCreationTime() {
+        const {budgetUpdateRequest: {creationTime}} = this.props
+        if (creationTime) {
+            return (
+                <Input
+                    label={msg('user.quotaUpdate.form.created')}
+                    readOnly
+                    // value={moment(creationTime).format('LLLL')}
+                    value={moment(creationTime).fromNow()}
+                />
+            )
         }
-        return null
     }
 
     renderUpdateTime() {
-        const {budgetUpdateRequest} = this.props
-        if (budgetUpdateRequest) {
-            const {updateTime} = budgetUpdateRequest
-            if (updateTime) {
-                return (
-                    <Input
-                        label={msg('user.quotaUpdate.form.modified')}
-                        readOnly
-                        // value={moment(updateTime).format('LLLL')}
-                        value={moment(updateTime).fromNow()}
-                    />
-                )
-            }
+        const {budgetUpdateRequest: {updateTime}} = this.props
+        if (updateTime) {
+            return (
+                <Input
+                    label={msg('user.quotaUpdate.form.modified')}
+                    readOnly
+                    // value={moment(updateTime).format('LLLL')}
+                    value={moment(updateTime).fromNow()}
+                />
+            )
         }
-        return null
     }
 
     renderMessage() {
