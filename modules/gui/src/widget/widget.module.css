@@ -5,8 +5,9 @@
     flex-direction: column;
     position: relative;
     overflow: hidden;
-    flex-shrink: 0;
     flex-grow: 0;
+    flex-shrink: 1;
+    min-width: fit-content;
 }
 
 .container.disabled {
