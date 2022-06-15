@@ -14,7 +14,7 @@ export class Message extends React.Component {
                 className
             ].join(' ')}>
                 {this.renderIcon()}
-                {children || text}
+                <div>{children || text}</div>
             </div>
         )
     }
