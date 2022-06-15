@@ -18,15 +18,12 @@
     padding-left: .25rem;
 }
 
-.input input {
-    width: 0;
-}
-
 .input input,
 .input textarea {
     font-size: .9rem;
     display: flex;
     flex-grow: 1;
+    width: 100%;
     border: none;
     color: #fff;
     background-color: transparent;
