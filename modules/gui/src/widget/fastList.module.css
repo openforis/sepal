@@ -1,7 +1,7 @@
 .container {
     width: 100%;
     height: 100%;
-    overflow-y: scroll;
+    overflow-y: auto;
     will-change: transform;
 }
 
