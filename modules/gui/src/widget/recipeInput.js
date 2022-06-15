@@ -120,7 +120,7 @@ class _RecipeInput extends React.Component {
                 ).pipe(
                     takeUntil(this.cancel$)
                 ),
-                result => onLoaded(result),
+                result => onLoaded && onLoaded(result),
                 error => onError && onError(error)
             )
         }
