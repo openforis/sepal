@@ -7,7 +7,7 @@
     overflow: hidden;
     flex-grow: 0;
     flex-shrink: 1;
-    min-width: fit-content;
+    min-width: min-content;
 }
 
 .container.disabled {
@@ -38,6 +38,10 @@
 .container.scrollable {
     flex-shrink: 1;
     flex-grow: 1;
+}
+
+.label {
+    margin-bottom: .5rem;
 }
 
 /* widget */

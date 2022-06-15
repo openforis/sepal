@@ -193,6 +193,7 @@ class _UserDetailsButton extends React.Component {
                 size='large'
                 air='less'
                 additionalClassName={className}
+                icon='user'
                 label={username}
                 disabled={active}
                 onClick={activate}

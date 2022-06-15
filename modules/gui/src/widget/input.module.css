@@ -23,7 +23,7 @@
     font-size: .9rem;
     display: flex;
     flex-grow: 1;
-    width: 100%; /* required by Firefox */
+    width: 100%;
     border: none;
     color: #fff;
     background-color: transparent;

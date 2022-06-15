@@ -3,6 +3,7 @@ import {Form, form} from 'widget/form/form'
 import {FormCombo} from 'widget/form/combo'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
+import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -10,7 +11,6 @@ import {parseCsvFile$} from 'csv'
 import {withRecipe} from '../body/process/recipeContext'
 import Color from 'color'
 import Icon from 'widget/icon'
-import Label from 'widget/label'
 import React from 'react'
 import _ from 'lodash'
 import guid from 'guid'
@@ -149,8 +149,7 @@ class _LegendImport extends React.Component {
     renderFileSelect() {
         const {stream, inputs: {name}} = this.props
         return (
-            <Layout spacing={'compact'}>
-                <Label>{msg('map.legendBuilder.import.file.label')}</Label>
+            <Widget label={msg('map.legendBuilder.import.file.label')}>
                 <FileSelect
                     single
                     onSelect={file => this.onSelectFile(file)}>
@@ -164,7 +163,7 @@ class _LegendImport extends React.Component {
                         : null
                     }
                 </FileSelect>
-            </Layout>
+            </Widget>
         )
     }
 

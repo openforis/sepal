@@ -2,6 +2,7 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
+import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
@@ -41,12 +42,11 @@ class _ForgotPassword extends React.Component {
                 onSubmit={() => this.requestPasswordReset(email.value)}>
                 <div className={styles.inputs}>
                     <Layout spacing='loose'>
-                        <div>
-                            <Label msg={msg('landing.forgot-password.label')}/>
-                            <div className={styles.instructions}>
-                                {msg('landing.forgot-password.instructions')}
-                            </div>
-                        </div>
+                        <Widget
+                            label={msg('landing.forgot-password.label')}
+                            contentClassName={styles.instructions}>
+                            {msg('landing.forgot-password.instructions')}
+                        </Widget>
                         <Form.Input
                             input={email}
                             placeholder={msg('landing.forgot-password.placeholder')}

@@ -73,7 +73,7 @@ const renderOption = (value, label) => {
         <div
             className={styles.presetOption}
             style={{'--palette': value.join(', ')}}>
-            <Label msg={label} className={styles.presetLabel}/>
+            <Label className={styles.presetLabel} msg={label}/>
         </div>
     )
 }
