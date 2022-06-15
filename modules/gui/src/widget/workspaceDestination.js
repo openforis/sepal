@@ -3,6 +3,7 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser} from 'user'
 import {selectFrom} from 'stateUtils'
+import {toSafeString} from 'string'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -113,7 +114,7 @@ class _WorkspaceDestination extends React.Component {
             return `${project?.defaultWorkspaceFolder}/${recipeName}`
         } else {
             if (project) {
-                const projectDir = project?.name?.replace(/[^\w-.]/g, '_')
+                const projectDir = toSafeString(project?.name)
                 return `downloads/${projectDir}/${recipeName}`
             } else {
                 return `downloads/${recipeName}`
