@@ -41,7 +41,7 @@ class CcdcToolbar extends React.Component {
 
                 {initialized ? <ChartPixel/> : null}
                 <Retrieve/>
-                <Aoi allowWholeEETable={true} layerIndex={2}/>
+                <Aoi layerIndex={2}/>
                 <Dates/>
                 <Sources/>
                 {_.isEmpty(sources.dataSets['SENTINEL_1'])

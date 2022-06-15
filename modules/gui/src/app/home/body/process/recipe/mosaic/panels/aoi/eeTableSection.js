@@ -41,7 +41,7 @@ class _EETableSection extends React.Component {
     }
 
     render() {
-        const {allowWholeEETable, inputs: {eeTable}} = this.props
+        const {inputs: {eeTable}} = this.props
         return (
             <Layout>
                 <Form.Input
@@ -54,7 +54,7 @@ class _EETableSection extends React.Component {
                     errorMessage
                     busyMessage={this.props.stream('LOAD_EE_TABLE_COLUMNS').active && msg('widget.loading')}
                 />
-                {allowWholeEETable ? this.renderFilterOptions() : null}
+                {this.renderFilterOptions()}
                 {this.renderColumnValueRowInputs()}
                 <PreviewMap/>
             </Layout>
@@ -265,6 +265,5 @@ export const EETableSection = compose(
 EETableSection.propTypes = {
     inputs: PropTypes.object.isRequired,
     recipeId: PropTypes.string.isRequired,
-    allowWholeEETable: PropTypes.any,
     layerIndex: PropTypes.number
 }

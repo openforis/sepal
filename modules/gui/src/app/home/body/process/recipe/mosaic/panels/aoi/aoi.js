@@ -24,7 +24,6 @@ const fields = {
     eeTable: new Form.Field()
         .skip((value, {section}) => section !== 'EE_TABLE')
         .notBlank('process.mosaic.panel.areaOfInterest.form.eeTable.eeTable.required'),
-    allowWholeEETable: new Form.Field(),
     eeTableRowSelection: new Form.Field(),
     eeTableColumn: new Form.Field()
         .skip((value, {section}) => section !== 'EE_TABLE')
@@ -51,7 +50,7 @@ class Aoi extends React.Component {
     }
 
     render() {
-        const {recipeId, allowWholeEETable, inputs, layerIndex = 1} = this.props
+        const {recipeId, inputs, layerIndex = 1} = this.props
         const sections = [{
             component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
         }, {
@@ -66,7 +65,6 @@ class Aoi extends React.Component {
             component: <EETableSection
                 recipeId={recipeId}
                 inputs={inputs}
-                allowWholeEETable={allowWholeEETable}
                 layerIndex={layerIndex}/>
         }, {
             value: 'POLYGON',
@@ -88,15 +86,6 @@ class Aoi extends React.Component {
             </RecipeFormPanel>
         )
     }
-
-    componentDidUpdate() {
-        const {inputs, allowWholeEETable = ''} = this.props
-        inputs.allowWholeEETable.set(allowWholeEETable)
-    }
-}
-
-Aoi.propTypes = {
-    allowWholeEETable: PropTypes.any
 }
 
 const valuesToModel = values => {

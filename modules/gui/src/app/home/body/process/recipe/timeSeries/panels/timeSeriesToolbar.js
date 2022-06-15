@@ -39,7 +39,7 @@ class TimeSeriesToolbar extends React.Component {
                 onDone={() => setInitialized(recipeId)}>
                 {initialized ? <ChartPixel/> : null}
                 <Retrieve/>
-                <Aoi allowWholeEETable={true}/>
+                <Aoi/>
                 <Dates/>
                 <Sources/>
                 {_.isEmpty(sources.dataSets['SENTINEL_1'])
