@@ -5,15 +5,12 @@ import {getAvailableBands} from 'sources'
 import {msg} from 'translate'
 import {recipeAccess} from '../../recipeAccess'
 import {selectFrom} from 'stateUtils'
-import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualizationParser'
+import {toAssetReference} from './panels/reference/assetSection'
 import {withRecipe} from '../../recipeContext'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
-import guid from 'guid'
-
-const baseBandPattern = /(.*)_(coefs|intercept|slope|phase_\d|amplitude_\d|rmse|magnitude)$/
 
 const mapRecipeToProps = (recipe, ownProps) => {
     return {
@@ -119,39 +116,13 @@ class _ReferenceSync extends React.Component {
 
     updateAssetReference(id, metadata, reference) {
         const {recipeActionBuilder} = this.props
-        const bands = metadata.bands
-        const bandAndType = _.chain(bands)
-            .map(referenceBand => referenceBand.match(baseBandPattern))
-            .filter(match => match)
-            .map(([_, name, bandType]) => bandType === 'coefs'
-                ? ['value', 'intercept', 'slope', 'phase_1', 'amplitude_1', 'phase_2', 'amplitude_2', 'phase_3', 'amplitude_3']
-                    .map(bandType => ({name, bandType}))
-                : [{name, bandType}]
-            )
-            .flatten()
-            .value()
-        const bandByName = _.groupBy(bandAndType, ({name}) => name)
-        const baseBands = _.chain(bandAndType)
-            .map(({name}) => name)
-            .uniq()
-            .map(name => ({name, bandTypes: bandByName[name].map(({bandType}) => bandType)}))
-            .value()
-        const segmentBands = bands
-            .filter(name => ['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb'].includes(name))
-            .map(name => ({name}))
         const assetDateFormat = metadata.properties.dateFormat
         const dateFormat = assetDateFormat === undefined ? reference.dateFormat : assetDateFormat
         const referenceDetails = {
             type: 'ASSET',
             id,
-            bands,
-            baseBands,
-            segmentBands,
-            dateFormat,
-            startDate: metadata.properties.startDate,
-            endDate: metadata.properties.endDate,
-            visualizations: toVisualizations(metadata.properties, bands)
-                .map(visualization => ({...visualization, id: guid()}))
+            ...toAssetReference(metadata.bands, metadata.properties),
+            dateFormat
         }
         recipeActionBuilder('UPDATE_REFERENCE', {referenceDetails})
             .set('model.reference', referenceDetails)

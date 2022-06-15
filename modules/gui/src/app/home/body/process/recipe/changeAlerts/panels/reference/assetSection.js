@@ -5,9 +5,11 @@ import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
+import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualizationParser'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
+import guid from 'guid'
 
 const J_DAYS = 0
 const FRACTIONAL_YEARS = 1
@@ -57,20 +59,53 @@ class AssetSection extends React.Component {
     }
 
     onLoaded({metadata}) {
-        const {inputs} = this.props
-        const {bands, properties: {dateFormat}} = metadata
-        const assetBands = _.intersection(...['coefs', 'magnitude', 'rmse']
-            .map(postfix => bands
-                .map(({id}) => id.match(`(.*)_${postfix}`))
-                .map(match => match && match[1])
-                .filter(band => band)
-            )
-        )
-        if (assetBands.length) {
-            dateFormat && inputs.dateFormat.set(dateFormat)
+        const {inputs: {asset, dateFormat, bands, baseBands, segmentBands, startDate, endDate, visualizations}} = this.props
+        const reference = toAssetReference(metadata.bands.map(({id}) => id), metadata.properties)
+        if (reference.bands.length) {
+            dateFormat.set(reference.dateFormat)
+            bands.set(reference.bands)
+            baseBands.set(reference.baseBands)
+            segmentBands.set(reference.segmentBands)
+            startDate.set(reference.endDate)
+            endDate.set(reference.endDate)
+            visualizations.set(reference.visualizations)
         } else {
-            inputs.asset.setInvalid(msg('process.changeAlerts.panel.reference.asset.notCcdc'))
+            asset.setInvalid(msg('process.changeAlerts.panel.reference.asset.notCcdc'))
         }
+    }
+}
+
+export const toAssetReference = (bands, properties) => {
+    const baseBandPattern = /(.*)_(coefs|intercept|slope|phase_\d|amplitude_\d|rmse|magnitude)$/
+    const bandAndType = _.chain(bands)
+        .map(referenceBand => referenceBand.match(baseBandPattern))
+        .filter(match => match)
+        .map(([_, name, bandType]) => bandType === 'coefs'
+            ? ['value', 'intercept', 'slope', 'phase_1', 'amplitude_1', 'phase_2', 'amplitude_2', 'phase_3', 'amplitude_3']
+                .map(bandType => ({name, bandType}))
+            : [{name, bandType}]
+        )
+        .flatten()
+        .value()
+    const bandByName = _.groupBy(bandAndType, ({name}) => name)
+    const baseBands = _.chain(bandAndType)
+        .map(({name}) => name)
+        .uniq()
+        .map(name => ({name, bandTypes: bandByName[name].map(({bandType}) => bandType)}))
+        .value()
+    const segmentBands = bands
+        .filter(name => ['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb'].includes(name))
+        .map(name => ({name}))
+    const dateFormat = properties.dateFormat
+    return {
+        bands,
+        baseBands,
+        segmentBands,
+        dateFormat,
+        startDate: properties.startDate,
+        endDate: properties.endDate,
+        visualizations: toVisualizations(properties, bands)
+            .map(visualization => ({...visualization, id: guid()}))
     }
 }
 
