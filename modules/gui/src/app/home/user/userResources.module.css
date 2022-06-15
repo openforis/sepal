@@ -1,3 +1,7 @@
+.container {
+    padding: 0 .5rem;
+}
+
 .resources {
     display: grid;
     grid-template-columns: 3fr 5rem 4rem 2fr;
@@ -7,10 +11,6 @@
     align-items: center;
     justify-items: right;
     grid-template-areas: 'label quota used bar';
-}
-
-.resources > * {
-    margin: .5rem;
 }
 
 .resources .label {

@@ -1,4 +1,6 @@
 import {Gauge} from 'widget/gauge'
+import {Layout} from 'widget/layout'
+import {Message} from 'widget/message'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
@@ -15,12 +17,28 @@ class UserResources extends React.Component {
     render() {
         const {userReport: {spending}} = this.props
         return (
-            <div>
-                {this.renderHeader()}
-                {this.renderInstanceBudget(spending)}
-                {this.renderStorageBudget(spending)}
-                {this.renderStorage(spending)}
-            </div>
+            <Layout type='vertical'>
+                {/* {this.renderInfo()} */}
+                <Layout
+                    className={styles.container}
+                    type='vertical'
+                    spacing='tight'>
+                    {this.renderHeader()}
+                    {this.renderInstanceBudget(spending)}
+                    {this.renderStorageBudget(spending)}
+                    {this.renderStorage(spending)}
+                </Layout>
+            </Layout>
+        )
+    }
+
+    renderInfo() {
+        return (
+            <Message
+                type='info'
+                icon='comment'
+                iconSize='2x'
+                text={msg('user.report.resources.info')}/>
         )
     }
 
