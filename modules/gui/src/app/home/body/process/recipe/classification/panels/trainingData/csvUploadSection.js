@@ -1,11 +1,10 @@
-import * as PropTypes from 'prop-types'
 import {FileSelect} from 'widget/fileSelect'
-import {Layout} from 'widget/layout'
 import {Subject, toArray, zip} from 'rxjs'
+import {Widget} from 'widget/widget'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
-import Label from 'widget/label'
 import Papa from 'papaparse'
+import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import styles from './csvUploadSection.module.css'
 
@@ -13,8 +12,7 @@ export default class CsvUploadSection extends Component {
     render() {
         const {stream, inputs: {name}} = this.props
         return (
-            <Layout spacing={'compact'}>
-                <Label>{msg('process.classification.panel.trainingData.form.csvUpload.file.label')}</Label>
+            <Widget label={msg('process.classification.panel.trainingData.form.csvUpload.file.label')}>
                 <FileSelect
                     single
                     onSelect={file => this.onSelect(file)}>
@@ -28,7 +26,7 @@ export default class CsvUploadSection extends Component {
                         : null
                     }
                 </FileSelect>
-            </Layout>
+            </Widget>
         )
     }
 

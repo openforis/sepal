@@ -40,6 +40,10 @@
     flex-grow: 1;
 }
 
+.label {
+    margin-bottom: .5rem;
+}
+
 /* widget */
 
 .widget {

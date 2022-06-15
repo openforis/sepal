@@ -1,8 +1,8 @@
 import {Graph} from 'widget/graph'
+import {Widget} from 'widget/widget'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import {toT} from './t'
-import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -85,65 +85,72 @@ export class CCDCGraph extends React.Component {
             <div
                 className={styles.point}
                 style={point.left ? {right: 0} : null}>
-                <div className={styles.date}>
-                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.date.label')} className={styles.label}/>
-                    <div>{moment(point.date).format('YYYY-MM-DD')}</div>
-                </div>
-                <div className={styles.model}>
-                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.model.label')} className={styles.label}/>
-                    <div>{hasModel
+                <Widget
+                    className={styles.date}
+                    label={msg('process.ccdc.mapToolbar.ccdcGraph.date.label')}>
+                    {moment(point.date).format('YYYY-MM-DD')}
+                </Widget>
+                <Widget
+                    className={styles.model}
+                    label={msg('process.ccdc.mapToolbar.ccdcGraph.model.label')}>
+                    {hasModel
                         ? format.number({value: point.model, precisionDigits: 3})
                         : <React.Fragment>&ndash;</React.Fragment>
-                    }</div>
-                </div>
+                    }
+                </Widget>
                 {observations
-                    ? <div className={styles.observation}>
-                        <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.observation.label')}
-                            className={styles.label}/>
-                        <div>{hasObservation
-                            ? format.number({value: point.observation, precisionDigits: 3})
-                            : <React.Fragment>&ndash;</React.Fragment>
-                        }</div>
-                    </div>
-                    : null
+                    ? (
+                        <Widget
+                            className={styles.observation}
+                            label={msg('process.ccdc.mapToolbar.ccdcGraph.observation.label')}>
+                            {hasObservation
+                                ? format.number({value: point.observation, precisionDigits: 3})
+                                : <React.Fragment>&ndash;</React.Fragment>
+                            }
+                        </Widget>
+                    ) : null
                 }
 
-                <div className={styles.startDate}>
-                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.startDate.label')} className={styles.label}/>
-                    <div>{hasModel
+                <Widget
+                    className={styles.startDate}
+                    label={msg('process.ccdc.mapToolbar.ccdcGraph.startDate.label')}>
+                    {hasModel
                         ? moment(point.startDate).format('YYYY-MM-DD')
                         : <React.Fragment>&ndash;</React.Fragment>
-                    }</div>
-                </div>
-                <div className={styles.endDate}>
-                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.endDate.label')} className={styles.label}/>
-                    <div>{hasModel
+                    }
+                </Widget>
+                <Widget
+                    className={styles.endDate}
+                    label={msg('process.ccdc.mapToolbar.ccdcGraph.endDate.label')}>
+                    {hasModel
                         ? moment(point.endDate).format('YYYY-MM-DD')
                         : <React.Fragment>&ndash;</React.Fragment>
-                    }</div>
-                </div>
-                <div className={styles.rmse}>
-                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.rmse.label')} className={styles.label}/>
-                    <div>{hasModel
+                    }
+                </Widget>
+                <Widget
+                    className={styles.rmse}
+                    label={msg('process.ccdc.mapToolbar.ccdcGraph.rmse.label')}>
+                    {hasModel
                         ? format.number({value: point.rmse, precisionDigits: 3})
                         : <React.Fragment>&ndash;</React.Fragment>
-                    }</div>
-                </div>
-                <div className={styles.magnitude}>
-                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.magnitude.label')} className={styles.label}/>
-                    <div>{hasModel
+                    }
+                </Widget>
+                <Widget
+                    className={styles.magnitude}
+                    label={msg('process.ccdc.mapToolbar.ccdcGraph.magnitude.label')}>
+                    {hasModel
                         ? format.number({value: point.magnitude, precisionDigits: 3})
                         : <React.Fragment>&ndash;</React.Fragment>
-                    }</div>
-                </div>
-                <div className={styles.observationCount}>
-                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.observationCount.label')}
-                        className={styles.label}/>
-                    <div>{hasModel
+                    }
+                </Widget>
+                <Widget
+                    className={styles.observationCount}
+                    label={msg('process.ccdc.mapToolbar.ccdcGraph.observationCount.label')}>
+                    {hasModel
                         ? point.observationCount
                         : <React.Fragment>&ndash;</React.Fragment>
-                    }</div>
-                </div>
+                    }
+                </Widget>
             </div>
         )
     }

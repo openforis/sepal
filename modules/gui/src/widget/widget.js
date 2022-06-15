@@ -60,6 +60,7 @@ export class _Widget extends React.Component {
         return label
             ? (
                 <Label
+                    className={styles.label}
                     msg={label}
                     buttons={labelButtons}
                     alignment={alignment}

@@ -3,11 +3,11 @@ import {BandSetSpec} from './bandSetSpec'
 import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
+import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {mutate} from 'stateUtils'
 import {withScrollable} from 'widget/scrollable'
 import BlurDetector from 'widget/blurDetector'
-import Label from 'widget/label'
 import React, {Component} from 'react'
 import _ from 'lodash'
 import styles from './inputImage.module.css'
@@ -82,10 +82,9 @@ class ImageForm extends Component {
     renderBandSetSpecs() {
         const {inputs: {bandSetSpecs}} = this.props
         return (
-            <React.Fragment>
-                <Label msg={'Included bands'}/>
+            <Widget label={'Included bands'}>
                 {(bandSetSpecs.value || []).map(bandSetSpec => this.renderBandSetSpec(bandSetSpec))}
-            </React.Fragment>
+            </Widget>
         )
     }
 

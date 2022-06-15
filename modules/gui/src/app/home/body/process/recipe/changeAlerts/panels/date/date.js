@@ -2,11 +2,11 @@ import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {maxDate, minDate} from 'widget/form/datePicker'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import Label from 'widget/label'
 import React from 'react'
 import moment from 'moment'
 import styles from './date.module.css'
@@ -101,32 +101,29 @@ class Date extends React.Component {
         const durationUnit = inputs[`${period}DurationUnit`]
 
         return (
-            <Layout spacing='none'>
-                <Label
-                    msg={msg(`process.changeAlerts.panel.date.form.${period}.duration.label`)}
+            <Widget
+                label={msg(`process.changeAlerts.panel.date.form.${period}.duration.label`)}
+                layout='horizontal-nowrap'
+                spacing='normal'
+                alignment='left'>
+                <Form.Input
+                    type='number'
+                    input={duration}
+                    className={styles.unit}
+                    errorMessage
                 />
-                <Layout
-                    type='horizontal-nowrap'
-                    alignment='left'>
-                    <Form.Input
-                        type='number'
-                        input={duration}
-                        className={styles.unit}
-                        errorMessage
-                    />
-                    <Form.Combo
-                        input={durationUnit}
-                        placeholder={msg('process.changeAlerts.panel.date.form.durationUnit.placeholder')}
-                        options={[
-                            {value: 'days', label: msg('process.changeAlerts.panel.date.form.durationUnit.DAYS')},
-                            {value: 'weeks', label: msg('process.changeAlerts.panel.date.form.durationUnit.WEEKS')},
-                            {value: 'months', label: msg('process.changeAlerts.panel.date.form.durationUnit.MONTHS')}
-                        ]}
-                        className={styles.durationUnit}
-                        errorMessage
-                    />
-                </Layout>
-            </Layout>
+                <Form.Combo
+                    input={durationUnit}
+                    placeholder={msg('process.changeAlerts.panel.date.form.durationUnit.placeholder')}
+                    options={[
+                        {value: 'days', label: msg('process.changeAlerts.panel.date.form.durationUnit.DAYS')},
+                        {value: 'weeks', label: msg('process.changeAlerts.panel.date.form.durationUnit.WEEKS')},
+                        {value: 'months', label: msg('process.changeAlerts.panel.date.form.durationUnit.MONTHS')}
+                    ]}
+                    className={styles.durationUnit}
+                    errorMessage
+                />
+            </Widget>
         )
     }
 

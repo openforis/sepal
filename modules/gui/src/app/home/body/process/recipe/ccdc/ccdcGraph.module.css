@@ -20,10 +20,6 @@
         'startDate   endDate';
 }
 
-.label {
-    margin-bottom: 0 !important;
-}
-
 .date {
     grid-area: date;
 }

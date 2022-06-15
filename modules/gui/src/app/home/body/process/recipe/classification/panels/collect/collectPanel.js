@@ -43,6 +43,8 @@ class CollectPanel extends React.Component {
         this.findNext = this.findNext.bind(this)
         this.close = this.close.bind(this)
         this.remove = this.remove.bind(this)
+        this.previous = this.previous.bind(this)
+        this.next = this.next.bind(this)
     }
 
     render() {
@@ -60,16 +62,16 @@ class CollectPanel extends React.Component {
                 </div>
                 <ButtonGroup layout={'horizontal-nowrap'}>
                     <Button
-                        icon={'chevron-left'}
-                        shape={'none'}
+                        icon='chevron-left'
+                        shape='circle'
                         disabled={historyIndex === 0 || history.length === 0}
-                        onClick={() => this.previous()}
+                        onClick={this.previous}
                     />
                     <Button
-                        icon={'chevron-right'}
-                        shape={'none'}
+                        icon='chevron-right'
+                        shape='circle'
                         disabled={historyIndex >= history.length - 1 || historyIndex === -1}
-                        onClick={() => this.next()}
+                        onClick={this.next}
                     />
                 </ButtonGroup>
             </div>

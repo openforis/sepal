@@ -4,13 +4,13 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {Combo} from 'widget/combo'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
+import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {toReferenceData$} from './inputData'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import Icon from 'widget/icon'
-import Label from 'widget/label'
 import React, {Component} from 'react'
 import _ from 'lodash'
 import styles from './classStep.module.css'
@@ -77,8 +77,35 @@ class ClassMappingStep extends Component {
         const valueOptions = values.map(value => ({value, label: `${value}`}))
         return (
             <React.Fragment>
-                <Layout type='horizontal-nowrap' spacing='compact' className={styles.valueSelectionRow}>
-                    <Label>{label}</Label>
+                <Widget
+                    className={styles.valueSelectionRow}
+                    type='horizontal-nowrap'
+                    spacing='compact'
+                    label={label}>
+                    {addingMapping === legendValue
+                        ? <Combo
+                            className={styles.valueSelectionCombo}
+                            standalone='true'
+                            autoFocus
+                            options={valueOptions}
+                            disabled={!valueOptions.length}
+                            onChange={option => {
+                                this.addMapping(mapping, legendValue, option.value)
+                                this.openSelector(null)
+                            }}
+                            onCancel={() => this.openSelector(null)}
+                        />
+                        : null}
+                    {this.renderCount(legendValue)}
+                    <Button
+                        icon='plus'
+                        look='add'
+                        shape='circle'
+                        size='small'
+                        onClick={() => this.openSelector(legendValue)}/>
+                </Widget>
+                {/* <Layout type='horizontal-nowrap' spacing='compact' className={styles.valueSelectionRow}>
+                    <Label msg={label}/>
                     <Layout type='horizontal-nowrap' spacing='compact'>
                         {addingMapping === legendValue
                             ? <Combo
@@ -102,7 +129,7 @@ class ClassMappingStep extends Component {
                             size='small'
                             onClick={() => this.openSelector(legendValue)}/>
                     </Layout>
-                </Layout>
+                </Layout> */}
                 <ButtonGroup>
                     {this.renderMapping(mapping, legendValue)}
                 </ButtonGroup>
