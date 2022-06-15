@@ -1,24 +1,27 @@
 
 .box {
-    --element-clearance: .3rem;
-    --edge-clearance: .5rem;
+    --element-clearance: .25rem;
+    --edge-clearance: .25rem;
     position: absolute;
-    /* overflow: hidden; */
     z-index: 2;
 }
 
 /* vertical */
 
 .box.vertical-center {
-    top: calc(var(--top) * 1px);
+    top: calc(var(--top) * 1px );
     bottom: calc(var(--bottom) * 1px);
-    max-height: calc(var(--max-height) * 1px);
+    max-height: calc(var(--max-height) * 1px - 2 * var(--edge-clearance));
 }
 
-.box.vertical-above,
+.box.vertical-above {
+    bottom: calc(var(--bottom) * 1px + var(--element-clearance));
+    max-height: calc(var(--max-height) * 1px - var(--element-clearance) - var(--edge-clearance));
+}
+
 .box.vertical-over-above {
     bottom: calc(var(--bottom) * 1px);
-    max-height: calc(var(--max-height) * 1px);
+    max-height: calc(var(--max-height) * 1px - var(--edge-clearance));
 }
 
 .box.vertical-over {
@@ -27,10 +30,14 @@
     max-height: calc(var(--max-height) * 1px);
 }
 
-.box.vertical-over-below,
-.box.vertical-below {
+.box.vertical-over-below {
     top: calc(var(--top) * 1px);
-    max-height: calc(var(--max-height) * 1px);
+    max-height: calc(var(--max-height) * 1px - var(--edge-clearance));
+}
+
+.box.vertical-below {
+    top: calc(var(--top) * 1px + var(--element-clearance));
+    max-height: calc(var(--max-height) * 1px - var(--element-clearance) - var(--edge-clearance));
 }
 
 /* horizontal */
@@ -38,13 +45,17 @@
 .box.horizontal-center {
     left: calc(var(--left) * 1px);
     right: calc(var(--right) * 1px);
-    max-width: calc(var(--max-width) * 1px);
+    max-width: calc(var(--max-width) * 1px - 2 * var(--edge-clearance));
 }
 
-.box.horizontal-left,
+.box.horizontal-left {
+    right: calc(var(--right) * 1px + var(--element-clearance));
+    max-width: calc(var(--max-width) * 1px - var(--element-clearance) - var(--edge-clearance));
+}
+
 .box.horizontal-over-left {
     right: calc(var(--right) * 1px);
-    max-width: calc(var(--max-width) * 1px);
+    max-width: calc(var(--max-width) * 1px - var(--edge-clearance));
 }
 
 .box.horizontal-over {
@@ -53,8 +64,12 @@
     max-width: calc(var(--max-width) * 1px);
 }
 
-.box.horizontal-over-right,
-.box.horizontal-right {
+.box.horizontal-over-right {
     left: calc(var(--left) * 1px);
-    max-width: calc(var(--max-width) * 1px);
+    max-width: calc(var(--max-width) * 1px - var(--edge-clearance));
+}
+
+.box.horizontal-right {
+    left: calc(var(--left) * 1px + var(--element-clearance));
+    max-width: calc(var(--max-width) * 1px - var(--element-clearance) - var(--edge-clearance));
 }
