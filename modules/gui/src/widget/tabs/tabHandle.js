@@ -5,6 +5,7 @@ import {compose} from 'compose'
 import {filter} from 'rxjs'
 import {renameTab, selectTab} from './tabs'
 import {select} from 'store'
+import {toSafeString} from 'string'
 import {withScrollable} from 'widget/scrollable'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -141,7 +142,7 @@ class _TabHandle extends React.Component {
     saveTitle() {
         const {id, statePath, onTitleChanged} = this.props
         const {title} = this.state
-        const normalizedTitle = title.replace(/[^\w-.]/g, '_')
+        const normalizedTitle = toSafeString(title)
         this.titleInput.current.value = normalizedTitle
         const tabPath = toTabPath(id, statePath)
         const selectTab = () => select(tabPath)

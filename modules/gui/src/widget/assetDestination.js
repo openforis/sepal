@@ -6,6 +6,7 @@ import {connect} from 'store'
 import {currentUser} from 'user'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {toSafeString} from 'string'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -112,7 +113,7 @@ class _AssetDestination extends React.Component {
             return `${project.defaultAssetFolder}/${recipeName}`
         } else if (assetRoots && assetRoots.length) {
             if (project) {
-                const projectDir = project?.name?.replace(/[^\w-.]/g, '_')
+                const projectDir = toSafeString(project?.name)
                 return `${assetRoots[0]}/${projectDir}/${recipeName}`
             } else {
                 return `${assetRoots[0]}/${recipeName}`

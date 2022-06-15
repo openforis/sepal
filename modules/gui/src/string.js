@@ -25,3 +25,11 @@ export const simplifyString = (s, {trim = true, removeAccents = true, removePunc
 }
 
 export const splitString = s => s ? s.split(/\s/) : []
+
+export const toSafeString = s =>
+    s
+        ? simplifyString(s, {
+            removeNonAlphanumeric: false,
+            removePunctuation: false
+        }).replace(/[^\w-.]/g, '_')
+        : s
