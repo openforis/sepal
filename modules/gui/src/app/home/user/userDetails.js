@@ -1,19 +1,21 @@
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
+import {ChangePassword, ChangePasswordButton} from './changePassword'
 import {Form, form} from 'widget/form/form'
+import {GoogleAccount, GoogleAccountButton} from './googleAccount'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
+import {Subject} from 'rxjs'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser, updateCurrentUserDetails$} from 'user'
 import {msg} from 'translate'
-import ChangePassword from './changePassword'
-import GoogleAccount from './googleAccount'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import styles from './userDetails.module.css'
+import withSubscriptions from 'subscription'
 
 const fields = {
     name: new Form.Field()
@@ -37,6 +39,8 @@ const mapStateToProps = state => {
         tasks: state.tasks
     }
 }
+
+const hint$ = new Subject()
 
 class _UserDetails extends React.Component {
 
@@ -105,27 +109,12 @@ class _UserDetails extends React.Component {
         const {form} = this.props
         return form.isDirty()
             ? null
-            : <React.Fragment>
-                <Activator id='changePassword'>
-                    {({canActivate, activate}) =>
-                        <Button
-                            icon={'key'}
-                            label={msg('user.changePassword.label')}
-                            disabled={!canActivate || form.isDirty()}
-                            onClick={() => activate()}/>
-                    }
-                </Activator>
-                <Activator id='googleAccount'>
-                    {({canActivate, activate}) =>
-                        <Button
-                            icon='google'
-                            iconType='brands'
-                            label={msg('user.googleAccount.label')}
-                            disabled={!canActivate || form.isDirty()}
-                            onClick={() => activate()}/>
-                    }
-                </Activator>
-            </React.Fragment>
+            : (
+                <React.Fragment>
+                    <ChangePasswordButton disabled={form.isDirty()}/>
+                    <GoogleAccountButton disabled={form.isDirty()}/>
+                </React.Fragment>
+            )
     }
 
     renderConnectionStatus() {
@@ -176,34 +165,62 @@ const UserDetails = compose(
 
 UserDetails.propTypes = {}
 
-const _UserDetailsButton = ({className, username}) =>
-    <React.Fragment>
-        <Activator id='userDetails'>
-            {({active, activate}) =>
-                <Button
-                    chromeless
-                    look='transparent'
-                    size='large'
-                    air='less'
-                    additionalClassName={className}
-                    label={username}
-                    disabled={active}
-                    onClick={() => activate()}
-                    tooltip={msg('home.sections.user.profile')}
-                    tooltipPlacement='top'
-                    tooltipDisabled={active}/>
-            }
-        </Activator>
-        <UserDetails/>
-        <ChangePassword/>
-        <GoogleAccount/>
-    </React.Fragment>
+class _UserDetailsButton extends React.Component {
+    state = {
+        hint: false
+    }
+
+    render() {
+        return (
+            <React.Fragment>
+                <Activator id='userDetails'>
+                    {({active, activate}) => this.renderButton({active, activate})}
+                </Activator>
+                <UserDetails/>
+                <ChangePassword/>
+                <GoogleAccount/>
+            </React.Fragment>
+        )
+    }
+
+    renderButton({active, activate}) {
+        const {hint} = this.state
+        const {className, username} = this.props
+        return (
+            <Button
+                chromeless
+                look='transparent'
+                size='large'
+                air='less'
+                additionalClassName={className}
+                label={username}
+                disabled={active}
+                onClick={activate}
+                tooltip={msg('home.sections.user.profile')}
+                tooltipPlacement='top'
+                tooltipDisabled={active}
+                hint={hint}
+            />
+        )
+    }
+
+    componentDidMount() {
+        const {addSubscription} = this.props
+        addSubscription(
+            hint$.subscribe(hint => this.setState({hint}))
+        )
+    }
+}
 
 export const UserDetailsButton = compose(
     _UserDetailsButton,
     connect(state => ({
         username: state.user.currentUser.username
-    }))
+    })),
+    withSubscriptions()
 )
 
 UserDetailsButton.propTypes = {}
+
+export const userDetailsHint = visible =>
+    hint$.next(visible)
