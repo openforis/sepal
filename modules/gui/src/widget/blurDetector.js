@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {filter, fromEvent, merge} from 'rxjs'
+import {delay, filter, fromEvent, merge, of, switchMap, takeUntil} from 'rxjs'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -21,6 +21,9 @@ class BlurDetector extends React.Component {
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
+        this.isEnabled = this.isEnabled.bind(this)
+        this.onEvent = this.onEvent.bind(this)
+        this.onTimeout = this.onTimeout.bind(this)
     }
 
     render() {
@@ -30,8 +33,7 @@ class BlurDetector extends React.Component {
                 ref={this.ref}
                 className={className}
                 style={style}
-                onClick={onClick}
-            >
+                onClick={onClick}>
                 <BlurDetectorContext.Provider value={{enabled: enabled => this.enabled = enabled}}>
                     {children}
                 </BlurDetectorContext.Provider>
@@ -40,7 +42,7 @@ class BlurDetector extends React.Component {
     }
 
     componentDidMount() {
-        const {onBlur, addSubscription} = this.props
+        const {autoBlurTimeout, onBlur, addSubscription} = this.props
         this.setEnabled(false)
         if (onBlur) {
             addSubscription(
@@ -49,12 +51,22 @@ class BlurDetector extends React.Component {
                     fromEvent(document, 'touchstart', {capture: true}),
                     fromEvent(document, 'focus', {capture: true}),
                 ).pipe(
-                    filter(() => this.enabled),
+                    filter(this.isEnabled),
                     // debounceTime(150) // prevent click-through
-                ).subscribe(
-                    e => this.onEvent(e)
-                )
+                ).subscribe(this.onEvent)
             )
+            if (autoBlurTimeout) {
+                const enter$ = fromEvent(this.ref.current, 'mouseenter')
+                const leave$ = fromEvent(this.ref.current, 'mouseleave')
+                addSubscription(
+                    leave$.pipe(
+                        switchMap(e => of(e).pipe(
+                            delay(autoBlurTimeout),
+                            takeUntil(enter$)
+                        ))
+                    ).subscribe(this.onTimeout)
+                )
+            }
         }
     }
 
@@ -69,9 +81,21 @@ class BlurDetector extends React.Component {
         }
     }
 
+    isEnabled() {
+        const {enabled} = this
+        return enabled
+    }
+
     onEvent(e) {
         const {onBlur} = this.props
         if (onBlur && !this.isRefEvent(e) && !this.isExcludedEvent(e)) {
+            onBlur(e)
+        }
+    }
+
+    onTimeout(e) {
+        const {onBlur} = this.props
+        if (onBlur) {
             onBlur(e)
         }
     }
@@ -96,6 +120,7 @@ export default compose(
 
 BlurDetector.propTypes = {
     children: PropTypes.any.isRequired,
+    autoBlurTimeout: PropTypes.number,
     className: PropTypes.string,
     exclude: PropTypes.oneOfType([
         PropTypes.arrayOf(PropTypes.elementType),
@@ -105,4 +130,8 @@ BlurDetector.propTypes = {
     style: PropTypes.object,
     onBlur: PropTypes.func,
     onClick: PropTypes.func
+}
+
+BlurDetector.defaultProps = {
+    autoBlurTimeout: 2000
 }
