@@ -165,8 +165,8 @@ export const dateRange = dates => {
 }
 
 export const getSource = recipe => {
-    const sources = selectFrom(recipe, 'model.sources')
-    return sources && Object.keys(sources)[0]
+    const dataSets = selectFrom(recipe, 'model.sources.dataSets')
+    return dataSets && Object.keys(dataSets)[0]
 }
 
 const fromDate = dates =>

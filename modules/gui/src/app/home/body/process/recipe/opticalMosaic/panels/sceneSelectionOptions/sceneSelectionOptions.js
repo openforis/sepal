@@ -18,7 +18,7 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    alwaysAll: Object.keys(selectFrom(recipe, 'model.sources') || {}).length > 1
+    alwaysAll: Object.keys(selectFrom(recipe, 'model.sources.dataSets') || {}).length > 1
 })
 
 class SceneSelectionOptions extends React.Component {
