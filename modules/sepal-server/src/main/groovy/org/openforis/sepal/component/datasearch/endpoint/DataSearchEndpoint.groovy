@@ -54,8 +54,8 @@ class DataSearchEndpoint {
                 def clientQuery = new JsonSlurper().parseText(params.required('query', String))
                 def query = new FindBestScenes(
                     sceneAreaIds: clientQuery.sceneAreaIds,
-                    source: clientQuery.sources.keySet().first(),
-                    dataSets: clientQuery.sources.values().flatten(),
+                    source: clientQuery.sources.dataSets.keySet().first(),
+                    dataSets: clientQuery.sources.dataSets.values().flatten(),
                     fromDate: subtractFromDate(clientQuery.dates.seasonStart, clientQuery.dates.yearsBefore as int, YEARS),
                     toDate: addToDate(clientQuery.dates.seasonEnd, clientQuery.dates.yearsAfter as int, YEARS),
                     targetDayOfYear: dayOfYearIgnoringLeapDay(clientQuery.dates.targetDate),
@@ -76,8 +76,8 @@ class DataSearchEndpoint {
                 def clientQuery = new JsonSlurper().parseText(params.required('query', String))
                 def query = new SceneQuery(
                     sceneAreaId: params.required('sceneAreaId'),
-                    source: clientQuery.sources.keySet().first(),
-                    dataSets: clientQuery.sources.values().flatten(),
+                    source: clientQuery.sources.dataSets.keySet().first(),
+                    dataSets: clientQuery.sources.dataSets.values().flatten(),
                     fromDate: subtractFromDate(clientQuery.dates.seasonStart, clientQuery.dates.yearsBefore as int, YEARS),
                     toDate: addToDate(clientQuery.dates.seasonEnd, clientQuery.dates.yearsAfter as int, YEARS),
                     targetDayOfYear: dayOfYearIgnoringLeapDay(clientQuery.dates.targetDate),

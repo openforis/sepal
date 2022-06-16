@@ -149,7 +149,9 @@ class _CreateRecipe extends React.Component {
                 projectId={projectId}
                 recipeId={recipeId}
                 type={recipeType}
-                onInfo={() => this.showRecipeTypeInfo(recipeType.id)}/>
+                onInfo={() => this.showRecipeTypeInfo(recipeType.id)}
+                beta={recipeType.beta}
+            />
         )
     }
 

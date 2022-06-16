@@ -10,14 +10,12 @@ export default class RecipeSection extends React.Component {
     }
 
     render() {
-        const {inputs: {recipe}, onLoading} = this.props
+        const {inputs: {recipe}} = this.props
         return (
             <RecipeInput
                 input={recipe}
                 filter={type => type.id === 'CCDC'}
                 autoFocus
-                onLoading={onLoading}
-                onLoaded={value => this.onRecipeLoaded(value)}
                 errorMessage
             />
         )
