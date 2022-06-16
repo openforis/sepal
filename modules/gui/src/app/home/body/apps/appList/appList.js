@@ -181,7 +181,6 @@ class _AppList extends React.Component {
                     tooltip={msg('apps.googleAccountRequired')}
                     tooltipPlacement='left'
                     tooltipOnVisible={visible => userDetailsHint(visible)}
-                    onClick={() => null}
                 />
             )
             : null
