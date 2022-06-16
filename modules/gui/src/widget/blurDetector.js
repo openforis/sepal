@@ -56,8 +56,8 @@ class BlurDetector extends React.Component {
                 ).subscribe(this.onEvent)
             )
             if (autoBlurTimeout) {
-                const enter$ = fromEvent(this.ref.current, 'mouseenter')
-                const leave$ = fromEvent(this.ref.current, 'mouseleave')
+                const enter$ = fromEvent(this.ref.current, 'mouseover')
+                const leave$ = fromEvent(this.ref.current, 'mouseout')
                 addSubscription(
                     leave$.pipe(
                         switchMap(e => of(e).pipe(
