@@ -24,7 +24,7 @@ export default class UserList extends React.Component {
         sortingOrder: 'updateTime',
         sortingDirection: -1,
         textFilterValues: [],
-        statusFilter: null
+        statusFilter: undefined
     }
 
     search = React.createRef()
@@ -237,8 +237,7 @@ export default class UserList extends React.Component {
     renderStatusFilter() {
         const {statusFilter} = this.state
         const options = [{
-            label: msg('users.filter.status.ignore.label'),
-            value: null
+            label: msg('users.filter.status.ignore.label')
         }, {
             label: msg('users.filter.status.pending.label'),
             value: 'PENDING'

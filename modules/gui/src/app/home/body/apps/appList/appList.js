@@ -150,10 +150,7 @@ class _AppList extends React.Component {
             value
         })
         const options = [
-            {
-                label: msg('apps.filter.tag.ignore.label'),
-                value: null
-            },
+            {label: msg('apps.filter.tag.ignore.label')},
             ...tags.map(toOption)
         ]
         return (
