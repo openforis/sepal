@@ -19,7 +19,7 @@
     margin-bottom: 1rem;
 }
 
-.menu button:disabled:before{
+.menu button:disabled:before {
     content: '';
     position: absolute;
     top: 0;
@@ -28,7 +28,6 @@
     left: 0;
     background-color: hsla(0, 0%, 0%, .5);
 }
-
 
 .menu button {
     position: relative;
@@ -46,7 +45,6 @@
     width: var(--button-size);
     opacity: 0;
 }
-
 
 .menu:hover .mode {
     opacity: 1;
