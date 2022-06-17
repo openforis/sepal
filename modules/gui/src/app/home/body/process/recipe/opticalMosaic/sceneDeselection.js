@@ -46,7 +46,7 @@ class SceneDeselection extends React.Component {
             return scenes
                 .filter(scene => inDateRange(scene.date, dates))
                 .filter(scene =>
-                    !!Object.values(sources).find(values => values.includes(scene.dataSet))
+                    !!Object.values(sources.dataSets).find(values => values.includes(scene.dataSet))
                 )
         }
         sceneAreas
