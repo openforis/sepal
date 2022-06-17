@@ -3,8 +3,7 @@
     position: relative;
     display: flex;
     flex-grow: 0;
-    flex-shrink: 1;
-    min-width: fit-content;
+    flex-shrink: 0;
     overflow: hidden;
     /* horizontal spacing */
     --horizontal-spacing-loose: 1.5rem;
@@ -48,6 +47,7 @@
 .layout.vertical {
     flex-direction: row;
     flex-shrink: 1;
+    min-width: fit-content;
     justify-content: space-between;
 }
 
