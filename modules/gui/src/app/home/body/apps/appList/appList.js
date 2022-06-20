@@ -271,7 +271,7 @@ class _AppList extends React.Component {
     }
 
     appMatchesFilters(app) {
-        return this.appMatchesFilterValues(app) && this.appMatchesTagFilter(app) && this.appMatcherGoogleAccountFilter(app)
+        return this.appMatchesFilterValues(app) && this.appMatchesTagFilter(app) && this.appMatchesGoogleAccountFilter(app)
     }
 
     appMatchesTagFilter(app) {
@@ -292,11 +292,13 @@ class _AppList extends React.Component {
             : true
     }
 
-    appMatcherGoogleAccountFilter({googleAccountRequired}) {
+    appMatchesGoogleAccountFilter({googleAccountRequired}) {
         const {googleAccountFilter} = this.props
-        return googleAccountFilter
+        return this.isUsingServiceAccount()
             ? true
-            : !googleAccountRequired
+            : googleAccountRequired
+                ? googleAccountFilter
+                : true
     }
 
     isLoading() {
