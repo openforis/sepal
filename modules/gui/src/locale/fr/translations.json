@@ -4,7 +4,7 @@
             "title": "Echec: {action}"
         },
         "type": {
-            "AUTO_SELECT_SCENES": "",
+            "AUTO_SELECT_SCENES": "Sélection automatique des scènes",
             "DUPLICATE_RECIPE": "Dupliquer la formule",
             "INIT_GOOGLE_MAPS_API": "Initialiser Google Maps",
             "LOAD_APPS": "Charger les applications",
@@ -135,8 +135,8 @@
                 "tooltip": ""
             },
             "sorting": {
-                "date.label": "",
-                "name.label": ""
+                "date.label": "Date",
+                "name.label": "Nom"
             }
         },
         "info": {
@@ -158,10 +158,10 @@
         "back": "",
         "cancel": "",
         "close": "",
-        "confirm": "",
+        "confirm": "Confirmer",
         "copyToClipboard": "",
-        "discard": "",
-        "done": "",
+        "discard": "Ne pas sauver",
+        "done": "Fini",
         "less": "",
         "more": "",
         "next": "",
