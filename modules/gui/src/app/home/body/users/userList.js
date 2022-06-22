@@ -270,7 +270,7 @@ export default class UserList extends React.Component {
 
     renderInfo(users) {
         return (
-            <div className={styles.pageInfo}>
+            <div className={styles.count}>
                 {msg('users.count', {count: users.length})}
             </div>
         )
