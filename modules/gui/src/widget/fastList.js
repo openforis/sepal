@@ -178,12 +178,13 @@ FastList.propTypes = {
     children: PropTypes.func.isRequired,
     itemKey: PropTypes.func.isRequired,
     items: PropTypes.array.isRequired,
-    overflow: PropTypes.number
+    overflow: PropTypes.number,
+    spacing: PropTypes.any
 }
 
 FastList.defaultProps = {
-    spacing: 'none',
-    overflow: 10
+    overflow: 10,
+    spacing: 'none'
 }
 
 class FastListItem extends React.PureComponent {
@@ -199,7 +200,5 @@ class FastListItem extends React.PureComponent {
 
 FastListItem.propTypes = {
     children: PropTypes.func.isRequired,
-    item: PropTypes.object.isRequired,
-    overflow: PropTypes.number,
-    spacing: PropTypes.any
+    item: PropTypes.object.isRequired
 }
