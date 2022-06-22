@@ -33,6 +33,7 @@
         }
     },
     "apps": {
+        "count": "",
         "developedBy": "Développé par {author}",
         "filter": {
             "search": {
@@ -3601,10 +3602,7 @@
         "title": ""
     },
     "users": {
-        "count": {
-            "morePages": "",
-            "onePage": ""
-        },
+        "count": "",
         "filter": {
             "search": {
                 "placeholder": ""
