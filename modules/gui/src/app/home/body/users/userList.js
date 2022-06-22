@@ -57,7 +57,8 @@ export default class UserList extends React.Component {
     }
 
     setStatusFilter(statusFilter) {
-        this.setState({statusFilter})
+        const {statusFilter: prevStatusFilter} = this.state
+        this.setState({statusFilter: statusFilter !== prevStatusFilter ? statusFilter : IGNORE})
     }
 
     getUsers() {
@@ -262,7 +263,7 @@ export default class UserList extends React.Component {
                 spacing='tight'
                 options={options}
                 selected={statusFilter}
-                onChange={this.setStatusFilter}
+                onSelect={this.setStatusFilter}
             />
         )
     }

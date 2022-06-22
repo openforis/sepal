@@ -173,7 +173,7 @@ class _AppList extends React.Component {
                 spacing='tight'
                 options={options}
                 selected={tagFilter}
-                onChange={this.setTagFilter}
+                onSelect={this.setTagFilter}
             />
         )
     }
@@ -332,8 +332,9 @@ class _AppList extends React.Component {
     }
 
     setTagFilter(tagFilter) {
+        const {tagFilter: prevTagFilter} = this.props
         actionBuilder('UPDATE_TAG_FILTER', tagFilter)
-            .set('apps.tagFilter', tagFilter)
+            .set('apps.tagFilter', tagFilter !== prevTagFilter ? tagFilter : IGNORE)
             .dispatch()
     }
 
