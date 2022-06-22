@@ -188,8 +188,8 @@ class _AppList extends React.Component {
         )
     }
 
-    renderGoogleAccountRequiredButton({googleAccountRequired}) {
-        return googleAccountRequired
+    renderGoogleAccountRequiredButton(app) {
+        return this.isDisallowed(app)
             ? (
                 <Button
                     key={'renderGoogleAccountRequiredButton'}
@@ -315,12 +315,10 @@ class _AppList extends React.Component {
             : true
     }
 
-    appMatchesGoogleAccountFilter({googleAccountRequired}) {
+    appMatchesGoogleAccountFilter(app) {
         const {googleAccountFilter} = this.props
-        return this.isUsingServiceAccount()
-            ? googleAccountRequired
-                ? googleAccountFilter
-                : true
+        return this.isDisallowed(app)
+            ? googleAccountFilter
             : true
     }
 
