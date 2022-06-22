@@ -24,12 +24,13 @@ export class Buttons extends React.Component {
     }
 
     select(value) {
-        const {selected, multiple, onChange} = this.props
+        const {selected, multiple, onChange, onSelect} = this.props
         const prevValue = selected
         const nextValue = multiple ? this.toggleMultiple(value) : value
         if (prevValue !== nextValue) {
             onChange && onChange(nextValue)
         }
+        onSelect && onSelect(nextValue)
     }
 
     renderButton({value, look: customLook, icon, label, content, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected}) {
@@ -149,5 +150,6 @@ Buttons.propTypes = {
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     width: PropTypes.any,
-    onChange: PropTypes.any
+    onChange: PropTypes.any,
+    onSelect: PropTypes.any
 }
