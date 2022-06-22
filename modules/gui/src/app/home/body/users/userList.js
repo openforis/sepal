@@ -271,7 +271,7 @@ export default class UserList extends React.Component {
     renderInfo(users) {
         return (
             <div className={styles.pageInfo}>
-                {msg('users.count.onePage', {count: users.length})}
+                {msg('users.count', {count: users.length})}
             </div>
         )
     }
