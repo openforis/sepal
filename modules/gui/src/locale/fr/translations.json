@@ -42,22 +42,22 @@
                 "ignore.label": "Tout"
             }
         },
-        "googleAccountRequired": "",
+        "googleAccountRequired": "Certaines applications ne sont pas disponibles. Pour les activer, connectez votre compte SEPAL à votre compte Google.",
         "info": "Afficher les informations de cette application",
         "initializing": "Démarrer une session...",
         "loading": {
-            "error": "",
+            "error": "Échec de chargement. Recharger la page.",
             "progress": "Chargement..."
         },
         "notRunning": "L'app ne fonctionne pas",
         "run": {
-            "error": ""
+            "error": "Echec d'exécution {label}"
         },
         "running": "L'app est lancée"
     },
     "asset": {
-        "failedToLoad": "",
-        "notFound": "",
+        "failedToLoad": "Échec du chargement de l'asset EE",
+        "notFound": "Asset EE introuvable",
         "unauthorized": ""
     },
     "bands": {
@@ -66,7 +66,7 @@
         "brightness": "Luminosité",
         "cirrus": "",
         "dayOfYear": "Jour Julien",
-        "daysFromTarget": "",
+        "daysFromTarget": "Jours de la date-cible",
         "fifth": "",
         "fourth": "",
         "green": "Vert",
@@ -74,10 +74,10 @@
         "nir": "",
         "pan": "",
         "red": "Rouge",
-        "redEdge1": "",
-        "redEdge2": "",
-        "redEdge3": "",
-        "redEdge4": "",
+        "redEdge1": "Rouge - bord 1",
+        "redEdge2": "Rouge - bord 2",
+        "redEdge3": "Rouge - bord 3",
+        "redEdge4": "Rouge - bord 4",
         "sixth": "",
         "swir1": "",
         "swir2": "",
@@ -112,27 +112,27 @@
         "fifth, sixth, fourth": ""
     },
     "body": {
-        "loading-apps": "",
-        "loading-initializing-google-maps": "",
-        "starting-sepal": "",
-        "starting-sepal-failed": ""
+        "loading-apps": "Chargement des applications...",
+        "loading-initializing-google-maps": "Initialisation carte...",
+        "starting-sepal": "Démarrage SEPAL...",
+        "starting-sepal-failed": "Une erreur est survenue. Veuillez recharger la page et réessayer."
     },
     "browse": {
         "controls": {
             "clearSelection": {
-                "tooltip": ""
+                "tooltip": "Vider la sélection"
             },
             "download": {
-                "tooltip": ""
+                "tooltip": "Télécharger les éléments sélectionnés"
             },
             "hideDotFiles": {
-                "tooltip": ""
+                "tooltip": "Masquer les fichiers commençant par ."
             },
             "remove": {
-                "tooltip": ""
+                "tooltip": "Supprimer les éléments sélectionnés"
             },
             "showDotFiles": {
-                "tooltip": ""
+                "tooltip": "Afficher les fichiers commençant par . (dotfiles)"
             },
             "sorting": {
                 "date.label": "Date",
@@ -140,7 +140,7 @@
             }
         },
         "info": {
-            "directory": "",
+            "directory": "{itemCount} {itemCount, plural, one {élément} other {éléments}}",
             "empty": ""
         },
         "loading": {
@@ -153,29 +153,29 @@
         "selected": ""
     },
     "button": {
-        "add": "",
-        "apply": "",
-        "back": "",
-        "cancel": "",
-        "close": "",
+        "add": "Ajouter",
+        "apply": "Appliquer",
+        "back": "Retour",
+        "cancel": "Annuler",
+        "close": "Fermer",
         "confirm": "Confirmer",
-        "copyToClipboard": "",
+        "copyToClipboard": "Copier dans presse-papier",
         "discard": "Ne pas sauver",
         "done": "Fini",
-        "less": "",
-        "more": "",
-        "next": "",
-        "ok": "",
-        "remove": "",
-        "restart": "",
-        "retry": "",
-        "save": "",
-        "select": "",
-        "stop": ""
+        "less": "Moins",
+        "more": "Plus",
+        "next": "Suivant",
+        "ok": "Ok",
+        "remove": "Supprimer",
+        "restart": "Redémarrer",
+        "retry": "Réessayer",
+        "save": "Sauver",
+        "select": "Sélectionner",
+        "stop": "Arrêter"
     },
     "eeTable": {
-        "failedToLoad": "",
-        "notFound": "",
+        "failedToLoad": "Echec du chargement de la table EE",
+        "notFound": "Table EE introuvable",
         "unauthorized": ""
     },
     "error": {
@@ -277,27 +277,27 @@
             },
             "process": {
                 "description": "",
-                "title": ""
+                "title": "Traitement"
             },
             "terminal": {
-                "description": "",
-                "title": ""
+                "description": "Outils performants pour le traitement de données",
+                "title": "Console"
             }
         },
         "forgot-password": {
-            "button": "",
-            "cancel-link": "",
+            "button": "Réinitialiser mot de passe",
+            "cancel-link": "Annuler",
             "instructions": "",
-            "invalid": "",
-            "label": "",
-            "placeholder": "",
-            "required": "",
-            "success": ""
+            "invalid": "Cette adresse email n'est pas valide",
+            "label": "Mot de passe oublié ?",
+            "placeholder": "Indiquer votre email",
+            "required": "Email requis",
+            "success": "Un courriel de réinitialisation de mdp a été envoyé à {email}."
         },
         "intro": {
             "about": {
-                "description": "",
-                "title": ""
+                "description": "SEPAL est un projet opensource de l'équipe Open Foris du Département des forêts de l'Organisation des Nations unies pour l'alimentation et l'agriculture (FAO), financé par le gouvernement norvégien.",
+                "title": "A propos"
             },
             "computingPower": {
                 "description": "",
@@ -332,62 +332,62 @@
             },
             "shiny": {
                 "description": "",
-                "title": ""
+                "title": "Serveur Shiny"
             }
         },
-        "launch": "",
+        "launch": "Démarrer",
         "loadCurrentUser": {
-            "error": ""
+            "error": "Impossible de se connecter à SEPAL"
         },
         "login": {
-            "button": "",
-            "error": "",
-            "forgot-password-link": "",
+            "button": "S'identifier",
+            "error": "Une erreur s'est produite lors de l'authentification.",
+            "forgot-password-link": "Mot de passe oublié ?",
             "password": {
-                "invalid": "",
-                "label": "",
-                "placeholder": "",
-                "required": ""
+                "invalid": "Identifiant / Mot de passe non valide",
+                "label": "Mot de passe",
+                "placeholder": "Entrer votre mot de passe",
+                "required": "Mot de passe requis"
             },
-            "sign-up": "",
+            "sign-up": "S'inscrire",
             "username": {
-                "label": "",
-                "placeholder": "",
-                "required": ""
+                "label": "Identifiant",
+                "placeholder": "Entrer votre identifiant",
+                "required": "Identifiant requis"
             }
         },
-        "privacyPolicy": "",
+        "privacyPolicy": "Politique de confidentialité",
         "reset-password": {
-            "button": "",
+            "button": "Initialiser mot de passe",
             "password": {
-                "invalid": "",
-                "label": "",
-                "placeholder": "",
-                "required": ""
+                "invalid": "Le mot de passe doit avoir au moins 8 caractères",
+                "label": "Mot de passe",
+                "placeholder": "Entrer un mot de passe",
+                "required": "Mot de passe requis"
             },
             "password2": {
-                "label": "",
-                "not-matching": "",
-                "placeholder": "",
-                "required": ""
+                "label": "Confirmer mot de passe",
+                "not-matching": "Les mots de passe ne correspondent pas",
+                "placeholder": "Entrer à nouveau le mot de passe",
+                "required": "Confirmer le mot de passe"
             },
-            "success": "",
+            "success": "Mot de passe réinitialisé",
             "username": {
-                "label": ""
+                "label": "Nom d'utilisateur"
             },
-            "validating-link": ""
+            "validating-link": "Lien en cours de validation..."
         },
-        "signup": "",
-        "tagline": "",
-        "title": "",
+        "signup": "S'inscrire",
+        "tagline": "Système pour l'accès, le traitement et l'analyse de données pour la surveillance des terres.",
+        "title": "SEPAL",
         "validate-token": {
-            "error": ""
+            "error": "Ce lien n'est plus valide. Assurez-vous que le lien utilisé soit le dernier envoyé par email."
         }
     },
     "map": {
         "info": {
-            "tooltip": "",
-            "center": "",
+            "tooltip": "Afficher les coordonnées",
+            "center": "Centrer",
             "bounds": "",
             "copy": "",
             "coordinatesCopied": ""
@@ -456,118 +456,118 @@
                         "tooltip": ""
                     },
                     "blueColumn": {
-                        "label": "",
-                        "placeholder": "",
-                        "tooltip": ""
+                        "label": "Bleu",
+                        "placeholder": "Sélectionnez...",
+                        "tooltip": "Colonne avec les valeurs du canal bleu"
                     }
                 }
             },
-            "label": "",
+            "label": "Légende",
             "load": {
-                "label": "",
+                "label": "Chargement...",
                 "options": {
                     "exportToCsv": {
-                        "label": ""
+                        "label": "Exporter au format CSV"
                     },
                     "importFromCsv": {
-                        "label": ""
+                        "label": "Importer depuis un CSV..."
                     },
                     "imageValues": {
-                        "label": "",
-                        "loadError": ""
+                        "label": "Valeurs distinctes de la bande d'images",
+                        "loadError": "Échec du chargement de valeurs distinctes à partir de la bande de l'image"
                     }
                 }
             },
-            "noEntries": ""
+            "noEntries": "Aucune entrée dans la légende. Ajoutez-en au moins une."
         },
         "layer": {
-            "error": ""
+            "error": "Échec du chargement de la couche"
         },
         "layout": {
             "addImageLayerSource": {
-                "title": "",
+                "title": "Ajouter une couche",
                 "types": {
                     "Asset": {
-                        "description": "",
+                        "description": "Ajouter un Asset Earth Engine",
                         "form": {
-                            "asset.label": "",
-                            "loadError": ""
+                            "asset.label": "Asset Earth Engine",
+                            "loadError": "Impossible de lire l'Asset"
                         },
-                        "presets": ""
+                        "presets": "Pré-réglages"
                     },
                     "Planet": {
                         "description": "",
                         "form": {
-                            "description.label": "",
-                            "apiKey.label": "",
-                            "invalidApiKey": ""
+                            "description.label": "Description",
+                            "apiKey.label": "Clé API Planet",
+                            "invalidApiKey": "Clé API Planet non valide"
                         }
                     },
                     "Recipe": {
-                        "description": ""
+                        "description": "Ajouter une formule de SEPAL"
                     }
                 }
             },
             "area": {
-                "edit.tooltip": "",
+                "edit.tooltip": "Modifier les propriétés de la zone",
                 "remove": {
-                    "message": "",
-                    "tooltip": ""
+                    "message": "Confirmer la suppression de cette zone",
+                    "tooltip": "Supprimer la zone"
                 }
             },
             "layer": {
                 "remove": {
-                    "tooltip": ""
+                    "tooltip": "Supprimer la couche"
                 }
             },
             "mode": {
                 "grid": {
-                    "label": ""
+                    "label": "Grille"
                 },
                 "stack": {
-                    "label": ""
+                    "label": "Pile"
                 }
             },
-            "title": ""
+            "title": "Couches"
         },
         "visParams": {
-            "title": "",
+            "title": "Visualisation",
             "bands": {
-                "loading": "",
-                "loadError": ""
+                "loading": "Chargement des bandes...",
+                "loadError": "Échec du chargement des bandes de l'image"
             },
             "form": {
                 "band": {
-                    "band.label": "",
-                    "blueChannel.label": "",
-                    "greenChannel.label": "",
-                    "hue.label": "",
-                    "redChannel.label": "",
-                    "reverse.tooltip": "",
-                    "saturation.label": "",
-                    "select.placeholder": "",
-                    "value.label": ""
+                    "band.label": "Bande",
+                    "blueChannel.label": "Canal Bleu",
+                    "greenChannel.label": "Canal vert",
+                    "hue.label": "Teinte",
+                    "redChannel.label": "Canal rouge",
+                    "reverse.tooltip": "Inverser la bande.",
+                    "saturation.label": "Saturation",
+                    "select.placeholder": "Sélectionnez une bande...",
+                    "value.label": "Valeur"
                 },
                 "gamma": {
-                    "label": "",
-                    "info": ""
+                    "label": "Gamma",
+                    "info": "Valeur: {gamma}"
                 },
                 "histogram": {
-                    "error": "",
-                    "noData": ""
+                    "error": "Impossible de créer l'histogramme.",
+                    "noData": "La bande ne contient aucune donnée."
                 },
                 "inverted": {
-                    "label": ""
+                    "label": "Inversé"
                 },
                 "palette": {
-                    "label": "",
+                    "label": "Palette",
                     "tooltip": "",
-                    "empty": "",
+                    "empty": "La palette est vide. Utilisation d'une échelle de gris.",
                     "add": {
-                        "tooltip": ""
+                        "tooltip": "Ajoutez une palette de couleurs."
                     },
                     "preset": {
-                        "placeholder": "",
+                        "placeholder": "Sélectionnez une palette prédéfinie...",
                         "attribution": ""
                     },
                     "text": {
@@ -679,66 +679,66 @@
     "process": {
         "mapZoom": {
             "fit": {
-                "tooltip": ""
+                "tooltip": "Zoom sur la zone d'intérêt"
             },
             "zoomArea": {
-                "tooltip": ""
+                "tooltip": "Zoom sur la zone"
             },
             "zoomIn": {
-                "tooltip": ""
+                "tooltip": "Agrandir"
             },
             "zoomOut": {
-                "tooltip": ""
+                "tooltip": "Réduire"
             },
             "search": {
-                "placeholder": ""
+                "placeholder": "recherche géographique"
             },
             "scrollwheel": {
                 "enabled": {
-                    "tooltip": ""
+                    "tooltip": "Désactiver le zoom à la molette"
                 },
                 "disabled": {
-                    "tooltip": ""
+                    "tooltip": "Activer le zoom à la molette"
                 }
             }
         },
         "ccdc": {
             "chartPixel": {
-                "cancel.tooltip": "",
-                "loadFailed": "",
-                "loadObservations.error": "",
-                "loadSegments.error": "",
-                "start.tooltip": ""
+                "cancel.tooltip": "Annuler la représentation des séries temporelles",
+                "loadFailed": "Impossible de charger le graphique : {error}",
+                "loadObservations.error": "Impossible de charger les observations : {error}",
+                "loadSegments.error": "Impossible de charger les segments : {error}",
+                "start.tooltip": "Graphique des séries temporelles pour le pixel"
             },
-            "create": "",
-            "description": "",
+            "create": "CCDC",
+            "description": "Créer un Asset CCDC à partir d'une série temporelle.",
             "mapToolbar": {
                 "ccdcGraph": {
-                    "date.label": "",
-                    "endDate.label": "",
-                    "magnitude.label": "",
-                    "model.label": "",
-                    "observation.label": "",
-                    "observationCount.label": "",
+                    "date.label": "Date",
+                    "endDate.label": "Date de fin",
+                    "magnitude.label": "Magnitude de la rupture",
+                    "model.label": "Valeur du modèle",
+                    "observation.label": "Observation",
+                    "observationCount.label": "nombre d'Obs.",
                     "rmse.label": "",
-                    "startDate.label": ""
+                    "startDate.label": "Date de début"
                 }
             },
             "panel": {
                 "dates": {
-                    "button": "",
+                    "button": "DAT",
                     "form": {
                         "dateFormat": {
                             "fractionalYears": {
-                                "label": ""
+                                "label": "Années fractionnaires"
                             },
                             "jDays": {
-                                "label": ""
+                                "label": "Jours Juliens"
                             },
-                            "label": "",
-                            "required": "",
+                            "label": "Format de la date",
+                            "required": "Le format de la date doit être précisé",
                             "unixTimeMillis": {
-                                "label": ""
+                                "label": "Temps Unix en millisecondes"
                             }
                         },
                         "endDate": {
@@ -2668,28 +2668,28 @@
         },
         "planetMosaic": {
             "create": "",
-            "description": "",
+            "description": "Créer une mosaïque à l'aide de composites Planet.",
             "panel": {
                 "dates": {
                     "button": "",
                     "form": {
                         "type": {
                             "DATE_RANGE": {
-                                "label": "",
+                                "label": "Intervalle temporel",
                                 "tooltip": ""
                             },
                             "SINGLE_DATE": {
-                                "label": "",
+                                "label": "Date unique",
                                 "tooltip": ""
                             }
                         },
                         "fromDate": {
                             "label": "",
-                            "malformed": ""
+                            "malformed": "Date invalide"
                         },
                         "toDate": {
                             "label": "",
-                            "malformed": ""
+                            "malformed": "Date invalide"
                         }
                     },
                     "title": "",
@@ -2707,24 +2707,24 @@
                             "label": "",
                             "tooltip": "",
                             "options": {
-                                "DISABLED": "",
-                                "ENABLED": ""
+                                "DISABLED": "Désactivé",
+                                "ENABLED": "Activé"
                             }
                         }
                     },
                     "shadowThreshold": {
                         "label": "",
                         "tooltip": "",
-                        "value": ""
+                        "value": "{value}%"
                     },
-                    "title": "",
-                    "tooltip": ""
+                    "title": "Options",
+                    "tooltip": "Configurer les options de mosaïque"
                 },
                 "sources": {
-                    "button": "",
+                    "button": "SRC",
                     "form": {
                         "asset": {
-                            "label": "",
+                            "label": "Id de l'Asset Earth Engine",
                             "placeholder": "",
                             "required": ""
                         },
@@ -2895,10 +2895,10 @@
                 "error": ""
             },
             "update": {
-                "error": ""
+                "error": "Impossible de mettre à jour le projet"
             },
-            "noProject": "",
-            "noProjectOption": ""
+            "noProject": "aucun projet",
+            "noProjectOption": "[aucun projet]"
         },
         "recipe": {
             "lastUpdate": "",
@@ -2910,31 +2910,31 @@
                 "tooltip": ""
             },
             "edit": {
-                "label": ""
+                "label": "Éditer"
             },
             "select": {
-                "label": "",
+                "label": "Sélectionner",
                 "tooltip": {
-                    "select": "",
-                    "deselect": ""
+                    "select": "Sélectionner toutes les formules",
+                    "deselect": "Désélectionner toutes les formules"
                 }
             },
             "remove": {
-                "label": "",
-                "title": "",
-                "tooltip": "",
+                "label": "Supprimer",
+                "title": "Supprimer les formules",
+                "tooltip": "Supprimer les formules sélectionnées",
                 "confirm": ""
             },
             "move": {
-                "label": "",
-                "title": "",
-                "tooltip": "",
+                "label": "Déplacer",
+                "title": "Déplacer les formules",
+                "tooltip": "Déplacer les formules sélectionnées vers un projet",
                 "destinationProject": "",
                 "confirm": ""
             },
             "export": {
-                "success": "",
-                "error": ""
+                "success": "La formule a été exportée.",
+                "error": "Impossible d'exporter la formule."
             }
         },
         "remapping": {
@@ -2953,44 +2953,44 @@
                     "button": "",
                     "form": {
                         "asset": {
-                            "label": "",
-                            "placeholder": ""
+                            "label": "Id d'Asset Earth Engine",
+                            "placeholder": "Entrez un ID d'Asset..."
                         },
                         "band": {
-                            "label": ""
+                            "label": "Bande"
                         },
                         "legend": {
-                            "label": ""
+                            "label": "Légende"
                         },
                         "noImagery": "",
                         "recipe": {
-                            "label": "",
-                            "placeholder": ""
+                            "label": "Formule",
+                            "placeholder": "Selectionner une formule..."
                         },
                         "remove": {
                             "tooltip": ""
                         },
                         "section": {
-                            "required": ""
+                            "required": "Une image doit être sélectionnée"
                         },
                         "type": {
                             "categorical": "",
-                            "continuous": "",
-                            "ASSET": "",
-                            "RECIPE_REF": "",
-                            "label": ""
+                            "continuous": "Continue",
+                            "ASSET": "Asset Google Earth Engine",
+                            "RECIPE_REF": "Formule SEPAL",
+                            "label": "Type"
                         }
                     },
                     "recipe": {
-                        "title": ""
+                        "title": "Formules SEPAL sauvegardée"
                     },
                     "title": ""
                 },
                 "legend": {
                     "button": "",
-                    "title": "",
+                    "title": "Légende",
                     "tooltip": "",
-                    "import": ""
+                    "import": "Importer..."
                 },
                 "mapping": {
                     "button": {
@@ -3152,7 +3152,7 @@
                                 "tooltip": ""
                             },
                             "none": {
-                                "label": "",
+                                "label": "Inactif",
                                 "tooltip": ""
                             }
                         },
@@ -3161,7 +3161,7 @@
                                 "label": "",
                                 "tooltip": ""
                             },
-                            "label": "",
+                            "label": "Corrections",
                             "surfaceReflectance": {
                                 "label": "",
                                 "tooltip": ""
@@ -3170,11 +3170,11 @@
                         "snowMasking": {
                             "label": "",
                             "off": {
-                                "label": "",
+                                "label": "Inactif",
                                 "tooltip": ""
                             },
                             "on": {
-                                "label": "",
+                                "label": "Actif",
                                 "tooltip": ""
                             }
                         }
@@ -3183,11 +3183,11 @@
                     "tooltip": ""
                 },
                 "sources": {
-                    "button": "",
+                    "button": "SRC",
                     "classificationLoadError": "",
                     "form": {
                         "classification": {
-                            "label": "",
+                            "label": "Classification",
                             "placeholder": "",
                             "tooltip": ""
                         },
@@ -3197,53 +3197,53 @@
                             },
                             "options": {
                                 "LANDSAT_7": {
-                                    "label": "",
-                                    "tooltip": ""
+                                    "label": "L7",
+                                    "tooltip": "Landsat 7"
                                 },
                                 "LANDSAT_7_T2": {
-                                    "label": "",
-                                    "tooltip": ""
+                                    "label": "L7 T2",
+                                    "tooltip": "Landsat 7 Tier 2"
                                 },
                                 "LANDSAT_8": {
-                                    "label": "",
-                                    "tooltip": ""
+                                    "label": "L8",
+                                    "tooltip": "Landsat 8"
                                 },
                                 "LANDSAT_8_T2": {
-                                    "label": "",
-                                    "tooltip": ""
+                                    "label": "L8 T2",
+                                    "tooltip": "Landsat 8 Tier 2"
                                 },
                                 "LANDSAT_9": {
-                                    "label": "",
-                                    "tooltip": ""
+                                    "label": "L9",
+                                    "tooltip": "Landsat 9"
                                 },
                                 "LANDSAT_9_T2": {
-                                    "label": "",
-                                    "tooltip": ""
+                                    "label": "L9 T2",
+                                    "tooltip": "Landsat 9 Tier 2"
                                 },
                                 "LANDSAT_TM": {
-                                    "label": "",
-                                    "tooltip": ""
+                                    "label": "L4-5",
+                                    "tooltip": "Landsat 4-5"
                                 },
                                 "LANDSAT_TM_T2": {
-                                    "label": "",
-                                    "tooltip": ""
+                                    "label": "L4-5 T2",
+                                    "tooltip": "Landsat 4-5 Tier 2"
                                 },
                                 "SENTINEL_1": {
-                                    "label": "",
-                                    "tooltip": ""
+                                    "label": "S1",
+                                    "tooltip": "Sentinel 1 A+B"
                                 },
                                 "SENTINEL_2": {
-                                    "label": "",
-                                    "tooltip": ""
+                                    "label": "S2",
+                                    "tooltip": "Sentinel 2 A+B"
                                 }
                             },
                             "radar": {
-                                "label": ""
+                                "label": "Radar"
                             }
                         },
                         "required": ""
                     },
-                    "title": "",
+                    "title": "Sources",
                     "tooltip": ""
                 }
             },
@@ -3253,27 +3253,27 @@
     "sources": {
         "dataSets": {
             "LANDSAT_7": {
-                "label": "",
-                "tooltip": ""
+                "label": "L7",
+                "tooltip": "Landsat 7"
             },
             "LANDSAT_7_T2": {
-                "label": "",
-                "tooltip": ""
+                "label": "L7 T2",
+                "tooltip": "Landsat 7 Tier 2"
             },
             "LANDSAT_8": {
-                "label": "",
-                "tooltip": ""
+                "label": "L8",
+                "tooltip": "Landsat 8"
             },
             "LANDSAT_8_T2": {
-                "label": "",
-                "tooltip": ""
+                "label": "L8 T2",
+                "tooltip": "Landsat 8 Tier 2"
             },
             "LANDSAT_9": {
-                "label": "",
-                "tooltip": ""
+                "label": "L9",
+                "tooltip": "Landsat 9"
             },
             "LANDSAT_9_T2": {
-                "label": "",
+                "label": "L9 T2",
                 "tooltip": ""
             },
             "LANDSAT_TM": {
@@ -3511,15 +3511,15 @@
                     "format": "",
                     "label": "",
                     "required": "",
-                    "unique": ""
+                    "unique": "Ce nom d'utilisateur existe déjà"
                 }
             },
             "resetPassword": {
-                "label": "",
-                "tooltip": "",
-                "message": ""
+                "label": "Réinitialiser le mot de passe",
+                "tooltip": "Envoyer un email de réinitialisation du mot de passe à l'utilisateur.",
+                "message": "Si vous continuez, l'utilisateur recevra un e-mail pour définir un nouveau mot de passe. Jusqu'à sa modification, le mot de passe actuel sera toujours valide."
             },
-            "switchingToSEPALGoogleAccount": "",
+            "switchingToSEPALGoogleAccount": "Passage au compte Google de SEPAL",
             "title": "",
             "update": {
                 "error": "",
@@ -3567,7 +3567,7 @@
                 "required": ""
             },
             "preview": {
-                "label": ""
+                "label": "Aperçu"
             }
         },
         "publish": {
@@ -3638,28 +3638,28 @@
                 "notReplacable": "",
                 "replacable": ""
             },
-            "loadError": "",
+            "loadError": "Impossible de charger l'Asset",
             "replace": {
-                "label": "",
-                "tooltip": ""
+                "label": "Remplacer",
+                "tooltip": "Remplacer l'Asset précédent par celui-ci."
             },
             "resume": {
-                "label": "",
-                "tooltip": ""
+                "label": "Reprendre",
+                "tooltip": "Garder les images existantes dans la collection et exporter uniquement les images manquantes."
             },
             "strategy": {
-                "label": ""
+                "label": "Stratégie"
             }
         },
         "assetInput": {
-            "loadError": ""
+            "loadError": "Impossible de charger l'Asset"
         },
         "comboBox": {
             "loading": ""
         },
         "confirm": {
             "title": "",
-            "label": ""
+            "label": "Confirmer"
         },
         "error": "",
         "fileSelect": {
@@ -3677,35 +3677,35 @@
         },
         "imageConstraints": {
             "band": {
-                "label": "",
-                "notSelected": ""
+                "label": "Bande",
+                "notSelected": "[Aucune bande sélectionnée]"
             },
             "image": {
-                "label": "",
-                "notSelected": ""
+                "label": "Image",
+                "notSelected": "[Aucune image sélectionnée]"
             },
             "logicalAnd": {
-                "tooltip": ""
+                "tooltip": "Toutes les contraintes doivent être vraies"
             },
             "logicalOr": {
-                "tooltip": ""
+                "tooltip": "Au moins une des contraintes doit être vraie"
             },
             "operator": {
                 "equals": {
-                    "label": ""
+                    "label": "="
                 },
                 "greaterThan": {
-                    "label": ""
+                    "label": ">"
                 },
                 "greaterThanOrEquals": {
-                    "label": ""
+                    "label": "≥"
                 },
-                "label": "",
+                "label": "Opérateur",
                 "lessThan": {
-                    "label": ""
+                    "label": "<"
                 },
                 "lessThanOrEquals": {
-                    "label": ""
+                    "label": "≤"
                 },
                 "range": {
                     "label": ""
@@ -3720,17 +3720,17 @@
                 }
             },
             "value": {
-                "label": ""
+                "label": "Valeur"
             }
         },
         "legend": {
             "edit": {
-                "tooltip": ""
+                "tooltip": "Mettre à jour la légende"
             },
             "editLegendPanel": {
-                "title": ""
+                "title": "Mettre à jour la légende"
             },
-            "noEntries": ""
+            "noEntries": "Aucune entrée de légende"
         },
         "list": {
             "noResults": ""
@@ -3747,10 +3747,10 @@
             }
         },
         "recipeInput": {
-            "label": "",
-            "placeholder": "",
+            "label": "Formule",
+            "placeholder": "Selectionner une formule...",
             "all": {
-                "tooltip": ""
+                "tooltip": "Afficher toutes les formules ou seulement les formules dans le projet en cours"
             }
         },
         "safetyButton": {
