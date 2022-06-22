@@ -33,6 +33,7 @@
       }
     },
     "apps": {
+      "count": "{count} {count, plural, one {app} other {apps}}",
       "developedBy": "Developed by {author}",
       "filter": {
         "search": {

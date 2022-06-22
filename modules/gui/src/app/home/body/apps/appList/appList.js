@@ -87,16 +87,17 @@ class _AppList extends React.Component {
 
     renderAppList() {
         const highlightMatcher = this.getHighlightMatcher()
+        const apps = this.getApps()
         const key = app => _.compact([app.path, highlightMatcher]).join('|')
         return this.hasData()
             ? (
                 <ScrollableContainer>
                     <Unscrollable>
-                        {this.renderHeader()}
+                        {this.renderHeader(apps)}
                     </Unscrollable>
                     <Scrollable direction='x'>
                         <FastList
-                            items={this.getApps()}
+                            items={apps}
                             itemKey={app => key(app)}
                             spacing='tight'
                             overflow={50}>
@@ -108,7 +109,7 @@ class _AppList extends React.Component {
             : null
     }
 
-    renderHeader() {
+    renderHeader(apps) {
         const {tags} = this.props
         return (
             <Layout className={styles.header} type='vertical' spacing='compact'>
@@ -116,7 +117,8 @@ class _AppList extends React.Component {
                     {this.renderSearch()}
                     {this.renderGoogleAccountFilter()}
                 </Layout>
-                <Layout type='horizontal' spacing='compact' alignment='right'>
+                <Layout type='horizontal' spacing='compact'>
+                    {this.renderInfo(apps)}
                     {this.renderTagFilter(tags)}
                 </Layout>
             </Layout>
@@ -149,6 +151,14 @@ class _AppList extends React.Component {
                 onClick={this.toggleGoogleAccountFilter}
             />
         ) : null
+    }
+
+    renderInfo(apps) {
+        return (
+            <div className={styles.count}>
+                {msg('apps.count', {count: apps.length})}
+            </div>
+        )
     }
 
     renderTagFilter(tags) {
