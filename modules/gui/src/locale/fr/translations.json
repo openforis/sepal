@@ -1044,15 +1044,15 @@
                     "form": {
                         "bandTypes": {
                             "amplitude1": {
-                                "label": "",
+                                "label": "Amplitude 1",
                                 "tooltip": ""
                             },
                             "amplitude2": {
-                                "label": "",
+                                "label": "Amplitude 2",
                                 "tooltip": ""
                             },
                             "amplitude3": {
-                                "label": "",
+                                "label": "Amplitude 3",
                                 "tooltip": ""
                             },
                             "atLeastOne": "",
@@ -1070,15 +1070,15 @@
                                 "tooltip": ""
                             },
                             "phase1": {
-                                "label": "",
+                                "label": "Phase 1",
                                 "tooltip": ""
                             },
                             "phase2": {
-                                "label": "",
+                                "label": "Phase 2",
                                 "tooltip": ""
                             },
                             "phase3": {
-                                "label": "",
+                                "label": "Phase 3",
                                 "tooltip": ""
                             },
                             "rmse": {
@@ -1226,14 +1226,14 @@
                         "calibration": {
                             "duration": {
                                 "label": "",
-                                "placeholder": ""
+                                "placeholder": "Durée..."
                             }
                         },
                         "durationUnit": {
-                            "placeholder": "",
-                            "DAYS": "",
-                            "MONTHS": "",
-                            "WEEKS": ""
+                            "placeholder": "Unité...",
+                            "DAYS": "Jours",
+                            "MONTHS": "Mois",
+                            "WEEKS": "Semaines"
                         },
                         "monitoring": {
                             "duration": {
@@ -1248,19 +1248,19 @@
                         "range": "",
                         "noRange": ""
                     },
-                    "title": "",
+                    "title": "Intervalle temporel",
                     "tooltip": ""
                 },
                 "options": {
-                    "button": "",
+                    "button": "OPT",
                     "form": {
                         "minConfidence": {
                             "label": "",
                             "tooltip": "",
-                            "value": ""
+                            "value": "{value} (différence/rmse)"
                         },
                         "numberOfObservations": {
-                            "label": "",
+                            "label": "Nombre d'observations",
                             "tooltip": ""
                         },
                         "minNumberOfChanges": {
@@ -1281,17 +1281,17 @@
                                 "tooltip": ""
                             },
                             "pino26": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "PINO 26",
+                                "tooltip": "Utiliser l'algorithme de détection des nuages Pan-Tropical S2 développé par Dario Simonetti"
                             },
                             "qa": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Bandes QA",
+                                "tooltip": "Utiliser des bandes QA préexistantes"
                             }
                         },
                         "cloudMasking": {
                             "aggressive": {
-                                "label": "",
+                                "label": "Aggressif",
                                 "tooltip": ""
                             },
                             "label": "",
@@ -1300,7 +1300,7 @@
                                 "tooltip": ""
                             },
                             "none": {
-                                "label": "",
+                                "label": "Inactif",
                                 "tooltip": ""
                             }
                         },
@@ -1318,22 +1318,22 @@
                         "shadowMasking": {
                             "label": "",
                             "off": {
-                                "label": "",
+                                "label": "Inactif",
                                 "tooltip": ""
                             },
                             "on": {
-                                "label": "",
+                                "label": "Actif",
                                 "tooltip": ""
                             }
                         },
                         "snowMasking": {
                             "label": "",
                             "off": {
-                                "label": "",
+                                "label": "Inactif",
                                 "tooltip": ""
                             },
                             "on": {
-                                "label": "",
+                                "label": "Actif",
                                 "tooltip": ""
                             }
                         }
@@ -1343,16 +1343,16 @@
                 },
                 "reference": {
                     "asset": {
-                        "label": "",
-                        "title": "",
-                        "notCcdc": ""
+                        "label": "Asset Earth Engine CCDC",
+                        "title": "Asset Earth Engine CCDC",
+                        "notCcdc": "L'Asset ne contient pas de segments CCDC"
                     },
                     "button": "",
                     "form": {
                         "asset": {
-                            "invalid": "",
-                            "label": "",
-                            "placeholder": "",
+                            "invalid": "L'Asset doit être un Asset CCDC exporté",
+                            "label": "Asset CCDC",
+                            "placeholder": "Entrer l'ID d'un Asset CCDC",
                             "required": ""
                         }
                     },
@@ -1394,28 +1394,28 @@
                                 "tooltip": ""
                             },
                             "phase1": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Phase 1",
+                                "tooltip": "La phase du premier ordre harmonique du modèle"
                             },
                             "phase2": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Phase 2",
+                                "tooltip": "La phase du deuxième ordre harmonique du modèle"
                             },
                             "phase3": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Phase 3",
+                                "tooltip": "La phase du troisième ordre harmonique du modèle"
                             },
                             "rmse": {
                                 "label": "",
                                 "tooltip": ""
                             },
                             "slope": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Pente",
+                                "tooltip": "La pente de la composante linéaire du modèle"
                             },
                             "value": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Valeur",
+                                "tooltip": "La valeur évaluée des modèles harmoniques pour la date spécifiée"
                             }
                         },
                         "baseBands": {
@@ -1423,10 +1423,10 @@
                             "label": ""
                         },
                         "destination": {
-                            "GEE": "",
+                            "GEE": "Asset Google Earth Engine",
                             "label": "",
-                            "required": "",
-                            "SEPAL": ""
+                            "required": "Une destination doit être sélectionnée",
+                            "SEPAL": "Espace de travail SEPAL"
                         },
                         "scale": {
                             "label": ""
@@ -1483,7 +1483,7 @@
                         "dataSets": {
                             "label": "",
                             "optical": {
-                                "label": ""
+                                "label": "Optique"
                             },
                             "options": {
                                 "LANDSAT_7": {
@@ -1535,30 +1535,30 @@
                             "label": ""
                         },
                         "dataSetTypes": {
-                            "OPTICAL": "",
-                            "PLANET": "",
-                            "RADAR": ""
+                            "OPTICAL": "Optique",
+                            "PLANET": "Planet",
+                            "RADAR": "Radar"
                         },
-                        "required": ""
+                        "required": "Une source de données doit être sélectionnée"
                     },
-                    "title": "",
-                    "tooltip": ""
+                    "title": "Sources",
+                    "tooltip": "Sélectionner une source d'image"
                 }
             },
             "preview": {
                 "description": "",
-                "error": "",
-                "initializing": "",
+                "error": "Échec de la génération de l'aperçu",
+                "initializing": "Chargement de l'aperçu...",
                 "label": "",
-                "loading": "",
-                "tilesFailed": ""
+                "loading": "Chargement des tuiles : {pending}",
+                "tilesFailed": "Echec de {failed}"
             },
             "reference": {
                 "asset": {
-                    "loadError": ""
+                    "loadError": "Échec du chargement de l'Asset"
                 },
                 "recipe": {
-                    "loadError": ""
+                    "loadError": "Échec du chargement de la recette"
                 }
             },
             "tabPlaceholder": ""
@@ -1567,7 +1567,7 @@
             "bands": {
                 "class": "",
                 "classProbability": "",
-                "probability": "",
+                "probability": "{class} %",
                 "regression": ""
             },
             "collect": {
@@ -1580,7 +1580,7 @@
                     "title": ""
                 }
             },
-            "create": "",
+            "create": "Classification",
             "description": "",
             "layers": {
                 "imageLayer": {
@@ -1593,10 +1593,10 @@
             },
             "panel": {
                 "auxiliaryImagery": {
-                    "button": "",
+                    "button": "AUX",
                     "form": {
                         "options": {
-                            "label": "",
+                            "label": "Sources",
                             "latitude": {
                                 "label": "",
                                 "tooltip": ""
@@ -2093,9 +2093,9 @@
             "panel": {
                 "inputImage": {
                     "asset": {
-                        "label": "",
-                        "placeholder": "",
-                        "title": ""
+                        "label": "Id de l'asset Earth Engine",
+                        "placeholder": "Entrer une ID d'Asset...",
+                        "title": "Asset Earth Engine"
                     },
                     "changeBand": {
                         "label": ""
@@ -2109,7 +2109,7 @@
                     },
                     "legend": {
                         "label": "",
-                        "tooLong": ""
+                        "tooLong": "La légende est trop longue. Elle ne peut pas contenir plus de {max} entrées."
                     },
                     "recipe": {
                         "title": ""
@@ -2158,9 +2158,9 @@
             "panel": {
                 "inputImage": {
                     "asset": {
-                        "label": "",
-                        "placeholder": "",
-                        "title": ""
+                        "label": "Id de l'Asset Earth Engine",
+                        "placeholder": "Entrer une ID d'Asset...",
+                        "title": "Asset Earth Engine"
                     },
                     "changeBand": {
                         "label": ""
@@ -2178,7 +2178,7 @@
                     "recipe": {
                         "label": "",
                         "placeholder": "",
-                        "title": ""
+                        "title": "Formule SEPAL enregistrée"
                     },
                     "to": {
                         "button": {
@@ -2193,7 +2193,7 @@
                         "label": "",
                         "tooltip": ""
                     },
-                    "import": "",
+                    "import": "Importer...",
                     "title": ""
                 },
                 "mapping": {
@@ -2257,14 +2257,14 @@
             },
             "panel": {
                 "areaOfInterest": {
-                    "button": "",
+                    "button": "AOI",
                     "form": {
                         "bounds": {
                             "required": ""
                         },
                         "buffer": {
-                            "info": "",
-                            "label": "",
+                            "info": "buffer de {buffer} km",
+                            "label": "Buffer",
                             "tooltip": ""
                         },
                         "country": {
@@ -2411,12 +2411,12 @@
                                 "tooltip": ""
                             },
                             "pino26": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "PINO 26",
+                                "tooltip": "Utiliser l'algorithme de détection des nuages Pan-Tropical S2 développé par Dario Simonetti"
                             },
                             "qa": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Bandes QA",
+                                "tooltip": "Utiliser des bandes QA préexistantes"
                             }
                         },
                         "cloudMasking": {
@@ -2430,7 +2430,7 @@
                                 "tooltip": ""
                             },
                             "none": {
-                                "label": "",
+                                "label": "Inactif",
                                 "tooltip": ""
                             }
                         },
@@ -2487,20 +2487,20 @@
                         "snowMasking": {
                             "label": "",
                             "off": {
-                                "label": "",
+                                "label": "Inactif",
                                 "tooltip": ""
                             },
                             "on": {
-                                "label": "",
+                                "label": "Actif",
                                 "tooltip": ""
                             }
                         }
                     },
-                    "title": "",
+                    "title": "Composite",
                     "tooltip": ""
                 },
                 "dates": {
-                    "button": "",
+                    "button": "DAT",
                     "form": {
                         "futureSeasons": {
                             "info": {
@@ -2534,14 +2534,14 @@
                             "tooltip": ""
                         }
                     },
-                    "title": "",
+                    "title": "Dates",
                     "tooltip": ""
                 },
                 "layers": {
                     "title": ""
                 },
                 "scenes": {
-                    "button": "",
+                    "button": "SCN",
                     "form": {
                         "required": "",
                         "targetDateWeight": {
@@ -2589,7 +2589,7 @@
                     "selectedScenes": ""
                 },
                 "sources": {
-                    "button": "",
+                    "button": "SRC",
                     "form": {
                         "dataSets": {
                             "label": "",
@@ -2608,16 +2608,16 @@
                                     "tooltip": ""
                                 },
                                 "LANDSAT_8_T2": {
-                                    "label": "",
-                                    "tooltip": ""
+                                    "label": "L8 T2",
+                                    "tooltip": "Landsat 8 Tier 2"
                                 },
                                 "LANDSAT_9": {
-                                    "label": "",
-                                    "tooltip": ""
+                                    "label": "L9",
+                                    "tooltip": "Landsat 9"
                                 },
                                 "LANDSAT_9_T2": {
-                                    "label": "",
-                                    "tooltip": ""
+                                    "label": "L9 T2",
+                                    "tooltip": "Landsat 9 Tier 2"
                                 },
                                 "LANDSAT_TM": {
                                     "label": "",
