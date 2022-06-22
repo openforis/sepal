@@ -19,12 +19,14 @@ import lookStyles from 'style/look.module.css'
 import moment from 'moment'
 import styles from './userList.module.css'
 
+const IGNORE = 'IGNORE'
+
 export default class UserList extends React.Component {
     state = {
         sortingOrder: 'updateTime',
         sortingDirection: -1,
         textFilterValues: [],
-        statusFilter: undefined
+        statusFilter: IGNORE
     }
 
     search = React.createRef()
@@ -33,6 +35,7 @@ export default class UserList extends React.Component {
         super(props)
         this.renderUser = this.renderUser.bind(this)
         this.onSelect = this.onSelect.bind(this)
+        this.setStatusFilter = this.setStatusFilter.bind(this)
     }
 
     setSorting(sortingOrder, defaultSorting) {
@@ -237,7 +240,8 @@ export default class UserList extends React.Component {
     renderStatusFilter() {
         const {statusFilter} = this.state
         const options = [{
-            label: msg('users.filter.status.ignore.label')
+            label: msg('users.filter.status.ignore.label'),
+            value: IGNORE
         }, {
             label: msg('users.filter.status.pending.label'),
             value: 'PENDING'
@@ -258,7 +262,7 @@ export default class UserList extends React.Component {
                 spacing='tight'
                 options={options}
                 selected={statusFilter}
-                onChange={statusFilter => this.setStatusFilter(statusFilter)}
+                onChange={this.setStatusFilter}
             />
         )
     }

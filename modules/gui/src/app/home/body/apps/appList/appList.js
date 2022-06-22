@@ -25,19 +25,29 @@ import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import styles from './appList.module.css'
 
+const IGNORE = 'IGNORE'
+
 const mapStateToProps = () => ({
     user: currentUser(),
     apps: select('apps.list'),
     tags: select('apps.tags'),
     tabs: select('apps.tabs'),
     filterValues: select('apps.filterValues') || [],
-    tagFilter: select('apps.tagFilter'),
+    tagFilter: select('apps.tagFilter') || IGNORE,
     googleAccountFilter: select('apps.googleAccountFilter')
 })
 
 class _AppList extends React.Component {
     state = {
         app: null
+    }
+
+    constructor(props) {
+        super(props)
+        this.closeAppDetails = this.closeAppDetails.bind(this)
+        this.setFilter = this.setFilter.bind(this)
+        this.setTagFilter = this.setTagFilter.bind(this)
+        this.toggleGoogleAccountFilter = this.toggleGoogleAccountFilter.bind(this)
     }
 
     render() {
@@ -67,7 +77,7 @@ class _AppList extends React.Component {
     renderAppDetails() {
         const {app} = this.state
         return app
-            ? <AppDetails app={app} onClose={() => this.closeAppDetails()}/>
+            ? <AppDetails app={app} onClose={this.closeAppDetails}/>
             : null
     }
 
@@ -119,7 +129,7 @@ class _AppList extends React.Component {
             <SearchBox
                 value={searchValues}
                 placeholder={msg('apps.filter.search.placeholder')}
-                onSearchValue={searchValue => this.setFilter(searchValue)}
+                onSearchValue={this.setFilter}
             />
         )
     }
@@ -136,7 +146,7 @@ class _AppList extends React.Component {
                 tooltip={msg('apps.googleAccountRequired')}
                 tooltipPlacement='left'
                 tooltipOnVisible={visible => userDetailsHint(visible)}
-                onClick={() => this.toggleGoogleAccountFilter()}
+                onClick={this.toggleGoogleAccountFilter}
             />
         ) : null
     }
@@ -150,7 +160,10 @@ class _AppList extends React.Component {
             value
         })
         const options = [
-            {label: msg('apps.filter.tag.ignore.label')},
+            {
+                label: msg('apps.filter.tag.ignore.label'),
+                value: IGNORE
+            },
             ...tags.map(toOption)
         ]
         return (
@@ -160,7 +173,7 @@ class _AppList extends React.Component {
                 spacing='tight'
                 options={options}
                 selected={tagFilter}
-                onChange={tagFilter => this.setTagFilter(tagFilter)}
+                onChange={this.setTagFilter}
             />
         )
     }
@@ -276,7 +289,7 @@ class _AppList extends React.Component {
 
     appMatchesTagFilter(app) {
         const {tagFilter} = this.props
-        return !tagFilter || app.tags.includes(tagFilter)
+        return tagFilter === IGNORE || app.tags.includes(tagFilter)
     }
 
     appMatchesFilterValues(app) {
@@ -295,10 +308,10 @@ class _AppList extends React.Component {
     appMatchesGoogleAccountFilter({googleAccountRequired}) {
         const {googleAccountFilter} = this.props
         return this.isUsingServiceAccount()
-            ? true
-            : googleAccountRequired
+            ? googleAccountRequired
                 ? googleAccountFilter
                 : true
+            : true
     }
 
     isLoading() {
