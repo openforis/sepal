@@ -84,7 +84,7 @@ class _FastList extends React.PureComponent {
     }
 
     renderFiller(height) {
-        const {spacedItemHeight} = this.state
+        const spacedItemHeight = this.getSpacedItemHeight()
         return (
             <div
                 className={styles.filler}
@@ -111,6 +111,11 @@ class _FastList extends React.PureComponent {
                 {children}
             </FastListItem>
         )
+    }
+
+    getSpacedItemHeight() {
+        const {itemHeight, spacedItemHeight} = this.state
+        return spacedItemHeight || itemHeight
     }
 
     initScrollable(element) {
@@ -149,7 +154,8 @@ class _FastList extends React.PureComponent {
     }
 
     update(scrollTop, clientHeight) {
-        const {itemSpacing, spacedItemHeight} = this.state
+        const {itemSpacing} = this.state
+        const spacedItemHeight = this.getSpacedItemHeight()
         const {items, overflow} = this.props
         const firstVisibleItem = Math.max(0, Math.ceil(scrollTop / spacedItemHeight) - overflow)
         const lastVisibleItem = Math.min(items.length, Math.floor((scrollTop + clientHeight + itemSpacing) / spacedItemHeight) + overflow)
