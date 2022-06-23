@@ -20,7 +20,7 @@ export const AppItem = ({app: {label, tagline, logoRef}, className, highlight, h
     <Item
         className={className}
         title={label}
-        description={tagline}
+        description={tagline || '...'}
         image={renderLogo(logoRef)}
         highlight={highlight}
         highlightClassName={highlightClassName}
