@@ -2406,10 +2406,7 @@
 		"title": "Mensajes de los usuarios"
 	},
 	"users": {
-		"count": {
-			"morePages": "{count} {count, plural, one {usuario} other {usuarios}}, mostrando {start}-{end}",
-			"onePage": "{count} {count, plural, one {usuario} other {usuarios}}"
-		},
+		"count": "{count} {count, plural, one {usuario} other {usuarios}}",
 		"filter": {
 			"search": {
 				"placeholder": "Buscar usuarios"

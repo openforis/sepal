@@ -48,7 +48,7 @@ const fields = {
 const mapStateToProps = (state, ownProps) => {
     const {userDetails} = ownProps
     const {id, newUser, username, name, email, organization, admin = false} = userDetails
-    const {quota: {budget: {instanceSpending, storageSpending, storageQuota}, budgetUpdateRequest}} = userDetails
+    const {quota: {budget: {instanceSpending, storageSpending, storageQuota} = {}, budgetUpdateRequest}} = userDetails
     const userRequestInstanceSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageQuotaState = budgetUpdateRequest ? null : false
