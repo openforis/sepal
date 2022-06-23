@@ -42,8 +42,9 @@ const isUpdatable = async (name, version) => {
     const packageNameFilter = minimatch.filter(getCranPackageFilename(name, '*'))
     const packageVersionFilter = filename => filename === getCranPackageFilename(name, version)
     const matchingPackages = packages.filter(packageNameFilter)
-    return matchingPackages.length !== 0
-        && matchingPackages.filter(packageVersionFilter).length === 0
+    const packageNamePresent = matchingPackages.length !== 0
+    const packageVersionPresent = matchingPackages.filter(packageVersionFilter).length !== 0
+    return packageNamePresent && !packageVersionPresent
 }
 
 const getCranPackageTarget = (base, name, {archive} = {}) =>
