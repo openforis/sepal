@@ -33,6 +33,7 @@
       }
     },
     "apps": {
+      "count": "{count} {count, plural, one {app} other {apps}}",
       "developedBy": "Developed by {author}",
       "filter": {
         "search": {
@@ -3604,10 +3605,7 @@
       "title": "User messages"
     },
     "users": {
-      "count": {
-        "morePages": "{count} {count, plural, one {user} other {users}}, showing {start}-{stop}",
-        "onePage": "{count} {count, plural, one {user} other {users}}"
-      },
+      "count": "{count} {count, plural, one {user} other {users}}",
       "filter": {
         "search": {
           "placeholder": "Search users"

@@ -10,3 +10,12 @@
 .apps {
     flex-shrink: 1;
 }
+
+.count {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    color: gray;
+    font-size: small;
+    margin-right: 1rem;
+}

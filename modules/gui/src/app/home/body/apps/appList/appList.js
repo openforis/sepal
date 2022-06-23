@@ -25,19 +25,29 @@ import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import styles from './appList.module.css'
 
+const IGNORE = 'IGNORE'
+
 const mapStateToProps = () => ({
     user: currentUser(),
     apps: select('apps.list'),
     tags: select('apps.tags'),
     tabs: select('apps.tabs'),
     filterValues: select('apps.filterValues') || [],
-    tagFilter: select('apps.tagFilter'),
+    tagFilter: select('apps.tagFilter') || IGNORE,
     googleAccountFilter: select('apps.googleAccountFilter')
 })
 
 class _AppList extends React.Component {
     state = {
         app: null
+    }
+
+    constructor(props) {
+        super(props)
+        this.closeAppDetails = this.closeAppDetails.bind(this)
+        this.setFilter = this.setFilter.bind(this)
+        this.setTagFilter = this.setTagFilter.bind(this)
+        this.toggleGoogleAccountFilter = this.toggleGoogleAccountFilter.bind(this)
     }
 
     render() {
@@ -67,7 +77,7 @@ class _AppList extends React.Component {
     renderAppDetails() {
         const {app} = this.state
         return app
-            ? <AppDetails app={app} onClose={() => this.closeAppDetails()}/>
+            ? <AppDetails app={app} onClose={this.closeAppDetails}/>
             : null
     }
 
@@ -77,16 +87,17 @@ class _AppList extends React.Component {
 
     renderAppList() {
         const highlightMatcher = this.getHighlightMatcher()
+        const apps = this.getApps()
         const key = app => _.compact([app.path, highlightMatcher]).join('|')
         return this.hasData()
             ? (
                 <ScrollableContainer>
                     <Unscrollable>
-                        {this.renderHeader()}
+                        {this.renderHeader(apps)}
                     </Unscrollable>
                     <Scrollable direction='x'>
                         <FastList
-                            items={this.getApps()}
+                            items={apps}
                             itemKey={app => key(app)}
                             spacing='tight'
                             overflow={50}>
@@ -98,7 +109,7 @@ class _AppList extends React.Component {
             : null
     }
 
-    renderHeader() {
+    renderHeader(apps) {
         const {tags} = this.props
         return (
             <Layout className={styles.header} type='vertical' spacing='compact'>
@@ -106,7 +117,8 @@ class _AppList extends React.Component {
                     {this.renderSearch()}
                     {this.renderGoogleAccountFilter()}
                 </Layout>
-                <Layout type='horizontal' spacing='compact' alignment='right'>
+                <Layout type='horizontal' spacing='compact'>
+                    {this.renderInfo(apps)}
                     {this.renderTagFilter(tags)}
                 </Layout>
             </Layout>
@@ -119,7 +131,7 @@ class _AppList extends React.Component {
             <SearchBox
                 value={searchValues}
                 placeholder={msg('apps.filter.search.placeholder')}
-                onSearchValue={searchValue => this.setFilter(searchValue)}
+                onSearchValue={this.setFilter}
             />
         )
     }
@@ -136,9 +148,17 @@ class _AppList extends React.Component {
                 tooltip={msg('apps.googleAccountRequired')}
                 tooltipPlacement='left'
                 tooltipOnVisible={visible => userDetailsHint(visible)}
-                onClick={() => this.toggleGoogleAccountFilter()}
+                onClick={this.toggleGoogleAccountFilter}
             />
         ) : null
+    }
+
+    renderInfo(apps) {
+        return (
+            <div className={styles.count}>
+                {msg('apps.count', {count: apps.length})}
+            </div>
+        )
     }
 
     renderTagFilter(tags) {
@@ -150,7 +170,10 @@ class _AppList extends React.Component {
             value
         })
         const options = [
-            {label: msg('apps.filter.tag.ignore.label')},
+            {
+                label: msg('apps.filter.tag.ignore.label'),
+                value: IGNORE
+            },
             ...tags.map(toOption)
         ]
         return (
@@ -160,13 +183,13 @@ class _AppList extends React.Component {
                 spacing='tight'
                 options={options}
                 selected={tagFilter}
-                onChange={tagFilter => this.setTagFilter(tagFilter)}
+                onSelect={this.setTagFilter}
             />
         )
     }
 
-    renderGoogleAccountRequiredButton({googleAccountRequired}) {
-        return googleAccountRequired
+    renderGoogleAccountRequiredButton(app) {
+        return this.isDisallowed(app)
             ? (
                 <Button
                     key={'renderGoogleAccountRequiredButton'}
@@ -271,12 +294,12 @@ class _AppList extends React.Component {
     }
 
     appMatchesFilters(app) {
-        return this.appMatchesFilterValues(app) && this.appMatchesTagFilter(app) && this.appMatcherGoogleAccountFilter(app)
+        return this.appMatchesFilterValues(app) && this.appMatchesTagFilter(app) && this.appMatchesGoogleAccountFilter(app)
     }
 
     appMatchesTagFilter(app) {
         const {tagFilter} = this.props
-        return !tagFilter || app.tags.includes(tagFilter)
+        return tagFilter === IGNORE || app.tags.includes(tagFilter)
     }
 
     appMatchesFilterValues(app) {
@@ -292,11 +315,11 @@ class _AppList extends React.Component {
             : true
     }
 
-    appMatcherGoogleAccountFilter({googleAccountRequired}) {
+    appMatchesGoogleAccountFilter(app) {
         const {googleAccountFilter} = this.props
-        return googleAccountFilter
-            ? true
-            : !googleAccountRequired
+        return this.isDisallowed(app)
+            ? googleAccountFilter
+            : true
     }
 
     isLoading() {
@@ -317,8 +340,9 @@ class _AppList extends React.Component {
     }
 
     setTagFilter(tagFilter) {
+        const {tagFilter: prevTagFilter} = this.props
         actionBuilder('UPDATE_TAG_FILTER', tagFilter)
-            .set('apps.tagFilter', tagFilter)
+            .set('apps.tagFilter', tagFilter !== prevTagFilter ? tagFilter : IGNORE)
             .dispatch()
     }
 
