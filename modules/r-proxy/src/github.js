@@ -80,7 +80,7 @@ const makeGitHubPackage = async (name, path) =>
     await ensureGitHubPackageInstalled(name, path) && await bundleGitHubPackage(name, path)
     
 const updateGitHubPackage = async ({name, path}) => {
-    log.debug(`Updating: ${path}`)
+    log.info(`Updating: ${name} (${path})`)
     const success = await makeGitHubPackage(name, path, {force: true})
     return {success}
 }

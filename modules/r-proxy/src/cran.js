@@ -6,6 +6,7 @@ const {runScript} = require('./script')
 const readline = require('readline')
 const https = require('https')
 const log = require('sepal/log').getLogger('cran')
+const {compare} = require('compare-versions')
 
 const BIN = Path.join(CRAN_ROOT, 'bin/contrib')
 
@@ -97,11 +98,11 @@ const makeCranPackage = async (name, version, repo) =>
 
 const updateCranPackage = async ({name, version}) => {
     if (await isUpdatable(name, version)) {
-        log.debug(`Updating: ${name}/${version}`)
+        log.info(`Updating: ${name}/${version}`)
         const success = await makeCranPackage(name, version, cranRepo)
         return {success}
     } else {
-        log.trace(`Skipping: ${name}/${version}`)
+        log.debug(`Skipping: ${name}/${version}`)
         return {success: true}
     }
 }
@@ -125,23 +126,84 @@ const getAvailablePackages = () =>
             reject(error)
         }
     })
+
+const getInstalledVersion = async () => {
+    const R_VERSION_MATCHER = /^R version (\S*)/
+    log.debug('Detecting R version')
+    const versionInfo = await runScript('get_r_version.sh')
+    const [, version] = versionInfo.match(R_VERSION_MATCHER)
+    log.info('Detected R version:', version)
+    return version
+}
+
+const isVersionSatisfied = ({name, version, depends, installedVersion}) => {
+    const R_VERSION_MATCHER = /(?:^|,)R\(>=(.*?)\)(?:$|,)/
+    log.debug(`Validating ${name}/${version}`)
+    if (depends) {
+        const dependsR = depends.replaceAll(' ', '').match(R_VERSION_MATCHER)
+        if(dependsR && dependsR[1]) {
+            const requiredVersion = dependsR[1].replace('-', '.') // fix packages having wrong R version format
+            try {
+                if (compare(installedVersion, requiredVersion, '>=')) {
+                    log.debug(`Validated ${name}/${version}`)
+                } else {
+                    log.info(`Skipping ${name}/${version}: requires R >= ${requiredVersion}`)
+                    return false
+                }
+            } catch (error) {
+                log.warn(`Cannot compare R version for ${name}/${version}:`, dependsR[1])
+            }
+        }
+    }
+    return true // being optimistic
+}
     
 const checkCranUpdates = async enqueueUpdateCranPackage => {
     log.info('Checking updated CRAN packages')
+    const installedVersion = await getInstalledVersion()
     const res = await getAvailablePackages()
     const rl = readline.createInterface({input: res})
 
-    let name = null
-    let version = null
+    const property = (() => {
+        let buffer = ''
+        return {
+            set: text => buffer = text,
+            append: text => buffer += ` ${text.trim()}`,
+            hasData: () => buffer.length !== 0,
+            get: () => buffer.split(': ')
+        }
+    })()
+
+    const entry = (() => {
+        let buffer = {}
+        return {
+            reset: () => buffer = {},
+            set: ([key, value]) => buffer[key.trim()] = value.trim(),
+            get: () => buffer
+        }
+    })()
 
     rl.on('line', line => {
-        if (line.startsWith('Package: ')) {
-            name = line.substring(9)
-        }
-        if (name && line.startsWith('Version: ')) {
-            version = line.substring(9)
-            enqueueUpdateCranPackage(name, version)
-            name = null
+        if (line.length) {
+            if (line.startsWith(' ')) {
+                // continuation of previous property: join
+                property.append(line)
+            } else {
+                // new property: process previous property
+                if (property.hasData()) {
+                    entry.set(property.get())
+                }
+                property.set(line)
+            }
+        } else {
+            // no more properties: process previous entry
+            const {Package: name, Version: version, Depends: depends} = entry.get()
+            if (name && version) {
+                if (isVersionSatisfied({name, version, depends, installedVersion})) {
+                    enqueueUpdateCranPackage(name, version)
+                }
+            }
+            entry.reset()
         }
     })
 
