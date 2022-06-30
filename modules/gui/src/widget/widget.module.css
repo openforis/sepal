@@ -53,15 +53,12 @@
 /* widget border */
 
 .widget.border {
+    --input-border-color: var(--input-border-default-color);
     --input-border-default-color: #606060;
     --input-border-hover-color: #b0b0b0;
     --input-border-focus-color: #a0a0a0;
     border-bottom: 1px solid var(--input-border-color);
     transition: 100ms ease-in-out;
-}
-
-.widget.border.normal {
-    --input-border-color: var(--input-border-default-color);
 }
 
 .widget.border.normal:focus-within {
