@@ -1,6 +1,6 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Layout} from './layout'
-import {Subject, animationFrames, distinctUntilChanged, fromEvent, map, mergeWith, switchMap, takeUntil, throttleTime, timer} from 'rxjs'
+import {Subject, animationFrames, distinctUntilChanged, fromEvent, map, mergeWith, switchMap, takeUntil, timer} from 'rxjs'
 import {compose} from 'compose'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -13,9 +13,8 @@ class _FastList extends React.PureComponent {
     reset$ = new Subject()
 
     state = {
-        itemHeight: 0,
-        itemSpacing: 0,
-        spacedItemHeight: 0,
+        singleItemHeight: null,
+        spacedItemHeight: null,
         firstVisibleItem: 0,
         lastVisibleItem: 0,
         marginTop: 0,
@@ -32,28 +31,27 @@ class _FastList extends React.PureComponent {
     render() {
         const {items} = this.props
         return items
-            ? this.renderItemHeightSampler() || this.renderItemSpacingSampler() || this.renderList()
+            ? this.renderSingleItemSampler() || this.renderSpacedItemSampler() || this.renderList()
             : null
     }
 
-    renderItemHeightSampler() {
+    renderSingleItemSampler() {
         const {items} = this.props
-        const {itemHeight} = this.state
-        if (items.length > 0 && !itemHeight) {
-            return this.renderSampler(1, ({height: itemHeight}) => {
-                this.setState({itemHeight})
+        const {singleItemHeight} = this.state
+        if (items.length > 0 && !singleItemHeight) {
+            return this.renderSampler(1, ({height: singleItemHeight}) => {
+                this.setState({singleItemHeight})
             })
         }
     }
 
-    renderItemSpacingSampler() {
+    renderSpacedItemSampler() {
         const {items} = this.props
-        const {itemHeight, itemSpacing} = this.state
-        if (items.length > 1 && !itemSpacing) {
+        const {singleItemHeight, spacedItemHeight} = this.state
+        if (items.length > 1 && !spacedItemHeight) {
             return this.renderSampler(2, ({height}) => {
-                const itemSpacing = height - 2 * itemHeight
-                const spacedItemHeight = itemHeight + itemSpacing
-                this.setState({itemSpacing, spacedItemHeight})
+                const spacedItemHeight = height - singleItemHeight
+                this.setState({spacedItemHeight})
             })
         }
     }
@@ -84,13 +82,13 @@ class _FastList extends React.PureComponent {
     }
 
     renderFiller(height) {
-        const spacedItemHeight = this.getSpacedItemHeight()
+        const {itemHeight} = this.getItemHeight()
         return (
             <div
                 className={styles.filler}
                 style={{
                     '--height': height,
-                    '--itemHeight': spacedItemHeight
+                    '--itemHeight': itemHeight
                 }}/>
         )
     }
@@ -111,11 +109,6 @@ class _FastList extends React.PureComponent {
                 {children}
             </FastListItem>
         )
-    }
-
-    getSpacedItemHeight() {
-        const {itemHeight, spacedItemHeight} = this.state
-        return spacedItemHeight || itemHeight
     }
 
     initScrollable(element) {
@@ -153,14 +146,21 @@ class _FastList extends React.PureComponent {
         }
     }
 
+    getItemHeight() {
+        const {singleItemHeight, spacedItemHeight} = this.state
+        return {
+            itemHeight: spacedItemHeight || singleItemHeight,
+            itemSpacing: Math.max(0, spacedItemHeight - singleItemHeight)
+        }
+    }
+
     update(scrollTop, clientHeight) {
-        const {itemSpacing} = this.state
-        const spacedItemHeight = this.getSpacedItemHeight()
         const {items, overflow} = this.props
-        const firstVisibleItem = Math.max(0, Math.ceil(scrollTop / spacedItemHeight) - overflow)
-        const lastVisibleItem = Math.min(items.length, Math.floor((scrollTop + clientHeight + itemSpacing) / spacedItemHeight) + overflow)
-        const marginTop = firstVisibleItem * spacedItemHeight
-        const marginBottom = (items.length - lastVisibleItem) * spacedItemHeight
+        const {itemHeight, itemSpacing} = this.getItemHeight()
+        const firstVisibleItem = Math.max(0, Math.ceil(scrollTop / itemHeight) - overflow)
+        const lastVisibleItem = Math.min(items.length, Math.floor((scrollTop + clientHeight + itemSpacing) / itemHeight) + overflow)
+        const marginTop = firstVisibleItem * itemHeight
+        const marginBottom = (items.length - lastVisibleItem) * itemHeight
         this.setState({firstVisibleItem, lastVisibleItem, marginTop, marginBottom})
     }
 
