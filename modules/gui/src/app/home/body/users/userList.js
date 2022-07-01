@@ -80,7 +80,7 @@ export default class UserList extends React.Component {
     userMatchesTextFilter(user) {
         const {textFilterValues} = this.state
         const searchMatchers = textFilterValues.map(filter => RegExp(filter, 'i'))
-        const searchProperties = ['name', 'username', 'email', 'organization']
+        const searchProperties = ['name', 'username', 'email', 'organization', 'intendedUse']
         return textFilterValues
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
