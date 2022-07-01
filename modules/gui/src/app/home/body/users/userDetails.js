@@ -28,6 +28,8 @@ const fields = {
         .predicate((email, {id}) => isNoMatchingUser(id, user => user.email === email), 'user.userDetails.form.email.unique'),
     organization: new Form.Field()
         .notBlank('user.userDetails.form.organization.required'),
+    intendedUse: new Form.Field()
+        .notBlank('user.userDetails.form.intendedUse.required'),
     admin: new Form.Field(),
     instanceSpending: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.instanceSpending.atLeast1')
@@ -48,14 +50,14 @@ const fields = {
 
 const mapStateToProps = (state, ownProps) => {
     const {userDetails} = ownProps
-    const {id, newUser, username, name, email, organization, admin = false} = userDetails
+    const {id, newUser, username, name, email, organization, intendedUse, admin = false} = userDetails
     const {quota: {budget: {instanceSpending, storageSpending, storageQuota} = {}, budgetUpdateRequest}} = userDetails
     const userRequestInstanceSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageQuotaState = budgetUpdateRequest ? null : false
     return {
         values: {
-            id, newUser, username, name, email, organization, admin, instanceSpending, storageSpending, storageQuota,
+            id, newUser, username, name, email, organization, intendedUse, admin, instanceSpending, storageSpending, storageQuota,
             userRequestInstanceSpendingState, userRequestStorageSpendingState, userRequestStorageQuotaState
         }
     }
@@ -74,7 +76,7 @@ class UserDetails extends React.Component {
     }
 
     render() {
-        const {form, inputs: {username, name, email, organization, instanceSpending, storageSpending, storageQuota}} = this.props
+        const {form, inputs: {username, name, email, organization, intendedUse, instanceSpending, storageSpending, storageQuota}} = this.props
         const newUser = !this.props.userDetails.username
         return (
             <Form.Panel
@@ -121,6 +123,13 @@ class UserDetails extends React.Component {
                             autoComplete={false}
                             spellCheck={false}
                             errorMessage
+                        />
+                        <Form.Input
+                            label={msg('user.userDetails.form.intendedUse.label')}
+                            input={intendedUse}
+                            spellCheck={false}
+                            textArea
+                            minRows={4}
                         />
                         <Form.FieldSet
                             className={styles.monthlyLimits}

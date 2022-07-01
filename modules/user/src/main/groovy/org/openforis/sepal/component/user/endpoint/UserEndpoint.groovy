@@ -283,6 +283,7 @@ class UserEndpoint {
                 username: user.username,
                 email: user.email,
                 organization: user.organization,
+                intendedUse: user.intendedUse,
                 googleTokens: user.googleTokens,
                 emailNotificationsEnabled: user.emailNotificationsEnabled,
                 status: user.status,

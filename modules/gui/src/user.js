@@ -102,13 +102,14 @@ export const validateToken$ = token =>
 export const signUp$ = (userDetails, recaptchaToken) =>
     api.user.signUp$(userDetails, recaptchaToken)
 
-export const updateCurrentUserDetails$ = ({name, email, organization, emailNotificationsEnabled}) => {
-    return api.user.updateCurrentUserDetails$({name, email, organization, emailNotificationsEnabled}).pipe(
+export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled}) => {
+    return api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled}).pipe(
         map(({name, email, organization}) =>
-            actionBuilder('UPDATE_USER_DETAILS', {name, email, organization})
+            actionBuilder('UPDATE_USER_DETAILS', {name, email, organization, intendedUse})
                 .set('user.currentUser.name', name)
                 .set('user.currentUser.email', email)
                 .set('user.currentUser.organization', organization)
+                .set('user.currentUser.intendedUse', intendedUse)
                 .set('user.currentUser.emailNotificationsEnabled', emailNotificationsEnabled)
                 .dispatch()
         )

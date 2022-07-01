@@ -23,6 +23,7 @@ const fields = {
     email: new Form.Field()
         .notBlank('user.userDetails.form.email.required'),
     organization: new Form.Field(),
+    intendedUse: new Form.Field(),
     emailNotificationsEnabled: new Form.Field()
 }
 
@@ -34,6 +35,7 @@ const mapStateToProps = state => {
             name: user.name,
             email: user.email,
             organization: user.organization,
+            intendedUse: user.intendedUse,
             emailNotificationsEnabled: user.emailNotificationsEnabled
         },
         tasks: state.tasks
@@ -57,7 +59,7 @@ class _UserDetails extends React.Component {
     }
 
     renderPanel() {
-        const {inputs: {name, email, organization, emailNotificationsEnabled}} = this.props
+        const {inputs: {name, email, organization, intendedUse, emailNotificationsEnabled}} = this.props
         return (
             <React.Fragment>
                 <Panel.Content>
@@ -79,6 +81,13 @@ class _UserDetails extends React.Component {
                             label={msg('user.userDetails.form.organization.label')}
                             input={organization}
                             spellCheck={false}
+                        />
+                        <Form.Input
+                            label={msg('user.userDetails.form.intendedUse.label')}
+                            input={intendedUse}
+                            spellCheck={false}
+                            textArea
+                            minRows={4}
                         />
                         <Form.Buttons
                             label={msg('user.userDetails.form.emailNotifications.label')}
