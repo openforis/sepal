@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React, {useEffect} from 'react'
 
-export const Recaptcha = ({children, siteKey, onToken}) => {
+export const Recaptcha = ({children, action, siteKey, onToken}) => {
     const handleLoaded = () => {
         if (!children) {
             window.grecaptcha.enterprise.ready(executeRecaptcha)
@@ -9,7 +9,7 @@ export const Recaptcha = ({children, siteKey, onToken}) => {
     }
 
     const executeRecaptcha = async () => {
-        const token = await window.grecaptcha.enterprise.execute(siteKey, {action: 'LOGIN'})
+        const token = await window.grecaptcha.enterprise.execute(siteKey, {action})
         onToken && onToken(token)
     }
       
@@ -40,6 +40,7 @@ export const Recaptcha = ({children, siteKey, onToken}) => {
 }
 
 Recaptcha.propTypes = {
+    action: PropTypes.string.isRequired,
     siteKey: PropTypes.string.isRequired,
     onToken: PropTypes.func.isRequired,
     children: PropTypes.func

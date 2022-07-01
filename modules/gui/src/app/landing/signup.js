@@ -106,6 +106,7 @@ class _SignUp extends React.Component {
         return (
             <Recaptcha
                 siteKey='6Lcb1rQgAAAAAAN97zORth98OcQaqVUVM7G_iQzV'
+                action='SIGNUP'
                 onToken={token => this.signup(form.values(), token)}>
                 {executeRecaptcha => (
                     <Form
