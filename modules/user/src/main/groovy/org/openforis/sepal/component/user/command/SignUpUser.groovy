@@ -27,6 +27,42 @@ class SignUpUser extends AbstractCommand<User> {
     String intendedUse
 }
 
+// reCAPTCHA assessment
+// https://cloud.google.com/recaptcha-enterprise/docs/create-assessment#java
+//
+// POST https://recaptchaenterprise.googleapis.com/v1/projects/${PROJECT_ID}/assessments?key=${API_KEY}
+//
+// Request body (json):
+//
+// {
+//     "event": {
+//         "token": "${recaptchaToken}",
+//         "siteKey": "${RECAPTCHA_KEY}",
+//         "expectedAction": "SIGNUP"
+//     }
+// }
+//
+// Expected response:
+//
+// {
+//     "tokenProperties": {
+//         "valid": true,
+//         "hostname": "www.google.com",
+//         "action": "homepage",
+//         "createTime": "2019-03-28T12:24:17.894Z"
+//     },
+//     "riskAnalysis": {
+//         "score": 0.1,
+//         "reasons": ["AUTOMATION"]
+//     },
+//     "event": {
+//         "token": "TOKEN",
+//         "siteKey": "KEY",
+//         "expectedAction": "USER_ACTION"
+//     },
+//     "name": "projects/PROJECT_ID//assessments/b6ac310000000000"
+// }
+
 class SignUpUserHandler implements CommandHandler<User, SignUpUser> {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final UserRepository userRepository
