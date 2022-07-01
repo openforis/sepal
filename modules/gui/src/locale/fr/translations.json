@@ -291,7 +291,7 @@
             "instructions": "Indiquez le courriel associé à votre compte SEPAL et nous vous enverrons les instructions pour réinitialiser le mot de passe.",
             "invalid": "Cette adresse email n'est pas valide",
             "label": "Mot de passe oublié ?",
-            "placeholder": "Indiquer votre email",
+            "email.placeholder": "Indiquer votre email",
             "required": "Email requis",
             "success": "Un courriel de réinitialisation de mdp a été envoyé à {email}."
         },

@@ -17,16 +17,16 @@ const fields = {
         .notBlank('landing.login.password.required')
 }
 
-const signUp = () => {
-    publishEvent('sign_up')
-    return window.location = 'https://docs.google.com/forms/d/e/1FAIpQLSci4hopXNtMOQKJzsUybaJETrAPQp8j6TCqycSBQ0XO37jBwA/viewform?c=0&w=1'
-}
+// const signUp = () => {
+//     publishEvent('sign_up')
+//     return window.location = 'https://docs.google.com/forms/d/e/1FAIpQLSci4hopXNtMOQKJzsUybaJETrAPQp8j6TCqycSBQ0XO37jBwA/viewform?c=0&w=1'
+// }
 
 const mapStateToProps = () => ({
     errors: invalidCredentials() ? {password: msg('landing.login.password.invalid')} : {}
 })
 
-class Login extends React.Component {
+class _Login extends React.Component {
     login({username, password}) {
         const {stream} = this.props
         stream('LOGIN', login$({username, password}))
@@ -36,18 +36,13 @@ class Login extends React.Component {
         resetInvalidCredentials()
     }
 
-    forgotPassword() {
-        const {onForgotPassword} = this.props
-        onForgotPassword()
-    }
-
     render() {
-        const {form, inputs: {username, password}, stream} = this.props
+        const {form, inputs: {username, password}, onSignUp, onForgotPassword, stream} = this.props
         return (
             <Form className={styles.form} onSubmit={() => this.login(form.values())}>
                 <Layout spacing='loose'>
                     <Form.Input
-                        label={msg('landing.login.username.label')}
+                        label={msg('user.userDetails.form.username.label')}
                         input={username}
                         placeholder={msg('landing.login.username.placeholder')}
                         autoFocus
@@ -55,7 +50,7 @@ class Login extends React.Component {
                         errorMessage
                     />
                     <Form.Input
-                        label={msg('landing.login.password.label')}
+                        label={msg('user.userDetails.form.password.label')}
                         input={password}
                         type='password'
                         placeholder={msg('landing.login.password.placeholder')}
@@ -72,7 +67,7 @@ class Login extends React.Component {
                                 label={msg('landing.login.sign-up')}
                                 tabIndex={4}
                                 onMouseDown={e => e.preventDefault()}
-                                onClick={signUp}
+                                onClick={onSignUp}
                             />
                             <Button
                                 chromeless
@@ -82,7 +77,7 @@ class Login extends React.Component {
                                 label={msg('landing.login.forgot-password-link')}
                                 tabIndex={5}
                                 onMouseDown={e => e.preventDefault()}
-                                onClick={() => this.forgotPassword()}
+                                onClick={onForgotPassword}
                             />
                         </ButtonGroup>
                         <ButtonGroup layout='horizontal-nowrap' alignment='fill'>
@@ -105,13 +100,14 @@ class Login extends React.Component {
     }
 }
 
+export const Login = compose(
+    _Login,
+    form({fields, mapStateToProps})
+)
+
 Login.propTypes = {
     onForgotPassword: PropTypes.func.isRequired,
+    onSignUp: PropTypes.func.isRequired,
     form: PropTypes.object,
     inputs: PropTypes.object
 }
-
-export default compose(
-    Login,
-    form({fields, mapStateToProps})
-)

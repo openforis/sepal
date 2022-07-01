@@ -99,6 +99,9 @@ export const validateToken$ = token =>
         })
     )
 
+export const signUp$ = (userDetails, recaptchaToken) =>
+    api.user.signUp$(userDetails, recaptchaToken)
+
 export const updateCurrentUserDetails$ = ({name, email, organization, emailNotificationsEnabled}) => {
     return api.user.updateCurrentUserDetails$({name, email, organization, emailNotificationsEnabled}).pipe(
         map(({name, email, organization}) =>

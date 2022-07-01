@@ -38,7 +38,7 @@ const mapStateToProps = () => ({
     user: tokenUser()
 })
 
-class SetPassword extends React.Component {
+class _SetPassword extends React.Component {
     componentDidMount() {
         const {stream} = this.props
         const token = query().token
@@ -128,12 +128,12 @@ class SetPassword extends React.Component {
     }
 }
 
+export const SetPassword = compose(
+    _SetPassword,
+    form({fields, constraints, mapStateToProps})
+)
+
 SetPassword.propTypes = {
     type: PropTypes.oneOf(['reset', 'assign']).isRequired,
     user: PropTypes.object
 }
-
-export default compose(
-    SetPassword,
-    form({fields, constraints, mapStateToProps})
-)

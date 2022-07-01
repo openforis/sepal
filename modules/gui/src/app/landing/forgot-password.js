@@ -6,7 +6,6 @@ import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
-import Label from 'widget/label'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -19,11 +18,6 @@ const fields = {
 }
 
 class _ForgotPassword extends React.Component {
-    cancel() {
-        const {onCancel} = this.props
-        onCancel()
-    }
-
     requestPasswordReset(email) {
         this.props.stream('REQUEST_PASSWORD_RESET',
             requestPasswordReset$(email),
@@ -35,7 +29,7 @@ class _ForgotPassword extends React.Component {
     }
 
     render() {
-        const {form, inputs: {email}, action} = this.props
+        const {form, inputs: {email}, action, onCancel} = this.props
         return (
             <Form
                 className={styles.form}
@@ -48,8 +42,9 @@ class _ForgotPassword extends React.Component {
                             {msg('landing.forgot-password.instructions')}
                         </Widget>
                         <Form.Input
+                            label={msg('user.userDetails.form.email.label')}
                             input={email}
-                            placeholder={msg('landing.forgot-password.placeholder')}
+                            placeholder={msg('landing.forgot-password.email.placeholder')}
                             autoFocus
                             autoComplete='off'
                             tabIndex={1}
@@ -66,7 +61,7 @@ class _ForgotPassword extends React.Component {
                                 label={msg('landing.forgot-password.cancel-link')}
                                 tabIndex={3}
                                 onMouseDown={e => e.preventDefault()}
-                                onClick={() => this.cancel()}
+                                onClick={onCancel}
                             />
                             <Button
                                 type='submit'

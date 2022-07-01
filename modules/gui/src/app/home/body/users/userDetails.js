@@ -13,6 +13,7 @@ import React from 'react'
 import styles from './userDetails.module.css'
 
 const isNoMatchingUser = (id, check) => !(select('users') || []).find(user => user.id !== id && check(user))
+
 const fields = {
     id: new Form.Field(),
     username: new Form.Field()

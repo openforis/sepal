@@ -31,7 +31,14 @@ class UserEndpoint {
             def emailConstraints = [notBlank(), email()]
             def organizationConstraints = [maxLength(1000)]
             def passwordConstraints = custom { it ==~ /^.{8,100}$/ }
+            def intendedUseConstraints = [notBlank()]
 
+            constrain(SignUpUser, [
+                    username    : usernameConstraints,
+                    name        : nameConstraints,
+                    email       : emailConstraints,
+                    organization: organizationConstraints,
+                    intendedUse : intendedUseConstraints])
             constrain(InviteUser, [
                     invitedUsername: usernameConstraints,
                     name           : nameConstraints,
@@ -119,6 +126,19 @@ class UserEndpoint {
                 send toJson(userToMap(user))
             }
 
+            post('/signup', [NO_AUTHORIZATION]) {
+                response.contentType = 'application/json'
+                def command = new SignUpUser(
+                    username: params.username?.toLowerCase(), 
+                    email: params.email?.toLowerCase(),
+                    recaptchaToken: params.recaptchaToken
+                )
+                def errors = bindAndValidate(command)
+                if (errors)
+                    throw new InvalidRequest(errors)
+                def user = component.submit(command)
+                send toJson(userToMap(user))
+            }
 
             post('/login') { // Just a nice looking endpoint the frontend can call to trigger authentication
                 response.contentType = 'application/json'

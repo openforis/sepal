@@ -75,6 +75,18 @@ class AbstractUserTest extends Specification {
         )
     }
 
+    User signUpUser(Map args = [:]) {
+        component.submit(
+                new SignUpUser(
+                        username: username(args),
+                        name: args.name ?: testName,
+                        email: args.email ?: testEmail,
+                        organization: args.testOrganization ?: testOrganization,
+                        intendedUse: args.testIntendedUse ?: testIntendedUse
+                ))
+
+    }
+
     User inviteUser(Map args = [:]) {
         component.submit(
                 new InviteUser(

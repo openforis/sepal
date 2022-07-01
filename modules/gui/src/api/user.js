@@ -27,6 +27,16 @@ export default {
     loadCurrentUserReport$: () =>
         get$('/api/sessions/report'),
 
+    signUp$: ({username, name, email, organization, intendedUse}, recaptchaToken) =>
+        post$('/api/user/signup', {
+            username,
+            name,
+            email,
+            organization,
+            intendedUse,
+            recaptchaToken
+        }),
+
     login$: (username, password) =>
         post$('/api/user/login', {
             username,
@@ -47,6 +57,16 @@ export default {
             body: {token}
         }),
 
+    validateUsername$: username =>
+        post$('/api/user/validate/username', {
+            body: {username}
+        }),
+    
+    validateEmail$: email =>
+        post$('/api/user/validate/email', {
+            body: {email}
+        }),
+    
     resetPassword$: (token, username, password) =>
         post$('/api/user/password/reset', {
             body: {token, password}

@@ -73,6 +73,7 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
         this.messageBroker = messageBroker
         def userRepository = new JdbcUserRepository(connectionManager, clock)
         def tokenManager = new TokenManager(userRepository, clock)
+        command(SignUpUser, new SignUpUserHandler(userRepository, messageBroker, externalUserDataGateway, emailGateway, changeListener, clock))
         command(InviteUser, new InviteUserHandler(userRepository, messageBroker, externalUserDataGateway, emailGateway, changeListener, clock))
         command(ValidateToken, new ValidateTokenHandler(tokenManager))
         command(ActivateUser, new ActivateUserHandler(tokenManager, externalUserDataGateway, userRepository, messageBroker, changeListener))

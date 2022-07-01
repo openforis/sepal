@@ -48,6 +48,12 @@ const endpoints = [
     },
     {
         prefix: false,
+        path: '/api/user/signup',
+        target: `http://${modules.user}/signup`,
+        authenticate: false
+    },
+    {
+        prefix: false,
         path: '/api/user/google/access-request-callback',
         target: `http://${modules.user}/google/access-request-callback`,
         authenticate: false

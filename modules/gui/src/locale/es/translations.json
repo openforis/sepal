@@ -291,7 +291,7 @@
             "instructions": "Indíquenos la dirección de correo electrónico de su cuenta SEPAL y le enviaremos un mensaje con instrucciones para restablecer su contraseña.",
             "invalid": "Correo electrónico inválido",
             "label": "¿Olvidaste tu contraseña?",
-            "placeholder": "Introduce tu correo electrónico",
+            "email.placeholder": "Introduce tu correo electrónico",
             "required": "El correo electrónico es obligatorio",
             "success": "Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña a {email}."
         },

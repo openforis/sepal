@@ -20,6 +20,7 @@ class UpdateUserDetails extends AbstractCommand<User> {
     String name
     String email
     String organization
+    String intendedUse
     boolean emailNotificationsEnabled
     boolean admin
 }
@@ -51,6 +52,7 @@ class UpdateUserDetailsHandler implements CommandHandler<User, UpdateUserDetails
                         command.name,
                         command.email,
                         command.organization,
+                        command.intendedUse,
                         command.emailNotificationsEnabled,
                         command.admin
                 )

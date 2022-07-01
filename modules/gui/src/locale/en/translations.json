@@ -291,7 +291,7 @@
         "instructions": "Provide us with the email address of your SEPAL account and we'll send you an email with instructions on how to reset your password.",
         "invalid": "Not a valid email",
         "label": "Forgot your password ?",
-        "placeholder": "Enter your email",
+        "email.placeholder": "Enter your email",
         "required": "Email is required",
         "success": "An email with password reset instructions has been sent to {email}."
       },
@@ -339,6 +339,43 @@
       "launch": "Launch",
       "loadCurrentUser": {
         "error": "Failed to connect to SEPAL"
+      },
+      "signUp": {
+        "button": "Sign up",
+        "username": {
+            "label": "Username",
+            "placeholder": "Choose your username",
+            "required": "Username is required",
+            "format": "Username should start with a letter",
+            "duplicate": "There is another user with this username",
+            "cannotValidate": "Cannot validate username"
+        },
+        "name": {
+            "label": "Name",
+            "placeholder": "Enter your full name",
+            "required": "Name is required",
+            "invalid": ""
+        },
+        "email": {
+            "label": "Email",
+            "placeholder": "Enter your email address",
+            "required": "Email is required",
+            "format": "Please enter a valid email address",
+            "duplicate": "There is another user with this email",
+            "cannotValidate": "Cannot validate email"
+        },
+        "organization": {
+            "label": "Organization",
+            "placeholder": "Enter your organization",
+            "required": "Organization is required",
+            "invalid": ""
+        },
+        "intendedUse": {
+            "label": "Intended use",
+            "placeholder": "What do you plan to do with SEPAL?",
+            "required": "Intended use is required",
+            "invalid": ""
+        }
       },
       "login": {
         "button": "Login",
@@ -3499,6 +3536,10 @@
             "label": "Organization",
             "required": "Organization is required"
           },
+          "intendedUse": {
+              "label": "Intended use",
+              "required": "Intended use is required"
+          },
           "role": {
             "label": "role"
           },
@@ -3516,6 +3557,9 @@
             "label": "Username",
             "required": "Username is required",
             "unique": "There is another user with this username"
+          },
+          "password": {
+              "label": "Password"
           }
         },
         "resetPassword": {
