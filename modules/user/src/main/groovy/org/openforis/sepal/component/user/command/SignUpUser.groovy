@@ -2,6 +2,8 @@ package org.openforis.sepal.component.user.command
 
 import groovy.transform.Canonical
 import groovy.transform.EqualsAndHashCode
+import groovyx.net.http.HttpResponseException
+import groovyx.net.http.RESTClient
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.user.api.EmailGateway
@@ -15,6 +17,7 @@ import org.openforis.sepal.util.Clock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import static groovyx.net.http.ContentType.JSON
 import static org.openforis.sepal.user.User.Status.PENDING
 
 @EqualsAndHashCode(callSuper = true)
@@ -26,42 +29,6 @@ class SignUpUser extends AbstractCommand<User> {
     String organization
     String intendedUse
 }
-
-// reCAPTCHA assessment
-// https://cloud.google.com/recaptcha-enterprise/docs/create-assessment#java
-//
-// POST https://recaptchaenterprise.googleapis.com/v1/projects/${PROJECT_ID}/assessments?key=${API_KEY}
-//
-// Request body (json):
-//
-// {
-//     "event": {
-//         "token": "${recaptchaToken}",
-//         "siteKey": "${RECAPTCHA_KEY}",
-//         "expectedAction": "SIGNUP"
-//     }
-// }
-//
-// Expected response:
-//
-// {
-//     "tokenProperties": {
-//         "valid": true,
-//         "hostname": "www.google.com",
-//         "action": "homepage",
-//         "createTime": "2019-03-28T12:24:17.894Z"
-//     },
-//     "riskAnalysis": {
-//         "score": 0.1,
-//         "reasons": ["AUTOMATION"]
-//     },
-//     "event": {
-//         "token": "TOKEN",
-//         "siteKey": "KEY",
-//         "expectedAction": "USER_ACTION"
-//     },
-//     "name": "projects/PROJECT_ID//assessments/b6ac310000000000"
-// }
 
 class SignUpUserHandler implements CommandHandler<User, SignUpUser> {
     private static final Logger LOG = LoggerFactory.getLogger(this)
@@ -110,6 +77,38 @@ class SignUpUserHandler implements CommandHandler<User, SignUpUser> {
                 token: token
         )
         return user
+    }
+
+    private boolean validateRecaptcha(String token) {
+        // reCAPTCHA assessment
+        // https://cloud.google.com/recaptcha-enterprise/docs/create-assessment#rest-api
+
+        // requires:
+        // - GOOGLE_PROJECT_ID
+        // - GOOGLE_RECAPTCHA_API_KEY
+        // - GOOGLE_RECAPTCHA_SITE_KEY
+
+        def response = http.post(
+                uri: 'https://recaptchaenterprise.googleapis.com',
+                path: '/v1/projects/' + GOOGLE_PROJECT_ID + '/assessments',
+                contentType: JSON,
+                requestContentType: JSON,
+                query: [
+                        key: GOOGLE_RECAPTCHA_API_KEY
+                ],
+                body: [
+                        event: [
+                                token: token,
+                                siteKey: GOOGLE_RECAPTCHA_SITE_KEY,
+                                expectedAction: 'SIGNUP'
+                        ]
+                ]
+        )
+        return response.data 
+            && response.data.tokenProperties.valid
+            && response.data.event.token == token
+            && response.data.event.siteKey == GOOGLE_RECAPTCHA_SITE_KEY
+            && response.data.event.expectedAction == 'SIGNUP'
     }
 
     private void createExternalUserAndSendEmailNotification(Map message) {
