@@ -21,6 +21,7 @@ geeadd
 oauth2client
 google-api-python-client==1.12.8
 git+https://github.com/openforis/earthengine-api.git@v0.1.270#egg=earthengine-api&subdirectory=python
+oeel
 
 ########  BFAST dependencies ########
 wget
