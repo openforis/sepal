@@ -36,4 +36,4 @@ npm install -g js-beautify
 /usr/bin/ijsinstall --install=global
 
 /usr/bin/python3 /usr/local/bin/jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-leaflet@v0.13.3
-/usr/bin/python3 /usr/local/bin/jupyter lab build
+/usr/bin/python3 /usr/local/bin/jupyter lab build --VoilaConfiguration.show_tracebacks=True
