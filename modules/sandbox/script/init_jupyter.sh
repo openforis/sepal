@@ -21,7 +21,7 @@ R -e "IRkernel::installspec(user = FALSE)"
 /usr/bin/python3 -m pip install ipyleaflet==0.13.3
 /usr/bin/python3 -m pip install ipyvuetify
 git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
-/usr/bin/python3 -m pip install jupyter_latex_envs
+/usr/bin/python3 -m pip install jupyter_latex_envs # Required for jupyter_contrib_nbextensions
 /usr/bin/python3 -m pip install -e jupyter_contrib_nbextensions
 /usr/bin/python3 /usr/local/bin/jupyter contrib nbextension install
 /usr/bin/python3 /usr/local/bin/jupyter nbextensions_configurator enable
