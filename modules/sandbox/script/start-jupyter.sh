@@ -34,4 +34,5 @@ sudo -iu $sandbox_user PATH=$PATH PROJ_LIB=/usr/share/proj NODE_PATH=$NODE_PATH:
  --NotebookApp.notebook_dir="/home/$sandbox_user"\
  --FileContentsManager.delete_to_trash=False\
  --VoilaConfiguration.enable_nbextensions=True\
- --VoilaConfiguration.show_tracebacks=True
+ --VoilaConfiguration.show_tracebacks=True\
+ --ContentsManager.allow_hidden = True
