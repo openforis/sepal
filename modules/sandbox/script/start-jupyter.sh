@@ -35,4 +35,4 @@ sudo -iu $sandbox_user PATH=$PATH PROJ_LIB=/usr/share/proj NODE_PATH=$NODE_PATH:
  --FileContentsManager.delete_to_trash=False\
  --VoilaConfiguration.enable_nbextensions=True\
  --VoilaConfiguration.show_tracebacks=True\
- --ContentsManager.allow_hidden = True
+ --ContentsManager.allow_hidden=True
