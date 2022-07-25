@@ -5,6 +5,7 @@ echo
 echo "**************************"
 echo "*** Installing Jupyter ***"
 echo "**************************"
+ln -sf /usr/local/bin/pip* /usr/bin/
 export DISPLAY=:0.0
 apt-get install -y libzmq3-dev
 /usr/bin/python3 -m pip install jupyter
