@@ -3079,7 +3079,7 @@
           }
         },
         "title": "Retrieve",
-        "tooltip": "Retrieve mosaic"
+        "tooltip": "Retrieve recipe"
       },
       "revisions": {
         "none": "No revision available.",
