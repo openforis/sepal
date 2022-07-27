@@ -1,7 +1,8 @@
 import {ContentPadding} from 'widget/sectionLayout'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {forkJoin, of, timer} from 'rxjs'
+import {forkJoin, of, switchMap, tap, timer} from 'rxjs'
+import {get$} from 'http-client'
 import {getLogger} from 'log'
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
@@ -15,9 +16,12 @@ import styles from './appInstance.module.css'
 const log = getLogger('apps')
 
 class AppInstance extends React.Component {
+    iFrameRef = React.createRef()
+
     state = {
         appState: 'REQUESTED',
-        src: undefined
+        src: undefined,
+        srcDoc: undefined
     }
 
     render() {
@@ -40,18 +44,18 @@ class AppInstance extends React.Component {
     }
 
     renderIFrame() {
-        const {app: {label, alt}, stream} = this.props
-        const {appState, src} = this.state
-        return stream('RUN_APP').completed
+        const {app: {label, alt, endpoint}} = this.props
+        const {src, srcDoc} = this.state
+        return !endpoint || srcDoc
             ? (
                 <iframe
+                    ref={this.iFrameRef}
                     width='100%'
                     height='100%'
                     frameBorder='0'
-                    src={src}
+                    src={endpoint ? undefined : src}
                     title={label || alt}
-                    style={{border: 'none', display: appState === 'READY' ? 'block' : 'none'}}
-                    onLoad={() => this.ready()}
+                    style={{border: 'none', display: 'block'}}
                 />
             )
             : null
@@ -70,14 +74,25 @@ class AppInstance extends React.Component {
     componentDidMount() {
         const {app: {endpoint, path}, busy$, stream} = this.props
         if (endpoint) {
-            this.setState({src: `/api${path}`}, () => {
-                busy$.next(true)
-                this.runApp()
-            })
+            busy$.next(true)
+            this.runApp()
         } else {
             this.setState({appState: 'INITIALIZED', src: path}, () =>
                 stream('RUN_APP', of())
             )
+        }
+    }
+
+    componentDidUpdate(_prevProps, prevState) {
+        const {busy$, app: {endpoint}} = this.props
+        const {srcDoc} = this.state
+        const iFrame = this.iFrameRef.current
+        if (endpoint && srcDoc && !prevState.srcDoc && iFrame) {
+            const doc = iFrame.contentWindow.document
+            doc.open()
+            doc.write(srcDoc)
+            doc.close()
+            busy$.next(false)
         }
     }
 
@@ -88,8 +103,11 @@ class AppInstance extends React.Component {
             forkJoin([
                 runApp$(app.path),
                 timer(500)
-            ]),
-            () => this.onInitialized(),
+            ]).pipe(
+                tap(() => this.setState({appState: 'INITIALIZED'})),
+                switchMap(() => get$(`api${app.path}`, {responseType: 'text', retries: 9}))
+            ),
+            srcDoc => this.setState({srcDoc}),
             error => this.onError(error)
         )
     }
@@ -101,25 +119,12 @@ class AppInstance extends React.Component {
         Notifications.error({message: msg('apps.run.error', {label: app.label || app.alt})})
         busy$.next(false)
     }
-
-    onInitialized() {
-        this.setState(({appState}) =>
-            appState === 'READY'
-                ? null
-                : {appState: 'INITIALIZED'}
-        )
-    }
-
-    ready() {
-        const {busy$} = this.props
-        busy$.next(false)
-        this.setState({appState: 'READY'})
-    }
 }
 
 AppInstance.propTypes = {
     app: PropTypes.shape({
         alt: PropTypes.string,
+        endpoint: PropTypes.string,
         label: PropTypes.string,
         path: PropTypes.string
     })

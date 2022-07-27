@@ -1,5 +1,5 @@
-import {concat, exhaustMap, filter, first, interval, map, switchMap} from 'rxjs'
-import {get$} from './http-client'
+import {concat, exhaustMap, filter, first, interval, map} from 'rxjs'
+
 import {select} from 'store'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
@@ -33,7 +33,6 @@ export const runApp$ = path => {
     )
 
     return concat(requestSession$, waitForSession$).pipe(
-        switchMap(() => get$(`api${path}`, {retries: 9})),
         first()
     )
 }
