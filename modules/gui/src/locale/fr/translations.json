@@ -1031,8 +1031,8 @@
                         "skipBreakInLastSegment": {
                             "label": "",
                             "options": {
-                                "EXCLUDE": "",
-                                "INCLUDE": ""
+                                "EXCLUDE": "Exclure",
+                                "INCLUDE": "Inclure"
                             },
                             "tooltip": ""
                         }
@@ -1067,7 +1067,7 @@
                             },
                             "label": "Types de band",
                             "magnitude": {
-                                "label": "",
+                                "label": "Magnitude",
                                 "tooltip": "Magnitude de rupture du segment"
                             },
                             "phase1": {
@@ -1101,13 +1101,13 @@
                         },
                         "destination": {
                             "GEE": "Asset Google Earth Engine",
-                            "label": "",
+                            "label": "Récupérer vers",
                             "required": "Une destination doit être sélectionnée",
                             "SEPAL": "Espace de travail SEPAL"
                         },
                         "scale": {
                             "label": "Echelle",
-                            "placeholder": ""
+                            "placeholder": "Echelle..."
                         },
                         "segmentBands": {
                             "changeProb": {
