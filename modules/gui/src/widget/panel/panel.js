@@ -51,7 +51,7 @@ class _Panel extends React.Component {
 
     renderPortal(type) {
         return (
-            <Portal>
+            <Portal type='context'>
                 {type === 'center'
                     ? this.renderCenteredContent()
                     : this.renderContent()}

@@ -23,7 +23,7 @@ export class Toolbar extends React.Component {
             className
         ]
         return (
-            <Portal>
+            <Portal type='context'>
                 <div className={classNames.join(' ')} ref={this.panelContainer}>
                     <Context.Provider value={{
                         horizontal: !!horizontal,

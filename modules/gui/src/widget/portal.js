@@ -21,7 +21,7 @@ export class PortalContext extends React.Component {
     }
 }
 
-export const withPortalContext = withContext(Context, 'portalContext')
+const withPortalContext = withContext(Context, 'portalContext')
 
 export const PortalContainer = ({id, className}) => (
     <div
@@ -75,10 +75,6 @@ class Portal extends React.Component {
         const portalContainer = this.getPortalContainer()
         this.setState({portalContainer})
     }
-}
-
-Portal.defaultProps = {
-    type: 'context'
 }
 
 Portal.propTypes = {
