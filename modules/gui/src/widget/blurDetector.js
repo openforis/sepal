@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {delay, distinctUntilChanged, filter, fromEvent, map, merge, of, switchMap, takeUntil} from 'rxjs'
+import {delay, distinctUntilChanged, filter, fromEvent, map, merge, switchMap} from 'rxjs'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
