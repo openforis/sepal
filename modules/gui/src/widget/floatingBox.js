@@ -1,6 +1,7 @@
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
+import {withContext} from 'context'
 import BlurDetector from 'widget/blurDetector'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
@@ -11,6 +12,9 @@ import withForwardedRef from 'ref'
 
 const MARGIN = 5
 
+const Context = React.createContext()
+const withFloatingBoxContext = withContext(Context, 'floatingBoxContext')
+
 const mapStateToProps = state => ({
     viewportDimensions: selectFrom(state, 'dimensions') || []
 })
@@ -18,17 +22,43 @@ const mapStateToProps = state => ({
 class FloatingBox extends React.Component {
     state = {
         elementDimensions: {},
-        contentDimensions: {}
+        contentDimensions: {},
+        excludedElements: []
     }
 
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
         this.onResize = this.onResize.bind(this)
+        this.addElement = this.addElement.bind(this)
+        this.removeElement = this.removeElement.bind(this)
+    }
+
+    addElement(element) {
+        const {excludedElements} = this.state
+        if (element && !excludedElements.includes(element)) {
+            this.setState({excludedElements: [...excludedElements, element]})
+        }
+    }
+
+    removeElement(element) {
+        const {excludedElements} = this.state
+        if (element && excludedElements.includes(element)) {
+            this.setState({excludedElements: _.without(excludedElements, element)})
+        }
+    }
+
+    getExcludedElements() {
+        const {element, elementBlur} = this.props
+        const {excludedElements} = this.state
+        return _.compact([
+            elementBlur ? null : element,
+            ...excludedElements
+        ])
     }
 
     render() {
-        const {className, element, elementBlur, children, onBlur} = this.props
+        const {className, children, onBlur} = this.props
         const {left, right, maxWidth, hPlacement} = this.getCorrectedHorizontalPosition()
         const {top, bottom, maxHeight, vPlacement} = this.getCorrectedVerticalPosition()
 
@@ -43,20 +73,25 @@ class FloatingBox extends React.Component {
 
         return (
             <Portal type='global'>
-                <BlurDetector
-                    onClick={e => e.stopPropagation()}
-                    onBlur={onBlur}
-                    exclude={elementBlur ? null : element}
-                    ref={this.ref}
-                    className={[
-                        styles.box,
-                        styles[`vertical-${vPlacement}`],
-                        styles[`horizontal-${hPlacement}`],
-                        className
-                    ].join(' ')}
-                    style={style}>
-                    {children}
-                </BlurDetector>
+                <Context.Provider value={{
+                    addElement: this.addElement,
+                    removeElement: this.removeElement
+                }}>
+                    <BlurDetector
+                        onClick={e => e.stopPropagation()}
+                        onBlur={onBlur}
+                        exclude={this.getExcludedElements()}
+                        ref={this.ref}
+                        className={[
+                            styles.box,
+                            styles[`vertical-${vPlacement}`],
+                            styles[`horizontal-${hPlacement}`],
+                            className
+                        ].join(' ')}
+                        style={style}>
+                        {children}
+                    </BlurDetector>
+                </Context.Provider>
             </Portal>
         )
     }
@@ -307,17 +342,33 @@ class FloatingBox extends React.Component {
     }
 
     componentDidMount() {
+        const {floatingBoxContext} = this.props
+        if (floatingBoxContext) {
+            floatingBoxContext.addElement(this.ref.current)
+        }
         this.updateDimensions()
     }
 
     componentDidUpdate() {
+        const {floatingBoxContext} = this.props
+        if (floatingBoxContext) {
+            floatingBoxContext.addElement(this.ref.current)
+        }
         this.updateDimensions()
+    }
+
+    componentWillUnmount() {
+        const {floatingBoxContext} = this.props
+        if (floatingBoxContext) {
+            floatingBoxContext.removeElement(this.ref.current)
+        }
     }
 }
 
 export default compose(
     FloatingBox,
     connect(mapStateToProps),
+    withFloatingBoxContext(),
     withForwardedRef()
 )
 
