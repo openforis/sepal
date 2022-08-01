@@ -17,7 +17,7 @@ module.exports = {
                 return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
                     switchMap(downloadDir =>
                         concat(
-                            export$({description, recipe, downloadDir, ...retrieveOptions}),
+                            export$({description, recipe, downloadDir, bands, ...retrieveOptions}),
                             postProcess$({description, downloadDir, bands})
                         )
                     )
