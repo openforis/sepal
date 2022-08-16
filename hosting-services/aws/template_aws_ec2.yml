@@ -5,6 +5,7 @@ filters:
   tag:Type: ${TYPE}
   tag:Environment: ${DEPLOY_ENVIRONMENT}
 compose:
+  ansible_host: public_ip_address
   ec2_ip_address: public_ip_address
   ec2_private_ip_address: private_ip_address
   ec2_private_secondary_ip_address: private_ip_addresses
