@@ -4,6 +4,8 @@ regions:
 filters:
   tag:Type: ${TYPE}
   tag:Environment: ${DEPLOY_ENVIRONMENT}
+hostnames:
+  - dns-name
 compose:
   ansible_host: public_ip_address
   ec2_ip_address: public_ip_address
