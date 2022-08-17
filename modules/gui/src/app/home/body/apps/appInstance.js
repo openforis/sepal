@@ -1,7 +1,7 @@
 import {ContentPadding} from 'widget/sectionLayout'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {forkJoin, of, switchMap, tap, timer} from 'rxjs'
+import {forkJoin, map, of, switchMap, tap, timer} from 'rxjs'
 import {get$} from 'http-client'
 import {getLogger} from 'log'
 import {msg} from 'translate'
@@ -73,11 +73,8 @@ class AppInstance extends React.Component {
 
     componentDidMount() {
         const {app: {endpoint, path}, busy$, stream} = this.props
-        if (this.useIFrameSrc()) {
-            const src = endpoint
-                ? `/api${path}`
-                : path
-            this.setState({appState: 'INITIALIZED', src}, () =>
+        if (!endpoint) {
+            this.setState({appState: 'INITIALIZED', src: path}, () =>
                 stream('RUN_APP', of())
             )
         } else {
@@ -101,7 +98,7 @@ class AppInstance extends React.Component {
 
     useIFrameSrc() {
         const {app: {endpoint}} = this.props
-        return !endpoint || endpoint === 'rstudio'
+        return !endpoint || ['rstudio', 'shiny'].includes(endpoint)
     }
 
     runApp() {
@@ -113,9 +110,18 @@ class AppInstance extends React.Component {
                 timer(500)
             ]).pipe(
                 tap(() => this.setState({appState: 'INITIALIZED'})),
-                switchMap(() => get$(`api${app.path}`, {responseType: 'text', retries: 9}))
+                switchMap(() => {
+                    if (this.useIFrameSrc()) {
+                        return of({src: `/api${app.path}`})
+                    } else {
+                        return get$(`api${app.path}`, {responseType: 'text', retries: 9}).pipe(
+                            map(srcDoc => ({srcDoc}))
+                        )
+                    }
+                    
+                })
             ),
-            srcDoc => this.setState({srcDoc}),
+            result => this.setState(result),
             error => this.onError(error)
         )
     }
