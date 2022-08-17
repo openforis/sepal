@@ -44,16 +44,16 @@ class AppInstance extends React.Component {
     }
 
     renderIFrame() {
-        const {app: {label, alt, endpoint}} = this.props
+        const {app: {label, alt}} = this.props
         const {src, srcDoc} = this.state
-        return !endpoint || srcDoc
+        return this.useIFrameSrc() || srcDoc
             ? (
                 <iframe
                     ref={this.iFrameRef}
                     width='100%'
                     height='100%'
                     frameBorder='0'
-                    src={endpoint ? undefined : src}
+                    src={this.useIFrameSrc() ? src : undefined}
                     title={label || alt}
                     style={{border: 'none', display: 'block'}}
                 />
@@ -73,27 +73,35 @@ class AppInstance extends React.Component {
 
     componentDidMount() {
         const {app: {endpoint, path}, busy$, stream} = this.props
-        if (endpoint) {
-            busy$.next(true)
-            this.runApp()
-        } else {
-            this.setState({appState: 'INITIALIZED', src: path}, () =>
+        if (this.useIFrameSrc()) {
+            const src = endpoint
+                ? `/api${path}`
+                : path
+            this.setState({appState: 'INITIALIZED', src}, () =>
                 stream('RUN_APP', of())
             )
+        } else {
+            busy$.next(true)
+            this.runApp()
         }
     }
 
     componentDidUpdate(_prevProps, prevState) {
-        const {busy$, app: {endpoint}} = this.props
+        const {busy$} = this.props
         const {srcDoc} = this.state
         const iFrame = this.iFrameRef.current
-        if (endpoint && srcDoc && !prevState.srcDoc && iFrame) {
+        if (!this.useIFrameSrc() && srcDoc && !prevState.srcDoc && iFrame) {
             const doc = iFrame.contentWindow.document
             doc.open()
             doc.write(srcDoc)
             doc.close()
             busy$.next(false)
         }
+    }
+
+    useIFrameSrc() {
+        const {app: {endpoint}} = this.props
+        return !endpoint || endpoint === 'rstudio'
     }
 
     runApp() {
