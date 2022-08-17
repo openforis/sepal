@@ -1,4 +1,4 @@
-# version 2021-09-13
+# version 2022-09-04
 ########  geospatial data analysis  ########
 scikit-image
 scipy
@@ -31,14 +31,14 @@ numpydoc
 git+https://github.com/12rambau/bfast.git
 
 ########  sepal modules  ########
-geemap==0.8.9
+geemap
 Unidecode
 pyperclip
 python-dateutil
 pytesmo
 Wand
 PyPDF2 # more recent version are avaiable (PyPDF4)
-rasterio==1.1.5
+rasterio
 openpyxl
 pre-commit
 
