@@ -20,6 +20,20 @@
         'startDate   endDate';
 }
 
+.observationPoint {
+    position: absolute;
+    z-index: 10;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: var(--wireframe);
+    padding: 1.5rem 1rem;
+    display: grid;
+    column-gap: 2rem;
+    row-gap: 1rem;
+    grid-template-areas:
+        'date        observation';
+}
+
+
 .date {
     grid-area: date;
 }
