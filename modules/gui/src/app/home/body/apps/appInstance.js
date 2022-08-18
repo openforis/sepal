@@ -56,6 +56,7 @@ class AppInstance extends React.Component {
                     src={this.useIFrameSrc() ? src : undefined}
                     title={label || alt}
                     style={{border: 'none', display: 'block'}}
+                    onLoad={() => this.iFrameLoaded()}
                 />
             )
             : null
@@ -99,6 +100,15 @@ class AppInstance extends React.Component {
     useIFrameSrc() {
         const {app: {endpoint}} = this.props
         return !endpoint || ['rstudio', 'shiny'].includes(endpoint)
+    }
+
+    iFrameLoaded() {
+        const {busy$} = this.props
+        const {src} = this.state
+        if (this.useIFrameSrc() && src) {
+            busy$.next(false)
+            this.setState({appState: 'READY'})
+        }
     }
 
     runApp() {
