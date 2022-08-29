@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  user-files:
+    build:
+      context: ../..
+      dockerfile: ./modules/user-node/Dockerfile
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/user-node:${SEPAL_VERSION:-latest}"
+    container_name: user-node
+    init: true
+    volumes:
+      - "${SEPAL_DATA_DIR}/user:/data"
+      - "${SEPAL_DATA_DIR}/sepal/home:/sepal/home" # User data dir, to setup initial structure/remove when user is deleted
+      - "${SEPAL_DATA_DIR}/ldap/certificates:/etc/ldap/certificates/:Z"
+    environment:
+      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
+      SEPAL_ADMIN_WEB_PASSWORD: "${SEPAL_ADMIN_WEB_PASSWORD}"
+      SEPAL_HOST: "${SEPAL_HOST}"
+      LDAP_HOST: "${LDAP_HOST}"
+      LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASSWORD}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      SMTP_FROM: "${SMTP_FROM}"
+      SMTP_HOST: "${SMTP_HOST}"
+      SMTP_PORT: "${SMTP_PORT}"
+      SMTP_USERNAME: "${SMTP_USERNAME}"
+      SMTP_PASSWORD: "${SMTP_PASSWORD}"
+      GOOGLE_OAUTH_CALLBACK_BASE_URL: "${GOOGLE_OAUTH_CALLBACK_BASE_URL}"
+      GOOGLE_OAUTH_CLIENT_ID: "${GOOGLE_OAUTH_CLIENT_ID}"
+      GOOGLE_OAUTH_CLIENT_SECRET: "${GOOGLE_OAUTH_CLIENT_SECRET}"
+    networks:
+      - sepal
+    restart: always
+
+networks:
+  sepal:
+    external: true
+    name: sepal
