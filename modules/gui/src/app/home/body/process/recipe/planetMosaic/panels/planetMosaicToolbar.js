@@ -1,4 +1,5 @@
 import {Retrieve} from './retrieve/retrieve'
+import {RetrieveButton} from '../../retrieveButton'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -39,13 +40,7 @@ class PlanetMosaicToolbar extends React.Component {
                     placement='top-right'
                     panel
                     className={styles.top}>
-
-                    <Toolbar.ActivationButton
-                        id='retrieve'
-                        icon='cloud-download-alt'
-                        tooltip={msg('process.retrieve.tooltip')}
-                        disabled={!initialized}
-                    />
+                    <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical
