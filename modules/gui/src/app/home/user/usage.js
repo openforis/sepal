@@ -111,13 +111,20 @@ const Usage = compose(
 
 Usage.propTypes = {}
 
-const _UsageButton = ({userReport, budgetExceeded, budgetWarning}) => {
+const _UsageButton = ({userReport, hasBudget, budgetExceeded, budgetWarning}) => {
     const hourlySpending = userReport.sessions
         ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
         : 0
-    const label = budgetExceeded
+    const label = hasBudget && budgetExceeded
         ? msg('home.sections.user.report.budgetExceeded')
         : format.unitsPerHour(hourlySpending)
+    const additionalClassName = hasBudget
+        ? budgetExceeded
+            ? styles.budgetExceeded
+            : budgetWarning
+                ? styles.budgetWarning
+                : null
+        : null
     return (
         <React.Fragment>
             <Activator id='userReport'>
@@ -127,8 +134,7 @@ const _UsageButton = ({userReport, budgetExceeded, budgetWarning}) => {
                         look='transparent'
                         size='large'
                         air='less'
-                        additionalClassName={budgetExceeded ? styles.budgetExceeded
-                            : budgetWarning ? styles.budgetWarning : null}
+                        additionalClassName={additionalClassName}
                         icon='dollar-sign'
                         label={label}
                         disabled={active}
@@ -147,6 +153,7 @@ export const UsageButton = compose(
     _UsageButton,
     connect(state => ({
         userReport: (state.user && state.user.currentUserReport) || {},
+        hasBudget: select('user.hasBudget'),
         budgetExceeded: select('user.budgetExceeded'),
         budgetWarning: select('user.budgetWarning'),
     }))

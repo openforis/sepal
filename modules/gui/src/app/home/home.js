@@ -41,6 +41,7 @@ const updateUserReport$ = () =>
             currentUserReport.spending.projectedStorageSpending = projectedStorageSpending
             return actionBuilder('UPDATE_CURRENT_USER_REPORT')
                 .set('user.currentUserReport', currentUserReport)
+                .set('user.hasBudget', hasBudget(currentUserReport))
                 .set('user.budgetExceeded', isBudgetExceeded(currentUserReport))
                 .set('user.budgetWarning', projectedStorageSpending > currentUserReport.spending.monthlyStorageBudget)
                 .dispatch()
@@ -78,9 +79,20 @@ const isBudgetExceeded = currentUserReport => {
         monthlyStorageBudget, monthlyStorageSpending,
         storageQuota, storageUsed
     } = currentUserReport.spending
-    return monthlyInstanceSpending > monthlyInstanceBudget
-        || monthlyStorageSpending > monthlyStorageBudget
-        || storageUsed > storageQuota
+    return monthlyInstanceSpending >= monthlyInstanceBudget
+        || monthlyStorageSpending >= monthlyStorageBudget
+        || storageUsed >= storageQuota
+}
+
+const hasBudget = currentUserReport => {
+    const {
+        monthlyInstanceBudget,
+        monthlyStorageBudget,
+        storageQuota
+    } = currentUserReport.spending
+    return monthlyInstanceBudget > 0
+        || monthlyStorageBudget > 0
+        || storageQuota > 0
 }
 
 const updateUserMessages$ = () =>

@@ -116,9 +116,9 @@ export default class UserList extends React.Component {
 
     isUserOverBudget({quota: {budget, current} = {}}) {
         return budget && current && (
-            current.instanceSpending > budget.instanceSpending
-            || current.storageSpending > budget.storageSpending
-            || current.storageQuota > budget.storageQuota
+            current.instanceSpending >= budget.instanceSpending && budget.instanceSpending > 0
+            || current.storageSpending >= budget.storageSpending && budget.storageSpending > 0
+            || current.storageQuota >= budget.storageQuota && budget.storageQuota > 0
         )
     }
 
