@@ -24,10 +24,9 @@ const mapStateToProps = () => ({
 class Body extends React.Component {
     componentDidUpdate() {
         const {budgetExceeded, location} = this.props
-        if (budgetExceeded && !['/browse', '/users'].includes(location.pathname))
-            history().replace('/browse')
-        else if (this.props.location.pathname === '/')
+        if (this.props.location.pathname === '/' || budgetExceeded && !['/process', '/browse', '/users'].includes(location.pathname)) {
             history().replace('/process')
+        }
     }
 
     renderSections() {

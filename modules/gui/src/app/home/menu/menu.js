@@ -23,7 +23,7 @@ class Menu extends React.Component {
             <div className={className}>
                 <div className={[styles.menu, floating && styles.floating].join(' ')}>
                     <div className={styles.section}>
-                        <SectionLink name='process' icon='globe' disabled={budgetExceeded}/>
+                        <SectionLink name='process' icon='globe'/>
                         <SectionLink name='browse' icon='folder-open'/>
                         <SectionLink name='terminal' icon='terminal' disabled={budgetExceeded}/>
                         <SectionLink name='app-launch-pad' icon='wrench' disabled={budgetExceeded}/>
