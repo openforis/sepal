@@ -18,7 +18,7 @@ const endpointConfig = {
 const exceededBudget = info => {
     const spending = info.spending
     const exceeded = (spending, budget, message) => {
-        if (spending > budget) {
+        if (spending >= budget) {
             println(`\n${message}`)
             return true
         } else {

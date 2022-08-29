@@ -9,6 +9,6 @@ class UserInstanceSpending {
     double budget
 
     boolean isBudgetExceeded() {
-        spending > budget
+        spending >= budget
     }
 }

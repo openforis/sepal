@@ -37,7 +37,7 @@ class CheckUserInstanceSpendingHandler implements CommandHandler<UserInstanceSpe
                 spending: instanceSpending,
                 budget: budget.instanceSpending
         )
-        if (instanceSpending > budget.instanceSpending)
+        if (instanceSpending >= budget.instanceSpending)
             eventDispatcher.publish(new UserInstanceBudgetExceeded(userInstanceSpending))
         return userInstanceSpending
     }

@@ -42,9 +42,9 @@ class CheckUserStorageUseHandler implements CommandHandler<UserStorageUse, Check
                 budget: budget.storageSpending,
                 quota: budget.storageQuota
         )
-        if (spending > budget.storageSpending)
+        if (spending >= budget.storageSpending)
             eventDispatcher.publish(new UserStorageSpendingExceeded(userStorageUse))
-        if (storageUse.gb > budget.storageQuota)
+        if (storageUse.gb >= budget.storageQuota)
             eventDispatcher.publish(new UserStorageQuotaExceeded(userStorageUse))
 
         return userStorageUse

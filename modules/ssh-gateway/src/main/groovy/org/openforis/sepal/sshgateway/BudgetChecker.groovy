@@ -8,7 +8,7 @@ class BudgetChecker {
     }
 
     private static void check(spending, budget, String message) {
-        if (spending > budget) {
+        if (spending >= budget) {
             println "\n$message"
             System.exit(1)
         }
