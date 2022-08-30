@@ -158,7 +158,7 @@ class ButtonPopup extends React.Component {
         if (e) {
             if (!stayOpenOnBlur) {
                 const isButtonClick = e => this.buttonRef.current && this.buttonRef.current.contains(e.target)
-                const isPopupClick = e => this.popupRef.current && this.popupRef.current && this.popupRef.current.contains(e.target)
+                const isPopupClick = e => this.popupRef.current && this.popupRef.current.contains(e.target)
                 if (!isButtonClick(e) && !isPopupClick(e)) {
                     this.hidePopup()
                 }

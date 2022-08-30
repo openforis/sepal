@@ -7,6 +7,17 @@ SEPAL
 SEPAL is a cloud computing platform for geographical data processing. It enables users to quickly process large amount
 of data without high network bandwidth requirements or need to invest in high-performance computing infrastructure.
 
+--------------------------------------------------------------------------------
+
+Currently available in the following languages:
+
+| English | Français | Español |
+|---------|----------|---------|
+
+You can contribute to the translation effort on our [crowdin project](https://crowdin.com/project/sepal).
+
+--------------------------------------------------------------------------------
+
 Background
 ----------
 Reducing Emissions from Deforestation and Forest Degradation (REDD) is an effort to create a financial value for the

@@ -108,29 +108,28 @@ class ClassMappingStep extends Component {
                 </Widget> */}
                 <Layout type='horizontal-nowrap' spacing='compact' className={styles.valueSelectionRow}>
                     <Label msg={label}/>
-                    <Layout type='horizontal-nowrap' spacing='compact'>
-                        {addingMapping === legendValue
-                            ? <Combo
-                                className={styles.valueSelectionCombo}
-                                standalone='true'
-                                autoFocus
-                                options={valueOptions}
-                                disabled={!valueOptions.length}
-                                onChange={option => {
-                                    this.addMapping(mapping, legendValue, option.value)
-                                    this.openSelector(null)
-                                }}
-                                onCancel={() => this.openSelector(null)}
-                            />
-                            : null}
-                        {this.renderCount(legendValue)}
-                        <Button
-                            icon='plus'
-                            look='add'
-                            shape='circle'
-                            size='small'
-                            onClick={() => this.openSelector(legendValue)}/>
-                    </Layout>
+                    <Layout.Spacer/>
+                    {addingMapping === legendValue
+                        ? <Combo
+                            className={styles.valueSelectionCombo}
+                            standalone='true'
+                            autoFocus
+                            options={valueOptions}
+                            disabled={!valueOptions.length}
+                            onChange={option => {
+                                this.addMapping(mapping, legendValue, option.value)
+                                this.openSelector(null)
+                            }}
+                            onCancel={() => this.openSelector(null)}
+                        />
+                        : null}
+                    {this.renderCount(legendValue)}
+                    <Button
+                        icon='plus'
+                        look='add'
+                        shape='circle'
+                        size='small'
+                        onClick={() => this.openSelector(legendValue)}/>
                 </Layout>
                 <ButtonGroup>
                     {this.renderMapping(mapping, legendValue)}

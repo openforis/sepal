@@ -5,6 +5,7 @@ echo
 echo "**************************"
 echo "*** Installing Jupyter ***"
 echo "**************************"
+ln -sf /usr/local/bin/pip* /usr/bin/
 export DISPLAY=:0.0
 apt-get install -y libzmq3-dev
 /usr/bin/python3 -m pip install jupyter
@@ -13,14 +14,18 @@ apt-get install -y libzmq3-dev
 /usr/bin/python3 -m ipykernel install
 R -e "pacman::p_load('IRkernel')"
 R -e "IRkernel::installspec(user = FALSE)"
+
 /usr/bin/python3 -m pip install ipywidgets
 /usr/bin/python3 -m pip install jupyterlab
 /usr/bin/python3 -m pip install jupyterlab-language-pack-fr-FR
 /usr/bin/python3 -m pip install jupyterlab-language-pack-es-ES
 /usr/bin/python3 -m pip install folium
-/usr/bin/python3 -m pip install ipyleaflet==0.13.3
+/usr/bin/python3 -m pip install ipyleaflet
 /usr/bin/python3 -m pip install ipyvuetify
+# /usr/bin/python3 -m pip install lckr-jupyterlab-variableinspector
+
 git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
+/usr/bin/python3 -m pip install jupyter_latex_envs # Required for jupyter_contrib_nbextensions
 /usr/bin/python3 -m pip install -e jupyter_contrib_nbextensions
 /usr/bin/python3 /usr/local/bin/jupyter contrib nbextension install
 /usr/bin/python3 /usr/local/bin/jupyter nbextensions_configurator enable
@@ -35,5 +40,7 @@ npm install -g --unsafe-perm ijavascript
 npm install -g js-beautify
 /usr/bin/ijsinstall --install=global
 
-/usr/bin/python3 /usr/local/bin/jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-leaflet@v0.13.3
+/usr/bin/python3 /usr/local/bin/jupyter labextension install @jupyter-widgets/jupyterlab-manager 
+/usr/bin/python3 /usr/local/bin/jupyter labextension install jupyter-leaflet
+# /usr/bin/python3 /usr/local/bin/jupyter labextension install @lckr/jupyterlab_variableinspector
 /usr/bin/python3 /usr/local/bin/jupyter lab build

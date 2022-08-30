@@ -27,7 +27,10 @@ const worker$ = ({recipe, latLng, bands}) => {
         )
 
     const assetSegments$ = () =>
-        of(new ee.Image(recipe.id))
+        imageFactory({
+            type: 'ASSET',
+            id: recipe.id
+        }).getImage$()
 
     const recipeRef$ = () => imageFactory(recipe, {selection: bands}).getRecipe$()
 

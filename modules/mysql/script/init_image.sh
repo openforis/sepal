@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
+set -e
 
-apt-get update -y && apt-get install -y \
+yum update -y && yum install -y \
     supervisor \
     net-tools \
     wget \

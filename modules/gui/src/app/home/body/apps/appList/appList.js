@@ -32,6 +32,7 @@ const mapStateToProps = () => ({
     apps: select('apps.list'),
     tags: select('apps.tags'),
     tabs: select('apps.tabs'),
+    filterValue: select('apps.filterValue'),
     filterValues: select('apps.filterValues') || [],
     tagFilter: select('apps.tagFilter') || IGNORE,
     googleAccountFilter: select('apps.googleAccountFilter')
@@ -126,10 +127,10 @@ class _AppList extends React.Component {
     }
 
     renderSearch() {
-        const {searchValues} = this.props
+        const {filterValue} = this.props
         return (
             <SearchBox
-                value={searchValues}
+                value={filterValue}
                 placeholder={msg('apps.filter.search.placeholder')}
                 onSearchValue={this.setFilter}
             />
@@ -334,7 +335,8 @@ class _AppList extends React.Component {
 
     setFilter(filterValue) {
         const filterValues = splitString(simplifyString(filterValue))
-        actionBuilder('UPDATE_FILTER_VALUES', filterValues)
+        actionBuilder('UPDATE_FILTER_VALUE', filterValue)
+            .set('apps.filterValue', filterValue)
             .set('apps.filterValues', filterValues)
             .dispatch()
     }
