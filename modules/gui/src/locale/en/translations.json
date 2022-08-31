@@ -2987,6 +2987,9 @@
             "recipe": {
               "title": "Saved SEPAL recipe"
             },
+            "sections": {
+                "title": "Image to remap"
+            },
             "title": "Input imagery"
           },
           "legend": {
