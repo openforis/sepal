@@ -9,7 +9,6 @@ import {countryEETable} from 'app/home/map/aoiLayer'
 import {msg} from 'translate'
 import {withMap} from 'app/home/map/mapContext'
 import PanelSections from 'widget/panelSections'
-import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './aoi.module.css'
 
