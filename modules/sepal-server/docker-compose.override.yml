@@ -5,6 +5,8 @@ services:
     ports:
       - "127.0.0.1:5005:5005"
     volumes:
+      - "${SEPAL_PROJECT_DIR}/common/src:/usr/local/src/sepal/common/src"
+      - "${SEPAL_PROJECT_DIR}/common/build:/usr/local/src/sepal/common/build"
       - "${SEPAL_PROJECT_DIR}/modules/sepal-server/src:/usr/local/src/sepal/modules/sepal-server/src"
       - "${SEPAL_PROJECT_DIR}/modules/sepal-server/build:/usr/local/src/sepal/modules/sepal-server/build"
     environment:
