@@ -7,6 +7,11 @@ import styles from './confirm.module.css'
 
 export default class Confirm extends React.Component {
     render() {
+        const {skip} = this.props
+        return skip || this.renderConfirmation()
+    }
+    
+    renderConfirmation() {
         const {title, message, label, disabled, onConfirm, onCancel, children} = this.props
         return (
             <Panel
@@ -43,6 +48,21 @@ export default class Confirm extends React.Component {
             </Panel>
         )
     }
+
+    autoConfirm() {
+        const {skip, onConfirm} = this.props
+        if (skip) {
+            onConfirm && onConfirm()
+        }
+    }
+
+    componentDidMount() {
+        this.autoConfirm()
+    }
+
+    componentDidUpdate() {
+        this.autoConfirm()
+    }
 }
 
 Confirm.propTypes = {
@@ -52,5 +72,6 @@ Confirm.propTypes = {
     disabled: PropTypes.any,
     label: PropTypes.string,
     message: PropTypes.string,
+    skip: PropTypes.any,
     title: PropTypes.string
 }
