@@ -926,11 +926,11 @@
                         "endDate": {
                             "label": "Date de fin",
                             "range": "Le segment CCDC a été créé avec les données de {startDate} à {endDate}",
-                            "tooltip": ""
+                            "tooltip": "La date de fin de a coupe"
                         },
                         "startDate": {
                             "label": "Date de début",
-                            "tooltip": ""
+                            "tooltip": "La date du début de la coupe"
                         }
                     },
                     "title": "Date",
@@ -959,13 +959,13 @@
                                     "tooltip": ""
                                 }
                             },
-                            "label": "",
+                            "label": "Direction de la magnitude de rupture",
                             "tooltip": ""
                         },
                         "breakSelection": {
                             "options": {
                                 "CONFIDENCE": {
-                                    "label": "",
+                                    "label": "Confiance",
                                     "tooltip": ""
                                 },
                                 "FIRST": {
@@ -973,15 +973,15 @@
                                     "tooltip": ""
                                 },
                                 "LAST": {
-                                    "label": "",
+                                    "label": "Dernier",
                                     "tooltip": ""
                                 },
                                 "MAGNITUDE": {
-                                    "label": "",
+                                    "label": "Magnitude",
                                     "tooltip": ""
                                 }
                             },
-                            "label": "",
+                            "label": "Détection des ruptures",
                             "tooltip": ""
                         },
                         "extrapolateMaxDays": {
@@ -1024,12 +1024,12 @@
                             "tooltip": "Préciser le nombre d'harmoniques du modèle de régression du CCDC à utiliser lors de la création de la coupe"
                         },
                         "minBreakConfidence": {
-                            "label": "",
+                            "label": "Confiance de rupture minimale",
                             "tooltip": "",
                             "value": ""
                         },
                         "skipBreakInLastSegment": {
-                            "label": "",
+                            "label": "Rupture à la fin",
                             "options": {
                                 "EXCLUDE": "Exclure",
                                 "INCLUDE": "Inclure"
@@ -1256,7 +1256,7 @@
                     "button": "OPT",
                     "form": {
                         "minConfidence": {
-                            "label": "",
+                            "label": "Confiance minimale",
                             "tooltip": "",
                             "value": "{value} (différence/rmse)"
                         },
@@ -1307,10 +1307,10 @@
                         },
                         "corrections": {
                             "brdf": {
-                                "label": "",
+                                "label": "Correction BRDF",
                                 "tooltip": ""
                             },
-                            "label": "",
+                            "label": "Corrections",
                             "surfaceReflectance": {
                                 "label": "",
                                 "tooltip": ""
