@@ -5,7 +5,7 @@
         "filesystem": "debug",
         "jobQueue": "debug",
         "main": "info",
-        "messageHanlder": "debug",
+        "messageHandler": "debug",
         "messageQueue": "debug",
         "persistence": "info",
         "scan": "info"
