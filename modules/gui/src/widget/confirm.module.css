@@ -2,13 +2,15 @@
     width: 25rem;
 }
 
+.header {
+    background-color: rgba(255, 0, 0, .3);
+}
+
 .message {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     font-size: .9rem;
-    background-color: rgba(255, 0, 0, .35);
-    border-radius: .25rem;
     padding: .25rem .5rem;
 }

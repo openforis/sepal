@@ -13,6 +13,7 @@ export default class Confirm extends React.Component {
                 className={styles.panel}
                 type='modal'>
                 <Panel.Header
+                    className={styles.header}
                     icon='exclamation-triangle'
                     title={title || msg('widget.confirm.title')}/>
                 <Panel.Content>
