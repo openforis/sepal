@@ -120,7 +120,7 @@ export class Palette extends React.Component {
         const {showTextInput} = this.state
         return (
             <Button
-                key={'add'}
+                key='add'
                 chromeless
                 additionalClassName={styles.element}
                 icon='plus'
@@ -135,12 +135,12 @@ export class Palette extends React.Component {
         const {showTextInput} = this.state
         return (
             <Button
-                key={'showHexColorCode'}
+                key='showHexColorCode'
                 look={showTextInput ? 'selected' : 'default'}
                 size='small'
                 shape='pill'
                 air='less'
-                label={'HEX'}
+                label='HEX'
                 tooltip={msg(showTextInput ? 'map.visParams.form.palette.tooltip' : 'map.visParams.form.palette.text.tooltip')}
                 onClick={() => showTextInput ? this.showPalette() : this.showTextInput()}
             />

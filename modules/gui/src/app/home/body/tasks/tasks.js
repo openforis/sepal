@@ -96,8 +96,9 @@ class Tasks extends React.Component {
                     label={msg('tasks.removeAll.label')}
                     tooltip={msg('tasks.removeAll.tooltip')}
                     tooltipPlacement='bottom'
+                    disabled={!this.inactiveTasks().length}
                     onClick={() => this.removeAllTasks()}
-                    disabled={!this.inactiveTasks().length}/>
+                />
             </div>
         )
     }

@@ -43,9 +43,10 @@ const _Logout = ({stream}) =>
         size='large'
         air='less'
         icon='sign-out-alt'
-        onClick={() => stream('LOGOUT', logout$())}
         tooltip={msg('home.sections.logout')}
-        tooltipPlacement='top'/>
+        tooltipPlacement='top'
+        onClick={() => stream('LOGOUT', logout$())}
+    />
 
 const Logout = compose(
     _Logout,
@@ -80,9 +81,7 @@ const Title = () => {
                         shape='circle'
                         icon='copy'
                         disabled={!buildNumber}
-                        onClick={() =>
-                            copyToClipboard(buildNumber, msg('footer.buildNumberCopied'))
-                        }
+                        onClick={() => copyToClipboard(buildNumber, msg('footer.buildNumberCopied'))}
                     />
                 </ButtonGroup>
             </Layout>
@@ -102,9 +101,7 @@ const Title = () => {
                         shape='circle'
                         icon='copy'
                         disabled={!gitCommit}
-                        onClick={() =>
-                            copyToClipboard(gitCommit, msg('footer.gitCommitCopied'))
-                        }
+                        onClick={() => copyToClipboard(gitCommit, msg('footer.gitCommitCopied'))}
                     />
                 </ButtonGroup>
             </Layout>
@@ -117,7 +114,7 @@ const Title = () => {
             air='less'
             additionalClassName={styles.title}
             linkUrl={wikiURL}
-            linkTarget={'sepal-wiki'}
+            linkTarget='sepal-wiki'
             label='SEPAL'
             tooltip={tooltip}/>
     )

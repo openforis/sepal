@@ -147,9 +147,9 @@ class _MapAreaMenu extends React.Component {
                                 shape='pill'
                                 icon='bars'
                                 disabled={!canActivate && !active}
-                                onClick={() => active ? deactivate() : activate()}
                                 tooltip={this.getImageLayerSourceDescription()}
                                 tooltipDisabled={active}
+                                onClick={() => active ? deactivate() : activate()}
                             />
                         </div>
                     )

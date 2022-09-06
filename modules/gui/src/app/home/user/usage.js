@@ -138,10 +138,11 @@ const _UsageButton = ({userReport, hasBudget, budgetExceeded, budgetWarning}) =>
                         icon='dollar-sign'
                         label={label}
                         disabled={active}
-                        onClick={() => activate()}
                         tooltip={msg('home.sections.user.report.tooltip')}
                         tooltipPlacement='top'
-                        tooltipDisabled={active}/>
+                        tooltipDisabled={active}
+                        onClick={() => activate()}
+                    />
                 }
             </Activator>
             <Usage/>

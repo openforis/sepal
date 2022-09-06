@@ -378,7 +378,7 @@ const MappedValue = ({value, onClick}) => {
     return <Button
         label={`${value}`}
         shape='pill'
-        onClick={() => onClick && onClick()}
         tooltip={msg('Remove column value')}
+        onClick={() => onClick && onClick()}
     />
 }

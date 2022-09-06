@@ -205,11 +205,11 @@ class _UserDetailsButton extends React.Component {
                 icon='user'
                 label={username}
                 disabled={active}
-                onClick={activate}
                 tooltip={msg('home.sections.user.profile')}
                 tooltipPlacement='top'
                 tooltipDisabled={active}
                 hint={hint}
+                onClick={activate}
             />
         )
     }

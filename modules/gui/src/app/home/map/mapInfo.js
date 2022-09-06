@@ -96,27 +96,27 @@ class _MapInfoPanel extends React.Component {
                         icon='copy'
                         label='[longitude, latitude]'
                         alignment='left'
-                        onClick={() => this.copyPlainCenterCoordinates(center)}
                         tooltip={msg('map.info.copy')}
                         tooltipPlacement='left'
+                        onClick={() => this.copyPlainCenterCoordinates(center)}
                     />
                     <Button
                         shape='pill'
                         icon='copy'
                         label='ee.Geometry.Point()'
                         alignment='left'
-                        onClick={() => this.copyEECenterCoordinates(center)}
                         tooltip={msg('map.info.copy')}
                         tooltipPlacement='left'
+                        onClick={() => this.copyEECenterCoordinates(center)}
                     />
                     <Button
                         shape='pill'
                         icon='copy'
                         label='Map.setCenter()'
                         alignment='left'
-                        onClick={() => this.copyEESetCenter(center, zoom)}
                         tooltip={msg('map.info.copy')}
                         tooltipPlacement='left'
+                        onClick={() => this.copyEESetCenter(center, zoom)}
                     />
                 </ButtonGroup>
             </Widget>
@@ -195,10 +195,10 @@ class _MapInfo extends React.Component {
                                 shape='rectangle'
                                 size='x-small'
                                 additionalClassName={styles.button}
-                                onClick={() => active ? deactivate() : activate()}
                                 air='less'
                                 tooltip={active ? null : msg('map.info.tooltip')}
-                                tooltipPlacement='bottomLeft'>
+                                tooltipPlacement='bottomLeft'
+                                onClick={() => active ? deactivate() : activate()}>
                                 <ElementResizeDetector onResize={({width}) => this.setState({width})}>
                                     <div className={styles.content}>
                                         <div>{format.number({value: scale, unit: 'm/px'})}</div>

@@ -58,7 +58,7 @@ const Link = ({name, icon, href}) =>
         tooltip={msg(`home.sections.${name}`)}
         tooltipPlacement='right'
         linkUrl={href}
-        linkTarget={'_blank'}
+        linkTarget='_blank'
     />
 
 const _SectionLink = ({active, name, icon, disabled}) => {

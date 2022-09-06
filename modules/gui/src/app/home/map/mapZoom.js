@@ -105,10 +105,10 @@ class _MapZoomPanel extends React.Component {
         return (
             <Button
                 disabled={isMaxZoom}
-                onClick={() => map.zoomIn()}
-                icon={'plus'}
+                icon='plus'
                 tooltip={msg('process.mapZoom.zoomIn.tooltip')}
                 tooltipPlacement='top'
+                onClick={() => map.zoomIn()}
             />
         )
     }
@@ -119,10 +119,10 @@ class _MapZoomPanel extends React.Component {
         return (
             <Button
                 disabled={isMinZoom}
-                onClick={() => map.zoomOut()}
-                icon={'minus'}
+                icon='minus'
                 tooltip={msg('process.mapZoom.zoomOut.tooltip')}
                 tooltipPlacement='top'
+                onClick={() => map.zoomOut()}
             />
         )
     }
@@ -134,10 +134,10 @@ class _MapZoomPanel extends React.Component {
             <Button
                 look={map.isZoomArea() ? 'highlight' : 'default'}
                 disabled={isMaxZoom}
-                onClick={() => map.toggleZoomArea()}
-                icon={'crop-alt'}
+                icon='crop-alt'
                 tooltip={msg('process.mapZoom.zoomArea.tooltip')}
                 tooltipPlacement='top'
+                onClick={() => map.toggleZoomArea()}
             />
         )
     }
@@ -147,10 +147,10 @@ class _MapZoomPanel extends React.Component {
         return (
             <Button
                 disabled={!map.canFit()}
-                onClick={() => map.fit()}
-                icon={'bullseye'}
+                icon='bullseye'
                 tooltip={msg('process.mapZoom.fit.tooltip')}
                 tooltipPlacement='top'
+                onClick={() => map.fit()}
             />
         )
     }
@@ -160,10 +160,10 @@ class _MapZoomPanel extends React.Component {
         return (
             <ToggleButton
                 selected={scrollWheelEnabled}
-                onChange={() => this.toggleScrollWheel()}
-                icon={'mouse'}
+                icon='mouse'
                 tooltip={msg(scrollWheelEnabled ? 'process.mapZoom.scrollwheel.enabled.tooltip' : 'process.mapZoom.scrollwheel.disabled.tooltip')}
                 tooltipPlacement='top'
+                onChange={() => this.toggleScrollWheel()}
             />
         )
     }

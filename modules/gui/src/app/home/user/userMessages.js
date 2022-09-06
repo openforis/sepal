@@ -174,9 +174,9 @@ class _UserMessages extends React.Component {
                 size='large'
                 icon={unread ? 'bell' : 'check'}
                 iconAttributes={{fade: unread}}
-                onClick={() => this.toggleReadState(userMessage)}
                 tooltip={msg(`userMessages.state.${state}`)}
                 tooltipPlacement='top'
+                onClick={() => this.toggleReadState(userMessage)}
             />
         )
     }
@@ -301,10 +301,11 @@ class _UserMessagesButton extends React.Component {
                             icon='bell'
                             iconAttributes={{fade: unreadUserMessages > 0}}
                             disabled={active}
-                            onClick={() => activate()}
                             tooltip={msg('home.sections.user.messages')}
                             tooltipPlacement='top'
-                            tooltipDisabled={active}/>
+                            tooltipDisabled={active}
+                            onClick={() => activate()}
+                        />
                     }
                 </Activator>
             </React.Fragment>
