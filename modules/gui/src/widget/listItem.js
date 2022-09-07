@@ -143,15 +143,14 @@ class _ListItem extends React.Component {
     }
 
     getSharedClassName(clickable) {
-        return _.flatten([
+        return [
             lookStyles.look,
             lookStyles.transparent,
             lookStyles.noTransitions,
-            clickable ? null : [lookStyles.noHover, lookStyles.nonClickable],
+            clickable ? null : lookStyles.noHover,
             (this.isDragging() || this.isDraggable() && !this.isClickable()) ? lookStyles.draggable : null,
-            // this.isDisabled() ? lookStyles.nonInteractive : null
             this.isDisabled() ? lookStyles.disabled : null
-        ])
+        ]
     }
 
     getItemClassName(original) {

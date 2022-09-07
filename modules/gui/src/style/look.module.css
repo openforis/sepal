@@ -158,9 +158,9 @@
     border-color: transparent !important;
 }
 
-/* nonClickable */
+/* noHover */
 
-.look.nonClickable {
+.look.noHover {
     cursor: default !important;
 }
 
