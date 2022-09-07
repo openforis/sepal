@@ -193,11 +193,7 @@ FastList.defaultProps = {
 class FastListItem extends React.PureComponent {
     render() {
         const {item, children} = this.props
-        return (
-            <div>
-                {children(item)}
-            </div>
-        )
+        return children(item)
     }
 }
 
