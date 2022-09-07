@@ -130,7 +130,7 @@
     min-width: 60rem;
 }
 
-.users > :nth-child(even) {
+.user:nth-child(even) {
     background-color: hsla(0, 0%, 100%, .03);
 }
 
