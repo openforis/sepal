@@ -343,7 +343,7 @@ class Browse extends React.Component {
             <Buttons
                 chromeless
                 layout='horizontal-nowrap'
-                spacing='none'
+                spacing='tight'
                 options={options}
                 selected={sorting}
                 onChange={sorting => this.setSorting(sorting)}
