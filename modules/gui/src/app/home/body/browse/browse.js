@@ -52,6 +52,10 @@ class Browse extends React.Component {
         super()
         this.processUpdates = this.processUpdates.bind(this)
         this.processUpdate = this.processUpdate.bind(this)
+        this.removeSelected = this.removeSelected.bind(this)
+        this.clearSelection = this.clearSelection.bind(this)
+        this.toggleDotFiles = this.toggleDotFiles.bind(this)
+        this.setSorting = this.setSorting.bind(this)
     }
 
     componentDidMount() {
@@ -262,7 +266,9 @@ class Browse extends React.Component {
         }
     }
 
-    showDotFiles(show) {
+    toggleDotFiles() {
+        const {showDotFiles} = this.props
+        const show = !showDotFiles
         actionBuilder('SET_SHOW_DOT_FILES', {show})
             .set(SHOW_DOT_FILES, show)
             .dispatch()
@@ -294,7 +300,7 @@ class Browse extends React.Component {
                         icon={showDotFiles ? 'eye' : 'eye-slash'}
                         tooltip={msg(dotFilesTooltip)}
                         tooltipPlacement='bottom'
-                        onClick={() => this.showDotFiles(!showDotFiles)}
+                        onClick={this.toggleDotFiles}
                     />
                     <Button
                         chromeless
@@ -303,9 +309,9 @@ class Browse extends React.Component {
                         icon='download'
                         tooltip={msg('browse.controls.download.tooltip')}
                         tooltipPlacement='bottom'
+                        disabled={!oneFileSelected}
                         downloadUrl={downloadUrl}
                         downloadFilename={downloadFilename}
-                        disabled={!oneFileSelected}
                     />
                     <RemoveButton
                         chromeless
@@ -313,8 +319,9 @@ class Browse extends React.Component {
                         shape='circle'
                         tooltip={msg('browse.controls.remove.tooltip')}
                         tooltipPlacement='bottom'
-                        onRemove={() => this.removeSelected()}
-                        disabled={nothingSelected}/>
+                        disabled={nothingSelected}
+                        onRemove={this.removeSelected}
+                    />
                     <Button
                         chromeless
                         size='large'
@@ -322,8 +329,8 @@ class Browse extends React.Component {
                         icon='times'
                         tooltip={msg('browse.controls.clearSelection.tooltip')}
                         tooltipPlacement='bottom'
-                        onClick={() => this.clearSelection()}
                         disabled={nothingSelected}
+                        onClick={this.clearSelection}
                     />
                 </ButtonGroup>
             </div>
@@ -346,7 +353,7 @@ class Browse extends React.Component {
                 spacing='tight'
                 options={options}
                 selected={sorting}
-                onChange={sorting => this.setSorting(sorting)}
+                onChange={this.setSorting}
             />
         )
     }
