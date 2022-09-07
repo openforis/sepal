@@ -169,6 +169,10 @@
     overflow: hidden;
 }
 
+.button .contents {
+    user-select: none;
+}
+
 /* spacing between icon and label */
 
 .button > .contents > * + * {
