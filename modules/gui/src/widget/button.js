@@ -32,24 +32,42 @@ class _Button extends React.Component {
         return stopPropagation
     }
 
-    active() {
+    isActive() {
         const {disabled, busy} = this.props
         return !disabled && !busy
     }
 
-    linked() {
+    isLinked() {
         const {onMouseDown, onClick, onClickHold, route, linkUrl, downloadUrl, type} = this.props
         return onMouseDown || onClick || onClickHold || route || linkUrl || downloadUrl || ['submit', 'reset'].includes(type)
     }
 
-    nonInteractive() {
+    isNonInteractive() {
+        return !this.isActive()
+    }
+
+    isHoverRequired() {
         const {tooltip, tooltipPanel} = this.props
-        return !this.active() || !(this.linked() || tooltip || tooltipPanel)
+        return this.isLinked() || tooltip || tooltipPanel
+    }
+
+    isHoverDisabled() {
+        const {hover} = this.props
+        return _.isNil(hover)
+            ? !this.isHoverRequired()
+            : hover === false
+    }
+
+    isHoverForced() {
+        const {hover} = this.props
+        return _.isNil(hover)
+            ? false
+            : hover === true
     }
 
     classNames() {
         const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle, hint,
-            alignment, width, onClickHold, hover, disableTransitions, buttonGroupContext: {joinLeft, joinRight} = {}} = this.props
+            alignment, width, onClickHold, disableTransitions, buttonGroupContext: {joinLeft, joinRight} = {}} = this.props
         return className ? className : [
             styles.button,
             styles[`size-${size}`],
@@ -63,10 +81,10 @@ class _Button extends React.Component {
             lookStyles.look,
             lookStyles[look],
             chromeless ? lookStyles.chromeless : null,
-            hover === true ? lookStyles.hover : null,
-            hover === false ? lookStyles.noHover : null,
+            this.isHoverForced() ? lookStyles.hoverForced : null,
+            this.isHoverDisabled() ? lookStyles.hoverDisabled : null,
+            this.isNonInteractive() ? lookStyles.nonInteractive : null,
             disableTransitions ? lookStyles.noTransitions : null,
-            this.nonInteractive() ? lookStyles.nonInteractive : null,
             onClickHold ? styles.hold : null,
             hint ? styles.hint : null,
             additionalClassName
@@ -146,7 +164,7 @@ class _Button extends React.Component {
 
     renderPlainLink(contents) {
         const {linkUrl, linkTarget} = this.props
-        return this.active() && linkUrl
+        return this.isActive() && linkUrl
             ? (
                 <a href={linkUrl} rel='noopener noreferrer' target={linkTarget} onMouseDown={e => e.preventDefault()}>
                     {contents}
@@ -157,7 +175,7 @@ class _Button extends React.Component {
 
     renderRouteLink(contents) {
         const {route} = this.props
-        return this.active() && route
+        return this.isActive() && route
             ? (
                 <Link to={route} onMouseDown={e => e.preventDefault()}>
                     {contents}
@@ -171,13 +189,13 @@ class _Button extends React.Component {
         const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
         const message = tooltipPanel || tooltip
         const visibility = _.isNil(tooltipVisible) ? {} : {visible: tooltipVisible}
-        return this.active() && message ? (
+        return this.isActive() && message ? (
             <Tooltip
                 msg={message}
                 placement={tooltipPlacement}
                 delay={tooltipDelay}
                 hoverTrigger={!tooltipPanel}
-                clickTrigger={tooltipClickTrigger || !this.linked()}
+                clickTrigger={tooltipClickTrigger || !this.isLinked()}
                 overlayInnerStyle={overlayInnerStyle}
                 overlayStyle={{visibility: tooltipDisabled ? 'hidden' : 'visible'}}
                 onVisibleChange={tooltipOnVisible}
@@ -196,7 +214,7 @@ class _Button extends React.Component {
 
     renderKeybinding(contents) {
         const {keybinding} = this.props
-        return this.active() && keybinding
+        return this.isActive() && keybinding
             ? (
                 <Keybinding keymap={this.getKeymap(keybinding)}>
                     {contents}
@@ -214,7 +232,7 @@ class _Button extends React.Component {
                 className={this.classNames()}
                 style={style}
                 tabIndex={tabIndex}
-                disabled={!this.active()}
+                disabled={!this.isActive()}
                 onMouseOver={e => this.handleMouseOver(e)}
                 onMouseOut={e => this.handleMouseOut(e)}
                 onMouseDown={e => this.handleMouseDown(e)}
@@ -312,7 +330,7 @@ class _Button extends React.Component {
             addSubscription(
                 clickHold$.subscribe(e => {
                     const {onClickHold} = this.props
-                    if (this.active() && onClickHold) {
+                    if (this.isActive() && onClickHold) {
                         this.handleClickHold(e)
                     }
                 })
@@ -336,7 +354,7 @@ class _Button extends React.Component {
             addSubscription(
                 click$.subscribe(e => {
                     const {onClick} = this.props
-                    if (this.active() && onClick) {
+                    if (this.isActive() && onClick) {
                         this.handleClick(e)
                     }
                 })
@@ -367,7 +385,7 @@ Button.propTypes = {
     downloadUrl: PropTypes.any,
     hidden: PropTypes.any,
     hint: PropTypes.any,
-    hover: PropTypes.any,
+    hover: PropTypes.any, // three-state
     icon: PropTypes.string,
     iconAttributes: PropTypes.any,
     iconClassName: PropTypes.any,

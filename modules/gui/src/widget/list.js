@@ -178,9 +178,7 @@ class List extends React.Component {
         const {overrideHover} = this.state
         const selected = this.isSelected(option)
         const highlighted = this.isHighlighted(option)
-        const hover = overrideHover
-            ? highlighted
-            : null
+        const hover = overrideHover && highlighted || null // three-state
         const ref = selected
             ? this.selected
             : highlighted
