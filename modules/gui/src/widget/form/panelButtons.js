@@ -10,13 +10,13 @@ export class FormPanelButtons extends React.Component {
                 {props => {
                     const renderProps = {...props, ...this.props}
                     const inWizard = renderProps.wizard && renderProps.wizard.includes(renderProps.id)
-                    return inWizard ? this.renderWizard(renderProps) : this.renderForm(renderProps)
+                    return inWizard ? this.renderInWizard(renderProps) : this.renderInForm(renderProps)
                 }}
             </FormPanelContext.Consumer>
         )
     }
 
-    renderForm({isActionForm, dirty, invalid, onOk, onCancel}) {
+    renderInForm({isActionForm, dirty, invalid, onOk, onCancel}) {
         const {applyLabel} = this.props
         const canSubmit = isActionForm || dirty
         return (
@@ -45,7 +45,7 @@ export class FormPanelButtons extends React.Component {
         )
     }
 
-    renderWizard({closable, isActionForm, dirty, invalid, first, last, onBack, onNext, onDone, onCancel}) {
+    renderInWizard({closable, isActionForm, dirty, invalid, first, last, onBack, onNext, onDone, onCancel}) {
         const {applyLabel} = this.props
         const canSubmit = isActionForm || dirty
         return (
