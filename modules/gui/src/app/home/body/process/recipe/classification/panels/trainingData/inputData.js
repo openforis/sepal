@@ -1,5 +1,7 @@
-import {Subject} from 'rxjs'
+import * as turf from '@turf/turf'
+import {Subject, of} from 'rxjs'
 import {evaluateRow} from './expression'
+import {selectFrom} from 'stateUtils'
 import _ from 'lodash'
 
 const filter = (row, {filterExpression}) =>
@@ -14,14 +16,13 @@ const validLocation = (row, {locationType, geoJsonColumn, xColumn, yColumn}) =>
 
 const filteredInputData = inputs => inputs.inputData.value.filter(row => validLocation(row, inputs) && filter(row, inputs))
 
-export const toReferenceData$ = inputs => {
-    // TODO: Use worker
+export const remapReferenceData$ = ({inputs, referenceData}) => {
     const referenceData$ = new Subject()
     setTimeout(() => {
         try {
             const counts = {}
-            const referenceData = filteredInputData(inputs)
-                .map(row => {
+            const remapped = referenceData
+                .map(({row}) => {
                     const legendValue = parseInt(remap(row, inputs))
                     if (_.isFinite(legendValue)) {
                         counts[legendValue] = (counts[legendValue] || 0) + 1
@@ -33,13 +34,28 @@ export const toReferenceData$ = inputs => {
                     }
                 })
                 .filter(row => _.isFinite(row['class']) && _.isFinite(row.x) && _.isFinite(row.y))
-            referenceData$.next({referenceData, counts})
+            referenceData$.next({referenceData: remapped, counts})
             referenceData$.complete()
         } catch (e) {
             referenceData$.error(e)
         }
     }, 0)
     return referenceData$
+}
+
+export const filterReferenceData$ = ({inputs, recipe}) => {
+    const bounds = selectFrom(recipe, 'ui.bounds')
+    const bbox = turf.bboxPolygon(bounds.flat())
+    const referenceData = filteredInputData(inputs)
+        .map(row => {
+            const {x, y, crs} = getLocation(row, inputs)
+            return {x, y, crs, row}
+        })
+        .filter(({x, y}) => {
+            const point = turf.point([x, y])
+            return turf.booleanIntersects(bbox, point)
+        })
+    return of(referenceData)
 }
 
 const remap = (row, inputs) => {

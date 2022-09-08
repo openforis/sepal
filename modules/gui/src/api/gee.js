@@ -40,9 +40,9 @@ export default {
             retries: 0
         }),
 
-    sampleImage$: ({asset, count, scale, classBand}) =>
-        get$('/api/gee/image/sample', {
-            query: {asset, count, scale, classBand},
+    sampleImage$: ({asset, count, scale, classBand, recipe}) =>
+        postJson$('/api/gee/image/sample', {
+            body: {asset, count, scale, classBand, recipe},
             retries: 0
         }),
 

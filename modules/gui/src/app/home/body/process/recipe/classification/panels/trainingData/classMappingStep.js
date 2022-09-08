@@ -5,9 +5,9 @@ import {Combo} from 'widget/combo'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
+import {filterReferenceData$, remapReferenceData$} from './inputData'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {toReferenceData$} from './inputData'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
@@ -16,7 +16,8 @@ import _ from 'lodash'
 import styles from './classStep.module.css'
 
 const mapRecipeToProps = recipe => ({
-    legend: selectFrom(recipe, 'model.legend')
+    legend: selectFrom(recipe, 'model.legend'),
+    recipe
 })
 
 class ClassMappingStep extends Component {
@@ -272,6 +273,7 @@ class ClassMappingStep extends Component {
             }
         }
         referenceData.set(null)
+        this.filterReferenceData()
     }
 
     componentDidUpdate(prevProps) {
@@ -284,16 +286,28 @@ class ClassMappingStep extends Component {
             || !_.isEqual(customMapping.value, prevCustomMapping.value)
             || !_.isEqual(defaultValue.value, prevDefaultValue.value)
         if (notAlreadyUpdatingReferenceData && (noReferenceData || updatedMapping)) {
-            this.updateReferenceData()
+            this.remapReferenceData()
         }
     }
 
-    updateReferenceData() {
+    filterReferenceData() {
+        const {stream, inputs, recipe} = this.props
+        stream('UPDATE_REFERENCE_DATA',
+            filterReferenceData$({inputs, recipe}),
+            referenceData => this.setState({referenceData})
+        )
+    }
+
+    remapReferenceData() {
         const {stream, inputs} = this.props
+        const {referenceData} = this.state
+        if (!referenceData) {
+            return
+        }
         inputs.referenceData.set(null) // Unset while updating
         stream('UPDATE_REFERENCE_DATA',
-            toReferenceData$(inputs),
-            updatedReferenceData => inputs.referenceData.set(updatedReferenceData),
+            remapReferenceData$({inputs, referenceData}),
+            remappedReferenceData => inputs.referenceData.set(remappedReferenceData),
             e => {
                 inputs.referenceData.set({counts: {}, referenceData: []})
                 this.setState({mappingError: e})
