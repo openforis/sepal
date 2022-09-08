@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     ca-certificates \
-    gdal-bin=3.4.3+dfsg-1~focal0 \
+    gdal-bin \
     git \
     gnupg \
     inetutils-ping \
