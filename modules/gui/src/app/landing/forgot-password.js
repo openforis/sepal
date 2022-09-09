@@ -19,11 +19,12 @@ const fields = {
 
 class _ForgotPassword extends React.Component {
     requestPasswordReset(email) {
+        const {onCancel} = this.props
         this.props.stream('REQUEST_PASSWORD_RESET',
             requestPasswordReset$(email),
             () => {
                 Notifications.success({message: msg('landing.forgot-password.success', {email})})
-                this.cancel()
+                onCancel()
             }
         )
     }
