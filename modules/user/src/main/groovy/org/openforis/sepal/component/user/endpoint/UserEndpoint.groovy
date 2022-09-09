@@ -218,13 +218,6 @@ class UserEndpoint {
                 send toJson(userToMap(user))
             }
 
-            post('/delete', [ADMIN]) {
-                response.contentType = 'application/json'
-                def command = new DeleteUser(username: params.required('username', String).toLowerCase())
-                component.submit(command)
-                send toJson([status: 'success', message: 'User deleted'])
-            }
-
             get('/google/access-request-url') {
                 response.contentType = 'application/json'
                 def url = component.submit(new GoogleAccessRequestUrl(destinationUrl: params.destinationUrl))
