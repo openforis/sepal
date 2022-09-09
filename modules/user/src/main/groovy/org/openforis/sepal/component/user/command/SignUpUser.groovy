@@ -104,11 +104,11 @@ class SignUpUserHandler implements CommandHandler<User, SignUpUser> {
                         ]
                 ]
         )
-        return response.data 
-            && response.data.tokenProperties.valid
-            && response.data.event.token == token
-            && response.data.event.siteKey == GOOGLE_RECAPTCHA_SITE_KEY
-            && response.data.event.expectedAction == 'SIGNUP'
+        return response.data && 
+            response.data.tokenProperties.valid &&
+            response.data.event.token == token &&
+            response.data.event.siteKey == GOOGLE_RECAPTCHA_SITE_KEY &&
+            response.data.event.expectedAction == 'SIGNUP'
     }
 
     private void createExternalUserAndSendEmailNotification(Map message) {
