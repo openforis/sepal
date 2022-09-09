@@ -15,23 +15,41 @@ export const FormPanelContext = React.createContext()
 class _FormPanel extends React.Component {
     autoCancel = true
 
+    state = {
+        confirm: false,
+        confirmed: false,
+        onSuccess: null
+    }
+
+    constructor(props) {
+        super(props)
+        this.confirm = this.confirm.bind(this)
+        this.reject = this.reject.bind(this)
+    }
+
     apply(onSuccess) {
-        const {form, onApply} = this.props
-        const result = onApply(form && form.values())
-        this.autoCancel = false
-        if (isObservable(result)) {
-            const result$ = result
-            this.props.stream('FORM_PANEL_APPLY', result$,
-                () => null,
-                _error => null,
-                () => {
-                    onSuccess && onSuccess()
-                    this.close()
-                }
-            )
+        const {form, confirmation, onApply} = this.props
+        const {confirmed} = this.state
+
+        if (confirmation && !confirmed) {
+            this.setState({confirm: true, onSuccess})
         } else {
-            onSuccess && onSuccess()
-            this.close()
+            const result = onApply(form && form.values())
+            this.autoCancel = false
+            if (isObservable(result)) {
+                const result$ = result
+                this.props.stream('FORM_PANEL_APPLY', result$,
+                    () => null,
+                    _error => null,
+                    () => {
+                        onSuccess && onSuccess()
+                        this.close()
+                    }
+                )
+            } else {
+                onSuccess && onSuccess()
+                this.close()
+            }
         }
     }
 
@@ -56,6 +74,15 @@ class _FormPanel extends React.Component {
         onClose && onClose()
     }
 
+    confirm() {
+        const {onSuccess} = this.state
+        this.setState({confirmed: true}, () => this.apply(onSuccess))
+    }
+
+    reject() {
+        this.setState({confirm: false})
+    }
+
     renderSpinner() {
         return this.props.stream('FORM_PANEL_APPLY').active
             ? (
@@ -67,6 +94,24 @@ class _FormPanel extends React.Component {
     }
 
     render() {
+        const {confirm} = this.state
+        return (
+            <React.Fragment>
+                {this.renderPanel()}
+                {confirm ? this.renderConfirmation() : null}
+            </React.Fragment>
+        )
+    }
+
+    renderConfirmation() {
+        const {confirmation} = this.props
+        return confirmation({
+            confirm: this.confirm,
+            cancel: this.reject
+        })
+    }
+
+    renderPanel() {
         const {id, form = false, isActionForm, onApply, type = 'modal', className, children, placement} = this.props
         return (
             <PanelWizardContext>
@@ -92,7 +137,10 @@ class _FormPanel extends React.Component {
                                         id={this.props.id}
                                         className={className}
                                         type={placement || placementFromContext || type}>
-                                        <Form onSubmit={() => onApply && onApply(form && form.values())}>
+                                        <Form onSubmit={(...args) => {
+                                            console.warn('Unexpected PanelForm onSubmit called', args)
+                                            onApply && onApply(form && form.values())
+                                        }}>
                                             {children}
                                         </Form>
                                         {this.renderSpinner()}
@@ -126,10 +174,11 @@ FormPanel.propTypes = {
     children: PropTypes.any.isRequired,
     form: PropTypes.object.isRequired,
     className: PropTypes.string,
+    confirmation: PropTypes.func,
     isActionForm: PropTypes.any,
     placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']),
     policy: PropTypes.func,
-    type: PropTypes.string, // TODO: Same as type?
+    type: PropTypes.string,
     onApply: PropTypes.func,
     onCancel: PropTypes.func,
     onClose: PropTypes.func
