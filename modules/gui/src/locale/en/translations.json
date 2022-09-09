@@ -3580,8 +3580,8 @@
         "switchingToSEPALGoogleAccount": "Switching to SEPAL's Google Account",
         "title": "User details",
         "update": {
-          "error": "Could not update user details.",
-          "success": "User details have been updated."
+          "error": "Could not update user.",
+          "success": "User has been updated."
         },
         "confirmation": {
             "message": "User role will be changed to \"{role}\""
