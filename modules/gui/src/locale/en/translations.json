@@ -3566,14 +3566,14 @@
         "lock": {
           "label": "Lock",
           "tooltip": "Lock the user",
-          "message": "The user will be locked and will no longer be able to access SEPAL. Active sessions will be terminated. No user data will be removed.",
+          "message": "The user will be locked and not be able to access SEPAL from now on.|Active sessions will be terminated, but all user data will be retained.",
           "error": "Could not lock user.",
           "success": "User has been locked."
         },
         "unlock": {
           "label": "Unlock",
           "tooltip": "Unlock the user",
-          "message": "The user will be unlocked and regain access to SEPAL. A password reset email will be sent to the user for reactivating the account.",
+          "message": "The user will be unlocked.|A password reset email will be sent to the user for reactivating the SEPAL account.",
           "error": "Could not unlock user.",
           "success": "User has been unlocked."
         },
