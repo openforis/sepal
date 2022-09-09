@@ -6,13 +6,35 @@ import React from 'react'
 import styles from './confirm.module.css'
 
 export default class Confirm extends React.Component {
+    constructor(props) {
+        super(props)
+        this.renderMessageLine = this.renderMessageLine.bind(this)
+    }
+
     render() {
         const {skip} = this.props
         return skip || this.renderConfirmation()
     }
+
+    renderMessage() {
+        const {message} = this.props
+        return (
+            <div className={styles.message}>
+                {message.split('|').map(this.renderMessageLine)}
+            </div>
+        )
+    }
+
+    renderMessageLine(messageLine, index) {
+        return (
+            <div key={index}>
+                {messageLine}
+            </div>
+        )
+    }
     
     renderConfirmation() {
-        const {title, message, label, disabled, onConfirm, onCancel, children} = this.props
+        const {title, label, disabled, onConfirm, onCancel, children} = this.props
         return (
             <Panel
                 className={styles.panel}
@@ -23,9 +45,7 @@ export default class Confirm extends React.Component {
                     title={title || msg('widget.confirm.title')}/>
                 <Panel.Content>
                     <Layout type='vertical' spacing='compact'>
-                        <div className={styles.message}>
-                            {message}
-                        </div>
+                        {this.renderMessage()}
                         {children}
                     </Layout>
                 </Panel.Content>
