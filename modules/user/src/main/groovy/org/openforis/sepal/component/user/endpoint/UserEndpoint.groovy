@@ -26,11 +26,11 @@ class UserEndpoint {
 
     void registerWith(Controller controller) {
         controller.with {
-            def usernameConstraints = custom { it ==~ /^[a-zA-Z_][a-zA-Z0-9]{0,29}$/ }
+            def usernameConstraints = [notBlank(), custom { it ==~ /^[a-zA-Z_][a-zA-Z0-9]{0,29}$/ }]
             def nameConstraints = [notBlank(), maxLength(1000)]
             def emailConstraints = [notBlank(), email()]
             def organizationConstraints = [maxLength(1000)]
-            def passwordConstraints = custom { it ==~ /^.{8,100}$/ }
+            def passwordConstraints = [notBlank(), custom { it ==~ /^.{8,100}$/ }]
             def intendedUseConstraints = [notBlank()]
 
             constrain(SignUpUser, [
