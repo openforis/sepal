@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {UserStatus} from './userStatus'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {forkJoin, map, tap, zip} from 'rxjs'
@@ -32,7 +33,7 @@ const getUserList$ = () => forkJoin(
 class Users extends React.Component {
     state = {
         users: [],
-        userDetails: null
+        userId: null
     }
 
     constructor(props) {
@@ -41,6 +42,8 @@ class Users extends React.Component {
         this.cancelUser = this.cancelUser.bind(this)
         this.updateUser = this.updateUser.bind(this)
         this.inviteUser = this.inviteUser.bind(this)
+        this.lockUser = this.lockUser.bind(this)
+        this.unlockUser = this.unlockUser.bind(this)
     }
 
     componentDidMount() {
@@ -84,29 +87,22 @@ class Users extends React.Component {
     }
 
     renderUserDetails() {
-        const {userDetails} = this.state
-        return userDetails ? (
+        const {users} = this.props
+        const {userId} = this.state
+        const user = users.find(({id}) => id === userId)
+        return user ? (
             <UserDetails
-                userDetails={userDetails}
+                userDetails={user}
                 onCancel={this.cancelUser}
-                onSave={this.updateUser}/>
+                onLock={this.lockUser}
+                onSave={this.updateUser}
+                onUnlock={this.unlockUser}
+            />
         ) : null
     }
 
-    editUser(user) {
-        const {id, username, name, email, organization, intendedUse, admin, quota} = user
-        this.setState({
-            userDetails: {
-                id,
-                username,
-                name,
-                email,
-                organization,
-                intendedUse,
-                admin,
-                quota
-            }
-        })
+    editUser({id: userId}) {
+        this.setState({userId})
     }
 
     inviteUser() {
@@ -124,7 +120,52 @@ class Users extends React.Component {
         })
     }
 
+    updateUserDetails(userDetails, merge = false) {
+        const users = [...this.props.users || []]
+        if (userDetails) {
+            const index = users.findIndex(({username}) => username === userDetails.username)
+            if (index === -1) {
+                users.push(userDetails)
+            } else {
+                const user = {
+                    ...userDetails,
+                    // Make sure current spending is taken from previous details if not provided in the update.
+                    quota: _.merge(users[index].quota, userDetails.quota)
+                }
+                if (merge) {
+                    users[index] = {
+                        ...users[index],
+                        ...user
+                    }
+                } else {
+                    users[index] = user
+                }
+
+            }
+            this.updateUsers(users)
+        }
+    }
+
+    removeFromLocalState(usernameToRemove) {
+        const users = [...this.props.users || []]
+        if (usernameToRemove) {
+            this.updateUsers(users.filter(({username}) => username !== usernameToRemove))
+        }
+    }
+
     updateUser(userDetails) {
+        const updateUserDetails$ = ({newUser, username, name, email, organization, intendedUse, admin}) =>
+            newUser
+                ? api.user.inviteUser$({username, name, email, organization, intendedUse, admin}).pipe(
+                    tap(() => publishEvent('user_invited'))
+                )
+                : api.user.updateUser$({username, name, email, organization, intendedUse, admin}).pipe(
+                    tap(() => publishEvent('user_updated'))
+                )
+
+        const updateUserBudget$ = ({username, instanceSpending, storageSpending, storageQuota}) =>
+            api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota})
+
         const update$ = userDetails =>
             zip(
                 updateUserDetails$(userDetails),
@@ -138,43 +179,9 @@ class Users extends React.Component {
                 }))
             )
 
-        const updateUserDetails$ = ({newUser, username, name, email, organization, intendedUse, admin}) =>
-            newUser
-                ? api.user.inviteUser$({username, name, email, organization, intendedUse, admin}).pipe(
-                    tap(() => publishEvent('user_invited'))
-                )
-                : api.user.updateUser$({username, name, email, organization, intendedUse, admin}).pipe(
-                    tap(() => publishEvent('user_updated'))
-                )
-
-        const updateUserBudget$ = ({username, instanceSpending, storageSpending, storageQuota}) =>
-            api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota})
-
-        const updateUserDetails = userDetails => {
-            const users = [...this.props.users || []]
-            if (userDetails) {
-                const index = users.findIndex(({username}) => username === userDetails.username)
-                index === -1
-                    ? users.push(userDetails)
-                    : users[index] = {
-                        ...userDetails,
-                        // Make sure current spending is taken from previous details if not provided in the update.
-                        quota: _.merge(users[index].quota, userDetails.quota)
-                    }
-                this.updateUsers(users)
-            }
-        }
-
-        const removeFromLocalState = userDetails => {
-            const users = {...this.props.users || {}}
-            if (userDetails) {
-                this.updateUsers(users.filter(({username}) => username !== userDetails.username))
-            }
-        }
-
         this.cancelUser()
 
-        updateUserDetails({
+        this.updateUserDetails({
             username: userDetails.username,
             name: userDetails.name,
             email: userDetails.email,
@@ -187,24 +194,59 @@ class Users extends React.Component {
                     storageQuota: userDetails.monthlyBudgetStorageQuota
                 }
             }
-        })
+        }, true)
 
         this.props.stream('UPDATE_USER',
             update$(userDetails),
             userDetails => {
-                updateUserDetails(userDetails)
+                this.updateUserDetails(userDetails)
                 Notifications.success({message: msg('user.userDetails.update.success')})
             },
             error => {
-                removeFromLocalState(userDetails)
                 Notifications.error({message: msg('user.userDetails.update.error'), error})
+            }
+        )
+    }
+
+    lockUser(username) {
+        this.updateUserDetails({
+            username,
+            status: UserStatus.LOCKED
+        }, true)
+
+        this.props.stream('LOCK_USER',
+            api.user.lockUser$(username),
+            userDetails => {
+                this.updateUserDetails(userDetails)
+                Notifications.success({message: msg('user.userDetails.lock.success')})
+            },
+            error => {
+                Notifications.error({message: msg('user.userDetails.lock.error'), error})
+            }
+        )
+    }
+
+    unlockUser(username) {
+        this.updateUserDetails({
+            username,
+            status: UserStatus.PENDING
+        }, true)
+
+        this.props.stream('UNLOCK_USER',
+            api.user.unlockUser$(username),
+            userDetails => {
+                this.updateUserDetails(userDetails)
+                Notifications.success({message: msg('user.userDetails.unlock.success')})
+            },
+            error => {
+                Notifications.error({message: msg('user.userDetails.unlock.error'), error})
             }
         )
     }
 
     cancelUser() {
         this.setState({
-            userDetails: null
+            userId: null
         })
     }
 }

@@ -9,27 +9,25 @@ import org.openforis.sepal.component.user.api.UserRepository
 import org.openforis.sepal.messagebroker.MessageBroker
 import org.openforis.sepal.messagebroker.MessageQueue
 import org.openforis.sepal.user.User
+import org.openforis.sepal.user.User.Status
 import org.openforis.sepal.util.Clock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static org.openforis.sepal.user.User.Status.ACTIVE
-
 @EqualsAndHashCode(callSuper = true)
 @Canonical
-class RequestPasswordReset extends AbstractCommand<Void> {
-    String email
-    boolean optional
+class UnlockUser extends AbstractCommand<User> {
+    String usernameToUnlock
 }
 
-class RequestPasswordResetHandler implements CommandHandler<Void, RequestPasswordReset> {
+class UnlockUserHandler implements CommandHandler<User, UnlockUser> {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final UserRepository userRepository
     private final EmailGateway emailGateway
     private final MessageQueue<Map> messageQueue
     private final Clock clock
 
-    RequestPasswordResetHandler(
+    UnlockUserHandler(
         UserRepository userRepository,
         EmailGateway emailGateway,
         MessageBroker messageBroker,
@@ -37,40 +35,39 @@ class RequestPasswordResetHandler implements CommandHandler<Void, RequestPasswor
     ) {
         this.userRepository = userRepository
         this.emailGateway = emailGateway
-        this.messageQueue = messageBroker.createMessageQueue('user.send_password_reset_email', Map) {
+        this.messageQueue = messageBroker.createMessageQueue('user.unlock', Map) {
             sendPasswordResetEmail(it)
         }
         this.clock = clock
     }
 
-    Void execute(RequestPasswordReset command) {
-        def user = userRepository.findUserByEmail(command.email)
+    User execute(UnlockUser command) {
+        def user = userRepository.lookupUser(command.usernameToUnlock)
         def token = UUID.randomUUID() as String
-        def optional = command.optional
-
+                
         if (!user) {
-            LOG.info("Cannot reset password for non-existing email: " + command)
-            return null
-        
-        }
-        if (user.status == User.Status.LOCKED) {
-            LOG.info("Ignoring password reset request for locked user: " + user)
+            LOG.info("Cannot unlock non-existing user: " + command)
             return null
         }
 
+        if (user.status != Status.LOCKED) {
+            LOG.info("Ignoring unlock for already unlocked user: " + user)
+            return user
+        }
+
+        userRepository.updateStatus(command.usernameToUnlock, Status.PENDING)
         userRepository.updateToken(user.username, token, clock.now())
 
-        messageQueue.publish(user: user, token: token, optional: optional)
-        return null
+        def unlockedUser = user.withStatus(Status.PENDING)
+        messageQueue.publish(user: unlockedUser)
+        return unlockedUser
     }
 
     private void sendPasswordResetEmail(Map message) {
+        def user = message.user as User
+        LOG.info("User unlocked: " + user.username)
         try {
-            if (message.optional) {
-                emailGateway.sendOptionalPasswordReset(message.user, message.token)
-            } else {
-                emailGateway.sendMandatoryPasswordReset(message.user, message.token)
-            }
+            emailGateway.sendMandatoryPasswordReset(user, message.token)
         } catch (Exception e) {
             LOG.error("Could not send password reset email", e)
             throw e

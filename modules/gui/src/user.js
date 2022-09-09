@@ -83,8 +83,8 @@ export const requestUserAccess$ = () =>
         tap(({url}) => window.location = url)
     )
 
-export const requestPasswordReset$ = email =>
-    api.user.requestPasswordReset$(email).pipe(
+export const requestPasswordReset$ = ({email, optional}) =>
+    api.user.requestPasswordReset$({email, optional}).pipe(
         tap(() => publishEvent('requested_password_reset')),
     )
 
@@ -102,8 +102,8 @@ export const validateToken$ = token =>
 export const signUp$ = (userDetails, recaptchaToken) =>
     api.user.signUp$(userDetails, recaptchaToken)
 
-export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled}) => {
-    return api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled}).pipe(
+export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled}) =>
+    api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled}).pipe(
         map(({name, email, organization}) =>
             actionBuilder('UPDATE_USER_DETAILS', {name, email, organization, intendedUse})
                 .set('user.currentUser.name', name)
@@ -114,7 +114,6 @@ export const updateCurrentUserDetails$ = ({name, email, organization, intendedUs
                 .dispatch()
         )
     )
-}
 
 export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
     api.user.changePassword$({oldPassword, newPassword})

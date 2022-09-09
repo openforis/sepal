@@ -61,6 +61,10 @@ class UserEndpoint {
                     newPassword: passwordConstraints])
             constrain(RequestPasswordReset, [
                     email: emailConstraints])
+            constrain(LockUser, [
+                    usernameToLock  : usernameConstraints])
+            constrain(UnlockUser, [
+                    usernameToUnlock: usernameConstraints])
 
             post('/authenticate', [NO_AUTHORIZATION]) {
                 response.contentType = 'application/json'
@@ -214,6 +218,26 @@ class UserEndpoint {
                 if (errors)
                     throw new InvalidRequest(errors)
                 command.username = sepalUser.username
+                def user = component.submit(command)
+                send toJson(userToMap(user))
+            }
+
+            post('/lock', [ADMIN]) {
+                response.contentType = 'application/json'
+                def command = new LockUser(usernameToLock: params.required('username', String).toLowerCase())
+                def errors = bindAndValidate(command)
+                if (errors)
+                    throw new InvalidRequest(errors)
+                def user = component.submit(command)
+                send toJson(userToMap(user))
+            }
+
+            post('/unlock', [ADMIN]) {
+                response.contentType = 'application/json'
+                def command = new UnlockUser(usernameToUnlock: params.required('username', String).toLowerCase())
+                def errors = bindAndValidate(command)
+                if (errors)
+                    throw new InvalidRequest(errors)
                 def user = component.submit(command)
                 send toJson(userToMap(user))
             }

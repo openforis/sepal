@@ -47,9 +47,9 @@ export default {
     logout$: () =>
         post$('/api/user/logout'),
 
-    requestPasswordReset$: email =>
+    requestPasswordReset$: ({email, optional}) =>
         post$('/api/user/password/reset-request', {
-            body: {email}
+            body: {email, optional}
         }),
 
     validateToken$: token =>
@@ -114,6 +114,16 @@ export default {
     updateUser$: userDetails =>
         post$('/api/user/details', {
             body: userDetails
+        }),
+
+    lockUser$: username =>
+        post$('/api/user/lock', {
+            body: {username}
+        }),
+
+    unlockUser$: username =>
+        post$('/api/user/unlock', {
+            body: {username}
         }),
 
     updateUserBudget$: budget =>

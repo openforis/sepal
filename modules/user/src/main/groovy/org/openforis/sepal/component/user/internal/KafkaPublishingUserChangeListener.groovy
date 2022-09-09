@@ -23,5 +23,8 @@ class KafkaPublishingUserChangeListener implements UserChangeListener {
         )
     }
 
+    void locked(String username, Map user) {
+    }
+
     void close() {}
 }

@@ -3,10 +3,12 @@ import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
 import {Panel} from 'widget/panel/panel'
+import {UserStatus} from './userStatus'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
 import {select} from 'store'
+import Confirm from 'widget/confirm'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -28,8 +30,8 @@ const fields = {
         .predicate((email, {id}) => isNoMatchingUser(id, user => user.email === email), 'user.userDetails.form.email.unique'),
     organization: new Form.Field()
         .notBlank('user.userDetails.form.organization.required'),
-    intendedUse: new Form.Field()
-        .notBlank('user.userDetails.form.intendedUse.required'),
+    intendedUse: new Form.Field(),
+    // .notBlank('user.userDetails.form.intendedUse.required'),
     admin: new Form.Field(),
     instanceSpending: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.instanceSpending.atLeast1')
@@ -76,7 +78,7 @@ class UserDetails extends React.Component {
     }
 
     render() {
-        const {form, inputs: {username, name, email, organization, intendedUse, instanceSpending, storageSpending, storageQuota}} = this.props
+        const {form, inputs: {username, name, email, organization, intendedUse, instanceSpending, storageSpending, storageQuota, admin}} = this.props
         const newUser = !this.props.userDetails.username
         return (
             <Form.Panel
@@ -84,12 +86,22 @@ class UserDetails extends React.Component {
                 form={form}
                 statePath='userDetails'
                 modal
+                confirmation={
+                    admin.isDirty() ?
+                        ({confirm, cancel}) =>
+                            <Confirm
+                                message={msg('user.userDetails.confirmation.message', {role: admin.value})}
+                                onConfirm={confirm}
+                                onCancel={cancel}
+                            />
+                        : null
+                }
                 onApply={userDetails => this.save(userDetails)}
                 onClose={() => this.cancel()}>
                 <Panel.Header
                     icon='user'
                     title={msg('user.userDetails.title')}
-                    label={this.renderUserRoleButtons()}
+                    label={this.renderHeaderButtons()}
                 />
                 <Panel.Content>
                     <Layout>
@@ -167,16 +179,59 @@ class UserDetails extends React.Component {
                     </Layout>
                 </Panel.Content>
                 <Form.PanelButtons>
-                    <ModalConfirmationButton
-                        label={msg('user.userDetails.resetPassword.label')}
-                        icon='envelope'
-                        tooltip={msg('user.userDetails.resetPassword.tooltip')}
-                        message={msg('user.userDetails.resetPassword.message')}
-                        disabled={email.isInvalid()}
-                        onConfirm={() => this.requestPasswordReset(email.value)}
-                    />
+                    {this.renderLockUnlockButton()}
+                    {this.renderResetPasswordButton()}
                 </Form.PanelButtons>
             </Form.Panel>
+        )
+    }
+
+    renderResetPasswordButton() {
+        const {userDetails: {status}, inputs: {email}, form} = this.props
+        return (
+            <ModalConfirmationButton
+                label={msg('user.userDetails.resetPassword.label')}
+                icon='key'
+                tooltip={msg('user.userDetails.resetPassword.tooltip')}
+                message={msg('user.userDetails.resetPassword.message')}
+                disabled={UserStatus.isLocked(status) || email.isInvalid() || form.isDirty()}
+                onConfirm={() => this.requestPasswordReset(email.value)}
+            />
+        )
+    }
+
+    renderLockUnlockButton() {
+        const {userDetails: {status}} = this.props
+        return UserStatus.isLocked(status)
+            ? this.renderUnlockButton()
+            : this.renderLockButton()
+    }
+
+    renderLockButton() {
+        const {form} = this.props
+        return (
+            <ModalConfirmationButton
+                label={msg('user.userDetails.lock.label')}
+                icon='lock'
+                tooltip={msg('user.userDetails.lock.tooltip')}
+                message={msg('user.userDetails.lock.message')}
+                disabled={form.isDirty()}
+                onConfirm={() => this.lock()}
+            />
+        )
+    }
+
+    renderUnlockButton() {
+        const {inputs: {email}, form} = this.props
+        return (
+            <ModalConfirmationButton
+                label={msg('user.userDetails.unlock.label')}
+                icon='lock-open'
+                tooltip={msg('user.userDetails.unlock.tooltip')}
+                message={msg('user.userDetails.unlock.message')}
+                disabled={email.isInvalid() || form.isDirty()}
+                onConfirm={() => this.unlock()}
+            />
         )
     }
 
@@ -202,6 +257,22 @@ class UserDetails extends React.Component {
             const approved = storageQuota >= budgetUpdateRequest.storageQuota
             userRequestStorageQuotaState.set(approved)
         }
+    }
+
+    renderHeaderButtons() {
+        return (
+            <Layout type='horizontal-nowrap'>
+                {this.renderStatus()}
+                {this.renderUserRoleButtons()}
+            </Layout>
+        )
+    }
+
+    renderStatus() {
+        const {userDetails: {status}} = this.props
+        return (
+            <UserStatus status={status}/>
+        )
     }
 
     renderUserRoleButtons() {
@@ -298,16 +369,28 @@ class UserDetails extends React.Component {
 
     requestPasswordReset(email) {
         this.props.stream('REQUEST_PASSWORD_RESET',
-            requestPasswordReset$(email),
+            requestPasswordReset$({email, optional: false}),
             () => Notifications.success({message: msg('landing.forgot-password.success', {email})})
         )
+    }
+
+    lock() {
+        const {userDetails: {username}, onLock} = this.props
+        onLock(username)
+    }
+
+    unlock() {
+        const {userDetails: {username}, onUnlock} = this.props
+        onUnlock(username)
     }
 }
 
 UserDetails.propTypes = {
     userDetails: PropTypes.object.isRequired,
     onCancel: PropTypes.func.isRequired,
+    onLock: PropTypes.func.isRequired,
     onSave: PropTypes.func.isRequired,
+    onUnlock: PropTypes.func.isRequired,
 }
 
 export default compose(

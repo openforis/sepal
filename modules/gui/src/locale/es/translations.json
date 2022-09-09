@@ -3445,6 +3445,12 @@
                 "error": ""
             }
         },
+        "status": {
+            "label": "Estado",
+            "ACTIVE": "Activo",
+            "LOCKED": "Bloqueado",
+            "PENDING": "Pendiente"
+        },
         "userDetails": {
             "form": {
                 "admin": {
@@ -3498,12 +3504,6 @@
                 },
                 "role": {
                     "label": "papel"
-                },
-                "status": {
-                    "ACTIVE": "Activo",
-                    "label": "Estado",
-                    "LOCKED": "Bloqueado",
-                    "PENDING": "Pendiente"
                 },
                 "user": {
                     "label": "Usuario"

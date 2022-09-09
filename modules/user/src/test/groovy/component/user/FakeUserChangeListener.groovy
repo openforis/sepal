@@ -10,6 +10,9 @@ class FakeUserChangeListener implements UserChangeListener {
         userChanges << user
     }
 
+    void locked(String username, Map user) {
+    }
+
     int changeCount(username) {
         return this.changes[username]?.size() ?: 0
     }

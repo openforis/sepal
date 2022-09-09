@@ -6,6 +6,7 @@ import {Layout} from 'widget/layout'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {UserResourceUsage} from 'app/home/user/userResourceUsage'
+import {UserStatus} from './userStatus'
 import {msg} from 'translate'
 import {simplifyString, splitString} from 'string'
 import Highlight from 'react-highlighter'
@@ -94,9 +95,11 @@ export default class UserList extends React.Component {
         const {statusFilter} = this.state
         switch (statusFilter) {
         case 'PENDING':
-            return this.isUserPending(user)
+            return UserStatus.isPending(user.status)
         case 'ACTIVE':
-            return this.isUserActive(user)
+            return UserStatus.isActive(user.status)
+        case 'LOCKED':
+            return UserStatus.isLocked(user.status)
         case 'OVERBUDGET':
             return this.isUserOverBudget(user)
         case 'BUDGET_UPDATE':
@@ -104,14 +107,6 @@ export default class UserList extends React.Component {
         default:
             return true
         }
-    }
-
-    isUserPending({status}) {
-        return status === 'PENDING'
-    }
-
-    isUserActive({status}) {
-        return status === 'ACTIVE'
     }
 
     isUserOverBudget({quota: {budget, current} = {}}) {
@@ -179,7 +174,7 @@ export default class UserList extends React.Component {
                 })}
                 {this.renderColumnHeader({
                     column: 'status',
-                    label: msg('user.userDetails.form.status.label'),
+                    label: msg('user.status.label'),
                     defaultSorting: 1,
                     classNames: [styles.status]
                 })}
@@ -249,6 +244,9 @@ export default class UserList extends React.Component {
         }, {
             label: msg('users.filter.status.active.label'),
             value: 'ACTIVE'
+        }, {
+            label: msg('users.filter.status.locked.label'),
+            value: 'LOCKED'
         }, {
             label: msg('users.filter.status.overbudget.label'),
             value: 'OVERBUDGET'
@@ -398,13 +396,13 @@ class UserItem extends React.PureComponent {
 
     renderDefinedStatus(status) {
         return (
-            <div>{msg(`user.userDetails.form.status.${status}`)}</div>
+            <UserStatus status={status}/>
         )
     }
 
     renderUndefinedStatus() {
         return (
-            <Icon name='spinner'/>
+            <UserStatus status={status}/>
         )
     }
 

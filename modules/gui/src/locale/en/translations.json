@@ -3485,6 +3485,13 @@
           "error": "Quota update request error."
         }
       },
+      "status": {
+        "label": "Status",
+        "UNKNOWN": "Unknown",
+        "ACTIVE": "Active",
+        "LOCKED": "Locked",
+        "PENDING": "Pending"
+      },
       "userDetails": {
         "form": {
           "admin": {
@@ -3540,15 +3547,6 @@
               "label": "Intended use",
               "required": "Intended use is required"
           },
-          "role": {
-            "label": "role"
-          },
-          "status": {
-            "ACTIVE": "Active",
-            "label": "Status",
-            "LOCKED": "Locked",
-            "PENDING": "Pending"
-          },
           "user": {
             "label": "User"
           },
@@ -3563,15 +3561,32 @@
           }
         },
         "resetPassword": {
-          "label": "Reset password",
+          "label": "Reset",
           "tooltip": "Send a password reset email to the user.",
-          "message": "If proceeding, the user will receive an email for setting a new password. Until that, the current password will still be valid."
+          "message": "The user will receive an email for setting a new password. Until that, the current password will still be valid."
+        },
+        "lock": {
+          "label": "Lock",
+          "tooltip": "Lock the user",
+          "message": "The user will be locked and will no longer be able to access SEPAL. Active sessions will be terminated. No user data will be removed.",
+          "error": "Could not lock user.",
+          "success": "User has been locked."
+        },
+        "unlock": {
+          "label": "Unlock",
+          "tooltip": "Unlock the user",
+          "message": "The user will be unlocked and regain access to SEPAL. A password reset email will be sent to the user for reactivating the account.",
+          "error": "Could not unlock user.",
+          "success": "User has been unlocked."
         },
         "switchingToSEPALGoogleAccount": "Switching to SEPAL's Google Account",
         "title": "User details",
         "update": {
           "error": "Could not update user details.",
           "success": "User details have been updated."
+        },
+        "confirmation": {
+            "message": "You are changing user access level to \"{role}\""
         }
       },
       "userSession": {
@@ -3666,6 +3681,9 @@
           },
           "pending": {
             "label": "Pending"
+          },
+          "locked": {
+            "label": "Locked"
           },
           "budgetUpdateRequest": {
             "label": "Budget update"
