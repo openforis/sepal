@@ -3584,7 +3584,7 @@
           "success": "User details have been updated."
         },
         "confirmation": {
-            "message": "User role is being changed to \"{role}\""
+            "message": "User role will be changed to \"{role}\""
         }
       },
       "userSession": {
