@@ -3451,11 +3451,11 @@
             "LOCKED": "Bloqué",
             "PENDING": "En attente"
         },
+        "role": {
+            "user": "Utilisateur"
+        },
         "userDetails": {
             "form": {
-                "admin": {
-                    "label": ""
-                },
                 "email": {
                     "label": "",
                     "required": "Email requis",
@@ -3504,9 +3504,6 @@
                 },
                 "role": {
                     "label": "rôle"
-                },
-                "user": {
-                    "label": "Utilisateur"
                 },
                 "username": {
                     "format": "Le nom d'utilisateur doit commencer par une lettre",

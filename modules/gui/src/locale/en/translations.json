@@ -3492,11 +3492,12 @@
         "LOCKED": "Locked",
         "PENDING": "Pending"
       },
+      "role": {
+        "admin": "Admin",
+        "user": "User"
+      },
       "userDetails": {
         "form": {
-          "admin": {
-            "label": "Admin"
-          },
           "email": {
             "label": "Email",
             "required": "Email is required",
@@ -3547,9 +3548,6 @@
               "label": "Intended use",
               "required": "Intended use is required"
           },
-          "user": {
-            "label": "User"
-          },
           "username": {
             "format": "Username should start with a letter",
             "label": "Username",
@@ -3586,7 +3584,7 @@
           "success": "User details have been updated."
         },
         "confirmation": {
-            "message": "You are changing user access level to \"{role}\""
+            "message": "User role is being changed to \"{role}\""
         }
       },
       "userSession": {

@@ -90,7 +90,7 @@ class UserDetails extends React.Component {
                     admin.isDirty() ?
                         ({confirm, cancel}) =>
                             <Confirm
-                                message={msg('user.userDetails.confirmation.message', {role: admin.value})}
+                                message={msg('user.userDetails.confirmation.message', {role: msg(`user.role.${admin.value ? 'admin' : 'user'}`)})}
                                 onConfirm={confirm}
                                 onCancel={cancel}
                             />
@@ -283,10 +283,10 @@ class UserDetails extends React.Component {
                 multiple={false}
                 options={[{
                     value: false,
-                    label: msg('user.userDetails.form.user.label')
+                    label: msg('user.role.user')
                 }, {
                     value: true,
-                    label: msg('user.userDetails.form.admin.label')
+                    label: msg('user.role.admin')
                 }]}
             />
         )
