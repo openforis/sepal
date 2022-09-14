@@ -59,7 +59,7 @@ class UnlockUserHandler implements CommandHandler<User, UnlockUser> {
         userRepository.updateToken(user.username, token, clock.now())
 
         def unlockedUser = user.withStatus(Status.PENDING)
-        messageQueue.publish(user: unlockedUser)
+        messageQueue.publish(user: unlockedUser, token: token)
         return unlockedUser
     }
 
