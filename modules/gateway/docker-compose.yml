@@ -20,6 +20,8 @@ services:
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       SEPAL_HOST: "${SEPAL_HOST}"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: "5672"
     networks:
       - sepal
     ulimits:

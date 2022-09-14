@@ -1,17 +1,20 @@
 require('sepal/log').configureServer(require('./log.json'))
-const {redisUri, port, secure} = require('./config')
+const {amqpUri, redisUri, port, secure} = require('./config')
 const {isMatch} = require('micromatch')
 const express = require('express')
 const Redis = require('ioredis')
-const session = require('express-session')
+const Session = require('express-session')
 const {logout} = require('./logout')
 const {proxyEndpoints} = require('./proxy')
 const {v4: uuid} = require('uuid')
 const url = require('url')
 const log = require('sepal/log').getLogger('gateway')
+const {initMessageQueue} = require('sepal/messageQueue')
 
 const redis = new Redis(redisUri)
-const RedisSessionStore = require('connect-redis')(session)
+const RedisSessionStore = require('connect-redis')(Session)
+const store = new RedisSessionStore({client: redis})
+const {messageHandler} = require('./session')(store)
 
 const getSecret = async () => {
     const secret = await redis.get('secret')
@@ -22,17 +25,23 @@ const getSecret = async () => {
     } else {
         const secret = uuid()
         log.info('Creating new secret')
-        redis.set('secret', secret)
+        await redis.set('secret', secret)
         return secret
     }
 }
 
 const main = async () => {
+    await initMessageQueue(amqpUri, {
+        subscribers: [
+            {queue: 'gateway.userLocked', topic: 'user.UserLocked', handler: messageHandler}
+        ]
+    })
+
     const app = express()
     const secret = await getSecret()
 
-    const sessionParser = session({
-        store: new RedisSessionStore({client: redis}),
+    const sessionParser = Session({
+        store,
         secret,
         name: 'SEPAL-SESSIONID',
         cookie: {

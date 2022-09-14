@@ -4,6 +4,7 @@ const log = require('sepal/log').getLogger('config')
 const DEFAULT_PORT = 8001
 
 program
+    .requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
     .requiredOption('--redis-uri <value>', 'Redis URI')
     .option('--port <number>', 'Port', DEFAULT_PORT)
     .option('--sepalHost <value>', 'Sepal host', 'localhost')
@@ -11,6 +12,7 @@ program
     .parse(process.argv)
 
 const {
+    amqpUri,
     redisUri,
     port,
     sepalHost,
@@ -20,6 +22,7 @@ const {
 log.info('Configuration loaded')
 
 module.exports = {
+    amqpUri,
     redisUri,
     port,
     sepalHost,

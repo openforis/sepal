@@ -3,6 +3,7 @@
     "categories": {
         "auth": "info",
         "gateway": "info",
-        "proxy": "warn"
+        "proxy": "warn",
+        "sessions": "info"
     }
 }
