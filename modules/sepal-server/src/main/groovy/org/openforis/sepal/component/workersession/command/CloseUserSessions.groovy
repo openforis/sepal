@@ -38,6 +38,8 @@ class CloseUserSessionsHandler implements NonTransactionalCommandHandler<Void, C
     }
 
     Void execute(CloseUserSessions command) {
+        // TODO fix inconsistency
+        // username should be the one of the user submitting the command, not the one we want to close sessions for
         def sessions = repository.userSessions(command.username, [PENDING, ACTIVE])
         sessions.each { WorkerSession session ->
             transactionManager.withTransaction {
