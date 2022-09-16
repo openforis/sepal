@@ -1,5 +1,6 @@
 package org.openforis.sepal.component.user.adapter
 
+import groovy.sql.GroovyResultSet
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import org.openforis.sepal.component.user.api.UserRepository
@@ -44,14 +45,16 @@ class JdbcUserRepository implements UserRepository {
     }
 
     List<User> listUsers() {
-        sql.rows('''
+        def users = []
+        sql.eachRow('''
                 SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, system_user, status, 
                        google_refresh_token,  google_access_token, google_access_token_expiration, 
                        creation_time, update_time
                 FROM sepal_user 
-                ORDER BY creation_time DESC''').collect {
-            createUser(it)
+                ORDER BY creation_time DESC''') {
+            users << toUser(it)
         }
+        return users
     }
 
     void setLastLoginTime(String username, Date loginTime) {
@@ -65,25 +68,32 @@ class JdbcUserRepository implements UserRepository {
     }
 
     User lookupUser(String username) {
-        def row = sql.firstRow('''
+        def user = null
+        sql.eachRow('''
                 SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, system_user, status, 
                        google_refresh_token,  google_access_token, google_access_token_expiration, 
                        creation_time, update_time
                 FROM sepal_user 
-                WHERE username = ?''', [username])
-        if (!row)
+                WHERE username = ?''', [username]) {
+            user = toUser(it)
+        }
+        if (user)
+            return user
+        else
             throw new IllegalStateException('User not in repository: ' + username)
-        return createUser(row)
     }
 
     User findUserByEmail(String email) {
-        def row = sql.firstRow('''
+        def user = null
+        sql.eachRow('''
                 SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, system_user, status, 
                        google_refresh_token,  google_access_token, google_access_token_expiration, 
                        creation_time, update_time
                 FROM sepal_user 
-                WHERE email = ?''', [email])
-        return row ? createUser(row) : null
+                WHERE email = ?''', [email]) {
+            user = toUser(it)
+        }
+        return user
     }
 
     boolean emailNotificationsEnabled(String email) {
@@ -101,17 +111,19 @@ class JdbcUserRepository implements UserRepository {
     }
 
     Map tokenStatus(String token) {
-        def row = sql.firstRow('''
+        def status = null
+        sql.eachRow('''
                 SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, status, system_user, token_generation_time, 
                        google_refresh_token,  google_access_token, google_access_token_expiration, 
                        creation_time, update_time 
                 FROM sepal_user 
-                WHERE token = ?''', [token])
-
-        return row ? [
-                generationTime: row.token_generation_time,
-                user: createUser(row)
-        ] : null
+                WHERE token = ?''', [token]) {
+            status = [
+                generationTime: it.token_generation_time,
+                user: toUser(it)
+            ]
+        }
+        return status
     }
 
     void invalidateToken(String token) {
@@ -138,14 +150,14 @@ class JdbcUserRepository implements UserRepository {
         ])
     }
 
-    private User createUser(GroovyRowResult row) {
+    private User toUser(row) {
         def user = new User(
                 id: row.id,
                 name: row.name,
                 username: row.username,
                 email: row.email,
                 organization: row.organization,
-                intendedUse: row.intended_use,
+                intendedUse: row.longText('intended_use'),
                 emailNotificationsEnabled: row.email_notifications_enabled,
                 roles: (row.admin ? [Roles.ADMIN] : []).toSet(),
                 systemUser: row.system_user,

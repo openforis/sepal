@@ -10,6 +10,7 @@ services:
     volumes:
       - "${SEPAL_DATA_DIR}/sepal:/data"
       - "${SEPAL_DATA_DIR}/sepal/etc:/etc/sepal"
+      - "${SEPAL_DATA_DIR}/user/home:/var/lib/sepal/user/home"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       HOSTING_SERVICE: "${HOSTING_SERVICE}"
