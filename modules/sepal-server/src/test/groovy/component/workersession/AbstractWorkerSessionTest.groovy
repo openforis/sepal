@@ -2,6 +2,7 @@ package component.workersession
 
 import fake.Database
 import fake.FakeClock
+import fake.FakeTopic
 import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.component.workersession.api.Spending
@@ -42,7 +43,8 @@ abstract class AbstractWorkerSessionTest extends Specification {
             googleOAuthGateway,
             [new InstanceType(id: testInstanceType, name: testInstanceType, hourlyCost: 123d, idleCount: 1)],
             clock,
-            workDir
+            workDir,
+            new FakeTopic()
     )
 
     final events = [] as List<Event>

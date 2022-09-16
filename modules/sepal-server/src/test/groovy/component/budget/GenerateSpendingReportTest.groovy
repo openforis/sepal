@@ -6,7 +6,7 @@ import static java.lang.Math.round
 
 class GenerateSpendingReportTest extends AbstractBudgetTest {
     def 'Given a user with budget and spending, when generating report, report reflects budget and spending'() {
-        updateUserBudget(new Budget(instanceSpending: 11, storageSpending: 22, storageQuota: 33))
+        updateUserBudget(createBudget(instanceSpending: 11, storageSpending: 22, storageQuota: 33))
         session(start: '2016-01-01', hours: 2, hourlyCost: 4)
         storageCost(0.3)
         storage(gb: 100, start: '2016-01-01', days: 15)
@@ -27,10 +27,10 @@ class GenerateSpendingReportTest extends AbstractBudgetTest {
     }
 
     def 'Give user with budget update request, when generating report, request is included'() {
-        updateUserBudget(new Budget(instanceSpending: 11, storageSpending: 22, storageQuota: 33))
+        updateUserBudget(createBudget(instanceSpending: 11, storageSpending: 22, storageQuota: 33))
         requestBudgetUpdate(
                 message: 'increase my budget',
-                budget: new Budget(instanceSpending: 12, storageSpending: 23, storageQuota: 34)
+                budget: createBudget(instanceSpending: 12, storageSpending: 23, storageQuota: 34)
         )
 
         when:

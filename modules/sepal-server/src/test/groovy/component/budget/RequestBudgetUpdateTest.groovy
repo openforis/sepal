@@ -4,12 +4,12 @@ import org.openforis.sepal.component.budget.api.Budget
 
 class RequestBudgetUpdateTest extends AbstractBudgetTest {
     def 'When requesting budget update, then spending report contains request'() {
-        updateUserBudget(new Budget(instanceSpending: 11, storageSpending: 22, storageQuota: 33))
+        updateUserBudget(createBudget(instanceSpending: 11, storageSpending: 22, storageQuota: 33))
 
         when:
         requestBudgetUpdate(
                 message: 'increase my budget',
-                budget: new Budget(instanceSpending: 12, storageSpending: 23, storageQuota: 34)
+                budget: createBudget(instanceSpending: 12, storageSpending: 23, storageQuota: 34)
         )
 
         then:
