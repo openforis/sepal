@@ -503,13 +503,15 @@ class _Retrieve extends React.Component {
     }
 
     retrieve(values) {
-        const project = this.findProject()
         const {assetId, workspacePath} = values
-        updateProject({
-            ...project,
-            defaultAssetFolder: assetId ? Path.dirname(assetId) : project.defaultAssetFolder,
-            defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : project.defaultWorkspaceFolder
-        })
+        const project = this.findProject()
+        if (project) {
+            updateProject({
+                ...project,
+                defaultAssetFolder: assetId ? Path.dirname(assetId) : project?.defaultAssetFolder,
+                defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : project?.defaultWorkspaceFolder
+            })
+        }
         this.recipeActions.retrieve(values).dispatch()
     }
 
