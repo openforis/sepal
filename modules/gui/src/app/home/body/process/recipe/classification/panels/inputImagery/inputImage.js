@@ -110,7 +110,7 @@ class InputImage extends React.Component {
     initBandSetSpecs() {
         const {inputs: {bandSetSpecs}} = this.props
         if (!bandSetSpecs.value) {
-            bandSetSpecs.set([{id: guid(), type: 'IMAGE_BANDS', class: 'IMAGE_BANDS'}])
+            bandSetSpecs.set([{id: guid(), type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: []}])
         }
     }
 

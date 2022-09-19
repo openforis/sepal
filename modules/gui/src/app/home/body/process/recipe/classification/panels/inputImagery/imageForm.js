@@ -1,105 +1,59 @@
 import * as PropTypes from 'prop-types'
 import {BandSetSpec} from './bandSetSpec'
+import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
+import {Combo} from 'widget/combo'
 import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
-import {Widget} from 'widget/widget'
 import {compose} from 'compose'
+import {msg} from 'translate'
 import {mutate} from 'stateUtils'
-import {withScrollable} from 'widget/scrollable'
-import BlurDetector from 'widget/blurDetector'
+import ButtonPopup from 'widget/buttonPopup'
 import React, {Component} from 'react'
 import _ from 'lodash'
-import styles from './inputImage.module.css'
 
 class ImageForm extends Component {
-    state = {
-        selectedSpecId: null,
-        prevBandSetSpecs: [],
-    }
-    element = React.createRef()
-
-    static getDerivedStateFromProps(props, state) {
-        const {inputs: {bandSetSpecs, bands}} = props
-        const {prevBandSetSpecs = [], selectedSpecId} = state
-        const nextBandSetSpecs = bandSetSpecs.value
-        if (!bands.value || !nextBandSetSpecs || !nextBandSetSpecs.length)
-            return state
-        const nextState = {...state}
-        if (!_.isEqual(nextBandSetSpecs, prevBandSetSpecs)) {
-            const addedSpec = nextBandSetSpecs.length - prevBandSetSpecs.length === 1
-            if (addedSpec) {
-                const lastSpec = _.last(nextBandSetSpecs)
-                if (BandSetSpec.isEmpty(lastSpec, bands.value)) {
-                    nextState.selectedSpecId = lastSpec.id
-                }
-            } else {
-                const emptySpec = !nextBandSetSpecs.find(spec => !BandSetSpec.isEmpty(spec, bands.value))
-                if (emptySpec && !selectedSpecId)
-                    nextState.selectedSpecId = nextBandSetSpecs[0].id
-            }
-            nextState.addedBandSetSpec = addedSpec
-        }
-        return nextState
-    }
-
+    state = {loading: false}
     render() {
-        const {input, inputComponent, inputs: {bands}} = this.props
+        const {inputs: {bands, bandSetSpecs}} = this.props
+        const {loading} = this.state
         return (
-            <Layout>
-                <div ref={this.element}>
-                    {React.createElement(inputComponent, {
-                        input,
-                        onLoading: () => {
-                            bands.set(null)
-                        },
-                        onLoaded: ({id, bands, metadata, visualizations}) => this.onLoaded(id, bands, metadata, visualizations)
-                    })}
-                </div>
-                <div>
-                    {bands.value && this.renderBandSetSpecs()}
-                </div>
+            <Layout
+                type='vertical'
+                spacing='compact'>
+                {this.renderInput()}
+                {!loading && bandSetSpecs.value?.length && bands.value?.length
+                    ? bandSetSpecs.value.map(bandSetSpec =>
+                        this.renderBandSetSpec(bandSetSpec)
+                    )
+                    : null}
             </Layout>
         )
     }
 
-    componentDidUpdate() {
-        const {scrollable, inputs: {bandSetSpecs}} = this.props
-        const {prevBandSetSpecs, addedBandSetSpec} = this.state
-        if (bandSetSpecs.value !== prevBandSetSpecs)
-            this.setState({prevBandSetSpecs: bandSetSpecs.value})
-
-        if (addedBandSetSpec) {
-            scrollable.scrollToBottom()
-        }
-
-        if (bandSetSpecs.value && bandSetSpecs.value.length === 1) {
-            const nextId = bandSetSpecs.value[0].id
-            this.setState(({selectedSpecId}) => nextId === selectedSpecId ? null : {selectedSpecId: nextId})
-        }
-    }
-
-    renderBandSetSpecs() {
-        const {inputs: {bandSetSpecs}} = this.props
-        return (
-            <Widget label={'Included bands'}>
-                {(bandSetSpecs.value || []).map(bandSetSpec => this.renderBandSetSpec(bandSetSpec))}
-            </Widget>
-        )
+    renderInput() {
+        const {input, inputComponent} = this.props
+        const {loading} = this.state
+        return React.createElement(inputComponent, {
+            input,
+            busy: loading,
+            onLoading: () => {
+                this.setState({loading: true})
+            },
+            onLoaded: ({id, bands, metadata, visualizations}) => this.onLoaded(id, bands, metadata, visualizations)
+        })
     }
 
     renderBandSetSpec(bandSetSpec) {
-        const {selectedSpecId} = this.state
-        const selected = selectedSpecId === bandSetSpec.id
         return (
             <ListItem
                 key={bandSetSpec.id}
-                expansion={this.renderBandSetSpecEditor(bandSetSpec)}
-                expanded={selected}
-                onClick={() => this.editBandSetSpec(bandSetSpec)}>
+                expanded={bandSetSpec.included.length}
+                expansion={this.renderSelection(bandSetSpec)}>
                 <CrudItem
                     title={BandSetSpec.renderTitle(bandSetSpec)}
-                    description={BandSetSpec.renderDescription(bandSetSpec)}
+                    inlineComponents={this.renderAddButton(bandSetSpec)}
                     unsafeRemove
                     removeDisabled={bandSetSpec.type === 'IMAGE_BANDS'}
                     onRemove={() => this.removeBandSetSpec(bandSetSpec)}
@@ -108,32 +62,75 @@ class ImageForm extends Component {
         )
     }
 
-    renderBandSetSpecEditor(bandSetSpec) {
-        const {inputs: {bands}} = this.props
+    renderSelection(bandSetSpec) {
         return (
-            <BlurDetector
-                onBlur={() => this.setState({selectedSpecId: null})}>
-                <div className={styles.widget}>
-                    {
-                        BandSetSpec.renderEditor({
-                            bandSetSpec,
-                            availableBands: bands.value,
-                            onChange: bandSetSpec => this.updateBandSetSpec(bandSetSpec)
-                        })
-                    }
-                </div>
-            </BlurDetector>
+            <ButtonGroup>
+                {bandSetSpec.included.map(value =>
+                    <Button
+                        key={value}
+                        label={value}
+                        size='small'
+                        air='less'
+                        onClick={() => this.removeSelection(bandSetSpec, value)}
+                        icon='times'
+                    />
+                )}
+            </ButtonGroup>
         )
-
     }
 
-    editBandSetSpec(bandSetSpec) {
-        this.setState({selectedSpecId: bandSetSpec.id})
+    renderAddButton(bandSetSpec) {
+        const {inputs: {bands}} = this.props
+        const options = BandSetSpec
+            .options(bandSetSpec, bands.value)
+            .filter(({value}) => !bandSetSpec.included.includes(value))
+        return (
+            <ButtonPopup
+                shape='circle'
+                chromeless
+                icon='plus'
+                noChevron
+                showPopupOnMount={!bandSetSpec.included.length && bands.value?.length}
+                vPlacement='below'
+                hPlacement='over-left'
+                tooltip={msg('process.recipe.move.tooltip')}>
+                {onBlur => (
+                    <Combo
+                        placement='below'
+                        alignment='left'
+                        placeholder={msg('process.recipe.move.destinationProject')}
+                        options={options}
+                        standalone
+                        autoFocus
+                        onCancel={onBlur}
+                        onChange={({value}) => {
+                            this.addSelection(bandSetSpec, value)
+                        }}
+                    />
+                )}
+            </ButtonPopup>
+        )
     }
 
-    updateBandSetSpec(bandSetSpec) {
+    componentDidUpdate(prevProps) {
+        const {inputs: {section: prevSection, bands, bandSetSpecs}} = prevProps
+        const {inputs: {section}} = this.props
+
+        if (prevSection.value !== section.value) {
+            bands.set(null)
+            bandSetSpecs.set(null)
+        }
+    }
+
+    addSelection(bandSetSpec, value) {
         const {inputs: {bandSetSpecs}} = this.props
-        const updated = mutate(bandSetSpecs.value, {id: bandSetSpec.id}).set(bandSetSpec)
+        const updated = mutate(bandSetSpecs.value, [{id: bandSetSpec.id}, 'included']).push(value)
+        bandSetSpecs.set(updated)
+    }
+
+    removeSelection(bandSetSpec, value) {
+        const {inputs: {bandSetSpecs}} = this.props
+        const updated = mutate(bandSetSpecs.value, [{id: bandSetSpec.id}, 'included', value]).del()
         bandSetSpecs.set(updated)
     }
 
@@ -145,6 +142,7 @@ class ImageForm extends Component {
 
     onLoaded(id, loadedBands, loadedMetadata, loadedVisualizations) {
         const {form, inputs: {bands, bandSetSpecs, metadata, visualizations}} = this.props
+        this.setState({loading: false})
         if (!id || !form.isDirty()) {
             return
         }
@@ -165,6 +163,5 @@ ImageForm.propTypes = {
 }
 
 export default compose(
-    ImageForm,
-    withScrollable()
+    ImageForm
 )
