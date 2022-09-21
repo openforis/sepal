@@ -128,11 +128,12 @@ BlurDetector.propTypes = {
     children: PropTypes.any.isRequired,
     autoBlurTimeout: PropTypes.number,
     className: PropTypes.string,
-    exclude: PropTypes.oneOfType([
-        PropTypes.arrayOf(PropTypes.elementType),
-        PropTypes.elementType,
-        null
-    ]),
+    // exclude: PropTypes.oneOfType([
+    //     PropTypes.arrayOf(PropTypes.elementType),
+    //     PropTypes.elementType,
+    //     // null
+    // ]),
+    exclude: PropTypes.any,
     style: PropTypes.object,
     onBlur: PropTypes.func,
     onClick: PropTypes.func
