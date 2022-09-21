@@ -79,7 +79,8 @@ RUN apt-get -y update && apt-get install -y \
 
 # Install GIS utilities
 RUN apt-get update -y && apt-get install -y \
-    gdal-bin \
+    gdal-bin=3.4.3+dfsg-1~focal0 \
+    proj-bin=8.2.0-1~focal0 \
     gsl-bin \
     saga \
     shapelib \

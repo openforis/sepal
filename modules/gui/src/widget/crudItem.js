@@ -31,7 +31,7 @@ export class CrudItem extends React.Component {
     }
 
     renderDefaultContent() {
-        const {title, description, image, timestamp, highlight, highlightClassName, highlightTitle, highlightDescription} = this.props
+        const {title, description, image, timestamp, highlight, highlightClassName, highlightTitle, highlightDescription, onClick} = this.props
         return (
             <Item
                 className={styles.content}
@@ -43,6 +43,7 @@ export class CrudItem extends React.Component {
                 highlightClassName={highlightClassName}
                 highlightTitle={highlightTitle}
                 highlightDescription={highlightDescription}
+                nonClickable={!onClick}
             />
         )
     }
