@@ -213,10 +213,12 @@ class _Button extends React.Component {
     }
 
     renderKeybinding(contents) {
-        const {keybinding} = this.props
-        return this.isActive() && keybinding
+        const {keybinding, hidden} = this.props
+        return keybinding
             ? (
-                <Keybinding keymap={this.getKeymap(keybinding)}>
+                <Keybinding
+                    keymap={this.getKeymap(keybinding)}
+                    disabled={hidden || !this.isActive()}>
                     {contents}
                 </Keybinding>
             )
