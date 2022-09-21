@@ -16,6 +16,8 @@ interface UserRepository {
 
     User lookupUser(String username)
 
+    User findUserByUsername(String username)
+    
     User findUserByEmail(String email)
 
     boolean emailNotificationsEnabled(String email)

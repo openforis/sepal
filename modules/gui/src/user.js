@@ -1,5 +1,4 @@
 import {EMPTY, catchError, map, of, switchMap, tap} from 'rxjs'
-import {history} from 'route'
 import {msg} from 'translate'
 import {publishCurrentUserEvent, publishEvent} from 'eventPublisher'
 import {select} from 'store'
@@ -20,9 +19,9 @@ export const loadUser$ = () =>
         tap(user => updateUser(user))
     )
 
-export const login$ = ({username, password}) => {
+export const login$ = ({username, password}, recaptchaToken) => {
     resetInvalidCredentials()
-    return api.user.login$(username, password).pipe(
+    return api.user.login$({username, password, recaptchaToken}).pipe(
         catchError(() => {
             Notifications.error({message: msg('landing.login.error')})
             return EMPTY
@@ -40,13 +39,13 @@ export const logout$ = () =>
         tap(() => document.location = '/' /* force full state reset*/)
     )
 
-export const resetPassword$ = ({token, username, password, type}) =>
-    api.user.resetPassword$(token, username, password).pipe(
+export const resetPassword$ = ({token, password, type, recaptchaToken}) =>
+    api.user.resetPassword$({token, password, recaptchaToken}).pipe(
         tap(() => publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')),
-        switchMap(() => api.user.login$(username, password)),
-        tap(user => {
-            credentialsPosted(user)
-            history().push('/process')
+        // switchMap(() => api.user.login$(username, password)),
+        tap(_user => {
+            // credentialsPosted(user)
+            // history().push('/process')
             Notifications.success({message: msg('landing.reset-password.success')})
         }),
         catchError(() => {
@@ -83,8 +82,8 @@ export const requestUserAccess$ = () =>
         tap(({url}) => window.location = url)
     )
 
-export const requestPasswordReset$ = ({email, optional}) =>
-    api.user.requestPasswordReset$({email, optional}).pipe(
+export const requestPasswordReset$ = ({email, optional}, recaptchaToken) =>
+    api.user.requestPasswordReset$({email, optional, recaptchaToken}).pipe(
         tap(() => publishEvent('requested_password_reset')),
     )
 
@@ -101,6 +100,12 @@ export const validateToken$ = token =>
 
 export const signUp$ = (userDetails, recaptchaToken) =>
     api.user.signUp$(userDetails, recaptchaToken)
+
+export const validateUsername$ = ({username, recaptchaToken}) =>
+    api.user.validateUsername$({username, recaptchaToken})
+    
+export const validateEmail$ = ({email, recaptchaToken}) =>
+    api.user.validateEmail$({email, recaptchaToken})
 
 export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled}) =>
     api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled}).pipe(

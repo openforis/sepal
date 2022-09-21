@@ -8,6 +8,7 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.user.api.EmailGateway
 import org.openforis.sepal.component.user.api.ExternalUserDataGateway
+import org.openforis.sepal.component.user.api.GoogleRecaptcha
 import org.openforis.sepal.component.user.api.UserRepository
 import org.openforis.sepal.component.user.internal.UserChangeListener
 import org.openforis.sepal.messagebroker.MessageBroker
@@ -17,6 +18,7 @@ import org.openforis.sepal.util.Clock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import static groovyx.net.http.ContentType.URLENC
 import static groovyx.net.http.ContentType.JSON
 import static org.openforis.sepal.user.User.Status.PENDING
 
@@ -28,15 +30,17 @@ class SignUpUser extends AbstractCommand<User> {
     String email
     String organization
     String intendedUse
+    String recaptchaToken
 }
 
-class SignUpUserHandler implements CommandHandler<User, SignUpUser> {
+class SignUpUserHandler implements CommandHandler<Boolean, SignUpUser> {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final UserRepository userRepository
     private final ExternalUserDataGateway externalUserDataGateway
     private final EmailGateway emailGateway
     private final MessageQueue<Map> messageQueue
     private final Clock clock
+    private final googleRecaptcha
 
     SignUpUserHandler(
             UserRepository userRepository,
@@ -44,7 +48,8 @@ class SignUpUserHandler implements CommandHandler<User, SignUpUser> {
             ExternalUserDataGateway externalUserDataGateway,
             EmailGateway emailGateway,
             UserChangeListener changeListener,
-            Clock clock
+            Clock clock,
+            GoogleRecaptcha googleRecaptcha
     ) {
         this.userRepository = userRepository
         this.externalUserDataGateway = externalUserDataGateway
@@ -55,60 +60,32 @@ class SignUpUserHandler implements CommandHandler<User, SignUpUser> {
             changeListener.changed(user.username, user.toMap())
         }
         this.clock = clock
+        this.googleRecaptcha = googleRecaptcha
     }
 
-    User execute(SignUpUser command) {
-        def token = UUID.randomUUID() as String
-        def now = clock.now()
-        def userToInsert = new User(
-                name: command.name,
-                username: command.username,
-                email: command.email,
-                organization: command.organization,
-                intendedUse: command.intendedUse,
-                emailNotificationsEnabled: true,
-                status: PENDING,
-                roles: [].toSet(),
-                creationTime: now,
-                updateTime: now)
-        def user = userRepository.insertUser(userToInsert, token)
-        messageQueue.publish(
-                user: user,
-                token: token
-        )
-        return user
-    }
-
-    private boolean validateRecaptcha(String token) {
-        // reCAPTCHA assessment
-        // https://cloud.google.com/recaptcha-enterprise/docs/create-assessment#rest-api
-
-        // requires:
-        // - GOOGLE_PROJECT_ID
-        // - GOOGLE_RECAPTCHA_API_KEY
-        // - GOOGLE_RECAPTCHA_SITE_KEY
-
-        def response = http.post(
-                uri: 'https://recaptchaenterprise.googleapis.com',
-                path: '/v1/projects/' + GOOGLE_PROJECT_ID + '/assessments',
-                contentType: JSON,
-                requestContentType: JSON,
-                query: [
-                        key: GOOGLE_RECAPTCHA_API_KEY
-                ],
-                body: [
-                        event: [
-                                token: token,
-                                siteKey: GOOGLE_RECAPTCHA_SITE_KEY,
-                                expectedAction: 'SIGNUP'
-                        ]
-                ]
-        )
-        return response.data && 
-            response.data.tokenProperties.valid &&
-            response.data.event.token == token &&
-            response.data.event.siteKey == GOOGLE_RECAPTCHA_SITE_KEY &&
-            response.data.event.expectedAction == 'SIGNUP'
+    Boolean execute(SignUpUser command) {
+        if (googleRecaptcha.isValid(command.recaptchaToken, 'SIGN_UP')) {
+            def token = UUID.randomUUID() as String
+            def now = clock.now()
+            def userToInsert = new User(
+                    name: command.name,
+                    username: command.username,
+                    email: command.email,
+                    organization: command.organization,
+                    intendedUse: command.intendedUse,
+                    emailNotificationsEnabled: true,
+                    status: PENDING,
+                    roles: [].toSet(),
+                    creationTime: now,
+                    updateTime: now)
+            def user = userRepository.insertUser(userToInsert, token)
+            messageQueue.publish(
+                    user: user,
+                    token: token
+            )
+            return true
+        }
+        return false
     }
 
     private void createExternalUserAndSendEmailNotification(Map message) {

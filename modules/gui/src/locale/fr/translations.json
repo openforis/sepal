@@ -378,7 +378,6 @@
             },
             "validating-link": "Lien en cours de validation..."
         },
-        "signup": "S'inscrire",
         "tagline": "Système pour l'accès, le traitement et l'analyse de données pour la surveillance des terres.",
         "title": "SEPAL",
         "validate-token": {

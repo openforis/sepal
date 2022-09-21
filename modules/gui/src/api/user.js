@@ -29,47 +29,49 @@ export default {
 
     signUp$: ({username, name, email, organization, intendedUse}, recaptchaToken) =>
         post$('/api/user/signup', {
-            username,
-            name,
-            email,
-            organization,
-            intendedUse,
-            recaptchaToken
+            body: {
+                username,
+                name,
+                email,
+                organization,
+                intendedUse,
+                recaptchaToken,
+                action: 'SIGN_UP'
+            }
         }),
 
-    login$: (username, password) =>
+    login$: ({username, password, recaptchaToken}) =>
         post$('/api/user/login', {
-            username,
-            password,
-            validStatuses: [200, 401]
+            basicAuth: [username, password, recaptchaToken],
+            validStatuses: [200, 401],
         }),
 
     logout$: () =>
         post$('/api/user/logout'),
 
-    requestPasswordReset$: ({email, optional}) =>
+    requestPasswordReset$: ({email, optional, recaptchaToken}) =>
         post$('/api/user/password/reset-request', {
-            body: {email, optional}
+            body: {email, optional, recaptchaToken}
         }),
 
     validateToken$: token =>
-        post$('/api/user/validate-token', {
+        post$('/api/user/validate/token', {
             body: {token}
         }),
 
-    validateUsername$: username =>
+    validateUsername$: ({username, recaptchaToken}) =>
         post$('/api/user/validate/username', {
-            body: {username}
+            body: {username, recaptchaToken}
         }),
     
-    validateEmail$: email =>
+    validateEmail$: ({email, recaptchaToken}) =>
         post$('/api/user/validate/email', {
-            body: {email}
+            body: {email, recaptchaToken}
         }),
     
-    resetPassword$: (token, username, password) =>
+    resetPassword$: ({token, password, recaptchaToken}) =>
         post$('/api/user/password/reset', {
-            body: {token, password}
+            body: {token, password, recaptchaToken}
         }),
 
     updateCurrentUserDetails$: ({name, email, organization, intendedUse, emailNotificationsEnabled}) =>

@@ -125,7 +125,6 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
         )
         subscribe(COMPONENT_NAME, userTopic) { message, type ->
             if (type == 'user.UserLocked') {
-                LOG.info('*** USER LOCKED: ' + message.username)
                 submit(new CloseUserSessions(username: message.username as String))
             }
         }

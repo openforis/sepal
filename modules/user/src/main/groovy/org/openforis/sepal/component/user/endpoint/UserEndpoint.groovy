@@ -32,53 +32,74 @@ class UserEndpoint {
             def organizationConstraints = [maxLength(1000)]
             def passwordConstraints = [notBlank(), custom { it ==~ /^.{8,100}$/ }]
             def intendedUseConstraints = [notBlank()]
+            def recaptchaTokenConstraints = [notBlank()]
 
             constrain(SignUpUser, [
                     username    : usernameConstraints,
                     name        : nameConstraints,
                     email       : emailConstraints,
                     organization: organizationConstraints,
-                    intendedUse : intendedUseConstraints])
+                    intendedUse : intendedUseConstraints,
+                    recaptchaToken: recaptchaTokenConstraints
+            ])
             constrain(InviteUser, [
                     invitedUsername: usernameConstraints,
                     name           : nameConstraints,
                     email          : emailConstraints,
-                    organization   : organizationConstraints])
+                    organization   : organizationConstraints
+            ])
             constrain(ActivateUser, [
                     token   : [notNull(), notBlank()],
-                    password: passwordConstraints])
+                    password: passwordConstraints
+            ])
             constrain(ResetPassword, [
                     token   : [notNull(), notBlank()],
-                    password: passwordConstraints])
+                    password: passwordConstraints
+            ])
             constrain(UpdateUserDetails, [
                     usernameToUpdate: [notNull(), notBlank()],
                     name            : [notNull(), notBlank()],
                     email           : emailConstraints,
                     organization    : organizationConstraints,
-                    admin           : notNull()])
+                    admin           : notNull()
+            ])
             constrain(ChangePassword, [
                     oldPassword: [notNull(), notBlank()],
-                    newPassword: passwordConstraints])
+                    newPassword: passwordConstraints
+            ])
             constrain(RequestPasswordReset, [
-                    email: emailConstraints])
+                    email: emailConstraints
+            ])
             constrain(LockUser, [
-                    usernameToLock  : usernameConstraints])
+                    usernameToLock  : usernameConstraints
+            ])
             constrain(UnlockUser, [
-                    usernameToUnlock: usernameConstraints])
+                    usernameToUnlock: usernameConstraints
+            ])
+            constrain(ValidateUsername, [
+                    username: usernameConstraints,
+                    recaptchaToken: recaptchaTokenConstraints
+            ])
+            constrain(ValidateEmail, [
+                    email: emailConstraints,
+                    recaptchaToken: recaptchaTokenConstraints
+            ])
 
             post('/authenticate', [NO_AUTHORIZATION]) {
                 response.contentType = 'application/json'
                 LOG.info('Authenticating user')
                 def username = params.required('username', String)
                 def password = params.required('password', String)
-                def user = component.submit(new Authenticate(username, password))
+                def recaptchaToken = params.required('recaptchaToken', String)
+                def user = component.submit(new Authenticate(username, password, recaptchaToken))
                 if (user) {
                     LOG.info('Authenticated ' + user)
                     component.submit(
-                            new RefreshGoogleAccessToken(
-                                    username: user.username,
-                                    tokens: user.googleTokens
-                            ))
+                        new RefreshGoogleAccessToken(
+                            username: user.username,
+                            tokens: user.googleTokens
+                        )
+                    )
                     send toJson(userToMap(user))
                 } else {
                     LOG.info('Authentication failed: ' + params.user)
@@ -99,7 +120,7 @@ class UserEndpoint {
                                      'an email with a password reset link will be sent there'])
             }
 
-            post('/validate-token', [NO_AUTHORIZATION]) {
+            post('/validate/token', [NO_AUTHORIZATION]) {
                 response.contentType = 'application/json'
                 def tokenStatus = component.submit(new ValidateToken(token: params.required('token')))
                 if (tokenStatus?.valid)
@@ -108,6 +129,28 @@ class UserEndpoint {
                     def reason = tokenStatus?.expired ? 'expired' : 'invalid'
                     send toJson([status: 'failure', token: tokenStatus?.token, reason: reason, message: "Token is $reason"])
                 }
+            }
+
+            post('/validate/username', [NO_AUTHORIZATION]) {
+                response.contentType = 'application/json'
+                def command = new ValidateUsername()
+                def errors = bindAndValidate(command)
+                if (errors) {
+                    throw new InvalidRequest(errors)
+                }
+                def valid = component.submit(command)
+                send toJson([valid: valid])
+            }
+
+            post('/validate/email', [NO_AUTHORIZATION]) {
+                response.contentType = 'application/json'
+                def command = new ValidateEmail()
+                def errors = bindAndValidate(command)
+                if (errors) {
+                    throw new InvalidRequest(errors)
+                }
+                def valid = component.submit(command)
+                send toJson([valid: valid])
             }
 
             post('/password/reset', [NO_AUTHORIZATION]) {
@@ -132,16 +175,14 @@ class UserEndpoint {
 
             post('/signup', [NO_AUTHORIZATION]) {
                 response.contentType = 'application/json'
-                def command = new SignUpUser(
-                    username: params.username?.toLowerCase(), 
-                    email: params.email?.toLowerCase(),
-                    recaptchaToken: params.recaptchaToken
-                )
+                def command = new SignUpUser()
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
-                def user = component.submit(command)
-                send toJson(userToMap(user))
+                def success = component.submit(command)
+                send toJson(success ?
+                        [status: 'success', message: 'Signup succeeded'] :
+                        [status: 'failure', message: 'Signup failed'])
             }
 
             post('/login') { // Just a nice looking endpoint the frontend can call to trigger authentication

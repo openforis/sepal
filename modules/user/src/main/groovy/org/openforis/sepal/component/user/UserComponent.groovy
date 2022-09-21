@@ -7,6 +7,7 @@ import org.openforis.sepal.component.user.adapter.*
 import org.openforis.sepal.component.user.api.EmailGateway
 import org.openforis.sepal.component.user.api.ExternalUserDataGateway
 import org.openforis.sepal.component.user.api.GoogleEarthEngineWhitelistChecker
+import org.openforis.sepal.component.user.api.GoogleRecaptcha
 import org.openforis.sepal.component.user.command.*
 import org.openforis.sepal.component.user.endpoint.UserEndpoint
 import org.openforis.sepal.component.user.internal.TokenManager
@@ -52,7 +53,11 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
                 new TopicPublishingUserChangeListener(
                         new RabbitMQTopic('user', serverConfig.rabbitMQHost, serverConfig.rabbitMQPort)
                 ),
-                new SystemClock())
+                new SystemClock(),
+                new RestGoogleRecaptcha(
+                        serverConfig.googleRecaptchaSecretKey
+                )
+            )
     }
 
     UserComponent(
@@ -66,22 +71,25 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
             GoogleEarthEngineWhitelistChecker googleEarthEngineWhitelistChecker,
             GoogleAccessTokenFileGateway googleAccessTokenFileGateway,
             UserChangeListener changeListener,
-            Clock clock
+            Clock clock,
+            GoogleRecaptcha recaptcha
     ) {
         super(connectionManager, eventDispatcher)
         this.changeListener = changeListener
         this.messageBroker = messageBroker
         def userRepository = new JdbcUserRepository(connectionManager, clock)
         def tokenManager = new TokenManager(userRepository, clock)
-        command(SignUpUser, new SignUpUserHandler(userRepository, messageBroker, externalUserDataGateway, emailGateway, changeListener, clock))
+        command(SignUpUser, new SignUpUserHandler(userRepository, messageBroker, externalUserDataGateway, emailGateway, changeListener, clock, recaptcha))
         command(InviteUser, new InviteUserHandler(userRepository, messageBroker, externalUserDataGateway, emailGateway, changeListener, clock))
         command(ValidateToken, new ValidateTokenHandler(tokenManager))
+        command(ValidateUsername, new ValidateUsernameHandler(userRepository, recaptcha))
+        command(ValidateEmail, new ValidateEmailHandler(userRepository, recaptcha))
         command(ActivateUser, new ActivateUserHandler(tokenManager, externalUserDataGateway, userRepository, messageBroker, changeListener))
-        command(ResetPassword, new ResetPasswordHandler(tokenManager, externalUserDataGateway, userRepository, messageBroker, changeListener))
-        command(Authenticate, new AuthenticateHandler(usernamePasswordVerifier, userRepository, clock))
+        command(ResetPassword, new ResetPasswordHandler(tokenManager, externalUserDataGateway, userRepository, messageBroker, changeListener, recaptcha))
+        command(Authenticate, new AuthenticateHandler(usernamePasswordVerifier, userRepository, clock, recaptcha))
         command(UpdateUserDetails, new UpdateUserDetailsHandler(userRepository, messageBroker, changeListener, clock))
         command(ChangePassword, new ChangePasswordHandler(usernamePasswordVerifier, externalUserDataGateway))
-        command(RequestPasswordReset, new RequestPasswordResetHandler(userRepository, emailGateway, messageBroker, clock))
+        command(RequestPasswordReset, new RequestPasswordResetHandler(userRepository, emailGateway, messageBroker, clock, recaptcha))
         command(AssociateGoogleAccount, new AssociateGoogleAccountHandler(googleOAuthClient, userRepository, googleEarthEngineWhitelistChecker, googleAccessTokenFileGateway, messageBroker, changeListener))
         command(RefreshGoogleAccessToken, new RefreshGoogleAccessTokenHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway, messageBroker, changeListener))
         command(RevokeGoogleAccountAccess, new RevokeGoogleAccountAccessHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway, messageBroker, changeListener))

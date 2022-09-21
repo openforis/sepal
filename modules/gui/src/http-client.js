@@ -5,6 +5,7 @@ import {logout$, updateUser} from 'user'
 import {msg} from 'translate'
 import {webSocket} from 'rxjs/webSocket'
 import Notifications from 'widget/notifications'
+import _ from 'lodash'
 import base64 from 'base-64'
 
 const log = getLogger('http')
@@ -136,16 +137,25 @@ const validateResponse = (response, validStatuses) =>
         ? response
         : throwError(() => response)
 
-const execute$ = (url, method, {retries, query, username, password, headers, validStatuses, ...args}) => {
+// const execute$ = (url, method, {retries, query, basicAuth, username, password, headers, validStatuses, ...args}) => {
+const execute$ = (url, method, {retries, query, basicAuth, headers, validStatuses, ...args}) => {
     const queryString = toQueryString(query)
     let urlWithQuery = queryString ? `${url}?${queryString}` : url
     if (!url.startsWith('http://') && !url.startsWith('https://'))
         headers = {'No-auth-challenge': true, ...headers}
-    if (username || password)
+    if (basicAuth) {
         headers = {
-            'Authorization': `Basic ${base64.encode(`${username}:${password}`)}`,
+            'Authorization': `Basic ${base64.encode(_.castArray(basicAuth).join(':'))}`,
             ...headers
         }
+    }
+    // if (username || password) {
+    //     log.error('basic auth!')
+    //     headers = {
+    //         'Authorization': `Basic ${base64.encode(`${username}:${password}`)}`,
+    //         ...headers
+    //     }
+    // }
     return ajax({url: urlWithQuery, method, headers, ...args}).pipe(
         tap(({responseHeaders}) => {
             if (responseHeaders['sepal-user']) { // Make sure the user is up-to-date. Google Tokens might have changed

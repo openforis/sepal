@@ -1,15 +1,16 @@
 {
-    "default": "info",
     "apps": "info",
+    "default": "info",
     "eventPublisher": "info",
     "http": "debug",
     "layer": "info",
-    "tileManager": "info",
-    "tileManager/queue": "info",
-    "tileManager/executor": "info",
     "map": "info",
-    "sepalMap": "info",
     "maps": "info",
+    "recaptcha": "info",
+    "sepalMap": "info",
     "splitContent": "info",
+    "tileManager": "info",
+    "tileManager/executor": "info",
+    "tileManager/queue": "info",
     "translate": "info"
 }

@@ -1,4 +1,3 @@
-import {Button} from 'widget/button'
 import {UserStatus} from './userStatus'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -66,25 +65,25 @@ class Users extends React.Component {
                 <UserList
                     users={users}
                     onSelect={this.editUser}/>
-                {this.renderInviteUser()}
+                {/* {this.renderInviteUser()} */}
                 {this.renderUserDetails()}
             </div>
         )
     }
 
-    renderInviteUser() {
-        return (
-            <Button
-                additionalClassName={styles.inviteUser}
-                look='add'
-                size='xx-large'
-                shape='circle'
-                icon='plus'
-                tooltip={msg('users.invite.label')}
-                tooltipPlacement='left'
-                onClick={this.inviteUser}/>
-        )
-    }
+    // renderInviteUser() {
+    //     return (
+    //         <Button
+    //             additionalClassName={styles.inviteUser}
+    //             look='add'
+    //             size='xx-large'
+    //             shape='circle'
+    //             icon='plus'
+    //             tooltip={msg('users.invite.label')}
+    //             tooltipPlacement='left'
+    //             onClick={this.inviteUser}/>
+    //     )
+    // }
 
     renderUserDetails() {
         const {users} = this.props

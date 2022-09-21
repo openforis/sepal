@@ -1,47 +1,73 @@
+import {from} from 'rxjs'
+import {getLogger} from 'log'
+import {withContext} from 'context'
 import PropTypes from 'prop-types'
-import React, {useEffect} from 'react'
+import React from 'react'
+import _ from 'lodash'
 
-export const Recaptcha = ({children, action, siteKey, onToken}) => {
-    const handleLoaded = () => {
-        if (!children) {
-            window.grecaptcha.enterprise.ready(executeRecaptcha)
-        }
+const log = getLogger('recaptcha')
+
+const Context = React.createContext()
+
+export const withRecaptchaContext = withContext(Context, 'recaptchaContext')
+
+export class Recaptcha extends React.Component {
+    state = {
+        loaded: false
     }
 
-    const executeRecaptcha = async () => {
-        const token = await window.grecaptcha.enterprise.execute(siteKey, {action})
-        onToken && onToken(token)
+    constructor(props) {
+        super(props)
+        this.handleLoaded = this.handleLoaded.bind(this)
+        this.recaptcha$ = this.recaptcha$.bind(this)
     }
-      
-    useEffect(() => {
+
+    render() {
+        const {siteKey, children} = this.props
+        const {loaded} = this.state
+        return loaded ? (
+            <Context.Provider value={{recaptcha$: this.recaptcha$}}>
+                <div
+                    className="g-recaptcha"
+                    data-sitekey={siteKey}
+                    data-size="invisible"
+                />
+                {children}
+            </Context.Provider>
+        ) : null
+    }
+
+    recaptcha$(action) {
+        const {siteKey} = this.props
+        log.debug(`Requesting reCAPTCHA assessment: ${action}`)
+        return from(window.grecaptcha.execute(siteKey, {action}))
+    }
+
+    componentDidMount() {
+        this.loadRecaptcha()
+    }
+
+    loadRecaptcha() {
+        const {siteKey} = this.props
+        log.debug('Loading Google reCAPTCHA')
         if (!window.grecaptcha) {
             const script = document.createElement('script')
             script.setAttribute('type', 'text/javascript')
-            script.setAttribute('src', `https://www.google.com/recaptcha/enterprise.js?render=${siteKey}`)
-            script.addEventListener('load', handleLoaded)
+            script.setAttribute('src', `https://www.google.com/recaptcha/api.js?render=${siteKey}`)
+            script.addEventListener('load', this.handleLoaded)
             document.body.appendChild(script)
+            log.debug('Google reCAPTCHA loaded')
         } else {
-            if (!children) {
-                executeRecaptcha()
-            }
+            log.debug('Google reCAPTCHA already loaded')
         }
-    }, [])
-      
-    return (
-        <React.Fragment>
-            <div
-                className="g-recaptcha"
-                data-sitekey={siteKey}
-                data-size="invisible"
-            />
-            {children && children(executeRecaptcha)}
-        </React.Fragment>
-    )
+    }
+    
+    handleLoaded() {
+        window.grecaptcha.ready(() => this.setState({loaded: true}))
+    }
 }
 
 Recaptcha.propTypes = {
-    action: PropTypes.string.isRequired,
     siteKey: PropTypes.string.isRequired,
-    onToken: PropTypes.func.isRequired,
-    children: PropTypes.func
+    children: PropTypes.any
 }

@@ -76,6 +76,16 @@ class JdbcUserRepository implements UserRepository {
         return createUser(row)
     }
 
+    User findUserByUsername(String username) {
+        def row = sql.firstRow('''
+                SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, system_user, status, 
+                       google_refresh_token,  google_access_token, google_access_token_expiration, 
+                       creation_time, update_time
+                FROM sepal_user 
+                WHERE username = ?''', [username])
+        return row ? createUser(row) : null
+    }
+
     User findUserByEmail(String email) {
         def row = sql.firstRow('''
                 SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, system_user, status, 

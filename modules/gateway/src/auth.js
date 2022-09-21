@@ -56,13 +56,11 @@ const authMiddleware = async (req, res, next) => {
 
         const authenticate$ = defer(() => {
             const header = req.get('Authorization')
-            const [username, password] = Buffer.from(
-                header.substring('basic '.length),
-                'base64'
-            ).toString().split(':')
+            const basicAuth = Buffer.from(header.substring('basic '.length), 'base64').toString()
+            const [username, password, recaptchaToken] = basicAuth.split(':')
             log.trace(`[${username}] [${req.originalUrl}] Authenticating user`)
             return post$(authenticationUrl, {
-                body: {username, password},
+                body: {username, password, recaptchaToken},
                 validStatuses: [200, 401]
             }).pipe(
                 map(response => {

@@ -42,8 +42,8 @@ const endpoints = [
     },
     {
         prefix: false,
-        path: '/api/user/validate-token',
-        target: `http://${modules.user}/validate-token`,
+        path: '/api/user/validate',
+        target: `http://${modules.user}/validate`,
         authenticate: false
     },
     {

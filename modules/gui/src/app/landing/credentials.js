@@ -1,6 +1,7 @@
 import {AnimateReplacement} from 'widget/animate'
 import {ForgotPassword} from './forgot-password'
 import {Login} from './login'
+import {Recaptcha} from 'widget/recaptcha'
 import {SetPassword} from './setPassword'
 import {SignUp} from './signup'
 import {isPathInLocation} from 'route'
@@ -75,7 +76,7 @@ export default class Credentials extends React.Component {
         const {mode} = this.state
         const ANIMATION_DURATION_MS = 500
         return (
-            <React.Fragment>
+            <Recaptcha siteKey={window.googleRecaptchaSiteKey}>
                 <div className={styles.container}>
                     <AnimateReplacement
                         currentKey={mode}
@@ -87,7 +88,7 @@ export default class Credentials extends React.Component {
                         </div>
                     </AnimateReplacement>
                 </div>
-            </React.Fragment>
+            </Recaptcha>
         )
     }
 }

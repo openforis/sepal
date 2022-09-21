@@ -5,8 +5,10 @@ import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {history, query} from 'route'
+import {logout$, resetPassword$, tokenUser, validateToken$} from 'user'
 import {msg} from 'translate'
-import {resetPassword$, tokenUser, validateToken$} from 'user'
+import {switchMap} from 'rxjs'
+import {withRecaptchaContext} from 'widget/recaptcha'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -39,6 +41,11 @@ const mapStateToProps = () => ({
 })
 
 class _SetPassword extends React.Component {
+    constructor(props) {
+        super(props)
+        this.submit = this.submit.bind(this)
+    }
+
     componentDidMount() {
         const {stream} = this.props
         const token = query().token
@@ -62,10 +69,20 @@ class _SetPassword extends React.Component {
         username.set(user && user.username)
     }
 
-    resetPassword({username, password}) {
-        const {stream, type} = this.props
+    submit() {
+        const {inputs: {password}} = this.props
+        this.resetPassword(password.value)
+    }
+
+    resetPassword(password) {
+        const {type, recaptchaContext: {recaptcha$}, stream} = this.props
         const token = query().token
-        stream('RESET_PASSWORD', resetPassword$({token, username, password, type}))
+        stream('RESET_PASSWORD',
+            recaptcha$('RESET_PASSWORD').pipe(
+                switchMap(recaptchaToken => resetPassword$({token, password, type, recaptchaToken})),
+                switchMap(() => logout$())
+            )
+        )
     }
 
     render() {
@@ -85,7 +102,9 @@ class _SetPassword extends React.Component {
         const {form, inputs: {username, password, password2}, stream} = this.props
         const resettingPassword = stream('RESET_PASSWORD').active
         return (
-            <Form className={styles.form} onSubmit={() => this.resetPassword(form.values())}>
+            <Form
+                className={styles.form}
+                onSubmit={this.submit}>
                 <Layout spacing='loose'>
                     <Form.Input
                         label={msg('landing.reset-password.username.label')}
@@ -130,7 +149,8 @@ class _SetPassword extends React.Component {
 
 export const SetPassword = compose(
     _SetPassword,
-    form({fields, constraints, mapStateToProps})
+    form({fields, constraints, mapStateToProps}),
+    withRecaptchaContext()
 )
 
 SetPassword.propTypes = {

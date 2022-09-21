@@ -340,14 +340,14 @@
       "loadCurrentUser": {
         "error": "Failed to connect to SEPAL"
       },
-      "signUp": {
+      "signup": {
         "button": "Sign up",
         "username": {
             "label": "Username",
             "placeholder": "Choose your username",
             "required": "Username is required",
             "format": "Username should start with a letter",
-            "duplicate": "There is another user with this username",
+            "duplicate": "This username is not available, please choose another one",
             "cannotValidate": "Cannot validate username"
         },
         "name": {
@@ -361,7 +361,7 @@
             "placeholder": "Enter your email address",
             "required": "Email is required",
             "format": "Please enter a valid email address",
-            "duplicate": "There is another user with this email",
+            "duplicate": "This email is not available, please choose another one",
             "cannotValidate": "Cannot validate email"
         },
         "organization": {
@@ -375,7 +375,8 @@
             "placeholder": "What do you plan to do with SEPAL?",
             "required": "Intended use is required",
             "invalid": ""
-        }
+        },
+        "success": "You've successfully signed up to SEPAL. An activation email has been sent to {email}."
       },
       "login": {
         "button": "Login",
@@ -415,7 +416,6 @@
         },
         "validating-link": "Validating link..."
       },
-      "signup": "Signup",
       "tagline": "System for earth observations, data access, processing & analysis for land monitoring.",
       "title": "SEPAL",
       "validate-token": {

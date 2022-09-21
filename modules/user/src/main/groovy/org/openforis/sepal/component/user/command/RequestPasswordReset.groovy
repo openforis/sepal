@@ -4,6 +4,7 @@ import groovy.transform.Canonical
 import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
+import org.openforis.sepal.component.user.api.GoogleRecaptcha
 import org.openforis.sepal.component.user.api.EmailGateway
 import org.openforis.sepal.component.user.api.UserRepository
 import org.openforis.sepal.messagebroker.MessageBroker
@@ -20,6 +21,7 @@ import static org.openforis.sepal.user.User.Status.ACTIVE
 class RequestPasswordReset extends AbstractCommand<Void> {
     String email
     boolean optional
+    String recaptchaToken
 }
 
 class RequestPasswordResetHandler implements CommandHandler<Void, RequestPasswordReset> {
@@ -28,12 +30,15 @@ class RequestPasswordResetHandler implements CommandHandler<Void, RequestPasswor
     private final EmailGateway emailGateway
     private final MessageQueue<Map> messageQueue
     private final Clock clock
+    private final googleRecaptcha
 
+GoogleRecaptcha googleRecaptcha
     RequestPasswordResetHandler(
         UserRepository userRepository,
         EmailGateway emailGateway,
         MessageBroker messageBroker,
-        Clock clock
+        Clock clock,
+        GoogleRecaptcha googleRecaptcha
     ) {
         this.userRepository = userRepository
         this.emailGateway = emailGateway
@@ -41,26 +46,28 @@ class RequestPasswordResetHandler implements CommandHandler<Void, RequestPasswor
             sendPasswordResetEmail(it)
         }
         this.clock = clock
+        this.googleRecaptcha = googleRecaptcha
     }
 
     Void execute(RequestPasswordReset command) {
-        def user = userRepository.findUserByEmail(command.email)
-        def token = UUID.randomUUID() as String
-        def optional = command.optional
+        if (googleRecaptcha.isValid(command.recaptchaToken, 'REQUEST_PASSWORD_RESET')) {
+            def user = userRepository.findUserByEmail(command.email)
+            def token = UUID.randomUUID() as String
+            def optional = command.optional
 
-        if (!user) {
-            LOG.info("Cannot reset password for non-existing email: " + command)
-            return null
-        
+            if (!user) {
+                LOG.info("Cannot reset password for non-existing email: " + command)
+                return null
+            
+            }
+            if (user.status == User.Status.LOCKED) {
+                LOG.info("Ignoring password reset request for locked user: " + user)
+                return null
+            }
+
+            userRepository.updateToken(user.username, token, clock.now())
+            messageQueue.publish(user: user, token: token, optional: optional)
         }
-        if (user.status == User.Status.LOCKED) {
-            LOG.info("Ignoring password reset request for locked user: " + user)
-            return null
-        }
-
-        userRepository.updateToken(user.username, token, clock.now())
-
-        messageQueue.publish(user: user, token: token, optional: optional)
         return null
     }
 
