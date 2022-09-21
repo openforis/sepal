@@ -124,6 +124,7 @@ export class Palette extends React.Component {
                 chromeless
                 additionalClassName={styles.element}
                 icon='plus'
+                air='none'
                 disabled={showTextInput}
                 tooltip={msg('map.visParams.form.palette.add.tooltip')}
                 onClick={() => this.addColor()}
