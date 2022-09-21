@@ -50,10 +50,10 @@ export class Item extends React.Component {
     }
 
     renderInfo() {
-        const {title, description} = this.props
+        const {title, description, nonClickable} = this.props
         return title || description
             ? (
-                <div className={styles.info}>
+                <div className={[styles.info, nonClickable ? styles.nonClickable : styles.clickable].join(' ')}>
                     {this.renderTitle()}
                     {this.renderDescription()}
                 </div>
@@ -103,6 +103,7 @@ Item.propTypes = {
     highlightClassName: PropTypes.string,
     highlightDescription: PropTypes.any,
     highlightTitle: PropTypes.any,
+    nonClickable: PropTypes.any,
     image: PropTypes.any,
     timestamp: PropTypes.any,
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),

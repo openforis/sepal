@@ -61,9 +61,7 @@ class ButtonPopup extends React.Component {
                 onMouseOut={onMouseOut}
                 disabled={disabled}
                 label={this.getLabel()}
-                tail={
-                    <Icon name={this.getIcon()} dimmed={this.getIconDimmed()}/>
-                }
+                tail={this.getChevron()}
             />
         )
     }
@@ -104,10 +102,24 @@ class ButtonPopup extends React.Component {
         )
     }
 
+    componentDidMount() {
+        const {showPopupOnMount} = this.props
+        if (showPopupOnMount) {
+            this.setState({showPopup: true})
+        }
+    }
+
     getLabel() {
         const {label} = this.props
         const {selectedOption} = this.state
         return (selectedOption && (selectedOption.buttonLabel || selectedOption.label)) || label
+    }
+
+    getChevron() {
+        const {noChevron} = this.props
+        return noChevron
+            ? null
+            : <Icon name={this.getIcon()} dimmed={this.getIconDimmed()}/>
     }
 
     getIcon() {
@@ -183,7 +195,9 @@ ButtonPopup.propTypes = {
     icon: PropTypes.string,
     label: PropTypes.any,
     look: PropTypes.string,
-    shape: PropTypes.oneOf(['rectangle', 'pill']),
+    noChevron: PropTypes.any,
+    shape: PropTypes.oneOf(['circle', 'rectangle', 'pill']),
+    showPopupOnMount: PropTypes.any,
     stayOpenOnBlur: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,

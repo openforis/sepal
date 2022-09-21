@@ -71,6 +71,13 @@ class _RecipeInput extends React.Component {
         )
     }
 
+    componentDidMount() {
+        const {input} = this.props
+        if (input.value) {
+            this.loadRecipe(input.value)
+        }
+    }
+
     getOptions() {
         const {projectId, projects, recipes, filter} = this.props
         const {all} = this.state

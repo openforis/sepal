@@ -35,7 +35,7 @@ module.exports = router =>
         .post('/image/assetVisualizations', stream(ctx => assetVisualizations$(ctx)))
         .post('/image/histogram', stream(ctx => imageHistogram$(ctx)))
         .post('/image/distinctBandValues', stream(ctx => distinctBandValues$(ctx)))
-        .get('/image/sample', stream(ctx => sampleImage$(ctx)))
+        .post('/image/sample', stream(ctx => sampleImage$(ctx)))
         .post('/imageMetadata', stream(ctx => imageMetadata$(ctx)))
         .post('/imageMetadata', stream(ctx => imageMetadata$(ctx)))
         .post('/assetMetadata', stream(ctx => assetMetadata$(ctx)))

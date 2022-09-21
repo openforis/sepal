@@ -13,7 +13,7 @@ const toFractionalYear = date => {
     const startOfNextYear = moment(startOfYear).add(1, 'years')
     const dayOfYear = moment(date).dayOfYear()
     const daysInYear = moment(startOfNextYear).diff(moment(startOfYear), 'days')
-    const fraction = (daysInYear - dayOfYear) / daysInYear
+    const fraction = dayOfYear / daysInYear
     const year = moment(date).get('year')
     return year + fraction
 }
@@ -96,10 +96,8 @@ const getChangeVisualizations = recipe => {
     } = selectFrom(recipe, 'model.date')
     const monitoringStart = moment(monitoringEnd, DATE_FORMAT).subtract(monitoringDuration, monitoringDurationUnit).format(DATE_FORMAT)
     const calibrationStart = moment(monitoringStart, DATE_FORMAT).subtract(calibrationDuration, calibrationDurationUnit).format(DATE_FORMAT)
-    // TODO: Difference - can we figure out a reasonable min/max somehow?
     const fractionalMonitoringEnd = toFractionalYear(monitoringEnd)
     const fractionalCalibrationStart = toFractionalYear(calibrationStart)
-
     const toOptions = visualizations => visualizations
         .map(visParams => {
             const band = visParams.bands[0]

@@ -70,7 +70,7 @@ class InputImage extends React.Component {
                     sections={sections}
                     selected={inputs.section}
                     icon='image'
-                    label={msg('IMAGE TO CLASSIFY')}
+                    label={msg('process.remapping.panel.inputImagery.sections.title')}
                     defaultButtons={
                         <Form.PanelButtons>
                             <Panel.Buttons.Add

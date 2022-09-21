@@ -54,8 +54,8 @@ const Logout = compose(
 )
 const Title = () => {
     const wikiURL = 'https://github.com/openforis/sepal'
-    const buildNumber = process.env.REACT_APP_BUILD_NUMBER
-    const gitCommit = process.env.REACT_APP_GIT_COMMIT
+    const buildNumber = window._sepal_global_.buildNumber
+    const gitCommit = window._sepal_global_.gitCommit
     const gitShortCommit = gitCommit && `${gitCommit.substring(0, 10)}...`
 
     const copyToClipboard = (value, message) => {

@@ -1,3 +1,5 @@
+![banner](https://raw.githubusercontent.com/openforis/sepal-doc/master/docs/source/_images/sepal_header.png)
+
 SEPAL
 =====
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/openforis/sepal/blob/master/license.txt)
