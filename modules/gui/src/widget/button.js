@@ -132,6 +132,30 @@ class _Button extends React.Component {
         }
     }
 
+    getKeymap(keybinding) {
+        return _.isArray(keybinding)
+            ? _.reduce(keybinding, (keymap, key) => ({...keymap, [key]: this.handleClick}), {})
+            : {[keybinding]: this.handleClick}
+    }
+
+    renderKeybinding(contents) {
+        const {keybinding, hidden} = this.props
+        return keybinding
+            ? (
+                <Keybinding
+                    keymap={this.getKeymap(keybinding)}
+                    disabled={hidden || !this.isActive()}>
+                    {contents}
+                </Keybinding>
+            )
+            : contents
+    }
+
+    renderVisible(contents) {
+        const {hidden} = this.props
+        return hidden ? null : contents
+    }
+
     // The Tooltip component stops propagation of events, thus the ref has to be on a wrapping element.
     renderWrapper(contents) {
         const {onClickHold} = this.props
@@ -206,25 +230,6 @@ class _Button extends React.Component {
         ) : contents
     }
 
-    getKeymap(keybinding) {
-        return _.isArray(keybinding)
-            ? _.reduce(keybinding, (keymap, key) => ({...keymap, [key]: this.handleClick}), {})
-            : {[keybinding]: this.handleClick}
-    }
-
-    renderKeybinding(contents) {
-        const {keybinding, hidden} = this.props
-        return keybinding
-            ? (
-                <Keybinding
-                    keymap={this.getKeymap(keybinding)}
-                    disabled={hidden || !this.isActive()}>
-                    {contents}
-                </Keybinding>
-            )
-            : contents
-    }
-
     renderButton(contents) {
         const {type, style, tabIndex, onClickHold, forwardedRef} = this.props
         return (
@@ -280,21 +285,39 @@ class _Button extends React.Component {
     }
 
     render() {
-        const {hidden} = this.props
-        return !hidden ? (
-            this.renderWrapper(
-                this.renderLink(
-                    this.renderTooltip(
-                        this.renderKeybinding(
-                            this.renderButton(
-                                this.renderContents()
+        return (
+            this.renderKeybinding(
+                this.renderVisible(
+                    this.renderWrapper(
+                        this.renderLink(
+                            this.renderTooltip(
+                                this.renderButton(
+                                    this.renderContents()
+                                )
                             )
                         )
                     )
                 )
             )
-        ) : null
+        )
     }
+
+    // render() {
+    //     const {hidden} = this.props
+    //     return !hidden ? (
+    //         this.renderWrapper(
+    //             this.renderLink(
+    //                 this.renderTooltip(
+    //                     this.renderKeybinding(
+    //                         this.renderButton(
+    //                             this.renderContents()
+    //                         )
+    //                     )
+    //                 )
+    //             )
+    //         )
+    //     ) : null
+    // }
 
     getContent() {
         const {content, children} = this.props
