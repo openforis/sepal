@@ -147,8 +147,9 @@ class ImageForm extends Component {
             return
         }
         const filteredSpecs = bandSetSpecs.value
-            .map(spec => BandSetSpec.filter(spec, loadedBands))
             .filter((spec, i) => !BandSetSpec.isEmpty(spec, loadedBands) || i === 0)
+            .map(spec => ({...spec, included: BandSetSpec.filter(spec, loadedBands)}))
+
         bandSetSpecs.set(filteredSpecs)
         bands.set(loadedBands)
         metadata.set(loadedMetadata)
