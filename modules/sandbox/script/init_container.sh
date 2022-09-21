@@ -1,9 +1,7 @@
 #!/bin/bash
 
-export sandbox_user=$1
-export sepal_host=$2
-export ldap_host=$3
-export ldap_admin_password=$4
+
+export sandbox_user=sepal-user
 
 function exportEnvironment {
     while read line; do
@@ -16,16 +14,20 @@ function template {
     chmod $3 $2
 }
 
-template /templates/ldap.secret /etc/ldap.secret 0400
-template /templates/sssd.conf /etc/sssd/sssd.conf 0400
+
 template /templates/shiny-server.conf /etc/shiny-server/shiny-server.conf 0444
 template /templates/supervisord.conf /etc/supervisor/conf.d/supervisord.conf 0400
-template /templates/ldap.conf /etc/ldap.conf 0400
-mkdir -p /etc/ldap
-ln -sf /etc/ldap.conf /etc/ldap/ldap.conf
 
 sandbox_user_id=`stat -c '%u' /home/$sandbox_user`
 home_group_id=`stat -c '%g' /home/$sandbox_user`
+
+groupadd -g ${home_group_id} sepal-user
+useradd sepal-user -u ${sandbox_user_id} -g ${home_group_id} -s /usr/bin/bash
+mkdir -p /home/sepal-user/.ssh
+authorized_keys=/home/$sandbox_user/.ssh/authorized_keys
+echo $USER_PUBLIC_KEY > $authorized_keys
+chown $sandbox_user_id:$home_group_id $authorized_keys
+
 mkdir -p /home/$sandbox_user/.log/shiny
 chown -R $sandbox_user_id:$home_group_id /home/$sandbox_user/.log
 mkdir -p /home/$sandbox_user/.shiny
@@ -39,11 +41,7 @@ printf '%s\n' \
     >> /etc/environment
 
 cp /etc/environment /etc/R/Renviron.site
-# LD_LIBRARY_PATH includes /usr/lib/x86_64-linux-gnu. Make sure /lib/x86_64-linux-gnu is also included
 sed -i -e 's/\/usr\/lib\/x86_64-linux-gnu/\/usr\/lib\/x86_64-linux-gnu:\/lib\/x86_64-linux-gnu/g' /usr/lib/R/etc/ldpaths
-
-ldap_ip=$(getent hosts $ldap_host | awk '{ print $1 }' | head -n 1)
-echo "$ldap_ip ldap" >> /etc/hosts
 
 TOT_MEM=$(awk '/MemFree/ { printf "%i\n", $2/1024 }' /proc/meminfo)
 if [[ (TOT_MEM -lt 3000) ]] ;then

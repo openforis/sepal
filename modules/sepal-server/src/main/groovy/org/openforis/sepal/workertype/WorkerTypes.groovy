@@ -12,6 +12,7 @@ final class WorkerTypes {
             (SANDBOX): new SandboxFactory(),
             (TASK_EXECUTOR): new TaskExecutorFactory()
     ]
+    static final String USER_HOME_NAME = 'sepal-user'
 
     static WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
         def factory = FACTORIES[id]
@@ -30,8 +31,8 @@ final class WorkerTypes {
             def eePrivateKey = config.googleEarthEnginePrivateKey.replaceAll(
                     '\n', '-----LINE BREAK-----')
             def volumes = [
-                (userHome): "/home/${username}",
-                (userTmp): ["/tmp", "/home/${username}/tmp"]
+                (userHome): "/home/${USER_HOME_NAME}",
+                (userTmp): ["/tmp", "/home/${USER_HOME_NAME}/tmp"]
             ]
             if (config.deployEnvironment == 'DEV') { // Allow hot-reload of task in DEV
                 volumes["${config.sepalHostProjectDir}/modules/task/src"] = '/usr/local/src/sepal/modules/task/src'
@@ -49,7 +50,7 @@ final class WorkerTypes {
                             EE_PRIVATE_KEY: eePrivateKey,
                             SEPAL_ENDPOINT: sepalEndpoint,
                             SEPAL_ADMIN_PASSWORD: config.sepalPassword,
-                            USERNAME: username,
+                            USERNAME: USER_HOME_NAME,
                             NODE_TLS_REJECT_UNAUTHORIZED: config.deployEnvironment == 'DEV' ? 0 : 1,
                             DEPLOY_ENVIRONMENT: config.deployEnvironment
                     ],
@@ -65,7 +66,7 @@ final class WorkerTypes {
             def username = instance.reservation.username
             def userHome = "${config.sepalHostDataDir}/sepal/home/${username}" as String
             def userTmp = tempDir(instance, config)
-            def ldapPem = "${config.sepalHostDataDir}/ldap/certificates/ldap-ca.crt.pem"
+            def userPublicKey = new File("/var/lib/sepal/user/home/${username}/.ssh/id_rsa.pub").text
             new WorkerType(SANDBOX, [
                     new Image(
                             name: 'sandbox',
@@ -73,25 +74,20 @@ final class WorkerTypes {
                             publishedPorts: publishedPorts,
                             volumes: [
                                     ("${config.sepalHostDataDir}/sepal/shiny"): '/shiny',
-                                    ("${config.sepalHostDataDir}/sepal/shared"): "/home/${username}/shared",
+                                    ("${config.sepalHostDataDir}/sepal/shared"): "/home/${USER_HOME_NAME}/shared",
                                     ("${config.sepalHostDataDir}/sepal/jupyter/current-kernels"): "/usr/local/share/jupyter/kernels/",
-                                    (userHome): "/home/${username}",
-                                    (userTmp): ["/tmp", "/home/${username}/tmp"],
-                                    (ldapPem): "/etc/ldap/certificates/ldap-ca.crt.pem"
+                                    (userHome): "/home/${USER_HOME_NAME}",
+                                    (userTmp): ["/tmp", "/home/${USER_HOME_NAME}/tmp"],
+                            ],
+                            environment: [
+                                    USER_PUBLIC_KEY: userPublicKey
                             ],
                             runCommand: [
                                     '/script/init_container.sh',
-                                    username,
-                                    config.sepalHost,
-                                    config.ldapHost,
-                                    config.ldapPassword,
-                                    config.sepalUser,
-                                    config.sepalPassword
                             ],
                             waitCommand: [
                                     "/script/wait_until_initialized.sh",
-                                    publishedPorts.values().join(';'),
-                                    username
+                                    publishedPorts.values().join(';')
                             ]
                     )
             ])

@@ -71,7 +71,7 @@ class BudgetComponentAdapter_IntegrationTest extends AbstractBudgetTest {
     }
 
     def 'When getting user spending, budget and spending is returned'() {
-        updateUserBudget(new Budget(instanceSpending: 1, storageSpending: 2, storageQuota: 3))
+        updateUserBudget(createBudget(instanceSpending: 1, storageSpending: 2, storageQuota: 3))
         session(start: '2016-01-01', hours: 1, hourlyCost: 4)
         storageCost(5)
         storage(gb: 2, start: '2016-01-01', days: 30)
@@ -98,34 +98,34 @@ class BudgetComponentAdapter_IntegrationTest extends AbstractBudgetTest {
 
 
     private void exceededInstanceBudget() {
-        updateUserBudget(new Budget(instanceSpending: 100))
+        updateUserBudget(createBudget(instanceSpending: 100))
         session(start: '2016-01-01', hours: 1, hourlyCost: 101)
     }
 
     private void notExceededInstanceBudget() {
-        updateUserBudget(new Budget(instanceSpending: 100))
+        updateUserBudget(createBudget(instanceSpending: 100))
         session(start: '2016-01-01', hours: 1, hourlyCost: 99)
     }
 
     private void exceededStorageBudget() {
-        updateUserBudget(new Budget(storageSpending: 1, storageQuota: 999))
+        updateUserBudget(createBudget(storageSpending: 1, storageQuota: 999))
         storageCost(1)
         storage(gb: 2, start: '2016-01-01', days: 30)
     }
 
     private void notExceededStorageBudget() {
-        updateUserBudget(new Budget(storageSpending: 2, storageQuota: 999))
+        updateUserBudget(createBudget(storageSpending: 2, storageQuota: 999))
         storageCost(1)
         storage(gb: 1, start: '2016-01-01', days: 30)
     }
 
     private void exceededStorageQuota() {
-        updateUserBudget(new Budget(storageQuota: 2))
+        updateUserBudget(createBudget(storageQuota: 2))
         storage(gb: 3)
     }
 
     private void notExceededStorageQuota() {
-        updateUserBudget(new Budget(storageQuota: 2))
+        updateUserBudget(createBudget(storageQuota: 2))
         storage(gb: 1)
     }
 }
