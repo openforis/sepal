@@ -24,6 +24,10 @@
     <link href="https://fonts.googleapis.com/css?family=Merriweather: 400,300,300italic,400italic,700,700italic,900,900italic" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Ubuntu+Mono: 400,700" rel="stylesheet">
     <script>
+        window.process = {} // HACK: temporary fix after switching to create-react-app 5
+        window.googleAnalyticsId = '${GOOGLE_ANALYTICS_ID}'
+        window.googleMapsApiKey = '${GOOGLE_MAPS_API_KEY}'
+        window.googleRecaptchaSiteKey = '${GOOGLE_RECAPTCHA_SITE_KEY}'
         window._sepal_global_ = {
             gitCommit: '%REACT_APP_GIT_COMMIT%' || '${GIT_COMMIT}',
             buildNumber: '%REACT_APP_BUILD_NUMBER%' || '${BUILD_NUMBER}',

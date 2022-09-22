@@ -105,13 +105,8 @@ class _Login extends React.Component {
     }
 
     login(credentials) {
-        const {recaptchaContext: {recaptcha$}} = this.props
         const {stream} = this.props
-        stream('LOGIN',
-            recaptcha$('LOGIN').pipe(
-                switchMap(recaptchaToken => login$(credentials, recaptchaToken))
-            )
-        )
+        stream('LOGIN', login$(credentials))
     }
 
     componentWillUnmount() {
@@ -121,8 +116,7 @@ class _Login extends React.Component {
 
 export const Login = compose(
     _Login,
-    form({fields, mapStateToProps}),
-    withRecaptchaContext()
+    form({fields, mapStateToProps})
 )
 
 Login.propTypes = {

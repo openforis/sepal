@@ -1,3 +1,20 @@
+Modules
+
+    5011: app-manager
+    8001: gateway
+    5001: gee
+    80, 443: haproxy
+    389, 636: ldap
+    80: letsencrypt
+    3306: mysql
+    8180: r-proxy
+    1025, 5005: sepal-server
+    22: ssh-gateway
+    1026: task
+    8000: terminal
+    80, 5006: user
+    5999: user-files
+
 Node debug
 
 Ports exposed in dev-env/docker-compose.yml: 9230-9249
@@ -22,3 +39,19 @@ Ports exposed in dev-env/docker-compose.yml: 9230-9249
     9247: <free>
     9248: <free>
     9249: <free>
+
+Log ports:
+
+    5100: gateway
+    5101: gee
+    5102: task
+    5103: user-storage
+    5104: email
+    5105: sys-monitor
+    5106: app-manager
+    5107: terminal
+    5108: user-files
+    5109: r-proxy
+    5110: user (temporarily user-node)
+    
+    

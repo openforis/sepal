@@ -40,9 +40,9 @@ export default {
             }
         }),
 
-    login$: ({username, password, recaptchaToken}) =>
+    login$: ({username, password}) =>
         post$('/api/user/login', {
-            basicAuth: [username, password, recaptchaToken],
+            basicAuth: [username, password],
             validStatuses: [200, 401],
         }),
 

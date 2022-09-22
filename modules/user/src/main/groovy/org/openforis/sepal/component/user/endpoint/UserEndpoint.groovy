@@ -90,8 +90,7 @@ class UserEndpoint {
                 LOG.info('Authenticating user')
                 def username = params.required('username', String)
                 def password = params.required('password', String)
-                def recaptchaToken = params.required('recaptchaToken', String)
-                def user = component.submit(new Authenticate(username, password, recaptchaToken))
+                def user = component.submit(new Authenticate(username, password))
                 if (user) {
                     LOG.info('Authenticated ' + user)
                     component.submit(

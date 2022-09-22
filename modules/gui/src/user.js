@@ -19,9 +19,9 @@ export const loadUser$ = () =>
         tap(user => updateUser(user))
     )
 
-export const login$ = ({username, password}, recaptchaToken) => {
+export const login$ = ({username, password}) => {
     resetInvalidCredentials()
-    return api.user.login$({username, password, recaptchaToken}).pipe(
+    return api.user.login$({username, password}).pipe(
         catchError(() => {
             Notifications.error({message: msg('landing.login.error')})
             return EMPTY
