@@ -147,8 +147,13 @@ class _ListItem extends React.Component {
             lookStyles.look,
             lookStyles.transparent,
             lookStyles.noTransitions,
-            clickable ? null : lookStyles.hoverDisabled,
-            (this.isDragging() || this.isDraggable() && !this.isClickable()) ? lookStyles.draggable : null,
+            // clickable ? null : lookStyles.hoverDisabled,
+            // (this.isDragging() || this.isDraggable() && !this.isClickable()) ? lookStyles.draggable : null,
+            (this.isDragging() || this.isDraggable() && !clickable)
+                ? lookStyles.draggable
+                : clickable
+                    ? null
+                    : lookStyles.hoverDisabled,
             this.isDisabled() ? lookStyles.disabled : null
         ]
     }
