@@ -93,6 +93,7 @@ class _Combo extends React.Component {
                 busyMessage={busyMessage}>
                 <div
                     ref={this.inputContainer}
+                    className={styles.inputContainer}
                     onClick={this.onClick}>
                     {this.renderInput()}
                 </div>

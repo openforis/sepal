@@ -15,3 +15,7 @@
     --background-color: hsla(0, 0%, 0%, .9);
     background-color: var(--background-color);
 }
+
+.inputContainer {
+    pointer-events: all;
+}
