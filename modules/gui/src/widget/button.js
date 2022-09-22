@@ -25,6 +25,13 @@ class _Button extends React.Component {
         const {onClickHold} = props
         this.button = onClickHold && React.createRef()
         this.handleClick = this.handleClick.bind(this)
+        this.renderKeybinding = this.renderKeybinding.bind(this)
+        this.renderVisible = this.renderVisible.bind(this)
+        this.renderWrapper = this.renderWrapper.bind(this)
+        this.renderLink = this.renderLink.bind(this)
+        this.renderTooltip = this.renderTooltip.bind(this)
+        this.renderButton = this.renderButton.bind(this)
+        this.renderContents = this.renderContents.bind(this)
     }
 
     stopPropagation() {
@@ -138,26 +145,26 @@ class _Button extends React.Component {
             : {[keybinding]: this.handleClick}
     }
 
-    renderKeybinding(contents) {
+    renderKeybinding([current, ...next]) {
         const {keybinding, hidden} = this.props
         return keybinding
             ? (
                 <Keybinding
                     keymap={this.getKeymap(keybinding)}
                     disabled={hidden || !this.isActive()}>
-                    {contents}
+                    {current(next)}
                 </Keybinding>
             )
-            : contents
+            : current(next)
     }
 
-    renderVisible(contents) {
+    renderVisible([current, ...next]) {
         const {hidden} = this.props
-        return hidden ? null : contents
+        return hidden ? null : current(next)
     }
 
     // The Tooltip component stops propagation of events, thus the ref has to be on a wrapping element.
-    renderWrapper(contents) {
+    renderWrapper([current, ...next]) {
         const {onClickHold} = this.props
         const style = {
             '--click-hold-delay-ms': `${CLICK_CANCEL_DELAY_MS}ms`,
@@ -165,24 +172,24 @@ class _Button extends React.Component {
         }
         return onClickHold ? (
             <span ref={this.button} className={styles.wrapper} style={style}>
-                {contents}
+                {current(next)}
             </span>
-        ) : contents
+        ) : current(next)
     }
 
-    renderLink(contents) {
+    renderLink([current, ...next]) {
         const {route, linkUrl} = this.props
         if (!route && !linkUrl) {
-            return contents
+            return current(next)
         }
         if (route && linkUrl) {
             throw Error('Cannot specify route and linkUrl at the same time.')
         }
         if (route) {
-            return this.renderRouteLink(contents)
+            return this.renderRouteLink(current(next))
         }
         if (linkUrl) {
-            return this.renderPlainLink(contents)
+            return this.renderPlainLink(current(next))
         }
     }
 
@@ -208,7 +215,7 @@ class _Button extends React.Component {
             : contents
     }
 
-    renderTooltip(contents) {
+    renderTooltip([current, ...next]) {
         const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipVisible, tooltipClickTrigger} = this.props
         const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
         const message = tooltipPanel || tooltip
@@ -225,12 +232,12 @@ class _Button extends React.Component {
                 onVisibleChange={tooltipOnVisible}
                 {...visibility}
             >
-                {contents}
+                {current(next)}
             </Tooltip>
-        ) : contents
+        ) : current(next)
     }
 
-    renderButton(contents) {
+    renderButton([current, ...next]) {
         const {type, style, tabIndex, onClickHold, forwardedRef} = this.props
         return (
             <button
@@ -245,7 +252,7 @@ class _Button extends React.Component {
                 onMouseDown={e => this.handleMouseDown(e)}
                 onClick={e => onClickHold ? e.stopPropagation() : this.handleClick(e)}
             >
-                {contents}
+                {current(next)}
             </button>
         )
     }
@@ -285,39 +292,17 @@ class _Button extends React.Component {
     }
 
     render() {
-        return (
-            this.renderKeybinding(
-                this.renderVisible(
-                    this.renderWrapper(
-                        this.renderLink(
-                            this.renderTooltip(
-                                this.renderButton(
-                                    this.renderContents()
-                                )
-                            )
-                        )
-                    )
-                )
-            )
-        )
+        const [current, ...next] = [
+            this.renderKeybinding,
+            this.renderVisible,
+            this.renderWrapper,
+            this.renderLink,
+            this.renderTooltip,
+            this.renderButton,
+            this.renderContents
+        ]
+        return current(next)
     }
-
-    // render() {
-    //     const {hidden} = this.props
-    //     return !hidden ? (
-    //         this.renderWrapper(
-    //             this.renderLink(
-    //                 this.renderTooltip(
-    //                     this.renderKeybinding(
-    //                         this.renderButton(
-    //                             this.renderContents()
-    //                         )
-    //                     )
-    //                 )
-    //             )
-    //         )
-    //     ) : null
-    // }
 
     getContent() {
         const {content, children} = this.props
@@ -388,12 +373,13 @@ class _Button extends React.Component {
     }
 }
 
-export const Button = compose(
-    _Button,
-    withSubscriptions(),
-    withButtonGroupContext(),
-    withForwardedRef()
-)
+export const Button =
+    compose(
+        React.memo(_Button),
+        withSubscriptions(),
+        withButtonGroupContext(),
+        withForwardedRef()
+    )
 
 Button.propTypes = {
     additionalClassName: PropTypes.string,
