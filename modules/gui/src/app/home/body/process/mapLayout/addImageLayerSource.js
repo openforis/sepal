@@ -20,6 +20,13 @@ export class AddImageLayerSource extends React.Component {
 }
 
 class _AddImageLayerSourcePanel extends React.Component {
+    constructor(props) {
+        super(props)
+        this.selectRecipe = this.selectRecipe.bind(this)
+        this.selectAsset = this.selectAsset.bind(this)
+        this.selectPlanet = this.selectPlanet.bind(this)
+    }
+
     render() {
         const {activatable: {deactivate}} = this.props
         return (
@@ -52,7 +59,7 @@ class _AddImageLayerSourcePanel extends React.Component {
 
     renderRecipeButton() {
         return (
-            <ListItem onClick={() => this.selectRecipe()}>
+            <ListItem onClick={this.selectRecipe}>
                 <CrudItem
                     title={msg('imageLayerSources.Recipe.label')}
                     description={msg('map.layout.addImageLayerSource.types.Recipe.description')}
@@ -63,7 +70,7 @@ class _AddImageLayerSourcePanel extends React.Component {
 
     renderAssetButton() {
         return (
-            <ListItem onClick={() => this.selectAsset()}>
+            <ListItem onClick={this.selectAsset}>
                 <CrudItem
                     title={msg('imageLayerSources.Asset.label')}
                     description={msg('map.layout.addImageLayerSource.types.Asset.description')}
@@ -74,7 +81,7 @@ class _AddImageLayerSourcePanel extends React.Component {
 
     renderPlanetButton() {
         return (
-            <ListItem onClick={() => this.selectPlanet()}>
+            <ListItem onClick={this.selectPlanet}>
                 <CrudItem
                     title={msg('imageLayerSources.Planet.label')}
                     description={msg('map.layout.addImageLayerSource.types.Planet.description')}
