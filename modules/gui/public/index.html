@@ -23,22 +23,25 @@
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro: 200,300,400,600,700,900,200italic,300italic,400italic,600italic,700italic,900italic" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Merriweather: 400,300,300italic,400italic,700,700italic,900,900italic" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Ubuntu+Mono: 400,700" rel="stylesheet">
-    <script async src="https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ANALYTICS_ID}"></script>
+    <script>
+        window._sepal_global_ = {
+            gitCommit: '%REACT_APP_GIT_COMMIT%' || '${GIT_COMMIT}',
+            buildNumber: '%REACT_APP_BUILD_NUMBER%' || '${BUILD_NUMBER}',
+            googleAnalyticsId: '%REACT_APP_GOOGLE_ANALYTICS_ID%' || '${GOOGLE_ANALYTICS_ID}',
+            googleMapsApiKey: '%REACT_APP_GOOGLE_MAPS_API_KEY%' || '${GOOGLE_MAPS_API_KEY}',
+            googleRecaptchaSiteKey: '%REACT_APP_GOOGLE_RECAPTCHA_SITE_KEY%' || '${GOOGLE_RECAPTCHA_SITE_KEY}'
+        }
+        var scriptElement = document.createElement("script");
+        scriptElement.async = true
+        scriptElement.src = 'https://www.googletagmanager.com/gtag/js?id=' + window._sepal_global_.googleAnalyticsId
+        document.head.appendChild(scriptElement)
+    </script>
     <script>
         window.process = {} // HACK: temporary fix after switching to create-react-app 5
-        window.googleAnalyticsId = '${GOOGLE_ANALYTICS_ID}'
-        window.googleMapsApiKey = '${GOOGLE_MAPS_API_KEY}'
-        window.googleRecaptchaSiteKey = '${GOOGLE_RECAPTCHA_SITE_KEY}'
-        window._sepal_global_ = {
-            gitCommit: '${GIT_COMMIT}',
-            buildNumber: '${BUILD_NUMBER}',
-            googleAnalyticsId: '${GOOGLE_ANALYTICS_ID}',
-            googleMapsApiKey: '${GOOGLE_MAPS_API_KEY}'
-        }
         window.dataLayer = window.dataLayer || []
         function gtag(){dataLayer.push(arguments)}
         gtag('js', new Date())
-        gtag('config', window.googleAnalyticsId)
+        gtag('config', window._sepal_global_.googleAnalyticsId)
     </script>
 
     <title>S E P A L</title>
