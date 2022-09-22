@@ -76,7 +76,7 @@ export default class Credentials extends React.Component {
         const {mode} = this.state
         const ANIMATION_DURATION_MS = 500
         return (
-            <Recaptcha siteKey={window.googleRecaptchaSiteKey}>
+            <Recaptcha siteKey={window._sepal_global_.googleRecaptchaSiteKey}>
                 <div className={styles.container}>
                     <AnimateReplacement
                         currentKey={mode}
