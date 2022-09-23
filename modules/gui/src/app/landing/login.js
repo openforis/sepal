@@ -3,10 +3,9 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
-import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
+import {credentialsPosted, invalidCredentials, login$} from 'user'
 import {msg} from 'translate'
-import {switchMap} from 'rxjs'
-import {withRecaptchaContext} from 'widget/recaptcha'
+import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -106,11 +105,15 @@ class _Login extends React.Component {
 
     login(credentials) {
         const {stream} = this.props
-        stream('LOGIN', login$(credentials))
-    }
-
-    componentWillUnmount() {
-        resetInvalidCredentials()
+        stream('LOGIN',
+            login$(credentials),
+            user => {
+                credentialsPosted(user)
+            },
+            () => {
+                Notifications.error({message: msg('landing.login.error')})
+            }
+        )
     }
 }
 

@@ -1,12 +1,12 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
+import {EMPTY, catchError, forkJoin, switchMap, tap} from 'rxjs'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
 import {signUp$, validateEmail$, validateUsername$} from 'user'
-import {switchMap} from 'rxjs'
 import {withRecaptchaContext} from 'widget/recaptcha'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
@@ -24,8 +24,6 @@ const fields = {
         .email('landing.signup.email.format'),
     organization: new Form.Field()
         .notBlank('landing.signup.organization.required'),
-    intendedUse: new Form.Field()
-        .notBlank('landing.signup.intendedUse.required')
 }
 
 const mapStateToProps = () => ({
@@ -33,17 +31,13 @@ const mapStateToProps = () => ({
 })
 
 class _SignUp extends React.Component {
-    state = {
-        formPage: 1
-    }
-
     constructor(props) {
         super(props)
         this.next = this.next.bind(this)
         this.back = this.back.bind(this)
         this.submit = this.submit.bind(this)
-        this.validateUsername = this.validateUsername.bind(this)
-        this.validateEmail = this.validateEmail.bind(this)
+        this.checkUsername = this.checkUsername.bind(this)
+        this.checkEmail = this.checkEmail.bind(this)
     }
     
     render() {
@@ -57,15 +51,7 @@ class _SignUp extends React.Component {
     }
 
     renderForm() {
-        const {formPage} = this.state
-        switch (formPage) {
-        case 1: return this.renderFirstPage()
-        case 2: return this.renderSecondPage()
-        }
-    }
-
-    renderFirstPage() {
-        const {inputs: {username, name, email, organization}, onCancel} = this.props
+        const {inputs: {username, name, email, organization}, action, onCancel} = this.props
         return (
             <Layout spacing='normal'>
                 <Form.Input
@@ -76,7 +62,7 @@ class _SignUp extends React.Component {
                     tabIndex={1}
                     busyMessage={this.props.stream('VALIDATE_USERNAME').active && msg('widget.loading')}
                     errorMessage
-                    onBlur={this.validateUsername}
+                    onBlur={this.checkUsername}
                 />
                 <Form.Input
                     label={msg('landing.signup.name.label')}
@@ -92,7 +78,7 @@ class _SignUp extends React.Component {
                     tabIndex={3}
                     busyMessage={this.props.stream('VALIDATE_EMAIL').active && msg('widget.loading')}
                     errorMessage
-                    onBlur={this.validateEmail}
+                    onBlur={this.checkEmail}
                 />
                 <Form.Input
                     label={msg('landing.signup.organization.label')}
@@ -107,50 +93,12 @@ class _SignUp extends React.Component {
                         look='transparent'
                         size='x-large'
                         shape='pill'
-                        icon='undo'
+                        icon='arrow-left'
                         label={msg('landing.forgot-password.cancel-link')}
-                        tabIndex={5}
+                        tabIndex={-1}
+                        keybinding='Escape'
                         onMouseDown={e => e.preventDefault()}
                         onClick={onCancel}
-                    />
-                    <Button
-                        look='apply'
-                        size='x-large'
-                        shape='pill'
-                        icon={'arrow-right'}
-                        label={msg('button.next')}
-                        tabIndex={6}
-                        onClick={this.next}
-                    />
-                </ButtonGroup>
-            </Layout>
-        )
-    }
-
-    renderSecondPage() {
-        const {inputs: {intendedUse}, action} = this.props
-        return (
-            <Layout spacing='normal'>
-                <Form.Input
-                    textArea
-                    minRows={5}
-                    maxRows={10}
-                    label={msg('landing.signup.intendedUse.label')}
-                    input={intendedUse}
-                    placeholder={msg('landing.signup.intendedUse.placeholder')}
-                    tabIndex={1}
-                    errorMessage
-                />
-                <ButtonGroup layout='horizontal-nowrap' alignment='spaced'>
-                    <Button
-                        type='submit'
-                        look='apply'
-                        size='x-large'
-                        shape='pill'
-                        icon={'arrow-left'}
-                        label={msg('button.back')}
-                        tabIndex={2}
-                        onClick={this.back}
                     />
                     <Button
                         type='submit'
@@ -167,57 +115,59 @@ class _SignUp extends React.Component {
         )
     }
 
-    validateUsername() {
-        const {inputs: {username}, recaptchaContext: {recaptcha$}, stream} = this.props
+    checkUsername$() {
+        const {inputs: {username}, recaptchaContext: {recaptcha$}} = this.props
+        return recaptcha$('VALIDATE_USERNAME').pipe(
+            switchMap(recaptchaToken =>
+                validateUsername$({username: username.value, recaptchaToken})
+            ),
+            tap(valid => {
+                username.setInvalid(
+                    username.isInvalid() || !valid && msg('landing.signup.username.duplicate')
+                )
+            }),
+            catchError(error => {
+                username.setInvalid(
+                    error.response
+                        ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+                        : msg('landing.signup.username.cannotValidate')
+                )
+            })
+        )
+    }
+
+    checkUsername() {
+        const {inputs: {username}, stream} = this.props
         if (username && !username.isInvalid()) {
-            stream('VALIDATE_USERNAME',
-                recaptcha$('VALIDATE_USERNAME').pipe(
-                    switchMap(recaptchaToken =>
-                        validateUsername$({username: username.value, recaptchaToken})
-                    )
-                ),
-                ({valid}) => {
-                    username.setInvalid(
-                        username.isInvalid() || !valid && msg('landing.signup.username.duplicate')
-                    )
-                    this.setState({validatingUsername: false})
-                },
-                error => {
-                    username.setInvalid(
-                        error.response
-                            ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                            : msg('landing.signup.username.cannotValidate')
-                    )
-                    this.setState({validatingUsername: false})
-                }
-            )
+            stream('VALIDATE_USERNAME', this.checkUsername$())
         }
     }
 
-    validateEmail() {
-        const {inputs: {email}, recaptchaContext: {recaptcha$}, stream} = this.props
+    checkEmail$() {
+        const {inputs: {email}, recaptchaContext: {recaptcha$}} = this.props
+        return recaptcha$('VALIDATE_EMAIL').pipe(
+            switchMap(recaptchaToken =>
+                validateEmail$({email: email.value, recaptchaToken})
+            ),
+            tap(valid => {
+                email.setInvalid(
+                    email.isInvalid() || !valid && msg('landing.signup.email.duplicate')
+                )
+            }),
+            catchError(error => {
+                email.setInvalid(
+                    error.response
+                        ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+                        : msg('landing.signup.email.cannotValidate')
+                )
+            })
+        )
+    }
+
+    checkEmail() {
+        const {inputs: {email}, stream} = this.props
         if (email && !email.isInvalid()) {
-            stream('VALIDATE_EMAIL',
-                recaptcha$('VALIDATE_EMAIL').pipe(
-                    switchMap(recaptchaToken =>
-                        validateEmail$({email: email.value, recaptchaToken})
-                    )
-                ),
-                ({valid}) => {
-                    email.setInvalid(
-                        email.isInvalid() || !valid && msg('landing.signup.email.duplicate')
-                    )
-                    this.setState({validatingEmail: false})
-                },
-                error => {
-                    email.setInvalid(
-                        error.response
-                            ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                            : msg('landing.signup.email.cannotValidate')
-                    )
-                    this.setState({validatingEmail: false})
-                }
-            )
+            stream('VALIDATE_EMAIL', this.checkEmail$())
         }
     }
 
@@ -230,13 +180,23 @@ class _SignUp extends React.Component {
         const {onCancel, recaptchaContext: {recaptcha$}, stream} = this.props
         const {email} = userDetails
         stream('SIGN_UP',
-            recaptcha$('SIGN_UP').pipe(
-                switchMap(recaptchaToken => signUp$(userDetails, recaptchaToken))
+            forkJoin(this.checkUsername$(), this.checkEmail$()).pipe(
+                switchMap(([usernameValid, emailValid]) => {
+                    if (usernameValid && emailValid) {
+                        return recaptcha$('SIGN_UP').pipe(
+                            switchMap(recaptchaToken => signUp$(userDetails, recaptchaToken))
+                        )
+                    } else {
+                        return EMPTY
+                    }
+                })
             ),
-            () => {
-                Notifications.success({message: msg('landing.signup.success', {email})})
-                publishEvent('signed_up')
-                onCancel()
+            success => {
+                if (success) {
+                    Notifications.success({message: msg('landing.signup.success', {email})})
+                    publishEvent('signed_up')
+                    onCancel()
+                }
             },
             error => console.error({error})
         )

@@ -1,5 +1,4 @@
-import {EMPTY, catchError, map, of, switchMap, tap} from 'rxjs'
-import {history} from 'route'
+import {catchError, map, of, switchMap, tap} from 'rxjs'
 import {msg} from 'translate'
 import {publishCurrentUserEvent, publishEvent} from 'eventPublisher'
 import {select} from 'store'
@@ -23,15 +22,10 @@ export const loadUser$ = () =>
 export const login$ = ({username, password}) => {
     resetInvalidCredentials()
     return api.user.login$({username, password}).pipe(
-        catchError(() => {
-            Notifications.error({message: msg('landing.login.error')})
-            return EMPTY
-        }),
         tap(user => {
             publishEvent(user ? 'login' : 'login_failed')
             publishCurrentUserEvent(user)
-        }),
-        map(user => credentialsPosted(user))
+        })
     )
 }
 
@@ -40,20 +34,16 @@ export const logout$ = () =>
         tap(() => document.location = '/' /* force full state reset*/)
     )
 
-export const resetPassword$ = ({token, username, password, type, recaptchaToken}) =>
-    api.user.resetPassword$({token, password, recaptchaToken}).pipe(
-        tap(() => publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')),
-        switchMap(() => api.user.login$({username, password})),
-        tap(user => {
-            credentialsPosted(user)
-            history().push('/process')
-            Notifications.success({message: msg('landing.reset-password.success')})
-        }),
-        catchError(() => {
-            Notifications.error({message: msg('landing.login.error')})
-            return EMPTY
-        })
+export const resetPassword$ = ({token, username, password, type, recaptchaToken}) => {
+    return api.user.resetPassword$({token, password, recaptchaToken}).pipe(
+        tap(() =>
+            publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')
+        ),
+        switchMap(() =>
+            login$({username, password})
+        )
     )
+}
 
 export const updateUser = user => {
     publishCurrentUserEvent(user)
@@ -103,10 +93,14 @@ export const signUp$ = (userDetails, recaptchaToken) =>
     api.user.signUp$(userDetails, recaptchaToken)
 
 export const validateUsername$ = ({username, recaptchaToken}) =>
-    api.user.validateUsername$({username, recaptchaToken})
+    api.user.validateUsername$({username, recaptchaToken}).pipe(
+        map(({valid}) => valid)
+    )
     
 export const validateEmail$ = ({email, recaptchaToken}) =>
-    api.user.validateEmail$({email, recaptchaToken})
+    api.user.validateEmail$({email, recaptchaToken}).pipe(
+        map(({valid}) => valid)
+    )
 
 export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled}) =>
     api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled}).pipe(
@@ -144,7 +138,7 @@ export const stopCurrentUserSession$ = session =>
         )
     )
 
-const credentialsPosted = user =>
+export const credentialsPosted = user =>
     actionBuilder('CREDENTIALS_POSTED')
         .set('user.currentUser', user)
         .set('user.login.invalidCredentials', !user)

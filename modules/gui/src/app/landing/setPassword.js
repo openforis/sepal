@@ -4,8 +4,8 @@ import {CenteredProgress} from 'widget/progress'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
+import {credentialsPosted, resetPassword$, tokenUser, validateToken$} from 'user'
 import {history, query} from 'route'
-import {login$, logout$, resetPassword$, tokenUser, validateToken$} from 'user'
 import {msg} from 'translate'
 import {switchMap} from 'rxjs'
 import {withRecaptchaContext} from 'widget/recaptcha'
@@ -51,9 +51,11 @@ class _SetPassword extends React.Component {
         const token = query().token
         stream('VALIDATE_TOKEN',
             validateToken$(token),
-            user => actionBuilder('TOKEN_VALIDATED')
-                .set('user.tokenUser', user)
-                .dispatch(),
+            user => {
+                actionBuilder('TOKEN_VALIDATED')
+                    .set('user.tokenUser', user)
+                    .dispatch()
+            },
             () => {
                 Notifications.error({
                     message: msg('landing.validate-token.error'),
@@ -79,8 +81,18 @@ class _SetPassword extends React.Component {
         const token = query().token
         stream('RESET_PASSWORD',
             recaptcha$('RESET_PASSWORD').pipe(
-                switchMap(recaptchaToken => resetPassword$({token, username, password, type, recaptchaToken}))
-            )
+                switchMap(recaptchaToken =>
+                    resetPassword$({token, username, password, type, recaptchaToken})
+                )
+            ),
+            user => {
+                credentialsPosted(user)
+                history().push('/process')
+                Notifications.success({message: msg('landing.reset-password.success')})
+            },
+            () => {
+                Notifications.error({message: msg('landing.reset-password.error')})
+            }
         )
     }
 

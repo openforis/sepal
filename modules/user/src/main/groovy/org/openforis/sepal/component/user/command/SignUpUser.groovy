@@ -29,7 +29,6 @@ class SignUpUser extends AbstractCommand<User> {
     String name
     String email
     String organization
-    String intendedUse
     String recaptchaToken
 }
 
@@ -72,7 +71,6 @@ class SignUpUserHandler implements CommandHandler<Boolean, SignUpUser> {
                     username: command.username,
                     email: command.email,
                     organization: command.organization,
-                    intendedUse: command.intendedUse,
                     emailNotificationsEnabled: true,
                     status: PENDING,
                     roles: [].toSet(),

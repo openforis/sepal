@@ -83,9 +83,7 @@ export default class Credentials extends React.Component {
                         timeout={ANIMATION_DURATION_MS}
                         classNames={{enter: styles.formEnter, exit: styles.formExit}}
                         style={{height: '100%', '--animation-duration': `${ANIMATION_DURATION_MS}ms`}}>
-                        <div className={styles.form}>
-                            {this.renderPanel()}
-                        </div>
+                        {this.renderPanel()}
                     </AnimateReplacement>
                 </div>
             </Recaptcha>

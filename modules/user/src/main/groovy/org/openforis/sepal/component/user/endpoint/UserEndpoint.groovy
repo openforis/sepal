@@ -39,7 +39,6 @@ class UserEndpoint {
                     name        : nameConstraints,
                     email       : emailConstraints,
                     organization: organizationConstraints,
-                    intendedUse : intendedUseConstraints,
                     recaptchaToken: recaptchaTokenConstraints
             ])
             constrain(InviteUser, [
