@@ -1,4 +1,5 @@
 import {EMPTY, catchError, map, of, switchMap, tap} from 'rxjs'
+import {history} from 'route'
 import {msg} from 'translate'
 import {publishCurrentUserEvent, publishEvent} from 'eventPublisher'
 import {select} from 'store'
@@ -39,13 +40,13 @@ export const logout$ = () =>
         tap(() => document.location = '/' /* force full state reset*/)
     )
 
-export const resetPassword$ = ({token, password, type, recaptchaToken}) =>
+export const resetPassword$ = ({token, username, password, type, recaptchaToken}) =>
     api.user.resetPassword$({token, password, recaptchaToken}).pipe(
         tap(() => publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')),
-        // switchMap(() => api.user.login$(username, password)),
-        tap(_user => {
-            // credentialsPosted(user)
-            // history().push('/process')
+        switchMap(() => api.user.login$({username, password})),
+        tap(user => {
+            credentialsPosted(user)
+            history().push('/process')
             Notifications.success({message: msg('landing.reset-password.success')})
         }),
         catchError(() => {

@@ -100,6 +100,10 @@ class _ForgotPassword extends React.Component {
             () => {
                 Notifications.success({message: msg('landing.forgot-password.success', {email})})
                 onCancel()
+            },
+            () => {
+                Notifications.error({message: msg('landing.forgot-password.error')})
+                onCancel()
             }
         )
     }

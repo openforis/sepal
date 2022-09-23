@@ -183,9 +183,11 @@ class _SignUp extends React.Component {
                     this.setState({validatingUsername: false})
                 },
                 error => {
-                    error.response
-                        ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                        : msg('landing.signup.username.cannotValidate')
+                    username.setInvalid(
+                        error.response
+                            ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+                            : msg('landing.signup.username.cannotValidate')
+                    )
                     this.setState({validatingUsername: false})
                 }
             )
@@ -208,9 +210,11 @@ class _SignUp extends React.Component {
                     this.setState({validatingEmail: false})
                 },
                 error => {
-                    error.response
-                        ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                        : msg('landing.signup.email.cannotValidate')
+                    email.setInvalid(
+                        error.response
+                            ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+                            : msg('landing.signup.email.cannotValidate')
+                    )
                     this.setState({validatingEmail: false})
                 }
             )

@@ -293,7 +293,8 @@
         "label": "Forgot your password ?",
         "email.placeholder": "Enter your email",
         "required": "Email is required",
-        "success": "An email with password reset instructions has been sent to {email}."
+        "success": "An email with password reset instructions has been sent to {email}.",
+        "error": "Cannot reset password."
       },
       "intro": {
         "about": {
@@ -411,6 +412,7 @@
           "required": "Password must be confirmed"
         },
         "success": "Password has been reset",
+        "error": "Password could not be reset",
         "username": {
           "label": "Username"
         },

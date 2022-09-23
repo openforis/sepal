@@ -1,4 +1,4 @@
-import {from} from 'rxjs'
+import {from, of, throwError} from 'rxjs'
 import {getLogger} from 'log'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
@@ -40,7 +40,12 @@ export class Recaptcha extends React.Component {
     recaptcha$(action) {
         const {siteKey} = this.props
         log.debug(`Requesting reCAPTCHA assessment: ${action}`)
-        return from(window.grecaptcha.execute(siteKey, {action}))
+        try {
+            return from(window.grecaptcha.execute(siteKey, {action}))
+        } catch (error) {
+            log.error('Cannot request reCAPTCHA assessment', error)
+            return throwError(() => error)
+        }
     }
 
     componentDidMount() {
@@ -56,14 +61,16 @@ export class Recaptcha extends React.Component {
             script.setAttribute('src', `https://www.google.com/recaptcha/api.js?render=${siteKey}`)
             script.addEventListener('load', this.handleLoaded)
             document.body.appendChild(script)
-            log.debug('Google reCAPTCHA loaded')
         } else {
             log.debug('Google reCAPTCHA already loaded')
         }
     }
     
     handleLoaded() {
-        window.grecaptcha.ready(() => this.setState({loaded: true}))
+        window.grecaptcha.ready(() => {
+            log.debug('Google reCAPTCHA loaded')
+            this.setState({loaded: true})
+        })
     }
 }
 

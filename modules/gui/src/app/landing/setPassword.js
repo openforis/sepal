@@ -5,7 +5,7 @@ import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {history, query} from 'route'
-import {logout$, resetPassword$, tokenUser, validateToken$} from 'user'
+import {login$, logout$, resetPassword$, tokenUser, validateToken$} from 'user'
 import {msg} from 'translate'
 import {switchMap} from 'rxjs'
 import {withRecaptchaContext} from 'widget/recaptcha'
@@ -70,17 +70,16 @@ class _SetPassword extends React.Component {
     }
 
     submit() {
-        const {inputs: {password}} = this.props
-        this.resetPassword(password.value)
+        const {inputs: {username, password}} = this.props
+        this.resetPassword(username.value, password.value)
     }
 
-    resetPassword(password) {
+    resetPassword(username, password) {
         const {type, recaptchaContext: {recaptcha$}, stream} = this.props
         const token = query().token
         stream('RESET_PASSWORD',
             recaptcha$('RESET_PASSWORD').pipe(
-                switchMap(recaptchaToken => resetPassword$({token, password, type, recaptchaToken})),
-                switchMap(() => logout$())
+                switchMap(recaptchaToken => resetPassword$({token, username, password, type, recaptchaToken}))
             )
         )
     }
