@@ -5,7 +5,7 @@ import Tooltip from 'widget/tooltip'
 import styles from './userResourceUsage.module.css'
 
 export const UserResourceUsage = ({currentValue = 0, budgetValue = 0, formattedValue}) =>
-    budgetValue > 0
+    budgetValue >= 0
         ? (
             <Tooltip
                 msg={

@@ -36,15 +36,15 @@ const fields = {
     instanceSpending: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.instanceSpending.atLeast1')
         .int('user.userDetails.form.monthlyBudget.instanceSpending.atLeast1')
-        .min(1, 'user.userDetails.form.monthlyBudget.instanceSpending.atLeast1'),
+        .min(0, 'user.userDetails.form.monthlyBudget.instanceSpending.atLeast1'),
     storageSpending: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.storageSpending.atLeast1')
         .int('user.userDetails.form.monthlyBudget.storageSpending.atLeast1')
-        .min(1, 'user.userDetails.form.monthlyBudget.storageSpending.atLeast1'),
+        .min(0, 'user.userDetails.form.monthlyBudget.storageSpending.atLeast1'),
     storageQuota: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
         .int('user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
-        .min(1, 'user.userDetails.form.monthlyBudget.storageQuota.atLeast1'),
+        .min(0, 'user.userDetails.form.monthlyBudget.storageQuota.atLeast1'),
     userRequestInstanceSpendingState: new Form.Field().notNil(),
     userRequestStorageSpendingState: new Form.Field().notNil(),
     userRequestStorageQuotaState: new Form.Field().notNil()

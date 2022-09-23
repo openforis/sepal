@@ -190,22 +190,29 @@ class JdbcBudgetRepository implements BudgetRepository {
         def requests = budgetUpdateRequests()
         def report = [:]
         sql.rows('''
-            SELECT s.username, s.instance_spending, s.storage_spending, s.storage_usage, 
+            SELECT u.username, s.instance_spending, s.storage_spending, s.storage_usage, 
                    IFNULL(b.monthly_instance, d.monthly_instance) monthly_instance,
                    IFNULL(b.monthly_storage, d.monthly_storage) monthly_storage,
                    IFNULL(b.storage_quota, d.storage_quota) storage_quota
-            FROM user_spending s
+            FROM (
+                SELECT username FROM user_spending
+                UNION
+                SELECT DISTINCT username FROM budget_update_request
+                UNION
+                SELECT username FROM user_budget
+            ) AS u
+            LEFT JOIN user_spending s ON s.username = u.username
             JOIN default_user_budget d
-            LEFT JOIN user_budget b ON s.username = b.username
+            LEFT JOIN user_budget b ON b.username = u.username
             ''').each {
             report[it.username] = new UserSpendingReport(
                     username: it.username,
-                    instanceSpending: it.instance_spending,
-                    storageSpending: it.storage_spending,
-                    storageUsage: it.storage_usage,
-                    instanceBudget: it.monthly_instance,
-                    storageBudget: it.monthly_storage,
-                    storageQuota: it.storage_quota,
+                    instanceSpending: it.instance_spending ?: 0,
+                    storageSpending: it.storage_spending?: 0,
+                    storageUsage: it.storage_usage?: 0,
+                    instanceBudget: it.monthly_instance ?: 0,
+                    storageBudget: it.monthly_storage ?: 0,
+                    storageQuota: it.storage_quota ?: 0,
                     budgetUpdateRequest: requests[it.username]
             )
         }
