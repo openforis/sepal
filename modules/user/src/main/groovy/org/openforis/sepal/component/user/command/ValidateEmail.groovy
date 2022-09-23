@@ -26,7 +26,7 @@ class ValidateEmailHandler implements CommandHandler<Boolean, ValidateEmail> {
 
     Boolean execute(ValidateEmail command) {
         googleRecaptcha.isValid(command.recaptchaToken, 'VALIDATE_EMAIL') &&
-            Email.isValid(command.email) &&
+            // Email.isValid(command.email) &&
             userRepository.findUserByEmail(command.email) == null
     }
 }
