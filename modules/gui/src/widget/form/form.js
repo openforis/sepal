@@ -31,7 +31,7 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                     initialValues: {...props.values} || {},
                     values: {...props.values} || {},
                     errors: {...props.errors} || {},
-                    invalidValue: {},
+                    invalid: {},
                     dirty: false,
                     gotDirty: {},
                     gotClean: {}
@@ -96,7 +96,7 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                         const state = _.cloneDeep(prevState)
                         state.values[name] = value
                         this.clearErrorsForField(name, state.errors)
-                        state.invalidValue[name] = ''
+                        state.invalid[name] = false
                         state.dirty = !!Object.keys(state.initialValues)
                             .find(name =>
                                 !_.isEqual(state.initialValues[name], state.values[name])
@@ -163,8 +163,9 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
             validateField(name) {
                 this.setState(prevState => {
                     const state = Object.assign({}, prevState)
-                    if (!state.invalidValue[name])
+                    if (!state.invalid[name]) {
                         state.errors[name] = this.checkFieldError(name)
+                    }
                     const constraintNames = this.constraintNamesByFieldName[name]
                     constraintNames && constraintNames.forEach(constraintName =>
                         state.errors[constraintName] = this.checkConstraintError(constraintName)
@@ -175,9 +176,10 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
             }
 
             isInvalid() {
+                const hasExternallyInvalidatedField = !_.isEmpty(_.pickBy(this.state.invalid, value => value))
                 const hasInvalidField = !!Object.keys(this.state.values).find(name => this.checkFieldError(name))
                 const hasInvalidConstraint = !!Object.keys(constraints).find(name => this.checkConstraintError(name))
-                return hasInvalidField || hasInvalidConstraint
+                return hasInvalidField || hasInvalidConstraint || hasExternallyInvalidatedField
             }
 
             setInitialValues(values) {
@@ -243,7 +245,7 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                         setInvalid: msg => this.setState(prevState => ({
                             ...prevState,
                             errors: {...prevState.errors, [name]: msg},
-                            invalidValue: {...prevState.invalidValue, [name]: this.state.values[name]}
+                            invalid: {...prevState.invalid, [name]: !!msg}
                         })),
                         validate: () => this.validateField(name),
                         isDirty: () => this.isValueDirty(name),
