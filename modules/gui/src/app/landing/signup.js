@@ -53,40 +53,42 @@ class _SignUp extends React.Component {
     renderForm() {
         const {inputs: {username, name, email, organization}, action, onCancel} = this.props
         return (
-            <Layout spacing='normal'>
-                <Form.Input
-                    label={msg('landing.signup.username.label')}
-                    input={username}
-                    placeholder={msg('landing.signup.username.placeholder')}
-                    autoFocus
-                    tabIndex={1}
-                    busyMessage={this.props.stream('VALIDATE_USERNAME').active && msg('widget.loading')}
-                    errorMessage
-                    onBlur={this.checkUsername}
-                />
-                <Form.Input
-                    label={msg('landing.signup.name.label')}
-                    input={name}
-                    placeholder={msg('landing.signup.name.placeholder')}
-                    tabIndex={2}
-                    errorMessage
-                />
-                <Form.Input
-                    label={msg('landing.signup.email.label')}
-                    input={email}
-                    placeholder={msg('landing.signup.email.placeholder')}
-                    tabIndex={3}
-                    busyMessage={this.props.stream('VALIDATE_EMAIL').active && msg('widget.loading')}
-                    errorMessage
-                    onBlur={this.checkEmail}
-                />
-                <Form.Input
-                    label={msg('landing.signup.organization.label')}
-                    input={organization}
-                    placeholder={msg('landing.signup.organization.placeholder')}
-                    tabIndex={4}
-                    errorMessage
-                />
+            <Layout spacing='loose'>
+                <Layout spacing='normal'>
+                    <Form.Input
+                        label={msg('landing.signup.username.label')}
+                        input={username}
+                        placeholder={msg('landing.signup.username.placeholder')}
+                        autoFocus
+                        tabIndex={1}
+                        busyMessage={this.props.stream('VALIDATE_USERNAME').active && msg('widget.loading')}
+                        errorMessage
+                        onBlur={this.checkUsername}
+                    />
+                    <Form.Input
+                        label={msg('landing.signup.name.label')}
+                        input={name}
+                        placeholder={msg('landing.signup.name.placeholder')}
+                        tabIndex={2}
+                        errorMessage
+                    />
+                    <Form.Input
+                        label={msg('landing.signup.email.label')}
+                        input={email}
+                        placeholder={msg('landing.signup.email.placeholder')}
+                        tabIndex={3}
+                        busyMessage={this.props.stream('VALIDATE_EMAIL').active && msg('widget.loading')}
+                        errorMessage
+                        onBlur={this.checkEmail}
+                    />
+                    <Form.Input
+                        label={msg('landing.signup.organization.label')}
+                        input={organization}
+                        placeholder={msg('landing.signup.organization.placeholder')}
+                        tabIndex={4}
+                        errorMessage
+                    />
+                </Layout>
                 <ButtonGroup layout='horizontal-nowrap' alignment='spaced'>
                     <Button
                         chromeless

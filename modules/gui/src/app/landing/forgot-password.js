@@ -64,6 +64,7 @@ class _ForgotPassword extends React.Component {
                             icon='arrow-left'
                             label={msg('landing.forgot-password.cancel-link')}
                             tabIndex={3}
+                            keybinding='Escape'
                             onMouseDown={e => e.preventDefault()}
                             onClick={onCancel}
                         />

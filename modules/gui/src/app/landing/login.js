@@ -58,18 +58,8 @@ class _Login extends React.Component {
                     tabIndex={2}
                     errorMessage
                 />
-                <ButtonGroup layout='horizontal' alignment='fill'>
-                    <ButtonGroup layout='horizontal-nowrap' spacing='tight' alignment='spaced'>
-                        <Button
-                            chromeless
-                            look='transparent'
-                            size='x-large'
-                            shape='pill'
-                            label={msg('landing.login.forgot-password-link')}
-                            tabIndex={5}
-                            onMouseDown={e => e.preventDefault()}
-                            onClick={onForgotPassword}
-                        />
+                <Layout>
+                    <ButtonGroup layout='horizontal' alignment='distribute'>
                         <Button
                             look='add'
                             size='x-large'
@@ -79,8 +69,6 @@ class _Login extends React.Component {
                             onMouseDown={e => e.preventDefault()}
                             onClick={onSignUp}
                         />
-                    </ButtonGroup>
-                    <ButtonGroup layout='horizontal-nowrap' alignment='fill'>
                         <Button
                             type='submit'
                             look='apply'
@@ -93,7 +81,19 @@ class _Login extends React.Component {
                             tabIndex={3}
                         />
                     </ButtonGroup>
-                </ButtonGroup>
+                    <ButtonGroup layout='horizontal' alignment='right'>
+                        <Button
+                            chromeless
+                            look='transparent'
+                            size='x-large'
+                            shape='pill'
+                            label={msg('landing.login.forgot-password-link')}
+                            tabIndex={5}
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={onForgotPassword}
+                        />
+                    </ButtonGroup>
+                </Layout>
             </Layout>
         )
     }
