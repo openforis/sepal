@@ -191,7 +191,8 @@ class Users extends React.Component {
                     instanceSpending: userDetails.monthlyBudgetInstanceSpending,
                     storageSpending: userDetails.monthlyBudgetStorageSpending,
                     storageQuota: userDetails.monthlyBudgetStorageQuota
-                }
+                },
+                budgetUpdateRequest: null
             }
         }, true)
 
