@@ -47,7 +47,7 @@ const Main = ({onLaunch}) =>
         <div id='main' className={styles.main}>
             <Title className={styles.title}/>
             <Tagline className={styles.tagline}/>
-            <ButtonGroup layout='horizontal-nowrap'>
+            <ButtonGroup layout='horizontal'>
                 <Button
                     type='submit'
                     look='apply'
@@ -58,8 +58,33 @@ const Main = ({onLaunch}) =>
                     onClick={onLaunch}
                     additionalClassName={styles.button}
                 />
+                <Button
+                    // chromeless
+                    look='transparent'
+                    size='x-large'
+                    // shape='pill'
+                    air='more'
+                    // label={msg('landing.launch')}
+                    // icon='book-open'
+                    label={'Documentation'}
+                    linkUrl='https://docs.sepal.io/'
+                />
             </ButtonGroup>
-            <ButtonGroup layout='horizontal-nowrap' alignment='center'>
+            <ButtonGroup layout='horizontal' alignment='right'>
+                <Button
+                    chromeless
+                    look='transparent'
+                    size='x-large'
+                    shape='pill'
+                    // air='more'
+                    // label={msg('landing.launch')}
+                    icon='github'
+                    iconType='brands'
+                    label={'GitHub'}
+                    linkUrl='https://github.com/openforis/sepal'
+                />
+            </ButtonGroup>
+            <ButtonGroup layout='horizontal' alignment='center'>
                 <Button
                     look='transparent'
                     shape='circle'
