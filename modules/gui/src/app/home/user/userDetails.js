@@ -61,7 +61,7 @@ class _UserDetails extends React.Component {
     }
 
     renderPanel() {
-        const {form, inputs: {name, email, organization, intendedUse, emailNotificationsEnabled}} = this.props
+        const {inputs: {name, email, organization, intendedUse, emailNotificationsEnabled}} = this.props
         return (
             <React.Fragment>
                 <Panel.Header
