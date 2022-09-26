@@ -16,10 +16,6 @@
     margin: 0 5% 2rem 0;
 }
 
-.github:not(:hover) * {
-    color: #999;
-}
-
 .pulse:not(:hover) {
     animation: pulse 2000ms ease-out infinite;
 }

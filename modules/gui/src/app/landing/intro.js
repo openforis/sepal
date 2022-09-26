@@ -71,7 +71,6 @@ const Main = ({onLaunch}) =>
                 alignment='right'
                 className={styles.github}>
                 <Button
-                    chromeless
                     look='transparent'
                     size='x-large'
                     shape='pill'
