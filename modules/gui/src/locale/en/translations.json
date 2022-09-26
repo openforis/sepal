@@ -338,6 +338,7 @@
         }
       },
       "launch": "Launch",
+      "documentation": "Documentation",
       "loadCurrentUser": {
         "error": "Failed to connect to SEPAL"
       },

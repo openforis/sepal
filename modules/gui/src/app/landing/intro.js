@@ -59,14 +59,10 @@ const Main = ({onLaunch}) =>
                     additionalClassName={styles.button}
                 />
                 <Button
-                    // chromeless
                     look='transparent'
                     size='x-large'
-                    // shape='pill'
                     air='more'
-                    // label={msg('landing.launch')}
-                    // icon='book-open'
-                    label={'Documentation'}
+                    label={msg('landing.documentation')}
                     linkUrl='https://docs.sepal.io/'
                 />
             </ButtonGroup>
@@ -76,11 +72,9 @@ const Main = ({onLaunch}) =>
                     look='transparent'
                     size='x-large'
                     shape='pill'
-                    // air='more'
-                    // label={msg('landing.launch')}
                     icon='github'
                     iconType='brands'
-                    label={'GitHub'}
+                    label='GitHub'
                     linkUrl='https://github.com/openforis/sepal'
                 />
             </ButtonGroup>
