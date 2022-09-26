@@ -291,9 +291,10 @@
             "instructions": "Indiquez le courriel associé à votre compte SEPAL et nous vous enverrons les instructions pour réinitialiser le mot de passe.",
             "invalid": "Cette adresse email n'est pas valide",
             "label": "Mot de passe oublié ?",
-            "placeholder": "Indiquer votre email",
+            "email.placeholder": "",
             "required": "Email requis",
-            "success": "Un courriel de réinitialisation de mdp a été envoyé à {email}."
+            "success": "Un courriel de réinitialisation de mdp a été envoyé à {email}.",
+            "error": ""
         },
         "intro": {
             "about": {
@@ -337,8 +338,47 @@
             }
         },
         "launch": "Démarrer",
+        "documentation": "",
         "loadCurrentUser": {
             "error": "Impossible de se connecter à SEPAL"
+        },
+        "signup": {
+            "button": "",
+            "username": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "format": "",
+                "duplicate": "",
+                "cannotValidate": ""
+            },
+            "name": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "invalid": ""
+            },
+            "email": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "format": "",
+                "duplicate": "",
+                "cannotValidate": ""
+            },
+            "organization": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "invalid": ""
+            },
+            "intendedUse": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "invalid": ""
+            },
+            "success": ""
         },
         "login": {
             "button": "S'identifier",
@@ -373,12 +413,12 @@
                 "required": "Confirmer le mot de passe"
             },
             "success": "Mot de passe réinitialisé",
+            "error": "",
             "username": {
                 "label": "Nom d'utilisateur"
             },
             "validating-link": "Lien en cours de validation..."
         },
-        "signup": "S'inscrire",
         "tagline": "Système pour l'accès, le traitement et l'analyse de données pour la surveillance des terres.",
         "title": "SEPAL",
         "validate-token": {
@@ -3448,11 +3488,19 @@
                 "error": ""
             }
         },
+        "status": {
+            "label": "",
+            "UNKNOWN": "",
+            "ACTIVE": "",
+            "LOCKED": "",
+            "PENDING": ""
+        },
+        "role": {
+            "admin": "",
+            "user": ""
+        },
         "userDetails": {
             "form": {
-                "admin": {
-                    "label": ""
-                },
                 "email": {
                     "label": "",
                     "required": "Email requis",
@@ -3499,35 +3547,47 @@
                     "label": "Organisation",
                     "required": "L'organisation est requise"
                 },
-                "role": {
-                    "label": "rôle"
-                },
-                "status": {
-                    "ACTIVE": "Actif",
-                    "label": "Statut",
-                    "LOCKED": "Bloqué",
-                    "PENDING": "En attente"
-                },
-                "user": {
-                    "label": "Utilisateur"
+                "intendedUse": {
+                    "label": "",
+                    "required": ""
                 },
                 "username": {
                     "format": "Le nom d'utilisateur doit commencer par une lettre",
                     "label": "Nom utilisateur",
                     "required": "Nom utilisateur requis",
                     "unique": "Ce nom d'utilisateur existe déjà"
+                },
+                "password": {
+                    "label": ""
                 }
             },
             "resetPassword": {
-                "label": "Réinitialiser le mot de passe",
+                "label": "",
                 "tooltip": "Envoyer un email de réinitialisation du mot de passe à l'utilisateur.",
-                "message": "Si vous continuez, l'utilisateur recevra un e-mail pour définir un nouveau mot de passe. Jusqu'à sa modification, le mot de passe actuel sera toujours valide."
+                "message": ""
+            },
+            "lock": {
+                "label": "",
+                "tooltip": "",
+                "message": "",
+                "error": "",
+                "success": ""
+            },
+            "unlock": {
+                "label": "",
+                "tooltip": "",
+                "message": "",
+                "error": "",
+                "success": ""
             },
             "switchingToSEPALGoogleAccount": "Passage au compte Google de SEPAL",
             "title": "Détails de l'utilisateur",
             "update": {
-                "error": "Echec de la mise à jour",
-                "success": "Les détails de l'utilisateur ont été mis à jour"
+                "error": "",
+                "success": ""
+            },
+            "confirmation": {
+                "message": ""
             }
         },
         "userSession": {
@@ -3622,6 +3682,9 @@
                 },
                 "pending": {
                     "label": "En attente"
+                },
+                "locked": {
+                    "label": ""
                 },
                 "budgetUpdateRequest": {
                     "label": ""
