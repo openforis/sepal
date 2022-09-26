@@ -291,9 +291,10 @@
             "instructions": "Indíquenos la dirección de correo electrónico de su cuenta SEPAL y le enviaremos un mensaje con instrucciones para restablecer su contraseña.",
             "invalid": "Correo electrónico inválido",
             "label": "¿Olvidaste tu contraseña?",
-            "placeholder": "Introduce tu correo electrónico",
+            "email.placeholder": "",
             "required": "El correo electrónico es obligatorio",
-            "success": "Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña a {email}."
+            "success": "Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña a {email}.",
+            "error": ""
         },
         "intro": {
             "about": {
@@ -337,8 +338,47 @@
             }
         },
         "launch": "Iniciar",
+        "documentation": "",
         "loadCurrentUser": {
             "error": ""
+        },
+        "signup": {
+            "button": "",
+            "username": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "format": "",
+                "duplicate": "",
+                "cannotValidate": ""
+            },
+            "name": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "invalid": ""
+            },
+            "email": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "format": "",
+                "duplicate": "",
+                "cannotValidate": ""
+            },
+            "organization": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "invalid": ""
+            },
+            "intendedUse": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "invalid": ""
+            },
+            "success": ""
         },
         "login": {
             "button": "Iniciar sesión",
@@ -373,12 +413,12 @@
                 "required": "La contraseña debe ser confirmada"
             },
             "success": "La contraseña se ha restablecido",
+            "error": "",
             "username": {
                 "label": "Nombre de usuario"
             },
             "validating-link": "Validación del enlace..."
         },
-        "signup": "Regístrate",
         "tagline": "Sistema de observación de la tierra, acceso a los datos, procesamiento y análisis para la vigilancia de la tierra.",
         "title": "Sepal",
         "validate-token": {
@@ -3448,11 +3488,19 @@
                 "error": ""
             }
         },
+        "status": {
+            "label": "",
+            "UNKNOWN": "",
+            "ACTIVE": "",
+            "LOCKED": "",
+            "PENDING": ""
+        },
+        "role": {
+            "admin": "",
+            "user": ""
+        },
         "userDetails": {
             "form": {
-                "admin": {
-                    "label": ""
-                },
                 "email": {
                     "label": "",
                     "required": "El email es obligatorio",
@@ -3499,23 +3547,18 @@
                     "label": "Organización",
                     "required": "La organización es necesaria"
                 },
-                "role": {
-                    "label": "papel"
-                },
-                "status": {
-                    "ACTIVE": "Activo",
-                    "label": "Estado",
-                    "LOCKED": "Bloqueado",
-                    "PENDING": "Pendiente"
-                },
-                "user": {
-                    "label": "Usuario"
+                "intendedUse": {
+                    "label": "",
+                    "required": ""
                 },
                 "username": {
                     "format": "El nombre de usuario debe comenzar con una letra",
                     "label": "Nombre de usuario",
                     "required": "El nombre de usuario es obligatorio",
                     "unique": ""
+                },
+                "password": {
+                    "label": ""
                 }
             },
             "resetPassword": {
@@ -3523,11 +3566,28 @@
                 "tooltip": "",
                 "message": ""
             },
+            "lock": {
+                "label": "",
+                "tooltip": "",
+                "message": "",
+                "error": "",
+                "success": ""
+            },
+            "unlock": {
+                "label": "",
+                "tooltip": "",
+                "message": "",
+                "error": "",
+                "success": ""
+            },
             "switchingToSEPALGoogleAccount": "",
             "title": "Datos del usuario",
             "update": {
-                "error": "Error de actualización",
-                "success": "Se han actualizado los datos del usuario"
+                "error": "",
+                "success": ""
+            },
+            "confirmation": {
+                "message": ""
             }
         },
         "userSession": {
@@ -3622,6 +3682,9 @@
                 },
                 "pending": {
                     "label": "Pendiente"
+                },
+                "locked": {
+                    "label": ""
                 },
                 "budgetUpdateRequest": {
                     "label": ""
