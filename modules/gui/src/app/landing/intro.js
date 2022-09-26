@@ -66,7 +66,10 @@ const Main = ({onLaunch}) =>
                     linkUrl='https://docs.sepal.io/'
                 />
             </ButtonGroup>
-            <ButtonGroup layout='horizontal' alignment='right'>
+            <ButtonGroup
+                layout='horizontal'
+                alignment='right'
+                className={styles.github}>
                 <Button
                     chromeless
                     look='transparent'
