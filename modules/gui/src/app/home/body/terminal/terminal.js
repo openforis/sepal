@@ -119,15 +119,15 @@ class _TerminalSession extends React.Component {
     startTerminal(sessionId) {
         const {terminal, terminalContainer, webSocket, resize$} = this
         const {onEnable, onDisable} = this.props
-        terminal.setOption('allowTransparency', true)
-        terminal.setOption('fontSize', 13)
-        terminal.setOption('bellStyle', 'both')
+        terminal.options.allowTransparency = true
+        terminal.options.fontSize = 13
+        terminal.options.bellStyle = 'both'
         terminal.open(terminalContainer.current)
         // for some reason theme must be defined after open...
-        terminal.setOption('theme', {
+        terminal.options.theme = {
             background: 'transparent',
             foreground: '#ccc'
-        })
+        }
         terminal.onResize(
             dimensions => resize$.next({sessionId, dimensions})
         )
