@@ -103,8 +103,8 @@ Item.propTypes = {
     highlightClassName: PropTypes.string,
     highlightDescription: PropTypes.any,
     highlightTitle: PropTypes.any,
-    nonClickable: PropTypes.any,
     image: PropTypes.any,
+    nonClickable: PropTypes.any,
     timestamp: PropTypes.any,
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
 }

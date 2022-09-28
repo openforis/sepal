@@ -1,4 +1,4 @@
-import {from, of, throwError} from 'rxjs'
+import {from, throwError} from 'rxjs'
 import {getLogger} from 'log'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'

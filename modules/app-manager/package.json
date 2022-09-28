@@ -11,17 +11,17 @@
     "license": "ISC",
     "dependencies": {
         "app-manager": "./src",
-        "commander": "^9.3.0",
+        "commander": "^9.4.0",
         "lodash": "^4.17.21",
-        "log4js": "^6.5.2",
+        "log4js": "^6.6.1",
         "mime-types": "^2.1.35",
-        "moment": "^2.29.3",
-        "rxjs": "^7.5.5",
+        "moment": "^2.29.4",
+        "rxjs": "^7.5.7",
         "sepal": "../../lib/js/shared/src"
     },
     "devDependencies": {
-        "eslint": "^8.17.0",
-        "jest": "^28.1.1",
-        "jest-expect-message": "^1.0.2"
+        "eslint": "^8.24.0",
+        "jest": "^29.0.3",
+        "jest-expect-message": "^1.1.3"
     }
 }
