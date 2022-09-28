@@ -181,6 +181,11 @@ class _UserDetailsButton extends React.Component {
         hint: false
     }
 
+    isUserGoogleAccount() {
+        const {user} = this.props
+        return user.googleTokens
+    }
+
     render() {
         return (
             <React.Fragment>
@@ -202,7 +207,8 @@ class _UserDetailsButton extends React.Component {
                 size='large'
                 air='less'
                 additionalClassName={className}
-                icon='user'
+                icon={this.isUserGoogleAccount() ? 'google' : 'user'}
+                iconType={this.isUserGoogleAccount() ? 'brands' : null}
                 label={username}
                 disabled={userDetails.active}
                 tooltip={msg('home.sections.user.profile')}

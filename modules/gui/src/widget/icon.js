@@ -54,7 +54,7 @@ export default class Icon extends React.Component {
         const filteredAttributes = _.omit({spin: name === 'spinner', ...attributes}, [
             'icon', 'name', 'type', 'className', 'variant'
         ])
-        const icon = [fontAwesomeCollection(type), name]
+        const icon = [fontAwesomeCollection(type || 'solid'), name]
         return (
             <FontAwesomeIcon
                 icon={icon}
