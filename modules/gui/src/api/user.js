@@ -42,7 +42,8 @@ export default {
 
     login$: ({username, password}) =>
         post$('/api/user/login', {
-            basicAuth: [username, password],
+            username,
+            password,
             validStatuses: [200, 401],
         }),
 
