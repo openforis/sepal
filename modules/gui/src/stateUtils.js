@@ -199,7 +199,12 @@ export class Mutator {
             if (_.isPlainObject(pathState)) {
                 delete pathState[pathKey]
             } else if (_.isArray(pathState)) {
-                pathState.splice(pathKey, 1)
+                if (_.isNumber(pathKey)) {
+                    pathState.splice(pathKey, 1)
+                } else {
+                    const index = pathState.indexOf(pathKey)
+                    index >= 0 && pathState.splice(index, 1)
+                }
             } else {
                 console.error('Unsupported type to delete from', {pathState, pathKey})
                 throw Error('Unsupported type to delete from')

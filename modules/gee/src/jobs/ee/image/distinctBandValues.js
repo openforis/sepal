@@ -30,7 +30,8 @@ const worker$ = ({recipe, band, aoi, mapBounds}) => {
             geometry,
             scale: 1,
             bestEffort: true,
-            maxPixels: MAX_PIXELS
+            maxPixels: MAX_PIXELS,
+            tileScale: 16
         })
         const min = minMax.getNumber(`${band}_min`).floor()
         const max = minMax.getNumber(`${band}_max`).ceil()
@@ -43,7 +44,8 @@ const worker$ = ({recipe, band, aoi, mapBounds}) => {
             geometry,
             scale: 1,
             bestEffort: true,
-            maxPixels: MAX_PIXELS
+            maxPixels: MAX_PIXELS,
+            tileScale: 16
         })
         const array = ee.Array(histogram.get(band))
         return array
