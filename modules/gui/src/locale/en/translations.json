@@ -3668,7 +3668,7 @@
       "title": "User messages"
     },
     "users": {
-      "count": "{count} {count, plural, one {user} other {users}}",
+      "count": "{count} {count, plural, one {user} other {users}}, {lastMonthUserCount} updated in the last month",
       "filter": {
         "search": {
           "placeholder": "Search users"

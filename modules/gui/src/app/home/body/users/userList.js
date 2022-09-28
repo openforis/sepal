@@ -267,9 +267,11 @@ export default class UserList extends React.Component {
     }
 
     renderInfo(users) {
+        const oneMonthAgo = moment().subtract(1, 'months')
+        const lastMonthUserCount = users.filter(user => oneMonthAgo.isBefore(user.updateTime)).length
         return (
             <div className={styles.count}>
-                {msg('users.count', {count: users.length})}
+                {msg('users.count', {count: users.length, lastMonthUserCount})}
             </div>
         )
     }
