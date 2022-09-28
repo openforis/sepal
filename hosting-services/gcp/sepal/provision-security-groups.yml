@@ -1,0 +1,54 @@
+- name: Setup Security Groups
+  hosts: all
+  user: ec2-user
+  gather_facts: true
+
+  tasks:
+    - name: Create Sandbox Security Group
+      ec2_group:
+        name: Sandbox
+        description: The Sandbox Security Group
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        rules:
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 168.202.0.0/16
+            rule_desc: 'FAO'
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: "{{ local_ip_address }}/32"
+            rule_desc: 'Deployer'
+          - proto: tcp
+            from_port: 0
+            to_port: 65535
+            cidr_ip: "{{ ec2_ip_address }}/32"
+            rule_desc: 'Sepal Server'
+        rules_egress:
+          - proto: all
+            from_port: 0
+            to_port: 65535
+            cidr_ip: 0.0.0.0/0
+      delegate_to: localhost
+
+    - name: Create EFS security group
+      ec2_group:
+        name: EFS
+        description: The EFS Security Group
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        rules:
+          - proto: all
+            from_port: 0
+            to_port: 65535
+            group_name:
+              - Sepal
+              - Sepal-Storage
+              - Sandbox
+            rule_desc: 'Instance access'
+        rules_egress:
+          - proto: all
+            from_port: 0
+            to_port: 65535
+            cidr_ip: 0.0.0.0/0
+      delegate_to: localhost

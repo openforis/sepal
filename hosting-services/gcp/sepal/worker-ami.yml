@@ -1,0 +1,166 @@
+- name: Configure Sandbox Image
+  strategy: debug
+  hosts: default
+  user: ec2-user
+  become: yes
+  gather_facts: true
+
+  tasks:
+    - name: Create /data/sepal
+      file:
+        path: "/data/sepal"
+        state: directory
+
+    - name: Create /data/ldap
+      file:
+        path: "/data/sepal"
+        state: directory
+
+    - name: Create /data/ldap/certificates
+      file:
+        path: "/data/ldap/certificates"
+        state: directory
+
+    - name: Copy LDAP Certificate
+      copy:
+       src: "{{ CONFIG_HOME }}/certificates/ldap-ca.crt.pem"
+       dest: "/data/ldap/certificates/ldap-ca.crt.pem"
+
+    # EFS setup
+    - name: Install nfs-utils
+      yum:
+        name: "nfs-utils"
+
+    - name: Install amazon-efs-utils
+      yum:
+        name: 'amazon-efs-utils'
+
+    - name: Install Lustre
+      command: amazon-linux-extras install lustre2.10 -y
+
+    - name: Create /data/sepal/home
+      file:
+        path: "/data/sepal/home"
+        state: directory
+
+    - name: Mount /data/sepal/home from EFS
+      lineinfile:
+        path: '/etc/fstab'
+        line: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/home /data/sepal/home efs defaults,_netdev 0 0"
+
+    - name: Create /data/sepal/shiny
+      file:
+        path: "/data/sepal/shiny"
+        state: directory
+
+    - name: Mount /data/sepal/shiny from FSx
+      lineinfile:
+        path: '/etc/fstab'
+        line: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/shiny /data/sepal/shiny lustre noatime,flock 0 0"
+
+    - name: Create /data/sepal/shared
+      file:
+        path: "/data/sepal/shared"
+        state: directory
+
+    - name: Mount /data/sepal/shared from FSx
+      lineinfile:
+        path: '/etc/fstab'
+        line: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/shared /data/sepal/shared lustre noatime,flock 0 0"
+
+    - name: Create /data/sepal/jupyter
+      file:
+        path: "/data/sepal/jupyter"
+        state: directory
+
+    - name: Mount /data/sepal/jupyter from FSx
+      lineinfile:
+        path: '/etc/fstab'
+        line: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/jupyter /data/sepal/jupyter lustre noatime,flock 0 0"
+
+    # GPU setup
+    - name: Copy GPU drivers init script
+      copy:
+        src: "gpu/init-gpu-drivers.sh"
+        dest: "/usr/local/bin/init-gpu-drivers.sh"
+
+    - name: Copy GPU drivers init service
+      copy:
+        src: "gpu/init-gpu-drivers.service"
+        dest: "/etc/systemd/system/init-gpu-drivers.service"
+
+    - name: Install GPU drivers
+      script: "gpu/install-gpu-drivers.sh"
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+        AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+
+    # Docker setup
+    - name: Create filesystem on Docker volume
+      filesystem:
+        fstype: xfs
+        dev: /dev/xvdf
+
+    - name: Mount Docker volume
+      mount:
+        path: /var/lib/docker
+        src: /dev/xvdf
+        fstype: xfs
+        state: mounted
+
+    - name: Create docker-registry certificate dir
+      file:
+        path: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
+        state: directory
+
+    - name: Copy docker-registry certificate
+      copy:
+        src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
+        dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
+
+    - name: Install docker
+      command: "amazon-linux-extras install docker -y"
+
+    - name: Create /etc/docker
+      file:
+        path: "/etc/docker"
+        state: directory
+
+    - name: Copy /etc/docker/daemon.json
+      copy: src=docker/worker-daemon.json dest=/etc/docker/daemon.json
+
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+
+    - name: Create /etc/systemd/system/docker.service.d
+      file:
+        path: "/etc/systemd/system/docker.service.d"
+        state: directory
+    - name: Copy /etc/systemd/system/docker.service.d/docker.conf
+      copy: src=docker/docker.conf dest=/etc/systemd/system/docker.service.d/docker.conf
+
+    - name: Enable docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+        masked: no
+        
+    - name: pip install docker
+      pip:
+        name: "docker"
+        executable: pip3
+
+    - name: Login to docker registry
+      command: "docker login -p '{{ lookup('env', 'DOCKER_REGISTRY_PASSWORD') }}' -u '{{ lookup('env', 'DOCKER_REGISTRY_USERNAME') }}' {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
+
+    - name: Pull sandbox
+      command: "docker pull {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/sandbox:{{ VERSION }}"
+
+    - name: Pull task
+      command: "docker pull {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/task:{{ VERSION }}"
+
+    - name: Logout from docker registry
+      command: "docker logout {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"

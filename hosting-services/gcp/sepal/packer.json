@@ -1,0 +1,64 @@
+{
+  "variables": {
+    "AWS_ACCESS_KEY_ID": "",
+    "AWS_SECRET_ACCESS_KEY": "",
+    "AWS_WORKER_AMI": "",
+    "AWS_REGION": "",
+    "VERSION": ""
+  },
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "access_key": "{{user `AWS_ACCESS_KEY_ID`}}",
+      "secret_key": "{{user `AWS_SECRET_ACCESS_KEY`}}",
+      "region": "{{user `AWS_REGION`}}",
+      "source_ami": "{{user `AWS_WORKER_AMI`}}",
+      "instance_type": "g4dn.xlarge",
+      "ssh_username": "ec2-user",
+      "ami_name": "Sandbox({{user  `AWS_REGION`}}) - {{user `VERSION`}}",
+      "tags": {
+        "Version": "{{user `VERSION`}}",
+        "Region": "{{user `AWS_REGION`}}"
+      },
+      "ami_block_device_mappings": [
+        {
+          "device_name": "/dev/xvda",
+          "volume_type": "gp2",
+          "volume_size": 30,
+          "delete_on_termination": true
+        },
+        {
+          "device_name": "/dev/xvdf",
+          "volume_type": "gp2",
+          "volume_size": 50,
+          "delete_on_termination": true
+        }
+      ],
+      "launch_block_device_mappings": [
+        {
+          "device_name": "/dev/xvda",
+          "volume_type": "gp2",
+          "volume_size": 30,
+          "delete_on_termination": true
+        },
+        {
+          "device_name": "/dev/xvdf",
+          "volume_type": "gp2",
+          "volume_size": 50,
+          "delete_on_termination": true
+        }
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "ansible",
+      "playbook_file": "worker-ami.yml",
+      "extra_arguments": [
+        "--extra-vars",
+        "env_file={{user `CONFIG_HOME`}}/env CONFIG_HOME={{user `CONFIG_HOME`}} VERSION={{user `VERSION`}} "
+      ],
+      "user": "ec2-user"
+    }
+  ]
+}

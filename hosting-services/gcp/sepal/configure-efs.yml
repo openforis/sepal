@@ -1,0 +1,110 @@
+- name: Configure Sepal instance
+  hosts: all
+  user: ec2-user
+  become: yes
+  gather_facts: true
+
+  tasks:
+    - name: Install amazon-efs-utils
+      yum:
+        name: 'amazon-efs-utils'
+
+    - name: Create temp mount dir
+      file:
+        path: "/efs"
+        state: "directory"
+
+    - name: Temporarily Mount EFS Nfs4 For Setting Up Folders
+      mount:
+        name: "/efs"
+        fstype: "efs"
+        state: "mounted"
+        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/"
+        opts: "defaults,_netdev"
+        dump: 0
+        passno: 0
+
+    - name: Create sepal home dir on EFS
+      file:
+        path: "/efs/data/sepal/home"
+        owner: "9999"
+        group: "9999"
+        mode: "u=rwx,g=rwxs"
+        state: "directory"
+
+    - name: Unmount EFS Nfs4
+      mount:
+          name: "/efs"
+          fstype: "efs"
+          state: "unmounted"
+          src: "{{ lookup('env', 'AWS_EFS_ID') }}:/"
+
+    - name: Delete temp mount dir
+      file:
+          path: "/efs"
+          state: "absent"
+
+    - name: Install Lustre
+      command: amazon-linux-extras install lustre2.10 -y
+
+    - name: Create /fsx mount dir
+      file:
+        path: "/fsx"
+        state: "directory"
+
+    - name: Temporarily Mount FSx For Setting Up Folders
+      mount:
+        name: "/fsx"
+        fstype: "lustre"
+        state: "mounted"
+        src: "{{ lookup('env', 'AWS_FSX_ID') }}"
+        opts: "noatime,flock"
+        dump: 0
+        passno: 0
+
+    - name: Create /fsx/data/sepal/jupyter
+      file:
+        path: "/fsx/data/sepal/jupyter"
+        owner: "9999"
+        group: "9999"
+        mode: "u=rwx,g=rwxs"
+        state: "directory"
+
+    - name: Create /fsx/data/sepal/jupyter/current-kernels
+      file:
+        path: "/fsx/data/sepal/jupyter/current-kernels"
+        owner: "9999"
+        group: "9999"
+        mode: "u=rwx,g=rwxs"
+        state: "directory"
+        
+    - name: Create /fsx/data/sepal/jupyter/kernels
+      file:
+        path: "/fsx/data/sepal/jupyter/kernels"
+        owner: "9999"
+        group: "9999"
+        mode: "u=rwx,g=rwxs"
+        state: "directory"
+
+    - name: Create /fsx/data/sepal/shiny
+      file:
+        path: "/fsx/data/sepal/shiny"
+        owner: "9999"
+        group: "9999"
+        mode: "u=rwx,g=rwxs"
+        state: "directory"
+
+    - name: Create /fsx/data/sepal/shared
+      file:
+        path: "/fsx/data/sepal/shared"
+        owner: "9999"
+        group: "9999"
+        mode: "u=rwx,g=rwxs"
+        state: "directory"
+
+    - name: Unmount FSx
+      mount:
+          name: "/fsx"
+          fstype: "lustre"
+          state: "unmounted"
+          src: "{{ lookup('env', 'AWS_FSX_ID') }}:/"

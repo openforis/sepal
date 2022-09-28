@@ -1,0 +1,284 @@
+- name: Setup AWS
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+
+    # - name: Create Sepal-Storage security group
+    #   ec2_group:
+    #     name: "Sepal-Storage"
+    #     description: The Sepal-Storage Security Group
+    #     region: "{{ lookup('env', ''AWS_REGION') }}"
+    #     rules:
+    #       - proto: tcp
+    #         from_port: 22
+    #         to_port: 22
+    #         cidr_ip: 168.202.0.0/16
+    #         rule_desc: 'FAO'
+    #       - proto: tcp
+    #         from_port: 22
+    #         to_port: 22
+    #         cidr_ip: "{{ local_ip_address }}/32"
+    #         rule_desc: 'Deployer'
+    #     rules_egress:
+    #       - proto: all
+    #         from_port: 0
+    #         to_port: 65535
+    #         cidr_ip: 0.0.0.0/0
+    #   register: sepal_storage_group
+
+    # - name: Provision Sepal-Storage instance
+    #   ec2_instance:
+    #     key_name: "{{ lookup('env', ''AWS_REGION') }}"
+    #     security_groups: 
+    #       - "Sepal-Storage"
+    #     instance_type: m5a.large
+    #     image_id: "{{ lookup('env', ''AWS_AMI') }}"
+    #     region: "{{ lookup('env', ''AWS_REGION') }}"
+    #     availability_zone: "{{ lookup('env', ''AWS_AVAILABILITY_ZONE') }}"
+    #     wait: true
+    #     filters:
+    #       tag:Name: "Sepal-Storage - {{ lookup('env', ''DEPLOY_ENVIRONMENT') }}"
+    #       tag:Type: "SepalStorage"
+    #       tag:Environment: "{{ lookup('env', ''DEPLOY_ENVIRONMENT') }}"
+    #     exact_count: 1
+    #     purge_tags: false
+    #     tags:
+    #       Type: "SepalStorage"
+    #       Environment: "{{ lookup('env', ''DEPLOY_ENVIRONMENT') }}"
+    #     volumes:
+    #       - device_name: /dev/xvda
+    #         delete_on_termination: false
+    #         volume_type: gp2
+    #         volume_size: 32
+    #       - device_name: /dev/sdb
+    #         delete_on_termination: false
+    #         volume_type: gp2
+    #         volume_size: 32
+    #   register: started_ec2_sepal_storage
+
+    # - ec2_instance_info:
+    #     region: "{{ lookup('env', ''AWS_REGION') }}"
+    #     filters:
+    #       "tag:Type": "SepalStorage"
+    #       "tag:Environment": "{{ lookup('env', ''DEPLOY_ENVIRONMENT') }}"
+    #   register: ec2_sepal_storage
+
+    # - set_fact:
+    #     sepal_storage_ip: "{{ ec2_sepal_storage.instances[0].public_ip_address }}"
+
+    # - name: Create Sepal security group
+    #   ec2_group:
+    #     name: "Sepal"
+    #     description: The Sepal Security Group
+    #     region: "{{ lookup('env', ''AWS_REGION') }}"
+    #     rules:
+    #       - proto: tcp
+    #         from_port: 22
+    #         to_port: 22
+    #         cidr_ip: 168.202.0.0/16
+    #         rule_desc: 'FAO'
+    #       - proto: tcp
+    #         from_port: 80
+    #         to_port: 80
+    #         cidr_ip: 0.0.0.0/0
+    #         rule_desc: 'HTTP'
+    #       - proto: tcp
+    #         from_port: 443
+    #         to_port: 443
+    #         cidr_ip: 0.0.0.0/0
+    #         rule_desc: 'HTTPS'
+    #       - proto: udp
+    #         from_port: 514
+    #         to_port: 514
+    #         cidr_ip: 172.31.0.0/16
+    #         rule_desc: 'syslog'
+    #       - proto: tcp
+    #         from_port: 0
+    #         to_port: 65535
+    #         cidr_ip: 172.31.0.0/16
+    #         rule_desc: 'Subnet'
+    #       - proto: tcp
+    #         from_port: 5672
+    #         to_port: 5672
+    #         cidr_ip: "{{ sepal_storage_ip }}/32"
+    #         rule_desc: 'Sepal-Storage'
+    #       - proto: tcp
+    #         from_port: 22
+    #         to_port: 22
+    #         cidr_ip: "{{ local_ip_address }}/32"
+    #         rule_desc: 'Deployer'
+    #     rules_egress:
+    #       - proto: all
+    #         from_port: 0
+    #         to_port: 65535
+    #         cidr_ip: 0.0.0.0/0
+
+
+
+    - set_fact:
+        PUBLIC_INSTANCE_KEY: "{{ lookup('env', 'CONFIG_HOME') }}/instance_key.pub"
+
+    - name: Create sepal disk
+      google.cloud.gcp_compute_disk:
+        name: sepal-disk
+        size_gb: 200
+        source_image: projects/debian-cloud/global/images/debian-11-bullseye-v20220920
+        zone: "{{ lookup('env', 'GCP_ZONE') }}"
+        project: "{{ lookup('env', 'GCP_PROJECT') }}"
+        auth_kind: "serviceaccount"
+        service_account_file: "{{ lookup('env', 'CONFIG_HOME') }}/service-account.json"
+        state: present
+      register: disk
+
+    - name: Create sepal primary network
+      google.cloud.gcp_compute_network:
+        name: sepal-primary-network
+        auto_create_subnetworks: false
+        project: "{{ lookup('env', 'GCP_PROJECT') }}"
+        auth_kind: "serviceaccount"
+        service_account_file: "{{ lookup('env', 'CONFIG_HOME') }}/service-account.json"
+        state: present
+      register: sepal_primary_network
+
+    - name: Create sepal primary subnetwork
+      google.cloud.gcp_compute_subnetwork:
+        name: sepal-primary-subnetwork
+        region: "{{ lookup('env', 'GCP_REGION') }}"
+        network: "{{ sepal_primary_network }}"
+        ip_cidr_range: 172.16.0.0/16
+        project: "{{ lookup('env', 'GCP_PROJECT') }}"
+        auth_kind: serviceaccount
+        service_account_file: "{{ lookup('env', 'CONFIG_HOME') }}/service-account.json"
+        state: present
+      register: sepal_primary_subnetwork
+
+    - name: Create sepal primary address
+      google.cloud.gcp_compute_address:
+        name: sepal-primary-address
+        region: "{{ lookup('env', 'GCP_REGION') }}"
+        project: "{{ lookup('env', 'GCP_PROJECT') }}"
+        auth_kind: "serviceaccount"
+        service_account_file: "{{ lookup('env', 'CONFIG_HOME') }}/service-account.json"
+        state: present
+      register: sepal_primary_address
+
+    - name: Create sepal secondary network
+      google.cloud.gcp_compute_network:
+        name: sepal-secondary-network
+        auto_create_subnetworks: false
+        project: "{{ lookup('env', 'GCP_PROJECT') }}"
+        auth_kind: "serviceaccount"
+        service_account_file: "{{ lookup('env', 'CONFIG_HOME') }}/service-account.json"
+        state: present
+      register: sepal_secondary_network
+
+    - name: Create sepal secondary subnetwork
+      google.cloud.gcp_compute_subnetwork:
+        name: sepal-secondary-subnetwork
+        region: "{{ lookup('env', 'GCP_REGION') }}"
+        network: "{{ sepal_secondary_network }}"
+        ip_cidr_range: 172.17.0.0/16
+        project: "{{ lookup('env', 'GCP_PROJECT') }}"
+        auth_kind: serviceaccount
+        service_account_file: "{{ lookup('env', 'CONFIG_HOME') }}/service-account.json"
+        state: present
+      register: sepal_secondary_subnetwork
+
+    - name: Create sepal secondary address
+      google.cloud.gcp_compute_address:
+        name: sepal-secondary-address
+        region: "{{ lookup('env', 'GCP_REGION') }}"
+        project: "{{ lookup('env', 'GCP_PROJECT') }}"
+        auth_kind: "serviceaccount"
+        service_account_file: "{{ lookup('env', 'CONFIG_HOME') }}/service-account.json"
+        state: present
+      register: sepal_secondary_address
+
+    - name: Provision Sepal instance
+      google.cloud.gcp_compute_instance:
+        name: "sepal-{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+        machine_type: "{{ lookup('env', 'GCP_MACHINE_TYPE') }}"
+        disks:
+        - auto_delete: false
+          boot: 'true'
+          source: "{{ disk }}"
+        metadata:
+          ssh-keys: "gcp-user:{{ lookup('file', PUBLIC_INSTANCE_KEY) }}"
+        labels:
+          environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+          type: sepal
+        network_interfaces:
+        - subnetwork: "{{ sepal_primary_subnetwork }}"
+          access_configs:
+          - name: Sepal primary network interface
+            nat_ip: "{{ sepal_primary_address }}"
+            type: ONE_TO_ONE_NAT
+        - subnetwork: "{{ sepal_secondary_subnetwork }}"
+          access_configs:
+          - name: Sepal secondary network interface
+            nat_ip: "{{ sepal_secondary_address }}"
+            type: ONE_TO_ONE_NAT
+        zone: "{{ lookup('env', 'GCP_ZONE') }}"
+        project: "{{ lookup('env', 'GCP_PROJECT') }}"
+        auth_kind: serviceaccount
+        service_account_file: "{{ lookup('env', 'CONFIG_HOME') }}/service-account.json"
+        state: present
+      register: sepal_instance
+
+    - name: Wait for SSH to be available on Sepal
+      local_action: wait_for host="{{ sepal_instance.networkInterfaces[0].accessConfigs[0].natIP }}"
+                    port=22
+                    state="started"
+
+
+    # - name: Provision Sepal instance
+    #   google.cloud.gcp_compute_instance:
+    #     key_name: "{{ lookup('env', ''AWS_REGION') }}"
+    #     security_groups: 
+    #       - "Sepal"
+    #     instance_type: "{{ lookup('env', ''AWS_INSTANCE_TYPE') }}"
+    #     image_id: "{{ lookup('env', ''AWS_AMI') }}"
+    #     region: "{{ lookup('env', ''AWS_REGION') }}"
+    #     availability_zone: "{{ lookup('env', ''AWS_AVAILABILITY_ZONE') }}"
+    #     wait: true
+    #     exact_count: 1
+    #     filters:
+    #       tag:Type: Sepal
+    #       tag:Environment: "{{ lookup('env', ''DEPLOY_ENVIRONMENT') }}"
+    #     purge_tags: false
+    #     tags:
+    #       Name: "Sepal - {{ lookup('env', ''DEPLOY_ENVIRONMENT') }}"
+    #       Type: Sepal
+    #       Environment: "{{ lookup('env', ''DEPLOY_ENVIRONMENT') }}"
+    #     ebs_optimized: true
+    #     volumes:
+    #       - device_name: /dev/xvda
+    #         delete_on_termination: false
+    #         volume_type: gp2
+    #         volume_size: 100
+    #       - device_name: /dev/sdb
+    #         delete_on_termination: false
+    #         volume_type: gp2
+    #         volume_size: 100
+    #   register: started_ec2_sepal
+
+    # - ec2_instance_info:
+    #     region: "{{ lookup('env', ''AWS_REGION') }}"
+    #     filters:
+    #       "tag:Type": "Sepal"
+    #       "tag:Environment": "{{ lookup('env', ''DEPLOY_ENVIRONMENT') }}"
+    #   register: ec2_sepal
+
+    # - name: Wait for SSH to be available on Sepal
+    #   local_action: wait_for host="{{ item.public_ip_address }}"
+    #                 port=22
+    #                 state="started"
+    #   with_items: "{{ ec2_sepal.instances }}"
+
+    # - name: Wait for SSH to be available on Sepal-Storage
+    #   local_action: wait_for host="{{ item.public_ip_address }}"
+    #                 port=22
+    #                 state="started"
+    #   with_items: "{{ ec2_sepal_storage.instances }}"

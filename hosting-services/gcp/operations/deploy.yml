@@ -1,0 +1,115 @@
+- name: Build Operations server
+  hosts: all
+  user: ec2-user
+  become: yes
+  gather_facts: true
+
+  vars_files:
+    - "{{ secret_vars_file }}"
+
+  pre_tasks:
+    - set_fact:
+        workspace: "/opt/sepal/"
+#
+#    # bash prompt
+#    - name: Set bash prompt
+#      blockinfile:
+#        path: /etc/profile
+#        block: |
+#          # Bash prompt
+#          PS1='{{bash_prompt}}'
+#
+#    # set locale
+#    - name: Set locale
+#      lineinfile:
+#        path: /etc/environment
+#        line: "{{ item }}"
+#      with_items:
+#        - "LANG=en_US.utf-8"
+#        - "LC_ALL=en_US.utf-8"
+#
+#
+#    - name: Copy Jenkins Image
+#      copy: src="../../../modules/jenkins/" dest="/opt/sepal/modules/jenkins/"
+#
+#    - name: Copy r-proxy Image
+#      copy: src="../../../modules/r-proxy/" dest="/opt/sepal/modules/r-proxy/"
+#
+#    - name: Mount Docker volume
+#      mount:
+#        path: /var/lib/docker
+#        src: /dev/sdb
+#        fstype: xfs
+#        state: mounted
+#
+#    - name: Create docker-registry certificate dir
+#      file:
+#        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+#        state: directory
+#
+#    - name: Copy docker-registry certificate
+#      copy:
+#        src: "{{ config_home }}/certificates/docker-registry.crt"
+#        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+#
+#    - name: Install docker
+#      command: "amazon-linux-extras install docker -y"
+#
+#    - name: Install pip
+#      yum:
+#        name: "python3-pip"
+#
+#    - name: Install python docker
+#      pip:
+#        name: docker
+#
+#    - name: Install docker-compose
+#      pip:
+#        executable: pip3
+#        name: docker-compose
+#
+#    - name: Create /etc/docker
+#      file:
+#        path: "/etc/docker"
+#        state: directory
+#
+#    - name: Copy /etc/docker/daemon.json
+#      copy: src=docker/main-daemon.json dest=/etc/docker/daemon.json
+#
+#    - name: Add ec2-user to docker group
+#      user:
+#        name: ec2-user
+#        groups: docker
+#
+#    - name: Enable docker
+#      systemd:
+#        name: docker
+#        state: started
+#        enabled: yes
+#        masked: no
+
+    # TODO: This currently doesn't build from scratch - because of the separate Dockerfile.r
+#    - name: "r-proxy | Start"
+#      shell: /usr/local/bin/docker-compose --file  /opt/sepal/modules/r-proxy/docker-compose.yml up --build
+
+  roles:
+    - { role: live-patching }
+    - { role: docker-registry }
+    - { role: ansible }
+    - { role: build-module, module: jenkins }
+    - { role: docker-login }
+    - { role: run-module, module: jenkins }
+#    - { role: run-module, module: r-proxy }
+
+  post_tasks:
+    - name: "Clean environment"
+      file:
+        path: /opt/sepal
+        state: absent
+
+    - name: "Create symlink to /opt/sepal"
+      file:
+        src: "/data/jenkins/workspace/Sepal"
+        path: "/opt/sepal"
+        state: "link"
+        force: "yes"

@@ -1,0 +1,2 @@
+check program docker with path /usr/local/bin/dockercheck
+    if status != 0 then alert

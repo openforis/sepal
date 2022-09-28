@@ -1,0 +1,40 @@
+---
+- name: Mount EFS Sepal Home Dir
+  mount:
+    name: "/data/sepal/home"
+    fstype: "efs"
+    state: "mounted"
+    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/home"
+    opts: "defaults,_netdev"
+    dump: 0
+    passno: 0
+
+- name: Mount /data/sepal/jupyter
+  mount:
+    name: "/data/sepal/jupyter"
+    fstype: "lustre"
+    state: "mounted"
+    src: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/jupyter"
+    opts: "noatime,flock"
+    dump: 0
+    passno: 0
+
+- name: Mount /data/sepal/shared
+  mount:
+    name: "/data/sepal/shared"
+    fstype: "lustre"
+    state: "mounted"
+    src: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/shared"
+    opts: "noatime,flock"
+    dump: 0
+    passno: 0
+
+- name: Mount /data/sepal/shiny
+  mount:
+    name: "/data/sepal/shiny"
+    fstype: "lustre"
+    state: "mounted"
+    src: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/shiny"
+    opts: "noatime,flock"
+    dump: 0
+    passno: 0

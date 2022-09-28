@@ -1,0 +1,264 @@
+- name: Configure Sepal instance
+  hosts: all
+  user: gcp-user
+  become: yes
+  gather_facts: true
+
+  pre_tasks:  
+    - set_fact:
+        SEPAL_PUBLIC_IP: "{{ ansible_play_hosts[0] }}"
+    - set_fact:
+        SEPAL_IP: "{{ hostvars[SEPAL_PUBLIC_IP].ansible_all_ipv4_addresses[0] }}"
+        SEPAL_SSH_IP: "{{ hostvars[SEPAL_PUBLIC_IP].ansible_all_ipv4_addresses[1] }}"
+    - set_fact:
+        LDAP_HOST: "{{ SEPAL_IP }}"
+        SYSLOG_ADDRESS: "udp://{{ SEPAL_IP }}"
+
+  #   # bash prompt
+  #   - name: Set bash prompt
+  #     blockinfile:
+  #       path: /etc/profile
+  #       block: |
+  #         # Bash prompt
+  #         PS1='{{ lookup('env', 'BASH_PROMPT') }}'
+
+  #   # set locale
+  #   - name: Set locale
+  #     lineinfile:
+  #       path: /etc/environment
+  #       line: "{{ item }}"
+  #     with_items:
+  #       - "LANG=en_US.utf-8"
+  #       - "LC_ALL=en_US.utf-8"
+
+  #   - name: Install monit
+  #     apt:
+  #       name: 'monit'
+
+  #   - name: Stop monit
+  #     systemd:
+  #       name: monit
+  #       state: stopped
+  #       enabled: yes
+  #       masked: no
+
+  #   - name: Configure monit 1/3
+  #     copy:
+  #       src: "monit/monit.d/"
+  #       dest: "/etc/monit.d/"
+  #       owner: "root"
+  #       group: "root"
+  #       mode: "0644"
+
+  #   - name: Configure monit 2/3
+  #     template:
+  #       src: "monit/config.template"
+  #       dest: "/etc/monit.d/config"
+  #       owner: "root"
+  #       group: "root"
+  #       mode: "0644"
+
+  #   - name: Configure monit 3/3
+  #     copy:
+  #       src: "monit/dockercheck/"
+  #       dest: "/usr/local/bin/"
+  #       owner: "root"
+  #       group: "root"
+  #       mode: "0755"
+
+  #   - file: path="/data/sepal/etc" state=directory
+  #   - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
+
+  #   # sshd
+  #   - name: Bind sshd to primary private IP
+  #     lineinfile:
+  #       path: /etc/ssh/sshd_config
+  #       line: "ListenAddress {{ SEPAL_IP }}"
+  #       insertafter: "#ListenAddress"
+  #     register: sshd_config
+
+  #   - name: Restart sshd
+  #     service:
+  #       name: sshd
+  #       state: restarted
+  #     when: sshd_config.changed
+
+  #   # rsyslog
+  #   - name: Copy rsyslog.conf
+  #     template: src="rsyslog.conf" dest=/etc/rsyslog.conf
+
+  #   - name: Copy rsyslog.d
+  #     copy:
+  #       src: "rsyslog.d/"
+  #       dest: "/etc/rsyslog.d/"
+  #       owner: "root"
+  #       group: "root"
+  #       mode: "0644"
+
+  #   - name: Start rsyslog
+  #     service: name=rsyslog state=started
+
+  #   # logrotate
+  #   - name: Copy worker-instances logrotate configuration
+  #     copy:
+  #       src: "logrotate.d/"
+  #       dest: "/etc/logrotate.d/"
+  #       owner: "root"
+  #       group: "root"
+  #       mode: "0644"
+
+  #   # Install multitail
+  #   - name: Install multitail
+  #     apt:
+  #       name: "multitail"
+
+  #   # profile.d
+  #   - name: Copy profile.d
+  #     copy:
+  #       src: "profile.d/"
+  #       dest: "/etc/profile.d/"
+  #       owner: "root"
+  #       group: "root"
+  #       mode: "0644"
+
+  #   # docker
+  #   - file: path="/data/docker/storage/devicemapper/metadata" state=directory
+  #   - file: path="/data/docker/storage/tmp" state=directory
+
+  #   - name: Create docker-registry certificate dir
+  #     file:
+  #       path: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
+  #       state: directory
+
+  #   - name: Copy docker-registry certificate
+  #     copy:
+  #       src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
+  #       dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
+
+
+
+  #   - name: Install apt-transport-https
+  #     apt:
+  #       name:
+  #         - apt-transport-https
+  #         - ca-certificates
+  #         - lsb-release
+  #         - gnupg
+  #       state: latest
+  #       update_cache: true
+
+  #   - name: Add signing key
+  #     apt_key:
+  #       url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+  #       state: present
+
+  #   - name: Add repository into sources list
+  #     apt_repository:
+  #       repo: "deb [arch={{ ansible_architecture }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+  #       state: present
+  #       filename: docker
+
+  #   - name: Install Docker
+  #     apt:
+  #       name:
+  #         - docker
+  #         - docker.io
+  #         - docker-compose
+  #         - docker-registry
+  #       state: latest
+  #       update_cache: true
+
+  #   - name: Install pip
+  #     apt:
+  #       name: "python3-pip"
+
+  #   - name: Create /etc/docker
+  #     file:
+  #       path: "/etc/docker"
+  #       state: directory
+  
+
+  #   - name: Copy /etc/docker/daemon.json
+  #     template: src=docker/main-daemon.json dest=/etc/docker/daemon.json
+
+  #   - name: Add gcp-user to docker group
+  #     user:
+  #       name: gcp-user
+  #       groups: docker
+  #       append: true
+
+  #   - name: Enable docker
+  #     systemd:
+  #       name: docker
+  #       state: started
+  #       enabled: yes
+  #       masked: no
+
+  #   - name: pip install docker
+  #     pip:
+  #       name: "docker"
+  #       executable: pip3
+
+  #   - docker_network: name=sepal
+
+  #   - file: path="/usr/local/lib/docker/cli-plugins" state=directory
+  #   - uri:
+  #       url: https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-x86_64
+  #       dest: /usr/local/lib/docker/cli-plugins/docker-compose
+  #       mode: +x
+  #       status_code: [200, 304]
+
+  #   - file: path="/etc/sepal/env.d" state=directory
+  #   - name: Copy env file to env-config
+  #     copy:
+  #       src: "{{ env_file }}"
+  #       dest: "/etc/sepal/env.d/env-config"
+
+  #   - name: Creating env-current file
+  #     copy:
+  #       dest: "/etc/sepal/env.d/env-current"
+  #       content: |
+  #         SEPAL_VERSION={{ VERSION }}
+  #         SEPAL_IP={{ SEPAL_IP }}
+  #         SEPAL_SSH_IP={{ SEPAL_SSH_IP }}
+  #         LDAP_HOST={{ LDAP_HOST }}
+  #         SYSLOG_ADDRESS={{ SYSLOG_ADDRESS }}
+
+  #   - name: Assemble a single env file
+  #     assemble:
+  #       src: /etc/sepal/env.d
+  #       dest: /etc/sepal/env
+
+  # post_tasks:
+  #   - name: Start monit
+  #     systemd:
+  #       name: monit
+  #       state: started
+  #       enabled: yes
+  #       masked: no
+
+  roles:
+    # - { role: live-patching }
+    # - { role: aws-mount-efs }
+    - { role: docker-login }
+
+    # - { role: run-module, module: backup }
+    - { role: run-module, module: rabbitmq }
+    - { role: run-module, module: email }
+    - { role: run-module, module: ldap }
+    - { role: run-module, module: ldap-backup }
+    - { role: run-module, module: mysql }
+    - { role: run-module, module: mysql-backup }
+    - { role: run-module, module: gee}
+    - { role: run-module, module: user }
+    - { role: run-module, module: app-manager }
+    - { role: run-module, module: sepal-server }
+    - { role: run-module, module: user-files }
+    - { role: run-module, module: gui }
+    - { role: run-module, module: ceo-gateway }
+    - { role: run-module, module: ssh-gateway }
+    - { role: run-module, module: terminal }
+    - { role: run-module, module: gateway }
+    - { role: run-module, module: letsencrypt }
+    - { role: run-module, module: haproxy }
+    - { role: run-module, module: sys-monitor }

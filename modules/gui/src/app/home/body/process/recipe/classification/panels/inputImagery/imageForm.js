@@ -131,6 +131,7 @@ class ImageForm extends Component {
     removeSelection(bandSetSpec, value) {
         const {inputs: {bandSetSpecs}} = this.props
         const updated = mutate(bandSetSpecs.value, [{id: bandSetSpec.id}, 'included', value]).del()
+        console.log({value, updated})
         bandSetSpecs.set(updated)
     }
 

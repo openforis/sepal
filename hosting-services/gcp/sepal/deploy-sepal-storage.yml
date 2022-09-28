@@ -1,0 +1,177 @@
+- name: Configure Sepal instance
+  hosts: all
+  user: ec2-user
+  become: yes
+  gather_facts: true
+
+  pre_tasks:
+    - set_fact:
+        SYSLOG_ADDRESS: "udp://{{ ec2_private_ip_address }}"
+
+    # bash prompt
+    - name: Set bash prompt
+      blockinfile:
+        path: /etc/profile
+        block: |
+          # Bash prompt
+          PS1='{{ lookup('env', 'BASH_PROMPT_STORAGE') }}'
+
+    # set locale
+    - name: Set locale
+      lineinfile:
+        path: /etc/environment
+        line: "{{ item }}"
+      with_items:
+        - "LANG=en_US.utf-8"
+        - "LC_ALL=en_US.utf-8"
+
+    - file: path="/data/sepal/etc" state=directory
+    - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
+
+    # rsyslog
+    - name: Copy rsyslog.conf
+      template: src="rsyslog.conf" dest=/etc/rsyslog.conf
+
+    - name: Copy rsyslog.d
+      copy:
+        src: "rsyslog.d/"
+        dest: "/etc/rsyslog.d/"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    - name: Start rsyslog
+      service: name=rsyslog state=started
+
+    # logrotate
+    - name: Copy worker-instances logrotate configuration
+      copy:
+        src: "logrotate.d/"
+        dest: "/etc/logrotate.d/"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    # docker
+    - name: Create filesystem on Docker volume
+      filesystem:
+        fstype: xfs
+        dev: /dev/sdb
+#        dev: /dev/xvdb
+
+    - name: Mount Docker volume
+      mount:
+        path: /var/lib/docker
+        src: /dev/sdb
+#        src: /dev/xvdb
+        fstype: xfs
+        state: mounted
+
+    - name: Create docker-registry certificate dir
+      file:
+        path: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
+        state: directory
+
+    - name: Copy docker-registry certificate
+      copy:
+        src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
+        dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
+
+    - name: Install docker
+      command: "amazon-linux-extras install docker -y"
+
+    - name: Install Development Tools
+      yum:
+        name: "@Development Tools"
+
+    - name: Install pip
+      yum:
+        name: python-pip
+
+    - name: Create /etc/docker
+      file:
+        path: "/etc/docker"
+        state: directory
+
+    - name: Copy /etc/docker/daemon.json
+      template: src=docker/storage-daemon.json dest=/etc/docker/daemon.json
+
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+
+    - name: Enable docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+        masked: no
+
+    - name: pip install docker
+      pip:
+        name: "docker"
+        executable: pip3
+
+    # EFS
+    - name: Install amazon-efs-utils
+      yum:
+        name: "amazon-efs-utils"
+
+    - name: Create /data
+      file:
+        path: "/data"
+        state: directory
+
+    - name: Create /data/sepal
+      file:
+        path: "/data/sepal"
+        state: directory
+
+    - name: Create /data/sepal/home
+      file:
+        path: "/data/sepal/home"
+        state: directory
+
+    - name: Mount EFS user home dirs
+      mount:
+        name: "/data/sepal/home"
+        fstype: "efs"
+        state: "mounted"
+        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/home"
+        opts: "defaults,_netdev"
+        dump: 0
+        passno: 0
+
+    - docker_network: name=sepal
+
+    - file: path="/usr/local/lib/docker/cli-plugins" state=directory
+    - uri:
+        url: https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-x86_64
+        dest: /usr/local/lib/docker/cli-plugins/docker-compose
+        mode: +x
+        status_code: [200, 304]
+
+    - file: path="/etc/sepal/env.d" state=directory
+    - name: Copy env file to env-config
+      copy:
+        src: "{{ env_file }}"
+        dest: "/etc/sepal/env.d/env-config"
+
+    - name: Creating env-current file
+      copy:
+        dest: "/etc/sepal/env.d/env-current"
+        content: |
+          SEPAL_VERSION={{ VERSION }}
+          SYSLOG_ADDRESS={{ SYSLOG_ADDRESS }}
+
+    - name: Assemble a single env file
+      ansible.builtin.assemble:
+        src: /etc/sepal/env.d
+        dest: /etc/sepal/env
+
+  roles:
+    - { role: live-patching }
+    - { role: docker-login }
+    # - { role: run-module, module: user-storage-backup }
+    - { role: run-module, module: user-storage }

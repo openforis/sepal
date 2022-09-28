@@ -1,0 +1,11 @@
+plugin: gcp_compute
+projects:
+  - $GCP_PROJECT
+zones:
+  - $GCP_ZONE
+# https://cloud.google.com/compute/docs/reference/rest/v1/instances/aggregatedList
+filters:
+  - 'labels.environment: $DEPLOY_ENVIRONMENT'
+  - 'labels.type: $TYPE'
+auth_kind: serviceaccount
+service_account_file: /etc/sepal/conf.d/service-account.json

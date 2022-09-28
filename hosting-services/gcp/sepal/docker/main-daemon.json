@@ -1,0 +1,14 @@
+{
+    "storage-driver": "devicemapper",
+    "storage-opts": [
+        "dm.datadev=/dev/vg-docker/data",
+        "dm.metadatadev=/dev/vg-docker/metadata"
+    ],
+    "log-driver": "syslog",
+    "log-opts": {
+        "syslog-address": "{{ SYSLOG_ADDRESS }}",
+        "tag": "docker/{{ '{{.Name}}' }}",
+        "labels": "dev",
+        "syslog-facility": "daemon"
+    }
+}
