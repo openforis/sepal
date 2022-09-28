@@ -30,7 +30,8 @@ const worker$ = ({recipe, band, aoi, mapBounds}) => {
             geometry,
             scale: 1,
             bestEffort: true,
-            maxPixels: histogramMaxPixels || MAX_PIXELS
+            maxPixels: histogramMaxPixels || MAX_PIXELS,
+            tileScale: 16
         }).get(band)
     }
 

@@ -17,7 +17,8 @@ const worker$ = ({recipe, bands, latLng}) => {
                 const value = image.reduceRegion({
                     reducer: ee.Reducer.first(),
                     geometry,
-                    scale: 10
+                    scale: 10,
+                    tileScale: 16
                 }).getNumber(band) // Expect a single band in the recipe
                 return ee.Feature(null, {date: image.date(), value})
             })

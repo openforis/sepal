@@ -25,7 +25,8 @@ const worker$ = recipe => {
                     numPoints: NUMBER_OF_POINTS,
                     classBand: 'class',
                     scale: 30,
-                    geometries: true
+                    geometries: true,
+                    tileScale: 16
                 })
         ),
         switchMap(points =>

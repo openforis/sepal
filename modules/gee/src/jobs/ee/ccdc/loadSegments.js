@@ -18,7 +18,8 @@ const worker$ = ({recipe, latLng, bands}) => {
                     segments.reduceRegion({
                         reducer: ee.Reducer.first(),
                         geometry,
-                        scale: 10
+                        scale: 10,
+                        tileScale: 16
                     }),
                     `Get CCDC segments for pixel (${latLng})`
                 )

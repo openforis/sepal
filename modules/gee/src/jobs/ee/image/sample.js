@@ -15,7 +15,8 @@ const worker$ = ctx => {
                 classBand: classBand || undefined,
                 scale: parseInt(scale),
                 region: geometry,
-                geometries: true
+                geometries: true,
+                tileScale: 16
             })
             return getRows$(samples, 'sample image')
         })
