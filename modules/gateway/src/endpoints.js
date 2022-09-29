@@ -121,13 +121,6 @@ const endpoints = [
     },
     {
         prefix: true,
-        path: '/static',
-        target: `http://${modules.gui}/static`,
-        authenticate: false,
-        cache: true
-    },
-    {
-        prefix: true,
         path: '/api/sandbox/jupyter',
         target: `http://${modules.sandbox}/jupyter/api/sandbox/jupyter/`,
         authenticate: true,
@@ -139,20 +132,6 @@ const endpoints = [
         target: `http://${modules.sandbox}`,
         authenticate: true,
         rewrite: true
-    },
-    {
-        prefix: false,
-        path: '/privacy-policy',
-        target: `http://${modules.gui}/resource/privacy-policy.html`,
-        authenticate: false,
-        noCache: true
-    },
-    {
-        prefix: true,
-        path: '',
-        target: `http://${modules.gui}`,
-        authenticate: false,
-        noCache: true
     }
 ]
 
