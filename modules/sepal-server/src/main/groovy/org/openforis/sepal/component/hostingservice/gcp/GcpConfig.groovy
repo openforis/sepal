@@ -1,10 +1,10 @@
-package org.openforis.sepal.component.hostingservice.aws
+package org.openforis.sepal.component.hostingservice.gcp
 
 import groovy.transform.Canonical
 import org.openforis.sepal.util.Config
 
 @Canonical
-class AwsConfig {
+class GcpConfig {
     final String region
     final String availabilityZone
     final String accessKey
@@ -13,7 +13,7 @@ class AwsConfig {
     final String sepalVersion
     final String environment
 
-    AwsConfig() {
+    GcpConfig() {
         def c = new Config('aws.properties')
         region = c.string('region')
         availabilityZone = c.string('availabilityZone')
