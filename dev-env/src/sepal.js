@@ -80,6 +80,7 @@ const main = async () => {
         .description('Start module shell')
         .option('-r, --root', 'Start as root')
         .argument('<module>', 'Module')
+        .argument('[service]', 'Service')
         .action(shell)
 
     program.command('npm-update')
