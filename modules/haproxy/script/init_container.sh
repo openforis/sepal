@@ -8,4 +8,4 @@ cat /etc/letsencrypt/live/$SEPAL_HOST/privkey.pem \
     > /etc/sepal/sepal.pem
 chmod 400 /etc/sepal/sepal.pem
 
-exec /usr/bin/supervisord -c /config/supervisord.conf
+exec haproxy -f /etc/haproxy/haproxy.cfg
