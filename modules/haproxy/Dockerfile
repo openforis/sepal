@@ -1,4 +1,4 @@
-FROM haproxy:2.4
+FROM haproxy:2.6
 
 EXPOSE 80 443
 
