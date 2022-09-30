@@ -52,6 +52,15 @@ export class Recaptcha extends React.Component {
         this.loadRecaptcha()
     }
 
+    componentWillUnmount() {
+        this.removeRecaptchaBadge()
+    }
+    
+    removeRecaptchaBadge() {
+        const recaptchaBadge = document.getElementsByClassName('grecaptcha-badge')
+        recaptchaBadge && _.forEach(recaptchaBadge, element => element.remove())
+    }
+
     loadRecaptcha() {
         const {siteKey} = this.props
         log.debug('Loading Google reCAPTCHA')
