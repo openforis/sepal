@@ -113,8 +113,10 @@ class ClassMappingStep extends Component {
                     {addingMapping === legendValue
                         ? <Combo
                             className={styles.valueSelectionCombo}
-                            standalone='true'
+                            stayOpenOnSelect
+                            autoOpen
                             autoFocus
+                            allowClear
                             options={valueOptions}
                             disabled={!valueOptions.length}
                             onChange={option => {

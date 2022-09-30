@@ -100,8 +100,10 @@ class ImageForm extends Component {
                         alignment='left'
                         placeholder={msg('process.recipe.move.destinationProject')}
                         options={options}
-                        standalone
+                        stayOpenOnSelect
+                        autoOpen
                         autoFocus
+                        allowClear
                         onCancel={onBlur}
                         onChange={({value}) => {
                             this.addSelection(bandSetSpec, value)

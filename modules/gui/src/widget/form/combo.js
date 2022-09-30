@@ -4,9 +4,9 @@ import React from 'react'
 
 export const FormCombo = (
     {
-        input, options, additionalButtons, alignment, allowClear, autoFocus, busyMessage, className, disabled,
+        input, options, additionalButtons, alignment, allowClear, autoFocus, autoOpen, busyMessage, className, disabled,
         errorMessage, inputClassName, keyboard, label, matchGroups, optionsClassName, optionTooltipPlacement, placeholder, placement,
-        readOnly, standalone, tooltip, tooltipPlacement, onCancel, onChange
+        readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, onCancel, onChange
     }) =>
     <Combo
         value={input.value}
@@ -15,6 +15,7 @@ export const FormCombo = (
         alignment={alignment}
         allowClear={allowClear}
         autoFocus={autoFocus}
+        autoOpen={autoOpen}
         busyMessage={busyMessage}
         className={className}
         disabled={disabled}
@@ -28,7 +29,7 @@ export const FormCombo = (
         placeholder={placeholder}
         placement={placement}
         readOnly={readOnly}
-        standalone={standalone}
+        stayOpenOnSelect={stayOpenOnSelect}
         tooltip={tooltip}
         tooltipPlacement={tooltipPlacement}
         onCancel={onCancel}
@@ -45,6 +46,7 @@ FormCombo.propTypes = {
     alignment: PropTypes.any,
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
+    autoOpen: PropTypes.any,
     busyMessage: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
@@ -58,7 +60,7 @@ FormCombo.propTypes = {
     placeholder: PropTypes.string,
     placement: PropTypes.any,
     readOnly: PropTypes.any,
-    standalone: PropTypes.any,
+    stayOpenOnSelect: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     onCancel: PropTypes.func,
