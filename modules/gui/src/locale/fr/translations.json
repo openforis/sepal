@@ -1858,6 +1858,10 @@
                         "title": "Asset Google Earth Engine"
                     },
                     "bandSetSpec": {
+                        "addBands": {
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
                         "imageBands": {
                             "label": "Bandes spectrales"
                         },
@@ -1975,6 +1979,16 @@
                 },
                 "trainingData": {
                     "button": "ETR",
+                    "classMapping": {
+                        "addColumns": {
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "columnValues": "",
+                        "enterExpression": "",
+                        "noColumValuesSelected": "",
+                        "removeColumnValue": ""
+                    },
                     "clearCollected": {
                         "confirmation": {
                             "label": "",
