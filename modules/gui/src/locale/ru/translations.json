@@ -1858,6 +1858,10 @@
                         "title": ""
                     },
                     "bandSetSpec": {
+                        "addBands": {
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
                         "imageBands": {
                             "label": ""
                         },
@@ -1975,6 +1979,16 @@
                 },
                 "trainingData": {
                     "button": "",
+                    "classMapping": {
+                        "addColumns": {
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "columnValues": "",
+                        "enterExpression": "",
+                        "noColumValuesSelected": "",
+                        "removeColumnValue": ""
+                    },
                     "clearCollected": {
                         "confirmation": {
                             "label": "",
