@@ -48,4 +48,4 @@ const SessionManager = store => {
     }
 }
 
-module.exports = SessionManager
+module.exports = {SessionManager}

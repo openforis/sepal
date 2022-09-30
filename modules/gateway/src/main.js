@@ -1,20 +1,27 @@
 require('sepal/log').configureServer(require('./log.json'))
+
 const {amqpUri, redisUri, port, secure} = require('./config')
 const {isMatch} = require('micromatch')
 const express = require('express')
 const Redis = require('ioredis')
 const Session = require('express-session')
-const {logout} = require('./logout')
-const {proxyEndpoints} = require('./proxy')
 const {v4: uuid} = require('uuid')
 const url = require('url')
+
 const log = require('sepal/log').getLogger('gateway')
 const {initMessageQueue} = require('sepal/messageQueue')
 
+const {logout} = require('./logout')
+const {Proxy} = require('./proxy')
+const {SessionManager} = require('./session')
+const {UserStore} = require('./user')
+
 const redis = new Redis(redisUri)
+const userStore = UserStore(redis)
 const RedisSessionStore = require('connect-redis')(Session)
-const store = new RedisSessionStore({client: redis})
-const {messageHandler} = require('./session')(store)
+const sessionStore = new RedisSessionStore({client: redis})
+const {messageHandler} = SessionManager(sessionStore)
+const {proxyEndpoints} = Proxy(userStore)
 
 const getSecret = async () => {
     const secret = await redis.get('secret')
@@ -41,7 +48,7 @@ const main = async () => {
     const secret = await getSecret()
 
     const sessionParser = Session({
-        store,
+        store: sessionStore,
         secret,
         name: 'SEPAL-SESSIONID',
         cookie: {
