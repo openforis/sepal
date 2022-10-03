@@ -2,8 +2,11 @@ import * as PropTypes from 'prop-types'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Combo} from 'widget/combo'
+import {CrudItem} from 'widget/crudItem'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
+import {LegendItem} from 'widget/legend/legendItem'
+import {ListItem} from 'widget/listItem'
 import {compose} from 'compose'
 import {filterReferenceData$, remapReferenceData$} from './inputData'
 import {msg} from 'translate'
@@ -101,6 +104,7 @@ class ClassMappingStep extends Component {
             .filter(({value}) => !mappedValues.includes(value))
         return (
             <ButtonPopup
+                key='selectionWidget'
                 look='add'
                 shape='circle'
                 icon='plus'
@@ -199,31 +203,44 @@ class ClassMappingStep extends Component {
     }
 
     renderClasses(legendValueRenderer) {
-        const {legend, inputs: {defaultValue}} = this.props
+        const {legend} = this.props
         const renderEntry = ({id, color, value, label}) =>
-            <div key={id} className={styles.mapping}>
-                <Layout type='horizontal-nowrap'>
-                    <div className={styles.entry}>
-                        <div className={styles.color} style={{'--color': color}}/>
-                        <div className={styles.value}>{value}</div>
-                        <div className={styles.label}>{label}</div>
-                    </div>
-                    <Button
-                        label={'Default'}
-                        labelStyle='smallcaps'
-                        tooltip={'Class to use for locations where no column value was mapped'}
-                        look={defaultValue.value === value ? 'selected' : 'default'}
-                        shape='pill'
-                        size='small'
-                        onClick={() => defaultValue.set(defaultValue.value === value ? null : value)}
-                    />
-                </Layout>
-                <div className={styles.input}>
-                    {legendValueRenderer(value)}
-                </div>
-            </div>
+            <ListItem
+                key={id}
+                expansion={legendValueRenderer(value)}
+                expanded>
+                <CrudItem
+                    content={this.renderLegendItem({color, value, label})}
+                    inlineComponents={[this.renderDefaultButton(value)]}
+                />
+            </ListItem>
 
         return legend.entries.map(renderEntry)
+    }
+
+    renderLegendItem({color, value, label}) {
+        return (
+            <LegendItem
+                color={color}
+                label={label}
+                value={value}
+            />
+        )
+    }
+
+    renderDefaultButton(value) {
+        const {inputs: {defaultValue}} = this.props
+        return (
+            <Button
+                key='default'
+                shape='pill'
+                look={defaultValue.value === value ? 'selected' : 'default'}
+                size='small'
+                label='Default'
+                tooltip={'Class to use for locations where no column value was mapped'}
+                onClick={() => defaultValue.set(defaultValue.value === value ? null : value)}
+            />
+        )
     }
 
     getMapping(mappingType) {
