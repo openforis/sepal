@@ -166,7 +166,7 @@ class _Combo extends React.Component {
     }
 
     renderClearButton() {
-        const {allowClear} = this.props
+        const {allowClear, readOnly} = this.props
         const {filter, selectedOption} = this.state
         const disabled = !filter && (!allowClear || !selectedOption)
         return readOnly
@@ -312,7 +312,7 @@ class _Combo extends React.Component {
         return !this.state.selected
     }
 
-    componentDidUpdate(prevProps) {
+    componentDidUpdate(prevProps, prevState) {
         const {value, options} = this.props
         const {value: prevValue, selectedOption: prevSelectedOption} = prevProps
         const inputChanged = value !== prevValue
@@ -324,6 +324,10 @@ class _Combo extends React.Component {
         const selectedOption = inputChanged
             ? this.getInputOption(flattenedOptions)
             : validatedSelectedOption || this.getInputOption(flattenedOptions)
+
+        if (prevState?.filter !== this.state?.filter) {
+            this.showOptions()
+        }
 
         this.setStateIfUpdated({
             filteredOptions,
