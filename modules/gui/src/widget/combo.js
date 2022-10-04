@@ -277,7 +277,7 @@ class _Combo extends React.Component {
         const {onChange, stayOpenOnSelect} = this.props
         this.setState({
             selectedOption: option,
-            selected: false
+            selected: true
         }, () => {
             if (stayOpenOnSelect) {
                 this.showOptions()
@@ -308,13 +308,10 @@ class _Combo extends React.Component {
         this.handleSelect()
     }
 
-    shouldComponentUpdate() {
-        return !this.state.selected
-    }
-
     componentDidUpdate(prevProps, prevState) {
         const {value, options} = this.props
         const {value: prevValue, selectedOption: prevSelectedOption} = prevProps
+        const {filter, selected} = this.state
         const inputChanged = value !== prevValue
         const filteredOptions = this.getFilteredOptions(options)
         const flattenedOptions = this.getFlattenedOptions(filteredOptions)
@@ -325,7 +322,7 @@ class _Combo extends React.Component {
             ? this.getInputOption(flattenedOptions)
             : validatedSelectedOption || this.getInputOption(flattenedOptions)
 
-        if (prevState?.filter !== this.state?.filter) {
+        if (prevState?.filter !== filter && !selected) {
             this.showOptions()
         }
 
