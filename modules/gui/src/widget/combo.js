@@ -169,21 +169,23 @@ class _Combo extends React.Component {
         const {allowClear} = this.props
         const {filter, selectedOption} = this.state
         const disabled = !filter && (!allowClear || !selectedOption)
-        return (
-            <Button
-                key='clear'
-                chromeless
-                shape='none'
-                air='none'
-                icon='times'
-                iconAttributes={{
-                    fixedWidth: true
-                }}
-                tabIndex={-1}
-                disabled={disabled}
-                onClick={this.resetFilterOrClearSelection}
-            />
-        )
+        return readOnly
+            ? null
+            : (
+                <Button
+                    key='clear'
+                    chromeless
+                    shape='none'
+                    air='none'
+                    icon='times'
+                    iconAttributes={{
+                        fixedWidth: true
+                    }}
+                    tabIndex={-1}
+                    disabled={disabled}
+                    onClick={this.resetFilterOrClearSelection}
+                />
+            )
     }
 
     renderToggleOptionsButton() {
