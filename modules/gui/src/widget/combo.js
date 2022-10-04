@@ -39,12 +39,15 @@ class _Combo extends React.Component {
 
     constructor() {
         super()
-        this.onClick = this.onClick.bind(this)
+        this.onInputClick = this.onInputClick.bind(this)
         this.onInputBlur = this.onInputBlur.bind(this)
         this.onOptionsBlur = this.onOptionsBlur.bind(this)
         this.showOptions = this.showOptions.bind(this)
-        this.toggleOptions = this.toggleOptions.bind(this)
         this.setFilter = this.setFilter.bind(this)
+        this.resetFilterOrClose = this.resetFilterOrClose.bind(this)
+        this.resetFilterOrClearSelection = this.resetFilterOrClearSelection.bind(this)
+        this.selectOption = this.selectOption.bind(this)
+        this.onOptionSelected = this.onOptionSelected.bind(this)
     }
 
     isActive() {
@@ -65,16 +68,20 @@ class _Combo extends React.Component {
         this.setState({showOptions: true})
     }
 
-    toggleOptions() {
-        this.setState(({showOptions}) => ({showOptions: !showOptions}))
+    hideOptions() {
+        const {onCancel} = this.props
+        this.setState({showOptions: false}, () => onCancel && onCancel())
     }
 
-    onClick(e) {
-        const {standalone, onCancel} = this.props
+    onInputClick() {
+        const {autoOpen} = this.props
+        const {filter, showOptions} = this.state
         if (this.isActive()) {
-            standalone
-                ? onCancel && onCancel(e)
-                : this.toggleOptions()
+            if (!autoOpen && !filter && showOptions) {
+                this.hideOptions()
+            } else if (!showOptions) {
+                this.showOptions()
+            }
         }
     }
 
@@ -94,7 +101,7 @@ class _Combo extends React.Component {
                 <div
                     ref={this.inputContainer}
                     className={styles.inputContainer}
-                    onClick={this.onClick}>
+                    onClick={this.onInputClick}>
                     {this.renderInput()}
                 </div>
                 {showOptions ? this.renderOptions() : null}
@@ -103,7 +110,7 @@ class _Combo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, standalone, readOnly, border, inputClassName, additionalButtons = []} = this.props
+        const {placeholder, autoFocus, readOnly, border, value, inputClassName, additionalButtons = []} = this.props
         const {filter, selectedOption, showOptions} = this.state
         return (
             <Keybinding
@@ -121,13 +128,12 @@ class _Combo extends React.Component {
                         ref={this.input}
                         className={[
                             styles.input,
-                            standalone ? styles.standalone : null,
                             selectedOption && !showOptions ? styles.fakePlaceholder : null,
                             inputClassName
                         ].join(' ')}
                         border={border}
                         value={filter}
-                        placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
+                        placeholder={selectedOption && !_.isNil(value) ? selectedOption.label : placeholder}
                         disabled={!this.isActive()}
                         readOnly={readOnly || isMobile()}
                         buttons={[
@@ -144,11 +150,15 @@ class _Combo extends React.Component {
         )
     }
 
+    focusInput() {
+        this.input.current && this.input.current.focus()
+    }
+
     onInputBlur(e) {
         const {onBlur} = this.props
         const {showOptions} = this.state
         if (showOptions) {
-            this.input.current && this.input.current.focus()
+            this.focusInput()
         } else {
             onBlur && onBlur(e)
             this.setFocused(false)
@@ -157,24 +167,23 @@ class _Combo extends React.Component {
 
     renderClearButton() {
         const {allowClear} = this.props
-        const {selectedOption} = this.state
-        return allowClear
-            ? (
-                <Button
-                    key='clear'
-                    chromeless
-                    shape='none'
-                    air='none'
-                    icon='times'
-                    iconAttributes={{
-                        fixedWidth: true
-                    }}
-                    tabIndex={-1}
-                    disabled={!selectedOption}
-                    onClick={() => this.select$.next()}
-                />
-            )
-            : null
+        const {filter, selectedOption} = this.state
+        const disabled = !filter && (!allowClear || !selectedOption)
+        return (
+            <Button
+                key='clear'
+                chromeless
+                shape='none'
+                air='none'
+                icon='times'
+                iconAttributes={{
+                    fixedWidth: true
+                }}
+                tabIndex={-1}
+                disabled={disabled}
+                onClick={this.resetFilterOrClearSelection}
+            />
+        )
     }
 
     renderToggleOptionsButton() {
@@ -197,7 +206,7 @@ class _Combo extends React.Component {
                 }}
                 tabIndex={-1}
                 disabled={!this.isActive()}
-                onClick={this.toggleOptions}
+                onClick={() => showOptions ? this.hideOptions() : this.showOptions()}
             />
         )
     }
@@ -217,8 +226,8 @@ class _Combo extends React.Component {
                     className={optionsClassName || styles.options}
                     options={flattenedOptions}
                     selectedOption={selectedOption}
-                    onSelect={option => this.select$.next(option)}
-                    onCancel={() => this.resetFilter()}
+                    onSelect={this.selectOption}
+                    onCancel={this.resetFilterOrClose}
                     autoCenter={!selected}
                     tooltipPlacement={optionTooltipPlacement}
                     autoHighlight
@@ -230,42 +239,53 @@ class _Combo extends React.Component {
     }
 
     setFilter(filter = '') {
-        const {standalone} = this.props
         this.setState({
-            showOptions: !!filter || standalone,
             filter,
             matcher: this.matcher(filter)
         })
     }
 
-    resetFilter() {
-        const {onCancel, standalone} = this.props
+    resetFilterOrClearSelection() {
         const {filter} = this.state
-        if (standalone && onCancel && !filter) {
-            onCancel()
-        } else {
-            this.setFilter()
+        filter
+            ? this.setFilter()
+            : this.selectOption()
+    }
+
+    resetFilterOrClose() {
+        const {filter} = this.state
+        this.setFilter()
+        if (!filter) {
+            this.hideOptions()
         }
     }
 
-    setSelectedOption(selectedOption) {
-        this.setState({
-            selectedOption,
-            selected: !!selectedOption
-        })
+    selectOption(option) {
+        this.select$.next(option)
     }
 
     handleSelect() {
-        const {onChange, addSubscription} = this.props
+        const {addSubscription} = this.props
         addSubscription(
-            this.select$.subscribe(
-                option => {
-                    this.setSelectedOption(option)
-                    onChange && onChange(option)
-                    this.setState({selected: false}, this.setFilter)
-                }
-            )
+            this.select$.subscribe(this.onOptionSelected)
         )
+    }
+
+    onOptionSelected(option) {
+        const {onChange, stayOpenOnSelect} = this.props
+        this.setState({
+            selectedOption: option,
+            selected: false
+        }, () => {
+            if (stayOpenOnSelect) {
+                this.showOptions()
+                this.focusInput()
+            } else {
+                this.hideOptions()
+                this.setFilter()
+            }
+            onChange && onChange(option)
+        })
     }
 
     onOptionsBlur(e) {
@@ -274,12 +294,15 @@ class _Combo extends React.Component {
         const isListClick = e => this.list.current && this.list.current.contains && this.list.current.contains(e.target)
         if (!isInputClick(e) && !isListClick(e)) {
             this.setFilter()
+            this.hideOptions()
             onCancel && onCancel(e)
         }
     }
 
     componentDidMount() {
+        const {autoOpen} = this.props
         this.setFilter()
+        autoOpen && this.showOptions()
         this.handleSelect()
     }
 
@@ -378,6 +401,7 @@ Combo.propTypes = {
     alignment: PropTypes.oneOf(['left', 'center', 'right', 'fit']),
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
+    autoOpen: PropTypes.any,
     border: PropTypes.any,
     busyMessage: PropTypes.any,
     className: PropTypes.string,
@@ -393,7 +417,7 @@ Combo.propTypes = {
     placeholder: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
     readOnly: PropTypes.any,
-    standalone: PropTypes.any,
+    stayOpenOnSelect: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     value: PropTypes.any,

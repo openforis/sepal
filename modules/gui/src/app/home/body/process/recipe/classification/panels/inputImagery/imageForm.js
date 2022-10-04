@@ -93,15 +93,17 @@ class ImageForm extends Component {
                 showPopupOnMount={!bandSetSpec.included.length && bands.value?.length}
                 vPlacement='below'
                 hPlacement='over-left'
-                tooltip={msg('process.recipe.move.tooltip')}>
+                tooltip={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.tooltip')}>
                 {onBlur => (
                     <Combo
                         placement='below'
                         alignment='left'
-                        placeholder={msg('process.recipe.move.destinationProject')}
+                        placeholder={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.placeholder')}
                         options={options}
-                        standalone
+                        stayOpenOnSelect
+                        autoOpen
                         autoFocus
+                        allowClear
                         onCancel={onBlur}
                         onChange={({value}) => {
                             this.addSelection(bandSetSpec, value)

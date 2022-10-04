@@ -1860,6 +1860,10 @@
               "title": "Earth Engine asset"
             },
             "bandSetSpec": {
+              "addBands": {
+                "placeholder": "Select bands...",
+                "tooltip": "Add bands"
+              },
               "imageBands": {
                 "label": "Image bands"
               },
@@ -1977,6 +1981,16 @@
           },
           "trainingData": {
             "button": "TRN",
+            "classMapping": {
+                "addColumns": {
+                    "placeholder": "Add columns...",
+                    "tooltip": "Add columns to map to this value"
+                },
+                "columnValues": "Column value(s)",
+                "enterExpression": "Enter expression",
+                "noColumValuesSelected": "No column value selected for this class",
+                "removeColumnValue": "Remove column value"
+            },
             "clearCollected": {
               "confirmation": {
                 "label": "Clear",
