@@ -1,5 +1,4 @@
 const log = require('sepal/log').getLogger('user')
-const {from} = require('rxjs')
 const _ = require('lodash')
 
 const SEPAL_USER_HEADER = 'sepal-user'
@@ -40,14 +39,27 @@ const UserStore = redis => {
         await redis.set(userKey(user.username), serialize(user))
             .then(result => result === 'OK')
 
-    const getUser$ = username =>
-        from(getUser(username))
-
-    const setUser$ = user =>
-        from(setUser(user))
+    const userMiddleware = (req, res, next) => {
+        const username = getSessionUsername(req)
+        if (username) {
+            getUser(username).then(user => {
+                if (user) {
+                    setRequestUser(req, user)
+                    log.isTrace()
+                        ? log.trace(`[${username}] populated context with user:`, user)
+                        : log.debug(`[${username}] populated context with user`)
+                } else {
+                    log.warn('Cannot populate context with user:', username)
+                }
+                next()
+            })
+        } else {
+            next()
+        }
+    }
 
     return {
-        getUser, setUser, getUser$, setUser$
+        getUser, setUser, userMiddleware
     }
 }
 
@@ -63,4 +75,11 @@ const getRequestUser = req =>
 const setRequestUser = (req, user) =>
     req.headers[SEPAL_USER_HEADER] = serialize(user)
 
-module.exports = {SEPAL_USER_HEADER, UserStore, getSessionUsername, setSessionUsername, getRequestUser, setRequestUser}
+module.exports = {
+    SEPAL_USER_HEADER,
+    UserStore,
+    getSessionUsername,
+    setSessionUsername,
+    getRequestUser,
+    setRequestUser
+}

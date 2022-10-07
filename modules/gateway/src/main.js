@@ -14,7 +14,7 @@ const {initMessageQueue} = require('sepal/messageQueue')
 const {logout} = require('./logout')
 const {Proxy} = require('./proxy')
 const {SessionManager} = require('./session')
-const {UserStore, setRequestUser, getRequestUser, getSessionUsername} = require('./user')
+const {UserStore, setRequestUser, getSessionUsername} = require('./user')
 
 const redis = new Redis(redisUri)
 const userStore = UserStore(redis)
@@ -34,25 +34,6 @@ const getSecret = async () => {
         log.info('Creating new secret')
         await redis.set('secret', secret)
         return secret
-    }
-}
-
-const userMiddleware = (req, res, next) => {
-    const username = req.session.username
-    if (username) {
-        userStore.getUser(username).then(user => {
-            if (user) {
-                setRequestUser(req, user)
-                log.isTrace()
-                    ? log.trace(`[${username}] populated context with user:`, user)
-                    : log.debug(`[${username}] populated context with user`)
-            } else {
-                log.warn('Cannot populate context with user:', username)
-            }
-            next()
-        })
-    } else {
-        next()
     }
 }
 
@@ -82,7 +63,7 @@ const main = async () => {
     })
     
     app.use(sessionParser)
-    app.use(userMiddleware)
+    app.use(userStore.userMiddleware)
 
     app.use('/api/user/logout', logout)
     const proxies = proxyEndpoints(app)

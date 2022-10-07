@@ -1,17 +1,17 @@
 const log = require('sepal/log').getLogger('session')
 const {toPromise} = require('sepal/util')
 
-const SessionManager = store => {
+const SessionManager = sessionStore => {
     const getAllSessions = async () => {
         const [sessions] = await toPromise(
-            callback => store.all(callback)
+            callback => sessionStore.all(callback)
         )
         return sessions
     }
     
     const removeSession = async id =>
         await toPromise(
-            callback => store.destroy(id, callback)
+            callback => sessionStore.destroy(id, callback)
         )
     
     const removeSessionsByUsername = async username => {

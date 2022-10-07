@@ -6,7 +6,7 @@ const {categories: {proxy: sepalLogLevel}} = require('./log.json')
 const {sepalHost} = require('./config')
 const modules = require('./modules')
 const {get$} = require('sepal/httpClient')
-const {EMPTY, map, switchMap} = require('rxjs')
+const {EMPTY, from, map, switchMap} = require('rxjs')
 const {getRequestUser, SEPAL_USER_HEADER} = require('./user')
 const proxyLog = require('sepal/log').getLogger('proxy')
 const log = require('sepal/log').getLogger('gateway')
@@ -104,7 +104,7 @@ const Proxy = userStore => {
                 map((({body}) => JSON.parse(body))),
                 switchMap(user => {
                     log.debug(() => `[${user.username}] [${req.url}] Updated user in user store`)
-                    return userStore.setUser$(user)
+                    return from(userStore.setUser(user))
                 })
             ).subscribe({
                 error: error => log.error(`[${user.username}] [${req.url}] Failed to load current user`, error)

@@ -1,4 +1,4 @@
-const {defer, firstValueFrom, of, catchError, switchMap} = require('rxjs')
+const {defer, firstValueFrom, from, of, catchError, switchMap} = require('rxjs')
 const {post$, postJson$} = require('sepal/httpClient')
 const modules = require('./modules')
 const {getRequestUser, setRequestUser, setSessionUsername, SEPAL_USER_HEADER} = require('./user')
@@ -30,7 +30,7 @@ const Auth = userStore => {
                             log.debug(() => `[${user.username}] [${req.originalUrl}] Refreshed Google tokens`)
                             const updatedUser = {...user, googleTokens: JSON.parse(googleTokens)}
                             res.set(SEPAL_USER_HEADER, JSON.stringify(updatedUser))
-                            return userStore.setUser$(updatedUser)
+                            return from(userStore.setUser(updatedUser))
                         } else {
                             log.warn(`[${user.username}] [${req.originalUrl}] Google tokens not refreshed - missing from response`)
                         }
@@ -39,20 +39,23 @@ const Auth = userStore => {
                 )
             })
     
+            const shouldRefreshGoogleTokens = user => {
+                const expiresInMinutes = (user.googleTokens.accessTokenExpiryDate - new Date().getTime()) / 60 / 1000
+                log.trace(`[${user.username}] [${req.originalUrl}] Google tokens expires in ${expiresInMinutes} minutes`)
+                return expiresInMinutes < REFRESH_IF_EXPIRES_IN_MINUTES
+            }
+
             const verifyGoogleTokens$ = defer(() => {
                 const user = getRequestUser(req)
-                const shouldRefresh = () => {
-                    const expiresInMinutes = (user.googleTokens.accessTokenExpiryDate - new Date().getTime()) / 60 / 1000
-                    log.trace(`[${user.username}] [${req.originalUrl}] Google tokens expires in ${expiresInMinutes} minutes`)
-                    return expiresInMinutes < REFRESH_IF_EXPIRES_IN_MINUTES
-                }
-                if (!user.googleTokens || !user.googleTokens.accessTokenExpiryDate) {
-                    log.trace(`[${user.username}] [${req.originalUrl}] No Google tokens to verify for user`)
-                    return of(true)
-                } else if (shouldRefresh()) {
-                    return refreshGoogleTokens$
+                if (user?.googleTokens?.accessTokenExpiryDate) {
+                    if (shouldRefreshGoogleTokens(user)) {
+                        return refreshGoogleTokens$
+                    } else {
+                        log.trace(`[${user.username}] [${req.originalUrl}] No need to refresh Google tokens for user - more than ${REFRESH_IF_EXPIRES_IN_MINUTES} minutes left until expiry`)
+                        return of(true)
+                    }
                 } else {
-                    log.trace(`[${user.username}] [${req.originalUrl}] No need to refresh Google tokens for user - more than ${REFRESH_IF_EXPIRES_IN_MINUTES} minutes left until expiry`)
+                    log.trace(`[${user.username}] [${req.originalUrl}] No Google tokens to verify for user`)
                     return of(true)
                 }
             })
@@ -63,7 +66,7 @@ const Auth = userStore => {
                 const user = JSON.parse(body)
                 setSessionUsername(req, username)
                 setRequestUser(req, user)
-                return userStore.setUser$(user)
+                return from(userStore.setUser(user))
             }
 
             const invalidCredentials$ = username => {
