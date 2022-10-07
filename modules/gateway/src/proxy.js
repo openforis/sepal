@@ -6,7 +6,8 @@ const {categories: {proxy: sepalLogLevel}} = require('./log.json')
 const {sepalHost} = require('./config')
 const modules = require('./modules')
 const {get$} = require('sepal/httpClient')
-const {EMPTY, map} = require('rxjs')
+const {EMPTY, map, switchMap} = require('rxjs')
+const {getRequestUser, SEPAL_USER_HEADER} = require('./user')
 const proxyLog = require('sepal/log').getLogger('proxy')
 const log = require('sepal/log').getLogger('gateway')
 
@@ -44,8 +45,8 @@ const Proxy = userStore => {
                 },
                 onProxyReq: (proxyReq, req) => {
                     // Make sure the client doesn't inject the user header, and pretend to be another user.
-                    proxyReq.removeHeader('sepal-user')
-                    const user = req.session && req.session.user
+                    proxyReq.removeHeader(SEPAL_USER_HEADER)
+                    const user = getRequestUser(req)
                     const username = user ? user.username : 'not-authenticated'
                     req.socket.on('close', () => {
                         log.trace(`[${username}] [${req.originalUrl}] Response closed`)
@@ -53,7 +54,7 @@ const Proxy = userStore => {
                     })
                     if (authenticate && user) {
                         log.trace(`[${username}] [${req.originalUrl}] Setting sepal-user header`, user)
-                        proxyReq.setHeader('sepal-user', JSON.stringify(user))
+                        proxyReq.setHeader(SEPAL_USER_HEADER, JSON.stringify(user))
                     } else {
                         log.trace(`[${username}] [${req.originalUrl}] No sepal-user header set`)
                     }
@@ -80,7 +81,7 @@ const Proxy = userStore => {
                         }
                     }
                     if (proxyRes.headers['sepal-user-updated']) {
-                        updateUserInSession(req)
+                        updateUser(req)
                     }
                     proxyRes.headers['Content-Security-Policy'] = `connect-src 'self' https://${sepalHost} wss://${sepalHost} https://*.googleapis.com https://apis.google.com https://www.google-analytics.com https://*.google.com https://*.planet.com https://registry.npmjs.org; frame-ancestors 'self' https://${sepalHost} https://*.googleapis.com https://apis.google.com https://*.google-analytics.com https://registry.npmjs.org`
                 }
@@ -93,24 +94,23 @@ const Proxy = userStore => {
             return {path, target, proxy: proxyMiddleware}
         }
     
-    const updateUserInSession = req => {
-        if (req.session && req.session.user) {
-            const user = req.session.user
-            log.debug(`[${user.username}] [${req.url}] Updating user in session`)
+    const updateUser = req => {
+        const user = getRequestUser(req)
+        if (user) {
+            log.debug(`[${user.username}] [${req.url}] Updating user in user store`)
             return get$(currentUserUrl, {
-                headers: {'sepal-user': JSON.stringify(user)}
+                headers: {SEPAL_USER_HEADER: JSON.stringify(user)}
             }).pipe(
                 map((({body}) => JSON.parse(body))),
+                switchMap(user => {
+                    log.debug(() => `[${user.username}] [${req.url}] Updated user in user store`)
+                    return userStore.setUser$(user)
+                })
             ).subscribe({
-                next: user => {
-                    log.debug(() => `[${user.username}] [${req.url}] Updated user in session`)
-                    req.session.user = user
-                    req.session.save()
-                },
                 error: error => log.error(`[${user.username}] [${req.url}] Failed to load current user`, error)
             })
         } else {
-            log.warn('[not-authenticated] Updated user, but no user in session')
+            log.warn('[not-authenticated] Updated user, but no user in user store')
             return EMPTY
         }
     }

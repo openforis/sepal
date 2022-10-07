@@ -1,6 +1,7 @@
-const {defer, firstValueFrom, of, catchError, map} = require('rxjs')
+const {defer, firstValueFrom, of, catchError, switchMap} = require('rxjs')
 const {post$, postJson$} = require('sepal/httpClient')
 const modules = require('./modules')
+const {getRequestUser, setRequestUser, setSessionUsername, SEPAL_USER_HEADER} = require('./user')
 const log = require('sepal/log').getLogger('auth')
 
 const REFRESH_IF_EXPIRES_IN_MINUTES = 10
@@ -11,7 +12,7 @@ const refreshGoogleTokensUrl = `http://${modules.user}/google/refresh-access-tok
 const Auth = userStore => {
     const authMiddleware = async (req, res, next) => {
         try {
-            const isAuthenticated = () => !!(req.session && req.session.user)
+            const isAuthenticated = () => !!(getRequestUser(req))
     
             const hasAuthHeaders = () => {
                 const header = req.get('Authorization')
@@ -19,26 +20,27 @@ const Auth = userStore => {
             }
     
             const refreshGoogleTokens$ = defer(() => {
-                const user = req.session.user
+                const user = getRequestUser(req)
                 log.debug(`[${user.username}] [${req.originalUrl}] Refreshing Google tokens for user`)
                 return postJson$(refreshGoogleTokensUrl, {
-                    headers: {'sepal-user': JSON.stringify(user)}
+                    headers: {SEPAL_USER_HEADER: JSON.stringify(user)}
                 }).pipe(
-                    map(({body: googleTokens}) => {
+                    switchMap(({body: googleTokens}) => {
                         if (googleTokens) {
                             log.debug(() => `[${user.username}] [${req.originalUrl}] Refreshed Google tokens`)
-                            req.session.user = {...user, googleTokens: JSON.parse(googleTokens)}
-                            res.set('sepal-user', JSON.stringify(req.session.user))
+                            const updatedUser = {...user, googleTokens: JSON.parse(googleTokens)}
+                            res.set(SEPAL_USER_HEADER, JSON.stringify(updatedUser))
+                            return userStore.setUser$(updatedUser)
                         } else {
                             log.warn(`[${user.username}] [${req.originalUrl}] Google tokens not refreshed - missing from response`)
                         }
-                        return true
+                        return of(true)
                     })
                 )
             })
     
             const verifyGoogleTokens$ = defer(() => {
-                const user = req.session.user
+                const user = getRequestUser(req)
                 const shouldRefresh = () => {
                     const expiresInMinutes = (user.googleTokens.accessTokenExpiryDate - new Date().getTime()) / 60 / 1000
                     log.trace(`[${user.username}] [${req.originalUrl}] Google tokens expires in ${expiresInMinutes} minutes`)
@@ -54,7 +56,35 @@ const Auth = userStore => {
                     return of(true)
                 }
             })
-    
+
+            const authenticated$ = (username, response) => {
+                const {body} = response
+                log.debug(() => `[${username}] [${req.originalUrl}] Authenticated user`)
+                const user = JSON.parse(body)
+                setSessionUsername(req, username)
+                setRequestUser(req, user)
+                return userStore.setUser$(user)
+            }
+
+            const invalidCredentials$ = username => {
+                log.debug(() => `[${username}] [${req.originalUrl}] Invalid credentials for user`)
+                if (!req.get('No-auth-challenge')) {
+                    log.trace(`[${req.originalUrl}] Sending auth challenge`)
+                    res.set('WWW-Authenticate', 'Basic realm="Sepal"')
+                }
+                res.status(401)
+                res.end()
+                return of(false)
+            }
+
+            const failure$ = (username, response) => {
+                const {body, statusCode} = response
+                log.error(`[${username}] [${req.originalUrl}] Error authenticating user`, statusCode, body)
+                res.status(500)
+                res.end()
+                return of(false)
+            }
+
             const authenticate$ = defer(() => {
                 const header = req.get('Authorization')
                 const basicAuth = Buffer.from(header.substring('basic '.length), 'base64').toString()
@@ -64,27 +94,12 @@ const Auth = userStore => {
                     body: {username, password},
                     validStatuses: [200, 401]
                 }).pipe(
-                    map(response => {
-                        const {body, statusCode} = response
-                        switch(statusCode) {
-                        case 200:
-                            log.debug(() => `[${username}] [${req.originalUrl}] Authenticated user`)
-                            req.session.user = JSON.parse(body)
-                            return true
-                        case 401:
-                            log.debug(() => `[${username}] [${req.originalUrl}] Invalid credentials for user`)
-                            if (!req.get('No-auth-challenge')) {
-                                log.trace(`[${req.originalUrl}] Sending auth challenge`)
-                                res.set('WWW-Authenticate', 'Basic realm="Sepal"')
-                            }
-                            res.status(401)
-                            res.end()
-                            return false
-                        default:
-                            log.error(`[${username}] [${req.originalUrl}] Error authenticating user`, statusCode, response.body)
-                            res.status(500)
-                            res.end()
-                            return false
+                    switchMap(response => {
+                        const {statusCode} = response
+                        switch (statusCode) {
+                        case 200: return authenticated$(username, response)
+                        case 401: return invalidCredentials$(username)
+                        default: return failure$(username, response)
                         }
                     })
                 )

@@ -4,6 +4,7 @@
         "auth": "info",
         "gateway": "info",
         "proxy": "warn",
-        "sessions": "info"
+        "sessions": "info",
+        "user": "info"
     }
 }
