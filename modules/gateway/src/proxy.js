@@ -1,7 +1,7 @@
 const {Auth} = require('./auth')
 const {createProxyMiddleware} = require('http-proxy-middleware')
 const {rewriteLocation} = require('./rewrite')
-const {endpoints} = require('./endpoints')
+const {endpoints} = require('../config/endpoints')
 const {categories: {proxy: sepalLogLevel}} = require('./log.json')
 const {sepalHost} = require('./config')
 const {getRequestUser, SEPAL_USER_HEADER} = require('./user')

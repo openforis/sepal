@@ -3,7 +3,7 @@ const _ = require('lodash')
 const {usernameTag, urlTag} = require('./tag')
 const {EMPTY, from, map, switchMap, firstValueFrom, catchError} = require('rxjs')
 const {get$} = require('sepal/httpClient')
-const modules = require('./modules')
+const modules = require('../config/modules')
 
 const SEPAL_USER_HEADER = 'sepal-user'
 const USER_PREFIX = 'user'

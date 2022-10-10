@@ -1,6 +1,6 @@
 const {defer, firstValueFrom, from, of, catchError, switchMap} = require('rxjs')
 const {post$, postJson$} = require('sepal/httpClient')
-const modules = require('./modules')
+const modules = require('../config/modules')
 const {usernameTag, urlTag} = require('./tag')
 const {getRequestUser, setRequestUser, setSessionUsername, SEPAL_USER_HEADER} = require('./user')
 const log = require('sepal/log').getLogger('auth')
