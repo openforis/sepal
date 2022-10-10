@@ -53,11 +53,23 @@ const UserStore = redis => {
                 if (saved) {
                     log.isTrace() && log.trace(`${usernameTag(user.username)} User saved into store:`, user)
                 } else {
-                    log.warn(`${usernameTag(user.username)} Could not save user into store`)
+                    log.isTrace() && log.trace(`${usernameTag(user.username)} Could not save user into store`)
                 }
                 return saved
             })
-
+    
+    const removeUser = async username =>
+        await redis.del(userKey(username))
+            .then(result => result !== 0)
+            .then(removed => {
+                if (removed) {
+                    log.isTrace() && log.trace(`${usernameTag(username)} User removed from store:`)
+                } else {
+                    log.isTrace() && log.trace(`${usernameTag(username)} Could not remove user from store`)
+                }
+                return removed
+            })
+    
     const updateUser = req => {
         const user = getRequestUser(req)
         if (user) {
@@ -82,7 +94,7 @@ const UserStore = redis => {
             return EMPTY
         }
     }
-    
+
     const userMiddleware = (req, res, next) => {
         const username = getSessionUsername(req)
         if (username) {
@@ -103,7 +115,7 @@ const UserStore = redis => {
     }
 
     return {
-        getUser, setUser, updateUser, userMiddleware
+        getUser, setUser, removeUser, updateUser, userMiddleware
     }
 }
 

@@ -2,7 +2,7 @@ const {defer, firstValueFrom, from, of, catchError, switchMap} = require('rxjs')
 const {post$, postJson$} = require('sepal/httpClient')
 const modules = require('./modules')
 const {usernameTag, urlTag} = require('./tag')
-const {getRequestUser, setRequestUser, getSessionUsername, setSessionUsername, SEPAL_USER_HEADER} = require('./user')
+const {getRequestUser, setRequestUser, setSessionUsername, SEPAL_USER_HEADER} = require('./user')
 const log = require('sepal/log').getLogger('auth')
 
 const REFRESH_IF_EXPIRES_IN_MINUTES = 10
@@ -148,24 +148,4 @@ const Auth = userStore => {
     return {authMiddleware}
 }
 
-const logout = async (req, res, _next) => {
-    const username = getSessionUsername(req)
-    req.session.destroy()
-    if (username) {
-        log.debug(() => `${usernameTag(username)} Logout`)
-    }
-    const cookieHeader = req.get('Cookie')
-    if (cookieHeader) {
-        cookieHeader
-            .split(';')
-            .map(cookie => cookie
-                .split('=')[0]
-                .trim()
-            )
-            .forEach(cookie => res.cookie(cookie, '', {maxAge: 0}))
-    }
-
-    res.end()
-}
-
-module.exports = {Auth, logout}
+module.exports = {Auth}

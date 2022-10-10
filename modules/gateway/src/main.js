@@ -11,7 +11,6 @@ const url = require('url')
 const log = require('sepal/log').getLogger('gateway')
 const {initMessageQueue} = require('sepal/messageQueue')
 
-const {logout} = require('./auth')
 const {Proxy} = require('./proxy')
 const {SessionManager} = require('./session')
 const {UserStore, setRequestUser, getSessionUsername} = require('./user')
@@ -21,7 +20,7 @@ const redis = new Redis(redisUri)
 const userStore = UserStore(redis)
 const RedisSessionStore = require('connect-redis')(Session)
 const sessionStore = new RedisSessionStore({client: redis})
-const {messageHandler} = SessionManager(sessionStore)
+const {messageHandler, logout} = SessionManager(sessionStore, userStore)
 const {proxyEndpoints} = Proxy(userStore)
 
 const getSecret = async () => {
