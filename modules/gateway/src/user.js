@@ -1,9 +1,14 @@
 const log = require('sepal/log').getLogger('user')
 const _ = require('lodash')
-const {usernameTag} = require('./tag')
+const {usernameTag, urlTag} = require('./tag')
+const {EMPTY, from, map, switchMap, firstValueFrom, catchError} = require('rxjs')
+const {get$} = require('sepal/httpClient')
+const modules = require('./modules')
 
 const SEPAL_USER_HEADER = 'sepal-user'
 const USER_PREFIX = 'user'
+
+const currentUserUrl = `http://${modules.user}/current`
 
 const serialize = value => {
     try {
@@ -35,12 +40,49 @@ const UserStore = redis => {
 
     const getUser = async username =>
         await redis.get(userKey(username))
-            .then(deserialize)
+            .then(serializedUser => {
+                const user = deserialize(serializedUser)
+                log.isTrace() && log.trace(`${usernameTag(username)} User retrieved from store:`, user)
+                return user
+            })
 
     const setUser = async user =>
         await redis.set(userKey(user.username), serialize(user))
             .then(result => result === 'OK')
+            .then(saved => {
+                if (saved) {
+                    log.isTrace() && log.trace(`${usernameTag(user.username)} User saved into store:`, user)
+                } else {
+                    log.warn(`${usernameTag(user.username)} Could not save user into store`)
+                }
+                return saved
+            })
 
+    const updateUser = req => {
+        const user = getRequestUser(req)
+        if (user) {
+            log.isTrace() && log.trace(`${usernameTag(user.username)} ${urlTag(req.url)} Updating user in user store`)
+            firstValueFrom(
+                get$(currentUserUrl, {
+                    headers: {[SEPAL_USER_HEADER]: JSON.stringify(user)}
+                }).pipe(
+                    map((({body}) => JSON.parse(body))),
+                    switchMap(user => {
+                        log.isDebug() && log.debug(`${usernameTag(user.username)} ${urlTag(req.url)} Updated user in user store`)
+                        return from(setUser(user))
+                    }),
+                    catchError(error => {
+                        log.error(`${usernameTag(user.username)} ${urlTag(req.url)} Failed to load current user`, error)
+                        return EMPTY
+                    })
+                )
+            )
+        } else {
+            log.warn('[not-authenticated] Updated user, but no user in user store')
+            return EMPTY
+        }
+    }
+    
     const userMiddleware = (req, res, next) => {
         const username = getSessionUsername(req)
         if (username) {
@@ -61,7 +103,7 @@ const UserStore = redis => {
     }
 
     return {
-        getUser, setUser, userMiddleware
+        getUser, setUser, updateUser, userMiddleware
     }
 }
 

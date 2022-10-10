@@ -4,14 +4,9 @@ const {rewriteLocation} = require('./rewrite')
 const {endpoints} = require('./endpoints')
 const {categories: {proxy: sepalLogLevel}} = require('./log.json')
 const {sepalHost} = require('./config')
-const modules = require('./modules')
-const {get$} = require('sepal/httpClient')
-const {EMPTY, from, map, switchMap} = require('rxjs')
 const {getRequestUser, SEPAL_USER_HEADER} = require('./user')
 const {usernameTag, urlTag} = require('./tag')
 const log = require('sepal/log').getLogger('proxy')
-
-const currentUserUrl = `http://${modules.user}/current`
 
 const logProvider = () => log
 
@@ -75,7 +70,7 @@ const Proxy = userStore => {
                         }
                     }
                     if (proxyRes.headers['sepal-user-updated']) {
-                        updateUser(req)
+                        userStore.updateUser(req)
                     }
                     proxyRes.headers['Content-Security-Policy'] = `connect-src 'self' https://${sepalHost} wss://${sepalHost} https://*.googleapis.com https://apis.google.com https://www.google-analytics.com https://*.google.com https://*.planet.com https://registry.npmjs.org; frame-ancestors 'self' https://${sepalHost} https://*.googleapis.com https://apis.google.com https://*.google-analytics.com https://registry.npmjs.org`
                 }
@@ -87,28 +82,7 @@ const Proxy = userStore => {
             )
             return {path, target, proxy: proxyMiddleware}
         }
-    
-    const updateUser = req => {
-        const user = getRequestUser(req)
-        if (user) {
-            log.isTrace() && log.trace(`${usernameTag(user.username)} ${urlTag(req.url)} Updating user in user store`)
-            return get$(currentUserUrl, {
-                headers: {[SEPAL_USER_HEADER]: JSON.stringify(user)}
-            }).pipe(
-                map((({body}) => JSON.parse(body))),
-                switchMap(user => {
-                    log.isDebug() && log.debug(`${usernameTag(user.username)} ${urlTag(req.url)} Updated user in user store`)
-                    return from(userStore.setUser(user))
-                })
-            ).subscribe({
-                error: error => log.error(`${usernameTag(user.username)} ${urlTag(req.url)} Failed to load current user`, error)
-            })
-        } else {
-            log.warn('[not-authenticated] Updated user, but no user in user store')
-            return EMPTY
-        }
-    }
-    
+        
     const proxyEndpoints = app => endpoints.map(proxy(app))
 
     return {proxyEndpoints}
