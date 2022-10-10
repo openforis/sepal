@@ -3,8 +3,8 @@
     "categories": {
         "auth": "info",
         "gateway": "info",
-        "proxy": "warn",
-        "sessions": "info",
+        "proxy": "info",
+        "session": "info",
         "user": "info"
     }
 }
