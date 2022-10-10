@@ -38,4 +38,6 @@ RUN apt-get update && apt-get install -y htop
 ADD modules/${MODULE_NAME}/script/init_sepal_ui.sh /script/
 RUN chmod u+x /script/init_sepal_ui.sh && sync && /script/init_sepal_ui.sh
 
+ENV USER=sepal-user
+
 CMD ["/script/init_container.sh"]

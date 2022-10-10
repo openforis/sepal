@@ -151,12 +151,12 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
             }
 
             checkFieldError(name) {
-                let field = fields[name]
+                const field = fields[name]
                 return field ? field.check(name, this.state.values) : ''
             }
 
             checkConstraintError(name) {
-                let constraint = constraints[name]
+                const constraint = constraints[name]
                 return constraint ? constraint.check(name, this.state.values) : ''
             }
 
@@ -176,7 +176,12 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
             }
 
             isInvalid() {
-                const hasExternallyInvalidatedField = !_.isEmpty(_.pickBy(this.state.invalid, value => value))
+                const hasExternallyInvalidatedField = !_.isEmpty(
+                    _.pickBy(
+                        this.state.invalid,
+                        (error, name) => error && !this.isSkipped(name)
+                    )
+                )
                 const hasInvalidField = !!Object.keys(this.state.values).find(name => this.checkFieldError(name))
                 const hasInvalidConstraint = !!Object.keys(constraints).find(name => this.checkConstraintError(name))
                 return hasInvalidField || hasInvalidConstraint || hasExternallyInvalidatedField
@@ -233,18 +238,33 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                 this.cleanListeners.forEach(listener => listener())
             }
 
+            getFieldError(name) {
+                return this.isSkipped(name)
+                    ? ''
+                    : this.state.errors[name]
+            }
+
+            isSkipped(name) {
+                const field = fields[name]
+                return !!(field && field.isSkipped(name, this.state.values))
+            }
+
+            filterErrors(errors) {
+                return _.mapValues(errors, (_error, name) => this.getFieldError(name))
+            }
+
             render() {
                 const inputs = {}
                 Object.keys(fields).forEach(name => {
                     inputs[name] = {
                         name,
                         value: this.state.values[name],
-                        error: this.state.errors[name],
-                        validationFailed: !!this.state.errors[name] || !!this.getConstraintErrorsForField(name),
+                        error: this.getFieldError(name),
+                        validationFailed: !!this.getFieldError(name) || !!this.getConstraintErrorsForField(name),
                         isInvalid: () => this.checkFieldError(name),
                         setInvalid: msg => this.setState(prevState => ({
                             ...prevState,
-                            errors: {...prevState.errors, [name]: msg},
+                            errors: {...this.filterErrors(prevState.errors), [name]: msg},
                             invalid: {...prevState.invalid, [name]: !!msg}
                         })),
                         validate: () => this.validateField(name),
@@ -261,7 +281,7 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                     }
                 })
                 const form = {
-                    errors: this.state.errors,
+                    errors: this.filterErrors(this.state.errors),
                     isInvalid: this.isInvalid,
                     isDirty: () => this.isDirty(),
                     setInitialValues: values => this.setInitialValues(values),

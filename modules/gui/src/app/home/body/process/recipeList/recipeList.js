@@ -178,7 +178,7 @@ class _RecipeList extends React.Component {
                         alignment='left'
                         placeholder={msg('process.recipe.move.destinationProject')}
                         options={this.getDestinations()}
-                        standalone
+                        autoOpen
                         autoFocus
                         onCancel={onBlur}
                         onChange={({value: projectId, label: projectName}) => {

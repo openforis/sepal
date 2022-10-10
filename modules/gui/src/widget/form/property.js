@@ -101,7 +101,7 @@ class FormProperty {
     }
 
     check(name, values) {
-        const skip = this._isSkipped(name, values)
+        const skip = this.isSkipped(name, values)
         const failingConstraint = !skip &&
             this._predicates.find(constraint =>
                 this._checkPredicate(name, values, constraint[0]) ? null : constraint[1]
@@ -113,7 +113,7 @@ class FormProperty {
         throw Error('Expected to be implemented by subclass')
     }
 
-    _isSkipped(_name, _values) {
+    isSkipped(_name, _values) {
         throw Error('Expected to be implemented by subclass')
     }
 }
@@ -130,7 +130,7 @@ export class FormConstraint extends FormProperty {
         return predicate(values)
     }
 
-    _isSkipped(name, values) {
+    isSkipped(name, values) {
         return this._skip.find(when => when(values))
     }
 }
@@ -140,7 +140,7 @@ export class FormField extends FormProperty {
         return predicate(values[name], values)
     }
 
-    _isSkipped(name, values) {
+    isSkipped(name, values) {
         return this._skip.find(when => when(values[name], values))
     }
 }
