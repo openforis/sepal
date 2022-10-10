@@ -147,4 +147,24 @@ const Auth = userStore => {
     return {authMiddleware}
 }
 
-module.exports = {Auth}
+const logout = async (req, res, _next) => {
+    const username = getSessionUsername(req)
+    req.session.destroy()
+    if (username) {
+        log.debug(() => `${usernameTag(username)} Logout`)
+    }
+    const cookieHeader = req.get('Cookie')
+    if (cookieHeader) {
+        cookieHeader
+            .split(';')
+            .map(cookie => cookie
+                .split('=')[0]
+                .trim()
+            )
+            .forEach(cookie => res.cookie(cookie, '', {maxAge: 0}))
+    }
+
+    res.end()
+}
+
+module.exports = {Auth, logout}

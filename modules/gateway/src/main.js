@@ -11,7 +11,7 @@ const url = require('url')
 const log = require('sepal/log').getLogger('gateway')
 const {initMessageQueue} = require('sepal/messageQueue')
 
-const {logout} = require('./logout')
+const {logout} = require('./auth')
 const {Proxy} = require('./proxy')
 const {SessionManager} = require('./session')
 const {UserStore, setRequestUser, getSessionUsername} = require('./user')
