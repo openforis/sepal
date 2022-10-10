@@ -99,7 +99,7 @@ const Proxy = userStore => {
         if (user) {
             log.debug(`[${user.username}] [${req.url}] Updating user in user store`)
             return get$(currentUserUrl, {
-                headers: {SEPAL_USER_HEADER: JSON.stringify(user)}
+                headers: {[SEPAL_USER_HEADER]: JSON.stringify(user)}
             }).pipe(
                 map((({body}) => JSON.parse(body))),
                 switchMap(user => {

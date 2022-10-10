@@ -23,13 +23,13 @@ const Auth = userStore => {
                 const user = getRequestUser(req)
                 log.debug(`[${user.username}] [${req.originalUrl}] Refreshing Google tokens for user`)
                 return postJson$(refreshGoogleTokensUrl, {
-                    headers: {SEPAL_USER_HEADER: JSON.stringify(user)}
+                    headers: {[SEPAL_USER_HEADER]: JSON.stringify(user)}
                 }).pipe(
                     switchMap(({body: googleTokens}) => {
                         if (googleTokens) {
                             log.debug(() => `[${user.username}] [${req.originalUrl}] Refreshed Google tokens`)
                             const updatedUser = {...user, googleTokens: JSON.parse(googleTokens)}
-                            res.set(SEPAL_USER_HEADER, JSON.stringify(updatedUser))
+                            res.set([SEPAL_USER_HEADER], JSON.stringify(updatedUser))
                             return from(userStore.setUser(updatedUser))
                         } else {
                             log.warn(`[${user.username}] [${req.originalUrl}] Google tokens not refreshed - missing from response`)
