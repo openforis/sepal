@@ -1,7 +1,8 @@
 const {defer, firstValueFrom, from, of, catchError, switchMap} = require('rxjs')
 const {post$, postJson$} = require('sepal/httpClient')
 const modules = require('./modules')
-const {getRequestUser, setRequestUser, setSessionUsername, SEPAL_USER_HEADER} = require('./user')
+const {usernameTag, urlTag} = require('./tag')
+const {getRequestUser, setRequestUser, getSessionUsername, setSessionUsername, SEPAL_USER_HEADER} = require('./user')
 const log = require('sepal/log').getLogger('auth')
 
 const REFRESH_IF_EXPIRES_IN_MINUTES = 10
@@ -21,18 +22,18 @@ const Auth = userStore => {
     
             const refreshGoogleTokens$ = defer(() => {
                 const user = getRequestUser(req)
-                log.debug(`[${user.username}] [${req.originalUrl}] Refreshing Google tokens for user`)
+                log.debug(`${usernameTag(user.username)} ${urlTag(req.originalUrl)} Refreshing Google tokens for user`)
                 return postJson$(refreshGoogleTokensUrl, {
                     headers: {[SEPAL_USER_HEADER]: JSON.stringify(user)}
                 }).pipe(
                     switchMap(({body: googleTokens}) => {
                         if (googleTokens) {
-                            log.debug(() => `[${user.username}] [${req.originalUrl}] Refreshed Google tokens`)
+                            log.debug(() => `${usernameTag(user.username)} ${urlTag(req.originalUrl)} Refreshed Google tokens`)
                             const updatedUser = {...user, googleTokens: JSON.parse(googleTokens)}
                             res.set([SEPAL_USER_HEADER], JSON.stringify(updatedUser))
                             return from(userStore.setUser(updatedUser))
                         } else {
-                            log.warn(`[${user.username}] [${req.originalUrl}] Google tokens not refreshed - missing from response`)
+                            log.warn(`${usernameTag(user.username)} ${urlTag(req.originalUrl)} Google tokens not refreshed - missing from response`)
                         }
                         return of(true)
                     })
@@ -41,7 +42,7 @@ const Auth = userStore => {
     
             const shouldRefreshGoogleTokens = user => {
                 const expiresInMinutes = (user.googleTokens.accessTokenExpiryDate - new Date().getTime()) / 60 / 1000
-                log.trace(`[${user.username}] [${req.originalUrl}] Google tokens expires in ${expiresInMinutes} minutes`)
+                log.trace(() => `${usernameTag(user.username)} ${urlTag(req.originalUrl)} Google tokens expires in ${expiresInMinutes} minutes`)
                 return expiresInMinutes < REFRESH_IF_EXPIRES_IN_MINUTES
             }
 
@@ -51,18 +52,18 @@ const Auth = userStore => {
                     if (shouldRefreshGoogleTokens(user)) {
                         return refreshGoogleTokens$
                     } else {
-                        log.trace(`[${user.username}] [${req.originalUrl}] No need to refresh Google tokens for user - more than ${REFRESH_IF_EXPIRES_IN_MINUTES} minutes left until expiry`)
+                        log.isTrace() && log.trace(`${usernameTag(user.username)} ${urlTag(req.originalUrl)} No need to refresh Google tokens for user - more than ${REFRESH_IF_EXPIRES_IN_MINUTES} minutes left until expiry`)
                         return of(true)
                     }
                 } else {
-                    log.trace(`[${user.username}] [${req.originalUrl}] No Google tokens to verify for user`)
+                    log.isTrace() && log.trace(`${usernameTag(user.username)} ${urlTag(req.originalUrl)} No Google tokens to verify for user`)
                     return of(true)
                 }
             })
 
             const authenticated$ = (username, response) => {
                 const {body} = response
-                log.debug(() => `[${username}] [${req.originalUrl}] Authenticated user`)
+                log.debug(() => `${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticated user`)
                 const user = JSON.parse(body)
                 setSessionUsername(req, username)
                 setRequestUser(req, user)
@@ -70,9 +71,9 @@ const Auth = userStore => {
             }
 
             const invalidCredentials$ = username => {
-                log.debug(() => `[${username}] [${req.originalUrl}] Invalid credentials for user`)
+                log.debug(() => `${usernameTag(username)} ${urlTag(req.originalUrl)} Invalid credentials for user`)
                 if (!req.get('No-auth-challenge')) {
-                    log.trace(`[${req.originalUrl}] Sending auth challenge`)
+                    log.trace(`${urlTag(req.originalUrl)} Sending auth challenge`)
                     res.set('WWW-Authenticate', 'Basic realm="Sepal"')
                 }
                 res.status(401)
@@ -82,7 +83,7 @@ const Auth = userStore => {
 
             const failure$ = (username, response) => {
                 const {body, statusCode} = response
-                log.error(`[${username}] [${req.originalUrl}] Error authenticating user`, statusCode, body)
+                log.error(`${usernameTag(username)} ${urlTag(req.originalUrl)} Error authenticating user`, statusCode, body)
                 res.status(500)
                 res.end()
                 return of(false)
@@ -92,7 +93,7 @@ const Auth = userStore => {
                 const header = req.get('Authorization')
                 const basicAuth = Buffer.from(header.substring('basic '.length), 'base64').toString()
                 const [username, password] = basicAuth.split(':')
-                log.trace(`[${username}] [${req.originalUrl}] Authenticating user`)
+                log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticating user`)
                 return post$(authenticationUrl, {
                     body: {username, password},
                     validStatuses: [200, 401]
@@ -110,10 +111,10 @@ const Auth = userStore => {
     
             const send401$ = defer(() => {
                 if (!req.get('No-auth-challenge')) {
-                    log.trace(`[${req.originalUrl}] Sending auth challenge`)
+                    log.trace(`${urlTag(req.originalUrl)} Sending auth challenge`)
                     res.set('WWW-Authenticate', 'Basic realm="Sepal"')
                 } else {
-                    log.trace(`[${req.originalUrl}] Responding with 401`)
+                    log.trace(`${urlTag(req.originalUrl)} Responding with 401`)
                 }
                 res.status(401)
                 res.end()
@@ -129,7 +130,7 @@ const Auth = userStore => {
             const shouldContinue = await firstValueFrom(
                 result$.pipe(
                     catchError(error => {
-                        log.error(`[${req.originalUrl}] Got an unexpected error when trying to authenticate`, error)
+                        log.error(`${urlTag(req.originalUrl)} Got an unexpected error when trying to authenticate`, error)
                         res.status(500)
                         res.end()
                         return of(false)

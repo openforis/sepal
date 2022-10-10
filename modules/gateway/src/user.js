@@ -1,7 +1,9 @@
 const log = require('sepal/log').getLogger('user')
 const _ = require('lodash')
+const {usernameTag} = require('./tag')
 
 const SEPAL_USER_HEADER = 'sepal-user'
+const USER_PREFIX = 'user'
 
 const serialize = value => {
     try {
@@ -29,7 +31,7 @@ const UserStore = redis => {
     }
 
     const userKey = username =>
-        `user:${username}`
+        `${USER_PREFIX}:${username}`
 
     const getUser = async username =>
         await redis.get(userKey(username))
@@ -46,10 +48,10 @@ const UserStore = redis => {
                 if (user) {
                     setRequestUser(req, user)
                     log.isTrace()
-                        ? log.trace(`[${username}] populated context with user:`, user)
-                        : log.debug(`[${username}] populated context with user`)
+                        ? log.trace(`${usernameTag(username)} Injected user into request headers:`, user)
+                        : log.isDebug() && log.debug(`${usernameTag(username)} Injected user into request headers`)
                 } else {
-                    log.warn('Cannot populate context with user:', username)
+                    log.warn(`${usernameTag(username)} Cannot inject user into request headers`)
                 }
                 next()
             })

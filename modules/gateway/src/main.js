@@ -15,6 +15,7 @@ const {logout} = require('./auth')
 const {Proxy} = require('./proxy')
 const {SessionManager} = require('./session')
 const {UserStore, setRequestUser, getSessionUsername} = require('./user')
+const {usernameTag, urlTag} = require('./tag')
 
 const redis = new Redis(redisUri)
 const userStore = UserStore(redis)
@@ -78,17 +79,17 @@ const main = async () => {
             userStore.getUser(username).then(user => {
                 const requestPath = url.parse(req.url).pathname
                 if (user) {
-                    log.trace(`[${username}] [${requestPath}] Setting sepal-user header`)
+                    log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
                     setRequestUser(req, user)
                 } else {
-                    log.warn(`[${username}] Websocket upgrade without a user`)
+                    log.warn(`${usernameTag(username)} Websocket upgrade without a user`)
                 }
                 const {proxy, target} = proxies.find(({path}) => !path || requestPath === path || isMatch(requestPath, `${path}/**`)) || {}
                 if (proxy) {
-                    log.debug(`[${username}] Requesting WebSocket upgrade for "${requestPath}" to target "${target}"`)
+                    log.debug(`${usernameTag(username)} Requesting WebSocket upgrade for "${requestPath}" to target "${target}"`)
                     proxy.upgrade(req, socket, head)
                 } else {
-                    log.warn(`[${username}] No proxy found for WebSocket upgrade "${requestPath}"`)
+                    log.warn(`${usernameTag(username)} No proxy found for WebSocket upgrade "${requestPath}"`)
                 }
             })
         })
