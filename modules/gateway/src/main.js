@@ -74,9 +74,9 @@ const main = async () => {
     
     server.on('upgrade', (req, socket, head) => {
         sessionParser(req, {}, () => { // Make sure we have access to session for the websocket
-            const requestPath = url.parse(req.url).pathname
             const username = getSessionUsername(req)
             userStore.getUser(username).then(user => {
+                const requestPath = url.parse(req.url).pathname
                 if (user) {
                     log.trace(`[${username}] [${requestPath}] Setting sepal-user header`)
                     setRequestUser(req, user)
