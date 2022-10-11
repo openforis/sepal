@@ -1,20 +1,27 @@
 require('sepal/log').configureServer(require('./log.json'))
+
 const {amqpUri, redisUri, port, secure} = require('./config')
 const {isMatch} = require('micromatch')
 const express = require('express')
 const Redis = require('ioredis')
 const Session = require('express-session')
-const {logout} = require('./logout')
-const {proxyEndpoints} = require('./proxy')
 const {v4: uuid} = require('uuid')
 const url = require('url')
+
 const log = require('sepal/log').getLogger('gateway')
 const {initMessageQueue} = require('sepal/messageQueue')
 
+const {Proxy} = require('./proxy')
+const {SessionManager} = require('./session')
+const {UserStore, setRequestUser, getSessionUsername} = require('./user')
+const {usernameTag, urlTag} = require('./tag')
+
 const redis = new Redis(redisUri)
+const userStore = UserStore(redis)
 const RedisSessionStore = require('connect-redis')(Session)
-const store = new RedisSessionStore({client: redis})
-const {messageHandler} = require('./session')(store)
+const sessionStore = new RedisSessionStore({client: redis})
+const {messageHandler, logout} = SessionManager(sessionStore, userStore)
+const {proxyEndpoints} = Proxy(userStore)
 
 const getSecret = async () => {
     const secret = await redis.get('secret')
@@ -41,7 +48,7 @@ const main = async () => {
     const secret = await getSecret()
 
     const sessionParser = Session({
-        store,
+        store: sessionStore,
         secret,
         name: 'SEPAL-SESSIONID',
         cookie: {
@@ -56,6 +63,8 @@ const main = async () => {
     })
     
     app.use(sessionParser)
+    app.use(userStore.userMiddleware)
+
     app.use('/api/user/logout', logout)
     const proxies = proxyEndpoints(app)
     const server = app.listen(port)
@@ -65,22 +74,23 @@ const main = async () => {
     
     server.on('upgrade', (req, socket, head) => {
         sessionParser(req, {}, () => { // Make sure we have access to session for the websocket
-            const requestPath = url.parse(req.url).pathname
-            const user = req.session.user
-            const username = user ? user.username : 'not-authenticated'
-            if (user) {
-                log.trace(`[${username}] [${requestPath}] Setting sepal-user header`)
-                req.headers['sepal-user'] = JSON.stringify(user)
-            } else {
-                log.warn(`[${username}] Websocket upgrade without a user`)
-            }
-            const {proxy, target} = proxies.find(({path}) => !path || requestPath === path || isMatch(requestPath, `${path}/**`)) || {}
-            if (proxy) {
-                log.debug(`[${username}] Requesting WebSocket upgrade for "${requestPath}" to target "${target}"`)
-                proxy.upgrade(req, socket, head)
-            } else {
-                log.warn(`[${username}] No proxy found for WebSocket upgrade "${requestPath}"`)
-            }
+            const username = getSessionUsername(req)
+            userStore.getUser(username).then(user => {
+                const requestPath = url.parse(req.url).pathname
+                if (user) {
+                    log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
+                    setRequestUser(req, user)
+                } else {
+                    log.warn(`${usernameTag(username)} Websocket upgrade without a user`)
+                }
+                const {proxy, target} = proxies.find(({path}) => !path || requestPath === path || isMatch(requestPath, `${path}/**`)) || {}
+                if (proxy) {
+                    log.debug(`${usernameTag(username)} Requesting WebSocket upgrade for "${requestPath}" to target "${target}"`)
+                    proxy.upgrade(req, socket, head)
+                } else {
+                    log.warn(`${usernameTag(username)} No proxy found for WebSocket upgrade "${requestPath}"`)
+                }
+            })
         })
     })
     
