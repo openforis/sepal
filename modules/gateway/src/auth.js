@@ -30,7 +30,7 @@ const Auth = userStore => {
                         if (googleTokens) {
                             log.debug(() => `${usernameTag(user.username)} ${urlTag(req.originalUrl)} Refreshed Google tokens`)
                             const updatedUser = {...user, googleTokens: JSON.parse(googleTokens)}
-                            res.set([SEPAL_USER_HEADER], JSON.stringify(updatedUser))
+                            res.set(SEPAL_USER_HEADER, JSON.stringify(updatedUser))
                             return from(userStore.setUser(updatedUser))
                         } else {
                             log.warn(`${usernameTag(user.username)} ${urlTag(req.originalUrl)} Google tokens not refreshed - missing from response`)
