@@ -31,12 +31,16 @@ export class CrudItem extends React.Component {
     }
 
     renderDefaultContent() {
-        const {title, description, image, timestamp, highlight, highlightClassName, highlightTitle, highlightDescription, onClick} = this.props
+        const {title, description, icon, iconSize, iconType, iconVariant, image, timestamp, highlight, highlightClassName, highlightTitle, highlightDescription, onClick} = this.props
         return (
             <Item
                 className={styles.content}
                 title={title}
                 description={description}
+                icon={icon}
+                iconSize={iconSize}
+                iconType={iconType}
+                iconVariant={iconVariant}
                 image={image}
                 timestamp={timestamp}
                 highlight={highlight}
@@ -176,6 +180,10 @@ CrudItem.propTypes = {
     highlightClassName: PropTypes.string,
     highlightDescription: PropTypes.any,
     highlightTitle: PropTypes.any,
+    icon: PropTypes.any,
+    iconSize: PropTypes.any,
+    iconType: PropTypes.any,
+    iconVariant: PropTypes.any,
     image: PropTypes.any,
     infoDisabled: PropTypes.any,
     infoTooltip: PropTypes.string,
