@@ -11,43 +11,8 @@
     align-items: center;
 }
 
-.tasks {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 21rem);
-    grid-template-rows: repeat(auto-fill, 18rem);
-    grid-gap: 2rem;
-    justify-content: center;
-}
-
-.task {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--container-border-radius);
-    padding: 1rem;
-    font-size: 0.9rem;
-    text-align: center;
-}
-
-.name {
-    flex-grow: 1;
-    overflow-y: auto;
-}
-
-.progress {
-    margin-bottom: 0.5rem;
-}
-
 .statusDescription {
     color: #999;
     height: 5rem;
     overflow-y: auto;
-}
-
-.overlay {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100%;   
 }

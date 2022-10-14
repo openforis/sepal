@@ -3380,9 +3380,19 @@
         }
       },
       "none": "You have no background tasks.",
+      "copyToClipboard": {
+        "tooltip": "Copy to clipboard",
+        "success": "Copied to clipboard"
+      },
+      "remove": {
+        "tooltip": "Remove task"
+      },
       "removeAll": {
         "label": "Clear inactive tasks",
         "tooltip": "Remove all completed, failed, or stopped tasks"
+      },
+      "stop": {
+        "tooltip": "Stop task"
       },
       "retrieve": {
         "collection_to_asset": {
