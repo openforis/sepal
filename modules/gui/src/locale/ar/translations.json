@@ -3377,8 +3377,18 @@
             }
         },
         "none": "",
+        "copyToClipboard": {
+            "tooltip": "",
+            "success": ""
+        },
+        "remove": {
+            "tooltip": ""
+        },
         "removeAll": {
             "label": "",
+            "tooltip": ""
+        },
+        "stop": {
             "tooltip": ""
         },
         "retrieve": {
