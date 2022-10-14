@@ -41,6 +41,9 @@ PyPDF2 # more recent version are avaiable (PyPDF4)
 rasterio
 openpyxl
 pre-commit
+ipywidgets==7.6.5
+ipyvuetify==1.8.2
+
 
 ########  web api  ########
 falcon
