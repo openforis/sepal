@@ -3377,9 +3377,19 @@
             }
         },
         "none": "Vous n'avez aucune tâche de fond en cours.",
+        "copyToClipboard": {
+            "tooltip": "",
+            "success": ""
+        },
+        "remove": {
+            "tooltip": ""
+        },
         "removeAll": {
             "label": "",
             "tooltip": "Supprimer toutes les tâches finalisées, arrêtées ou en échec"
+        },
+        "stop": {
+            "tooltip": ""
         },
         "retrieve": {
             "collection_to_asset": {
