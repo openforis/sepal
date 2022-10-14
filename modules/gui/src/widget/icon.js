@@ -49,9 +49,16 @@ export default class Icon extends React.Component {
         ].join(' ')
     }
 
+    isSpinner(name) {
+        return [
+            'spinner',
+            'circle-notch'
+        ].includes(name)
+    }
+
     renderIcon() {
         const {name, type, size, attributes} = this.props
-        const filteredAttributes = _.omit({spin: name === 'spinner', ...attributes}, [
+        const filteredAttributes = _.omit({spin: this.isSpinner(name), ...attributes}, [
             'icon', 'name', 'type', 'className', 'variant'
         ])
         const icon = [fontAwesomeCollection(type || 'solid'), name]
