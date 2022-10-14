@@ -3377,9 +3377,19 @@
             }
         },
         "none": "No tiene tareas de fondo.",
+        "copyToClipboard": {
+            "tooltip": "",
+            "success": ""
+        },
+        "remove": {
+            "tooltip": ""
+        },
         "removeAll": {
             "label": "",
             "tooltip": "Eliminar todas las tareas completadas, fallidas o detenidas"
+        },
+        "stop": {
+            "tooltip": ""
         },
         "retrieve": {
             "collection_to_asset": {
