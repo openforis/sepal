@@ -99,6 +99,14 @@ export class SepalMap {
         }
     }
 
+    disableDrawingMode() {
+        const {google} = this
+        if (this.drawingManager) {
+            this.drawingManager.setMap(null)
+            google.maps.event.clearListeners(this.drawingManager, 'overlaycomplete')
+        }
+    }
+
     // Cursor
 
     setCursor(latLng) {
@@ -193,7 +201,7 @@ export class SepalMap {
         this.setZoom(googleMap.getZoom() - 1)
     }
 
-    zoomArea() {
+    enableZoomArea() {
         const {google, googleMap} = this
         this.drawingManager = new google.maps.drawing.DrawingManager({
             drawingMode: google.maps.drawing.OverlayType.RECTANGLE,
@@ -211,20 +219,12 @@ export class SepalMap {
         this.drawingManager.setMap(googleMap)
     }
 
-    getZoomArea$() {
-        return this.zoomArea$
-    }
-
     cancelZoomArea() {
         this.disableDrawingMode()
     }
 
-    disableDrawingMode() {
-        const {google} = this
-        if (this.drawingManager) {
-            this.drawingManager.setMap(null)
-            google.maps.event.clearListeners(this.drawingManager, 'overlaycomplete')
-        }
+    getZoomArea$() {
+        return this.zoomArea$
     }
 
     // Bounds

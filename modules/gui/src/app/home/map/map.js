@@ -54,7 +54,7 @@ class _Map extends React.Component {
         mapId: null,
         googleMapsApiKey: null,
         nicfiPlanetApiKey: null,
-        zoomArea: null,
+        zoomAreaEnabled: false,
         selectedZoomArea: null,
         overlay: null,
         overlayActive: false,
@@ -158,12 +158,6 @@ class _Map extends React.Component {
         this.withAllMaps(({map}) => map.setVisibility(visible))
     }
 
-    zoomArea(zoomArea) {
-        this.setState({zoomArea, selectedZoomArea: null}, () => {
-            this.withAllMaps(({map}) => zoomArea ? map.zoomArea() : map.cancelZoomArea())
-        })
-    }
-
     addClickListenerOnce(listener) {
         const listeners = this.withAllMaps(({map}) => map.addClickListener(e => {
             listener(e)
@@ -177,17 +171,23 @@ class _Map extends React.Component {
         listener && listener.remove()
     }
 
-    isZoomArea() {
-        const {zoomArea} = this.state
-        return zoomArea
-    }
-
-    toggleZoomArea() {
-        this.zoomArea(!this.isZoomArea())
+    setZoomArea(zoomAreaEnabled) {
+        this.setState({zoomAreaEnabled, selectedZoomArea: null}, () => {
+            this.withAllMaps(({map}) => zoomAreaEnabled ? map.enableZoomArea() : map.cancelZoomArea())
+        })
     }
 
     cancelZoomArea() {
-        this.zoomArea(false)
+        this.setZoomArea(false)
+    }
+
+    toggleZoomArea() {
+        this.setZoomArea(!this.isZoomArea())
+    }
+
+    isZoomArea() {
+        const {zoomAreaEnabled} = this.state
+        return zoomAreaEnabled
     }
 
     setLocationMarker(options) {
@@ -419,12 +419,12 @@ class _Map extends React.Component {
 
         const subscriptions = [
             this.mouseDown$.subscribe(mouseDownArea => {
-                const {zoomArea, selectedZoomArea} = this.state
+                const {zoomAreaEnabled, selectedZoomArea} = this.state
                 const currentArea = this.getArea(id)
-                if (zoomArea) {
+                if (zoomAreaEnabled) {
                     if (selectedZoomArea) {
                         if (mouseDownArea === currentArea && selectedZoomArea !== currentArea) {
-                            this.zoomArea(false)
+                            this.cancelZoomArea()
                         }
                     } else {
                         if (mouseDownArea === currentArea) {
@@ -436,7 +436,7 @@ class _Map extends React.Component {
                 }
             }),
             map.getZoomArea$().subscribe(() =>
-                this.zoomArea(false)
+                this.cancelZoomArea()
             ),
             this.scrollWheel$.subscribe(
                 enabled => googleMap.setOptions({scrollwheel: enabled})
