@@ -22,7 +22,7 @@ const DEFAULT_ZOOM = 3
 export const MIN_ZOOM = 3
 export const MAX_ZOOM = 23
 
-export const MapsContext = React.createContext()
+const MapsContext = React.createContext()
 
 export const withMapsContext = withContext(MapsContext, 'mapsContext')
 

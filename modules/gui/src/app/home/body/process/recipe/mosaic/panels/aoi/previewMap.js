@@ -1,15 +1,12 @@
 import {FeatureLayers} from 'app/home/map/featureLayers'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {getLogger} from 'log'
 import {selectFrom} from 'stateUtils'
 import {withMapsContext} from 'app/home/map/maps'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 import _ from 'lodash'
 import styles from './previewMap.module.css'
-
-const log = getLogger('previewMap')
 
 const PREVIEW_MAP_OPTIONS = {
     minZoom: 0,
@@ -56,14 +53,9 @@ class _PreviewMap extends React.Component {
     createMap(element) {
         const {map} = this.state
         if (!map) {
-            log.debug('creating map')
             const {mapsContext: {createSepalMap}} = this.props
             const map = createSepalMap(element, PREVIEW_MAP_OPTIONS)
             this.setState({map})
-            // const {google, googleMap} = map.getGoogle()
-            // google.maps.event.addListenerOnce(googleMap, 'idle', () => {
-            //     this.setState({map})
-            // })
         }
     }
 
