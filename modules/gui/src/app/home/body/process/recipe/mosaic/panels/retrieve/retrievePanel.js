@@ -75,10 +75,11 @@ class _MosaicRetrievePanel extends React.Component {
     state = {more: false}
 
     render() {
+        const {className} = this.props
         const {more} = this.state
         return (
             <RecipeFormPanel
-                className={styles.panel}
+                className={[styles.panel, className].join(' ')}
                 isActionForm
                 placement='top-right'
                 onApply={values => {
@@ -387,6 +388,7 @@ MosaicRetrievePanel.propTypes = {
     defaultTileSize: PropTypes.number.isRequired,
     onRetrieve: PropTypes.func.isRequired,
     allowTiling: PropTypes.any,
+    className: PropTypes.any,
     defaultAssetType: PropTypes.any,
     scaleTicks: PropTypes.array,
     single: PropTypes.any,

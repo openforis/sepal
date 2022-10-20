@@ -2929,6 +2929,185 @@
         },
         "tabPlaceholder": "Radar_mosaic"
       },
+
+      "phenology": {
+        "create": "Land surface phenology",
+        "description": "Create land surface phenology.",
+        "panel": {
+          "dates": {
+            "button": "DAT",
+            "form": {
+              "fromYear": {
+                "label": "Start year",
+                "tooltip": "The first year to include (inclusive)"
+              },
+              "toYear": {
+                "beforeFromYear": "Cannot be before start year",
+                "label": "End year",
+                "tooltip": "The final year to include (inclusive)"
+              }
+            },
+            "title": "Dates",
+            "tooltip": "Specify dates"
+          },
+          "preprocess": {
+            "button": "PRC",
+            "form": {
+              "cloudDetection": {
+                "label": "Cloud detection",
+                "cloudScore": {
+                  "label": "Cloud score",
+                  "tooltip": "Use cloud scoring algorithm"
+                },
+                "pino26": {
+                  "label": "PINO 26",
+                  "tooltip": "Use Pan-Tropical S2 cloud detection algorithm developed by Dario Simonetti"
+                },
+                "qa": {
+                  "label": "QA bands",
+                  "tooltip": "Use pre-created QA bands"
+                }
+              },
+              "cloudMasking": {
+                "aggressive": {
+                  "label": "Aggressive",
+                  "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
+                },
+                "label": "Cloud masking",
+                "moderate": {
+                  "label": "Moderate",
+                  "tooltip": "Rely only on image source QA bands for cloud masking"
+                },
+                "none": {
+                  "label": "Off",
+                  "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
+                }
+              },
+              "corrections": {
+                "brdf": {
+                  "label": "BRDF correction",
+                  "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
+                },
+                "label": "Corrections",
+                "surfaceReflectance": {
+                  "label": "Surface reflectance",
+                  "tooltip": "Use scenes atmospherically corrected surface reflectance."
+                }
+              },
+              "shadowMasking": {
+                "label": "Shadow masking",
+                "off": {
+                  "label": "Off",
+                  "tooltip": "Don't apply aggressive shadow masking."
+                },
+                "on": {
+                  "label": "On",
+                  "tooltip": "Apply aggressive shadow masking. This can inadvertently remove some dynamics and lead to missing changes"
+                }
+              },
+              "snowMasking": {
+                "label": "Snow masking",
+                "off": {
+                  "label": "Off",
+                  "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
+                },
+                "on": {
+                  "label": "On",
+                  "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
+                }
+              }
+            },
+            "title": "Pre-process",
+            "tooltip": "Configure imagery pre-processing"
+          },
+          "sources": {
+            "button": "SRC",
+            "classificationLoadError": "Failed to load classification: {error}",
+            "form": {
+              "classification": {
+                "label": "Classification",
+                "placeholder": "Select a classification...",
+                "tooltip": "(Optional) Select a classification recipe and apply the classifier to every acquisition in the time-series."
+              },
+              "band": {
+                "label": "Analysis band"
+              },
+              "cloudPercentageThreshold": {
+                "label": "Max cloud cover %",
+                "value": "{value}%",
+                "tooltip": "Filter out scenes with higher cloud cover higher than this threshold"
+              },
+              "dataSets": {
+                "label": "Data sets",
+                "optical": {
+                  "label": "Optical"
+                },
+                "options": {
+                  "LANDSAT_7": {
+                    "label": "L7",
+                    "tooltip": "Landsat 7"
+                  },
+                  "LANDSAT_7_T2": {
+                    "label": "L7 T2",
+                    "tooltip": "Landsat 7 Tier 2"
+                  },
+                  "LANDSAT_8": {
+                    "label": "L8",
+                    "tooltip": "Landsat 8"
+                  },
+                  "LANDSAT_8_T2": {
+                    "label": "L8 T2",
+                    "tooltip": "Landsat 8 Tier 2"
+                  },
+                  "LANDSAT_9": {
+                    "label": "L9",
+                    "tooltip": "Landsat 9"
+                  },
+                  "LANDSAT_9_T2": {
+                    "label": "L9 T2",
+                    "tooltip": "Landsat 9 Tier 2"
+                  },
+                  "LANDSAT_TM": {
+                    "label": "L4-5",
+                    "tooltip": "Landsat 4-5"
+                  },
+                  "LANDSAT_TM_T2": {
+                    "label": "L4-5 T2",
+                    "tooltip": "Landsat 4-5 Tier 2"
+                  },
+                  "SENTINEL_1": {
+                    "label": "S1",
+                    "tooltip": "Sentinel 1 A+B"
+                  },
+                  "SENTINEL_2": {
+                    "label": "S2",
+                    "tooltip": "Sentinel 2 A+B"
+                  }
+                },
+                "radar": {
+                  "label": "Radar"
+                }
+              },
+              "dataSetType": {
+                "label": "Type"
+              },
+              "dataSetTypes": {
+                "OPTICAL": "Optical",
+                "PLANET": "Planet",
+                "RADAR": "Radar"
+              },
+              "required": "A data source must be selected"
+            },
+            "title": "Sources",
+            "tooltip": "Select image source"
+          }
+        },
+        "preview": {
+          "description": "Preview of land surface phenology, generated on the fly by EE.",
+          "label": "Land surface phenology"
+        },
+        "tabPlaceholder": "Phenology"
+      },      
       "projects": {
         "title": "Projects",
         "label": "Projects",
