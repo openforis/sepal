@@ -318,7 +318,7 @@ class _Button extends React.Component {
             const mouseUp$ = fromEvent(button, 'mouseup')
             const mouseEnter$ = fromEvent(button, 'mouseenter')
             const cancel$ = windowMouseUp$
-            const mouseTrigger$ = combineLatest(mouseDown$, mouseEnter$)
+            const mouseTrigger$ = combineLatest([mouseDown$, mouseEnter$])
             const mouseActivate$ = mouseUp$
 
             // Click-hold is triggered if button pressed more than CLICK_HOLD_DELAY_MS.
