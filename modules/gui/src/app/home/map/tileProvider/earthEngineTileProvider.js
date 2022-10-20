@@ -39,9 +39,9 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
 
     createElement(id, doc) {
         const canvas = doc.createElement('canvas')
-        canvas.id = id
-        canvas.width = TILE_SIZE
-        canvas.height = TILE_SIZE
+        canvas.setAttribute('id', id)
+        canvas.setAttribute('width', TILE_SIZE)
+        canvas.setAttribute('height', TILE_SIZE)
         return canvas
     }
 
@@ -51,7 +51,7 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
         image.onload = () => {
             this.elements[element.id] = element
             this.updateOffset(element)
-            element.getContext('2d').drawImage(image, 0, 0, TILE_SIZE, TILE_SIZE)
+            element.getContext('2d', {willReadFrequently: true}).drawImage(image, 0, 0, TILE_SIZE, TILE_SIZE)
         }
 
         image.src = URL.createObjectURL(blob)
@@ -87,7 +87,7 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
         const {top, left} = this.offsets[id]
         const offsetX = x - left
         const offsetY = y - top
-        const ctx = element.getContext('2d')
+        const ctx = element.getContext('2d', {willReadFrequently: true})
         const data = ctx.getImageData(offsetX, offsetY, 1, 1).data
         const [red, green, blue, alpha] = data
         if (alpha) {

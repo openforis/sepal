@@ -22,7 +22,7 @@ const DEFAULT_ZOOM = 3
 export const MIN_ZOOM = 3
 export const MAX_ZOOM = 23
 
-export const MapsContext = React.createContext()
+const MapsContext = React.createContext()
 
 export const withMapsContext = withContext(MapsContext, 'mapsContext')
 
@@ -32,7 +32,7 @@ class _Maps extends React.Component {
     }
 
     view$ = new BehaviorSubject()
-    scrollWheel$ = new BehaviorSubject()
+    scrollWheelEnabled$ = new BehaviorSubject()
     linkedMaps = new Set()
 
     constructor(props) {
@@ -148,10 +148,10 @@ class _Maps extends React.Component {
         return googleMap
     }
 
-    createSepalMap(mapElement, options, style) {
+    createSepalMap({element, options, style, zoomAreaSelected$}) {
         const {google: {google}} = this.state
-        const googleMap = this.createGoogleMap(mapElement, options, style)
-        return new SepalMap(google, googleMap)
+        const googleMap = this.createGoogleMap(element, options, style)
+        return new SepalMap({google, googleMap, zoomAreaSelected$})
     }
 
     getCurrentView() {
@@ -177,7 +177,7 @@ class _Maps extends React.Component {
 
         const updateView$ = new Subject()
         const linked$ = new Subject()
-        const scrollWheel$ = this.scrollWheel$
+        const scrollWheelEnabled$ = this.scrollWheelEnabled$
 
         const setLinked = linked => {
             const currentView = this.getCurrentView()
@@ -224,7 +224,7 @@ class _Maps extends React.Component {
             )
         )
 
-        return {mapId, googleMapsApiKey, nicfiPlanetApiKey, view$, updateView$, linked$, scrollWheel$}
+        return {mapId, googleMapsApiKey, nicfiPlanetApiKey, view$, updateView$, linked$, scrollWheelEnabled$}
     }
 
     render() {
@@ -249,9 +249,9 @@ class _Maps extends React.Component {
         const {addSubscription} = this.props
         const LOCAL_STORAGE_KEY = 'ScrollWheelMapZooming'
         const enabled = localStorage.getItem(LOCAL_STORAGE_KEY)
-        this.scrollWheel$.next(!enabled || enabled === 'true')
+        this.scrollWheelEnabled$.next(!enabled || enabled === 'true')
         addSubscription(
-            this.scrollWheel$.subscribe(
+            this.scrollWheelEnabled$.subscribe(
                 enabled => localStorage.setItem(LOCAL_STORAGE_KEY, enabled)
             )
         )

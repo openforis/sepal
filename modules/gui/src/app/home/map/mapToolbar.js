@@ -41,7 +41,7 @@ class MapToolbar extends React.Component {
                         tooltip={msg('process.mosaic.mapToolbar.layers.tooltip')}/>
                     {children}
                 </Toolbar>
-                <Keybinding disabled={!map.isZoomArea()} keymap={{Escape: () => map.cancelZoomArea()}}/>
+                <Keybinding disabled={!map.isZoomArea()} keymap={{Escape: () => map.disableZoomArea()}}/>
             </React.Fragment>
         )
     }

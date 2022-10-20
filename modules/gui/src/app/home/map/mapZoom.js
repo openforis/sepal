@@ -27,6 +27,11 @@ class _MapZoomPanel extends React.Component {
         super()
         this.search = this.search.bind(this)
         this.onEscape = this.onEscape.bind(this)
+        this.zoomIn = this.zoomIn.bind(this)
+        this.zoomOut = this.zoomOut.bind(this)
+        this.toggleZoomArea = this.toggleZoomArea.bind(this)
+        this.fit = this.fit.bind(this)
+        this.toggleScrollWheel = this.toggleScrollWheel.bind(this)
     }
 
     render() {
@@ -100,7 +105,6 @@ class _MapZoomPanel extends React.Component {
     }
 
     renderZoomInButton() {
-        const {map} = this.props
         const {view: {isMaxZoom}} = this.state
         return (
             <Button
@@ -108,13 +112,12 @@ class _MapZoomPanel extends React.Component {
                 icon='plus'
                 tooltip={msg('process.mapZoom.zoomIn.tooltip')}
                 tooltipPlacement='top'
-                onClick={() => map.zoomIn()}
+                onClick={this.zoomIn}
             />
         )
     }
 
     renderZoomOutButton() {
-        const {map} = this.props
         const {view: {isMinZoom}} = this.state
         return (
             <Button
@@ -122,7 +125,7 @@ class _MapZoomPanel extends React.Component {
                 icon='minus'
                 tooltip={msg('process.mapZoom.zoomOut.tooltip')}
                 tooltipPlacement='top'
-                onClick={() => map.zoomOut()}
+                onClick={this.zoomOut}
             />
         )
     }
@@ -137,7 +140,7 @@ class _MapZoomPanel extends React.Component {
                 icon='crop-alt'
                 tooltip={msg('process.mapZoom.zoomArea.tooltip')}
                 tooltipPlacement='top'
-                onClick={() => map.toggleZoomArea()}
+                onClick={this.toggleZoomArea}
             />
         )
     }
@@ -150,7 +153,7 @@ class _MapZoomPanel extends React.Component {
                 icon='bullseye'
                 tooltip={msg('process.mapZoom.fit.tooltip')}
                 tooltipPlacement='top'
-                onClick={() => map.fit()}
+                onClick={this.fit}
             />
         )
     }
@@ -163,7 +166,7 @@ class _MapZoomPanel extends React.Component {
                 icon='mouse'
                 tooltip={msg(scrollWheelEnabled ? 'process.mapZoom.scrollwheel.enabled.tooltip' : 'process.mapZoom.scrollwheel.disabled.tooltip')}
                 tooltipPlacement='top'
-                onChange={() => this.toggleScrollWheel()}
+                onChange={this.toggleScrollWheel}
             />
         )
     }
@@ -186,14 +189,34 @@ class _MapZoomPanel extends React.Component {
         )
     }
 
+    zoomIn() {
+        const {map} = this.props
+        map.zoomIn()
+    }
+
+    zoomOut() {
+        const {map} = this.props
+        map.zoomOut()
+    }
+
+    toggleZoomArea() {
+        const {map} = this.props
+        map.isZoomArea() ? map.disableZoomArea() : map.enableZoomArea()
+    }
+
+    fit() {
+        const {map} = this.props
+        map.fit()
+    }
+
     toggleScrollWheel() {
-        const {map: {scrollWheel$}} = this.props
-        scrollWheel$.next(!scrollWheel$.getValue())
+        const {map: {scrollWheelEnabled$}} = this.props
+        scrollWheelEnabled$.next(!scrollWheelEnabled$.getValue())
     }
 
     onEscape() {
         const {map, activatable: {deactivate}} = this.props
-        map.isZoomArea() ? map.cancelZoomArea() : deactivate()
+        map.isZoomArea() ? map.disableZoomArea() : deactivate()
     }
 
     componentDidMount() {
@@ -205,7 +228,7 @@ class _MapZoomPanel extends React.Component {
             map.view$.subscribe(
                 view => this.setState({view})
             ),
-            map.scrollWheel$.subscribe(
+            map.scrollWheelEnabled$.subscribe(
                 scrollWheelEnabled => this.setState({scrollWheelEnabled})
             )
         )

@@ -128,22 +128,18 @@
 
 .area.top {
     --area-bottom: calc(var(--bottom) - var(--clip-offset));
-    margin-bottom: calc(var(--half-axis-handle-size));
 }
 
 .area.bottom {
     --area-top: calc(var(--top) + var(--clip-offset));
-    margin-top: calc(-1 * var(--half-axis-handle-size));
 }
 
 .area.left {
     --area-right: calc(var(--right) - var(--clip-offset));
-    margin-right: calc(var(--half-axis-handle-size));
 }
 
 .area.right {
     --area-left: calc(var(--left) + var(--clip-offset));
-    margin-left: calc(-1 * var(--half-axis-handle-size));
 }
 
 /* active area indicator */
