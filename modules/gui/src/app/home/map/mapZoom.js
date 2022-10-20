@@ -201,7 +201,7 @@ class _MapZoomPanel extends React.Component {
 
     toggleZoomArea() {
         const {map} = this.props
-        map.toggleZoomArea()
+        map.isZoomArea() ? map.disableZoomArea() : map.enableZoomArea()
     }
 
     fit() {
@@ -210,13 +210,13 @@ class _MapZoomPanel extends React.Component {
     }
 
     toggleScrollWheel() {
-        const {map: {scrollWheel$}} = this.props
-        scrollWheel$.next(!scrollWheel$.getValue())
+        const {map: {scrollWheelEnabled$}} = this.props
+        scrollWheelEnabled$.next(!scrollWheelEnabled$.getValue())
     }
 
     onEscape() {
         const {map, activatable: {deactivate}} = this.props
-        map.isZoomArea() ? map.cancelZoomArea() : deactivate()
+        map.isZoomArea() ? map.disableZoomArea() : deactivate()
     }
 
     componentDidMount() {
@@ -228,7 +228,7 @@ class _MapZoomPanel extends React.Component {
             map.view$.subscribe(
                 view => this.setState({view})
             ),
-            map.scrollWheel$.subscribe(
+            map.scrollWheelEnabled$.subscribe(
                 scrollWheelEnabled => this.setState({scrollWheelEnabled})
             )
         )

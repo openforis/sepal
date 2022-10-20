@@ -8,12 +8,12 @@ import {MapContext} from './mapContext'
 import {MapInfo} from './mapInfo'
 import {SplitView} from 'widget/split/splitView'
 import {VisParamsPanel} from './visParams/visParamsPanel'
+import {areaTag, mapTag} from 'tag'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
-import {mapTag} from 'tag'
 import {recipePath} from '../body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import {v4 as uuid} from 'uuid'
@@ -35,15 +35,19 @@ const mapRecipeToProps = recipe => ({
     recipe
 })
 
+const OVERLAY_ID = 'overlay-layer-id'
+const OVERLAY_AREA = OVERLAY_AREA
+
 class _Map extends React.Component {
     viewUpdates$ = new BehaviorSubject({})
     linked$ = new BehaviorSubject(false)
-    mouseDown$ = new Subject()
+    mouseDownArea$ = new Subject()
     draggingMap$ = new BehaviorSubject(false)
     viewChanged$ = new Subject()
     splitPosition$ = new BehaviorSubject()
     draggingSplit$ = new BehaviorSubject(false)
     cursor$ = new Subject()
+    zoomAreaSelected$ = new Subject()
 
     filteredViewUpdates$ = this.viewUpdates$.pipe(
         distinctUntilChanged(_.isEqual)
@@ -67,21 +71,63 @@ class _Map extends React.Component {
         super()
         this.mapDelegate = this.mapDelegate.bind(this)
         this.toggleLinked = this.toggleLinked.bind(this)
-        this.toggleZoomArea = this.toggleZoomArea.bind(this)
-        this.cancelZoomArea = this.cancelZoomArea.bind(this)
+        this.enableZoomArea = this.enableZoomArea.bind(this)
+        this.disableZoomArea = this.disableZoomArea.bind(this)
         this.isZoomArea = this.isZoomArea.bind(this)
         this.drawPolygon = this.drawPolygon.bind(this)
         this.disableDrawingMode = this.disableDrawingMode.bind(this)
         this.setLocationMarker = this.setLocationMarker.bind(this)
         this.setAreaMarker = this.setAreaMarker.bind(this)
-        this.addClickListenerOnce = this.addClickListenerOnce.bind(this)
-        this.removeListener = this.removeListener.bind(this)
+        this.addOneShotClickListener = this.addOneShotClickListener.bind(this)
+    }
+
+    isInitialized() {
+        const {maps} = this.state
+        return !_.isEmpty(maps)
+    }
+
+    isOverlayLayer(id) {
+        return id === OVERLAY_ID
+    }
+
+    isOverlayArea(area) {
+        return area === OVERLAY_AREA
+    }
+
+    isStackMode() {
+        const {layers: {mode}} = this.props
+        return mode === 'stack'
+    }
+
+    isGridMode() {
+        const {layers: {mode}} = this.props
+        return mode === 'grid'
+    }
+
+    getMap(id) {
+        const {maps} = this.state
+        const {map} = maps[id]
+        return map
+    }
+
+    getArea(id) {
+        const {layers: {areas}} = this.props
+        return this.isOverlayLayer(id)
+            ? OVERLAY_AREA
+            : _.findKey(areas, area => area.id === id)
+    }
+
+    getLayerId(area) {
+        const {layers} = this.props
+        return this.isOverlayArea(area)
+            ? OVERLAY_AREA
+            : layers.areas[area].id
     }
 
     withAllMaps(func) {
         const {maps} = this.state
-        return _.map(maps, ({map, area, listeners, subscriptions}, id) =>
-            func({id, map, area, listeners, subscriptions})
+        return _.map(maps, ({map, listeners, subscriptions}, id) =>
+            func({id, map, listeners, subscriptions})
         )
     }
 
@@ -94,12 +140,67 @@ class _Map extends React.Component {
             : null
     }
 
+    createMap(id, element, isOverlay, callback) {
+        const {mapsContext: {createSepalMap}} = this.props
+        const area = this.getArea(id)
+        log.debug(() => `Adding ${mapTag(this.state.mapId, id)} to ${areaTag(area)}`)
+
+        const options = isOverlay ? {
+            backgroundColor: 'hsla(0, 0%, 0%, 0)',
+            gestureHandling: 'none'
+        } : null
+        const style = isOverlay ? 'overlayStyle' : 'sepalStyle'
+        const zoomAreaSelected$ = this.zoomAreaSelected$
+        const map = createSepalMap({element, options, style, zoomAreaSelected$})
+
+        this.withFirstMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
+
+        if (isOverlay) {
+            this.viewUpdates$.next(map.getView())
+        }
+
+        const {googleMap} = map.getGoogle()
+
+        const listeners = [
+            googleMap.addListener('mouseout',
+                () => this.synchronizeCursor(id, null)
+            ),
+            googleMap.addListener('mousemove',
+                ({latLng, domEvent}) => this.synchronizeCursor(id, latLng, domEvent)
+            ),
+            googleMap.addListener('bounds_changed',
+                () => this.viewChanged$.next()
+            ),
+            googleMap.addListener('center_changed',
+                () => this.synchronizeOut(id, map)
+            ),
+            googleMap.addListener('zoom_changed',
+                () => this.synchronizeOut(id, map)
+            ),
+            googleMap.addListener('dragstart',
+                () => this.draggingMap$.next(true)
+            ),
+            googleMap.addListener('dragend',
+                () => this.draggingMap$.next(false)
+            )
+        ]
+
+        const subscriptions = [
+            this.scrollWheelEnabled$.subscribe(
+                enabled => googleMap.setOptions({scrollwheel: enabled})
+            )
+        ]
+
+        callback({map, listeners, subscriptions})
+    }
+
     removeMap(id) {
         const {maps} = this.state
         if (maps[id]) {
-            const {map, area, listeners, subscriptions} = maps[id]
+            const {map, listeners, subscriptions} = maps[id]
             const {google} = map.getGoogle()
-            log.debug(() => `Removing ${mapTag(this.state.mapId, id)} (${area})`)
+            const area = this.getArea(id)
+            log.debug(() => `Removing ${mapTag(this.state.mapId, id)} from ${areaTag(area)}`)
             listeners.forEach(listener =>
                 google.maps.event.removeListener(listener)
             )
@@ -112,16 +213,16 @@ class _Map extends React.Component {
         )
     }
 
-    synchronizeOut(map, area) {
+    synchronizeOut(id, map) {
         const {overlay} = this.state
         const view = map.getView()
-        this.withAllMaps(({map, area: currentArea}) => {
-            if (currentArea !== area) {
+        this.withAllMaps(({map, id: currentId}) => {
+            if (currentId !== id) {
                 map.setView(view)
             }
         })
         this.viewUpdates$.next(view)
-        if (area !== 'overlay') {
+        if (!this.isOverlayLayer(id)) {
             overlay && overlay.map.setView(view)
         }
     }
@@ -133,20 +234,18 @@ class _Map extends React.Component {
     }
 
     synchronizeCursor(cursorId, latLng, event) {
-        const {layers: {mode}} = this.props
         const cursorArea = this.getArea(cursorId)
         if (event) {
             this.cursor$.next({
                 screenPixel: {x: event.clientX, y: event.clientY},
                 mapPixel: {x: event.layerX, y: event.layerY},
                 cursorArea,
-                latLng,
-                mode
+                latLng
             })
         }
         this.withAllMaps(({id, map}) => {
             const otherArea = this.getArea(id)
-            if (mode === 'grid' && otherArea !== cursorArea) {
+            if (this.isGridMode() && otherArea !== cursorArea) {
                 map.setCursor(latLng)
             } else {
                 map.setCursor(null)
@@ -158,37 +257,82 @@ class _Map extends React.Component {
         this.withAllMaps(({map}) => map.setVisibility(visible))
     }
 
-    addClickListenerOnce(listener) {
-        const listeners = this.withAllMaps(({map}) => map.addClickListener(e => {
-            listener(e)
-            removableListener.remove()
-        }))
-        const removableListener = {remove: () => listeners.map(listener => listener.remove())}
+    addOneShotClickListener(listener) {
+        const listeners = this.withAllMaps(({map}) =>
+            map.addClickListener(e => {
+                listener(e)
+                removableListener.remove()
+            })
+        )
+        const removableListener = {
+            remove: () => listeners.map(listener => listener.remove())
+        }
         return removableListener
     }
 
-    removeListener(listener) {
-        listener && listener.remove()
-    }
+    // zoom
 
-    setZoomArea(zoomAreaEnabled) {
-        this.setState({zoomAreaEnabled, selectedZoomArea: null}, () => {
-            this.withAllMaps(({map}) => zoomAreaEnabled ? map.enableZoomArea() : map.cancelZoomArea())
+    disableZoomArea() {
+        this.setState({zoomAreaEnabled: false, selectedZoomArea: null}, () => {
+            this.withAllMaps(({map}) => map.disableZoomArea())
         })
     }
 
-    cancelZoomArea() {
-        this.setZoomArea(false)
+    enableZoomArea() {
+        this.setState({zoomAreaEnabled: true, selectedZoomArea: null}, () => {
+            this.withAllMaps(({map}) => map.enableZoomArea())
+        })
     }
 
-    toggleZoomArea() {
-        this.setZoomArea(!this.isZoomArea())
+    startZoomArea(selectedZoomArea) {
+        const {zoomAreaEnabled} = this.state
+        const selectedZoomAreaId = this.getLayerId(selectedZoomArea)
+        if (zoomAreaEnabled) {
+            this.setState({selectedZoomArea}, () => {
+                this.withAllMaps(({id, map}) => id !== selectedZoomAreaId && map.disableZoomArea())
+            })
+        }
     }
 
     isZoomArea() {
         const {zoomAreaEnabled} = this.state
         return zoomAreaEnabled
     }
+
+    drawPolygon(id, callback) {
+        const {overlay: {map}} = this.state
+        if (this.isStackMode()) {
+            this.setState({drawPolygon: {id, callback}, overlayActive: true},
+                () => {
+                    map.interactive(true)
+                    map.disableDrawingMode()
+                    map.drawPolygon(id, callback)
+                }
+            )
+        } else {
+            this.setState({drawPolygon: true},
+                () => this.withAllMaps(({map}) => map.drawPolygon(id, callback))
+            )
+        }
+    }
+
+    disableDrawingMode() {
+        const {overlay: {map}} = this.state
+        if (this.isStackMode()) {
+            this.setState({drawPolygon: false, overlayActive: false},
+                () => {
+                    map.disableDrawingMode()
+                    map.interactive(false)
+                }
+            )
+        } else {
+            this.setState({drawPolygon: false},
+                () => this.withAllMaps(({map}) => map.disableDrawingMode())
+            )
+        }
+    }
+
+    // markers
 
     setLocationMarker(options) {
         const id = uuid()
@@ -216,69 +360,14 @@ class _Map extends React.Component {
         }
     }
 
-    renderImageLayer(id, source, layerConfig, area) {
-        const {recipe} = this.props
-        const {maps} = this.state
-        const map = maps[id] && maps[id].map
-        const updateLayerConfig = layerConfig => this.updateLayerConfig(layerConfig, area)
-        const includeAreaFeatureLayerSource = featureLayerSource => this.includeAreaFeatureLayerSource(featureLayerSource, area)
-        const excludeAreaFeatureLayerSource = featureLayerSource => this.excludeAreaFeatureLayerSource(featureLayerSource, area)
-        const {layerComponent} = getImageLayerSource({
-            recipe,
-            source,
-            layerConfig,
-            map,
-            boundsChanged$: this.viewChanged$.pipe(share()),
-            dragging$: combineLatest([this.draggingMap$, this.draggingSplit$]).pipe(
-                share(),
-                rxMap(([draggingMap, draggingSplit]) => draggingMap || draggingSplit)
-            ),
-            cursor$: this.areaCursor$(id)
-        })
-
-        const refCallback = element => {
-            if (element) {
-                if (!maps[id]) {
-                    this.createMap(id, area, element, ({map, listeners, subscriptions}) => {
-                        this.setState(({maps}) => ({maps: {...maps, [id]: {id, map, area, listeners, subscriptions}}}))
-                    })
-                }
-            }
-        }
-        return (
-            <React.Fragment>
-                <div
-                    className={styles.map}
-                    ref={refCallback}
-                    onMouseDown={() => this.mouseDown$.next(area)}
-                />
-                <MapAreaContext.Provider value={{
-                    area,
-                    updateLayerConfig,
-                    includeAreaFeatureLayerSource,
-                    excludeAreaFeatureLayerSource
-                }}>
-                    <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
-                    {layerComponent}
-                </MapAreaContext.Provider>
-            </React.Fragment>
-        )
-    }
-
-    getArea(layerId) {
-        const {layers: {areas}} = this.props
-        return Object.keys(areas).find(area => areas[area].id === layerId)
-    }
-
     areaCursor$(id) {
         return this.cursor$.pipe(
             share(),
             lastInWindow(100),
-            switchMap(({screenPixel, mapPixel, cursorArea, mode, latLng}) => {
-                const {maps} = this.state
-                const {map} = maps[id]
+            switchMap(({screenPixel, mapPixel, cursorArea, latLng}) => {
+                const map = this.getMap(id)
                 const area = this.getArea(id)
-                if (cursorArea === area || mode === 'stack') {
+                if (cursorArea === area || this.isStackMode()) {
                     return of({...screenPixel})
                 } else {
                     return this.splitPosition$.pipe(
@@ -359,93 +448,6 @@ class _Map extends React.Component {
             .dispatch()
     }
 
-    onMouseOut(id) {
-        this.synchronizeCursor(id, null)
-    }
-
-    onMouseMove(id, latLng, domEvent) {
-        this.synchronizeCursor(id, latLng, domEvent)
-    }
-
-    onBoundsChanged() {
-        this.viewChanged$.next()
-    }
-
-    onCenterChanged(map, area) {
-        this.synchronizeOut(map, area)
-    }
-
-    onZoomChanged(map, area) {
-        this.synchronizeOut(map, area)
-    }
-
-    onDragStart() {
-        this.draggingMap$.next(true)
-    }
-
-    onDragEnd() {
-        this.draggingMap$.next(false)
-    }
-
-    createMap(id, area, element, callback) {
-        const {mapsContext: {createSepalMap}} = this.props
-        log.debug(() => `Adding ${mapTag(this.state.mapId, id)} (${area})`)
-
-        const isOverlay = area === 'overlay'
-        const options = isOverlay ? {
-            backgroundColor: 'hsla(0, 0%, 0%, 0)',
-            gestureHandling: 'none'
-        } : null
-        const style = isOverlay ? 'overlayStyle' : 'sepalStyle'
-        const map = createSepalMap(element, options, style)
-
-        this.withFirstMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
-
-        if (isOverlay) {
-            this.viewUpdates$.next(map.getView())
-        }
-
-        const {googleMap} = map.getGoogle()
-
-        const listeners = [
-            googleMap.addListener('mouseout', () => this.onMouseOut(id)),
-            googleMap.addListener('mousemove', ({latLng, domEvent}) => this.onMouseMove(id, latLng, domEvent)),
-            googleMap.addListener('bounds_changed', () => this.onBoundsChanged()),
-            googleMap.addListener('center_changed', () => this.onCenterChanged(map, area)),
-            googleMap.addListener('zoom_changed', () => this.onZoomChanged(map, area)),
-            googleMap.addListener('dragstart', () => this.onDragStart()),
-            googleMap.addListener('dragend', () => this.onDragEnd())
-        ]
-
-        const subscriptions = [
-            this.mouseDown$.subscribe(mouseDownArea => {
-                const {zoomAreaEnabled, selectedZoomArea} = this.state
-                const currentArea = this.getArea(id)
-                if (zoomAreaEnabled) {
-                    if (selectedZoomArea) {
-                        if (mouseDownArea === currentArea && selectedZoomArea !== currentArea) {
-                            this.cancelZoomArea()
-                        }
-                    } else {
-                        if (mouseDownArea === currentArea) {
-                            this.setState({selectedZoomArea: currentArea})
-                        } else {
-                            map.cancelZoomArea()
-                        }
-                    }
-                }
-            }),
-            map.getZoomArea$().subscribe(() =>
-                this.cancelZoomArea()
-            ),
-            this.scrollWheel$.subscribe(
-                enabled => googleMap.setOptions({scrollwheel: enabled})
-            )
-        ]
-
-        callback({map, listeners, subscriptions})
-    }
-
     setLinked(linked) {
         this.linked$.next(linked)
     }
@@ -458,7 +460,6 @@ class _Map extends React.Component {
     render() {
         const {recipe, layers, imageLayerSources} = this.props
         const {googleMapsApiKey, nicfiPlanetApiKey, selectedZoomArea} = this.state
-
         const imageLayerSourceComponents = imageLayerSources
             .map(source =>
                 getImageLayerSource({recipe, source}).sourceComponent
@@ -476,11 +477,11 @@ class _Map extends React.Component {
                         areas={this.renderAreas()}
                         overlay={this.renderOverlay()}
                         mode={layers.mode}
-                        maximize={layers.mode === 'stack' ? selectedZoomArea : null}
+                        maximize={this.isStackMode() ? selectedZoomArea : null}
                         position$={this.splitPosition$}
                         dragging$={this.draggingSplit$}>
                         <div className={styles.content}>
-                            {this.isMapInitialized() ? this.renderRecipe() : null}
+                            {this.isInitialized() ? this.renderRecipe() : null}
                         </div>
                     </SplitView>
                 </MapContext.Provider>
@@ -513,7 +514,7 @@ class _Map extends React.Component {
 
         const refCallback = element => {
             if (element && !overlay) {
-                this.createMap('overlay-layer-id', 'overlay', element, ({map, listeners, subscriptions}) => {
+                this.createMap(OVERLAY_ID, element, true, ({map, listeners, subscriptions}) => {
                     this.setState({overlay: {map, listeners, subscriptions}})
                 })
             }
@@ -521,21 +522,16 @@ class _Map extends React.Component {
 
         return size ? (
             <div
+                ref={refCallback}
                 className={[
                     styles.map,
                     styles.overlay,
                     overlayActive ? styles.active : null
                 ].join(' ')}
                 style={{'--height': `${size.height}px`}}
-                ref={refCallback}
-                onMouseDown={() => this.mouseDown$.next('overlay')}
+                onMouseDown={() => this.mouseDownArea$.next(OVERLAY_AREA)}
             />
         ) : null
-    }
-
-    isMapInitialized() {
-        const {maps} = this.state
-        return !_.isEmpty(maps)
     }
 
     renderRecipe() {
@@ -554,12 +550,58 @@ class _Map extends React.Component {
         )
     }
 
+    renderImageLayer(id, source, layerConfig, area) {
+        const {recipe} = this.props
+        const {maps} = this.state
+        const map = maps[id] && maps[id].map
+        const updateLayerConfig = layerConfig => this.updateLayerConfig(layerConfig, area)
+        const includeAreaFeatureLayerSource = featureLayerSource => this.includeAreaFeatureLayerSource(featureLayerSource, area)
+        const excludeAreaFeatureLayerSource = featureLayerSource => this.excludeAreaFeatureLayerSource(featureLayerSource, area)
+        const {layerComponent} = getImageLayerSource({
+            recipe,
+            source,
+            layerConfig,
+            map,
+            boundsChanged$: this.viewChanged$.pipe(share()),
+            dragging$: combineLatest([this.draggingMap$, this.draggingSplit$]).pipe(
+                share(),
+                rxMap(([draggingMap, draggingSplit]) => draggingMap || draggingSplit)
+            ),
+            cursor$: this.areaCursor$(id)
+        })
+
+        const refCallback = element => {
+            if (element) {
+                if (!maps[id]) {
+                    this.createMap(id, element, false, ({map, listeners, subscriptions}) => {
+                        this.setState(({maps}) => ({maps: {...maps, [id]: {id, map, listeners, subscriptions}}}))
+                    })
+                }
+            }
+        }
+        return (
+            <MapAreaContext.Provider value={{
+                area,
+                updateLayerConfig,
+                includeAreaFeatureLayerSource,
+                excludeAreaFeatureLayerSource
+            }}>
+                <div
+                    className={styles.map}
+                    ref={refCallback}
+                    onMouseDown={() => this.mouseDownArea$.next(area)}
+                />
+                <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
+                {layerComponent}
+            </MapAreaContext.Provider>
+        )
+    }
+
     componentDidMount() {
         const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
-        const {mapId, googleMapsApiKey, nicfiPlanetApiKey, view$, updateView$, linked$, scrollWheel$} = createMapContext()
-
+        const {mapId, googleMapsApiKey, nicfiPlanetApiKey, view$, updateView$, linked$, scrollWheelEnabled$} = createMapContext()
         this.setLinked(getProcessTabsInfo().single)
-        this.scrollWheel$ = scrollWheel$
+        this.scrollWheelEnabled$ = scrollWheelEnabled$
 
         this.setState({
             mapId,
@@ -597,43 +639,14 @@ class _Map extends React.Component {
             ),
             this.linked$.subscribe(
                 linked => linked$.next(linked)
+            ),
+            this.zoomAreaSelected$.subscribe(
+                () => this.disableZoomArea()
+            ),
+            this.mouseDownArea$.subscribe(
+                area => this.startZoomArea(area)
             )
         )
-    }
-
-    drawPolygon(id, callback) {
-        const {layers: {mode}} = this.props
-        const {overlay: {map}} = this.state
-        if (mode === 'stack') {
-            this.setState({drawPolygon: {id, callback}, overlayActive: true},
-                () => {
-                    map.interactive(true)
-                    map.disableDrawingMode()
-                    map.drawPolygon(id, callback)
-                }
-            )
-        } else {
-            this.setState({drawPolygon: true},
-                () => this.withAllMaps(({map}) => map.drawPolygon(id, callback))
-            )
-        }
-    }
-
-    disableDrawingMode() {
-        const {layers: {mode}} = this.props
-        const {overlay: {map}} = this.state
-        if (mode === 'stack') {
-            this.setState({drawPolygon: false, overlayActive: false},
-                () => {
-                    map.disableDrawingMode()
-                    map.interactive(false)
-                }
-            )
-        } else {
-            this.setState({drawPolygon: false},
-                () => this.withAllMaps(({map}) => map.disableDrawingMode())
-            )
-        }
     }
 
     mapDelegate() {
@@ -647,12 +660,12 @@ class _Map extends React.Component {
         return {
             view$: this.filteredViewUpdates$,
             linked$: this.linked$,
-            scrollWheel$: this.scrollWheel$,
+            scrollWheelEnabled$: this.scrollWheelEnabled$,
             toggleLinked: this.toggleLinked,
             zoomIn: () => map.zoomIn(),
             zoomOut: () => map.zoomOut(),
-            toggleZoomArea: this.toggleZoomArea,
-            cancelZoomArea: this.cancelZoomArea,
+            enableZoomArea: this.enableZoomArea,
+            disableZoomArea: this.disableZoomArea,
             isZoomArea: this.isZoomArea,
             canFit: () => isInitialized(),
             fit: () => map.fitBounds(bounds),
@@ -661,8 +674,7 @@ class _Map extends React.Component {
             setView: view => map.setView(view),
             fitBounds: bounds => map.fitBounds(bounds),
             getBounds: () => map.getBounds(),
-            addClickListenerOnce: this.addClickListenerOnce,
-            removeListener: this.removeListener,
+            addOneShotClickListener: this.addOneShotClickListener,
             drawPolygon: this.drawPolygon,
             disableDrawingMode: this.disableDrawingMode,
             setLocationMarker: this.setLocationMarker,

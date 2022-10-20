@@ -5,10 +5,11 @@ import _ from 'lodash'
 const log = getLogger('sepalMap')
 
 export class SepalMap {
-    constructor(google, googleMap) {
+    constructor({google, googleMap, zoomAreaSelected$}) {
         log.debug('creating new SepalMap')
         this.google = google
         this.googleMap = googleMap
+        this.zoomAreaSelected$ = zoomAreaSelected$
 
         this.cursor = new google.maps.Marker({
             clickable: false,
@@ -57,7 +58,6 @@ export class SepalMap {
     layerById = {}
     hiddenLayerById = {}
     removeLayer$ = new Subject()
-    zoomArea$ = new Subject()
 
     drawingOptions = {
         fillColor: '#FBFAF2',
@@ -220,17 +220,13 @@ export class SepalMap {
         }, ({overlay: rectangle}) => {
             rectangle.setMap(null)
             googleMap.fitBounds(rectangle.bounds)
-            this.cancelZoomArea()
-            this.zoomArea$.next()
+            this.disableZoomArea()
+            this.zoomAreaSelected$ && this.zoomAreaSelected$.next()
         })
     }
 
-    cancelZoomArea() {
+    disableZoomArea() {
         this.disableDrawingMode()
-    }
-
-    getZoomArea$() {
-        return this.zoomArea$
     }
 
     // Bounds

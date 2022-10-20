@@ -19,6 +19,8 @@ const argsJoiner = (args, delimiter = ARG_DELIMITER) =>
 
 const tag = (tag, args, delimiter) => `${tag}<${argsJoiner(args, delimiter)}>`
 
+const areaTag = (mapId, layerId) => tag('Area', [mapId, layerId])
+
 const mapTag = (mapId, layerId) => tag('Map', [mapId, layerId])
 
 const mapViewTag = ({center, zoom}) => tag('View', [center.lat.toFixed(4), center.lng.toFixed(4), zoom], '/')
@@ -28,6 +30,7 @@ const requestTag = ({tileProviderId, requestId}) => tag('Request', [tileProvider
 const tileProviderTag = tileProviderId => tag('TileProvider', [tileProviderId])
 
 module.exports = {
+    areaTag,
     mapTag,
     mapViewTag,
     requestTag,

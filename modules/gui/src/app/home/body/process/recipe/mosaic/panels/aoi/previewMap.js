@@ -54,7 +54,7 @@ class _PreviewMap extends React.Component {
         const {map} = this.state
         if (!map) {
             const {mapsContext: {createSepalMap}} = this.props
-            const map = createSepalMap(element, PREVIEW_MAP_OPTIONS)
+            const map = createSepalMap({element, options: PREVIEW_MAP_OPTIONS})
             this.setState({map})
         }
     }
