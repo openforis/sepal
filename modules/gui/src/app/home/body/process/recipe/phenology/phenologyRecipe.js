@@ -9,14 +9,15 @@ import moment from 'moment'
 
 export const defaultModel = {
     dates: {
-        fromYear: moment().year(),
-        toYear: moment().year()
+        fromYear: moment().year() - 1,
+        toYear: moment().year() - 1
     },
     sources: {
         cloudPercentageThreshold: 75,
         dataSets: {
             LANDSAT: ['LANDSAT_8']
-        }
+        },
+        band: 'evi'
     },
     options: {
         corrections: ['SR'],
