@@ -2927,6 +2927,184 @@
             },
             "tabPlaceholder": ""
         },
+        "phenology": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "dates": {
+                    "button": "",
+                    "form": {
+                        "fromYear": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "toYear": {
+                            "beforeFromYear": "",
+                            "label": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "preprocess": {
+                    "button": "",
+                    "form": {
+                        "cloudDetection": {
+                            "label": "",
+                            "cloudScore": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "pino26": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "qa": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "cloudMasking": {
+                            "aggressive": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "moderate": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "corrections": {
+                            "brdf": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "surfaceReflectance": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "shadowMasking": {
+                            "label": "",
+                            "off": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "on": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "snowMasking": {
+                            "label": "",
+                            "off": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "on": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "sources": {
+                    "button": "",
+                    "classificationLoadError": "",
+                    "form": {
+                        "classification": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "band": {
+                            "label": ""
+                        },
+                        "cloudPercentageThreshold": {
+                            "label": "",
+                            "value": "",
+                            "tooltip": ""
+                        },
+                        "dataSets": {
+                            "label": "",
+                            "optical": {
+                                "label": ""
+                            },
+                            "options": {
+                                "LANDSAT_7": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_7_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_8": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_8_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_9": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_9_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_TM": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_TM_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SENTINEL_1": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SENTINEL_2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                }
+                            },
+                            "radar": {
+                                "label": ""
+                            }
+                        },
+                        "dataSetType": {
+                            "label": ""
+                        },
+                        "dataSetTypes": {
+                            "OPTICAL": "",
+                            "PLANET": "",
+                            "RADAR": ""
+                        },
+                        "required": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "label": ""
+            },
+            "tabPlaceholder": ""
+        },
         "projects": {
             "title": "",
             "label": "",
