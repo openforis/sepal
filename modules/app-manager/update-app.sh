@@ -65,7 +65,8 @@ function update_venv {
         python3 -m venv $venv_path
         "$venv_path"/bin/python3 -m pip install --cache-dir /root/.cache/pip ipykernel wheel >> "$venv_log_file"
         "$venv_path"/bin/python3 -m pip install --cache-dir /root/.cache/pip --upgrade pip >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install -r "$app_path"/requirements.txt -U --cache-dir /root/.cache/pip >> "$venv_log_file"
+        "$venv_path"/bin/python3 -m pip install -r "$app_path"/requirements.txt -U --no-cache-dir >> "$venv_log_file"
+        # "$venv_path"/bin/python3 -m pip install -r "$app_path"/requirements.txt -U --cache-dir /root/.cache/pip >> "$venv_log_file"
         if [[ -d $current_venv_path ]] 
         then
             echo "Moving away current venv: $current_venv_path" >> "$venv_log_file"
