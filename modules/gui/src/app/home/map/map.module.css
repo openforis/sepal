@@ -28,12 +28,13 @@
 }
 
 .overlay {
-    display: none;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .overlay.active {
-    display: block;
     opacity: .75;
+    pointer-events: all;
 }
 
 .recipe {
