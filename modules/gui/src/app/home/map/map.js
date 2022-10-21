@@ -57,10 +57,9 @@ class _Map extends React.Component {
         mapId: null,
         googleMapsApiKey: null,
         nicfiPlanetApiKey: null,
-        zoomAreaEnabled: false,
         overlay: null,
         overlayActive: false,
-        drawPolygonEnabled: false
+        drawingMode: false
     }
 
     markers = {}
