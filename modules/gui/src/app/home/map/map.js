@@ -41,13 +41,11 @@ const OVERLAY_AREA = OVERLAY_AREA
 class _Map extends React.Component {
     viewUpdates$ = new BehaviorSubject({})
     linked$ = new BehaviorSubject(false)
-    mouseDownArea$ = new Subject()
     draggingMap$ = new BehaviorSubject(false)
     viewChanged$ = new Subject()
     splitPosition$ = new BehaviorSubject()
     draggingSplit$ = new BehaviorSubject(false)
     cursor$ = new Subject()
-    zoomAreaSelected$ = new Subject()
 
     filteredViewUpdates$ = this.viewUpdates$.pipe(
         distinctUntilChanged(_.isEqual)
@@ -59,10 +57,9 @@ class _Map extends React.Component {
         googleMapsApiKey: null,
         nicfiPlanetApiKey: null,
         zoomAreaEnabled: false,
-        selectedZoomArea: null,
         overlay: null,
         overlayActive: false,
-        drawPolygon: false
+        drawPolygonEnabled: false
     }
 
     markers = {}
@@ -74,8 +71,8 @@ class _Map extends React.Component {
         this.enableZoomArea = this.enableZoomArea.bind(this)
         this.disableZoomArea = this.disableZoomArea.bind(this)
         this.isZoomArea = this.isZoomArea.bind(this)
-        this.drawPolygon = this.drawPolygon.bind(this)
-        this.disableDrawingMode = this.disableDrawingMode.bind(this)
+        this.enablePolygonDrawing = this.enablePolygonDrawing.bind(this)
+        this.disablePolygonDrawing = this.disablePolygonDrawing.bind(this)
         this.setLocationMarker = this.setLocationMarker.bind(this)
         this.setAreaMarker = this.setAreaMarker.bind(this)
         this.addOneShotClickListener = this.addOneShotClickListener.bind(this)
@@ -140,6 +137,14 @@ class _Map extends React.Component {
             : null
     }
 
+    withOverlayMap(func) {
+        const {overlay} = this.state
+        if (overlay) {
+            const {map, listeners, subscriptions} = overlay
+            func({id: OVERLAY_ID, map, listeners, subscriptions})
+        }
+    }
+
     createMap(id, element, isOverlay, callback) {
         const {mapsContext: {createSepalMap}} = this.props
         const area = this.getArea(id)
@@ -150,8 +155,7 @@ class _Map extends React.Component {
             gestureHandling: 'none'
         } : null
         const style = isOverlay ? 'overlayStyle' : 'sepalStyle'
-        const zoomAreaSelected$ = this.zoomAreaSelected$
-        const map = createSepalMap({element, options, style, zoomAreaSelected$})
+        const map = createSepalMap({element, options, style})
 
         this.withFirstMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
 
@@ -270,69 +274,97 @@ class _Map extends React.Component {
         return removableListener
     }
 
-    // zoom
+    // Drawing mode
 
-    disableZoomArea() {
-        this.setState({zoomAreaEnabled: false, selectedZoomArea: null}, () => {
-            this.withAllMaps(({map}) => map.disableZoomArea())
-        })
+    drawingInstances = []
+
+    enterDrawingMode(drawingMode, callback) {
+        const newInstance = {drawingMode, callback}
+        const currentInstance = _.last(this.drawingInstances)
+        if (currentInstance) {
+            this.disableDrawingMode()
+        }
+        this.enableDrawingMode(newInstance)
+        this.drawingInstances.push(newInstance)
+    }
+    
+    exitDrawingMode() {
+        const currentInstance = this.drawingInstances.pop()
+        if (currentInstance) {
+            this.disableDrawingMode()
+            const previousInstance = _.last(this.drawingInstances)
+            if (previousInstance) {
+                this.enableDrawingMode(previousInstance)
+            }
+        }
     }
 
-    enableZoomArea() {
-        this.setState({zoomAreaEnabled: true, selectedZoomArea: null}, () => {
-            this.withAllMaps(({map}) => map.enableZoomArea())
-        })
-    }
-
-    startZoomArea(selectedZoomArea) {
-        const {zoomAreaEnabled} = this.state
-        const selectedZoomAreaId = this.getLayerId(selectedZoomArea)
-        if (zoomAreaEnabled) {
-            this.setState({selectedZoomArea}, () => {
-                this.withAllMaps(({id, map}) => id !== selectedZoomAreaId && map.disableZoomArea())
+    enableDrawingMode({drawingMode, callback}) {
+        log.debug('enableDrawingMode:', drawingMode)
+        if (this.isStackMode()) {
+            this.setState({drawingMode, overlayActive: true}, () => {
+                this.withOverlayMap(callback)
+            })
+        } else {
+            this.setState({drawingMode, overlayActive: false}, () => {
+                this.withAllMaps(callback)
             })
         }
     }
 
-    isZoomArea() {
-        const {zoomAreaEnabled} = this.state
-        return zoomAreaEnabled
-    }
-
-    drawPolygon(id, callback) {
-        const {overlay: {map}} = this.state
-        if (this.isStackMode()) {
-            this.setState({drawPolygon: {id, callback}, overlayActive: true},
-                () => {
-                    map.interactive(true)
-                    map.disableDrawingMode()
-                    map.drawPolygon(id, callback)
-                }
-            )
-        } else {
-            this.setState({drawPolygon: true},
-                () => this.withAllMaps(({map}) => map.drawPolygon(id, callback))
-            )
-        }
-    }
-
     disableDrawingMode() {
-        const {overlay: {map}} = this.state
+        log.debug('disableDrawingMode')
         if (this.isStackMode()) {
-            this.setState({drawPolygon: false, overlayActive: false},
-                () => {
-                    map.disableDrawingMode()
-                    map.interactive(false)
-                }
-            )
+            this.setState({drawingMode: null, overlayActive: false}, () => {
+                this.withOverlayMap(({map}) => map.disableDrawingMode())
+            })
         } else {
-            this.setState({drawPolygon: false},
-                () => this.withAllMaps(({map}) => map.disableDrawingMode())
-            )
+            this.setState({drawingMode: null, overlayActive: false}, () => {
+                this.withAllMaps(({map}) => map.disableDrawingMode())
+            })
         }
     }
 
-    // markers
+    // Zoom
+
+    enableZoomArea(callback) {
+        this.enterDrawingMode('zoomarea', ({map}) =>
+            map.enableZoomArea((...args) => {
+                this.disableZoomArea()
+                callback && callback(...args)
+            })
+        )
+    }
+
+    disableZoomArea() {
+        this.exitDrawingMode()
+    }
+
+    isZoomArea() {
+        const {drawingMode} = this.state
+        return drawingMode === 'zoomarea'
+    }
+
+    // Polygon
+
+    enablePolygonDrawing(callback) {
+        this.enterDrawingMode('polygon', ({map}) =>
+            map.enablePolygonDrawing((...args) => {
+                callback && callback(...args)
+            })
+        )
+    }
+
+    disablePolygonDrawing() {
+        this.exitDrawingMode()
+    }
+
+    iPolygonDrawing() {
+        const {drawingMode} = this.state
+        return drawingMode === 'polygon'
+    }
+
+    // Markers
 
     setLocationMarker(options) {
         const id = uuid()
@@ -459,7 +491,7 @@ class _Map extends React.Component {
 
     render() {
         const {recipe, layers, imageLayerSources} = this.props
-        const {googleMapsApiKey, nicfiPlanetApiKey, selectedZoomArea} = this.state
+        const {googleMapsApiKey, nicfiPlanetApiKey} = this.state
         const imageLayerSourceComponents = imageLayerSources
             .map(source =>
                 getImageLayerSource({recipe, source}).sourceComponent
@@ -477,7 +509,6 @@ class _Map extends React.Component {
                         areas={this.renderAreas()}
                         overlay={this.renderOverlay()}
                         mode={layers.mode}
-                        maximize={this.isStackMode() ? selectedZoomArea : null}
                         position$={this.splitPosition$}
                         dragging$={this.draggingSplit$}>
                         <div className={styles.content}>
@@ -529,7 +560,6 @@ class _Map extends React.Component {
                     overlayActive ? styles.active : null
                 ].join(' ')}
                 style={{'--height': `${size.height}px`}}
-                onMouseDown={() => this.mouseDownArea$.next(OVERLAY_AREA)}
             />
         ) : null
     }
@@ -589,7 +619,6 @@ class _Map extends React.Component {
                 <div
                     className={styles.map}
                     ref={refCallback}
-                    onMouseDown={() => this.mouseDownArea$.next(area)}
                 />
                 <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
                 {layerComponent}
@@ -639,12 +668,6 @@ class _Map extends React.Component {
             ),
             this.linked$.subscribe(
                 linked => linked$.next(linked)
-            ),
-            this.zoomAreaSelected$.subscribe(
-                () => this.disableZoomArea()
-            ),
-            this.mouseDownArea$.subscribe(
-                area => this.startZoomArea(area)
             )
         )
     }
@@ -675,8 +698,8 @@ class _Map extends React.Component {
             fitBounds: bounds => map.fitBounds(bounds),
             getBounds: () => map.getBounds(),
             addOneShotClickListener: this.addOneShotClickListener,
-            drawPolygon: this.drawPolygon,
-            disableDrawingMode: this.disableDrawingMode,
+            enablePolygonDrawing: this.enablePolygonDrawing,
+            disablePolygonDrawing: this.disablePolygonDrawing,
             setLocationMarker: this.setLocationMarker,
             setAreaMarker: this.setAreaMarker,
             removeMarker: this.removeMarker,

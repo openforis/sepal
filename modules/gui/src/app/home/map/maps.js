@@ -148,10 +148,10 @@ class _Maps extends React.Component {
         return googleMap
     }
 
-    createSepalMap({element, options, style, zoomAreaSelected$}) {
+    createSepalMap({element, options, style}) {
         const {google: {google}} = this.state
         const googleMap = this.createGoogleMap(element, options, style)
-        return new SepalMap({google, googleMap, zoomAreaSelected$})
+        return new SepalMap({google, googleMap})
     }
 
     getCurrentView() {

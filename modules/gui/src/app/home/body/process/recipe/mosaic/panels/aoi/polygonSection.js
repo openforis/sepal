@@ -24,18 +24,14 @@ class _PolygonSection extends React.Component {
 
     componentDidMount() {
         const {map, inputs: {polygon}} = this.props
-        map.drawPolygon('aoi', drawnPolygon => {
+        map.enablePolygonDrawing(drawnPolygon => {
             polygon.set(drawnPolygon)
         })
     }
 
     componentWillUnmount() {
-        this.disableDrawingMode()
-    }
-
-    disableDrawingMode() {
         const {map} = this.props
-        map.disableDrawingMode()
+        map.disablePolygonDrawing()
     }
 
     render() {

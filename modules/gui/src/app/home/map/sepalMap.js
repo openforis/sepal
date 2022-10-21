@@ -5,11 +5,10 @@ import _ from 'lodash'
 const log = getLogger('sepalMap')
 
 export class SepalMap {
-    constructor({google, googleMap, zoomAreaSelected$}) {
+    constructor({google, googleMap}) {
         log.debug('creating new SepalMap')
         this.google = google
         this.googleMap = googleMap
-        this.zoomAreaSelected$ = zoomAreaSelected$
 
         this.cursor = new google.maps.Marker({
             clickable: false,
@@ -101,11 +100,11 @@ export class SepalMap {
 
     // Drawing mode
 
-    enableDrawingMode(options, overlayCompleteCallback) {
+    enableDrawingMode(options, callback) {
         const {google, googleMap} = this
         this.disableDrawingMode()
         this.drawingManager = new google.maps.drawing.DrawingManager(options)
-        google.maps.event.addListener(this.drawingManager, 'overlaycomplete', overlayCompleteCallback)
+        google.maps.event.addListener(this.drawingManager, 'overlaycomplete', callback)
         this.drawingManager.setMap(googleMap)
     }
 
@@ -178,7 +177,7 @@ export class SepalMap {
         }
     }
 
-    // Zooming
+    // Zoom
 
     getZoom() {
         const {googleMap} = this
@@ -211,21 +210,57 @@ export class SepalMap {
         this.setZoom(googleMap.getZoom() - 1)
     }
 
-    enableZoomArea() {
+    enableZoomArea(callback) {
         const {google, googleMap} = this
+        log.debug('enableZoomArea')
         this.enableDrawingMode({
             drawingMode: google.maps.drawing.OverlayType.RECTANGLE,
             drawingControl: false,
             rectangleOptions: this.drawingOptions
-        }, ({overlay: rectangle}) => {
-            rectangle.setMap(null)
-            googleMap.fitBounds(rectangle.bounds)
-            this.disableZoomArea()
-            this.zoomAreaSelected$ && this.zoomAreaSelected$.next()
+        }, ({type, overlay: rectangle}) => {
+            if (type === 'rectangle') {
+                rectangle.setMap(null)
+                googleMap.fitBounds(rectangle.bounds)
+                callback()
+            } else {
+                log.warn(`Expecting overlaycomplete event type rectangle but got ${type}`)
+            }
         })
     }
 
     disableZoomArea() {
+        log.debug('disableZoomArea')
+        this.disableDrawingMode()
+    }
+
+    // Polygon
+
+    enablePolygonDrawing(callback) {
+        const {google} = this
+        log.debug('enablePolygonDrawing')
+        this.enableDrawingMode({
+            drawingMode: google.maps.drawing.OverlayType.POLYGON,
+            drawingControl: false,
+            drawingControlOptions: {
+                position: google.maps.ControlPosition.TOP_CENTER,
+                drawingModes: ['polygon']
+            },
+            polygonOptions: this.drawingOptions,
+        }, ({type, overlay: polygon}) => {
+            if (type === 'polygon') {
+                polygon.setMap(null)
+                const toPolygonPath = polygon => polygon.getPaths().getArray()[0].getArray().map(latLng =>
+                    [latLng.lng(), latLng.lat()]
+                )
+                callback(toPolygonPath(polygon))
+            } else {
+                log.warn(`Expecting overlaycomplete event type polygon but got ${type}`)
+            }
+        })
+    }
+
+    disablePolygonDrawing() {
+        log.debug('disablePolygonDrawing')
         this.disableDrawingMode()
     }
 
@@ -317,37 +352,6 @@ export class SepalMap {
         closeMarker.setMap(googleMap)
         return {
             remove
-        }
-    }
-
-    // Polygon
-
-    drawPolygon(id, callback) {
-        this.drawingPolygon = {id, callback}
-        this.redrawPolygon()
-    }
-
-    redrawPolygon() {
-        const {google} = this
-        if (this.drawingPolygon) {
-            const {callback} = this.drawingPolygon
-            this.enableDrawingMode({
-                drawingMode: google.maps.drawing.OverlayType.POLYGON,
-                drawingControl: false,
-                drawingControlOptions: {
-                    position: google.maps.ControlPosition.TOP_CENTER,
-                    drawingModes: ['polygon']
-                },
-                circleOptions: this.drawingOptions,
-                polygonOptions: this.drawingOptions,
-                rectangleOptions: this.drawingOptions
-            }, ({overlay: polygon}) => {
-                polygon.setMap(null)
-                const toPolygonPath = polygon => polygon.getPaths().getArray()[0].getArray().map(latLng =>
-                    [latLng.lng(), latLng.lat()]
-                )
-                callback(toPolygonPath(polygon))
-            })
         }
     }
 
