@@ -5,6 +5,7 @@ import {ClassificationImageLayer} from './classification/classificationImageLaye
 import {CursorValue} from 'app/home/map/cursorValue'
 import {IndexChangeImageLayer} from './indexChange/indexChangeImageLayer'
 import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
+import {PhenologyImageLayer} from './phenology/phenologyImageLayer'
 import {PlanetMosaicImageLayer} from './planetMosaic/planetMosaicImageLayer'
 import {RadarMosaicImageLayer} from './radarMosaic/radarMosaicImageLayer'
 import {RemappingImageLayer} from './remapping/remappingImageLayer'
@@ -91,6 +92,10 @@ class _RecipeImageLayer extends React.Component {
         case 'CCDC_SLICE':
             return (
                 <CCDCSliceImageLayer {...props}/>
+            )
+        case 'PHENOLOGY':
+            return (
+                <PhenologyImageLayer {...props}/>
             )
         default:
             return null

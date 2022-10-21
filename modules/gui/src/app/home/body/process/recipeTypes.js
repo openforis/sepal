@@ -5,6 +5,7 @@ import classChange from './recipe/classChange/classChange'
 import classification from './recipe/classification/classification'
 import indexChange from './recipe/indexChange/indexChange'
 import opticalMosaic from './recipe/opticalMosaic/opticalMosaic'
+import phenology from './recipe/phenology/phenology'
 import planetMosaic from './recipe/planetMosaic/planetMosaic'
 import radarMosaic from './recipe/radarMosaic/radarMosaic'
 import remapping from './recipe/remapping/remapping'
@@ -21,7 +22,8 @@ export const listRecipeTypes = () => ([
     classChange(),
     indexChange(),
     remapping(),
-    changeAlerts()
+    changeAlerts(),
+    phenology()
 ])
 
 export const getRecipeType = id => listRecipeTypes().find(recipeType => recipeType.id === id)
