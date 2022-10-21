@@ -46,6 +46,7 @@ class _Map extends React.Component {
     splitPosition$ = new BehaviorSubject()
     draggingSplit$ = new BehaviorSubject(false)
     cursor$ = new Subject()
+    drawingInstances = []
 
     filteredViewUpdates$ = this.viewUpdates$.pipe(
         distinctUntilChanged(_.isEqual)
@@ -275,8 +276,6 @@ class _Map extends React.Component {
     }
 
     // Drawing mode
-
-    drawingInstances = []
 
     enterDrawingMode(drawingMode, callback) {
         const newInstance = {drawingMode, callback}
