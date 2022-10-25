@@ -215,8 +215,8 @@ class _MapZoomPanel extends React.Component {
     }
 
     onEscape() {
-        const {map, activatable: {deactivate}} = this.props
-        map.isZoomArea() ? map.disableZoomArea() : deactivate()
+        const {activatable: {deactivate}} = this.props
+        deactivate()
     }
 
     componentDidMount() {

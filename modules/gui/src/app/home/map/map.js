@@ -1,5 +1,6 @@
 import {BehaviorSubject, Subject, combineLatest, concat, distinctUntilChanged, filter, finalize,
     first, last, of, pipe, map as rxMap, share, switchMap, takeUntil, windowTime} from 'rxjs'
+import {Button} from 'widget/button'
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {LegendImport} from './legendImport'
@@ -14,6 +15,7 @@ import {connect} from 'store'
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
+import {msg} from 'translate'
 import {recipePath} from '../body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import {v4 as uuid} from 'uuid'
@@ -59,7 +61,7 @@ class _Map extends React.Component {
         nicfiPlanetApiKey: null,
         overlay: null,
         overlayActive: false,
-        drawingMode: false
+        drawingMode: null
     }
 
     markers = {}
@@ -283,16 +285,23 @@ class _Map extends React.Component {
             this.disableDrawingMode()
         }
         this.enableDrawingMode(newInstance)
-        this.drawingInstances.push(newInstance)
+        this.drawingInstances = [
+            ...this.drawingInstances.filter(drawingInstance => drawingInstance.drawingMode !== drawingMode),
+            newInstance
+        ]
     }
     
-    exitDrawingMode() {
-        const currentInstance = this.drawingInstances.pop()
-        if (currentInstance) {
-            this.disableDrawingMode()
-            const previousInstance = _.last(this.drawingInstances)
-            if (previousInstance) {
-                this.enableDrawingMode(previousInstance)
+    exitDrawingMode(drawingMode) {
+        const index = _.findLastIndex(this.drawingInstances, drawingInstance => drawingInstance.drawingMode === drawingMode)
+        if (index !== -1) {
+            const isLast = index === this.drawingInstances.length - 1
+            const currentInstance = this.drawingInstances.splice(index, 1)
+            if (currentInstance && isLast) {
+                this.disableDrawingMode()
+                const previousInstance = _.last(this.drawingInstances)
+                if (previousInstance) {
+                    this.enableDrawingMode(previousInstance)
+                }
             }
         }
     }
@@ -335,7 +344,7 @@ class _Map extends React.Component {
     }
 
     disableZoomArea() {
-        this.exitDrawingMode()
+        this.exitDrawingMode('zoomarea')
     }
 
     isZoomArea() {
@@ -354,7 +363,7 @@ class _Map extends React.Component {
     }
 
     disablePolygonDrawing() {
-        this.exitDrawingMode()
+        this.exitDrawingMode('polygon')
     }
 
     iPolygonDrawing() {
@@ -511,6 +520,7 @@ class _Map extends React.Component {
                         dragging$={this.draggingSplit$}>
                         <div className={styles.content}>
                             {this.isInitialized() ? this.renderRecipe() : null}
+                            {this.renderDrawingModeIndicator()}
                         </div>
                     </SplitView>
                 </MapContext.Provider>
@@ -622,6 +632,18 @@ class _Map extends React.Component {
                 {layerComponent}
             </MapAreaContext.Provider>
         )
+    }
+
+    renderDrawingModeIndicator() {
+        const {drawingMode} = this.state
+        return drawingMode ? (
+            <div className={styles.drawingMode}>
+                <Button
+                    air='less'
+                    label={msg(`map.drawingMode.${drawingMode}`)}
+                />
+            </div>
+        ) : null
     }
 
     componentDidMount() {

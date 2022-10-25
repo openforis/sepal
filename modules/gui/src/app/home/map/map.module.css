@@ -42,3 +42,9 @@
     width: 100%;
     height: 100%;
 }
+
+.drawingMode {
+    position: absolute;
+    top: .5rem;
+    left: .5rem;
+}
