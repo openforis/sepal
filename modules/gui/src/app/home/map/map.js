@@ -78,6 +78,7 @@ class _Map extends React.Component {
         this.setLocationMarker = this.setLocationMarker.bind(this)
         this.setAreaMarker = this.setAreaMarker.bind(this)
         this.addOneShotClickListener = this.addOneShotClickListener.bind(this)
+        this.removeMap = this.removeMap.bind(this)
     }
 
     isInitialized() {
@@ -302,6 +303,24 @@ class _Map extends React.Component {
                 if (previousInstance) {
                     this.enableDrawingMode(previousInstance)
                 }
+            }
+        }
+    }
+
+    reassignDrawingMode() {
+        const activeInstance = _.last(this.drawingInstances)
+        if (activeInstance) {
+            const {drawingMode, callback} = activeInstance
+            this.withOverlayMap(({map}) => map.disableDrawingMode())
+            this.withAllMaps(({map}) => map.disableDrawingMode())
+            if (this.isStackMode()) {
+                this.setState({drawingMode, overlayActive: true}, () => {
+                    this.withOverlayMap(callback)
+                })
+            } else {
+                this.setState({drawingMode, overlayActive: false}, () => {
+                    this.withAllMaps(callback)
+                })
             }
         }
     }
@@ -664,11 +683,20 @@ class _Map extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const prevAreas = selectFrom(prevProps, 'layers.areas') || {}
-        const {layers: {areas}} = this.props
-        Object.values(prevAreas)
-            .filter(({id}) => !Object.values(areas).map(({id}) => id).includes(id))
-            .map(({id}) => this.removeMap(id))
+        const {areas: prevAreas, mode: prevMode} = selectFrom(prevProps, 'layers') || {}
+        const {layers: {areas, mode}} = this.props
+        const previousAreaIds = Object.values(prevAreas).map(({id}) => id)
+        const currentAreaIds = Object.values(areas).map(({id}) => id)
+        const removedAreaIds = _.difference(previousAreaIds, currentAreaIds)
+        const addedAreaIds = _.difference(currentAreaIds, previousAreaIds)
+        const modeChanged = prevMode !== mode
+
+        if (removedAreaIds.length) {
+            removedAreaIds.forEach(this.removeMap)
+        }
+        if (addedAreaIds.length || modeChanged) {
+            this.reassignDrawingMode()
+        }
     }
 
     componentWillUnmount() {
