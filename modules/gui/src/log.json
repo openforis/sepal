@@ -4,7 +4,7 @@
     "eventPublisher": "info",
     "http": "debug",
     "layer": "info",
-    "map": "debug",
+    "map": "info",
     "maps": "info",
     "recaptcha": "info",
     "sepalMap": "info",
