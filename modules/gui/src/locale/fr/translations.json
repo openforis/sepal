@@ -653,6 +653,10 @@
             "edit.tooltip": "Modifier la visualisation sélectionnée",
             "clone.tooltip": "Dupliquer la visualisation prédéfinie sélectionnée",
             "remove.tooltip": "Supprimer la visualisation sélectionnée"
+        },
+        "drawingMode": {
+            "zoomarea": "",
+            "polygon": ""
         }
     },
     "featureLayerSources": {
