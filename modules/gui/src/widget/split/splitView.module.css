@@ -157,43 +157,43 @@
 }
 
 .area.partial.top:not(.left):not(.right):hover::after {
-    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size));
     left: calc(var(--left) - var(--half-area-marker-size));
 }
 
 .area.partial.bottom:not(.left):not(.right):hover::after {
-    top: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size));
+    top: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size) - 1px);
     left: calc(var(--left) - var(--half-area-marker-size));
 }
 
 .area.partial.left:not(.top):not(.bottom):hover::after {
     top: calc(var(--top) - var(--half-area-marker-size));
-    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size));
 }
 
 .area.partial.right:not(.top):not(.bottom):hover::after {
     top: calc(var(--top) - var(--half-area-marker-size));
-    left: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size));
+    left: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size) - 1px);
 }
 
 .area.partial.top.left:hover::after {
-    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
-    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size));
+    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size));
 }
 
 .area.partial.top.right:hover::after {
-    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
-    left: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size));
+    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size));
+    left: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size) - 1px);
 }
 
 .area.partial.bottom.left:hover::after {
-    top: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size));
-    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    top: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size) - 1px);
+    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size));
 }
 
 .area.partial.bottom.right:hover::after {
-    top: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size));
-    left: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size));
+    top: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size) - 1px);
+    left: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size) - 1px);
 }
 
 /* areaOverlay */
