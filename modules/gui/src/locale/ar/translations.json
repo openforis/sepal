@@ -653,6 +653,10 @@
             "edit.tooltip": "",
             "clone.tooltip": "",
             "remove.tooltip": ""
+        },
+        "drawingMode": {
+            "zoomarea": "",
+            "polygon": ""
         }
     },
     "featureLayerSources": {
