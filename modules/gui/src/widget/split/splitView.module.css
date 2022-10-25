@@ -149,8 +149,14 @@
     position: absolute;
     width: calc(2 * var(--half-area-marker-size) + 1px);
     height: calc(2 * var(--half-area-marker-size) + 1px);
-    background-color: rgba(255, 0, 0, .6);
-    border: 1px solid rgba(0, 0, 0, .9);
+    /* border: 1px solid rgba(0, 0, 0, .9); */
+    background: radial-gradient(
+        circle,
+        transparent,
+        transparent calc(var(--half-center-handle-size) + 1px),
+        rgba(255, 0, 0, .6) calc(var(--half-center-handle-size) + 1px),
+        rgba(255, 0, 0, .6)
+    );
     box-sizing: border-box;
     border-radius: 100%;
     pointer-events: none;
