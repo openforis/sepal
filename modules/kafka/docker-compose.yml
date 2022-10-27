@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  kafka:
+    build:
+      dockerfile: Dockerfile
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/kafka:${SEPAL_VERSION:-latest}"
+    container_name: kafka
+    ports:
+      - "${SEPAL_IP:-0.0.0.0}:9092:9092"
+    volumes:
+      - "${SEPAL_DATA_DIR}/kafka:/var/lib/kafka"
+    networks:
+      - sepal
+    restart: unless-stopped
+    healthcheck:
+      test: netstat -nl | grep -e ':9092\s'
+      timeout: 60s
+      interval: 1s
+      retries: 60
+
+networks:
+  sepal:
+    external: true
+    name: sepal

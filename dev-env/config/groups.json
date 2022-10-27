@@ -6,6 +6,7 @@
         "gee",
         "gui",
         "haproxy",
+        "kafka",
         "ldap",
         "mysql",
         "rabbitmq",

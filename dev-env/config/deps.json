@@ -22,7 +22,8 @@
         ],
         "build": {},
         "run": [
-            "rabbitmq"
+            "rabbitmq",
+            "kafka"
         ]
     },
     "gateway": {
@@ -30,7 +31,10 @@
             "shared"
         ],
         "build": {},
-        "run": []
+        "run": [
+            "rabbitmq",
+            "kafka"
+        ]
     },
     "gee": {
         "lib": [
@@ -62,6 +66,10 @@
     "java": {
         "build": {},
         "run": false
+    },
+    "kafka": {
+        "build": {},
+        "run": []
     },
     "ldap": {
         "build": {},
@@ -132,7 +140,9 @@
         ],
         "build": {},
         "run": [
-            "email"
+            "email",
+            "rabbitmq",
+            "kafka"
         ]
     },
     "task": {
@@ -158,7 +168,8 @@
         "run": [
             "mysql",
             "ldap",
-            "rabbitmq"
+            "rabbitmq",
+            "kafka"
         ]
     },
     "user-files": {
@@ -166,7 +177,10 @@
             "shared"
         ],
         "build": {},
-        "run": []
+        "run": [
+            "rabbitmq",
+            "kafka"
+        ]
     },
     "user-storage": {
         "lib": [
@@ -174,7 +188,9 @@
         ],
         "build": {},
         "run": [
-            "email"
+            "email",
+            "rabbitmq",
+            "kafka"
         ]
     },
     "user-storage-backup": {
