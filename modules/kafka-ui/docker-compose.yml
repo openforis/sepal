@@ -1,0 +1,18 @@
+version: '3.9'
+services:
+  kafka-ui:
+    image: provectuslabs/kafka-ui
+    container_name: kafka-ui
+    ports:
+      - "9090:8080"
+    restart: always
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    external: true
+    name: sepal

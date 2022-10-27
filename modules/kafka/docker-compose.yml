@@ -6,10 +6,10 @@ services:
       dockerfile: Dockerfile
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/kafka:${SEPAL_VERSION:-latest}"
     container_name: kafka
-    ports:
-      - "${SEPAL_IP:-0.0.0.0}:9092:9092"
     volumes:
       - "${SEPAL_DATA_DIR}/kafka:/var/lib/kafka"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
     networks:
       - sepal
     restart: unless-stopped

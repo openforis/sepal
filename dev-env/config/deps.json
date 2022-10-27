@@ -71,6 +71,12 @@
         "build": {},
         "run": []
     },
+    "kafka-ui": {
+        "build": {},
+        "run": [
+            "kafka"
+        ]
+    },
     "ldap": {
         "build": {},
         "run": []

@@ -14,6 +14,8 @@ Modules
     8000: terminal
     80, 5006: user
     5999: user-files
+    9092: kafka
+    9090: kafka-ui
 
 Node debug
 
