@@ -129,19 +129,6 @@ class _ListItem extends React.Component {
         expansionClickable || e.stopPropagation()
     }
 
-    render() {
-        return (
-            <React.Fragment>
-                {this.renderStatic()}
-                {this.isDragging() ? this.renderClone() : null}
-            </React.Fragment>
-        )
-    }
-
-    renderStatic() {
-        return this.renderItem(true)
-    }
-
     getSharedClassName(clickable) {
         return [
             lookStyles.look,
@@ -186,6 +173,15 @@ class _ListItem extends React.Component {
         ]).join(' ')
     }
 
+    render() {
+        return (
+            <React.Fragment>
+                {this.renderItem(true)}
+                {this.isDragging() ? this.renderDraggableClone() : null}
+            </React.Fragment>
+        )
+    }
+
     renderItem(original) {
         return (
             <div
@@ -195,7 +191,7 @@ class _ListItem extends React.Component {
                 onMouseOut={this.onMouseOut}>
                 <div className={styles.horizontalWrapper}>
                     {this.renderMain(original)}
-                    {this.renderExpansion()}
+                    {this.isExpanded() ? this.renderExpansion() : null}
                 </div>
             </div>
         )
@@ -220,18 +216,16 @@ class _ListItem extends React.Component {
     }
 
     renderExpansion() {
-        return this.isExpanded()
-            ? (
-                <div
-                    className={this.getExpansionClassName()}
-                    onClick={this.onExpansionClick}>
-                    {this.getExpansionContent()}
-                </div>
-            )
-            : null
+        return (
+            <div
+                className={this.getExpansionClassName()}
+                onClick={this.onExpansionClick}>
+                {this.getExpansionContent()}
+            </div>
+        )
     }
 
-    renderClone() {
+    renderDraggableClone() {
         const {position, size} = this.state
         const {dragCloneClassName} = this.props
         if (position && size) {
