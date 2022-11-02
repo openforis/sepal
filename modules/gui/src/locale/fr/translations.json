@@ -3758,7 +3758,7 @@
                     "required": ""
                 },
                 "username": {
-                    "format": "Le nom d'utilisateur doit commencer par une lettre",
+                    "format": "",
                     "label": "Nom utilisateur",
                     "required": "Nom utilisateur requis",
                     "unique": "Ce nom d'utilisateur existe déjà"
