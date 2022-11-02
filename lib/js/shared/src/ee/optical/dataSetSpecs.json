@@ -26,7 +26,8 @@
                     "name": "B5"
                 },
                 "thermal": {
-                    "name": "B6"
+                    "name": "B6",
+                    "scale": 0.001
                 },
                 "swir2": {
                     "name": "B7"
@@ -62,7 +63,8 @@
                     "name": "B5"
                 },
                 "thermal": {
-                    "name": "B6"
+                    "name": "B6",
+                    "scale": 0.001
                 },
                 "swir2": {
                     "name": "B7"
@@ -98,7 +100,8 @@
                     "name": "B5"
                 },
                 "thermal": {
-                    "name": "B6"
+                    "name": "B6",
+                    "scale": 0.001
                 },
                 "swir2": {
                     "name": "B7"
@@ -134,7 +137,8 @@
                     "name": "B5"
                 },
                 "thermal": {
-                    "name": "B6"
+                    "name": "B6",
+                    "scale": 0.001
                 },
                 "swir2": {
                     "name": "B7"
@@ -170,10 +174,12 @@
                     "name": "B5"
                 },
                 "thermal": {
-                    "name": "B6_VCID_1"
+                    "name": "B6_VCID_1",
+                    "scale": 0.001
                 },
                 "thermal2": {
-                    "name": "B6_VCID_2"
+                    "name": "B6_VCID_2",
+                    "scale": 0.001
                 },
                 "swir2": {
                     "name": "B7"
@@ -212,10 +218,12 @@
                     "name": "B5"
                 },
                 "thermal": {
-                    "name": "B6_VCID_1"
+                    "name": "B6_VCID_1",
+                    "scale": 0.001
                 },
                 "thermal2": {
-                    "name": "B6_VCID_2"
+                    "name": "B6_VCID_2",
+                    "scale": 0.001
                 },
                 "swir2": {
                     "name": "B7"
@@ -266,10 +274,12 @@
                     "name": "B9"
                 },
                 "thermal": {
-                    "name": "B10"
+                    "name": "B10",
+                    "scale": 0.001
                 },
                 "thermal2": {
-                    "name": "B11"
+                    "name": "B11",
+                    "scale": 0.001
                 },
                 "qa": {
                     "name": "QA_PIXEL"
@@ -314,10 +324,12 @@
                     "name": "B9"
                 },
                 "thermal": {
-                    "name": "B10"
+                    "name": "B10",
+                    "scale": 0.001
                 },
                 "thermal2": {
-                    "name": "B11"
+                    "name": "B11",
+                    "scale": 0.001
                 },
                 "qa": {
                     "name": "QA_PIXEL"
@@ -362,10 +374,12 @@
                     "name": "B9"
                 },
                 "thermal": {
-                    "name": "B10"
+                    "name": "B10",
+                    "scale": 0.001
                 },
                 "thermal2": {
-                    "name": "B11"
+                    "name": "B11",
+                    "scale": 0.001
                 },
                 "qa": {
                     "name": "QA_PIXEL"
@@ -410,10 +424,12 @@
                     "name": "B9"
                 },
                 "thermal": {
-                    "name": "B10"
+                    "name": "B10",
+                    "scale": 0.001
                 },
                 "thermal2": {
-                    "name": "B11"
+                    "name": "B11",
+                    "scale": 0.001
                 },
                 "qa": {
                     "name": "QA_PIXEL"
@@ -519,8 +535,8 @@
                 },
                 "thermal": {
                     "name": "ST_B6",
-                    "scale": 0.00341802,
-                    "offset": 149
+                    "scale": 3.41802e-6,
+                    "offset": 0.149
                 },
                 "swir2": {
                     "name": "SR_B7",
@@ -565,8 +581,8 @@
                 },
                 "thermal": {
                     "name": "ST_B6",
-                    "scale": 0.00341802,
-                    "offset": 149
+                    "scale": 3.41802e-6,
+                    "offset": 0.149
                 },
                 "swir2": {
                     "name": "SR_B7",
@@ -611,8 +627,8 @@
                 },
                 "thermal": {
                     "name": "ST_B6",
-                    "scale": 0.00341802,
-                    "offset": 149
+                    "scale": 3.41802e-6,
+                    "offset": 0.149
                 },
                 "swir2": {
                     "name": "SR_B7",
@@ -657,8 +673,8 @@
                 },
                 "thermal": {
                     "name": "ST_B6",
-                    "scale": 0.00341802,
-                    "offset": 149
+                    "scale": 3.41802e-6,
+                    "offset": 0.149
                 },
                 "swir2": {
                     "name": "SR_B7",
@@ -703,8 +719,8 @@
                 },
                 "thermal": {
                     "name": "ST_B6",
-                    "scale": 0.00341802,
-                    "offset": 149
+                    "scale": 3.41802e-6,
+                    "offset": 0.149
                 },
                 "swir2": {
                     "name": "SR_B7",
@@ -749,8 +765,8 @@
                 },
                 "thermal": {
                     "name": "ST_B6",
-                    "scale": 0.00341802,
-                    "offset": 149
+                    "scale": 3.41802e-6,
+                    "offset": 0.149
                 },
                 "swir2": {
                     "name": "SR_B7",
@@ -805,8 +821,8 @@
                 },
                 "thermal": {
                     "name": "ST_B10",
-                    "scale": 0.00341802,
-                    "offset": 149
+                    "scale": 3.41802e-6,
+                    "offset": 0.149
                 },
                 "qa": {
                     "name": "QA_PIXEL"
@@ -856,8 +872,8 @@
                 },
                 "thermal": {
                     "name": "ST_B10",
-                    "scale": 0.00341802,
-                    "offset": 149
+                    "scale": 3.41802e-6,
+                    "offset": 0.149
                 },
                 "qa": {
                     "name": "QA_PIXEL"
@@ -907,8 +923,8 @@
                 },
                 "thermal": {
                     "name": "ST_B10",
-                    "scale": 0.00341802,
-                    "offset": 149
+                    "scale": 3.41802e-6,
+                    "offset": 0.149
                 },
                 "qa": {
                     "name": "QA_PIXEL"
@@ -958,8 +974,8 @@
                 },
                 "thermal": {
                     "name": "ST_B10",
-                    "scale": 0.00341802,
-                    "offset": 149
+                    "scale": 3.41802e-6,
+                    "offset": 0.149
                 },
                 "qa": {
                     "name": "QA_PIXEL"
