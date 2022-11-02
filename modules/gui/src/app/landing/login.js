@@ -5,6 +5,7 @@ import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {credentialsPosted, invalidCredentials, login$} from 'user'
 import {msg} from 'translate'
+import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -23,8 +24,11 @@ const mapStateToProps = () => ({
 })
 
 class _Login extends React.Component {
+    ref = React.createRef()
+
     constructor(props) {
         super(props)
+        this.reset = this.reset.bind(this)
         this.submit = this.submit.bind(this)
     }
 
@@ -42,7 +46,9 @@ class _Login extends React.Component {
         const {form, inputs: {username, password}, onSignUp, onForgotPassword, stream} = this.props
         return (
             <Layout spacing='loose'>
+                <Keybinding keymap={{'Escape': this.reset}}/>
                 <Form.Input
+                    ref={this.ref}
                     label={msg('user.userDetails.form.username.label')}
                     input={username}
                     placeholder={msg('landing.login.username.placeholder')}
@@ -96,6 +102,15 @@ class _Login extends React.Component {
                 </Layout>
             </Layout>
         )
+    }
+
+    reset() {
+        const {form} = this.props
+        const username = this.ref.current
+        if (username) {
+            username.focus()
+            setTimeout(form.reset)
+        }
     }
 
     submit() {
