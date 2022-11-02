@@ -3758,7 +3758,7 @@
                     "required": ""
                 },
                 "username": {
-                    "format": "El nombre de usuario debe comenzar con una letra",
+                    "format": "",
                     "label": "Nombre de usuario",
                     "required": "El nombre de usuario es obligatorio",
                     "unique": ""
