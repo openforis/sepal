@@ -24,7 +24,9 @@ const Auth = userStore => {
                 const user = getRequestUser(req)
                 log.debug(`${usernameTag(user.username)} ${urlTag(req.originalUrl)} Refreshing Google tokens for user`)
                 return postJson$(refreshGoogleTokensUrl, {
-                    headers: {[SEPAL_USER_HEADER]: JSON.stringify(user)}
+                    headers: {
+                        [SEPAL_USER_HEADER]: JSON.stringify(user)
+                    }
                 }).pipe(
                     switchMap(({body: googleTokens}) => {
                         if (googleTokens) {

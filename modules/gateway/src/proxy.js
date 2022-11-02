@@ -32,7 +32,7 @@ const Proxy = userStore => {
                 onClose: () => {
                     log.trace('WebSocket closed')
                 },
-                onProxyReq: (proxyReq, req) => {
+                onProxyReq: (proxyReq, req, _res) => {
                     // Make sure the client doesn't inject the user header, and pretend to be another user.
                     proxyReq.removeHeader(SEPAL_USER_HEADER)
                     const user = getRequestUser(req)
@@ -60,7 +60,7 @@ const Proxy = userStore => {
                         proxyReq.setHeader('Cache-Control', 'max-age=0')
                     }
                 },
-                onProxyRes: (proxyRes, req) => {
+                onProxyRes: (proxyRes, req, _res) => {
                     if (rewrite) {
                         const location = proxyRes.headers['location']
                         if (location) {
@@ -73,6 +73,9 @@ const Proxy = userStore => {
                         userStore.updateUser(req)
                     }
                     proxyRes.headers['Content-Security-Policy'] = `connect-src 'self' https://${sepalHost} wss://${sepalHost} https://*.googleapis.com https://apis.google.com https://www.google-analytics.com https://*.google.com https://*.planet.com https://registry.npmjs.org; frame-ancestors 'self' https://${sepalHost} https://*.googleapis.com https://apis.google.com https://*.google-analytics.com https://registry.npmjs.org`
+                },
+                onError: (err, req, _res) => {
+                    log.warn(`${urlTag(req.originalUrl)} Proxy error:`, err)
                 }
             })
     
