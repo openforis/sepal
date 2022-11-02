@@ -5,6 +5,7 @@ import {getErrorMessage} from 'widget/form/error'
 import {withFormContext} from 'widget/form/context'
 import PropTypes from 'prop-types'
 import React from 'react'
+import withForwardedRef from 'ref'
 import withSubscriptions from 'subscription'
 
 const DEBOUNCE_TIME_MS = 750
@@ -30,10 +31,11 @@ class _FormInput extends React.Component {
     }
 
     renderInput() {
-        const {form, className, input, errorMessage, busyMessage, type, validate, tabIndex, onChange, onBlur, additionalButtons, ...props} = this.props
+        const {form, forwardedRef, className, input, errorMessage, busyMessage, type, validate, tabIndex, onChange, onBlur, additionalButtons, ...props} = this.props
         return (
             <Input
                 {...props}
+                ref={forwardedRef}
                 className={className}
                 type={type}
                 name={input && input.name}
@@ -60,10 +62,11 @@ class _FormInput extends React.Component {
     }
 
     renderTextArea() {
-        const {form, className, input, errorMessage, busyMessage, minRows, maxRows, validate, tabIndex, onChange, onBlur, ...props} = this.props
+        const {form, forwardedRef, className, input, errorMessage, busyMessage, minRows, maxRows, validate, tabIndex, onChange, onBlur, ...props} = this.props
         return (
             <Textarea
                 {...props}
+                ref={forwardedRef}
                 className={className}
                 name={input.name}
                 value={input.value || ''}
@@ -88,7 +91,8 @@ class _FormInput extends React.Component {
 export const FormInput = compose(
     _FormInput,
     withFormContext(),
-    withSubscriptions()
+    withSubscriptions(),
+    withForwardedRef()
 )
 
 FormInput.propTypes = {
