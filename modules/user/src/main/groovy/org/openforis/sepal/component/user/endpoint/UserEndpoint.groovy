@@ -185,7 +185,10 @@ class UserEndpoint {
 
             post('/login') { // Just a nice looking endpoint the frontend can call to trigger authentication
                 response.contentType = 'application/json'
-                send toJson(sepalUser)
+                // send toJson(sepalUser)
+                def query = new LoadUser(username: sepalUser.username)
+                def user = component.submit(query)
+                send toJson(userToMap(user))
             }
 
             get('/current') {

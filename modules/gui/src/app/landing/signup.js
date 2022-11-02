@@ -16,7 +16,7 @@ import styles from './login.module.css'
 const fields = {
     username: new Form.Field()
         .notBlank('landing.signup.username.required')
-        .match(/^[a-zA-Z_][a-zA-Z0-9]{0,29}$/, 'landing.signup.form.username.format'),
+        .match(/^[a-zA-Z_][a-zA-Z0-9]{0,29}$/, 'landing.signup.username.format'),
     name: new Form.Field()
         .notBlank('landing.signup.name.required'),
     email: new Form.Field()

@@ -98,17 +98,19 @@ const UserStore = redis => {
     const userMiddleware = (req, res, next) => {
         const username = getSessionUsername(req)
         if (username) {
-            getUser(username).then(user => {
-                if (user) {
-                    setRequestUser(req, user)
-                    log.isTrace()
-                        ? log.trace(`${usernameTag(username)} Injected user into request headers:`, user)
-                        : log.isDebug() && log.debug(`${usernameTag(username)} Injected user into request headers`)
-                } else {
-                    log.warn(`${usernameTag(username)} Cannot inject user into request headers`)
-                }
-                next()
-            })
+            getUser(username)
+                .then(user => {
+                    if (user) {
+                        setRequestUser(req, user)
+                    } else {
+                        log.warn(`${usernameTag(username)} Cannot inject user into request headers`)
+                    }
+                    next()
+                })
+                .catch(err => {
+                    log.warn(`${usernameTag(username)} Cannot get user for injecting into request headers`, err)
+                    next()
+                })
         } else {
             next()
         }
@@ -128,8 +130,13 @@ const setSessionUsername = (req, username) =>
 const getRequestUser = req =>
     deserialize(req.headers[SEPAL_USER_HEADER])
 
-const setRequestUser = (req, user) =>
-    req.headers[SEPAL_USER_HEADER] = serialize(user)
+const setRequestUser = (req, user) => {
+    const userInfo = _.pick(user, ['id', 'username', 'googleTokens', 'status', 'roles', 'systemUser', 'admin'])
+    log.isTrace()
+        ? log.trace(`${usernameTag(user.username)} Injecting user into request headers:`, userInfo)
+        : log.isDebug() && log.debug(`${usernameTag(user.username)} Injecting user into request headers`)
+    req.headers[SEPAL_USER_HEADER] = serialize(userInfo)
+}
 
 module.exports = {
     SEPAL_USER_HEADER,
