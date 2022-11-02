@@ -253,6 +253,10 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                 return _.mapValues(errors, (_error, name) => this.getFieldError(name))
             }
 
+            reset() {
+                Object.keys(fields).forEach(name => this.setInitialValue(name))
+            }
+
             render() {
                 const inputs = {}
                 Object.keys(fields).forEach(name => {
@@ -292,7 +296,8 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                     onDirtyChanged: listener => {
                         this.dirtyListeners.push(() => listener(true))
                         this.cleanListeners.push(() => listener(false))
-                    }
+                    },
+                    reset: () => this.reset()
                 }
                 const element = React.createElement(WrappedComponent, {
                     ...this.props, form, inputs
