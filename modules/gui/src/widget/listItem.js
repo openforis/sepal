@@ -115,7 +115,7 @@ class _ListItem extends React.Component {
 
     onClick() {
         const {onClick} = this.props
-        if (!this.isDisabled() && !this.isDragging()) {
+        if (!this.isDisabled()) {
             if (onClick) {
                 onClick()
             } else if (this.isToggleable()) {
@@ -145,12 +145,22 @@ class _ListItem extends React.Component {
         ]
     }
 
-    getItemClassName(original) {
+    getItemClassName() {
         const {className, expansionClickable} = this.props
         return _.flatten([
             expansionClickable ? this.getSharedClassName(this.isClickable()) : null,
             styles.verticalWrapper,
-            original ? styles.original : styles.clone,
+            styles.original,
+            className
+        ]).join(' ')
+    }
+
+    getGhostClassName() {
+        const {className, expansionClickable} = this.props
+        return _.flatten([
+            expansionClickable ? this.getSharedClassName(this.isClickable()) : null,
+            styles.verticalWrapper,
+            styles.clone,
             className
         ]).join(' ')
     }
@@ -176,51 +186,29 @@ class _ListItem extends React.Component {
     render() {
         return (
             <React.Fragment>
-                {this.renderItem(true)}
+                {this.renderItem()}
                 {this.isDragging() ? this.renderDraggableClone() : null}
             </React.Fragment>
         )
     }
 
-    renderItem(original) {
+    renderItem() {
         return (
             <div
-                className={this.getItemClassName(original)}
+                className={this.getItemClassName()}
                 onClick={this.onClick}
                 onMouseOver={this.onMouseOver}
                 onMouseOut={this.onMouseOut}>
                 <div className={styles.horizontalWrapper}>
-                    {this.renderMain(original)}
-                    {this.isExpanded() ? this.renderExpansion() : null}
+                    <div ref={this.draggable}
+                        className={this.getMainClassName()}>
+                        {this.isDraggable() ? this.renderDragHandle() : null}
+                        <div className={styles.content}>
+                            {this.getMainContent()}
+                        </div>
+                    </div>
+                    {this.renderExpansion()}
                 </div>
-            </div>
-        )
-    }
-
-    renderMain(original) {
-        return (
-            <div ref={original ? this.draggable : null}
-                className={this.getMainClassName()}>
-                {this.isDraggable() ? this.renderDragHandle() : null}
-                <div className={styles.content}>
-                    {this.getMainContent()}
-                </div>
-            </div>
-        )
-    }
-
-    renderDragHandle() {
-        return (
-            <div className={styles.dragHandle}/>
-        )
-    }
-
-    renderExpansion() {
-        return (
-            <div
-                className={this.getExpansionClassName()}
-                onClick={this.onExpansionClick}>
-                {this.getExpansionContent()}
             </div>
         )
     }
@@ -240,12 +228,38 @@ class _ListItem extends React.Component {
                                 '--width': size.width,
                                 '--height': size.height
                             }}>
-                            {this.renderItem(false)}
+                            <div className={this.getGhostClassName()}>
+                                <div className={styles.horizontalWrapper}>
+                                    <div className={this.getMainClassName()}>
+                                        {this.renderDragHandle()}
+                                        <div className={styles.content}>
+                                            {this.getMainContent()}
+                                        </div>
+                                    </div>
+                                    {this.renderExpansion()}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </Portal>
             )
         }
+    }
+
+    renderDragHandle() {
+        return (
+            <div className={styles.dragHandle}/>
+        )
+    }
+
+    renderExpansion() {
+        return this.isExpanded() ? (
+            <div
+                className={this.getExpansionClassName()}
+                onClick={this.onExpansionClick}>
+                {this.getExpansionContent()}
+            </div>
+        ) : null
     }
 
     initializeDraggable() {
