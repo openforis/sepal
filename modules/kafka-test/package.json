@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "kafkajs": "^2.2.2",
-    "node-rdkafka": "^2.14.0"
+    "node-rdkafka": "^2.14.0",
+    "rxjs": "^7.5.7",
+    "sepal": "../../lib/js/shared/src"
   }
 }
