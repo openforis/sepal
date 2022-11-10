@@ -4,7 +4,7 @@ ENV MODULE_NAME email
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
-RUN npm install -g npm nodemon
+RUN npm install -g nodemon
 
 RUN apt-get update && \
     apt-get install sudo && \
