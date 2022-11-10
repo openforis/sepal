@@ -43,7 +43,7 @@ const main = async () => {
     
     program.command('stop')
         .description('Stop modules')
-        .option('-d, --dependencies', 'Stop dependencies too')
+        .option('-d, --dependencies', 'Stop dependencies')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .argument('[module...]', 'Modules to stop')
@@ -51,7 +51,6 @@ const main = async () => {
     
     program.command('start')
         .description('Start modules')
-        .option('-d, --dependencies', 'Start dependencies too', true)
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .option('-l, --log-tail', 'Show log tail')
@@ -60,7 +59,7 @@ const main = async () => {
     
     program.command('restart')
         .description('Restart modules')
-        .option('-d, --dependencies', 'Restart dependencies too')
+        .option('-d, --dependencies', 'Restart dependencies')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .option('-l, --log-tail', 'Show log tail')
