@@ -1,5 +1,6 @@
 import {Subject, takeUntil} from 'rxjs'
 import {connect as connectToRedux} from 'react-redux'
+import {isEqual} from 'serialize'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
@@ -103,6 +104,7 @@ export const connect = mapStateToProps => {
         const ReduxConnectedComponent = connectToRedux(
             includeDispatchingProp(mapStateToProps), null, null, {
                 areStatePropsEqual: _.isEqual
+                // areStatePropsEqual: isEqual
             }
         )(PreventUpdateWhenDisabled)
 

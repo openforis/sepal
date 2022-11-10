@@ -1,10 +1,14 @@
+import {HASH_KEY, cloneDeep} from 'serialize'
+import {addHash} from './serialize'
 import _ from 'lodash'
 import flatten from 'flat'
+// import hash from 'object-hash'
 
 const DOT_SAFE = '__dotSafe__'
 const dotSafeWrap = unsafePath => ({[DOT_SAFE]: unsafePath})
 const dotSafeUnwrap = safePath => safePath[DOT_SAFE]
 
+// const cloneDeep = _.cloneDeep
 export const dotSafe = dotSafeWrap
 
 export const toPathList = (path, safe = false) => {
@@ -136,13 +140,17 @@ export class Mutator {
         const pathKey = key === -1
             ? pathState.length
             : key
+            
         func(pathState, pathKey)
+
+        addHash(pathState[pathKey])
+
         return state
     }
 
     set(value) {
         return this.mutate((pathState, pathKey) => {
-            pathState[pathKey] = _.cloneDeep(value)
+            pathState[pathKey] = cloneDeep(value)
         })
     }
 
@@ -160,13 +168,13 @@ export class Mutator {
 
     assign(value) {
         return this.mutate((pathState, pathKey) => {
-            pathState[pathKey] = _.assign({}, pathState[pathKey], _.cloneDeep(value))
+            pathState[pathKey] = _.assign({}, pathState[pathKey], cloneDeep(value))
         })
     }
 
     merge(value) {
         return this.mutate((pathState, pathKey) => {
-            pathState[pathKey] = _.merge({}, pathState[pathKey], _.cloneDeep(value))
+            pathState[pathKey] = _.merge({}, pathState[pathKey], cloneDeep(value))
         })
     }
 
@@ -175,7 +183,7 @@ export class Mutator {
             if (!pathState[pathKey]) {
                 pathState[pathKey] = []
             }
-            pathState[pathKey] = [...pathState[pathKey], _.cloneDeep(value)]
+            pathState[pathKey] = [...pathState[pathKey], cloneDeep(value)]
         })
     }
 
@@ -189,7 +197,7 @@ export class Mutator {
                 if (!array) {
                     pathState[pathKey] = []
                 }
-                pathState[pathKey] = [...pathState[pathKey], _.cloneDeep(value)]
+                pathState[pathKey] = [...pathState[pathKey], cloneDeep(value)]
             }
         })
     }
