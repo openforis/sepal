@@ -4,9 +4,10 @@ import hash from 'object-hash'
 const HASH_KEY = '___hash___'
 
 let stats = {
-    equal: 0,
-    notEqual: 0,
-    noHash: 0
+    hashedEqual: 0,
+    hashedNotEqual: 0,
+    notHashed: 0,
+    nonHashable: 0
 }
 
 setInterval(() => {
@@ -73,10 +74,12 @@ export const isEqual = (a, b) => {
         if (_.isString(aHash) && !_.isEmpty(aHash)) {
             const bHash = b[HASH_KEY]
             // hash present on both, rely on it
-            stats = {...stats, ...aHash === bHash ? {equal: stats.equal + 1} : {notEqual: stats.notEqual + 1}}
+            aHash === bHash
+                ? stats.hashedEqual++
+                : stats.hashedNotEqual++
             return aHash === bHash
         } else {
-            stats = {...stats, noHash: stats.noHash + 1}
+            stats.notHashed++
         }
         const aKeys = _.keys(a)
         const bKeys = _.keys(b)
@@ -105,10 +108,12 @@ export const isEqual = (a, b) => {
         if (_.isString(aHash) && !_.isEmpty(aHash)) {
             const bHash = b[HASH_KEY]
             // hash present on both, rely on it
-            stats = {...stats, ...aHash === bHash ? {equal: stats.equal + 1} : {notEqual: stats.notEqual + 1}}
+            aHash === bHash
+                ? stats.hashedEqual++
+                : stats.hashedNotEqual++
             return aHash === bHash
         } else {
-            stats = {...stats, noHash: stats.noHash + 1}
+            stats.notHashed++
         }
         if (_.size(a) !== _.size(b)) {
             // size doesn't match
@@ -125,6 +130,7 @@ export const isEqual = (a, b) => {
         return true
     }
 
+    stats.nonHashable++
     // default handling for anything else
     return _.isEqual(a, b)
 }
