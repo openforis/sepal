@@ -1,14 +1,11 @@
-import {HASH_KEY, cloneDeep} from 'serialize'
-import {addHash} from './serialize'
+import {addHash, cloneDeep, getHash} from 'hash'
 import _ from 'lodash'
 import flatten from 'flat'
-// import hash from 'object-hash'
 
 const DOT_SAFE = '__dotSafe__'
 const dotSafeWrap = unsafePath => ({[DOT_SAFE]: unsafePath})
 const dotSafeUnwrap = safePath => safePath[DOT_SAFE]
 
-// const cloneDeep = _.cloneDeep
 export const dotSafe = dotSafeWrap
 
 export const toPathList = (path, safe = false) => {
@@ -83,12 +80,18 @@ export class Mutator {
         this.state = {
             root: state
         }
+        // this.hash = {
+        //     root: {}
+        // }
         this.path = toPathList(['root', path])
     }
 
-    getKey(pathState, pathElement) {
+    getKey(node, pathElement) {
         if (_.isPlainObject(pathElement)) {
-            return _.findIndex(pathState, item => _.isEqual(_.pick(item, Object.keys(flatten(pathElement))), pathElement))
+            const index = _.findIndex(node,
+                item => _.isEqual(_.pick(item, Object.keys(flatten(pathElement))), pathElement)
+            )
+            return index
         }
         return pathElement
     }
@@ -107,10 +110,8 @@ export class Mutator {
         }
     }
 
-    mutate(func) {
-        const parentPath = _.initial(this.path)
-        const pathElement = _.last(this.path)
-        const stateElements = _.chain(parentPath)
+    traverse(tree, path) {
+        const stateElements = _.chain(path)
             .transform(
                 (stateElements, pathElement, index, pathElements) => {
                     const stateElement = _.last(stateElements)
@@ -131,21 +132,33 @@ export class Mutator {
                         stateElement[key] = next
                         stateElements.push(next)
                     }
-                }, [this.state])
+                }, [tree])
             .tail() // drop the synthetic root
             .value()
-        const state = _.first(stateElements)
-        const pathState = _.last(stateElements)
-        const key = this.getKey(pathState, pathElement)
-        const pathKey = key === -1
-            ? pathState.length
+        const root = _.first(stateElements)
+        const node = _.last(stateElements)
+        return {root, node}
+    }
+
+    mutate(func) {
+        const parentPath = _.initial(this.path)
+        const pathElement = _.last(this.path)
+        const {root: stateRoot, node: stateNode} = this.traverse(this.state, parentPath)
+        // const {root: hashRoot, node: hashNode} = this.traverse(this.hash, parentPath)
+
+        const key = this.getKey(stateNode, pathElement)
+        // console.log({parentPath, pathElement, pathState, key})
+        const nodeKey = key === -1
+            ? stateNode.length
             : key
             
-        func(pathState, pathKey)
+        func(stateNode, nodeKey)
 
-        addHash(pathState[pathKey])
+        addHash(stateNode[nodeKey])
 
-        return state
+        // hashNode[nodeKey] = getHash(stateNode[nodeKey])
+
+        return stateRoot
     }
 
     set(value) {
@@ -163,6 +176,7 @@ export class Mutator {
     unique() {
         return this.mutate((pathState, pathKey) => {
             pathState[pathKey] = _.uniq(pathState[pathKey])
+            // TODO fix this
         })
     }
 
