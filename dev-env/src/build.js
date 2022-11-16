@@ -9,7 +9,8 @@ import _ from 'lodash'
 const buildModule = async (module, options = {}, parent) => {
     try {
         if (isModule(module)) {
-            showModuleStatus(module, MESSAGE.BUILDING, {sameLine: true})
+            // showModuleStatus(module, MESSAGE.BUILDING, {sameLine: true})
+            showModuleStatus(module, MESSAGE.BUILDING)
             const buildOptions = _.compact([
                 !options.cache && (!parent || options.recursive) ? '--no-cache' : null
             ]).join(' ')
