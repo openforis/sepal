@@ -57,13 +57,11 @@ const waitModuleRunning = async module =>
     })
 
 const getModulesToStart = (modules, options = {}) => {
-    const dependencies = options.dependencies
-        ? _.flatten(
-            modules.map(module =>
-                getModulesToStart(getDirectRunDeps(module), options)
-            )
+    const dependencies = _.flatten(
+        modules.map(module =>
+            getModulesToStart(getDirectRunDeps(module), options)
         )
-        : []
+    )
 
     return [
         ...dependencies,

@@ -5,7 +5,7 @@ ENV MODULE_NAME ssh-gateway
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
-RUN npm install -g npm nodemon
+RUN npm install -g nodemon
 
 ADD modules/${MODULE_NAME}/config /config
 ADD modules/${MODULE_NAME}/script /script

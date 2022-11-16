@@ -10,7 +10,7 @@ RUN apt-get update && \
     adduser node sudo && \
     echo 'node    ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
 
-RUN npm install -g npm nodemon
+RUN npm install -g nodemon
 
 # Set bash prompt
 RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
