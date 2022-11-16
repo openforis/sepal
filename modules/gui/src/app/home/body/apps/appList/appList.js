@@ -49,6 +49,7 @@ class _AppList extends React.Component {
         this.setFilter = this.setFilter.bind(this)
         this.setTagFilter = this.setTagFilter.bind(this)
         this.toggleGoogleAccountFilter = this.toggleGoogleAccountFilter.bind(this)
+        this.userDetailsHint = this.userDetailsHint.bind(this)
     }
 
     render() {
@@ -148,7 +149,7 @@ class _AppList extends React.Component {
                 label={googleAccountFilter ? 'Hide unavailable' : 'Show unavailable'}
                 tooltip={msg('apps.googleAccountRequired')}
                 tooltipPlacement='left'
-                tooltipOnVisible={visible => userDetailsHint(visible)}
+                tooltipOnVisible={this.userDetailsHint}
                 onClick={this.toggleGoogleAccountFilter}
             />
         ) : null
@@ -201,10 +202,14 @@ class _AppList extends React.Component {
                     iconStyle='warning'
                     tooltip={msg('apps.googleAccountRequired')}
                     tooltipPlacement='left'
-                    tooltipOnVisible={visible => userDetailsHint(visible)}
+                    tooltipOnVisible={this.userDetailsHint}
                 />
             )
             : null
+    }
+
+    userDetailsHint(visible) {
+        return userDetailsHint(visible)
     }
 
     renderAppRunningIcon() {

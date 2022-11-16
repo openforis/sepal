@@ -73,19 +73,24 @@ class _Scrollable extends Component {
         key: null
     }
 
+    constructor() {
+        super()
+        this.renderScrollable = this.renderScrollable.bind(this)
+    }
+
     render() {
         return (
             <ScrollableContainerContext.Consumer>
-                {({height}) => this.renderScrollable(height)}
+                {this.renderScrollable}
             </ScrollableContainerContext.Consumer>
         )
     }
 
-    renderScrollable(containerHeight) {
+    renderScrollable({height}) {
         const {className, direction, children} = this.props
         const {key} = this.state
         const scrollable = {
-            containerHeight,
+            containerHeight: height,
             getOffset: (direction = 'y') => this.getOffset(direction),
             getContainerHeight: this.getContainerHeight.bind(this),
             getClientHeight: this.getClientHeight.bind(this),
@@ -277,13 +282,22 @@ Scrollable.propTypes = {
 export const withScrollable = () =>
     WrappedComponent =>
         class HigherOrderComponent extends React.Component {
+            constructor() {
+                super()
+                this.renderScrollable = this.renderScrollable.bind(this)
+            }
+
             render() {
                 return (
                     <ScrollableContext.Consumer>
-                        {scrollable =>
-                            <WrappedComponent {...this.props} scrollable={scrollable}/>
-                        }
+                        {this.renderScrollable}
                     </ScrollableContext.Consumer>
+                )
+            }
+
+            renderScrollable(scrollable) {
+                return (
+                    <WrappedComponent {...this.props} scrollable={scrollable}/>
                 )
             }
         }

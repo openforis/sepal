@@ -18,11 +18,16 @@ class App extends React.Component {
         app: null
     }
 
+    constructor() {
+        super()
+        this.runApp = this.runApp.bind(this)
+    }
+
     render() {
         const {app} = this.state
         return app
             ? <AppInstance app={app}/>
-            : <AppList onSelect={app => this.runApp(app)}/>
+            : <AppList onSelect={this.runApp}/>
     }
 
     runApp(app) {

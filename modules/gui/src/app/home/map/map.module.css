@@ -17,6 +17,10 @@
     pointer-events: all;
 }
 
+.view {
+    background-color: #131314;
+}
+
 .map::before {
     pointer-events: none;
     content: '';

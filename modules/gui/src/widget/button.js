@@ -25,6 +25,10 @@ class _Button extends React.Component {
         const {onClickHold} = props
         this.button = onClickHold && React.createRef()
         this.handleClick = this.handleClick.bind(this)
+        this.handleMouseOver = this.handleMouseOver.bind(this)
+        this.handleMouseOut = this.handleMouseOut.bind(this)
+        this.handleMouseDown = this.handleMouseDown.bind(this)
+        this.preventDefault = this.preventDefault.bind(this)
         this.renderKeybinding = this.renderKeybinding.bind(this)
         this.renderVisible = this.renderVisible.bind(this)
         this.renderWrapper = this.renderWrapper.bind(this)
@@ -98,6 +102,10 @@ class _Button extends React.Component {
         ].join(' ')
     }
 
+    preventDefault(e) {
+        e.preventDefault()
+    }
+
     handleMouseOver(e) {
         const {onMouseOver} = this.props
         onMouseOver && onMouseOver(e)
@@ -123,11 +131,15 @@ class _Button extends React.Component {
     }
 
     handleClick(e) {
-        const {onClick, downloadUrl, downloadFilename} = this.props
-        onClick && onClick(e)
-        downloadUrl && download(downloadUrl, downloadFilename)
-        if (this.stopPropagation()) {
+        const {onClick, onClickHold, downloadUrl, downloadFilename} = this.props
+        if (onClickHold) {
             e.stopPropagation()
+        } else {
+            onClick && onClick(e)
+            downloadUrl && download(downloadUrl, downloadFilename)
+            if (this.stopPropagation()) {
+                e.stopPropagation()
+            }
         }
     }
 
@@ -197,7 +209,7 @@ class _Button extends React.Component {
         const {linkUrl, linkTarget} = this.props
         return this.isActive() && linkUrl
             ? (
-                <a href={linkUrl} rel='noopener noreferrer' target={linkTarget} onMouseDown={e => e.preventDefault()}>
+                <a href={linkUrl} rel='noopener noreferrer' target={linkTarget} onMouseDown={this.preventDefault}>
                     {contents}
                 </a>
             )
@@ -208,7 +220,7 @@ class _Button extends React.Component {
         const {route} = this.props
         return this.isActive() && route
             ? (
-                <Link to={route} onMouseDown={e => e.preventDefault()}>
+                <Link to={route} onMouseDown={this.preventDefault}>
                     {contents}
                 </Link>
             )
@@ -247,11 +259,10 @@ class _Button extends React.Component {
                 style={style}
                 tabIndex={tabIndex}
                 disabled={!this.isActive()}
-                onMouseOver={e => this.handleMouseOver(e)}
-                onMouseOut={e => this.handleMouseOut(e)}
-                onMouseDown={e => this.handleMouseDown(e)}
-                onClick={e => onClickHold ? e.stopPropagation() : this.handleClick(e)}
-            >
+                onMouseOver={this.handleMouseOver}
+                onMouseOut={this.handleMouseOut}
+                onMouseDown={this.handleMouseDown}
+                onClick={this.handleClick}>
                 {current(next)}
             </button>
         )

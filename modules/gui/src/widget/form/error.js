@@ -16,9 +16,10 @@ export const getErrorMessage = (form, input) =>
         .value() || ''
 
 export const FormError = props => {
+    const errorMessage = form => getErrorMessage(form, props['for'])
     return (
         <FormContext.Consumer>
-            {form => getErrorMessage(form, props['for'])}
+            {errorMessage}
         </FormContext.Consumer>
     )
 }

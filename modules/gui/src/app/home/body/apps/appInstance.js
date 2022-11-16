@@ -24,6 +24,11 @@ class AppInstance extends React.Component {
         srcDoc: undefined
     }
 
+    constructor() {
+        super()
+        this.iFrameLoaded = this.iFrameLoaded.bind(this)
+    }
+
     render() {
         const {app: {label, alt}} = this.props
         return (
@@ -56,7 +61,7 @@ class AppInstance extends React.Component {
                     src={this.useIFrameSrc() ? src : undefined}
                     title={label || alt}
                     style={{border: 'none', display: 'block'}}
-                    onLoad={() => this.iFrameLoaded()}
+                    onLoad={this.iFrameLoaded}
                 />
             )
             : null

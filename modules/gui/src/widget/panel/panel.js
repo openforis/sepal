@@ -17,6 +17,7 @@ class _Panel extends React.Component {
 
     constructor(props) {
         super(props)
+        this.onClick = this.onClick.bind(this)
         this.props.onEnable(() => this.setState({enabled: true}))
         this.props.onDisable(() => this.setState({enabled: false}))
     }
@@ -42,11 +43,15 @@ class _Panel extends React.Component {
             <Portal type='global' center>
                 <div
                     className={styles.modalWrapper}
-                    onClick={e => e.stopPropagation()}>
+                    onClick={this.onClick}>
                     {this.renderContent()}
                 </div>
             </Portal>
         )
+    }
+
+    onClick(e) {
+        e.stopPropagation()
     }
 
     renderPortal(type) {

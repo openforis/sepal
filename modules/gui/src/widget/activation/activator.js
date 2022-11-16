@@ -88,13 +88,21 @@ class _Activator extends React.Component {
 export const activator = (...ids) =>
     WrappedComponent =>
         class HigherOrderComponent extends React.Component {
+            constructor() {
+                super()
+                this.renderActivator = this.renderActivator.bind(this)
+            }
+
             render() {
                 return (
                     <Activator ids={ids}>
-                        {activator =>
-                            React.createElement(WrappedComponent, {activator, ...this.props})}
+                        {this.renderActivator}
                     </Activator>
                 )
+            }
+
+            renderActivator(activator) {
+                return React.createElement(WrappedComponent, {activator, ...this.props})
             }
         }
 

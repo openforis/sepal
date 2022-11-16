@@ -1,6 +1,5 @@
 import {ActivationButton} from './activationButton'
 import {Context} from './context'
-import {PanelButton} from './panelButton'
 import {ToolbarButton} from './toolbarButton'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
@@ -52,5 +51,4 @@ Toolbar.propTypes = {
 }
 
 Toolbar.ActivationButton = ActivationButton
-Toolbar.PanelButton = PanelButton
 Toolbar.ToolbarButton = ToolbarButton

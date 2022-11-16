@@ -49,6 +49,12 @@ const denormalize = (value, min, max, scale, invert) =>
 class SliderContainer extends React.Component {
     clickTarget = React.createRef()
 
+    constructor() {
+        super()
+        this.normalize = this.normalize.bind(this)
+        this.denormalize = this.denormalize.bind(this)
+    }
+
     renderTick({position, value, label}) {
         const left = `${Math.trunc(position)}px`
         return (
@@ -88,17 +94,21 @@ class SliderContainer extends React.Component {
                 range={range}
                 invert={invert}
                 clickTarget={this.clickTarget}
-                normalize={value => {
-                    const {scale, minValue, maxValue} = this.props
-                    return normalize(value, minValue, maxValue, scale, invert)
-                }}
-                denormalize={value => {
-                    const {scale, minValue, maxValue} = this.props
-                    return denormalize(value, minValue, maxValue, scale, invert)
-                }}
+                normalize={this.normalize}
+                denormalize={this.denormalize}
                 onChange={onChange}
             />
         )
+    }
+
+    normalize(value) {
+        const {scale, minValue, maxValue, invert} = this.props
+        return normalize(value, minValue, maxValue, scale, invert)
+    }
+
+    denormalize(value) {
+        const {scale, minValue, maxValue, invert} = this.props
+        return denormalize(value, minValue, maxValue, scale, invert)
     }
 
     render() {
@@ -441,6 +451,11 @@ export class Slider extends React.Component {
         maxValue: null
     }
 
+    constructor() {
+        super()
+        this.onResize = this.onResize.bind(this)
+    }
+
     static getDerivedStateFromProps(props, state) {
         const mapTicks = ticks =>
             ticks.map((tick, index) => {
@@ -487,11 +502,15 @@ export class Slider extends React.Component {
         return (
             <div className={styles.container}>
                 <div className={styles.slider}>
-                    <ElementResizeDetector onResize={({width}) => this.setState({width})}/>
+                    <ElementResizeDetector onResize={this.onResize}/>
                     {width ? this.renderContainer() : null}
                 </div>
             </div>
         )
+    }
+
+    onResize({width}) {
+        this.setState({width})
     }
 
     renderContainer() {

@@ -532,6 +532,7 @@ class _Map extends React.Component {
                 }}>
                     {imageLayerSourceComponents}
                     <SplitView
+                        className={styles.view}
                         areas={this.renderAreas()}
                         overlay={this.renderOverlay()}
                         mode={layers.mode}

@@ -12,6 +12,7 @@ import {msg} from 'translate'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import guid from 'guid'
 import styles from './tabs.module.css'
@@ -75,6 +76,27 @@ export const getTabsInfo = statePath => {
     return {}
 }
 
+const nextSelectedTabId = (id, statePath) => {
+    const tabs = select([statePath, 'tabs'])
+    const tabIndex = tabs.findIndex(tab => tab.id === id)
+    const first = tabIndex === 0
+    const last = tabIndex === tabs.length - 1
+    if (!last) {
+        return tabs[tabIndex + 1].id
+    }
+    if (!first) {
+        return tabs[tabIndex - 1].id
+    }
+    return null
+}
+
+const finalizeCloseTab = (id, statePath, nextId) => {
+    actionBuilder('CLOSE_TAB')
+        .set([statePath, 'selectedTabId'], nextId || nextSelectedTabId(id, statePath))
+        .del([statePath, 'tabs', {id}])
+        .dispatch()
+}
+
 const mapStateToProps = (state, ownProps) => ({
     tabs: select([ownProps.statePath, 'tabs']) || [],
     selectedTabId: select([ownProps.statePath, 'selectedTabId'])
@@ -83,6 +105,7 @@ const mapStateToProps = (state, ownProps) => ({
 class _Tabs extends React.Component {
     constructor(props) {
         super(props)
+        this.renderTab = this.renderTab.bind(this)
         const {tabs, statePath} = props
         if (tabs.length === 0) {
             addTab(statePath)
@@ -92,8 +115,7 @@ class _Tabs extends React.Component {
     busy$ = new Subject()
 
     renderTab(tab) {
-        const {selectedTabId, statePath, onTitleChanged, onClose} = this.props
-        const close = () => this.closeTab(tab.id)
+        const {selectedTabId, statePath, onTitleChanged} = this.props
         return (
             <TabHandle
                 key={tab.id}
@@ -105,7 +127,7 @@ class _Tabs extends React.Component {
                 closing={tab.ui && tab.ui.closing}
                 statePath={statePath}
                 onTitleChanged={onTitleChanged}
-                onClose={() => onClose ? onClose(tab, close) : close()}
+                onClose={() => this.onClose(tab)}
             />
         )
     }
@@ -136,7 +158,7 @@ class _Tabs extends React.Component {
             }}>
                 <ScrollableContainer>
                     <Scrollable direction='x' className={styles.tabs}>
-                        {tabs.map(tab => this.renderTab(tab))}
+                        {tabs.map(this.renderTab)}
                     </Scrollable>
                 </ScrollableContainer>
                 <div className={styles.tabActions}>
@@ -146,6 +168,11 @@ class _Tabs extends React.Component {
                 </div>
             </Keybinding>
         )
+    }
+
+    onClose(tab) {
+        const {onClose} = this.props
+        onClose ? onClose(tab, () => this.closeTab(tab.id)) : this.closeTab(tab.id)
     }
 
     selectPreviousTab() {
@@ -258,10 +285,6 @@ class _Tabs extends React.Component {
         )
     }
 
-    componentDidMount() {
-        this.handleCloseTab()
-    }
-
     handleCloseTab() {
         const {addSubscription, statePath} = this.props
         addSubscription(
@@ -269,36 +292,20 @@ class _Tabs extends React.Component {
                 filter(tab => tab.statePath === statePath),
                 delay(CLOSE_ANIMATION_DURATION_MS * 1.2),
             ).subscribe(
-                ({id, statePath, nextId}) => this.finalizeCloseTab(id, statePath, nextId)
+                ({id, statePath, nextId}) => finalizeCloseTab(id, statePath, nextId)
             )
         )
     }
 
-    finalizeCloseTab(id, statePath, nextId) {
-        const nextSelectedTabId = () => {
-            const tabs = select([statePath, 'tabs'])
-            const tabIndex = tabs.findIndex(tab => tab.id === id)
-            const first = tabIndex === 0
-            const last = tabIndex === tabs.length - 1
-            if (!last) {
-                return tabs[tabIndex + 1].id
-            }
-            if (!first) {
-                return tabs[tabIndex - 1].id
-            }
-            return null
-        }
-
-        actionBuilder('CLOSE_TAB')
-            .set([statePath, 'selectedTabId'], nextId || nextSelectedTabId())
-            .del([statePath, 'tabs', {id}])
-            .dispatch()
+    componentDidMount() {
+        this.handleCloseTab()
     }
 
     componentDidUpdate() {
         const {tabs, statePath} = this.props
-        if (tabs.length === 0)
+        if (tabs.length === 0) {
             addTab(statePath)
+        }
     }
 }
 

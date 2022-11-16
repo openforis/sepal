@@ -21,6 +21,7 @@ class BlurDetector extends React.Component {
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
+        this.checkEnabled = this.checkEnabled.bind(this)
         this.isEnabled = this.isEnabled.bind(this)
         this.onBlur = this.onBlur.bind(this)
     }
@@ -33,11 +34,15 @@ class BlurDetector extends React.Component {
                 className={className}
                 style={style}
                 onClick={onClick}>
-                <BlurDetectorContext.Provider value={{enabled: enabled => this.enabled = enabled}}>
+                <BlurDetectorContext.Provider value={{enabled: this.checkEnabled}}>
                     {children}
                 </BlurDetectorContext.Provider>
             </div>
         )
+    }
+
+    checkEnabled(enabled) {
+        return this.enabled = enabled
     }
 
     componentDidMount() {

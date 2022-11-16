@@ -20,26 +20,42 @@ import _ from 'lodash'
 export const getProcessTabsInfo = () => getTabsInfo('process')
 
 class Process extends React.Component {
+    constructor(props) {
+        super(props)
+        this.isLandingTab = this.isLandingTab.bind(this)
+        this.renderMenu = this.renderMenu.bind(this)
+        this.renderTab = this.renderTab.bind(this)
+        this.onCloseTab = this.onCloseTab.bind(this)
+    }
+
     render() {
         return (
             <React.Fragment>
                 <Tabs
                     label={msg('home.sections.process')}
                     statePath='process'
-                    isLandingTab={({type}) => !type}
-                    tabActions={recipeId => this.renderMenu(recipeId)}
-                    onTitleChanged={tab => saveRecipe(tab)}
-                    onClose={(tab, close) => this.onCloseTab(tab, close)}
+                    isLandingTab={this.isLandingTab}
+                    tabActions={this.renderMenu}
+                    onTitleChanged={saveRecipe}
+                    onClose={this.onCloseTab}
                 >
-                    {({id, type}) =>
-                        <RecipeContext recipeId={id}>
-                            {this.renderRecipe(id, type)}
-                        </RecipeContext>
-                    }
+                    {this.renderTab}
                 </Tabs>
                 <CloseRecipe/>
                 <SaveRecipe/>
             </React.Fragment>
+        )
+    }
+
+    isLandingTab({type}) {
+        return !type
+    }
+
+    renderTab({id, type}) {
+        return (
+            <RecipeContext recipeId={id}>
+                {this.renderRecipe(id, type)}
+            </RecipeContext>
         )
     }
 

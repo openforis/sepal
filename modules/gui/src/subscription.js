@@ -4,15 +4,24 @@ const withSubscriptions = () =>
     WrappedComponent =>
         class HigherOrderComponent extends React.Component {
             subscriptions = []
+
+            constructor() {
+                super()
+                this.addSubscription = this.addSubscription.bind(this)
+            }
+
             render() {
                 return React.createElement(WrappedComponent, {
                     ...this.props,
-                    addSubscription: (...subscriptions) => {
-                        subscriptions.forEach(subscription =>
-                            subscription && this.subscriptions.push(subscription))
-                    }
+                    addSubscription: this.addSubscription
                 })
             }
+
+            addSubscription(...subscriptions) {
+                subscriptions.forEach(subscription =>
+                    subscription && this.subscriptions.push(subscription))
+            }
+
             componentWillUnmount() {
                 this.subscriptions.forEach(subscription => subscription.unsubscribe())
             }

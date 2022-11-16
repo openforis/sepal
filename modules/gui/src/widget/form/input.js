@@ -13,6 +13,8 @@ const DEBOUNCE_TIME_MS = 750
 class _FormInput extends React.Component {
     constructor(props) {
         super(props)
+        this.onChange = this.onChange.bind(this)
+        this.onBlur = this.onBlur.bind(this)
         const {addSubscription, onChangeDebounced} = props
         this.change$ = new Subject()
         addSubscription(
@@ -31,7 +33,7 @@ class _FormInput extends React.Component {
     }
 
     renderInput() {
-        const {form, forwardedRef, className, input, errorMessage, busyMessage, type, validate, tabIndex, onChange, onBlur, additionalButtons, ...props} = this.props
+        const {form, forwardedRef, className, input, errorMessage, busyMessage, type, tabIndex, additionalButtons, ...props} = this.props
         return (
             <Input
                 {...props}
@@ -39,30 +41,26 @@ class _FormInput extends React.Component {
                 className={className}
                 type={type}
                 name={input && input.name}
-                value={typeof input.value === 'number' || typeof input.value === 'boolean' || input.value
-                    ? input.value
-                    : ''
-                }
+                value={this.getValue()}
                 errorMessage={getErrorMessage(form, errorMessage === true ? input : errorMessage)}
                 busyMessage={busyMessage}
                 tabIndex={tabIndex}
                 additionalButtons={additionalButtons}
-                onChange={e => {
-                    input.handleChange(e)
-                    this.change$.next(e.target.value)
-                    onChange && onChange(e)
-                    validate === 'onChange' && input.validate()
-                }}
-                onBlur={e => {
-                    onBlur && onBlur(e)
-                    validate === 'onBlur' && input.validate()
-                }}
+                onChange={this.onChange}
+                onBlur={this.onblur}
             />
         )
     }
 
+    getValue() {
+        const {input} = this.props
+        typeof input.value === 'number' || typeof input.value === 'boolean' || input.value
+            ? input.value
+            : ''
+    }
+
     renderTextArea() {
-        const {form, forwardedRef, className, input, errorMessage, busyMessage, minRows, maxRows, validate, tabIndex, onChange, onBlur, ...props} = this.props
+        const {form, forwardedRef, className, input, errorMessage, busyMessage, minRows, maxRows, tabIndex, ...props} = this.props
         return (
             <Textarea
                 {...props}
@@ -75,18 +73,26 @@ class _FormInput extends React.Component {
                 tabIndex={tabIndex}
                 minRows={minRows}
                 maxRows={maxRows}
-                onChange={e => {
-                    input && input.handleChange(e)
-                    onChange && onChange(e)
-                    input && validate === 'onChange' && input.validate()
-                }}
-                onBlur={e => {
-                    onBlur && onBlur(e)
-                    input && validate === 'onBlur' && input.validate()
-                }}
+                onChange={this.onChange}
+                onBlur={this.onblur}
             />
         )
     }
+
+    onChange(e) {
+        const {input, validate, onChange} = this.props
+        input.handleChange(e)
+        this.change$.next(e.target.value)
+        onChange && onChange(e)
+        validate === 'onChange' && input.validate()
+    }
+
+    onBlur(e) {
+        const {input, validate, onBlur} = this.props
+        onBlur && onBlur(e)
+        validate === 'onBlur' && input.validate()
+    }
+
 }
 export const FormInput = compose(
     _FormInput,

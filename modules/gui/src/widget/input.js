@@ -28,10 +28,13 @@ class _Input extends React.Component {
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
+        this.onClick = this.onClick.bind(this)
         this.onFocus = this.onFocus.bind(this)
         this.onBlur = this.onBlur.bind(this)
         this.onChange = this.onChange.bind(this)
         this.onClear = this.onClear.bind(this)
+        this.onWheel = this.onWheel.bind(this)
+        this.checkProtectedKey = this.checkProtectedKey.bind(this)
     }
 
     checkProtectedKey(e) {
@@ -39,7 +42,7 @@ class _Input extends React.Component {
     }
 
     render() {
-        const {className, disabled, label, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border, onClick} = this.props
+        const {className, disabled, label, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border} = this.props
         return (
             <Widget
                 className={[
@@ -54,14 +57,17 @@ class _Input extends React.Component {
                 errorMessage={errorMessage}
                 busyMessage={busyMessage}
                 border={border}
-                onClick={e => {
-                    this.ref.current && this.ref.current.focus()
-                    onClick && onClick(e)
-                }}
+                onClick={this.onClick}
             >
                 {this.renderContent()}
             </Widget>
         )
+    }
+
+    onClick(e) {
+        const {onClick} = this.props
+        this.ref.current && this.ref.current.focus()
+        onClick && onClick(e)
     }
 
     renderContent() {
@@ -110,13 +116,18 @@ class _Input extends React.Component {
                         onFocus={this.onFocus}
                         onBlur={this.onBlur}
                         onChange={this.onChange}
-                        onWheel={e => type === 'number' && e.target.blur()} // disable mouse wheel on input type=number
-                        onKeyDown={e => this.checkProtectedKey(e)}
+                        onWheel={this.onWheel} // disable mouse wheel on input type=number
+                        onKeyDown={this.checkProtectedKey}
                     />
                 </Tooltip>
                 {/* </div> */}
             </Keybinding>
         )
+    }
+
+    onWheel(e) {
+        const {type} = this.props
+        type === 'number' && e.target.blur()
     }
 
     onFocus(e) {
@@ -275,6 +286,10 @@ class _Textarea extends React.Component {
 
     constructor(props) {
         super(props)
+        this.onFocus = this.onFocus.bind(this)
+        this.onBlur = this.onBlur.bind(this)
+        this.onChange = this.onChange.bind(this)
+        this.checkProtectedKey = this.checkProtectedKey.bind(this)
         this.ref = props.forwardedRef || React.createRef()
     }
 
@@ -305,7 +320,7 @@ class _Textarea extends React.Component {
     }
 
     renderTextArea() {
-        const {className, name, value, placeholder, autoFocus, inputTooltip, inputTooltipPlacement, tabIndex, disabled, minRows, maxRows, onChange, onBlur, onFocus} = this.props
+        const {className, name, value, placeholder, autoFocus, inputTooltip, inputTooltipPlacement, tabIndex, disabled, minRows, maxRows} = this.props
         const {focused} = this.state
         return (
             <Keybinding keymap={{Enter: null, ' ': null}} disabled={!focused} priority>
@@ -326,20 +341,31 @@ class _Textarea extends React.Component {
                         autoFocus={autoFocus && !isMobile()}
                         minRows={minRows}
                         maxRows={maxRows}
-                        onFocus={e => {
-                            this.setState({focused: true})
-                            onFocus && onFocus(e)
-                        }}
-                        onBlur={e => {
-                            this.setState({focused: false})
-                            onBlur && onBlur(e)
-                        }}
-                        onChange={e => onChange && onChange(e)}
-                        onKeyDown={e => this.checkProtectedKey(e)}
+                        onFocus={this.onFocus}
+                        onBlur={this.onBlur}
+                        onChange={this.onChange}
+                        onKeyDown={this.checkProtectedKey}
                     />
                 </Tooltip>
             </Keybinding>
         )
+    }
+
+    onFocus(e) {
+        const {onFocus} = this.props
+        this.setState({focused: true})
+        onFocus && onFocus(e)
+    }
+
+    onBlur(e) {
+        const {onBlur} = this.props
+        this.setState({focused: false})
+        onBlur && onBlur(e)
+    }
+
+    onChange(e) {
+        const {onChange} = this.props
+        onChange && onChange(e)
     }
 }
 

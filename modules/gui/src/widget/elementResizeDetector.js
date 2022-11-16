@@ -16,15 +16,24 @@ export class _ElementResizeDetector extends React.Component {
         height: null
     }
 
+    constructor() {
+        super()
+        this.onResize = this.onResize.bind(this)
+    }
+
     render() {
         return (
             <ReactResizeDetector
                 handleHeight
                 handleWidth
-                onResize={(width, height) => this.size$.next({width, height})}>
+                onResize={this.onResize}>
                 {this.renderContent()}
             </ReactResizeDetector>
         )
+    }
+
+    onResize(width, height) {
+        this.size$.next({width, height})
     }
 
     renderContent() {
@@ -38,15 +47,16 @@ export class _ElementResizeDetector extends React.Component {
     }
 
     componentDidMount() {
-        const {debounce, onResize, addSubscription} = this.props
+        const {debounce, resize$, onResize, addSubscription} = this.props
         addSubscription(
             this.size$.pipe(
                 throttleTime(debounce, null, {leading: true, trailing: true}),
                 distinctUntilChanged()
             ).subscribe(
-                ({width, height}) => {
-                    this.setState({width, height})
-                    onResize && onResize({width, height})
+                size => {
+                    this.setState(size)
+                    resize$ && resize$.next(size)
+                    onResize && onResize(size)
                 }
             )
         )
@@ -61,7 +71,8 @@ export const ElementResizeDetector = compose(
 ElementResizeDetector.propTypes = {
     children: PropTypes.any,
     debounce: PropTypes.number,
-    onResize: PropTypes.func
+    resize$: PropTypes.object,
+    onResize: PropTypes.func,
 }
 
 ElementResizeDetector.defaultProps = {

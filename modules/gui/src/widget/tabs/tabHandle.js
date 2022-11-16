@@ -25,6 +25,12 @@ const toTabPath = (id, statePath) =>
 class _TabHandle extends React.Component {
     constructor(props) {
         super(props)
+        this.onClick = this.onClick.bind(this)
+        this.onTitleChange = this.onTitleChange.bind(this)
+        this.saveTitle = this.saveTitle.bind(this)
+        this.restoreTitle = this.restoreTitle.bind(this)
+        this.focus = this.focus.bind(this)
+        this.blur = this.blur.bind(this)
         const {title = ''} = props
         this.state = {
             editing: false,
@@ -70,11 +76,11 @@ class _TabHandle extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, selected} = this.props
+        const {placeholder} = this.props
         const {title, editing} = this.state
         const keymap = {
-            Enter: () => this.exitEditing(true),
-            Escape: () => this.exitEditing(false),
+            Enter: this.saveTitle,
+            Escape: this.restoreTitle,
         }
         return (
             <Keybinding keymap={keymap} disabled={!editing}>
@@ -88,12 +94,9 @@ class _TabHandle extends React.Component {
                     readOnly={!editing}
                     tooltip={title || placeholder}
                     tooltipPlacement='bottom'
-                    onClick={() => selected
-                        ? this.editTitle()
-                        : this.selectTab()
-                    }
-                    onChange={e => this.onTitleChange(e)}
-                    onBlur={() => this.exitEditing(true)}/>
+                    onClick={this.onClick}
+                    onChange={this.onTitleChange}
+                    onBlur={this.saveTitle}/>
             </Keybinding>
         )
     }
@@ -109,9 +112,21 @@ class _TabHandle extends React.Component {
                 air='less'
                 icon='times'
                 message='message'
-                onClick={() => onClose()}
+                onClick={onClose}
             />
         )
+    }
+
+    onClick() {
+        const {selected} = this.props
+        selected
+            ? this.editTitle()
+            : this.selectTab()
+    }
+
+    onTitleChange(e) {
+        const value = e.target.value
+        this.setState({title: value})
     }
 
     selectTab() {
@@ -120,48 +135,36 @@ class _TabHandle extends React.Component {
     }
 
     editTitle() {
-        this.setState({editing: true}, () => this.focus())
-    }
-
-    onTitleChange(e) {
-        const value = e.target.value
-        this.setState({title: value})
-    }
-
-    exitEditing(save) {
-        const {editing} = this.state
-        if (editing) {
-            if (save) {
-                this.saveTitle()
-            } else {
-                this.restoreTitle()
-            }
-        }
+        this.setState({editing: true}, this.focus)
     }
 
     saveTitle() {
         const {id, statePath, onTitleChanged} = this.props
-        const {title} = this.state
+        const {editing, title} = this.state
         const normalizedTitle = toSafeString(title)
         this.titleInput.current.value = normalizedTitle
         const tabPath = toTabPath(id, statePath)
         const selectTab = () => select(tabPath)
         const prevTitle = selectTab().title
-        if (prevTitle !== normalizedTitle) {
-            renameTab(normalizedTitle, tabPath, onTitleChanged)
+        if (editing) {
+            if (prevTitle !== normalizedTitle) {
+                renameTab(normalizedTitle, tabPath, onTitleChanged)
+            }
+            this.setState({
+                prevTitle: normalizedTitle,
+                editing: false
+            }, this.blur)
         }
-        this.setState({
-            prevTitle: normalizedTitle,
-            editing: false
-        }, this.blur)
     }
 
     restoreTitle() {
-        const {prevTitle} = this.state
-        this.setState({
-            title: prevTitle,
-            editing: false
-        }, this.blur)
+        const {editing, prevTitle} = this.state
+        if (editing) {
+            this.setState({
+                title: prevTitle,
+                editing: false
+            }, this.blur)
+        }
     }
 
     focus() {

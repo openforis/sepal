@@ -11,13 +11,13 @@ import _ from 'lodash'
 import styles from './splitView.module.css'
 import withSubscriptions from 'subscription'
 
-const resize$ = new Subject()
-
 class _SplitView extends React.PureComponent {
     areas = React.createRef()
     centerHandle = React.createRef()
     verticalHandle = React.createRef()
     horizontalHandle = React.createRef()
+
+    resize$ = new Subject()
 
     state = {
         size: {
@@ -50,7 +50,7 @@ class _SplitView extends React.PureComponent {
         const {className, maximize, mode} = this.props
         const {position: {x, y}, dragging} = this.state
         return (
-            <ElementResizeDetector onResize={size => resize$.next(size)}>
+            <ElementResizeDetector resize$={this.resize$}>
                 <SplitContext.Provider value={{container: this.areas.current, mode, maximize}}>
                     <div
                         className={[
@@ -121,7 +121,7 @@ class _SplitView extends React.PureComponent {
         const {areas, maximize} = this.props
         const {enabled: {center, vertical, horizontal}} = this.state
         const placements = _.map(areas, area => area.placement)
-        return (
+        return this.isSized() ? (
             <div className={[
                 styles.handles,
                 maximize ? styles.hide : null
@@ -130,7 +130,7 @@ class _SplitView extends React.PureComponent {
                 {vertical ? this.renderVerticalHandle(placements) : null}
                 {horizontal ? this.renderHorizontalHandle(placements) : null}
             </div>
-        )
+        ) : null
     }
 
     renderCenterHandle() {
@@ -167,7 +167,8 @@ class _SplitView extends React.PureComponent {
                 size={size}
                 onDragging={this.onDragging}
                 onPosition={this.onPosition}
-            />)
+            />
+        )
     }
 
     onDragging(dragging) {
@@ -242,7 +243,7 @@ class _SplitView extends React.PureComponent {
     initializeResizeDetector() {
         const {addSubscription} = this.props
         addSubscription(
-            resize$.subscribe(
+            this.resize$.subscribe(
                 size => this.resize(size)
             )
         )
@@ -260,6 +261,11 @@ class _SplitView extends React.PureComponent {
             position,
             initialized: true
         })
+    }
+
+    isSized() {
+        const {size: {width, height}} = this.state
+        return width && height
     }
 
     reset() {
@@ -282,7 +288,7 @@ SplitView.propTypes = {
             className: PropTypes.string,
             view: PropTypes.any
         })
-    ),
+    ).isRequired,
     children: PropTypes.any,
     className: PropTypes.string,
     dragging$: PropTypes.any,

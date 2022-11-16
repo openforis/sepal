@@ -29,6 +29,7 @@ class FloatingBox extends React.Component {
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
+        this.onClick = this.onClick.bind(this)
         this.onResize = this.onResize.bind(this)
         this.addElement = this.addElement.bind(this)
         this.removeElement = this.removeElement.bind(this)
@@ -78,7 +79,7 @@ class FloatingBox extends React.Component {
                     removeElement: this.removeElement
                 }}>
                     <BlurDetector
-                        onClick={e => e.stopPropagation()}
+                        onClick={this.onClick}
                         onBlur={onBlur}
                         exclude={this.getExcludedElements()}
                         ref={this.ref}
@@ -94,6 +95,10 @@ class FloatingBox extends React.Component {
                 </Context.Provider>
             </Portal>
         )
+    }
+
+    onClick(e) {
+        e.stopPropagation()
     }
 
     fixVerticalOverflow(vertical) {
