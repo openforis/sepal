@@ -1,13 +1,13 @@
 import {Subject, delay, filter, map, merge, mergeMap, scan, takeWhile, timer} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {simplehash as hash} from 'hash'
 import {msg} from 'translate'
 import {publishError} from 'eventPublisher'
 import {v4 as uuid} from 'uuid'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
-import hash from 'object-hash'
 import styles from './notifications.module.css'
 import withSubscriptions from 'subscription'
 
@@ -73,12 +73,13 @@ const publish = notification => {
 const dismiss = notificationId =>
     manualDismiss$.next(notificationId)
 
-const mapStateToProps = () => ({
-    notifications: select(PATH) || []
-})
+// const mapStateToProps = () => ({
+//     notifications: select(PATH) || []
+// })
 
 class _Notifications extends React.Component {
     state = {
+        notifications: [],
         timeoutById: {}
     }
 
@@ -166,7 +167,7 @@ class _Notifications extends React.Component {
     }
 
     renderNotifications() {
-        const {notifications} = this.props
+        const {notifications} = this.state
         return notifications.map(notification => this.renderNotification(notification))
     }
 
@@ -182,17 +183,31 @@ class _Notifications extends React.Component {
         const {addSubscription} = this.props
         addSubscription(
             publish$.subscribe(notification =>
-                actionBuilder('PUBLISH_NOTIFICATION')
-                    .pushUnique(PATH, notification, 'group')
-                    .dispatch()
+                this.setState(({notifications}) => ([...notifications, notification]))
+                // actionBuilder('PUBLISH_NOTIFICATION')
+                //     .pushUnique(PATH, notification, 'group')
+                //     .dispatch()
             ),
             dismiss$.subscribe(id => {
-                actionBuilder('DISMISS_NOTIFICATION')
-                    .assign([PATH, {id}], {dismissing: true})
-                    .dispatch()
-                this.setState(({timeoutById}) => {
+                // actionBuilder('DISMISS_NOTIFICATION')
+                //     .assign([PATH, {id}], {dismissing: true})
+                //     .dispatch()
+                this.setState(({notifications, timeoutById}) => {
                     delete timeoutById[id]
-                    return {timeoutById}
+                    const updatedNotifications = notifications.map(notification => {
+                        if (notification.id === id) {
+                            return {
+                                ...notification,
+                                dismissing: true
+                            }
+                        } else {
+                            return notification
+                        }
+                    })
+                    return {
+                        notifications: updatedNotifications,
+                        timeoutById
+                    }
                 })
             }),
             autoDismiss$.subscribe(({id, timeout}) => {
@@ -205,11 +220,16 @@ class _Notifications extends React.Component {
                     return {timeoutById}
                 })
             }),
-            remove$.subscribe(id =>
-                actionBuilder('REMOVE_NOTIFICATION')
-                    .del([PATH, {id}])
-                    .dispatch()
-            )
+            remove$.subscribe(id => {
+                // actionBuilder('REMOVE_NOTIFICATION')
+                //     .del([PATH, {id}])
+                //     .dispatch()
+                this.setState(({notifications}) =>
+                    notifications.filter(notification => {
+                        notification.id !== id
+                    })
+                )
+            })
         )
     }
 }
@@ -217,7 +237,7 @@ class _Notifications extends React.Component {
 const Notifications = compose(
     _Notifications,
     withSubscriptions(),
-    connect(mapStateToProps)
+    // connect(mapStateToProps)
 )
 
 Notifications.success = notification =>

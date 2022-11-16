@@ -30,7 +30,9 @@
             "shared"
         ],
         "build": {},
-        "run": []
+        "run": [
+            "rabbitmq"
+        ]
     },
     "gee": {
         "lib": [
