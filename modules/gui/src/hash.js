@@ -38,27 +38,13 @@ export const cloneDeep = entity =>
 
 export const isEqual = (a, b) =>
     _.isEqualWith(a, b, (a, b) => {
-        if (_.isPlainObject(a) && _.isPlainObject(b)) {
+        if (_.isPlainObject(a) && _.isPlainObject(b) || _.isArray(a) && _.isArray(b)) {
             const aHash = a[HASH_KEY]
             if (_.isString(aHash) && !_.isEmpty(aHash)) {
                 const bHash = b[HASH_KEY]
-                // hash present on both, rely on it
-                // aHash === bHash
-                //     ? stats.hashedEqual++
-                //     : stats.hashedNotEqual++
-                return aHash === bHash
-            } else {
-                stats.notHashed++
-            }
-        }
-        if (_.isArray(a) && _.isArray(b)) {
-            const aHash = a[HASH_KEY]
-            if (_.isString(aHash) && !_.isEmpty(aHash)) {
-                const bHash = b[HASH_KEY]
-                // hash present on both, rely on it
-                // aHash === bHash
-                //     ? stats.hashedEqual++
-                //     : stats.hashedNotEqual++
+                aHash === bHash
+                    ? stats.hashedEqual++
+                    : stats.hashedNotEqual++
                 return aHash === bHash
             } else {
                 stats.notHashed++
