@@ -10,15 +10,15 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bull": "^4.9.0",
-        "commander": "^9.4.0",
+        "bull": "^4.10.1",
+        "commander": "^9.4.1",
         "date-fns": "^2.29.3",
         "email": "./src",
         "handlebars": "^4.7.7",
-        "ioredis": "^5.2.3",
+        "ioredis": "^5.2.4",
         "lodash": "^4.17.21",
-        "log4js": "^6.6.1",
-        "marked": "^4.1.0",
+        "log4js": "^6.7.0",
+        "marked": "^4.2.2",
         "moment": "^2.29.4",
         "nodemailer": "^6.8.0",
         "rxjs": "^7.5.7",
@@ -26,8 +26,8 @@
         "short-unique-id": "^4.4.4"
     },
     "devDependencies": {
-        "eslint": "^8.24.0",
-        "jest": "^29.1.1",
+        "eslint": "^8.27.0",
+        "jest": "^29.3.1",
         "jest-expect-message": "^1.1.3"
     }
 }
