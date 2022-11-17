@@ -88,15 +88,24 @@ export const connect = mapStateToProps => {
         }
 
         class AddEnabledProp extends Component {
+            constructor() {
+                super()
+                this.renderEnabled = this.renderEnabled.bind(this)
+            }
+            
             render() {
                 return (
                     <EnabledContext.Consumer>
-                        {enabled =>
-                            <ConnectedComponent {...this.props} enabled={enabled}>
-                                {this.props.children}
-                            </ConnectedComponent>
-                        }
+                        {this.renderEnabled}
                     </EnabledContext.Consumer>
+                )
+            }
+
+            renderEnabled(enabled) {
+                return (
+                    <ConnectedComponent {...this.props} enabled={enabled}>
+                        {this.props.children}
+                    </ConnectedComponent>
                 )
             }
         }

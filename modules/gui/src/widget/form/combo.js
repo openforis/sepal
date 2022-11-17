@@ -11,6 +11,9 @@ export const FormCombo = ({
         input.set(option ? option.value : null)
         onChange && onChange(option)
     }
+    const onBlurHandler = () =>
+        input.validate()
+
     return (
         <Combo
             value={input.value}
@@ -38,7 +41,7 @@ export const FormCombo = ({
             tooltipPlacement={tooltipPlacement}
             onCancel={onCancel}
             onChange={onChangeHandler}
-            onBlur={() => input.validate()}/>
+            onBlur={onBlurHandler}/>
     )
 }
 

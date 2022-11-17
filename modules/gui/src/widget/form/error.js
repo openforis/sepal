@@ -16,7 +16,9 @@ export const getErrorMessage = (form, input) =>
         .value() || ''
 
 export const FormError = props => {
-    const errorMessage = form => getErrorMessage(form, props['for'])
+    const errorMessage = form =>
+        getErrorMessage(form, props['for'])
+        
     return (
         <FormContext.Consumer>
             {errorMessage}

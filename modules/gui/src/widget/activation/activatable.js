@@ -34,11 +34,11 @@ class _Activatable extends React.Component {
 
     renderActivator(activatorProps) {
         const {id, activatables, children} = this.props
-        const currentActivatable = activatables[id] || {}
+        const {activationProps} = activatables[id] || {}
         return children({
             ...this.props,
             ...activatorProps,
-            ...currentActivatable.activationProps
+            ...activationProps
         })
     }
 
