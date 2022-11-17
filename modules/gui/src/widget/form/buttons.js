@@ -11,7 +11,7 @@ export class FormButtons extends React.Component {
 
     render() {
         const {chromeless, look, shape, size, air, className, input, label, multiple, options, tooltip, tooltipPlacement,
-            layout, alignment, spacing, groupSpacing, framed, disabled, tabIndex, width, onChange
+            layout, alignment, spacing, groupSpacing, framed, disabled, tabIndex, width
         } = this.props
         return (
             <Buttons

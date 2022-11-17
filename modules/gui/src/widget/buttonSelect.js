@@ -82,7 +82,7 @@ class ButtonSelect extends React.Component {
     }
 
     renderMultiButton() {
-        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement, width, onClick, onMouseOver, onMouseOut} = this.props
+        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
         return (
             <ButtonGroup
                 ref={this.input}

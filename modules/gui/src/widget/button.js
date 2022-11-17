@@ -250,7 +250,7 @@ class _Button extends React.Component {
     }
 
     renderButton([current, ...next]) {
-        const {type, style, tabIndex, onClickHold, forwardedRef} = this.props
+        const {type, style, tabIndex, forwardedRef} = this.props
         return (
             <button
                 ref={forwardedRef}
