@@ -32,13 +32,16 @@ class _Activatable extends React.Component {
             : null
     }
 
-    renderActivator(activatorProps) {
+    renderActivator({active, canActivate, activate, deactivate}) {
         const {id, activatables, children} = this.props
         const {activationProps} = activatables[id] || {}
         return children({
             ...this.props,
-            ...activatorProps,
-            ...activationProps
+            ...activationProps,
+            active,
+            canActivate,
+            activate,
+            deactivate
         })
     }
 
@@ -90,7 +93,7 @@ class _Activatable extends React.Component {
     }
 }
 
-export const Activatable = compose(
+const Activatable = compose(
     _Activatable,
     connect(mapStateToProps),
     withActivationContext()
@@ -99,12 +102,13 @@ export const Activatable = compose(
 Activatable.propTypes = {
     children: PropTypes.func.isRequired,
     id: PropTypes.string.isRequired,
+    alwaysAllow: PropTypes.any,
     policy: PropTypes.func
 }
 
 export const activatable = ({id, policy, alwaysAllow}) =>
     WrappedComponent =>
-        class HigherOrderComponent extends React.Component {
+        class ActivatableHoC extends React.Component {
             constructor() {
                 super()
                 this.renderActivatable = this.renderActivatable.bind(this)
@@ -113,16 +117,17 @@ export const activatable = ({id, policy, alwaysAllow}) =>
             render() {
                 const activatableId = _.isFunction(id) ? id(this.props) : id
                 return (
-                    <Activatable id={activatableId} policy={policy} alwaysAllow={alwaysAllow} otherProps={this.props}>
+                    <Activatable
+                        id={activatableId}
+                        policy={policy}
+                        alwaysAllow={alwaysAllow}
+                        otherProps={this.props}>
                         {this.renderActivatable}
                     </Activatable>
                 )
             }
 
             renderActivatable(activatable) {
-                return React.createElement(
-                    WrappedComponent,
-                    {activatable, ...this.props}
-                )
+                return React.createElement(WrappedComponent, {activatable, ...this.props})
             }
         }

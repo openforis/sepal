@@ -165,10 +165,15 @@ const MapInfoPanel = compose(
     })
 )
 
-class _MapInfo extends React.Component {
+class _MapInfo extends React.PureComponent {
     state = {
         view: {},
         width: null
+    }
+
+    constructor() {
+        super()
+        this.renderButton = this.renderButton.bind(this)
     }
 
     componentDidMount() {
@@ -183,37 +188,41 @@ class _MapInfo extends React.Component {
     }
 
     render() {
-        const {view: {scale}, width} = this.state
+        const {view: {scale}} = this.state
         return scale
             ? (
                 <div className={styles.container}>
                     <MapInfoPanel/>
                     <Activator id={'mapInfo'}>
-                        {({activate, deactivate, active}) => (
-                            <Button
-                                look='default'
-                                shape='rectangle'
-                                size='x-small'
-                                additionalClassName={styles.button}
-                                air='less'
-                                tooltip={active ? null : msg('map.info.tooltip')}
-                                tooltipPlacement='bottomLeft'
-                                onClick={() => active ? deactivate() : activate()}>
-                                <ElementResizeDetector onResize={({width}) => this.setState({width})}>
-                                    <div className={styles.content}>
-                                        <div>{format.number({value: scale, unit: 'm/px'})}</div>
-                                        <div className={styles.scale}></div>
-                                        <div>{format.number({value: width * scale, unit: 'm'})}</div>
-                                    </div>
-                                </ElementResizeDetector>
-                            </Button>
-                        )}
+                        {this.renderButton}
                     </Activator>
                 </div>
             )
             : null
     }
 
+    renderButton({activate, deactivate, active}) {
+        const {view: {scale}, width} = this.state
+        return (
+            <Button
+                look='default'
+                shape='rectangle'
+                size='x-small'
+                additionalClassName={styles.button}
+                air='less'
+                tooltip={active ? null : msg('map.info.tooltip')}
+                tooltipPlacement='bottomLeft'
+                onClick={() => active ? deactivate() : activate()}>
+                <ElementResizeDetector onResize={({width}) => this.setState({width})}>
+                    <div className={styles.content}>
+                        <div>{format.number({value: scale, unit: 'm/px'})}</div>
+                        <div className={styles.scale}></div>
+                        <div>{format.number({value: width * scale, unit: 'm'})}</div>
+                    </div>
+                </ElementResizeDetector>
+            </Button>
+        )
+    }
 }
 
 export const MapInfo = compose(

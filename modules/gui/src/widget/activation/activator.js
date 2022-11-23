@@ -1,4 +1,5 @@
 import {activationAllowed} from './activationPolicy'
+import {cloneDeep, isEqual} from 'hash'
 import {collectActivatables} from './activation'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -7,6 +8,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
+import diff from 'deep-diff'
 
 const mapStateToProps = (state, ownProps) => {
     const {activationContext: {pathList}} = ownProps
@@ -15,6 +17,21 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class _Activator extends React.Component {
+    shouldComponentUpdate({activatables: prevActivatables}) {
+        const {activatables} = this.props
+        if (isEqual(activatables, prevActivatables)) {
+            if (this.props.id === 'mapInfo') {
+                console.log('Activator skipped rerendering:', this.props.id || this.props.ids)
+            }
+            return false
+        } else {
+            if (this.props.id === 'mapInfo') {
+                console.log('Activator rerendering:', this.props.id || this.props.ids, diff(prevActivatables, activatables))
+            }
+            return true
+        }
+    }
+
     render() {
         const {children} = this.props
         return children(this.getActivatorProps())
@@ -45,7 +62,7 @@ class _Activator extends React.Component {
                 })
                 .dispatch()
 
-        const isActive = id => !!(activatables[id] || {}).active
+        const isActive = id => activatables[id]?.active
 
         const canActivate = id => activationAllowed(id, activatables)
 
@@ -57,8 +74,8 @@ class _Activator extends React.Component {
                     activatable.active = updatedActive
                     activatable.justActivated = updatedActive
                 }
-            }, _.cloneDeep(activatables))
-            if (!_.isEqual(updatedActivatables, activatables)) {
+            }, cloneDeep(activatables))
+            if (!isEqual(updatedActivatables, activatables)) {
                 actionBuilder('UPDATE_ACTIVATABLES', {pathList})
                     .set([pathList, 'activatables'], updatedActivatables)
                     .dispatch()
@@ -85,9 +102,21 @@ class _Activator extends React.Component {
     }
 }
 
+export const Activator = compose(
+    _Activator,
+    connect(mapStateToProps),
+    withActivationContext()
+)
+
+Activator.propTypes = {
+    children: PropTypes.func.isRequired,
+    id: PropTypes.string,
+    ids: PropTypes.array
+}
+
 export const activator = (...ids) =>
     WrappedComponent =>
-        class HigherOrderComponent extends React.Component {
+        class ActivatorHoc extends React.Component {
             constructor() {
                 super()
                 this.renderActivator = this.renderActivator.bind(this)
@@ -105,15 +134,3 @@ export const activator = (...ids) =>
                 return React.createElement(WrappedComponent, {activator, ...this.props})
             }
         }
-
-export const Activator = compose(
-    _Activator,
-    connect(mapStateToProps),
-    withActivationContext()
-)
-
-Activator.propTypes = {
-    children: PropTypes.func.isRequired,
-    id: PropTypes.string,
-    ids: PropTypes.array
-}

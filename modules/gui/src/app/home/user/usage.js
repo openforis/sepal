@@ -111,43 +111,57 @@ const Usage = compose(
 
 Usage.propTypes = {}
 
-const _UsageButton = ({userReport, hasBudget, budgetExceeded, budgetWarning}) => {
-    const hourlySpending = userReport.sessions
-        ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
-        : 0
-    const label = hasBudget && budgetExceeded
-        ? msg('home.sections.user.report.budgetExceeded')
-        : format.unitsPerHour(hourlySpending)
-    const additionalClassName = hasBudget
-        ? budgetExceeded
-            ? styles.budgetExceeded
-            : budgetWarning
-                ? styles.budgetWarning
-                : null
-        : null
-    return (
-        <React.Fragment>
-            <Activator id='userReport'>
-                {({active, activate}) =>
-                    <Button
-                        chromeless
-                        look='transparent'
-                        size='large'
-                        air='less'
-                        additionalClassName={additionalClassName}
-                        icon='dollar-sign'
-                        label={label}
-                        disabled={active}
-                        tooltip={msg('home.sections.user.report.tooltip')}
-                        tooltipPlacement='top'
-                        tooltipDisabled={active}
-                        onClick={() => activate()}
-                    />
-                }
-            </Activator>
-            <Usage/>
-        </React.Fragment>
-    )
+class _UsageButton extends React.Component {
+    constructor() {
+        super()
+        this.renderActivator = this.renderActivator.bind(this)
+    }
+
+    render() {
+        return (
+            <React.Fragment>
+                <Activator id='userReport'>
+                    {this.renderActivator}
+                </Activator>
+                <Usage/>
+            </React.Fragment>
+        )
+    }
+
+    renderActivator({active, activate}) {
+        const {userReport, hasBudget, budgetExceeded, budgetWarning} = this.props
+        const hourlySpending = userReport.sessions
+            ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
+            : 0
+        const label = hasBudget && budgetExceeded
+            ? msg('home.sections.user.report.budgetExceeded')
+            : format.unitsPerHour(hourlySpending)
+        const additionalClassName = hasBudget
+            ? budgetExceeded
+                ? styles.budgetExceeded
+                : budgetWarning
+                    ? styles.budgetWarning
+                    : null
+            : null
+
+        return (
+            <Button
+                chromeless
+                look='transparent'
+                size='large'
+                air='less'
+                additionalClassName={additionalClassName}
+                icon='dollar-sign'
+                label={label}
+                disabled={active}
+                tooltip={msg('home.sections.user.report.tooltip')}
+                tooltipPlacement='top'
+                tooltipDisabled={active}
+                onClick={activate}
+            />
+
+        )
+    }
 }
 
 export const UsageButton = compose(

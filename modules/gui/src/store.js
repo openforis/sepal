@@ -4,7 +4,7 @@ import {isEqual} from 'hash'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
-import React, {Component} from 'react'
+import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import asyncActionBuilder from 'async-action-builder'
@@ -51,9 +51,7 @@ export const connect = mapStateToProps => {
     mapStateToProps = mapStateToProps ? mapStateToProps : () => ({})
 
     // Component hierarchy:
-    //
-    // ComponentIdAssignment
-    // AddEnabledProp
+    // Wrapper
     // ConnectedComponent
     // ReduxConnectedComponent
     // PreventUpdateWhenDisabled
@@ -62,32 +60,9 @@ export const connect = mapStateToProps => {
     return WrappedComponent => {
         const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
 
-        class ComponentIdAssignment extends Component {
+        class Wrapper extends React.PureComponent {
             id = `${displayName}:${guid()}`
-            render() {
-                return (
-                    <AddEnabledProp {...this.props} componentId={this.id}>
-                        {this.props.children}
-                    </AddEnabledProp>
-                )
-            }
-        }
 
-        class PreventUpdateWhenDisabled extends Component {
-            shouldComponentUpdate(nextProps) {
-                return nextProps.enabled !== false
-            }
-
-            render() {
-                return (
-                    <WrappedComponent {...this.props}>
-                        {this.props.children}
-                    </WrappedComponent>
-                )
-            }
-        }
-
-        class AddEnabledProp extends Component {
             constructor() {
                 super()
                 this.renderEnabled = this.renderEnabled.bind(this)
@@ -102,11 +77,21 @@ export const connect = mapStateToProps => {
             }
 
             renderEnabled(enabled) {
-                return (
-                    <ConnectedComponent {...this.props} enabled={enabled}>
-                        {this.props.children}
-                    </ConnectedComponent>
-                )
+                return React.createElement(ConnectedComponent, {
+                    ...this.props,
+                    enabled,
+                    componentId: this.id
+                })
+            }
+        }
+
+        class PreventUpdateWhenDisabled extends React.Component {
+            render() {
+                return React.createElement(WrappedComponent, this.props)
+            }
+
+            shouldComponentUpdate(nextProps) {
+                return nextProps.enabled !== false
             }
         }
 
@@ -164,7 +149,6 @@ export const connect = mapStateToProps => {
                     stream: this.stream,
                     onEnable: this.setEnableListener,
                     onDisable: this.setDisableListener,
-                    // componentId: this.id,
                     componentWillUnmount$: this.componentWillUnmount$
                 })
             }
@@ -181,11 +165,10 @@ export const connect = mapStateToProps => {
         }
 
         ConnectedComponent.displayName
-            = AddEnabledProp.displayName
             = PreventUpdateWhenDisabled.displayName
             = `Store(${WrappedComponent.displayName})`
 
-        return ComponentIdAssignment
+        return Wrapper
     }
 }
 
@@ -198,31 +181,41 @@ const EnabledContext = React.createContext()
 
 export class Enabled extends React.PureComponent {
     ref = React.createRef()
+
+    constructor() {
+        super()
+        this.renderEnabled = this.renderEnabled.bind(this)
+    }
+
     render() {
-        const {value} = this.props
         return (
             <EnabledContext.Consumer>
-                {parentValue => this.renderChildren(value !== false && parentValue !== false)}
+                {this.renderEnabled}
             </EnabledContext.Consumer>
         )
+    }
+
+    renderEnabled(parentValue) {
+        const {value} = this.props
+        return this.renderChildren(value !== false && parentValue !== false)
     }
 
     renderChildren(enabled) {
         const {className, enabledClassName, disabledClassName, children} = this.props
         return (
-            <EnabledContext.Provider value={enabled}>
-                <div
-                    style={{
-                        height: '100%',
-                        width: '100%'
-                    }}
-                    className={[
-                        className,
-                        enabled ? enabledClassName : disabledClassName,
-                    ].join(' ')}>
+            <div
+                style={{
+                    height: '100%',
+                    width: '100%'
+                }}
+                className={[
+                    className,
+                    enabled ? enabledClassName : disabledClassName,
+                ].join(' ')}>
+                <EnabledContext.Provider value={enabled}>
                     {children}
-                </div>
-            </EnabledContext.Provider>
+                </EnabledContext.Provider>
+            </div>
         )
     }
 

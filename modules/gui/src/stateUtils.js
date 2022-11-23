@@ -1,4 +1,4 @@
-import {addHash, cloneDeep} from 'hash'
+import {addHash, cloneDeep, createHash} from 'hash'
 import _ from 'lodash'
 import flatten from 'flat'
 
@@ -107,7 +107,7 @@ export class Mutator {
         }
     }
 
-    traverse(tree, path) {
+    traverse(tree, path, hash) {
         const stateElements = _.chain(path)
             .transform(
                 (stateElements, pathElement, index, pathElements) => {
@@ -123,10 +123,12 @@ export class Mutator {
                             const previousElement = _.nth(stateElements, -2)
                             previousElement[pathElements[index - 1]] = [next]
                         }
+                        addHash(next, hash)
                         stateElements.push(next)
                     } else {
                         const next = this.getNext(stateElement[key], index)
                         stateElement[key] = next
+                        addHash(next, hash)
                         stateElements.push(next)
                     }
                 }, [tree])
@@ -140,7 +142,8 @@ export class Mutator {
     mutate(func) {
         const parentPath = _.initial(this.path)
         const pathElement = _.last(this.path)
-        const {root: stateRoot, node: stateNode} = this.traverse(this.state, parentPath)
+        const hash = createHash()
+        const {root: stateRoot, node: stateNode} = this.traverse(this.state, parentPath, hash)
 
         const key = this.getKey(stateNode, pathElement)
         const nodeKey = key === -1
@@ -148,7 +151,7 @@ export class Mutator {
             : key
             
         func(stateNode, nodeKey)
-        addHash(stateNode[nodeKey])
+        addHash(stateNode[nodeKey], hash)
         return stateRoot
     }
 

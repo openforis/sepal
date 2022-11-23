@@ -2,7 +2,7 @@ import React from 'react'
 
 const withSubscriptions = () =>
     WrappedComponent =>
-        class HigherOrderComponent extends React.Component {
+        class WithSubscriptionHoC extends React.Component {
             subscriptions = []
 
             constructor() {

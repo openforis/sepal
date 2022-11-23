@@ -9,6 +9,9 @@ const stats = {
     notHashed: 0
 }
 
+export const createHash = () =>
+    uuid()
+
 const setHash = (object, hash) =>
     Object.defineProperty(object, HASH_KEY, {
         value: hash,
@@ -16,8 +19,8 @@ const setHash = (object, hash) =>
         writable: true
     })
 
-export const addHash = object =>
-    (_.isPlainObject(object) || _.isArray(object)) && setHash(object, uuid())
+export const addHash = (object, hash = uuid()) =>
+    (_.isPlainObject(object) || _.isArray(object)) && setHash(object, hash)
     
 const copyHash = (source, target) =>
     setHash(target, source[HASH_KEY])
