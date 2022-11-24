@@ -108,7 +108,7 @@ Activatable.propTypes = {
 
 export const activatable = ({id, policy, alwaysAllow}) =>
     WrappedComponent =>
-        class ActivatableHoC extends React.Component {
+        class ActivatableHOC extends React.Component {
             constructor() {
                 super()
                 this.renderActivatable = this.renderActivatable.bind(this)

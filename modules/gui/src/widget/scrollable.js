@@ -281,7 +281,7 @@ Scrollable.propTypes = {
 
 export const withScrollable = () =>
     WrappedComponent =>
-        class HigherOrderComponent extends React.Component {
+        class WithScrollableHOC extends React.Component {
             constructor() {
                 super()
                 this.renderScrollable = this.renderScrollable.bind(this)

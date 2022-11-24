@@ -5,7 +5,7 @@ import _ from 'lodash'
 
 export const withLeaveAlert = mapStateToLeaveAlert =>
     WrappedComponent => {
-        class HigherOrderComponent extends React.Component {
+        class WithLeaveAlertHOC extends React.Component {
             constructor() {
                 super()
                 this.onClose = this.onClose.bind(this)
@@ -38,7 +38,7 @@ export const withLeaveAlert = mapStateToLeaveAlert =>
         })
 
         return compose(
-            HigherOrderComponent,
+            WithLeaveAlertHOC,
             connect(mapStateToProps)
         )
     }

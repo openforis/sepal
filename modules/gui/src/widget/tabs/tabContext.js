@@ -9,7 +9,7 @@ export const TabContext = React.createContext()
 
 export const withTabContext = () =>
     WrappedComponent => compose(
-        class HigherOrderComponent extends React.Component {
+        class WithTabContextHOC extends React.Component {
             constructor(props) {
                 super(props)
                 this.busy$ = this.createBusy$()

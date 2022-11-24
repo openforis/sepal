@@ -54,7 +54,7 @@ export const recipeFormPanel = (
     }
 
     return WrappedComponent => {
-        class HigherOrderComponent extends React.Component {
+        class RecipeFormPanelHOC extends React.Component {
             constructor(props) {
                 super(props)
                 const {values, recipeContext: {statePath}, form} = props
@@ -86,7 +86,7 @@ export const recipeFormPanel = (
         // activatable() is dependent on recipe for its policy -> withRecipe() before activatable()
         // withRecipe() is dependent on activatable props -> activatable() before withRecipe()
         return compose(
-            HigherOrderComponent,
+            RecipeFormPanelHOC,
             form({fields, constraints}),
             initValues(valuesSpec),
             withRecipe(createMapRecipeToProps(mapRecipeToProps)),

@@ -14,7 +14,7 @@ const mapRecipeToProps = recipe => ({
 
 export const withLayers = () =>
     WrappedComponent => {
-        class HigherOrderComponent extends React.Component {
+        class WithLayersHOC extends React.Component {
             render() {
                 const {
                     recipe,
@@ -47,7 +47,7 @@ export const withLayers = () =>
         }
 
         return compose(
-            HigherOrderComponent,
+            WithLayersHOC,
             withRecipe(mapRecipeToProps),
             withMapAreaContext(),
         )

@@ -41,7 +41,7 @@ export const withRecipe = (mapRecipeToProps = () => ({})) =>
                 return ownProps
             }
         }
-        class HigherOrderComponent extends React.Component {
+        class WithRecipeHOC extends React.Component {
             constructor(props) {
                 super(props)
                 const {recipeId, usingRecipe} = props
@@ -53,7 +53,7 @@ export const withRecipe = (mapRecipeToProps = () => ({})) =>
             }
         }
         return compose(
-            HigherOrderComponent,
+            WithRecipeHOC,
             connect(mapStateToProps),
             withRecipeContext(),
             recipeAccess()
@@ -68,7 +68,7 @@ export const recipe = ({getDefaultModel, defaultModel, mapRecipeToProps}) =>
             return {hasModel}
         }
 
-        class HigherOrderComponent extends React.Component {
+        class RecipeHOC extends React.Component {
             render() {
                 const {hasModel} = this.props
                 return hasModel
@@ -87,7 +87,7 @@ export const recipe = ({getDefaultModel, defaultModel, mapRecipeToProps}) =>
         }
 
         return compose(
-            HigherOrderComponent,
+            RecipeHOC,
             connect(mapStateToProps),
             withRecipe(mapRecipeToProps)
         )

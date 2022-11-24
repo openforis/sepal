@@ -3,7 +3,7 @@ import React from 'react'
 export const withContext = (Context, prop, required = false) =>
     () => // wrapped with apparently useless function for consistency with other "with*" wrappers
         WrappedComponent =>
-            class HigherOrderComponent extends React.Component {
+            class WithContextHOC extends React.Component {
                 constructor() {
                     super()
                     this.wrap = this.wrap.bind(this)

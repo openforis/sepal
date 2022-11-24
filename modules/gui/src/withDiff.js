@@ -3,7 +3,7 @@ import diff from 'deep-diff'
 
 export const withDiff = () =>
     WrappedComponent =>
-        class HigherOrderComponent extends React.Component {
+        class WithDiffHOC extends React.Component {
             render() {
                 return React.createElement(WrappedComponent, this.props)
             }

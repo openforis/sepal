@@ -19,7 +19,7 @@ const mapStateToProps = state => {
 
 export const recipeAccess = () =>
     WrappedComponent => {
-        class HigherOrderComponent extends React.Component {
+        class RecipeAccessHOC extends React.Component {
             constructor(props) {
                 super(props)
                 this.componentId = guid()
@@ -95,7 +95,7 @@ export const recipeAccess = () =>
         }
 
         return compose(
-            HigherOrderComponent,
+            RecipeAccessHOC,
             connect(mapStateToProps)
         )
     }
