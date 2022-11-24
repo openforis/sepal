@@ -3,6 +3,7 @@
 import {program, Option} from 'commander'
 import {showStatus, exit} from './utils.js'
 import {build} from './build.js'
+import {buildRestart} from './buildRestart.js'
 import {start} from './start.js'
 import {stop} from './stop.js'
 import {restart} from './restart.js'
@@ -41,6 +42,18 @@ const main = async () => {
         .argument('[module...]', 'Modules to build')
         .action(build)
     
+    program.command('buildrestart')
+        .description('Build and restart modules')
+        .option('-nc, --no-cache', 'No cache')
+        .option('-r, --recursive', 'Recursive')
+        .option('-d, --dependencies', 'Restart dependencies')
+        .option('-l, --log-tail', 'Show log tail')
+        .option('-t, --log-tail', 'Show log tail')
+        .option('-v, --verbose', 'Verbose')
+        .option('-q, --quiet', 'Quiet')
+        .argument('[module...]', 'Modules to build')
+        .action(buildRestart)
+    
     program.command('stop')
         .description('Stop modules')
         .option('-d, --dependencies', 'Stop dependencies')
@@ -54,6 +67,7 @@ const main = async () => {
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .option('-l, --log-tail', 'Show log tail')
+        .option('-t, --log-tail', 'Show log tail')
         .argument('[module...]', 'Modules to start')
         .action(start)
     
@@ -63,6 +77,7 @@ const main = async () => {
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .option('-l, --log-tail', 'Show log tail')
+        .option('-t, --log-tail', 'Show log tail')
         .argument('[module...]', 'Modules to start')
         .action(restart)
     
