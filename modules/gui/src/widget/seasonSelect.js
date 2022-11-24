@@ -2,12 +2,12 @@ import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {animationFrames, distinctUntilChanged, filter, fromEvent, map, scan, switchMap, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {intersect} from 'collections'
+import {withSubscriptions} from 'subscription'
 import Hammer from 'hammerjs'
 import PropTypes from 'prop-types'
 import React from 'react'
 import moment from 'moment'
 import styles from './seasonSelect.module.css'
-import withSubscriptions from '../subscription'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 

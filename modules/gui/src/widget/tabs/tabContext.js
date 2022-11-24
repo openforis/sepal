@@ -2,8 +2,8 @@ import {Subject, finalize} from 'rxjs'
 import {compose} from 'compose'
 import {v4 as uuid} from 'uuid'
 import {withContext} from 'context'
+import {withSubscriptions} from 'subscription'
 import React from 'react'
-import withSubscriptions from 'subscription'
 
 export const TabContext = React.createContext()
 

@@ -11,14 +11,16 @@ import guid from 'guid'
 
 let componentIdsByRecipeId = {}
 
-const mapStateToProps = state => {
-    return {
-        loadedRecipes: selectFrom(state, 'process.loadedRecipes') || {}
-    }
-}
+const componentIdsForRecipeId = recipeId => Array.from(
+    componentIdsByRecipeId[recipeId] || new Set([])
+)
+
+const mapStateToProps = state => ({
+    loadedRecipes: selectFrom(state, 'process.loadedRecipes') || {}
+})
 
 export const recipeAccess = () =>
-    WrappedComponent => {
+    WrappedComponent => compose(
         class RecipeAccessHOC extends React.Component {
             constructor(props) {
                 super(props)
@@ -92,14 +94,6 @@ export const recipeAccess = () =>
                     .del(['process.loadedRecipes', recipeId])
                     .dispatch()
             }
-        }
-
-        return compose(
-            RecipeAccessHOC,
-            connect(mapStateToProps)
-        )
-    }
-
-const componentIdsForRecipeId = recipeId => Array.from(
-    componentIdsByRecipeId[recipeId] || new Set([])
-)
+        },
+        connect(mapStateToProps)
+    )

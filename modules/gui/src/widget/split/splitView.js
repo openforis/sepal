@@ -5,11 +5,11 @@ import {SplitHandleHorizontal} from './splitHandleHorizontal'
 import {SplitHandleVertical} from './splitHandleVertical'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './splitView.module.css'
-import withSubscriptions from 'subscription'
 
 class _SplitView extends React.PureComponent {
     areas = React.createRef()

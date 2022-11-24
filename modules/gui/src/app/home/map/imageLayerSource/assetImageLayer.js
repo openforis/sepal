@@ -7,12 +7,12 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from '../mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import {withSubscriptions} from 'subscription'
 import {withTabContext} from 'widget/tabs/tabContext'
 import EarthEngineImageLayer from '../layer/earthEngineImageLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import withSubscriptions from 'subscription'
 
 const mapRecipeToProps = (recipe, ownProps) => {
     const {source} = ownProps

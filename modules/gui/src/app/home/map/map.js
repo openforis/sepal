@@ -22,13 +22,13 @@ import {v4 as uuid} from 'uuid'
 import {withLayers} from '../body/process/withLayers'
 import {withMapsContext} from './maps'
 import {withRecipe} from '../body/process/recipeContext'
+import {withSubscriptions} from 'subscription'
 import MapToolbar from './mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import styles from './map.module.css'
-import withSubscriptions from 'subscription'
 
 // _.memoize.Cache = WeakMap
 

@@ -1,6 +1,6 @@
 import React from 'react'
 
-const withSubscriptions = () =>
+export const withSubscriptions = () =>
     WrappedComponent =>
         class WithSubscriptionHOC extends React.Component {
             subscriptions = []
@@ -26,5 +26,3 @@ const withSubscriptions = () =>
                 this.subscriptions.forEach(subscription => subscription.unsubscribe())
             }
         }
-
-export default withSubscriptions

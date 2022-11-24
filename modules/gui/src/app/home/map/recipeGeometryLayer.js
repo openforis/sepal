@@ -1,10 +1,10 @@
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import {withTabContext} from 'widget/tabs/tabContext'
 import EarthEngineTableLayer from './layer/earthEngineTableLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import api from 'api'
-import withSubscriptions from 'subscription'
 
 class _RecipeGeometryLayer extends React.Component {
     render() {

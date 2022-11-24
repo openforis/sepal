@@ -11,12 +11,12 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser, updateCurrentUserDetails$} from 'user'
 import {msg} from 'translate'
+import {withSubscriptions} from 'subscription'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import styles from './userDetails.module.css'
-import withSubscriptions from 'subscription'
 
 const fields = {
     name: new Form.Field()

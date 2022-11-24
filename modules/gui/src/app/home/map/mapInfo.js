@@ -11,13 +11,13 @@ import {debounceTime, throttleTime} from 'rxjs'
 import {formatCoordinates} from 'coords'
 import {msg} from 'translate'
 import {withMap} from './mapContext'
+import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import clipboard from 'clipboard'
 import format from 'format'
 import styles from './mapInfo.module.css'
-import withSubscriptions from 'subscription'
 
 const THROTTLE_TIME_MS = 100
 

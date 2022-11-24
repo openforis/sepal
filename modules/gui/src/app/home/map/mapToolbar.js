@@ -4,11 +4,11 @@ import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {withMap} from './mapContext'
+import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './mapToolbar.module.css'
-import withSubscriptions from 'subscription'
 
 class MapToolbar extends React.Component {
     state = {

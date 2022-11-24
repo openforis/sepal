@@ -4,13 +4,13 @@ import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Subject, merge} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './list.module.css'
 import withForwardedRef from 'ref'
-import withSubscriptions from 'subscription'
 
 class _ScrollableList extends React.Component {
     autoCenter$ = new Subject()

@@ -8,6 +8,7 @@ import {connect} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
 import {simplifyString, splitString} from 'string'
+import {withSubscriptions} from 'subscription'
 import AutoFocus from 'widget/autoFocus'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
@@ -15,7 +16,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './combo.module.css'
-import withSubscriptions from 'subscription'
 
 const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []

@@ -5,13 +5,13 @@ import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
+import {withSubscriptions} from 'subscription'
 import FloatingBox from 'widget/floatingBox'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './buttonSelect.module.css'
-import withSubscriptions from 'subscription'
 
 // const SELECTION_DELAY_MS = 350
 

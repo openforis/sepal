@@ -41,19 +41,18 @@ export const withRecipe = (mapRecipeToProps = () => ({})) =>
                 return ownProps
             }
         }
-        class WithRecipeHOC extends React.Component {
-            constructor(props) {
-                super(props)
-                const {recipeId, usingRecipe} = props
-                usingRecipe(recipeId)
-            }
-
-            render() {
-                return React.createElement(WrappedComponent, {...this.props})
-            }
-        }
         return compose(
-            WithRecipeHOC,
+            class WithRecipeHOC extends React.Component {
+                constructor(props) {
+                    super(props)
+                    const {recipeId, usingRecipe} = props
+                    usingRecipe(recipeId)
+                }
+    
+                render() {
+                    return React.createElement(WrappedComponent, {...this.props})
+                }
+            },
             connect(mapStateToProps),
             withRecipeContext(),
             recipeAccess()
@@ -68,26 +67,24 @@ export const recipe = ({getDefaultModel, defaultModel, mapRecipeToProps}) =>
             return {hasModel}
         }
 
-        class RecipeHOC extends React.Component {
-            render() {
-                const {hasModel} = this.props
-                return hasModel
-                    ? React.createElement(WrappedComponent, this.props)
-                    : null
-            }
-
-            componentDidMount() {
-                const {hasModel, recipeContext: {statePath}} = this.props
-                if (!hasModel) {
-                    actionBuilder('INIT_MODEL', defaultModel || (getDefaultModel && getDefaultModel()))
-                        .set([statePath, 'model'], defaultModel || (getDefaultModel && getDefaultModel()))
-                        .dispatch()
-                }
-            }
-        }
-
         return compose(
-            RecipeHOC,
+            class RecipeHOC extends React.Component {
+                render() {
+                    const {hasModel} = this.props
+                    return hasModel
+                        ? React.createElement(WrappedComponent, this.props)
+                        : null
+                }
+    
+                componentDidMount() {
+                    const {hasModel, recipeContext: {statePath}} = this.props
+                    if (!hasModel) {
+                        actionBuilder('INIT_MODEL', defaultModel || (getDefaultModel && getDefaultModel()))
+                            .set([statePath, 'model'], defaultModel || (getDefaultModel && getDefaultModel()))
+                            .dispatch()
+                    }
+                }
+            },
             connect(mapStateToProps),
             withRecipe(mapRecipeToProps)
         )

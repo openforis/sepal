@@ -9,6 +9,7 @@ import {compose} from 'compose'
 import {connect, select} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
+import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -16,7 +17,6 @@ import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import guid from 'guid'
 import styles from './tabs.module.css'
-import withSubscriptions from 'subscription'
 
 const CLOSE_ANIMATION_DURATION_MS = 250
 

@@ -9,11 +9,11 @@ import {selectFrom} from 'stateUtils'
 import {withCursorValue} from './cursorValue'
 import {withMapAreaContext} from './mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import {withSubscriptions} from 'subscription'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
 import _ from 'lodash'
 import styles from './legendLayer.module.css'
-import withSubscriptions from 'subscription'
 
 const mapRecipeToProps = recipe => ({
     areas: selectFrom(recipe, 'layers.areas') || {}

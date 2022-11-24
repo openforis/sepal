@@ -3,13 +3,13 @@ import {ViewportResizeDetector} from 'widget/viewportResizeDetector'
 import {Widget} from 'widget/widget'
 import {animationFrames, combineLatest, distinctUntilChanged, fromEvent, map, merge, of, scan, switchMap, withLatestFrom} from 'rxjs'
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import Hammer from 'hammerjs'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './slider.module.css'
-import withSubscriptions from 'subscription'
 
 const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
 

@@ -10,10 +10,10 @@ import {compose} from 'compose'
 import {formatCoordinates, parseCoordinates} from 'coords'
 import {msg} from 'translate'
 import {withMap} from './mapContext'
+import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
 import React from 'react'
 import styles from './mapZoom.module.css'
-import withSubscriptions from 'subscription'
 
 class _MapZoomPanel extends React.Component {
     state = {

@@ -3,13 +3,13 @@ import {ScrollableList} from 'widget/list'
 import {Shape} from 'widget/shape'
 import {Subject, debounceTime, distinctUntilChanged, filter, merge} from 'rxjs'
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './searchBox.module.css'
-import withSubscriptions from 'subscription'
 
 class _SearchBox extends React.Component {
     inputRef = React.createRef()

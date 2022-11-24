@@ -2,11 +2,11 @@ import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Layout} from './layout'
 import {Subject, animationFrames, distinctUntilChanged, fromEvent, map, mergeWith, switchMap, takeUntil, timer} from 'rxjs'
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './fastList.module.css'
-import withSubscriptions from 'subscription'
 
 class _FastList extends React.PureComponent {
     resize$ = new Subject()

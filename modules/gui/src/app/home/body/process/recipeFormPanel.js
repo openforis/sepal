@@ -54,39 +54,37 @@ export const recipeFormPanel = (
     }
 
     return WrappedComponent => {
-        class RecipeFormPanelHOC extends React.Component {
-            constructor(props) {
-                super(props)
-                const {values, recipeContext: {statePath}, form} = props
-                this.prevValues = values
-
-                form.onDirtyChanged(dirty => setDirty({evaluatedPath: path(props), statePath, dirty}))
-            }
-
-            render() {
-                const {form, recipeContext: {statePath}, activatable: {deactivate}} = this.props
-                return (
-                    <Context.Provider value={{
-                        id,
-                        evaluatedPath: path(this.props),
-                        form,
-                        statePath,
-                        valuesToModel,
-                        deactivate,
-                        prevValues: this.prevValues
-                    }}>
-                        {React.createElement(WrappedComponent, {...this.props, form})}
-                    </Context.Provider>
-                )
-            }
-        }
-
         const policyToApply = props => ({...policy(props), ...additionalPolicy(props)})
         // [HACK] Using withRecipe() twice.
         // activatable() is dependent on recipe for its policy -> withRecipe() before activatable()
         // withRecipe() is dependent on activatable props -> activatable() before withRecipe()
         return compose(
-            RecipeFormPanelHOC,
+            class RecipeFormPanelHOC extends React.Component {
+                constructor(props) {
+                    super(props)
+                    const {values, recipeContext: {statePath}, form} = props
+                    this.prevValues = values
+    
+                    form.onDirtyChanged(dirty => setDirty({evaluatedPath: path(props), statePath, dirty}))
+                }
+    
+                render() {
+                    const {form, recipeContext: {statePath}, activatable: {deactivate}} = this.props
+                    return (
+                        <Context.Provider value={{
+                            id,
+                            evaluatedPath: path(this.props),
+                            form,
+                            statePath,
+                            valuesToModel,
+                            deactivate,
+                            prevValues: this.prevValues
+                        }}>
+                            {React.createElement(WrappedComponent, {...this.props, form})}
+                        </Context.Provider>
+                    )
+                }
+            },
             form({fields, constraints}),
             initValues(valuesSpec),
             withRecipe(createMapRecipeToProps(mapRecipeToProps)),

@@ -1,11 +1,11 @@
 import {compose} from 'compose'
 import {delay, distinctUntilChanged, filter, fromEvent, map, merge, switchMap} from 'rxjs'
 import {withContext} from 'context'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import withForwardedRef from 'ref'
-import withSubscriptions from 'subscription'
 
 const BlurDetectorContext = React.createContext()
 

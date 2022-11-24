@@ -12,7 +12,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './tabHandle.module.css'
-import withSubscriptions from 'subscription'
+import {withSubscriptions} from 'subscription'
 
 const CLOSE_ANIMATION_DURATION_MS = 250
 

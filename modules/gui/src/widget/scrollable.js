@@ -1,13 +1,13 @@
 import {EMPTY, Subject, animationFrames, debounceTime, distinctUntilChanged, fromEvent, map, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs'
 import {compose} from 'compose'
 import {v4 as uuid} from 'uuid'
+import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
 import flexy from './flexy.module.css'
 import styles from './scrollable.module.css'
-import withSubscriptions from 'subscription'
 
 const ScrollableContainerContext = React.createContext()
 

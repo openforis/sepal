@@ -16,12 +16,12 @@ import {getAllVisualizations, getUserDefinedVisualizations} from './visualizatio
 import {getRecipeType} from '../recipeTypes'
 import {selectFrom} from 'stateUtils'
 import {withMapAreaContext} from 'app/home/map/mapAreaContext'
+import {withSubscriptions} from 'subscription'
 import {withTabContext} from 'widget/tabs/tabContext'
 import EarthEngineImageLayer from 'app/home/map/layer/earthEngineImageLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import withSubscriptions from 'subscription'
 
 const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => ({
     sourceId: id,

@@ -1,11 +1,11 @@
 import {animationFrames, distinctUntilChanged, filter, fromEvent, map, merge, scan, switchMap} from 'rxjs'
 import {compose} from 'compose'
 import {getLogger} from 'log'
+import {withSubscriptions} from 'subscription'
 import Hammer from 'hammerjs'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import withSubscriptions from 'subscription'
 
 const log = getLogger('splitHandle')
 
