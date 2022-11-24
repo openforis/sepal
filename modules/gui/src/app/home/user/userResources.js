@@ -10,13 +10,13 @@ import format from 'format'
 import styles from './userResources.module.css'
 
 const mapStateToProps = () => ({
-    userReport: select('user.currentUserReport')
+    userReport: select('user.currentUserReport') || {}
 })
 
 class UserResources extends React.Component {
     render() {
         const {userReport: {spending}} = this.props
-        return (
+        return spending ? (
             <Layout type='vertical'>
                 {/* {this.renderInfo()} */}
                 <Layout
@@ -29,7 +29,7 @@ class UserResources extends React.Component {
                     {this.renderStorage(spending)}
                 </Layout>
             </Layout>
-        )
+        ) : null
     }
 
     renderInfo() {

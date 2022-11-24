@@ -79,7 +79,7 @@ class UserSessions extends React.Component {
 
     render() {
         const {sessions} = this.props
-        return sessions.length
+        return sessions?.length
             ? this.renderSessions(sessions)
             : this.renderNoSessions()
     }
