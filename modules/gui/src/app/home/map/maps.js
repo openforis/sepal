@@ -15,7 +15,7 @@ import api from 'api'
 
 const log = getLogger('maps')
 
-const GOOGLE_MAPS_VERSION = '3.47'
+const GOOGLE_MAPS_VERSION = '3.51'
 const GOOGLE_MAPS_LIBRARIES = ['drawing', 'places']
 
 const DEFAULT_ZOOM = 3
