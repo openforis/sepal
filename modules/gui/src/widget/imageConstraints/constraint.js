@@ -65,6 +65,7 @@ class _Constraint extends React.Component {
                         {this.renderValue()}
                     </Layout>
                 }
+                expansionInteractive
                 onClick={onClick}>
                 <CrudItem
                     title={imageSpec ? imageSpec.description : msg('widget.imageConstraints.image.notSelected')}
