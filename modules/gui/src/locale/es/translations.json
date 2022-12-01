@@ -1510,13 +1510,7 @@
                 },
                 "sources": {
                     "button": "",
-                    "classificationLoadError": "",
                     "form": {
-                        "classification": {
-                            "label": "",
-                            "placeholder": "",
-                            "tooltip": ""
-                        },
                         "band": {
                             "label": ""
                         },
@@ -2273,6 +2267,44 @@
                         "value": ""
                     },
                     "title": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "masking": {
+            "create": "",
+            "description": "",
+            "layers": {
+                "imageLayer": {
+                    "preSets": ""
+                }
+            },
+            "panel": {
+                "inputImage": {
+                    "asset": {
+                        "label": "",
+                        "placeholder": "",
+                        "title": ""
+                    },
+                    "imageMask": {
+                        "button": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "title": ""
+                    },
+                    "imageToMask": {
+                        "button": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "title": ""
+                    },
+                    "recipe": {
+                        "label": "",
+                        "placeholder": "",
+                        "title": ""
+                    }
                 }
             },
             "tabPlaceholder": ""
