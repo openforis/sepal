@@ -1510,13 +1510,7 @@
                 },
                 "sources": {
                     "button": "SRC",
-                    "classificationLoadError": "Échec du chargement de la classification : {error}",
                     "form": {
-                        "classification": {
-                            "label": "Classification",
-                            "placeholder": "Sélectionnez une classification...",
-                            "tooltip": "(Facultatif) Sélectionnez une formule de classification et appliquez le classificateur à chaque acquisition de la série temporelle."
-                        },
                         "band": {
                             "label": ""
                         },
@@ -2273,6 +2267,44 @@
                         "value": ""
                     },
                     "title": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "masking": {
+            "create": "",
+            "description": "",
+            "layers": {
+                "imageLayer": {
+                    "preSets": ""
+                }
+            },
+            "panel": {
+                "inputImage": {
+                    "asset": {
+                        "label": "",
+                        "placeholder": "",
+                        "title": ""
+                    },
+                    "imageMask": {
+                        "button": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "title": ""
+                    },
+                    "imageToMask": {
+                        "button": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "title": ""
+                    },
+                    "recipe": {
+                        "label": "",
+                        "placeholder": "",
+                        "title": ""
+                    }
                 }
             },
             "tabPlaceholder": ""
