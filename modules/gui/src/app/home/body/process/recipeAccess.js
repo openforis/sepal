@@ -1,7 +1,7 @@
 import {compose} from 'compose'
 import {connect} from 'store'
 import {initializeRecipe} from './recipe'
-import {map, of, tap} from 'rxjs'
+import {map, of, switchMap, tap} from 'rxjs'
 import {selectFrom} from 'stateUtils'
 import React from 'react'
 import _ from 'lodash'
@@ -31,6 +31,7 @@ export const recipeAccess = () =>
                     ...this.props,
                     usingRecipe: recipeId => this.usingRecipe(recipeId),
                     loadRecipe$: recipeId => this.loadRecipe$(recipeId),
+                    loadSourceRecipe$: recipeId => this.loadSourceRecipe$(recipeId),
                     loadedRecipes
                 })
             }
@@ -71,6 +72,26 @@ export const recipeAccess = () =>
                         map(recipe => initializeRecipe(recipe)),
                         tap(recipe => this.cacheRecipe(recipe))
                     )
+            }
+
+            loadSourceRecipe$(recipeId) {
+                const {getRecipeType} = require('./recipeTypes')
+                return this.loadRecipe$(recipeId).pipe(
+                    switchMap(recipe => {
+                        const type = getRecipeType(recipe.type)
+                        const sourceRecipe = type?.sourceRecipe && type.sourceRecipe(recipe)
+                        if (sourceRecipe) {
+                            if (sourceRecipe.type === 'ASSET') {
+                                return of(sourceRecipe)
+                            } else {
+                                return this.loadSourceRecipe$(sourceRecipe.recipeId)
+                            }
+                        } else {
+                            this.cacheRecipe(recipe)
+                            return of(recipe)
+                        }
+                    })
+                )
             }
 
             cacheRecipe(recipe) {

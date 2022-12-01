@@ -30,7 +30,6 @@ const fields = {
         .skip((v, {dataSets}) => !['BASEMAPS', 'DAILY'].includes(dataSets))
         .notBlank(),
     cloudPercentageThreshold: new Form.Field(),
-    classification: new Form.Field(),
     band: new Form.Field()
         .notBlank()
 }
@@ -71,7 +70,6 @@ class Sources extends React.Component {
                         {this.renderDataSets()}
                         {dataSetType.value === 'OPTICAL' ? this.renderCloudPercentageThreshold() : null}
                         {this.renderAssetId()}
-                        {this.renderClassification()}
                         {this.renderBand()}
                     </Layout>
                 </Panel.Content>
@@ -129,42 +127,14 @@ class Sources extends React.Component {
         )
     }
 
-    renderClassification() {
-        const {recipes, inputs: {classification}} = this.props
-        const options = recipes
-            .filter(({type}) => type === 'CLASSIFICATION')
-            .map(recipe => ({
-                value: recipe.id,
-                label: recipe.name
-            }))
-        return (
-            <Form.Combo
-                label={msg('process.changeAlerts.panel.sources.form.classification.label')}
-                tooltip={msg('process.changeAlerts.panel.sources.form.classification.tooltip')}
-                placeholder={msg('process.changeAlerts.panel.sources.form.classification.placeholder')}
-                input={classification}
-                options={options}
-                busyMessage={this.props.stream('LOAD_CLASSIFICATION_RECIPE').active && msg('widget.loading')}
-                onChange={selected => selected
-                    ? this.loadClassification(selected.value)
-                    : this.deselectClassification()}
-                allowClear
-                errorMessage
-            />
-        )
-    }
-
     renderBand() {
         const {bands, baseBands, corrections, inputs: {dataSets, band}} = this.props
-        const {classificationLegend, classifierType} = this.state
         var dataSetArray = dataSets.value && _.isArray(dataSets.value)
             ? dataSets.value
             : [dataSets.value]
-        var classification = {classificationLegend, classifierType, include: ['regression', 'probabilities']}
         const collectionGrouped = groupedBandOptions({
             dataSets: dataSetArray,
-            corrections,
-            classification
+            corrections
         })
         
         const rmseBands = bands
@@ -209,12 +179,9 @@ class Sources extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {dataSetType, classification}} = this.props
+        const {inputs: {dataSetType}} = this.props
         if (!dataSetType.value) {
             dataSetType.set('OPTICAL')
-        }
-        if (classification.value) {
-            this.loadClassification(classification.value)
         }
     }
 
@@ -248,44 +215,21 @@ class Sources extends React.Component {
         }
     }
 
-    loadClassification(recipeId) {
-        const {stream, loadRecipe$} = this.props
-        this.deselectClassification()
-        stream('LOAD_CLASSIFICATION_RECIPE',
-            loadRecipe$(recipeId),
-            classification => this.setState({
-                classificationLegend: classification.model.legend,
-                classifierType: classification.model.classifier.type
-            }),
-            error => Notifications.error({
-                message: msg('process.changeAlerts.panel.sources.classificationLoadError', {error}),
-                error
-            })
-        )
-    }
-
-    deselectClassification() {
-        this.setState({
-            classificationLegend: null,
-            classifierType: null
-        })
-    }
 }
 
 Sources.propTypes = {}
 
-const valuesToModel = ({dataSetType, asset, dataSets, cloudPercentageThreshold, classification, band}) => {
+const valuesToModel = ({dataSetType, asset, dataSets, cloudPercentageThreshold, band}) => {
     return ({
         dataSetType,
         dataSets: toSources(_.isArray(dataSets) ? dataSets : [dataSets]),
         cloudPercentageThreshold,
         assets: asset ? [asset] : [],
-        classification,
         band
     })
 }
 
-const modelToValues = ({dataSetType, assets, dataSets, cloudPercentageThreshold, classification, band}) => {
+const modelToValues = ({dataSetType, assets, dataSets, cloudPercentageThreshold, band}) => {
     const dataSetIds = _.uniq(Object.values(dataSets).flat())
     const defaultedDataSetType = dataSetType
         ? dataSetType
@@ -300,7 +244,6 @@ const modelToValues = ({dataSetType, assets, dataSets, cloudPercentageThreshold,
         cloudPercentageThreshold,
         asset: _.isEmpty(assets) ? null : assets[0],
         validAsset: true,
-        classification,
         band
     })
 }
