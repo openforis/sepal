@@ -232,8 +232,11 @@ export const isModule = name => {
 }
 
 export const isRunnable = module =>
-    (isModule(module) || {}).run
+    isModule(module)?.run
 
+export const isGradleModule = module =>
+    isModule(module)?.gradle
+    
 export const isServiceRunning = async (module, serviceName) => {
     const result = await getStatus([module], true)
     const services = _(result).get(['0', 'services'])

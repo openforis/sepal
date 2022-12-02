@@ -1,5 +1,5 @@
 import {exec} from './exec.js'
-import {exit, getModules, isModule, isRunnable, showModuleStatus, MESSAGE, getStatus, showStatus} from './utils.js'
+import {exit, getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus} from './utils.js'
 import {logs} from './logs.js'
 import {getDirectRunDeps} from './deps.js'
 import {SEPAL_SRC, ENV_FILE} from './config.js'
@@ -70,7 +70,9 @@ const getModulesToStart = (modules, options = {}) => {
 }
 
 export const start = async (modules, options) => {
-    if (options.gradle) {
+    const rootModules = getModules(modules)
+    const startModules = _.uniq(getModulesToStart(rootModules, options))
+    if (_.some(startModules, module => isGradleModule(module))) {
         showModuleStatus('gradle', MESSAGE.BUILDING, {sameLine: true})
         await exec({
             command: './script/gradle-build.sh',
@@ -79,8 +81,7 @@ export const start = async (modules, options) => {
         })
         showModuleStatus('gradle', MESSAGE.BUILT)
     }
-    const rootModules = getModules(modules)
-    const startModules = _.uniq(getModulesToStart(rootModules, options))
+
     for (const module of startModules) {
         await startModule(module, options, rootModules.includes(module))
     }
