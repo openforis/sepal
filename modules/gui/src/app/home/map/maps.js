@@ -1,4 +1,4 @@
-import {BehaviorSubject, Subject, debounceTime, distinctUntilChanged, filter, finalize, from, map, merge, of, switchMap, zip} from 'rxjs'
+import {BehaviorSubject, Subject, debounceTime, distinctUntilChanged, filter, from, map, merge, of, switchMap, zip} from 'rxjs'
 import {Loader} from 'google-maps'
 import {SepalMap} from './sepalMap'
 import {compose} from 'compose'
@@ -211,8 +211,7 @@ class _Maps extends React.Component {
 
         addSubscription(
             linked$.pipe(
-                distinctUntilChanged(),
-                finalize(() => setLinked(false))
+                distinctUntilChanged()
             ).subscribe(
                 linked => setLinked(linked)
             ),

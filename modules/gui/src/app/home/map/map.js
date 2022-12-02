@@ -714,7 +714,9 @@ class _Map extends React.Component {
             this.filteredViewUpdates$.subscribe(
                 view => updateView$.next(view)
             ),
-            this.linked$.subscribe(
+            this.linked$.pipe(
+                finalize(() => linked$.next(false))
+            ).subscribe(
                 linked => linked$.next(linked)
             )
         )
