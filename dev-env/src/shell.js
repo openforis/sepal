@@ -1,5 +1,5 @@
 import {exec} from './exec.js'
-import {exit, isModule, isRunnable, isServiceRunning, showModuleStatus, MESSAGE} from './utils.js'
+import {exit, isModule, isRunnable, isRunning, showModuleStatus, MESSAGE} from './utils.js'
 import {SEPAL_SRC, ENV_FILE} from './config.js'
 import _ from 'lodash'
 
@@ -8,7 +8,7 @@ const shellModule = async (module, service, options = {}, _parent) => {
         if (isModule(module)) {
             if (isRunnable(module)) {
                 const serviceName = `${module}${_.isEmpty(service) ? '' : `-${service}`}`
-                if (await isServiceRunning(module, serviceName)) {
+                if (await isRunning(module, serviceName)) {
                     const shellOptions = _.compact([
                         options.root ? '--user=root' : null
                     ]).join(' ')
