@@ -70,6 +70,15 @@ const getModulesToStart = (modules, options = {}) => {
 }
 
 export const start = async (modules, options) => {
+    if (options.gradle) {
+        showModuleStatus('gradle', MESSAGE.BUILDING, {sameLine: true})
+        await exec({
+            command: './script/gradle-build.sh',
+            args: [SEPAL_SRC],
+            showStdOut: options.verbose
+        })
+        showModuleStatus('gradle', MESSAGE.BUILT)
+    }
     const rootModules = getModules(modules)
     const startModules = _.uniq(getModulesToStart(rootModules, options))
     for (const module of startModules) {
