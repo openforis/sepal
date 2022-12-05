@@ -13,7 +13,8 @@ const {initMessageQueue} = require('sepal/messageQueue')
 
 const {Proxy} = require('./proxy')
 const {SessionManager} = require('./session')
-const {UserStore, setRequestUser, getSessionUsername} = require('./user')
+const {setRequestUser, getSessionUsername} = require('./user')
+const {UserStore} = require('./userStore')
 const {usernameTag, urlTag} = require('./tag')
 
 const redis = new Redis(redisUri)

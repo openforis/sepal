@@ -5,6 +5,7 @@
         "gateway": "info",
         "proxy": "info",
         "session": "info",
-        "user": "info"
+        "user": "info",
+        "userstore": "info"
     }
 }
