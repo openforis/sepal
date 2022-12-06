@@ -133,13 +133,11 @@ class _RecipeImageLayer extends React.Component {
                     bands
                 }) => id === prevVisParams.id && (prevVisParams.id || _.isEqual(bands, prevVisParams.bands)))
             if (!visParams) {
-                console.log('!visParams')
                 this.selectVisualization(allVisualizations[0])
             } else if (!_.isEqual(visParams, prevVisParams)) {
                 this.selectVisualization(visParams)
             }
         } else {
-            console.log('else')
             this.selectVisualization(allVisualizations[0])
         }
     }
