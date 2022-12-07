@@ -83,6 +83,11 @@ const mapStateToProps = (state, ownProps) => ({
 class _Tabs extends React.Component {
     constructor(props) {
         super(props)
+        this.addTab = this.addTab.bind(this)
+        this.closeSelectedTab = this.closeSelectedTab.bind(this)
+        this.selectPreviousTab = this.selectPreviousTab.bind(this)
+        this.selectNextTab = this.selectNextTab.bind(this)
+        
         const {tabs, statePath} = props
         if (tabs.length === 0) {
             addTab(statePath)
@@ -126,26 +131,48 @@ class _Tabs extends React.Component {
     }
 
     renderTabs() {
-        const {tabs, selectedTabId, tabActions} = this.props
+        const {tabs, maxTabs} = this.props
         return (
-            <Keybinding keymap={{
-                'Ctrl+Shift+W': () => this.closeTab(selectedTabId),
-                'Ctrl+Shift+T': () => this.addTab(),
-                'Ctrl+Shift+ArrowLeft': () => this.selectPreviousTab(),
-                'Ctrl+Shift+ArrowRight': () => this.selectNextTab()
-            }}>
+            <React.Fragment>
                 <ScrollableContainer>
                     <Scrollable direction='x' className={styles.tabs}>
-                        {tabs.map(tab => this.renderTab(tab))}
+                        {maxTabs > 1 ? tabs.map(tab => this.renderTab(tab)) : null}
                     </Scrollable>
                 </ScrollableContainer>
-                <div className={styles.tabActions}>
-                    {isMobile() || this.renderNavigationButtons()}
-                    {this.renderAddButton()}
-                    {tabActions && tabActions(selectedTabId)}
-                </div>
-            </Keybinding>
+                {this.renderTabControls()}
+            </React.Fragment>
         )
+    }
+
+    renderTabControls() {
+        return (
+            <div className={styles.tabActions}>
+                {this.renderTabButtons()}
+                {this.renderTabActions()}
+            </div>
+        )
+    }
+
+    renderTabActions() {
+        const {selectedTabId, tabActions} = this.props
+        return tabActions
+            ? tabActions(selectedTabId)
+            : null
+    }
+
+    renderTabButtons() {
+        const {maxTabs} = this.props
+        return maxTabs > 1 ? (
+            <Keybinding keymap={{
+                'Ctrl+Shift+W': this.closeSelectedTab,
+                'Ctrl+Shift+T': this.addTab,
+                'Ctrl+Shift+ArrowLeft': this.selectPreviousTab,
+                'Ctrl+Shift+ArrowRight': this.selectNextTab
+            }}>
+                {isMobile() || this.renderNavigationButtons()}
+                {this.renderAddButton()}
+            </Keybinding>
+        ) : null
     }
 
     selectPreviousTab() {
@@ -183,7 +210,7 @@ class _Tabs extends React.Component {
                     size='large'
                     shape='circle'
                     icon='chevron-left'
-                    onClick={() => this.selectPreviousTab()}
+                    onClick={this.selectPreviousTab}
                     disabled={this.isFirstTab()}/>
                 <Button
                     chromeless
@@ -191,16 +218,16 @@ class _Tabs extends React.Component {
                     size='large'
                     shape='circle'
                     icon='chevron-right'
-                    onClick={() => this.selectNextTab()}
+                    onClick={this.selectNextTab}
                     disabled={this.isLastTab()}/>
             </ButtonGroup>
         )
     }
 
     isAddDisabled() {
-        const {tabs, selectedTabId, isLandingTab} = this.props
+        const {tabs, selectedTabId, isLandingTab, maxTabs} = this.props
         const selectedTab = tabs.find(tab => tab.id === selectedTabId)
-        return selectedTab && isLandingTab && isLandingTab(selectedTab)
+        return tabs.length === maxTabs || selectedTab && isLandingTab && isLandingTab(selectedTab)
     }
 
     renderAddButton() {
@@ -215,7 +242,7 @@ class _Tabs extends React.Component {
                 tooltip={msg('widget.tabs.addTab.tooltip')}
                 tooltipPlacement='bottom'
                 disabled={this.isAddDisabled() && !onAdd}
-                onClick={() => this.addTab()}/>
+                onClick={this.addTab}/>
         )
     }
 
@@ -238,6 +265,11 @@ class _Tabs extends React.Component {
     closeTab(id) {
         const {statePath} = this.props
         closeTab(id, statePath)
+    }
+
+    closeSelectedTab() {
+        const {selectedTabId} = this.props
+        this.closeTab(selectedTabId)
     }
 
     render() {
@@ -314,10 +346,15 @@ Tabs.propTypes = {
     children: PropTypes.any,
     isDirty: PropTypes.func,
     isLandingTab: PropTypes.func,
+    maxTabs: PropTypes.number,
     selectedTabId: PropTypes.string,
     tabActions: PropTypes.func,
     tabs: PropTypes.array,
     onAdd: PropTypes.func,
     onClose: PropTypes.func,
     onTitleChanged: PropTypes.func
+}
+
+Tabs.defaultProps = {
+    maxTabs: 10
 }
