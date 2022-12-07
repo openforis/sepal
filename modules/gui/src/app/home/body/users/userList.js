@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
-import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import {Content} from 'widget/sectionLayout'
 import {FastList} from 'widget/fastList'
 import {Layout} from 'widget/layout'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
@@ -312,27 +312,24 @@ export default class UserList extends React.Component {
     render() {
         const users = this.getUsers()
         return (
-            <SectionLayout>
-                <TopBar label={msg('home.sections.users')}/>
-                <Content horizontalPadding verticalPadding menuPadding>
-                    <ScrollableContainer>
-                        <Unscrollable>
-                            <Layout type='horizontal' spacing='compact'>
-                                {this.renderTextFilter()}
-                                {this.renderStatusFilter()}
-                            </Layout>
-                        </Unscrollable>
-                        <Scrollable direction='x'>
-                            <ScrollableContainer className={styles.content}>
-                                <Scrollable direction='x' className={styles.users}>
-                                    {this.renderHeader(users)}
-                                    {this.renderUsers(users)}
-                                </Scrollable>
-                            </ScrollableContainer>
-                        </Scrollable>
-                    </ScrollableContainer>
-                </Content>
-            </SectionLayout>
+            <Content horizontalPadding verticalPadding menuPadding>
+                <ScrollableContainer>
+                    <Unscrollable>
+                        <Layout type='horizontal' spacing='compact'>
+                            {this.renderTextFilter()}
+                            {this.renderStatusFilter()}
+                        </Layout>
+                    </Unscrollable>
+                    <Scrollable direction='x'>
+                        <ScrollableContainer className={styles.content}>
+                            <Scrollable direction='x' className={styles.users}>
+                                {this.renderHeader(users)}
+                                {this.renderUsers(users)}
+                            </Scrollable>
+                        </ScrollableContainer>
+                    </Scrollable>
+                </ScrollableContainer>
+            </Content>
         )
     }
 }

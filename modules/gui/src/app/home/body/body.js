@@ -1,6 +1,7 @@
 import {CenteredProgress} from 'widget/progress'
 import {Maps} from 'app/home/map/maps'
 import {Section} from './section'
+import {Users} from './users/users'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {history, location} from 'route'
@@ -13,7 +14,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import Tasks from './tasks/tasks'
 import Terminal from './terminal/terminal'
-import Users from './users/users'
 import styles from './body.module.css'
 
 const mapStateToProps = () => ({
