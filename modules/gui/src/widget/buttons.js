@@ -43,6 +43,7 @@ export class Buttons extends React.Component {
                     chromeless
                     look={selected ? (customLook || 'transparent') : 'transparent'}
                     shape={shape || 'pill'}
+                    air={air}
                     size={size}
                     disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
                     icon={icon}
