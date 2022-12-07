@@ -5,19 +5,11 @@
     --remove-color: hsla(var(--look-cancel-h), var(--fx-saturation), var(--look-cancel-l), 1);
 }
 
-.toolbar {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
-    align-content: center;
-}
-
 .sortingButtons {
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
     align-content: center;
-    margin: .5rem 0;
 }
 
 .info {

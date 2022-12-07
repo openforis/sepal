@@ -29,13 +29,12 @@ class Process extends React.Component {
                     isLandingTab={({type}) => !type}
                     tabActions={recipeId => this.renderMenu(recipeId)}
                     onTitleChanged={tab => saveRecipe(tab)}
-                    onClose={(tab, close) => this.onCloseTab(tab, close)}
-                >
-                    {({id, type}) =>
+                    onClose={(tab, close) => this.onCloseTab(tab, close)}>
+                    {({id, type}) => (
                         <RecipeContext recipeId={id}>
                             {this.renderRecipe(id, type)}
                         </RecipeContext>
-                    }
+                    )}
                 </Tabs>
                 <CloseRecipe/>
                 <SaveRecipe/>

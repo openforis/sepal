@@ -3,6 +3,7 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Buttons} from 'widget/buttons'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {Tabs} from 'widget/tabs/tabs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {dotSafe} from 'stateUtils'
@@ -40,7 +41,7 @@ const treePath = (path = '/') =>
             (treePath, pathElement) => treePath.concat(['items', pathElement]), []
         ) : []
 
-class Browse extends React.Component {
+class _Browse extends React.Component {
 
     userFiles = api.userFiles.userFiles()
 
@@ -282,7 +283,9 @@ class Browse extends React.Component {
         })
     }
 
-    renderToolbar(selected, nothingSelected) {
+    renderToolbar() {
+        const selected = this.countSelectedItems()
+        const nothingSelected = selected.files === 0 && selected.directories === 0
         const oneFileSelected = selected.files === 1 && selected.directories === 0
         const selectedFiles = this.selectedItems().files
         const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
@@ -291,49 +294,47 @@ class Browse extends React.Component {
         const {showDotFiles} = this.props
         let dotFilesTooltip = `browse.controls.${showDotFiles ? 'hideDotFiles' : 'showDotFiles'}.tooltip`
         return (
-            <div className={styles.toolbar}>
-                <ButtonGroup>
-                    <Button
-                        chromeless
-                        size='large'
-                        shape='circle'
-                        icon={showDotFiles ? 'eye' : 'eye-slash'}
-                        tooltip={msg(dotFilesTooltip)}
-                        tooltipPlacement='bottom'
-                        onClick={this.toggleDotFiles}
-                    />
-                    <Button
-                        chromeless
-                        size='large'
-                        shape='circle'
-                        icon='download'
-                        tooltip={msg('browse.controls.download.tooltip')}
-                        tooltipPlacement='bottom'
-                        disabled={!oneFileSelected}
-                        downloadUrl={downloadUrl}
-                        downloadFilename={downloadFilename}
-                    />
-                    <RemoveButton
-                        chromeless
-                        size='large'
-                        shape='circle'
-                        tooltip={msg('browse.controls.remove.tooltip')}
-                        tooltipPlacement='bottom'
-                        disabled={nothingSelected}
-                        onRemove={this.removeSelected}
-                    />
-                    <Button
-                        chromeless
-                        size='large'
-                        shape='circle'
-                        icon='times'
-                        tooltip={msg('browse.controls.clearSelection.tooltip')}
-                        tooltipPlacement='bottom'
-                        disabled={nothingSelected}
-                        onClick={this.clearSelection}
-                    />
-                </ButtonGroup>
-            </div>
+            <ButtonGroup layout='horizontal-nowrap'>
+                <Button
+                    chromeless
+                    size='large'
+                    shape='circle'
+                    icon={showDotFiles ? 'eye' : 'eye-slash'}
+                    tooltip={msg(dotFilesTooltip)}
+                    tooltipPlacement='bottom'
+                    onClick={this.toggleDotFiles}
+                />
+                <Button
+                    chromeless
+                    size='large'
+                    shape='circle'
+                    icon='download'
+                    tooltip={msg('browse.controls.download.tooltip')}
+                    tooltipPlacement='bottom'
+                    disabled={!oneFileSelected}
+                    downloadUrl={downloadUrl}
+                    downloadFilename={downloadFilename}
+                />
+                <RemoveButton
+                    chromeless
+                    size='large'
+                    shape='circle'
+                    tooltip={msg('browse.controls.remove.tooltip')}
+                    tooltipPlacement='bottom'
+                    disabled={nothingSelected}
+                    onRemove={this.removeSelected}
+                />
+                <Button
+                    chromeless
+                    size='large'
+                    shape='circle'
+                    icon='times'
+                    tooltip={msg('browse.controls.clearSelection.tooltip')}
+                    tooltipPlacement='bottom'
+                    disabled={nothingSelected}
+                    onClick={this.clearSelection}
+                />
+            </ButtonGroup>
         )
     }
 
@@ -524,12 +525,13 @@ class Browse extends React.Component {
     }
 }
 
-Browse.propTypes = {
-    tree: PropTypes.object
-}
-
-export default compose(
-    Browse,
+export const Browse = compose(
+    _Browse,
     connect(mapStateToProps),
     withSubscriptions()
 )
+
+Browse.propTypes = {
+    id: PropTypes.string,
+    tree: PropTypes.object
+}
