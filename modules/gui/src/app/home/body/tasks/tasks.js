@@ -131,17 +131,15 @@ class Tasks extends React.Component {
 
     renderToolbar() {
         return (
-            <div className={styles.toolbar}>
-                <Button
-                    chromeless
-                    icon='trash'
-                    label={msg('tasks.removeAll.label')}
-                    tooltip={msg('tasks.removeAll.tooltip')}
-                    tooltipPlacement='bottom'
-                    disabled={!this.inactiveTasks().length}
-                    onClick={() => this.removeAllTasks()}
-                />
-            </div>
+            <InlineConfirmationButton
+                chromeless
+                shape='circle'
+                icon='trash'
+                disabled={!this.inactiveTasks().length}
+                tooltip={msg('tasks.removeAll.tooltip')}
+                tooltipPlacement='bottom'
+                onConfirm={() => this.removeAllTasks()}
+            />
         )
     }
 
