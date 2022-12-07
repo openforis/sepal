@@ -1,6 +1,5 @@
 import {Enabled} from 'store'
 import {PortalContainer, PortalContext} from 'widget/portal'
-import {StaticMap} from '../map/staticMap'
 import {isPathInLocation} from 'route'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -41,7 +40,7 @@ export class Section extends React.Component {
     }
 
     renderEnabled() {
-        const {path} = this.props
+        const {path, children} = this.props
         const {active} = this.state
         const portalContainerId = `portal_selectable_${path}`
         return (
@@ -51,17 +50,10 @@ export class Section extends React.Component {
                 disabledClassName={styles.disabled}>
                 <PortalContext id={portalContainerId}>
                     <PortalContainer id={portalContainerId} className={styles.portalContainer}/>
-                    {this.renderContent()}
+                    {children}
                 </PortalContext>
             </Enabled>
         )
-    }
-
-    renderContent() {
-        const {staticMap, children} = this.props
-        return staticMap
-            ? <StaticMap>{children}</StaticMap>
-            : children
     }
 }
 

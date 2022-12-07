@@ -2,6 +2,7 @@ import {Browse} from './browse/browse'
 import {CenteredProgress} from 'widget/progress'
 import {Maps} from 'app/home/map/maps'
 import {Section} from './section'
+import {StaticMap} from '../map/staticMap'
 import {Users} from './users/users'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -34,6 +35,7 @@ class Body extends React.Component {
         return (
             <div className={className}>
                 <div className={styles.sections}>
+                    <StaticMap/>
                     <Section path='/process'>
                         <Process/>
                     </Section>
