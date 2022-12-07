@@ -12,6 +12,6 @@ export const getGroupedBandOptions = recipe => {
     return [
         Object
             .keys(availableBands)
-            .map(band => ({value: band, ...availableBands[band]}))
+            .map(band => ({value: band, label: band, ...availableBands[band]}))
     ]
 }

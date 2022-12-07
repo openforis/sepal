@@ -45,7 +45,8 @@ const submitRetrieveRecipeTask = recipe => {
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
     const visualizations = getAllVisualizations(recipe)
-    const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
+    const type = getRecipeType(recipe.type)
+    const [timeStart, timeEnd] = ((type.getDateRange && type.getDateRange(recipe)) || []).map(date => date.valueOf())
     const pyramidingPolicy = {}
     bands.forEach(band => pyramidingPolicy[band] = band === 'change' ? 'mode' : 'mean')
     const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
