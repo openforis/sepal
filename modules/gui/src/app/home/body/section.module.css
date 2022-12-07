@@ -4,5 +4,52 @@
     bottom: 0;
     left: 0;
     right: 0;
-    overflow-y: hidden;
+    overflow: hidden;
+}
+
+.staticMap {
+    pointer-events: all;
+}
+
+.active {
+    z-index: 1;
+}
+
+.portalContainer {
+    top: var(--top-bar-height);
+    pointer-events: none;
+}
+
+.enabled {
+    animation-name: show;
+    animation-duration: 300ms;
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-in-out;
+}
+
+.disabled {
+    animation-name: hide;
+    animation-duration: 300ms;
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-in-out;
+}
+
+@keyframes show {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+        visibility: visible; /* Enables event capturing */
+    }
+}
+
+@keyframes hide {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        visibility: hidden; /* Disables event capturing */
+    }
 }

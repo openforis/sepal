@@ -1,5 +1,6 @@
 import {CenteredProgress} from 'widget/progress'
 import {Maps} from 'app/home/map/maps'
+import {Section} from './section'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {history, location} from 'route'
@@ -10,7 +11,6 @@ import Notifications from 'widget/notifications'
 import Process from './process/process'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Section from './section'
 import Tasks from './tasks/tasks'
 import Terminal from './terminal/terminal'
 import Users from './users/users'
@@ -34,22 +34,22 @@ class Body extends React.Component {
         return (
             <div className={className}>
                 <div className={styles.sections}>
-                    <Section path='/process' captureMouseEvents={false} staticMap={false}>
+                    <Section path='/process'>
                         <Process/>
                     </Section>
-                    <Section path='/browse'>
+                    <Section path='/browse' staticMap>
                         <Browse/>
                     </Section>
-                    <Section path='/app-launch-pad'>
+                    <Section path='/app-launch-pad' staticMap>
                         <Apps/>
                     </Section>
-                    <Section path='/terminal'>
+                    <Section path='/terminal' staticMap>
                         <Terminal/>
                     </Section>
-                    <Section path='/tasks'>
+                    <Section path='/tasks' staticMap>
                         <Tasks/>
                     </Section>
-                    <Section path='/users'>
+                    <Section path='/users' staticMap>
                         <Users/>
                     </Section>
                 </div>
