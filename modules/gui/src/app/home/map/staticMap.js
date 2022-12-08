@@ -1,18 +1,33 @@
+import {Subject, merge, timer} from 'rxjs'
 import {compose} from 'compose'
 import {withMapsContext} from './maps'
+import Keybinding from 'widget/keybinding'
 import React from 'react'
 import styles from './staticMap.module.css'
+import withSubscriptions from 'subscription'
 
 const MIN_ZOOM = 0
 const MAX_ZOOM = 5
 
 class _StaticMap extends React.Component {
     map = React.createRef()
+    randomize$ = new Subject()
+
+    constructor() {
+        super()
+        this.randomizeMap = this.randomizeMap.bind(this)
+    }
 
     render() {
         return (
-            <div className={styles.map} ref={this.map}/>
+            <Keybinding keymap={{'Ctrl+Shift+R': this.randomizeMap}}>
+                <div className={styles.map} ref={this.map}/>
+            </Keybinding>
         )
+    }
+
+    randomizeMap() {
+        this.randomize$.next()
     }
 
     randomize(map) {
@@ -24,15 +39,18 @@ class _StaticMap extends React.Component {
     }
 
     componentDidMount() {
-        const {mapsContext: {createGoogleMap}} = this.props
+        const {mapsContext: {createGoogleMap}, addSubscription} = this.props
         const map = createGoogleMap(this.map.current)
-        setTimeout(() => this.randomize(map), 1000)
+        addSubscription(
+            merge(this.randomize$, timer(1000)).subscribe(() => this.randomize(map))
+        )
     }
 }
 
 export const StaticMap = compose(
     _StaticMap,
-    withMapsContext()
+    withMapsContext(),
+    withSubscriptions()
 )
 
 StaticMap.propTypes = {}
