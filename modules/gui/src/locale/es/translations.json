@@ -127,13 +127,13 @@
                 "tooltip": "Descargar el elemento seleccionado"
             },
             "hideDotFiles": {
-                "tooltip": "Ocultar los documentos que empiezan por ."
+                "tooltip": ""
             },
             "remove": {
                 "tooltip": "Eliminar los elementos seleccionados"
             },
             "showDotFiles": {
-                "tooltip": "Mostrar los documentos que empiezan por . (dotfiles)"
+                "tooltip": ""
             },
             "sorting": {
                 "date.label": "",
