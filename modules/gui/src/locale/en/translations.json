@@ -126,19 +126,18 @@
         "download": {
           "tooltip": "Download selected item"
         },
-        "hideDotFiles": {
-          "tooltip": "Hide files beginning with a dot"
-        },
         "remove": {
           "tooltip": "Remove selected items"
         },
-        "showDotFiles": {
+        "dotFiles": {
           "label": "dotfiles",
-          "tooltip": "Show files beginning with a dot"
+          "hide.tooltip": "Hide files beginning with a dot",
+          "show.tooltip": "Show files beginning with a dot"
         },
         "splitDirs": {
           "label": "split",
-          "tooltip": "Show files beginning with a dot"
+          "split.tooltip": "Split directories and files",
+          "mix.tooltip": "Mix directories and files"
         },
         "sorting": {
           "date.label": "Date",

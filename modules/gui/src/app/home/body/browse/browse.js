@@ -345,8 +345,8 @@ class _FileBrowser extends React.Component {
                 />
                 <ToggleButton
                     shape='pill'
-                    label={msg('browse.controls.showDotFiles.label')}
-                    tooltip={msg(`browse.controls.${showDotFiles ? 'hideDotFiles' : 'showDotFiles'}.tooltip`)}
+                    label={msg('browse.controls.dotFiles.label')}
+                    tooltip={msg(`browse.controls.dotFiles.${showDotFiles ? 'hide' : 'show'}.tooltip`)}
                     tooltipPlacement='bottom'
                     selected={showDotFiles}
                     onChange={this.toggleDotFiles}
@@ -354,7 +354,7 @@ class _FileBrowser extends React.Component {
                 <ToggleButton
                     shape='pill'
                     label={msg('browse.controls.splitDirs.label')}
-                    tooltip={msg(`browse.controls.${splitDirs ? 'mix' : 'split'}.tooltip`)}
+                    tooltip={msg(`browse.controls.splitDirs.${splitDirs ? 'mix' : 'split'}.tooltip`)}
                     tooltipPlacement='bottom'
                     selected={splitDirs}
                     onChange={this.toggleSplitDirs}
