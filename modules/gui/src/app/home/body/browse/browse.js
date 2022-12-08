@@ -1,9 +1,9 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {Buttons} from 'widget/buttons'
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {Layout} from 'widget/layout'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {SortButtons} from 'widget/sortButtons'
 import {Tabs} from 'widget/tabs/tabs'
 import {ToggleButton} from 'widget/toggleButton'
 import {compose} from 'compose'
@@ -50,7 +50,8 @@ class _FileBrowser extends React.Component {
     userFiles = api.userFiles.userFiles()
 
     state = {
-        sorting: 'name'
+        sortingOrder: 'name',
+        sortingDirection: 1
     }
 
     constructor() {
@@ -298,7 +299,7 @@ class _FileBrowser extends React.Component {
 
     renderToolbar() {
         const {showDotFiles} = this.props
-        const {sorting} = this.state
+        const {sortingOrder, sortingDirection} = this.state
         const selected = this.countSelectedItems()
         const nothingSelected = selected.files === 0 && selected.directories === 0
         const oneFileSelected = selected.files === 1 && selected.directories === 0
@@ -306,13 +307,6 @@ class _FileBrowser extends React.Component {
         const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
         const downloadUrl = selectedFile && api.userFiles.downloadUrl(selectedFile)
         const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
-        const sortingOptions = [{
-            label: msg('browse.controls.sorting.date.label'),
-            value: 'date'
-        }, {
-            label: msg('browse.controls.sorting.name.label'),
-            value: 'name'
-        }]
         return (
             <ButtonGroup layout='horizontal-nowrap'>
                 <Button
@@ -347,20 +341,21 @@ class _FileBrowser extends React.Component {
                     selected={showDotFiles}
                     onChange={this.toggleDotFiles}
                 />
-                <Buttons
-                    shape='pill'
-                    layout='horizontal-nowrap'
-                    spacing='none'
-                    options={sortingOptions}
-                    selected={sorting}
+                <SortButtons
+                    labels={{
+                        name: msg('browse.controls.sorting.name.label'),
+                        date: msg('browse.controls.sorting.date.label'),
+                    }}
+                    sortingOrder={sortingOrder}
+                    sortingDirection={sortingDirection}
                     onChange={this.setSorting}
                 />
             </ButtonGroup>
         )
     }
 
-    setSorting(sorting) {
-        this.setState({sorting})
+    setSorting(sortingOrder, sortingDirection) {
+        this.setState({sortingOrder, sortingDirection})
     }
 
     renderNodeInfo(file) {
@@ -467,16 +462,28 @@ class _FileBrowser extends React.Component {
     }
 
     getSorter() {
-        const {sorting} = this.state
+        const {sortingOrder, sortingDirection} = this.state
+        const orderMap = {
+            '-1': 'desc',
+            '1': 'asc'
+        }
         const naturalSortingDirectoriesFirst = items =>
-            orderBy(items, [([_, {dir}]) => dir, ([name]) => name], ['desc', 'asc'])
+            orderBy(
+                items,
+                [([_, {dir}]) => dir, ([name]) => name],
+                ['desc', orderMap[sortingDirection]]
+            )
         const dateSortingDirectoriesFirst = items =>
-            orderBy(items, [([_, {dir}]) => dir, ([_, {mtime}]) => mtime], ['desc', 'desc'])
+            orderBy(
+                items,
+                [([_, {dir}]) => dir, ([_, {mtime}]) => mtime],
+                ['desc', orderMap[-sortingDirection]]
+            )
         const sortingMap = {
             name: naturalSortingDirectoriesFirst,
             date: dateSortingDirectoriesFirst
         }
-        return sortingMap[sorting]
+        return sortingMap[sortingOrder]
     }
 
     renderListItems(path, items, depth) {
