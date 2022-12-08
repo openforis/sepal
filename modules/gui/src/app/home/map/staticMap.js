@@ -15,22 +15,22 @@ class _StaticMap extends React.Component {
 
     constructor() {
         super()
-        this.randomizeMap = this.randomizeMap.bind(this)
+        this.randomize = this.randomize.bind(this)
     }
 
     render() {
         return (
-            <Keybinding keymap={{'Ctrl+Shift+R': this.randomizeMap}}>
+            <Keybinding keymap={{'Ctrl+Shift+R': this.randomize}}>
                 <div className={styles.map} ref={this.map}/>
             </Keybinding>
         )
     }
 
-    randomizeMap() {
+    randomize() {
         this.randomize$.next()
     }
 
-    randomize(map) {
+    setRandomView(map) {
         map.setCenter({
             lng: 360 * Math.random() - 180,
             lat: 90 * Math.random() - 45
@@ -42,7 +42,7 @@ class _StaticMap extends React.Component {
         const {mapsContext: {createGoogleMap}, addSubscription} = this.props
         const map = createGoogleMap(this.map.current)
         addSubscription(
-            merge(this.randomize$, timer(1000)).subscribe(() => this.randomize(map))
+            merge(this.randomize$, timer(1000)).subscribe(() => this.setRandomView(map))
         )
     }
 }
