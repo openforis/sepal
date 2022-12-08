@@ -126,14 +126,18 @@
             "download": {
                 "tooltip": ""
             },
-            "hideDotFiles": {
-                "tooltip": ""
-            },
             "remove": {
                 "tooltip": ""
             },
-            "showDotFiles": {
-                "tooltip": ""
+            "dotFiles": {
+                "label": "",
+                "hide.tooltip": "",
+                "show.tooltip": ""
+            },
+            "splitDirs": {
+                "label": "",
+                "split.tooltip": "",
+                "mix.tooltip": ""
             },
             "sorting": {
                 "date.label": "",
