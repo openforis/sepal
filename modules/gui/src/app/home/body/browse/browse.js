@@ -345,7 +345,7 @@ class _FileBrowser extends React.Component {
                 />
                 <ToggleButton
                     shape='pill'
-                    label='dotfiles'
+                    label={msg('browse.controls.showDotFiles.label')}
                     tooltip={msg(`browse.controls.${showDotFiles ? 'hideDotFiles' : 'showDotFiles'}.tooltip`)}
                     tooltipPlacement='bottom'
                     selected={showDotFiles}
@@ -353,9 +353,9 @@ class _FileBrowser extends React.Component {
                 />
                 <ToggleButton
                     shape='pill'
-                    label='split'
-                    // tooltip={msg(`browse.controls.${showDotFiles ? 'hideDotFiles' : 'showDotFiles'}.tooltip`)}
-                    // tooltipPlacement='bottom'
+                    label={msg('browse.controls.splitDirs.label')}
+                    tooltip={msg(`browse.controls.${splitDirs ? 'mix' : 'split'}.tooltip`)}
+                    tooltipPlacement='bottom'
                     selected={splitDirs}
                     onChange={this.toggleSplitDirs}
                 />
@@ -520,7 +520,7 @@ class _FileBrowser extends React.Component {
             name: naturalSortingDirectoriesFirst,
             date: dateSortingDirectoriesFirst
         }
-        
+
         return sortingMap[sortingOrder]
     }
 

@@ -133,6 +133,11 @@
           "tooltip": "Remove selected items"
         },
         "showDotFiles": {
+          "label": "dotfiles",
+          "tooltip": "Show files beginning with a dot"
+        },
+        "splitDirs": {
+          "label": "split",
           "tooltip": "Show files beginning with a dot"
         },
         "sorting": {
