@@ -126,14 +126,18 @@
             "download": {
                 "tooltip": "Descargar el elemento seleccionado"
             },
-            "hideDotFiles": {
-                "tooltip": ""
-            },
             "remove": {
                 "tooltip": "Eliminar los elementos seleccionados"
             },
-            "showDotFiles": {
-                "tooltip": ""
+            "dotFiles": {
+                "label": "",
+                "hide.tooltip": "",
+                "show.tooltip": ""
+            },
+            "splitDirs": {
+                "label": "",
+                "split.tooltip": "",
+                "mix.tooltip": ""
             },
             "sorting": {
                 "date.label": "",
