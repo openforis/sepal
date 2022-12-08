@@ -276,15 +276,11 @@ class _Tabs extends React.Component {
         const {label} = this.props
         return (
             <SectionLayout className={styles.container}>
-                <TopBar
-                    padding={false}
-                    label={label}>
+                <TopBar label={label}>
                     {this.renderTabs()}
                 </TopBar>
-                <Content>
-                    <div className={styles.tabContents}>
-                        {this.props.tabs.map(tab => this.renderTabContent(tab))}
-                    </div>
+                <Content className={styles.tabContents}>
+                    {this.props.tabs.map(tab => this.renderTabContent(tab))}
                 </Content>
             </SectionLayout>
         )

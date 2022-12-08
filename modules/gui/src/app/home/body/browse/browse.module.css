@@ -1,24 +1,23 @@
 .browse {
-    --look-highlight-a: .5;
+    /* --look-highlight-a: .5; */
     --fx-saturation: 70%;
     --add-color: hsla(var(--look-add-h), var(--fx-saturation), var(--look-add-l), 1);
     --remove-color: hsla(var(--look-cancel-h), var(--fx-saturation), var(--look-cancel-l), 1);
 }
 
-.sortingButtons {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
-    align-content: center;
-}
-
 .info {
-    justify-content: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    color: gray;
+    font-size: small;
+    margin-right: 1rem;
 }
 
 .fileList {
     overflow-x: auto;
     line-height: 2rem;
+    margin-top: 1rem;
 }
 
 .fileList ul {
@@ -31,6 +30,7 @@
 }
 
 .fileList li div {
+    --look-highlight-a: .5;
     display: flex;
     align-items: center;
     position: relative;

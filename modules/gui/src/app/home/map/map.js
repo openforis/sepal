@@ -595,13 +595,11 @@ class _Map extends React.Component {
         const {recipeContext: {statePath}, children} = this.props
         return (
             <SectionLayout>
-                <Content>
-                    <div className={styles.recipe}>
-                        <MapToolbar statePath={[statePath, 'ui']}/>
-                        <MapInfo/>
-                        <LegendImport/>
-                        {children}
-                    </div>
+                <Content className={styles.recipe}>
+                    <MapToolbar statePath={[statePath, 'ui']}/>
+                    <MapInfo/>
+                    <LegendImport/>
+                    {children}
                 </Content>
             </SectionLayout>
         )

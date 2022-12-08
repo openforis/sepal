@@ -127,13 +127,13 @@
           "tooltip": "Download selected item"
         },
         "hideDotFiles": {
-          "tooltip": "Hide files beginning with ."
+          "tooltip": "Hide files beginning with a dot"
         },
         "remove": {
           "tooltip": "Remove selected items"
         },
         "showDotFiles": {
-          "tooltip": "Show files beginning with . (dotfiles)"
+          "tooltip": "Show files beginning with a dot"
         },
         "sorting": {
           "date.label": "Date",
