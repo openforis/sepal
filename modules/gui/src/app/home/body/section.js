@@ -26,13 +26,11 @@ export class Section extends React.Component {
     }
 
     renderInitialized() {
-        const {staticMap} = this.props
         const {active} = this.state
         return (
             <div className={[
                 styles.section,
                 active ? styles.active : null,
-                active && staticMap ? styles.staticMap : null,
             ].join(' ')}>
                 {this.renderEnabled()}
             </div>
@@ -59,6 +57,5 @@ export class Section extends React.Component {
 
 Section.propTypes = {
     children: PropTypes.any,
-    path: PropTypes.string,
-    staticMap: PropTypes.any
+    path: PropTypes.string
 }

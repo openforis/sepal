@@ -39,19 +39,19 @@ class Body extends React.Component {
                     <Section path='/process'>
                         <Process/>
                     </Section>
-                    <Section path='/browse' staticMap>
-                        <Browse/>
+                    <Section path='/browse'>
+                        <Browse tabId='foo'/>
                     </Section>
-                    <Section path='/app-launch-pad' staticMap>
+                    <Section path='/app-launch-pad'>
                         <Apps/>
                     </Section>
-                    <Section path='/terminal' staticMap>
+                    <Section path='/terminal'>
                         <Terminal/>
                     </Section>
-                    <Section path='/tasks' staticMap>
+                    <Section path='/tasks'>
                         <Tasks/>
                     </Section>
-                    <Section path='/users' staticMap>
+                    <Section path='/users'>
                         <Users/>
                     </Section>
                 </div>
