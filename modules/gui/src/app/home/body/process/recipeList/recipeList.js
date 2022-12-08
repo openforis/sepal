@@ -13,6 +13,7 @@ import {RecipeListConfirm} from './recipeListConfirm'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {SelectProject} from './selectProject'
+import {SortButtons} from 'widget/sortButtons'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {getRecipeType} from '../recipeTypes'
@@ -61,6 +62,7 @@ class _RecipeList extends React.Component {
         this.moveSelected = this.moveSelected.bind(this)
         this.removeSelected = this.removeSelected.bind(this)
         this.toggleConfirmed = this.toggleConfirmed.bind(this)
+        this.setSorting = this.setSorting.bind(this)
     }
 
     render() {
@@ -254,26 +256,17 @@ class _RecipeList extends React.Component {
     }
 
     renderSortButtons() {
-        return (
-            <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
-                {this.renderSortButton('updateTime', msg('process.recipe.lastUpdate'))}
-                {this.renderSortButton('name', msg('process.recipe.name'))}
-            </ButtonGroup>
-        )
-    }
-
-    renderSortButton(column, label) {
         const {sortingOrder, sortingDirection} = this.props
         return (
-            <Button
-                chromeless
-                look='transparent'
-                shape='pill'
-                label={label}
-                labelStyle={sortingOrder === column ? 'smallcaps-highlight' : 'smallcaps'}
-                icon={this.getHandleIcon({column, sortingOrder, sortingDirection})}
-                iconPlacement='right'
-                onClick={() => this.setSorting(column)}/>
+            <SortButtons
+                labels={{
+                    updateTime: msg('process.recipe.lastUpdate'),
+                    name: msg('process.recipe.name'),
+                }}
+                sortingOrder={sortingOrder}
+                sortingDirection={sortingDirection}
+                onChange={this.setSorting}
+            />
         )
     }
 
@@ -366,12 +359,8 @@ class _RecipeList extends React.Component {
             .dispatch()
     }
 
-    setSorting(sortingOrder) {
-        const {sortingOrder: prevSortingOrder, sortingDirection: prevSortingDirection} = this.props
-        const sortingDirection = sortingOrder === prevSortingOrder
-            ? -prevSortingDirection
-            : 1
-        actionBuilder('SET_SORTING_ORDER', {sortingOrder})
+    setSorting(sortingOrder, sortingDirection) {
+        actionBuilder('SET_SORTING_ORDER', {sortingOrder, sortingDirection})
             .set(['process.sortingOrder'], sortingOrder)
             .set(['process.sortingDirection'], sortingDirection)
             .dispatch()
