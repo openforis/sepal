@@ -2,6 +2,12 @@ import {Button} from 'widget/button'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+const orderMap = {
+    '-1': 'sort-up',
+    '0': 'sort',
+    '1': 'sort-down'
+}
+
 export class SortButton extends React.Component {
     constructor() {
         super()
@@ -26,11 +32,6 @@ export class SortButton extends React.Component {
 
     getHandleIcon(sortingDirection) {
         const {sorted} = this.props
-        const orderMap = {
-            '-1': 'sort-up',
-            '0': 'sort',
-            '1': 'sort-down'
-        }
         return orderMap[sorted ? sortingDirection : 0]
     }
 
