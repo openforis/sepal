@@ -30,10 +30,12 @@ const ANIMATION_DURATION_MS = 1000
 const basePath = id => ['browse', id]
 const TREE = 'tree'
 const SHOW_DOT_FILES = 'showDotFiles'
+const SPLIT_DIRS = 'splitDirs'
 
 const mapStateToProps = (state, ownProps) => ({
     tree: select([basePath(ownProps.id), TREE]) || {},
-    showDotFiles: select([basePath(ownProps.id), SHOW_DOT_FILES])
+    showDotFiles: select([basePath(ownProps.id), SHOW_DOT_FILES]),
+    splitDirs: select([basePath(ownProps.id), SPLIT_DIRS])
 })
 
 const pathSections = path =>
@@ -61,6 +63,7 @@ class _FileBrowser extends React.Component {
         this.removeSelected = this.removeSelected.bind(this)
         this.clearSelection = this.clearSelection.bind(this)
         this.toggleDotFiles = this.toggleDotFiles.bind(this)
+        this.toggleSplitDirs = this.toggleSplitDirs.bind(this)
         this.setSorting = this.setSorting.bind(this)
     }
 
@@ -289,6 +292,13 @@ class _FileBrowser extends React.Component {
             .dispatch()
     }
 
+    toggleSplitDirs() {
+        const {splitDirs, id} = this.props
+        actionBuilder('TOGGLE_SPLIT_DIRS')
+            .set([basePath(id), SPLIT_DIRS], !splitDirs)
+            .dispatch()
+    }
+
     removeInfo() {
         const selected = this.countSelectedItems()
         return msg('browse.removeConfirmation', {
@@ -298,7 +308,7 @@ class _FileBrowser extends React.Component {
     }
 
     renderToolbar() {
-        const {showDotFiles} = this.props
+        const {showDotFiles, splitDirs} = this.props
         const {sortingOrder, sortingDirection} = this.state
         const selected = this.countSelectedItems()
         const nothingSelected = selected.files === 0 && selected.directories === 0
@@ -340,6 +350,14 @@ class _FileBrowser extends React.Component {
                     tooltipPlacement='bottom'
                     selected={showDotFiles}
                     onChange={this.toggleDotFiles}
+                />
+                <ToggleButton
+                    shape='pill'
+                    label='split'
+                    // tooltip={msg(`browse.controls.${showDotFiles ? 'hideDotFiles' : 'showDotFiles'}.tooltip`)}
+                    // tooltipPlacement='bottom'
+                    selected={splitDirs}
+                    onChange={this.toggleSplitDirs}
                 />
                 <SortButtons
                     labels={{
@@ -462,27 +480,47 @@ class _FileBrowser extends React.Component {
     }
 
     getSorter() {
+        const {splitDirs} = this.props
         const {sortingOrder, sortingDirection} = this.state
         const orderMap = {
             '-1': 'desc',
             '1': 'asc'
         }
+
+        const dirSorter = {
+            order: splitDirs ? ([_, {dir}]) => dir : null,
+            direction: splitDirs ? 'desc' : null
+        }
+
+        const nameSorter = {
+            order: ([name]) => name,
+            direction: orderMap[sortingDirection]
+        }
+
+        const dateSorter = {
+            order: ([_, {mtime}]) => mtime,
+            direction: orderMap[-sortingDirection]
+        }
+
         const naturalSortingDirectoriesFirst = items =>
             orderBy(
                 items,
-                [([_, {dir}]) => dir, ([name]) => name],
-                ['desc', orderMap[sortingDirection]]
+                _.compact([dirSorter.order, nameSorter.order]),
+                _.compact([dirSorter.direction, nameSorter.direction])
             )
+
         const dateSortingDirectoriesFirst = items =>
             orderBy(
                 items,
-                [([_, {dir}]) => dir, ([_, {mtime}]) => mtime],
-                ['desc', orderMap[-sortingDirection]]
+                _.compact([dirSorter.order, dateSorter.order]),
+                _.compact([dirSorter.direction, dateSorter.direction])
             )
+            
         const sortingMap = {
             name: naturalSortingDirectoriesFirst,
             date: dateSortingDirectoriesFirst
         }
+        
         return sortingMap[sortingOrder]
     }
 
