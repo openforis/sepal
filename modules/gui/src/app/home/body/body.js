@@ -40,7 +40,7 @@ class Body extends React.Component {
                         <Process/>
                     </Section>
                     <Section path='/browse'>
-                        <Browse tabId='foo'/>
+                        <Browse/>
                     </Section>
                     <Section path='/app-launch-pad'>
                         <Apps/>
