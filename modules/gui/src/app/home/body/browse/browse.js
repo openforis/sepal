@@ -31,11 +31,14 @@ const basePath = id => ['browse', id]
 const TREE = 'tree'
 const SHOW_DOT_FILES = 'showDotFiles'
 const SPLIT_DIRS = 'splitDirs'
+const SORTING = 'sorting'
 
 const mapStateToProps = (state, ownProps) => ({
     tree: select([basePath(ownProps.id), TREE]) || {},
     showDotFiles: select([basePath(ownProps.id), SHOW_DOT_FILES]),
-    splitDirs: select([basePath(ownProps.id), SPLIT_DIRS])
+    splitDirs: select([basePath(ownProps.id), SPLIT_DIRS]),
+
+    sorting: select([basePath(ownProps.id), SORTING]) || {sortingOrder: 'name', sortingDirection: 1}
 })
 
 const pathSections = path =>
@@ -50,11 +53,6 @@ const treePath = (path = '/') =>
 class _FileBrowser extends React.Component {
 
     userFiles = api.userFiles.userFiles()
-
-    state = {
-        sortingOrder: 'name',
-        sortingDirection: 1
-    }
 
     constructor() {
         super()
@@ -308,8 +306,7 @@ class _FileBrowser extends React.Component {
     }
 
     renderToolbar() {
-        const {showDotFiles, splitDirs} = this.props
-        const {sortingOrder, sortingDirection} = this.state
+        const {showDotFiles, splitDirs, sorting: {sortingOrder, sortingDirection}} = this.props
         const selected = this.countSelectedItems()
         const nothingSelected = selected.files === 0 && selected.directories === 0
         const oneFileSelected = selected.files === 1 && selected.directories === 0
@@ -380,7 +377,11 @@ class _FileBrowser extends React.Component {
     }
 
     setSorting(sortingOrder, sortingDirection) {
-        this.setState({sortingOrder, sortingDirection})
+        const {id} = this.props
+        actionBuilder('SET_SORTING', {sortingOrder, sortingDirection})
+            .set([basePath(id), SORTING], {sortingOrder, sortingDirection})
+            .dispatch()
+
     }
 
     renderNodeInfo(file) {
@@ -487,8 +488,7 @@ class _FileBrowser extends React.Component {
     }
 
     getSorter() {
-        const {splitDirs} = this.props
-        const {sortingOrder, sortingDirection} = this.state
+        const {splitDirs, sorting: {sortingOrder, sortingDirection}} = this.props
         const orderMap = {
             '-1': 'desc',
             '1': 'asc'
