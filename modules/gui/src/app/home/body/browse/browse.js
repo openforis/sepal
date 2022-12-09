@@ -320,6 +320,7 @@ class _FileBrowser extends React.Component {
         return (
             <ButtonGroup layout='horizontal-nowrap'>
                 <Button
+                    chromeless
                     shape='circle'
                     icon='download'
                     tooltip={msg('browse.controls.download.tooltip')}
@@ -329,6 +330,7 @@ class _FileBrowser extends React.Component {
                     downloadFilename={downloadFilename}
                 />
                 <RemoveButton
+                    chromeless
                     shape='circle'
                     tooltip={msg('browse.controls.remove.tooltip')}
                     tooltipPlacement='bottom'
@@ -336,38 +338,43 @@ class _FileBrowser extends React.Component {
                     onRemove={this.removeSelected}
                 />
                 <Button
+                    chromeless
                     shape='circle'
-                    icon='times'
+                    icon='rotate-left'
                     tooltip={msg('browse.controls.clearSelection.tooltip')}
                     tooltipPlacement='bottom'
                     disabled={nothingSelected}
                     onClick={this.clearSelection}
                 />
-                <ToggleButton
-                    shape='pill'
-                    label={msg('browse.controls.dotFiles.label')}
-                    tooltip={msg(`browse.controls.dotFiles.${showDotFiles ? 'hide' : 'show'}.tooltip`)}
-                    tooltipPlacement='bottom'
-                    selected={showDotFiles}
-                    onChange={this.toggleDotFiles}
-                />
-                <ToggleButton
-                    shape='pill'
-                    label={msg('browse.controls.splitDirs.label')}
-                    tooltip={msg(`browse.controls.splitDirs.${splitDirs ? 'mix' : 'split'}.tooltip`)}
-                    tooltipPlacement='bottom'
-                    selected={splitDirs}
-                    onChange={this.toggleSplitDirs}
-                />
-                <SortButtons
-                    labels={{
-                        name: msg('browse.controls.sorting.name.label'),
-                        date: msg('browse.controls.sorting.date.label'),
-                    }}
-                    sortingOrder={sortingOrder}
-                    sortingDirection={sortingDirection}
-                    onChange={this.setSorting}
-                />
+                <ButtonGroup spacing='tight'>
+                    <ToggleButton
+                        chromeless
+                        shape='pill'
+                        label={msg('browse.controls.dotFiles.label')}
+                        tooltip={msg(`browse.controls.dotFiles.${showDotFiles ? 'hide' : 'show'}.tooltip`)}
+                        tooltipPlacement='bottom'
+                        selected={showDotFiles}
+                        onChange={this.toggleDotFiles}
+                    />
+                    <ToggleButton
+                        chromeless
+                        shape='pill'
+                        label={msg('browse.controls.splitDirs.label')}
+                        tooltip={msg(`browse.controls.splitDirs.${splitDirs ? 'mix' : 'split'}.tooltip`)}
+                        tooltipPlacement='bottom'
+                        selected={splitDirs}
+                        onChange={this.toggleSplitDirs}
+                    />
+                    <SortButtons
+                        labels={{
+                            name: msg('browse.controls.sorting.name.label'),
+                            date: msg('browse.controls.sorting.date.label'),
+                        }}
+                        sortingOrder={sortingOrder}
+                        sortingDirection={sortingDirection}
+                        onChange={this.setSorting}
+                    />
+                </ButtonGroup>
             </ButtonGroup>
         )
     }
