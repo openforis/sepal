@@ -79,7 +79,6 @@ export class CrudItem extends React.Component {
                 <Button
                     chromeless
                     shape='circle'
-                    size='large'
                     icon='info-circle'
                     tooltip={infoTooltip}
                     tooltipPlacement={tooltipPlacement}
@@ -97,7 +96,6 @@ export class CrudItem extends React.Component {
                 <Button
                     chromeless
                     shape='circle'
-                    size='large'
                     icon='edit'
                     tooltip={editTooltip}
                     tooltipPlacement={tooltipPlacement}
@@ -115,7 +113,6 @@ export class CrudItem extends React.Component {
                 <Button
                     chromeless
                     shape='circle'
-                    size='large'
                     icon='clone'
                     tooltip={duplicateTooltip}
                     tooltipPlacement={tooltipPlacement}
@@ -133,7 +130,6 @@ export class CrudItem extends React.Component {
                 <RemoveButton
                     chromeless
                     shape='circle'
-                    size='large'
                     title={removeTitle}
                     message={removeMessage}
                     tooltip={removeTooltip}
@@ -155,7 +151,6 @@ export class CrudItem extends React.Component {
                 <CheckButton
                     chromeless
                     shape='circle'
-                    size='large'
                     checked={selected}
                     tooltip={selectTooltip}
                     tooltipPlacement={tooltipPlacement}
