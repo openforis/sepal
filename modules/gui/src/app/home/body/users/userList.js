@@ -1,10 +1,10 @@
-import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
-import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import {Content, SectionLayout} from 'widget/sectionLayout'
 import {FastList} from 'widget/fastList'
 import {Layout} from 'widget/layout'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
+import {SortButton} from 'widget/sortButton'
 import {UserResourceUsage} from 'app/home/user/userResourceUsage'
 import {UserStatus} from './userStatus'
 import {msg} from 'translate'
@@ -39,11 +39,11 @@ export default class UserList extends React.Component {
         this.setStatusFilter = this.setStatusFilter.bind(this)
     }
 
-    setSorting(sortingOrder, defaultSorting) {
+    setSorting(sortingOrder, defaultSortingDirection) {
         this.setState(prevState => {
             const sortingDirection = sortingOrder === prevState.sortingOrder
                 ? -prevState.sortingDirection
-                : defaultSorting
+                : defaultSortingDirection
             return {
                 ...prevState,
                 sortingOrder,
@@ -132,28 +132,19 @@ export default class UserList extends React.Component {
         this.search.current.focus()
     }
 
-    getSortingHandleIcon(column, defaultSorting) {
+    renderColumnHeader({column, label, defaultSortingDirection, classNames = []}) {
         const {sortingOrder, sortingDirection} = this.state
-        return sortingOrder === column
-            ? sortingDirection === defaultSorting
-                ? 'sort-down'
-                : 'sort-up'
-            : 'sort'
-    }
-
-    renderColumnHeader({column, label, defaultSorting, classNames = []}) {
-        const {sortingOrder} = this.state
         return (
-            <Button
-                chromeless
-                look='transparent'
+            <SortButton
+                key={column}
+                additionalClassName={classNames.join(' ')}
                 shape='none'
                 label={label}
-                labelStyle={sortingOrder === column ? 'smallcaps-highlight' : 'smallcaps'}
-                icon={this.getSortingHandleIcon(column, defaultSorting)}
-                iconPlacement='right'
-                additionalClassName={classNames.join(' ')}
-                onClick={() => this.setSorting(column, defaultSorting)}/>
+                sorted={sortingOrder === column}
+                sortingDirection={sortingDirection}
+                defaultSortingDirection={defaultSortingDirection}
+                onChange={sortingDirection => this.setSorting(column, sortingDirection)}
+            />
         )
     }
 
@@ -169,55 +160,55 @@ export default class UserList extends React.Component {
                 {this.renderColumnHeader({
                     column: 'name',
                     label: msg('user.userDetails.form.name.label'),
-                    defaultSorting: 1,
+                    defaultSortingDirection: 1,
                     classNames: [styles.name]
                 })}
                 {this.renderColumnHeader({
                     column: 'status',
                     label: msg('user.status.label'),
-                    defaultSorting: 1,
+                    defaultSortingDirection: 1,
                     classNames: [styles.status]
                 })}
                 {this.renderColumnHeader({
                     column: 'updateTime',
                     label: msg('user.userDetails.form.lastUpdate.label'),
-                    defaultSorting: -1,
+                    defaultSortingDirection: -1,
                     classNames: [styles.updateTime]
                 })}
                 {this.renderColumnHeader({
                     column: 'quota.budget.instanceSpending',
                     label: msg('user.report.resources.max'),
-                    defaultSorting: -1,
+                    defaultSortingDirection: -1,
                     classNames: [styles.instanceBudgetMax, styles.number]
                 })}
                 {this.renderColumnHeader({
                     column: 'quota.current.instanceSpending',
                     label: msg('user.report.resources.used'),
-                    defaultSorting: -1,
+                    defaultSortingDirection: -1,
                     classNames: [styles.instanceBudgetUsed, styles.number]
                 })}
                 {this.renderColumnHeader({
                     column: 'quota.budget.storageSpending',
                     label: msg('user.report.resources.max'),
-                    defaultSorting: -1,
+                    defaultSortingDirection: -1,
                     classNames: [styles.storageBudgetMax, styles.number]
                 })}
                 {this.renderColumnHeader({
                     column: 'quota.current.storageSpending',
                     label: msg('user.report.resources.used'),
-                    defaultSorting: -1,
+                    defaultSortingDirection: -1,
                     classNames: [styles.storageBudgetUsed, styles.number]
                 })}
                 {this.renderColumnHeader({
                     column: 'quota.budget.storageQuota',
                     label: msg('user.report.resources.max'),
-                    defaultSorting: -1,
+                    defaultSortingDirection: -1,
                     classNames: [styles.storageSpaceMax, styles.number]
                 })}
                 {this.renderColumnHeader({
                     column: 'quota.current.storageQuota',
                     label: msg('user.report.resources.used'),
-                    defaultSorting: -1,
+                    defaultSortingDirection: -1,
                     classNames: [styles.storageSpaceUsed, styles.number]
                 })}
             </div>
@@ -313,7 +304,6 @@ export default class UserList extends React.Component {
         const users = this.getUsers()
         return (
             <SectionLayout>
-                <TopBar label={msg('home.sections.users')}/>
                 <Content horizontalPadding verticalPadding menuPadding>
                     <ScrollableContainer>
                         <Unscrollable>

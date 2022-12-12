@@ -10,7 +10,7 @@ import _ from 'lodash'
 import actionBuilder from 'action-builder'
 
 const Context = React.createContext()
-
+ 
 export const RecipeContext = ({rootStatePath = 'process.loadedRecipes', recipeId, children}) =>
     recipeId
         ? (
@@ -28,7 +28,7 @@ const withRecipeContext = withContext(Context, 'recipeContext')
 
 export const withRecipe = (mapRecipeToProps = () => ({})) =>
     WrappedComponent => {
-        const mapStateToProps = (state, ownProps) => {
+        const mapStateToProps = (_state, ownProps) => {
             const {recipeContext: {statePath}} = ownProps
             const recipe = {...select(statePath)}
             if (!_.isEmpty(recipe)) {

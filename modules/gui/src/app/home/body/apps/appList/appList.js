@@ -55,7 +55,7 @@ class _AppList extends React.Component {
     render() {
         return (
             <SectionLayout>
-                <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
+                <Content className={styles.container} horizontalPadding verticalPadding menuPadding>
                     {this.isLoading()
                         ? this.renderProgress()
                         : this.renderAppList()}

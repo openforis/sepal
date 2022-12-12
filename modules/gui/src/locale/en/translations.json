@@ -126,14 +126,18 @@
         "download": {
           "tooltip": "Download selected item"
         },
-        "hideDotFiles": {
-          "tooltip": "Hide files beginning with ."
-        },
         "remove": {
           "tooltip": "Remove selected items"
         },
-        "showDotFiles": {
-          "tooltip": "Show files beginning with . (dotfiles)"
+        "dotFiles": {
+          "label": "dotfiles",
+          "hide.tooltip": "Hide files beginning with a dot",
+          "show.tooltip": "Show files beginning with a dot"
+        },
+        "splitDirs": {
+          "label": "split",
+          "split.tooltip": "Split directories and files",
+          "mix.tooltip": "Mix directories and files"
         },
         "sorting": {
           "date.label": "Date",
@@ -1512,13 +1516,7 @@
           },
           "sources": {
             "button": "SRC",
-            "classificationLoadError": "Failed to load classification: {error}",
             "form": {
-              "classification": {
-                "label": "Classification",
-                "placeholder": "Select a classification...",
-                "tooltip": "(Optional) Select a classification recipe and apply the classifier to every acquisition in the time-series."
-              },
               "band": {
                 "label": "Analysis band"
               },
@@ -2279,6 +2277,44 @@
         },
         "tabPlaceholder": "Index_change"
       },
+      "masking": {
+        "create": "Masking",
+        "description": "Apply a mask to an image.",
+        "layers": {
+          "imageLayer": {
+            "preSets": "Pre-sets"
+          }
+        },
+        "panel": {
+          "inputImage": {
+            "asset": {
+              "label": "Earth Engine asset ID",
+              "placeholder": "Enter an asset ID...",
+              "title": "Earth Engine Asset"
+            },
+            "imageMask": {
+              "button": {
+                "label": "MSK",
+                "tooltip": "Select mask to use"
+              },
+              "title": "Mask to use"
+            },
+            "imageToMask": {
+              "button": {
+                "label": "IMG",
+                "tooltip": "Select image to mask"
+              },
+              "title": "Image to mask"
+            },
+            "recipe": {
+              "label": "Recipe",
+              "placeholder": "Select a recipe...",
+              "title": "Saved SEPAL Recipe"
+            }
+          }
+        },
+        "tabPlaceholder": "Masking"
+      },      
       "menu": {
         "duplicateRecipe": {
           "label": "Duplicate recipe",

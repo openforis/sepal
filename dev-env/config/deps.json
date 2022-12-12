@@ -117,7 +117,8 @@
         "run": [
             "mysql",
             "user"
-        ]
+        ],
+        "gradle": true
     },
     "ssh-gateway": {
         "lib": [
@@ -161,7 +162,8 @@
             "mysql",
             "ldap",
             "rabbitmq"
-        ]
+        ],
+        "gradle": true
     },
     "user-files": {
         "lib": [

@@ -14,20 +14,20 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './userDetails.module.css'
 
-const isNoMatchingUser = (id, check) => !(select('users') || []).find(user => user.id !== id && check(user))
+const isUniqueUser = (id, check) => !(select('users.users') || []).find(user => user.id !== id && check(user))
 
 const fields = {
     id: new Form.Field(),
     username: new Form.Field()
         .notBlank('user.userDetails.form.username.required')
         .match(/^[a-zA-Z_][a-zA-Z0-9]{0,29}$/, 'user.userDetails.form.username.format')
-        .predicate((username, {id}) => isNoMatchingUser(id, user => user.username === username), 'user.userDetails.form.username.unique'),
+        .predicate((username, {id}) => isUniqueUser(id, user => user.username === username), 'user.userDetails.form.username.unique'),
     name: new Form.Field()
         .notBlank('user.userDetails.form.name.required'),
     email: new Form.Field()
         .notBlank('user.userDetails.form.email.required')
         .email('user.userDetails.form.email.required')
-        .predicate((email, {id}) => isNoMatchingUser(id, user => user.email === email), 'user.userDetails.form.email.unique'),
+        .predicate((email, {id}) => isUniqueUser(id, user => user.email === email), 'user.userDetails.form.email.unique'),
     organization: new Form.Field()
         .notBlank('user.userDetails.form.organization.required'),
     intendedUse: new Form.Field(),

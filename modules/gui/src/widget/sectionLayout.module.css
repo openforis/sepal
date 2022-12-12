@@ -66,7 +66,7 @@
 }
 
 .content.verticalPadding {
-    --edgePadding-top: 2rem;
+    --edgePadding-top: 1.5rem;
     --edgePadding-bottom: .5rem;
 }
 

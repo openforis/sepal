@@ -4,6 +4,7 @@ import {ClassChangeImageLayer} from './classChange/classChangeImageLayer'
 import {ClassificationImageLayer} from './classification/classificationImageLayer'
 import {CursorValue} from 'app/home/map/cursorValue'
 import {IndexChangeImageLayer} from './indexChange/indexChangeImageLayer'
+import {MaskingImageLayer} from './masking/maskingImageLayer'
 import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
 import {PhenologyImageLayer} from './phenology/phenologyImageLayer'
 import {PlanetMosaicImageLayer} from './planetMosaic/planetMosaicImageLayer'
@@ -96,6 +97,10 @@ class _RecipeImageLayer extends React.Component {
         case 'PHENOLOGY':
             return (
                 <PhenologyImageLayer {...props}/>
+            )
+        case 'MASKING':
+            return (
+                <MaskingImageLayer {...props}/>
             )
         default:
             return null

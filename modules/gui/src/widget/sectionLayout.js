@@ -25,8 +25,7 @@ export const TopBar = ({className, label, children}) =>
     </div>
 
 TopBar.propTypes = {
-    children: PropTypes.any,
-    padding: PropTypes.any
+    children: PropTypes.any
 }
 
 export const Content = ({menuPadding, appMenuPadding, horizontalPadding, verticalPadding, className, children}) =>

@@ -5,7 +5,10 @@ import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
+import styles from './blurDetector.module.css'
 import withForwardedRef from 'ref'
+
+const ANIMATION_DURATION_MS = 500
 
 const BlurDetectorContext = React.createContext()
 
@@ -18,21 +21,31 @@ const isOver = (e, element) => {
 class BlurDetector extends React.Component {
     enabled = true
 
+    state = {
+        fadeOut: false
+    }
+
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
         this.checkEnabled = this.checkEnabled.bind(this)
         this.isEnabled = this.isEnabled.bind(this)
         this.onBlur = this.onBlur.bind(this)
+        this.blurStart = this.blurStart.bind(this)
+        this.blurStop = this.blurStop.bind(this)
     }
 
     render() {
         const {className, style, children, onClick} = this.props
+        const {fadeOut} = this.state
         return (
             <div
                 ref={this.ref}
-                className={className}
-                style={style}
+                className={[
+                    className,
+                    fadeOut ? styles.fadeOut : null
+                ].join(' ')}
+                style={{...style, '--animation-duration-ms': ANIMATION_DURATION_MS}}
                 onClick={onClick}>
                 <BlurDetectorContext.Provider value={{enabled: this.checkEnabled}}>
                     {children}
@@ -44,9 +57,17 @@ class BlurDetector extends React.Component {
     checkEnabled(enabled) {
         return this.enabled = enabled
     }
+    
+    blurStart() {
+        this.setState({fadeOut: true})
+    }
+    
+    blurStop() {
+        this.setState({fadeOut: false})
+    }
 
     componentDidMount() {
-        const {autoBlurTimeout, onBlur, addSubscription} = this.props
+        const {autoBlurTimeout, fadeOut, onBlur, addSubscription} = this.props
         this.setEnabled(false)
         if (onBlur) {
             addSubscription(
@@ -57,7 +78,6 @@ class BlurDetector extends React.Component {
                 ).pipe(
                     filter(this.isEnabled),
                     filter(e => !this.isOver(e))
-                    // debounceTime(150) // prevent click-through
                 ).subscribe(this.onBlur)
             )
             if (autoBlurTimeout) {
@@ -78,6 +98,16 @@ class BlurDetector extends React.Component {
                         ))
                     ).subscribe(this.onBlur)
                 )
+                if (fadeOut) {
+                    addSubscription(
+                        enter$.subscribe(this.blurStop),
+                        enter$.pipe(
+                            switchMap(() => leave$.pipe(
+                                delay(autoBlurTimeout - ANIMATION_DURATION_MS)
+                            ))
+                        ).subscribe(this.blurStart),
+                    )
+                }
             }
         }
     }
@@ -139,6 +169,7 @@ BlurDetector.propTypes = {
     //     // null
     // ]),
     exclude: PropTypes.any,
+    fadeOut: PropTypes.any,
     style: PropTypes.object,
     onBlur: PropTypes.func,
     onClick: PropTypes.func

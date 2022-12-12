@@ -1,6 +1,5 @@
 import {RecipeContext} from 'app/home/body/process/recipeContext'
 import {RecipeHome} from './recipeHome'
-import {StaticMap} from 'app/home/map/staticMap'
 import {Tabs, getTabsInfo} from 'widget/tabs/tabs'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
@@ -37,8 +36,7 @@ class Process extends React.Component {
                     isLandingTab={this.isLandingTab}
                     tabActions={this.renderMenu}
                     onTitleChanged={saveRecipe}
-                    onClose={this.onCloseTab}
-                >
+                    onClose={this.onCloseTab}>
                     {this.renderTab}
                 </Tabs>
                 <CloseRecipe/>
@@ -82,9 +80,7 @@ class Process extends React.Component {
 
     renderRecipeHome(recipeId) {
         return (
-            <StaticMap>
-                <RecipeHome recipeId={recipeId}/>
-            </StaticMap>
+            <RecipeHome recipeId={recipeId}/>
         )
     }
 

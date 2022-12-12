@@ -130,6 +130,7 @@ class _ListItem extends React.Component {
     }
 
     getSharedClassName(clickable) {
+        const {expansionInteractive} = this.props
         return [
             lookStyles.look,
             lookStyles.transparent,
@@ -141,6 +142,9 @@ class _ListItem extends React.Component {
                 : clickable
                     ? null
                     : lookStyles.hoverDisabled,
+            expansionInteractive
+                ? lookStyles.interactive
+                : null,
             this.isDisabled() ? lookStyles.disabled : null
         ]
     }
@@ -412,6 +416,7 @@ ListItem.propTypes = {
     expansion: PropTypes.any,
     expansionClassName: PropTypes.string,
     expansionClickable: PropTypes.any,
+    expansionInteractive: PropTypes.any,
     main: PropTypes.any,
     onClick: PropTypes.func,
     onDrag: PropTypes.func,

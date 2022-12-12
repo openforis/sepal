@@ -1,19 +1,20 @@
+import {Browse} from './browse/browse'
 import {CenteredProgress} from 'widget/progress'
 import {Maps} from 'app/home/map/maps'
+import {Section} from './section'
+import {StaticMap} from '../map/staticMap'
+import {Users} from './users/users'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {history, location} from 'route'
 import {msg} from 'translate'
 import Apps from './apps/apps'
-import Browse from './browse/browse'
 import Notifications from 'widget/notifications'
 import Process from './process/process'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Section from './section'
 import Tasks from './tasks/tasks'
 import Terminal from './terminal/terminal'
-import Users from './users/users'
 import styles from './body.module.css'
 
 const mapStateToProps = () => ({
@@ -34,7 +35,8 @@ class Body extends React.Component {
         return (
             <div className={className}>
                 <div className={styles.sections}>
-                    <Section path='/process' captureMouseEvents={false} staticMap={false}>
+                    <StaticMap/>
+                    <Section path='/process'>
                         <Process/>
                     </Section>
                     <Section path='/browse'>

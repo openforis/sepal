@@ -123,9 +123,14 @@
 
 /* noHover */
 
-.look.hoverDisabled {
+.look.hoverDisabled:not(.look.interactive) {
     cursor: default !important;
     pointer-events: none !important;
+    opacity: var(--look-hover-disabled-opacity);
+}
+
+.look.interactive {
+    cursor: default !important;
     opacity: var(--look-hover-disabled-opacity);
 }
 
