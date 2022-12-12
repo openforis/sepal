@@ -477,10 +477,6 @@ export class Slider extends React.Component {
     constructor() {
         super()
         this.onPreview = this.onPreview.bind(this)
-    }
-
-    constructor() {
-        super()
         this.onResize = this.onResize.bind(this)
     }
 

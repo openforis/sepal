@@ -3,11 +3,11 @@ import _ from 'lodash'
 
 const HASH_KEY = '___hash___'
 
-const stats = {
-    hashedEqual: 0,
-    hashedNotEqual: 0,
-    notHashed: 0
-}
+// const stats = {
+//     hashedEqual: 0,
+//     hashedNotEqual: 0,
+//     notHashed: 0
+// }
 
 export const createHash = () =>
     uuid()
@@ -45,12 +45,12 @@ export const isEqual = (a, b) =>
             const aHash = a[HASH_KEY]
             if (_.isString(aHash) && !_.isEmpty(aHash)) {
                 const bHash = b[HASH_KEY]
-                aHash === bHash
-                    ? stats.hashedEqual++
-                    : stats.hashedNotEqual++
+                // aHash === bHash
+                //     ? stats.hashedEqual++
+                //     : stats.hashedNotEqual++
                 return aHash === bHash
             } else {
-                stats.notHashed++
+                // stats.notHashed++
             }
         }
     })

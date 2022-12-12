@@ -8,7 +8,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
-import diff from 'deep-diff'
+// import diff from 'deep-diff'
 
 const mapStateToProps = (state, ownProps) => {
     const {activationContext: {pathList}} = ownProps
@@ -20,14 +20,14 @@ class _Activator extends React.Component {
     shouldComponentUpdate({activatables: prevActivatables}) {
         const {activatables} = this.props
         if (isEqual(activatables, prevActivatables)) {
-            if (this.props.id === 'mapInfo') {
-                console.log('Activator skipped rerendering:', this.props.id || this.props.ids)
-            }
+            // if (this.props.id === 'mapInfo') {
+            // console.log('Activator skipped rerendering:', this.props.id || this.props.ids)
+            // }
             return false
         } else {
-            if (this.props.id === 'mapInfo') {
-                console.log('Activator rerendering:', this.props.id || this.props.ids, diff(prevActivatables, activatables))
-            }
+            // if (this.props.id === 'mapInfo') {
+            // console.log('Activator rerendering:', this.props.id || this.props.ids, diff(prevActivatables, activatables))
+            // }
             return true
         }
     }
