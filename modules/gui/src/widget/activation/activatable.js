@@ -1,4 +1,4 @@
-import {Activator} from './activator'
+import {SingleActivator} from './singleActivator'
 import {collectActivatables} from 'widget/activation/activation'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -25,9 +25,9 @@ class _Activatable extends React.Component {
         const currentActivatable = activatables[id] || {}
         return currentActivatable.active
             ? (
-                <Activator id={id}>
+                <SingleActivator id={id}>
                     {this.renderActivator}
-                </Activator>
+                </SingleActivator>
             )
             : null
     }

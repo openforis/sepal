@@ -1,8 +1,8 @@
-import {Activator} from 'widget/activation/activator'
 import {BudgetUpdateRequest} from './userBudgetUpdateRequest'
 import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
+import {SingleActivator} from 'widget/activation/singleActivator'
 import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
@@ -120,9 +120,9 @@ class _UsageButton extends React.Component {
     render() {
         return (
             <React.Fragment>
-                <Activator id='userReport'>
+                <SingleActivator id='userReport'>
                     {this.renderActivator}
-                </Activator>
+                </SingleActivator>
                 <Usage/>
             </React.Fragment>
         )

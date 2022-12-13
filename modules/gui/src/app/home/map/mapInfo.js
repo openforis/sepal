@@ -1,9 +1,9 @@
-import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
+import {SingleActivator} from 'widget/activation/singleActivator'
 import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
@@ -193,9 +193,9 @@ class _MapInfo extends React.PureComponent {
             ? (
                 <div className={styles.container}>
                     <MapInfoPanel/>
-                    <Activator id={'mapInfo'}>
+                    <SingleActivator id={'mapInfo'}>
                         {this.renderButton}
-                    </Activator>
+                    </SingleActivator>
                 </div>
             )
             : null

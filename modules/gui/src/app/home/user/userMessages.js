@@ -1,4 +1,3 @@
-import {Activator, withActivator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
@@ -7,10 +6,12 @@ import {Markdown} from 'widget/markdown'
 import {Msg, msg} from 'translate'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
+import {SingleActivator} from 'widget/activation/singleActivator'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {v4 as uuid} from 'uuid'
+import {withActivator} from 'widget/activation/activator'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -291,7 +292,7 @@ class _UserMessagesButton extends React.Component {
         return (
             <React.Fragment>
                 <UserMessages/>
-                <Activator id='userMessages'>
+                <SingleActivator id='userMessages'>
                     {({active, activate}) =>
                         <Button
                             chromeless
@@ -307,7 +308,7 @@ class _UserMessagesButton extends React.Component {
                             onClick={() => activate()}
                         />
                     }
-                </Activator>
+                </SingleActivator>
             </React.Fragment>
         )
     }

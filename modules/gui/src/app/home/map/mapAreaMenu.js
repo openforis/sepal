@@ -1,9 +1,9 @@
-import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import {Item} from 'widget/item'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
+import {SingleActivator} from 'widget/activation/singleActivator'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
@@ -137,7 +137,7 @@ class _MapAreaMenu extends React.Component {
     renderButton() {
         const {area} = this.props
         return (
-            <Activator id={`mapAreaMenu-${area}`}>
+            <SingleActivator id={`mapAreaMenu-${area}`}>
                 {activator => {
                     const {activate, deactivate, active, canActivate} = activator
                     return (
@@ -154,7 +154,7 @@ class _MapAreaMenu extends React.Component {
                         </div>
                     )
                 }}
-            </Activator>
+            </SingleActivator>
         )
     }
 

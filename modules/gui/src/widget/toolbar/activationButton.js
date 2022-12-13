@@ -1,4 +1,4 @@
-import {Activator} from 'widget/activation/activator'
+import {SingleActivator} from 'widget/activation/singleActivator'
 import {ToolbarButton} from './toolbarButton'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -13,9 +13,9 @@ export class ActivationButton extends React.Component {
     render() {
         const {id} = this.props
         return (
-            <Activator id={id}>
+            <SingleActivator id={id}>
                 {this.renderButton}
-            </Activator>
+            </SingleActivator>
         )
     }
 

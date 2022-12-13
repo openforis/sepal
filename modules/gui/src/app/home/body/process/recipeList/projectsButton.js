@@ -1,8 +1,9 @@
-import {Activator, withActivator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Projects} from './projects'
+import {SingleActivator} from 'widget/activation/singleActivator'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {withActivator} from 'widget/activation/activator'
 import React from 'react'
 import _ from 'lodash'
 
@@ -11,7 +12,7 @@ class _ProjectsButton extends React.Component {
         return (
             <React.Fragment>
                 <Projects/>
-                <Activator id='projects'>
+                <SingleActivator id='projects'>
                     {({active, activate}) =>
                         <Button
                             look='transparent'
@@ -25,7 +26,7 @@ class _ProjectsButton extends React.Component {
                             onClick={activate}
                         />
                     }
-                </Activator>
+                </SingleActivator>
             </React.Fragment>
         )
     }

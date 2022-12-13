@@ -1,13 +1,14 @@
-import {Activator, withActivator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
 import {Panel} from 'widget/panel/panel'
+import {SingleActivator} from 'widget/activation/singleActivator'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser, requestUserAccess$, revokeGoogleAccess$} from 'user'
 import {msg} from 'translate'
+import {withActivator} from 'widget/activation/activator'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
@@ -171,7 +172,7 @@ export const GoogleAccount = compose(
 GoogleAccount.propTypes = {}
 
 export const GoogleAccountButton = ({disabled}) => (
-    <Activator id='googleAccount'>
+    <SingleActivator id='googleAccount'>
         {({canActivate, activate}) =>
             <Button
                 icon='google'
@@ -180,7 +181,7 @@ export const GoogleAccountButton = ({disabled}) => (
                 disabled={!canActivate || disabled}
                 onClick={() => activate()}/>
         }
-    </Activator>
+    </SingleActivator>
 )
 
 GoogleAccountButton.propTypes = {

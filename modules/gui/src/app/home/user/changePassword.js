@@ -1,13 +1,14 @@
-import {Activator, withActivator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {EMPTY, switchMap, throwError} from 'rxjs'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
+import {SingleActivator} from 'widget/activation/singleActivator'
 import {activatable} from 'widget/activation/activatable'
 import {changeCurrentUserPassword$} from 'user'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {withActivator} from 'widget/activation/activator'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -118,7 +119,7 @@ export const ChangePassword = compose(
 ChangePassword.propTypes = {}
 
 export const ChangePasswordButton = ({disabled}) => (
-    <Activator id='changePassword'>
+    <SingleActivator id='changePassword'>
         {({canActivate, activate}) =>
             <Button
                 icon={'key'}
@@ -126,7 +127,7 @@ export const ChangePasswordButton = ({disabled}) => (
                 disabled={!canActivate || disabled}
                 onClick={() => activate()}/>
         }
-    </Activator>
+    </SingleActivator>
 )
 
 ChangePasswordButton.propTypes = {

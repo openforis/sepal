@@ -1,8 +1,9 @@
-import {Activator, withActivator} from 'widget/activation/activator'
 import {Msg, msg} from 'translate'
 import {RecipeState, duplicateRecipe, exportRecipe$} from './recipe'
+import {SingleActivator} from 'widget/activation/singleActivator'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {withActivator} from 'widget/activation/activator'
 import Menu, {MenuItem} from 'widget/menu'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -49,13 +50,13 @@ class ProcessMenu extends React.Component {
 
     renderSavedRecipeItems() {
         return (
-            <Activator id='revisions'>
+            <SingleActivator id='revisions'>
                 {({activate}) =>
                     <MenuItem onSelect={() => activate()}>
                         <Msg id='process.menu.revertToOldRevision'/>
                     </MenuItem>
                 }
-            </Activator>
+            </SingleActivator>
         )
     }
 
