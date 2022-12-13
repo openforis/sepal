@@ -1,5 +1,5 @@
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
+import {withActivator} from 'widget/activation/activator'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -84,7 +84,7 @@ class PanelWizard extends React.Component {
 
 export default compose(
     PanelWizard,
-    activator()
+    withActivator()
 )
 
 PanelWizard.propTypes = {

@@ -1,4 +1,4 @@
-import {Activator, activator} from 'widget/activation/activator'
+import {Activator, withActivator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {EMPTY, switchMap, throwError} from 'rxjs'
 import {Form, form} from 'widget/form/form'
@@ -111,7 +111,7 @@ const policy = () => ({
 export const ChangePassword = compose(
     _ChangePassword,
     form({fields, constraints, mapStateToProps}),
-    activator('userDetails'),
+    withActivator('userDetails'),
     activatable({id: 'changePassword', policy, alwaysAllow: true})
 )
 

@@ -1,4 +1,4 @@
-import {Activator, activator} from 'widget/activation/activator'
+import {Activator, withActivator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
@@ -327,5 +327,5 @@ export const UserMessagesButton = compose(
     connect(state => ({
         unreadUserMessages: unreadMessagesCount(state.user.userMessages)
     })),
-    activator('userMessages')
+    withActivator('userMessages')
 )

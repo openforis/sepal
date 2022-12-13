@@ -6,10 +6,10 @@ import {ListItem} from 'widget/listItem'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {withActivator} from 'widget/activation/activator'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -141,7 +141,7 @@ const additionalPolicy = () => ({
 export const Mapping = compose(
     _Mapping,
     recipeFormPanel({id: 'mapping', mapRecipeToProps, additionalPolicy}),
-    activator()
+    withActivator()
 )
 
 Mapping.propTypes = {

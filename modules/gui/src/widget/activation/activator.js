@@ -114,7 +114,7 @@ Activator.propTypes = {
     ids: PropTypes.array
 }
 
-export const activator = (...ids) =>
+export const withActivator = (...ids) =>
     WrappedComponent =>
         class ActivatorHoc extends React.Component {
             constructor() {

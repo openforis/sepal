@@ -2,11 +2,11 @@ import {Form} from 'widget/form/form'
 import {LegendBuilder, defaultColor} from 'app/home/map/legendBuilder'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {downloadCsv} from 'widget/download'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {withActivator} from 'widget/activation/activator'
 import ButtonSelect from 'widget/buttonSelect'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -146,7 +146,7 @@ const additionalPolicy = () => ({
 export const Legend = compose(
     _Legend,
     recipeFormPanel({id: 'legend', fields, mapRecipeToProps, additionalPolicy, valuesToModel}),
-    activator('legendImport')
+    withActivator('legendImport')
 )
 
 Legend.propTypes = {

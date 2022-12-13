@@ -7,11 +7,11 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/classification/classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Subject} from 'rxjs'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {downloadCsv} from 'widget/download'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {withActivator} from 'widget/activation/activator'
 import ButtonSelect from 'widget/buttonSelect'
 import Confirm from 'widget/confirm'
 import PropTypes from 'prop-types'
@@ -210,5 +210,5 @@ const valuesToModel = null
 export default compose(
     TrainingData,
     recipeFormPanel({id: 'trainingData', mapRecipeToProps, valuesToModel, additionalPolicy}),
-    activator('trainingDataSet')
+    withActivator('trainingDataSet')
 )

@@ -1,4 +1,4 @@
-import {Activator, activator} from 'widget/activation/activator'
+import {Activator, withActivator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
@@ -164,7 +164,7 @@ const policy = () => ({
 export const GoogleAccount = compose(
     _GoogleAccount,
     connect(mapStateToProps),
-    activator('userDetails'),
+    withActivator('userDetails'),
     activatable({id: 'googleAccount', policy, alwaysAllow: true})
 )
 

@@ -8,10 +8,10 @@ import {SelectPlanet} from './selectPlanet'
 import {SelectRecipe} from './selectRecipe'
 import {Subject} from 'rxjs'
 import {activatable} from 'widget/activation/activatable'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {withActivator} from 'widget/activation/activator'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 import styles from './mapLayout.module.css'
@@ -124,7 +124,7 @@ export const MapLayoutPanel = compose(
         policy,
         alwaysAllow: true
     }),
-    activator('addImageLayerSource')
+    withActivator('addImageLayerSource')
 )
 
 MapLayout.propTypes = {}

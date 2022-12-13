@@ -7,12 +7,12 @@ import {Panel} from 'widget/panel/panel'
 import {Subject, filter, takeUntil} from 'rxjs'
 import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {downloadCsv} from 'widget/download'
 import {msg} from 'translate'
 import {normalize} from 'app/home/map/visParams/visParams'
 import {selectFrom} from 'stateUtils'
+import {withActivator} from 'widget/activation/activator'
 import {withMapContext} from 'app/home/map/mapContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
@@ -642,7 +642,7 @@ export const VisParamsPanel = compose(
         policy,
         alwaysAllow: true
     }),
-    activator('legendImport')
+    withActivator('legendImport')
 )
 
 class BandForm extends React.Component {

@@ -6,11 +6,11 @@ import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {Subject} from 'rxjs'
 import {activatable} from 'widget/activation/activatable'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser, updateCurrentUserDetails$} from 'user'
 import {msg} from 'translate'
+import {withActivator} from 'widget/activation/activator'
 import {withSubscriptions} from 'subscription'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
@@ -253,7 +253,7 @@ export const UserDetailsButton = compose(
         user: state.user.currentUser
     })),
     withSubscriptions(),
-    activator('userDetails')
+    withActivator('userDetails')
 )
 
 UserDetailsButton.propTypes = {}

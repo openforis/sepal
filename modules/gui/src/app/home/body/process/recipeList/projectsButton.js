@@ -1,4 +1,4 @@
-import {Activator, activator} from 'widget/activation/activator'
+import {Activator, withActivator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Projects} from './projects'
 import {compose} from 'compose'
@@ -22,7 +22,7 @@ class _ProjectsButton extends React.Component {
                             tooltipPlacement='top'
                             tooltipDisabled={active}
                             disabled={active}
-                            onClick={() => activate()}
+                            onClick={activate}
                         />
                     }
                 </Activator>
@@ -33,5 +33,5 @@ class _ProjectsButton extends React.Component {
 
 export const ProjectsButton = compose(
     _ProjectsButton,
-    activator('projects')
+    withActivator('projects')
 )
