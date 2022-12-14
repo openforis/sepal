@@ -130,9 +130,9 @@ class _Button extends React.Component {
         }
     }
 
-    handleClick(e) {
+    handleClick(e, forceHandle = false) {
         const {onClick, onClickHold, downloadUrl, downloadFilename} = this.props
-        if (onClickHold) {
+        if (onClickHold && !forceHandle) {
             e.stopPropagation()
         } else {
             onClick && onClick(e)
@@ -376,7 +376,7 @@ class _Button extends React.Component {
                 click$.subscribe(e => {
                     const {onClick} = this.props
                     if (this.isActive() && onClick) {
-                        this.handleClick(e)
+                        this.handleClick(e, true)
                     }
                 })
             )
