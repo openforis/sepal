@@ -303,13 +303,12 @@ export class SepalMap {
     }
 
     fitBounds(bounds) {
-        const PADDING = 2 // compensate for attribution masking
         const {googleMap} = this
         const nextBounds = this.toGoogleBounds(bounds)
         const currentBounds = googleMap.getBounds()
         const boundsChanged = !currentBounds || !currentBounds.equals(nextBounds)
         if (boundsChanged) {
-            googleMap.fitBounds(nextBounds, PADDING)
+            googleMap.fitBounds(nextBounds)
         }
     }
 
