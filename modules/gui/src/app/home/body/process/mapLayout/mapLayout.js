@@ -11,7 +11,7 @@ import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 import styles from './mapLayout.module.css'
@@ -124,7 +124,7 @@ export const MapLayoutPanel = compose(
         policy,
         alwaysAllow: true
     }),
-    withActivator('addImageLayerSource')
+    withActivators('addImageLayerSource')
 )
 
 MapLayout.propTypes = {}

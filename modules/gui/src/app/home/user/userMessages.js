@@ -10,7 +10,7 @@ import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {v4 as uuid} from 'uuid'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -329,5 +329,5 @@ export const UserMessagesButton = compose(
     connect(state => ({
         unreadUserMessages: unreadMessagesCount(state.user.userMessages)
     })),
-    withActivator('userMessages')
+    withActivators('userMessages')
 )

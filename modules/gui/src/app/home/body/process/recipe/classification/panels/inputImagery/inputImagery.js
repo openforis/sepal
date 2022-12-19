@@ -10,7 +10,7 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import InputImage from './inputImage'
 import React from 'react'
 import guid from 'guid'
@@ -124,5 +124,5 @@ export default compose(
     InputImagery,
     connect(mapStateToProps),
     recipeFormPanel({id: 'inputImagery', mapRecipeToProps, valuesToModel, additionalPolicy}),
-    withActivator('inputImage')
+    withActivators('inputImage')
 )

@@ -6,7 +6,7 @@ import {ScrollableList} from 'widget/list'
 import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import Label from 'widget/label'
 import React, {Component} from 'react'
 import _ from 'lodash'
@@ -160,7 +160,7 @@ class _FormDatePicker extends React.Component {
 
 export const FormDatePicker = compose(
     _FormDatePicker,
-    withActivator({
+    withActivators({
         datePicker: (_props, activatorId) => `datePicker-${activatorId}`
     })
 )

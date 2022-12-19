@@ -4,7 +4,7 @@ import {SceneSelectionType} from 'app/home/body/process/recipe/opticalMosaic/opt
 import {compose} from 'compose'
 import {enabled} from 'widget/enableWhen'
 import {selectFrom} from 'stateUtils'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -64,7 +64,7 @@ class _SceneAreasLayer extends React.Component {
 export const SceneAreasLayer = compose(
     _SceneAreasLayer,
     enabled({when: ({manualSelection}) => manualSelection}),
-    withActivator('sceneSelection'),
+    withActivators('sceneSelection'),
     withRecipe(mapRecipeToProps)
 )
 

@@ -9,7 +9,7 @@ import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 
@@ -117,7 +117,7 @@ const toUpdatedEntryPath = componentId => ['ui', 'widget.Legend', componentId, '
 export const Legend = compose(
     _Legend,
     withRecipe(mapRecipeToProps),
-    withActivator('editLegendPanel')
+    withActivators('editLegendPanel')
 )
 
 Legend.propTypes = {

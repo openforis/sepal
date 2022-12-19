@@ -9,7 +9,7 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -141,7 +141,7 @@ const additionalPolicy = () => ({
 export const Mapping = compose(
     _Mapping,
     recipeFormPanel({id: 'mapping', mapRecipeToProps, additionalPolicy}),
-    withActivator()
+    withActivators()
 )
 
 Mapping.propTypes = {

@@ -11,7 +11,7 @@ import {compose} from 'compose'
 import {downloadCsv} from 'widget/download'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import ButtonSelect from 'widget/buttonSelect'
 import Confirm from 'widget/confirm'
 import PropTypes from 'prop-types'
@@ -210,5 +210,5 @@ const valuesToModel = null
 export default compose(
     TrainingData,
     recipeFormPanel({id: 'trainingData', mapRecipeToProps, valuesToModel, additionalPolicy}),
-    withActivator('trainingDataSet')
+    withActivators('trainingDataSet')
 )

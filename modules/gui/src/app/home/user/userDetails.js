@@ -10,7 +10,7 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser, updateCurrentUserDetails$} from 'user'
 import {msg} from 'translate'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import {withSubscriptions} from 'subscription'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
@@ -253,7 +253,7 @@ export const UserDetailsButton = compose(
         user: state.user.currentUser
     })),
     withSubscriptions(),
-    withActivator('userDetails')
+    withActivators('userDetails')
 )
 
 UserDetailsButton.propTypes = {}

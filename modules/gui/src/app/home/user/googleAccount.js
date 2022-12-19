@@ -7,7 +7,7 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser, requestUserAccess$, revokeGoogleAccess$} from 'user'
 import {msg} from 'translate'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
@@ -162,7 +162,7 @@ const policy = () => ({
 export const GoogleAccount = compose(
     _GoogleAccount,
     connect(mapStateToProps),
-    withActivator('userDetails'),
+    withActivators('userDetails'),
     activatable({id: 'googleAccount', policy, alwaysAllow: true})
 )
 
@@ -184,7 +184,7 @@ class _GoogleAccountButton extends React.Component {
 
 export const GoogleAccountButton = compose(
     _GoogleAccountButton,
-    withActivator('googleAccount')
+    withActivators('googleAccount')
 )
 
 GoogleAccountButton.propTypes = {

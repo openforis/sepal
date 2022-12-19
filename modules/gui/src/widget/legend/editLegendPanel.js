@@ -6,7 +6,7 @@ import {compose} from 'compose'
 import {downloadCsv} from '../download'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import {withMapContext} from 'app/home/map/mapContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
@@ -208,5 +208,5 @@ export const EditLegendPanel = compose(
         policy,
         alwaysAllow: true
     }),
-    withActivator('legendImport')
+    withActivators('legendImport')
 )

@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {Projects} from './projects'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import React from 'react'
 import _ from 'lodash'
 
@@ -36,5 +36,5 @@ class _ProjectsButton extends React.Component {
 
 export const ProjectsButton = compose(
     _ProjectsButton,
-    withActivator('projects')
+    withActivators('projects')
 )

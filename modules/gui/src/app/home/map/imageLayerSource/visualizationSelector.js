@@ -3,7 +3,7 @@ import {Combo} from 'widget/combo'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import {withMapAreaContext} from '../mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
@@ -128,7 +128,7 @@ class _VisualizationSelector extends React.Component {
 export const VisualizationSelector = compose(
     _VisualizationSelector,
     withRecipe(mapRecipeToProps),
-    withActivator(),
+    withActivators(),
     withMapAreaContext()
 )
 

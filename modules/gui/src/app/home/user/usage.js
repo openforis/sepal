@@ -7,7 +7,7 @@ import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import React from 'react'
 import UserResources from './userResources'
 import UserSession from './userSession'
@@ -165,5 +165,5 @@ export const UsageButton = compose(
         budgetExceeded: select('user.budgetExceeded'),
         budgetWarning: select('user.budgetWarning'),
     })),
-    withActivator('userReport')
+    withActivators('userReport')
 )

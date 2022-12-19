@@ -2,7 +2,7 @@ import {RecipeActions} from './classificationRecipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import {withDataCollectionContext} from './dataCollectionManager'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import MarkerClustererLayer from 'app/home/map/markerClustererLayer'
@@ -196,5 +196,5 @@ export default compose(
     ReferenceDataLayer,
     withRecipe(mapRecipeToProps),
     withDataCollectionContext(),
-    withActivator('collect')
+    withActivators('collect')
 )

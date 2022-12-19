@@ -7,7 +7,7 @@ import {activatable} from 'widget/activation/activatable'
 import {changeCurrentUserPassword$} from 'user'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -111,7 +111,7 @@ const policy = () => ({
 export const ChangePassword = compose(
     _ChangePassword,
     form({fields, constraints, mapStateToProps}),
-    withActivator('userDetails'),
+    withActivators('userDetails'),
     activatable({id: 'changePassword', policy, alwaysAllow: true})
 )
 
@@ -132,7 +132,7 @@ class _ChangePasswordButton extends React.Component {
 
 export const ChangePasswordButton = compose(
     _ChangePasswordButton,
-    withActivator('changePassword')
+    withActivators('changePassword')
 )
 
 ChangePasswordButton.propTypes = {

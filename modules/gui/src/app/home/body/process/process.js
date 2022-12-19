@@ -6,7 +6,7 @@ import {getRecipeType} from './recipeTypes'
 import {loadProjects$, loadRecipes$, recipePath, saveRecipe} from './recipe'
 import {msg} from 'translate'
 import {select} from '../../../../store'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import {withLeaveAlert} from 'widget/leaveAlert'
 import CloseRecipe from './closeRecipe'
 import Notifications from 'widget/notifications'
@@ -129,6 +129,6 @@ const mapStateToLeaveAlert = () => {
 
 export default compose(
     Process,
-    withActivator('closeRecipeDialog'),
+    withActivators('closeRecipeDialog'),
     withLeaveAlert(mapStateToLeaveAlert)
 )

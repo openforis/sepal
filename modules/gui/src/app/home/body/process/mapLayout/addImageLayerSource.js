@@ -5,7 +5,7 @@ import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import React from 'react'
 import styles from './addImageLayerSource.module.css'
 
@@ -116,5 +116,5 @@ const policy = () => ({
 const AddImageLayerSourcePanel = compose(
     _AddImageLayerSourcePanel,
     activatable({id: 'addImageLayerSource', policy, alwaysAllow: true}),
-    withActivator('mapLayout', 'selectRecipe', 'selectAsset', 'selectPlanet')
+    withActivators('mapLayout', 'selectRecipe', 'selectAsset', 'selectPlanet')
 )

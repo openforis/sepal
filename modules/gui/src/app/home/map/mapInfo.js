@@ -9,7 +9,7 @@ import {compose} from 'compose'
 import {debounceTime, throttleTime} from 'rxjs'
 import {formatCoordinates} from 'coords'
 import {msg} from 'translate'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import {withMap} from './mapContext'
 import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
@@ -223,7 +223,7 @@ export const MapInfo = compose(
     _MapInfo,
     withMap(),
     withSubscriptions(),
-    withActivator('mapInfo')
+    withActivators('mapInfo')
 )
 
 MapInfo.propTypes = {}

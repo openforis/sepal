@@ -8,7 +8,7 @@ import {compose} from 'compose'
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {msg} from 'translate'
 import {recipePath} from '../body/process/recipe'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import {withLayers} from '../body/process/withLayers'
 import {withRecipe} from '../body/process/recipeContext'
 import FloatingBox from 'widget/floatingBox'
@@ -173,7 +173,7 @@ class _MapAreaMenu extends React.Component {
 
 export const MapAreaMenu = compose(
     _MapAreaMenu,
-    withActivator({
+    withActivators({
         mapAreaMenu: ({area}) => `mapAreaMenu-${area}`
     }),
     withLayers(),

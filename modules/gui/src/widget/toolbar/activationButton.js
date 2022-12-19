@@ -1,7 +1,7 @@
 // import {SingleActivator} from 'widget/activation/singleActivator'
 import {ToolbarButton} from './toolbarButton'
 import {compose} from 'compose'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './toolbar.module.css'
@@ -27,7 +27,7 @@ class _ActivationButton extends React.Component {
 
 export const ActivationButton = compose(
     _ActivationButton,
-    withActivator({
+    withActivators({
         button: ({id}) => id
     })
 )

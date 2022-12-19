@@ -3,7 +3,7 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {shouldDeactivate} from 'widget/activation/activationPolicy'
 import {withActivationContext} from 'widget/activation/activationContext'
-import {withActivator} from './activator'
+import {withActivators} from './activator'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -90,7 +90,7 @@ const Activatable = compose(
     _Activatable,
     connect(mapStateToProps),
     withActivationContext(),
-    withActivator({
+    withActivators({
         activatable: ({id}) => id
     })
 )

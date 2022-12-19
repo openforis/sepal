@@ -2,7 +2,7 @@ import {Msg, msg} from 'translate'
 import {RecipeState, duplicateRecipe, exportRecipe$} from './recipe'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import Menu, {MenuItem} from 'widget/menu'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -85,5 +85,5 @@ class ProcessMenu extends React.Component {
 export default compose(
     ProcessMenu,
     connect(mapStateToProps),
-    withActivator('saveRecipeDialog', 'revisions')
+    withActivators('saveRecipeDialog', 'revisions')
 )

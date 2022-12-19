@@ -11,7 +11,7 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -151,7 +151,7 @@ export const Mapping = compose(
     _Mapping,
     connect(mapStateToProps),
     recipeFormPanel({id: 'mapping', mapRecipeToProps, additionalPolicy}),
-    withActivator()
+    withActivators()
 )
 
 Mapping.propTypes = {

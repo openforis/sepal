@@ -6,7 +6,7 @@ import {compose} from 'compose'
 import {downloadCsv} from 'widget/download'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import ButtonSelect from 'widget/buttonSelect'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -146,7 +146,7 @@ const additionalPolicy = () => ({
 export const Legend = compose(
     _Legend,
     recipeFormPanel({id: 'legend', fields, mapRecipeToProps, additionalPolicy, valuesToModel}),
-    withActivator('legendImport')
+    withActivators('legendImport')
 )
 
 Legend.propTypes = {

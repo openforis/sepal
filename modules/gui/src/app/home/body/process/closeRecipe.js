@@ -3,7 +3,7 @@ import {activatable} from 'widget/activation/activatable'
 import {closeRecipe} from './recipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {withActivator} from 'widget/activation/activator'
+import {withActivators} from 'widget/activation/activator'
 import React from 'react'
 import styles from './closeRecipe.module.css'
 
@@ -62,6 +62,6 @@ const policy = () => ({
 
 export default compose(
     CloseRecipe,
-    withActivator('saveRecipeDialog'),
+    withActivators('saveRecipeDialog'),
     activatable({id: 'closeRecipeDialog', policy})
 )
