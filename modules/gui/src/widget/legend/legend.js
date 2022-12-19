@@ -1,4 +1,3 @@
-import * as PropTypes from 'prop-types'
 import {Button} from 'widget/button'
 import {EditLegendPanel} from './editLegendPanel'
 import {Layout} from 'widget/layout'
@@ -11,6 +10,7 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withActivators} from 'widget/activation/activator'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import PropTypes from 'prop-types'
 import React from 'react'
 
 const mapRecipeToProps = (recipe, {componentId}) => ({
