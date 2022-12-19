@@ -2,12 +2,12 @@ import {BudgetUpdateRequest} from './userBudgetUpdateRequest'
 import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {SingleActivator} from 'widget/activation/singleActivator'
 import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
+import {withActivator} from 'widget/activation/activator'
 import React from 'react'
 import UserResources from './userResources'
 import UserSession from './userSession'
@@ -112,24 +112,17 @@ const Usage = compose(
 Usage.propTypes = {}
 
 class _UsageButton extends React.Component {
-    constructor() {
-        super()
-        this.renderActivator = this.renderActivator.bind(this)
-    }
-
     render() {
         return (
             <React.Fragment>
-                <SingleActivator id='userReport'>
-                    {this.renderActivator}
-                </SingleActivator>
                 <Usage/>
+                {this.renderButton()}
             </React.Fragment>
         )
     }
 
-    renderActivator({active, activate}) {
-        const {userReport, hasBudget, budgetExceeded, budgetWarning} = this.props
+    renderButton() {
+        const {userReport, hasBudget, budgetExceeded, budgetWarning, activator: {activatables: {userReport: {active, activate}}}} = this.props
         const hourlySpending = userReport.sessions
             ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
             : 0
@@ -171,5 +164,6 @@ export const UsageButton = compose(
         hasBudget: select('user.hasBudget'),
         budgetExceeded: select('user.budgetExceeded'),
         budgetWarning: select('user.budgetWarning'),
-    }))
+    })),
+    withActivator('userReport')
 )

@@ -6,7 +6,6 @@ import {Markdown} from 'widget/markdown'
 import {Msg, msg} from 'translate'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
-import {SingleActivator} from 'widget/activation/singleActivator'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -288,28 +287,30 @@ class _UserMessagesButton extends React.Component {
     }
 
     render() {
-        const {unreadUserMessages} = this.props
         return (
             <React.Fragment>
                 <UserMessages/>
-                <SingleActivator id='userMessages'>
-                    {({active, activate}) =>
-                        <Button
-                            chromeless
-                            look='transparent'
-                            size='large'
-                            air='less'
-                            icon='bell'
-                            iconAttributes={{fade: unreadUserMessages > 0}}
-                            disabled={active}
-                            tooltip={msg('home.sections.user.messages')}
-                            tooltipPlacement='top'
-                            tooltipDisabled={active}
-                            onClick={() => activate()}
-                        />
-                    }
-                </SingleActivator>
+                {this.renderButton()}
             </React.Fragment>
+        )
+    }
+
+    renderButton() {
+        const {unreadUserMessages, activator: {activatables: {userMessages: {active, activate}}}} = this.props
+        return (
+            <Button
+                chromeless
+                look='transparent'
+                size='large'
+                air='less'
+                icon='bell'
+                iconAttributes={{fade: unreadUserMessages > 0}}
+                disabled={active}
+                tooltip={msg('home.sections.user.messages')}
+                tooltipPlacement='top'
+                tooltipDisabled={active}
+                onClick={activate}
+            />
         )
     }
 

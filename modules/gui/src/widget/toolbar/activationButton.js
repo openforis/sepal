@@ -1,26 +1,14 @@
-import {SingleActivator} from 'widget/activation/singleActivator'
+// import {SingleActivator} from 'widget/activation/singleActivator'
 import {ToolbarButton} from './toolbarButton'
+import {compose} from 'compose'
+import {withActivator} from 'widget/activation/activator'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './toolbar.module.css'
 
-export class ActivationButton extends React.Component {
-    constructor() {
-        super()
-        this.renderButton = this.renderButton.bind(this)
-    }
-
+class _ActivationButton extends React.Component {
     render() {
-        const {id} = this.props
-        return (
-            <SingleActivator id={id}>
-                {this.renderButton}
-            </SingleActivator>
-        )
-    }
-
-    renderButton({activate, deactivate, active, canActivate}) {
-        const {icon, label, tooltip, disabled, onClick} = this.props
+        const {icon, label, tooltip, disabled, onClick, activator: {activatables: {button: {active, canActivate, toggle}}}} = this.props
         return (
             <ToolbarButton
                 disabled={disabled || (!active && !canActivate)}
@@ -30,12 +18,19 @@ export class ActivationButton extends React.Component {
                 tooltip={active ? null : tooltip}
                 className={[styles.activationButton, styles.panelButton, active ? styles.selected : null].join(' ')}
                 onClick={e => {
-                    active ? deactivate() : activate()
+                    toggle()
                     onClick && onClick(e)
                 }}/>
         )
     }
 }
+
+export const ActivationButton = compose(
+    _ActivationButton,
+    withActivator({
+        button: ({id}) => id
+    })
+)
 
 ActivationButton.propTypes = {
     id: PropTypes.string.isRequired,

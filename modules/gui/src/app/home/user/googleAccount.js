@@ -2,7 +2,6 @@ import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
 import {Panel} from 'widget/panel/panel'
-import {SingleActivator} from 'widget/activation/singleActivator'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -30,12 +29,10 @@ class _GoogleAccount extends React.Component {
     }
 
     useUserGoogleAccount() {
-        // e.preventDefault()
         this.props.stream('USE_USER_GOOGLE_ACCOUNT', requestUserAccess$())
     }
 
     useSepalGoogleAccount() {
-        // e.preventDefault()
         this.close()
         this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT',
             revokeGoogleAccess$(),
@@ -171,17 +168,23 @@ export const GoogleAccount = compose(
 
 GoogleAccount.propTypes = {}
 
-export const GoogleAccountButton = ({disabled}) => (
-    <SingleActivator id='googleAccount'>
-        {({canActivate, activate}) =>
+class _GoogleAccountButton extends React.Component {
+    render() {
+        const {disabled, activator: {activatables: {googleAccount: {activate, canActivate}}}} = this.props
+        return (
             <Button
                 icon='google'
                 iconType='brands'
                 label={msg('user.googleAccount.label')}
                 disabled={!canActivate || disabled}
-                onClick={() => activate()}/>
-        }
-    </SingleActivator>
+                onClick={activate}/>
+        )
+    }
+}
+
+export const GoogleAccountButton = compose(
+    _GoogleAccountButton,
+    withActivator('googleAccount')
 )
 
 GoogleAccountButton.propTypes = {

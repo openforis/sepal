@@ -1,9 +1,9 @@
-import {SingleActivator} from './singleActivator'
 import {collectActivatables} from 'widget/activation/activation'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {shouldDeactivate} from 'widget/activation/activationPolicy'
 import {withActivationContext} from 'widget/activation/activationContext'
+import {withActivator} from './activator'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -24,23 +24,16 @@ class _Activatable extends React.Component {
         const {id, activatables} = this.props
         const currentActivatable = activatables[id] || {}
         return currentActivatable.active
-            ? (
-                <SingleActivator id={id}>
-                    {this.renderActivator}
-                </SingleActivator>
-            )
+            ? this.renderActivator()
             : null
     }
 
-    renderActivator({active, canActivate, activate, deactivate}) {
-        const {id, activatables, children} = this.props
+    renderActivator() {
+        const {id, activatables, children, activator: {activatables: {activatable: {deactivate}}}} = this.props
         const {activationProps} = activatables[id] || {}
         return children({
             ...this.props,
             ...activationProps,
-            active,
-            canActivate,
-            activate,
             deactivate
         })
     }
@@ -96,7 +89,10 @@ class _Activatable extends React.Component {
 const Activatable = compose(
     _Activatable,
     connect(mapStateToProps),
-    withActivationContext()
+    withActivationContext(),
+    withActivator({
+        activatable: ({id}) => id
+    })
 )
 
 Activatable.propTypes = {

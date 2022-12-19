@@ -1,6 +1,5 @@
 import {Button} from 'widget/button'
 import {Projects} from './projects'
-import {SingleActivator} from 'widget/activation/singleActivator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {withActivator} from 'widget/activation/activator'
@@ -12,22 +11,25 @@ class _ProjectsButton extends React.Component {
         return (
             <React.Fragment>
                 <Projects/>
-                <SingleActivator id='projects'>
-                    {({active, activate}) =>
-                        <Button
-                            look='transparent'
-                            shape='pill'
-                            icon='folder-tree'
-                            label={msg('process.projects.label')}
-                            tooltip={msg('process.projects.tooltip')}
-                            tooltipPlacement='top'
-                            tooltipDisabled={active}
-                            disabled={active}
-                            onClick={activate}
-                        />
-                    }
-                </SingleActivator>
+                {this.renderActivator()}
             </React.Fragment>
+        )
+    }
+
+    renderActivator() {
+        const {activator: {activatables: {projects: {active, activate}}}} = this.props
+        return (
+            <Button
+                look='transparent'
+                shape='pill'
+                icon='folder-tree'
+                label={msg('process.projects.label')}
+                tooltip={msg('process.projects.tooltip')}
+                tooltipPlacement='top'
+                tooltipDisabled={active}
+                disabled={active}
+                onClick={activate}
+            />
         )
     }
 }

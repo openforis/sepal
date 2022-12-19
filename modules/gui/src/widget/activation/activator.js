@@ -1,14 +1,13 @@
 import {activationAllowed} from './activationPolicy'
-import {cloneDeep, isEqual} from 'hash'
 import {collectActivatables} from './activation'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {v4 as uuid} from 'uuid'
 import {withActivationContext} from './activationContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
-// import diff from 'deep-diff'
 
 const mapStateToProps = (state, ownProps) => {
     const {activationContext: {pathList}} = ownProps
@@ -17,54 +16,66 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class _Activator extends React.Component {
-    shouldComponentUpdate({activatables: prevActivatables}) {
-        const {activatables} = this.props
-        if (isEqual(activatables, prevActivatables)) {
-            // if (this.props.id === 'mapInfo') {
-            // console.log('Activator skipped rerendering:', this.props.id || this.props.ids)
-            // }
-            return false
-        } else {
-            // if (this.props.id === 'mapInfo') {
-            // console.log('Activator rerendering:', this.props.id || this.props.ids, diff(prevActivatables, activatables))
-            // }
-            return true
-        }
-    }
+    activatorId = uuid()
+
+    // shouldComponentUpdate({activatables: prevActivatables}) {
+    //     const {activatables} = this.props
+    //     return !isEqual(activatables, prevActivatables)
+    // }
 
     render() {
         const {children} = this.props
         return children(this.getActivatorProps())
     }
 
+    activatablePath(id) {
+        const {activatables} = this.props
+        return activatables[id].path
+    }
+
+    activate(id, activationProps) {
+        const {activationContext: {pathList}} = this.props
+        actionBuilder('ACTIVATE', {id, pathList})
+            .assign(this.activatablePath(id), {
+                active: true,
+                justActivated: true,
+                activationProps
+            })
+            .dispatch()
+    }
+
+    deactivate (id) {
+        const {activationContext: {pathList}} = this.props
+        actionBuilder('DEACTIVATE', {id, pathList})
+            .assign(this.activatablePath(id), {
+                active: false,
+                justActivated: false
+            })
+            .dispatch()
+    }
+
     getActivatorProps() {
-        const {id, ids, activatables, activationContext: {pathList}} = this.props
-        if (id && ids) {
-            throw Error('Cannot provide both id and ids props.')
+        const {ids, activatables, activationContext: {pathList}} = this.props
+
+        const props = id => {
+            if (activatables[id]) {
+                const active = activatables[id]?.active
+                const canActivate = activationAllowed(id, activatables)
+                return {
+                    id,
+                    activatorId: this.activatorId,
+                    active,
+                    canActivate,
+                    activate: activationProps => canActivate && this.activate(id, activationProps),
+                    deactivate: () => active && this.deactivate(id),
+                    toggle: () => active && this.deactivate(id) || canActivate && this.activate(id)
+                }
+            }
+            return {
+                id,
+                activatorId: this.activatorId
+            }
         }
-
-        const activatablePath = id => activatables[id].path
-
-        const activate = (id, activationProps) =>
-            actionBuilder('ACTIVATE', {id, pathList})
-                .assign(activatablePath(id), {
-                    active: true,
-                    justActivated: true,
-                    activationProps
-                })
-                .dispatch()
-
-        const deactivate = id =>
-            actionBuilder('DEACTIVATE', {id, pathList})
-                .assign(activatablePath(id), {
-                    active: false,
-                    justActivated: false
-                })
-                .dispatch()
-
-        const isActive = id => activatables[id]?.active
-
-        const canActivate = id => activationAllowed(id, activatables)
 
         const updateActivatables = updates => {
             const updatedActivatables = _.transform(updates, (activatables, {id, active}) => {
@@ -74,35 +85,45 @@ class _Activator extends React.Component {
                     activatable.active = updatedActive
                     activatable.justActivated = updatedActive
                 }
-            }, cloneDeep(activatables))
-            if (!isEqual(updatedActivatables, activatables)) {
+            }, _.cloneDeep(activatables)) // TODO: our cloneDepp not working here!!
+            if (!_.isEqual(updatedActivatables, activatables)) {
                 actionBuilder('UPDATE_ACTIVATABLES', {pathList})
                     .set([pathList, 'activatables'], updatedActivatables)
                     .dispatch()
             }
+            return {}
         }
 
-        const props = id => ({
-            active: isActive(id),
-            canActivate: canActivate(id),
-            activate: activationProps => canActivate(id) && activate(id, activationProps),
-            deactivate: () => isActive(id) && deactivate(id)
-        })
+        const processEntries = entries =>
+            _.transform(entries, (acc, entry) => processEntry(acc, entry), {})
 
-        return id
-            ? props(id)
-            : {
-                activatables: _(activatables)
-                    .keys()
-                    .filter(activatableId => _.isEmpty(ids) || ids.includes(activatableId))
-                    .transform((acc, id) => acc[id] = props(id), {})
-                    .value(),
-                updateActivatables
+        const processEntry = (acc, entry, id) => {
+            if (_.isFunction(entry)) {
+                const activatableId = entry(this.props.otherProps, this.activatorId)
+                acc[id || activatableId] = props(activatableId)
+            } else if (_.isArray(entry)) {
+                _.forEach(entry, value => {
+                    processEntry(acc, value)
+                })
+            } else if (_.isObject(entry)) {
+                _.forEach(entry, (value, id) => {
+                    processEntry(acc, value, id)
+                })
+            } else if (_.isString(entry)) {
+                acc[id || entry] = props(entry)
+            } else {
+                throw new Error('Unsupported activator argument:', entry)
             }
+        }
+
+        return {
+            activatables: processEntries(_.isEmpty(ids) ? Object.keys(activatables) : ids),
+            updateActivatables
+        }
     }
 }
 
-export const Activator = compose(
+const Activator = compose(
     _Activator,
     connect(mapStateToProps),
     withActivationContext()
@@ -110,7 +131,6 @@ export const Activator = compose(
 
 Activator.propTypes = {
     children: PropTypes.func.isRequired,
-    id: PropTypes.string,
     ids: PropTypes.array
 }
 
@@ -124,7 +144,7 @@ export const withActivator = (...ids) =>
 
             render() {
                 return (
-                    <Activator ids={ids}>
+                    <Activator ids={ids} otherProps={this.props}>
                         {this.renderActivator}
                     </Activator>
                 )

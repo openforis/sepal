@@ -3,13 +3,13 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {SingleActivator} from 'widget/activation/singleActivator'
 import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {debounceTime, throttleTime} from 'rxjs'
 import {formatCoordinates} from 'coords'
 import {msg} from 'translate'
+import {withActivator} from 'widget/activation/activator'
 import {withMap} from './mapContext'
 import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
@@ -171,11 +171,6 @@ class _MapInfo extends React.PureComponent {
         width: null
     }
 
-    constructor() {
-        super()
-        this.renderButton = this.renderButton.bind(this)
-    }
-
     componentDidMount() {
         const {map: {view$}, addSubscription} = this.props
         addSubscription(
@@ -193,15 +188,14 @@ class _MapInfo extends React.PureComponent {
             ? (
                 <div className={styles.container}>
                     <MapInfoPanel/>
-                    <SingleActivator id={'mapInfo'}>
-                        {this.renderButton}
-                    </SingleActivator>
+                    {this.renderButton()}
                 </div>
             )
             : null
     }
 
-    renderButton({activate, deactivate, active}) {
+    renderButton() {
+        const {activator: {activatables: {mapInfo: {active, toggle}}}} = this.props
         const {view: {scale}, width} = this.state
         return (
             <Button
@@ -212,7 +206,7 @@ class _MapInfo extends React.PureComponent {
                 air='less'
                 tooltip={active ? null : msg('map.info.tooltip')}
                 tooltipPlacement='bottomLeft'
-                onClick={() => active ? deactivate() : activate()}>
+                onClick={toggle}>
                 <ElementResizeDetector onResize={({width}) => this.setState({width})}>
                     <div className={styles.content}>
                         <div>{format.number({value: scale, unit: 'm/px'})}</div>
@@ -228,7 +222,8 @@ class _MapInfo extends React.PureComponent {
 export const MapInfo = compose(
     _MapInfo,
     withMap(),
-    withSubscriptions()
+    withSubscriptions(),
+    withActivator('mapInfo')
 )
 
 MapInfo.propTypes = {}

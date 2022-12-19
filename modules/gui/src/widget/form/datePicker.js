@@ -1,5 +1,4 @@
 import * as PropTypes from 'prop-types'
-import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Input} from 'widget/input'
 import {Panel} from 'widget/panel/panel'
@@ -7,10 +6,10 @@ import {ScrollableList} from 'widget/list'
 import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
+import {withActivator} from 'widget/activation/activator'
 import Label from 'widget/label'
 import React, {Component} from 'react'
 import _ from 'lodash'
-import guid from 'guid'
 import moment from 'moment'
 import styles from './datePicker.module.css'
 
@@ -36,8 +35,7 @@ export const maxDate = (date1, date2) => pickDate(date1, date2, moment.max)
 export const minDate = (date1, date2) => pickDate(date1, date2, moment.min)
 export const constrainDate = (date, min, max) => maxDate(minDate(date, max), min)
 
-export class FormDatePicker extends React.Component {
-    id = `DatePicker-${guid()}`
+class _FormDatePicker extends React.Component {
     inputElement = React.createRef()
     state = {value: ''}
 
@@ -49,46 +47,73 @@ export class FormDatePicker extends React.Component {
     }
 
     render() {
-        const {input, startDate, endDate, label, autoFocus, tooltip, tooltipPlacement} = this.props
+        return (
+            <React.Fragment>
+                {this.renderDatePicker()}
+                {this.renderWidget()}
+            </React.Fragment>
+        )
+    }
+
+    renderDatePicker() {
+        const {startDate, endDate, label, activator: {activatables: {datePicker: {id}}}} = this.props
         const {value} = this.state
         const date = moment(value, DATE_FORMAT)
         return (
-            <Activator id={this.id}>
-                {({activate}) =>
-                    <Widget
-                        label={label}
-                        tooltip={tooltip}
-                        tooltipPlacement={tooltipPlacement}>
-                        <DatePickerPanel
-                            id={this.id}
-                            title={label}
-                            date={date.isValid() ? date : moment(startDate, DATE_FORMAT)}
-                            startDate={momentDate(startDate)}
-                            endDate={momentDate(endDate)}
-                            onSelect={this.onSelect}/>
-                        <div className={styles.input}>
-                            <Input
-                                ref={this.inputElement}
-                                value={value || input.value}
-                                type='text'
-                                maxLength={10}
-                                autoFocus={autoFocus}
-                                className={styles.input}
-                                onChange={this.onChange}
-                                onBlur={this.onBlur}
-                            />
-                            <Button
-                                additionalClassName={styles.panelTrigger}
-                                chromeless
-                                shape='none'
-                                icon='calendar-alt'
-                                size='small'
-                                onClick={activate}
-                            />
-                        </div>
-                    </Widget>
-                }
-            </Activator>
+            <DatePickerPanel
+                id={id}
+                title={label}
+                date={date.isValid() ? date : moment(startDate, DATE_FORMAT)}
+                startDate={momentDate(startDate)}
+                endDate={momentDate(endDate)}
+                onSelect={this.onSelect}
+            />
+        )
+    }
+
+    renderWidget() {
+        const {label, tooltip, tooltipPlacement} = this.props
+        return (
+            <Widget
+                label={label}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+                contenClassName={styles.input}>
+                {this.renderInput()}
+                {this.renderButton()}
+            </Widget>
+        )
+    }
+
+    renderInput() {
+        const {input, autoFocus} = this.props
+        const {value} = this.state
+        return (
+            <Input
+                ref={this.inputElement}
+                value={value || input.value}
+                type='text'
+                maxLength={10}
+                autoFocus={autoFocus}
+                className={styles.input}
+                onChange={this.onChange}
+                onBlur={this.onBlur}
+            />
+        )
+    }
+
+    renderButton() {
+        const {activator: {activatables: {datePicker: {activate, active, canActivate}}}} = this.props
+        return (
+            <Button
+                additionalClassName={styles.panelTrigger}
+                chromeless
+                shape='none'
+                icon='calendar-alt'
+                size='small'
+                disabled={active || !canActivate}
+                onClick={activate}
+            />
         )
     }
 
@@ -133,6 +158,13 @@ export class FormDatePicker extends React.Component {
     }
 }
 
+export const FormDatePicker = compose(
+    _FormDatePicker,
+    withActivator({
+        datePicker: (_props, activatorId) => `datePicker-${activatorId}`
+    })
+)
+
 FormDatePicker.propTypes = {
     endDate: PropTypes.any.isRequired,
     input: PropTypes.object.isRequired,
@@ -166,12 +198,10 @@ class _DatePickerPanel extends React.Component {
                     icon='calendar-alt'
                     title={title}/>
                 <Panel.Content noVerticalPadding>
-                    <div>
-                        <div className={styles.panelContent}>
-                            {this.renderYears()}
-                            {this.renderMonths()}
-                            {this.renderDays()}
-                        </div>
+                    <div className={styles.panelContent}>
+                        {this.renderYears()}
+                        {this.renderMonths()}
+                        {this.renderDays()}
                     </div>
                 </Panel.Content>
                 <Panel.Buttons>

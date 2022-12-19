@@ -3,7 +3,6 @@ import {EMPTY, switchMap, throwError} from 'rxjs'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {SingleActivator} from 'widget/activation/singleActivator'
 import {activatable} from 'widget/activation/activatable'
 import {changeCurrentUserPassword$} from 'user'
 import {compose} from 'compose'
@@ -118,16 +117,22 @@ export const ChangePassword = compose(
 
 ChangePassword.propTypes = {}
 
-export const ChangePasswordButton = ({disabled}) => (
-    <SingleActivator id='changePassword'>
-        {({canActivate, activate}) =>
+class _ChangePasswordButton extends React.Component {
+    render() {
+        const {disabled, activator: {activatables: {changePassword: {activate, canActivate}}}} = this.props
+        return (
             <Button
                 icon={'key'}
                 label={msg('user.changePassword.label')}
                 disabled={!canActivate || disabled}
-                onClick={() => activate()}/>
-        }
-    </SingleActivator>
+                onClick={activate}/>
+        )
+    }
+}
+
+export const ChangePasswordButton = compose(
+    _ChangePasswordButton,
+    withActivator('changePassword')
 )
 
 ChangePasswordButton.propTypes = {
