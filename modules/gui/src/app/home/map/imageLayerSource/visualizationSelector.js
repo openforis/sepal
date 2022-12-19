@@ -98,18 +98,16 @@ class _VisualizationSelector extends React.Component {
     }
 
     addVisParams() {
-        const {recipe, source, activator: {activatables}, mapAreaContext: {area}} = this.props
-        const visParamsPanel = activatables[`visParams-${area}`]
-        visParamsPanel.activate({recipe, imageLayerSourceId: source.id})
+        const {recipe, source, activator: {activatables: {visParams: {activate}}}} = this.props
+        activate({recipe, imageLayerSourceId: source.id})
     }
 
     editVisParams(visParamsToEdit, editMode) {
-        const {recipe, source, activator: {activatables}, mapAreaContext: {area}} = this.props
-        const visParamsPanel = activatables[`visParams-${area}`]
+        const {recipe, source, activator: {activatables: {visParams: {activate}}}} = this.props
         const visParams = editMode === 'clone'
             ? {...visParamsToEdit, id: guid()}
             : visParamsToEdit
-        visParamsPanel.activate({recipe, imageLayerSourceId: source.id, visParams})
+        activate({recipe, imageLayerSourceId: source.id, visParams})
     }
 
     removeVisParams(visParams) {
@@ -128,7 +126,9 @@ class _VisualizationSelector extends React.Component {
 export const VisualizationSelector = compose(
     _VisualizationSelector,
     withRecipe(mapRecipeToProps),
-    withActivators(),
+    withActivators({
+        visParams: ({mapAreaContext: {area}}) => `visParams-${area}`
+    }),
     withMapAreaContext()
 )
 
