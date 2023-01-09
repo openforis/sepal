@@ -125,7 +125,7 @@ class _TerminalSession extends React.Component {
         terminal.open(terminalContainer.current)
         // for some reason theme must be defined after open...
         terminal.options.theme = {
-            background: 'transparent',
+            background: '#00000000',
             foreground: '#ccc'
         }
         terminal.onResize(
