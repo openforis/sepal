@@ -50,8 +50,8 @@
         "rxjs": "7.5.7",
         "@turf/turf": "6.5.0",
         "uuid": "^9.0.0",
-        "xterm": "^5.0.0",
-        "xterm-addon-fit": "^0.6.0"
+        "xterm": "^5.1.0",
+        "xterm-addon-fit": "^0.7.0"
     },
     "scripts": {
         "start": "react-scripts start",
