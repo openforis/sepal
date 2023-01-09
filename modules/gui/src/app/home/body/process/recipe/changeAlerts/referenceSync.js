@@ -1,4 +1,4 @@
-import {Subject, map, of, switchMap, takeUntil} from 'rxjs'
+import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {getAllVisualizations} from '../ccdc/ccdcRecipe'
@@ -69,13 +69,11 @@ class _ReferenceSync extends React.Component {
                         .set('ui.reference.sourceType', type)
                         .dispatch()
                 },
-                error => console.log('ERROR:', error)
+                error => Notifications.error({message: msg('process.changeAlerts.reference.recipe.loadError'), error})
             )
         } else if (type === 'ASSET') {
-            console.log('initAsset')
             this.initAsset() // What about prevReference?
         } else {
-            console.log('updateRecipeReference', recipe)
             this.updateRecipeReference({ccdcRecipe: recipe})
         }
     }
