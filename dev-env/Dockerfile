@@ -53,7 +53,7 @@ RUN curl -sL https://deb.nodesource.com/setup_18.x | bash && apt-get update && a
 
 # Install global npm packages
 
-RUN npm install -g npm npm-check-updates wscat
+RUN npm install -g npm-check-updates wscat
 
 # Set bash prompt
 
