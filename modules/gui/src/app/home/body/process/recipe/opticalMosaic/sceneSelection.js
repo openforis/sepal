@@ -5,7 +5,7 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {Scene} from './scene'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {map} from 'rxjs'
 import {msg} from 'translate'
@@ -232,5 +232,5 @@ export default compose(
     SceneSelection,
     form({fields}),
     withRecipe(mapRecipeToProps),
-    activatable({id: 'sceneSelection', policy})
+    withActivatable({id: 'sceneSelection', policy})
 )

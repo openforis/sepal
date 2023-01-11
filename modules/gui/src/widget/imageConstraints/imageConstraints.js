@@ -2,7 +2,7 @@ import {Buttons} from '../buttons'
 import {Constraint} from './constraint'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from '../../translate'
 import {withMapContext} from 'app/home/map/mapContext'
@@ -179,7 +179,7 @@ const policy = () => ({
 export const ImageConstraints = compose(
     _ImageConstraints,
     withMapContext(),
-    activatable({
+    withActivatable({
         id: ({id}) => id,
         policy,
         alwaysAllow: true

@@ -2,11 +2,11 @@ import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {getRevisions, revertToRevision$} from 'app/home/body/process/recipe'
 import {map} from 'rxjs'
 import {msg} from 'translate'
+import {withActivatable} from 'widget/activation/activatable'
 import PropTypes from 'prop-types'
 import React from 'react'
 import moment from 'moment'
@@ -112,5 +112,5 @@ const policy = () => ({_: 'allow'})
 export default compose(
     Revisions,
     form({fields}),
-    activatable({id: 'revisions', policy})
+    withActivatable({id: 'revisions', policy})
 )

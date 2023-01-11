@@ -3,7 +3,7 @@ import {Input} from 'widget/input'
 import {Panel} from 'widget/panel/panel'
 import {ScrollableList} from 'widget/list'
 import {Widget} from 'widget/widget'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {withActivators} from 'widget/activation/activator'
 import Label from 'widget/label'
@@ -381,7 +381,7 @@ class _DatePickerPanel extends React.Component {
 
 const DatePickerPanel = compose(
     _DatePickerPanel,
-    activatable({
+    withActivatable({
         id: ({id}) => id,
         policy: () => ({_: 'allow'}),
         alwaysAllow: true

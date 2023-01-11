@@ -6,12 +6,12 @@ import {Palette} from './palette'
 import {Panel} from 'widget/panel/panel'
 import {Subject, filter, takeUntil} from 'rxjs'
 import {Widget} from 'widget/widget'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {downloadCsv} from 'widget/download'
 import {msg} from 'translate'
 import {normalize} from 'app/home/map/visParams/visParams'
 import {selectFrom} from 'stateUtils'
+import {withActivatable} from 'widget/activation/activatable'
 import {withActivators} from 'widget/activation/activator'
 import {withMapContext} from 'app/home/map/mapContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -637,7 +637,7 @@ export const VisParamsPanel = compose(
     form({fields}),
     withRecipe(mapRecipeToProps),
     withMapContext(),
-    activatable({
+    withActivatable({
         id: ({area}) => `visParams-${area}`,
         policy,
         alwaysAllow: true

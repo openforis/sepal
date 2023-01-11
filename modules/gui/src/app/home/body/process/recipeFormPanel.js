@@ -1,8 +1,8 @@
 import {Form, form} from 'widget/form/form'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {initValues} from 'app/home/body/process/recipe'
 import {selectFrom} from 'stateUtils'
+import {withActivatable} from 'widget/activation/activatable'
 import {withPanelWizardContext} from 'widget/panelWizard'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
@@ -56,8 +56,8 @@ export const recipeFormPanel = (
     return WrappedComponent => {
         const policyToApply = props => ({...policy(props), ...additionalPolicy(props)})
         // [HACK] Using withRecipe() twice.
-        // activatable() is dependent on recipe for its policy -> withRecipe() before activatable()
-        // withRecipe() is dependent on activatable props -> activatable() before withRecipe()
+        // withActivatable() is dependent on recipe for its policy -> withRecipe() before withActivatable()
+        // withRecipe() is dependent on activatable props -> withActivatable() before withRecipe()
         return compose(
             class RecipeFormPanelHOC extends React.Component {
                 constructor(props) {
@@ -88,7 +88,7 @@ export const recipeFormPanel = (
             form({fields, constraints}),
             initValues(valuesSpec),
             withRecipe(createMapRecipeToProps(mapRecipeToProps)),
-            activatable({id, policy: policyToApply}),
+            withActivatable({id, policy: policyToApply}),
             withRecipe(createMapRecipeToProps(mapRecipeToProps)),
             withPanelWizardContext()
         )

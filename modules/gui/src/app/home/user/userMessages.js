@@ -6,7 +6,7 @@ import {Markdown} from 'widget/markdown'
 import {Msg, msg} from 'translate'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {v4 as uuid} from 'uuid'
@@ -274,7 +274,7 @@ const policy = () => ({_: 'disallow'})
 const UserMessages = compose(
     _UserMessages,
     connect(mapStateToProps),
-    activatable({id: 'userMessages', policy, alwaysAllow: true})
+    withActivatable({id: 'userMessages', policy, alwaysAllow: true})
 )
 
 UserMessages.propTypes = {

@@ -5,7 +5,7 @@ import {Panel} from 'widget/panel/panel'
 import {SearchBox} from 'widget/searchBox'
 import {Slider} from 'widget/slider'
 import {ToggleButton} from 'widget/toggleButton'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {formatCoordinates, parseCoordinates} from 'coords'
 import {msg} from 'translate'
@@ -331,7 +331,7 @@ export const MapZoomPanel = compose(
     _MapZoomPanel,
     withMap(),
     withSubscriptions(),
-    activatable({
+    withActivatable({
         id: 'mapZoom',
         policy,
         alwaysAllow: true

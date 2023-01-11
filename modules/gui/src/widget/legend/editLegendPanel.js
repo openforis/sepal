@@ -1,11 +1,11 @@
 import {Form, form} from 'widget/form/form'
 import {LegendBuilder, defaultColor} from 'app/home/map/legendBuilder'
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {downloadCsv} from '../download'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {withActivatable} from 'widget/activation/activatable'
 import {withActivators} from 'widget/activation/activator'
 import {withMapContext} from 'app/home/map/mapContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -203,7 +203,7 @@ export const EditLegendPanel = compose(
     form({fields}),
     withRecipe(mapRecipeToProps),
     withMapContext(),
-    activatable({
+    withActivatable({
         id: 'editLegendPanel',
         policy,
         alwaysAllow: true

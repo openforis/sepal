@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser, requestUserAccess$, revokeGoogleAccess$} from 'user'
@@ -163,7 +163,7 @@ export const GoogleAccount = compose(
     _GoogleAccount,
     connect(mapStateToProps),
     withActivators('userDetails'),
-    activatable({id: 'googleAccount', policy, alwaysAllow: true})
+    withActivatable({id: 'googleAccount', policy, alwaysAllow: true})
 )
 
 GoogleAccount.propTypes = {}

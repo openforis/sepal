@@ -3,7 +3,7 @@ import {EMPTY, switchMap, throwError} from 'rxjs'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {changeCurrentUserPassword$} from 'user'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -112,7 +112,7 @@ export const ChangePassword = compose(
     _ChangePassword,
     form({fields, constraints, mapStateToProps}),
     withActivators('userDetails'),
-    activatable({id: 'changePassword', policy, alwaysAllow: true})
+    withActivatable({id: 'changePassword', policy, alwaysAllow: true})
 )
 
 ChangePassword.propTypes = {}

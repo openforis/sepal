@@ -1,10 +1,10 @@
 import {Form, form} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
 import {RecipeInput} from 'widget/recipeInput'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'
+import {withActivatable} from 'widget/activation/activatable'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 import styles from './selectRecipe.module.css'
@@ -86,5 +86,5 @@ export const SelectRecipe = compose(
     _SelectRecipe,
     form({fields}),
     withRecipe(),
-    activatable({id: 'selectRecipe', policy, alwaysAllow: true})
+    withActivatable({id: 'selectRecipe', policy, alwaysAllow: true})
 )

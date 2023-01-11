@@ -3,7 +3,7 @@ import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {Widget} from 'widget/widget'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
@@ -106,7 +106,7 @@ const policy = () => ({
 const Usage = compose(
     _Usage,
     connect(mapStateToProps),
-    activatable({id: 'userReport', policy, alwaysAllow: true})
+    withActivatable({id: 'userReport', policy, alwaysAllow: true})
 )
 
 Usage.propTypes = {}

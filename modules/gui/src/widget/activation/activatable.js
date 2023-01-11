@@ -102,7 +102,7 @@ Activatable.propTypes = {
     policy: PropTypes.func
 }
 
-export const activatable = ({id, policy, alwaysAllow}) =>
+export const withActivatable = ({id, policy, alwaysAllow}) =>
     WrappedComponent =>
         class ActivatableHOC extends React.Component {
             constructor() {

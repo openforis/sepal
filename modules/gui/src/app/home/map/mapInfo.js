@@ -4,7 +4,7 @@ import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {Widget} from 'widget/widget'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {debounceTime, throttleTime} from 'rxjs'
 import {formatCoordinates} from 'coords'
@@ -158,7 +158,7 @@ const MapInfoPanel = compose(
     _MapInfoPanel,
     withMap(),
     withSubscriptions(),
-    activatable({
+    withActivatable({
         id: 'mapInfo',
         policy,
         alwaysAllow: true

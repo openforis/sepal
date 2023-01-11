@@ -5,7 +5,7 @@ import {GoogleAccount, GoogleAccountButton} from './googleAccount'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {Subject} from 'rxjs'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser, updateCurrentUserDetails$} from 'user'
@@ -171,7 +171,7 @@ const policy = () => ({
 const UserDetails = compose(
     _UserDetails,
     form({fields, mapStateToProps}),
-    activatable({id: 'userDetails', policy, alwaysAllow: true})
+    withActivatable({id: 'userDetails', policy, alwaysAllow: true})
 )
 
 UserDetails.propTypes = {}

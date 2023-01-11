@@ -3,7 +3,7 @@ import {Buttons} from 'widget/buttons'
 import {Item} from 'widget/item'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {msg} from 'translate'
@@ -115,7 +115,7 @@ const MapAreaMenuPanel = compose(
     _MapAreaMenuPanel,
     withLayers(),
     withRecipe(recipe => ({recipe})),
-    activatable({
+    withActivatable({
         id: ({area}) => `mapAreaMenu-${area}`,
         policy,
         alwaysAllow: true

@@ -2,11 +2,11 @@ import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {Subject, takeUntil} from 'rxjs'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'
+import {withActivatable} from 'widget/activation/activatable'
 import {withRecipe} from '../recipeContext'
 import React from 'react'
 import api from 'api'
@@ -121,6 +121,6 @@ export const SelectPlanet = compose(
     _SelectPlanet,
     form({fields}),
     withRecipe(),
-    activatable({id: 'selectPlanet', policy, alwaysAllow: true}),
+    withActivatable({id: 'selectPlanet', policy, alwaysAllow: true}),
     connect(mapStateToProps)
 )
