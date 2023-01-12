@@ -2,7 +2,7 @@ import {EMPTY, combineLatest, distinctUntilChanged, fromEvent, switchMap, take, 
 import {Link} from 'route'
 import {compose} from 'compose'
 import {download} from 'widget/download'
-import {withButtonGroupContext} from './buttonGroup'
+import {withButtonGroup} from './buttonGroup'
 import {withSubscriptions} from 'subscription'
 import Icon from 'widget/icon'
 import Keybinding from './keybinding'
@@ -78,7 +78,7 @@ class _Button extends React.Component {
 
     classNames() {
         const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle, hint,
-            alignment, width, onClickHold, disableTransitions, buttonGroupContext: {joinLeft, joinRight} = {}} = this.props
+            alignment, width, onClickHold, disableTransitions, buttonGroup: {joinLeft, joinRight} = {}} = this.props
         return className ? className : [
             styles.button,
             styles[`size-${size}`],
@@ -388,7 +388,7 @@ export const Button =
     compose(
         React.memo(_Button),
         withSubscriptions(),
-        withButtonGroupContext(),
+        withButtonGroup(),
         withForwardedRef()
     )
 
