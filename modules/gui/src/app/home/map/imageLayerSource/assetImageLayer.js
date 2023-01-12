@@ -79,11 +79,6 @@ class _AssetImageLayer extends React.Component {
         }
     }
 
-    setBusy(name, busy) {
-        const {tabContext: {setBusy}, componentId} = this.props
-        setBusy(`${name}-${componentId}`, busy)
-    }
-
     maybeCreateLayer() {
         const {layerConfig, map} = this.props
         return map && layerConfig && layerConfig.visParams
