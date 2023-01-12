@@ -10,6 +10,8 @@ const DEFAULT_PORTAL_CONTAINER_ID = 'defaultPortalContainer'
 
 const Context = React.createContext()
 
+const withPortal = withContext(Context, 'portal')
+
 export class PortalContext extends React.Component {
     render() {
         const {id, children} = this.props
@@ -20,8 +22,6 @@ export class PortalContext extends React.Component {
         )
     }
 }
-
-const withPortalContext = withContext(Context, 'portalContext')
 
 export const PortalContainer = ({id, className}) => (
     <div
@@ -41,9 +41,9 @@ class Portal extends React.Component {
     }
 
     getPortalContainer() {
-        const {type, container, portalContext} = this.props
+        const {type, container, portal} = this.props
         if (type === 'context') {
-            const portalContainerId = portalContext ? portalContext.id : null
+            const portalContainerId = portal?.id
             if (portalContainerId) {
                 return document.getElementById(portalContainerId)
             } else {
@@ -86,6 +86,6 @@ Portal.propTypes = {
 
 export default compose(
     Portal,
-    withPortalContext(),
+    withPortal(),
     withSubscriptions()
 )
