@@ -1,4 +1,4 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
@@ -69,5 +69,5 @@ Project.propTypes = {
 
 export default compose(
     Project,
-    form({fields, mapStateToProps})
+    withForm({fields, mapStateToProps})
 )

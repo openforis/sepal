@@ -17,7 +17,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 
-export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
+export const withForm = ({fields = {}, constraints = {}, mapStateToProps}) =>
     WrappedComponent => {
         class Form extends React.Component {
             dirtyListeners = []

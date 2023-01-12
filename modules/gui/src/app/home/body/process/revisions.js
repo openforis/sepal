@@ -1,4 +1,4 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
@@ -111,6 +111,6 @@ const policy = () => ({_: 'allow'})
 
 export default compose(
     Revisions,
-    form({fields}),
+    withForm({fields}),
     withActivatable({id: 'revisions', policy})
 )

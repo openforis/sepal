@@ -1,4 +1,4 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {Subject, takeUntil} from 'rxjs'
@@ -119,7 +119,7 @@ const policy = () => ({
 
 export const SelectPlanet = compose(
     _SelectPlanet,
-    form({fields}),
+    withForm({fields}),
     withRecipe(),
     withActivatable({id: 'selectPlanet', policy, alwaysAllow: true}),
     connect(mapStateToProps)

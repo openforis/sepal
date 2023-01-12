@@ -1,4 +1,4 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {compose} from 'compose'
 import {initValues} from 'app/home/body/process/recipe'
 import {selectFrom} from 'stateUtils'
@@ -85,7 +85,7 @@ export const recipeFormPanel = (
                     )
                 }
             },
-            form({fields, constraints}),
+            withForm({fields, constraints}),
             initValues(valuesSpec),
             withRecipe(createMapRecipeToProps(mapRecipeToProps)),
             withActivatable({id, policy: policyToApply}),

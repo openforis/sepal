@@ -1,5 +1,5 @@
 import {CenteredProgress} from 'widget/progress'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Padding} from 'widget/padding'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
@@ -230,7 +230,7 @@ const policy = () => ({
 
 export default compose(
     SceneSelection,
-    form({fields}),
+    withForm({fields}),
     withRecipe(mapRecipeToProps),
     withActivatable({id: 'sceneSelection', policy})
 )

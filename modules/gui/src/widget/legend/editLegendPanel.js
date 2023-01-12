@@ -1,4 +1,4 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {LegendBuilder, defaultColor} from 'app/home/map/legendBuilder'
 import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
@@ -200,7 +200,7 @@ const policy = () => ({
 
 export const EditLegendPanel = compose(
     _EditLegendPanel,
-    form({fields}),
+    withForm({fields}),
     withRecipe(mapRecipeToProps),
     withMapContext(),
     withActivatable({

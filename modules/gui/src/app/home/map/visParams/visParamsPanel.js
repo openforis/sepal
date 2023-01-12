@@ -1,4 +1,4 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Histogram, histogramStretch} from './histogram'
 import {Layout} from 'widget/layout'
 import {LegendBuilder, defaultColor} from 'app/home/map/legendBuilder'
@@ -634,7 +634,7 @@ const policy = () => ({
 
 export const VisParamsPanel = compose(
     _VisParamsPanel,
-    form({fields}),
+    withForm({fields}),
     withRecipe(mapRecipeToProps),
     withMapContext(),
     withActivatable({

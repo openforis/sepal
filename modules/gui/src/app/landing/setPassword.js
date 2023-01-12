@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {CenteredProgress} from 'widget/progress'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {credentialsPosted, resetPassword$, tokenUser, validateToken$} from 'user'
@@ -160,7 +160,7 @@ class _SetPassword extends React.Component {
 
 export const SetPassword = compose(
     _SetPassword,
-    form({fields, constraints, mapStateToProps}),
+    withForm({fields, constraints, mapStateToProps}),
     withRecaptchaContext()
 )
 

@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
@@ -112,7 +112,7 @@ class _ForgotPassword extends React.Component {
 
 export const ForgotPassword = compose(
     _ForgotPassword,
-    form({fields}),
+    withForm({fields}),
     withRecaptchaContext()
 )
 

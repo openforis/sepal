@@ -1,4 +1,4 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
 import {RecipeInput} from 'widget/recipeInput'
 import {compose} from 'compose'
@@ -84,7 +84,7 @@ const policy = () => ({
 
 export const SelectRecipe = compose(
     _SelectRecipe,
-    form({fields}),
+    withForm({fields}),
     withRecipe(),
     withActivatable({id: 'selectRecipe', policy, alwaysAllow: true})
 )

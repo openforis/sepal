@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {EMPTY, catchError, forkJoin, switchMap, tap} from 'rxjs'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -220,7 +220,7 @@ class _SignUp extends React.Component {
 
 export const SignUp = compose(
     _SignUp,
-    form({fields, mapStateToProps}),
+    withForm({fields, mapStateToProps}),
     withRecaptchaContext()
 )
 

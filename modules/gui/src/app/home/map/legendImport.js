@@ -1,5 +1,5 @@
 import {FileSelect} from 'widget/fileSelect'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {FormCombo} from 'widget/form/combo'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
@@ -250,7 +250,7 @@ export const LegendImport = compose(
         alwaysAllow: true
     }),
     withRecipe(),
-    form({fields}),
+    withForm({fields}),
 )
 
 export const getValidMappings = (columns, rows) => {

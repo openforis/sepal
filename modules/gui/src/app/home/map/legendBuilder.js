@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {ColorElement} from 'widget/colorElement'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {NoData} from 'widget/noData'
 import {PalettePreSets, pickColors} from './visParams/palettePreSets'
@@ -333,7 +333,7 @@ class _Entry extends React.Component {
 
 const Entry = compose(
     _Entry,
-    form({fields: entryFields, constraints: entryConstraints})
+    withForm({fields: entryFields, constraints: entryConstraints})
 )
 
 class ColorInput extends React.Component {

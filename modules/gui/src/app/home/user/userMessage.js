@@ -1,4 +1,4 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Markdown} from 'widget/markdown'
 import {Panel} from 'widget/panel/panel'
@@ -98,5 +98,5 @@ UserMessage.propTypes = {
 
 export default compose(
     UserMessage,
-    form({fields, mapStateToProps})
+    withForm({fields, mapStateToProps})
 )

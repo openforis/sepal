@@ -1,5 +1,5 @@
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {NoData} from '../../../../../../../widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions, loadObservations$} from '../timeSeriesRecipe'
@@ -179,5 +179,5 @@ ChartPixel.propTypes = {}
 export default compose(
     ChartPixel,
     withRecipe(mapRecipeToProps),
-    form({fields})
+    withForm({fields})
 )

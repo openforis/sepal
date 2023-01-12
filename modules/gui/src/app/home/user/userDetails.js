@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {ChangePassword, ChangePasswordButton} from './changePassword'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {GoogleAccount, GoogleAccountButton} from './googleAccount'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
@@ -170,7 +170,7 @@ const policy = () => ({
 
 const UserDetails = compose(
     _UserDetails,
-    form({fields, mapStateToProps}),
+    withForm({fields, mapStateToProps}),
     withActivatable({id: 'userDetails', policy, alwaysAllow: true})
 )
 

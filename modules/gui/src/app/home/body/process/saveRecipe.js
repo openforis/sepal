@@ -1,4 +1,4 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {closeRecipe, saveRecipe} from './recipe'
@@ -91,6 +91,6 @@ const policy = () => ({
 
 export default compose(
     SaveRecipe,
-    form({fields, mapStateToProps}),
+    withForm({fields, mapStateToProps}),
     withActivatable({id: 'saveRecipeDialog', policy})
 )

@@ -1,5 +1,5 @@
 import {AssetSelect} from 'widget/assetSelect'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
@@ -105,7 +105,7 @@ const policy = () => ({
 
 export const SelectAsset = compose(
     _SelectAsset,
-    form({fields}),
+    withForm({fields}),
     withRecipe(),
     withActivatable({id: 'selectAsset', policy, alwaysAllow: true})
 )
