@@ -13,7 +13,7 @@ import withForwardedRef from 'ref'
 const MARGIN = 5
 
 const Context = React.createContext()
-const withFloatingBoxContext = withContext(Context, 'floatingBoxContext')
+const withFloatingBox = withContext(Context, 'floatingBox')
 
 const mapStateToProps = state => ({
     viewportDimensions: selectFrom(state, 'dimensions') || []
@@ -347,25 +347,25 @@ class FloatingBox extends React.Component {
     }
 
     componentDidMount() {
-        const {floatingBoxContext} = this.props
-        if (floatingBoxContext) {
-            floatingBoxContext.addElement(this.ref.current)
+        const {floatingBox} = this.props
+        if (floatingBox) {
+            floatingBox.addElement(this.ref.current)
         }
         this.updateDimensions()
     }
 
     componentDidUpdate() {
-        const {floatingBoxContext} = this.props
-        if (floatingBoxContext) {
-            floatingBoxContext.addElement(this.ref.current)
+        const {floatingBox} = this.props
+        if (floatingBox) {
+            floatingBox.addElement(this.ref.current)
         }
         this.updateDimensions()
     }
 
     componentWillUnmount() {
-        const {floatingBoxContext} = this.props
-        if (floatingBoxContext) {
-            floatingBoxContext.removeElement(this.ref.current)
+        const {floatingBox} = this.props
+        if (floatingBox) {
+            floatingBox.removeElement(this.ref.current)
         }
     }
 }
@@ -373,7 +373,7 @@ class FloatingBox extends React.Component {
 export default compose(
     FloatingBox,
     connect(mapStateToProps),
-    withFloatingBoxContext(),
+    withFloatingBox(),
     withForwardedRef()
 )
 
