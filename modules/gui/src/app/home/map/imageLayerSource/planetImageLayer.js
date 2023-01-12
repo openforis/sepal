@@ -11,7 +11,7 @@ import {withMap} from '../mapContext'
 import {withMapArea} from '../mapAreaContext'
 import {withRecipe} from '../../body/process/recipeContext'
 import {withSubscriptions} from 'subscription'
-import {withTabContext} from 'widget/tabs/tabContext'
+import {withTab} from 'widget/tabs/tabContext'
 import PlanetLayer from '../layer/planetLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -45,7 +45,7 @@ class _PlanetImageLayer extends React.Component {
     }
 
     createLayer() {
-        const {layerConfig: {bands, urlTemplate} = defaultLayerConfig, map, busy$} = this.props
+        const {layerConfig: {bands, urlTemplate} = defaultLayerConfig, map, tab: {busy$}} = this.props
         const concurrency = CONCURRENCY
         const layer = urlTemplate
             ? this.selectedHasCir()
@@ -210,7 +210,7 @@ export const PlanetImageLayer = compose(
     withMap(),
     withMapArea(),
     withRecipe(mapRecipeToProps),
-    withTabContext(),
+    withTab(),
     withSubscriptions()
 )
 

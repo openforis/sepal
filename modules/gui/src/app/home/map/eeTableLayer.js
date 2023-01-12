@@ -1,6 +1,6 @@
 import {compose} from 'compose'
 import {withSubscriptions} from 'subscription'
-import {withTabContext} from 'widget/tabs/tabContext'
+import {withTab} from 'widget/tabs/tabContext'
 import EarthEngineTableLayer from './layer/earthEngineTableLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -33,7 +33,7 @@ class _EETableLayer extends React.Component {
     }
 
     createLayer() {
-        const {tableId, columnName, columnValue, buffer, color, fillColor, layerIndex, map, busy$} = this.props
+        const {tableId, columnName, columnValue, buffer, color, fillColor, layerIndex, map, tab: {busy$}} = this.props
         return tableId
             ? new EarthEngineTableLayer({
                 map,
@@ -50,7 +50,7 @@ class _EETableLayer extends React.Component {
 
 export const EETableLayer = compose(
     _EETableLayer,
-    withTabContext(),
+    withTab(),
     withSubscriptions()
 )
 

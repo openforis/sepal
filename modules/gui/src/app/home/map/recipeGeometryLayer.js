@@ -1,6 +1,6 @@
 import {compose} from 'compose'
 import {withSubscriptions} from 'subscription'
-import {withTabContext} from 'widget/tabs/tabContext'
+import {withTab} from 'widget/tabs/tabContext'
 import EarthEngineTableLayer from './layer/earthEngineTableLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -33,7 +33,7 @@ class _RecipeGeometryLayer extends React.Component {
     }
 
     createLayer() {
-        const {recipe, color, fillColor, layerIndex, map, busy$} = this.props
+        const {recipe, color, fillColor, layerIndex, map, tab: {busy$}} = this.props
         return recipe.ui.initialized
             ? new EarthEngineTableLayer({
                 map,
@@ -50,7 +50,7 @@ class _RecipeGeometryLayer extends React.Component {
 
 export const RecipeGeometryLayer = compose(
     _RecipeGeometryLayer,
-    withTabContext(),
+    withTab(),
     withSubscriptions()
 )
 

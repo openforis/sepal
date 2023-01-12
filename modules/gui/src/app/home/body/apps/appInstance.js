@@ -7,7 +7,7 @@ import {getLogger} from 'log'
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
 import {runApp$} from 'apps'
-import {withTabContext} from 'widget/tabs/tabContext'
+import {withTab} from 'widget/tabs/tabContext'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -78,7 +78,7 @@ class AppInstance extends React.Component {
     }
 
     componentDidMount() {
-        const {app: {endpoint, path}, busy$, stream} = this.props
+        const {app: {endpoint, path}, tab: {busy$}, stream} = this.props
         if (!endpoint) {
             this.setState({appState: 'INITIALIZED', src: path}, () =>
                 stream('RUN_APP', of())
@@ -90,7 +90,7 @@ class AppInstance extends React.Component {
     }
 
     componentDidUpdate(_prevProps, prevState) {
-        const {busy$} = this.props
+        const {tab: {busy$}} = this.props
         const {srcDoc} = this.state
         const iFrame = this.iFrameRef.current
         if (!this.useIFrameSrc() && srcDoc && !prevState.srcDoc && iFrame) {
@@ -108,7 +108,7 @@ class AppInstance extends React.Component {
     }
 
     iFrameLoaded() {
-        const {busy$} = this.props
+        const {tab: {busy$}} = this.props
         const {src} = this.state
         if (this.useIFrameSrc() && src) {
             busy$.next(false)
@@ -142,7 +142,7 @@ class AppInstance extends React.Component {
     }
 
     onError(error) {
-        const {app, busy$} = this.props
+        const {app, tab: {busy$}} = this.props
         log.error('Failed to load app', error)
         this.setState({appState: 'FAILED'})
         Notifications.error({message: msg('apps.run.error', {label: app.label || app.alt})})
@@ -167,5 +167,5 @@ AppInstance.contextTypes = {
 export default compose(
     AppInstance,
     connect(),
-    withTabContext()
+    withTab()
 )

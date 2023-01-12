@@ -8,7 +8,7 @@ import {selectFrom} from 'stateUtils'
 import {withMapArea} from '../mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {withSubscriptions} from 'subscription'
-import {withTabContext} from 'widget/tabs/tabContext'
+import {withTab} from 'widget/tabs/tabContext'
 import EarthEngineImageLayer from '../layer/earthEngineImageLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -87,7 +87,7 @@ class _AssetImageLayer extends React.Component {
     }
 
     createLayer() {
-        const {layerConfig, map, source, boundsChanged$, dragging$, cursor$, busy$} = this.props
+        const {layerConfig, map, source, boundsChanged$, dragging$, cursor$, tab: {busy$}} = this.props
         const asset = selectFrom(source, 'sourceConfig.asset')
         const dataTypes = selectFrom(source, 'sourceConfig.metadata.dataTypes') || {}
         const {watchedProps: prevPreviewRequest} = this.layer || {}
@@ -121,7 +121,7 @@ export const AssetImageLayer = compose(
     withSubscriptions(),
     withRecipe(mapRecipeToProps),
     withMapArea(),
-    withTabContext()
+    withTab()
 )
 
 AssetImageLayer.propTypes = {

@@ -7,7 +7,7 @@ import React from 'react'
 
 export const TabContext = React.createContext()
 
-export const withTabContext = () =>
+export const withTab = () =>
     WrappedComponent => compose(
         class WithTabContextHOC extends React.Component {
             constructor(props) {
@@ -18,13 +18,13 @@ export const withTabContext = () =>
             render() {
                 const props = {
                     ...this.props,
-                    busy$: this.busy$
+                    tab: {busy$: this.busy$}
                 }
                 return React.createElement(WrappedComponent, props)
             }
 
             createBusy$() {
-                const {tabContext: {id, busy$}, addSubscription} = this.props
+                const {tab: {id, busy$}, addSubscription} = this.props
                 const label = uuid()
                 const busyTab$ = new Subject()
                 const setBusy = busy => busy$.next({id, label, busy})
@@ -40,6 +40,6 @@ export const withTabContext = () =>
                 return busyTab$
             }
         },
-        withContext(TabContext, 'tabContext')(),
+        withContext(TabContext, 'tab')(),
         withSubscriptions()
     )

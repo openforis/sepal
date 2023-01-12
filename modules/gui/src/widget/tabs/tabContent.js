@@ -10,7 +10,6 @@ export class TabContent extends React.PureComponent {
     render() {
         const {id, busy$, type, selected, children} = this.props
         const portalContainerId = `portal_tab_${id}`
-        const tabContext = {id, busy$}
         return (
             <div className={[
                 styles.tabContent,
@@ -18,7 +17,7 @@ export class TabContent extends React.PureComponent {
             ].join(' ')}>
                 <Enabled value={selected}>
                     <PortalContainer id={portalContainerId}/>
-                    <TabContext.Provider value={tabContext}>
+                    <TabContext.Provider value={{id, busy$}}>
                         <PortalContext id={portalContainerId}>
                             {children({id, type})}
                         </PortalContext>

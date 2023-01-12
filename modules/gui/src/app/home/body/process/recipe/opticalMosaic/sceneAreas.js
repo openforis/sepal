@@ -10,7 +10,7 @@ import {msg} from 'translate'
 import {objectEquals} from 'collections'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import {withTabContext} from 'widget/tabs/tabContext'
+import {withTab} from 'widget/tabs/tabContext'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import api from 'api'
@@ -54,7 +54,7 @@ class _SceneAreas extends React.Component {
     }
 
     loadSceneAreas(aoi, source) {
-        const {recipeId, stream, busy$} = this.props
+        const {recipeId, stream, tab: {busy$}} = this.props
         RecipeActions(recipeId).setSceneAreas(null).dispatch()
         this.loadSceneArea$.next()
         busy$.next(true)
@@ -135,7 +135,7 @@ class _SceneAreas extends React.Component {
 export const SceneAreas = compose(
     _SceneAreas,
     withRecipe(mapRecipeToProps),
-    withTabContext()
+    withTab()
 )
 
 SceneAreas.propTypes = {}

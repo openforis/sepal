@@ -18,7 +18,7 @@ import {getRecipeType} from '../recipeTypes'
 import {selectFrom} from 'stateUtils'
 import {withMapArea} from 'app/home/map/mapAreaContext'
 import {withSubscriptions} from 'subscription'
-import {withTabContext} from 'widget/tabs/tabContext'
+import {withTab} from 'widget/tabs/tabContext'
 import EarthEngineImageLayer from 'app/home/map/layer/earthEngineImageLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -163,7 +163,7 @@ class _RecipeImageLayer extends React.Component {
     }
 
     createLayer() {
-        const {recipe, layerConfig, map, boundsChanged$, dragging$, cursor$, busy$} = this.props
+        const {recipe, layerConfig, map, boundsChanged$, dragging$, cursor$, tab: {busy$}} = this.props
         const recipes = [recipe, ...getDependentRecipes(recipe)]
         const availableBands = getRecipeType(recipe.type).getAvailableBands(recipe)
         const dataTypes = _.mapValues(availableBands, 'dataType')
@@ -209,7 +209,7 @@ export const RecipeImageLayer = compose(
     _RecipeImageLayer,
     connect(mapStateToProps),
     withMapArea(),
-    withTabContext(),
+    withTab(),
     withSubscriptions()
 )
 
