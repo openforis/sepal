@@ -1,4 +1,4 @@
-import {RecipeContext} from 'app/home/body/process/recipeContext'
+import {Recipe} from 'app/home/body/process/recipeContext'
 import {RecipeHome} from './recipeHome'
 import {Tabs, getTabsInfo} from 'widget/tabs/tabs'
 import {compose} from 'compose'
@@ -51,18 +51,18 @@ class Process extends React.Component {
 
     renderTab({id, type}) {
         return (
-            <RecipeContext recipeId={id}>
+            <Recipe id={id}>
                 {this.renderRecipe(id, type)}
-            </RecipeContext>
+            </Recipe>
         )
     }
 
     renderMenu(recipeId) {
         return (
-            <RecipeContext recipeId={recipeId}>
+            <Recipe id={recipeId}>
                 <ProcessMenu recipeId={recipeId}/>
                 <Revisions recipeId={recipeId}/>
-            </RecipeContext>
+            </Recipe>
         )
     }
 
