@@ -22,13 +22,13 @@ export const Recipe = ({id, children}) =>
         )
         : null
 
-const withRecipeContext = withContext(Context, 'recipeContext')
+const withRecipeStatePath = withContext(Context, 'recipeStatePath')
 
 export const withRecipe = (mapRecipeToProps = () => ({})) =>
     WrappedComponent => {
         const mapStateToProps = (_state, ownProps) => {
-            const {recipeContext: {statePath}} = ownProps
-            const recipe = {...select(statePath)}
+            const {recipeStatePath} = ownProps
+            const recipe = {...select(recipeStatePath)}
             if (!_.isEmpty(recipe)) {
                 return {
                     recipeActionBuilder: recipeActionBuilder(recipe.id),
@@ -52,7 +52,7 @@ export const withRecipe = (mapRecipeToProps = () => ({})) =>
                 }
             },
             connect(mapStateToProps),
-            withRecipeContext(),
+            withRecipeStatePath(),
             recipeAccess()
         )
     }
@@ -60,8 +60,8 @@ export const withRecipe = (mapRecipeToProps = () => ({})) =>
 export const recipe = ({getDefaultModel, defaultModel, mapRecipeToProps}) =>
     WrappedComponent => {
         const mapStateToProps = (state, ownProps) => {
-            const {recipeContext: {statePath}} = ownProps
-            const hasModel = !!select([statePath, 'model'])
+            const {recipeStatePath} = ownProps
+            const hasModel = !!select([recipeStatePath, 'model'])
             return {hasModel}
         }
 
@@ -75,10 +75,10 @@ export const recipe = ({getDefaultModel, defaultModel, mapRecipeToProps}) =>
                 }
     
                 componentDidMount() {
-                    const {hasModel, recipeContext: {statePath}} = this.props
+                    const {hasModel, recipeStatePath} = this.props
                     if (!hasModel) {
                         actionBuilder('INIT_MODEL', defaultModel || (getDefaultModel && getDefaultModel()))
-                            .set([statePath, 'model'], defaultModel || (getDefaultModel && getDefaultModel()))
+                            .set([recipeStatePath, 'model'], defaultModel || (getDefaultModel && getDefaultModel()))
                             .dispatch()
                     }
                 }

@@ -47,7 +47,7 @@ export const recipeFormPanel = (
         getValues: props => props.values,
         modelToValues,
         onInitialized: ({model, values, props}) => {
-            const {recipeContext: {statePath}} = props
+            const {recipeStatePath: statePath} = props
             const evaluatedPath = path(props)
             setModelAndValues({evaluatedPath, statePath, model, values})
         }
@@ -62,14 +62,14 @@ export const recipeFormPanel = (
             class RecipeFormPanelHOC extends React.Component {
                 constructor(props) {
                     super(props)
-                    const {values, recipeContext: {statePath}, form} = props
+                    const {values, recipeStatePath: statePath, form} = props
                     this.prevValues = values
     
                     form.onDirtyChanged(dirty => setDirty({evaluatedPath: path(props), statePath, dirty}))
                 }
     
                 render() {
-                    const {form, recipeContext: {statePath}, activatable: {deactivate}} = this.props
+                    const {form, recipeStatePath: statePath, activatable: {deactivate}} = this.props
                     return (
                         <Context.Provider value={{
                             id,
