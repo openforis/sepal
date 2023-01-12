@@ -7,8 +7,8 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {getRecipeType} from '../../body/process/recipeTypes'
 import {map} from 'rxjs'
+import {withMap} from '../mapContext'
 import {withMapAreaContext} from '../mapAreaContext'
-import {withMapContext} from '../mapContext'
 import {withRecipe} from '../../body/process/recipeContext'
 import {withSubscriptions} from 'subscription'
 import {withTabContext} from 'widget/tabs/tabContext'
@@ -199,7 +199,7 @@ class _PlanetImageLayer extends React.Component {
     }
 
     getApiKey(props) {
-        const {planetApiKey, mapContext: {nicfiPlanetApiKey}} = props || this.props
+        const {planetApiKey, nicfiPlanetApiKey} = props || this.props
         return planetApiKey || nicfiPlanetApiKey
     }
 }
@@ -207,7 +207,7 @@ class _PlanetImageLayer extends React.Component {
 export const PlanetImageLayer = compose(
     _PlanetImageLayer,
     connect(),
-    withMapContext(),
+    withMap(),
     withMapAreaContext(),
     withRecipe(mapRecipeToProps),
     withTabContext(),

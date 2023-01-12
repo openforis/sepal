@@ -7,7 +7,7 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withActivatable} from 'widget/activation/activatable'
 import {withActivators} from 'widget/activation/activator'
-import {withMapContext} from 'app/home/map/mapContext'
+import {withMap} from 'app/home/map/mapContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
 import Notifications from 'widget/notifications'
@@ -167,7 +167,7 @@ class _EditLegendPanel extends React.Component {
     }
 
     loadDistinctBandValues() {
-        const {activatable: {band, recipe}, aoi, stream, mapContext: {map: {getBounds}}} = this.props
+        const {activatable: {band, recipe}, aoi, stream, map: {getBounds}} = this.props
         const toEntries = values => values.map(value => ({
             id: guid(),
             value,
@@ -202,7 +202,7 @@ export const EditLegendPanel = compose(
     _EditLegendPanel,
     withForm({fields}),
     withRecipe(mapRecipeToProps),
-    withMapContext(),
+    withMap(),
     withActivatable({
         id: 'editLegendPanel',
         policy,

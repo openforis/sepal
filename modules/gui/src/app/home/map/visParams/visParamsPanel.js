@@ -13,7 +13,7 @@ import {normalize} from 'app/home/map/visParams/visParams'
 import {selectFrom} from 'stateUtils'
 import {withActivatable} from 'widget/activation/activatable'
 import {withActivators} from 'widget/activation/activator'
-import {withMapContext} from 'app/home/map/mapContext'
+import {withMap} from 'app/home/map/mapContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
 import Confirm from 'widget/confirm'
@@ -480,7 +480,7 @@ class _VisParamsPanel extends React.Component {
     }
 
     initHistogram(name, {stretch}) {
-        const {stream, activatable: {recipe}, aoi, mapContext: {map: {getBounds}}} = this.props
+        const {stream, activatable: {recipe}, aoi, map: {getBounds}} = this.props
         const {histograms} = this.state
         const histogram = histograms[name]
         const updateHistogram = (data, stretch) => this.setState(({histograms}) =>
@@ -554,7 +554,7 @@ class _VisParamsPanel extends React.Component {
     }
 
     loadDistinctBandValues() {
-        const {activatable: {recipe}, aoi, stream, inputs: {name1}, mapContext: {map: {getBounds}}} = this.props
+        const {activatable: {recipe}, aoi, stream, inputs: {name1}, map: {getBounds}} = this.props
         const toEntries = values => values.map(value => ({
             id: guid(),
             value,
@@ -636,7 +636,7 @@ export const VisParamsPanel = compose(
     _VisParamsPanel,
     withForm({fields}),
     withRecipe(mapRecipeToProps),
-    withMapContext(),
+    withMap(),
     withActivatable({
         id: ({area}) => `visParams-${area}`,
         policy,
