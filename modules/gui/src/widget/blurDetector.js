@@ -12,7 +12,7 @@ const ANIMATION_DURATION_MS = 500
 
 const BlurDetectorContext = React.createContext()
 
-const withBlurDetectorContext = withContext(BlurDetectorContext, 'blurDetectorContext')
+const withBlurDetector = withContext(BlurDetectorContext, 'blurDetector')
 
 const isOver = (e, element) => {
     return element.contains(e.target)
@@ -124,9 +124,9 @@ class BlurDetector extends React.Component {
     }
 
     setEnabled(enabled) {
-        const {blurDetectorContext} = this.props
-        if (blurDetectorContext) {
-            blurDetectorContext.enabled(enabled)
+        const {blurDetector} = this.props
+        if (blurDetector) {
+            blurDetector.enabled(enabled)
         }
     }
 
@@ -154,7 +154,7 @@ class BlurDetector extends React.Component {
 
 export default compose(
     BlurDetector,
-    withBlurDetectorContext(),
+    withBlurDetector(),
     withSubscriptions(),
     withForwardedRef(),
 )
