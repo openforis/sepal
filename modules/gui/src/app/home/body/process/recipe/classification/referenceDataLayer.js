@@ -3,7 +3,7 @@ import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withActivators} from 'widget/activation/activator'
-import {withDataCollectionContext} from './dataCollectionManager'
+import {withDataCollectionManager} from './dataCollectionManager'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import MarkerClustererLayer from 'app/home/map/markerClustererLayer'
 import PropTypes from 'prop-types'
@@ -195,6 +195,6 @@ ReferenceDataLayer.propTypes = {
 export default compose(
     ReferenceDataLayer,
     withRecipe(mapRecipeToProps),
-    withDataCollectionContext(),
+    withDataCollectionManager(),
     withActivators('collect')
 )

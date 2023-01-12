@@ -62,6 +62,6 @@ export class DataCollectionManager {
 
 const isClassified = marker => Object.keys(marker).includes('class') && _.isFinite(marker['class'])
 
-export const DataCollectionContext = React.createContext()
+export const DataCollectionManagerContext = React.createContext()
 
-export const withDataCollectionContext = withContext(DataCollectionContext)
+export const withDataCollectionManager = withContext(DataCollectionManagerContext, 'dataCollectionManager')
