@@ -3,7 +3,7 @@ import {compose} from 'compose'
 import {initValues} from 'app/home/body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import {withActivatable} from 'widget/activation/activatable'
-import {withPanelWizardContext} from 'widget/panelWizard'
+import {withPanelWizard} from 'widget/panelWizard'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -11,7 +11,7 @@ import actionBuilder from 'action-builder'
 
 const Context = React.createContext()
 
-const defaultPolicy = ({values, wizardContext: {wizard}}) =>
+const defaultPolicy = ({values, panelWizard: {wizard}}) =>
     wizard || selectFrom(values, 'dirty')
         ? {_: 'disallow'}
         : {_: 'allow-then-deactivate'}
@@ -90,7 +90,7 @@ export const recipeFormPanel = (
             withRecipe(createMapRecipeToProps(mapRecipeToProps)),
             withActivatable({id, policy: policyToApply}),
             withRecipe(createMapRecipeToProps(mapRecipeToProps)),
-            withPanelWizardContext()
+            withPanelWizard()
         )
     }
 }
