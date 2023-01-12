@@ -167,6 +167,8 @@
         "copyToClipboard": "",
         "discard": "",
         "done": "",
+        "disabled": "",
+        "enabled": "",
         "less": "",
         "more": "",
         "next": "",
@@ -1313,6 +1315,18 @@
                             "tooltip": ""
                         },
                         "minNumberOfChanges": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "mustBeConfirmedInMonitoring": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "mustBeStableBeforeChange": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "mustStayChanged": {
                             "label": "",
                             "tooltip": ""
                         }
