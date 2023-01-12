@@ -167,6 +167,8 @@
         "copyToClipboard": "Copiar al portapapeles",
         "discard": "No guardar",
         "done": "Hecho",
+        "disabled": "",
+        "enabled": "",
         "less": "Menos",
         "more": "Más",
         "next": "Siguiente",
@@ -1313,6 +1315,18 @@
                             "tooltip": ""
                         },
                         "minNumberOfChanges": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "mustBeConfirmedInMonitoring": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "mustBeStableBeforeChange": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "mustStayChanged": {
                             "label": "",
                             "tooltip": ""
                         }
