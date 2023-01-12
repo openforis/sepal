@@ -8,7 +8,7 @@ import {credentialsPosted, resetPassword$, tokenUser, validateToken$} from 'user
 import {history, query} from 'route'
 import {msg} from 'translate'
 import {switchMap} from 'rxjs'
-import {withRecaptchaContext} from 'widget/recaptcha'
+import {withRecaptcha} from 'widget/recaptcha'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -77,7 +77,7 @@ class _SetPassword extends React.Component {
     }
 
     resetPassword(username, password) {
-        const {type, recaptchaContext: {recaptcha$}, stream} = this.props
+        const {type, recaptcha: {recaptcha$}, stream} = this.props
         const token = query().token
         stream('RESET_PASSWORD',
             recaptcha$('RESET_PASSWORD').pipe(
@@ -161,7 +161,7 @@ class _SetPassword extends React.Component {
 export const SetPassword = compose(
     _SetPassword,
     withForm({fields, constraints, mapStateToProps}),
-    withRecaptchaContext()
+    withRecaptcha()
 )
 
 SetPassword.propTypes = {

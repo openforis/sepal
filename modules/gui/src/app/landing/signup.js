@@ -7,7 +7,7 @@ import {compose} from 'compose'
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
 import {signUp$, validateEmail$, validateUsername$} from 'user'
-import {withRecaptchaContext} from 'widget/recaptcha'
+import {withRecaptcha} from 'widget/recaptcha'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -118,7 +118,7 @@ class _SignUp extends React.Component {
     }
 
     checkUsername$() {
-        const {inputs: {username}, recaptchaContext: {recaptcha$}} = this.props
+        const {inputs: {username}, recaptcha: {recaptcha$}} = this.props
         return recaptcha$('VALIDATE_USERNAME').pipe(
             switchMap(recaptchaToken =>
                 validateUsername$({username: username.value, recaptchaToken})
@@ -146,7 +146,7 @@ class _SignUp extends React.Component {
     }
 
     checkEmail$() {
-        const {inputs: {email}, recaptchaContext: {recaptcha$}} = this.props
+        const {inputs: {email}, recaptcha: {recaptcha$}} = this.props
         return recaptcha$('VALIDATE_EMAIL').pipe(
             switchMap(recaptchaToken =>
                 validateEmail$({email: email.value, recaptchaToken})
@@ -179,7 +179,7 @@ class _SignUp extends React.Component {
     }
 
     signup(userDetails) {
-        const {onCancel, recaptchaContext: {recaptcha$}, stream} = this.props
+        const {onCancel, recaptcha: {recaptcha$}, stream} = this.props
         const {email} = userDetails
         stream('SIGN_UP',
             forkJoin(this.checkUsername$(), this.checkEmail$()).pipe(
@@ -221,7 +221,7 @@ class _SignUp extends React.Component {
 export const SignUp = compose(
     _SignUp,
     withForm({fields, mapStateToProps}),
-    withRecaptchaContext()
+    withRecaptcha()
 )
 
 SignUp.propTypes = {

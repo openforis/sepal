@@ -7,7 +7,7 @@ import {compose} from 'compose'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
 import {switchMap} from 'rxjs'
-import {withRecaptchaContext} from 'widget/recaptcha'
+import {withRecaptcha} from 'widget/recaptcha'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -90,7 +90,7 @@ class _ForgotPassword extends React.Component {
     }
 
     requestPasswordReset(email) {
-        const {recaptchaContext: {recaptcha$}, stream} = this.props
+        const {recaptcha: {recaptcha$}, stream} = this.props
         const {onCancel} = this.props
         stream('REQUEST_PASSWORD_RESET',
             recaptcha$('REQUEST_PASSWORD_RESET').pipe(
@@ -113,7 +113,7 @@ class _ForgotPassword extends React.Component {
 export const ForgotPassword = compose(
     _ForgotPassword,
     withForm({fields}),
-    withRecaptchaContext()
+    withRecaptcha()
 )
 
 ForgotPassword.propTypes = {
