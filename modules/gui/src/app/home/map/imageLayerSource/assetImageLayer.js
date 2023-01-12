@@ -5,7 +5,7 @@ import {VisualizationSelector} from './visualizationSelector'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withMapAreaContext} from '../mapAreaContext'
+import {withMapArea} from '../mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {withSubscriptions} from 'subscription'
 import {withTabContext} from 'widget/tabs/tabContext'
@@ -68,7 +68,7 @@ class _AssetImageLayer extends React.Component {
     }
 
     selectFirstVisualization() {
-        const {source, userDefinedVisualizations, layerConfig: {visParams} = {}, mapAreaContext: {updateLayerConfig}} = this.props
+        const {source, userDefinedVisualizations, layerConfig: {visParams} = {}, mapArea: {updateLayerConfig}} = this.props
         const allVisualizations = [...userDefinedVisualizations, ...(selectFrom(source, 'sourceConfig.visualizations') || [])]
         if (allVisualizations.length && (!visParams || !allVisualizations.find(({id}) => id === visParams.id))) {
             const firstVisParams = allVisualizations[0]
@@ -125,7 +125,7 @@ export const AssetImageLayer = compose(
     _AssetImageLayer,
     withSubscriptions(),
     withRecipe(mapRecipeToProps),
-    withMapAreaContext(),
+    withMapArea(),
     withTabContext()
 )
 

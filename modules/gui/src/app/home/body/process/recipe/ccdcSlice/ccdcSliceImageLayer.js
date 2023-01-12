@@ -5,7 +5,7 @@ import {compose} from 'compose'
 import {getUserDefinedVisualizations} from 'app/home/body/process/recipe/visualizations'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withMapAreaContext} from 'app/home/map/mapAreaContext'
+import {withMapArea} from 'app/home/map/mapAreaContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -89,14 +89,14 @@ class _CCDCSliceImageLayer extends React.Component {
     }
 
     selectVisualization(visParams) {
-        const {layerConfig: {panSharpen}, mapAreaContext: {updateLayerConfig}} = this.props
+        const {layerConfig: {panSharpen}, mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({visParams, panSharpen})
     }
 }
 
 export const CCDCSliceImageLayer = compose(
     _CCDCSliceImageLayer,
-    withMapAreaContext()
+    withMapArea()
 )
 
 CCDCSliceImageLayer.defaultProps = {

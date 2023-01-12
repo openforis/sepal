@@ -16,7 +16,7 @@ import {connect, select} from 'store'
 import {getAllVisualizations, getUserDefinedVisualizations} from './visualizations'
 import {getRecipeType} from '../recipeTypes'
 import {selectFrom} from 'stateUtils'
-import {withMapAreaContext} from 'app/home/map/mapAreaContext'
+import {withMapArea} from 'app/home/map/mapAreaContext'
 import {withSubscriptions} from 'subscription'
 import {withTabContext} from 'widget/tabs/tabContext'
 import EarthEngineImageLayer from 'app/home/map/layer/earthEngineImageLayer'
@@ -192,7 +192,7 @@ class _RecipeImageLayer extends React.Component {
     }
 
     selectVisualization(visParams) {
-        const {layerConfig, mapAreaContext: {updateLayerConfig}} = this.props
+        const {layerConfig, mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({...layerConfig, visParams})
     }
 }
@@ -208,7 +208,7 @@ const getDependentRecipes = recipe =>
 export const RecipeImageLayer = compose(
     _RecipeImageLayer,
     connect(mapStateToProps),
-    withMapAreaContext(),
+    withMapArea(),
     withTabContext(),
     withSubscriptions()
 )

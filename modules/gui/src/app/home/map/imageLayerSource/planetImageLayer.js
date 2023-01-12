@@ -8,7 +8,7 @@ import {connect} from 'store'
 import {getRecipeType} from '../../body/process/recipeTypes'
 import {map} from 'rxjs'
 import {withMap} from '../mapContext'
-import {withMapAreaContext} from '../mapAreaContext'
+import {withMapArea} from '../mapAreaContext'
 import {withRecipe} from '../../body/process/recipeContext'
 import {withSubscriptions} from 'subscription'
 import {withTabContext} from 'widget/tabs/tabContext'
@@ -172,12 +172,12 @@ class _PlanetImageLayer extends React.Component {
     }
 
     setBands(bands) {
-        const {layerConfig: {urlTemplate}, mapAreaContext: {updateLayerConfig}} = this.props
+        const {layerConfig: {urlTemplate}, mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({bands, urlTemplate})
     }
 
     selectUrlTemplate(urlTemplate) {
-        const {layerConfig: {bands}, mapAreaContext: {updateLayerConfig}} = this.props
+        const {layerConfig: {bands}, mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({bands, urlTemplate})
     }
 
@@ -208,7 +208,7 @@ export const PlanetImageLayer = compose(
     _PlanetImageLayer,
     connect(),
     withMap(),
-    withMapAreaContext(),
+    withMapArea(),
     withRecipe(mapRecipeToProps),
     withTabContext(),
     withSubscriptions()

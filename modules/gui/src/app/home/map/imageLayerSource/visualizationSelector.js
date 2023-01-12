@@ -4,7 +4,7 @@ import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withActivators} from 'widget/activation/activator'
-import {withMapAreaContext} from '../mapAreaContext'
+import {withMapArea} from '../mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -93,7 +93,7 @@ class _VisualizationSelector extends React.Component {
     }
 
     selectVisParams(visParams) {
-        const {mapAreaContext: {updateLayerConfig}} = this.props
+        const {mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({visParams})
     }
 
@@ -127,9 +127,9 @@ export const VisualizationSelector = compose(
     _VisualizationSelector,
     withRecipe(mapRecipeToProps),
     withActivators({
-        visParams: ({mapAreaContext: {area}}) => `visParams-${area}`
+        visParams: ({mapArea: {area}}) => `visParams-${area}`
     }),
-    withMapAreaContext()
+    withMapArea()
 )
 
 VisualizationSelector.defaultProps = {

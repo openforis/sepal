@@ -6,7 +6,7 @@ import {connect} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
 import {withCursorValue} from './cursorValue'
-import {withMapAreaContext} from './mapAreaContext'
+import {withMapArea} from './mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
@@ -34,7 +34,7 @@ class _LegendLayer extends React.Component {
     }
 
     render() {
-        const {cursorValue$, mapAreaContext: {area}, areas} = this.props
+        const {cursorValue$, mapArea: {area}, areas} = this.props
         if (!cursorValue$) {
             return null
         }
@@ -78,7 +78,7 @@ class _LegendLayer extends React.Component {
     }
 
     renderFullLegend() {
-        const {mapAreaContext: {area}, areas} = this.props
+        const {mapArea: {area}, areas} = this.props
         const {labels, values, palette} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
         return (
             <ScrollableContainer>
@@ -177,7 +177,7 @@ const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * 
 export const LegendLayer = compose(
     _LegendLayer,
     connect(),
-    withMapAreaContext(),
+    withMapArea(),
     withRecipe(mapRecipeToProps),
     withCursorValue(),
     withSubscriptions()

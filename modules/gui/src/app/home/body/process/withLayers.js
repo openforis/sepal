@@ -1,7 +1,7 @@
 import {compose} from 'compose'
 import {getImageLayerSource} from '../../map/imageLayerSource/imageLayerSource'
 import {selectFrom} from 'stateUtils'
-import {withMapAreaContext} from 'app/home/map/mapAreaContext'
+import {withMapArea} from 'app/home/map/mapAreaContext'
 import {withRecipe} from './recipeContext'
 import React from 'react'
 
@@ -22,7 +22,7 @@ export const withLayers = () =>
                         layers,
                         standardImageLayerSources,
                         recipeFeatureLayerSources,
-                        mapAreaContext: {area} = {}
+                        mapArea: {area} = {}
                     } = this.props
                     const {additionalImageLayerSources = [], areas = {}} = layers
                     const {imageLayer: {sourceId, layerConfig} = {}, featureLayerSources: areaFeatureLayerSources = []} = areas[area] || {}
@@ -47,5 +47,5 @@ export const withLayers = () =>
                 }
             },
             withRecipe(mapRecipeToProps),
-            withMapAreaContext()
+            withMapArea()
         )
