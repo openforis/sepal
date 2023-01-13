@@ -7,7 +7,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
-import asyncActionBuilder from 'async-action-builder'
 import guid from 'guid'
 
 let storeInstance = null
@@ -106,7 +105,6 @@ export const connect = mapStateToProps => {
                 super(props)
                 this.id = props.componentId
                 this.componentWillUnmount$ = new Subject()
-                this.asyncActionBuilder = this.asyncActionBuilder.bind(this)
                 this.action = this.action.bind(this)
                 this.setDisableListener = this.setDisableListener.bind(this)
                 this.setEnableListener = this.setEnableListener.bind(this)
@@ -116,10 +114,6 @@ export const connect = mapStateToProps => {
             componentWillUnmount() {
                 this.componentWillUnmount$.next()
                 this.componentWillUnmount$.complete()
-            }
-
-            asyncActionBuilder(type, action$) {
-                return asyncActionBuilder(type, action$, this)
             }
 
             action(type) {
@@ -144,7 +138,6 @@ export const connect = mapStateToProps => {
             render() {
                 return React.createElement(ReduxConnectedComponent, {
                     ...this.props,
-                    asyncActionBuilder: this.asyncActionBuilder,
                     action: this.action,
                     stream: this.stream,
                     onEnable: this.setEnableListener,
