@@ -39,10 +39,6 @@ class _MaskingImageLayer extends React.Component {
             />
         )
     }
-
-    componentDidUpdate() {
-        const {layerConfig = {}} = this.props
-    }
 }
 
 export const MaskingImageLayer = compose(
