@@ -1,0 +1,4090 @@
+{
+    "action": {
+        "error": {
+            "title": ""
+        },
+        "type": {
+            "AUTO_SELECT_SCENES": "",
+            "DUPLICATE_RECIPE": "",
+            "INIT_GOOGLE_MAPS_API": "",
+            "LOAD_APPS": "",
+            "LOAD_COUNTRIES": "",
+            "LOAD_COUNTRY_AREAS": "",
+            "LOAD_CURRENT_USER": "",
+            "LOAD_DIRECTORY": "",
+            "LOAD_FUSION_TABLE_COLUMNS": "",
+            "LOAD_FUSION_TABLE_ROWS": "",
+            "LOAD_RECIPE": "",
+            "LOAD_RECIPES": "",
+            "LOAD_SCENE_AREAS": "",
+            "LOAD_SCENES": "",
+            "LOGIN": "",
+            "REMOVE_DIRECTORY": "",
+            "REMOVE_FILE": "",
+            "REMOVE_TASK": "",
+            "REQUEST_PASSWORD_RESET": "",
+            "RESET_PASSWORD": "",
+            "RESTART_TASK": "",
+            "RUN_APP": "",
+            "SCHEDULE_UPDATE_TASKS": "",
+            "SCHEDULE_USER_INFO_REFRESH": "",
+            "STOP_TASK": "",
+            "VALIDATE_TOKEN": ""
+        }
+    },
+    "apps": {
+        "count": "",
+        "developedBy": "",
+        "filter": {
+            "search": {
+                "placeholder": ""
+            },
+            "tag": {
+                "ignore.label": ""
+            }
+        },
+        "googleAccountRequired": "",
+        "info": "",
+        "initializing": "",
+        "loading": {
+            "error": "",
+            "progress": ""
+        },
+        "notRunning": "",
+        "run": {
+            "error": ""
+        },
+        "running": ""
+    },
+    "asset": {
+        "failedToLoad": "",
+        "notFound": "",
+        "unauthorized": ""
+    },
+    "bands": {
+        "aerosol": "",
+        "blue": "",
+        "brightness": "",
+        "cirrus": "",
+        "dayOfYear": "",
+        "daysFromTarget": "",
+        "fifth": "",
+        "fourth": "",
+        "green": "",
+        "greenness": "",
+        "nir": "",
+        "pan": "",
+        "red": "",
+        "redEdge1": "",
+        "redEdge2": "",
+        "redEdge3": "",
+        "redEdge4": "",
+        "sixth": "",
+        "swir1": "",
+        "swir2": "",
+        "thermal": "",
+        "thermal2": "",
+        "unixTimeDays": "",
+        "waterVapor": "",
+        "wetness": "",
+        "ndvi": "",
+        "ndmi": "",
+        "ndwi": "",
+        "mndwi": "",
+        "ndfi": "",
+        "evi": "",
+        "evi2": "",
+        "savi": "",
+        "nbr": "",
+        "mvi": "",
+        "ui": "",
+        "ndbi": "",
+        "ibi": "",
+        "nbi": "",
+        "ebbi": "",
+        "bui": "",
+        "red, green, blue": "",
+        "nir, red, green": "",
+        "nir, swir1, red": "",
+        "swir2, nir, red": "",
+        "swir2, swir1', red": "",
+        "swir2, nir, green": "",
+        "brightness, greenness, wetness": "",
+        "fifth, sixth, fourth": ""
+    },
+    "body": {
+        "loading-apps": "",
+        "loading-initializing-google-maps": "",
+        "starting-sepal": "",
+        "starting-sepal-failed": ""
+    },
+    "browse": {
+        "controls": {
+            "clearSelection": {
+                "tooltip": ""
+            },
+            "download": {
+                "tooltip": ""
+            },
+            "remove": {
+                "tooltip": ""
+            },
+            "dotFiles": {
+                "label": "",
+                "hide.tooltip": "",
+                "show.tooltip": ""
+            },
+            "splitDirs": {
+                "label": "",
+                "split.tooltip": "",
+                "mix.tooltip": ""
+            },
+            "sorting": {
+                "date.label": "",
+                "name.label": ""
+            }
+        },
+        "info": {
+            "directory": "",
+            "empty": ""
+        },
+        "loading": {
+            "error": ""
+        },
+        "removeConfirmation": "",
+        "removing": {
+            "error": ""
+        },
+        "selected": ""
+    },
+    "button": {
+        "add": "",
+        "apply": "",
+        "back": "",
+        "cancel": "",
+        "close": "",
+        "confirm": "",
+        "copyToClipboard": "",
+        "discard": "",
+        "done": "",
+        "disabled": "",
+        "enabled": "",
+        "less": "",
+        "more": "",
+        "next": "",
+        "ok": "",
+        "remove": "",
+        "restart": "",
+        "retry": "",
+        "save": "",
+        "select": "",
+        "stop": ""
+    },
+    "eeTable": {
+        "failedToLoad": "",
+        "notFound": "",
+        "unauthorized": ""
+    },
+    "error": {
+        "internal": ""
+    },
+    "fieldValidation": {
+        "date": "",
+        "email": "",
+        "greaterThan": "",
+        "int": "",
+        "lessThan": "",
+        "match": "",
+        "max": "",
+        "min": "",
+        "notBlank": "",
+        "notEmpty": "",
+        "number": ""
+    },
+    "footer": {
+        "buildNumber": "",
+        "buildNumberCopied": "",
+        "gitCommit": "",
+        "gitCommitCopied": ""
+    },
+    "format": {
+        "dollars": "",
+        "dollarsPerHour": "",
+        "GB": "",
+        "hour": "",
+        "percent": ""
+    },
+    "fusionTable": {
+        "failedToLoad": "",
+        "notFound": "",
+        "unauthorized": ""
+    },
+    "gee": {
+        "asset": {
+            "error": {
+                "wrongType": ""
+            }
+        },
+        "classification": {
+            "error": {
+                "noTrainingData": ""
+            }
+        },
+        "error": {
+            "earthEngineException": "",
+            "failedToLoadRecipe": "",
+            "title": ""
+        },
+        "image": {
+            "error": {
+                "notAnImage": "",
+                "notFound": ""
+            }
+        },
+        "table": {
+            "error": {
+                "notATable": "",
+                "notFound": ""
+            }
+        }
+    },
+    "home": {
+        "connectivityError": "",
+        "sections": {
+            "account": "",
+            "app-launch-pad": "",
+            "browse": "",
+            "collapse": "",
+            "expand": "",
+            "help": "",
+            "logout": "",
+            "process": "",
+            "tasks": "",
+            "terminal": "",
+            "user": {
+                "messages": "",
+                "profile": "",
+                "report": {
+                    "budgetExceeded": "",
+                    "tooltip": ""
+                }
+            },
+            "users": ""
+        }
+    },
+    "landing": {
+        "features": {
+            "apps": {
+                "description": "",
+                "title": ""
+            },
+            "browse": {
+                "description": "",
+                "title": ""
+            },
+            "process": {
+                "description": "",
+                "title": ""
+            },
+            "terminal": {
+                "description": "",
+                "title": ""
+            }
+        },
+        "forgot-password": {
+            "button": "",
+            "cancel-link": "",
+            "instructions": "",
+            "invalid": "",
+            "label": "",
+            "email.placeholder": "",
+            "required": "",
+            "success": "",
+            "error": ""
+        },
+        "intro": {
+            "about": {
+                "description": "",
+                "title": ""
+            },
+            "computingPower": {
+                "description": "",
+                "title": ""
+            },
+            "easeOfUse": {
+                "description": "",
+                "title": ""
+            },
+            "googleEarthEngine": {
+                "description": "",
+                "title": ""
+            },
+            "integrations": {
+                "description": "",
+                "title": ""
+            },
+            "jupyterNotebook": {
+                "description": "",
+                "title": ""
+            },
+            "partners": {
+                "title": ""
+            },
+            "powerUsers": {
+                "description": "",
+                "title": ""
+            },
+            "rstudio": {
+                "description": "",
+                "title": ""
+            },
+            "shiny": {
+                "description": "",
+                "title": ""
+            }
+        },
+        "launch": "",
+        "documentation": "",
+        "loadCurrentUser": {
+            "error": ""
+        },
+        "signup": {
+            "button": "",
+            "username": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "format": "",
+                "duplicate": "",
+                "cannotValidate": ""
+            },
+            "name": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "invalid": ""
+            },
+            "email": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "format": "",
+                "duplicate": "",
+                "cannotValidate": ""
+            },
+            "organization": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "invalid": ""
+            },
+            "intendedUse": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "invalid": ""
+            },
+            "success": ""
+        },
+        "login": {
+            "button": "",
+            "error": "",
+            "forgot-password-link": "",
+            "password": {
+                "invalid": "",
+                "label": "",
+                "placeholder": "",
+                "required": ""
+            },
+            "sign-up": "",
+            "username": {
+                "label": "",
+                "placeholder": "",
+                "required": ""
+            }
+        },
+        "privacyPolicy": "",
+        "reset-password": {
+            "button": "",
+            "password": {
+                "invalid": "",
+                "label": "",
+                "placeholder": "",
+                "required": ""
+            },
+            "password2": {
+                "label": "",
+                "not-matching": "",
+                "placeholder": "",
+                "required": ""
+            },
+            "success": "",
+            "error": "",
+            "username": {
+                "label": ""
+            },
+            "validating-link": ""
+        },
+        "tagline": "",
+        "title": "",
+        "validate-token": {
+            "error": ""
+        }
+    },
+    "map": {
+        "info": {
+            "tooltip": "",
+            "center": "",
+            "bounds": "",
+            "copy": "",
+            "coordinatesCopied": ""
+        },
+        "legendBuilder": {
+            "addEntry": {
+                "tooltip": ""
+            },
+            "colors": {
+                "edit": {
+                    "tooltip": ""
+                },
+                "swap": {
+                    "tooltip": ""
+                }
+            },
+            "entry": {
+                "error": {
+                    "duplicateColor": "",
+                    "duplicateLabel": "",
+                    "duplicateValue": "",
+                    "invalidColor": ""
+                },
+                "remove": {
+                    "tooltip": ""
+                },
+                "classLabel": {
+                    "placeholder": ""
+                }
+            },
+            "import": {
+                "title": "",
+                "file": {
+                    "label": ""
+                },
+                "colorColumnType": {
+                    "label": "",
+                    "tooltip": "",
+                    "single": "",
+                    "multiple": ""
+                },
+                "column": {
+                    "valueColumn": {
+                        "label": "",
+                        "placeholder": "",
+                        "tooltip": ""
+                    },
+                    "labelColumn": {
+                        "label": "",
+                        "placeholder": "",
+                        "tooltip": ""
+                    },
+                    "colorColumn": {
+                        "label": "",
+                        "placeholder": "",
+                        "tooltip": ""
+                    },
+                    "redColumn": {
+                        "label": "",
+                        "placeholder": "",
+                        "tooltip": ""
+                    },
+                    "greenColumn": {
+                        "label": "",
+                        "placeholder": "",
+                        "tooltip": ""
+                    },
+                    "blueColumn": {
+                        "label": "",
+                        "placeholder": "",
+                        "tooltip": ""
+                    }
+                }
+            },
+            "label": "",
+            "load": {
+                "label": "",
+                "options": {
+                    "exportToCsv": {
+                        "label": ""
+                    },
+                    "importFromCsv": {
+                        "label": ""
+                    },
+                    "imageValues": {
+                        "label": "",
+                        "loadError": ""
+                    }
+                }
+            },
+            "noEntries": ""
+        },
+        "layer": {
+            "error": ""
+        },
+        "layout": {
+            "addImageLayerSource": {
+                "title": "",
+                "types": {
+                    "Asset": {
+                        "description": "",
+                        "form": {
+                            "asset.label": "",
+                            "loadError": ""
+                        },
+                        "presets": ""
+                    },
+                    "Planet": {
+                        "description": "",
+                        "form": {
+                            "description.label": "",
+                            "apiKey.label": "",
+                            "invalidApiKey": ""
+                        }
+                    },
+                    "Recipe": {
+                        "description": ""
+                    }
+                }
+            },
+            "area": {
+                "edit.tooltip": "",
+                "remove": {
+                    "message": "",
+                    "tooltip": ""
+                }
+            },
+            "layer": {
+                "remove": {
+                    "tooltip": ""
+                }
+            },
+            "mode": {
+                "grid": {
+                    "label": ""
+                },
+                "stack": {
+                    "label": ""
+                }
+            },
+            "title": ""
+        },
+        "visParams": {
+            "title": "",
+            "bands": {
+                "loading": "",
+                "loadError": ""
+            },
+            "form": {
+                "band": {
+                    "band.label": "",
+                    "blueChannel.label": "",
+                    "greenChannel.label": "",
+                    "hue.label": "",
+                    "redChannel.label": "",
+                    "reverse.tooltip": "",
+                    "saturation.label": "",
+                    "select.placeholder": "",
+                    "value.label": ""
+                },
+                "gamma": {
+                    "label": "",
+                    "info": ""
+                },
+                "histogram": {
+                    "error": "",
+                    "noData": ""
+                },
+                "inverted": {
+                    "label": ""
+                },
+                "palette": {
+                    "label": "",
+                    "tooltip": "",
+                    "empty": "",
+                    "add": {
+                        "tooltip": ""
+                    },
+                    "preset": {
+                        "placeholder": "",
+                        "attribution": ""
+                    },
+                    "text": {
+                        "tooltip": "",
+                        "placeholder": ""
+                    }
+                },
+                "min": {
+                    "label": "",
+                    "notSmallerThanMax": ""
+                },
+                "max": {
+                    "label": ""
+                }
+            },
+            "stretch": {
+                "label": ""
+            },
+            "type": {
+                "categorical": {
+                    "label": "",
+                    "tooltip": ""
+                },
+                "continuous": {
+                    "label": "",
+                    "tooltip": ""
+                },
+                "rgb": {
+                    "label": "",
+                    "tooltip": ""
+                },
+                "hsv": {
+                    "label": "",
+                    "tooltip": ""
+                }
+            }
+        },
+        "visualizationSelector": {
+            "label": "",
+            "userDefined.label": "",
+            "add.tooltip": "",
+            "edit.tooltip": "",
+            "clone.tooltip": "",
+            "remove.tooltip": ""
+        },
+        "drawingMode": {
+            "zoomarea": "",
+            "polygon": ""
+        }
+    },
+    "featureLayerSources": {
+        "Aoi": {
+            "type": "",
+            "description": ""
+        },
+        "Labels": {
+            "type": "",
+            "description": ""
+        },
+        "Legend": {
+            "type": "",
+            "description": ""
+        },
+        "Classification": {
+            "type": "",
+            "description": ""
+        },
+        "Palette": {
+            "type": "",
+            "description": ""
+        },
+        "ReferenceData": {
+            "type": "",
+            "description": ""
+        },
+        "Values": {
+            "type": "",
+            "description": ""
+        },
+        "SceneAreas": {
+            "type": "",
+            "description": ""
+        }
+    },
+    "imageLayerSources": {
+        "Asset": {
+            "label": "",
+            "description": ""
+        },
+        "Recipe": {
+            "label": "",
+            "thisRecipeDescription": "",
+            "loadError": ""
+        },
+        "Planet": {
+            "label": "",
+            "nicfiDescription": ""
+        },
+        "GoogleSatellite": {
+            "label": "",
+            "description": ""
+        }
+    },
+    "notifications": {
+        "error": {
+            "connectionError": "",
+            "generic": ""
+        }
+    },
+    "pagination": {
+        "info": ""
+    },
+    "process": {
+        "mapZoom": {
+            "fit": {
+                "tooltip": ""
+            },
+            "zoomArea": {
+                "tooltip": ""
+            },
+            "zoomIn": {
+                "tooltip": ""
+            },
+            "zoomOut": {
+                "tooltip": ""
+            },
+            "search": {
+                "placeholder": ""
+            },
+            "scrollwheel": {
+                "enabled": {
+                    "tooltip": ""
+                },
+                "disabled": {
+                    "tooltip": ""
+                }
+            }
+        },
+        "ccdc": {
+            "chartPixel": {
+                "cancel.tooltip": "",
+                "loadFailed": "",
+                "loadObservations.error": "",
+                "loadSegments.error": "",
+                "start.tooltip": ""
+            },
+            "create": "",
+            "description": "",
+            "mapToolbar": {
+                "ccdcGraph": {
+                    "date.label": "",
+                    "endDate.label": "",
+                    "magnitude.label": "",
+                    "model.label": "",
+                    "observation.label": "",
+                    "observationCount.label": "",
+                    "rmse.label": "",
+                    "startDate.label": ""
+                }
+            },
+            "panel": {
+                "dates": {
+                    "button": "",
+                    "form": {
+                        "dateFormat": {
+                            "fractionalYears": {
+                                "label": ""
+                            },
+                            "jDays": {
+                                "label": ""
+                            },
+                            "label": "",
+                            "required": "",
+                            "unixTimeMillis": {
+                                "label": ""
+                            }
+                        },
+                        "endDate": {
+                            "label": "",
+                            "malformed": "",
+                            "required": "",
+                            "tooltip": ""
+                        },
+                        "startDate": {
+                            "beforeEnd": "",
+                            "label": "",
+                            "malformed": "",
+                            "required": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "options": {
+                    "button": "",
+                    "form": {
+                        "breakDetection": {
+                            "aggressive": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "conservative": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "moderate": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "chiSquareProbability": "",
+                        "lambda": "",
+                        "maxIterations": "",
+                        "minNumOfYearsScaler": "",
+                        "minObservations": "",
+                        "tmaskBands": {
+                            "label": "",
+                            "noneOrTwo": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "preprocess": {
+                    "button": "",
+                    "form": {
+                        "cloudDetection": {
+                            "label": "",
+                            "cloudScore": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "pino26": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "qa": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "cloudMasking": {
+                            "aggressive": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "moderate": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "corrections": {
+                            "brdf": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "surfaceReflectance": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "shadowMasking": {
+                            "label": "",
+                            "off": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "on": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "snowMasking": {
+                            "label": "",
+                            "off": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "on": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "sources": {
+                    "button": "",
+                    "classificationLoadError": "",
+                    "form": {
+                        "breakpointBands": {
+                            "atLeastOne": "",
+                            "label": "",
+                            "probability": "",
+                            "regression": ""
+                        },
+                        "classification": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "cloudPercentageThreshold": {
+                            "label": "",
+                            "value": "",
+                            "tooltip": ""
+                        },
+                        "dataSets": {
+                            "label": ""
+                        },
+                        "dataSetType": {
+                            "label": ""
+                        },
+                        "dataSetTypes": {
+                            "OPTICAL": "",
+                            "PLANET": "",
+                            "RADAR": ""
+                        },
+                        "required": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "ccdcSlice": {
+            "chartPixel": {
+                "cancel.tooltip": "",
+                "loadFailed": "",
+                "loadObservations.error": "",
+                "loadSegments.error": "",
+                "start.tooltip": ""
+            },
+            "create": "",
+            "description": "",
+            "panel": {
+                "date": {
+                    "button": "",
+                    "form": {
+                        "date": {
+                            "label": "",
+                            "range": "",
+                            "tooltip": ""
+                        },
+                        "dateType": {
+                            "label": "",
+                            "RANGE": "",
+                            "SINGLE": ""
+                        },
+                        "endDate": {
+                            "label": "",
+                            "range": "",
+                            "tooltip": ""
+                        },
+                        "startDate": {
+                            "label": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "options": {
+                    "button": "",
+                    "form": {
+                        "breakAnalysisBand": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "breakMagnitudeDirection": {
+                            "options": {
+                                "ANY": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "DECREASE": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "INCREASE": {
+                                    "label": "",
+                                    "tooltip": ""
+                                }
+                            },
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "breakSelection": {
+                            "options": {
+                                "CONFIDENCE": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "FIRST": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LAST": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "MAGNITUDE": {
+                                    "label": "",
+                                    "tooltip": ""
+                                }
+                            },
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "extrapolateMaxDays": {
+                            "label": "",
+                            "unlimited": ""
+                        },
+                        "extrapolateSegment": {
+                            "closest": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "next": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "previous": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "gapStrategy": {
+                            "extrapolate": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "interpolate": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "mask": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "tooltip": ""
+                        },
+                        "harmonics": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "minBreakConfidence": {
+                            "label": "",
+                            "tooltip": "",
+                            "value": ""
+                        },
+                        "skipBreakInLastSegment": {
+                            "label": "",
+                            "options": {
+                                "EXCLUDE": "",
+                                "INCLUDE": ""
+                            },
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "retrieve": {
+                    "apply": "",
+                    "form": {
+                        "bandTypes": {
+                            "amplitude1": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "amplitude2": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "amplitude3": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "atLeastOne": "",
+                            "intercept": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "breakConfidence": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "magnitude": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "phase1": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "phase2": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "phase3": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "rmse": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "slope": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "value": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "baseBands": {
+                            "atLeastOne": "",
+                            "label": ""
+                        },
+                        "destination": {
+                            "GEE": "",
+                            "label": "",
+                            "required": "",
+                            "SEPAL": ""
+                        },
+                        "scale": {
+                            "label": "",
+                            "placeholder": ""
+                        },
+                        "segmentBands": {
+                            "changeProb": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "numObs": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "tBreak": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "tEnd": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "tooltip": "",
+                            "tStart": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "task": {
+                        "GEE": "",
+                        "SEPAL": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "source": {
+                    "asset": {
+                        "label": "",
+                        "title": "",
+                        "notCcdc": ""
+                    },
+                    "button": "",
+                    "form": {
+                        "asset": {
+                            "invalid": "",
+                            "label": "",
+                            "placeholder": "",
+                            "required": ""
+                        }
+                    },
+                    "recipe": {
+                        "label": "",
+                        "title": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "error": "",
+                "initializing": "",
+                "label": "",
+                "loading": "",
+                "tilesFailed": ""
+            },
+            "source": {
+                "asset": {
+                    "loadError": ""
+                },
+                "recipe": {
+                    "loadError": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "changeAlerts": {
+            "create": "",
+            "description": "",
+            "imageLayerForm": {
+                "mosaicType": {
+                    "label": "",
+                    "latest": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "median": {
+                        "label": "",
+                        "tooltip": ""
+                    }
+                },
+                "visualizationType": {
+                    "calibration": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "changes": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "label": "",
+                    "monitoring": {
+                        "label": "",
+                        "tooltip": ""
+                    }
+                }
+            },
+            "layers": {
+                "imageLayer": {
+                    "changes": "",
+                    "dates": "",
+                    "observations": ""
+                }
+            },
+            "panel": {
+                "date": {
+                    "button": "",
+                    "form": {
+                        "calibration": {
+                            "duration": {
+                                "label": "",
+                                "placeholder": ""
+                            }
+                        },
+                        "durationUnit": {
+                            "placeholder": "",
+                            "DAYS": "",
+                            "MONTHS": "",
+                            "WEEKS": ""
+                        },
+                        "monitoring": {
+                            "duration": {
+                                "label": "",
+                                "placeholder": ""
+                            }
+                        },
+                        "monitoringEnd": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "range": "",
+                        "noRange": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "options": {
+                    "button": "",
+                    "form": {
+                        "minConfidence": {
+                            "label": "",
+                            "tooltip": "",
+                            "value": ""
+                        },
+                        "numberOfObservations": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "minNumberOfChanges": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "mustBeConfirmedInMonitoring": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "mustBeStableBeforeChange": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "mustStayChanged": {
+                            "label": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "preprocess": {
+                    "button": "",
+                    "form": {
+                        "cloudDetection": {
+                            "label": "",
+                            "cloudScore": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "pino26": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "qa": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "cloudMasking": {
+                            "aggressive": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "moderate": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "corrections": {
+                            "brdf": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "surfaceReflectance": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "shadowMasking": {
+                            "label": "",
+                            "off": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "on": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "snowMasking": {
+                            "label": "",
+                            "off": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "on": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "reference": {
+                    "asset": {
+                        "label": "",
+                        "title": "",
+                        "notCcdc": ""
+                    },
+                    "button": "",
+                    "form": {
+                        "asset": {
+                            "invalid": "",
+                            "label": "",
+                            "placeholder": "",
+                            "required": ""
+                        }
+                    },
+                    "recipe": {
+                        "label": "",
+                        "title": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "retrieve": {
+                    "apply": "",
+                    "form": {
+                        "bandTypes": {
+                            "amplitude1": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "amplitude2": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "amplitude3": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "atLeastOne": "",
+                            "intercept": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "breakConfidence": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "magnitude": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "phase1": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "phase2": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "phase3": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "rmse": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "slope": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "value": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "baseBands": {
+                            "atLeastOne": "",
+                            "label": ""
+                        },
+                        "destination": {
+                            "GEE": "",
+                            "label": "",
+                            "required": "",
+                            "SEPAL": ""
+                        },
+                        "scale": {
+                            "label": ""
+                        },
+                        "segmentBands": {
+                            "changeProb": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "numObs": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "tBreak": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "tEnd": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "tooltip": "",
+                            "tStart": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "task": {
+                        "GEE": "",
+                        "SEPAL": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "sources": {
+                    "button": "",
+                    "form": {
+                        "band": {
+                            "label": ""
+                        },
+                        "cloudPercentageThreshold": {
+                            "label": "",
+                            "value": "",
+                            "tooltip": ""
+                        },
+                        "dataSets": {
+                            "label": "",
+                            "optical": {
+                                "label": ""
+                            },
+                            "options": {
+                                "LANDSAT_7": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_7_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_8": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_8_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_9": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_9_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_TM": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_TM_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SENTINEL_1": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SENTINEL_2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                }
+                            },
+                            "radar": {
+                                "label": ""
+                            }
+                        },
+                        "dataSetType": {
+                            "label": ""
+                        },
+                        "dataSetTypes": {
+                            "OPTICAL": "",
+                            "PLANET": "",
+                            "RADAR": ""
+                        },
+                        "required": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "error": "",
+                "initializing": "",
+                "label": "",
+                "loading": "",
+                "tilesFailed": ""
+            },
+            "reference": {
+                "asset": {
+                    "loadError": ""
+                },
+                "recipe": {
+                    "loadError": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "classification": {
+            "bands": {
+                "class": "",
+                "classProbability": "",
+                "probability": "",
+                "regression": ""
+            },
+            "collect": {
+                "disable.tooltip": "",
+                "enable.tooltip": "",
+                "findingNextPoint": {
+                    "error": "",
+                    "message": "",
+                    "notFound": "",
+                    "title": ""
+                }
+            },
+            "create": "",
+            "description": "",
+            "layers": {
+                "imageLayer": {
+                    "preSets": ""
+                },
+                "referenceData": {
+                    "description": "",
+                    "label": ""
+                }
+            },
+            "panel": {
+                "auxiliaryImagery": {
+                    "button": "",
+                    "form": {
+                        "options": {
+                            "label": "",
+                            "latitude": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "terrain": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "water": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "classifier": {
+                    "button": "",
+                    "form": {
+                        "cart": {
+                            "label": ""
+                        },
+                        "decisionTree": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "gradientTreeBoost": {
+                            "config": {
+                                "loss": {
+                                    "label": "",
+                                    "options": {
+                                        "Huber.label": "",
+                                        "LeastAbsoluteDeviation.label": "",
+                                        "LeastSquares.label": ""
+                                    },
+                                    "placeholder": "",
+                                    "tooltip": ""
+                                },
+                                "samplingRate": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "tooltip": ""
+                                },
+                                "shrinkage": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "tooltip": ""
+                                }
+                            },
+                            "label": ""
+                        },
+                        "minimumDistance": {
+                            "config": {
+                                "metric": {
+                                    "label": "",
+                                    "options": {
+                                        "cosine": {
+                                            "label": "",
+                                            "tooltip": ""
+                                        },
+                                        "euclidean": {
+                                            "label": "",
+                                            "tooltip": ""
+                                        },
+                                        "mahalanobis": {
+                                            "label": "",
+                                            "tooltip": ""
+                                        }
+                                    }
+                                }
+                            },
+                            "label": ""
+                        },
+                        "naiveBayes": {
+                            "config": {
+                                "lambda": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "tooltip": ""
+                                }
+                            },
+                            "label": ""
+                        },
+                        "randomForest": {
+                            "config": {
+                                "bagFraction": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "tooltip": ""
+                                },
+                                "maxNodes": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "tooltip": ""
+                                },
+                                "minLeafPopulation": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "tooltip": ""
+                                },
+                                "numberOfTrees": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "tooltip": ""
+                                },
+                                "seed": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "tooltip": ""
+                                },
+                                "variablesPerSplit": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "tooltip": ""
+                                }
+                            },
+                            "label": ""
+                        },
+                        "svm": {
+                            "config": {
+                                "coef0": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "tooltip": ""
+                                },
+                                "cost": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "tooltip": ""
+                                },
+                                "decisionProcedure": {
+                                    "label": "",
+                                    "options": {
+                                        "Margin.label": "",
+                                        "Voting.label": ""
+                                    }
+                                },
+                                "degree": {
+                                    "label": "",
+                                    "placeholder": ""
+                                },
+                                "gamma": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "tooltip": ""
+                                },
+                                "kernelType": {
+                                    "label": "",
+                                    "options": {
+                                        "LINEAR": {
+                                            "label": "",
+                                            "tooltip": ""
+                                        },
+                                        "POLY": {
+                                            "label": "",
+                                            "tooltip": ""
+                                        },
+                                        "RBF": {
+                                            "label": "",
+                                            "tooltip": ""
+                                        },
+                                        "SIGMOID": {
+                                            "label": "",
+                                            "tooltip": ""
+                                        }
+                                    },
+                                    "tooltip": ""
+                                },
+                                "nu": {
+                                    "label": "",
+                                    "placeholder": "",
+                                    "tooltip": ""
+                                },
+                                "oneClass": {
+                                    "label": "",
+                                    "placeholder": ""
+                                },
+                                "shrinking": {
+                                    "label": "",
+                                    "options": {
+                                        "no.label": "",
+                                        "yes.label": ""
+                                    },
+                                    "tooltip": ""
+                                },
+                                "svmType": {
+                                    "label": "",
+                                    "options": {
+                                        "C_SVC": {
+                                            "label": "",
+                                            "tooltip": ""
+                                        },
+                                        "NU_SVC": {
+                                            "label": "",
+                                            "tooltip": ""
+                                        },
+                                        "ONE_CLASS": {
+                                            "label": "",
+                                            "tooltip": ""
+                                        }
+                                    },
+                                    "tooltip": ""
+                                }
+                            },
+                            "label": ""
+                        },
+                        "type": {
+                            "label": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "inputImagery": {
+                    "asset": {
+                        "title": ""
+                    },
+                    "bandSetSpec": {
+                        "addBands": {
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "imageBands": {
+                            "label": ""
+                        },
+                        "indexes": {
+                            "label": ""
+                        },
+                        "pairWiseExpression": {
+                            "ANGLE": {
+                                "label": ""
+                            },
+                            "DIFFERENCE": {
+                                "label": ""
+                            },
+                            "DISTANCE": {
+                                "label": ""
+                            },
+                            "NORMALIZED_DIFFERENCE": {
+                                "label": ""
+                            },
+                            "RATIO": {
+                                "label": ""
+                            }
+                        }
+                    },
+                    "button": "",
+                    "derivedBands": {
+                        "bandCombinations": {
+                            "label": "",
+                            "options": {
+                                "ANGLE": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "DIFFERENCE": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "DISTANCE": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "INDEXES": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "NORMALIZED_DIFFERENCE": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "RATIO": {
+                                    "label": "",
+                                    "tooltip": ""
+                                }
+                            }
+                        },
+                        "label": "",
+                        "profiles": {
+                            "label": "",
+                            "options": {
+                                "RLCMS": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SIMPLE": {
+                                    "label": "",
+                                    "tooltip": ""
+                                }
+                            }
+                        },
+                        "tooltip": ""
+                    },
+                    "form": {
+                        "asset": {
+                            "label": "",
+                            "placeholder": "",
+                            "required": ""
+                        },
+                        "includedBands": {
+                            "label": ""
+                        },
+                        "recipe": {
+                            "label": "",
+                            "placeholder": "",
+                            "required": ""
+                        },
+                        "section": {
+                            "required": ""
+                        }
+                    },
+                    "loadingBands": "",
+                    "loadingBandsError": "",
+                    "noImagery": "",
+                    "recipe": {
+                        "title": ""
+                    },
+                    "remove": {
+                        "confirmationMessage": "",
+                        "tooltip": ""
+                    },
+                    "sections": {
+                        "title": ""
+                    },
+                    "title": "",
+                    "tooltip": "",
+                    "type": {
+                        "ASSET": "",
+                        "RECIPE_REF": ""
+                    }
+                },
+                "legend": {
+                    "button": "",
+                    "title": "",
+                    "tooltip": "",
+                    "import": ""
+                },
+                "trainingData": {
+                    "button": "",
+                    "classMapping": {
+                        "addColumns": {
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "columnValues": "",
+                        "enterExpression": "",
+                        "noColumValuesSelected": "",
+                        "removeColumnValue": ""
+                    },
+                    "clearCollected": {
+                        "confirmation": {
+                            "label": "",
+                            "message": "",
+                            "title": ""
+                        },
+                        "label": ""
+                    },
+                    "export": {
+                        "label": ""
+                    },
+                    "form": {
+                        "class": {
+                            "classColumnFormat": {
+                                "label": "",
+                                "options": {
+                                    "MULTIPLE_COLUMNS": {
+                                        "label": "",
+                                        "tooltip": ""
+                                    },
+                                    "OTHER_FORMAT": {
+                                        "label": "",
+                                        "tooltip": ""
+                                    },
+                                    "SINGLE_COLUMN": {
+                                        "label": "",
+                                        "tooltip": ""
+                                    }
+                                }
+                            },
+                            "valueColumn": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "csvUpload": {
+                            "file": {
+                                "label": ""
+                            }
+                        },
+                        "eeTable": {
+                            "label": "",
+                            "placeholder": "",
+                            "required": ""
+                        },
+                        "location": {
+                            "geoJson": {
+                                "label": "",
+                                "placeholder": ""
+                            },
+                            "locationType": {
+                                "GEO_JSON": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "label": "",
+                                "tooltip": "",
+                                "XY_COLUMNS": {
+                                    "label": "",
+                                    "tooltip": ""
+                                }
+                            },
+                            "xColumn": {
+                                "label": "",
+                                "placeholder": ""
+                            },
+                            "yColumn": {
+                                "label": "",
+                                "placeholder": ""
+                            }
+                        },
+                        "sampleClassification": {
+                            "assetToSample": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": ""
+                            },
+                            "sampleScale": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": "",
+                                "suffix": "",
+                                "tooltip": ""
+                            },
+                            "samplesPerClass": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": "",
+                                "suffix": "",
+                                "tooltip": ""
+                            },
+                            "valueColumn": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "noDataSet": "",
+                    "remove": {
+                        "confirmationMessage": "",
+                        "tooltip": ""
+                    },
+                    "sectionSelection": {
+                        "title": ""
+                    },
+                    "title": "",
+                    "tooltip": "",
+                    "type": {
+                        "COLLECTED": {
+                            "label": "",
+                            "title": ""
+                        },
+                        "CSV_UPLOAD": {
+                            "label": "",
+                            "title": "",
+                            "tooltip": ""
+                        },
+                        "EE_TABLE": {
+                            "label": "",
+                            "title": "",
+                            "tooltip": ""
+                        },
+                        "RECIPE": {
+                            "label": "",
+                            "title": "",
+                            "tooltip": ""
+                        },
+                        "SAMPLE_CLASSIFICATION": {
+                            "label": "",
+                            "title": "",
+                            "tooltip": ""
+                        }
+                    }
+                }
+            },
+            "preview": {
+                "description": "",
+                "error": "",
+                "initializing": "",
+                "label": "",
+                "loading": "",
+                "tilesFailed": ""
+            },
+            "tabPlaceholder": ""
+        },
+        "classChange": {
+            "create": "",
+            "description": "",
+            "layers": {
+                "imageLayer": {
+                    "preSets": ""
+                }
+            },
+            "panel": {
+                "inputImage": {
+                    "asset": {
+                        "label": "",
+                        "placeholder": "",
+                        "title": ""
+                    },
+                    "changeBand": {
+                        "label": ""
+                    },
+                    "from": {
+                        "button": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "title": ""
+                    },
+                    "legend": {
+                        "label": "",
+                        "tooLong": ""
+                    },
+                    "recipe": {
+                        "title": ""
+                    },
+                    "to": {
+                        "button": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "title": ""
+                    }
+                },
+                "legend": {
+                    "button": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "import": ""
+                },
+                "options": {
+                    "button": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "minConfidence": {
+                        "label": "",
+                        "tooltip": "",
+                        "value": ""
+                    },
+                    "title": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "closeRecipe": {
+            "message": ""
+        },
+        "indexChange": {
+            "create": "",
+            "description": "",
+            "layers": {
+                "imageLayer": {
+                    "preSets": ""
+                }
+            },
+            "panel": {
+                "inputImage": {
+                    "asset": {
+                        "label": "",
+                        "placeholder": "",
+                        "title": ""
+                    },
+                    "changeBand": {
+                        "label": ""
+                    },
+                    "errorBand": {
+                        "label": ""
+                    },
+                    "from": {
+                        "button": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "title": ""
+                    },
+                    "recipe": {
+                        "label": "",
+                        "placeholder": "",
+                        "title": ""
+                    },
+                    "to": {
+                        "button": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "title": ""
+                    }
+                },
+                "legend": {
+                    "button": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "import": "",
+                    "title": ""
+                },
+                "mapping": {
+                    "button": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "title": ""
+                },
+                "options": {
+                    "button": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "minConfidence": {
+                        "label": "",
+                        "tooltip": "",
+                        "value": ""
+                    },
+                    "title": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "masking": {
+            "create": "",
+            "description": "",
+            "layers": {
+                "imageLayer": {
+                    "preSets": ""
+                }
+            },
+            "panel": {
+                "inputImage": {
+                    "asset": {
+                        "label": "",
+                        "placeholder": "",
+                        "title": ""
+                    },
+                    "imageMask": {
+                        "button": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "title": ""
+                    },
+                    "imageToMask": {
+                        "button": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "title": ""
+                    },
+                    "recipe": {
+                        "label": "",
+                        "placeholder": "",
+                        "title": ""
+                    }
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "menu": {
+            "duplicateRecipe": {
+                "label": "",
+                "tooltip": ""
+            },
+            "exportRecipe": "",
+            "removeRecipe.tooltip": "",
+            "selectRecipe.tooltip": "",
+            "revertToOldRevision": "",
+            "saveRecipe": "",
+            "searchRecipes": ""
+        },
+        "mosaic": {
+            "bands": {
+                "combinations": "",
+                "indexes": "",
+                "label": "",
+                "metadata": "",
+                "panSharpen": "",
+                "placeholder": ""
+            },
+            "create": "",
+            "description": "",
+            "mapToolbar": {
+                "zoom": {
+                    "tooltip": ""
+                },
+                "layers": {
+                    "tooltip": ""
+                },
+                "link": {
+                    "tooltip": ""
+                },
+                "unlink": {
+                    "tooltip": ""
+                }
+            },
+            "panel": {
+                "areaOfInterest": {
+                    "button": "",
+                    "form": {
+                        "bounds": {
+                            "required": ""
+                        },
+                        "buffer": {
+                            "info": "",
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "country": {
+                            "area": {
+                                "label": "",
+                                "placeholder": {
+                                    "loaded": "",
+                                    "loading": "",
+                                    "noAreas": "",
+                                    "noCountry": ""
+                                },
+                                "title": ""
+                            },
+                            "country": {
+                                "label": "",
+                                "loadFailed": "",
+                                "placeholder": {
+                                    "loaded": "",
+                                    "loading": ""
+                                }
+                            },
+                            "required": "",
+                            "title": ""
+                        },
+                        "eeTable": {
+                            "column": {
+                                "label": "",
+                                "placeholder": {
+                                    "loaded": "",
+                                    "loading": "",
+                                    "noEETable": ""
+                                },
+                                "required": ""
+                            },
+                            "eeTable": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": ""
+                            },
+                            "eeTableRowSelection": {
+                                "FILTER": "",
+                                "INCLUDE_ALL": "",
+                                "label": ""
+                            },
+                            "row": {
+                                "label": "",
+                                "placeholder": {
+                                    "loaded": "",
+                                    "loading": "",
+                                    "noColumn": "",
+                                    "noEETable": "",
+                                    "noRows": ""
+                                },
+                                "required": ""
+                            },
+                            "title": ""
+                        },
+                        "fusionTable": {
+                            "column": {
+                                "label": "",
+                                "placeholder": {
+                                    "loaded": "",
+                                    "loading": "",
+                                    "noFusionTable": ""
+                                },
+                                "required": ""
+                            },
+                            "fusionTable": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": ""
+                            },
+                            "fusionTableRowSelection": {
+                                "FILTER": "",
+                                "INCLUDE_ALL": "",
+                                "label": ""
+                            },
+                            "row": {
+                                "label": "",
+                                "placeholder": {
+                                    "loaded": "",
+                                    "loading": "",
+                                    "noColumn": "",
+                                    "noFusionTable": "",
+                                    "noRows": ""
+                                },
+                                "required": ""
+                            },
+                            "title": ""
+                        },
+                        "polygon": {
+                            "description": "",
+                            "title": ""
+                        },
+                        "section": {
+                            "required": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "autoSelectScenes": {
+                    "form": {
+                        "max": {
+                            "label": ""
+                        },
+                        "min": {
+                            "label": ""
+                        },
+                        "selectScenes": ""
+                    },
+                    "selecting": "",
+                    "title": "",
+                    "tooltip": ""
+                },
+                "clearSelectedScenes": {
+                    "apply": "",
+                    "message": "",
+                    "title": "",
+                    "tooltip": ""
+                },
+                "composite": {
+                    "button": "",
+                    "form": {
+                        "cloudBuffer": {
+                            "aggressive": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "moderate": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "cloudDetection": {
+                            "label": "",
+                            "cloudScore": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "pino26": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "qa": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "cloudMasking": {
+                            "aggressive": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "moderate": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "composingMethod": {
+                            "label": "",
+                            "median": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "medoid": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "corrections": {
+                            "brdf": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "calibrate": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "surfaceReflectance": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "filters": {
+                            "dayOfYearPercentile": {
+                                "max": "",
+                                "off": "",
+                                "percentile": ""
+                            },
+                            "hazePercentile": {
+                                "max": "",
+                                "off": "",
+                                "percentile": ""
+                            },
+                            "label": "",
+                            "ndviPercentile": {
+                                "max": "",
+                                "off": "",
+                                "percentile": ""
+                            },
+                            "shadowPercentile": {
+                                "max": "",
+                                "off": "",
+                                "percentile": ""
+                            },
+                            "tooltip": ""
+                        },
+                        "snowMasking": {
+                            "label": "",
+                            "off": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "on": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "dates": {
+                    "button": "",
+                    "form": {
+                        "futureSeasons": {
+                            "info": {
+                                "none": "",
+                                "number": ""
+                            },
+                            "label": ""
+                        },
+                        "pastSeasons": {
+                            "info": {
+                                "none": "",
+                                "number": ""
+                            },
+                            "label": ""
+                        },
+                        "season": {
+                            "label": "",
+                            "malformed": "",
+                            "tooEarly": "",
+                            "tooLate": "",
+                            "tooltip": ""
+                        },
+                        "targetDate": {
+                            "label": "",
+                            "malformed": "",
+                            "tooltip": ""
+                        },
+                        "targetYear": {
+                            "label": "",
+                            "malformed": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "layers": {
+                    "title": ""
+                },
+                "scenes": {
+                    "button": "",
+                    "form": {
+                        "required": "",
+                        "targetDateWeight": {
+                            "balanced": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "cloudFree": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "targetDate": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "type": {
+                            "all": {
+                                "label": ""
+                            },
+                            "label": "",
+                            "select": {
+                                "label": ""
+                            }
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "sceneSelection": {
+                    "availableScenes": "",
+                    "loadingScenes": "",
+                    "noScenes": "",
+                    "preview": {
+                        "afterTarget": "",
+                        "beforeTarget": "",
+                        "cloudCover": "",
+                        "dataSet": "",
+                        "date": "",
+                        "daysFromTarget": "",
+                        "label": "",
+                        "onTarget": ""
+                    },
+                    "selectedScenes": ""
+                },
+                "sources": {
+                    "button": "",
+                    "form": {
+                        "dataSets": {
+                            "label": "",
+                            "oneDataSet": "",
+                            "options": {
+                                "LANDSAT_7": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_7_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_8": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_8_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_9": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_9_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_TM": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_TM_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SENTINEL_1": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SENTINEL_2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                }
+                            }
+                        },
+                        "required": "",
+                        "source": {
+                            "label": "",
+                            "options": {
+                                "LANDSAT": "",
+                                "SENTINEL_2": ""
+                            }
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "error": "",
+                "initializing": "",
+                "label": "",
+                "loading": "",
+                "tilesFailed": ""
+            },
+            "sceneAreas": {
+                "description": "",
+                "error": "",
+                "label": "",
+                "loading": ""
+            },
+            "tabPlaceholder": ""
+        },
+        "planetMosaic": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "dates": {
+                    "button": "",
+                    "form": {
+                        "type": {
+                            "DATE_RANGE": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "SINGLE_DATE": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "fromDate": {
+                            "label": "",
+                            "malformed": ""
+                        },
+                        "toDate": {
+                            "label": "",
+                            "malformed": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "options": {
+                    "button": "",
+                    "cloudThreshold": {
+                        "label": "",
+                        "tooltip": "",
+                        "value": ""
+                    },
+                    "form": {
+                        "histogramMatching": {
+                            "label": "",
+                            "tooltip": "",
+                            "options": {
+                                "DISABLED": "",
+                                "ENABLED": ""
+                            }
+                        }
+                    },
+                    "shadowThreshold": {
+                        "label": "",
+                        "tooltip": "",
+                        "value": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "sources": {
+                    "button": "",
+                    "form": {
+                        "asset": {
+                            "label": "",
+                            "placeholder": "",
+                            "required": ""
+                        },
+                        "collectionType": {
+                            "label": ""
+                        },
+                        "collectionTypes": {
+                            "BASEMAPS": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "DAILY": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "NICFI": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "label": ""
+            },
+            "tabPlaceholder": ""
+        },
+        "radarMosaic": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "dates": {
+                    "button": "",
+                    "form": {
+                        "fromDate": {
+                            "label": "",
+                            "malformed": ""
+                        },
+                        "targetDate": {
+                            "label": "",
+                            "malformed": ""
+                        },
+                        "toDate": {
+                            "label": "",
+                            "malformed": ""
+                        },
+                        "type": {
+                            "CUSTOM_TIME_SCAN": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "POINT_IN_TIME_MOSAIC": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "YEARLY_TIME_SCAN": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "year": {
+                            "label": "",
+                            "malformed": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "options": {
+                    "button": "",
+                    "form": {
+                        "geometricCorrection": {
+                            "ellipsoid": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "terrain": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "orbits": {
+                            "ascending": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "descending": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": ""
+                        },
+                        "outlierRemoval": {
+                            "aggressive": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "moderate": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "speckleFilter": {
+                            "label": "",
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "quegan": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "refinedLee": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snic": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "label": ""
+            },
+            "tabPlaceholder": ""
+        },
+        "phenology": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "dates": {
+                    "button": "",
+                    "form": {
+                        "fromYear": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "toYear": {
+                            "beforeFromYear": "",
+                            "label": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "preprocess": {
+                    "button": "",
+                    "form": {
+                        "cloudDetection": {
+                            "label": "",
+                            "cloudScore": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "pino26": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "qa": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "cloudMasking": {
+                            "aggressive": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "moderate": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "corrections": {
+                            "brdf": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "surfaceReflectance": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "shadowMasking": {
+                            "label": "",
+                            "off": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "on": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "snowMasking": {
+                            "label": "",
+                            "off": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "on": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "sources": {
+                    "button": "",
+                    "classificationLoadError": "",
+                    "form": {
+                        "classification": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "band": {
+                            "label": ""
+                        },
+                        "cloudPercentageThreshold": {
+                            "label": "",
+                            "value": "",
+                            "tooltip": ""
+                        },
+                        "dataSets": {
+                            "label": "",
+                            "optical": {
+                                "label": ""
+                            },
+                            "options": {
+                                "LANDSAT_7": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_7_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_8": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_8_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_9": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_9_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_TM": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_TM_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SENTINEL_1": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SENTINEL_2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                }
+                            },
+                            "radar": {
+                                "label": ""
+                            }
+                        },
+                        "dataSetType": {
+                            "label": ""
+                        },
+                        "dataSetTypes": {
+                            "OPTICAL": "",
+                            "PLANET": "",
+                            "RADAR": ""
+                        },
+                        "required": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "label": ""
+            },
+            "tabPlaceholder": ""
+        },
+        "projects": {
+            "title": "",
+            "label": "",
+            "tooltip": "",
+            "noProjects": "",
+            "selected": "",
+            "add": ""
+        },
+        "project": {
+            "title": "",
+            "form": {
+                "name.label": ""
+            },
+            "edit": {
+                "tooltip": ""
+            },
+            "remove": {
+                "tooltip": "",
+                "title": "",
+                "confirm": "",
+                "error": ""
+            },
+            "update": {
+                "error": ""
+            },
+            "noProject": "",
+            "noProjectOption": ""
+        },
+        "recipe": {
+            "lastUpdate": "",
+            "loading": "",
+            "loadingError": "",
+            "name": "",
+            "newRecipe": {
+                "title": "",
+                "tooltip": ""
+            },
+            "edit": {
+                "label": ""
+            },
+            "select": {
+                "label": "",
+                "tooltip": {
+                    "select": "",
+                    "deselect": ""
+                }
+            },
+            "remove": {
+                "label": "",
+                "title": "",
+                "tooltip": "",
+                "confirm": ""
+            },
+            "move": {
+                "label": "",
+                "title": "",
+                "tooltip": "",
+                "destinationProject": "",
+                "confirm": ""
+            },
+            "export": {
+                "success": "",
+                "error": ""
+            }
+        },
+        "remapping": {
+            "create": "",
+            "description": "",
+            "layers": {
+                "imageLayer": {
+                    "preSets": ""
+                }
+            },
+            "panel": {
+                "inputImagery": {
+                    "asset": {
+                        "title": ""
+                    },
+                    "button": "",
+                    "form": {
+                        "asset": {
+                            "label": "",
+                            "placeholder": ""
+                        },
+                        "band": {
+                            "label": ""
+                        },
+                        "legend": {
+                            "label": ""
+                        },
+                        "noImagery": "",
+                        "recipe": {
+                            "label": "",
+                            "placeholder": ""
+                        },
+                        "remove": {
+                            "tooltip": ""
+                        },
+                        "section": {
+                            "required": ""
+                        },
+                        "type": {
+                            "categorical": "",
+                            "continuous": "",
+                            "ASSET": "",
+                            "RECIPE_REF": "",
+                            "label": ""
+                        }
+                    },
+                    "recipe": {
+                        "title": ""
+                    },
+                    "sections": {
+                        "title": ""
+                    },
+                    "title": ""
+                },
+                "legend": {
+                    "button": "",
+                    "title": "",
+                    "tooltip": "",
+                    "import": ""
+                },
+                "mapping": {
+                    "button": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "title": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "retrieve": {
+            "apply": "",
+            "form": {
+                "assetId": {
+                    "label": "",
+                    "placeholder": "",
+                    "tooltip": ""
+                },
+                "assetType": {
+                    "label": "",
+                    "Image": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "ImageCollection": {
+                        "label": "",
+                        "tooltip": ""
+                    }
+                },
+                "bands": {
+                    "atLeastOne": "",
+                    "label": ""
+                },
+                "crs": {
+                    "label": "",
+                    "placeholder": "",
+                    "tooltip": ""
+                },
+                "crsTransform": {
+                    "label": "",
+                    "placeholder": "",
+                    "tooltip": ""
+                },
+                "destination": {
+                    "GEE": "",
+                    "label": "",
+                    "required": "",
+                    "SEPAL": ""
+                },
+                "fileDimensionsMultiple": {
+                    "label": "",
+                    "placeholder": "",
+                    "suffix": "",
+                    "tooLarge": "",
+                    "tooltip": ""
+                },
+                "scale": {
+                    "label": "",
+                    "placeholder": "",
+                    "suffix": ""
+                },
+                "shardSize": {
+                    "label": "",
+                    "placeholder": "",
+                    "suffix": "",
+                    "tooltip": ""
+                },
+                "task": {
+                    "GEE": "",
+                    "SEPAL": ""
+                },
+                "tileSize": {
+                    "label": "",
+                    "placeholder": "",
+                    "suffix": "",
+                    "tooltip": ""
+                },
+                "workspacePath": {
+                    "label": "",
+                    "placeholder": "",
+                    "tooltip": ""
+                }
+            },
+            "title": "",
+            "tooltip": ""
+        },
+        "revisions": {
+            "none": "",
+            "revert": "",
+            "title": ""
+        },
+        "saveRecipe": {
+            "error": "",
+            "form": {
+                "name": {
+                    "label": "",
+                    "required": ""
+                }
+            },
+            "title": ""
+        },
+        "timeSeries": {
+            "chartPixel": {
+                "loadObservations": {
+                    "error": "",
+                    "noData": ""
+                }
+            },
+            "create": "",
+            "description": "",
+            "panel": {
+                "dates": {
+                    "button": "",
+                    "form": {
+                        "endDate": {
+                            "label": "",
+                            "malformed": "",
+                            "required": "",
+                            "tooltip": ""
+                        },
+                        "startDate": {
+                            "beforeEnd": "",
+                            "label": "",
+                            "malformed": "",
+                            "required": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "preprocess": {
+                    "button": "",
+                    "form": {
+                        "cloudDetection": {
+                            "label": "",
+                            "cloudScore": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "pino26": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "qa": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "cloudMasking": {
+                            "aggressive": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "moderate": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "corrections": {
+                            "brdf": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "surfaceReflectance": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "snowMasking": {
+                            "label": "",
+                            "off": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "on": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "sources": {
+                    "button": "",
+                    "classificationLoadError": "",
+                    "form": {
+                        "classification": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "dataSets": {
+                            "optical": {
+                                "label": ""
+                            },
+                            "options": {
+                                "LANDSAT_7": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_7_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_8": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_8_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_9": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_9_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_TM": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_TM_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SENTINEL_1": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SENTINEL_2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                }
+                            },
+                            "radar": {
+                                "label": ""
+                            }
+                        },
+                        "required": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "tabPlaceholder": ""
+        }
+    },
+    "sources": {
+        "dataSets": {
+            "LANDSAT_7": {
+                "label": "",
+                "tooltip": ""
+            },
+            "LANDSAT_7_T2": {
+                "label": "",
+                "tooltip": ""
+            },
+            "LANDSAT_8": {
+                "label": "",
+                "tooltip": ""
+            },
+            "LANDSAT_8_T2": {
+                "label": "",
+                "tooltip": ""
+            },
+            "LANDSAT_9": {
+                "label": "",
+                "tooltip": ""
+            },
+            "LANDSAT_9_T2": {
+                "label": "",
+                "tooltip": ""
+            },
+            "LANDSAT_TM": {
+                "label": "",
+                "tooltip": ""
+            },
+            "LANDSAT_TM_T2": {
+                "label": "",
+                "tooltip": ""
+            },
+            "SENTINEL_1": {
+                "label": "",
+                "tooltip": ""
+            },
+            "SENTINEL_2": {
+                "label": "",
+                "tooltip": ""
+            }
+        },
+        "optical": {
+            "label": ""
+        },
+        "radar": {
+            "label": ""
+        }
+    },
+    "tasks": {
+        "download": {
+            "progress": ""
+        },
+        "ee": {
+            "export": {
+                "asset": {
+                    "createFolder": "",
+                    "delete": "",
+                    "prepareImageCollection": "",
+                    "startExport": "",
+                    "tilingImage": ""
+                },
+                "pending": "",
+                "ready": "",
+                "running": ""
+            }
+        },
+        "none": "",
+        "copyToClipboard": {
+            "tooltip": "",
+            "success": ""
+        },
+        "remove": {
+            "tooltip": ""
+        },
+        "removeAll": {
+            "label": "",
+            "tooltip": ""
+        },
+        "stop": {
+            "tooltip": ""
+        },
+        "retrieve": {
+            "collection_to_asset": {
+                "progress": ""
+            },
+            "time_series_to_sepal": {
+                "assembling": "",
+                "creating_drive_folder": "",
+                "deleting_drive_folder": "",
+                "progress": "",
+                "tiling": ""
+            }
+        },
+        "status": {
+            "canceled": "",
+            "canceling": "",
+            "completed": "",
+            "EEException": "",
+            "executing": "",
+            "failed": "",
+            "initializing": ""
+        }
+    },
+    "terminal": {
+        "server": {
+            "error": ""
+        }
+    },
+    "unauthorized": {
+        "warning": ""
+    },
+    "user": {
+        "changePassword": {
+            "form": {
+                "confirmPassword": {
+                    "label": "",
+                    "required": ""
+                },
+                "newPassword": {
+                    "invalid": "",
+                    "label": "",
+                    "notMatching": "",
+                    "required": ""
+                },
+                "oldPassword": {
+                    "incorrect": "",
+                    "label": "",
+                    "required": ""
+                }
+            },
+            "label": "",
+            "success": "",
+            "title": "",
+            "updating": ""
+        },
+        "googleAccount": {
+            "connect": {
+                "label": ""
+            },
+            "connected": {
+                "info": "",
+                "label": "",
+                "title": ""
+            },
+            "disconnect": {
+                "label": "",
+                "warning": {
+                    "message": "",
+                    "title": ""
+                }
+            },
+            "disconnected": {
+                "info": "",
+                "label": "",
+                "success": "",
+                "title": ""
+            },
+            "label": "",
+            "title": ""
+        },
+        "report": {
+            "resources": {
+                "max": "",
+                "instanceSpending": "",
+                "storageSpending": "",
+                "storageSpace": "",
+                "quota": "",
+                "title": "",
+                "used": "",
+                "used%": ""
+            },
+            "sessions": {
+                "cost": "",
+                "earliestTimeoutHours": "",
+                "hourlyCost": "",
+                "instanceDescription": "",
+                "instanceType": "",
+                "noSessions": "",
+                "time": "",
+                "title": ""
+            },
+            "title": "",
+            "usage": "",
+            "updateQuota": ""
+        },
+        "quotaUpdate": {
+            "title": "",
+            "info1": "",
+            "info2": "",
+            "form": {
+                "created": "",
+                "modified": "",
+                "message": {
+                    "label": "",
+                    "required": ""
+                }
+            },
+            "update": {
+                "success": "",
+                "error": ""
+            }
+        },
+        "status": {
+            "label": "",
+            "UNKNOWN": "",
+            "ACTIVE": "",
+            "LOCKED": "",
+            "PENDING": ""
+        },
+        "role": {
+            "admin": "",
+            "user": ""
+        },
+        "userDetails": {
+            "form": {
+                "email": {
+                    "label": "",
+                    "required": "",
+                    "unique": ""
+                },
+                "emailNotifications": {
+                    "disabled.label": "",
+                    "enabled.label": "",
+                    "label": "",
+                    "tooltip": ""
+                },
+                "lastUpdate": {
+                    "label": ""
+                },
+                "monthlyBudget": {
+                    "instanceSpending": {
+                        "atLeast1": "",
+                        "label": "",
+                        "required:": ""
+                    },
+                    "storageSpending": {
+                        "atLeast1": "",
+                        "label": "",
+                        "required:": ""
+                    },
+                    "storageQuota": {
+                        "atLeast1": "",
+                        "label": "",
+                        "required:": ""
+                    }
+                },
+                "monthlyLimits": {
+                    "label": "",
+                    "tooltip": ""
+                },
+                "budgetUpdateRequest": {
+                    "label": ""
+                },
+                "name": {
+                    "label": "",
+                    "required": ""
+                },
+                "organization": {
+                    "label": "",
+                    "required": ""
+                },
+                "intendedUse": {
+                    "label": "",
+                    "required": ""
+                },
+                "username": {
+                    "format": "",
+                    "label": "",
+                    "required": "",
+                    "unique": ""
+                },
+                "password": {
+                    "label": ""
+                }
+            },
+            "resetPassword": {
+                "label": "",
+                "tooltip": "",
+                "message": ""
+            },
+            "lock": {
+                "label": "",
+                "tooltip": "",
+                "message": "",
+                "error": "",
+                "success": ""
+            },
+            "unlock": {
+                "label": "",
+                "tooltip": "",
+                "message": "",
+                "error": "",
+                "success": ""
+            },
+            "switchingToSEPALGoogleAccount": "",
+            "title": "",
+            "update": {
+                "error": "",
+                "success": ""
+            },
+            "confirmation": {
+                "message": ""
+            }
+        },
+        "userSession": {
+            "form": {
+                "keepAlive": {
+                    "info": "",
+                    "label": ""
+                },
+                "name": {
+                    "label": ""
+                }
+            },
+            "stop": {
+                "error": "",
+                "label": "",
+                "message": "",
+                "success": "",
+                "tooltip": ""
+            },
+            "suspend": {
+                "error": "",
+                "label": "",
+                "success": "",
+                "tooltip": ""
+            },
+            "update": {
+                "error": "",
+                "success": "",
+                "tooltip": ""
+            }
+        }
+    },
+    "userMessage": {
+        "form": {
+            "contents": {
+                "label": "",
+                "required": ""
+            },
+            "subject": {
+                "label": "",
+                "required": ""
+            },
+            "preview": {
+                "label": ""
+            }
+        },
+        "publish": {
+            "error": "",
+            "success": ""
+        },
+        "remove": {
+            "error": "",
+            "success": ""
+        },
+        "title": "",
+        "update": {
+            "error": "",
+            "success": ""
+        },
+        "updateState": {
+            "error": "",
+            "success": ""
+        }
+    },
+    "userMessages": {
+        "author": "",
+        "edit": "",
+        "noMessages": "",
+        "post": "",
+        "remove": "",
+        "state": {
+            "READ": "",
+            "UNREAD": ""
+        },
+        "title": ""
+    },
+    "users": {
+        "count": "",
+        "filter": {
+            "search": {
+                "placeholder": ""
+            },
+            "status": {
+                "active": {
+                    "label": ""
+                },
+                "ignore": {
+                    "label": ""
+                },
+                "overbudget": {
+                    "label": ""
+                },
+                "pending": {
+                    "label": ""
+                },
+                "locked": {
+                    "label": ""
+                },
+                "budgetUpdateRequest": {
+                    "label": ""
+                }
+            }
+        },
+        "invite": {
+            "label": ""
+        },
+        "page": ""
+    },
+    "widget": {
+        "assetDestination": {
+            "exists": {
+                "notReplacable": "",
+                "replacable": ""
+            },
+            "loadError": "",
+            "replace": {
+                "label": "",
+                "tooltip": ""
+            },
+            "resume": {
+                "label": "",
+                "tooltip": ""
+            },
+            "strategy": {
+                "label": ""
+            }
+        },
+        "assetInput": {
+            "loadError": ""
+        },
+        "comboBox": {
+            "loading": ""
+        },
+        "confirm": {
+            "title": "",
+            "label": ""
+        },
+        "error": "",
+        "fileSelect": {
+            "multiple": {
+                "drop": "",
+                "dropOrClick": "",
+                "reject": ""
+            },
+            "single": {
+                "drop": "",
+                "dropOrClick": "",
+                "reject": "",
+                "tooMany": ""
+            }
+        },
+        "imageConstraints": {
+            "band": {
+                "label": "",
+                "notSelected": ""
+            },
+            "image": {
+                "label": "",
+                "notSelected": ""
+            },
+            "logicalAnd": {
+                "tooltip": ""
+            },
+            "logicalOr": {
+                "tooltip": ""
+            },
+            "operator": {
+                "equals": {
+                    "label": ""
+                },
+                "greaterThan": {
+                    "label": ""
+                },
+                "greaterThanOrEquals": {
+                    "label": ""
+                },
+                "label": "",
+                "lessThan": {
+                    "label": ""
+                },
+                "lessThanOrEquals": {
+                    "label": ""
+                },
+                "range": {
+                    "label": ""
+                }
+            },
+            "range": {
+                "from": {
+                    "label": ""
+                },
+                "to": {
+                    "label": ""
+                }
+            },
+            "value": {
+                "label": ""
+            }
+        },
+        "legend": {
+            "edit": {
+                "tooltip": ""
+            },
+            "editLegendPanel": {
+                "title": ""
+            },
+            "noEntries": ""
+        },
+        "list": {
+            "noResults": ""
+        },
+        "loading": "",
+        "notification": {
+            "dismiss": "",
+            "dismissOrWait": "",
+            "error": {
+                "title": ""
+            },
+            "warning": {
+                "title": ""
+            }
+        },
+        "recipeInput": {
+            "label": "",
+            "placeholder": "",
+            "all": {
+                "tooltip": ""
+            }
+        },
+        "safetyButton": {
+            "label": ""
+        },
+        "seasonSelect": {
+            "from": "",
+            "to": ""
+        },
+        "tabs": {
+            "addTab": {
+                "tooltip": ""
+            },
+            "newTab": ""
+        }
+    }
+}
