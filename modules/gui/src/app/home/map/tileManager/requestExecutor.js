@@ -67,10 +67,10 @@ export const getRequestExecutor = concurrency => {
                 log.debug(() => `Aborted ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
             }
             if (replacementTileProviderId) {
-                finished$.next({currentRequest, replacementTileProviderId})
+                setTimeout(() => finished$.next({currentRequest, replacementTileProviderId}))
             } else {
                 const priorityTileProviderIds = getPriorityTileProviderIds(tileProviderId)
-                finished$.next({currentRequest, priorityTileProviderIds})
+                setTimeout(() => finished$.next({currentRequest, priorityTileProviderIds}))
             }
         } else {
             log.warn(() => `Cannot finish already finished ${requestTag({tileProviderId, requestId})}`)

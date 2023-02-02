@@ -4,6 +4,7 @@ import {CrudItem} from 'widget/crudItem'
 import {FastList} from 'widget/fastList'
 import {InlineConfirmationButton} from 'widget/inlineConfirmationButton'
 import {ListItem} from 'widget/listItem'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Shape} from 'widget/shape'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -15,7 +16,7 @@ import clipboard from 'clipboard'
 import styles from './tasks.module.css'
 
 const mapStateToProps = state => ({
-    tasks: state.tasks,
+    tasks: state.tasks
 })
 
 class Tasks extends React.Component {
@@ -150,7 +151,11 @@ class Tasks extends React.Component {
                     {this.renderToolbar()}
                 </TopBar>
                 <Content horizontalPadding verticalPadding menuPadding>
-                    {this.renderTasks()}
+                    <ScrollableContainer>
+                        <Scrollable direction='x'>
+                            {this.renderTasks()}
+                        </Scrollable>
+                    </ScrollableContainer>
                 </Content>
             </SectionLayout>
         )
