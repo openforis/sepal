@@ -18,13 +18,12 @@ apt-get update && apt-get install -y \
 	 libshp-dev \
 	 libtiff5-dev \
 	 make \
-	 python3-h5py \
 	 python3-saga \
-	 python3-scipy \
 	 python3-tk \
 	 perl \
 	 spatialite-bin
 
+pip3 install h5py scipy
 wget -nv https://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run
 chmod u+x OpenForisToolkit.run
 ln -sf /usr/bin/python3 /usr/bin/python
