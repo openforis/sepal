@@ -200,7 +200,7 @@ Button.propTypes = {
     size: PropTypes.oneOf(['small', 'normal', 'large', 'x-large']),
     stopPropagation: PropTypes.any,
     tabIndex: PropTypes.number,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipDisabled: PropTypes.any,
     tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
     type: PropTypes.string,

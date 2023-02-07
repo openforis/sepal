@@ -246,7 +246,7 @@ Input.propTypes = {
     spellCheck: PropTypes.any,
     suffix: PropTypes.any,
     tabIndex: PropTypes.number,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     tooltipTrigger: PropTypes.string,
     type: PropTypes.string,

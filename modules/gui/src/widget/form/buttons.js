@@ -81,7 +81,7 @@ FormButtons.propTypes = {
     shape: PropTypes.string,
     size: PropTypes.string,
     spacing: PropTypes.string,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     width: PropTypes.any,
     onChange: PropTypes.any

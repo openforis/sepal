@@ -268,7 +268,7 @@ ButtonSelect.propTypes = {
     optionTooltipPlacement: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
     shape: PropTypes.string,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     width: PropTypes.string,
     onClick: PropTypes.func,

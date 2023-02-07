@@ -148,7 +148,7 @@ Buttons.propTypes = {
     size: PropTypes.string,
     spacing: PropTypes.any,
     tabIndex: PropTypes.number,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     width: PropTypes.any,
     onChange: PropTypes.any,

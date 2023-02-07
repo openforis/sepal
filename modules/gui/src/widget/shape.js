@@ -117,7 +117,7 @@ Shape.propTypes = {
     shown: PropTypes.any,
     size: PropTypes.oneOf(['x-small', 'small', 'normal', 'large', 'x-large', 'xx-large']),
     tail: PropTypes.string,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipDisabled: PropTypes.any,
     tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
     width: PropTypes.oneOf(['fit', 'fill'])
