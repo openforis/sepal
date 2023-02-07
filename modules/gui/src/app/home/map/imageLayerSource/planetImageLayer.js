@@ -166,9 +166,13 @@ class _PlanetImageLayer extends React.Component {
                 )
             return filtered.length
                 ? this.selectUrlTemplate(filtered[0].urlTemplate)
-                : this.selectUrlTemplate(mosaics[0].urlTemplate)
+                : mosaics.length
+                    ? this.selectUrlTemplate(mosaics[0].urlTemplate)
+                    : null
         } else {
-            return this.selectUrlTemplate(mosaics[0].urlTemplate)
+            return mosaics.length
+                ? this.selectUrlTemplate(mosaics[0].urlTemplate)
+                : null
         }
     }
 
