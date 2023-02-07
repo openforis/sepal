@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import {Combo} from 'widget/combo'
 import {Item} from 'widget/item'
@@ -7,6 +8,7 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {getRecipeType} from '../../body/process/recipeTypes'
 import {map} from 'rxjs'
+import {msg} from 'translate'
 import {withMapAreaContext} from '../mapAreaContext'
 import {withMapContext} from '../mapContext'
 import {withRecipe} from '../../body/process/recipeContext'
@@ -67,14 +69,31 @@ class _PlanetImageLayer extends React.Component {
 
     renderBands() {
         const {layerConfig: {bands}} = this.props
+        const link = <Button
+            tooltip={msg('imageLayerSources.Planet.bands.tooltip')}
+            chromeless
+            shape='circle'
+            size='small'
+            linkUrl={'https://developers.planet.com/docs/basemaps/tile-services/indices/'}
+            linkTarget='_blank'
+            icon='arrow-up-right-from-square'
+            
+        />
         return (
             <Buttons
                 label={'Bands'}
+                labelButtons={[link]}
                 selected={bands}
                 onChange={bands => this.setBands(bands)}
                 options={[
                     {value: 'rgb', label: 'RGB'},
-                    {value: 'cir', label: 'CIR'}
+                    {value: 'cir', label: 'CIR'},
+                    {value: 'ndvi', label: 'NDVI'},
+                    {value: 'ndwi', label: 'NDWI'},
+                    {value: 'vari', label: 'VARI'},
+                    {value: 'msavi2', label: 'MSAVI2'},
+                    {value: 'mtvi2', label: 'MTVI2'},
+                    {value: 'tgi', label: 'TGI'}
                 ]}/>
         )
     }
@@ -191,7 +210,7 @@ class _PlanetImageLayer extends React.Component {
                         startDate: first_acquired.substring(0, 10),
                         endDate: last_acquired.substring(0, 10),
                         urlTemplate: tiles,
-                        hasCir: item_types.includes('PSScene4Band')
+                        hasCir: item_types.includes('PSScene4Band') || item_types.includes('PSScene')
                     })),
                 ['startDate', 'endDate'], ['desc', 'desc']
             ))
