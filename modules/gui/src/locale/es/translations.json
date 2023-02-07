@@ -711,7 +711,10 @@
         },
         "Planet": {
             "label": "",
-            "nicfiDescription": ""
+            "nicfiDescription": "",
+            "bands": {
+                "tooltip": ""
+            }
         },
         "GoogleSatellite": {
             "label": "",
