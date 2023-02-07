@@ -1,7 +1,8 @@
 {
     "port": 5106,
     "categories": {
-        "apps": "debug",
-        "terminal": "debug"
+        "apps": "info",
+        "metrics": "debug",
+        "terminal": "info"
     }
 }

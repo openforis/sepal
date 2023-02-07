@@ -4,6 +4,7 @@
         "config": "info",
         "filesystem": "debug",
         "main": "info",
+        "metrics": "debug",
         "ws": "debug"
     }
 }

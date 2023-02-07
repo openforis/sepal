@@ -6,7 +6,8 @@ const _ = require('lodash')
 const DEFAULT_PORT = 1026
 
 program
-    .option('--gee-email <value>')
+.requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
+.option('--gee-email <value>')
     .option('--gee-key <value>')
     .option('--gee-key-path <value>')
     .option('--google-project-id <value>')
@@ -21,6 +22,7 @@ program
     .parse(process.argv)
 
 const {
+    amqpUri,
     geeEmail,
     geeKey,
     geeKeyPath,
@@ -54,6 +56,7 @@ const serviceAccountCredentials = {
 log.info('Configuration loaded')
 
 module.exports = {
+    amqpUri,
     googleProjectId,
     googleRegion,
     serviceAccountCredentials,
