@@ -711,7 +711,10 @@
         },
         "Planet": {
             "label": "Planet",
-            "nicfiDescription": "Images composites de Planet NICFI"
+            "nicfiDescription": "Images composites de Planet NICFI",
+            "bands": {
+                "tooltip": ""
+            }
         },
         "GoogleSatellite": {
             "label": "Google Satellite",
