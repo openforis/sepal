@@ -5,7 +5,7 @@ import _ from 'lodash'
 
 export class FormButtons extends React.Component {
     render() {
-        const {chromeless, look, shape, size, air, className, input, label, multiple, options, tooltip, tooltipPlacement,
+        const {chromeless, look, shape, size, air, className, input, label, labelButtons, multiple, options, tooltip, tooltipPlacement,
             layout, alignment, spacing, groupSpacing, framed, disabled, tabIndex, width, onChange
         } = this.props
         return (
@@ -22,6 +22,7 @@ export class FormButtons extends React.Component {
                     onChange && onChange(value)
                 }}
                 label={label}
+                labelButtons={labelButtons}
                 multiple={multiple}
                 options={options}
                 tooltip={tooltip}
@@ -74,6 +75,7 @@ FormButtons.propTypes = {
     groupSpacing: PropTypes.any,
     input: PropTypes.object,
     label: PropTypes.any,
+    labelButtons: PropTypes.any,
     layout: PropTypes.string,
     look: PropTypes.string,
     multiple: PropTypes.any,
