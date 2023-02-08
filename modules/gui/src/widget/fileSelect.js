@@ -5,11 +5,12 @@ import React from 'react'
 import styles from './fileSelect.module.css'
 
 export const FileSelect = ({multiple, single, accept, onSelect, children}) => {
-    const {getRootProps, getInputProps, isDragActive, isDragAccept, isDragReject, draggedFiles} = useDropzone({
+    const {getRootProps, getInputProps, isDragActive, isDragAccept, isDragReject} = useDropzone({
         multiple: multiple || !single,
         accept,
-        onDrop: files => onSelect(single ? files[0] : files)
+        onDrop: files => onSelect(single ? files[0] : files),
     })
+    
     const reject = isDragReject || (isDragActive && !isDragAccept)
 
     const classNames = [
@@ -25,9 +26,7 @@ export const FileSelect = ({multiple, single, accept, onSelect, children}) => {
                 {reject
                     ? multiple
                         ? msg('widget.fileSelect.multiple.reject')
-                        : draggedFiles.length > 1
-                            ? msg('widget.fileSelect.single.tooMany')
-                            : msg('widget.fileSelect.single.reject')
+                        : msg('widget.fileSelect.single.reject')
                     : isDragAccept
                         ? multiple
                             ? msg('widget.fileSelect.multiple.drop')

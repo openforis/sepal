@@ -3998,8 +3998,7 @@
         "single": {
           "drop": "Drop file here",
           "dropOrClick": "Drop file here, or click to select file",
-          "reject": "Cannot drop file. Wrong file type?",
-          "tooMany": "Can only drop a single file."
+          "reject": "Cannot drop file. Wrong file type, or more than one file?"
         }
       },
       "imageConstraints": {
