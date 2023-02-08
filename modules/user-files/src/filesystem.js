@@ -1,7 +1,7 @@
 const Path = require('path')
 const {createReadStream, realpathSync} = require('fs')
 const {stat} = require('fs/promises')
-const log = require('sepal/log').getLogger('filesystem')
+const log = require('#sepal/log').getLogger('filesystem')
 
 const resolvePath = (baseDir, path) => {
     const realBaseDir = realpathSync(baseDir)

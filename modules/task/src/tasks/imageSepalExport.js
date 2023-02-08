@@ -1,10 +1,10 @@
 const {concat, forkJoin, switchMap} = require('rxjs')
 const moment = require('moment')
-const {mkdirSafe$} = require('task/rxjs/fileSystem')
-const {createVrt$, setBandNames$} = require('sepal/gdal')
+const {mkdirSafe$} = require('#task/rxjs/fileSystem')
+const {createVrt$, setBandNames$} = require('#sepal/gdal')
 const {exportImageToSepal$} = require('../jobs/export/toSepal')
-const ImageFactory = require('sepal/ee/imageFactory')
-const {getCurrentContext$} = require('task/jobs/service/context')
+const ImageFactory = require('#sepal/ee/imageFactory')
+const {getCurrentContext$} = require('#task/jobs/service/context')
 
 module.exports = {
     submit$: (id, {image: {recipe, workspacePath, bands, ...retrieveOptions}}) =>

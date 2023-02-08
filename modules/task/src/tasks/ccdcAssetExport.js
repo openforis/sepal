@@ -1,6 +1,6 @@
 const {exportImageToAsset$} = require('../jobs/export/toAsset')
 const {forkJoin, switchMap} = require('rxjs')
-const ccdc = require('sepal/ee/timeSeries/ccdc')
+const ccdc = require('#sepal/ee/timeSeries/ccdc')
 const {toVisualizationProperties} = require('../ee/visualizations')
 const {formatProperties} = require('./formatProperties')
 

@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const log = require('sepal/log').getLogger('messageHandler')
+const log = require('#sepal/log').getLogger('messageHandler')
 const {enqueue} = require('./emailQueue')
 const {setEmailNotificationsEnabled} = require('./cache')
 

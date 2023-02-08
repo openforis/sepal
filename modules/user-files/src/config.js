@@ -1,5 +1,5 @@
 const program = require('commander')
-const log = require('sepal/log').getLogger('config')
+const log = require('#sepal/log').getLogger('config')
 
 const DEFAULT_PORT = 5999
 const DEFAULT_POLL_INTERVAL_MS = 1000

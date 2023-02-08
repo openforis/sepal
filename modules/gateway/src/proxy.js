@@ -6,7 +6,7 @@ const {categories: {proxy: proxyLogLevel}} = require('./log.json')
 const {sepalHost} = require('./config')
 const {getRequestUser, SEPAL_USER_HEADER} = require('./user')
 const {usernameTag, urlTag} = require('./tag')
-const log = require('sepal/log').getLogger('proxy')
+const log = require('#sepal/log').getLogger('proxy')
 
 const Proxy = userStore => {
     const {authMiddleware} = Auth(userStore)

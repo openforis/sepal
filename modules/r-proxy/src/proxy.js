@@ -1,4 +1,4 @@
-const log = require('sepal/log').getLogger('proxy')
+const log = require('#sepal/log').getLogger('proxy')
 const http = require('http')
 const {httpPort} = require('./config')
 

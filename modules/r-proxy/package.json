@@ -17,12 +17,15 @@
         "lodash": "^4.17.21",
         "log4js": "^6.3.0",
         "minimatch": "^3.0.4",
-        "r-proxy": "./src",
-        "sepal": "../../lib/js/shared/src"
+        "sepal": "../../lib/js/shared"
     },
     "devDependencies": {
         "eslint": "^8.4.1",
         "jest": "^27.4.4",
         "jest-expect-message": "^1.0.2"
+    },
+    "imports": {
+        "#sepal/*": "sepal/src/*.js",
+        "#sepal/*.json": "sepal/src/*.json"
     }
 }

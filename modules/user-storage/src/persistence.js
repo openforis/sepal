@@ -1,6 +1,6 @@
 const Redis = require('ioredis')
 const {redisUri} = require('./config')
-const log = require('sepal/log').getLogger('persistence')
+const log = require('#sepal/log').getLogger('persistence')
 
 const redis = new Redis(redisUri)
 

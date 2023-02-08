@@ -18,6 +18,7 @@ then
   echo "Starting nodemon"
   [[ -d node_modules ]] || npm install
   exec sudo -Eu $USERNAME "PATH=$PATH NODE_TLS_REJECT_UNAUTHORIZED=0" nodemon \
+    --config ../../dev-env/nodemon/nodemon.json \
     --watch "${MODULE}"/src \
     --watch "${JS_SHARED}" \
     --inspect=0.0.0.0:9234 \

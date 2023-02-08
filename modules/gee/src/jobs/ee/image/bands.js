@@ -1,8 +1,8 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const worker$ = ({asset, recipe}) => {
-    const ImageFactory = require('sepal/ee/imageFactory')
-    const ee = require('sepal/ee')
+    const ImageFactory = require('#sepal/ee/imageFactory')
+    const ee = require('#sepal/ee')
     const {switchMap} = require('rxjs')
 
     if (asset) {

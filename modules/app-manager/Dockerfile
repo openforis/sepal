@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-venv \
     python3-wheel \
+    rsync \
     software-properties-common \
     sudo
 

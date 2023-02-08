@@ -19,6 +19,10 @@ RUN apt-get update && apt-get -y install nodejs
 # Install node global packages
 RUN npm install -g nodemon
 
+RUN apt-get update && \
+    apt-get install -y \
+        rsync
+
 # Set bash prompt
 RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
 RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /root/.bashrc

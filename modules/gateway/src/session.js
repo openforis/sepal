@@ -1,5 +1,5 @@
-const log = require('sepal/log').getLogger('session')
-const {toPromise} = require('sepal/util')
+const log = require('#sepal/log').getLogger('session')
+const {toPromise} = require('#sepal/util')
 const {usernameTag} = require('./tag')
 const {getSessionUsername} = require('./user')
 

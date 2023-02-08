@@ -1,10 +1,10 @@
-require('sepal/log').configureServer(require('./log.json'))
-const log = require('sepal/log').getLogger('main')
+require('#sepal/log').configureServer(require('./log.json'))
+const log = require('#sepal/log').getLogger('main')
 
 const _ = require('lodash')
 
-const {initMessageQueue} = require('sepal/messageQueue')
-const {metrics$, startMetrics} = require('sepal/metrics')
+const {initMessageQueue} = require('#sepal/messageQueue')
+const {metrics$, startMetrics} = require('#sepal/metrics')
 const {amqpUri} = require('./config')
 const {logStats} = require('./emailQueue')
 const {messageHandler} = require('./messageHandler')

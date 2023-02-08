@@ -1,6 +1,6 @@
 const {spawn} = require('child_process')
 const Path = require('path')
-const log = require('sepal/log').getLogger('script')
+const log = require('#sepal/log').getLogger('script')
 
 const runScript = (script, args, {showStdOut, showStdErr} = {}) =>
     new Promise((resolve, reject) => {

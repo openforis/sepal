@@ -2,7 +2,7 @@ const {scanUserHomes} = require('./filesystem')
 const {minDelayMilliseconds, maxDelayMilliseconds} = require('./config')
 const {getUserStorage} = require('./persistence')
 const {scan} = require('./jobQueue')
-const log = require('sepal/log').getLogger('scan')
+const log = require('#sepal/log').getLogger('scan')
 
 const scheduleMap = {
     'filesDeleted': {priority: 1, delay: 0},

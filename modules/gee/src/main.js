@@ -1,11 +1,11 @@
-require('sepal/log').configureServer(require('./log.json'))
-const log = require('sepal/log').getLogger('main')
+require('#sepal/log').configureServer(require('./log.json'))
+const log = require('#sepal/log').getLogger('main')
 
 const {amqpUri, port} = require('./config')
 const routes = require('./routes')
-const server = require('sepal/httpServer')
-const {initMessageQueue} = require('sepal/messageQueue')
-const {metrics$, startMetrics} = require('sepal/metrics')
+const server = require('#sepal/httpServer')
+const {initMessageQueue} = require('#sepal/messageQueue')
+const {metrics$, startMetrics} = require('#sepal/metrics')
 
 const main = async () => {
     await initMessageQueue(amqpUri, {

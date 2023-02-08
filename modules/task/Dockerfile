@@ -13,6 +13,10 @@ ENV PYTHON_SHARED /usr/local/src/sepal/lib/python/shared
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get install -y nodejs
 
+RUN apt-get update && \
+    apt-get install -y \
+        rsync
+
 RUN groupadd --gid 1000 node && \
     useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 

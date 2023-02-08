@@ -1,11 +1,11 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const worker$ = ({recipe, bands, latLng}) => {
-    const {getCollection$} = require('sepal/ee/timeSeries/collection')
-    const {toGeometry} = require('sepal/ee/aoi')
-    const {getRows$} = require('sepal/ee/table')
+    const {getCollection$} = require('#sepal/ee/timeSeries/collection')
+    const {toGeometry} = require('#sepal/ee/aoi')
+    const {getRows$} = require('#sepal/ee/table')
     const {switchMap} = require('rxjs')
-    const ee = require('sepal/ee')
+    const ee = require('#sepal/ee')
     const aoi = {type: 'POINT', ...latLng}
     const geometry = toGeometry(aoi)
 
