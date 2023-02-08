@@ -1,6 +1,6 @@
 # Image with preinstalled Java, Python, and R
 
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
@@ -27,19 +27,17 @@ RUN echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
 # Install support for add-apt-repository
 RUN apt-get -y update && apt-get install -y \
     software-properties-common \
-    gnupg
-
-# Upgrade installed packages
-RUN apt-get -y upgrade
+    gnupg \
+    dirmngr \
+    wget
 
 # Add repository for misc GIS utilities
 RUN apt-add-repository -y ppa:ubuntugis/ubuntugis-unstable
 
 # Add repositories for R
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
-RUN add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
+RUN wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | tee -a /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc
+RUN add-apt-repository -y "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
 RUN add-apt-repository -y ppa:c2d4u.team/c2d4u4.0+
-
 # Install general purpose utilities
 RUN apt-get -y update && apt-get install -y \
     aria2 \
@@ -53,7 +51,7 @@ RUN apt-get -y update && apt-get install -y \
     dbview \
     dtach \
     ed \
-    enchant \
+    enchant-2 \
     flex \
     gcc \
     gettext \
@@ -74,13 +72,12 @@ RUN apt-get -y update && apt-get install -y \
     unrar-free \
     unzip \
     vim \
-    wget \
     zip
 
 # Install GIS utilities
 RUN apt-get update -y && apt-get install -y \
-    gdal-bin=3.4.3+dfsg-1~focal0 \
-    proj-bin=8.2.0-1~focal0 \
+    gdal-bin=3.6.2+dfsg-1~jammy0 \
+    proj-bin=9.1.1-1~jammy0 \
     gsl-bin \
     saga \
     shapelib \

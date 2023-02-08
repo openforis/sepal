@@ -2,17 +2,20 @@
 set -e
 
 yum install -y gcc kernel-devel-$(uname -r)
-#aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
 
-# Ensure same nvidia driver version is used both in init_gpu.sh and in init-gpu-drivers.sh
+# *** Ensure same NVIDIA driver version is used both here and in init_gpu.sh ***
+
+# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver
+#   In "Public NVIDIA drivers section", see which driver to use based on instance type. Currently we use G4dn.
 #
-# Version for different instance types:
-#   https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver
-# Find download URL:
-#   https://www.nvidia.com/Download/Find.aspx
-wget https://uk.download.nvidia.com/tesla/470.82.01/NVIDIA-Linux-x86_64-470.82.01.run
+# https://www.nvidia.com/Download/Find.aspx
+#   Locate the driver link based on the above. Currently:
+#       Product Type: Data Center / Tesla
+#       Product Series: T-Series
+#       Product: Tesla T4
+wget https://us.download.nvidia.com/tesla/525.85.12/NVIDIA-Linux-x86_64-525.85.12.run
 chmod +x NVIDIA-Linux-x86_64*.run
-/bin/sh ./NVIDIA-Linux-x86_64*.run -s
+CC=/usr/bin/gcc10-cc /bin/sh ./NVIDIA-Linux-x86_64*.run -s
 chmod +x /usr/local/bin/init-gpu-drivers.sh
 systemctl enable init-gpu-drivers.service
 
