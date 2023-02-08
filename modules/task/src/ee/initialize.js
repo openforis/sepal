@@ -1,6 +1,6 @@
 const {Subject, switchMap, first} = require('rxjs')
-const ee = require('sepal/ee')
-const {getCredentials$} = require('task/context')
+const ee = require('#sepal/ee')
+const {getCredentials$} = require('#task/context')
 
 const secondsToExpiration = expiration => {
     const now = Date.now()

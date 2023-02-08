@@ -1,4 +1,4 @@
-const Job = require('sepal/worker/job')
+const Job = require('#sepal/worker/job')
 const {messageService, sendMessage$} = require('./messageService')
 const logConfig = require('./log.json')
 
@@ -18,10 +18,10 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
     const Path = require('path')
     const {realpath, readdir, stat, rm} = require('fs/promises')
     const {EMPTY, catchError, concat, timer, Subject, finalize, from, exhaustMap, distinctUntilChanged, takeUntil, takeWhile, switchMap} = require('rxjs')
-    const {minDuration$} = require('sepal/rxjs')
+    const {minDuration$} = require('#sepal/rxjs')
     const _ = require('lodash')
     const {resolvePath} = require('./filesystem')
-    const log = require('sepal/log').getLogger('ws')
+    const log = require('#sepal/log').getLogger('ws')
     
     const REMOVE_COMFORT_DELAY_MS = 1000
 

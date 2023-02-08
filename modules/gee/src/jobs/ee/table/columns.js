@@ -1,9 +1,9 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const worker$ = ({tableId}) => {
-    const ee = require('sepal/ee')
-    const {ClientException, NotFoundException} = require('sepal/exception')
-    const {EEException} = require('sepal/ee/exception')
+    const ee = require('#sepal/ee')
+    const {ClientException, NotFoundException} = require('#sepal/exception')
+    const {EEException} = require('#sepal/ee/exception')
     const {throwError, of, switchMap, catchError} = require('rxjs')
 
     const handleError$ = error =>

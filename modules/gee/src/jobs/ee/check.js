@@ -1,7 +1,7 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const worker$ = () => {
-    const ee = require('sepal/ee')
+    const ee = require('#sepal/ee')
     const {map} = require('rxjs')
 
     return ee.getInfo$(ee.Image(), 'can communicate with EE servers').pipe(

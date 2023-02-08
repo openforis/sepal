@@ -1,5 +1,5 @@
 const {Subject} = require('rxjs')
-const log = require('sepal/log').getLogger('terminal')
+const log = require('#sepal/log').getLogger('terminal')
 const {spawn} = require('child_process')
 
 const exec$ = (workingDir, command, args) => {

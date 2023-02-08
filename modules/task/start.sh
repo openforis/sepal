@@ -18,10 +18,12 @@ then
   echo "Starting nodemon"
   [[ -d node_modules ]] || npm install
   exec sudo -Eu $USERNAME "PATH=$PATH NODE_TLS_REJECT_UNAUTHORIZED=0" nodemon \
+    --config ../../dev-env/nodemon/nodemon.json \
     --watch "${MODULE}"/src \
     --watch "${JS_SHARED}" \
     --inspect=0.0.0.0:9234 \
     src/main.js \
+    --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
     --gee-email "$EE_ACCOUNT" \
     --gee-key "$EE_PRIVATE_KEY" \
     --google-project-id "$GOOGLE_PROJECT_ID" \
@@ -36,6 +38,7 @@ else
   echo "Starting node"
   exec sudo -Eu $USERNAME "PATH=$PATH" node \
     src/main.js \
+    --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
     --gee-email "$EE_ACCOUNT" \
     --gee-key "$EE_PRIVATE_KEY" \
     --google-project-id "$GOOGLE_PROJECT_ID" \

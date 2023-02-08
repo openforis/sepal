@@ -1,6 +1,6 @@
 const {redisUri, autoUpdateIntervalHours, LOCAL_CRAN_REPO} = require('./config')
 const Bull = require('bull')
-const log = require('sepal/log').getLogger('queue')
+const log = require('#sepal/log').getLogger('queue')
 const {makeCranPackage, checkCranUpdates, updateCranPackage} = require('./cran')
 const {makeGitHubPackage, checkGitHubUpdates, updateGitHubPackage} = require('./github')
 // const {checkCranUpdates, checkGitHubUpdates} = require('./update')

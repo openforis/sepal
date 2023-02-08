@@ -1,4 +1,4 @@
-const log = require('sepal/log').getLogger('proxy')
+const log = require('#sepal/log').getLogger('proxy')
 const https = require('https')
 const fs = require('fs')
 const {stat} = require('fs/promises')

@@ -1,10 +1,10 @@
-const {job} = require('task/jobs/job')
-const {eeLimiterService} = require('sepal/ee/eeLimiterService')
+const {job} = require('#task/jobs/job')
+const {eeLimiterService} = require('#sepal/ee/eeLimiterService')
 
 const worker$ = () => {
     const {ReplaySubject, switchMap} = require('rxjs')
-    const ee = require('sepal/ee')
-    const {getContext$} = require('task/jobs/service/context')
+    const ee = require('#sepal/ee')
+    const {getContext$} = require('#task/jobs/service/context')
     
     const DEFAULT_MAX_RETRIES = 10
 

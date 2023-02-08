@@ -1,9 +1,9 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const worker$ = ({asset, expectedType}) => {
     const {of, catchError, map, switchMap, throwError} = require('rxjs')
-    const {ClientException, NotFoundException} = require('sepal/exception')
-    const ee = require('sepal/ee')
+    const {ClientException, NotFoundException} = require('#sepal/exception')
+    const ee = require('#sepal/ee')
     const _ = require('lodash')
 
     const addFirstImageBands$ = asset => {

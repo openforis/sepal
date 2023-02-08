@@ -1,4 +1,4 @@
-const {delete$, get$, post$} = require('sepal/httpClient')
+const {delete$, get$, post$} = require('#sepal/httpClient')
 const {filter, first, interval, map, switchMap} = require('rxjs')
 const {
     username,

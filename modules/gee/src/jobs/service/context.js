@@ -1,12 +1,12 @@
 const _ = require('lodash')
 const {first} = require('rxjs')
-const service = require('sepal/service')
+const service = require('#sepal/service')
 
 const contextService = {
     serviceName: 'ContextService',
     serviceHandler$: () => {
         const {of} = require('rxjs')
-        return of(require('gee/config'))
+        return of(require('#gee/config'))
     }
 }
 

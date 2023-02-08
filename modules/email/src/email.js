@@ -1,4 +1,4 @@
-const log = require('sepal/log').getLogger('email')
+const log = require('#sepal/log').getLogger('email')
 const {smtpHost, smtpPort, smtpSecure, smtpUser, smtpPassword, smtpFromDomain} = require('./config')
 const fs = require('fs')
 const nodemailer = require('nodemailer')

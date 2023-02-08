@@ -11,7 +11,7 @@ WORKDIR ${ROOT}
 ADD modules/${MODULE_NAME}/package.json ${ROOT}/package.json
 
 RUN apt-get update && \
-    apt-get install sudo && \
+    apt-get install -y sudo && \
     adduser node sudo && \
     echo "node ALL = (root) NOPASSWD: /usr/bin/ssh" >> /etc/sudoers && \
     npm install

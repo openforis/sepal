@@ -1,9 +1,9 @@
-const {job} = require('gee/jobs/job')
-const {eeLimiterService} = require('sepal/ee/eeLimiterService')
+const {job} = require('#gee/jobs/job')
+const {eeLimiterService} = require('#sepal/ee/eeLimiterService')
 
 const worker$ = () => {
-    const {swallow} = require('sepal/rxjs')
-    const ee = require('sepal/ee')
+    const {swallow} = require('#sepal/rxjs')
+    const ee = require('#sepal/ee')
 
     const DEFAULT_MAX_RETRIES = 3
 

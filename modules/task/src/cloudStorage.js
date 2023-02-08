@@ -1,6 +1,6 @@
 const {map} = require('rxjs')
 const {Storage} = require('@google-cloud/storage')
-const {getCurrentContext$} = require('task/jobs/service/context')
+const {getCurrentContext$} = require('#task/jobs/service/context')
 
 const cloudStorage$ = () =>
     getCurrentContext$().pipe(

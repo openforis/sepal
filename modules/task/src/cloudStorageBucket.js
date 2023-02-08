@@ -1,11 +1,11 @@
 const {defer, of, first, map, switchMap} = require('rxjs')
-const {retry} = require('sepal/rxjs')
-const {fromPromise} = require('sepal/rxjs')
+const {retry} = require('#sepal/rxjs')
+const {fromPromise} = require('#sepal/rxjs')
 const crypto = require('crypto')
-const http = require('sepal/httpClient')
-const {getCurrentContext$} = require('task/jobs/service/context')
+const http = require('#sepal/httpClient')
+const {getCurrentContext$} = require('#task/jobs/service/context')
 const {cloudStorage$} = require('./cloudStorage')
-const log = require('sepal/log').getLogger('cloudStorage')
+const log = require('#sepal/log').getLogger('cloudStorage')
 
 const RETRIES = 5
 

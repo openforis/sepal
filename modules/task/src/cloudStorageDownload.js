@@ -1,10 +1,10 @@
 const fs = require('fs')
 const {Subject, EMPTY, concat, defer, of, catchError, expand, map, mergeMap, scan, switchMap} = require('rxjs')
-const {fromPromise, finalize, retry, swallow} = require('sepal/rxjs')
+const {fromPromise, finalize, retry, swallow} = require('#sepal/rxjs')
 const {cloudStorage$} = require('./cloudStorage')
 const path = require('path')
 const format = require('./format')
-const log = require('sepal/log').getLogger('cloudStorage')
+const log = require('#sepal/log').getLogger('cloudStorage')
 
 const CHUNK_SIZE = 10 * 1024 * 1024
 const CONCURRENT_FILE_DOWNLOAD = 1

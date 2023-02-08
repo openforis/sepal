@@ -1,4 +1,4 @@
-const log = require('sepal/log').getLogger('session')
+const log = require('#sepal/log').getLogger('session')
 const pty = require('node-pty')
 const fs = require('fs')
 
