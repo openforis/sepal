@@ -128,7 +128,7 @@ Droppable.propTypes = {
     // className: PropTypes.string,
     // disabled: PropTypes.any,
     // dragCloneClassName: PropTypes.string,
-    // dragTooltip: PropTypes.string,
+    // dragtooltip: PropTypes.any,
     // dragValue: PropTypes.any,
     // main: PropTypes.any,
     // showHandle: PropTypes.any,

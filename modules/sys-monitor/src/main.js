@@ -1,9 +1,9 @@
-require('sepal/log').configureServer(require('./log.json'))
-const log = require('sepal/log').getLogger('main')
+require('#sepal/log').configureServer(require('./log.json'))
+const log = require('#sepal/log').getLogger('main')
 
 const _ = require('lodash')
 
-const {initMessageQueue} = require('sepal/messageQueue')
+const {initMessageQueue} = require('#sepal/messageQueue')
 const {amqpUri, initialDelayMinutes, notifyFrom, notifyTo} = require('./config')
 const {start} = require('./logMonitor')
 const {email$} = require('./email')

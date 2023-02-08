@@ -410,7 +410,7 @@ ListItem.propTypes = {
     disabled: PropTypes.any,
     drag$: PropTypes.object,
     dragCloneClassName: PropTypes.string,
-    dragTooltip: PropTypes.string,
+    dragtooltip: PropTypes.any,
     dragValue: PropTypes.any,
     expanded: PropTypes.any,
     expansion: PropTypes.any,

@@ -39,7 +39,10 @@ export const defaultModel = {
     changeAlertsOptions: {
         minConfidence: 5,
         numberOfObservations: 3,
-        minNumberOfChanges: 3
+        minNumberOfChanges: 3,
+        mustBeConfirmedInMonitoring: true,
+        mustBeStableBeforeChange: true,
+        mustStayChanged: true,
     }
 }
 

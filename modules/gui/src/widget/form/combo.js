@@ -67,7 +67,7 @@ FormCombo.propTypes = {
     placement: PropTypes.any,
     readOnly: PropTypes.any,
     stayOpenOnSelect: PropTypes.any,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     onCancel: PropTypes.func,
     onChange: PropTypes.func

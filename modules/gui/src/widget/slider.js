@@ -607,7 +607,7 @@ Slider.propTypes = {
         // PropTypes.number,
         PropTypes.array
     ]),
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     value: PropTypes.any,
     onChange: PropTypes.func

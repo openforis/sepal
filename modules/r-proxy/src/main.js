@@ -1,5 +1,5 @@
-require('sepal/log').configureServer(require('./log.json'))
-const log = require('sepal/log').getLogger('main')
+require('#sepal/log').configureServer(require('./log.json'))
+const log = require('#sepal/log').getLogger('main')
 const {initProxy} = require('./proxy')
 const {initQueue} = require('./queue')
 

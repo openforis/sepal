@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-venv \
     python3-wheel \
+    rsync \
     software-properties-common \
     sudo
 
@@ -34,7 +35,7 @@ RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /r
 
 USER node
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-RUN bash -c "source /home/node/.nvm/nvm.sh && nvm install node 14"
+RUN bash -c "source /home/node/.nvm/nvm.sh && nvm install 18"
 
 RUN bash -c "source /home/node/.nvm/nvm.sh && npm install -g nodemon"
 

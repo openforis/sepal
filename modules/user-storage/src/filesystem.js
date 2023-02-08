@@ -2,7 +2,7 @@ const {spawn} = require('child_process')
 const {homeDir} = require('./config')
 const path = require('path')
 const fs = require('fs')
-const log = require('sepal/log').getLogger('filesystem')
+const log = require('#sepal/log').getLogger('filesystem')
 
 const diskUsage = path =>
     new Promise((resolve, reject) => {

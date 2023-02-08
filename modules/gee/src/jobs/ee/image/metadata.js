@@ -1,11 +1,11 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const worker$ = ({asset, recipe}) => {
     const {throwError, of, catchError, map, switchMap} = require('rxjs')
-    const {ClientException, NotFoundException} = require('sepal/exception')
-    const {EEException} = require('sepal/ee/exception')
-    const ImageFactory = require('sepal/ee/imageFactory')
-    const ee = require('sepal/ee')
+    const {ClientException, NotFoundException} = require('#sepal/exception')
+    const {EEException} = require('#sepal/ee/exception')
+    const ImageFactory = require('#sepal/ee/imageFactory')
+    const ee = require('#sepal/ee')
 
     const handleError$ = error =>
         ee.getAsset$(asset, 0).pipe(

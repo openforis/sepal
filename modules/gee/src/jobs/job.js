@@ -1,5 +1,5 @@
-const Job = require('sepal/worker/job')
-const logConfig = require('gee/log.json')
+const Job = require('#sepal/worker/job')
+const logConfig = require('#gee/log.json')
 
 const getSepalUser = ctx => {
     const sepalUser = ctx.request.headers['sepal-user']
@@ -9,7 +9,7 @@ const getSepalUser = ctx => {
 }
 
 const getCredentials = ctx => {
-    const config = require('gee/config')
+    const config = require('#gee/config')
     const sepalUser = getSepalUser(ctx)
     const serviceAccountCredentials = config.serviceAccountCredentials
     return {
@@ -27,7 +27,7 @@ module.exports = {
         minIdleCount,
         maxIdleMilliseconds,
         ctx,
-        before = [require('gee/jobs/ee/initialize')],
+        before = [require('#gee/jobs/ee/initialize')],
         services,
         args = ctx => [{...ctx.request.query, ...ctx.request.body}, getCredentials(ctx)],
         worker$,

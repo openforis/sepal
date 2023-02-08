@@ -1,4 +1,4 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const worker$ = () => {
     const {EMPTY, delay} = require('rxjs')

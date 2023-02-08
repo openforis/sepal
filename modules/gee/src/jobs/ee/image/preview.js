@@ -1,12 +1,12 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
-    const ImageFactory = require('sepal/ee/imageFactory')
+    const ImageFactory = require('#sepal/ee/imageFactory')
     
-    const ee = require('sepal/ee')
+    const ee = require('#sepal/ee')
     const {switchMap} = require('rxjs')
-    const {sequence} = require('sepal/utils/array')
-    const log = require('sepal/log').getLogger('ee')
+    const {sequence} = require('#sepal/utils/array')
+    const log = require('#sepal/log').getLogger('ee')
     const _ = require('lodash')
     if (visParams) {
         const {getImage$} = ImageFactory(recipe, {selection: visParams.bands, baseBands: visParams.baseBands, ...otherArgs})

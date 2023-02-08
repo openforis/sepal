@@ -1,4 +1,4 @@
-require('sepal/log').configureServer(require('./log.json'))
+require('#sepal/log').configureServer(require('./log.json'))
 
 const {amqpUri, redisUri, port, secure} = require('./config')
 const {isMatch} = require('micromatch')
@@ -8,8 +8,8 @@ const Session = require('express-session')
 const {v4: uuid} = require('uuid')
 const url = require('url')
 
-const log = require('sepal/log').getLogger('gateway')
-const {initMessageQueue} = require('sepal/messageQueue')
+const log = require('#sepal/log').getLogger('gateway')
+const {initMessageQueue} = require('#sepal/messageQueue')
 
 const {Proxy} = require('./proxy')
 const {SessionManager} = require('./session')

@@ -1,4 +1,4 @@
-const ImageFactory = require('sepal/ee/imageFactory')
+const ImageFactory = require('#sepal/ee/imageFactory')
 const {forkJoin, switchMap} = require('rxjs')
 const {exportImageToAsset$} = require('../jobs/export/toAsset')
 const {toVisualizationProperties} = require('../ee/visualizations')

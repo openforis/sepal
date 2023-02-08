@@ -1,4 +1,4 @@
-const log = require('sepal/log').getLogger('user')
+const log = require('#sepal/log').getLogger('user')
 const _ = require('lodash')
 const {usernameTag} = require('./tag')
 

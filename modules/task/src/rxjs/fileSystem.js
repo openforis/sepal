@@ -1,5 +1,5 @@
 const {defer, of, catchError, map, switchMap} = require('rxjs')
-const {fromPromise} = require('sepal/rxjs')
+const {fromPromise} = require('#sepal/rxjs')
 const fs = require('fs')
 const Path = require('path')
 

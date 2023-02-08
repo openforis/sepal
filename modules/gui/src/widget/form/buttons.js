@@ -10,8 +10,8 @@ export class FormButtons extends React.Component {
     }
 
     render() {
-        const {chromeless, look, shape, size, air, className, input, label, multiple, options, tooltip, tooltipPlacement,
-            layout, alignment, spacing, groupSpacing, framed, disabled, tabIndex, width
+        const {chromeless, look, shape, size, air, className, input, label, labelButtons, multiple, options, tooltip, tooltipPlacement,
+            layout, alignment, spacing, groupSpacing, framed, disabled, tabIndex, width, onChange
         } = this.props
         return (
             <Buttons
@@ -24,6 +24,7 @@ export class FormButtons extends React.Component {
                 selected={input.value}
                 onChange={this.onChange}
                 label={label}
+                labelButtons={labelButtons}
                 multiple={multiple}
                 options={options}
                 tooltip={tooltip}
@@ -82,6 +83,7 @@ FormButtons.propTypes = {
     groupSpacing: PropTypes.any,
     input: PropTypes.object,
     label: PropTypes.any,
+    labelButtons: PropTypes.any,
     layout: PropTypes.string,
     look: PropTypes.string,
     multiple: PropTypes.any,
@@ -89,7 +91,7 @@ FormButtons.propTypes = {
     shape: PropTypes.string,
     size: PropTypes.string,
     spacing: PropTypes.string,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     width: PropTypes.any,
     onChange: PropTypes.any

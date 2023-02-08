@@ -1,13 +1,13 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const MAX_BUCKETS = Math.pow(2, 8)
 const MAX_PIXELS = 1e5
 
 const worker$ = ({recipe, band, aoi, mapBounds}) => {
-    const ImageFactory = require('sepal/ee/imageFactory')
-    const ee = require('sepal/ee')
+    const ImageFactory = require('#sepal/ee/imageFactory')
+    const ee = require('#sepal/ee')
     const {switchMap} = require('rxjs')
-    const {toGeometry} = require('sepal/ee/aoi')
+    const {toGeometry} = require('#sepal/ee/aoi')
 
     const {getImage$, histogramMaxPixels} = ImageFactory(recipe, {selection: [band]})
     const histogram = image => {

@@ -3,13 +3,10 @@ import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
-import {maxDate, minDate, momentDate} from 'widget/form/datePicker'
 import {msg} from 'translate'
 import React from 'react'
 import moment from 'moment'
 import styles from './dates.module.css'
-
-const DATE_FORMAT = 'YYYY-MM-DD'
 
 const fields = {
     fromYear: new Form.Field()

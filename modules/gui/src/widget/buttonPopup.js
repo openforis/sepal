@@ -210,7 +210,7 @@ ButtonPopup.propTypes = {
     showPopupOnMount: PropTypes.any,
     size: PropTypes.any,
     stayOpenOnBlur: PropTypes.any,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     vPlacement: PropTypes.oneOf(['above', 'below', 'over-above', 'over-below']),
     width: PropTypes.string,

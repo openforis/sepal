@@ -59,7 +59,7 @@ FormSlider.propTypes = {
         // PropTypes.number,
         PropTypes.array
     ]),
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     onChange: PropTypes.func
 }

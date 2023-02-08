@@ -1,4 +1,4 @@
-const {stream} = require('sepal/httpServer')
+const {stream} = require('#sepal/httpServer')
 const ws$ = require('./ws')
 const {download} = require('./filesystem')
 const {homeDir} = require('./config')

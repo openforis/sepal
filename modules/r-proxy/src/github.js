@@ -3,7 +3,7 @@ const {opendir} = require('fs/promises')
 const {isChildOf, isFile} = require('./filesystem')
 const {GITHUB_ROOT, LOCAL_CRAN_REPO, libPath} = require('./config')
 const {runScript} = require('./script')
-const log = require('sepal/log').getLogger('github')
+const log = require('#sepal/log').getLogger('github')
 
 const isGitHubRepoPath = path =>
     isChildOf(GITHUB_ROOT, path)

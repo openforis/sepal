@@ -1,5 +1,5 @@
-const {job} = require('gee/jobs/job')
-const {testLimiterService} = require('./testLimiter')
+const {job} = require('#gee/jobs/job')
+const {testLimiterService} = require('./http/testLimiter')
 
 module.exports = job({
     jobName: 'Test1',
@@ -9,7 +9,7 @@ module.exports = job({
     minIdleCount: 5,
     maxIdleMilliseconds: 2000,
     services: [testLimiterService],
-    before: [require('./test_1'), require('./test_2')],
+    before: [require('./http/test_1'), require('./http/test_2')],
     args: ({params: {min, max, errorProbability}}) => [parseInt(min), parseInt(max), parseInt(errorProbability)],
-    worker$: require('./test')
+    worker$: require('./http/test')
 })

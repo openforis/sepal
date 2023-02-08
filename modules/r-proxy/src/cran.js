@@ -5,7 +5,7 @@ const {cranRepo, CRAN_ROOT, libPath} = require('./config')
 const {runScript} = require('./script')
 const readline = require('readline')
 const https = require('https')
-const log = require('sepal/log').getLogger('cran')
+const log = require('#sepal/log').getLogger('cran')
 const {compare} = require('compare-versions')
 
 const BIN = Path.join(CRAN_ROOT, 'bin/contrib')

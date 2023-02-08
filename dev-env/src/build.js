@@ -6,13 +6,13 @@ import {getBuildDeps, getBuildRunDeps} from './deps.js'
 import {log} from './log.js'
 import _ from 'lodash'
 
-const buildModule = async (module, options = {}, parent) => {
+const buildModule = async (module, options = {}, pull) => {
     try {
         if (isModule(module)) {
-            // showModuleStatus(module, MESSAGE.BUILDING, {sameLine: true})
             showModuleStatus(module, MESSAGE.BUILDING)
             const buildOptions = _.compact([
-                !options.cache && (!parent || options.recursive) ? '--no-cache' : null
+                !options.cache ? '--no-cache' : null,
+                !options.cache && pull ? '--pull' : null,
             ]).join(' ')
             await exec({
                 command: './script/docker-compose-build.sh',
@@ -28,7 +28,10 @@ const buildModule = async (module, options = {}, parent) => {
 }
 
 const getBuildActions = module => {
-    const buildActions = _(getBuildDeps(module))
+    const buildDeps = getBuildDeps(module)
+    const hasLocalParent = buildDeps.length
+
+    const buildActions = _(buildDeps)
         .map(module => getBuildActions(module))
         .flatten()
         .value()
@@ -40,7 +43,7 @@ const getBuildActions = module => {
     return [
         ...buildActions,
         ...runActions,
-        {module, action: 'build'}
+        {module, action: 'build', pull: !hasLocalParent}
     ]
 }
 
@@ -51,9 +54,9 @@ export const build = async (modules, options) => {
         .uniqWith(_.isEqual)
         .value()
 
-    for (const {module, action} of buildActions) {
+    for (const {module, action, pull} of buildActions) {
         if (action === 'build') {
-            await buildModule(module, options)
+            await buildModule(module, options, pull)
         } else if (action === 'run') {
             await start(module, {stop: true})
         } else {

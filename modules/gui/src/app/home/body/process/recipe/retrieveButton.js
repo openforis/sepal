@@ -33,5 +33,5 @@ export const RetrieveButton = compose(
 
 RetrieveButton.propTypes = {
     disabled: PropTypes.any,
-    tooltip: PropTypes.string
+    tooltip: PropTypes.any
 }

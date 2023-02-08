@@ -78,7 +78,7 @@ ToggleButton.propTypes = {
     shape: PropTypes.string,
     size: PropTypes.string,
     tabIndex: PropTypes.number,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     width: PropTypes.any,
 }

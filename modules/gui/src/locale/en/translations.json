@@ -167,6 +167,8 @@
       "copyToClipboard": "Copy to clipboard",
       "discard": "Don't save",
       "done": "Done",
+      "disabled": "Disabled",
+      "enabled": "Enabled",
       "less": "Less",
       "more": "More",
       "next": "Next",
@@ -709,7 +711,10 @@
       },
       "Planet": {
         "label": "Planet",
-        "nicfiDescription": "NICFI Planet composites"
+        "nicfiDescription": "NICFI Planet composites",
+        "bands": {
+            "tooltip": "Description of false-color indices."
+        }
       },
       "GoogleSatellite": {
         "label": "Google Satellite",
@@ -1317,6 +1322,18 @@
               "minNumberOfChanges": {
                 "label": "Min number of changes",
                 "tooltip": "Minimum number of change observations in window to consider the window a change, or minimum number of stable observations to consider the window stable"
+              },
+              "mustBeConfirmedInMonitoring": {
+                "label": "Confirmed in monitoring",
+                "tooltip": "A change must be confirmed in the monitoring period. If it was confirmed already in the calibration period, the change is discarded. This prevents changes occuring in the calibration period from being detected."
+              },
+              "mustBeStableBeforeChange": {
+                "label": "Stable before change",
+                "tooltip": "A change must be stable before it's detected. Otherwise, the change is discarded. This prevents changes that happened outside of the monitoring period in the last year from being detected."
+              },
+              "mustStayChanged": {
+                "label": "Must stay change",
+                "tooltip": "A change must stay change, and not be classified as stable after the change was detected. Otherwise, the change is discarded. This lowers the risk of multiple consecutive outliers to be classified as change."
               }
             },
             "title": "Change alert options",
@@ -3981,8 +3998,7 @@
         "single": {
           "drop": "Drop file here",
           "dropOrClick": "Drop file here, or click to select file",
-          "reject": "Cannot drop file. Wrong file type?",
-          "tooMany": "Can only drop a single file."
+          "reject": "Cannot drop file. Wrong file type, or more than one file?"
         }
       },
       "imageConstraints": {

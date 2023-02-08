@@ -1,9 +1,9 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
     const {map, merge, toArray} = require('rxjs')
     const Path = require('path')
-    const http = require('sepal/httpClient')
+    const http = require('#sepal/httpClient')
     const _ = require('lodash')
 
     if (!googleTokens) {

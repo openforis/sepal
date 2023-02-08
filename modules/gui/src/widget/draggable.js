@@ -332,7 +332,7 @@ Draggable.propTypes = {
     disabled: PropTypes.any,
     dragCloneClassName: PropTypes.string,
     dragPlaceholderClassName: PropTypes.string,
-    dragTooltip: PropTypes.string,
+    dragtooltip: PropTypes.any,
     dragValue: PropTypes.any,
     hidden: PropTypes.any,
     index: PropTypes.any,
