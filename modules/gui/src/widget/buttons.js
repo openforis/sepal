@@ -107,11 +107,12 @@ export class Buttons extends React.Component {
     }
 
     render() {
-        const {label, tooltip, tooltipPlacement, groupSpacing, framed, disabled, options, className} = this.props
+        const {label, labelButtons, tooltip, tooltipPlacement, groupSpacing, framed, disabled, options, className} = this.props
         return (
             <Widget
                 className={className}
                 label={label}
+                labelButtons={labelButtons}
                 spacing={groupSpacing}
                 framed={framed}
                 tooltip={tooltip}
@@ -139,6 +140,7 @@ Buttons.propTypes = {
     framed: PropTypes.any,
     groupSpacing: PropTypes.any,
     label: PropTypes.any,
+    labelButtons: PropTypes.any,
     layout: PropTypes.string,
     look: PropTypes.string,
     multiple: PropTypes.any,
@@ -148,7 +150,7 @@ Buttons.propTypes = {
     size: PropTypes.string,
     spacing: PropTypes.any,
     tabIndex: PropTypes.number,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     width: PropTypes.any,
     onChange: PropTypes.any,

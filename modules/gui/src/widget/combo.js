@@ -421,7 +421,7 @@ Combo.propTypes = {
     placement: PropTypes.oneOf(['above', 'below']),
     readOnly: PropTypes.any,
     stayOpenOnSelect: PropTypes.any,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     value: PropTypes.any,
     onBlur: PropTypes.func,

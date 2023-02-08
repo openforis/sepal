@@ -50,6 +50,6 @@ PanelButton.propTypes = {
     disabled: PropTypes.any,
     icon: PropTypes.string,
     label: PropTypes.string,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     onClick: PropTypes.func
 }

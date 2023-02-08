@@ -126,17 +126,21 @@
             "download": {
                 "tooltip": "Descargar el elemento seleccionado"
             },
-            "hideDotFiles": {
-                "tooltip": "Ocultar los documentos que empiezan por ."
-            },
             "remove": {
                 "tooltip": "Eliminar los elementos seleccionados"
             },
-            "showDotFiles": {
-                "tooltip": "Mostrar los documentos que empiezan por . (dotfiles)"
+            "dotFiles": {
+                "label": "",
+                "hide.tooltip": "",
+                "show.tooltip": ""
+            },
+            "splitDirs": {
+                "label": "",
+                "split.tooltip": "",
+                "mix.tooltip": ""
             },
             "sorting": {
-                "date.label": "",
+                "date.label": "Fecha",
                 "name.label": ""
             }
         },
@@ -163,6 +167,8 @@
         "copyToClipboard": "Copiar al portapapeles",
         "discard": "No guardar",
         "done": "Hecho",
+        "disabled": "",
+        "enabled": "",
         "less": "Menos",
         "more": "Más",
         "next": "Siguiente",
@@ -232,7 +238,7 @@
         "image": {
             "error": {
                 "notAnImage": "",
-                "notFound": ""
+                "notFound": "Tabla de EE no encontrada"
             }
         },
         "table": {
@@ -291,9 +297,10 @@
             "instructions": "Indíquenos la dirección de correo electrónico de su cuenta SEPAL y le enviaremos un mensaje con instrucciones para restablecer su contraseña.",
             "invalid": "Correo electrónico inválido",
             "label": "¿Olvidaste tu contraseña?",
-            "email.placeholder": "Introduce tu correo electrónico",
+            "email.placeholder": "",
             "required": "El correo electrónico es obligatorio",
-            "success": "Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña a {email}."
+            "success": "Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña a {email}.",
+            "error": ""
         },
         "intro": {
             "about": {
@@ -337,8 +344,47 @@
             }
         },
         "launch": "Iniciar",
+        "documentation": "",
         "loadCurrentUser": {
             "error": ""
+        },
+        "signup": {
+            "button": "Regístrate",
+            "username": {
+                "label": "Nombre de usuario",
+                "placeholder": "",
+                "required": "El nombre de usuario es obligatorio",
+                "format": "",
+                "duplicate": "",
+                "cannotValidate": ""
+            },
+            "name": {
+                "label": "",
+                "placeholder": "",
+                "required": "El nombre es obligatorio",
+                "invalid": ""
+            },
+            "email": {
+                "label": "",
+                "placeholder": "",
+                "required": "El correo electrónico es obligatorio",
+                "format": "",
+                "duplicate": "",
+                "cannotValidate": ""
+            },
+            "organization": {
+                "label": "Organización",
+                "placeholder": "",
+                "required": "La organización es necesaria",
+                "invalid": ""
+            },
+            "intendedUse": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "invalid": ""
+            },
+            "success": ""
         },
         "login": {
             "button": "Iniciar sesión",
@@ -373,6 +419,7 @@
                 "required": "La contraseña debe ser confirmada"
             },
             "success": "La contraseña se ha restablecido",
+            "error": "",
             "username": {
                 "label": "Nombre de usuario"
             },
@@ -389,7 +436,7 @@
             "tooltip": "",
             "center": "",
             "bounds": "",
-            "copy": "",
+            "copy": "Copiar al portapapeles",
             "coordinatesCopied": ""
         },
         "legendBuilder": {
@@ -446,17 +493,17 @@
                         "tooltip": ""
                     },
                     "redColumn": {
-                        "label": "",
+                        "label": "Rojo",
                         "placeholder": "",
                         "tooltip": ""
                     },
                     "greenColumn": {
-                        "label": "",
+                        "label": "Verde",
                         "placeholder": "",
                         "tooltip": ""
                     },
                     "blueColumn": {
-                        "label": "",
+                        "label": "Azul",
                         "placeholder": "",
                         "tooltip": ""
                     }
@@ -612,6 +659,10 @@
             "edit.tooltip": "",
             "clone.tooltip": "",
             "remove.tooltip": ""
+        },
+        "drawingMode": {
+            "zoomarea": "",
+            "polygon": ""
         }
     },
     "featureLayerSources": {
@@ -660,7 +711,10 @@
         },
         "Planet": {
             "label": "",
-            "nicfiDescription": ""
+            "nicfiDescription": "",
+            "bands": {
+                "tooltip": ""
+            }
         },
         "GoogleSatellite": {
             "label": "",
@@ -923,12 +977,12 @@
                             "SINGLE": ""
                         },
                         "endDate": {
-                            "label": "",
+                            "label": "Fecha fin",
                             "range": "",
                             "tooltip": ""
                         },
                         "startDate": {
-                            "label": "",
+                            "label": "Fecha de inicio",
                             "tooltip": ""
                         }
                     },
@@ -1176,7 +1230,7 @@
                     "loadError": ""
                 },
                 "recipe": {
-                    "loadError": ""
+                    "loadError": "Error al cargar la fórmula."
                 }
             },
             "tabPlaceholder": "Corte de CCDC"
@@ -1215,13 +1269,13 @@
             "layers": {
                 "imageLayer": {
                     "changes": "",
-                    "dates": "",
-                    "observations": ""
+                    "dates": "Fechas",
+                    "observations": "Observaciones"
                 }
             },
             "panel": {
                 "date": {
-                    "button": "",
+                    "button": "FEC",
                     "form": {
                         "calibration": {
                             "duration": {
@@ -1266,6 +1320,18 @@
                         "minNumberOfChanges": {
                             "label": "",
                             "tooltip": ""
+                        },
+                        "mustBeConfirmedInMonitoring": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "mustBeStableBeforeChange": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "mustStayChanged": {
+                            "label": "",
+                            "tooltip": ""
                         }
                     },
                     "title": "",
@@ -1291,187 +1357,181 @@
                         },
                         "cloudMasking": {
                             "aggressive": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Agresivo",
+                                "tooltip": "Basarse en las bandas de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
                             },
-                            "label": "",
+                            "label": "Enmascaramiento de nubes",
                             "moderate": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Moderado",
+                                "tooltip": "Basarse sólo en las bandas de calidad de la imagen para el enmascaramiento de las nubes"
                             },
                             "none": {
                                 "label": "",
-                                "tooltip": ""
+                                "tooltip": "Usar píxeles libres de nubes si es posible, pero no enmascarar áreas sin píxeles libres"
                             }
                         },
                         "corrections": {
                             "brdf": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Corrección BRDF",
+                                "tooltip": "Corregir los efectos de la función de distribución de la reflectancia bidireccional (BRDF)."
                             },
-                            "label": "",
+                            "label": "Correcciones",
                             "surfaceReflectance": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Reflectancia de la superficie",
+                                "tooltip": "Utilizar escenas de reflectancia superficial corregidas atmosféricamente."
                             }
                         },
                         "shadowMasking": {
-                            "label": "",
+                            "label": "Enmascaramiento de sombras",
                             "off": {
                                 "label": "",
-                                "tooltip": ""
+                                "tooltip": "No aplicar enmascaramiento agresivo de sombras."
                             },
                             "on": {
                                 "label": "",
-                                "tooltip": ""
+                                "tooltip": "Aplicar enmascaramiento de sombras agresivo. Esto puede eliminar inadvertidamente algunas dinámicas y hacer que se pierdan cambios"
                             }
                         },
                         "snowMasking": {
-                            "label": "",
+                            "label": "Enmascaramiento de nieve",
                             "off": {
                                 "label": "",
-                                "tooltip": ""
+                                "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
                             },
                             "on": {
                                 "label": "",
-                                "tooltip": ""
+                                "tooltip": "Enmascarar nieve. Esto tiende a dejar algunos píxeles con sombra de nieve."
                             }
                         }
                     },
-                    "title": "",
-                    "tooltip": ""
+                    "title": "Pre-proceso",
+                    "tooltip": "Configurar el preprocesamiento de imágenes"
                 },
                 "reference": {
                     "asset": {
-                        "label": "",
-                        "title": "",
+                        "label": "Asset de Earth Engine CCDC",
+                        "title": "Asset de Earth Engine CCDC",
                         "notCcdc": ""
                     },
                     "button": "",
                     "form": {
                         "asset": {
-                            "invalid": "",
-                            "label": "",
-                            "placeholder": "",
-                            "required": ""
+                            "invalid": "Se debe ingresar un asset de CCDC exportado",
+                            "label": "GEE asset de CCDC",
+                            "placeholder": "Indique el ID de un asset CCDC",
+                            "required": "Indique el ID de un asset CCDC"
                         }
                     },
                     "recipe": {
-                        "label": "",
-                        "title": ""
+                        "label": "Flujo de SEPAL CCDC salvada",
+                        "title": "Flujo de SEPAL CCDC salvada"
                     },
-                    "title": "",
+                    "title": "Fuente",
                     "tooltip": ""
                 },
                 "retrieve": {
-                    "apply": "",
+                    "apply": "Recuperar",
                     "form": {
                         "bandTypes": {
                             "amplitude1": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Amplitud 1",
+                                "tooltip": "La amplitud del modelo armónico de primer orden"
                             },
                             "amplitude2": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Amplitud 2",
+                                "tooltip": "La amplitud del modelo armónico de segundo orden"
                             },
                             "amplitude3": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Amplitud 3",
+                                "tooltip": "La amplitud del modelo armónico de tercer orden"
                             },
-                            "atLeastOne": "",
+                            "atLeastOne": "Debe seleccionarse al menos un tipo de banda",
                             "intercept": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Interceptar",
+                                "tooltip": "El intercepto del componente lineal del modelo"
                             },
                             "breakConfidence": {
                                 "label": "",
                                 "tooltip": ""
                             },
-                            "label": "",
+                            "label": "Tipos de banda",
                             "magnitude": {
                                 "label": "",
-                                "tooltip": ""
+                                "tooltip": "Magnitud de punto de quiebre del segmento"
                             },
                             "phase1": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Fase 1",
+                                "tooltip": "La fase del modelo armónico de primer orden."
                             },
                             "phase2": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Fase 2",
+                                "tooltip": "La fase del modelo armónico de segundo orden"
                             },
                             "phase3": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Fase 3",
+                                "tooltip": "La fase del modelo armónico de tercer orden"
                             },
                             "rmse": {
                                 "label": "",
-                                "tooltip": ""
+                                "tooltip": "RMSE de los modelos armónicos"
                             },
                             "slope": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Pendiente",
+                                "tooltip": "La pendiente del componente lineal del modelo"
                             },
                             "value": {
                                 "label": "",
-                                "tooltip": ""
+                                "tooltip": "El valor evaluado de los modelos armónicos para la fecha especificada"
                             }
                         },
                         "baseBands": {
-                            "atLeastOne": "",
-                            "label": ""
+                            "atLeastOne": "Debe seleccionarse al menos una banda base",
+                            "label": "Bandas base"
                         },
                         "destination": {
-                            "GEE": "",
-                            "label": "",
-                            "required": "",
-                            "SEPAL": ""
+                            "GEE": "Asset de Google Earth Engine",
+                            "label": "Destino",
+                            "required": "Debe seleccionar el destino",
+                            "SEPAL": "Espacio de trabajo SEPAL"
                         },
                         "scale": {
-                            "label": ""
+                            "label": "Escala"
                         },
                         "segmentBands": {
                             "changeProb": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Probabilidad",
+                                "tooltip": "Probabilidad de que el punto de quiebre detectado sea preciso"
                             },
-                            "label": "",
+                            "label": "Bandas del segmento",
                             "numObs": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Observaciones",
+                                "tooltip": "Número de observaciones en el segmento"
                             },
                             "tBreak": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Punto de quiebre",
+                                "tooltip": "Fecha del punto de quiebre detectado"
                             },
                             "tEnd": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Fin",
+                                "tooltip": "Fecha de fin del segmento"
                             },
-                            "tooltip": "",
+                            "tooltip": "Bandas con información sobre el segmento en el que cae el corte. Si un píxel cae en un hueco, se utilizará el segmento anterior",
                             "tStart": {
-                                "label": "",
-                                "tooltip": ""
+                                "label": "Inicio",
+                                "tooltip": "Fecha de inicio del segmento"
                             }
                         }
                     },
                     "task": {
-                        "GEE": "",
-                        "SEPAL": ""
+                        "GEE": "Exportar {name} como asset de Google Earth Engine",
+                        "SEPAL": "Recuperar {name} al espacio de trabajo de SEPAL"
                     },
-                    "title": "",
-                    "tooltip": ""
+                    "title": "Recuperar",
+                    "tooltip": "Recuperar series temporales"
                 },
                 "sources": {
                     "button": "",
-                    "classificationLoadError": "",
                     "form": {
-                        "classification": {
-                            "label": "",
-                            "placeholder": "",
-                            "tooltip": ""
-                        },
                         "band": {
                             "label": ""
                         },
@@ -1539,26 +1599,26 @@
                             "PLANET": "",
                             "RADAR": ""
                         },
-                        "required": ""
+                        "required": "Debes seleccionar una fuente de datos"
                     },
-                    "title": "",
-                    "tooltip": ""
+                    "title": "Fuentes",
+                    "tooltip": "Selecciona la fuente de la imagen"
                 }
             },
             "preview": {
                 "description": "",
-                "error": "",
-                "initializing": "",
+                "error": "Fallo en la generación de vista previa",
+                "initializing": "Cargando vista previa...",
                 "label": "",
-                "loading": "",
-                "tilesFailed": ""
+                "loading": "Cargado {loaded} de {count} tiles",
+                "tilesFailed": "{failed} falló"
             },
             "reference": {
                 "asset": {
                     "loadError": ""
                 },
                 "recipe": {
-                    "loadError": ""
+                    "loadError": "Error al cargar la fórmula."
                 }
             },
             "tabPlaceholder": ""
@@ -1817,6 +1877,10 @@
                         "title": "Asset Earth Engine"
                     },
                     "bandSetSpec": {
+                        "addBands": {
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
                         "imageBands": {
                             "label": "Bandas de imágenes"
                         },
@@ -1934,6 +1998,16 @@
                 },
                 "trainingData": {
                     "button": "",
+                    "classMapping": {
+                        "addColumns": {
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "columnValues": "",
+                        "enterExpression": "",
+                        "noColumValuesSelected": "",
+                        "removeColumnValue": ""
+                    },
                     "clearCollected": {
                         "confirmation": {
                             "label": "",
@@ -2093,8 +2167,8 @@
             "panel": {
                 "inputImage": {
                     "asset": {
-                        "label": "",
-                        "placeholder": "",
+                        "label": "ID de asset de Earth Engine",
+                        "placeholder": "Indique el ID de un GEE asset...",
                         "title": ""
                     },
                     "changeBand": {
@@ -2158,8 +2232,8 @@
             "panel": {
                 "inputImage": {
                     "asset": {
-                        "label": "",
-                        "placeholder": "",
+                        "label": "ID de asset de Earth Engine",
+                        "placeholder": "Indique el ID de un GEE asset...",
                         "title": ""
                     },
                     "changeBand": {
@@ -2177,7 +2251,7 @@
                     },
                     "recipe": {
                         "label": "",
-                        "placeholder": "",
+                        "placeholder": "Selecciona un flujo de trabajo...",
                         "title": ""
                     },
                     "to": {
@@ -2218,9 +2292,47 @@
             },
             "tabPlaceholder": ""
         },
+        "masking": {
+            "create": "",
+            "description": "",
+            "layers": {
+                "imageLayer": {
+                    "preSets": ""
+                }
+            },
+            "panel": {
+                "inputImage": {
+                    "asset": {
+                        "label": "ID de asset de Earth Engine",
+                        "placeholder": "Indique el ID de un GEE asset...",
+                        "title": ""
+                    },
+                    "imageMask": {
+                        "button": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "title": ""
+                    },
+                    "imageToMask": {
+                        "button": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "title": ""
+                    },
+                    "recipe": {
+                        "label": "",
+                        "placeholder": "Selecciona un flujo de trabajo...",
+                        "title": ""
+                    }
+                }
+            },
+            "tabPlaceholder": ""
+        },
         "menu": {
             "duplicateRecipe": {
-                "label": "",
+                "label": "Duplicar fórmula",
                 "tooltip": ""
             },
             "exportRecipe": "Exportar flujo de trabajo",
@@ -2233,7 +2345,7 @@
         "mosaic": {
             "bands": {
                 "combinations": "Combinaciones",
-                "indexes": "",
+                "indexes": "Índices",
                 "label": "",
                 "metadata": "Metadatos",
                 "panSharpen": "",
@@ -2500,7 +2612,7 @@
                     "tooltip": "Configurar la creación de compuestos"
                 },
                 "dates": {
-                    "button": "",
+                    "button": "FEC",
                     "form": {
                         "futureSeasons": {
                             "info": {
@@ -2671,7 +2783,7 @@
             "description": "",
             "panel": {
                 "dates": {
-                    "button": "",
+                    "button": "FEC",
                     "form": {
                         "type": {
                             "DATE_RANGE": {
@@ -2685,20 +2797,20 @@
                         },
                         "fromDate": {
                             "label": "",
-                            "malformed": ""
+                            "malformed": "Fecha no válida"
                         },
                         "toDate": {
                             "label": "",
-                            "malformed": ""
+                            "malformed": "Fecha no válida"
                         }
                     },
-                    "title": "",
-                    "tooltip": ""
+                    "title": "Fechas",
+                    "tooltip": "Especifique las fechas"
                 },
                 "options": {
                     "button": "",
                     "cloudThreshold": {
-                        "label": "",
+                        "label": "Enmascaramiento de nubes",
                         "tooltip": "",
                         "value": ""
                     },
@@ -2724,9 +2836,9 @@
                     "button": "",
                     "form": {
                         "asset": {
-                            "label": "",
-                            "placeholder": "",
-                            "required": ""
+                            "label": "ID de asset de Earth Engine",
+                            "placeholder": "Indique el ID de un GEE asset...",
+                            "required": "Debes introducir un ID de un GEE asset"
                         },
                         "collectionType": {
                             "label": ""
@@ -2746,8 +2858,8 @@
                             }
                         }
                     },
-                    "title": "",
-                    "tooltip": ""
+                    "title": "Fuentes",
+                    "tooltip": "Selecciona la fuente de la imagen"
                 }
             },
             "preview": {
@@ -2761,7 +2873,7 @@
             "description": "Crear mosaico de Sentinel 1.",
             "panel": {
                 "dates": {
-                    "button": "",
+                    "button": "FEC",
                     "form": {
                         "fromDate": {
                             "label": "De la fecha",
@@ -2872,13 +2984,191 @@
             },
             "tabPlaceholder": ""
         },
+        "phenology": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "dates": {
+                    "button": "FEC",
+                    "form": {
+                        "fromYear": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "toYear": {
+                            "beforeFromYear": "",
+                            "label": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "Fechas",
+                    "tooltip": "Especifique las fechas"
+                },
+                "preprocess": {
+                    "button": "",
+                    "form": {
+                        "cloudDetection": {
+                            "label": "",
+                            "cloudScore": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "pino26": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "qa": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "cloudMasking": {
+                            "aggressive": {
+                                "label": "Agresivo",
+                                "tooltip": "Basarse en las bandas de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
+                            },
+                            "label": "Enmascaramiento de nubes",
+                            "moderate": {
+                                "label": "Moderado",
+                                "tooltip": "Basarse sólo en las bandas de calidad de la imagen para el enmascaramiento de las nubes"
+                            },
+                            "none": {
+                                "label": "",
+                                "tooltip": "Usar píxeles libres de nubes si es posible, pero no enmascarar áreas sin píxeles libres"
+                            }
+                        },
+                        "corrections": {
+                            "brdf": {
+                                "label": "Corrección BRDF",
+                                "tooltip": "Corregir los efectos de la función de distribución de la reflectancia bidireccional (BRDF)."
+                            },
+                            "label": "Correcciones",
+                            "surfaceReflectance": {
+                                "label": "Reflectancia de la superficie",
+                                "tooltip": "Utilizar escenas de reflectancia superficial corregidas atmosféricamente."
+                            }
+                        },
+                        "shadowMasking": {
+                            "label": "Enmascaramiento de sombras",
+                            "off": {
+                                "label": "",
+                                "tooltip": "No aplicar enmascaramiento agresivo de sombras."
+                            },
+                            "on": {
+                                "label": "",
+                                "tooltip": "Aplicar enmascaramiento de sombras agresivo. Esto puede eliminar inadvertidamente algunas dinámicas y hacer que se pierdan cambios"
+                            }
+                        },
+                        "snowMasking": {
+                            "label": "Enmascaramiento de nieve",
+                            "off": {
+                                "label": "",
+                                "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
+                            },
+                            "on": {
+                                "label": "",
+                                "tooltip": "Enmascarar nieve. Esto tiende a dejar algunos píxeles con sombra de nieve."
+                            }
+                        }
+                    },
+                    "title": "Pre-proceso",
+                    "tooltip": "Configurar el preprocesamiento de imágenes"
+                },
+                "sources": {
+                    "button": "",
+                    "classificationLoadError": "Fallo en la carga de la clasificación: {error}",
+                    "form": {
+                        "classification": {
+                            "label": "",
+                            "placeholder": "Selecciona una clasificación...",
+                            "tooltip": "(Opcional) Selecciona un flujo de clasificación y aplique el clasificador a cada adquisición de la serie temporal."
+                        },
+                        "band": {
+                            "label": ""
+                        },
+                        "cloudPercentageThreshold": {
+                            "label": "",
+                            "value": "",
+                            "tooltip": ""
+                        },
+                        "dataSets": {
+                            "label": "",
+                            "optical": {
+                                "label": ""
+                            },
+                            "options": {
+                                "LANDSAT_7": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_7_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_8": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_8_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_9": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_9_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_TM": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_TM_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SENTINEL_1": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SENTINEL_2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                }
+                            },
+                            "radar": {
+                                "label": ""
+                            }
+                        },
+                        "dataSetType": {
+                            "label": ""
+                        },
+                        "dataSetTypes": {
+                            "OPTICAL": "",
+                            "PLANET": "",
+                            "RADAR": ""
+                        },
+                        "required": "Debes seleccionar una fuente de datos"
+                    },
+                    "title": "Fuentes",
+                    "tooltip": "Selecciona la fuente de la imagen"
+                }
+            },
+            "preview": {
+                "description": "",
+                "label": ""
+            },
+            "tabPlaceholder": ""
+        },
         "projects": {
             "title": "",
             "label": "",
             "tooltip": "",
             "noProjects": "",
             "selected": "",
-            "add": ""
+            "add": "Añadir"
         },
         "project": {
             "title": "",
@@ -2913,14 +3203,14 @@
                 "label": ""
             },
             "select": {
-                "label": "",
+                "label": "Seleccionar",
                 "tooltip": {
                     "select": "",
                     "deselect": ""
                 }
             },
             "remove": {
-                "label": "",
+                "label": "Eliminar",
                 "title": "",
                 "tooltip": "",
                 "confirm": ""
@@ -2948,13 +3238,13 @@
             "panel": {
                 "inputImagery": {
                     "asset": {
-                        "title": ""
+                        "title": "Asset Earth Engine"
                     },
                     "button": "",
                     "form": {
                         "asset": {
-                            "label": "",
-                            "placeholder": ""
+                            "label": "ID de asset de Earth Engine",
+                            "placeholder": "Indique el ID de un GEE asset..."
                         },
                         "band": {
                             "label": ""
@@ -2965,24 +3255,24 @@
                         "noImagery": "",
                         "recipe": {
                             "label": "",
-                            "placeholder": ""
+                            "placeholder": "Selecciona un flujo de trabajo..."
                         },
                         "remove": {
                             "tooltip": ""
                         },
                         "section": {
-                            "required": ""
+                            "required": "Debes seleccionar una imagen"
                         },
                         "type": {
                             "categorical": "",
                             "continuous": "",
-                            "ASSET": "",
-                            "RECIPE_REF": "",
+                            "ASSET": "Asset Earth Engine",
+                            "RECIPE_REF": "Flujo de trabajo de SEPAL",
                             "label": ""
                         }
                     },
                     "recipe": {
-                        "title": ""
+                        "title": "Guardar el flujo de trabajo de SEPAL"
                     },
                     "sections": {
                         "title": ""
@@ -3107,7 +3397,7 @@
             "description": "Descargar series temporales de Landsat en SEPAL.",
             "panel": {
                 "dates": {
-                    "button": "",
+                    "button": "FEC",
                     "form": {
                         "endDate": {
                             "label": "Fecha fin",
@@ -3322,9 +3612,19 @@
             }
         },
         "none": "No tiene tareas de fondo.",
+        "copyToClipboard": {
+            "tooltip": "Copiar al portapapeles",
+            "success": ""
+        },
+        "remove": {
+            "tooltip": "Eliminar la tasa"
+        },
         "removeAll": {
             "label": "",
             "tooltip": "Eliminar todas las tareas completadas, fallidas o detenidas"
+        },
+        "stop": {
+            "tooltip": "Detener tarea"
         },
         "retrieve": {
             "collection_to_asset": {
@@ -3448,13 +3748,15 @@
             }
         },
         "status": {
-            "label": "Estado",
+            "label": "",
+            "UNKNOWN": "",
             "ACTIVE": "Activo",
-            "LOCKED": "Bloqueado",
+            "LOCKED": "",
             "PENDING": "Pendiente"
         },
         "role": {
-            "user": "Usuario"
+            "admin": "",
+            "user": ""
         },
         "userDetails": {
             "form": {
@@ -3504,14 +3806,18 @@
                     "label": "Organización",
                     "required": "La organización es necesaria"
                 },
-                "role": {
-                    "label": "papel"
+                "intendedUse": {
+                    "label": "",
+                    "required": ""
                 },
                 "username": {
-                    "format": "El nombre de usuario debe comenzar con una letra",
+                    "format": "",
                     "label": "Nombre de usuario",
                     "required": "El nombre de usuario es obligatorio",
                     "unique": ""
+                },
+                "password": {
+                    "label": "Contraseña"
                 }
             },
             "resetPassword": {
@@ -3519,11 +3825,28 @@
                 "tooltip": "",
                 "message": ""
             },
+            "lock": {
+                "label": "",
+                "tooltip": "",
+                "message": "",
+                "error": "",
+                "success": ""
+            },
+            "unlock": {
+                "label": "",
+                "tooltip": "",
+                "message": "",
+                "error": "",
+                "success": ""
+            },
             "switchingToSEPALGoogleAccount": "",
             "title": "Datos del usuario",
             "update": {
-                "error": "Error de actualización",
-                "success": "Se han actualizado los datos del usuario"
+                "error": "",
+                "success": ""
+            },
+            "confirmation": {
+                "message": ""
             }
         },
         "userSession": {
@@ -3567,7 +3890,7 @@
                 "required": "Asunto requerido"
             },
             "preview": {
-                "label": ""
+                "label": "Vista previa"
             }
         },
         "publish": {
@@ -3619,6 +3942,9 @@
                 "pending": {
                     "label": "Pendiente"
                 },
+                "locked": {
+                    "label": ""
+                },
                 "budgetUpdateRequest": {
                     "label": ""
                 }
@@ -3656,7 +3982,7 @@
         },
         "confirm": {
             "title": "Se requiere confirmación",
-            "label": ""
+            "label": "Confirmar"
         },
         "error": "",
         "fileSelect": {
@@ -3745,7 +4071,7 @@
         },
         "recipeInput": {
             "label": "",
-            "placeholder": "",
+            "placeholder": "Selecciona un flujo de trabajo...",
             "all": {
                 "tooltip": ""
             }

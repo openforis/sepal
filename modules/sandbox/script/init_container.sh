@@ -76,9 +76,13 @@ printf '%s\n' \
     > /usr/local/snap/bin/gpt.vmoptions
 
 userHome=/home/$sandbox_user
-cp /etc/skel/.bashrc "$userHome"
-cp /etc/skel/.profile "$userHome"
-cp /etc/skel/.bash_logout "$userHome"
+cp -n /etc/skel/.bashrc "$userHome"
+cp -n /etc/skel/.profile "$userHome"
+cp -n /etc/skel/.bash_logout "$userHome"
+
+chmod g+w "$userHome/.bashrc"
+chmod g+w "$userHome/.profile"
+chmod g+w "$userHome/.bash_logout"
 
 exportEnvironment
 source /home/$sandbox_user/.bashrc

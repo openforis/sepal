@@ -711,7 +711,10 @@
       },
       "Planet": {
         "label": "Planet",
-        "nicfiDescription": "NICFI Planet composites"
+        "nicfiDescription": "NICFI Planet composites",
+        "bands": {
+            "tooltip": "Description of false-color indices."
+        }
       },
       "GoogleSatellite": {
         "label": "Google Satellite",

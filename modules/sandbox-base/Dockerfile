@@ -100,19 +100,9 @@ RUN apt-get -y update && apt-get install -y \
     python3-dev \
     python3-venv \
     python3-pip \
-    python3-gdal \
     python3-opencv \
-    python3-pandas \
-    python3-pyshp \
-    python3-rasterio \
-    python3-sklearn \
-    python3-statsmodels \
-    python3-statsmodels-lib \
     python3-virtualenv \
     python3-wheel
-
-# Make sure pip is up-to-date
-RUN pip3 install --upgrade pip
 
 # Install libraries and headers
 RUN apt-get -y update && apt-get install -y \
@@ -148,6 +138,16 @@ RUN apt-get -y update && apt-get install -y \
     libxml2-dev \
     libxrandr-dev \
     libxt-dev
+
+# Make sure pip is up-to-date
+RUN pip3 install --upgrade pip
+
+RUN pip3 install \
+    pandas \
+    pyshp \
+    rasterio \
+    scikit-learn \
+    statsmodels
 
 # Install Java: configure SDKMAN! directory
 ARG SDKMAN_DIR=/usr/local/lib/sdkman
