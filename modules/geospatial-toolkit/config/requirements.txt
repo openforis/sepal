@@ -8,7 +8,7 @@ tqdm
 xarray-leaflet
 GDAL==$GDAL_VERSION
 bqplot
-numpy==$NUMPY_VERSION
+numpy
 geopandas
 matplotlib
 pandas
@@ -25,8 +25,8 @@ oeel
 
 ########  BFAST dependencies ########
 wget
-Sphinx==2.2.0
-sphinx-bootstrap-theme==0.7.1
+Sphinx
+sphinx-bootstrap-theme
 numpydoc
 git+https://github.com/12rambau/bfast.git
 
@@ -53,7 +53,6 @@ awscli
 
 ########  other deps  ########
 requests
-llvmlite
 coverage
 
 ########  OSK requirements  ########
@@ -65,7 +64,7 @@ imageio
 rtree
 retrying
 Cython
-pyproj==2.6.1 # Require proj update before 3.0.0 can be installed
+pyproj
 
 ########  Early Warning System for Canopy Disturbances in Ecuador (SATA)  ########
 nose
