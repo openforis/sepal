@@ -9,7 +9,6 @@ then
   echo "Starting nodemon"
   [[ -d node_modules ]] || npm install
   NODE_TLS_REJECT_UNAUTHORIZED=1 exec nodemon \
-    --config ../../dev-env/nodemon/nodemon.json \
     --watch "${MODULE}/src" \
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9232 \

@@ -1,5 +1,0 @@
-{
-    "events": {
-        "restart": "../../dev-env/nodemon/nodemon_onrestart.sh"
-    }
-}
