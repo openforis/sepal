@@ -16,7 +16,7 @@ RUN chmod +x /usr/local/bin/fix_sepal_users_permissions
 
 # RUN groupadd --gid 9999 sepal && adduser node sepal
 RUN apt-get update && \
-    apt-get install -y rsync sudo && \
+    apt-get install -y sudo && \
     adduser node sudo && \
     echo 'node ALL=(root) NOPASSWD: /usr/bin/diskus' >> /etc/sudoers && \
     echo 'node ALL=(root) NOPASSWD: /usr/local/bin/fix_sepal_users_permissions' >> /etc/sudoers

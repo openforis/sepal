@@ -7,7 +7,7 @@ ENV SHARED /usr/local/src/sepal/lib/js/shared
 RUN npm install -g nodemon
 
 RUN apt-get update && \
-    apt-get install -y rsync sudo && \
+    apt-get install -y sudo && \
     adduser node sudo
 
 # Set bash prompt

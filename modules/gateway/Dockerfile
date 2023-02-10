@@ -10,7 +10,6 @@ RUN npm install -g nodemon
 
 RUN apt-get update && \
     apt-get install -y \
-        rsync \
         sudo \
         net-tools
 
