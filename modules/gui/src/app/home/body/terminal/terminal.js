@@ -11,6 +11,7 @@ import {connect} from 'store'
 import {msg} from 'translate'
 import {post$} from 'http-client'
 import {v4 as uuid} from 'uuid'
+import {withEnableDetector} from 'enabled'
 import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -118,7 +119,7 @@ class _TerminalSession extends React.Component {
 
     startTerminal(sessionId) {
         const {terminal, terminalContainer, webSocket, resize$} = this
-        const {onEnable, onDisable} = this.props
+        const {enableDetector: {onEnable, onDisable}} = this.props
         terminal.options.allowTransparency = true
         terminal.options.fontSize = 13
         terminal.options.bellStyle = 'both'
@@ -149,5 +150,6 @@ class _TerminalSession extends React.Component {
 
 const TerminalSession = compose(
     _TerminalSession,
-    connect()
+    connect(),
+    withEnableDetector()
 )

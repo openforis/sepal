@@ -11,6 +11,7 @@ import {connect, select} from 'store'
 import {dotSafe} from 'stateUtils'
 import {msg} from 'translate'
 import {orderBy} from 'natural-orderby'
+import {withEnableDetector} from 'enabled'
 import {withSubscriptions} from 'subscription'
 import Icon from 'widget/icon'
 import Path from 'path'
@@ -66,9 +67,8 @@ class _FileBrowser extends React.Component {
     }
 
     componentDidMount() {
-        const {addSubscription, onEnable, onDisable} = this.props
-        onEnable(() => this.enabled(true))
-        onDisable(() => this.enabled(false))
+        const {addSubscription, enableDetector: {onChange}} = this.props
+        onChange(enabled => this.enabled(enabled))
         addSubscription(
             this.userFiles.downstream$.subscribe(
                 updates => this.processUpdates(updates)
@@ -583,6 +583,7 @@ class _FileBrowser extends React.Component {
 const FileBrowser = compose(
     _FileBrowser,
     connect(mapStateToProps),
+    withEnableDetector(),
     withSubscriptions()
 )
 

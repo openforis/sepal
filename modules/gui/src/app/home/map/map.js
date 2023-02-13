@@ -19,6 +19,7 @@ import {msg} from 'translate'
 import {recipePath} from '../body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import {v4 as uuid} from 'uuid'
+import {withEnableDetector} from 'enabled'
 import {withLayers} from '../body/process/withLayers'
 import {withMapsContext} from './maps'
 import {withRecipe} from '../body/process/recipeContext'
@@ -699,7 +700,7 @@ class _Map extends React.Component {
     }
 
     componentDidMount() {
-        const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
+        const {mapsContext: {createMapContext}, enableDetector: {onEnable, onDisable}} = this.props
         const {mapId, googleMapsApiKey, nicfiPlanetApiKey, view$, updateView$, linked$, scrollWheelEnabled$} = createMapContext()
         this.setLinked(getProcessTabsInfo().single)
         this.scrollWheelEnabled$ = scrollWheelEnabled$
@@ -782,7 +783,8 @@ export const Map = compose(
     withMapsContext(),
     withLayers(),
     withRecipe(mapRecipeToProps),
-    withSubscriptions()
+    withSubscriptions(),
+    withEnableDetector()
 )
 
 Map.propTypes = {

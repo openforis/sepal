@@ -3,6 +3,7 @@ import {PanelContent} from './panelContent'
 import {PanelHeader} from './panelHeader'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {withEnableDetector} from 'enabled'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -18,8 +19,8 @@ class _Panel extends React.Component {
     constructor(props) {
         super(props)
         this.onClick = this.onClick.bind(this)
-        this.props.onEnable(() => this.setState({enabled: true}))
-        this.props.onDisable(() => this.setState({enabled: false}))
+        const {enableDetector: {onChange}} = props
+        onChange(enabled => this.setState({enabled}))
     }
 
     render() {
@@ -90,7 +91,8 @@ class _Panel extends React.Component {
 
 export const Panel = compose(
     _Panel,
-    connect()
+    connect(),
+    withEnableDetector()
 )
 
 Panel.propTypes = {

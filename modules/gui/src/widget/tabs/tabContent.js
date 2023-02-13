@@ -1,4 +1,4 @@
-import {Enabled} from 'store'
+import {Enabled} from 'enabled'
 import {PortalContainer, PortalContext} from 'widget/portal'
 import {TabContext} from './tabContext'
 import PropTypes from 'prop-types'
@@ -15,7 +15,7 @@ export class TabContent extends React.PureComponent {
                 styles.tabContent,
                 selected && styles.selected
             ].join(' ')}>
-                <Enabled value={selected}>
+                <Enabled enabled={selected}>
                     <PortalContainer id={portalContainerId}/>
                     <TabContext.Provider value={{id, busy$}}>
                         <PortalContext id={portalContainerId}>
@@ -33,7 +33,5 @@ TabContent.propTypes = {
     children: PropTypes.any,
     id: PropTypes.string,
     selected: PropTypes.any,
-    type: PropTypes.string,
-    onDisable: PropTypes.func,
-    onEnable: PropTypes.func
+    type: PropTypes.string
 }
