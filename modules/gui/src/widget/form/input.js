@@ -54,7 +54,7 @@ class _FormInput extends React.Component {
 
     getValue() {
         const {input} = this.props
-        typeof input.value === 'number' || typeof input.value === 'boolean' || input.value
+        return typeof input.value === 'number' || typeof input.value === 'boolean' || input.value
             ? input.value
             : ''
     }
