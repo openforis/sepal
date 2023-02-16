@@ -364,7 +364,6 @@ class _Map extends React.Component {
         log.debug('enableDrawingMode:', drawingMode)
         if (this.isStackMode()) {
             this.setState({drawingMode, overlayActive: true}, () => {
-                log.debug('do nothing here')
                 this.withOverlayMap(callback)
             })
         } else {
