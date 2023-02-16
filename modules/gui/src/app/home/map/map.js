@@ -155,7 +155,7 @@ class _Map extends React.Component {
 
         const options = isOverlay ? {
             backgroundColor: 'hsla(0, 0%, 0%, 0)',
-            gestureHandling: 'none'
+            gestureHandling: 'auto'
         } : null
         const style = isOverlay ? 'overlayStyle' : 'sepalStyle'
         const map = createSepalMap({element, options, style})
@@ -329,6 +329,7 @@ class _Map extends React.Component {
         log.debug('enableDrawingMode:', drawingMode)
         if (this.isStackMode()) {
             this.setState({drawingMode, overlayActive: true}, () => {
+                log.debug('do nothing here')
                 this.withOverlayMap(callback)
             })
         } else {
@@ -374,6 +375,7 @@ class _Map extends React.Component {
     // Polygon
 
     enablePolygonDrawing(callback) {
+        log.debug('enablePolygonDrawing')
         this.enterDrawingMode('polygon', ({map}) =>
             map.enablePolygonDrawing((...args) => {
                 callback && callback(...args)
@@ -385,7 +387,7 @@ class _Map extends React.Component {
         this.exitDrawingMode('polygon')
     }
 
-    iPolygonDrawing() {
+    isPolygonDrawing() {
         const {drawingMode} = this.state
         return drawingMode === 'polygon'
     }
