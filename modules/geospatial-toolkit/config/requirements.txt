@@ -52,6 +52,11 @@ pyCrypto
 awscli
 
 ########  other deps  ########
+xarray
+dask
+dask-geopandas
+nrt
+seaborn
 requests
 llvmlite
 coverage
