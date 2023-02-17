@@ -15,8 +15,6 @@ services:
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
       EE_ACCOUNT: "${EE_ACCOUNT}"
       EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
-      RABBITMQ_HOST: "rabbitmq"
-      RABBITMQ_PORT: "5672"
     networks:
       - sepal
 

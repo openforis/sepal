@@ -13,7 +13,6 @@
         "http": "info",
         "httpClient": "info",
         "limiter": "info",
-        "metrics": "debug",
         "scheduler": "info",
         "pool": "info",
         "service": "info",

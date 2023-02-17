@@ -6,7 +6,6 @@ const _ = require('lodash')
 const DEFAULT_PORT = 5001
 
 program
-    .requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
     .option('--gee-email <value>')
     .option('--gee-key-path <value>')
     .option('--gee-key <value>')
@@ -17,7 +16,6 @@ program
     .parse(process.argv)
     
 const {geeEmail,
-    amqpUri,
     geeKey,
     geeKeyPath,
     sepalEndpoint,
@@ -45,7 +43,6 @@ const serviceAccountCredentials = {
 log.info('Configuration loaded')
 
 module.exports = {
-    amqpUri,
     serviceAccountCredentials,
     sepalEndpoint,
     sepalUsername,

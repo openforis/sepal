@@ -7,7 +7,6 @@
         "main": "info",
         "messageHandler": "info",
         "messageQueue": "info",
-        "metrics": "debug",
         "persistence": "info",
         "scan": "info"
     }
