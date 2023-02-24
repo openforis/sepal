@@ -11,7 +11,7 @@ apt-get -y update && apt-get install -qq -y \
     zip
 
 # Installing Java
-curl -s get.sdkman.io | bash
+curl -s https://get.sdkman.io | bash
 source "$SDKMAN_DIR/bin/sdkman-init.sh"
 yes | sdk install java 11.0.11.hs-adpt
 sdk install gradle 6.9.1
