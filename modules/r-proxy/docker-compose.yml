@@ -27,6 +27,8 @@ services:
       - ${SEPAL_DATA_DIR}/r-proxy/site-library:/usr/local/lib/R/site-library
       - ${SEPAL_DATA_DIR}/r-proxy/repo:/R
     restart: always
+    ulimits:
+      core: 0
 
 networks:
   sepal:
