@@ -17,6 +17,8 @@ services:
       EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
     networks:
       - sepal
+    ulimits:
+      core: 0
 
 networks:
   sepal:
