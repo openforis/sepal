@@ -6,7 +6,7 @@
         "channel-forward": "info",
         "channel-reverse": "info",
         "ee": "info",
-        "http": "info",
+        "http": "debug",
         "limiter": "info",
         "logger": "info",
         "main": "info",
