@@ -29,7 +29,7 @@ services:
     environment:
       PMA_HOST: mysql
     ports:
-      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8980:80"
     networks:
       - sepal
     depends_on:

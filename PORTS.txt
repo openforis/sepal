@@ -14,6 +14,7 @@ Modules
     8000: terminal
     80, 5006: user
     5999: user-files
+    8980: mysql-admin
 
 Node debug
 
