@@ -1,0 +1,115 @@
+# my global config
+global:
+  scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  external_labels:
+      monitor: 'codelab-monitor'
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first.rules"
+  # - "second.rules"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['host.docker.internal:9323']
+
+  - job_name: cadvisor
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # SEPAL modules
+
+  - job_name: app-manager
+    scrape_interval: 5s
+    metrics_path: '/metrics/system'
+    static_configs:
+      - targets: ['app-manager:5011']
+
+  - job_name: app-manager-http
+    scrape_interval: 5s
+    metrics_path: '/metrics/http'
+    static_configs:
+      - targets: ['app-manager:5011']
+
+  - job_name: email
+    scrape_interval: 5s
+    metrics_path: '/metrics/system'
+    static_configs:
+      - targets: ['email:6001']
+
+  - job_name: email-http
+    scrape_interval: 5s
+    metrics_path: '/metrics/http'
+    static_configs:
+      - targets: ['email:6001']
+
+  # - job_name: gateway
+  #   scrape_interval: 5s
+  #   metrics_path: '/metrics/system'
+  #   static_configs:
+  #     - targets: ['gateway:8001']
+
+  # - job_name: gateway-http
+  #   scrape_interval: 5s
+  #   metrics_path: '/metrics/http'
+  #   static_configs:
+  #     - targets: ['gateway:8001']
+
+  - job_name: gee
+    scrape_interval: 5s
+    metrics_path: '/metrics/system'
+    static_configs:
+      - targets: ['gee:5001']
+
+  - job_name: gee-http
+    scrape_interval: 5s
+    metrics_path: '/metrics/http'
+    static_configs:
+      - targets: ['gee:5001']
+
+  - job_name: sys-monitor
+    scrape_interval: 5s
+    metrics_path: '/metrics/system'
+    static_configs:
+      - targets: ['sys-monitor:7001']
+
+  - job_name: sys-monitor-http
+    scrape_interval: 5s
+    metrics_path: '/metrics/http'
+    static_configs:
+      - targets: ['sys-monitor:7001']
+
+  - job_name: user-files
+    scrape_interval: 5s
+    metrics_path: '/metrics/system'
+    static_configs:
+      - targets: ['user-files:5999']
+
+  - job_name: user-files-http
+    scrape_interval: 5s
+    metrics_path: '/metrics/http'
+    static_configs:
+      - targets: ['user-files:5999']
+
+  # - job_name: user-storage
+  #   scrape_interval: 5s
+  #   metrics_path: '/metrics/system'
+  #   static_configs:
+  #     - targets: ['user-storage:8001']
+
+  # - job_name: user-storage-http
+  #   scrape_interval: 5s
+  #   metrics_path: '/metrics/http'
+  #   static_configs:
+  #     - targets: ['user-storage:8001']

@@ -85,6 +85,10 @@
         "build": {},
         "run": []
     },
+    "prometheus": {
+        "build": {},
+        "run": []
+    },
     "r-proxy": {
         "lib": [
             "shared"

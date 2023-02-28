@@ -4,10 +4,11 @@ const log = require('#sepal/log').getLogger('main')
 const _ = require('lodash')
 
 const {initMessageQueue} = require('#sepal/messageQueue')
-const {amqpUri} = require('./config')
+const {amqpUri, port} = require('./config')
 const {scheduleFullScan} = require('./scan')
 const {scanComplete$, logStats} = require('./jobQueue')
 const {messageHandler} = require('./messageHandler')
+const server = require('#sepal/httpServer')
 
 const main = async () => {
     await initMessageQueue(amqpUri, {
@@ -19,6 +20,8 @@ const main = async () => {
             {queue: 'userStorage.files', topic: 'files.#', handler: messageHandler}
         ]
     })
+
+    await server.start({port})
 
     await scheduleFullScan()
     await logStats()

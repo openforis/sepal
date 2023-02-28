@@ -4,7 +4,8 @@ const log = require('#sepal/log').getLogger('main')
 const _ = require('lodash')
 
 const {initMessageQueue} = require('#sepal/messageQueue')
-const {amqpUri, initialDelayMinutes, notifyFrom, notifyTo} = require('./config')
+const {amqpUri, port, initialDelayMinutes, notifyFrom, notifyTo} = require('./config')
+const server = require('#sepal/httpServer')
 const {start} = require('./logMonitor')
 const {email$} = require('./email')
 
@@ -13,6 +14,8 @@ const main = async () => {
         publishers: [{key: 'email.send', publish$: email$}]
     })
     
+    await server.start({port})
+
     if (initialDelayMinutes) {
         log.info(`Starting in ${initialDelayMinutes}m`)
     }
