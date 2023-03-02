@@ -270,16 +270,18 @@ class _Button extends React.Component {
 
     renderIcon() {
         const {busy, icon, iconType, iconVariant, iconDimmed, iconClassName, iconAttributes} = this.props
-        return (
-            <Icon
-                name={busy ? 'spinner' : icon}
-                type={iconType}
-                variant={iconVariant}
-                dimmed={iconDimmed}
-                className={iconClassName}
-                attributes={iconAttributes}
-            />
-        )
+        return React.isValidElement(icon)
+            ? icon
+            : (
+                <Icon
+                    name={busy ? 'spinner' : icon}
+                    type={iconType}
+                    variant={iconVariant}
+                    dimmed={iconDimmed}
+                    className={iconClassName}
+                    attributes={iconAttributes}
+                />
+            )
     }
 
     renderLabel() {
@@ -408,7 +410,7 @@ Button.propTypes = {
     hidden: PropTypes.any,
     hint: PropTypes.any,
     hover: PropTypes.any, // three-state
-    icon: PropTypes.string,
+    icon: PropTypes.oneOfType(PropTypes.string, PropTypes.elementType),
     iconAttributes: PropTypes.any,
     iconClassName: PropTypes.any,
     iconDimmed: PropTypes.any,
