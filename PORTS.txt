@@ -19,6 +19,7 @@ Modules
     7001: sys-monitor
     8001: user-storage
     9293: docker metrics
+    9090: prometheus
 
 Node debug
 
