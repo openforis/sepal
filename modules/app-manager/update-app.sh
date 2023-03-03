@@ -68,7 +68,7 @@ function update_venv {
         "$venv_path"/bin/python3 -m pip install -r "$app_path"/requirements.txt -U --no-cache-dir >> "$venv_log_file"
         "$venv_path"/bin/python3 -m pip install gdal==3.4.3 -U --no-cache-dir >> "$venv_log_file"
         "$venv_path"/bin/python3 -m pip install pyproj==3.4.1 -U --no-cache-dir >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install "git+https://github.com/openforis/earthengine-api.git@v0.1.332#egg=earthengine-api&subdirectory=python" -U --no-cache-dir >> "$venv_log_file"
+        "$venv_path"/bin/python3 -m pip install "git+https://github.com/openforis/earthengine-api.git@v0.1.343#egg=earthengine-api&subdirectory=python" -U --no-cache-dir >> "$venv_log_file"
         if [[ -d $current_venv_path ]] 
         then
             echo "Moving away current venv: $current_venv_path" >> "$venv_log_file"
