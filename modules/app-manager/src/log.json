@@ -2,7 +2,7 @@
     "port": 5106,
     "categories": {
         "apps": "info",
-        "metrics": "debug",
+        "metrics": "warn",
         "terminal": "info"
     }
 }
