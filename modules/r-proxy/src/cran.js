@@ -7,9 +7,11 @@ const readline = require('readline')
 const https = require('https')
 const log = require('#sepal/log').getLogger('cran')
 const {compare} = require('compare-versions')
+const {makePackage, cleanupPackage} = require('./bundle')
 
-const CONTRIB = 'bin/contrib'
-const CONTRIB_UNVERIFIED = 'bin/contrib-unverified'
+const SRC = 'src/contrib'
+const BIN = 'bin/contrib'
+const TMP = '.bin/contrib'
 
 const isCranRepoPath = path =>
     isChildOf(CRAN_ROOT, path)
@@ -40,7 +42,7 @@ const getCranPackageFilename = (name, version) =>
     `${name}_${version}.tar.gz`
 
 const isUpdatable = async (name, version) => {
-    const packages = await getFiles(Path.join(CRAN_ROOT, CONTRIB))
+    const packages = await getFiles(Path.join(CRAN_ROOT, BIN))
     const packageNameFilter = minimatch.filter(getCranPackageFilename(name, '*'))
     const packageVersionFilter = filename => filename === getCranPackageFilename(name, version)
     const matchingPackages = packages.filter(packageNameFilter)
@@ -65,10 +67,8 @@ const getCranTarget = (base, name, options) =>
 const toBinaryPackagePath = requestPath =>
     requestPath.replace(/^\/src\//, '/bin/')
 
-const isCranPackageCached = async (name, version) => {
-    const path = getCranRepoPath(Path.join(CONTRIB, getCranPackageFilename(name, version)))
-    return isFile(path)
-}
+const isCranPackageCached = async (name, version) =>
+    isFile(getCranRepoPath(Path.join(BIN, getCranPackageFilename(name, version))))
         
 const installCranPackage = async (name, version, repo) => {
     try {
@@ -82,63 +82,15 @@ const installCranPackage = async (name, version, repo) => {
     }
 }
     
-const bundleCranPackage = async (name, version) => {
-    try {
-        log.debug(`Bundling ${name}/${version}`)
-        await runScript('bundle_cran_package.sh', [name, version, libPath, CRAN_ROOT, 'build'], {showStdOut: true, showStdErr: true})
-        log.info(`Bundled ${name}/${version}`)
-        return true
-    } catch (error) {
-        log.warn(`Could not bundle ${name}/${version}`, error)
-        return false
-    }
-}
-
-const verifyCranPackage = async (name, version) => {
-    const path = getCranRepoPath(Path.join(CONTRIB_UNVERIFIED, getCranPackageFilename(name, version)))
-    try {
-        log.debug(`Verifying ${name}/${version}`)
-        await runScript('verify_package.r', [name, path, libPath])
-        log.info(`Verified ${name}/${version}`)
-        return true
-    } catch (error) {
-        log.warn(`Could not verify ${name}/${version}`, error)
-        return false
-    }
-}
-
-const deployCranPackage = async (name, version) => {
-    try {
-        log.debug(`Deploying ${name}/${version}`)
-        await runScript('bundle_cran_package.sh', [name, version, libPath, CRAN_ROOT, 'deploy'], {showStdOut: true, showStdErr: true})
-        log.info(`Deployed ${name}/${version}`)
-        return true
-    } catch (error) {
-        log.warn(`Could not deploy ${name}/${version}`, error)
-        return false
-    }
-}
-
-const cleanupCranPackage = async (name, version) => {
-    try {
-        log.debug(`Cleaning up ${name}/${version}`)
-        await runScript('bundle_cran_package.sh', [name, version, libPath, CRAN_ROOT, 'cleanup'], {showStdOut: true, showStdErr: true})
-        log.info(`Cleaned up ${name}/${version}`)
-        return true
-    } catch (error) {
-        log.warn(`Could not clean up ${name}/${version}`, error)
-        return false
-    }
-}
-
 const makeCranPackage = async (name, version, repo) => {
+    const packageFilename = `${name}_${version}.tar.gz`
+    const srcPath = Path.join(CRAN_ROOT, SRC, packageFilename)
+    const binPath = Path.join(CRAN_ROOT, BIN, packageFilename)
+    const tmpPath = Path.join(CRAN_ROOT, TMP, packageFilename)
     const success = await isCranPackageCached(name, version) || (
-        await installCranPackage(name, version, repo)
-            && await bundleCranPackage(name, version)
-            && await verifyCranPackage(name, version)
-            && await deployCranPackage(name, version)
+        await installCranPackage(name, version, repo) && await makePackage(name, srcPath, binPath, tmpPath)
     )
-    await cleanupCranPackage(name, version)
+    await cleanupPackage(name, srcPath, binPath, tmpPath)
     return success
 }
 
