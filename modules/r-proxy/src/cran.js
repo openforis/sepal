@@ -8,7 +8,8 @@ const https = require('https')
 const log = require('#sepal/log').getLogger('cran')
 const {compare} = require('compare-versions')
 
-const BIN = Path.join(CRAN_ROOT, 'bin/contrib')
+const CONTRIB = 'bin/contrib'
+const CONTRIB_UNVERIFIED = 'bin/contrib-unverified'
 
 const isCranRepoPath = path =>
     isChildOf(CRAN_ROOT, path)
@@ -39,7 +40,7 @@ const getCranPackageFilename = (name, version) =>
     `${name}_${version}.tar.gz`
 
 const isUpdatable = async (name, version) => {
-    const packages = await getFiles(BIN)
+    const packages = await getFiles(Path.join(CRAN_ROOT, CONTRIB))
     const packageNameFilter = minimatch.filter(getCranPackageFilename(name, '*'))
     const packageVersionFilter = filename => filename === getCranPackageFilename(name, version)
     const matchingPackages = packages.filter(packageNameFilter)
@@ -65,7 +66,7 @@ const toBinaryPackagePath = requestPath =>
     requestPath.replace(/^\/src\//, '/bin/')
 
 const isCranPackageCached = async (name, version) => {
-    const path = getCranRepoPath(Path.join('bin/contrib', getCranPackageFilename(name, version)))
+    const path = getCranRepoPath(Path.join(CONTRIB, getCranPackageFilename(name, version)))
     return isFile(path)
 }
         
@@ -84,7 +85,7 @@ const installCranPackage = async (name, version, repo) => {
 const bundleCranPackage = async (name, version) => {
     try {
         log.debug(`Bundling ${name}/${version}`)
-        await runScript('bundle_cran_package.sh', [name, version, libPath, CRAN_ROOT], {showStdOut: true, showStdErr: true})
+        await runScript('bundle_cran_package.sh', [name, version, libPath, CRAN_ROOT, 'build'], {showStdOut: true, showStdErr: true})
         log.info(`Bundled ${name}/${version}`)
         return true
     } catch (error) {
@@ -93,8 +94,53 @@ const bundleCranPackage = async (name, version) => {
     }
 }
 
-const makeCranPackage = async (name, version, repo) =>
-    await isCranPackageCached(name, version) || await installCranPackage(name, version, repo) && await bundleCranPackage(name, version)
+const verifyCranPackage = async (name, version) => {
+    const path = getCranRepoPath(Path.join(CONTRIB_UNVERIFIED, getCranPackageFilename(name, version)))
+    try {
+        log.debug(`Verifying ${name}/${version}`)
+        await runScript('verify_package.r', [name, path, libPath])
+        log.info(`Verified ${name}/${version}`)
+        return true
+    } catch (error) {
+        log.warn(`Could not verify ${name}/${version}`, error)
+        return false
+    }
+}
+
+const deployCranPackage = async (name, version) => {
+    try {
+        log.debug(`Deploying ${name}/${version}`)
+        await runScript('bundle_cran_package.sh', [name, version, libPath, CRAN_ROOT, 'deploy'], {showStdOut: true, showStdErr: true})
+        log.info(`Deployed ${name}/${version}`)
+        return true
+    } catch (error) {
+        log.warn(`Could not deploy ${name}/${version}`, error)
+        return false
+    }
+}
+
+const cleanupCranPackage = async (name, version) => {
+    try {
+        log.debug(`Cleaning up ${name}/${version}`)
+        await runScript('bundle_cran_package.sh', [name, version, libPath, CRAN_ROOT, 'cleanup'], {showStdOut: true, showStdErr: true})
+        log.info(`Cleaned up ${name}/${version}`)
+        return true
+    } catch (error) {
+        log.warn(`Could not clean up ${name}/${version}`, error)
+        return false
+    }
+}
+
+const makeCranPackage = async (name, version, repo) => {
+    const success = await isCranPackageCached(name, version) || (
+        await installCranPackage(name, version, repo)
+            && await bundleCranPackage(name, version)
+            && await verifyCranPackage(name, version)
+            && await deployCranPackage(name, version)
+    )
+    await cleanupCranPackage(name, version)
+    return success
+}
 
 const updateCranPackage = async ({name, version}) => {
     if (await isUpdatable(name, version)) {
