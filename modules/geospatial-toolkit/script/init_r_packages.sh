@@ -299,7 +299,7 @@ R -e "install.packages(c(\
 
 # Install GitHub packages via r-proxy
 
-R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/')"
+R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/', upgrade = 'never')"
 
 R -e "remotes::install_url(c(\
         'http://r-proxy:8180/github/r-barnes/dggridR/archive/refs/heads/master.tar.gz',\
