@@ -19,6 +19,8 @@ services:
       RABBITMQ_PORT: "5672"
     networks:
       - sepal
+    ulimits:
+      core: 0
 
 networks:
   sepal:

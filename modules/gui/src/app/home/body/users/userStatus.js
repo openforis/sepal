@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {msg} from 'translate'
+import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -18,47 +19,58 @@ export class UserStatus extends React.Component {
         status === UserStatus.ACTIVE
 
     render() {
-        const {status = 'UNKNOWN'} = this.props
+        const {status} = this.props
         return (
             <Button
                 chromeless
                 shape='none'
                 air='none'
-                look={this.getLook(status)}
                 icon={this.getIcon(status)}
-                iconVariant={this.getIconVariant(status)}
-                iconDimmed={UserStatus.isLocked(status)}
+                // look={this.getLook(status)}
+                // iconVariant={this.getIconVariant(status)}
+                // iconDimmed={UserStatus.isLocked(status)}
                 label={msg(`user.status.${status}`).toUpperCase()}
             />
         )
     }
 
-    getLook(status) {
+    getIcon() {
+        const {status, isGoogleUser} = this.props
         switch(status) {
-        case UserStatus.LOCKED: return 'cancel'
-        case UserStatus.PENDING: return 'apply'
-        case UserStatus.ACTIVE: return 'add'
+        case UserStatus.LOCKED:
+            return this.getLockedUserIcon()
+        case UserStatus.PENDING:
+            return this.getPendingUserIcon()
+        case UserStatus.ACTIVE:
+            return isGoogleUser ? this.getConnectedActiveUserIcon() : this.getDisconnectedActiveUserIcon()
+        default:
+            return this.getUnknownUserIcon()
         }
-        return 'default'
     }
 
-    getIcon(status) {
-        switch(status) {
-        case UserStatus.LOCKED: return 'lock'
-        case UserStatus.PENDING: return 'pause'
-        case UserStatus.ACTIVE: return 'play'
-        }
-        return 'question'
+    getUnknownUserIcon() {
+        return <Icon name='question' look='default' variant='normal'/>
     }
 
-    getIconVariant(status) {
-        switch(status) {
-        case UserStatus.LOCKED: return 'normal'
-        case UserStatus.PENDING: return 'info'
-        case UserStatus.ACTIVE: return 'success'
-        }
-        return 'normal'
+    getLockedUserIcon() {
+        return <Icon name='lock' look='cancel' variant='normal' dimmed/>
     }
+
+    getPendingUserIcon() {
+        return <Icon name='hourglass-half' look='apply' variant='info'/>
+    }
+
+    getDisconnectedActiveUserIcon() {
+        return <Icon name='user' look='add' variant='success'/>
+    }
+
+    getConnectedActiveUserIcon() {
+        return <Icon name='google' type='brands' look='add' variant='success'/>
+    }
+}
+
+UserStatus.defaultProps = {
+    status: 'UNKNOWN'
 }
 
 UserStatus.propTypes = {

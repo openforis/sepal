@@ -8,18 +8,18 @@ const {initMessageQueue} = require('#sepal/messageQueue')
 const {metrics$, startMetrics} = require('#sepal/metrics')
 
 const main = async () => {
-    await initMessageQueue(amqpUri, {
-        publishers: [
-            {key: 'metrics', publish$: metrics$},
-        ]
-    })
+    // await initMessageQueue(amqpUri, {
+    //     publishers: [
+    //         {key: 'metrics', publish$: metrics$},
+    //     ]
+    // })
 
     await server.start({
         port,
         routes
     })
 
-    startMetrics()
+    // startMetrics()
 
     log.info('Initialized')
 }

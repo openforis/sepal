@@ -64,6 +64,5 @@ export default () => ({
             .subtract(recipe.model.date.monitoringDuration, recipe.model.date.monitoringDurationUnit)
         return [monitoringStart, monitoringEnd]
     },
-    getAvailableBands,
-    beta: true
+    getAvailableBands
 })

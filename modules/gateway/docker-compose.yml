@@ -25,6 +25,7 @@ services:
     networks:
       - sepal
     ulimits:
+      core: 0
       nproc: 65535
       nofile:
         soft: 65536

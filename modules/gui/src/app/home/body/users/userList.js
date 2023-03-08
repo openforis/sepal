@@ -345,7 +345,8 @@ class UserItem extends React.PureComponent {
 
     render() {
         const {user} = this.props
-        const {name, status, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
+        const {name, status, googleTokens, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
+        const isGoogleUser = !!googleTokens
         return (
             <div
                 className={[
@@ -359,7 +360,7 @@ class UserItem extends React.PureComponent {
                 ].join(' ')}
                 onClick={this.onClick}>
                 {this.renderName(name)}
-                {this.renderStatus(status)}
+                {this.renderStatus(status, isGoogleUser)}
                 {this.renderLastUpdate(updateTime)}
                 {this.renderBudgetUpdateRequest(budgetUpdateRequest)}
                 {this.renderInstanceSpending(budget, current)}
@@ -378,23 +379,23 @@ class UserItem extends React.PureComponent {
         )
     }
 
-    renderStatus(status) {
+    renderStatus(status, isGoogleUser) {
         return (
             <div>
-                {status ? this.renderDefinedStatus(status) : this.renderUndefinedStatus() }
+                {status ? this.renderDefinedStatus(status, isGoogleUser) : this.renderUndefinedStatus() }
             </div>
         )
     }
 
-    renderDefinedStatus(status) {
+    renderDefinedStatus(status, isGoogleUser) {
         return (
-            <UserStatus status={status}/>
+            <UserStatus status={status} isGoogleUser={isGoogleUser}/>
         )
     }
 
     renderUndefinedStatus() {
         return (
-            <UserStatus status={status}/>
+            <UserStatus/>
         )
     }
 
