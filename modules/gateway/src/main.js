@@ -19,7 +19,7 @@ const {usernameTag, urlTag} = require('./tag')
 
 const redis = new Redis(redisUri)
 const userStore = UserStore(redis)
-const RedisSessionStore = require('connect-redis')(Session)
+const RedisSessionStore = require('connect-redis').default
 const sessionStore = new RedisSessionStore({client: redis})
 const {messageHandler, logout} = SessionManager(sessionStore, userStore)
 const {proxyEndpoints} = Proxy(userStore)
