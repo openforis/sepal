@@ -14,7 +14,8 @@ R CMD javareconf
 
 # Install CRAN packages via r-proxy
 
-R -e "install.packages('rgdal', version='1.3-9', dependencies=TRUE, repos='http://r-proxy:8180/')"
+R -e "install.packages('rgdal', version = '1.3-9', dependencies = TRUE, repos = 'http://r-proxy:8180/', upgrade = 'never')"
+
 R -e "install.packages(c(\
         'abind',\
         'askpass',\
@@ -294,11 +295,12 @@ R -e "install.packages(c(\
         'yaml',\
         'zeallot',\
         'zoo'
-    ), repos='http://r-proxy:8180/')"
+    ), repos='http://r-proxy:8180/', upgrade = 'never')"
 
 # Install GitHub packages via r-proxy
 
-R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/')"
+R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/', upgrade = 'never')"
+
 R -e "remotes::install_url(c(\
         'http://r-proxy:8180/github/r-barnes/dggridR/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/bfast2/bfast/archive/refs/heads/master.tar.gz',\
@@ -306,5 +308,4 @@ R -e "remotes::install_url(c(\
         'http://r-proxy:8180/github/loicdtx/bfastSpatial/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/jreiche/bayts/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/cran/gdalUtils/archive/refs/heads/master.tar.gz'
-
-    ), repos='http://r-proxy:8180/', build = FALSE)"
+    ), repos='http://r-proxy:8180/', build = FALSE, upgrade = 'never')"
