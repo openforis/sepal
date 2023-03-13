@@ -13,8 +13,9 @@ library(remotes)
 
 install_local(path, repos = repo, lib = lib, upgrade = 'never')
 
-# check if library can be loaded
+# check if library can be loaded, otherwise uninstall it and fail
 
 if ( ! library(name, character.only = TRUE, logical.return = TRUE) ) {
+    remove.packages(name)
     quit(status = 3, save = 'no')
 }

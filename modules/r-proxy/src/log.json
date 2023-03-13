@@ -1,6 +1,7 @@
 {
     "port": 5109,
     "categories": {
+        "bundle": "info",
         "config": "info",
         "cran": "info",
         "github": "info",
