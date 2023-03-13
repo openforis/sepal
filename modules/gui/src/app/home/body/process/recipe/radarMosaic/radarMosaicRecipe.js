@@ -16,9 +16,20 @@ export const defaultModel = {
     },
     options: {
         orbits: ['ASCENDING'],
+        orbitNumbers: 'ALL',
         geometricCorrection: 'ELLIPSOID',
-        speckleFilter: 'NONE',
+        spatialSpeckleFilter: 'NONE',
+        kernelSize: 5,
+        targetKernelSize: 3,
+        sigma: 0.9,
+        strongScattererValues: [5, 0],
+        temporalSpeckleFilter: 'NONE',
+        numberOfImages: 10,
         outlierRemoval: 'MODERATE',
+        mask: ['SIDES', 'FIRST_LAST'],
+        minAngle: 30.88,
+        maxAngle: 45.35,
+        minObservations: 1,
     }
 }
 

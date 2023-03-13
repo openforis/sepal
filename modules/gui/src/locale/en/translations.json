@@ -2941,6 +2941,21 @@
                 },
                 "label": "Orbits"
               },
+              "orbitNumbers": {
+                "all": {
+                  "label": "All",
+                  "tooltip": "Include values from all orbit numbers for a pixel."
+                },
+                "dominant": {
+                  "label": "Dominant",
+                  "tooltip": "Only include values from the dominant orbit number for a pixel."
+                },
+                "adjacent": {
+                  "label": "Adjacent",
+                  "tooltip": "Include values from the dominant orbit of both ascending and descending orbits."
+                },
+                "label": "Orbit overlap"
+              },
               "outlierRemoval": {
                 "aggressive": {
                   "label": "Aggressive",
@@ -2956,24 +2971,89 @@
                   "tooltip": "Don't remove outliers."
                 }
               },
-              "speckleFilter": {
-                "label": "Speckle filter",
+              "mask": {
+                "label": "Border noise correction",
+                "sides": {
+                  "label": "Sides",
+                  "tooltip": "Mask sides of slices."
+                },
+                "firstLast": {
+                  "label": "First/Last",
+                  "tooltip": "Mask the beginning of the first slice and the end of the last slice."
+                }
+              },
+              "minAngle": {
+                "label": "Min angle"
+              },
+              "maxAngle": {
+                "label": "Max angle"
+              },
+              "spatialSpeckleFilter": {
+                "label": "Spatial speckle filter",
                 "none": {
                   "label": "None",
                   "tooltip": "Don't apply any speckle filter."
                 },
-                "quegan": {
-                  "label": "Quegan",
-                  "tooltip": "Quegan MT Filter is applied."
+                "boxcar": {
+                  "label": "Boxcar",
+                  "tooltip": "Boxcar filtering is applied."
+                },
+                "gammaMap": {
+                  "label": "Gamma Map",
+                  "tooltip": "Gamma Map filtering is applied."
+                },
+                "lee": {
+                  "label": "Lee",
+                  "tooltip": "Lee filtering is applied."
                 },
                 "refinedLee": {
                   "label": "Refined Lee",
                   "tooltip": "Refined Lee filtering is applied. This can be very slow, but often gives good results."
                 },
+                "leeSigma": {
+                  "label": "Lee Sigma",
+                  "tooltip": "Lee Sigma filtering is applied."
+                },
                 "snic": {
                   "label": "SNIC",
                   "tooltip": "Simple Non-Iterative Clustering is used to filter out speckle."
                 }
+              },
+              "kernelSize": {
+                "label": "Kernel size"
+              },
+              "targetKernelSize": {
+                "label": "Target kernel size"
+              },
+              "sigma": {
+                "label": "Sigma"
+              },
+              "strontScatterValue": {
+                "label": "{band} threshold",
+                "tooltip": "The threshold to consider {band} a strong scatterer when performing Lee-Sigma spatial speckle filtering."
+              },
+              "numberOfImages": {
+                "label": "Number of images",
+                "value": "{value} images"
+              },
+              "multitemporalSpeckleFilter": {
+                "label": "Multitemporal speckle filter",
+                "none": {
+                  "label": "None",
+                  "tooltip": "Don't apply any multitemporal speckle filter."
+                },
+                "quegan": {
+                  "label": "Quegan",
+                  "tooltip": "Apply Quegan multi-temporal filter."
+                },
+                "rabasar": {
+                  "label": "RABASAR",
+                  "tooltip": "Apply RABASAR multi-temporal filter."
+                }
+              },
+              "minObservations": {
+                "label": "Min observations",
+                "value": "{value} observation(s)"
               }
             },
             "title": "Options",
