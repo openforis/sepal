@@ -72,7 +72,7 @@ class _Login extends React.Component {
                             shape='pill'
                             label={msg('landing.login.sign-up')}
                             tabIndex={4}
-                            disabled={form.isDirty()}
+                            // disabled={form.isDirty()}
                             onMouseDown={e => e.preventDefault()}
                             onClick={onSignUp}
                         />
