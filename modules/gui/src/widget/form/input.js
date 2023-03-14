@@ -74,7 +74,7 @@ class _FormInput extends React.Component {
                 minRows={minRows}
                 maxRows={maxRows}
                 onChange={this.onChange}
-                onBlur={this.onblur}
+                onBlur={this.onBlur}
             />
         )
     }
