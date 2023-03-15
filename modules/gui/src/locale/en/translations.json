@@ -3032,6 +3032,15 @@
                 "label": "{band} threshold",
                 "tooltip": "The threshold to consider {band} a strong scatterer when performing Lee-Sigma spatial speckle filtering."
               },
+              "snicSize": {
+                "label": "Seed spacing",
+                "tooltip": "The superpixel seed location spacing, in pixels. If 'seeds' image is provided, no grid is produced."
+              },
+              "snicCompactness": {
+                "label": "Compactness",
+                "tooltip": "Compactness factor. Larger values cause clusters to be more compact (square). Setting this to 0 disables spatial distance weighting.",
+                "value": "{value}"
+              },
               "numberOfImages": {
                 "label": "Number of images",
                 "value": "{value} images"
