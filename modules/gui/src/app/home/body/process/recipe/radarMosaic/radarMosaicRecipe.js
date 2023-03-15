@@ -23,6 +23,8 @@ export const defaultModel = {
         targetKernelSize: 3,
         sigma: 0.9,
         strongScattererValues: [5, 0],
+        snicSize: 5,
+        snicCompactness: 0.15,
         temporalSpeckleFilter: 'NONE',
         numberOfImages: 10,
         outlierRemoval: 'MODERATE',
@@ -67,6 +69,16 @@ const submitRetrieveRecipeTask = recipe => {
     const visualizations = getAllVisualizations(recipe)
     const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
     const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
+    const recipeProperties = {
+        recipe_id: recipe.id,
+        recipe_projectId: recipe.projectId,
+        recipe_type: recipe.type,
+        recipe_title: recipe.title || recipe.placeholder,
+        ..._(recipe.model)
+            .mapValues(value => JSON.stringify(value))
+            .mapKeys((_value, key) => `recipe_${key}`)
+            .value()
+    }
     const task = {
         operation,
         params: {
@@ -77,7 +89,7 @@ const submitRetrieveRecipeTask = recipe => {
                 ...recipe.ui.retrieveOptions,
                 bands: {selection: bands},
                 visualizations,
-                properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
+                properties: {...recipeProperties, 'system:time_start': timeStart, 'system:time_end': timeEnd}
             }
         }
     }

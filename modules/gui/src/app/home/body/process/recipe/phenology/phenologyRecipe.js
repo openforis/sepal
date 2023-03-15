@@ -1,3 +1,5 @@
+import {defaultModel as defaultOpticalModel} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {defaultModel as defaultRadarModel} from 'app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
 import {getAllVisualizations} from 'app/home/body/process/recipe/visualizations'
 import {getRecipeType} from 'app/home/body/process/recipeTypes'
 import {msg} from 'translate'
@@ -20,6 +22,8 @@ export const defaultModel = {
         band: 'evi'
     },
     options: {
+        ...defaultOpticalModel.compositeOptions,
+        ...defaultRadarModel.options,
         corrections: ['SR'],
         cloudDetection: ['QA', 'CLOUD_SCORE'],
         cloudMasking: 'AGGRESSIVE',
@@ -65,6 +69,16 @@ const submitRetrieveRecipeTask = recipe => {
     const visualizations = getAllVisualizations(recipe)
     const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
     const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
+    const recipeProperties = {
+        recipe_id: recipe.id,
+        recipe_projectId: recipe.projectId,
+        recipe_type: recipe.type,
+        recipe_title: recipe.title || recipe.placeholder,
+        ..._(recipe.model)
+            .mapValues(value => JSON.stringify(value))
+            .mapKeys((_value, key) => `recipe_${key}`)
+            .value()
+    }
     const task = {
         operation,
         params: {
@@ -75,7 +89,7 @@ const submitRetrieveRecipeTask = recipe => {
                 ...recipe.ui.retrieveOptions,
                 bands: {selection: bands},
                 visualizations,
-                properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
+                properties: {...recipeProperties, 'system:time_start': timeStart, 'system:time_end': timeEnd}
             }
         }
     }
