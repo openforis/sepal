@@ -13,7 +13,11 @@ export const getDataSetBands = recipe => {
     const dataSetIds = Object.values(dataSets).flat()
     const correction = corrections && corrections.includes('SR') ? 'SR' : 'TOA'
 
-    const bandsPerDataSet = dataSetIds.map(dataSetId => dataSetById[dataSetId][correction].bands)
+    const bandsPerDataSet = dataSetIds.map(dataSetId => {
+        return dataSetById[dataSetId]
+            ? dataSetById[dataSetId][correction].bands
+            : []
+    })
     return _.uniq(_.intersection(...bandsPerDataSet))
 }
 
