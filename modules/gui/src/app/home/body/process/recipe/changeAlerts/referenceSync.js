@@ -116,7 +116,6 @@ class _ReferenceSync extends React.Component {
         const assignSources = builder => {
             const assetSourcesString = metadata?.properties?.recipe_sources
             if (assetSourcesString) {
-                console.log(JSON.parse(assetSourcesString))
                 return builder
                     .assign('model.sources', JSON.parse(assetSourcesString))
             } else {
