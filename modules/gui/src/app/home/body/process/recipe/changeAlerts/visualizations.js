@@ -8,6 +8,10 @@ import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
+export const getPreSetVisualizations = recipe => getChangeVisualizations(recipe)
+    .map(({options}) => options.map(({visParams}) => visParams))
+    .flat()
+
 const toFractionalYear = date => {
     const startOfYear = moment(date, DATE_FORMAT).startOf(year)
     const startOfNextYear = moment(startOfYear).add(1, 'years')
