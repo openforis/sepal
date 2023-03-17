@@ -3022,11 +3022,19 @@
               "kernelSize": {
                 "label": "Kernel size"
               },
-              "targetKernelSize": {
-                "label": "Target kernel size"
-              },
               "sigma": {
                 "label": "Sigma"
+              },
+              "retainStrongScatterers": {
+                "yes": {
+                  "label": "Retain",
+                  "tooltip": "Retain original value for strong scatterers. They don't tend to include much speckle and some speckle filtering algorithms tends to blur them."
+                },
+                "no": {
+                  "label": "Filter",
+                  "tooltip": "Apply spatial speckle filter also to strong scatterers. It can cause some speckle filtering algorithms to blur them."
+                },
+                "label": "Strong scatterers"
               },
               "strontScatterValue": {
                 "label": "{band} threshold",

@@ -18,8 +18,8 @@ const fields = {
     geometricCorrection: new Form.Field(),
     spatialSpeckleFilter: new Form.Field(),
     kernelSize: new Form.Field(),
-    targetKernelSize: new Form.Field(),
     sigma: new Form.Field(),
+    retainStrongScatterers: new Form.Field(),
     strongScattererValue1: new Form.Field(),
     strongScattererValue2: new Form.Field(),
     snicSize: new Form.Field(),
@@ -34,7 +34,6 @@ const fields = {
 }
 
 const KERNEL_SIZES = [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25]
-const TARGET_KERNEL_SIZES = [3, 5, 7]
 
 class Options extends React.Component {
     render() {
@@ -59,7 +58,7 @@ class Options extends React.Component {
     }
 
     renderAdvanced() {
-        const {inputs: {mask, spatialSpeckleFilter}} = this.props
+        const {inputs: {mask, spatialSpeckleFilter, retainStrongScatterers}} = this.props
         return (
             <Layout>
                 {this.renderOrbits()}
@@ -70,10 +69,10 @@ class Options extends React.Component {
                 {['BOXCAR', 'GAMMA_MAP', 'LEE_SIGMA', 'LEE'].includes(spatialSpeckleFilter.value)
                     ? this.renderKernelSize()
                     : null}
-                {spatialSpeckleFilter.value === 'LEE_SIGMA' ? this.renderTargetKernelSize() : null}
                 {spatialSpeckleFilter.value === 'LEE_SIGMA' ? this.renderSigma() : null}
-                {spatialSpeckleFilter.value === 'LEE_SIGMA' ? this.renderStrongScattererValues() : null}
                 {spatialSpeckleFilter.value === 'SNIC' ? this.renderSnicOptions() : null}
+                {spatialSpeckleFilter.value !== 'NONE' ? this.renderRetainStrongScatterers() : null}
+                {spatialSpeckleFilter.value !== 'NONE' && retainStrongScatterers.value ? this.renderStrongScattererValues() : null}
                 {this.usingSpatialSpeckleFilter() ? this.renderMultitemporalSpeckleFilter() : null}
                 {this.usingMultitemporalSpeckleFilter() ? this.renderNumberOfImages() : null}
                 {this.renderOutlierRemoval()}
@@ -114,7 +113,7 @@ class Options extends React.Component {
             <Form.Buttons
                 label={msg('process.radarMosaic.panel.options.form.orbits.label')}
                 input={orbits}
-                multiple={true}
+                multiple
                 options={options}
             />
         )
@@ -225,31 +224,14 @@ class Options extends React.Component {
     }
 
     renderKernelSize() {
-        const {inputs: {spatialSpeckleFilter, kernelSize, targetKernelSize}} = this.props
-        const minIndex = spatialSpeckleFilter.value === 'LEE_SIGMA'
-            ? TARGET_KERNEL_SIZES.indexOf(targetKernelSize.value) + 1
-            : 0
+        const {inputs: {kernelSize}} = this.props
         return (
             <Form.Slider
                 label={msg('process.radarMosaic.panel.options.form.kernelSize.label')}
                 input={kernelSize}
-                minValue={KERNEL_SIZES[minIndex]}
+                minValue={KERNEL_SIZES[0]}
                 maxValue={KERNEL_SIZES[KERNEL_SIZES.length - 1]}
                 ticks={KERNEL_SIZES}
-                snap
-            />
-        )
-    }
-
-    renderTargetKernelSize() {
-        const {inputs: {targetKernelSize}} = this.props
-        return (
-            <Form.Slider
-                label={msg('process.radarMosaic.panel.options.form.targetKernelSize.label')}
-                input={targetKernelSize}
-                minValue={TARGET_KERNEL_SIZES[0]}
-                maxValue={TARGET_KERNEL_SIZES[TARGET_KERNEL_SIZES.length - 1]}
-                ticks={TARGET_KERNEL_SIZES}
                 snap
             />
         )
@@ -266,6 +248,29 @@ class Options extends React.Component {
                 ticks={[0.5, 0.6, 0.7, 0.8, 0.9, 0.95]}
                 decimals={2}
                 snap
+            />
+        )
+    }
+
+    renderRetainStrongScatterers() {
+        const {inputs: {retainStrongScatterers}} = this.props
+        const options = [
+            {
+                value: true,
+                label: msg('process.radarMosaic.panel.options.form.retainStrongScatterers.yes.label'),
+                tooltip: msg('process.radarMosaic.panel.options.form.retainStrongScatterers.yes.tooltip')
+            },
+            {
+                value: false,
+                label: msg('process.radarMosaic.panel.options.form.retainStrongScatterers.no.label'),
+                tooltip: msg('process.radarMosaic.panel.options.form.retainStrongScatterers.no.tooltip')
+            }
+        ]
+        return (
+            <Form.Buttons
+                label={msg('process.radarMosaic.panel.options.form.retainStrongScatterers.label')}
+                input={retainStrongScatterers}
+                options={options}
             />
         )
     }
@@ -416,7 +421,7 @@ class Options extends React.Component {
             <Form.Buttons
                 label={msg('process.radarMosaic.panel.options.form.mask.label')}
                 input={mask}
-                multiple={true}
+                multiple
                 options={options}
             />
         )
@@ -455,20 +460,6 @@ class Options extends React.Component {
         )
     }
 
-    componentDidUpdate(prevProps) {
-        const {inputs: {targetKernelSize: prevTargetKernelSize}} = prevProps
-        const {inputs: {spatialSpeckleFilter, kernelSize, targetKernelSize}} = this.props
-        if (spatialSpeckleFilter.value === 'LEE_SIGMA' && kernelSize.value <= targetKernelSize.value) {
-            const targetIndex = TARGET_KERNEL_SIZES.indexOf(targetKernelSize.value)
-            const targetKernelSizeUpdated = prevTargetKernelSize.value !== targetKernelSize.value
-            if (targetIndex === 0 || targetKernelSizeUpdated) {
-                kernelSize.set(KERNEL_SIZES[targetIndex + 1])
-            } else {
-                targetKernelSize.set(TARGET_KERNEL_SIZES[targetIndex - 1])
-            }
-        }
-    }
-
     setAdvanced(enabled) {
         const {inputs: {advanced}} = this.props
         advanced.set(enabled)
@@ -505,11 +496,11 @@ const valuesToModel = values => ({
     geometricCorrection: values.geometricCorrection,
     spatialSpeckleFilter: values.spatialSpeckleFilter,
     kernelSize: parseInt(values.kernelSize),
-    targetKernelSize: parseInt(values.targetKernelSize),
     sigma: parseFloat(values.sigma),
-    strongScattererValues: [parseFloat(values.strongScattererValue1), parseFloat(values.strongScattererValue2)],
     snicSize: parseInt(values.snicSize),
     snicCompactness: parseFloat(values.snicCompactness),
+    retainStrongScatterers: values.retainStrongScatterers,
+    strongScattererValues: [parseFloat(values.strongScattererValue1), parseFloat(values.strongScattererValue2)],
     multitemporalSpeckleFilter: values.multitemporalSpeckleFilter,
     numberOfImages: parseInt(values.numberOfImages),
     outlierRemoval: values.outlierRemoval,
