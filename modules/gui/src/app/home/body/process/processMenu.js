@@ -67,7 +67,7 @@ class ProcessMenu extends React.Component {
     }
 
     duplicateRecipe() {
-        const {recipe} = this.propTypes
+        const {recipe} = this.props
         duplicateRecipe(recipe)
     }
 
