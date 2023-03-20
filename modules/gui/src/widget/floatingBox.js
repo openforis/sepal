@@ -13,7 +13,7 @@ import withForwardedRef from 'ref'
 const MARGIN = 5
 
 const Context = React.createContext()
-const withFloatingBoxContext = withContext(Context, 'floatingBoxContext')
+const withFloatingBox = withContext(Context, 'floatingBox')
 
 const mapStateToProps = state => ({
     viewportDimensions: selectFrom(state, 'dimensions') || []
@@ -29,6 +29,7 @@ class FloatingBox extends React.Component {
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
+        this.onClick = this.onClick.bind(this)
         this.onResize = this.onResize.bind(this)
         this.addElement = this.addElement.bind(this)
         this.removeElement = this.removeElement.bind(this)
@@ -78,7 +79,7 @@ class FloatingBox extends React.Component {
                     removeElement: this.removeElement
                 }}>
                     <BlurDetector
-                        onClick={e => e.stopPropagation()}
+                        onClick={this.onClick}
                         onBlur={onBlur}
                         exclude={this.getExcludedElements()}
                         ref={this.ref}
@@ -94,6 +95,10 @@ class FloatingBox extends React.Component {
                 </Context.Provider>
             </Portal>
         )
+    }
+
+    onClick(e) {
+        e.stopPropagation()
     }
 
     fixVerticalOverflow(vertical) {
@@ -342,25 +347,25 @@ class FloatingBox extends React.Component {
     }
 
     componentDidMount() {
-        const {floatingBoxContext} = this.props
-        if (floatingBoxContext) {
-            floatingBoxContext.addElement(this.ref.current)
+        const {floatingBox} = this.props
+        if (floatingBox) {
+            floatingBox.addElement(this.ref.current)
         }
         this.updateDimensions()
     }
 
     componentDidUpdate() {
-        const {floatingBoxContext} = this.props
-        if (floatingBoxContext) {
-            floatingBoxContext.addElement(this.ref.current)
+        const {floatingBox} = this.props
+        if (floatingBox) {
+            floatingBox.addElement(this.ref.current)
         }
         this.updateDimensions()
     }
 
     componentWillUnmount() {
-        const {floatingBoxContext} = this.props
-        if (floatingBoxContext) {
-            floatingBoxContext.removeElement(this.ref.current)
+        const {floatingBox} = this.props
+        if (floatingBox) {
+            floatingBox.removeElement(this.ref.current)
         }
     }
 }
@@ -368,7 +373,7 @@ class FloatingBox extends React.Component {
 export default compose(
     FloatingBox,
     connect(mapStateToProps),
-    withFloatingBoxContext(),
+    withFloatingBox(),
     withForwardedRef()
 )
 

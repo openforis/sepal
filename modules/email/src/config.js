@@ -2,12 +2,15 @@ const program = require('commander')
 const log = require('#sepal/log').getLogger('config')
 const _ = require('lodash')
 
+const DEFAULT_PORT = 6001
+
 program.exitOverride()
 
 try {
     program
         .requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
         .requiredOption('--redis-uri <value>', 'Redis URI')
+        .option('--port <number>', 'Port', DEFAULT_PORT)
         .option('--concurrency <number>', 'Concurrent rescan jobs', parseInt)
         .requiredOption('--smtp-host <value>', 'SMTP host')
         .option('--smtp-port <value>', 'SMTP port')
@@ -27,6 +30,7 @@ try {
 const {
     amqpUri,
     redisUri,
+    port,
     concurrency = 4,
     smtpHost,
     smtpPort = 25,
@@ -44,6 +48,7 @@ log.info('Configuration loaded')
 module.exports = {
     amqpUri,
     redisUri,
+    port,
     concurrency,
     smtpHost,
     smtpPort,

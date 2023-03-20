@@ -1,6 +1,7 @@
 import {add, remove} from './keybindings'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {withEnableDetector} from 'enabled'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -9,9 +10,8 @@ class Keybinding extends React.Component {
     constructor(props) {
         super(props)
         this.createKeybinding()
-        const {onEnable, onDisable} = props
-        onEnable(() => this.keybinding.enabled = true)
-        onDisable(() => this.keybinding.enabled = false)
+        const {enableDetector: {onChange}} = props
+        onChange(enabled => this.keybinding.enabled = enabled)
         add(this.keybinding)
     }
 
@@ -67,7 +67,8 @@ class Keybinding extends React.Component {
 
 export default compose(
     Keybinding,
-    connect()
+    connect(),
+    withEnableDetector()
 )
 
 Keybinding.propTypes = {

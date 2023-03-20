@@ -1,13 +1,13 @@
-import {Activator, activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser, requestUserAccess$, revokeGoogleAccess$} from 'user'
 import {msg} from 'translate'
+import {withActivators} from 'widget/activation/activator'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
@@ -29,12 +29,10 @@ class _GoogleAccount extends React.Component {
     }
 
     useUserGoogleAccount() {
-        // e.preventDefault()
         this.props.stream('USE_USER_GOOGLE_ACCOUNT', requestUserAccess$())
     }
 
     useSepalGoogleAccount() {
-        // e.preventDefault()
         this.close()
         this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT',
             revokeGoogleAccess$(),
@@ -164,23 +162,29 @@ const policy = () => ({
 export const GoogleAccount = compose(
     _GoogleAccount,
     connect(mapStateToProps),
-    activator('userDetails'),
-    activatable({id: 'googleAccount', policy, alwaysAllow: true})
+    withActivators('userDetails'),
+    withActivatable({id: 'googleAccount', policy, alwaysAllow: true})
 )
 
 GoogleAccount.propTypes = {}
 
-export const GoogleAccountButton = ({disabled}) => (
-    <Activator id='googleAccount'>
-        {({canActivate, activate}) =>
+class _GoogleAccountButton extends React.Component {
+    render() {
+        const {disabled, activator: {activatables: {googleAccount: {activate, canActivate}}}} = this.props
+        return (
             <Button
                 icon='google'
                 iconType='brands'
                 label={msg('user.googleAccount.label')}
                 disabled={!canActivate || disabled}
-                onClick={() => activate()}/>
-        }
-    </Activator>
+                onClick={activate}/>
+        )
+    }
+}
+
+export const GoogleAccountButton = compose(
+    _GoogleAccountButton,
+    withActivators('googleAccount')
 )
 
 GoogleAccountButton.propTypes = {

@@ -7,7 +7,6 @@
         "emailQueue": "info",
         "http": "info",
         "main": "info",
-        "metrics": "warn",
         "messageHandler": "info",
         "messageQueue": "info",
         "user": "info"

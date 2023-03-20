@@ -8,6 +8,7 @@ import {connect} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
 import {simplifyString, splitString} from 'string'
+import {withSubscriptions} from 'subscription'
 import AutoFocus from 'widget/autoFocus'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
@@ -15,7 +16,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './combo.module.css'
-import withSubscriptions from 'subscription'
 
 const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
@@ -39,6 +39,9 @@ class _Combo extends React.Component {
 
     constructor() {
         super()
+        this.onChange = this.onChange.bind(this)
+        this.onFocus = this.onFocus.bind(this)
+        this.onClick = this.onClick.bind(this)
         this.onInputClick = this.onInputClick.bind(this)
         this.onInputBlur = this.onInputBlur.bind(this)
         this.onOptionsBlur = this.onOptionsBlur.bind(this)
@@ -141,13 +144,21 @@ class _Combo extends React.Component {
                             this.renderToggleOptionsButton()
                         ]}
                         additionalButtons={additionalButtons}
-                        onChange={e => this.setFilter(e.target.value)}
-                        onFocus={() => this.setFocused(true)}
+                        onChange={this.onChange}
+                        onFocus={this.onFocus}
                         onBlur={this.onInputBlur}
                     />
                 </AutoFocus>
             </Keybinding>
         )
+    }
+
+    onChange(e) {
+        this.setFilter(e.target.value)
+    }
+
+    onFocus() {
+        this.setFocused(true)
     }
 
     focusInput() {
@@ -208,9 +219,14 @@ class _Combo extends React.Component {
                 }}
                 tabIndex={-1}
                 disabled={!this.isActive()}
-                onClick={() => showOptions ? this.hideOptions() : this.showOptions()}
+                onClick={this.onClick}
             />
         )
+    }
+
+    onClick() {
+        const {showOptions} = this.state
+        showOptions ? this.hideOptions() : this.showOptions()
     }
 
     renderOptions() {

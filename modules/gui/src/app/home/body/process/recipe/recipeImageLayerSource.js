@@ -37,7 +37,7 @@ class _RecipeImageLayerSource extends React.Component {
     componentDidUpdate(prevProps) {
         const {recipe: prevRecipe} = prevProps
         const {stream, recipe} = this.props
-        if (!stream('LOAD_RECIPE').active && (!recipe || recipe.id !== prevRecipe.id)) {
+        if (!stream('LOAD_RECIPE').active && (!recipe || recipe?.id !== prevRecipe?.id)) {
             this.loadRecipe()
         }
         if (recipe && toDescription(recipe) !== toDescription(prevRecipe)) {

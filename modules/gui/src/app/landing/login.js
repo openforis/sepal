@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {credentialsPosted, invalidCredentials, login$} from 'user'
@@ -72,7 +72,7 @@ class _Login extends React.Component {
                             shape='pill'
                             label={msg('landing.login.sign-up')}
                             tabIndex={4}
-                            disabled={form.isDirty()}
+                            // disabled={form.isDirty()}
                             onMouseDown={e => e.preventDefault()}
                             onClick={onSignUp}
                         />
@@ -135,7 +135,7 @@ class _Login extends React.Component {
 
 export const Login = compose(
     _Login,
-    form({fields, mapStateToProps})
+    withForm({fields, mapStateToProps})
 )
 
 Login.propTypes = {

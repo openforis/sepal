@@ -1,4 +1,3 @@
-const {Auth} = require('./auth')
 const {createProxyMiddleware} = require('http-proxy-middleware')
 const {rewriteLocation} = require('./rewrite')
 const {endpoints} = require('../config/endpoints')
@@ -8,8 +7,7 @@ const {getRequestUser, SEPAL_USER_HEADER} = require('./user')
 const {usernameTag, urlTag} = require('./tag')
 const log = require('#sepal/log').getLogger('proxy')
 
-const Proxy = userStore => {
-    const {authMiddleware} = Auth(userStore)
+const Proxy = (userStore, authMiddleware) => {
     const proxy = app =>
         ({path, target, proxyTimeout = 60 * 1000, timeout = 61 * 1000, authenticate, cache, noCache, rewrite}) => {
             const proxyMiddleware = createProxyMiddleware(path, {

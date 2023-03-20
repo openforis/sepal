@@ -24,6 +24,8 @@ class ButtonPopup extends React.Component {
     constructor() {
         super()
         this.handleBlur = this.handleBlur.bind(this)
+        this.togglePopup = this.togglePopup.bind(this)
+        this.onClick = this.onClick.bind(this)
     }
 
     render() {
@@ -57,7 +59,7 @@ class ButtonPopup extends React.Component {
                 tooltipPlacement={tooltipPlacement}
                 size={size}
                 width={width}
-                onClick={() => this.togglePopup()}
+                onClick={this.togglePopup}
                 onMouseOver={onMouseOver}
                 onMouseOut={onMouseOut}
                 disabled={disabled}
@@ -68,7 +70,7 @@ class ButtonPopup extends React.Component {
     }
 
     renderMultiButton() {
-        const {disabled, chromeless, shape, look, icon, size, tooltip, tooltipPlacement, width, onClick, onMouseOver, onMouseOut} = this.props
+        const {disabled, chromeless, shape, look, icon, size, tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
         return (
             <ButtonGroup
                 ref={this.buttonRef}
@@ -84,7 +86,7 @@ class ButtonPopup extends React.Component {
                     tooltipPlacement={tooltipPlacement}
                     size={size}
                     width={width}
-                    onClick={e => onClick && onClick(e)}
+                    onClick={this.onClick}
                     disabled={disabled}
                     label={this.getLabel()}
                 />
@@ -98,11 +100,16 @@ class ButtonPopup extends React.Component {
                     tooltipPlacement={tooltipPlacement}
                     size={size}
                     width={width}
-                    onClick={() => this.togglePopup()}
+                    onClick={this.togglePopup}
                     disabled={disabled}
                 />
             </ButtonGroup>
         )
+    }
+
+    onClick(e) {
+        const {onClick} = this.props
+        onClick && onClick(e)
     }
 
     componentDidMount() {

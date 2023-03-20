@@ -1,4 +1,4 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {Message} from 'widget/message'
@@ -195,7 +195,7 @@ export class _BudgetUpdateRequest extends React.Component {
 
 export const BudgetUpdateRequest = compose(
     _BudgetUpdateRequest,
-    form({fields, mapStateToProps})
+    withForm({fields, mapStateToProps})
 )
 
 BudgetUpdateRequest.propType = {

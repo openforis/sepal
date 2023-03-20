@@ -1,23 +1,23 @@
-import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {Widget} from 'widget/widget'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {debounceTime, throttleTime} from 'rxjs'
 import {formatCoordinates} from 'coords'
 import {msg} from 'translate'
+import {withActivatable} from 'widget/activation/activatable'
+import {withActivators} from 'widget/activation/activator'
 import {withMap} from './mapContext'
+import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import clipboard from 'clipboard'
 import format from 'format'
 import styles from './mapInfo.module.css'
-import withSubscriptions from 'subscription'
 
 const THROTTLE_TIME_MS = 100
 
@@ -158,14 +158,14 @@ const MapInfoPanel = compose(
     _MapInfoPanel,
     withMap(),
     withSubscriptions(),
-    activatable({
+    withActivatable({
         id: 'mapInfo',
         policy,
         alwaysAllow: true
     })
 )
 
-class _MapInfo extends React.Component {
+class _MapInfo extends React.PureComponent {
     state = {
         view: {},
         width: null
@@ -183,43 +183,47 @@ class _MapInfo extends React.Component {
     }
 
     render() {
-        const {view: {scale}, width} = this.state
+        const {view: {scale}} = this.state
         return scale
             ? (
                 <div className={styles.container}>
                     <MapInfoPanel/>
-                    <Activator id={'mapInfo'}>
-                        {({activate, deactivate, active}) => (
-                            <Button
-                                look='default'
-                                shape='rectangle'
-                                size='x-small'
-                                additionalClassName={styles.button}
-                                air='less'
-                                tooltip={active ? null : msg('map.info.tooltip')}
-                                tooltipPlacement='bottomLeft'
-                                onClick={() => active ? deactivate() : activate()}>
-                                <ElementResizeDetector onResize={({width}) => this.setState({width})}>
-                                    <div className={styles.content}>
-                                        <div>{format.number({value: scale, unit: 'm/px'})}</div>
-                                        <div className={styles.scale}></div>
-                                        <div>{format.number({value: width * scale, unit: 'm'})}</div>
-                                    </div>
-                                </ElementResizeDetector>
-                            </Button>
-                        )}
-                    </Activator>
+                    {this.renderButton()}
                 </div>
             )
             : null
     }
 
+    renderButton() {
+        const {activator: {activatables: {mapInfo: {active, toggle}}}} = this.props
+        const {view: {scale}, width} = this.state
+        return (
+            <Button
+                look='default'
+                shape='rectangle'
+                size='x-small'
+                additionalClassName={styles.button}
+                air='less'
+                tooltip={active ? null : msg('map.info.tooltip')}
+                tooltipPlacement='bottomLeft'
+                onClick={toggle}>
+                <ElementResizeDetector onResize={({width}) => this.setState({width})}>
+                    <div className={styles.content}>
+                        <div>{format.number({value: scale, unit: 'm/px'})}</div>
+                        <div className={styles.scale}></div>
+                        <div>{format.number({value: width * scale, unit: 'm'})}</div>
+                    </div>
+                </ElementResizeDetector>
+            </Button>
+        )
+    }
 }
 
 export const MapInfo = compose(
     _MapInfo,
     withMap(),
-    withSubscriptions()
+    withSubscriptions(),
+    withActivators('mapInfo')
 )
 
 MapInfo.propTypes = {}

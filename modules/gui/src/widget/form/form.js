@@ -17,7 +17,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 
-export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
+export const withForm = ({fields = {}, constraints = {}, mapStateToProps}) =>
     WrappedComponent => {
         class Form extends React.Component {
             dirtyListeners = []
@@ -321,18 +321,26 @@ const getDisplayName = Component =>
     Component.displayName || Component.name || 'Component'
 
 export class Form extends React.Component {
+    constructor() {
+        super()
+        this.onSubmit = this.onSubmit.bind(this)
+    }
+
     render() {
-        const {className, onSubmit, children} = this.props
+        const {className, children} = this.props
         return (
             <form
                 className={className}
-                onSubmit={e => {
-                    e.preventDefault()
-                    onSubmit && onSubmit(e)
-                }}>
+                onSubmit={this.onSubmit}>
                 {children}
             </form>
         )
+    }
+
+    onSubmit(e) {
+        const {onSubmit} = this.props
+        e.preventDefault()
+        onSubmit && onSubmit(e)
     }
 }
 

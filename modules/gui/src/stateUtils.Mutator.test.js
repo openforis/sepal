@@ -3,6 +3,25 @@ import _ from 'lodash'
 
 /* eslint-disable no-undef */
 
+// it('foo', () => {
+//     const a = ['foo']
+//     // Object.defineProperty(a, '___hash', {
+//     //     value: '123',
+//     //     enumerable: false,
+//     //     // writable: false
+//     // })
+//     const b = ['foo']
+//     Object.defineProperty(b, '___hash', {
+//         value: '456',
+//         enumerable: true,
+//         writable: true
+//     })
+//     // expect(b.___hash).toEqual('456')
+//     // expect(a).toEqual(b)
+//     console.log({...b})
+//     expect({...b}.___hash).toEqual('456')
+// })
+
 it('create', () => {
     const state = {}
     const nextState = new Mutator(state, 'a').set(1)
@@ -35,37 +54,37 @@ it('match by template and replace', () => {
     expect(nextState).toEqual({a: [3, 'c']})
 })
 
-it('create by template', () => {
+it('create by template 1', () => {
     const state = {}
     const nextState = new Mutator(state, ['x', {a: 1}, 'b']).set(2)
     expect(nextState).toEqual({x: [{a: 1, b: 2}]})
 })
 
-it('create by template', () => {
+it('create by template 2', () => {
     const state = {}
     const nextState = new Mutator(state, ['x', {a: 1}]).set({b: 2})
     expect(nextState).toEqual({x: [{b: 2}]})
 })
 
-it('create by template', () => {
+it('create by template 3', () => {
     const state = {x: [{a: 1}]}
     const nextState = new Mutator(state, ['x', {a: 1}]).set({b: 2})
     expect(nextState).toEqual({x: [{b: 2}]})
 })
 
-it('create by template', () => {
+it('create by template 4', () => {
     const state = {x: ['y', {a: 1}]}
     const nextState = new Mutator(state, ['x', {a: 1}]).set({b: 2})
     expect(nextState).toEqual({x: ['y', {b: 2}]})
 })
 
-it('create by template', () => {
+it('create by template 5', () => {
     const state = {foo: 'bar'}
     const nextState = new Mutator(state, 'a.b').set(1)
     expect(nextState).toEqual({a: {b: 1}, foo: 'bar'})
 })
 
-it('create by template', () => {
+it('create by template 6', () => {
     const state = {foo: 'bar'}
     const nextState = new Mutator(state, 'a.0').set(1)
     expect(nextState).toEqual({a: [1], foo: 'bar'})
@@ -185,7 +204,7 @@ it('delete from array (non-existing element)', () => {
     expect(nextState).toEqual({a: [2]})
 })
 
-it('delete from array', () => {
+it('delete from array by index', () => {
     const state = {a: ['b', 'c', 'd']}
     const nextState = new Mutator(state, 'a.1').del()
     expect(nextState).toEqual({a: ['b', 'd']})

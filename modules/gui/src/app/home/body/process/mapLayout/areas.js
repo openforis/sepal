@@ -9,11 +9,11 @@ import {getImageLayerSource} from 'app/home/map/imageLayerSource/imageLayerSourc
 import {msg} from 'translate'
 import {withLayers} from '../withLayers'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './areas.module.css'
-import withSubscription from 'subscription'
 
 const AREA = Symbol('area')
 const SOURCE = Symbol('source')
@@ -334,7 +334,7 @@ export const Areas = compose(
     _Areas,
     withLayers(),
     withRecipe(recipe => ({recipe})),
-    withSubscription()
+    withSubscriptions()
 )
 
 Areas.propTypes = {

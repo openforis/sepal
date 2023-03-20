@@ -4,16 +4,23 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 export class FormPanelButtons extends React.Component {
+    constructor() {
+        super()
+        this.renderFormPanelContext = this.renderFormPanelContext.bind(this)
+    }
+
     render() {
         return (
             <FormPanelContext.Consumer>
-                {props => {
-                    const renderProps = {...props, ...this.props}
-                    const inWizard = renderProps.wizard && renderProps.wizard.includes(renderProps.id)
-                    return inWizard ? this.renderInWizard(renderProps) : this.renderInForm(renderProps)
-                }}
+                {this.renderFormPanelContext}
             </FormPanelContext.Consumer>
         )
+    }
+
+    renderFormPanelContext(props) {
+        const renderProps = {...props, ...this.props}
+        const inWizard = renderProps.wizard && renderProps.wizard.includes(renderProps.id)
+        return inWizard ? this.renderInWizard(renderProps) : this.renderInForm(renderProps)
     }
 
     renderInForm({isActionForm, dirty, invalid, onOk, onCancel}) {

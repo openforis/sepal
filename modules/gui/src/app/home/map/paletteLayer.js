@@ -1,16 +1,16 @@
-import * as PropTypes from 'prop-types'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Subject, animationFrames, distinctUntilChanged, map, of, scan, switchMap} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
 import {withCursorValue} from './cursorValue'
-import {withMapAreaContext} from './mapAreaContext'
+import {withMapArea} from './mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import {withSubscriptions} from 'subscription'
+import PropTypes from 'prop-types'
 import React from 'react'
 import format from 'format'
 import styles from './paletteLayer.module.css'
-import withSubscriptions from 'subscription'
 
 const mapRecipeToProps = recipe => ({
     areas: selectFrom(recipe, 'layers.areas') || {}
@@ -33,7 +33,7 @@ class _PaletteLayer extends React.Component {
     }
 
     render() {
-        const {cursorValue$, mapAreaContext: {area}, areas} = this.props
+        const {cursorValue$, mapArea: {area}, areas} = this.props
         if (!cursorValue$) {
             return null
         }
@@ -94,7 +94,7 @@ class _PaletteLayer extends React.Component {
     }
 
     getMinMax(props) {
-        const {mapAreaContext: {area}, areas} = props
+        const {mapArea: {area}, areas} = props
         const {min, max} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
         return {min, max}
     }
@@ -203,7 +203,7 @@ const Value = ({value}) => {
 export const PaletteLayer = compose(
     _PaletteLayer,
     connect(),
-    withMapAreaContext(),
+    withMapArea(),
     withRecipe(mapRecipeToProps),
     withCursorValue(),
     withSubscriptions()

@@ -1,22 +1,22 @@
 import {Button} from 'widget/button'
 import {ChangePassword, ChangePasswordButton} from './changePassword'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {GoogleAccount, GoogleAccountButton} from './googleAccount'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {Subject} from 'rxjs'
-import {activatable} from 'widget/activation/activatable'
-import {activator} from 'widget/activation/activator'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser, updateCurrentUserDetails$} from 'user'
 import {msg} from 'translate'
+import {withActivators} from 'widget/activation/activator'
+import {withSubscriptions} from 'subscription'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import styles from './userDetails.module.css'
-import withSubscriptions from 'subscription'
 
 const fields = {
     name: new Form.Field()
@@ -170,8 +170,8 @@ const policy = () => ({
 
 const UserDetails = compose(
     _UserDetails,
-    form({fields, mapStateToProps}),
-    activatable({id: 'userDetails', policy, alwaysAllow: true})
+    withForm({fields, mapStateToProps}),
+    withActivatable({id: 'userDetails', policy, alwaysAllow: true})
 )
 
 UserDetails.propTypes = {}
@@ -253,7 +253,7 @@ export const UserDetailsButton = compose(
         user: state.user.currentUser
     })),
     withSubscriptions(),
-    activator('userDetails')
+    withActivators('userDetails')
 )
 
 UserDetailsButton.propTypes = {}

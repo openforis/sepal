@@ -7,11 +7,11 @@ import {getLogger} from 'log'
 import {mapTag, mapViewTag} from 'tag'
 import {v4 as uuid} from 'uuid'
 import {withContext} from 'context'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
-import withSubscriptions from 'subscription'
 
 const log = getLogger('maps')
 

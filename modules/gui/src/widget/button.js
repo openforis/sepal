@@ -2,7 +2,8 @@ import {EMPTY, combineLatest, distinctUntilChanged, fromEvent, switchMap, take, 
 import {Link} from 'route'
 import {compose} from 'compose'
 import {download} from 'widget/download'
-import {withButtonGroupContext} from './buttonGroup'
+import {withButtonGroup} from './buttonGroup'
+import {withSubscriptions} from 'subscription'
 import Icon from 'widget/icon'
 import Keybinding from './keybinding'
 import PropTypes from 'prop-types'
@@ -12,7 +13,6 @@ import _ from 'lodash'
 import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
 import withForwardedRef from 'ref'
-import withSubscriptions from 'subscription'
 
 const CLICK_HOLD_DURATION_MS = 600
 const CLICK_CANCEL_DELAY_MS = 250
@@ -25,6 +25,10 @@ class _Button extends React.Component {
         const {onClickHold} = props
         this.button = onClickHold && React.createRef()
         this.handleClick = this.handleClick.bind(this)
+        this.handleMouseOver = this.handleMouseOver.bind(this)
+        this.handleMouseOut = this.handleMouseOut.bind(this)
+        this.handleMouseDown = this.handleMouseDown.bind(this)
+        this.preventDefault = this.preventDefault.bind(this)
         this.renderKeybinding = this.renderKeybinding.bind(this)
         this.renderVisible = this.renderVisible.bind(this)
         this.renderWrapper = this.renderWrapper.bind(this)
@@ -74,7 +78,7 @@ class _Button extends React.Component {
 
     classNames() {
         const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle, hint,
-            alignment, width, onClickHold, disableTransitions, buttonGroupContext: {joinLeft, joinRight} = {}} = this.props
+            alignment, width, onClickHold, disableTransitions, buttonGroup: {joinLeft, joinRight} = {}} = this.props
         return className ? className : [
             styles.button,
             styles[`size-${size}`],
@@ -96,6 +100,10 @@ class _Button extends React.Component {
             hint ? styles.hint : null,
             additionalClassName
         ].join(' ')
+    }
+
+    preventDefault(e) {
+        e.preventDefault()
     }
 
     handleMouseOver(e) {
@@ -122,12 +130,16 @@ class _Button extends React.Component {
         }
     }
 
-    handleClick(e) {
-        const {onClick, downloadUrl, downloadFilename} = this.props
-        onClick && onClick(e)
-        downloadUrl && download(downloadUrl, downloadFilename)
-        if (this.stopPropagation()) {
+    handleClick(e, forceHandle = false) {
+        const {onClick, onClickHold, downloadUrl, downloadFilename} = this.props
+        if (onClickHold && !forceHandle) {
             e.stopPropagation()
+        } else {
+            onClick && onClick(e)
+            downloadUrl && download(downloadUrl, downloadFilename)
+            if (this.stopPropagation()) {
+                e.stopPropagation()
+            }
         }
     }
 
@@ -197,7 +209,7 @@ class _Button extends React.Component {
         const {linkUrl, linkTarget} = this.props
         return this.isActive() && linkUrl
             ? (
-                <a href={linkUrl} rel='noopener noreferrer' target={linkTarget} onMouseDown={e => e.preventDefault()}>
+                <a href={linkUrl} rel='noopener noreferrer' target={linkTarget} onMouseDown={this.preventDefault}>
                     {contents}
                 </a>
             )
@@ -208,7 +220,7 @@ class _Button extends React.Component {
         const {route} = this.props
         return this.isActive() && route
             ? (
-                <Link to={route} onMouseDown={e => e.preventDefault()}>
+                <Link to={route} onMouseDown={this.preventDefault}>
                     {contents}
                 </Link>
             )
@@ -238,7 +250,7 @@ class _Button extends React.Component {
     }
 
     renderButton([current, ...next]) {
-        const {type, style, tabIndex, onClickHold, forwardedRef} = this.props
+        const {type, style, tabIndex, forwardedRef} = this.props
         return (
             <button
                 ref={forwardedRef}
@@ -247,11 +259,10 @@ class _Button extends React.Component {
                 style={style}
                 tabIndex={tabIndex}
                 disabled={!this.isActive()}
-                onMouseOver={e => this.handleMouseOver(e)}
-                onMouseOut={e => this.handleMouseOut(e)}
-                onMouseDown={e => this.handleMouseDown(e)}
-                onClick={e => onClickHold ? e.stopPropagation() : this.handleClick(e)}
-            >
+                onMouseOver={this.handleMouseOver}
+                onMouseOut={this.handleMouseOut}
+                onMouseDown={this.handleMouseDown}
+                onClick={this.handleClick}>
                 {current(next)}
             </button>
         )
@@ -367,7 +378,7 @@ class _Button extends React.Component {
                 click$.subscribe(e => {
                     const {onClick} = this.props
                     if (this.isActive() && onClick) {
-                        this.handleClick(e)
+                        this.handleClick(e, true)
                     }
                 })
             )
@@ -379,7 +390,7 @@ export const Button =
     compose(
         React.memo(_Button),
         withSubscriptions(),
-        withButtonGroupContext(),
+        withButtonGroup(),
         withForwardedRef()
     )
 

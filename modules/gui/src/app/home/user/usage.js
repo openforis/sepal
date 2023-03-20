@@ -1,13 +1,13 @@
-import {Activator} from 'widget/activation/activator'
 import {BudgetUpdateRequest} from './userBudgetUpdateRequest'
 import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {Widget} from 'widget/widget'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
+import {withActivators} from 'widget/activation/activator'
 import React from 'react'
 import UserResources from './userResources'
 import UserSession from './userSession'
@@ -106,48 +106,55 @@ const policy = () => ({
 const Usage = compose(
     _Usage,
     connect(mapStateToProps),
-    activatable({id: 'userReport', policy, alwaysAllow: true})
+    withActivatable({id: 'userReport', policy, alwaysAllow: true})
 )
 
 Usage.propTypes = {}
 
-const _UsageButton = ({userReport, hasBudget, budgetExceeded, budgetWarning}) => {
-    const hourlySpending = userReport.sessions
-        ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
-        : 0
-    const label = hasBudget && budgetExceeded
-        ? msg('home.sections.user.report.budgetExceeded')
-        : format.unitsPerHour(hourlySpending)
-    const additionalClassName = hasBudget
-        ? budgetExceeded
-            ? styles.budgetExceeded
-            : budgetWarning
-                ? styles.budgetWarning
-                : null
-        : null
-    return (
-        <React.Fragment>
-            <Activator id='userReport'>
-                {({active, activate}) =>
-                    <Button
-                        chromeless
-                        look='transparent'
-                        size='large'
-                        air='less'
-                        additionalClassName={additionalClassName}
-                        icon='dollar-sign'
-                        label={label}
-                        disabled={active}
-                        tooltip={msg('home.sections.user.report.tooltip')}
-                        tooltipPlacement='top'
-                        tooltipDisabled={active}
-                        onClick={() => activate()}
-                    />
-                }
-            </Activator>
-            <Usage/>
-        </React.Fragment>
-    )
+class _UsageButton extends React.Component {
+    render() {
+        return (
+            <React.Fragment>
+                <Usage/>
+                {this.renderButton()}
+            </React.Fragment>
+        )
+    }
+
+    renderButton() {
+        const {userReport, hasBudget, budgetExceeded, budgetWarning, activator: {activatables: {userReport: {active, activate}}}} = this.props
+        const hourlySpending = userReport.sessions
+            ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
+            : 0
+        const label = hasBudget && budgetExceeded
+            ? msg('home.sections.user.report.budgetExceeded')
+            : format.unitsPerHour(hourlySpending)
+        const additionalClassName = hasBudget
+            ? budgetExceeded
+                ? styles.budgetExceeded
+                : budgetWarning
+                    ? styles.budgetWarning
+                    : null
+            : null
+
+        return (
+            <Button
+                chromeless
+                look='transparent'
+                size='large'
+                air='less'
+                additionalClassName={additionalClassName}
+                icon='dollar-sign'
+                label={label}
+                disabled={active}
+                tooltip={msg('home.sections.user.report.tooltip')}
+                tooltipPlacement='top'
+                tooltipDisabled={active}
+                onClick={activate}
+            />
+
+        )
+    }
 }
 
 export const UsageButton = compose(
@@ -157,5 +164,6 @@ export const UsageButton = compose(
         hasBudget: select('user.hasBudget'),
         budgetExceeded: select('user.budgetExceeded'),
         budgetWarning: select('user.budgetWarning'),
-    }))
+    })),
+    withActivators('userReport')
 )

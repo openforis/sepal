@@ -1,10 +1,10 @@
 import {Subject, merge, timer} from 'rxjs'
 import {compose} from 'compose'
 import {withMapsContext} from './maps'
+import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
 import React from 'react'
 import styles from './staticMap.module.css'
-import withSubscriptions from 'subscription'
 
 const MIN_ZOOM = 0
 const MAX_ZOOM = 5

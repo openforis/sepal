@@ -16,13 +16,13 @@ import {connect, select} from 'store'
 import {getAllVisualizations, getUserDefinedVisualizations} from './visualizations'
 import {getRecipeType} from '../recipeTypes'
 import {selectFrom} from 'stateUtils'
-import {withMapAreaContext} from 'app/home/map/mapAreaContext'
-import {withTabContext} from 'widget/tabs/tabContext'
+import {withMapArea} from 'app/home/map/mapAreaContext'
+import {withSubscriptions} from 'subscription'
+import {withTab} from 'widget/tabs/tabContext'
 import EarthEngineImageLayer from 'app/home/map/layer/earthEngineImageLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import withSubscriptions from 'subscription'
 
 const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}}) => ({
     sourceId: id,
@@ -163,7 +163,7 @@ class _RecipeImageLayer extends React.Component {
     }
 
     createLayer() {
-        const {recipe, layerConfig, map, boundsChanged$, dragging$, cursor$, busy$} = this.props
+        const {recipe, layerConfig, map, boundsChanged$, dragging$, cursor$, tab: {busy$}} = this.props
         const recipes = [recipe, ...getDependentRecipes(recipe)]
         const availableBands = getRecipeType(recipe.type).getAvailableBands(recipe)
         const dataTypes = _.mapValues(availableBands, 'dataType')
@@ -192,7 +192,7 @@ class _RecipeImageLayer extends React.Component {
     }
 
     selectVisualization(visParams) {
-        const {layerConfig, mapAreaContext: {updateLayerConfig}} = this.props
+        const {layerConfig, mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({...layerConfig, visParams})
     }
 }
@@ -208,8 +208,8 @@ const getDependentRecipes = recipe =>
 export const RecipeImageLayer = compose(
     _RecipeImageLayer,
     connect(mapStateToProps),
-    withMapAreaContext(),
-    withTabContext(),
+    withMapArea(),
+    withTab(),
     withSubscriptions()
 )
 

@@ -1,14 +1,14 @@
-import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import {Item} from 'widget/item'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {msg} from 'translate'
 import {recipePath} from '../body/process/recipe'
+import {withActivatable} from 'widget/activation/activatable'
+import {withActivators} from 'widget/activation/activator'
 import {withLayers} from '../body/process/withLayers'
 import {withRecipe} from '../body/process/recipeContext'
 import FloatingBox from 'widget/floatingBox'
@@ -115,7 +115,7 @@ const MapAreaMenuPanel = compose(
     _MapAreaMenuPanel,
     withLayers(),
     withRecipe(recipe => ({recipe})),
-    activatable({
+    withActivatable({
         id: ({area}) => `mapAreaMenu-${area}`,
         policy,
         alwaysAllow: true
@@ -135,26 +135,19 @@ class _MapAreaMenu extends React.Component {
     }
 
     renderButton() {
-        const {area} = this.props
+        const {activator: {activatables: {mapAreaMenu: {active, canActivate, toggle}}}} = this.props
         return (
-            <Activator id={`mapAreaMenu-${area}`}>
-                {activator => {
-                    const {activate, deactivate, active, canActivate} = activator
-                    return (
-                        <div className={styles.buttonContainer} ref={this.ref}>
-                            <Button
-                                look='default'
-                                shape='pill'
-                                icon='bars'
-                                disabled={!canActivate && !active}
-                                tooltip={this.getImageLayerSourceDescription()}
-                                tooltipDisabled={active}
-                                onClick={() => active ? deactivate() : activate()}
-                            />
-                        </div>
-                    )
-                }}
-            </Activator>
+            <div className={styles.buttonContainer} ref={this.ref}>
+                <Button
+                    look='default'
+                    shape='pill'
+                    icon='bars'
+                    disabled={!canActivate && !active}
+                    tooltip={this.getImageLayerSourceDescription()}
+                    tooltipDisabled={active}
+                    onClick={toggle}
+                />
+            </div>
         )
     }
 
@@ -180,6 +173,9 @@ class _MapAreaMenu extends React.Component {
 
 export const MapAreaMenu = compose(
     _MapAreaMenu,
+    withActivators({
+        mapAreaMenu: ({area}) => `mapAreaMenu-${area}`
+    }),
     withLayers(),
     withRecipe(recipe => ({recipe}))
 )

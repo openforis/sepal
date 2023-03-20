@@ -1,9 +1,9 @@
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './droppable.module.css'
-import withSubscriptions from 'subscription'
 
 class _Droppable extends React.Component {
     state = {

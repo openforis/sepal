@@ -36,22 +36,27 @@ const Footer = ({className}) => {
 
 Footer.propTypes = {}
 
-const _Logout = ({stream}) =>
-    <Button
-        chromeless
-        look='transparent'
-        size='large'
-        air='less'
-        icon='sign-out-alt'
-        tooltip={msg('home.sections.logout')}
-        tooltipPlacement='top'
-        onClick={() => stream('LOGOUT', logout$())}
-    />
+const _Logout = ({stream}) => {
+    const logout = () => stream('LOGOUT', logout$())
+    return (
+        <Button
+            chromeless
+            look='transparent'
+            size='large'
+            air='less'
+            icon='sign-out-alt'
+            tooltip={msg('home.sections.logout')}
+            tooltipPlacement='top'
+            onClick={logout}
+        />
+    )
+}
 
 const Logout = compose(
     _Logout,
     connect()
 )
+
 const Title = () => {
     const wikiURL = 'https://github.com/openforis/sepal'
     const buildNumber = window._sepal_global_.buildNumber
@@ -62,6 +67,12 @@ const Title = () => {
         clipboard.copy(value)
         Notifications.success({message})
     }
+
+    const copyBuildNumber = () =>
+        copyToClipboard(buildNumber, msg('footer.buildNumberCopied'))
+
+    const copyGitCommit = () =>
+        copyToClipboard(gitCommit, msg('footer.gitCommitCopied'))
 
     const tooltip =
         <Layout type='vertical' spacing='none'>
@@ -81,7 +92,7 @@ const Title = () => {
                         shape='circle'
                         icon='copy'
                         disabled={!buildNumber}
-                        onClick={() => copyToClipboard(buildNumber, msg('footer.buildNumberCopied'))}
+                        onClick={copyBuildNumber}
                     />
                 </ButtonGroup>
             </Layout>
@@ -101,7 +112,7 @@ const Title = () => {
                         shape='circle'
                         icon='copy'
                         disabled={!gitCommit}
-                        onClick={() => copyToClipboard(gitCommit, msg('footer.gitCommitCopied'))}
+                        onClick={copyGitCommit}
                     />
                 </ButtonGroup>
             </Layout>

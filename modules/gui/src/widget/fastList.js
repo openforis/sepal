@@ -2,11 +2,11 @@ import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Layout} from './layout'
 import {Subject, animationFrames, distinctUntilChanged, fromEvent, map, mergeWith, switchMap, takeUntil, timer} from 'rxjs'
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './fastList.module.css'
-import withSubscriptions from 'subscription'
 
 class _FastList extends React.PureComponent {
     resize$ = new Subject()
@@ -25,7 +25,6 @@ class _FastList extends React.PureComponent {
         super(props)
         this.initScrollable = this.initScrollable.bind(this)
         this.renderItem = this.renderItem.bind(this)
-        this.onResize = this.onResize.bind(this)
     }
     
     render() {
@@ -67,7 +66,7 @@ class _FastList extends React.PureComponent {
     renderList() {
         const {firstVisibleItem, lastVisibleItem, marginTop, marginBottom} = this.state
         return (
-            <ElementResizeDetector onResize={this.onResize}>
+            <ElementResizeDetector resize$={this.resize$}>
                 <div
                     ref={this.initScrollable}
                     className={styles.container}>
@@ -133,10 +132,6 @@ class _FastList extends React.PureComponent {
             )
             this.reset(element)
         }
-    }
-
-    onResize() {
-        this.resize$.next(true)
     }
 
     reset(element) {

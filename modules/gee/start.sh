@@ -13,7 +13,6 @@ then
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9232 \
     src/main.js \
-    --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
     --gee-email "$EE_ACCOUNT" \
     --gee-key "$EE_PRIVATE_KEY" \
     --sepal-endpoint "$SEPAL_ENDPOINT" \
@@ -23,7 +22,6 @@ else
   echo "Starting node"
   exec node \
     src/main.js \
-    --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
     --gee-email "$EE_ACCOUNT" \
     --gee-key "$EE_PRIVATE_KEY" \
     --sepal-endpoint "$SEPAL_ENDPOINT" \

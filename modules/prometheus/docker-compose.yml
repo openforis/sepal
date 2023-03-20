@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  prometheus:
+    build:
+      context: ../..
+      dockerfile: ./modules/prometheus/prometheus.dockerfile
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/prometheus:${SEPAL_VERSION:-latest}"
+    container_name: prometheus
+    ports:
+    - 9090:9090
+    environment:
+      - TARGET_USERNAME=sepalAdmin
+      - TARGET_PASSWORD=${SEPAL_ADMIN_PASSWORD}
+      - SEPAL_HOST=${SEPAL_HOST}
+    volumes:
+      - ${SEPAL_PROJECT_DIR}/modules/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - "${SEPAL_DATA_DIR}/prometheus:/prometheus"
+    depends_on:
+    - cadvisor
+    networks:
+      - sepal
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - 8080:8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - sepal
+
+networks:
+  sepal:
+    external: true
+    name: sepal

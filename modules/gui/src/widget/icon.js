@@ -63,12 +63,14 @@ export default class Icon extends React.Component {
         ])
         const icon = [fontAwesomeCollection(type || 'solid'), name]
         return (
-            <FontAwesomeIcon
-                icon={icon}
-                size={size}
-                className={this.classNames()}
-                {...filteredAttributes}
-            />
+            <span>
+                <FontAwesomeIcon
+                    icon={icon}
+                    size={size}
+                    className={this.classNames()}
+                    {...filteredAttributes}
+                />
+            </span>
         )
     }
 }

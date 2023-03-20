@@ -1,18 +1,18 @@
 import {compose} from 'compose'
 import {delay, distinctUntilChanged, filter, fromEvent, map, merge, switchMap} from 'rxjs'
 import {withContext} from 'context'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './blurDetector.module.css'
 import withForwardedRef from 'ref'
-import withSubscriptions from 'subscription'
 
 const ANIMATION_DURATION_MS = 500
 
 const BlurDetectorContext = React.createContext()
 
-const withBlurDetectorContext = withContext(BlurDetectorContext, 'blurDetectorContext')
+const withBlurDetector = withContext(BlurDetectorContext, 'blurDetector')
 
 const isOver = (e, element) => {
     return element.contains(e.target)
@@ -28,6 +28,7 @@ class BlurDetector extends React.Component {
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
+        this.checkEnabled = this.checkEnabled.bind(this)
         this.isEnabled = this.isEnabled.bind(this)
         this.onBlur = this.onBlur.bind(this)
         this.blurStart = this.blurStart.bind(this)
@@ -46,13 +47,17 @@ class BlurDetector extends React.Component {
                 ].join(' ')}
                 style={{...style, '--animation-duration-ms': ANIMATION_DURATION_MS}}
                 onClick={onClick}>
-                <BlurDetectorContext.Provider value={{enabled: enabled => this.enabled = enabled}}>
+                <BlurDetectorContext.Provider value={{enabled: this.checkEnabled}}>
                     {children}
                 </BlurDetectorContext.Provider>
             </div>
         )
     }
 
+    checkEnabled(enabled) {
+        return this.enabled = enabled
+    }
+    
     blurStart() {
         this.setState({fadeOut: true})
     }
@@ -119,9 +124,9 @@ class BlurDetector extends React.Component {
     }
 
     setEnabled(enabled) {
-        const {blurDetectorContext} = this.props
-        if (blurDetectorContext) {
-            blurDetectorContext.enabled(enabled)
+        const {blurDetector} = this.props
+        if (blurDetector) {
+            blurDetector.enabled(enabled)
         }
     }
 
@@ -149,7 +154,7 @@ class BlurDetector extends React.Component {
 
 export default compose(
     BlurDetector,
-    withBlurDetectorContext(),
+    withBlurDetector(),
     withSubscriptions(),
     withForwardedRef(),
 )

@@ -1,9 +1,9 @@
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
-import {activator} from 'widget/activation/activator'
 import {closeRecipe} from './recipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {withActivatable} from 'widget/activation/activatable'
+import {withActivators} from 'widget/activation/activator'
 import React from 'react'
 import styles from './closeRecipe.module.css'
 
@@ -62,6 +62,6 @@ const policy = () => ({
 
 export default compose(
     CloseRecipe,
-    activator('saveRecipeDialog'),
-    activatable({id: 'closeRecipeDialog', policy})
+    withActivators('saveRecipeDialog'),
+    withActivatable({id: 'closeRecipeDialog', policy})
 )

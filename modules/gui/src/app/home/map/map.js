@@ -19,16 +19,19 @@ import {msg} from 'translate'
 import {recipePath} from '../body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import {v4 as uuid} from 'uuid'
+import {withEnableDetector} from 'enabled'
 import {withLayers} from '../body/process/withLayers'
 import {withMapsContext} from './maps'
 import {withRecipe} from '../body/process/recipeContext'
+import {withSubscriptions} from 'subscription'
 import MapToolbar from './mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import styles from './map.module.css'
-import withSubscriptions from 'subscription'
+
+// _.memoize.Cache = WeakMap
 
 const log = getLogger('map')
 
@@ -79,6 +82,38 @@ class _Map extends React.Component {
         this.setAreaMarker = this.setAreaMarker.bind(this)
         this.addOneShotClickListener = this.addOneShotClickListener.bind(this)
         this.removeMap = this.removeMap.bind(this)
+        this.fit = this.fit.bind(this)
+        this.canFit = this.canFit.bind(this)
+        this.addOneShotClickListener = this.addOneShotClickListener.bind(this)
+        this.removeMarker = this.removeMarker.bind(this)
+        this.memoizedMapDelegate = _.memoize(this.getMapDelegate)
+    }
+
+    getMapDelegate(map) {
+        return map && ({
+            view$: this.filteredViewUpdates$,
+            linked$: this.linked$,
+            scrollWheelEnabled$: this.scrollWheelEnabled$,
+            zoomIn: map.zoomIn,
+            zoomOut: map.zoomOut,
+            setZoom: map.setZoom,
+            getZoom: map.getZoom,
+            setView: map.setView,
+            fitBounds: map.fitBounds,
+            getBounds: map.getBounds,
+            getGoogle: map.getGoogle,
+            toggleLinked: this.toggleLinked,
+            enableZoomArea: this.enableZoomArea,
+            disableZoomArea: this.disableZoomArea,
+            isZoomArea: this.isZoomArea,
+            canFit: this.canFit,
+            fit: this.fit,
+            addOneShotClickListener: this.addOneShotClickListener,
+            enablePolygonDrawing: this.enablePolygonDrawing,
+            disablePolygonDrawing: this.disablePolygonDrawing,
+            setLocationMarker: this.setLocationMarker,
+            setAreaMarker: this.setAreaMarker
+        })
     }
 
     isInitialized() {
@@ -533,6 +568,7 @@ class _Map extends React.Component {
                 }}>
                     {imageLayerSourceComponents}
                     <SplitView
+                        className={styles.view}
                         areas={this.renderAreas()}
                         overlay={this.renderOverlay()}
                         mode={layers.mode}
@@ -593,11 +629,11 @@ class _Map extends React.Component {
     }
 
     renderRecipe() {
-        const {recipeContext: {statePath}, children} = this.props
+        const {recipeStatePath, children} = this.props
         return (
             <SectionLayout>
                 <Content className={styles.recipe}>
-                    <MapToolbar statePath={[statePath, 'ui']}/>
+                    <MapToolbar statePath={[recipeStatePath, 'ui']}/>
                     <MapInfo/>
                     <LegendImport/>
                     {children}
@@ -665,7 +701,7 @@ class _Map extends React.Component {
     }
 
     componentDidMount() {
-        const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
+        const {mapsContext: {createMapContext}, enableDetector: {onEnable, onDisable}} = this.props
         const {mapId, googleMapsApiKey, nicfiPlanetApiKey, view$, updateView$, linked$, scrollWheelEnabled$} = createMapContext()
         this.setLinked(getProcessTabsInfo().single)
         this.scrollWheelEnabled$ = scrollWheelEnabled$
@@ -721,39 +757,24 @@ class _Map extends React.Component {
         )
     }
 
-    mapDelegate() {
+    fit() {
         const {bounds} = this.props
         const {maps: mapById} = this.state
         const maps = Object.values(mapById).map(({map}) => map)
         const map = maps[0]
+        map.fitBounds(bounds)
+    }
 
-        const isInitialized = () => bounds
+    canFit() {
+        const {bounds} = this.props
+        return !!bounds
+    }
 
-        return {
-            view$: this.filteredViewUpdates$,
-            linked$: this.linked$,
-            scrollWheelEnabled$: this.scrollWheelEnabled$,
-            toggleLinked: this.toggleLinked,
-            zoomIn: () => map.zoomIn(),
-            zoomOut: () => map.zoomOut(),
-            enableZoomArea: this.enableZoomArea,
-            disableZoomArea: this.disableZoomArea,
-            isZoomArea: this.isZoomArea,
-            canFit: () => isInitialized(),
-            fit: () => map.fitBounds(bounds),
-            setZoom: zoom => map.setZoom(zoom),
-            getZoom: () => map.getZoom(),
-            setView: view => map.setView(view),
-            fitBounds: bounds => map.fitBounds(bounds),
-            getBounds: () => map.getBounds(),
-            addOneShotClickListener: this.addOneShotClickListener,
-            enablePolygonDrawing: this.enablePolygonDrawing,
-            disablePolygonDrawing: this.disablePolygonDrawing,
-            setLocationMarker: this.setLocationMarker,
-            setAreaMarker: this.setAreaMarker,
-            removeMarker: this.removeMarker,
-            getGoogle: () => map.getGoogle()
-        }
+    mapDelegate() {
+        const {maps: mapById} = this.state
+        const maps = Object.values(mapById).map(({map}) => map)
+        const map = maps[0]
+        return this.memoizedMapDelegate(map)
     }
 }
 
@@ -763,7 +784,8 @@ export const Map = compose(
     withMapsContext(),
     withLayers(),
     withRecipe(mapRecipeToProps),
-    withSubscriptions()
+    withSubscriptions(),
+    withEnableDetector()
 )
 
 Map.propTypes = {

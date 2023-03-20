@@ -1,13 +1,13 @@
 import {EMPTY, Subject, animationFrames, debounceTime, distinctUntilChanged, fromEvent, map, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs'
 import {compose} from 'compose'
 import {v4 as uuid} from 'uuid'
+import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
 import flexy from './flexy.module.css'
 import styles from './scrollable.module.css'
-import withSubscriptions from 'subscription'
 
 const ScrollableContainerContext = React.createContext()
 
@@ -73,19 +73,24 @@ class _Scrollable extends Component {
         key: null
     }
 
+    constructor() {
+        super()
+        this.renderScrollable = this.renderScrollable.bind(this)
+    }
+
     render() {
         return (
             <ScrollableContainerContext.Consumer>
-                {({height}) => this.renderScrollable(height)}
+                {this.renderScrollable}
             </ScrollableContainerContext.Consumer>
         )
     }
 
-    renderScrollable(containerHeight) {
+    renderScrollable({height}) {
         const {className, direction, children} = this.props
         const {key} = this.state
         const scrollable = {
-            containerHeight,
+            containerHeight: height,
             getOffset: (direction = 'y') => this.getOffset(direction),
             getContainerHeight: this.getContainerHeight.bind(this),
             getClientHeight: this.getClientHeight.bind(this),
@@ -276,14 +281,23 @@ Scrollable.propTypes = {
 
 export const withScrollable = () =>
     WrappedComponent =>
-        class HigherOrderComponent extends React.Component {
+        class WithScrollableHOC extends React.Component {
+            constructor() {
+                super()
+                this.renderScrollable = this.renderScrollable.bind(this)
+            }
+
             render() {
                 return (
                     <ScrollableContext.Consumer>
-                        {scrollable =>
-                            <WrappedComponent {...this.props} scrollable={scrollable}/>
-                        }
+                        {this.renderScrollable}
                     </ScrollableContext.Consumer>
+                )
+            }
+
+            renderScrollable(scrollable) {
+                return (
+                    <WrappedComponent {...this.props} scrollable={scrollable}/>
                 )
             }
         }

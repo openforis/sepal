@@ -9,7 +9,7 @@ const log = getLogger('recaptcha')
 
 const Context = React.createContext()
 
-export const withRecaptchaContext = withContext(Context, 'recaptchaContext')
+export const withRecaptcha = withContext(Context, 'recaptcha')
 
 export class Recaptcha extends React.Component {
     state = {

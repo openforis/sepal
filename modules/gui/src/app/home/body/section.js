@@ -1,4 +1,4 @@
-import {Enabled} from 'store'
+import {Enabled} from 'enabled'
 import {PortalContainer, PortalContext} from 'widget/portal'
 import {isPathInLocation} from 'route'
 import PropTypes from 'prop-types'
@@ -43,7 +43,7 @@ export class Section extends React.Component {
         const portalContainerId = `portal_selectable_${path}`
         return (
             <Enabled
-                value={active}
+                enabled={active}
                 enabledClassName={styles.enabled}
                 disabledClassName={styles.disabled}>
                 <PortalContext id={portalContainerId}>

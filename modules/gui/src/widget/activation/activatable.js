@@ -1,9 +1,9 @@
-import {Activator} from './activator'
 import {collectActivatables} from 'widget/activation/activation'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {shouldDeactivate} from 'widget/activation/activationPolicy'
 import {withActivationContext} from 'widget/activation/activationContext'
+import {withActivators} from './activator'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -15,13 +15,27 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class _Activatable extends React.Component {
+    constructor() {
+        super()
+        this.renderActivator = this.renderActivator.bind(this)
+    }
+
     render() {
-        const {id, activatables, children} = this.props
+        const {id, activatables} = this.props
         const currentActivatable = activatables[id] || {}
         return currentActivatable.active
-            ? <Activator
-                id={id}>{activatorProps => children({...this.props, ...activatorProps, ...currentActivatable.activationProps})}</Activator>
+            ? this.renderActivator()
             : null
+    }
+
+    renderActivator() {
+        const {id, activatables, children, activator: {activatables: {activatable: {deactivate}}}} = this.props
+        const {activationProps} = activatables[id] || {}
+        return children({
+            ...this.props,
+            ...activationProps,
+            deactivate
+        })
     }
 
     componentDidMount() {
@@ -72,32 +86,44 @@ class _Activatable extends React.Component {
     }
 }
 
-export const Activatable = compose(
+const Activatable = compose(
     _Activatable,
     connect(mapStateToProps),
-    withActivationContext()
+    withActivationContext(),
+    withActivators({
+        activatable: ({id}) => id
+    })
 )
 
 Activatable.propTypes = {
     children: PropTypes.func.isRequired,
     id: PropTypes.string.isRequired,
+    alwaysAllow: PropTypes.any,
     policy: PropTypes.func
 }
 
-export const activatable = ({id, policy, alwaysAllow}) =>
+export const withActivatable = ({id, policy, alwaysAllow}) =>
     WrappedComponent =>
-        class HigherOrderComponent extends React.Component {
+        class ActivatableHOC extends React.Component {
+            constructor() {
+                super()
+                this.renderActivatable = this.renderActivatable.bind(this)
+            }
+
             render() {
                 const activatableId = _.isFunction(id) ? id(this.props) : id
                 return (
-                    <Activatable id={activatableId} policy={policy} alwaysAllow={alwaysAllow} otherProps={this.props}>
-                        {activatable =>
-                            React.createElement(
-                                WrappedComponent,
-                                {activatable, ...this.props}
-                            )
-                        }
+                    <Activatable
+                        id={activatableId}
+                        policy={policy}
+                        alwaysAllow={alwaysAllow}
+                        otherProps={this.props}>
+                        {this.renderActivatable}
                     </Activatable>
                 )
+            }
+
+            renderActivatable(activatable) {
+                return React.createElement(WrappedComponent, {activatable, ...this.props})
             }
         }

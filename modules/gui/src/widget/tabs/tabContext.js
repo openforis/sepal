@@ -2,14 +2,14 @@ import {Subject, finalize} from 'rxjs'
 import {compose} from 'compose'
 import {v4 as uuid} from 'uuid'
 import {withContext} from 'context'
+import {withSubscriptions} from 'subscription'
 import React from 'react'
-import withSubscriptions from 'subscription'
 
 export const TabContext = React.createContext()
 
-export const withTabContext = () =>
+export const withTab = () =>
     WrappedComponent => compose(
-        class HigherOrderComponent extends React.Component {
+        class WithTabContextHOC extends React.Component {
             constructor(props) {
                 super(props)
                 this.busy$ = this.createBusy$()
@@ -18,13 +18,13 @@ export const withTabContext = () =>
             render() {
                 const props = {
                     ...this.props,
-                    busy$: this.busy$
+                    tab: {busy$: this.busy$}
                 }
                 return React.createElement(WrappedComponent, props)
             }
 
             createBusy$() {
-                const {tabContext: {id, busy$}, addSubscription} = this.props
+                const {tab: {id, busy$}, addSubscription} = this.props
                 const label = uuid()
                 const busyTab$ = new Subject()
                 const setBusy = busy => busy$.next({id, label, busy})
@@ -40,6 +40,6 @@ export const withTabContext = () =>
                 return busyTab$
             }
         },
-        withContext(TabContext, 'tabContext')(),
+        withContext(TabContext, 'tab')(),
         withSubscriptions()
     )

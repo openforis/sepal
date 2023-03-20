@@ -5,14 +5,14 @@ import {VisualizationSelector} from './visualizationSelector'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withMapAreaContext} from '../mapAreaContext'
+import {withMapArea} from '../mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import {withTabContext} from 'widget/tabs/tabContext'
+import {withSubscriptions} from 'subscription'
+import {withTab} from 'widget/tabs/tabContext'
 import EarthEngineImageLayer from '../layer/earthEngineImageLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import withSubscriptions from 'subscription'
 
 const mapRecipeToProps = (recipe, ownProps) => {
     const {source} = ownProps
@@ -68,7 +68,7 @@ class _AssetImageLayer extends React.Component {
     }
 
     selectFirstVisualization() {
-        const {source, userDefinedVisualizations, layerConfig: {visParams} = {}, mapAreaContext: {updateLayerConfig}} = this.props
+        const {source, userDefinedVisualizations, layerConfig: {visParams} = {}, mapArea: {updateLayerConfig}} = this.props
         const allVisualizations = [...userDefinedVisualizations, ...(selectFrom(source, 'sourceConfig.visualizations') || [])]
         if (allVisualizations.length && (!visParams || !allVisualizations.find(({id}) => id === visParams.id))) {
             const firstVisParams = allVisualizations[0]
@@ -79,11 +79,6 @@ class _AssetImageLayer extends React.Component {
         }
     }
 
-    setBusy(name, busy) {
-        const {tabContext: {setBusy}, componentId} = this.props
-        setBusy(`${name}-${componentId}`, busy)
-    }
-
     maybeCreateLayer() {
         const {layerConfig, map} = this.props
         return map && layerConfig && layerConfig.visParams
@@ -92,7 +87,7 @@ class _AssetImageLayer extends React.Component {
     }
 
     createLayer() {
-        const {layerConfig, map, source, boundsChanged$, dragging$, cursor$, busy$} = this.props
+        const {layerConfig, map, source, boundsChanged$, dragging$, cursor$, tab: {busy$}} = this.props
         const asset = selectFrom(source, 'sourceConfig.asset')
         const dataTypes = selectFrom(source, 'sourceConfig.metadata.dataTypes') || {}
         const {watchedProps: prevPreviewRequest} = this.layer || {}
@@ -125,8 +120,8 @@ export const AssetImageLayer = compose(
     _AssetImageLayer,
     withSubscriptions(),
     withRecipe(mapRecipeToProps),
-    withMapAreaContext(),
-    withTabContext()
+    withMapArea(),
+    withTab()
 )
 
 AssetImageLayer.propTypes = {

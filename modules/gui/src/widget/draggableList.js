@@ -1,10 +1,10 @@
 import {Draggable} from './draggable'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import withSubscriptions from 'subscription'
 
 class _DraggableList extends React.Component {
     drag$ = new Subject()

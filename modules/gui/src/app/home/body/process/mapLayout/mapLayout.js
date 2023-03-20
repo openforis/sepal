@@ -7,11 +7,11 @@ import {SelectAsset} from './selectAsset'
 import {SelectPlanet} from './selectPlanet'
 import {SelectRecipe} from './selectRecipe'
 import {Subject} from 'rxjs'
-import {activatable} from 'widget/activation/activatable'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {withActivatable} from 'widget/activation/activatable'
+import {withActivators} from 'widget/activation/activator'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 import styles from './mapLayout.module.css'
@@ -119,12 +119,12 @@ const policy = () => ({
 export const MapLayoutPanel = compose(
     _MapLayoutPanel,
     withRecipe(mapRecipeToProps),
-    activatable({
+    withActivatable({
         id: 'mapLayout',
         policy,
         alwaysAllow: true
     }),
-    activator('addImageLayerSource')
+    withActivators('addImageLayerSource')
 )
 
 MapLayout.propTypes = {}

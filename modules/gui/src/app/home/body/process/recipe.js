@@ -2,6 +2,7 @@ import {Subject, debounceTime, groupBy, map, mergeMap, switchMap} from 'rxjs'
 import {addTab, closeTab} from 'widget/tabs/tabs'
 import {compose} from 'compose'
 import {connect, select, subscribe} from 'store'
+import {deserialize, serialize} from 'serialize'
 import {downloadObjectZip$} from 'widget/download'
 import {gzip$, ungzip$} from 'gzip'
 import {msg} from 'translate'
@@ -170,7 +171,7 @@ export const closeRecipe = id =>
 export const exportRecipe$ = recipe =>
     downloadObjectZip$({
         filename: `${recipe.title || recipe.placeholder}.json`,
-        data: JSON.stringify(_.omit(recipe, ['ui']), null, 2)
+        data: serialize(_.omit(recipe, ['ui']))
     })
 
 export const loadProjects$ = () =>
@@ -292,7 +293,7 @@ subscribe('process.loadedRecipes', loadedRecipes => {
     }
 })
 
-const uncompressRecipe$ = compressedRecipe => JSON.parse(ungzip$(compressedRecipe))
+const uncompressRecipe$ = compressedRecipe => deserialize(ungzip$(compressedRecipe))
 
 export const getRevisions = recipeId =>
     _(localStorage)

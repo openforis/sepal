@@ -2,6 +2,7 @@ import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Graph} from 'widget/graph'
 import {animationFrames, distinctUntilChanged, filter, fromEvent, map, merge, scan, switchMap} from 'rxjs'
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import Hammer from 'hammerjs'
 import Icon from 'widget/icon'
 import Portal from 'widget/portal'
@@ -9,7 +10,6 @@ import React from 'react'
 import _ from 'lodash'
 import format from 'format'
 import styles from './histogram.module.css'
-import withSubscriptions from 'subscription'
 
 const DEFAULT_STRETCH = 99.9
 const MIN_STEPS = 40

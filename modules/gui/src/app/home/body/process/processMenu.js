@@ -1,8 +1,8 @@
-import {Activator, activator} from 'widget/activation/activator'
 import {Msg, msg} from 'translate'
 import {RecipeState, duplicateRecipe, exportRecipe$} from './recipe'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {withActivators} from 'widget/activation/activator'
 import Menu, {MenuItem} from 'widget/menu'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -16,19 +16,24 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class ProcessMenu extends React.Component {
+    constructor() {
+        super()
+        this.duplicateRecipe = this.duplicateRecipe.bind(this)
+        this.exportRecipe = this.exportRecipe.bind(this)
+    }
+
     render() {
         const {recipe} = this.props
         if (recipe && recipe.type && recipe.ui.initialized) {
-            const unsaved = this.isRecipeUnsaved()
             return (
                 <Menu>
-                    {unsaved
+                    {this.isRecipeUnsaved()
                         ? this.renderUnsavedRecipeItems()
                         : this.renderSavedRecipeItems()}
-                    <MenuItem onSelect={() => duplicateRecipe(this.props.recipe)}>
+                    <MenuItem onSelect={this.duplicateRecipe}>
                         <Msg id='process.menu.duplicateRecipe.label'/>
                     </MenuItem>
-                    <MenuItem onSelect={() => this.exportRecipe(recipe)}>
+                    <MenuItem onSelect={this.exportRecipe}>
                         <Msg id='process.menu.exportRecipe'/>
                     </MenuItem>
                 </Menu>
@@ -48,20 +53,22 @@ class ProcessMenu extends React.Component {
     }
 
     renderSavedRecipeItems() {
+        const {activator: {activatables: {revisions: {activate}}}} = this.props
         return (
-            <Activator id='revisions'>
-                {({activate}) =>
-                    <MenuItem onSelect={() => activate()}>
-                        <Msg id='process.menu.revertToOldRevision'/>
-                    </MenuItem>
-                }
-            </Activator>
+            <MenuItem onSelect={activate}>
+                <Msg id='process.menu.revertToOldRevision'/>
+            </MenuItem>
         )
     }
 
     isRecipeUnsaved() {
         const {recipe, recipes} = this.props
         return !(recipes && recipes.find(saved => saved.id === recipe.id))
+    }
+
+    duplicateRecipe() {
+        const {recipe} = this.propTypes
+        duplicateRecipe(recipe)
     }
 
     exportRecipe() {
@@ -78,5 +85,5 @@ class ProcessMenu extends React.Component {
 export default compose(
     ProcessMenu,
     connect(mapStateToProps),
-    activator('saveRecipeDialog')
+    withActivators('saveRecipeDialog', 'revisions')
 )

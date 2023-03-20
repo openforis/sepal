@@ -4,12 +4,12 @@ import {ListItem} from 'widget/listItem'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {RecipeListConfirm} from './recipeListConfirm'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {map, switchMap, tap} from 'rxjs'
 import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'
+import {withActivatable} from 'widget/activation/activatable'
 import Notifications from 'widget/notifications'
 import Project from './project'
 import PropTypes from 'prop-types'
@@ -239,7 +239,7 @@ export const updateProject = project =>
 export const Projects = compose(
     _Projects,
     connect(mapStateToProps),
-    activatable({id: 'projects', policy, alwaysAllow: true})
+    withActivatable({id: 'projects', policy, alwaysAllow: true})
 )
 
 Projects.propTypes = {

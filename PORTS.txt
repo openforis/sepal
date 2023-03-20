@@ -3,6 +3,7 @@ Modules
     5011: app-manager
     8001: gateway
     5001: gee
+    6001: email
     80, 443: haproxy
     389, 636: ldap
     80: letsencrypt
@@ -14,6 +15,11 @@ Modules
     8000: terminal
     80, 5006: user
     5999: user-files
+    8980: mysql-admin
+    7001: sys-monitor
+    8001: user-storage
+    9293: docker metrics
+    9090: prometheus
 
 Node debug
 

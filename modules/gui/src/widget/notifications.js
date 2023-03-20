@@ -1,17 +1,17 @@
 import {Subject, delay, filter, map, merge, mergeMap, scan, takeWhile, timer} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {simplehash as hash} from 'hash'
 import {msg} from 'translate'
 import {publishError} from 'eventPublisher'
 import {v4 as uuid} from 'uuid'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
+import hash from 'object-hash'
 import styles from './notifications.module.css'
-import withSubscriptions from 'subscription'
 
-const PATH = 'Notifications'
+const PATH = 'notifications'
 const PUBLISH_ANIMATION_DURATION_MS = 250
 const DISMISS_ANIMATION_DURATION_MS = 250
 

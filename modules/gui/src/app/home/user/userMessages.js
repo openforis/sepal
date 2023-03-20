@@ -1,4 +1,3 @@
-import {Activator, activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
@@ -7,10 +6,11 @@ import {Markdown} from 'widget/markdown'
 import {Msg, msg} from 'translate'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {v4 as uuid} from 'uuid'
+import {withActivators} from 'widget/activation/activator'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -274,7 +274,7 @@ const policy = () => ({_: 'disallow'})
 const UserMessages = compose(
     _UserMessages,
     connect(mapStateToProps),
-    activatable({id: 'userMessages', policy, alwaysAllow: true})
+    withActivatable({id: 'userMessages', policy, alwaysAllow: true})
 )
 
 UserMessages.propTypes = {
@@ -287,28 +287,30 @@ class _UserMessagesButton extends React.Component {
     }
 
     render() {
-        const {unreadUserMessages} = this.props
         return (
             <React.Fragment>
                 <UserMessages/>
-                <Activator id='userMessages'>
-                    {({active, activate}) =>
-                        <Button
-                            chromeless
-                            look='transparent'
-                            size='large'
-                            air='less'
-                            icon='bell'
-                            iconAttributes={{fade: unreadUserMessages > 0}}
-                            disabled={active}
-                            tooltip={msg('home.sections.user.messages')}
-                            tooltipPlacement='top'
-                            tooltipDisabled={active}
-                            onClick={() => activate()}
-                        />
-                    }
-                </Activator>
+                {this.renderButton()}
             </React.Fragment>
+        )
+    }
+
+    renderButton() {
+        const {unreadUserMessages, activator: {activatables: {userMessages: {active, activate}}}} = this.props
+        return (
+            <Button
+                chromeless
+                look='transparent'
+                size='large'
+                air='less'
+                icon='bell'
+                iconAttributes={{fade: unreadUserMessages > 0}}
+                disabled={active}
+                tooltip={msg('home.sections.user.messages')}
+                tooltipPlacement='top'
+                tooltipDisabled={active}
+                onClick={activate}
+            />
         )
     }
 
@@ -327,5 +329,5 @@ export const UserMessagesButton = compose(
     connect(state => ({
         unreadUserMessages: unreadMessagesCount(state.user.userMessages)
     })),
-    activator('userMessages')
+    withActivators('userMessages')
 )
