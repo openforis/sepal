@@ -10,8 +10,8 @@ const worker$ = ({asset, recipe}) => {
     const handleError$ = error =>
         ee.getAsset$(asset, 0).pipe(
             catchError(() => of(null)),
-            switchMap(asset => {
-                return throwError(
+            switchMap(asset =>
+                throwError(
                     () => asset
                         ? asset.type === 'Image'
                             ? new EEException('Failed to load asset.', {
@@ -39,7 +39,6 @@ const worker$ = ({asset, recipe}) => {
                             }
                         })
                 )
-            }
             )
         )
 
