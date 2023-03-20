@@ -1,4 +1,5 @@
 const typeFloat = {precision: 'float'}
+const typeInt = {precision: 'int'}
 
 export const getAvailableBands = (recipe, select = ['dataSetBands', 'indexes', 'metadata']) => {
     const type = (recipe.model.dates || {}).fromDate
@@ -27,18 +28,21 @@ export const getGroupedBandOptions = (recipe, select = ['dataSetBands', 'indexes
 
 const bandGroups = [
     ['VV', 'VH', 'ratio_VV_VH'],
-    ['VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VV_std', 'VV_cv'],
-    ['VH_min', 'VH_mean', 'VH_med', 'VH_max', 'VH_std', 'VH_cv'],
+    ['VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VV_std', 'VV_cv', 'VV_speckle_ratio'],
+    ['VH_min', 'VH_mean', 'VH_med', 'VH_max', 'VH_std', 'VH_cv', 'VH_speckle_ratio'],
     ['VV_const', 'VV_t', 'VV_phase', 'VV_amp', 'VV_res'],
     ['VH_const', 'VH_t', 'VH_phase', 'VH_amp', 'VH_res'],
-    ['dayOfYear', 'daysFromTarget']
+    ['orbit', 'dominant_orbit', 'dayOfYear', 'daysFromTarget']
 ]
 
 const bands = {
     POINT_IN_TIME: {
         VV: {dataType: typeFloat},
         VH: {dataType: typeFloat},
-        ratio_VV_VH: {dataType: typeFloat}
+        ratio_VV_VH: {dataType: typeFloat},
+        VV_speckle_ratio: {dataType: typeFloat},
+        VH_speckle_ratio: {dataType: typeFloat},
+        orbit: {dataType: typeInt},
     },
     TIME_SCAN: {
         VV_min: {dataType: typeFloat},
@@ -64,7 +68,10 @@ const bands = {
         VH_amp: {dataType: typeFloat},
         VH_cv: {dataType: typeFloat},
         ratio_VV_med_VH_med: {dataType: typeFloat},
-        NDCV: {dataType: typeFloat}
+        NDCV: {dataType: typeFloat},
+        VV_speckle_ratio: {dataType: typeFloat},
+        VH_speckle_ratio: {dataType: typeFloat},
+        dominant_orbit: {dataType: typeInt},
     },
     METADATA: {
         dayOfYear: {dataType: {precision: 'int', min: 0, max: 366}},
