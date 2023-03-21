@@ -1,9 +1,9 @@
-import {Msg, msg} from 'translate'
+import {Menu} from 'widget/menu'
 import {RecipeState, duplicateRecipe, exportRecipe$} from './recipe'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {msg} from 'translate'
 import {withActivators} from 'widget/activation/activator'
-import Menu, {MenuItem} from 'widget/menu'
 import Notifications from 'widget/notifications'
 import React from 'react'
 
@@ -20,6 +20,7 @@ class ProcessMenu extends React.Component {
         super()
         this.duplicateRecipe = this.duplicateRecipe.bind(this)
         this.exportRecipe = this.exportRecipe.bind(this)
+        this.save = this.save.bind(this)
     }
 
     render() {
@@ -30,12 +31,12 @@ class ProcessMenu extends React.Component {
                     {this.isRecipeUnsaved()
                         ? this.renderUnsavedRecipeItems()
                         : this.renderSavedRecipeItems()}
-                    <MenuItem onSelect={this.duplicateRecipe}>
-                        <Msg id='process.menu.duplicateRecipe.label'/>
-                    </MenuItem>
-                    <MenuItem onSelect={this.exportRecipe}>
-                        <Msg id='process.menu.exportRecipe'/>
-                    </MenuItem>
+                    <Menu.Item onSelect={this.duplicateRecipe}>
+                        {msg('process.menu.duplicateRecipe.label')}
+                    </Menu.Item>
+                    <Menu.Item onSelect={this.exportRecipe}>
+                        {msg('process.menu.exportRecipe')}
+                    </Menu.Item>
                 </Menu>
             )
         } else {
@@ -44,21 +45,25 @@ class ProcessMenu extends React.Component {
     }
 
     renderUnsavedRecipeItems() {
-        const {recipe, activator: {activatables: {saveRecipeDialog}}} = this.props
         return (
-            <MenuItem onSelect={() => saveRecipeDialog.activate({recipe, closeTabOnSave: false})}>
-                <Msg id='process.menu.saveRecipe'/>
-            </MenuItem>
+            <Menu.Item onSelect={this.save}>
+                {msg('process.menu.saveRecipe')}
+            </Menu.Item>
         )
     }
 
     renderSavedRecipeItems() {
         const {activator: {activatables: {revisions: {activate}}}} = this.props
         return (
-            <MenuItem onSelect={activate}>
-                <Msg id='process.menu.revertToOldRevision'/>
-            </MenuItem>
+            <Menu.Item onSelect={activate}>
+                {msg('process.menu.revertToOldRevision')}
+            </Menu.Item>
         )
+    }
+
+    save() {
+        const {recipe, activator: {activatables: {saveRecipeDialog}}} = this.props
+        saveRecipeDialog.activate({recipe, closeTabOnSave: false})
     }
 
     isRecipeUnsaved() {
