@@ -216,7 +216,7 @@ class _Maps extends React.Component {
                 linked => setLinked(linked)
             ),
             updateView$.pipe(
-                debounceTime(100),
+                debounceTime(500),
                 distinctUntilChanged()
             ).subscribe(
                 view => updateView(view)
