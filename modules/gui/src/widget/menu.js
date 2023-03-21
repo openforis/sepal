@@ -1,65 +1,106 @@
 import {Button} from 'widget/button'
 import {compose} from 'compose'
-import {connect, select} from 'store'
-import Portal from 'widget/portal'
+import {withContext} from 'context'
+import FloatingBox from './floatingBox'
+import Keybinding from './keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './menu.module.css'
 
-const mapStateToProps = () => ({
-    appDimensions: select('dimensions')
-})
+const Context = React.createContext()
+const withMenuContext = withContext(Context, 'menuContext')
 
-class Menu extends React.Component {
-    state = {}
-    button = React.createRef()
-
-    menuStyle() {
-        const {appDimensions} = this.props
-        const buttonPosition = this.button.current.getBoundingClientRect()
-        const maxHeight = appDimensions.height - buttonPosition.bottom - 10
-        const width = '20rem'
-
-        return {
-            top: buttonPosition.bottom,
-            left: `calc(${buttonPosition.right}px - ${width})`,
-            right: buttonPosition.right,
-            width,
-            maxWidth: width,
-            height: 'fit-content',
-            maxHeight,
-        }
-    }
-
-    toggleOpen() {
-        this.setState(({open}) => ({open: !open}))
+class _MenuItem extends React.Component {
+    constructor() {
+        super()
+        this.onClick = this.onClick.bind(this)
     }
 
     render() {
-        const {disabled, children} = this.props
+        const {children} = this.props
+        return (
+            <li className={styles.item} onClick={this.onClick}>
+                {children}
+            </li>
+        )
+    }
+
+    onClick(e) {
+        const {menuContext: {close}, onSelect} = this.props
+        close()
+        onSelect && onSelect(e)
+    }
+}
+
+const MenuItem = compose(
+    _MenuItem,
+    withMenuContext()
+)
+
+MenuItem.propTypes = {
+    children: PropTypes.any,
+    onSelect: PropTypes.func
+}
+
+export class Menu extends React.Component {
+    button = React.createRef()
+
+    state = {
+        open: false
+    }
+
+    constructor() {
+        super()
+        this.toggle = this.toggle.bind(this)
+        this.close = this.close.bind(this)
+    }
+
+    toggle() {
+        this.setState(({open}) => ({open: !open}))
+    }
+
+    close() {
+        this.setState({open: false})
+    }
+
+    render() {
+        const {disabled} = this.props
         const {open} = this.state
-        return <React.Fragment>
-            <span ref={this.button}>
+        return (
+            <React.Fragment>
                 <Button
+                    ref={this.button}
                     chromeless
                     look='transparent'
                     size='large'
                     shape='circle'
                     icon='bars'
                     disabled={disabled}
-                    onClick={() => this.toggleOpen()}/>
-            </span>
-            {open
-                ? <Portal type='global'>
-                    <MenuContext.Provider value={this}>
-                        <div className={styles.captureClicks} onClick={() => this.toggleOpen()}/>
-                        <ul className={styles.list} style={this.menuStyle()}>
+                    hover={open === true ? true : undefined}
+                    onClick={this.toggle}
+                />
+                {open ? this.renderMenu() : null}
+            </React.Fragment>
+        )
+    }
+
+    renderMenu() {
+        const {children} = this.props
+        return (
+            <Keybinding keymap={{'Escape': this.close}}>
+                <FloatingBox
+                    element={this.button.current}
+                    vPlacement='below'
+                    hPlacement='over-left'
+                    onBlur={this.close}>
+                    <Context.Provider value={{close: this.close}}>
+                        <ul className={styles.menu}>
                             {children}
                         </ul>
-                    </MenuContext.Provider>
-                </Portal>
-                : null}
-        </React.Fragment>
+                    </Context.Provider>
+                </FloatingBox>
+            </Keybinding>
+        )
     }
 }
 
@@ -71,24 +112,4 @@ Menu.propTypes = {
     onClick: PropTypes.func
 }
 
-export default compose(
-    Menu,
-    connect(mapStateToProps)
-)
-
-const MenuContext = React.createContext()
-
-export const MenuItem = ({onSelect, children}) =>
-    <MenuContext.Consumer>
-        {menu =>
-            <li className={styles.menuItem} onClick={e => {
-                menu.toggleOpen()
-                onSelect && onSelect(e)
-            }}>{children}</li>
-        }
-    </MenuContext.Consumer>
-
-MenuItem.propTypes = {
-    children: PropTypes.any,
-    onSelect: PropTypes.func
-}
+Menu.Item = MenuItem
