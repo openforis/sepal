@@ -1,17 +1,17 @@
 .menu {
-    background-color: rgba(26, 26, 27, 0.91);
-    padding: 0;   
+    margin-top: .5rem;
+    padding: 0;
     border: var(--wireframe);
-    border-radius: ;
     list-style-type: none;
+    background-color: var(--panel-default-background-color);
 }
 
 .item {  
-    font-size: 0.8rem;
+    font-size: .8rem;
     padding: .5rem 1rem;
     cursor: pointer;
 }
 
 .item:hover {
-    background-color: hsl(var(--selected-hue), var(--selected-sat), 26%);
+    background-color: var(--look-highlight-hover-background-color);
 }
