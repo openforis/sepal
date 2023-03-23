@@ -63,7 +63,7 @@ class _Map extends React.Component {
         googleMapsApiKey: null,
         nicfiPlanetApiKey: null,
         overlay: null,
-        overlayActive: false,
+        overlayActive: true,
         drawingMode: null
     }
 
@@ -160,13 +160,18 @@ class _Map extends React.Component {
     }
 
     withAllMaps(func) {
+        this.withAreaMaps(func)
+        this.withOverlayMap(func)
+    }
+
+    withAreaMaps(func) {
         const {maps} = this.state
         return _.map(maps, ({map, listeners, subscriptions}, id) =>
             func({id, map, listeners, subscriptions})
         )
     }
 
-    withFirstMap(func) {
+    withFirstAreaMap(func) {
         const {maps} = this.state
         const id = _.head(_.keys(maps))
         const {map = null} = maps[id] || {}
@@ -195,7 +200,7 @@ class _Map extends React.Component {
         const style = isOverlay ? 'overlayStyle' : 'sepalStyle'
         const map = createSepalMap({element, options, style})
 
-        this.withFirstMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
+        this.withFirstAreaMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
 
         if (isOverlay) {
             this.viewUpdates$.next(map.getView())
@@ -256,23 +261,17 @@ class _Map extends React.Component {
     }
 
     synchronizeOut(id, map) {
-        const {overlay} = this.state
         const view = map.getView()
-        this.withAllMaps(({map, id: currentId}) => {
-            if (currentId !== id) {
-                map.setView(view)
-            }
-        })
-        this.viewUpdates$.next(view)
-        if (!this.isOverlayLayer(id)) {
-            overlay && overlay.map.setView(view)
+        if (!_.isEqual(view, this.viewUpdates$.getValue())) {
+            this.viewUpdates$.next(view)
+            this.withAllMaps(({map, id: mapId}) =>
+                mapId !== id && map.setView(view)
+            )
         }
     }
 
     synchronizeIn(view) {
-        const {overlay} = this.state
         this.withAllMaps(({map}) => map.setView(view))
-        overlay && overlay.map.setView(view)
     }
 
     synchronizeCursor(cursorId, latLng, event) {
@@ -285,7 +284,7 @@ class _Map extends React.Component {
                 latLng
             })
         }
-        this.withAllMaps(({id, map}) => {
+        this.withAreaMaps(({id, map}) => {
             const otherArea = this.getArea(id)
             if (this.isGridMode() && otherArea !== cursorArea) {
                 map.setCursor(latLng)
@@ -296,11 +295,11 @@ class _Map extends React.Component {
     }
 
     setVisibility(visible) {
-        this.withAllMaps(({map}) => map.setVisibility(visible))
+        this.withAreaMaps(({map}) => map.setVisibility(visible))
     }
 
     addOneShotClickListener(listener) {
-        const listeners = this.withAllMaps(({map}) =>
+        const listeners = this.withAreaMaps(({map}) =>
             map.addClickListener(e => {
                 listener(e)
                 removableListener.remove()
@@ -346,15 +345,14 @@ class _Map extends React.Component {
         const activeInstance = _.last(this.drawingInstances)
         if (activeInstance) {
             const {drawingMode, callback} = activeInstance
-            this.withOverlayMap(({map}) => map.disableDrawingMode())
             this.withAllMaps(({map}) => map.disableDrawingMode())
             if (this.isStackMode()) {
-                this.setState({drawingMode, overlayActive: true}, () => {
+                this.setState({drawingMode}, () => {
                     this.withOverlayMap(callback)
                 })
             } else {
                 this.setState({drawingMode, overlayActive: false}, () => {
-                    this.withAllMaps(callback)
+                    this.withAreaMaps(callback)
                 })
             }
         }
@@ -363,12 +361,12 @@ class _Map extends React.Component {
     enableDrawingMode({drawingMode, callback}) {
         log.debug('enableDrawingMode:', drawingMode)
         if (this.isStackMode()) {
-            this.setState({drawingMode, overlayActive: true}, () => {
+            this.setState({drawingMode}, () => {
                 this.withOverlayMap(callback)
             })
         } else {
             this.setState({drawingMode, overlayActive: false}, () => {
-                this.withAllMaps(callback)
+                this.withAreaMaps(callback)
             })
         }
     }
@@ -376,12 +374,12 @@ class _Map extends React.Component {
     disableDrawingMode() {
         log.debug('disableDrawingMode')
         if (this.isStackMode()) {
-            this.setState({drawingMode: null, overlayActive: false}, () => {
+            this.setState({drawingMode: null}, () => {
                 this.withOverlayMap(({map}) => map.disableDrawingMode())
             })
         } else {
-            this.setState({drawingMode: null, overlayActive: false}, () => {
-                this.withAllMaps(({map}) => map.disableDrawingMode())
+            this.setState({drawingMode: null, overlayActive: true}, () => {
+                this.withAreaMaps(({map}) => map.disableDrawingMode())
             })
         }
     }
@@ -431,7 +429,7 @@ class _Map extends React.Component {
     setLocationMarker(options) {
         const id = uuid()
         const remove = () => this.removeMarker(id)
-        this.markers[id] = this.withAllMaps(
+        this.markers[id] = this.withAreaMaps(
             ({map}) => map.setLocationMarker(options, remove)
         )
         return remove
@@ -440,7 +438,7 @@ class _Map extends React.Component {
     setAreaMarker(options) {
         const id = uuid()
         const remove = () => this.removeMarker(id)
-        this.markers[id] = this.withAllMaps(
+        this.markers[id] = this.withAreaMaps(
             ({map}) => map.setAreaMarker(options, remove)
         )
         return remove
@@ -735,7 +733,7 @@ class _Map extends React.Component {
     }
 
     componentWillUnmount() {
-        this.withAllMaps(({id}) => {
+        this.withAreaMaps(({id}) => {
             this.removeMap(id)
         })
     }
