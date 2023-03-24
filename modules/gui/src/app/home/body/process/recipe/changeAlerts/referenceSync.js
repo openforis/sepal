@@ -48,12 +48,12 @@ class _ReferenceSync extends React.Component {
         this.fetchRecipe(reference)
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
         const {reference} = this.props
-        this.fetchRecipe(reference)
+        this.fetchRecipe(reference, prevProps.reference)
     }
 
-    fetchRecipe(recipe) {
+    fetchRecipe(recipe, prevReference) {
         const {stream, loadSourceRecipe$, recipeActionBuilder} = this.props
         const type = recipe.type
         if (!type) {
@@ -72,7 +72,7 @@ class _ReferenceSync extends React.Component {
                 error => Notifications.error({message: msg('process.changeAlerts.reference.recipe.loadError'), error})
             )
         } else if (type === 'ASSET') {
-            this.initAsset() // What about prevReference?
+            this.initAsset(prevReference)
         } else {
             this.updateRecipeReference({ccdcRecipe: recipe})
         }
@@ -80,7 +80,7 @@ class _ReferenceSync extends React.Component {
 
     initAsset(prevReference = {}) {
         const {stream, reference = {}} = this.props
-        if (reference.id && reference.id === prevReference.id || stream('LOAD').active) {
+        if ((reference.id && reference.id === prevReference.id) || stream('LOAD').active) {
             return
         }
         stream('LOAD',
