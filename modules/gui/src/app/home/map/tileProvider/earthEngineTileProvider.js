@@ -3,7 +3,7 @@ import {combineLatest, filter, map} from 'rxjs'
 import {toBandValues} from '../cursorValue'
 import ee from '@google/earthengine'
 
-const CONCURRENCY = 16
+const CONCURRENCY = 8
 const TILE_SIZE = ee.layers.AbstractOverlay.DEFAULT_TILE_EDGE_LENGTH
 
 export class EarthEngineTileProvider extends WMTSTileProvider {
