@@ -84,7 +84,6 @@ class _Map extends React.Component {
         this.removeMap = this.removeMap.bind(this)
         this.fit = this.fit.bind(this)
         this.canFit = this.canFit.bind(this)
-        this.addOneShotClickListener = this.addOneShotClickListener.bind(this)
         this.removeMarker = this.removeMarker.bind(this)
         this.memoizedMapDelegate = _.memoize(this.getMapDelegate)
     }
@@ -184,8 +183,9 @@ class _Map extends React.Component {
         const {overlay} = this.state
         if (overlay) {
             const {map, listeners, subscriptions} = overlay
-            func({id: OVERLAY_ID, map, listeners, subscriptions})
+            return func({id: OVERLAY_ID, map, listeners, subscriptions})
         }
+        return null
     }
 
     createMap(id, element, isOverlay, callback) {
@@ -299,16 +299,30 @@ class _Map extends React.Component {
     }
 
     addOneShotClickListener(listener) {
-        const listeners = this.withAreaMaps(({map}) =>
-            map.addClickListener(e => {
-                listener(e)
-                removableListener.remove()
-            })
-        )
-        const removableListener = {
-            remove: () => listeners.map(listener => listener.remove())
+        const {overlayActive} = this.state
+        if (overlayActive) {
+            const listeners = this.withOverlayMap(({map}) =>
+                map.addClickListener(e => {
+                    listener(e)
+                    removableListener.remove()
+                })
+            )
+            const removableListener = {
+                remove: () => listeners.remove()
+            }
+            return removableListener
+        } else {
+            const listeners = this.withAreaMaps(({map}) =>
+                map.addClickListener(e => {
+                    listener(e)
+                    removableListener.remove()
+                })
+            )
+            const removableListener = {
+                remove: () => listeners.map(listener => listener.remove())
+            }
+            return removableListener
         }
-        return removableListener
     }
 
     // Drawing mode
