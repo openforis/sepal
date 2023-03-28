@@ -9,7 +9,6 @@ import {connect} from 'store'
 import {getRecipeType} from '../../body/process/recipeTypes'
 import {map} from 'rxjs'
 import {msg} from 'translate'
-import {withMap} from '../mapContext'
 import {withMapArea} from '../mapAreaContext'
 import {withRecipe} from '../../body/process/recipeContext'
 import {withSubscriptions} from 'subscription'
@@ -230,7 +229,6 @@ class _PlanetImageLayer extends React.Component {
 export const PlanetImageLayer = compose(
     _PlanetImageLayer,
     connect(),
-    withMap(),
     withMapArea(),
     withRecipe(mapRecipeToProps),
     withTab(),
