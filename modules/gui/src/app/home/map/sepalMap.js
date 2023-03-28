@@ -12,7 +12,6 @@ export class SepalMap {
         this.toGoogleBounds = this.toGoogleBounds.bind(this)
         this.zoomIn = this.zoomIn.bind(this)
         this.zoomOut = this.zoomOut.bind(this)
-        this.fitBounds = this.fitBounds.bind(this)
         this.setZoom = this.setZoom.bind(this)
         this.getZoom = this.getZoom.bind(this)
         this.setView = this.setView.bind(this)
