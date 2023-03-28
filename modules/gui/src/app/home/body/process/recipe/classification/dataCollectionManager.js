@@ -3,6 +3,15 @@ import {withContext} from 'context'
 import React from 'react'
 import _ from 'lodash'
 
+const Context = React.createContext()
+
+export const DataCollectionManagerContext = ({dataCollectionManager, children}) =>
+    <Context.Provider value={dataCollectionManager}>
+        {children}
+    </Context.Provider>
+
+export const withDataCollectionManager = withContext(Context, 'dataCollectionManager')
+
 export class DataCollectionManager {
     constructor(recipeId) {
         this.recipeActions = RecipeActions(recipeId)
@@ -61,7 +70,3 @@ export class DataCollectionManager {
 }
 
 const isClassified = marker => Object.keys(marker).includes('class') && _.isFinite(marker['class'])
-
-export const DataCollectionManagerContext = React.createContext()
-
-export const withDataCollectionManager = withContext(DataCollectionManagerContext, 'dataCollectionManager')

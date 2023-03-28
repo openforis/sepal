@@ -8,6 +8,7 @@ import React from 'react'
 import styles from './menu.module.css'
 
 const Context = React.createContext()
+
 const withMenuContext = withContext(Context, 'menuContext')
 
 class _MenuItem extends React.Component {

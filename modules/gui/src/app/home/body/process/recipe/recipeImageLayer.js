@@ -2,7 +2,7 @@ import {CCDCSliceImageLayer} from './ccdcSlice/ccdcSliceImageLayer'
 import {ChangeAlertsImageLayer} from './changeAlerts/changeAlertsImageLayer'
 import {ClassChangeImageLayer} from './classChange/classChangeImageLayer'
 import {ClassificationImageLayer} from './classification/classificationImageLayer'
-import {CursorValue} from 'app/home/map/cursorValue'
+import {CursorValueContext} from 'app/home/map/cursorValue'
 import {IndexChangeImageLayer} from './indexChange/indexChangeImageLayer'
 import {MaskingImageLayer} from './masking/maskingImageLayer'
 import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
@@ -36,9 +36,9 @@ class _RecipeImageLayer extends React.Component {
         const {recipe} = this.props
         return recipe
             ? (
-                <CursorValue value$={this.cursorValue$}>
+                <CursorValueContext cursorValue$={this.cursorValue$}>
                     {this.renderRecipeLayer()}
-                </CursorValue>
+                </CursorValueContext>
             )
             : null
     }

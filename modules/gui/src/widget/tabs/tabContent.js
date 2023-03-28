@@ -17,11 +17,12 @@ export class TabContent extends React.PureComponent {
             ].join(' ')}>
                 <Enabled enabled={selected}>
                     <PortalContainer id={portalContainerId}/>
-                    <TabContext.Provider value={{id, busy$}}>
+
+                    <TabContext id={id} busy$={busy$}>
                         <PortalContext id={portalContainerId}>
                             {children({id, type})}
                         </PortalContext>
-                    </TabContext.Provider>
+                    </TabContext>
                 </Enabled>
             </div>
         )

@@ -63,7 +63,7 @@ class _Map extends React.Component {
         googleMapsApiKey: null,
         nicfiPlanetApiKey: null,
         overlay: null,
-        overlayActive: true,
+        overlayActive: false,
         drawingMode: null
     }
 
@@ -361,7 +361,8 @@ class _Map extends React.Component {
             const {drawingMode, callback} = activeInstance
             this.withAllMaps(({map}) => map.disableDrawingMode())
             if (this.isStackMode()) {
-                this.setState({drawingMode}, () => {
+                // this.setState({drawingMode}, () => {
+                this.setState({drawingMode, overlayActive: true}, () => {
                     this.withOverlayMap(callback)
                 })
             } else {
@@ -375,7 +376,8 @@ class _Map extends React.Component {
     enableDrawingMode({drawingMode, callback}) {
         log.debug('enableDrawingMode:', drawingMode)
         if (this.isStackMode()) {
-            this.setState({drawingMode}, () => {
+            // this.setState({drawingMode}, () => {
+            this.setState({drawingMode, overlayActive: true}, () => {
                 this.withOverlayMap(callback)
             })
         } else {
@@ -388,11 +390,13 @@ class _Map extends React.Component {
     disableDrawingMode() {
         log.debug('disableDrawingMode')
         if (this.isStackMode()) {
-            this.setState({drawingMode: null}, () => {
+            // this.setState({drawingMode: null}, () => {
+            this.setState({drawingMode: null, overlayActive: false}, () => {
                 this.withOverlayMap(({map}) => map.disableDrawingMode())
             })
         } else {
-            this.setState({drawingMode: null, overlayActive: true}, () => {
+            // this.setState({drawingMode: null, overlayActive: true}, () => {
+            this.setState({drawingMode: null, overlayActive: false}, () => {
                 this.withAreaMaps(({map}) => map.disableDrawingMode())
             })
         }
@@ -573,11 +577,10 @@ class _Map extends React.Component {
             .filter(mapComponent => mapComponent)
         return (
             <ElementResizeDetector onResize={size => this.setState({size})}>
-                <MapContext.Provider value={{
-                    map: this.mapDelegate(),
-                    googleMapsApiKey,
-                    nicfiPlanetApiKey
-                }}>
+                <MapContext
+                    map={this.mapDelegate()}
+                    googleMapsApiKey={googleMapsApiKey}
+                    nicfiPlanetApiKey={nicfiPlanetApiKey}>
                     {imageLayerSourceComponents}
                     <SplitView
                         className={styles.view}
@@ -591,7 +594,7 @@ class _Map extends React.Component {
                             {this.renderDrawingModeIndicator()}
                         </div>
                     </SplitView>
-                </MapContext.Provider>
+                </MapContext>
             </ElementResizeDetector>
         )
     }
@@ -684,7 +687,7 @@ class _Map extends React.Component {
             }
         }
         return (
-            <MapAreaContext.Provider value={{
+            <MapAreaContext mapArea={{
                 area,
                 updateLayerConfig,
                 includeAreaFeatureLayerSource,
@@ -696,7 +699,7 @@ class _Map extends React.Component {
                 />
                 <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
                 {layerComponent}
-            </MapAreaContext.Provider>
+            </MapAreaContext>
         )
     }
 

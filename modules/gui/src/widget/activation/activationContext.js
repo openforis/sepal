@@ -5,6 +5,8 @@ import actionBuilder from 'action-builder'
 
 const Context = React.createContext()
 
+export const withActivationContext = withContext(Context, 'activationContext', true)
+
 export class ActivationContext extends Component {
     render() {
         const {children} = this.props
@@ -43,5 +45,3 @@ ActivationContext.propTypes = {
     id: PropTypes.string.isRequired,
     children: PropTypes.any
 }
-
-export const withActivationContext = withContext(Context, 'activationContext', true)

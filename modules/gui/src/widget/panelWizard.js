@@ -5,9 +5,9 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 
-const PanelWizardContext = React.createContext()
+const Context = React.createContext()
 
-export const withPanelWizard = withContext(PanelWizardContext, 'panelWizard')
+export const withPanelWizard = withContext(Context, 'panelWizard')
 
 class PanelWizard extends React.Component {
     constructor(props) {
@@ -52,9 +52,9 @@ class PanelWizard extends React.Component {
         }
 
         return (
-            <PanelWizardContext.Provider value={{wizard, back, next, done}}>
+            <Context.Provider value={{wizard, back, next, done}}>
                 {children}
-            </PanelWizardContext.Provider>
+            </Context.Provider>
         )
     }
 

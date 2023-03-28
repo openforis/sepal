@@ -303,9 +303,9 @@ export const withForm = ({fields = {}, constraints = {}, mapStateToProps}) =>
                     ...this.props, form, inputs
                 })
                 return (
-                    <FormContext.Provider value={form}>
+                    <FormContext form={form}>
                         {element}
-                    </FormContext.Provider>
+                    </FormContext>
                 )
             }
         }

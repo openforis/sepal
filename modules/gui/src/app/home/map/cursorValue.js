@@ -4,14 +4,14 @@ import Color from 'color'
 import React from 'react'
 import _ from 'lodash'
 
-const CursorValueContext = React.createContext()
+const Context = React.createContext()
 
-export const CursorValue = ({value$, children}) =>
-    <CursorValueContext.Provider value={{cursorValue$: value$}}>
+export const CursorValueContext = ({cursorValue$, children}) =>
+    <Context.Provider value={cursorValue$}>
         {children}
-    </CursorValueContext.Provider>
+    </Context.Provider>
 
-export const withCursorValue = withContext(CursorValueContext)
+export const withCursorValue = withContext(Context, 'cursorValue$')
 
 export const toBandValues = (rgb, visParams, dataTypes) => {
     const inverted = visParams.inverted || visParams.bands.map(() => false)

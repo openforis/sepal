@@ -1,6 +1,7 @@
 import React from 'react'
+// import _ from 'lodash'
 
-export const withContext = (Context, prop, required = false) => () =>
+export const withContext = (context, prop, required = false) => () =>
     WrappedComponent =>
         class WithContextHOC extends React.Component {
             constructor() {
@@ -10,9 +11,9 @@ export const withContext = (Context, prop, required = false) => () =>
 
             render() {
                 return (
-                    <Context.Consumer>
+                    <context.Consumer>
                         {this.wrap}
-                    </Context.Consumer>
+                    </context.Consumer>
                 )
             }
 
@@ -26,7 +27,15 @@ export const withContext = (Context, prop, required = false) => () =>
                 return React.createElement(WrappedComponent, props)
             }
 
+            // assertNoCollisions(props) {
+            //     const collisions = _.intersection(Object.keys(this.props), props)
+            //     if (collisions.length) {
+            //         throw new Error(`Cannot pass properties already injected by HoC: ${collisions.join(', ')}`)
+            //     }
+            // }
+
             assign(context) {
+                // this.assertNoCollisions([prop])
                 return {
                     ...this.props,
                     [prop]: context
@@ -34,6 +43,7 @@ export const withContext = (Context, prop, required = false) => () =>
             }
 
             merge(context) {
+                // this.assertNoCollisions(Object.keys(context))
                 return {
                     ...this.props,
                     ...context

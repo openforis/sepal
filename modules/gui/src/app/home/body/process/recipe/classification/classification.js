@@ -42,7 +42,7 @@ class _Classification extends React.Component {
     render() {
         const {initialized, images} = this.props
         return (
-            <DataCollectionManagerContext.Provider value={this.dataCollectionManager}>
+            <DataCollectionManagerContext dataCollectionManager={this.dataCollectionManager}>
                 <Map>
                     <ClassificationToolbar dataCollectionManager={this.dataCollectionManager}/>
                     <Aoi value={images && images.length && images[0]}/>
@@ -52,7 +52,7 @@ class _Classification extends React.Component {
                         )
                         : null}
                 </Map>
-            </DataCollectionManagerContext.Provider>
+            </DataCollectionManagerContext>
         )
     }
 

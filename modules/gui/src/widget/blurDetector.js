@@ -10,9 +10,9 @@ import withForwardedRef from 'ref'
 
 const ANIMATION_DURATION_MS = 500
 
-const BlurDetectorContext = React.createContext()
+const Context = React.createContext()
 
-const withBlurDetector = withContext(BlurDetectorContext, 'blurDetector')
+const withBlurDetector = withContext(Context, 'blurDetector')
 
 const isOver = (e, element) => {
     return element.contains(e.target)
@@ -47,9 +47,9 @@ class BlurDetector extends React.Component {
                 ].join(' ')}
                 style={{...style, '--animation-duration-ms': ANIMATION_DURATION_MS}}
                 onClick={onClick}>
-                <BlurDetectorContext.Provider value={{enabled: this.checkEnabled}}>
+                <Context.Provider value={{enabled: this.checkEnabled}}>
                     {children}
-                </BlurDetectorContext.Provider>
+                </Context.Provider>
             </div>
         )
     }
