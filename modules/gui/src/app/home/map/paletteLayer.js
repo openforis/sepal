@@ -101,8 +101,8 @@ class _PaletteLayer extends React.Component {
 
     formatMinMax({min, max}) {
         const magnitude = format.stepMagnitude({min, max, minSteps: MIN_STEPS})
-        const formattedMin = format.numberToMagnitude({value: min[0], magnitude})
-        const formattedMax = format.numberToMagnitude({value: max[0], magnitude})
+        const formattedMin = format.numberToMagnitude({value: min && min[0], magnitude})
+        const formattedMax = format.numberToMagnitude({value: max && max[0], magnitude})
         this.setState({formattedMin, formattedMax, magnitude})
     }
 }
