@@ -10,19 +10,24 @@ import _ from 'lodash'
 import actionBuilder from 'action-builder'
 
 const Context = React.createContext()
+
+const RecipeContext = ({recipeStatePath, children}) =>
+    <Context.Provider value={recipeStatePath}>
+        {children}
+    </Context.Provider>
  
+const withRecipeStatePath = withContext(Context, 'recipeStatePath')
+
 export const Recipe = ({id, children}) =>
     id
         ? (
-            <Context.Provider value={toPathList(['process.loadedRecipes', id])}>
+            <RecipeContext recipeStatePath={toPathList(['process.loadedRecipes', id])}>
                 <ActivationContext id={`recipe-${id}`}>
                     {children}
                 </ActivationContext>
-            </Context.Provider>
+            </RecipeContext>
         )
         : null
-
-const withRecipeStatePath = withContext(Context, 'recipeStatePath')
 
 export const withRecipe = (mapRecipeToProps = () => ({})) =>
     WrappedComponent => {

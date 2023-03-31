@@ -1,6 +1,11 @@
 import {withContext} from 'context'
 import React from 'react'
 
-export const MapAreaContext = React.createContext()
+const Context = React.createContext()
 
-export const withMapArea = withContext(MapAreaContext, 'mapArea')
+export const MapAreaContext = ({mapArea, children}) =>
+    <Context.Provider value={mapArea}>
+        {children}
+    </Context.Provider>
+
+export const withMapArea = withContext(Context, 'mapArea')

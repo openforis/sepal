@@ -1,4 +1,5 @@
-import {FormContext} from './context'
+import {compose} from 'compose'
+import {withFormContext} from './context'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -15,16 +16,28 @@ export const getErrorMessage = (form, input) =>
         .find(error => error)
         .value() || ''
 
-export const FormError = props => {
-    const errorMessage = form =>
-        getErrorMessage(form, props['for'])
+// export const FormError = props => {
+//     const errorMessage = form =>
+//         getErrorMessage(form, props['for'])
         
-    return (
-        <FormContext.Consumer>
-            {errorMessage}
-        </FormContext.Consumer>
-    )
+//     return (
+//         <FormContext.Consumer>
+//             {errorMessage}
+//         </FormContext.Consumer>
+//     )
+// }
+
+class _FormError extends React.Component {
+    render() {
+        const {props, form} = this.props
+        return getErrorMessage(form, props['for'])
+    }
 }
+
+export const FormError = compose(
+    _FormError,
+    withFormContext()
+)
 
 FormError.propTypes = {
     'for': PropTypes.any.isRequired,

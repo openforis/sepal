@@ -13,6 +13,7 @@ import withForwardedRef from 'ref'
 const MARGIN = 5
 
 const Context = React.createContext()
+
 const withFloatingBox = withContext(Context, 'floatingBox')
 
 const mapStateToProps = state => ({

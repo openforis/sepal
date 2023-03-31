@@ -1,4 +1,4 @@
-import {CursorValue} from '../cursorValue'
+import {CursorValueContext} from '../cursorValue'
 import {MapAreaLayout} from '../mapAreaLayout'
 import {Subject} from 'rxjs'
 import {VisualizationSelector} from './visualizationSelector'
@@ -27,13 +27,13 @@ class _AssetImageLayer extends React.Component {
     render() {
         const {map} = this.props
         return (
-            <CursorValue value$={this.cursorValue$}>
+            <CursorValueContext cursorValue$={this.cursorValue$}>
                 <MapAreaLayout
                     layer={this.maybeCreateLayer()}
                     form={this.renderImageLayerForm()}
                     map={map}
                 />
-            </CursorValue>
+            </CursorValueContext>
         )
     }
 

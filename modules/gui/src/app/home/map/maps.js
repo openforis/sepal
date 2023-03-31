@@ -22,9 +22,9 @@ const DEFAULT_ZOOM = 3
 export const MIN_ZOOM = 3
 export const MAX_ZOOM = 23
 
-const MapsContext = React.createContext()
+const Context = React.createContext()
 
-export const withMapsContext = withContext(MapsContext, 'mapsContext')
+export const withMapsContext = withContext(Context, 'mapsContext')
 
 class _Maps extends React.Component {
     state = {
@@ -230,13 +230,13 @@ class _Maps extends React.Component {
         const {children} = this.props
         const {error, initialized} = this.state
         return (
-            <MapsContext.Provider value={{
+            <Context.Provider value={{
                 createGoogleMap: this.createGoogleMap,
                 createSepalMap: this.createSepalMap,
                 createMapContext: this.createMapContext
             }}>
                 {children(initialized, error)}
-            </MapsContext.Provider>
+            </Context.Provider>
         )
     }
 

@@ -5,7 +5,14 @@ import {withContext} from 'context'
 import {withSubscriptions} from 'subscription'
 import React from 'react'
 
-export const TabContext = React.createContext()
+const Context = React.createContext()
+
+const withTabContext = withContext(Context, 'tab')
+
+export const TabContext = ({id, busy$, children}) =>
+    <Context.Provider value={{id, busy$}}>
+        {children}
+    </Context.Provider>
 
 export const withTab = () =>
     WrappedComponent => compose(
@@ -40,6 +47,6 @@ export const withTab = () =>
                 return busyTab$
             }
         },
-        withContext(TabContext, 'tab')(),
+        withTabContext(),
         withSubscriptions()
     )
