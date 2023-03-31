@@ -2,6 +2,9 @@ import {AddImageLayerSource} from './addImageLayerSource'
 import {Areas} from './areas'
 import {Buttons} from 'widget/buttons'
 import {ImageLayerSources} from './imageLayerSources'
+import {Layout} from 'widget/layout'
+import {Message} from 'widget/message'
+import {Padding} from 'widget/padding'
 import {Panel} from 'widget/panel/panel'
 import {SelectAsset} from './selectAsset'
 import {SelectPlanet} from './selectPlanet'
@@ -10,6 +13,7 @@ import {Subject} from 'rxjs'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
+import {isChromiumBasedBrowser, isHighDensityDisplay} from 'widget/userAgent'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -90,12 +94,28 @@ class _MapLayoutPanel extends React.Component {
         )
     }
 
+    renderWarning() {
+        return (
+            <Padding>
+                <Message
+                    type='warning'
+                    icon='comment'
+                    iconSize='2x'
+                    text={msg('chromeOnHighResDisplayWarning')}
+                />
+            </Padding>
+        )
+    }
+
     renderContent() {
         return (
-            <div className={styles.content}>
-                <Areas sourceDrag$={this.sourceDrag$}/>
-                <ImageLayerSources drag$={this.sourceDrag$}/>
-            </div>
+            <Layout type='vertical' spacing='none'>
+                {isChromiumBasedBrowser() && isHighDensityDisplay() ? this.renderWarning() : null}
+                <div className={styles.content}>
+                    <Areas sourceDrag$={this.sourceDrag$}/>
+                    <ImageLayerSources drag$={this.sourceDrag$}/>
+                </div>
+            </Layout>
         )
     }
 
