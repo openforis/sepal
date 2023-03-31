@@ -4088,5 +4088,6 @@
             },
             "newTab": "Nueva_pestaña"
         }
-    }
+    },
+    "chromeOnHighResDisplayWarning": ""
 }
