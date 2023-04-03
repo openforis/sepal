@@ -4088,5 +4088,6 @@
             },
             "newTab": "Nouvel_onglet"
         }
-    }
+    },
+    "chromeOnHighResDisplayWarning": ""
 }
