@@ -3,9 +3,9 @@ import React from 'react'
 
 const Context = React.createContext()
 
-export const MapContext = ({map, googleMapsApiKey, nicfiPlanetApiKey, children}) =>
-    <Context.Provider value={{map, googleMapsApiKey, nicfiPlanetApiKey}}>
+export const MapContext = ({map, children}) =>
+    <Context.Provider value={map}>
         {children}
     </Context.Provider>
 
-export const withMap = withContext(Context)
+export const withMap = withContext(Context, 'map')
