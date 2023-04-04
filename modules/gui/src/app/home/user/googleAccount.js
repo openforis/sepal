@@ -26,19 +26,21 @@ class _GoogleAccount extends React.Component {
     constructor(props) {
         super(props)
         this.close = this.close.bind(this)
+        this.useUserGoogleAccount = this.useUserGoogleAccount.bind(this)
+        this.useSepalGoogleAccount = this.useSepalGoogleAccount.bind(this)
     }
 
     useUserGoogleAccount() {
-        // e.preventDefault()
         this.props.stream('USE_USER_GOOGLE_ACCOUNT', requestUserAccess$())
     }
 
     useSepalGoogleAccount() {
-        // e.preventDefault()
-        this.close()
         this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT',
             revokeGoogleAccess$(),
-            () => Notifications.success({message: msg('user.googleAccount.disconnected.success')})
+            () => {
+                Notifications.success({message: msg('user.googleAccount.disconnected.success')})
+                this.close()
+            }
         )
     }
 
@@ -69,7 +71,7 @@ class _GoogleAccount extends React.Component {
                 look='add'
                 width='max'
                 busy={useUserGoogleAccount.active || useUserGoogleAccount.completed}
-                onClick={e => this.useUserGoogleAccount(e)}
+                onClick={this.useUserGoogleAccount}
             />
         )
     }
@@ -86,7 +88,7 @@ class _GoogleAccount extends React.Component {
                 width='max'
                 skipConfirmation={!taskCount}
                 busy={this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT').active}
-                onConfirm={() => this.useSepalGoogleAccount()}
+                onConfirm={this.useSepalGoogleAccount}
             />
         )
     }
