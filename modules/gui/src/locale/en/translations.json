@@ -4092,5 +4092,6 @@
         },
         "newTab": "New_Tab"
       }
-    }
+    },
+    "chromeOnHighResDisplayWarning": "The browser you are using can have issues when showing multiple layers at the same time on very high resolution displays, like yours. If your screen flickers or freezes, please reduce the number of layers or use a different browser, like Firefox or Safari, until the issue has been resolved."
   }
