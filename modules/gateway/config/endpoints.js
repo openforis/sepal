@@ -156,6 +156,13 @@ const endpoints = [
         path: '/api/docker/metrics',
         target: 'http://host.docker.internal:9323/metrics',
         authenticate: true
+    },
+    {
+        prefix: false,
+        path: '/privacy-policy',
+        target: `http://${modules.gui}/resource/privacy-policy.html`,
+        authenticate: false,
+        noCache: true
     }
 ]
 
