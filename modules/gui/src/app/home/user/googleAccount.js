@@ -2,11 +2,11 @@ import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
 import {Panel} from 'widget/panel/panel'
-import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser, requestUserAccess$, revokeGoogleAccess$} from 'user'
 import {msg} from 'translate'
+import {withActivatable} from 'widget/activation/activatable'
 import {withActivators} from 'widget/activation/activator'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
@@ -26,6 +26,8 @@ class _GoogleAccount extends React.Component {
     constructor(props) {
         super(props)
         this.close = this.close.bind(this)
+        this.useUserGoogleAccount = this.useUserGoogleAccount.bind(this)
+        this.useSepalGoogleAccount = this.useSepalGoogleAccount.bind(this)
     }
 
     useUserGoogleAccount() {
@@ -33,10 +35,12 @@ class _GoogleAccount extends React.Component {
     }
 
     useSepalGoogleAccount() {
-        this.close()
         this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT',
             revokeGoogleAccess$(),
-            () => Notifications.success({message: msg('user.googleAccount.disconnected.success')})
+            () => {
+                Notifications.success({message: msg('user.googleAccount.disconnected.success')})
+                this.close()
+            }
         )
     }
 
@@ -67,7 +71,7 @@ class _GoogleAccount extends React.Component {
                 look='add'
                 width='max'
                 busy={useUserGoogleAccount.active || useUserGoogleAccount.completed}
-                onClick={e => this.useUserGoogleAccount(e)}
+                onClick={this.useUserGoogleAccount}
             />
         )
     }
@@ -84,7 +88,7 @@ class _GoogleAccount extends React.Component {
                 width='max'
                 skipConfirmation={!taskCount}
                 busy={this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT').active}
-                onConfirm={() => this.useSepalGoogleAccount()}
+                onConfirm={this.useSepalGoogleAccount}
             />
         )
     }
