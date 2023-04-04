@@ -132,6 +132,13 @@ const endpoints = [
         target: `http://${modules.sandbox}`,
         authenticate: true,
         rewrite: true
+    },
+    {
+        prefix: false,
+        path: '/privacy-policy',
+        target: `http://${modules.gui}/resource/privacy-policy.html`,
+        authenticate: false,
+        noCache: true
     }
 ]
 
