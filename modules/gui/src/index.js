@@ -1,10 +1,11 @@
 import {ErrorBoundary} from './errorBoundary'
 import {Provider} from 'react-redux'
 import {Router} from 'react-router-dom'
-import {applyMiddleware, createStore} from 'redux'
+import {applyMiddleware, legacy_createStore as createStore} from 'redux'
 import {createBrowserHistory} from 'history'
 import {createRoot} from 'react-dom/client'
 import {initStore} from 'store'
+import {isDevelopment} from 'environment'
 import {syncHistoryAndStore} from 'route'
 import App from 'app/app'
 import React from 'react'
@@ -33,7 +34,7 @@ const batchActions = () => next => action => {
 }
 
 const useDevTools = middleware =>
-    process.env.NODE_ENV === 'development'
+    isDevelopment()
         ? require('@redux-devtools/extension').composeWithDevTools(middleware)
         : middleware
 
