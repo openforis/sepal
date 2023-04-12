@@ -3,11 +3,22 @@ import _ from 'lodash'
 
 const HASH_KEY = '___hash___'
 
-// const stats = {
-//     hashedEqual: 0,
-//     hashedNotEqual: 0,
-//     notHashed: 0
+// const stats = {}
+
+// const resetStats = () => {
+//     stats.hashComparisons = 0,
+//     stats.valueComparisons = 0
 // }
+
+// resetStats()
+
+// setInterval(() => {
+//     const total = stats.hashComparisons + stats.valueComparisons
+//     if (total) {
+//         console.log(`bypassed ${Math.round(100 * stats.hashComparisons / total)}% of ${total} equality checks`)
+//         resetStats()
+//     }
+// }, 1000)
 
 export const createHash = () =>
     uuid()
@@ -19,12 +30,9 @@ const setHash = (object, hash) =>
         writable: true
     })
 
-export const addHash = (object, hash = uuid()) =>
+export const addHash = (object, hash = createHash()) =>
     (_.isPlainObject(object) || _.isArray(object)) && setHash(object, hash)
     
-const copyHash = (source, target) =>
-    setHash(target, source[HASH_KEY])
-
 export const cloneDeep = entity =>
     _.cloneDeepWith(entity, entity => {
         const isPlainObject = _.isPlainObject(entity)
@@ -34,7 +42,8 @@ export const cloneDeep = entity =>
             for (const prop in entity) {
                 cloned[prop] = cloneDeep(entity[prop])
             }
-            copyHash(entity, cloned)
+            const hash = entity[HASH_KEY]
+            hash && setHash(cloned, hash)
             return cloned
         }
     })
@@ -43,14 +52,12 @@ export const isEqual = (a, b) =>
     _.isEqualWith(a, b, (a, b) => {
         if (_.isPlainObject(a) && _.isPlainObject(b) || _.isArray(a) && _.isArray(b)) {
             const aHash = a[HASH_KEY]
-            if (_.isString(aHash) && !_.isEmpty(aHash)) {
+            if (!_.isEmpty(aHash)) {
+                // stats.hashComparisons++
                 const bHash = b[HASH_KEY]
-                // aHash === bHash
-                //     ? stats.hashedEqual++
-                //     : stats.hashedNotEqual++
                 return aHash === bHash
             } else {
-                // stats.notHashed++
+                // stats.valueComparisons++
             }
         }
     })
