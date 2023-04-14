@@ -221,9 +221,9 @@ export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
 export const removeRecipes$ = recipeIds =>
     api.recipe.remove$(recipeIds).pipe(
         map(() =>
-            _.transform(recipeIds, (actions, recipeId) => {
+            _.transform(recipeIds, (actionBuilder, recipeId) => {
                 removeAllRevisions(recipeId)
-                actions
+                actionBuilder
                     .del(['process.recipes', {id: recipeId}])
                     .del(['process.loadedRecipes', recipeId])
             }, actionBuilder('REMOVE_RECIPES', {recipeIds})).dispatch()
