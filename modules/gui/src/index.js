@@ -1,3 +1,4 @@
+import {App} from 'app/app'
 import {ErrorBoundary} from './errorBoundary'
 import {Provider} from 'react-redux'
 import {Router} from 'react-router-dom'
@@ -7,7 +8,6 @@ import {createRoot} from 'react-dom/client'
 import {initStore} from 'store'
 import {isDevelopment} from 'environment'
 import {syncHistoryAndStore} from 'route'
-import App from 'app/app'
 import React from 'react'
 import TranslationProvider from 'translate'
 
