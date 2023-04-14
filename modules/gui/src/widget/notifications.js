@@ -1,17 +1,14 @@
 import {Subject, delay, filter, map, merge, mergeMap, scan, takeWhile, timer} from 'rxjs'
 import {compose} from 'compose'
-import {connect, select} from 'store'
 import {msg} from 'translate'
 import {publishError} from 'eventPublisher'
 import {v4 as uuid} from 'uuid'
 import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
 import hash from 'object-hash'
 import styles from './notifications.module.css'
 
-const PATH = 'notifications'
 const PUBLISH_ANIMATION_DURATION_MS = 250
 const DISMISS_ANIMATION_DURATION_MS = 250
 
@@ -73,13 +70,10 @@ const publish = notification => {
 const dismiss = notificationId =>
     manualDismiss$.next(notificationId)
 
-const mapStateToProps = () => ({
-    notifications: select(PATH) || []
-})
-
 class _Notifications extends React.Component {
     state = {
-        timeoutById: {}
+        notifications: {},
+        timeouts: {}
     }
 
     renderTitle(title) {
@@ -116,8 +110,8 @@ class _Notifications extends React.Component {
     }
 
     renderDismissMessage(id) {
-        const {timeoutById} = this.state
-        const timeout = timeoutById[id] || 0
+        const {timeouts} = this.state
+        const timeout = timeouts[id] || 0
         const message = timeout
             ? msg('widget.notification.dismissOrWait', {timeout})
             : msg('widget.notification.dismiss')
@@ -166,8 +160,8 @@ class _Notifications extends React.Component {
     }
 
     renderNotifications() {
-        const {notifications} = this.props
-        return notifications.map(notification => this.renderNotification(notification))
+        const {notifications} = this.state
+        return Object.values(notifications).map(notification => this.renderNotification(notification))
     }
 
     render() {
@@ -181,34 +175,44 @@ class _Notifications extends React.Component {
     componentDidMount() {
         const {addSubscription} = this.props
         addSubscription(
-            publish$.subscribe(notification =>
-                actionBuilder('PUBLISH_NOTIFICATION')
-                    .pushUnique(PATH, notification, 'group')
-                    .dispatch()
+            publish$.subscribe(notification => {
+                this.setState(({notifications}) => {
+                    if (!Object.values(notifications).find(({group}) => group === notification.group)) {
+                        return {
+                            notifications: {
+                                ...notifications,
+                                [notification.id]: notification
+                            }
+                        }
+                    }
+                })
+            }
             ),
             dismiss$.subscribe(id => {
-                actionBuilder('DISMISS_NOTIFICATION')
-                    .assign([PATH, {id}], {dismissing: true})
-                    .dispatch()
-                this.setState(({timeoutById}) => {
-                    delete timeoutById[id]
-                    return {timeoutById}
+                this.setState(({notifications, timeouts}) => {
+                    delete timeouts[id]
+                    const notification = notifications[id]
+                    if (notification) {
+                        notification.dismissing = true
+                    }
+                    return {notifications, timeouts}
                 })
             }),
             autoDismiss$.subscribe(({id, timeout}) => {
-                this.setState(({timeoutById}) => {
+                this.setState(({timeouts}) => {
                     if (timeout > 0) {
-                        timeoutById[id] = timeout
+                        timeouts[id] = timeout
                     } else {
-                        delete timeoutById[id]
+                        delete timeouts[id]
                     }
-                    return {timeoutById}
+                    return {timeouts}
                 })
             }),
             remove$.subscribe(id =>
-                actionBuilder('REMOVE_NOTIFICATION')
-                    .del([PATH, {id}])
-                    .dispatch()
+                this.setState(({notifications}) => {
+                    delete notifications[id]
+                    return {notifications}
+                })
             )
         )
     }
@@ -216,8 +220,8 @@ class _Notifications extends React.Component {
 
 const Notifications = compose(
     _Notifications,
-    withSubscriptions(),
-    connect(mapStateToProps)
+    withSubscriptions()
+    // connect(mapStateToProps)
 )
 
 Notifications.success = notification =>
