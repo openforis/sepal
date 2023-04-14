@@ -19,7 +19,7 @@ const rootReducer = (state = [], action) => {
 }
 
 const batchActions = () => next => action => {
-    if ('actions' in action)
+    if ('actions' in action) {
         next({
             type: action.type,
             reduce(state) {
@@ -29,8 +29,9 @@ const batchActions = () => next => action => {
                 )
             }
         })
-    else
+    } else {
         next(action)
+    }
 }
 
 const useDevTools = middleware =>
