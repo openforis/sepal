@@ -38,13 +38,6 @@ export const dispatch = action =>
 export const select = (...path) =>
     selectFrom(state(), path)
 
-const includeDispatchingProp = mapStateToProps =>
-    (state, ownProps) => ({
-        ...mapStateToProps(state, ownProps),
-        actions: state.actions || {},
-        streams: state.stream && state.stream[ownProps.componentId]
-    })
-
 const withConnectedComponent = () =>
     WrappedComponent =>
         class ConnectedComponent extends React.PureComponent {
@@ -146,9 +139,17 @@ const withConnectedComponent = () =>
             }
         }
 
+// const includeDispatchingProp = mapStateToProps =>
+//     (state, ownProps) => ({
+//         ...(mapStateToProps ? mapStateToProps(state, ownProps) : null),
+//         actions: state.actions || {},
+//         streams: state.stream && state.stream[ownProps.componentId]
+//     })
+    
 const withReduxState = mapStateToProps =>
     connectToRedux(
-        includeDispatchingProp(mapStateToProps), null, null, {
+        // includeDispatchingProp(mapStateToProps), null, null, {
+        mapStateToProps, null, null, {
             areStatePropsEqual: isEqual
         }
     )
@@ -156,7 +157,7 @@ const withReduxState = mapStateToProps =>
 export const connect = mapStateToProps =>
     composeHoC(
         withPreventUpdateWhenDisabled(),
-        withReduxState(mapStateToProps || (() => ({}))),
+        withReduxState(mapStateToProps),
         withConnectedComponent()
     )
 
@@ -166,7 +167,7 @@ export const connect = mapStateToProps =>
 //     = PreventUpdateWhenDisabled.displayName
 //     = `Store(${WrappedComponent.displayName})`
 
-export const dispatchable = action => ({
-    ...action,
-    dispatch: () => dispatch(action)
-})
+// export const dispatchable = action => ({
+//     ...action,
+//     dispatch: () => dispatch(action)
+// })
