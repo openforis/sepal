@@ -6,11 +6,12 @@ import {v4 as uuid} from 'uuid'
 import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import hash from 'object-hash'
 import styles from './notifications.module.css'
 
 const PUBLISH_ANIMATION_DURATION_MS = 250
-const DISMISS_ANIMATION_DURATION_MS = 250
+const DISMISS_ANIMATION_DURATION_MS = 500
 
 const publish$ = new Subject()
 const manualDismiss$ = new Subject()
@@ -41,7 +42,7 @@ const group = ({group = false, id, ...notification}) =>
     group === false
         ? id
         : group === true
-            ? hash(notification) // id is excluded
+            ? hash(_.omit(notification, 'id')) // id is excluded
             : group
 
 const publish = notification => {
@@ -136,24 +137,28 @@ class _Notifications extends React.Component {
             ? (
                 <div
                     key={id}
-                    className={[
-                        styles.notification,
-                        styles[level],
-                        dismissable ? styles.dismissable : null,
-                        dismissing ? styles.dismissing : null
-                    ].join(' ')}
-                    style={{
-                        '--publish-animation-duration-ms': `${PUBLISH_ANIMATION_DURATION_MS}ms`,
-                        '--dismiss-animation-duration-ms': `${DISMISS_ANIMATION_DURATION_MS}ms`
-                    }}
-                    onClick={() => dismissable && dismiss()}
+                    className={styles.wrapper}
                 >
-                    {title ? this.renderTitle(title) : null}
-                    {message ? this.renderMessage(message) : null}
-                    {error ? this.renderError(error) : null}
-                    {content ? this.renderContent(content, dismiss) : null}
-                    {this.renderDismissMessage(id)}
-                    {this.renderAutoDismissIndicator(timeout)}
+                    <div
+                        className={[
+                            styles.notification,
+                            styles[level],
+                            dismissable ? styles.dismissable : null,
+                            dismissing ? styles.dismissing : null
+                        ].join(' ')}
+                        style={{
+                            '--publish-animation-duration-ms': `${PUBLISH_ANIMATION_DURATION_MS}ms`,
+                            '--dismiss-animation-duration-ms': `${DISMISS_ANIMATION_DURATION_MS}ms`
+                        }}
+                        onClick={() => dismissable && dismiss()}
+                    >
+                        {title ? this.renderTitle(title) : null}
+                        {message ? this.renderMessage(message) : null}
+                        {error ? this.renderError(error) : null}
+                        {content ? this.renderContent(content, dismiss) : null}
+                        {this.renderDismissMessage(id)}
+                        {this.renderAutoDismissIndicator(timeout)}
+                    </div>
                 </div>
             )
             : null
@@ -221,7 +226,6 @@ class _Notifications extends React.Component {
 const Notifications = compose(
     _Notifications,
     withSubscriptions()
-    // connect(mapStateToProps)
 )
 
 Notifications.success = notification =>
