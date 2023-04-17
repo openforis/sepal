@@ -21,7 +21,7 @@ const autoDismiss$ = publish$
         filter(({timeout}) => timeout),
         mergeMap(({id, timeout}) =>
             timer(0, 1000).pipe(
-                scan(timeout => timeout - 1, timeout + 1),
+                scan(timeout => timeout - 1, Math.round(timeout) + 1),
                 takeWhile(timeout => timeout >= 0),
                 map(timeout => ({id, timeout}))
             )
