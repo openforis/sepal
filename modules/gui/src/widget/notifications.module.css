@@ -13,6 +13,14 @@
     overflow: visible;
 }
 
+.wrapper {
+    pointer-events: all; /* prevent unwanted clicks in the inter-notification margin */
+}
+
+.wrapper:not(:first-child) .notification {
+    margin-top: .5rem;
+}
+
 .notification {
     --error-color: hsl(0, 60%, 40%);
     --info-color: hsl(202, 60%, 40%);
@@ -29,6 +37,7 @@
     border-radius: var(--container-border-radius);
     overflow: hidden;
     word-wrap: break-word;
+    box-sizing: border-box;
 }
 
 .notification:not(.dismissing) {
@@ -43,18 +52,15 @@
 }
 
 .notification.dismissing {
-    animation: remove var(--dismiss-animation-duration-ms) ease-in-out reverse forwards;
+    animation: remove var(--dismiss-animation-duration-ms) ease-out normal forwards;
 }
 
 @keyframes remove {
-    0% {
-        transform: translateX(50%);
+    100% {
+        transform: translateX(100%);
+        margin-top: -100%;
         opacity: 0;
     }
-}
-
-.notification:not(:first-child) {
-    margin-top: .5rem;
 }
 
 .notification.success {

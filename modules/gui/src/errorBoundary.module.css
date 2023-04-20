@@ -1,0 +1,24 @@
+.productionError {
+    margin: auto;
+    margin-top: 30%;
+    max-width: 40rem;
+}
+
+.developmentError {
+    height: 100%;
+    width: 100%;
+    overflow: scroll;
+}
+
+.developmentError > * {
+    margin: 2rem;
+}
+
+.title {
+    color: rgb(255, 61, 61);
+    font-size: 1.25rem;
+}
+
+.stack {
+    margin: 1rem 2rem;
+}
