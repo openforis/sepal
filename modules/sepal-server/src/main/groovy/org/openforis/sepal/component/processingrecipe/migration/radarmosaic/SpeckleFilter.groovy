@@ -13,7 +13,7 @@ class SpeckleFilter {
         set(r.model.options, 'orbitNumbers', 'ALL')
         set(r.model.options, 'kernelSize', 5)
         set(r.model.options, 'sigma', 0.9)
-        set(r.model.options, 'retainStrongScatterers', true)
+        set(r.model.options, 'strongScatterers', 'RETAIN')
         set(r.model.options, 'strongScattererValues', [0, -5])
         set(r.model.options, 'snicSize', 5)
         set(r.model.options, 'snicCompactness', 0.15)

@@ -1,8 +1,11 @@
 import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
+import {MaskOptions} from './maskOptions'
+import {MultitemporalSpeckleFilterOptions} from './multitemporalSpeckleFilterOptions'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {SpatialSpeckleFilterOptions} from './spatialSpeckleFilterOptions'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
@@ -19,7 +22,7 @@ const fields = {
     spatialSpeckleFilter: new Form.Field(),
     kernelSize: new Form.Field(),
     sigma: new Form.Field(),
-    retainStrongScatterers: new Form.Field(),
+    strongScatterers: new Form.Field(),
     strongScattererValue1: new Form.Field(),
     strongScattererValue2: new Form.Field(),
     snicSize: new Form.Field(),
@@ -32,8 +35,6 @@ const fields = {
     maxAngle: new Form.Field(),
     minObservations: new Form.Field(),
 }
-
-const KERNEL_SIZES = [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25]
 
 class Options extends React.Component {
     render() {
@@ -58,7 +59,7 @@ class Options extends React.Component {
     }
 
     renderAdvanced() {
-        const {inputs: {mask, spatialSpeckleFilter, retainStrongScatterers}} = this.props
+        const {inputs: {mask, spatialSpeckleFilter, strongScatterers}} = this.props
         return (
             <Layout>
                 {this.renderOrbits()}
@@ -66,15 +67,9 @@ class Options extends React.Component {
                 {mask.value?.includes('SIDES') ? this.renderMaskOptions() : null}
                 {this.renderGeometricCorrection()}
                 {this.renderSpatialSpeckleFilter()}
-                {['BOXCAR', 'GAMMA_MAP', 'LEE_SIGMA', 'LEE'].includes(spatialSpeckleFilter.value)
-                    ? this.renderKernelSize()
-                    : null}
-                {spatialSpeckleFilter.value === 'LEE_SIGMA' ? this.renderSigma() : null}
-                {spatialSpeckleFilter.value === 'SNIC' ? this.renderSnicOptions() : null}
-                {spatialSpeckleFilter.value !== 'NONE' ? this.renderRetainStrongScatterers() : null}
-                {spatialSpeckleFilter.value !== 'NONE' && retainStrongScatterers.value ? this.renderStrongScattererValues() : null}
+                {this.usingSpatialSpeckleFilter() ? this.renderSpatialSpeckleFilterOptions() : null}
                 {this.usingSpatialSpeckleFilter() ? this.renderMultitemporalSpeckleFilter() : null}
-                {this.usingMultitemporalSpeckleFilter() ? this.renderNumberOfImages() : null}
+                {this.usingMultitemporalSpeckleFilter() ? this.renderMultitemporalSpeckleFilterOptions() : null}
                 {this.renderOutlierRemoval()}
                 {this.renderOrbitNumbers()}
                 {this.renderMinObservations()}
@@ -223,103 +218,13 @@ class Options extends React.Component {
         )
     }
 
-    renderKernelSize() {
-        const {inputs: {kernelSize}} = this.props
+    renderSpatialSpeckleFilterOptions() {
+        const {inputs: {spatialSpeckleFilter, kernelSize, sigma, strongScatterers, strongScattererValue1, strongScattererValue2, snicSize, snicCompactness}} = this.props
         return (
-            <Form.Slider
-                label={msg('process.radarMosaic.panel.options.form.kernelSize.label')}
-                input={kernelSize}
-                minValue={KERNEL_SIZES[0]}
-                maxValue={KERNEL_SIZES[KERNEL_SIZES.length - 1]}
-                ticks={KERNEL_SIZES}
-                snap
+            <SpatialSpeckleFilterOptions
+                spatialSpeckleFilter={spatialSpeckleFilter.value}
+                inputs={{kernelSize, sigma, strongScatterers, strongScattererValue1, strongScattererValue2, snicSize, snicCompactness}}
             />
-        )
-    }
-
-    renderSigma() {
-        const {inputs: {sigma}} = this.props
-        return (
-            <Form.Slider
-                label={msg('process.radarMosaic.panel.options.form.sigma.label')}
-                input={sigma}
-                minValue={0.5}
-                maxValue={0.95}
-                ticks={[0.5, 0.6, 0.7, 0.8, 0.9, 0.95]}
-                decimals={2}
-                snap
-            />
-        )
-    }
-
-    renderRetainStrongScatterers() {
-        const {inputs: {retainStrongScatterers}} = this.props
-        const options = [
-            {
-                value: true,
-                label: msg('process.radarMosaic.panel.options.form.retainStrongScatterers.yes.label'),
-                tooltip: msg('process.radarMosaic.panel.options.form.retainStrongScatterers.yes.tooltip')
-            },
-            {
-                value: false,
-                label: msg('process.radarMosaic.panel.options.form.retainStrongScatterers.no.label'),
-                tooltip: msg('process.radarMosaic.panel.options.form.retainStrongScatterers.no.tooltip')
-            }
-        ]
-        return (
-            <Form.Buttons
-                label={msg('process.radarMosaic.panel.options.form.retainStrongScatterers.label')}
-                input={retainStrongScatterers}
-                options={options}
-            />
-        )
-    }
-
-    renderStrongScattererValues() {
-        const {inputs: {strongScattererValue1, strongScattererValue2}} = this.props
-        return (
-            <Layout type='horizontal-nowrap'>
-                <Form.Input
-                    label={msg('process.radarMosaic.panel.options.form.strontScatterValue.label', {band: 'VV'})}
-                    tooltip={msg('process.radarMosaic.panel.options.form.strontScatterValue.tooltip', {band: 'VV'})}
-                    input={strongScattererValue1}
-                />
-                <Form.Input
-                    label={msg('process.radarMosaic.panel.options.form.strontScatterValue.label', {band: 'VH'})}
-                    tooltip={msg('process.radarMosaic.panel.options.form.strontScatterValue.tooltip', {band: 'VH'})}
-                    input={strongScattererValue2}
-                />
-            </Layout>
-        )
-    }
-
-    renderSnicOptions() {
-        const {inputs: {snicSize, snicCompactness}} = this.props
-        return (
-            <Layout>
-                <Form.Slider
-                    label={msg('process.radarMosaic.panel.options.form.snicSize.label')}
-                    tooltip={msg('process.radarMosaic.panel.options.form.snicSize.tooltip')}
-                    input={snicSize}
-                    minValue={3}
-                    maxValue={15}
-                    ticks={KERNEL_SIZES}
-                    snap
-                />
-                <Form.Slider
-                    label={msg('process.radarMosaic.panel.options.form.snicCompactness.label')}
-                    tooltip={msg('process.radarMosaic.panel.options.form.snicCompactness.tooltip')}
-                    input={snicCompactness}
-                    minValue={0}
-                    maxValue={2}
-                    scale='log'
-                    ticks={[0, 0.15, 0.4, 0.7, 1, 1.5, 2]}
-                    decimals={2}
-                    info={value =>
-                        msg('process.radarMosaic.panel.options.form.snicCompactness.value', {value})
-                    }
-                />
-            </Layout>
         )
     }
 
@@ -358,19 +263,13 @@ class Options extends React.Component {
         )
     }
 
-    renderNumberOfImages() {
-        const {inputs: {numberOfImages}} = this.props
+    renderMultitemporalSpeckleFilterOptions() {
+        const {inputs: {spatialSpeckleFilter, multitemporalSpeckleFilter, numberOfImages}} = this.props
         return (
-            <Form.Slider
-                label={msg('process.radarMosaic.panel.options.form.numberOfImages.label')}
-                input={numberOfImages}
-                minValue={2}
-                maxValue={100}
-                ticks={[1, 2, 5, 10, 20, 50, 100]}
-                scale='log'
-                info={value =>
-                    msg('process.radarMosaic.panel.options.form.numberOfImages.value', {value})
-                }
+            <MultitemporalSpeckleFilterOptions
+                spatialSpeckleFilter={spatialSpeckleFilter.value}
+                multitemporalSpeckleFilter={multitemporalSpeckleFilter.value}
+                inputs={{numberOfImages}}
             />
         )
     }
@@ -430,16 +329,7 @@ class Options extends React.Component {
     renderMaskOptions() {
         const {inputs: {minAngle, maxAngle}} = this.props
         return (
-            <Layout type='horizontal-nowrap'>
-                <Form.Input
-                    label={msg('process.radarMosaic.panel.options.form.minAngle.label')}
-                    input={minAngle}
-                />
-                <Form.Input
-                    label={msg('process.radarMosaic.panel.options.form.maxAngle.label')}
-                    input={maxAngle}
-                />
-            </Layout>
+            <MaskOptions inputs={{minAngle, maxAngle}}/>
         )
     }
 
@@ -499,7 +389,7 @@ const valuesToModel = values => ({
     sigma: parseFloat(values.sigma),
     snicSize: parseInt(values.snicSize),
     snicCompactness: parseFloat(values.snicCompactness),
-    retainStrongScatterers: values.retainStrongScatterers,
+    strongScatterers: values.strongScatterers,
     strongScattererValues: [parseFloat(values.strongScattererValue1), parseFloat(values.strongScattererValue2)],
     multitemporalSpeckleFilter: values.multitemporalSpeckleFilter,
     numberOfImages: parseInt(values.numberOfImages),

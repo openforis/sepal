@@ -21,7 +21,7 @@ export const defaultModel = {
         spatialSpeckleFilter: 'LEE_SIGMA',
         kernelSize: 9,
         sigma: 0.9,
-        retainStrongScatterers: true,
+        strongScatterers: 'RETAIN',
         strongScattererValues: [0, -5],
         snicSize: 5,
         snicCompactness: 0.15,

@@ -2982,11 +2982,14 @@
                   "tooltip": "Mask the beginning of the first slice and the end of the last slice."
                 }
               },
-              "minAngle": {
-                "label": "Min angle"
-              },
-              "maxAngle": {
-                "label": "Max angle"
+              "maskOptions": {
+                "title": "Border noise correction options",
+                "minAngle": {
+                  "label": "Min angle"
+                },
+                "maxAngle": {
+                  "label": "Max angle"
+                }
               },
               "spatialSpeckleFilter": {
                 "label": "Spatial speckle filter",
@@ -3019,39 +3022,49 @@
                   "tooltip": "Simple Non-Iterative Clustering is used to filter out speckle."
                 }
               },
-              "kernelSize": {
-                "label": "Kernel size"
-              },
-              "sigma": {
-                "label": "Sigma"
-              },
-              "retainStrongScatterers": {
-                "yes": {
-                  "label": "Retain",
-                  "tooltip": "Retain original value for strong scatterers. They don't tend to include much speckle and some speckle filtering algorithms tends to blur them."
+              "spatialSpeckleFilterOptions": {
+                "kernelSize": {
+                    "label": "Kernel size"
                 },
-                "no": {
-                  "label": "Filter",
-                  "tooltip": "Apply spatial speckle filter also to strong scatterers. It can cause some speckle filtering algorithms to blur them."
+                "sigma": {
+                    "label": "Sigma"
                 },
-                "label": "Strong scatterers"
+                "strongScatterers": {
+                    "retain": {
+                        "label": "Retain",
+                        "tooltip": "Retain original value for strong scatterers. They don't tend to include much speckle and some speckle filtering algorithms tends to blur them."
+                    },
+                    "filter": {
+                        "label": "Filter",
+                        "tooltip": "Apply spatial speckle filter also to strong scatterers. It can cause some speckle filtering algorithms to blur them."
+                    },
+                    "label": "Strong scatterers"
+                },
+                "strongScattererValue1": {
+                    "label": "VV threshold",
+                    "tooltip": "The threshold to consider VV a strong scatterer when performing Lee-Sigma spatial speckle filtering."
+                },
+                "strongScattererValue2": {
+                    "label": "VH threshold",
+                    "tooltip": "The threshold to consider VH a strong scatterer when performing Lee-Sigma spatial speckle filtering."
+                },
+                "snicSize": {
+                    "label": "Seed spacing",
+                    "tooltip": "The superpixel seed location spacing, in pixels. If 'seeds' image is provided, no grid is produced."
+                },
+                "snicCompactness": {
+                    "label": "Compactness",
+                    "tooltip": "Compactness factor. Larger values cause clusters to be more compact (square). Setting this to 0 disables spatial distance weighting.",
+                    "value": "{value}"
+                },
+                "title": "Spatial speckle filter options"
               },
-              "strontScatterValue": {
-                "label": "{band} threshold",
-                "tooltip": "The threshold to consider {band} a strong scatterer when performing Lee-Sigma spatial speckle filtering."
-              },
-              "snicSize": {
-                "label": "Seed spacing",
-                "tooltip": "The superpixel seed location spacing, in pixels. If 'seeds' image is provided, no grid is produced."
-              },
-              "snicCompactness": {
-                "label": "Compactness",
-                "tooltip": "Compactness factor. Larger values cause clusters to be more compact (square). Setting this to 0 disables spatial distance weighting.",
-                "value": "{value}"
-              },
-              "numberOfImages": {
-                "label": "Number of images",
-                "value": "{value} images"
+              "multitemporalSpeckleFilterOptions": {
+                "numberOfImages": {
+                    "label": "Number of images",
+                    "value": "{value} images"
+                },
+                "title": "Multitemporal speckle filter options"
               },
               "multitemporalSpeckleFilter": {
                 "label": "Multitemporal speckle filter",
