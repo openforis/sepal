@@ -155,7 +155,14 @@ export class Mutator {
         return stateRoot
     }
 
+    assertValueType(value) {
+        if (value instanceof Function) {
+            throw Error('Cannot pass a value of type function to Mutator')
+        }
+    }
+
     set(value) {
+        this.assertValueType(value)
         return this.mutate((pathState, pathKey) => {
             pathState[pathKey] = cloneDeep(value)
         })
@@ -175,18 +182,21 @@ export class Mutator {
     }
 
     assign(value) {
+        this.assertValueType(value)
         return this.mutate((pathState, pathKey) => {
             pathState[pathKey] = _.assign({}, pathState[pathKey], cloneDeep(value))
         })
     }
 
     merge(value) {
+        this.assertValueType(value)
         return this.mutate((pathState, pathKey) => {
             pathState[pathKey] = _.merge({}, pathState[pathKey], cloneDeep(value))
         })
     }
 
     push(value) {
+        this.assertValueType(value)
         return this.mutate((pathState, pathKey) => {
             if (!pathState[pathKey]) {
                 pathState[pathKey] = []
@@ -196,6 +206,7 @@ export class Mutator {
     }
 
     pushUnique(value, key) {
+        this.assertValueType(value)
         return this.mutate((pathState, pathKey) => {
             const finder = key
                 ? item => resolve(item, key, true) === resolve(value, key, true)

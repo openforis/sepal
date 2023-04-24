@@ -34,6 +34,7 @@ class _Button extends React.Component {
         this.renderWrapper = this.renderWrapper.bind(this)
         this.renderLink = this.renderLink.bind(this)
         this.renderTooltip = this.renderTooltip.bind(this)
+        this.renderDisabled = this.renderDisabled.bind(this)
         this.renderButton = this.renderButton.bind(this)
         this.renderContents = this.renderContents.bind(this)
     }
@@ -228,11 +229,11 @@ class _Button extends React.Component {
     }
 
     renderTooltip([current, ...next]) {
-        const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipVisible, tooltipClickTrigger} = this.props
+        const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipVisible, tooltipClickTrigger, tooltipAllowedWhenDisabled} = this.props
         const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
         const message = tooltipPanel || tooltip
         const visibility = _.isNil(tooltipVisible) ? {} : {visible: tooltipVisible}
-        return this.isActive() && message ? (
+        return (tooltipAllowedWhenDisabled || this.isActive()) && message ? (
             <Tooltip
                 msg={message}
                 placement={tooltipPlacement}
@@ -249,6 +250,16 @@ class _Button extends React.Component {
         ) : current(next)
     }
 
+    renderDisabled([current, ...next]) {
+        const {tooltipAllowedWhenDisabled} = this.props
+        return tooltipAllowedWhenDisabled && !this.isActive()
+            ? (
+                <div style={{pointerEvents: 'all'}}>
+                    {current(next)}
+                </div>
+            ) : current(next)
+    }
+
     renderButton([current, ...next]) {
         const {type, style, tabIndex, forwardedRef} = this.props
         return (
@@ -256,7 +267,7 @@ class _Button extends React.Component {
                 ref={forwardedRef}
                 type={type}
                 className={this.classNames()}
-                style={style}
+                style={this.isActive() ? style : {...style, pointerEvents: 'none'}}
                 tabIndex={tabIndex}
                 disabled={!this.isActive()}
                 onMouseOver={this.handleMouseOver}
@@ -311,6 +322,7 @@ class _Button extends React.Component {
             this.renderWrapper,
             this.renderLink,
             this.renderTooltip,
+            this.renderDisabled,
             this.renderButton,
             this.renderContents
         ]
@@ -431,6 +443,7 @@ Button.propTypes = {
     tabIndex: PropTypes.number,
     tail: PropTypes.any,
     tooltip: PropTypes.any,
+    tooltipAllowedWhenDisabled: PropTypes.any,
     tooltipClickTrigger: PropTypes.any,
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,

@@ -3482,7 +3482,8 @@
           }
         },
         "title": "Retrieve",
-        "tooltip": "Retrieve recipe"
+        "tooltip": "Retrieve recipe",
+        "disabled.tooltip": "Your SEPAL budget is not sufficient for retrieving recipes. Please request additional resources using the button highlighted below."
       },
       "revisions": {
         "none": "No revision available.",
