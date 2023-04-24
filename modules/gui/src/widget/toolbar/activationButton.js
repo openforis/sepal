@@ -1,4 +1,3 @@
-// import {SingleActivator} from 'widget/activation/singleActivator'
 import {ToolbarButton} from './toolbarButton'
 import {compose} from 'compose'
 import {withActivators} from 'widget/activation/activator'
@@ -8,7 +7,7 @@ import styles from './toolbar.module.css'
 
 class _ActivationButton extends React.Component {
     render() {
-        const {icon, label, tooltip, disabled, onClick, activator: {activatables: {button: {active, canActivate, toggle}}}} = this.props
+        const {icon, label, tooltip, tooltipAllowedWhenDisabled, tooltipOnVisible, disabled, onClick, activator: {activatables: {button: {active, canActivate, toggle}}}} = this.props
         return (
             <ToolbarButton
                 disabled={disabled || (!active && !canActivate)}
@@ -16,6 +15,8 @@ class _ActivationButton extends React.Component {
                 icon={icon}
                 label={label}
                 tooltip={active ? null : tooltip}
+                tooltipAllowedWhenDisabled={tooltipAllowedWhenDisabled}
+                tooltipOnVisible={tooltipOnVisible}
                 className={[styles.activationButton, styles.panelButton, active ? styles.selected : null].join(' ')}
                 onClick={e => {
                     toggle()
@@ -38,5 +39,7 @@ ActivationButton.propTypes = {
     icon: PropTypes.string,
     label: PropTypes.string,
     tooltip: PropTypes.any,
+    tooltipAllowedWhenDisabled: PropTypes.any,
+    tooltipOnVisible: PropTypes.func,
     onClick: PropTypes.func
 }
