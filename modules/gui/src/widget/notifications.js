@@ -42,7 +42,7 @@ const group = ({group = false, id, ...notification}) =>
     group === false
         ? id
         : group === true
-            ? hash(_.omit(notification, 'id')) // id is excluded
+            ? hash(_.omit(notification, ['id', 'error'])) // id and error are excluded
             : group
 
 const publish = notification => {
@@ -177,12 +177,19 @@ class _Notifications extends React.Component {
         )
     }
 
+    isUniqueGroup(notification) {
+        const {notifications} = this.state
+        const noGroup = !notification.group
+        const uniqueGroup = !Object.values(notifications).find(({group}) => group === notification.group)
+        return noGroup || uniqueGroup
+    }
+
     componentDidMount() {
         const {addSubscription} = this.props
         addSubscription(
             publish$.subscribe(notification => {
                 this.setState(({notifications}) => {
-                    if (!Object.values(notifications).find(({group}) => group === notification.group)) {
+                    if (this.isUniqueGroup(notification)) {
                         return {
                             notifications: {
                                 ...notifications,
@@ -191,8 +198,7 @@ class _Notifications extends React.Component {
                         }
                     }
                 })
-            }
-            ),
+            }),
             dismiss$.subscribe(id => {
                 this.setState(({notifications, timeouts}) => {
                     delete timeouts[id]
