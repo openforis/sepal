@@ -3372,8 +3372,7 @@
           }
         },
         "title": "Retrieve",
-        "tooltip": "Retrieve recipe",
-        "disabled.tooltip": "Your SEPAL budget is not sufficient for retrieving recipes. Please request additional resources using the button highlighted below."
+        "tooltip": "Retrieve recipe"
       },
       "revisions": {
         "none": "No revision available.",
@@ -3750,7 +3749,8 @@
         "update": {
           "success": "Quota update request has been submitted.",
           "error": "Quota update request error."
-        }
+        },
+        "info": "Your SEPAL budget is not sufficient for this functionality. Please request additional resources using the button highlighted below."
       },
       "status": {
         "label": "Status",
