@@ -4,6 +4,7 @@ import {connect, select} from 'store'
 import {currentUser} from 'user'
 import {isPathInLocation} from 'route'
 import {msg} from 'translate'
+import {usageHint} from '../user/usage'
 import MenuMode, {isFloating} from './menuMode'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -69,8 +70,13 @@ const _SectionLink = ({active, name, icon, disabled}) => {
             className={[styles[name], activeClass].join(' ')}
             icon={icon}
             route={link}
-            tooltip={msg(`home.sections.${name}`)}
+            tooltip={[
+                msg(`home.sections.${name}`),
+                (disabled ? msg('user.quotaUpdate.info') : null)
+            ]}
             tooltipPlacement='right'
+            tooltipAllowedWhenDisabled
+            tooltipOnVisible={enabled => disabled && usageHint(enabled)}
             disabled={disabled}
         />
     )

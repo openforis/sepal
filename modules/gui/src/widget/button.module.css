@@ -26,6 +26,10 @@
     padding: 0; /* Needed for alignment of button contents */
 }
 
+.button span {
+    user-select: none;
+}
+
 .button.width-fill span {
     display: inline-block;
     display: flex;

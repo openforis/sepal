@@ -5,15 +5,17 @@ import PropTypes from 'prop-types'
 import RcTooltip from 'rc-tooltip'
 import React from 'react'
 import _ from 'lodash'
+import styles from './tooltip.module.css'
 
 export default class Tooltip extends React.Component {
     render() {
-        const {msg, placement, disabled, delay, clickTrigger, hoverTrigger, focusTrigger, destroyTooltipOnHide, onVisibleChange, afterVisibleChange, children, ...otherProps} = this.props
+        const {placement, disabled, delay, clickTrigger, hoverTrigger, focusTrigger, destroyTooltipOnHide, onVisibleChange, afterVisibleChange, children, ...otherProps} = this.props
         const trigger = _.compact([
             focusTrigger ? 'focus' : '',
             clickTrigger ? 'click' : '',
             hoverTrigger && !isMobile() ? 'hover' : ''
         ])
+        const msg = this.getMsg()
         return msg && !disabled
             ? (
                 <RcTooltip
@@ -29,6 +31,16 @@ export default class Tooltip extends React.Component {
                 </RcTooltip>
             )
             : children
+    }
+
+    getMsg() {
+        const {msg} = this.props
+        if (_.isArray(msg)) {
+            return msg.map((msg, line) => (
+                <div key={line} className={styles.block}>{msg}</div>
+            ))
+        }
+        return msg
     }
 }
 

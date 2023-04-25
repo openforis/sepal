@@ -1,3 +1,4 @@
+import {Scrollable, ScrollableContainer} from './scrollable'
 import {Subject, delay, filter, map, merge, mergeMap, scan, takeWhile, timer} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -10,23 +11,22 @@ import _ from 'lodash'
 import hash from 'object-hash'
 import styles from './notifications.module.css'
 
-const PUBLISH_ANIMATION_DURATION_MS = 250
-const DISMISS_ANIMATION_DURATION_MS = 500
+const PUBLISH_ANIMATION_DURATION_MS = 1000
+const DISMISS_ANIMATION_DURATION_MS = 1000
 
 const publish$ = new Subject()
 const manualDismiss$ = new Subject()
 
-const autoDismiss$ = publish$
-    .pipe(
-        filter(({timeout}) => timeout),
-        mergeMap(({id, timeout}) =>
-            timer(0, 1000).pipe(
-                scan(timeout => timeout - 1, Math.round(timeout) + 1),
-                takeWhile(timeout => timeout >= 0),
-                map(timeout => ({id, timeout}))
-            )
+const autoDismiss$ = publish$.pipe(
+    filter(({timeout}) => timeout),
+    mergeMap(({id, timeout}) =>
+        timer(0, 1000).pipe(
+            scan(timeout => timeout - 1, Math.round(timeout) + 1),
+            takeWhile(timeout => timeout >= 0),
+            map(timeout => ({id, timeout}))
         )
     )
+)
 
 const dismiss$ = merge(
     manualDismiss$,
@@ -36,7 +36,8 @@ const dismiss$ = merge(
     )
 )
 
-const remove$ = dismiss$.pipe(delay(DISMISS_ANIMATION_DURATION_MS))
+const added$ = publish$.pipe(delay(PUBLISH_ANIMATION_DURATION_MS))
+const removed$ = dismiss$.pipe(delay(DISMISS_ANIMATION_DURATION_MS))
 
 const group = ({group = false, id, ...notification}) =>
     group === false
@@ -64,10 +65,11 @@ const publish = notification => {
         timeout = 8,
         dismissable = true,
         ...notification
-    }) => ({id, level, title, timeout, dismissable, ...notification})
+    }) => ({id, level, title, timeout, dismissable, ...notification, adding: true})
 
     publish(applyDefaults(notification))
 }
+
 const dismiss = notificationId =>
     manualDismiss$.next(notificationId)
 
@@ -131,7 +133,7 @@ class _Notifications extends React.Component {
             : null
     }
 
-    renderNotification({id, level, title, message, error, content, timeout, dismissable, dismissing}) {
+    renderNotification({id, level, title, message, error, content, timeout, dismissable, adding, removing}) {
         const dismiss = () => manualDismiss$.next(id)
         return id
             ? (
@@ -144,7 +146,8 @@ class _Notifications extends React.Component {
                             styles.notification,
                             styles[level],
                             dismissable ? styles.dismissable : null,
-                            dismissing ? styles.dismissing : null
+                            adding ? styles.adding : null,
+                            removing ? styles.removing : null
                         ].join(' ')}
                         style={{
                             '--publish-animation-duration-ms': `${PUBLISH_ANIMATION_DURATION_MS}ms`,
@@ -171,9 +174,11 @@ class _Notifications extends React.Component {
 
     render() {
         return (
-            <div className={styles.container}>
-                {this.renderNotifications()}
-            </div>
+            <ScrollableContainer className={styles.container}>
+                <Scrollable hideScrollbar>
+                    {this.renderNotifications()}
+                </Scrollable>
+            </ScrollableContainer>
         )
     }
 
@@ -204,7 +209,9 @@ class _Notifications extends React.Component {
                     delete timeouts[id]
                     const notification = notifications[id]
                     if (notification) {
-                        notification.dismissing = true
+                        const onDismiss = notification.onDismiss
+                        onDismiss && onDismiss()
+                        notification.removing = true
                     }
                     return {notifications, timeouts}
                 })
@@ -219,7 +226,16 @@ class _Notifications extends React.Component {
                     return {timeouts}
                 })
             }),
-            remove$.subscribe(id =>
+            added$.subscribe(({id}) => {
+                this.setState(({notifications}) => {
+                    const notification = notifications[id]
+                    if (notification) {
+                        delete notification.adding
+                    }
+                    return {notifications}
+                })
+            }),
+            removed$.subscribe(id =>
                 this.setState(({notifications}) => {
                     delete notifications[id]
                     return {notifications}
@@ -227,7 +243,19 @@ class _Notifications extends React.Component {
             )
         )
     }
+
 }
+
+// const publishRandomNotification = () => {
+//     const levels = ['info', 'success', 'warning', 'error']
+//     const level = levels[Math.floor(Math.random() * levels.length)]
+//     publish({
+//         level,
+//         message: 'Hello there',
+//         timeout: 0,
+//         onDismiss: createRandomNotification
+//     })
+// }
 
 const Notifications = compose(
     _Notifications,
@@ -266,4 +294,5 @@ Notifications.propTypes = {
     message: PropTypes.string,
     timeout: PropTypes.number,
     title: PropTypes.string,
+    onDismiss: PropTypes.func
 }
