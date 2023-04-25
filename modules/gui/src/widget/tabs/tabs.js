@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {Subject, delay, filter} from 'rxjs'
+import {Subject} from 'rxjs'
 import {TabContent} from './tabContent'
 import {TabHandle} from './tabHandle'
 import {compose} from 'compose'
@@ -18,10 +18,6 @@ import actionBuilder from 'action-builder'
 import guid from 'guid'
 import styles from './tabs.module.css'
 
-const CLOSE_ANIMATION_DURATION_MS = 250
-
-const close$ = new Subject()
-
 export const addTab = statePath => {
     const id = guid()
     const tab = {id, placeholder: msg('widget.tabs.newTab')}
@@ -33,10 +29,15 @@ export const addTab = statePath => {
 }
 
 export const closeTab = (id, statePath, nextId) => {
-    close$.next({id, statePath, nextId})
     actionBuilder('CLOSING_TAB')
         .set([statePath, 'tabs', {id}, 'ui.closing'], true)
         .dispatch()
+    setImmediate(() =>
+        actionBuilder('CLOSE_TAB')
+            .set([statePath, 'selectedTabId'], nextId || nextSelectedTabId(id, statePath))
+            .del([statePath, 'tabs', {id}])
+            .dispatch()
+    )
 }
 
 export const renameTab = (title, tabPath, onTitleChanged) => {
@@ -88,13 +89,6 @@ const nextSelectedTabId = (id, statePath) => {
         return tabs[tabIndex - 1].id
     }
     return null
-}
-
-const finalizeCloseTab = (id, statePath, nextId) => {
-    actionBuilder('CLOSE_TAB')
-        .set([statePath, 'selectedTabId'], nextId || nextSelectedTabId(id, statePath))
-        .del([statePath, 'tabs', {id}])
-        .dispatch()
 }
 
 const mapStateToProps = (state, ownProps) => ({
@@ -311,22 +305,6 @@ class _Tabs extends React.Component {
                 </Content>
             </SectionLayout>
         )
-    }
-
-    handleCloseTab() {
-        const {addSubscription, statePath} = this.props
-        addSubscription(
-            close$.pipe(
-                filter(tab => tab.statePath === statePath),
-                delay(CLOSE_ANIMATION_DURATION_MS * 1.2),
-            ).subscribe(
-                ({id, statePath, nextId}) => finalizeCloseTab(id, statePath, nextId)
-            )
-        )
-    }
-
-    componentDidMount() {
-        this.handleCloseTab()
     }
 
     componentDidUpdate() {
