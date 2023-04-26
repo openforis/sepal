@@ -1,0 +1,15 @@
+.panel {
+    max-width: 24rem;
+}
+
+.maskOptionsPanel {
+    width: 20rem;
+}
+
+.spatialSpeckleFilterOptionsPanel {
+    width: 25rem;
+}
+
+.multitemporalSpeckleFilterOptionsPanel {
+    width: 25rem;
+}

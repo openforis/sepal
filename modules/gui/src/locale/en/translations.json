@@ -3096,6 +3096,194 @@
         },
         "tabPlaceholder": "Radar_mosaic"
       },
+      "baytsHistorical": {
+        "create": "BayTS Historical Layer",
+        "description": "Create an historical layer as reference for BayTS alerts.",
+        "panel": {
+          "dates": {
+            "button": "DAT",
+            "form": {
+              "fromDate": {
+                "label": "From date",
+                "malformed": "Invalid date"
+              },
+              "toDate": {
+                "label": "To date",
+                "malformed": "Invalid date"
+              }
+            },
+            "title": "Date range",
+            "tooltip": "Specify date range"
+          },
+          "options": {
+            "button": "OPT",
+            "form": {
+              "geometricCorrection": {
+                "ellipsoid": {
+                  "label": "Ellipsoid",
+                  "tooltip": "Ellipsoid correction (gamma0 correction) is applied."
+                },
+                "label": "Geometric correction",
+                "none": {
+                  "label": "None",
+                  "tooltip": "No geometric correction is applied."
+                },
+                "terrain": {
+                  "label": "Terrain",
+                  "tooltip": "Terrain correction is applied."
+                }
+              },
+              "orbits": {
+                "ascending": {
+                  "label": "Ascending",
+                  "tooltip": "Include scenes from ascending orbits."
+                },
+                "descending": {
+                  "label": "Descending",
+                  "tooltip": "Include scenes from descending orbits."
+                },
+                "label": "Orbits"
+              },
+              "outlierRemoval": {
+                "aggressive": {
+                  "label": "Aggressive",
+                  "tooltip": "Remove more outliers."
+                },
+                "label": "Outlier removal",
+                "moderate": {
+                  "label": "Moderate",
+                  "tooltip": "Remove outliers."
+                },
+                "none": {
+                  "label": "None",
+                  "tooltip": "Don't remove outliers."
+                }
+              },
+              "mask": {
+                "label": "Border noise correction",
+                "sides": {
+                  "label": "Sides",
+                  "tooltip": "Mask sides of slices."
+                },
+                "firstLast": {
+                  "label": "First/Last",
+                  "tooltip": "Mask the beginning of the first slice and the end of the last slice."
+                }
+              },
+              "maskOptions": {
+                "title": "Border noise correction options",
+                "minAngle": {
+                  "label": "Min angle"
+                },
+                "maxAngle": {
+                  "label": "Max angle"
+                }
+              },
+              "spatialSpeckleFilter": {
+                "label": "Spatial speckle filter",
+                "none": {
+                  "label": "None",
+                  "tooltip": "Don't apply any speckle filter."
+                },
+                "boxcar": {
+                  "label": "Boxcar",
+                  "tooltip": "Boxcar filtering is applied."
+                },
+                "gammaMap": {
+                  "label": "Gamma Map",
+                  "tooltip": "Gamma Map filtering is applied."
+                },
+                "lee": {
+                  "label": "Lee",
+                  "tooltip": "Lee filtering is applied."
+                },
+                "refinedLee": {
+                  "label": "Refined Lee",
+                  "tooltip": "Refined Lee filtering is applied. This can be very slow, but often gives good results."
+                },
+                "leeSigma": {
+                  "label": "Lee Sigma",
+                  "tooltip": "Lee Sigma filtering is applied."
+                },
+                "snic": {
+                  "label": "SNIC",
+                  "tooltip": "Simple Non-Iterative Clustering is used to filter out speckle."
+                }
+              },
+              "spatialSpeckleFilterOptions": {
+                "kernelSize": {
+                    "label": "Kernel size"
+                },
+                "sigma": {
+                    "label": "Sigma"
+                },
+                "strongScatterers": {
+                    "retain": {
+                        "label": "Retain",
+                        "tooltip": "Retain original value for strong scatterers. They don't tend to include much speckle and some speckle filtering algorithms tends to blur them."
+                    },
+                    "filter": {
+                        "label": "Filter",
+                        "tooltip": "Apply spatial speckle filter also to strong scatterers. It can cause some speckle filtering algorithms to blur them."
+                    },
+                    "label": "Strong scatterers"
+                },
+                "strongScattererValue1": {
+                    "label": "VV threshold",
+                    "tooltip": "The threshold to consider VV a strong scatterer when performing Lee-Sigma spatial speckle filtering."
+                },
+                "strongScattererValue2": {
+                    "label": "VH threshold",
+                    "tooltip": "The threshold to consider VH a strong scatterer when performing Lee-Sigma spatial speckle filtering."
+                },
+                "snicSize": {
+                    "label": "Seed spacing",
+                    "tooltip": "The superpixel seed location spacing, in pixels. If 'seeds' image is provided, no grid is produced."
+                },
+                "snicCompactness": {
+                    "label": "Compactness",
+                    "tooltip": "Compactness factor. Larger values cause clusters to be more compact (square). Setting this to 0 disables spatial distance weighting.",
+                    "value": "{value}"
+                },
+                "title": "Spatial speckle filter options"
+              },
+              "multitemporalSpeckleFilterOptions": {
+                "numberOfImages": {
+                    "label": "Number of images",
+                    "value": "{value} images"
+                },
+                "title": "Multitemporal speckle filter options"
+              },
+              "multitemporalSpeckleFilter": {
+                "label": "Multitemporal speckle filter",
+                "none": {
+                  "label": "None",
+                  "tooltip": "Don't apply any multitemporal speckle filter."
+                },
+                "quegan": {
+                  "label": "Quegan",
+                  "tooltip": "Apply Quegan multi-temporal filter."
+                },
+                "rabasar": {
+                  "label": "RABASAR",
+                  "tooltip": "Apply RABASAR multi-temporal filter."
+                }
+              },
+              "minObservations": {
+                "label": "Min observations",
+                "value": "{value} observation(s)"
+              }
+            },
+            "title": "Options",
+            "tooltip": "Configure BayTS historical layer options"
+          }
+        },
+        "preview": {
+          "description": "Preview of BayTS historical layer, generated on the fly by EE.",
+          "label": "BayTS historical"
+        },
+        "tabPlaceholder": "BAYTS_historical"
+      },
 
       "phenology": {
         "create": "Land surface phenology",
