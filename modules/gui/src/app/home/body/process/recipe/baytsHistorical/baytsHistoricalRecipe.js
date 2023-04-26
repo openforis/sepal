@@ -67,7 +67,6 @@ const submitRetrieveRecipeTask = recipe => {
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.retrieve.form.task', destination], {name})
     const bands = Object.keys(getAvailableBands(recipe))
-    console.log({bands})
     const visualizations = getAllVisualizations(recipe)
     const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
     const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`

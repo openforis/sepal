@@ -41,10 +41,8 @@ const BaytsHistorical = compose(
 )
 
 const getDateRange = recipe => {
-    const {fromDate, toDate, targetDate} = recipe.model.dates
-    const startDate = fromDate || targetDate
-    const endDate = toDate || targetDate
-    return [moment.utc(startDate, 'YYYY-MM-DD'), moment.utc(endDate, 'YYYY-MM-DD')]
+    const {fromDate, toDate} = recipe.model.dates
+    return [moment.utc(fromDate, 'YYYY-MM-DD'), moment.utc(toDate, 'YYYY-MM-DD')]
 }
 
 export default () => ({

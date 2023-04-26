@@ -1,14 +1,11 @@
 import {getAvailableBands} from './bands'
-import {msg} from 'translate'
 import {normalize} from 'app/home/map/visParams/visParams'
-import {selectFrom} from 'stateUtils'
 
 export const getPreSetVisualizations = recipe => {
-    // TODO: Filter
-    return visualizations
-    // const availableBands = getAvailableBands(recipe)
-    // return Object.values(visualizations).flat()
-    //     .filter(({bands}) => bands.every(band => availableBands[band]))
+    const availableBands = getAvailableBands(recipe)
+    return visualizations.filter(
+        ({bands}) => bands.every(band => availableBands[band])
+    )
 }
 
 export const visualizationOptions = recipe => {
@@ -17,9 +14,12 @@ export const visualizationOptions = recipe => {
         label: visParams.bands.join(', '),
         visParams
     })
-
-    // TODO: Filter
-    return visualizations.map(visParamsToOption)
+    const availableBands = getAvailableBands(recipe)
+    return visualizations
+        .filter(
+            ({bands}) => bands.every(band => availableBands[band])
+        )
+        .map(visParamsToOption)
 }
 
 export const visualizations = [
