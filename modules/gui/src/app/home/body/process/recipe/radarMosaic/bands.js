@@ -32,7 +32,7 @@ const bandGroups = [
     ['VH_min', 'VH_mean', 'VH_med', 'VH_max', 'VH_std', 'VH_cv'],
     ['VV_const', 'VV_t', 'VV_phase', 'VV_amp', 'VV_res'],
     ['VH_const', 'VH_t', 'VH_phase', 'VH_amp', 'VH_res'],
-    ['orbit', 'dominant_orbit', 'dayOfYear', 'daysFromTarget']
+    ['orbit', 'orbit', 'dayOfYear', 'daysFromTarget']
 ]
 
 const bands = {
@@ -67,7 +67,7 @@ const bands = {
         VH_cv: {dataType: typeFloat},
         ratio_VV_med_VH_med: {dataType: typeFloat},
         NDCV: {dataType: typeFloat},
-        dominant_orbit: {dataType: typeInt},
+        orbit: {dataType: typeInt},
     },
     METADATA: {
         dayOfYear: {dataType: {precision: 'int', min: 0, max: 366}},

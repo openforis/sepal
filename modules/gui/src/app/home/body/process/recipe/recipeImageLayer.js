@@ -1,3 +1,4 @@
+import {BaytsAlertsImageLayer} from './baytsAlerts/baytsAlertsImageLayer'
 import {BaytsHistoricalImageLayer} from './baytsHistorical/baytsHistoricalImageLayer'
 import {CCDCSliceImageLayer} from './ccdcSlice/ccdcSliceImageLayer'
 import {ChangeAlertsImageLayer} from './changeAlerts/changeAlertsImageLayer'
@@ -106,6 +107,10 @@ class _RecipeImageLayer extends React.Component {
         case 'BAYTS_HISTORICAL':
             return (
                 <BaytsHistoricalImageLayer {...props}/>
+            )
+        case 'BAYTS_ALERTS':
+            return (
+                <BaytsAlertsImageLayer {...props}/>
             )
         default:
             return null

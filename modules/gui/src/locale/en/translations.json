@@ -3096,6 +3096,122 @@
         },
         "tabPlaceholder": "Radar_mosaic"
       },
+
+      "baytsAlerts": {
+        "create": "BayTS Alerts",
+        "description": "Generate forest change alerts using Sentinel-1 radar time-series and probabilistic updating, based on the RADD processing pipeline.",
+        "imageLayerForm": {
+          "mosaicType": {
+            "label": "Mosaic",
+            "latest": {
+              "label": "Latest",
+              "tooltip": "Render a composite of the latest available imagery in the period"
+            },
+            "median": {
+              "label": "Median",
+              "tooltip": "Render a median composite of the period"
+            }
+          },
+          "visualizationType": {
+            "alerts": {
+              "label": "Alerts",
+              "tooltip": "Rendeźr alerts"
+            },
+            "first": {
+              "label": "First",
+              "tooltip": "Render a composite of the first value in the monitoring period"
+            },
+            "label": "Type",
+            "last": {
+              "label": "Last",
+              "tooltip": "Render a composite of the last value in the monitoring period"
+            }
+          }
+        },
+        "layers": {
+          "imageLayer": {
+            "changes": "Changes",
+            "dates": "Dates",
+            "observations": "Observations"
+          }
+        },
+        "panel": {
+          "date": {
+            "button": "DAT",
+            "form": {
+              "durationUnit": {
+                "placeholder": "Unit...",
+                "DAYS": "Days",
+                "MONTHS": "Months",
+                "WEEKS": "Weeks"
+              },
+              "monitoring": {
+                "duration": {
+                  "label": "Monitoring duration",
+                  "placeholder": "Duration..."
+                }
+              },
+              "monitoringEnd": {
+                "label": "Monitoring end",
+                "tooltip": "The date when monitoring ends. You typically set this to today's date"
+              }
+            },
+            "title": "Date range",
+            "tooltip": "Specify date range to get alerts for"
+          },
+          "options": {
+            "button": "OPT",
+            "form": {
+            },
+            "title": "BayTS alert options",
+            "tooltip": "Configure sensitivity in detecting changes"
+          },
+          "preprocess": {
+            "button": "PRC",
+            "title": "Pre-process",
+            "tooltip": "Configure imagery pre-processing"
+          },
+          "reference": {
+            "asset": {
+              "label": "Earth Engine Asset",
+              "title": "Earth Engine Asset",
+              "notBayTSHistorical": "Asset is not a BayTS historical image or image collection"
+            },
+            "button": "REF",
+            "form": {
+              "asset": {
+                "invalid": "Asset must be an exported BayTS historical asset",
+                "label": "BayTS historical asset",
+                "placeholder": "Enter BayTS historical asset ID",
+                "required": "An asset ID must be specified"
+              }
+            },
+            "recipe": {
+              "label": "Saved SEPAL recipe",
+              "title": "Saved SEPAL recipe"
+            },
+            "title": "Source",
+            "tooltip": "Select BayTS historical asset or recipe to use as reference for alerts"
+          }
+        },
+        "preview": {
+          "description": "Preview of change alerts, generated on the fly by EE.",
+          "error": "Failed to generate preview",
+          "initializing": "Loading preview...",
+          "label": "Change alerts",
+          "loading": "Loading tiles: {pending}",
+          "tilesFailed": "{failed} failed"
+        },
+        "reference": {
+          "asset": {
+            "loadError": "Failed to load asset"
+          },
+          "recipe": {
+            "loadError": "Failed to load recipe"
+          }
+        },
+        "tabPlaceholder": "BayTS_alerts"
+      },      
       "baytsHistorical": {
         "create": "BayTS Historical Layer",
         "description": "Create an historical layer as reference for BayTS alerts.",
