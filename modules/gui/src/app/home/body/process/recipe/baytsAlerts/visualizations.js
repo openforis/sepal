@@ -45,7 +45,7 @@ const alertVisualizationOptions = recipe => {
                     max: 3,
                     values: [0, 1, 2, 3],
                     labels: ['Unflagged', 'Initial detection', 'Low-conf detection', 'High-conf detection'],
-                    palette: ['#a50026', '#d73027', '#f46d43', '#fdae61']
+                    palette: ['#000000', '#042333', '#b15f82', '#e8fa5b']
                 }),
             ])
         },
