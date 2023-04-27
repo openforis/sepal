@@ -61,6 +61,7 @@ export default () => ({
         creationDescription: msg('process.mosaic.description'),
         tabPlaceholder: msg('process.mosaic.tabPlaceholder'),
     },
+    tags: ['OPTICAL', 'MOSAIC'],
     components: {
         recipe: OpticalMosaic
     },

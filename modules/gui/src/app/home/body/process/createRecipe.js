@@ -1,15 +1,20 @@
 import {Button} from 'widget/button'
+import {Buttons} from 'widget/buttons'
 import {CrudItem} from 'widget/crudItem'
+import {FastList} from 'widget/fastList'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
 import {Panel} from 'widget/panel/panel'
+import {SearchBox} from 'widget/searchBox'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {getRecipeType, listRecipeTypes} from './recipeTypes'
+import {getRecipeType} from './recipeTypes'
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
+import {simplifyString, splitString} from 'string'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import moment from 'moment'
 import styles from './createRecipe.module.css'
@@ -56,8 +61,19 @@ const setTabType = ({projectId, recipeId, type, tabPlaceholder}) => {
 }
 
 class _CreateRecipe extends React.Component {
+    constructor() {
+        super()
+        this.closePanel = this.closePanel.bind(this)
+        this.showRecipeTypeInfo = this.showRecipeTypeInfo.bind(this)
+        this.renderRecipeType = this.renderRecipeType.bind(this)
+        this.setTextFilter = this.setTextFilter.bind(this)
+        this.setTagsFilter = this.setTagsFilter.bind(this)
+    }
+
     state = {
-        selectedRecipeType: null
+        selectedRecipeType: null,
+        textFilterValues: [],
+        tagsFilter: []
     }
 
     showRecipeTypeInfo(type) {
@@ -80,7 +96,7 @@ class _CreateRecipe extends React.Component {
                 shape='pill'
                 label='Add recipe'
                 keybinding='Ctrl+n'
-                onClick={() => showRecipeTypes()}
+                onClick={showRecipeTypes}
                 tooltip={msg('process.recipe.newRecipe.tooltip')}
                 tooltipPlacement='left'
                 tooltipDisabled={modal}/>
@@ -89,8 +105,6 @@ class _CreateRecipe extends React.Component {
 
     renderRecipeTypeInfo(type) {
         const recipeType = getRecipeType(type)
-        const close = () => this.closePanel()
-        const back = () => this.showRecipeTypeInfo()
         return (
             <React.Fragment>
                 <Panel.Header
@@ -104,12 +118,12 @@ class _CreateRecipe extends React.Component {
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close
                             keybinding={['Enter', 'Escape']}
-                            onClick={close}
+                            onClick={this.closePanel}
                         />
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
                         <Panel.Buttons.Back
-                            onClick={back}
+                            onClick={this.showRecipeTypeInfo}
                         />
                     </Panel.Buttons.Extra>
                 </Panel.Buttons>
@@ -117,23 +131,31 @@ class _CreateRecipe extends React.Component {
         )
     }
 
-    renderRecipeTypes() {
-        const close = () => this.closePanel()
+    renderRecipeTypeList() {
+        const highlightMatcher = this.getHighlightMatcher()
+        const recipeTypes = this.getFilteredRecipeTypes()
+        const {textFilterValues} = this.state
+        const key = recipeType => _.compact([recipeType.id, highlightMatcher]).join('|')
         return (
             <React.Fragment>
                 <Panel.Header
                     icon='book-open'
                     title={msg('process.recipe.newRecipe.title')}/>
                 <Panel.Content>
-                    <Layout type='vertical' spacing='tight'>
-                        {listRecipeTypes().map(recipeType => this.renderRecipeType(recipeType))}
-                    </Layout>
+                    {this.renderHeader()}
+                    <FastList
+                        items={recipeTypes}
+                        itemKey={key}
+                        spacing='tight'
+                        overflow={50}>
+                        {recipeType => this.renderRecipeType(recipeType, highlightMatcher)}
+                    </FastList>
                 </Panel.Content>
                 <Panel.Buttons>
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close
-                            keybinding={['Enter', 'Escape']}
-                            onClick={close}
+                            keybinding={textFilterValues.length ? null : ['Enter', 'Escape']}
+                            onClick={this.closePanel}
                         />
                     </Panel.Buttons.Main>
                 </Panel.Buttons>
@@ -141,7 +163,99 @@ class _CreateRecipe extends React.Component {
         )
     }
 
-    renderRecipeType(recipeType) {
+    renderHeader() {
+        return (
+            <Layout
+                className={styles.header}
+                type='horizontal'
+                spacing='compact'>
+                {this.renderSearch()}
+                {this.renderTagsFilter()}
+            </Layout>
+        )
+    }
+
+    renderSearch() {
+        const {filterValue} = this.props
+        return (
+            <SearchBox
+                value={filterValue}
+                placeholder={msg('process.recipe.newRecipe.search.placeholder')}
+                debounce={0}
+                onSearchValue={this.setTextFilter}
+            />
+        )
+    }
+
+    renderTagsFilter() {
+        const {tags, tagsFilter} = this.state
+
+        const options = tags?.map(tag => ({
+            label: msg(`process.recipe.newRecipe.tags.${tag}`),
+            value: tag
+        }))
+
+        return (
+            <Buttons
+                chromeless
+                layout='horizontal'
+                spacing='tight'
+                options={options}
+                multiple
+                selected={tagsFilter}
+                onSelect={this.setTagsFilter}
+            />
+        )
+    }
+
+    setTextFilter(textFilterValue) {
+        const textFilterValues = splitString(simplifyString(textFilterValue))
+        this.setState({textFilterValues})
+    }
+
+    setTagsFilter(tagsFilter) {
+        this.setState({tagsFilter})
+    }
+
+    getFilteredRecipeTypes() {
+        const {recipeTypes} = this.props
+        return _.chain(recipeTypes)
+            .map(({id, labels, tags}) => ({id, labels, tags}))
+            .filter(recipeType => this.recipeTypeMatchesFilters(recipeType))
+            .value()
+    }
+
+    recipeTypeMatchesFilters(recipeType) {
+        return this.recipeTypeMatchesFilterValues(recipeType)
+            && this.recipeTypeMatchesTags(recipeType)
+    }
+
+    recipeTypeMatchesFilterValues(recipeType) {
+        const {textFilterValues} = this.state
+        const searchMatchers = textFilterValues.map(filter => RegExp(filter, 'i'))
+        const searchProperties = ['labels.name', 'labels.creationDescription']
+        return textFilterValues
+            ? _.every(searchMatchers, matcher =>
+                _.find(searchProperties, property =>
+                    matcher.test(simplifyString(_.get(recipeType, property)))
+                )
+            )
+            : true
+    }
+
+    recipeTypeMatchesTags(recipeType) {
+        const {tagsFilter} = this.state
+        return _.every(tagsFilter, tag => recipeType?.tags?.includes(tag))
+    }
+
+    getHighlightMatcher() {
+        const {textFilterValues} = this.state
+        return textFilterValues.length
+            ? new RegExp(`(?:${textFilterValues.join('|')})`, 'i')
+            : null
+    }
+
+    renderRecipeType(recipeType, highlightMatcher) {
         const {projectId, recipeId} = this.props
         return (
             <RecipeType
@@ -151,6 +265,7 @@ class _CreateRecipe extends React.Component {
                 type={recipeType}
                 onInfo={() => this.showRecipeTypeInfo(recipeType.id)}
                 beta={recipeType.beta}
+                highlight={highlightMatcher}
             />
         )
     }
@@ -158,12 +273,10 @@ class _CreateRecipe extends React.Component {
     renderPanel() {
         const {selectedRecipeType} = this.state
         return (
-            <Panel
-                className={[styles.panel, styles.modal].join(' ')}
-                type={'modal'}>
+            <Panel className={[styles.panel, styles.modal].join(' ')} type='modal'>
                 {selectedRecipeType
                     ? this.renderRecipeTypeInfo(selectedRecipeType)
-                    : this.renderRecipeTypes()}
+                    : this.renderRecipeTypeList()}
             </Panel>
         )
     }
@@ -177,6 +290,28 @@ class _CreateRecipe extends React.Component {
             </React.Fragment>
         )
     }
+
+    updateTags() {
+        const {recipeTypes} = this.props
+        const tags = _.chain(recipeTypes)
+            .map(({tags}) => tags)
+            .flatten()
+            .uniq()
+            .compact()
+            .value()
+        this.setState({tags})
+    }
+
+    componentDidMount() {
+        this.updateTags()
+    }
+
+    componentDidUpdate({recipeTypes: prevRecipeTypes}) {
+        const {recipeTypes} = this.props
+        if (!_.isEqual(recipeTypes, prevRecipeTypes)) {
+            this.updateTags()
+        }
+    }
 }
 
 export const CreateRecipe = compose(
@@ -185,12 +320,13 @@ export const CreateRecipe = compose(
 )
 
 CreateRecipe.propTypes = {
-    recipeId: PropTypes.string.isRequired
+    recipeId: PropTypes.string.isRequired,
+    recipeTypes: PropTypes.array.isRequired
 }
 
 class RecipeType extends React.Component {
     render() {
-        const {projectId, recipeId, type: {id: recipeTypeId, labels: {name, tabPlaceholder, creationDescription}, beta}} = this.props
+        const {projectId, recipeId, type: {id: recipeTypeId, labels: {name, tabPlaceholder, creationDescription}, beta}, highlight} = this.props
         const title = beta
             ? <span>{name}<sup className={styles.beta}>Beta</sup></span>
             : name
@@ -202,6 +338,7 @@ class RecipeType extends React.Component {
                     className={styles.recipe}
                     title={title}
                     description={creationDescription}
+                    highlight={highlight}
                 />
             </ListItem>
         )

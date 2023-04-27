@@ -1,10 +1,15 @@
 .panel {
     --margin-right: 0.5rem; /* There is no toolbar - make margin-right shorter than the default centered panel */
     max-width: 40rem;
+    height: 50vh;
 }
 
 .panel.modal {
     width: 40rem;
+}
+
+.header {
+    margin-bottom: 1rem;
 }
 
 .beta {

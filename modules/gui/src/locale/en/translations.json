@@ -3200,7 +3200,13 @@
         "name": "Name",
         "newRecipe": {
           "title": "Create recipe",
-          "tooltip": "Create a new SEPAL recipe"
+          "tooltip": "Create a new SEPAL recipe",
+          "search.placeholder": "Search recipe types",
+          "tags": {
+            "OPTICAL": "Optical",
+            "RADAR": "Radar",
+            "MOSAIC": "Mosaic"
+          }
         },
         "edit": {
           "label": "Edit"
