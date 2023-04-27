@@ -4,9 +4,7 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
-import {maxDate, minDate} from 'widget/form/datePicker'
 import {msg} from 'translate'
-import {selectFrom} from 'stateUtils'
 import React from 'react'
 import moment from 'moment'
 import styles from './date.module.css'
@@ -23,11 +21,6 @@ const fields = {
     monitoringDurationUnit: new Form.Field()
         .notBlank()
 }
-
-const mapRecipeToProps = recipe => ({
-    segmentsStartDate: selectFrom(recipe, 'model.reference.startDate'),
-    segmentsEndDate: selectFrom(recipe, 'model.reference.endDate')
-})
 
 class Date extends React.Component {
     render() {
@@ -74,17 +67,8 @@ class Date extends React.Component {
     }
 
     dateRange() {
-        const {segmentsStartDate, segmentsEndDate} = this.props
-        const start = minDate(
-            maxDate(
-                moment(segmentsStartDate).add(1, 'year'),
-                moment('1982-08-22', DATE_FORMAT)),
-            moment()
-        ).format(DATE_FORMAT)
-        const end = minDate(
-            moment(segmentsEndDate).add(1, 'year'),
-            moment()
-        ).format(DATE_FORMAT)
+        const start = '2014-06-15'
+        const end = moment().format(DATE_FORMAT)
         return {start, end}
     }
 
@@ -120,21 +104,6 @@ class Date extends React.Component {
         )
     }
 
-    renderReferenceDates() {
-        const {segmentsStartDate, segmentsEndDate} = this.props
-        return segmentsStartDate && segmentsEndDate
-            ? (
-                <p className={styles.dateRange}>
-                    {msg('process.baytsAlerts.panel.date.form.range', {segmentsStartDate, segmentsEndDate})}
-                </p>
-            )
-            : (
-                <p className={styles.dateRange}>
-                    {msg('process.baytsAlerts.panel.date.form.noRange', {segmentsStartDate, segmentsEndDate})}
-                </p>
-            )
-    }
-
     componentDidMount() {
         this.defaultMonitoringEnd()
     }
@@ -155,5 +124,5 @@ Date.propTypes = {}
 
 export default compose(
     Date,
-    recipeFormPanel({id: 'date', fields, mapRecipeToProps})
+    recipeFormPanel({id: 'date', fields})
 )
