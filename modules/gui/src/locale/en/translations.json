@@ -3205,7 +3205,10 @@
           "tags": {
             "OPTICAL": "Optical",
             "RADAR": "Radar",
-            "MOSAIC": "Mosaic"
+            "MOSAIC": "Mosaic",
+            "CHANGE": "Change",
+            "TIME_SERIES": "Time series",
+            "ALERTS": "Alerts"
           }
         },
         "edit": {
