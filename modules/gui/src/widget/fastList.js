@@ -29,7 +29,7 @@ class _FastList extends React.PureComponent {
     
     render() {
         const {items} = this.props
-        return items
+        return items?.length
             ? this.renderSingleItemSampler() || this.renderSpacedItemSampler() || this.renderList()
             : null
     }
@@ -88,7 +88,8 @@ class _FastList extends React.PureComponent {
                 style={{
                     '--height': height,
                     '--itemHeight': itemHeight
-                }}/>
+                }}
+            />
         )
     }
 
