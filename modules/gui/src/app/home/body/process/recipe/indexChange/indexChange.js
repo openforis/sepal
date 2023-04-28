@@ -63,6 +63,7 @@ export default () => ({
         creationDescription: msg('process.indexChange.description'),
         tabPlaceholder: msg('process.indexChange.tabPlaceholder'),
     },
+    tags: ['CHANGE'],
     components: {
         recipe: IndexChange
     },

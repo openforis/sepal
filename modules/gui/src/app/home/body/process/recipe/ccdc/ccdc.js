@@ -82,6 +82,7 @@ export default () => ({
         creationDescription: msg('process.ccdc.description'),
         tabPlaceholder: msg('process.ccdc.tabPlaceholder')
     },
+    tags: ['TIME_SERIES'],
     components: {
         recipe: CCDC
     },

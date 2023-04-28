@@ -16,7 +16,7 @@ import {SelectProject} from './selectProject'
 import {SortButtons} from 'widget/sortButtons'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {getRecipeType} from '../recipeTypes'
+import {getRecipeType, listRecipeTypes} from '../recipeTypes'
 import {msg} from 'translate'
 import {simplifyString, splitString} from 'string'
 import ButtonPopup from 'widget/buttonPopup'
@@ -111,7 +111,7 @@ class _RecipeList extends React.Component {
                     {this.renderEditButtons()}
                 </Layout>
                 <Layout type='horizontal' spacing='compact'>
-                    <CreateRecipe recipeId={recipeId}/>
+                    <CreateRecipe recipeId={recipeId} recipeTypes={listRecipeTypes()}/>
                     <ProjectsButton/>
                     <SelectProject/>
                     <Layout.Spacer/>
