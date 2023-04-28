@@ -14,7 +14,9 @@ import React from 'react'
 import _ from 'lodash'
 
 const defaultLayerConfig = {
-    visualizationType: 'alerts'
+    visualizationType: 'alerts',
+    previouslyConfirmed: 'exclude',
+    minConfidence: 'high'
 }
 
 const mapRecipeToProps = (recipe, {source}) => {
@@ -40,10 +42,13 @@ class _BaytsAlertsImageLayer extends React.Component {
     }
 
     renderImageLayerForm() {
+        const {layerConfig: {visualizationType}} = this.props
         return (
             <Layout>
                 {this.renderVisualizationType()}
-                {this.renderVisualizationSelector()}
+                {visualizationType === 'alerts' ? this.renderPreviouslyConfirmed() : null}
+                {visualizationType === 'alerts' ? this.renderMinConfidence() : null}
+                {visualizationType === 'alerts' ? this.renderVisualizationSelector() : null}
             </Layout>
         )
     }
@@ -63,7 +68,41 @@ class _BaytsAlertsImageLayer extends React.Component {
                 options={options}
                 onChange={visualizationType => this.selectVisualizationType(visualizationType)}
             />
-            
+        )
+    }
+
+    renderPreviouslyConfirmed() {
+        const {layerConfig: {previouslyConfirmed}} = this.props
+        const options = [
+            {value: 'include', label: msg('process.baytsAlerts.imageLayerForm.previouslyConfirmed.include.label'), tooltip: msg('process.baytsAlerts.imageLayerForm.previouslyConfirmed.include.tooltip')},
+            {value: 'exclude', label: msg('process.baytsAlerts.imageLayerForm.previouslyConfirmed.exclude.label'), tooltip: msg('process.baytsAlerts.imageLayerForm.previouslyConfirmed.exclude.tooltip')}
+        ]
+        const selectedOption = options.find(({value}) => value === previouslyConfirmed) || {}
+        return (
+            <Buttons
+                label={msg('process.baytsAlerts.imageLayerForm.previouslyConfirmed.label')}
+                selected={selectedOption.value}
+                options={options}
+                onChange={previouslyConfirmed => this.selectPreviouslyConfirmed(previouslyConfirmed)}
+            />
+        )
+    }
+
+    renderMinConfidence() {
+        const {layerConfig: {minConfidence}} = this.props
+        const options = [
+            {value: 'all', label: msg('process.baytsAlerts.imageLayerForm.minConfidence.all.label'), tooltip: msg('process.baytsAlerts.imageLayerForm.minConfidence.all.tooltip')},
+            {value: 'low', label: msg('process.baytsAlerts.imageLayerForm.minConfidence.low.label'), tooltip: msg('process.baytsAlerts.imageLayerForm.minConfidence.low.tooltip')},
+            {value: 'high', label: msg('process.baytsAlerts.imageLayerForm.minConfidence.high.label'), tooltip: msg('process.baytsAlerts.imageLayerForm.minConfidence.high.tooltip')}
+        ]
+        const selectedOption = options.find(({value}) => value === minConfidence) || {}
+        return (
+            <Buttons
+                label={msg('process.baytsAlerts.imageLayerForm.minConfidence.label')}
+                selected={selectedOption.value}
+                options={options}
+                onChange={minConfidence => this.selectMinConfidence(minConfidence)}
+            />
         )
     }
 
@@ -140,6 +179,16 @@ class _BaytsAlertsImageLayer extends React.Component {
     selectVisualizationType(visualizationType) {
         const {mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({visualizationType})
+    }
+
+    selectPreviouslyConfirmed(previouslyConfirmed) {
+        const {mapArea: {updateLayerConfig}} = this.props
+        updateLayerConfig({previouslyConfirmed})
+    }
+
+    selectMinConfidence(minConfidence) {
+        const {mapArea: {updateLayerConfig}} = this.props
+        updateLayerConfig({minConfidence})
     }
 }
 

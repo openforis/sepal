@@ -55,6 +55,7 @@ export default () => ({
         creationDescription: msg('process.baytsAlerts.description'),
         tabPlaceholder: msg('process.baytsAlerts.tabPlaceholder')
     },
+    tags: ['CHANGE', 'ALERTS'],
     components: {
         recipe: BaytsAlerts
     },

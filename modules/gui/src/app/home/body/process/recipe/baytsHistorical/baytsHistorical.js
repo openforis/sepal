@@ -52,6 +52,7 @@ export default () => ({
         creationDescription: msg('process.baytsHistorical.description'),
         tabPlaceholder: msg('process.baytsHistorical.tabPlaceholder'),
     },
+    tags: ['CHANGE', 'ALERTS'],
     components: {
         recipe: BaytsHistorical
     },

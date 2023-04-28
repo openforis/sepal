@@ -3115,7 +3115,7 @@
           "visualizationType": {
             "alerts": {
               "label": "Alerts",
-              "tooltip": "Rendeźr alerts"
+              "tooltip": "Render alerts"
             },
             "first": {
               "label": "First",
@@ -3126,6 +3126,32 @@
               "label": "Last",
               "tooltip": "Render a composite of the last value in the monitoring period"
             }
+          },
+          "previouslyConfirmed": {
+            "include": {
+              "label": "Include",
+              "tooltip": "Include alerts confirmed before the monitoring period"
+            },
+            "exclude": {
+              "label": "Exclude",
+              "tooltip": "Exclude alerts confirmed before the monitoring period"
+            },
+            "label": "Previously confirmed"
+          },
+          "minConfidence": {
+            "all": {
+              "label": "All",
+              "tooltip": "Show all alerts independent on their confidence"
+            },
+            "low": {
+              "label": "Low",
+              "tooltip": "Show alerts with low or high confidence"
+            },
+            "high": {
+              "label": "High",
+              "tooltip": "Show only alerts with high confidence"
+            },
+            "label": "Min confidence"
           }
         },
         "layers": {
