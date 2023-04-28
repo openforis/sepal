@@ -55,6 +55,7 @@ const alertVisualizationOptions = recipe => {
                 normalize({
                     type: 'continuous',
                     bands: ['first_detection_date'],
+                    dataType: 'fractionalYear',
                     min: [fractionalMonitoringStart],
                     max: [fractionalMonitoringEnd],
                     palette: ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
@@ -62,6 +63,7 @@ const alertVisualizationOptions = recipe => {
                 normalize({
                     type: 'continuous',
                     bands: ['confirmation_date'],
+                    dataType: 'fractionalYear',
                     min: [fractionalMonitoringStart],
                     max: [fractionalMonitoringEnd],
                     palette: ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
