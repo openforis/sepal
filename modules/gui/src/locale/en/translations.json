@@ -3203,6 +3203,7 @@
           "tooltip": "Create a new SEPAL recipe",
           "search.placeholder": "Search recipe types",
           "tags": {
+            "ALL": "All",
             "OPTICAL": "Optical",
             "RADAR": "Radar",
             "MOSAIC": "Mosaic",

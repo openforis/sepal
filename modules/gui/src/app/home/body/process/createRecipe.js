@@ -76,15 +76,14 @@ class _CreateRecipe extends React.Component {
         tagsFilter: []
     }
 
-    showRecipeTypeInfo(type) {
-        this.setState({
-            selectedRecipeType: type
-        })
-    }
-
-    closePanel() {
-        this.showRecipeTypeInfo()
-        closePanel()
+    render() {
+        const {panel} = this.props
+        return (
+            <React.Fragment>
+                {this.renderButton()}
+                {panel ? this.renderPanel() : null}
+            </React.Fragment>
+        )
     }
 
     renderButton() {
@@ -100,6 +99,17 @@ class _CreateRecipe extends React.Component {
                 tooltip={msg('process.recipe.newRecipe.tooltip')}
                 tooltipPlacement='left'
                 tooltipDisabled={modal}/>
+        )
+    }
+
+    renderPanel() {
+        const {selectedRecipeType} = this.state
+        return (
+            <Panel className={styles.panel} type='modal'>
+                {selectedRecipeType
+                    ? this.renderRecipeTypeInfo(selectedRecipeType)
+                    : this.renderRecipeTypeList()}
+            </Panel>
         )
     }
 
@@ -190,10 +200,16 @@ class _CreateRecipe extends React.Component {
     renderTagsFilter() {
         const {tags, tagsFilter} = this.state
 
-        const options = tags?.map(tag => ({
+        const recipeOptions = tags?.map(tag => ({
             label: msg(`process.recipe.newRecipe.tags.${tag}`),
             value: tag
         }))
+
+        const options = [{
+            label: msg('process.recipe.newRecipe.tags.ALL'),
+            // value: null,
+            deselect: true
+        }, ...recipeOptions]
 
         return (
             <Buttons
@@ -206,6 +222,32 @@ class _CreateRecipe extends React.Component {
                 onSelect={this.setTagsFilter}
             />
         )
+    }
+
+    renderRecipeType(recipeType, highlightMatcher) {
+        const {projectId, recipeId} = this.props
+        return (
+            <RecipeType
+                key={recipeType.id}
+                projectId={projectId}
+                recipeId={recipeId}
+                type={recipeType}
+                onInfo={() => this.showRecipeTypeInfo(recipeType.id)}
+                beta={recipeType.beta}
+                highlight={highlightMatcher}
+            />
+        )
+    }
+
+    showRecipeTypeInfo(type) {
+        this.setState({
+            selectedRecipeType: type
+        })
+    }
+
+    closePanel() {
+        this.showRecipeTypeInfo()
+        closePanel()
     }
 
     setTextFilter(textFilterValue) {
@@ -253,42 +295,6 @@ class _CreateRecipe extends React.Component {
         return textFilterValues.length
             ? new RegExp(`(?:${textFilterValues.join('|')})`, 'i')
             : null
-    }
-
-    renderRecipeType(recipeType, highlightMatcher) {
-        const {projectId, recipeId} = this.props
-        return (
-            <RecipeType
-                key={recipeType.id}
-                projectId={projectId}
-                recipeId={recipeId}
-                type={recipeType}
-                onInfo={() => this.showRecipeTypeInfo(recipeType.id)}
-                beta={recipeType.beta}
-                highlight={highlightMatcher}
-            />
-        )
-    }
-
-    renderPanel() {
-        const {selectedRecipeType} = this.state
-        return (
-            <Panel className={[styles.panel, styles.modal].join(' ')} type='modal'>
-                {selectedRecipeType
-                    ? this.renderRecipeTypeInfo(selectedRecipeType)
-                    : this.renderRecipeTypeList()}
-            </Panel>
-        )
-    }
-
-    render() {
-        const {panel} = this.props
-        return (
-            <React.Fragment>
-                {this.renderButton()}
-                {panel ? this.renderPanel() : null}
-            </React.Fragment>
-        )
     }
 
     updateTags() {
