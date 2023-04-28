@@ -102,6 +102,7 @@ const valuesToModel = ({section, asset, recipe, bands, startDate, endDate, visua
         return null
     }
 }
+
 Reference.propTypes = {}
 
 export default compose(

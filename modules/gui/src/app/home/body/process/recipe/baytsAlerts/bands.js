@@ -10,7 +10,8 @@ export const getAvailableBands = (recipe, visualizationType) => {
         ? alertsBands()
         : radarBands(recipe)
 }
-const alertsBands = () => {
+
+export const alertsBands = () => {
     return {
         PNF: {dataType: typeFloat},
         pChange: {dataType: typeFloat},

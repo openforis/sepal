@@ -3162,6 +3162,12 @@
           "options": {
             "button": "OPT",
             "form": {
+                "previousAlertsAsset": {
+                    "label": "Previous alerts asset",
+                    "placeholder": "Previous alerts asset...",
+                    "tooltip": "EE asset containing previous alerts as a starting point for the algorithm",
+                    "missingBands": "The asset is missing required bands: {missingBands}"
+                }
             },
             "title": "BayTS alert options",
             "tooltip": "Configure sensitivity in detecting changes"

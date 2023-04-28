@@ -1,7 +1,9 @@
+import {AssetSelect} from 'widget/assetSelect'
 import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {alertsBands} from '../../bands'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import React from 'react'
@@ -9,9 +11,15 @@ import styles from './options.module.css'
 
 const fields = {
     advanced: new Form.Field(),
+    previousAlertsAsset: new Form.Field()
 }
 
 class Options extends React.Component {
+    constructor(props) {
+        super(props)
+        this.onPreviousAlertsAssetLoaded = this.onPreviousAlertsAssetLoaded.bind(this)
+    }
+
     render() {
         const {inputs: {advanced}} = this.props
         return (
@@ -41,7 +49,7 @@ class Options extends React.Component {
     renderSimple() {
         return (
             <React.Fragment>
-                Simple
+                {this.renderInitialAsset()}
             </React.Fragment>
         )
     }
@@ -54,9 +62,57 @@ class Options extends React.Component {
         )
     }
 
+    renderInitialAsset() {
+        const {inputs: {previousAlertsAsset}} = this.props
+        return (
+            <AssetSelect
+                input={previousAlertsAsset}
+                label={msg('process.baytsAlerts.panel.options.form.previousAlertsAsset.label')}
+                placeholder={msg('process.baytsAlerts.panel.options.form.previousAlertsAsset.placeholder')}
+                tooltip={msg('process.baytsAlerts.panel.options.form.previousAlertsAsset.tooltip')}
+                autoFocus
+                expectedType={['Image', 'ImageCollection']}
+                onLoaded={this.onPreviousAlertsAssetLoaded}
+            />
+        )
+    }
+
+    onPreviousAlertsAssetLoaded({metadata}) {
+        const {inputs: {previousAlertsAsset}} = this.props
+        const bands = metadata.bands.map(({id}) => id)
+        const requiredBands = Object.keys(alertsBands())
+        const missingBands = requiredBands
+            .filter(requiredBand => !bands.includes(requiredBand))
+        if (missingBands.length) {
+            previousAlertsAsset.setInvalid(msg(
+                'process.baytsAlerts.panel.options.form.previousAlertsAsset.missingBands',
+                {missingBands: missingBands.join(', ')}
+            ))
+            
+        }
+    }
+
     setAdvanced(enabled) {
         const {inputs: {advanced}} = this.props
         advanced.set(enabled)
+    }
+}
+const modelToValues = model => {
+    return {
+        ...model,
+        previousAlertsAsset: model.previousAlertsAsset?.id
+    }
+}
+
+const valuesToModel = values => {
+    return {
+        ...values,
+        previousAlertsAsset: values.previousAlertsAsset
+            ? {
+                type: 'ASSET',
+                id: values.previousAlertsAsset
+            }
+            : undefined
     }
 }
 
@@ -64,5 +120,5 @@ Options.propTypes = {}
 
 export default compose(
     Options,
-    recipeFormPanel({id: 'baytsAlertsOptions', fields})
+    recipeFormPanel({id: 'baytsAlertsOptions', fields, modelToValues, valuesToModel})
 )
