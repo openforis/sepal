@@ -17,8 +17,7 @@ import _ from 'lodash'
 import styles from './baytsAlertsToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
-    initialized: selectFrom(recipe, 'ui.initialized'),
-    baseBands: selectFrom(recipe, 'model.reference.baseBands')
+    initialized: selectFrom(recipe, 'ui.initialized')
 })
 
 class BaytsAlertsToolbar extends React.Component {
@@ -28,7 +27,7 @@ class BaytsAlertsToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized, baseBands} = this.props
+        const {recipeId, initialized} = this.props
 
         return (
             <PanelWizard
@@ -45,7 +44,7 @@ class BaytsAlertsToolbar extends React.Component {
                     vertical
                     placement='top-right'
                     className={styles.top}>
-                    <RetrieveButton disabled={!baseBands} tooltip={msg('process.baytsAlerts.panel.retrieve.tooltip')}/>
+                    <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical

@@ -1,7 +1,7 @@
 .panel {
-    max-width: 34rem;
+    max-width: 26rem;
 }
-
+    
 .scaleChange {
     display: flex;
     justify-content: flex-end;

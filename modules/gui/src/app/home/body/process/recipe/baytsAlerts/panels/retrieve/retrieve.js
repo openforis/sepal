@@ -4,6 +4,7 @@ import {compose} from 'compose'
 import {getGroupedBandOptions} from 'app/home/body/process/recipe/baytsAlerts/bands'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
+import styles from './retrieve.module.css'
 
 const mapRecipeToProps = recipe => ({recipe})
 
@@ -11,8 +12,9 @@ class _Retrieve extends React.Component {
     render() {
         return (
             <MosaicRetrievePanel
+                className={styles.panel}
                 bandOptions={getGroupedBandOptions()}
-                defaultScale={30}
+                defaultScale={10}
                 toSepal
                 toEE
                 onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
