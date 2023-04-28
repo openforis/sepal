@@ -54,6 +54,7 @@ export default () => ({
         creationDescription: msg('process.planetMosaic.description'),
         tabPlaceholder: msg('process.planetMosaic.tabPlaceholder'),
     },
+    tags: ['MOSAIC'],
     components: {
         recipe: PlanetMosaic
     },

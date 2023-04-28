@@ -14,52 +14,66 @@ export class Buttons extends React.Component {
             : selected === value
     }
 
-    toggleMultiple(value) {
+    toggleMultiple(value, deselect) {
         const {selected} = this.props
-        const prevValue = Array.isArray(selected) ? selected : []
-        const nextValue = this.isSelected(value)
-            ? prevValue.filter(v => v !== value)
-            : [...prevValue, value]
-        return nextValue
-    }
+        const isSelected = this.isSelected(value)
+        const prevSelected = Array.isArray(selected) ? selected : []
+        const nextSelected = isSelected
+            ? prevSelected.filter(v => v !== value)
+            : [...prevSelected, value]
 
-    select(value) {
-        const {selected, multiple, onChange, onSelect} = this.props
-        const prevValue = selected
-        const nextValue = multiple ? this.toggleMultiple(value) : value
-        if (prevValue !== nextValue) {
-            onChange && onChange(nextValue)
+        if (!isSelected && deselect) {
+            return _.isArray(deselect)
+                ? _.difference(nextSelected, deselect)
+                : []
         }
-        onSelect && onSelect(nextValue)
+        return nextSelected
     }
 
-    renderButton({value, look: customLook, icon, label, content, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected}) {
-        const {chromeless, air, disabled: allDisabled, look, shape, size, tabIndex, width} = this.props
-        const selected = !allDisabled && (alwaysSelected || (!neverSelected && this.isSelected(value)))
+    select(value, deselect) {
+        const {selected, multiple, onChange, onSelect} = this.props
+        const prevSelected = selected
+
+        const nextSelected = multiple
+            ? this.toggleMultiple(value, deselect)
+            : value
+
+        if (prevSelected !== nextSelected) {
+            onChange && onChange(nextSelected)
+        }
+        onSelect && onSelect(nextSelected)
+    }
+
+    renderButton({value, look: customLook, icon, label, content, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected, deselect}, index) {
+        const {chromeless, air, disabled: allDisabled, look, shape, size, tabIndex, width, selected} = this.props
+        const optionSelected = !allDisabled && (alwaysSelected || (!neverSelected && this.isSelected(value)))
+        const highlighted = optionSelected
+            || deselect === true && Array.isArray(selected) && selected.length === 0
+        const key = value || label || index
         return chromeless
             ? (
                 <Button
-                    key={value}
+                    key={key}
                     chromeless
-                    look={selected ? (customLook || 'transparent') : 'transparent'}
+                    look={optionSelected ? (customLook || 'transparent') : 'transparent'}
                     shape={shape || 'pill'}
                     air={air}
                     size={size}
                     disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
                     icon={icon}
                     label={label}
-                    labelStyle={selected ? 'smallcaps-highlight' : 'smallcaps'}
+                    labelStyle={highlighted ? 'smallcaps-highlight' : 'smallcaps'}
                     content={content}
                     tooltip={tooltip}
                     tooltipPlacement='bottom'
                     tabIndex={tabIndex}
                     width={width}
-                    onClick={() => this.select(value)}/>
+                    onClick={() => this.select(value, deselect)}/>
             )
             : (
                 <Button
-                    key={value}
-                    look={selected ? (customLook || 'highlight') : look || 'default'}
+                    key={key}
+                    look={highlighted ? (customLook || 'highlight') : look || 'default'}
                     shape={shape}
                     size={size}
                     air={air}
@@ -72,7 +86,7 @@ export class Buttons extends React.Component {
                     tooltipPlacement='bottom'
                     tabIndex={tabIndex}
                     width={width}
-                    onClick={() => this.select(value)}/>
+                    onClick={() => this.select(value, deselect)}/>
             )
 
     }
@@ -89,10 +103,9 @@ export class Buttons extends React.Component {
                 spacing={spacing}
                 disabled={disabled}
             >
-                {options.map(option => this.renderButton(
-                    _.isObjectLike(option)
-                        ? option
-                        : {value: option, label: option}
+                {options.map((option, index) => this.renderButton(
+                    _.isObjectLike(option) ? option : {value: option, label: option},
+                    index
                 ))}
             </ButtonGroup>
         )
@@ -144,7 +157,24 @@ Buttons.propTypes = {
     layout: PropTypes.string,
     look: PropTypes.string,
     multiple: PropTypes.any,
-    options: PropTypes.array,
+    options: PropTypes.arrayOf(
+        PropTypes.oneOfType(
+            PropTypes.string,
+            PropTypes.number,
+            PropTypes.shape({
+                alwaysSelected: PropTypes.any,
+                content: PropTypes.any,
+                deselect: PropTypes.any,
+                disabled: PropTypes.any,
+                icon: PropTypes.any,
+                label: PropTypes.any,
+                look: PropTypes.any,
+                neverSelected: PropTypes.any,
+                tooltip: PropTypes.any,
+                value: PropTypes.any
+            })
+        )
+    ),
     selected: PropTypes.any,
     shape: PropTypes.string,
     size: PropTypes.string,

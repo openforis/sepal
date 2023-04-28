@@ -55,6 +55,7 @@ export default () => ({
         creationDescription: msg('process.changeAlerts.description'),
         tabPlaceholder: msg('process.changeAlerts.tabPlaceholder')
     },
+    tags: ['CHANGE', 'ALERTS'],
     components: {
         recipe: ChangeAlerts
     },
