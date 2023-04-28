@@ -136,9 +136,10 @@ class _CursorValue extends React.Component {
             : value >= max
                 ? formatValue({dataType, value: max, magnitude})
                 : formatValue({dataType, value, magnitude})
+        console.log(dataType || 'default', styles[dataType || 'default'])
         return (
             <div
-                className={[styles.cursorValue, dataType || 'default'].join(' ')}
+                className={[styles.cursorValue, styles[dataType || 'default']].join(' ')}
                 style={{'--left': `${position}px`}}>
                 {prefix}
                 {formatted}
@@ -212,7 +213,7 @@ const Value = ({value}) => {
 
 const formatValue = ({dataType, value, magnitude}) => {
     switch (dataType) {
-    case 'fractionalYear': return format.date(format.fractionalYearsToDate(value))
+    case 'fractionalYears': return format.date(format.fractionalYearsToDate(value))
     default: return format.numberToMagnitude({value, magnitude})
     }
 }
