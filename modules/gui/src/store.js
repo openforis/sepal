@@ -139,20 +139,10 @@ const withConnectedComponent = () =>
             }
         }
 
-// const includeDispatchingProp = mapStateToProps =>
-//     (state, ownProps) => ({
-//         ...(mapStateToProps ? mapStateToProps(state, ownProps) : null),
-//         actions: state.actions || {},
-//         streams: state.stream && state.stream[ownProps.componentId]
-//     })
-    
 const withReduxState = mapStateToProps =>
-    connectToRedux(
-        // includeDispatchingProp(mapStateToProps), null, null, {
-        mapStateToProps, null, null, {
-            areStatePropsEqual: isEqual
-        }
-    )
+    connectToRedux(mapStateToProps, null, null, {
+        areStatePropsEqual: isEqual
+    })
 
 export const connect = mapStateToProps =>
     composeHoC(
@@ -160,14 +150,3 @@ export const connect = mapStateToProps =>
         withReduxState(mapStateToProps),
         withConnectedComponent()
     )
-
-// const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
-
-// ConnectedComponent.displayName
-//     = PreventUpdateWhenDisabled.displayName
-//     = `Store(${WrappedComponent.displayName})`
-
-// export const dispatchable = action => ({
-//     ...action,
-//     dispatch: () => dispatch(action)
-// })
