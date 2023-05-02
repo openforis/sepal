@@ -45,7 +45,12 @@ export default class Layer {
             },
             error: error => {
                 log.warn('Initialization failed', error)
-                Notifications.error({message: msg('map.layer.error'), error})
+                Notifications.error({
+                    message: msg('map.layer.error'),
+                    error,
+                    group: true,
+                    timeout: 0
+                })
             },
             complete: () => {
                 log.debug('Initialization complete')

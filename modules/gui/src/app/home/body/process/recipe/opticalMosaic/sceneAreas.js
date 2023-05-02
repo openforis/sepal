@@ -1,4 +1,3 @@
-import {Button} from 'widget/button'
 import {
     RecipeActions,
     SceneSelectionType,
@@ -48,7 +47,7 @@ class _SceneAreas extends React.Component {
         }
         this.toggleLayer(manualSelection)
     }
-
+    
     componentWillUnmount() {
         this.toggleLayer(false)
     }
@@ -72,18 +71,19 @@ class _SceneAreas extends React.Component {
                     title: msg('gee.error.title'),
                     message: msg('process.mosaic.sceneAreas.error'),
                     error: e.response ? msg(e.response.messageKey, e.response.messageArgs, e.response.defaultMessage) : null,
-                    timeout: 0,
-                    content: dismiss =>
-                        <Button
-                            look='transparent'
-                            shape='pill'
-                            icon='sync'
-                            label={msg('button.retry')}
-                            onClick={() => {
-                                dismiss()
-                                this.reload()
-                            }}
-                        />
+                    group: true,
+                    timeout: 0
+                    // content: dismiss =>
+                    //     <Button
+                    //         look='transparent'
+                    //         shape='pill'
+                    //         icon='sync'
+                    //         label={msg('button.retry')}
+                    //         onClick={() => {
+                    //             dismiss()
+                    //             this.reload()
+                    //         }}
+                    //     />
                 })
             }
         )
@@ -134,6 +134,7 @@ class _SceneAreas extends React.Component {
 
 export const SceneAreas = compose(
     _SceneAreas,
+    // withDiff(),
     withRecipe(mapRecipeToProps),
     withTab()
 )
