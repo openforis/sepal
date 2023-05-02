@@ -11,7 +11,14 @@ import styles from './options.module.css'
 
 const fields = {
     advanced: new Form.Field(),
-    previousAlertsAsset: new Form.Field()
+    previousAlertsAsset: new Form.Field(),
+    sensitivity: new Form.Field(),
+    normalize: new Form.Field(),
+    maxDays: new Form.Field(),
+    highConfidenceThreshold: new Form.Field(),
+    lowConfidenceThreshold: new Form.Field(),
+    wetlandMaskAsset: new Form.Field(),
+
 }
 
 class Options extends React.Component {
