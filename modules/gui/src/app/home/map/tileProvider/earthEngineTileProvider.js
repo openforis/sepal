@@ -9,6 +9,7 @@ const TILE_SIZE = ee.layers.AbstractOverlay.DEFAULT_TILE_EDGE_LENGTH
 export class EarthEngineTileProvider extends WMTSTileProvider {
     elements = {}
     offsets = {}
+    contexts = {}
 
     constructor({urlTemplate, dataTypes, visParams, cursorValue$, boundsChanged$, dragging$, cursor$}) {
         super({
@@ -21,7 +22,7 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
         this.visParams = visParams
         this.cursorValue$ = cursorValue$
         this.subscriptions = [
-            combineLatest([boundsChanged$, dragging$]).pipe(
+            combineLatest(boundsChanged$, dragging$).pipe(
                 map(([_, dragging]) => dragging),
                 filter(dragging => !dragging)
             ).subscribe(
@@ -46,25 +47,27 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
     }
 
     renderTile({doc, element, blob}) {
+        const ctx = element.getContext('2d', {willReadFrequently: true})
+        this.contexts[element.id] = ctx
+        ctx.imageSmoothingEnabled = false
         const image = doc.createElement('img')
         image.setAttribute('src', (window.URL || window.webkitURL).createObjectURL(blob))
         image.onload = () => {
             this.elements[element.id] = element
             this.updateOffset(element)
-            element.getContext('2d', {willReadFrequently: true}).drawImage(image, 0, 0, TILE_SIZE, TILE_SIZE)
+            ctx.drawImage(image, 0, 0, TILE_SIZE, TILE_SIZE)
         }
-
-        image.src = URL.createObjectURL(blob)
     }
 
     releaseTile(element) {
         delete this.elements[element.id]
         delete this.offsets[element.id]
+        delete this.contexts[element.id]
     }
 
     updateOffset(element) {
-        const rect = element.getBoundingClientRect()
-        this.offsets[element.id] = {top: rect.top, left: rect.left}
+        const {top, left} = element.getBoundingClientRect()
+        this.offsets[element.id] = {top, left}
     }
 
     cursorColor(cursor) {
@@ -83,11 +86,10 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
     }
 
     toColor(id, x, y) {
-        const element = this.elements[id]
         const {top, left} = this.offsets[id]
         const offsetX = x - left
         const offsetY = y - top
-        const ctx = element.getContext('2d', {willReadFrequently: true})
+        const ctx = this.contexts[id]
         const data = ctx.getImageData(offsetX, offsetY, 1, 1).data
         const [red, green, blue, alpha] = data
         if (alpha) {
