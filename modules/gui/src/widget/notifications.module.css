@@ -12,6 +12,10 @@
     padding-bottom: 0;
 }
 
+.scrollable {
+    pointer-events: none;
+}
+
 .wrapper {
     pointer-events: all; /* prevent unwanted clicks in the inter-notification margin */
 }

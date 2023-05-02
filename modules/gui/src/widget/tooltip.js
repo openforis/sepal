@@ -36,7 +36,7 @@ export default class Tooltip extends React.Component {
     getMsg() {
         const {msg} = this.props
         if (_.isArray(msg)) {
-            return msg.map((msg, line) => (
+            return _.compact(msg).map((msg, line) => (
                 <div key={line} className={styles.block}>{msg}</div>
             ))
         }

@@ -63,6 +63,7 @@ export default () => ({
         creationDescription: msg('process.classChange.description'),
         tabPlaceholder: msg('process.classChange.tabPlaceholder'),
     },
+    tags: ['CHANGE'],
     components: {
         recipe: ClassChange
     },
