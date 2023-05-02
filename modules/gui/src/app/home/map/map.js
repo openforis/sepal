@@ -210,6 +210,9 @@ class _Map extends React.Component {
         const {googleMap} = map.getGoogle()
 
         const listeners = [
+            googleMap.addListener('idle',
+                () => this.viewChanged$.next()
+            ),
             googleMap.addListener('mouseout',
                 () => this.synchronizeCursor(id, null)
             ),
@@ -671,7 +674,8 @@ class _Map extends React.Component {
             source,
             layerConfig,
             map,
-            boundsChanged$: this.viewChanged$.pipe(share()),
+            boundsChanged$: this.viewChanged$,
+            // boundsChanged$: this.viewChanged$.pipe(share()),
             dragging$: combineLatest([this.draggingMap$, this.draggingSplit$]).pipe(
                 share(),
                 rxMap(([draggingMap, draggingSplit]) => draggingMap || draggingSplit)
