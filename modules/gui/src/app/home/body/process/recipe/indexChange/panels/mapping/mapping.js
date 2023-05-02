@@ -101,6 +101,7 @@ class _Mapping extends React.Component {
                         />
                     }
                     images={images}
+                    booleanOperator={booleanOperator}
                     constraints={constraints}
                     onChange={({constraints, booleanOperator}) => this.updateConstraints(id, constraints, booleanOperator)}
                 />

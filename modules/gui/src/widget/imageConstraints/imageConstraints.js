@@ -74,12 +74,15 @@ class _ImageConstraints extends React.Component {
     }
 
     componentDidMount() {
-        const {constraints = []} = this.props
+        const {booleanOperator, constraints = []} = this.props
         this.setState({constraints})
         if (constraints.length) {
             this.setState({constraints})
         } else {
             this.addConstraint()
+        }
+        if (booleanOperator) {
+            this.setState({booleanOperator})
         }
     }
 
@@ -189,5 +192,6 @@ ImageConstraints.propTypes = {
     images: PropTypes.array.isRequired,
     title: PropTypes.any.isRequired,
     onChange: PropTypes.func.isRequired,
+    booleanOperator: PropTypes.func,
     icon: PropTypes.string,
 }
