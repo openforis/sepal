@@ -584,7 +584,7 @@ class _VisParamsPanel extends React.Component {
             ? inputs.palette.value.map(({color}) => color)
             : ['#000000', '#FFFFFF']
         const id = prevVisParams && prevVisParams.id ? prevVisParams.id : guid()
-        const dataType = prevVisParams.dataType
+        const dataType = prevVisParams?.dataType
         const visParams = normalize(
             type === 'continuous'
                 ? {id, type, bands, dataType, inverted, min, max, palette, userDefined: true}
