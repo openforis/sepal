@@ -118,7 +118,7 @@ class _RecipeImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        if (this.selfManagedVisualiations()) {
+        if (this.selfManagedVisualizations()) {
             return
         }
         const {layerConfig: {visParams}} = this.props
@@ -128,7 +128,7 @@ class _RecipeImageLayer extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (this.selfManagedVisualiations()) {
+        if (this.selfManagedVisualizations()) {
             return
         }
         const {layerConfig: {visParams: prevVisParams}} = prevProps
@@ -152,7 +152,7 @@ class _RecipeImageLayer extends React.Component {
         }
     }
 
-    selfManagedVisualiations() {
+    selfManagedVisualizations() {
         const {recipe} = this.props
         return recipe && ['CCDC_SLICE', 'CHANGE_ALERTS'].includes(recipe.type)
     }

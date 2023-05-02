@@ -1,5 +1,5 @@
+import {diff} from 'deep-diff'
 import React from 'react'
-import diff from 'deep-diff'
 
 export const withDiff = () =>
     WrappedComponent =>
