@@ -2939,6 +2939,21 @@
                             },
                             "label": ""
                         },
+                        "orbitNumbers": {
+                            "all": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "dominant": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "adjacent": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": ""
+                        },
                         "outlierRemoval": {
                             "aggressive": {
                                 "label": "",
@@ -2954,7 +2969,102 @@
                                 "tooltip": ""
                             }
                         },
-                        "speckleFilter": {
+                        "mask": {
+                            "label": "",
+                            "sides": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "firstLast": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "maskOptions": {
+                            "title": "",
+                            "minAngle": {
+                                "label": ""
+                            },
+                            "maxAngle": {
+                                "label": ""
+                            }
+                        },
+                        "spatialSpeckleFilter": {
+                            "label": "",
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "boxcar": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "gammaMap": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "lee": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "refinedLee": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "leeSigma": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snic": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "spatialSpeckleFilterOptions": {
+                            "kernelSize": {
+                                "label": ""
+                            },
+                            "sigma": {
+                                "label": ""
+                            },
+                            "strongScatterers": {
+                                "retain": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "filter": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "label": ""
+                            },
+                            "strongScattererValue1": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "strongScattererValue2": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicSize": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicCompactness": {
+                                "label": "",
+                                "tooltip": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilterOptions": {
+                            "numberOfImages": {
+                                "label": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilter": {
                             "label": "",
                             "none": {
                                 "label": "",
@@ -2964,14 +3074,14 @@
                                 "label": "",
                                 "tooltip": ""
                             },
-                            "refinedLee": {
-                                "label": "",
-                                "tooltip": ""
-                            },
-                            "snic": {
+                            "rabasar": {
                                 "label": "",
                                 "tooltip": ""
                             }
+                        },
+                        "minObservations": {
+                            "label": "",
+                            "value": ""
                         }
                     },
                     "title": "",
@@ -3197,7 +3307,17 @@
             "name": "",
             "newRecipe": {
                 "title": "",
-                "tooltip": ""
+                "tooltip": "",
+                "search.placeholder": "",
+                "tags": {
+                    "ALL": "",
+                    "OPTICAL": "",
+                    "RADAR": "",
+                    "MOSAIC": "",
+                    "CHANGE": "",
+                    "TIME_SERIES": "",
+                    "ALERTS": ""
+                }
             },
             "edit": {
                 "label": ""
@@ -3745,7 +3865,8 @@
             "update": {
                 "success": "",
                 "error": ""
-            }
+            },
+            "info": ""
         },
         "status": {
             "label": "",
