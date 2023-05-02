@@ -2939,6 +2939,21 @@
                             },
                             "label": "Orbites"
                         },
+                        "orbitNumbers": {
+                            "all": {
+                                "label": "Tout",
+                                "tooltip": ""
+                            },
+                            "dominant": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "adjacent": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": ""
+                        },
                         "outlierRemoval": {
                             "aggressive": {
                                 "label": "Aggressif",
@@ -2954,24 +2969,119 @@
                                 "tooltip": "Ne pas supprimer les outliers"
                             }
                         },
-                        "speckleFilter": {
-                            "label": "Filtre speckle",
+                        "mask": {
+                            "label": "",
+                            "sides": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "firstLast": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "maskOptions": {
+                            "title": "",
+                            "minAngle": {
+                                "label": ""
+                            },
+                            "maxAngle": {
+                                "label": ""
+                            }
+                        },
+                        "spatialSpeckleFilter": {
+                            "label": "",
                             "none": {
                                 "label": "Aucun",
-                                "tooltip": "Ne pas appliquer de filtre speckle"
+                                "tooltip": ""
                             },
-                            "quegan": {
+                            "boxcar": {
                                 "label": "",
-                                "tooltip": "Le filtre Quegan MT est appliqué."
+                                "tooltip": ""
+                            },
+                            "gammaMap": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "lee": {
+                                "label": "",
+                                "tooltip": ""
                             },
                             "refinedLee": {
                                 "label": "",
-                                "tooltip": "Refine Lee appliqué (Cela peut être très lent, mais donne souvent de bons résultats)."
+                                "tooltip": ""
+                            },
+                            "leeSigma": {
+                                "label": "",
+                                "tooltip": ""
                             },
                             "snic": {
                                 "label": "",
-                                "tooltip": "Groupement simple non-iteratif (SNIC)"
+                                "tooltip": ""
                             }
+                        },
+                        "spatialSpeckleFilterOptions": {
+                            "kernelSize": {
+                                "label": ""
+                            },
+                            "sigma": {
+                                "label": ""
+                            },
+                            "strongScatterers": {
+                                "retain": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "filter": {
+                                    "label": "Filtre",
+                                    "tooltip": ""
+                                },
+                                "label": ""
+                            },
+                            "strongScattererValue1": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "strongScattererValue2": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicSize": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicCompactness": {
+                                "label": "",
+                                "tooltip": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilterOptions": {
+                            "numberOfImages": {
+                                "label": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilter": {
+                            "label": "",
+                            "none": {
+                                "label": "Aucun",
+                                "tooltip": ""
+                            },
+                            "quegan": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "rabasar": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "minObservations": {
+                            "label": "Nombre min d'observation",
+                            "value": ""
                         }
                     },
                     "title": "Options",
@@ -3197,7 +3307,17 @@
             "name": "Nom",
             "newRecipe": {
                 "title": "Créer une formule",
-                "tooltip": "Créer une nouvelle formule SEPAL"
+                "tooltip": "Créer une nouvelle formule SEPAL",
+                "search.placeholder": "",
+                "tags": {
+                    "ALL": "Tout",
+                    "OPTICAL": "Optique",
+                    "RADAR": "Radar",
+                    "MOSAIC": "Mosaïque",
+                    "CHANGE": "",
+                    "TIME_SERIES": "Séries temporelles",
+                    "ALERTS": ""
+                }
             },
             "edit": {
                 "label": "Éditer"
@@ -3745,7 +3865,8 @@
             "update": {
                 "success": "",
                 "error": ""
-            }
+            },
+            "info": ""
         },
         "status": {
             "label": "",
