@@ -474,7 +474,7 @@ class _Map extends React.Component {
     areaCursor$(id) {
         return this.cursor$.pipe(
             share(),
-            lastInWindow(100),
+            lastInWindow(50),
             switchMap(({screenPixel, mapPixel, cursorArea, latLng}) => {
                 const map = this.getMap(id)
                 const area = this.getArea(id)
