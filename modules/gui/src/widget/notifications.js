@@ -175,7 +175,7 @@ class _Notifications extends React.Component {
     render() {
         return (
             <ScrollableContainer className={styles.container}>
-                <Scrollable hideScrollbar>
+                <Scrollable className={styles.scrollable} hideScrollbar>
                     {this.renderNotifications()}
                 </Scrollable>
             </ScrollableContainer>
