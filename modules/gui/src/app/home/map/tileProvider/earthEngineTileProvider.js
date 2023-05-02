@@ -21,7 +21,7 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
         this.visParams = visParams
         this.cursorValue$ = cursorValue$
         this.subscriptions = [
-            combineLatest([boundsChanged$, dragging$]).pipe(
+            combineLatest(boundsChanged$, dragging$).pipe(
                 map(([_, dragging]) => dragging),
                 filter(dragging => !dragging)
             ).subscribe(
@@ -51,10 +51,8 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
         image.onload = () => {
             this.elements[element.id] = element
             this.updateOffset(element)
-            element.getContext('2d', {willReadFrequently: true}).drawImage(image, 0, 0, TILE_SIZE, TILE_SIZE)
+            element.getContext('2d', {willReadFrequently: true}).drawImage(image, 0, 0, TILE_SIZE, TILE_SIZE, 0, 0, TILE_SIZE, TILE_SIZE)
         }
-
-        image.src = URL.createObjectURL(blob)
     }
 
     releaseTile(element) {
@@ -64,7 +62,7 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
 
     updateOffset(element) {
         const rect = element.getBoundingClientRect()
-        this.offsets[element.id] = {top: rect.top, left: rect.left}
+        this.offsets[element.id] = {top: Math.floor(rect.top), left: Math.floor(rect.left)}
     }
 
     cursorColor(cursor) {
@@ -120,7 +118,7 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
 
     isInElement(id, x, y) {
         const {top, left} = this.offsets[id]
-        return x >= left && x <= left + TILE_SIZE && y >= top && y <= top + TILE_SIZE
+        return x >= left && x < left + TILE_SIZE && y >= top && y < top + TILE_SIZE
     }
 
     close() {
