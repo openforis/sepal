@@ -1,8 +1,7 @@
 .panel {
     --margin-right: 0.5rem; /* There is no toolbar - make margin-right shorter than the default centered panel */
     width: 45rem;
-    max-height: 90vh !important;
-    height: 80vh !important;
+    height: 80vh;
 }
 
 .header {
