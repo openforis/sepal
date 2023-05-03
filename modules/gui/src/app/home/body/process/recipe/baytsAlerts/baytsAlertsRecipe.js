@@ -20,6 +20,14 @@ export const defaultModel = {
     },
     options: {...defaultHistoricalModel.options},
     baytsAlertsOptions: {
+        wetlandMaskAsset: 'users/andreasvollrath/global_data/cifor_radd',
+        normalization: 'DISABLED',
+        sensitivity: 1,
+        maxDays: 90,
+        highConfidenceThreshold: 0.975,
+        lowConfidenceThreshold: 0.85,
+        minNonForestProbability: 0.6,
+        minChangeProbability: 0.5
     }
 }
 

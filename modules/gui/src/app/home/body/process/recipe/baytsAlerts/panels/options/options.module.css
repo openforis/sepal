@@ -1,3 +1,7 @@
 .panel {
     max-width: 29rem;
 }
+
+.input {
+    width: calc(50% - 1rem);
+}

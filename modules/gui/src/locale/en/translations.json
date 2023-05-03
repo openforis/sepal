@@ -3188,11 +3188,65 @@
           "options": {
             "button": "OPT",
             "form": {
+                "highConfidenceThreshold": {
+                    "label": "High-conf threshold",
+                    "tooltip": "The needed change probability for a high-confidence alert"
+                },
+                "lowConfidenceThreshold": {
+                    "label": "Low-conf threshold",
+                    "tooltip": "The needed change probability for a low-confidence alert",
+                    "tooLarge": "Must be smaller than the high-conf threshold"
+                },
+                "minChangeProbability": {
+                    "label": "Min change prob",
+                    "tooltip": "Min probability to consider an observation a potential change"
+                },
+                "minNonForestProbability": {
+                    "label": "Min non-forest prob",
+                    "tooltip": "Min probability to consider an observation to potentially be non-forest"
+                },
+                "maxDays": {
+                    "label": "Max days",
+                    "tooltip": "The max number of days before a lower confidence get unflagged"
+                },
+                "normalization": {
+                    "label": "Normalization",
+                    "tooltip": "Enable or disable image normalization. When enabled, less false changes, due to seasonality, will be detected.",
+                    "disabled": {
+                        "label": "Disabled",
+                        "tooltip": "Disable image normalization"
+                    },
+                    "enabled": {
+                        "label": "Enabled",
+                        "tooltip": "Enable image normalization"
+                    }
+                },
                 "previousAlertsAsset": {
                     "label": "Previous alerts asset",
                     "placeholder": "Previous alerts asset...",
                     "tooltip": "EE asset containing previous alerts as a starting point for the algorithm",
                     "missingBands": "The asset is missing required bands: {missingBands}"
+                },
+                "sensitivity": {
+                    "label": "Sensitivy",
+                    "tooltip": "Determine how sensitive the algorithm should be to pick up changes",
+                    "low": {
+                        "label": "Low",
+                        "tooltip": "Use low sensitivity"
+                    },
+                    "medium": {
+                        "label": "Medium",
+                        "tooltip": "Use medium sensitivity"
+                    },
+                    "high": {
+                        "label": "High",
+                        "tooltip": "Use high sensitivity"
+                    }
+                },
+                "wetlandMaskAsset": {
+                    "label": "Wetland Mask Asset",
+                    "placeholder": "Wetland mask...",
+                    "tooltip": "When a wetland mask is specified, the algorith will treat these areas slightly different"
                 }
             },
             "title": "BayTS alert options",
