@@ -8,6 +8,7 @@ import {alertsBands} from '../../bands'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import React from 'react'
+import _, {toInteger} from 'lodash'
 import styles from './options.module.css'
 
 const fields = {
@@ -48,6 +49,7 @@ const fields = {
 
 const constraints = {
     confidenceThreshold: new Form.Constraint(['highConfidenceThreshold', 'lowConfidenceThreshold'])
+        .skip(({highConfidenceThreshold}) => !highConfidenceThreshold)
         .predicate(({highConfidenceThreshold, lowConfidenceThreshold}) =>
             lowConfidenceThreshold < highConfidenceThreshold, 'process.baytsAlerts.panel.options.form.lowConfidenceThreshold.tooLarge'
         )
@@ -174,25 +176,25 @@ class Options extends React.Component {
         const {inputs: {sensitivity}} = this.props
         const options = [
             {
-                value: 0.8,
-                label: msg('process.baytsAlerts.panel.options.form.sensitivity.low.label'),
-                tooltip: msg('process.baytsAlerts.panel.options.form.sensitivity.low.tooltip'),
+                value: 1.2,
+                label: msg('process.baytsAlerts.panel.options.form.sensitivityButton.low.label'),
+                tooltip: msg('process.baytsAlerts.panel.options.form.sensitivityButton.low.tooltip'),
             },
             {
                 value: 1,
-                label: msg('process.baytsAlerts.panel.options.form.sensitivity.medium.label'),
-                tooltip: msg('process.baytsAlerts.panel.options.form.sensitivity.medium.tooltip'),
+                label: msg('process.baytsAlerts.panel.options.form.sensitivityButton.medium.label'),
+                tooltip: msg('process.baytsAlerts.panel.options.form.sensitivityButton.medium.tooltip'),
             },
             {
-                value: 1.2,
-                label: msg('process.baytsAlerts.panel.options.form.sensitivity.high.label'),
-                tooltip: msg('process.baytsAlerts.panel.options.form.sensitivity.high.tooltip'),
+                value: 0.8,
+                label: msg('process.baytsAlerts.panel.options.form.sensitivityButton.high.label'),
+                tooltip: msg('process.baytsAlerts.panel.options.form.sensitivityButton.high.tooltip'),
             },
         ]
         return (
             <Form.Buttons
                 label={msg('process.baytsAlerts.panel.options.form.sensitivity.label')}
-                tooltip={msg('process.baytsAlerts.panel.options.form.sensitivity.tooltip')}
+                tooltip={msg('process.baytsAlerts.panel.options.form.sensitivityButton.tooltip')}
                 input={sensitivity}
                 options={options}
             />
@@ -313,13 +315,31 @@ const modelToValues = model => {
 const valuesToModel = values => {
     return {
         ...values,
+        sensitivity: toInt(values.sensitivity),
+        maxDays: toInt(values.maxDays),
+        highConfidenceThreshold: toFloat(values.highConfidenceThreshold),
+        lowConfidenceThreshold: toFloat(values.lowConfidenceThreshold),
+        minNonForestProbability: toFloat(values.minNonForestProbability),
+        minChangeProbability: toFloat(values.minChangeProbability),
         previousAlertsAsset: values.previousAlertsAsset
             ? {
                 type: 'ASSET',
-                id: values.previousAlertsAsset
+                id: values.previousAlertsAsset,
             }
             : undefined
     }
+}
+
+const toInt = input => {
+    input = _.isString(input) ? input : _.toString(input)
+    const parsed = parseInt(input)
+    return _.isFinite(parsed) ? parsed : null
+}
+
+const toFloat = input => {
+    input = _.isString(input) ? input : _.toString(input)
+    const parsed = parseFloat(input)
+    return _.isFinite(parsed) ? parsed : null
 }
 
 Options.propTypes = {}

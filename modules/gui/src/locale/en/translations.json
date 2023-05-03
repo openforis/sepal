@@ -3227,8 +3227,7 @@
                     "tooltip": "EE asset containing previous alerts as a starting point for the algorithm",
                     "missingBands": "The asset is missing required bands: {missingBands}"
                 },
-                "sensitivity": {
-                    "label": "Sensitivy",
+                "sensitivityButton": {
                     "tooltip": "Determine how sensitive the algorithm should be to pick up changes",
                     "low": {
                         "label": "Low",
@@ -3242,6 +3241,10 @@
                         "label": "High",
                         "tooltip": "Use high sensitivity"
                     }
+                },
+                "sensitivity": {
+                    "label": "Sensitivy",
+                    "tooltip": "Determine how sensitive the algorithm should be to pick up changes. Medium sensitivity is 1. The bigger the number the less sensitive to change the algorithm will be."
                 },
                 "wetlandMaskAsset": {
                     "label": "Wetland Mask Asset",
