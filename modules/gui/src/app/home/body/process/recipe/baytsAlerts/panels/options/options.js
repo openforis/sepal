@@ -99,7 +99,7 @@ class Options extends React.Component {
         return (
             <Layout>
                 {this.renderPreviousAlertsAsset()}
-                {/* {this.renderWetlandMaskAsset()} */}
+                {this.renderWetlandMaskAsset()}
                 {this.renderNormalization()}
                 <Layout type='horizontal'>
                     {this.renderSensitivity()}
