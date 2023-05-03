@@ -59,5 +59,6 @@ export default () => ({
     getDependentRecipeIds: _recipe => [],
     getDateRange,
     getAvailableBands,
-    getPreSetVisualizations
+    getPreSetVisualizations,
+    beta: true
 })

@@ -67,5 +67,6 @@ export default () => ({
         return [monitoringStart, monitoringEnd]
     },
     getAvailableBands,
-    getPreSetVisualizations
+    getPreSetVisualizations,
+    beta: true
 })
