@@ -289,6 +289,7 @@ class _AppList extends React.Component {
     getApps() {
         const {apps} = this.props
         return _.chain(apps)
+            .filter(({hidden}) => !hidden)
             .filter(app => this.appMatchesFilters(app))
             .map(app => ({...app, running: this.isRunning(app)}))
             .value()
