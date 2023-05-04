@@ -19,14 +19,6 @@
     width: 7.5rem;
 }
 
-.panelTrigger {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    margin: auto 0;
-}
-
 .years, .months, .days {
     height: 100%;
 }
