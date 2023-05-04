@@ -315,7 +315,7 @@ const modelToValues = model => {
 const valuesToModel = values => {
     return {
         ...values,
-        sensitivity: toInt(values.sensitivity),
+        sensitivity: toFloat(values.sensitivity),
         maxDays: toInt(values.maxDays),
         highConfidenceThreshold: toFloat(values.highConfidenceThreshold),
         lowConfidenceThreshold: toFloat(values.lowConfidenceThreshold),
