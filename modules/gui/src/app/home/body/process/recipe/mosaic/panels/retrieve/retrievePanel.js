@@ -19,7 +19,9 @@ import _ from 'lodash'
 import styles from './retrievePanel.module.css'
 
 const fields = {
+    useAllBands: new Form.Field(),
     bands: new Form.Field()
+        .skip((v, {useAllBands}) => useAllBands)
         .predicate(bands => bands && bands.length, 'process.retrieve.form.bands.atLeastOne'),
     scale: new Form.Field()
         .int()
@@ -104,11 +106,11 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     renderContent() {
-        const {allowTiling, toSepal, toEE, inputs: {destination, assetType}} = this.props
+        const {allBands, allowTiling, toSepal, toEE, inputs: {destination, assetType}} = this.props
         const {more} = this.state
         return (
             <Layout>
-                {this.renderBandOptions()}
+                {allBands ? null : this.renderBandOptions()}
                 {this.renderScale()}
                 {toEE && toSepal && this.renderDestination()}
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
@@ -300,7 +302,7 @@ class _MosaicRetrievePanel extends React.Component {
     }
     
     componentDidMount() {
-        const {defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize, inputs: {assetType, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize}} = this.props
+        const {allBands, defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize, inputs: {assetType, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize, useAllBands}} = this.props
         const more = (crs.value && crs.value !== defaultCrs)
             || (crsTransform.value)
             || (shardSize.value && shardSize.value !== defaultShardSize)
@@ -324,6 +326,9 @@ class _MosaicRetrievePanel extends React.Component {
         }
         if (defaultAssetType && !assetType.value) {
             assetType.set(defaultAssetType)
+        }
+        if (allBands) {
+            useAllBands.set(true)
         }
         this.update()
     }
@@ -380,14 +385,15 @@ MosaicRetrievePanel.defaultProps = {
 }
 
 MosaicRetrievePanel.propTypes = {
-    bandOptions: PropTypes.array.isRequired,
     defaultCrs: PropTypes.string.isRequired,
     defaultFileDimensionsMultiple: PropTypes.number.isRequired,
     defaultScale: PropTypes.number.isRequired,
     defaultShardSize: PropTypes.number.isRequired,
     defaultTileSize: PropTypes.number.isRequired,
     onRetrieve: PropTypes.func.isRequired,
+    allBands: PropTypes.any,
     allowTiling: PropTypes.any,
+    bandOptions: PropTypes.array,
     className: PropTypes.any,
     defaultAssetType: PropTypes.any,
     scaleTicks: PropTypes.array,

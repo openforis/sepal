@@ -49,6 +49,16 @@ const date = date =>
 const fileSize = (size, {scale, precisionDigits, unit = 'B'} = {}) =>
     number({value: size, scale, precisionDigits, unit})
 
+const fractionalYearsToDate = fractionalYear => {
+    const year = Math.floor(fractionalYear)
+    const fraction = fractionalYear - year
+    const startOfYear = moment({year, month: 0, day: 1})
+    const startOfNextYear = moment(startOfYear).add(1, 'years')
+    const daysOfYear = startOfNextYear.diff(startOfYear, 'days')
+
+    return startOfYear.add(Math.floor(daysOfYear * fraction), 'days').toDate()
+}
+
 // scale: the magnitude of the input value (e.g. 'k')
 // minScale: the minimum magnitude of the output value (e.g. '')
 // precisionDigits: the total number of digits of the output value (e.g. 34.56 = 4 digits)
@@ -206,6 +216,7 @@ export default {
     percent,
     fullDateTime,
     fullDate,
+    fractionalYearsToDate,
     date,
     fileSize,
     number,

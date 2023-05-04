@@ -69,6 +69,7 @@ export const additionalVisualizations = recipe => {
     const endDate = selectFrom(recipe, 'model.date.endDate')
     const segmentsEndDate = selectFrom(recipe, 'model.source.endDate')
     const dateFormat = selectFrom(recipe, 'model.source.dateFormat')
+    const dataTypesByDateFormat = ['number', 'fractionalYears', 'number']
 
     const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -95,6 +96,7 @@ export const additionalVisualizations = recipe => {
         normalize({
             type: 'continuous',
             bands: ['tBreak'],
+            dataType: dataTypesByDateFormat[dateFormat],
             ...getBreakMinMax(),
             palette: ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
         }),

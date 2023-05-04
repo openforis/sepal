@@ -262,7 +262,7 @@ class _CreateRecipe extends React.Component {
     getFilteredRecipeTypes() {
         const {recipeTypes} = this.props
         return _.chain(recipeTypes)
-            .map(({id, labels, tags}) => ({id, labels, tags}))
+            .map(({id, labels, tags, beta}) => ({id, labels, tags, beta}))
             .filter(recipeType => this.recipeTypeMatchesFilters(recipeType))
             .value()
     }
