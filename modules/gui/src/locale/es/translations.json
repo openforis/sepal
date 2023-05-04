@@ -3094,6 +3094,398 @@
             },
             "tabPlaceholder": ""
         },
+        "baytsAlerts": {
+            "create": "",
+            "description": "",
+            "imageLayerForm": {
+                "mosaicType": {
+                    "label": "",
+                    "latest": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "median": {
+                        "label": "",
+                        "tooltip": ""
+                    }
+                },
+                "visualizationType": {
+                    "alerts": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "first": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "label": "",
+                    "last": {
+                        "label": "",
+                        "tooltip": ""
+                    }
+                },
+                "previouslyConfirmed": {
+                    "include": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "exclude": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "label": ""
+                },
+                "minConfidence": {
+                    "all": {
+                        "label": "Todo",
+                        "tooltip": ""
+                    },
+                    "low": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "high": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "label": ""
+                }
+            },
+            "layers": {
+                "imageLayer": {
+                    "changes": "",
+                    "dates": "Fechas",
+                    "observations": "Observaciones"
+                }
+            },
+            "panel": {
+                "date": {
+                    "button": "FEC",
+                    "form": {
+                        "durationUnit": {
+                            "placeholder": "",
+                            "DAYS": "",
+                            "MONTHS": "",
+                            "WEEKS": ""
+                        },
+                        "monitoring": {
+                            "duration": {
+                                "label": "",
+                                "placeholder": ""
+                            }
+                        },
+                        "monitoringEnd": {
+                            "label": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "options": {
+                    "button": "",
+                    "form": {
+                        "highConfidenceThreshold": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "lowConfidenceThreshold": {
+                            "label": "",
+                            "tooltip": "",
+                            "tooLarge": ""
+                        },
+                        "minChangeProbability": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "minNonForestProbability": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "maxDays": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "normalization": {
+                            "label": "",
+                            "tooltip": "",
+                            "disabled": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "enabled": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "previousAlertsAsset": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": "",
+                            "missingBands": ""
+                        },
+                        "sensitivityButton": {
+                            "tooltip": "",
+                            "low": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "medium": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "high": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "sensitivity": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "wetlandMaskAsset": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "preprocess": {
+                    "button": "",
+                    "title": "Pre-proceso",
+                    "tooltip": "Configurar el preprocesamiento de imágenes"
+                },
+                "reference": {
+                    "asset": {
+                        "label": "",
+                        "title": "",
+                        "notBayTSHistorical": ""
+                    },
+                    "button": "",
+                    "form": {
+                        "asset": {
+                            "invalid": "",
+                            "label": "",
+                            "placeholder": "",
+                            "required": "Indique el ID de un asset CCDC"
+                        }
+                    },
+                    "recipe": {
+                        "label": "Guardar el flujo de trabajo de SEPAL",
+                        "title": "Guardar el flujo de trabajo de SEPAL"
+                    },
+                    "title": "Fuente",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "error": "Fallo en la generación de vista previa",
+                "initializing": "Cargando vista previa...",
+                "label": "",
+                "loading": "Cargado {loaded} de {count} tiles",
+                "tilesFailed": "{failed} falló"
+            },
+            "reference": {
+                "asset": {
+                    "loadError": ""
+                },
+                "recipe": {
+                    "loadError": "Error al cargar la fórmula."
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "baytsHistorical": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "dates": {
+                    "button": "FEC",
+                    "form": {
+                        "fromDate": {
+                            "label": "",
+                            "malformed": "Fecha no válida"
+                        },
+                        "toDate": {
+                            "label": "",
+                            "malformed": "Fecha no válida"
+                        }
+                    },
+                    "title": "",
+                    "tooltip": "Especifique el rango de fechas"
+                },
+                "options": {
+                    "button": "",
+                    "form": {
+                        "geometricCorrection": {
+                            "ellipsoid": {
+                                "label": "Elipsoide",
+                                "tooltip": "Se aplica la corrección del elipsoide (corrección gamma0)."
+                            },
+                            "label": "Corrección geométrica",
+                            "none": {
+                                "label": "Ninguno",
+                                "tooltip": "No se aplica ninguna corrección geométrica."
+                            },
+                            "terrain": {
+                                "label": "Terreno",
+                                "tooltip": "Se aplica corrección del terreno."
+                            }
+                        },
+                        "orbits": {
+                            "ascending": {
+                                "label": "Ascendente",
+                                "tooltip": "Incluir escenas de órbitas ascendentes."
+                            },
+                            "descending": {
+                                "label": "Descendiendo",
+                                "tooltip": "Incluir escenas de órbitas descendentes."
+                            },
+                            "label": "Órbitas"
+                        },
+                        "outlierRemoval": {
+                            "aggressive": {
+                                "label": "Agresivo",
+                                "tooltip": "Eliminar más valores atípicos."
+                            },
+                            "label": "Eliminar valores atípicos",
+                            "moderate": {
+                                "label": "Moderado",
+                                "tooltip": "Eliminar valores atípicos."
+                            },
+                            "none": {
+                                "label": "Ninguno",
+                                "tooltip": "No eliminar valores atípicos."
+                            }
+                        },
+                        "mask": {
+                            "label": "",
+                            "sides": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "firstLast": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "maskOptions": {
+                            "title": "",
+                            "minAngle": {
+                                "label": ""
+                            },
+                            "maxAngle": {
+                                "label": ""
+                            }
+                        },
+                        "spatialSpeckleFilter": {
+                            "label": "",
+                            "none": {
+                                "label": "Ninguno",
+                                "tooltip": ""
+                            },
+                            "boxcar": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "gammaMap": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "lee": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "refinedLee": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "leeSigma": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snic": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "spatialSpeckleFilterOptions": {
+                            "kernelSize": {
+                                "label": ""
+                            },
+                            "sigma": {
+                                "label": ""
+                            },
+                            "strongScatterers": {
+                                "retain": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "filter": {
+                                    "label": "Filtro",
+                                    "tooltip": ""
+                                },
+                                "label": ""
+                            },
+                            "strongScattererValue1": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "strongScattererValue2": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicSize": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicCompactness": {
+                                "label": "",
+                                "tooltip": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilterOptions": {
+                            "numberOfImages": {
+                                "label": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilter": {
+                            "label": "",
+                            "none": {
+                                "label": "Ninguno",
+                                "tooltip": ""
+                            },
+                            "quegan": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "rabasar": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "minObservations": {
+                            "label": "Observaciones mínimas",
+                            "value": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "label": ""
+            },
+            "tabPlaceholder": ""
+        },
         "phenology": {
             "create": "",
             "description": "",
