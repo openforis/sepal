@@ -20,7 +20,7 @@ import styles from './tabs.module.css'
 
 export const addTab = statePath => {
     const id = guid()
-    const tab = {id, placeholder: msg('widget.tabs.newTab')}
+    const tab = {id, placeholder: msg('widget.tabs.newTab'), title: ''}
     actionBuilder('ADD_TAB')
         .push([statePath, 'tabs'], tab)
         .set([statePath, 'selectedTabId'], id)
@@ -44,7 +44,7 @@ export const renameTab = (title, tabPath, onTitleChanged) => {
     actionBuilder('RENAME_TAB')
         .set([tabPath, 'title'], title)
         .dispatch()
-    setTimeout(() => onTitleChanged && onTitleChanged(select(tabPath)), 0)
+    setImmediate(() => onTitleChanged && onTitleChanged(select(tabPath)))
 }
 
 export const selectTab = (id, statePath) => {
