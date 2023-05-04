@@ -422,7 +422,7 @@ Button.propTypes = {
     hidden: PropTypes.any,
     hint: PropTypes.any,
     hover: PropTypes.any, // three-state
-    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
+    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     iconAttributes: PropTypes.any,
     iconClassName: PropTypes.any,
     iconDimmed: PropTypes.any,

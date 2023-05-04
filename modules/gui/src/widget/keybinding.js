@@ -9,6 +9,7 @@ import _ from 'lodash'
 class Keybinding extends React.Component {
     constructor(props) {
         super(props)
+        this.handlesKey = this.handlesKey.bind(this)
         this.createKeybinding()
         const {enableDetector: {onChange}} = props
         onChange(enabled => this.keybinding.enabled = enabled)
@@ -22,18 +23,24 @@ class Keybinding extends React.Component {
             priority,
             enabled: true,
             handler: this.handle.bind(this),
-            handles: key => _.keys(this.props.keymap).includes(key)
+            // handles: key => _.keys(this.props.keymap).includes(key)
+            handles: this.handlesKey
         }
+    }
+
+    handlesKey(key) {
+        const {keymap} = this.props
+        return keymap && keymap[key]
     }
 
     getDefaultHandler() {
         const {keymap} = this.props
-        return keymap.default
+        return keymap && keymap.default
     }
 
     getCustomHandler(key) {
         const {keymap} = this.props
-        return keymap[key]
+        return keymap && keymap[key]
     }
 
     getHandler(key) {

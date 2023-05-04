@@ -158,7 +158,7 @@ Buttons.propTypes = {
     look: PropTypes.string,
     multiple: PropTypes.any,
     options: PropTypes.arrayOf(
-        PropTypes.oneOfType(
+        PropTypes.oneOfType([
             PropTypes.string,
             PropTypes.number,
             PropTypes.shape({
@@ -173,7 +173,7 @@ Buttons.propTypes = {
                 tooltip: PropTypes.any,
                 value: PropTypes.any
             })
-        )
+        ])
     ),
     selected: PropTypes.any,
     shape: PropTypes.string,
