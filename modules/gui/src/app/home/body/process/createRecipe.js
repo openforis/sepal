@@ -142,23 +142,26 @@ class _CreateRecipe extends React.Component {
     }
 
     renderRecipeTypeList() {
+        const {projectId, recipeId} = this.props
+        const {textFilterValues} = this.state
         const highlightMatcher = this.getHighlightMatcher()
         const recipeTypes = this.getFilteredRecipeTypes()
-        const {textFilterValues} = this.state
         const key = recipeType => _.compact([recipeType.id, highlightMatcher]).join('|')
         return (
             <React.Fragment>
                 <Panel.Header
                     icon='book-open'
                     title={msg('process.recipe.newRecipe.title')}/>
-                <Panel.Content>
+                <Panel.Content scrollable={false}>
                     {this.renderHeader()}
                     <FastList
                         items={recipeTypes}
                         itemKey={key}
                         spacing='tight'
-                        overflow={50}>
-                        {recipeType => this.renderRecipeType(recipeType, highlightMatcher)}
+                        overflow={50}
+                        onEnter={recipeType => createRecipe({projectId, recipeId, type: recipeType.id, tabPlaceholder: recipeType.labels.tabPlaceholder})}
+                    >
+                        {(recipeType, hovered) => this.renderRecipeType(recipeType, highlightMatcher, hovered)}
                     </FastList>
                 </Panel.Content>
                 <Panel.Buttons>
@@ -224,7 +227,7 @@ class _CreateRecipe extends React.Component {
         )
     }
 
-    renderRecipeType(recipeType, highlightMatcher) {
+    renderRecipeType(recipeType, highlightMatcher, hovered) {
         const {projectId, recipeId} = this.props
         return (
             <RecipeType
@@ -235,6 +238,7 @@ class _CreateRecipe extends React.Component {
                 onInfo={() => this.showRecipeTypeInfo(recipeType.id)}
                 beta={recipeType.beta}
                 highlight={highlightMatcher}
+                hovered={hovered}
             />
         )
     }
@@ -332,13 +336,14 @@ CreateRecipe.propTypes = {
 
 class RecipeType extends React.Component {
     render() {
-        const {projectId, recipeId, type: {id: recipeTypeId, labels: {name, tabPlaceholder, creationDescription}, beta}, highlight} = this.props
+        const {projectId, recipeId, type: {id: recipeTypeId, labels: {name, tabPlaceholder, creationDescription}, beta}, highlight, hovered} = this.props
         const title = beta
             ? <span>{name}<sup className={styles.beta}>Beta</sup></span>
             : name
         return (
             <ListItem
                 key={recipeTypeId}
+                hovered={hovered}
                 onClick={() => createRecipe({projectId, recipeId, type: recipeTypeId, tabPlaceholder})}>
                 <CrudItem
                     className={styles.recipe}
