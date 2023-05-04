@@ -3094,6 +3094,398 @@
             },
             "tabPlaceholder": "Radar_mosaique"
         },
+        "baytsAlerts": {
+            "create": "",
+            "description": "",
+            "imageLayerForm": {
+                "mosaicType": {
+                    "label": "Mosaïque",
+                    "latest": {
+                        "label": "Dernières",
+                        "tooltip": "Afficher un composite des dernières images disponibles sur la période"
+                    },
+                    "median": {
+                        "label": "Médiane",
+                        "tooltip": "Afficher un composite médian de la période"
+                    }
+                },
+                "visualizationType": {
+                    "alerts": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "first": {
+                        "label": "Premier",
+                        "tooltip": ""
+                    },
+                    "label": "Type",
+                    "last": {
+                        "label": "Dernier",
+                        "tooltip": ""
+                    }
+                },
+                "previouslyConfirmed": {
+                    "include": {
+                        "label": "Inclure",
+                        "tooltip": ""
+                    },
+                    "exclude": {
+                        "label": "Exclure",
+                        "tooltip": ""
+                    },
+                    "label": ""
+                },
+                "minConfidence": {
+                    "all": {
+                        "label": "Tout",
+                        "tooltip": ""
+                    },
+                    "low": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "high": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "label": "Confiance minimale"
+                }
+            },
+            "layers": {
+                "imageLayer": {
+                    "changes": "Changements",
+                    "dates": "Dates",
+                    "observations": "Observations"
+                }
+            },
+            "panel": {
+                "date": {
+                    "button": "DAT",
+                    "form": {
+                        "durationUnit": {
+                            "placeholder": "Unité...",
+                            "DAYS": "Jours",
+                            "MONTHS": "Mois",
+                            "WEEKS": "Semaines"
+                        },
+                        "monitoring": {
+                            "duration": {
+                                "label": "Durée du suivi",
+                                "placeholder": "Durée..."
+                            }
+                        },
+                        "monitoringEnd": {
+                            "label": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "Intervalle temporel",
+                    "tooltip": ""
+                },
+                "options": {
+                    "button": "OPT",
+                    "form": {
+                        "highConfidenceThreshold": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "lowConfidenceThreshold": {
+                            "label": "",
+                            "tooltip": "",
+                            "tooLarge": ""
+                        },
+                        "minChangeProbability": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "minNonForestProbability": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "maxDays": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "normalization": {
+                            "label": "",
+                            "tooltip": "",
+                            "disabled": {
+                                "label": "Désactivé",
+                                "tooltip": ""
+                            },
+                            "enabled": {
+                                "label": "Activé",
+                                "tooltip": ""
+                            }
+                        },
+                        "previousAlertsAsset": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": "",
+                            "missingBands": ""
+                        },
+                        "sensitivityButton": {
+                            "tooltip": "",
+                            "low": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "medium": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "high": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "sensitivity": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "wetlandMaskAsset": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "preprocess": {
+                    "button": "",
+                    "title": "Prétraitement",
+                    "tooltip": "Configurer le prétraitement des images"
+                },
+                "reference": {
+                    "asset": {
+                        "label": "Asset Earth Engine",
+                        "title": "Asset Earth Engine",
+                        "notBayTSHistorical": ""
+                    },
+                    "button": "",
+                    "form": {
+                        "asset": {
+                            "invalid": "",
+                            "label": "",
+                            "placeholder": "",
+                            "required": "Un ID d'asset doit être précisé"
+                        }
+                    },
+                    "recipe": {
+                        "label": "Sauvegarde de la formule SEPAL",
+                        "title": "Sauvegarde de la formule SEPAL"
+                    },
+                    "title": "Source",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "error": "Échec de la génération de l'aperçu",
+                "initializing": "Chargement de l'aperçu...",
+                "label": "",
+                "loading": "Chargement {loaded} de {count} tuiles",
+                "tilesFailed": "Echec de {failed}"
+            },
+            "reference": {
+                "asset": {
+                    "loadError": "Échec du chargement de l'asset"
+                },
+                "recipe": {
+                    "loadError": "Echec du chargement de la formule"
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "baytsHistorical": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "dates": {
+                    "button": "DAT",
+                    "form": {
+                        "fromDate": {
+                            "label": "",
+                            "malformed": "Date invalide"
+                        },
+                        "toDate": {
+                            "label": "",
+                            "malformed": "Date invalide"
+                        }
+                    },
+                    "title": "Intervalle temporel",
+                    "tooltip": "Préciser l'intervalle de dates"
+                },
+                "options": {
+                    "button": "OPT",
+                    "form": {
+                        "geometricCorrection": {
+                            "ellipsoid": {
+                                "label": "Ellipsoide",
+                                "tooltip": "La correction ellipsoide (gamma0) est appliquée"
+                            },
+                            "label": "Correction géométrique",
+                            "none": {
+                                "label": "Aucun",
+                                "tooltip": "Aucune correction géométrique appliquée"
+                            },
+                            "terrain": {
+                                "label": "Relief",
+                                "tooltip": "Correction de relief appliquée"
+                            }
+                        },
+                        "orbits": {
+                            "ascending": {
+                                "label": "Ascendante",
+                                "tooltip": "Inclure les scènes des orbites ascendantes"
+                            },
+                            "descending": {
+                                "label": "Descendante",
+                                "tooltip": "Inclure les scènes des orbites descendantes"
+                            },
+                            "label": "Orbites"
+                        },
+                        "outlierRemoval": {
+                            "aggressive": {
+                                "label": "Agressif",
+                                "tooltip": "Enlever plus d'outliers"
+                            },
+                            "label": "Supprimer les outliers",
+                            "moderate": {
+                                "label": "Modéré",
+                                "tooltip": "Enlever les outliers"
+                            },
+                            "none": {
+                                "label": "Aucun",
+                                "tooltip": "Ne pas supprimer les outliers"
+                            }
+                        },
+                        "mask": {
+                            "label": "",
+                            "sides": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "firstLast": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "maskOptions": {
+                            "title": "",
+                            "minAngle": {
+                                "label": ""
+                            },
+                            "maxAngle": {
+                                "label": ""
+                            }
+                        },
+                        "spatialSpeckleFilter": {
+                            "label": "",
+                            "none": {
+                                "label": "Aucun",
+                                "tooltip": ""
+                            },
+                            "boxcar": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "gammaMap": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "lee": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "refinedLee": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "leeSigma": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snic": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "spatialSpeckleFilterOptions": {
+                            "kernelSize": {
+                                "label": ""
+                            },
+                            "sigma": {
+                                "label": ""
+                            },
+                            "strongScatterers": {
+                                "retain": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "filter": {
+                                    "label": "Filtre",
+                                    "tooltip": ""
+                                },
+                                "label": ""
+                            },
+                            "strongScattererValue1": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "strongScattererValue2": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicSize": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicCompactness": {
+                                "label": "",
+                                "tooltip": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilterOptions": {
+                            "numberOfImages": {
+                                "label": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilter": {
+                            "label": "",
+                            "none": {
+                                "label": "Aucun",
+                                "tooltip": ""
+                            },
+                            "quegan": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "rabasar": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "minObservations": {
+                            "label": "Nombre min d'observation",
+                            "value": ""
+                        }
+                    },
+                    "title": "Options",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "label": ""
+            },
+            "tabPlaceholder": ""
+        },
         "phenology": {
             "create": "",
             "description": "",
