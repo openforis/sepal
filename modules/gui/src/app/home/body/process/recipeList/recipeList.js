@@ -63,6 +63,7 @@ class _RecipeList extends React.Component {
         this.removeSelected = this.removeSelected.bind(this)
         this.toggleConfirmed = this.toggleConfirmed.bind(this)
         this.setSorting = this.setSorting.bind(this)
+        this.handleClick = this.handleClick.bind(this)
     }
 
     render() {
@@ -91,8 +92,9 @@ class _RecipeList extends React.Component {
                         items={filteredRecipes}
                         itemKey={recipe => `${recipe.id}|${highlightMatcher}`}
                         spacing='tight'
-                        overflow={50}>
-                        {recipe => this.renderRecipe(recipe, highlightMatcher)}
+                        overflow={50}
+                        onEnter={this.handleClick}>
+                        {(recipe, hovered) => this.renderRecipe(recipe, highlightMatcher, hovered)}
                     </FastList>
                     {move && this.renderMoveConfirmation()}
                     {remove && this.renderRemoveConfirmation()}
@@ -270,13 +272,14 @@ class _RecipeList extends React.Component {
         )
     }
 
-    renderRecipe(recipe, highlightMatcher) {
-        const {onClick, onDuplicate, onRemove} = this.props
+    renderRecipe(recipe, highlightMatcher, hovered) {
+        const {onDuplicate, onRemove} = this.props
         const {edit} = this.state
         return (
             <ListItem
                 key={recipe.id}
-                onClick={onClick ? () => onClick(recipe.id) : null}>
+                hovered={hovered}
+                onClick={() => this.handleClick(recipe)}>
                 <CrudItem
                     title={this.getRecipeTypeName(recipe.type)}
                     description={this.getRecipePath(recipe)}
@@ -293,6 +296,11 @@ class _RecipeList extends React.Component {
                 />
             </ListItem>
         )
+    }
+
+    handleClick(recipe) {
+        const {onClick} = this.props
+        onClick && onClick(recipe.id)
     }
 
     getRecipePath(recipe) {
