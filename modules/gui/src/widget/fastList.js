@@ -74,17 +74,30 @@ class _FastList extends React.PureComponent {
         )
     }
 
-    renderList() {
-        const {firstVisibleItem, lastVisibleItem, marginTop, marginBottom, keyboardHover, mouseHover} = this.state
-        const keymap = {
-            'ArrowDown': this.handleArrowDown,
-            'ArrowUp': this.handleArrowUp,
-            'Enter': keyboardHover !== NOT_HOVERED ? this.handleEnter : null,
-            'Escape': keyboardHover !== NOT_HOVERED ? this.handleEscape : null
+    getKeymap() {
+        const {mouseHover, keyboardHover} = this.state
+        if (mouseHover) {
+            return null
         }
+        if (keyboardHover !== NOT_HOVERED) {
+            return {
+                'ArrowDown': this.handleArrowDown,
+                'ArrowUp': this.handleArrowUp,
+                'Enter': this.handleEnter,
+                'Escape': this.handleEscape
+            }
+        }
+        return {
+            'ArrowDown': this.handleArrowDown,
+            'ArrowUp': this.handleArrowUp
+        }
+    }
+
+    renderList() {
+        const {firstVisibleItem, lastVisibleItem, marginTop, marginBottom} = this.state
         return (
             // <HoverDetector onHover={this.setMouseHover}>
-            <Keybinding keymap={!mouseHover ? keymap : null}>
+            <Keybinding keymap={this.getKeymap()}>
                 <ElementResizeDetector resize$={this.resize$}>
                     <div
                         ref={this.initScrollable}

@@ -23,14 +23,14 @@ class Keybinding extends React.Component {
             priority,
             enabled: true,
             handler: this.handle.bind(this),
-            // handles: key => _.keys(this.props.keymap).includes(key)
             handles: this.handlesKey
         }
     }
 
     handlesKey(key) {
         const {keymap} = this.props
-        return keymap && keymap[key]
+        return keymap && _.keys(keymap).includes(key)
+        // return keymap && keymap[key] // this doesn't work
     }
 
     getDefaultHandler() {
