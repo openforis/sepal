@@ -48,7 +48,7 @@ const mapStateToProps = () => ({
 const getHighlightMatcher = memoizeOne(
     filterValues => filterValues.length
         ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
-        : null
+        : ''
 )
 
 class _RecipeList extends React.Component {

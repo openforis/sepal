@@ -26,7 +26,7 @@ const IGNORE = 'IGNORE'
 const getHighlightMatcher = memoizeOne(
     filterValues => filterValues.length
         ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
-        : null
+        : ''
 )
 
 export default class UserList extends React.Component {

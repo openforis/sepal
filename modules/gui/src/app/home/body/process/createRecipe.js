@@ -64,7 +64,7 @@ const setTabType = ({projectId, recipeId, type, tabPlaceholder}) => {
 const getHighlightMatcher = memoizeOne(
     filterValues => filterValues.length
         ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
-        : null
+        : ''
 )
 
 class _CreateRecipe extends React.Component {
