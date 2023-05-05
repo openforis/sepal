@@ -23,6 +23,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
+import memoizeOne from 'memoize-one'
 import styles from './appList.module.css'
 
 const IGNORE = 'IGNORE'
@@ -38,6 +39,12 @@ const mapStateToProps = () => ({
     googleAccountFilter: select('apps.googleAccountFilter')
 })
 
+const getHighlightMatcher = memoizeOne(
+    filterValues => filterValues.length
+        ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
+        : null
+)
+
 class _AppList extends React.Component {
     state = {
         app: null
@@ -50,6 +57,7 @@ class _AppList extends React.Component {
         this.setTagFilter = this.setTagFilter.bind(this)
         this.toggleGoogleAccountFilter = this.toggleGoogleAccountFilter.bind(this)
         this.userDetailsHint = this.userDetailsHint.bind(this)
+        this.renderApp = this.renderApp.bind(this)
     }
 
     render() {
@@ -67,9 +75,7 @@ class _AppList extends React.Component {
 
     getHighlightMatcher() {
         const {filterValues} = this.props
-        return filterValues.length
-            ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
-            : null
+        return getHighlightMatcher(filterValues)
     }
 
     closeAppDetails() {
@@ -88,9 +94,8 @@ class _AppList extends React.Component {
     }
 
     renderAppList() {
-        const highlightMatcher = this.getHighlightMatcher()
         const apps = this.getApps()
-        const key = app => _.compact([app.path, highlightMatcher]).join('|')
+        const itemKey = app => `${app.path}|${this.getHighlightMatcher()}`
         return this.hasData()
             ? (
                 <ScrollableContainer>
@@ -100,11 +105,11 @@ class _AppList extends React.Component {
                     <Scrollable direction='x'>
                         <FastList
                             items={apps}
-                            itemKey={app => key(app)}
+                            itemKey={itemKey}
+                            itemRenderer={this.renderApp}
                             spacing='tight'
-                            overflow={50}>
-                            {app => this.renderApp(app, highlightMatcher)}
-                        </FastList>
+                            overflow={50}
+                        />
                     </Scrollable>
                 </ScrollableContainer>
             )
@@ -245,7 +250,7 @@ class _AppList extends React.Component {
             : this.renderAppStoppedIcon()
     }
 
-    renderApp(app, highlightMatcher) {
+    renderApp(app) {
         const {onSelect} = this.props
         const unavailable = this.isDisabled(app) || this.isDisallowed(app)
         return (
@@ -262,7 +267,7 @@ class _AppList extends React.Component {
                     onInfo={() => this.showInfo(app)}>
                     <AppItem
                         app={app}
-                        highlight={highlightMatcher}
+                        highlight={this.getHighlightMatcher()}
                     />
                 </CrudItem>
             </ListItem>

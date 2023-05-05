@@ -17,10 +17,17 @@ import React from 'react'
 import _ from 'lodash'
 import format from 'format'
 import lookStyles from 'style/look.module.css'
+import memoizeOne from 'memoize-one'
 import moment from 'moment'
 import styles from './userList.module.css'
 
 const IGNORE = 'IGNORE'
+
+const getHighlightMatcher = memoizeOne(
+    filterValues => filterValues.length
+        ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
+        : null
+)
 
 export default class UserList extends React.Component {
     state = {
@@ -268,14 +275,15 @@ export default class UserList extends React.Component {
     }
 
     renderUsers(users) {
+        const itemKey = user => `${user.id}|${user.username}|${this.getHighlightMatcher()}`
         return (
             <FastList
                 items={users}
-                itemKey={user => _.compact([user.id, user.username, this.getHighLightMatcher()]).join('|')}
+                itemKey={itemKey}
+                itemRenderer={this.renderUser}
                 overflow={50}
-                onEnter={this.onSelect}>
-                {this.renderUser}
-            </FastList>
+                onEnter={this.onSelect}
+            />
         )
     }
 
@@ -283,18 +291,16 @@ export default class UserList extends React.Component {
         return (
             <UserItem
                 user={user}
-                highlight={this.getHighLightMatcher()}
+                highlight={this.getHighlightMatcher()}
                 hovered={hovered}
                 onClick={this.onSelect}
             />
         )
     }
 
-    getHighLightMatcher() {
+    getHighlightMatcher() {
         const {textFilterValues} = this.state
-        return textFilterValues.length
-            ? new RegExp(`(?:${textFilterValues.join('|')})`, 'i')
-            : ''
+        return getHighlightMatcher(textFilterValues)
     }
 
     onSelect(user) {

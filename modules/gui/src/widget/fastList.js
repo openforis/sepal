@@ -124,11 +124,14 @@ class _FastList extends React.PureComponent {
     }
 
     renderItem(item, index) {
-        const {itemKey, children} = this.props
+        const {itemKey, itemRenderer, children} = this.props
         const {keyboardHover, mouseHover} = this.state
         return (
-            <FastListItem item={item} key={itemKey(item)} hovered={!mouseHover && keyboardHover === index}>
-                {children}
+            <FastListItem
+                item={item}
+                key={itemKey(item)}
+                hovered={!mouseHover && keyboardHover === index}>
+                {itemRenderer || children}
             </FastListItem>
         )
     }
@@ -220,9 +223,10 @@ export const FastList = compose(
 )
 
 FastList.propTypes = {
-    children: PropTypes.func.isRequired,
     itemKey: PropTypes.func.isRequired,
     items: PropTypes.array.isRequired,
+    children: PropTypes.func,
+    itemRenderer: PropTypes.func,
     overflow: PropTypes.number,
     spacing: PropTypes.any
 }
