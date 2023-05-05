@@ -58,6 +58,7 @@ class _AppList extends React.Component {
         this.toggleGoogleAccountFilter = this.toggleGoogleAccountFilter.bind(this)
         this.userDetailsHint = this.userDetailsHint.bind(this)
         this.renderApp = this.renderApp.bind(this)
+        this.handleSelect = this.handleSelect.bind(this)
     }
 
     render() {
@@ -109,11 +110,17 @@ class _AppList extends React.Component {
                             itemRenderer={this.renderApp}
                             spacing='tight'
                             overflow={50}
+                            onEnter={this.handleSelect}
                         />
                     </Scrollable>
                 </ScrollableContainer>
             )
             : null
+    }
+
+    handleSelect(app) {
+        const {onSelect} = this.props
+        this.isAvailable(app) && onSelect(app)
     }
 
     renderHeader(apps) {
@@ -250,12 +257,12 @@ class _AppList extends React.Component {
             : this.renderAppStoppedIcon()
     }
 
-    renderApp(app) {
+    renderApp(app, hovered) {
         const {onSelect} = this.props
-        const unavailable = this.isDisabled(app) || this.isDisallowed(app)
         return (
             <ListItem
-                onClick={unavailable ? null : () => onSelect(app)}>
+                hovered={hovered}
+                onClick={this.isAvailable(app) ? () => onSelect(app) : null}>
                 <CrudItem
                     infoTooltip={msg('apps.info')}
                     tooltipPlacement='left'
@@ -280,6 +287,10 @@ class _AppList extends React.Component {
 
     isDisallowed(app) {
         return app.googleAccountRequired && this.isUsingServiceAccount()
+    }
+
+    isAvailable(app) {
+        return !this.isDisabled(app) && !this.isDisallowed(app)
     }
 
     isUsingServiceAccount() {
