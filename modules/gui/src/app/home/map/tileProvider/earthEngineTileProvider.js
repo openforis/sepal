@@ -83,37 +83,19 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
     toColor(id, x, y) {
         const element = this.elements[id]
         const {top, left} = this.offsets[id]
-        const offsetX = x - left
-        const offsetY = y - top
         const ctx = element.getContext('2d', {willReadFrequently: true})
-        const data = ctx.getImageData(offsetX, offsetY, 1, 1).data
-        const [red, green, blue, alpha] = data
+        const {data} = ctx.getImageData(x - left, y - top, 1, 1)
+        this.cursorValue$.next(this.getBandValues(data))
+    }
+
+    getBandValues([red, green, blue, alpha]) {
         if (alpha) {
             const bandValues = toBandValues([red, green, blue], this.visParams, this.dataTypes)
             if (bandValues.length) {
-                this.cursorValue$.next(bandValues)
-            } else {
-                // Might not have a value for this pixels due to anti-aliasing.
-                // Try with a pixel around this
-                const offsets = [-1, 1]
-                for (let i = 0; i < 2; i++) {
-                    for (let j = 0; j < 2; j++) {
-                        const data = ctx.getImageData(offsetX + offsets[i], offsetY + offsets[j], 1, 1).data
-                        const [red, green, blue, alpha] = data
-                        if (alpha) {
-                            const bandValues = toBandValues([red, green, blue], this.visParams, this.dataTypes)
-                            if (bandValues.length) {
-                                return this.cursorValue$.next(bandValues)
-                            }
-                        }
-                    }
-                }
-                this.cursorValue$.next([])
+                return bandValues
             }
-            this.cursorValue$.next(bandValues)
-        } else {
-            this.cursorValue$.next([])
         }
+        return []
     }
 
     isInElement(id, x, y) {
