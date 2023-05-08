@@ -13,7 +13,7 @@ export const getAvailableBands = (recipe, visualizationType) => {
 
 export const alertsBands = () => {
     return {
-        PNF: {dataType: typeFloat},
+        non_forest_probability: {dataType: typeFloat},
         pChange: {dataType: typeFloat},
         flag: {dataType: typeInt},
         flag_orbit: {dataType: typeInt},
@@ -25,7 +25,7 @@ export const alertsBands = () => {
 export const getGroupedBandOptions = () => {
     const toOption = band => ({value: band, label: band})
     return [
-        ['PNF', 'pChange', 'flag', 'flag_orbit'].map(toOption),
+        ['non_forest_probability', 'change_probability', 'flag', 'flag_orbit'].map(toOption),
         ['first_detection_date', 'confirmation_date'].map(toOption)
     ]
 }
