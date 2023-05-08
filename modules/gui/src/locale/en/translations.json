@@ -3098,7 +3098,7 @@
       },
 
       "baytsAlerts": {
-        "create": "BayTS Alerts",
+        "create": "BAYTS Alerts",
         "description": "Generate forest change alerts using Sentinel-1 time-series and probabilistic change detection (based on the RADD processing pipeline).",
         "imageLayerForm": {
           "mosaicType": {
@@ -3252,7 +3252,7 @@
                     "tooltip": "When a wetland mask is specified, the algorith will treat these areas slightly different"
                 }
             },
-            "title": "BayTS alert options",
+            "title": "BAYTS alert options",
             "tooltip": "Configure sensitivity in detecting changes"
           },
           "preprocess": {
@@ -3264,14 +3264,14 @@
             "asset": {
               "label": "Earth Engine Asset",
               "title": "Earth Engine Asset",
-              "notBayTSHistorical": "Asset is not a BayTS historical image or image collection"
+              "notBayTSHistorical": "Asset is not a BAYTS historical image or image collection"
             },
             "button": "REF",
             "form": {
               "asset": {
-                "invalid": "Asset must be an exported BayTS historical asset",
-                "label": "BayTS historical asset",
-                "placeholder": "Enter BayTS historical asset ID",
+                "invalid": "Asset must be an exported BAYTS historical asset",
+                "label": "BAYTS historical asset",
+                "placeholder": "Enter BAYTS historical asset ID",
                 "required": "An asset ID must be specified"
               }
             },
@@ -3280,7 +3280,7 @@
               "title": "Saved SEPAL recipe"
             },
             "title": "Source",
-            "tooltip": "Select BayTS historical asset or recipe to use as reference for alerts"
+            "tooltip": "Select BAYTS historical asset or recipe to use as reference for alerts"
           }
         },
         "preview": {
@@ -3299,11 +3299,11 @@
             "loadError": "Failed to load recipe"
           }
         },
-        "tabPlaceholder": "BayTS_alerts"
+        "tabPlaceholder": "BAYTS_alerts"
       },      
       "baytsHistorical": {
-        "create": "BayTS Historical Layer",
-        "description": "Create an historical layer as reference for BayTS alerts.",
+        "create": "BAYTS Historical Layer",
+        "description": "Create a Sentinel-1 historical layer as reference for BAYTS alerts.",
         "panel": {
           "dates": {
             "button": "DAT",
@@ -3480,12 +3480,12 @@
               }
             },
             "title": "Options",
-            "tooltip": "Configure BayTS historical layer options"
+            "tooltip": "Configure BAYTS historical layer options"
           }
         },
         "preview": {
-          "description": "Preview of BayTS historical layer, generated on the fly by EE.",
-          "label": "BayTS historical"
+          "description": "Preview of BAYTS historical layer, generated on the fly by EE.",
+          "label": "BAYTS historical"
         },
         "tabPlaceholder": "BAYTS_historical"
       },
