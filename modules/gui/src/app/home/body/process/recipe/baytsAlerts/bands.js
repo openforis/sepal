@@ -3,8 +3,6 @@ import {getAvailableBands as radarBands} from 'app/home/body/process/recipe/rada
 const typeFloat = {precision: 'float'}
 const typeInt = {precision: 'int'}
 
-// TODO: Implement...
-
 export const getAvailableBands = (recipe, visualizationType) => {
     return !visualizationType || visualizationType === 'alerts'
         ? alertsBands()
