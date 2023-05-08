@@ -30,11 +30,12 @@ const OMITTED_ATTRIBUTES = ['icon', 'name', 'type', 'className', 'variant']
 
 export default class Icon extends React.Component {
     render() {
-        const {tooltip, tooltipPlacement, tooltipDelay, tooltipDisabled} = this.props
+        const {tooltip, tooltipPlacement, tooltipClickTrigger, tooltipDelay, tooltipDisabled} = this.props
         return (
             <Tooltip
                 msg={tooltip}
                 placement={tooltipPlacement}
+                clickTrigger={tooltipClickTrigger}
                 delay={tooltipDelay}
                 disabled={tooltipDisabled}>
                 {this.renderIcon()}
@@ -81,6 +82,7 @@ Icon.propTypes = {
     dimmed: PropTypes.any,
     size: PropTypes.string,
     tooltip: PropTypes.any,
+    tooltipClickTrigger: PropTypes.any,
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
     tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
