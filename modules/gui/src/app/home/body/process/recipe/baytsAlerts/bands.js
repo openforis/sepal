@@ -14,7 +14,7 @@ export const getAvailableBands = (recipe, visualizationType) => {
 export const alertsBands = () => {
     return {
         non_forest_probability: {dataType: typeFloat},
-        pChange: {dataType: typeFloat},
+        change_probability: {dataType: typeFloat},
         flag: {dataType: typeInt},
         flag_orbit: {dataType: typeInt},
         first_detection_date: {dataType: typeFloat},
