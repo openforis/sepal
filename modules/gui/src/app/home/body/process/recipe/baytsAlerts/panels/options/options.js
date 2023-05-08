@@ -91,8 +91,14 @@ class Options extends React.Component {
         return (
             <Layout>
                 {this.renderPreviousAlertsAsset()}
-                {this.renderNormalization()}
-                {this.renderSensitivityButtons()}
+                <Layout type='horizontal'>
+                    {this.renderNormalization()}
+                    {this.renderSensitivityButtons()}
+                </Layout>
+                <Layout type='horizontal'>
+                    {this.renderHighConfidenceThreshold()}
+                    {this.renderLowConfidenceThreshold()}
+                </Layout>
             </Layout>
         )
     }
@@ -103,10 +109,7 @@ class Options extends React.Component {
                 {this.renderPreviousAlertsAsset()}
                 {this.renderWetlandMaskAsset()}
                 {this.renderNormalization()}
-                <Layout type='horizontal'>
-                    {this.renderSensitivity()}
-                    {this.renderMaxDays()}
-                </Layout>
+                {this.renderSensitivity()}
                 <Layout type='horizontal'>
                     {this.renderHighConfidenceThreshold()}
                     {this.renderLowConfidenceThreshold()}
@@ -114,6 +117,9 @@ class Options extends React.Component {
                 <Layout type='horizontal'>
                     {this.renderMinNonForestProbability()}
                     {this.renderChangeProbability()}
+                </Layout>
+                <Layout>
+                    {this.renderMaxDays()}
                 </Layout>
             </Layout>
         )
@@ -204,13 +210,17 @@ class Options extends React.Component {
     renderSensitivity() {
         const {inputs: {sensitivity}} = this.props
         return (
-            <Form.Input
-                className={styles.input}
-                type='number'
+
+            <Form.Slider
                 label={msg('process.baytsAlerts.panel.options.form.sensitivity.label')}
                 tooltip={msg('process.baytsAlerts.panel.options.form.sensitivity.tooltip')}
                 input={sensitivity}
-                errorMessage
+                minValue={0.5}
+                maxValue={1.5}
+                ticks={[0.5, 0.8, 1, 1.2, 1.5]}
+                scale='log'
+                decimals={2}
+                info={value => msg('process.baytsAlerts.panel.options.form.sensitivity.value', {value})}
             />
         )
     }

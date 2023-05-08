@@ -3244,7 +3244,8 @@
                 },
                 "sensitivity": {
                     "label": "Detection sensitivy",
-                    "tooltip": "Determine how sensitive the algorithm should be to detect changes. Medium detection sensitivity is 1. The bigger the number, the less sensitive to change the algorithm will be."
+                    "tooltip": "Determine how sensitive the algorithm should be to detect changes. Medium detection sensitivity is 1. The bigger the number, the less sensitive to change the algorithm will be.",
+                    "value": "Value: {value}"
                 },
                 "wetlandMaskAsset": {
                     "label": "Wetland Mask Asset",
