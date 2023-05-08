@@ -43,8 +43,8 @@ export class BalancingTileProvider extends TileProvider {
         return this.tileProvider.createElement(id, doc)
     }
 
-    renderTile({doc, element, blob}) {
-        this.tileProvider.renderTile({doc, element, blob})
+    renderTile({element, blob}) {
+        this.tileProvider.renderTile({element, blob})
     }
 
     releaseTile(element) {

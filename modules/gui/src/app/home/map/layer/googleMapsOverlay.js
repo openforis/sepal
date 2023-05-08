@@ -31,7 +31,7 @@ export class GoogleMapsOverlay {
         }
 
         const tile$ = this.tileProvider.loadTile$(request)
-        tile$.subscribe(blob => this.tileProvider.renderTile({doc, element, blob}))
+        tile$.subscribe(blob => this.tileProvider.renderTile({element, blob}))
         return element
     }
 

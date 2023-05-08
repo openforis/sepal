@@ -33,25 +33,34 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
         ]
     }
 
+    getElementContext(element) {
+        const ctx = element.getContext('2d', {willReadFrequently: true})
+        // ctx.imageSmoothingEnabled = false
+        // ctx.mozImageSmoothingEnabled = false
+        // ctx.webkitImageSmoothingEnabled = false
+        // ctx.msImageSmoothingEnabled = false
+        return ctx
+    }
+
     calculateTileOffsets() {
         Object.values(this.elements).forEach(element => this.updateOffset(element))
     }
 
     createElement(id, doc) {
-        const canvas = doc.createElement('canvas')
-        canvas.setAttribute('id', id)
-        canvas.setAttribute('width', TILE_SIZE)
-        canvas.setAttribute('height', TILE_SIZE)
-        return canvas
+        const element = doc.createElement('canvas')
+        element.setAttribute('id', id)
+        element.setAttribute('width', TILE_SIZE)
+        element.setAttribute('height', TILE_SIZE)
+        return element
     }
 
-    renderTile({doc, element, blob}) {
-        const image = doc.createElement('img')
+    renderTile({element, blob}) {
+        const image = new Image()
         image.setAttribute('src', (window.URL || window.webkitURL).createObjectURL(blob))
         image.onload = () => {
             this.elements[element.id] = element
             this.updateOffset(element)
-            element.getContext('2d', {willReadFrequently: true}).drawImage(image, 0, 0, TILE_SIZE, TILE_SIZE, 0, 0, TILE_SIZE, TILE_SIZE)
+            this.getElementContext(element).drawImage(image, 0, 0, TILE_SIZE, TILE_SIZE, 0, 0, TILE_SIZE, TILE_SIZE)
         }
     }
 
@@ -61,8 +70,8 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
     }
 
     updateOffset(element) {
-        const rect = element.getBoundingClientRect()
-        this.offsets[element.id] = {top: Math.floor(rect.top), left: Math.floor(rect.left)}
+        const {top, left} = element.getBoundingClientRect()
+        this.offsets[element.id] = {top: Math.floor(top), left: Math.floor(left)}
     }
 
     cursorColor(cursor) {
@@ -83,8 +92,7 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
     toColor(id, x, y) {
         const element = this.elements[id]
         const {top, left} = this.offsets[id]
-        const ctx = element.getContext('2d', {willReadFrequently: true})
-        const {data} = ctx.getImageData(x - left, y - top, 1, 1)
+        const {data} = this.getElementContext(element).getImageData(x - left, y - top, 1, 1)
         this.cursorValue$.next(this.getBandValues(data))
     }
 

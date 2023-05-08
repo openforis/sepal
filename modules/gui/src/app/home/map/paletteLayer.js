@@ -147,7 +147,7 @@ class _CursorValue extends React.Component {
         const {position} = this.state
         const clampedValue = _.clamp(value, min, max)
         const formattedValue = formatValue({dataType, value: clampedValue, magnitude})
-        return position ? (
+        return position !== null ? (
             <div
                 className={[styles.cursorValue, styles[dataType || 'default']].join(' ')}
                 style={{'--left': `${position}px`}}>
@@ -200,7 +200,11 @@ class _CursorValue extends React.Component {
     }
 
     setPosition(position) {
-        this.setState({position})
+        this.setState(({position: prevPosition}) => {
+            if (position !== prevPosition) {
+                return {position}
+            }
+        })
     }
 }
 
