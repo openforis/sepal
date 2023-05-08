@@ -8,7 +8,7 @@ import {alertsBands} from '../../bands'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import React from 'react'
-import _, {toInteger} from 'lodash'
+import _ from 'lodash'
 import styles from './options.module.css'
 
 const fields = {
