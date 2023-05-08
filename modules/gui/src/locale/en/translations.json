@@ -3228,23 +3228,23 @@
                     "missingBands": "The asset is missing required bands: {missingBands}"
                 },
                 "sensitivityButton": {
-                    "tooltip": "Determine how sensitive the algorithm should be to pick up changes",
+                    "tooltip": "Determine how sensitive the algorithm should be to detect changes",
                     "low": {
                         "label": "Low",
-                        "tooltip": "Use low sensitivity"
+                        "tooltip": "Use low detection sensitivity"
                     },
                     "medium": {
                         "label": "Medium",
-                        "tooltip": "Use medium sensitivity"
+                        "tooltip": "Use medium detection sensitivity"
                     },
                     "high": {
                         "label": "High",
-                        "tooltip": "Use high sensitivity"
+                        "tooltip": "Use high detection sensitivity"
                     }
                 },
                 "sensitivity": {
-                    "label": "Sensitivy",
-                    "tooltip": "Determine how sensitive the algorithm should be to pick up changes. Medium sensitivity is 1. The bigger the number the less sensitive to change the algorithm will be."
+                    "label": "Detection sensitivy",
+                    "tooltip": "Determine how sensitive the algorithm should be to detect changes. Medium detection sensitivity is 1. The bigger the number, the less sensitive to change the algorithm will be."
                 },
                 "wetlandMaskAsset": {
                     "label": "Wetland Mask Asset",
@@ -3253,7 +3253,7 @@
                 }
             },
             "title": "BAYTS alert options",
-            "tooltip": "Configure sensitivity in detecting changes"
+            "tooltip": "Configure algorithm parameters."
           },
           "preprocess": {
             "button": "PRC",
