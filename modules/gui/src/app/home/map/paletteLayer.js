@@ -9,7 +9,9 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import format from 'format'
+import memoizeOne from 'memoize-one'
 import styles from './paletteLayer.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -17,6 +19,9 @@ const mapRecipeToProps = recipe => ({
 })
 
 const MIN_STEPS = 40
+
+const getVisualizationParameters = ({mapArea: {area}, areas}) =>
+    areas[area]?.imageLayer?.layerConfig?.visParams || {}
 
 class _PaletteLayer extends React.Component {
     state = {
@@ -27,8 +32,9 @@ class _PaletteLayer extends React.Component {
     constructor(props) {
         super(props)
         const {cursorValue$, addSubscription} = props
+        this.setPaletteWidth = this.setPaletteWidth.bind(this)
         addSubscription(
-            cursorValue$.subscribe(value => this.setState({value: value && value}))
+            cursorValue$.subscribe(value => this.setState({value}))
         )
     }
 
@@ -37,8 +43,8 @@ class _PaletteLayer extends React.Component {
         if (!cursorValue$) {
             return null
         }
-        const {min, max, palette, inverted, dataType} = this.getVisualizationParameters()
-        return palette
+        const {dataType, min, max, palette, inverted} = this.getVisualizationParameters()
+        return palette?.length > 1
             ? this.renderPalette({
                 dataType,
                 min: min[0],
@@ -50,70 +56,83 @@ class _PaletteLayer extends React.Component {
     }
 
     renderPalette({dataType, min, max, palette, inverted}) {
-        const {value, paletteWidth, formattedMin, formattedMax, magnitude} = this.state
-        const cursorValues = value.map((v, i) => {
-            return (
-                <CursorValue
-                    key={i}
-                    value={Math.min(max, Math.max(min, value))}
-                    min={min}
-                    max={max}
-                    dataType={dataType}
-                    magnitude={magnitude}
-                    paletteWidth={paletteWidth}
-                />
-            )
-        })
-
         return (
             <div className={styles.container}>
                 <div className={styles.legend}>
-                    <Value value={formattedMin}/>
+                    {this.renderMinValue()}
                     <div
                         className={styles.palette}
                         style={{'--palette': inverted
                             ? palette.slice().reverse()
                             : palette}}>
-                        <ElementResizeDetector onResize={({width}) => this.setState({paletteWidth: width})}/>
-                        {cursorValues}
+                        <ElementResizeDetector onResize={this.setPaletteWidth}/>
+                        {this.renderCursorValues({dataType, min, max})}
                     </div>
-                    <Value value={formattedMax}/>
+                    {this.renderMaxValue()}
                 </div>
             </div>
         )
     }
 
-    componentDidMount() {
-        const {min, max} = this.getMinMax(this.props)
-        this.formatMinMax({min, max})
+    renderMinValue() {
+        const {formattedMin} = this.state
+        return (
+            <Value value={formattedMin}/>
+        )
     }
 
-    componentDidUpdate(prevProps) {
-        const {min: prevMin, max: prevMax} = this.getMinMax(prevProps)
-        const {min, max} = this.getMinMax(this.props)
+    renderMaxValue() {
+        const {formattedMax} = this.state
+        return (
+            <Value value={formattedMax}/>
+        )
+    }
 
-        if (min !== prevMin || max !== prevMax) {
-            this.formatMinMax({min, max})
-        }
+    renderCursorValues({dataType, min, max}) {
+        const {value} = this.state
+        return value.map((_v, i) => this.renderCursorValue({dataType, min, max}, i))
+    }
+
+    renderCursorValue({dataType, min, max}, i) {
+        const {value, paletteWidth, magnitude} = this.state
+        return (
+            <CursorValue
+                key={i}
+                value={value}
+                min={min}
+                max={max}
+                dataType={dataType}
+                magnitude={magnitude}
+                paletteWidth={paletteWidth}
+            />
+        )
+    }
+
+    setPaletteWidth({width}) {
+        this.setState({paletteWidth: width})
+    }
+
+    static getDerivedStateFromProps(props) {
+        const {dataType, min, max} = getVisualizationParameters(props)
+
+        const getMagnitude = memoizeOne(
+            (min, max) => format.stepMagnitude({min, max, minSteps: MIN_STEPS})
+        )
+        const getFormattedMin = memoizeOne(
+            (dataType, min, magnitude) => formatValue({dataType, value: min && min[0], magnitude})
+        )
+        const getFormattedMax = memoizeOne(
+            (dataType, max, magnitude) => formatValue({dataType, value: max && max[0], magnitude})
+        )
+        const magnitude = getMagnitude(min, max)
+        const formattedMin = getFormattedMin(dataType, min, magnitude)
+        const formattedMax = getFormattedMax(dataType, max, magnitude)
+        
+        return {magnitude, formattedMin, formattedMax}
     }
 
     getVisualizationParameters() {
-        const {mapArea: {area}, areas} = this.props
-        return selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
-    }
-
-    getMinMax(props) {
-        const {mapArea: {area}, areas} = props
-        const {min, max} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
-        return {min, max}
-    }
-
-    formatMinMax({min, max}) {
-        const {dataType} = this.getVisualizationParameters()
-        const magnitude = format.stepMagnitude({min, max, minSteps: MIN_STEPS})
-        const formattedMin = formatValue({dataType, value: min && min[0], magnitude})
-        const formattedMax = formatValue({dataType, value: max && max[0], magnitude})
-        this.setState({formattedMin, formattedMax, magnitude})
+        return getVisualizationParameters(this.props)
     }
 }
 
@@ -126,30 +145,31 @@ class _CursorValue extends React.Component {
     render() {
         const {dataType, value, min, max, magnitude} = this.props
         const {position} = this.state
-        const prefix = value <= min
-            ? <>&#8804; </>
-            : value >= max
-                ? <>&#8805; </>
-                : ''
-        const formatted = value <= min
-            ? formatValue({dataType, value: min, magnitude})
-            : value >= max
-                ? formatValue({dataType, value: max, magnitude})
-                : formatValue({dataType, value, magnitude})
-        return (
+        const clampedValue = _.clamp(value, min, max)
+        const formattedValue = formatValue({dataType, value: clampedValue, magnitude})
+        return position ? (
             <div
                 className={[styles.cursorValue, styles[dataType || 'default']].join(' ')}
                 style={{'--left': `${position}px`}}>
-                {prefix}
-                {formatted}
+                {this.renderPrefix(clampedValue, min, max)}
+                {formattedValue}
                 <div className={styles.arrow}/>
             </div>
-        )
+        ) : null
+    }
+
+    renderPrefix(value, min, max) {
+        if (value <= min) {
+            return <>&#8804; </>
+        }
+        if (value >= max) {
+            return <>&#8805; </>
+        }
+        return ''
     }
 
     componentDidMount() {
         const {addSubscription} = this.props
-
         addSubscription(
             this.targetPosition$.pipe(
                 switchMap(targetPosition => {
@@ -180,10 +200,7 @@ class _CursorValue extends React.Component {
     }
 
     setPosition(position) {
-        position = Math.round(position)
-        if (position !== this.state.position) {
-            this.setState({position})
-        }
+        this.setState({position})
     }
 }
 

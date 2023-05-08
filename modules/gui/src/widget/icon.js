@@ -26,6 +26,8 @@ const fontAwesomeCollection = type => {
     }
 }
 
+const OMITTED_ATTRIBUTES = ['icon', 'name', 'type', 'className', 'variant']
+
 export default class Icon extends React.Component {
     render() {
         const {tooltip, tooltipPlacement, tooltipDelay, tooltipDisabled} = this.props
@@ -58,9 +60,7 @@ export default class Icon extends React.Component {
 
     renderIcon() {
         const {name, type, size, attributes} = this.props
-        const filteredAttributes = _.omit({spin: this.isSpinner(name), ...attributes}, [
-            'icon', 'name', 'type', 'className', 'variant'
-        ])
+        const filteredAttributes = _.omit({spin: this.isSpinner(name), ...attributes}, OMITTED_ATTRIBUTES)
         const icon = [fontAwesomeCollection(type || 'solid'), name]
         return (
             <span className={this.classNames()}>

@@ -71,48 +71,37 @@ const toCategorical = (rgb, visParams, dataTypes) => {
 }
 
 const toContinuous = (rgb, visParams, dataTypes) => {
+    if (visParams.palette?.length < 2) {
+        return []
+    }
+        
     const toSegment = (fromRgbValue, toRgbValue) => {
-        const buffer = 5 // Sampled color can be off a bit
-        const inRange = rgb.every((c, i) =>
-            (fromRgbValue.rgb[i] - buffer <= c && toRgbValue.rgb[i] + buffer >= c) || (fromRgbValue.rgb[i] + buffer >= c && toRgbValue.rgb[i] - buffer <= c)
-        )
-
         const channels = fromRgbValue.rgb.map((from, i) => {
-            const c = rgb[i]
+            const value = rgb[i]
             const to = toRgbValue.rgb[i]
             const factor = from === to
                 ? 1
-                : (c - from) / (to - from)
-            return ({
-                c,
-                from,
-                to,
-                diff: Math.abs(toRgbValue.rgb[i] - c),
-                factor
-            })
+                : _.clamp((value - from) / (to - from), 0, 1)
+            return ({value, from, to, factor})
         })
-
-        // Picking factor from channel with largest color diff - most accurate
-        const referenceChannel = _.maxBy(channels, 'diff')
-        const factor = referenceChannel.factor
-
-        // An error in color
-        // What color would we get if we used the reference factor?
-        // Error is the difference in color
-        const error = _.sum(
-            channels.map(({c, from, to}) => {
-                const calculatedC = Math.round(from + factor * (to - from))
-                return Math.abs(calculatedC - c)
-            })
+        // Error is the 3d difference in color
+        const error = Math.sqrt(
+            _.sum(
+                channels.map(({value, from, to, factor}) => {
+                    const calculatedC = Math.round(from + factor * (to - from))
+                    return Math.pow(calculatedC - value, 2)
+                })
+            )
         )
 
+        const meanFactor = _.meanBy(channels, 'factor')
         const fromValue = fromRgbValue.value
         const toValue = toRgbValue.value
-        const preciseValue = fromValue + factor * (toValue - fromValue)
+        const preciseValue = fromValue + meanFactor * (toValue - fromValue)
         const value = selectFrom(dataTypes, [visParams.bands[0], 'precision']) === 'int'
             ? Math.round(parseFloat(preciseValue))
             : parseFloat(preciseValue)
-        return {value, inRange, error}
+        return {value, error}
     }
 
     const {palette, min: minList, max: maxList} = visParams
@@ -125,7 +114,6 @@ const toContinuous = (rgb, visParams, dataTypes) => {
     const segments = _.uniqBy(
         _.tail(palette)
             .map((_color, i) => toSegment(paletteRgbValueArray[i], paletteRgbValueArray[i + 1]))
-            .filter(({inRange}) => inRange)
             .filter(({value}) => _.isFinite(value)),
         'value'
     )

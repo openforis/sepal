@@ -22,6 +22,7 @@ const mapStateToProps = state => ({
 class Tasks extends React.Component {
     constructor(props) {
         super(props)
+        this.renderTask = this.renderTask.bind(this)
         this.state = {tasks: props.tasks || []}
     }
 
@@ -108,26 +109,35 @@ class Tasks extends React.Component {
     renderTasks() {
         const {tasks} = this.state
         return tasks.length
-            ? (
-                <FastList
-                    items={tasks}
-                    itemKey={task => `${task.id}`}
-                    spacing='tight'
-                    overflow={50}>
-                    {task => this.renderTask(task)}
-                </FastList>
-            )
-            : (
-                <div className={styles.noTasks}>
-                    <Shape
-                        look='transparent'
-                        shape='pill'
-                        size='normal'
-                        air='more'>
-                        {msg('tasks.none')}
-                    </Shape>
-                </div>
-            )
+            ? this.renderTaskList(tasks)
+            : this.renderNoTasks()
+    }
+
+    renderTaskList(tasks) {
+        const itemKey = task => `${task.id}`
+        return (
+            <FastList
+                items={tasks}
+                itemKey={itemKey}
+                itemRenderer={this.renderTask}
+                spacing='tight'
+                overflow={50}
+            />
+        )
+    }
+
+    renderNoTasks() {
+        return (
+            <div className={styles.noTasks}>
+                <Shape
+                    look='transparent'
+                    shape='pill'
+                    size='normal'
+                    air='more'>
+                    {msg('tasks.none')}
+                </Shape>
+            </div>
+        )
     }
 
     renderToolbar() {

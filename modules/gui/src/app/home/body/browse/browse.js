@@ -422,13 +422,27 @@ class _FileBrowser extends React.Component {
             e.stopPropagation()
             this.toggleDirectory(path, directory)
         }
-        return expanded && !directory.items
-            ? this.renderSpinner()
-            : (
-                <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}>
-                    <Icon name={'chevron-right'} className={expanded ? styles.expanded : styles.collapsed}/>
-                </span>
-            )
+        const busy = expanded && !directory.items
+        return (
+            <span
+                className={[styles.icon, styles.directory].join(' ')}
+                onClick={toggleDirectory}>
+                <Icon
+                    name={'chevron-right'}
+                    className={expanded ? styles.expanded : styles.collapsed}
+                    attributes={{
+                        fade: busy
+                    }}
+                />
+            </span>
+        )
+        // return busy
+        //     ? this.renderSpinner()
+        //     : (
+        //         <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}>
+        //             <Icon name={'chevron-right'} className={expanded ? styles.expanded : styles.collapsed}/>
+        //         </span>
+        //     )
     }
 
     renderFileIcon(fileName) {

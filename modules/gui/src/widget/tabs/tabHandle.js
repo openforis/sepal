@@ -125,8 +125,8 @@ class _TabHandle extends React.Component {
     }
 
     onTitleChange(e) {
-        const value = e.target.value
-        this.setState({title: value})
+        const title = e.target.value
+        this.setState({title})
     }
 
     selectTab() {

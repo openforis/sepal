@@ -105,12 +105,12 @@ class _Scrollable extends Component {
             centerElement: this.centerElement.bind(this),
             getElement: this.getScrollableElement.bind(this)
         }
-        const keymap = {
+        const keymap = ['y', 'xy'].includes(direction) ? {
             ArrowUp: () => scrollable.scrollLine(-1),
             ArrowDown: () => scrollable.scrollLine(1),
             'Shift+ ': () => scrollable.scrollPage(-1),
             ' ': () => scrollable.scrollPage(1)
-        }
+        } : null
         return (
             <div
                 key={key}
