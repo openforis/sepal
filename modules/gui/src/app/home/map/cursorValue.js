@@ -74,34 +74,27 @@ const toContinuous = (rgb, visParams, dataTypes) => {
     if (visParams.palette?.length < 2) {
         return []
     }
-        
+
     const toSegment = (fromRgbValue, toRgbValue) => {
         const channels = fromRgbValue.rgb.map((from, i) => {
             const value = rgb[i]
             const to = toRgbValue.rgb[i]
-            const factor = from === to
-                ? 1
-                : _.clamp((value - from) / (to - from), 0, 1)
-            return ({value, from, to, factor})
+            const range = to - from
+            const factor = range
+                ? _.clamp((value - from) / range, 0, 1)
+                : 0
+            return ({value, from, range, factor})
         })
-        // Error is the 3d difference in color
-        const error = Math.sqrt(
-            _.sum(
-                channels.map(({value, from, to, factor}) => {
-                    const calculatedC = Math.round(from + factor * (to - from))
-                    return Math.pow(calculatedC - value, 2)
-                })
-            )
-        )
-
-        const meanFactor = _.meanBy(channels, 'factor')
+        
         const fromValue = fromRgbValue.value
         const toValue = toRgbValue.value
-        const preciseValue = fromValue + meanFactor * (toValue - fromValue)
-        const value = selectFrom(dataTypes, [visParams.bands[0], 'precision']) === 'int'
-            ? Math.round(parseFloat(preciseValue))
-            : parseFloat(preciseValue)
-        return {value, error}
+        const error = getError(channels)
+        const weightedMeanFactor = getWeightedMeanFactor(channels)
+        // const preciseValue = fromValue + weightedMeanFactor * (toValue - fromValue)
+        // const value = selectFrom(dataTypes, [visParams.bands[0], 'precision']) === 'int'
+        //     ? Math.round(parseFloat(preciseValue))
+        //     : parseFloat(preciseValue)
+        return {error, fromValue, toValue, weightedMeanFactor}
     }
 
     const {palette, min: minList, max: maxList} = visParams
@@ -111,18 +104,39 @@ const toContinuous = (rgb, visParams, dataTypes) => {
     const paletteRgbValueArray = palette.map((color, i) =>
         ({rgb: Color(color).rgb().array(), value: paletteValues[i]})
     )
-    const segments = _.uniqBy(
-        _.tail(palette)
-            .map((_color, i) => toSegment(paletteRgbValueArray[i], paletteRgbValueArray[i + 1]))
-            .filter(({value}) => _.isFinite(value)),
-        'value'
-    )
 
-    return segments.length
-        ? [_.minBy(segments, 'error').value]
-        : []
+    const segments = _.tail(palette).map((_color, i) => toSegment(paletteRgbValueArray[i], paletteRgbValueArray[i + 1]))
+
+    if (segments.length) {
+        const closestSegment = _.minBy(segments, 'error')
+        const {fromValue, toValue, weightedMeanFactor} = closestSegment
+        const preciseValue = fromValue + weightedMeanFactor * (toValue - fromValue)
+        const value = selectFrom(dataTypes, [visParams.bands[0], 'precision']) === 'int'
+            ? Math.round(parseFloat(preciseValue))
+            : parseFloat(preciseValue)
+        return [value]
+    }
+
+    return []
 }
 
+// Calculate the error as the multidimensional color distance (1 to 3 bands)
+const getError = channels =>
+    Math.sqrt(
+        _.sum(
+            channels.map(({value, from, range, factor}) => {
+                const calculatedC = Math.round(from + factor * range)
+                return Math.pow(calculatedC - value, 2)
+            })
+        )
+    )
+
+const getWeightedMeanFactor = channels => {
+    const numerator = _.sum(channels.map(({range, factor}) => Math.abs(range) * factor))
+    const denominator = _.sum(channels.map(({range}) => Math.abs(range)))
+    return numerator / denominator
+}
+    
 const sequence = (start, end, step = 1) =>
     end >= start
         ? Array.apply(null, {length: Math.floor((end - start) / step) + 1})
