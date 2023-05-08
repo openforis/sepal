@@ -200,7 +200,11 @@ class _CursorValue extends React.Component {
     }
 
     setPosition(position) {
-        this.setState({position})
+        this.setState(({position: prevPosition}) => {
+            if (position !== prevPosition) {
+                return {position}
+            }
+        })
     }
 }
 
