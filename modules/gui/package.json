@@ -9,7 +9,7 @@
         "@fortawesome/free-regular-svg-icons": "6.4.0",
         "@fortawesome/free-solid-svg-icons": "6.4.0",
         "@fortawesome/react-fontawesome": "0.2.0",
-        "@google/earthengine": "0.1.350",
+        "@google/earthengine": "0.1.352",
         "@googlemaps/markerclusterer": "^2.0.15",
         "@turf/turf": "6.5.0",
         "base-64": "1.0.0",
@@ -39,7 +39,7 @@
         "react-dom": "^18.2.0",
         "react-dropzone": "^14.2.3",
         "react-highlighter": "^0.4.3",
-        "react-intl": "6.4.1",
+        "react-intl": "6.4.2",
         "react-markdown": "^8.0.7",
         "react-number-format": "^5.1.4",
         "react-redux": "8.0.5",
@@ -48,7 +48,7 @@
         "react-textarea-autosize": "^8.4.1",
         "react-transition-group": "4.4.5",
         "redux": "4.2.1",
-        "rxjs": "7.8.0",
+        "rxjs": "7.8.1",
         "uuid": "^9.0.0",
         "xterm": "^5.1.0",
         "xterm-addon-fit": "^0.7.0"
@@ -63,7 +63,7 @@
         "extends": []
     },
     "devDependencies": {
-        "@babel/eslint-parser": "^7.21.3",
+        "@babel/eslint-parser": "^7.21.8",
         "@babel/preset-react": "^7.18.6",
         "@redux-devtools/extension": "^3.2.5",
         "@testing-library/jest-dom": "^5.16.5",
