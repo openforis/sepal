@@ -3099,7 +3099,7 @@
 
       "baytsAlerts": {
         "create": "BayTS Alerts",
-        "description": "Generate forest change alerts using Sentinel-1 radar time-series and probabilistic updating, based on the RADD processing pipeline.",
+        "description": "Generate forest change alerts using Sentinel-1 time-series and probabilistic change detection (based on the RADD processing pipeline).",
         "imageLayerForm": {
           "mosaicType": {
             "label": "Mosaic",
