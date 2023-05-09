@@ -1,4 +1,4 @@
-FROM osixia/openldap:1.2.4
+FROM osixia/openldap:1.5.0
 
 EXPOSE 389 636
 
