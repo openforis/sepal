@@ -70,20 +70,21 @@ class Options extends React.Component {
                 {this.usingSpatialSpeckleFilter() ? this.renderSpatialSpeckleFilterOptions() : null}
                 {this.usingSpatialSpeckleFilter() ? this.renderMultitemporalSpeckleFilter() : null}
                 {!monitor && this.usingMultitemporalSpeckleFilter() ? this.renderMultitemporalSpeckleFilterOptions() : null}
-                {this.renderOutlierRemoval()}
+                {!monitor ? this.renderOutlierRemoval() : null}
                 {!monitor ? this.renderMinObservations() : null}
             </Layout>
         )
     }
 
     renderSimple() {
+        const {monitor} = this.props
         return (
             <Layout>
                 {this.renderOrbits()}
                 {this.renderGeometricCorrection()}
                 {this.renderSpatialSpeckleFilter()}
                 {this.usingSpatialSpeckleFilter() ? this.renderMultitemporalSpeckleFilter() : null}
-                {this.renderOutlierRemoval()}
+                {!monitor ? this.renderOutlierRemoval() : null}
             </Layout>
         )
     }
