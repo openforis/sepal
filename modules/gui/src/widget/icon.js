@@ -85,7 +85,7 @@ Icon.propTypes = {
     tooltipClickTrigger: PropTypes.any,
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
-    tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
+    tooltipPlacement: PropTypes.any,
     type: PropTypes.oneOf(['solid', 'regular', 'brands']),
     variant: PropTypes.oneOf(['normal', 'error', 'info', 'success', 'warning'])
 }
