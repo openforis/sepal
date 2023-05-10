@@ -129,7 +129,7 @@ const withConnectedComponent = () =>
             stream(...args) {
                 if (args.length === 1 && _.isObject(args[0])) {
                     // object arguments
-                    const {name, stream$, onNext, onError, onComplete} = args
+                    const {name, stream$, onNext, onError, onComplete} = args[0]
                     return this.getStream({name, stream$, onNext, onError, onComplete})
                 } else {
                     // positional arguments
