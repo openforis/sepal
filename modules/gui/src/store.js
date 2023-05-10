@@ -129,7 +129,12 @@ const withConnectedComponent = () =>
             stream(...args) {
                 if (args.length === 1 && _.isObject(args[0])) {
                     // object arguments
-                    const {name, stream$, onNext, onError, onComplete} = args[0]
+                    const objectArgs = args[0]
+                    const unsupportedArgs = _.difference(Object.keys(objectArgs), ['name', 'stream$', 'onNext', 'onError', 'onComplete'])
+                    if (unsupportedArgs.length) {
+                        throw new Error(`Unsupported stream arguments: ${unsupportedArgs.join(', ')}`)
+                    }
+                    const {name, stream$, onNext, onError, onComplete} = objectArgs
                     return this.getStream({name, stream$, onNext, onError, onComplete})
                 } else {
                     // positional arguments
