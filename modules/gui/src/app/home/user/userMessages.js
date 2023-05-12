@@ -318,7 +318,8 @@ class _UserMessagesButton extends React.Component {
         const {unreadUserMessages, activator: {activatables: {userMessages}}} = this.props
         const {shown} = this.state
         if (unreadUserMessages && !shown && userMessages.canActivate) {
-            this.setState({shown: true}, userMessages.activate)
+            userMessages.activate()
+            this.setState({shown: true})
         }
     }
 }
