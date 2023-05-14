@@ -5,7 +5,7 @@ const {Subject, groupBy, debounceTime, mergeMap, map, tap} = require('rxjs')
 const _ = require('lodash')
 const {notify} = require('./email')
 
-const rules = require('./logMonitor.json')
+const rules = require('#config/logMonitor.json')
 
 const tag$ = new Subject()
 

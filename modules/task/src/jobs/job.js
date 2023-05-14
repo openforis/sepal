@@ -1,4 +1,4 @@
 const Job = require('#sepal/worker/job')
-const logConfig = require('#task/log.json')
+const logConfig = require('#config/log.json')
 
 module.exports = {job: Job(logConfig)}

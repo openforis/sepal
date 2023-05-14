@@ -31,6 +31,7 @@
     },
     "imports": {
         "#sepal/*": "sepal/src/*.js",
-        "#sepal/*.json": "sepal/src/*.json"
+        "#sepal/*.json": "sepal/src/*.json",
+        "#config/*.json": "./config/*.json"
     }
 }

@@ -27,6 +27,7 @@
         "#sepal/*": "sepal/src/*.js",
         "#sepal/*.json": "sepal/src/*.json",
         "#gee/*": "./src/*.js",
-        "#gee/*.json": "./src/*.json"
+        "#gee/*.json": "./src/*.json",
+        "#config/*.json": "./config/*.json"
     }
 }
