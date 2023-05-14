@@ -14,7 +14,6 @@ RUN sed -i '/stretch-updates/d' /etc/apt/sources.list
 
 RUN chmod -R 500 /script && \
     chmod -R 400 /config && sync && \
-    sed -i 's|http://|https://|g' /etc/apt/sources.list \
     /script/init_image.sh
 
 ENTRYPOINT []
