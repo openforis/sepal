@@ -145,7 +145,7 @@ export const getTileManager = ({tileProviderId = uuid(), tileProvider}) => {
     }
 
     const loadTile$ = request => {
-        const response$ = new ReplaySubject()
+        const response$ = new ReplaySubject(1)
         const cancel$ = new Subject()
         const requestId = request.id
         tileManagerGroup.loadTile({tileProviderId, requestId, request, response$, cancel$})
