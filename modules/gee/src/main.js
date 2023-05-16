@@ -1,4 +1,4 @@
-require('#sepal/log').configureServer(require('./log.json'))
+require('#sepal/log').configureServer(require('#config/log.json'))
 const log = require('#sepal/log').getLogger('main')
 
 const {port} = require('./config')

@@ -1,6 +1,6 @@
 const Job = require('#sepal/worker/job')
 const {messageService, sendMessage$} = require('./messageService')
-const logConfig = require('./log.json')
+const logConfig = require('#config/log.json')
 
 const getSepalUser = request => {
     const sepalUser = request.headers['sepal-user']

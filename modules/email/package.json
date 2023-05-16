@@ -17,9 +17,9 @@
         "ioredis": "^5.3.2",
         "lodash": "^4.17.21",
         "log4js": "^6.9.1",
-        "marked": "^5.0.1",
+        "marked": "^5.0.2",
         "moment": "^2.29.4",
-        "nodemailer": "^6.9.1",
+        "nodemailer": "^6.9.2",
         "rxjs": "^7.8.1",
         "sepal": "../../lib/js/shared",
         "short-unique-id": "^4.4.4"
@@ -31,6 +31,7 @@
     },
     "imports": {
         "#sepal/*": "sepal/src/*.js",
-        "#sepal/*.json": "sepal/src/*.json"
+        "#sepal/*.json": "sepal/src/*.json",
+        "#config/*.json": "./config/*.json"
     }
 }
