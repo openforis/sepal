@@ -34,6 +34,14 @@ services:
     networks:
       - sepal
 
+  grafana:
+    image: grafana/grafana-enterprise:latest
+    container_name: grafana
+    ports:
+      - 3000:3000
+    networks:
+      - sepal
+
 networks:
   sepal:
     external: true
