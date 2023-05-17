@@ -1,0 +1,8 @@
+.details:hover {
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+.value {
+    font-size: .75rem;
+}

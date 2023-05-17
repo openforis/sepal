@@ -22,7 +22,7 @@
     padding: 0 .25rem .25rem .25rem;
     transform-origin: right top;
     overflow: hidden;
-    animation: add 250ms linear forwards;
+    animation: add 200ms linear forwards;
 }
 
 .tab::before {
@@ -69,7 +69,12 @@
 
 @keyframes add {
     0% {
+        opacity: 0;
         transform: translateY(-100%);
+    }
+    100% {
+        opacity: 1;
+        transform: none;
     }
 }
 

@@ -7,7 +7,7 @@ import {getAvailableBands} from './bands'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {visualizationOptions} from './visualizations'
-import {withMapAreaContext} from 'app/home/map/mapAreaContext'
+import {withMapArea} from 'app/home/map/mapAreaContext'
 import {withRecipe} from '../../recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -104,7 +104,7 @@ class _ChangeAlertsImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {layerConfig: {visParams, visualizationType}, mapAreaContext: {updateLayerConfig}} = this.props
+        const {layerConfig: {visParams, visualizationType}, mapArea: {updateLayerConfig}} = this.props
 
         if (!visualizationType) {
             updateLayerConfig(defaultLayerConfig)
@@ -155,24 +155,24 @@ class _ChangeAlertsImageLayer extends React.Component {
     }
 
     selectVisualization(visParams) {
-        const {layerConfig, mapAreaContext: {updateLayerConfig}} = this.props
+        const {layerConfig, mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({...layerConfig, visParams})
     }
 
     selectVisualizationType(visualizationType) {
-        const {layerConfig: {mosaicType}, mapAreaContext: {updateLayerConfig}} = this.props
+        const {layerConfig: {mosaicType}, mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({visualizationType, mosaicType})
     }
 
     selectMosaicType(mosaicType) {
-        const {layerConfig: {visualizationType}, mapAreaContext: {updateLayerConfig}} = this.props
+        const {layerConfig: {visualizationType}, mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({visualizationType, mosaicType})
     }
 }
 
 export const ChangeAlertsImageLayer = compose(
     _ChangeAlertsImageLayer,
-    withMapAreaContext(),
+    withMapArea(),
     withRecipe(mapRecipeToProps)
 )
 

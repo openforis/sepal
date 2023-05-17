@@ -6,11 +6,11 @@ import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../../remappingRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {withActivators} from 'widget/activation/activator'
 import InputImage from './inputImage'
 import React from 'react'
 import guid from 'guid'
@@ -123,5 +123,5 @@ export default compose(
     InputImagery,
     connect(mapStateToProps),
     recipeFormPanel({id: 'inputImagery', mapRecipeToProps, valuesToModel, additionalPolicy}),
-    activator('inputImage')
+    withActivators('inputImage')
 )

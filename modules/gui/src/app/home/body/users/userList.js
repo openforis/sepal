@@ -17,10 +17,17 @@ import React from 'react'
 import _ from 'lodash'
 import format from 'format'
 import lookStyles from 'style/look.module.css'
+import memoizeOne from 'memoize-one'
 import moment from 'moment'
 import styles from './userList.module.css'
 
 const IGNORE = 'IGNORE'
+
+const getHighlightMatcher = memoizeOne(
+    filterValues => filterValues.length
+        ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
+        : ''
+)
 
 export default class UserList extends React.Component {
     state = {
@@ -268,31 +275,32 @@ export default class UserList extends React.Component {
     }
 
     renderUsers(users) {
+        const itemKey = user => `${user.id}|${user.username}|${this.getHighlightMatcher()}`
         return (
             <FastList
                 items={users}
-                itemKey={user => _.compact([user.id, user.username, this.getHighLightMatcher()]).join('|')}
-                overflow={50}>
-                {this.renderUser}
-            </FastList>
+                itemKey={itemKey}
+                itemRenderer={this.renderUser}
+                overflow={50}
+                onEnter={this.onSelect}
+            />
         )
     }
 
-    renderUser(user) {
+    renderUser(user, hovered) {
         return (
             <UserItem
                 user={user}
-                highlight={this.getHighLightMatcher()}
+                highlight={this.getHighlightMatcher()}
+                hovered={hovered}
                 onClick={this.onSelect}
             />
         )
     }
 
-    getHighLightMatcher() {
+    getHighlightMatcher() {
         const {textFilterValues} = this.state
-        return textFilterValues.length
-            ? new RegExp(`(?:${textFilterValues.join('|')})`, 'i')
-            : ''
+        return getHighlightMatcher(textFilterValues)
     }
 
     onSelect(user) {
@@ -344,8 +352,9 @@ class UserItem extends React.PureComponent {
     }
 
     render() {
-        const {user} = this.props
-        const {name, status, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
+        const {user, hovered} = this.props
+        const {name, status, googleTokens, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
+        const isGoogleUser = !!googleTokens
         return (
             <div
                 className={[
@@ -355,11 +364,12 @@ class UserItem extends React.PureComponent {
                     lookStyles.noTransitions,
                     styles.grid,
                     styles.user,
-                    status ? styles.clickable : null
+                    status ? styles.clickable : null,
+                    hovered ? lookStyles.hoverForced : null
                 ].join(' ')}
                 onClick={this.onClick}>
                 {this.renderName(name)}
-                {this.renderStatus(status)}
+                {this.renderStatus(status, isGoogleUser)}
                 {this.renderLastUpdate(updateTime)}
                 {this.renderBudgetUpdateRequest(budgetUpdateRequest)}
                 {this.renderInstanceSpending(budget, current)}
@@ -378,23 +388,23 @@ class UserItem extends React.PureComponent {
         )
     }
 
-    renderStatus(status) {
+    renderStatus(status, isGoogleUser) {
         return (
             <div>
-                {status ? this.renderDefinedStatus(status) : this.renderUndefinedStatus() }
+                {status ? this.renderDefinedStatus(status, isGoogleUser) : this.renderUndefinedStatus() }
             </div>
         )
     }
 
-    renderDefinedStatus(status) {
+    renderDefinedStatus(status, isGoogleUser) {
         return (
-            <UserStatus status={status}/>
+            <UserStatus status={status} isGoogleUser={isGoogleUser}/>
         )
     }
 
     renderUndefinedStatus() {
         return (
-            <UserStatus status={status}/>
+            <UserStatus/>
         )
     }
 
@@ -462,6 +472,7 @@ class UserItem extends React.PureComponent {
 
 UserItem.propTypes = {
     highlighter: PropTypes.string,
+    hovered: PropTypes.any,
     user: PropTypes.object,
     onClick: PropTypes.func
 }

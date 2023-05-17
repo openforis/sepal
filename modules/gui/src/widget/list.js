@@ -1,36 +1,48 @@
 import {Button} from 'widget/button'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {Subject} from 'rxjs'
+import {Subject, merge} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './list.module.css'
 import withForwardedRef from 'ref'
-import withSubscriptions from 'subscription'
-
-const autoCenter$ = new Subject()
 
 class _ScrollableList extends React.Component {
+    autoCenter$ = new Subject()
+
+    constructor() {
+        super()
+        this.renderScrollable = this.renderScrollable.bind(this)
+    }
+
     render() {
-        const {className, ...props} = this.props
+        const {className} = this.props
         return (
-            <ElementResizeDetector onResize={() => autoCenter$.next()}>
+            <ElementResizeDetector resize$={this.autoCenter$}>
                 <ScrollableContainer className={className}>
                     <Scrollable
                         className={styles.options}
                         direction='y'>
-                        {scrollable =>
-                            <List
-                                {...props}
-                                scrollable={scrollable}
-                            />}
+                        {this.renderScrollable}
                     </Scrollable>
                 </ScrollableContainer>
             </ElementResizeDetector>
+        )
+    }
+
+    renderScrollable(scrollable) {
+        const {className, ...props} = this.props
+        return (
+            <List
+                {...props}
+                scrollable={scrollable}
+                autoCenter$={this.autoCenter$}
+            />
         )
     }
 }
@@ -78,9 +90,8 @@ class List extends React.Component {
     constructor(props) {
         super(props)
         const {forwardedRef} = props
-        this.list = forwardedRef
-            ? forwardedRef
-            : React.createRef()
+        this.list = forwardedRef || React.createRef()
+        this.autoCenter$ = new Subject()
     }
 
     render() {
@@ -108,7 +119,7 @@ class List extends React.Component {
                 style={{
                     '--scrollable-container-height': overScroll ? containerHeight : 0
                 }}
-                onMouseLeave={() => autoCenter$.next(true)}
+                onMouseLeave={() => this.autoCenter$.next(true)}
             >
                 {this.renderOptions(options)}
             </ul>
@@ -339,7 +350,7 @@ class List extends React.Component {
         this.setState({
             highlightedOption,
             overrideHover: true
-        }, () => autoCenter$.next())
+        }, () => this.autoCenter$.next(false))
     }
 
     centerSelectedOption() {
@@ -348,11 +359,9 @@ class List extends React.Component {
     }
 
     initializeAutoCenter() {
-        const {addSubscription, scrollable} = this.props
+        const {addSubscription, scrollable, autoCenter$} = this.props
         addSubscription(
-            autoCenter$
-                // [HACK] Add delay to fix bug where iOS doesn't capture next tap event
-                // .pipe(delay(250))
+            merge(autoCenter$, this.autoCenter$)
                 .subscribe(reset => reset
                     ? scrollable.reset(() => this.centerSelectedOption())
                     : this.centerSelectedOption()

@@ -1,3 +1,4 @@
+import {addHash, cloneDeep, createHash} from 'hash'
 import _ from 'lodash'
 import flatten from 'flat'
 
@@ -82,9 +83,12 @@ export class Mutator {
         this.path = toPathList(['root', path])
     }
 
-    getKey(pathState, pathElement) {
+    getKey(node, pathElement) {
         if (_.isPlainObject(pathElement)) {
-            return _.findIndex(pathState, item => _.isEqual(_.pick(item, Object.keys(flatten(pathElement))), pathElement))
+            const index = _.findIndex(node,
+                item => _.isEqual(_.pick(item, Object.keys(flatten(pathElement))), pathElement)
+            )
+            return index
         }
         return pathElement
     }
@@ -103,10 +107,8 @@ export class Mutator {
         }
     }
 
-    mutate(func) {
-        const parentPath = _.initial(this.path)
-        const pathElement = _.last(this.path)
-        const stateElements = _.chain(parentPath)
+    traverse(tree, path, hash) {
+        const stateElements = _.chain(path)
             .transform(
                 (stateElements, pathElement, index, pathElements) => {
                     const stateElement = _.last(stateElements)
@@ -121,28 +123,48 @@ export class Mutator {
                             const previousElement = _.nth(stateElements, -2)
                             previousElement[pathElements[index - 1]] = [next]
                         }
+                        addHash(next, hash)
                         stateElements.push(next)
                     } else {
                         const next = this.getNext(stateElement[key], index)
                         stateElement[key] = next
+                        addHash(next, hash)
                         stateElements.push(next)
                     }
-                }, [this.state])
+                }, [tree])
             .tail() // drop the synthetic root
             .value()
-        const state = _.first(stateElements)
-        const pathState = _.last(stateElements)
-        const key = this.getKey(pathState, pathElement)
-        const pathKey = key === -1
-            ? pathState.length
+        const root = _.first(stateElements)
+        const node = _.last(stateElements)
+        return {root, node}
+    }
+
+    mutate(func) {
+        const parentPath = _.initial(this.path)
+        const pathElement = _.last(this.path)
+        const hash = createHash()
+        const {root: stateRoot, node: stateNode} = this.traverse(this.state, parentPath, hash)
+
+        const key = this.getKey(stateNode, pathElement)
+        const nodeKey = key === -1
+            ? stateNode.length
             : key
-        func(pathState, pathKey)
-        return state
+            
+        func(stateNode, nodeKey)
+        addHash(stateNode[nodeKey], hash)
+        return stateRoot
+    }
+
+    assertValueType(value) {
+        if (value instanceof Function) {
+            throw Error('Cannot pass a value of type function to Mutator')
+        }
     }
 
     set(value) {
+        this.assertValueType(value)
         return this.mutate((pathState, pathKey) => {
-            pathState[pathKey] = _.cloneDeep(value)
+            pathState[pathKey] = cloneDeep(value)
         })
     }
 
@@ -155,31 +177,36 @@ export class Mutator {
     unique() {
         return this.mutate((pathState, pathKey) => {
             pathState[pathKey] = _.uniq(pathState[pathKey])
+            // TODO fix this
         })
     }
 
     assign(value) {
+        this.assertValueType(value)
         return this.mutate((pathState, pathKey) => {
-            pathState[pathKey] = _.assign({}, pathState[pathKey], _.cloneDeep(value))
+            pathState[pathKey] = _.assign({}, pathState[pathKey], cloneDeep(value))
         })
     }
 
     merge(value) {
+        this.assertValueType(value)
         return this.mutate((pathState, pathKey) => {
-            pathState[pathKey] = _.merge({}, pathState[pathKey], _.cloneDeep(value))
+            pathState[pathKey] = _.merge({}, pathState[pathKey], cloneDeep(value))
         })
     }
 
     push(value) {
+        this.assertValueType(value)
         return this.mutate((pathState, pathKey) => {
             if (!pathState[pathKey]) {
                 pathState[pathKey] = []
             }
-            pathState[pathKey] = [...pathState[pathKey], _.cloneDeep(value)]
+            pathState[pathKey] = [...pathState[pathKey], cloneDeep(value)]
         })
     }
 
     pushUnique(value, key) {
+        this.assertValueType(value)
         return this.mutate((pathState, pathKey) => {
             const finder = key
                 ? item => resolve(item, key, true) === resolve(value, key, true)
@@ -189,7 +216,7 @@ export class Mutator {
                 if (!array) {
                     pathState[pathKey] = []
                 }
-                pathState[pathKey] = [...pathState[pathKey], _.cloneDeep(value)]
+                pathState[pathKey] = [...pathState[pathKey], cloneDeep(value)]
             }
         })
     }
@@ -203,8 +230,9 @@ export class Mutator {
                     pathState.splice(pathKey, 1)
                 } else {
                     const index = pathState.indexOf(pathKey)
-                    index >= 0 && pathState.splice(index, 1)
+                    index >= 0 && (pathState.splice(index, 1))
                 }
+                
             } else {
                 console.error('Unsupported type to delete from', {pathState, pathKey})
                 throw Error('Unsupported type to delete from')

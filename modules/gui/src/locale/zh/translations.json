@@ -3994,8 +3994,7 @@
             "single": {
                 "drop": "",
                 "dropOrClick": "",
-                "reject": "",
-                "tooMany": ""
+                "reject": ""
             }
         },
         "imageConstraints": {
@@ -4089,5 +4088,6 @@
             },
             "newTab": ""
         }
-    }
+    },
+    "chromeOnHighResDisplayWarning": ""
 }

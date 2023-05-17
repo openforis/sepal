@@ -3994,8 +3994,7 @@
             "single": {
                 "drop": "Suelte el archivo aquí",
                 "dropOrClick": "Suelte el archivo aquí, o haga clic para seleccionar el archivo",
-                "reject": "No se puede soltar el archivo. ¿Tipo de archivo incorrecto?",
-                "tooMany": "Sólo puede soltar un único archivo."
+                "reject": ""
             }
         },
         "imageConstraints": {
@@ -4089,5 +4088,6 @@
             },
             "newTab": "Nueva_pestaña"
         }
-    }
+    },
+    "chromeOnHighResDisplayWarning": ""
 }

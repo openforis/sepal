@@ -1,4 +1,4 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
@@ -269,9 +269,10 @@ class UserDetails extends React.Component {
     }
 
     renderStatus() {
-        const {userDetails: {status}} = this.props
+        const {userDetails: {status, googleTokens}} = this.props
+        const isGoogleUser = !!googleTokens
         return (
-            <UserStatus status={status}/>
+            <UserStatus status={status} isGoogleUser={isGoogleUser}/>
         )
     }
 
@@ -395,5 +396,5 @@ UserDetails.propTypes = {
 
 export default compose(
     UserDetails,
-    form({fields, mapStateToProps})
+    withForm({fields, mapStateToProps})
 )

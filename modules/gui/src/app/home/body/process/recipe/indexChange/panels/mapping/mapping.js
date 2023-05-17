@@ -6,10 +6,10 @@ import {ListItem} from 'widget/listItem'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {withActivators} from 'widget/activation/activator'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -50,17 +50,12 @@ class _Mapping extends React.Component {
         )
     }
 
-    onClick() {
-
-    }
-
     renderEntryMapping(entry) {
         const {activator: {activatables}} = this.props
-        const onClick = () => activatables[`entryMapping-${entry.id}}`].activate()
+        const onClick = activatables[`entryMapping-${entry.id}}`].activate
         return (
             <ListItem
                 key={entry.id}
-                onClick={onClick}
                 expansion={this.renderMappingOverview(entry)}
                 expansionClickable
                 expanded>
@@ -101,6 +96,7 @@ class _Mapping extends React.Component {
                         />
                     }
                     images={images}
+                    booleanOperator={booleanOperator}
                     constraints={constraints}
                     onChange={({constraints, booleanOperator}) => this.updateConstraints(id, constraints, booleanOperator)}
                 />
@@ -141,7 +137,7 @@ const additionalPolicy = () => ({
 export const Mapping = compose(
     _Mapping,
     recipeFormPanel({id: 'mapping', mapRecipeToProps, additionalPolicy}),
-    activator()
+    withActivators()
 )
 
 Mapping.propTypes = {

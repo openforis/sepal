@@ -6,26 +6,33 @@ import _ from 'lodash'
 import styles from './splitView.module.css'
 
 export class SplitOverlay extends React.Component {
+    constructor() {
+        super()
+        this.renderSplitContext = this.renderSplitContext.bind(this)
+    }
+
     render() {
-        const {area, children} = this.props
         return (
             <SplitContext.Consumer>
-                {({container, mode, maximize}) => {
-                    const single = mode === 'stack' && maximize
-                    const hidden = single && maximize !== area
-                    return !hidden ? (
-                        <Portal type='container' container={container}>
-                            <div className={_.flatten([
-                                styles.areaOverlay,
-                                single ? styles.center : area.split('-').map(area => styles[area])
-                            ]).join(' ')}>
-                                {children}
-                            </div>
-                        </Portal>
-                    ) : null
-                }}
+                {this.renderSplitContext}
             </SplitContext.Consumer>
         )
+    }
+
+    renderSplitContext({container, mode, maximize}) {
+        const {area, children} = this.props
+        const single = mode === 'stack' && maximize
+        const hidden = single && maximize !== area
+        return !hidden ? (
+            <Portal type='container' container={container}>
+                <div className={_.flatten([
+                    styles.areaOverlay,
+                    single ? styles.center : area.split('-').map(area => styles[area])
+                ]).join(' ')}>
+                    {children}
+                </div>
+            </Portal>
+        ) : null
     }
 }
 

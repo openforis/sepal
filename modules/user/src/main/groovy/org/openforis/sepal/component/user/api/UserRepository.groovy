@@ -25,6 +25,8 @@ interface UserRepository {
     void updateToken(String username, String token, Date tokenGenerationTime)
 
     Map tokenStatus(String token)
+    
+    Map tokenStatusByUsername(String username)
 
     void invalidateToken(String token)
 

@@ -9,6 +9,15 @@ export class SepalMap {
         log.debug('creating new SepalMap')
         this.google = google
         this.googleMap = googleMap
+        this.toGoogleBounds = this.toGoogleBounds.bind(this)
+        this.zoomIn = this.zoomIn.bind(this)
+        this.zoomOut = this.zoomOut.bind(this)
+        this.setZoom = this.setZoom.bind(this)
+        this.getZoom = this.getZoom.bind(this)
+        this.setView = this.setView.bind(this)
+        this.fitBounds = this.fitBounds.bind(this)
+        this.getBounds = this.getBounds.bind(this)
+        this.getGoogle = this.getGoogle.bind(this)
 
         this.cursor = new google.maps.Marker({
             clickable: false,

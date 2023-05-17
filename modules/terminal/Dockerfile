@@ -6,7 +6,7 @@ ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
 RUN apt-get update && \
-    apt-get install -y rsync sudo && \
+    apt-get install -y sudo && \
     adduser node sudo && \
     echo 'node    ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
 
@@ -37,6 +37,7 @@ RUN chmod +x /usr/local/bin/ssh_gateway.sh
 
 USER node
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/config ${MODULE}/config
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 
 CMD start.sh

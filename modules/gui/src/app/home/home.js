@@ -53,7 +53,7 @@ const updateAssetRoots$ = () => {
         select('user.currentUser.googleTokens')
             ? api.gee.assetRoots$()
             : of([])
-    return timedRefresh$(assetRoots$, 60, 'asset roots').pipe(
+    return timedRefresh$(assetRoots$, 600, 'asset roots').pipe(
         map(assetRoots =>
             actionBuilder('UPDATE_ASSET_ROOTS')
                 .set('gee.assetRoots', assetRoots)

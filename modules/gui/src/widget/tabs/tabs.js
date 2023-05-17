@@ -2,28 +2,25 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {Subject, delay, filter} from 'rxjs'
+import {Subject} from 'rxjs'
 import {TabContent} from './tabContent'
 import {TabHandle} from './tabHandle'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
+import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import guid from 'guid'
 import styles from './tabs.module.css'
-import withSubscriptions from 'subscription'
-
-const CLOSE_ANIMATION_DURATION_MS = 250
-
-const close$ = new Subject()
 
 export const addTab = statePath => {
     const id = guid()
-    const tab = {id, placeholder: msg('widget.tabs.newTab')}
+    const tab = {id, placeholder: msg('widget.tabs.newTab'), title: ''}
     actionBuilder('ADD_TAB')
         .push([statePath, 'tabs'], tab)
         .set([statePath, 'selectedTabId'], id)
@@ -32,17 +29,22 @@ export const addTab = statePath => {
 }
 
 export const closeTab = (id, statePath, nextId) => {
-    close$.next({id, statePath, nextId})
     actionBuilder('CLOSING_TAB')
         .set([statePath, 'tabs', {id}, 'ui.closing'], true)
         .dispatch()
+    setImmediate(() =>
+        actionBuilder('CLOSE_TAB')
+            .set([statePath, 'selectedTabId'], nextId || nextSelectedTabId(id, statePath))
+            .del([statePath, 'tabs', {id}])
+            .dispatch()
+    )
 }
 
 export const renameTab = (title, tabPath, onTitleChanged) => {
     actionBuilder('RENAME_TAB')
         .set([tabPath, 'title'], title)
         .dispatch()
-    setTimeout(() => onTitleChanged && onTitleChanged(select(tabPath)), 0)
+    setImmediate(() => onTitleChanged && onTitleChanged(select(tabPath)))
 }
 
 export const selectTab = (id, statePath) => {
@@ -75,6 +77,20 @@ export const getTabsInfo = statePath => {
     return {}
 }
 
+const nextSelectedTabId = (id, statePath) => {
+    const tabs = select([statePath, 'tabs'])
+    const tabIndex = tabs.findIndex(tab => tab.id === id)
+    const first = tabIndex === 0
+    const last = tabIndex === tabs.length - 1
+    if (!last) {
+        return tabs[tabIndex + 1].id
+    }
+    if (!first) {
+        return tabs[tabIndex - 1].id
+    }
+    return null
+}
+
 const mapStateToProps = (state, ownProps) => ({
     tabs: select([ownProps.statePath, 'tabs']) || [],
     selectedTabId: select([ownProps.statePath, 'selectedTabId'])
@@ -83,6 +99,7 @@ const mapStateToProps = (state, ownProps) => ({
 class _Tabs extends React.Component {
     constructor(props) {
         super(props)
+        this.renderTab = this.renderTab.bind(this)
         this.addTab = this.addTab.bind(this)
         this.closeSelectedTab = this.closeSelectedTab.bind(this)
         this.selectPreviousTab = this.selectPreviousTab.bind(this)
@@ -97,8 +114,7 @@ class _Tabs extends React.Component {
     busy$ = new Subject()
 
     renderTab(tab) {
-        const {selectedTabId, statePath, onTitleChanged, onClose} = this.props
-        const close = () => this.closeTab(tab.id)
+        const {selectedTabId, statePath, onTitleChanged} = this.props
         return (
             <TabHandle
                 key={tab.id}
@@ -110,7 +126,7 @@ class _Tabs extends React.Component {
                 closing={tab.ui && tab.ui.closing}
                 statePath={statePath}
                 onTitleChanged={onTitleChanged}
-                onClose={() => onClose ? onClose(tab, close) : close()}
+                onClose={() => this.onClose(tab)}
             />
         )
     }
@@ -136,7 +152,7 @@ class _Tabs extends React.Component {
             <React.Fragment>
                 <ScrollableContainer>
                     <Scrollable direction='x' className={styles.tabs}>
-                        {maxTabs > 1 ? tabs.map(tab => this.renderTab(tab)) : null}
+                        {maxTabs > 1 ? tabs.map(this.renderTab) : null}
                     </Scrollable>
                 </ScrollableContainer>
                 {this.renderTabControls()}
@@ -144,6 +160,11 @@ class _Tabs extends React.Component {
         )
     }
 
+    onClose(tab) {
+        const {onClose} = this.props
+        onClose ? onClose(tab, () => this.closeTab(tab.id)) : this.closeTab(tab.id)
+    }
+    
     renderTabControls() {
         return (
             <div className={styles.tabActions}>
@@ -286,47 +307,11 @@ class _Tabs extends React.Component {
         )
     }
 
-    componentDidMount() {
-        this.handleCloseTab()
-    }
-
-    handleCloseTab() {
-        const {addSubscription, statePath} = this.props
-        addSubscription(
-            close$.pipe(
-                filter(tab => tab.statePath === statePath),
-                delay(CLOSE_ANIMATION_DURATION_MS * 1.2),
-            ).subscribe(
-                ({id, statePath, nextId}) => this.finalizeCloseTab(id, statePath, nextId)
-            )
-        )
-    }
-
-    finalizeCloseTab(id, statePath, nextId) {
-        const nextSelectedTabId = () => {
-            const tabs = select([statePath, 'tabs'])
-            const tabIndex = tabs.findIndex(tab => tab.id === id)
-            const first = tabIndex === 0
-            const last = tabIndex === tabs.length - 1
-            if (!last) {
-                return tabs[tabIndex + 1].id
-            }
-            if (!first) {
-                return tabs[tabIndex - 1].id
-            }
-            return null
-        }
-
-        actionBuilder('CLOSE_TAB')
-            .set([statePath, 'selectedTabId'], nextId || nextSelectedTabId())
-            .del([statePath, 'tabs', {id}])
-            .dispatch()
-    }
-
     componentDidUpdate() {
         const {tabs, statePath} = this.props
-        if (tabs.length === 0)
+        if (tabs.length === 0) {
             addTab(statePath)
+        }
     }
 }
 

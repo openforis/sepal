@@ -3994,8 +3994,7 @@
             "single": {
                 "drop": "Déposer le fichier ici",
                 "dropOrClick": "Déposez le fichier ici, ou cliquez pour sélectionner le fichier",
-                "reject": "Impossible de déposer un fichier. Mauvais type de fichier ?",
-                "tooMany": "On ne peut déposer qu'un seul fichier."
+                "reject": ""
             }
         },
         "imageConstraints": {
@@ -4089,5 +4088,6 @@
             },
             "newTab": "Nouvel_onglet"
         }
-    }
+    },
+    "chromeOnHighResDisplayWarning": ""
 }

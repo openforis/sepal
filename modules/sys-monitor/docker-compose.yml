@@ -21,6 +21,8 @@ services:
     networks:
       - sepal
     restart: always
+    ulimits:
+      core: 0
 
 networks:
   sepal:

@@ -1,5 +1,6 @@
 import {Subject, animationFrames, debounceTime, delay, distinctUntilChanged, filter, fromEvent, map, switchMap, takeUntil, timer} from 'rxjs'
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import Hammer from 'hammerjs'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
@@ -7,7 +8,6 @@ import React from 'react'
 import _ from 'lodash'
 import lookStyles from 'style/look.module.css'
 import styles from './listItem.module.css'
-import withSubscriptions from 'subscription'
 
 const EXPAND_DELAYED_TIMEOUT_MS = 1000
 const CLICKABLE_PAN_THRESHOLD_PX = 10
@@ -130,7 +130,7 @@ class _ListItem extends React.Component {
     }
 
     getSharedClassName(clickable) {
-        const {expansionInteractive} = this.props
+        const {expansionInteractive, hovered} = this.props
         return [
             lookStyles.look,
             lookStyles.transparent,
@@ -145,7 +145,8 @@ class _ListItem extends React.Component {
             expansionInteractive
                 ? lookStyles.interactive
                 : null,
-            this.isDisabled() ? lookStyles.disabled : null
+            this.isDisabled() ? lookStyles.disabled : null,
+            hovered ? lookStyles.hoverForced : null
         ]
     }
 
@@ -417,6 +418,7 @@ ListItem.propTypes = {
     expansionClassName: PropTypes.string,
     expansionClickable: PropTypes.any,
     expansionInteractive: PropTypes.any,
+    hovered: PropTypes.any,
     main: PropTypes.any,
     onClick: PropTypes.func,
     onDrag: PropTypes.func,

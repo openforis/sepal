@@ -1,4 +1,3 @@
-import * as PropTypes from 'prop-types'
 import {BandSetSpec} from './bandSetSpec'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
@@ -10,6 +9,7 @@ import {compose} from 'compose'
 import {msg} from 'translate'
 import {mutate} from 'stateUtils'
 import ButtonPopup from 'widget/buttonPopup'
+import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
 

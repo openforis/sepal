@@ -1,14 +1,14 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {CenteredProgress} from 'widget/progress'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {credentialsPosted, resetPassword$, tokenUser, validateToken$} from 'user'
 import {history, query} from 'route'
 import {msg} from 'translate'
 import {switchMap} from 'rxjs'
-import {withRecaptchaContext} from 'widget/recaptcha'
+import {withRecaptcha} from 'widget/recaptcha'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -77,7 +77,7 @@ class _SetPassword extends React.Component {
     }
 
     resetPassword(username, password) {
-        const {type, recaptchaContext: {recaptcha$}, stream} = this.props
+        const {type, recaptcha: {recaptcha$}, stream} = this.props
         const token = query().token
         stream('RESET_PASSWORD',
             recaptcha$('RESET_PASSWORD').pipe(
@@ -160,8 +160,8 @@ class _SetPassword extends React.Component {
 
 export const SetPassword = compose(
     _SetPassword,
-    form({fields, constraints, mapStateToProps}),
-    withRecaptchaContext()
+    withForm({fields, constraints, mapStateToProps}),
+    withRecaptcha()
 )
 
 SetPassword.propTypes = {

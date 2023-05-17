@@ -3,7 +3,7 @@ import {combineLatest, filter, map} from 'rxjs'
 import {toBandValues} from '../cursorValue'
 import ee from '@google/earthengine'
 
-const CONCURRENCY = 16
+const CONCURRENCY = 8
 const TILE_SIZE = ee.layers.AbstractOverlay.DEFAULT_TILE_EDGE_LENGTH
 
 export class EarthEngineTileProvider extends WMTSTileProvider {
@@ -21,7 +21,7 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
         this.visParams = visParams
         this.cursorValue$ = cursorValue$
         this.subscriptions = [
-            combineLatest([boundsChanged$, dragging$]).pipe(
+            combineLatest(boundsChanged$, dragging$).pipe(
                 map(([_, dragging]) => dragging),
                 filter(dragging => !dragging)
             ).subscribe(
@@ -33,28 +33,35 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
         ]
     }
 
+    getElementContext(element) {
+        const ctx = element.getContext('2d', {willReadFrequently: true})
+        // ctx.imageSmoothingEnabled = false
+        // ctx.mozImageSmoothingEnabled = false
+        // ctx.webkitImageSmoothingEnabled = false
+        // ctx.msImageSmoothingEnabled = false
+        return ctx
+    }
+
     calculateTileOffsets() {
         Object.values(this.elements).forEach(element => this.updateOffset(element))
     }
 
     createElement(id, doc) {
-        const canvas = doc.createElement('canvas')
-        canvas.setAttribute('id', id)
-        canvas.setAttribute('width', TILE_SIZE)
-        canvas.setAttribute('height', TILE_SIZE)
-        return canvas
+        const element = doc.createElement('canvas')
+        element.setAttribute('id', id)
+        element.setAttribute('width', TILE_SIZE)
+        element.setAttribute('height', TILE_SIZE)
+        return element
     }
 
-    renderTile({doc, element, blob}) {
-        const image = doc.createElement('img')
+    renderTile({element, blob}) {
+        const image = new Image()
         image.setAttribute('src', (window.URL || window.webkitURL).createObjectURL(blob))
         image.onload = () => {
             this.elements[element.id] = element
             this.updateOffset(element)
-            element.getContext('2d', {willReadFrequently: true}).drawImage(image, 0, 0, TILE_SIZE, TILE_SIZE)
+            this.getElementContext(element).drawImage(image, 0, 0, TILE_SIZE, TILE_SIZE, 0, 0, TILE_SIZE, TILE_SIZE)
         }
-
-        image.src = URL.createObjectURL(blob)
     }
 
     releaseTile(element) {
@@ -63,8 +70,8 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
     }
 
     updateOffset(element) {
-        const rect = element.getBoundingClientRect()
-        this.offsets[element.id] = {top: rect.top, left: rect.left}
+        const {top, left} = element.getBoundingClientRect()
+        this.offsets[element.id] = {top: Math.floor(top), left: Math.floor(left)}
     }
 
     cursorColor(cursor) {
@@ -85,42 +92,23 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
     toColor(id, x, y) {
         const element = this.elements[id]
         const {top, left} = this.offsets[id]
-        const offsetX = x - left
-        const offsetY = y - top
-        const ctx = element.getContext('2d', {willReadFrequently: true})
-        const data = ctx.getImageData(offsetX, offsetY, 1, 1).data
-        const [red, green, blue, alpha] = data
+        const {data} = this.getElementContext(element).getImageData(x - left, y - top, 1, 1)
+        this.cursorValue$.next(this.getBandValues(data))
+    }
+
+    getBandValues([red, green, blue, alpha]) {
         if (alpha) {
             const bandValues = toBandValues([red, green, blue], this.visParams, this.dataTypes)
             if (bandValues.length) {
-                this.cursorValue$.next(bandValues)
-            } else {
-                // Might not have a value for this pixels due to anti-aliasing.
-                // Try with a pixel around this
-                const offsets = [-1, 1]
-                for (let i = 0; i < 2; i++) {
-                    for (let j = 0; j < 2; j++) {
-                        const data = ctx.getImageData(offsetX + offsets[i], offsetY + offsets[j], 1, 1).data
-                        const [red, green, blue, alpha] = data
-                        if (alpha) {
-                            const bandValues = toBandValues([red, green, blue], this.visParams, this.dataTypes)
-                            if (bandValues.length) {
-                                return this.cursorValue$.next(bandValues)
-                            }
-                        }
-                    }
-                }
-                this.cursorValue$.next([])
+                return bandValues
             }
-            this.cursorValue$.next(bandValues)
-        } else {
-            this.cursorValue$.next([])
         }
+        return []
     }
 
     isInElement(id, x, y) {
         const {top, left} = this.offsets[id]
-        return x >= left && x <= left + TILE_SIZE && y >= top && y <= top + TILE_SIZE
+        return x >= left && x < left + TILE_SIZE && y >= top && y < top + TILE_SIZE
     }
 
     close() {

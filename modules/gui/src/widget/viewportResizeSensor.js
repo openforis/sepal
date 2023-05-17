@@ -3,11 +3,16 @@ import React from 'react'
 import actionBuilder from 'action-builder'
 
 export default class ViewportResizeSensor extends React.Component {
+    constructor() {
+        super()
+        this.updateDimensions = this.updateDimensions.bind(this)
+    }
+
     render() {
         return (
             <ElementResizeDetector
                 debounce={100}
-                onResize={size => this.updateDimensions(size)}
+                onResize={this.updateDimensions}
             />
         )
     }

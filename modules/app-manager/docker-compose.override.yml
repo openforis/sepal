@@ -3,7 +3,6 @@ version: "3.9"
 services:
   app-manager:
     volumes:  # To allow dynamic reloading in dev
-      - ${SEPAL_PROJECT_DIR}/dev-env/nodemon:/usr/local/src/sepal/dev-env/nodemon
       - ${SEPAL_PROJECT_DIR}/lib/js/shared:/usr/local/src/sepal/lib/js/shared
       - ${SEPAL_PROJECT_DIR}/modules/app-manager:/usr/local/src/sepal/modules/app-manager
       - ${SEPAL_PROJECT_DIR}/modules/app-manager/update-app.sh:/usr/local/bin/update-app

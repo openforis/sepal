@@ -139,6 +139,20 @@ class JdbcUserRepository implements UserRepository {
         return status
     }
 
+    Map tokenStatusByUsername(String username) {
+        def status = null
+        sql.eachRow('''
+                SELECT token, token_generation_time
+                FROM sepal_user 
+                WHERE username = ?''', [username]) {
+            status = it.token ? [
+                token: it.token,
+                generationTime: it.token_generation_time,
+            ] : null
+        }
+        return status
+    }
+
     void invalidateToken(String token) {
         sql.executeUpdate('UPDATE sepal_user SET token = NULL WHERE token = ?', [token])
     }

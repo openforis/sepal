@@ -24,7 +24,10 @@ services:
       RABBITMQ_PORT: "5672"
     networks:
       - sepal
+    extra_hosts:
+      - 'host.docker.internal:${SEPAL_IP:-host-gateway}' # expose docker host ip address to container
     ulimits:
+      core: 0
       nproc: 65535
       nofile:
         soft: 65536

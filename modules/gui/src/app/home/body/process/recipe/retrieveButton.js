@@ -3,6 +3,7 @@ import {compose} from 'compose'
 import {msg} from 'translate'
 import {select} from 'store'
 import {selectFrom} from 'stateUtils'
+import {usageHint} from 'app/home/user/usage'
 import {withRecipe} from '../recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -14,15 +15,44 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _RetrieveButton extends React.Component {
+    constructor() {
+        super()
+        this.hint = this.hint.bind(this)
+    }
+
     render() {
-        const {initialized, budgetExceeded, disabled, tooltip} = this.props
+        const {initialized, disabled} = this.props
         return (
             <ActivationButton
                 id='retrieve'
                 icon='cloud-download-alt'
-                tooltip={tooltip || msg('process.retrieve.tooltip')}
-                disabled={!initialized || budgetExceeded || disabled}/>
+                disabled={!initialized || disabled || this.isBudgetExceeded()}
+                tooltip={this.getTooltip()}
+                tooltipOnVisible={this.hint}
+                tooltipAllowedWhenDisabled
+            />
         )
+    }
+
+    isBudgetExceeded() {
+        const {initialized, budgetExceeded, disabled} = this.props
+        return initialized && budgetExceeded && !disabled
+    }
+
+    getTooltip() {
+        const {tooltip} = this.props
+        return [
+            (tooltip || msg('process.retrieve.tooltip')),
+            (this.isBudgetExceeded() ? msg('user.quotaUpdate.info') : null)
+        ]
+        // return (tooltip || msg('process.retrieve.tooltip')) +
+        //     (this.isBudgetExceeded() ? ` - ${msg('user.quotaUpdate.info')}` : '')
+    }
+
+    hint(enabled) {
+        if (this.isBudgetExceeded()) {
+            usageHint(enabled)
+        }
     }
 }
 

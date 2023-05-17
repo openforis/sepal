@@ -10,13 +10,12 @@ import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
 import {ProjectsButton} from './projectsButton'
 import {RecipeListConfirm} from './recipeListConfirm'
-import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {SelectProject} from './selectProject'
 import {SortButtons} from 'widget/sortButtons'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {getRecipeType} from '../recipeTypes'
+import {getRecipeType, listRecipeTypes} from '../recipeTypes'
 import {msg} from 'translate'
 import {simplifyString, splitString} from 'string'
 import ButtonPopup from 'widget/buttonPopup'
@@ -25,7 +24,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
-import styles from './recipeList.module.css'
+import memoizeOne from 'memoize-one'
 
 export const PROJECT_RECIPE_SEPARATOR = ' / '
 export const NO_PROJECT_SYMBOL = '<no project>'
@@ -46,6 +45,12 @@ const mapStateToProps = () => ({
     filteredRecipes: select('process.filteredRecipes') ?? []
 })
 
+const getHighlightMatcher = memoizeOne(
+    filterValues => filterValues.length
+        ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
+        : ''
+)
+
 class _RecipeList extends React.Component {
     state = {
         edit: false,
@@ -57,66 +62,68 @@ class _RecipeList extends React.Component {
 
     constructor() {
         super()
+        this.renderRecipe = this.renderRecipe.bind(this)
+        this.toggleEdit = this.toggleEdit.bind(this)
         this.setFilter = this.setFilter.bind(this)
         this.toggleAll = this.toggleAll.bind(this)
         this.moveSelected = this.moveSelected.bind(this)
         this.removeSelected = this.removeSelected.bind(this)
         this.toggleConfirmed = this.toggleConfirmed.bind(this)
         this.setSorting = this.setSorting.bind(this)
+        this.handleClick = this.handleClick.bind(this)
     }
 
     render() {
         return this.isLoading()
             ? this.renderProgress()
-            : this.renderData()
+            : this.renderList()
     }
 
     renderProgress() {
         return <CenteredProgress title={msg('process.recipe.loading')}/>
     }
 
-    renderData() {
-        const {filteredRecipes, filterValues} = this.props
+    renderList() {
+        const {filteredRecipes} = this.props
         const {move, remove} = this.state
-        const highlightMatcher = filterValues.length
-            ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
-            : null
+        const itemKey = recipe => `${recipe.id}|${this.getHighlightMatcher()}`
         return (
-            <ScrollableContainer>
-                <Unscrollable>
-                    {this.renderHeader()}
-                </Unscrollable>
-                <Scrollable direction='x'>
-                    <FastList
-                        items={filteredRecipes}
-                        itemKey={recipe => `${recipe.id}|${highlightMatcher}`}
-                        spacing='tight'
-                        overflow={50}>
-                        {recipe => this.renderRecipe(recipe, highlightMatcher)}
-                    </FastList>
-                    {move && this.renderMoveConfirmation()}
-                    {remove && this.renderRemoveConfirmation()}
-                </Scrollable>
-            </ScrollableContainer>
+            <Layout type='vertical' spacing='compact'>
+                {this.renderHeader1()}
+                {this.renderHeader2()}
+                <FastList
+                    items={filteredRecipes}
+                    itemKey={itemKey}
+                    itemRenderer={this.renderRecipe}
+                    spacing='tight'
+                    overflow={50}
+                    onEnter={this.handleClick}
+                />
+                {move && this.renderMoveConfirmation()}
+                {remove && this.renderRemoveConfirmation()}
+            </Layout>
         )
     }
 
-    renderHeader() {
+    renderHeader1() {
+        return (
+            <Layout type='horizontal' spacing='compact'>
+                {this.renderSearch()}
+                <Layout.Spacer/>
+                {this.renderEditButtons()}
+            </Layout>
+        )
+    }
+
+    renderHeader2() {
         const {recipeId} = this.props
         return (
-            <Layout type='vertical' spacing='compact' className={styles.header}>
-                <Layout type='horizontal' spacing='compact'>
-                    {this.renderSearch()}
-                    <Layout.Spacer/>
-                    {this.renderEditButtons()}
-                </Layout>
-                <Layout type='horizontal' spacing='compact'>
-                    <CreateRecipe recipeId={recipeId}/>
-                    <ProjectsButton/>
-                    <SelectProject/>
-                    <Layout.Spacer/>
-                    {this.renderSortButtons()}
-                </Layout>
+            <Layout type='horizontal' spacing='compact'>
+                <CreateRecipe recipeId={recipeId} recipeTypes={listRecipeTypes()}/>
+                <ProjectsButton/>
+                <SelectProject/>
+                <Layout.Spacer/>
+                {this.renderSortButtons()}
             </Layout>
         )
     }
@@ -146,10 +153,14 @@ class _RecipeList extends React.Component {
                     shape='pill'
                     keybinding={edit ? 'Escape' : ''}
                     disabled={!this.hasData()}
-                    onClick={() => this.setEdit(!edit)}
+                    onClick={this.toggleEdit}
                 />
             </ButtonGroup>
         )
+    }
+
+    toggleEdit() {
+        this.setState(({edit}) => ({edit: !edit}))
     }
 
     renderSelectButton() {
@@ -244,6 +255,11 @@ class _RecipeList extends React.Component {
         )
     }
 
+    getHighlightMatcher() {
+        const {filterValues} = this.props
+        return getHighlightMatcher(filterValues)
+    }
+
     getFilteredPreselectedIds() {
         const {filteredRecipes} = this.props
         const {preselectedIds} = this.state
@@ -270,20 +286,21 @@ class _RecipeList extends React.Component {
         )
     }
 
-    renderRecipe(recipe, highlightMatcher) {
-        const {onClick, onDuplicate, onRemove} = this.props
+    renderRecipe(recipe, hovered) {
+        const {onDuplicate, onRemove} = this.props
         const {edit} = this.state
         return (
             <ListItem
                 key={recipe.id}
-                onClick={onClick ? () => onClick(recipe.id) : null}>
+                hovered={hovered}
+                onClick={() => this.handleClick(recipe)}>
                 <CrudItem
                     title={this.getRecipeTypeName(recipe.type)}
                     description={this.getRecipePath(recipe)}
                     timestamp={recipe.updateTime}
-                    highlight={highlightMatcher}
+                    highlight={this.getHighlightMatcher()}
                     highlightTitle={false}
-                    duplicateTooltip={msg('process.menu.duplicateRecipe.tooltip')}
+                    duplicateTooltip={msg('procthis.getHighlightMatcher()ess.menu.duplicateRecipe.tooltip')}
                     removeTooltip={msg('process.menu.removeRecipe.tooltip')}
                     selectTooltip={msg('process.menu.selectRecipe.tooltip')}
                     selected={edit ? this.isSelected(recipe.id) : undefined}
@@ -295,6 +312,11 @@ class _RecipeList extends React.Component {
         )
     }
 
+    handleClick(recipe) {
+        const {onClick} = this.props
+        onClick && onClick(recipe.id)
+    }
+
     getRecipePath(recipe) {
         const {projects} = this.props
         const name = recipe.name
@@ -303,10 +325,6 @@ class _RecipeList extends React.Component {
             project?.name ?? NO_PROJECT_SYMBOL,
             name
         ].join(PROJECT_RECIPE_SEPARATOR)
-    }
-
-    setEdit(edit) {
-        this.setState({edit})
     }
 
     setMove(move) {

@@ -1,4 +1,4 @@
-import * as PropTypes from 'prop-types'
+import PropTypes from 'prop-types'
 import {Form} from 'widget/form/form'
 import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'

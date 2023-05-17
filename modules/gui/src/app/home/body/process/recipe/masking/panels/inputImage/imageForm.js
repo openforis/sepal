@@ -1,7 +1,7 @@
-import * as PropTypes from 'prop-types'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {withScrollable} from 'widget/scrollable'
+import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import styles from './inputImage.module.css'
 

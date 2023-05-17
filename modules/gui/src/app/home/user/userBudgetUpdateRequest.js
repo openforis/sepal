@@ -1,4 +1,4 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {Message} from 'widget/message'
@@ -44,6 +44,12 @@ const mapStateToProps = () => {
 }
 
 export class _BudgetUpdateRequest extends React.Component {
+    constructor() {
+        super()
+        this.save = this.save.bind(this)
+        this.cancel = this.cancel.bind(this)
+    }
+
     render() {
         const {form} = this.props
         return (
@@ -52,8 +58,8 @@ export class _BudgetUpdateRequest extends React.Component {
                 form={form}
                 statePath='userDetails'
                 modal
-                onApply={budgetUpdateRequest => this.save(budgetUpdateRequest)}
-                onCancel={() => this.cancel()}>
+                onApply={this.save}
+                onCancel={this.cancel}>
                 <Panel.Header
                     icon='user'
                     title={msg('user.quotaUpdate.title')}/>
@@ -171,8 +177,9 @@ export class _BudgetUpdateRequest extends React.Component {
     }
 
     save(budgetUpdateRequest) {
+        const {stream} = this.props
         api.user.updateBudgetUpdateRequest$(budgetUpdateRequest)
-        this.props.stream({
+        stream({
             name: 'UPDATE_BUDGET_UPDATE_REQUEST',
             stream$: api.user.updateBudgetUpdateRequest$(budgetUpdateRequest),
             onError: error => {
@@ -195,7 +202,7 @@ export class _BudgetUpdateRequest extends React.Component {
 
 export const BudgetUpdateRequest = compose(
     _BudgetUpdateRequest,
-    form({fields, mapStateToProps})
+    withForm({fields, mapStateToProps})
 )
 
 BudgetUpdateRequest.propType = {

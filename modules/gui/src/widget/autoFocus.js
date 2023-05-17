@@ -1,5 +1,6 @@
 import {compose} from 'compose'
 import {connect} from 'store'
+import {withEnableDetector} from 'enabled'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -10,7 +11,9 @@ class AutoFocus extends React.Component {
 
     constructor(props) {
         super(props)
-        props.onEnable(() => this.reset())
+        this.reset = this.reset.bind(this)
+        const {enableDetector: {onEnable}} = props
+        onEnable(this.reset)
     }
 
     render() {
@@ -59,5 +62,6 @@ AutoFocus.propTypes = {
 
 export default compose(
     AutoFocus,
-    connect()
+    connect(),
+    withEnableDetector()
 )

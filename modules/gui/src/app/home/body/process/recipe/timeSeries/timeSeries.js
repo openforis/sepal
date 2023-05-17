@@ -82,6 +82,7 @@ export default () => ({
         creationDescription: msg('process.timeSeries.description'),
         tabPlaceholder: msg('process.timeSeries.tabPlaceholder')
     },
+    tags: ['TIME_SERIES'],
     components: {
         recipe: TimeSeries
     },

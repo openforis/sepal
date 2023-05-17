@@ -21,7 +21,7 @@ module.exports = {
                         .set('startDate', recipe.model.dates.startDate)
                         .set('endDate', recipe.model.dates.endDate)
                         .set('dateFormat', recipe.model.ccdcOptions.dateFormat)
-                        .set('surfaceReflectance', recipe.model.options.corrections.includes('SR') && 1)
+                        .set('surfaceReflectance', recipe.model.options.corrections?.includes('SR') && 1)
                         .set(toVisualizationProperties(visualizations, {selection: allBands})),
                     region: geometry.bounds(),
                     scale,

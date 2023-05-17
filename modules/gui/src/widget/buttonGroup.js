@@ -8,7 +8,7 @@ import withForwardedRef from 'ref'
 
 const Context = React.createContext()
 
-export const withButtonGroupContext = withContext(Context, 'buttonGroupContext')
+export const withButtonGroup = withContext(Context, 'buttonGroup')
 
 const _ButtonGroup = ({className, contentClassName, layout, alignment, spacing, framed, label, disabled, onMouseOver, onMouseOut, forwardedRef, children}) => {
     const mapChild = (child, index, childrenCount) => {

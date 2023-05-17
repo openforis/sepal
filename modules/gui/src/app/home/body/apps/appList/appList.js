@@ -23,6 +23,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
+import memoizeOne from 'memoize-one'
 import styles from './appList.module.css'
 
 const IGNORE = 'IGNORE'
@@ -38,6 +39,12 @@ const mapStateToProps = () => ({
     googleAccountFilter: select('apps.googleAccountFilter')
 })
 
+const getHighlightMatcher = memoizeOne(
+    filterValues => filterValues.length
+        ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
+        : ''
+)
+
 class _AppList extends React.Component {
     state = {
         app: null
@@ -49,6 +56,9 @@ class _AppList extends React.Component {
         this.setFilter = this.setFilter.bind(this)
         this.setTagFilter = this.setTagFilter.bind(this)
         this.toggleGoogleAccountFilter = this.toggleGoogleAccountFilter.bind(this)
+        this.userDetailsHint = this.userDetailsHint.bind(this)
+        this.renderApp = this.renderApp.bind(this)
+        this.handleSelect = this.handleSelect.bind(this)
     }
 
     render() {
@@ -66,9 +76,7 @@ class _AppList extends React.Component {
 
     getHighlightMatcher() {
         const {filterValues} = this.props
-        return filterValues.length
-            ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
-            : null
+        return getHighlightMatcher(filterValues)
     }
 
     closeAppDetails() {
@@ -87,9 +95,8 @@ class _AppList extends React.Component {
     }
 
     renderAppList() {
-        const highlightMatcher = this.getHighlightMatcher()
         const apps = this.getApps()
-        const key = app => _.compact([app.path, highlightMatcher]).join('|')
+        const itemKey = app => `${app.path}|${this.getHighlightMatcher()}`
         return this.hasData()
             ? (
                 <ScrollableContainer>
@@ -99,15 +106,21 @@ class _AppList extends React.Component {
                     <Scrollable direction='x'>
                         <FastList
                             items={apps}
-                            itemKey={app => key(app)}
+                            itemKey={itemKey}
+                            itemRenderer={this.renderApp}
                             spacing='tight'
-                            overflow={50}>
-                            {app => this.renderApp(app, highlightMatcher)}
-                        </FastList>
+                            overflow={50}
+                            onEnter={this.handleSelect}
+                        />
                     </Scrollable>
                 </ScrollableContainer>
             )
             : null
+    }
+
+    handleSelect(app) {
+        const {onSelect} = this.props
+        this.isAvailable(app) && onSelect(app)
     }
 
     renderHeader(apps) {
@@ -148,7 +161,7 @@ class _AppList extends React.Component {
                 label={googleAccountFilter ? 'Hide unavailable' : 'Show unavailable'}
                 tooltip={msg('apps.googleAccountRequired')}
                 tooltipPlacement='left'
-                tooltipOnVisible={visible => userDetailsHint(visible)}
+                tooltipOnVisible={this.userDetailsHint}
                 onClick={this.toggleGoogleAccountFilter}
             />
         ) : null
@@ -201,10 +214,14 @@ class _AppList extends React.Component {
                     iconStyle='warning'
                     tooltip={msg('apps.googleAccountRequired')}
                     tooltipPlacement='left'
-                    tooltipOnVisible={visible => userDetailsHint(visible)}
+                    tooltipOnVisible={this.userDetailsHint}
                 />
             )
             : null
+    }
+
+    userDetailsHint(visible) {
+        return userDetailsHint(visible)
     }
 
     renderAppRunningIcon() {
@@ -240,12 +257,12 @@ class _AppList extends React.Component {
             : this.renderAppStoppedIcon()
     }
 
-    renderApp(app, highlightMatcher) {
+    renderApp(app, hovered) {
         const {onSelect} = this.props
-        const unavailable = this.isDisabled(app) || this.isDisallowed(app)
         return (
             <ListItem
-                onClick={unavailable ? null : () => onSelect(app)}>
+                hovered={hovered}
+                onClick={this.isAvailable(app) ? () => onSelect(app) : null}>
                 <CrudItem
                     infoTooltip={msg('apps.info')}
                     tooltipPlacement='left'
@@ -257,7 +274,7 @@ class _AppList extends React.Component {
                     onInfo={() => this.showInfo(app)}>
                     <AppItem
                         app={app}
-                        highlight={highlightMatcher}
+                        highlight={this.getHighlightMatcher()}
                     />
                 </CrudItem>
             </ListItem>
@@ -272,6 +289,10 @@ class _AppList extends React.Component {
         return app.googleAccountRequired && this.isUsingServiceAccount()
     }
 
+    isAvailable(app) {
+        return !this.isDisabled(app) && !this.isDisallowed(app)
+    }
+
     isUsingServiceAccount() {
         const {user} = this.props
         return !user.googleTokens
@@ -284,6 +305,7 @@ class _AppList extends React.Component {
     getApps() {
         const {apps} = this.props
         return _.chain(apps)
+            .filter(({hidden}) => !hidden)
             .filter(app => this.appMatchesFilters(app))
             .map(app => ({...app, running: this.isRunning(app)}))
             .value()

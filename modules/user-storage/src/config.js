@@ -2,6 +2,8 @@ const program = require('commander')
 const log = require('#sepal/log').getLogger('config')
 const _ = require('lodash')
 
+const DEFAULT_PORT = 8001
+
 const fatalError = error => {
     log.fatal(error)
     process.exit(1)
@@ -13,6 +15,7 @@ try {
     program
         .requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
         .requiredOption('--redis-uri <value>', 'Redis URI')
+        .option('--port <number>', 'Port', DEFAULT_PORT)
         .requiredOption('--home-dir <value>', 'Base directory of user homes')
         .option('--min-delay-seconds <number>', 'Minimum delay in seconds before rescheduling', parseInt)
         .option('--max-delay-seconds <number>', 'Maximum delay in seconds before rescheduling', parseInt)
@@ -28,6 +31,7 @@ try {
 const {
     amqpUri,
     redisUri,
+    port,
     homeDir,
     minDelaySeconds = 5,
     maxDelaySeconds = 86400,
@@ -54,6 +58,7 @@ if (maxDelaySeconds <= minDelaySeconds) {
 module.exports = {
     amqpUri,
     redisUri,
+    port,
     homeDir,
     minDelayMilliseconds: minDelaySeconds * 1000,
     maxDelayMilliseconds: maxDelaySeconds * 1000,

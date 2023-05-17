@@ -132,6 +132,37 @@ const endpoints = [
         target: `http://${modules.sandbox}`,
         authenticate: true,
         rewrite: true
+    },
+    {
+        prefix: true,
+        path: '/api/app-manager',
+        target: `http://${modules.appManager}`,
+        authenticate: true
+    },
+    {
+        prefix: true,
+        path: '/api/email',
+        target: `http://${modules.email}`,
+        authenticate: true
+    },
+    {
+        prefix: true,
+        path: '/api/sys-monitor',
+        target: `http://${modules.sysMonitor}`,
+        authenticate: true
+    },
+    {
+        prefix: false,
+        path: '/api/docker/metrics',
+        target: 'http://host.docker.internal:9323/metrics',
+        authenticate: true
+    },
+    {
+        prefix: false,
+        path: '/privacy-policy',
+        target: `http://${modules.gui}/resource/privacy-policy.html`,
+        authenticate: false,
+        noCache: true
     }
 ]
 

@@ -13,10 +13,6 @@ ENV PYTHON_SHARED /usr/local/src/sepal/lib/python/shared
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get install -y nodejs
 
-RUN apt-get update && \
-    apt-get install -y \
-        rsync
-
 RUN groupadd --gid 1000 node && \
     useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
@@ -46,6 +42,7 @@ RUN npm install
 
 USER root
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/config ${MODULE}/config
 ADD modules/${MODULE_NAME}/wait_until_initialized.sh /usr/local/bin
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 RUN chmod +x -R /usr/local/bin && sync

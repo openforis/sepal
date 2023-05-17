@@ -30,7 +30,9 @@
             "shared"
         ],
         "build": {},
-        "run": []
+        "run": [
+            "rabbitmq"
+        ]
     },
     "gee": {
         "lib": [
@@ -80,6 +82,10 @@
         "run": []
     },
     "mysql-backup": {
+        "build": {},
+        "run": []
+    },
+    "prometheus": {
         "build": {},
         "run": []
     },

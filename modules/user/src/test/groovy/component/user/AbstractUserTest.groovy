@@ -38,6 +38,7 @@ class AbstractUserTest extends Specification {
     final changeListener = new FakeUserChangeListener()
     final clock = new FakeClock()
     final homeDirectory = File.createTempDir()
+    final recaptcha = new FakeGoogleRecaptcha()
     final component = new UserComponent(
             connectionManager,
             externalUserDataGateway,
@@ -49,7 +50,8 @@ class AbstractUserTest extends Specification {
             googleEarthEngineWhitelistChecker,
             new FakeGoogleAccessTokenFileGateway(homeDirectory.absolutePath),
             changeListener,
-            clock
+            clock,
+            recaptcha
     )
 
     final testUsername = 'test-user'

@@ -1,6 +1,7 @@
 import {add, remove} from './keybindings'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {withEnableDetector} from 'enabled'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -8,10 +9,10 @@ import _ from 'lodash'
 class Keybinding extends React.Component {
     constructor(props) {
         super(props)
+        this.handlesKey = this.handlesKey.bind(this)
         this.createKeybinding()
-        const {onEnable, onDisable} = props
-        onEnable(() => this.keybinding.enabled = true)
-        onDisable(() => this.keybinding.enabled = false)
+        const {enableDetector: {onChange}} = props
+        onChange(enabled => this.keybinding.enabled = enabled)
         add(this.keybinding)
     }
 
@@ -22,18 +23,24 @@ class Keybinding extends React.Component {
             priority,
             enabled: true,
             handler: this.handle.bind(this),
-            handles: key => _.keys(this.props.keymap).includes(key)
+            handles: this.handlesKey
         }
+    }
+
+    handlesKey(key) {
+        const {keymap} = this.props
+        return keymap && _.keys(keymap).includes(key)
+        // return keymap && keymap[key] // this doesn't work
     }
 
     getDefaultHandler() {
         const {keymap} = this.props
-        return keymap.default
+        return keymap && keymap.default
     }
 
     getCustomHandler(key) {
         const {keymap} = this.props
-        return keymap[key]
+        return keymap && keymap[key]
     }
 
     getHandler(key) {
@@ -67,7 +74,8 @@ class Keybinding extends React.Component {
 
 export default compose(
     Keybinding,
-    connect()
+    connect(),
+    withEnableDetector()
 )
 
 Keybinding.propTypes = {

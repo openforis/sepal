@@ -7,10 +7,6 @@ ENV SHARED /usr/local/src/sepal/lib/js/shared
 
 RUN npm install -g nodemon
 
-RUN apt-get update && \
-    apt-get install -y \
-        rsync
-
 ADD modules/${MODULE_NAME}/config /config
 ADD modules/${MODULE_NAME}/script /script
 

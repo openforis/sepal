@@ -1,4 +1,4 @@
-FROM node:10.15.2-stretch
+FROM node:18-bullseye
 EXPOSE 8001
 
 ENV MODULE_NAME ceo-gateway

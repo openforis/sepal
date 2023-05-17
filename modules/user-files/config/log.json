@@ -1,0 +1,9 @@
+{
+    "port": 5108,
+    "categories": {
+        "config": "info",
+        "filesystem": "debug",
+        "main": "info",
+        "ws": "debug"
+    }
+}

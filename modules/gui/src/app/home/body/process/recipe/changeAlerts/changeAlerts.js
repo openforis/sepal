@@ -4,6 +4,7 @@ import {RecipeActions, defaultModel} from './changeAlertsRecipe'
 import {ReferenceSync} from './referenceSync'
 import {compose} from 'compose'
 import {getAvailableBands} from './bands'
+import {getPreSetVisualizations} from './visualizations'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
@@ -54,6 +55,7 @@ export default () => ({
         creationDescription: msg('process.changeAlerts.description'),
         tabPlaceholder: msg('process.changeAlerts.tabPlaceholder')
     },
+    tags: ['CHANGE', 'ALERTS'],
     components: {
         recipe: ChangeAlerts
     },
@@ -65,5 +67,5 @@ export default () => ({
         return [monitoringStart, monitoringEnd]
     },
     getAvailableBands,
-    beta: true
+    getPreSetVisualizations
 })

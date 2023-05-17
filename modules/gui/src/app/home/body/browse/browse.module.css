@@ -104,12 +104,12 @@
     color: white;
 }
 
-.expanded {
+.expanded svg {
     transform: rotateZ(45deg);
     transition: 100ms ease-in-out;
 }
 
-.collapsed {
+.collapsed svg {
     transform: none;
     transition: 100ms ease-in-out;
 }

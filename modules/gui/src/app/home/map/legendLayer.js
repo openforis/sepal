@@ -1,4 +1,3 @@
-import * as PropTypes from 'prop-types'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Subject, animationFrames, distinctUntilChanged, map, of, scan, switchMap} from 'rxjs'
@@ -7,13 +6,14 @@ import {connect} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
 import {withCursorValue} from './cursorValue'
-import {withMapAreaContext} from './mapAreaContext'
+import {withMapArea} from './mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import {withSubscriptions} from 'subscription'
+import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
 import _ from 'lodash'
 import styles from './legendLayer.module.css'
-import withSubscriptions from 'subscription'
 
 const mapRecipeToProps = recipe => ({
     areas: selectFrom(recipe, 'layers.areas') || {}
@@ -34,7 +34,7 @@ class _LegendLayer extends React.Component {
     }
 
     render() {
-        const {cursorValue$, mapAreaContext: {area}, areas} = this.props
+        const {cursorValue$, mapArea: {area}, areas} = this.props
         if (!cursorValue$) {
             return null
         }
@@ -78,7 +78,7 @@ class _LegendLayer extends React.Component {
     }
 
     renderFullLegend() {
-        const {mapAreaContext: {area}, areas} = this.props
+        const {mapArea: {area}, areas} = this.props
         const {labels, values, palette} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
         return (
             <ScrollableContainer>
@@ -177,7 +177,7 @@ const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * 
 export const LegendLayer = compose(
     _LegendLayer,
     connect(),
-    withMapAreaContext(),
+    withMapArea(),
     withRecipe(mapRecipeToProps),
     withCursorValue(),
     withSubscriptions()

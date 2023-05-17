@@ -23,9 +23,6 @@ const tableRows$ = require('#gee/jobs/ee/table/rows')
 const tableQuery$ = require('#gee/jobs/ee/table/query')
 const tableMap$ = require('#gee/jobs/ee/table/map')
 const check$ = require('#gee/jobs/ee/check')
-const testHttp$ = require('#gee/jobs/test/http')
-const testHttpDirect$ = require('#gee/jobs/test/http/test')
-const testWs$ = require('#gee/jobs/test/ws')
 
 module.exports = router =>
     router
@@ -52,10 +49,4 @@ module.exports = router =>
         .get('/table/columnValues', stream(ctx => tableColumnValues$(ctx)))
         .post('/table/query', stream(ctx => tableQuery$(ctx)))
         .get('/table/map', stream(ctx => tableMap$(ctx)))
-        .get('/test/worker/:min/:max/:errorProbability', stream(ctx => testHttp$(ctx)))
-        .post('/test/worker/:min/:max/:errorProbability', stream(ctx => testHttp$(ctx)))
-        .get('/test/direct/:min/:max/:errorProbability', stream(
-            ({params: {min, max, errorProbability}}) => testHttpDirect$(parseInt(min), parseInt(max), parseInt(errorProbability))
-        ))
-        .get('/ws/:name', stream(ctx => testWs$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))

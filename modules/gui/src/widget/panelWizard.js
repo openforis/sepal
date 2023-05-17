@@ -1,9 +1,13 @@
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
+import {withActivators} from 'widget/activation/activator'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
+
+const Context = React.createContext()
+
+export const withPanelWizard = withContext(Context, 'panelWizard')
 
 class PanelWizard extends React.Component {
     constructor(props) {
@@ -36,6 +40,8 @@ class PanelWizard extends React.Component {
                 ])
                 : false
         }
+
+        const wizard = !initialized && panels
         const back = navigate(currentIndex - 1)
         const next = navigate(currentIndex + 1)
 
@@ -44,8 +50,9 @@ class PanelWizard extends React.Component {
             currentActivatable && currentActivatable.deactivate()
             onDone && onDone()
         }
+
         return (
-            <Context.Provider value={{wizard: !initialized && panels, back, next, done}}>
+            <Context.Provider value={{wizard, back, next, done}}>
                 {children}
             </Context.Provider>
         )
@@ -84,7 +91,7 @@ class PanelWizard extends React.Component {
 
 export default compose(
     PanelWizard,
-    activator()
+    withActivators()
 )
 
 PanelWizard.propTypes = {
@@ -94,12 +101,3 @@ PanelWizard.propTypes = {
     selectedPanel: PropTypes.any,
     onDone: PropTypes.func
 }
-
-const Context = React.createContext()
-
-export const PanelWizardContext = ({children}) =>
-    <Context.Consumer>
-        {(value = {}) => children(value)}
-    </Context.Consumer>
-
-export const withPanelWizardContext = withContext(Context, 'wizardContext')

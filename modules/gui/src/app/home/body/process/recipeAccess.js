@@ -3,26 +3,28 @@ import {connect} from 'store'
 import {initializeRecipe} from './recipe'
 import {map, of, switchMap, tap} from 'rxjs'
 import {selectFrom} from 'stateUtils'
+import {v4 as uuid} from 'uuid'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
-import guid from 'guid'
 
 let componentIdsByRecipeId = {}
 
-const mapStateToProps = state => {
-    return {
-        loadedRecipes: selectFrom(state, 'process.loadedRecipes') || {}
-    }
-}
+const componentIdsForRecipeId = recipeId => Array.from(
+    componentIdsByRecipeId[recipeId] || new Set([])
+)
+
+const mapStateToProps = state => ({
+    loadedRecipes: selectFrom(state, 'process.loadedRecipes') || {}
+})
 
 export const recipeAccess = () =>
-    WrappedComponent => {
-        class HigherOrderComponent extends React.Component {
+    WrappedComponent => compose(
+        class RecipeAccessHOC extends React.Component {
             constructor(props) {
                 super(props)
-                this.componentId = guid()
+                this.componentId = uuid()
             }
 
             render() {
@@ -113,14 +115,6 @@ export const recipeAccess = () =>
                     .del(['process.loadedRecipes', recipeId])
                     .dispatch()
             }
-        }
-
-        return compose(
-            HigherOrderComponent,
-            connect(mapStateToProps)
-        )
-    }
-
-const componentIdsForRecipeId = recipeId => Array.from(
-    componentIdsByRecipeId[recipeId] || new Set([])
-)
+        },
+        connect(mapStateToProps)
+    )
