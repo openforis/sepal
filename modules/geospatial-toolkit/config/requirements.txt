@@ -49,7 +49,7 @@ ipyvuetify==1.8.2
 falcon
 gunicorn
 pyCrypto
-awscli
+awscli==1.11.18 # Pinned to prevent backtracking
 
 ########  other deps  ########
 xarray
@@ -77,4 +77,4 @@ nosexcover
 pylint
 click
 dateutils
-boto3
+boto3==1.4.3 # Pinned to prevent backtracking
