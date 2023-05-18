@@ -7,7 +7,7 @@
         "channel-reverse": "info",
         "ee": "info",
         "factory": "info",
-        "http": "debug",
+        "http": "info",
         "limiter": "info",
         "logger": "info",
         "main": "info",
@@ -16,6 +16,6 @@
         "service": "info",
         "tokenLimiter": "info",
         "transport": "info",
-        "worker": "debug"
+        "worker": "info"
     }
 }
