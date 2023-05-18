@@ -45,6 +45,7 @@
         "ceo-gateway",
         "email",
         "gateway",
+        "gee",
         "r-proxy",
         "ssh-gateway",
         "sys-monitor",

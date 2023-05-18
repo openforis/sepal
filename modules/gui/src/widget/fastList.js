@@ -1,7 +1,6 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
-import {HoverDetector} from './hover'
 import {Layout} from './layout'
-import {Subject, animationFrames, distinctUntilChanged, fromEvent, map, mergeWith, switchMap, takeUntil, tap, timer} from 'rxjs'
+import {Subject, animationFrames, distinctUntilChanged, fromEvent, map, mergeWith, switchMap, takeUntil, timer} from 'rxjs'
 import {compose} from 'compose'
 import {withSubscriptions} from 'subscription'
 import Keybinding from './keybinding'
@@ -35,7 +34,6 @@ class _FastList extends React.PureComponent {
         this.handleArrowUp = this.handleArrowUp.bind(this)
         this.handleEnter = this.handleEnter.bind(this)
         this.handleEscape = this.handleEscape.bind(this)
-        this.setMouseHover = this.setMouseHover.bind(this)
     }
     
     render() {
@@ -96,7 +94,6 @@ class _FastList extends React.PureComponent {
     renderList() {
         const {firstVisibleItem, lastVisibleItem, marginTop, marginBottom} = this.state
         return (
-            // <HoverDetector onHover={this.setMouseHover}>
             <Keybinding keymap={this.getKeymap()}>
                 <ElementResizeDetector resize$={this.resize$}>
                     <div
@@ -110,7 +107,6 @@ class _FastList extends React.PureComponent {
                     </div>
                 </ElementResizeDetector>
             </Keybinding>
-            // </HoverDetector>
         )
     }
 
@@ -206,10 +202,6 @@ class _FastList extends React.PureComponent {
 
     handleEscape() {
         this.setState({keyboardHover: NOT_HOVERED})
-    }
-
-    setMouseHover(mouseHover) {
-        this.setState({mouseHover})
     }
 
     update(scrollTop, clientHeight) {

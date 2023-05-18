@@ -32,6 +32,7 @@
         "#sepal/*": "sepal/src/*.js",
         "#sepal/*.json": "sepal/src/*.json",
         "#task/*": "./src/*.js",
-        "#task/*.json": "./src/*.json"
+        "#task/*.json": "./src/*.json",
+        "#config/*.json": "./config/*.json"
     }
 }

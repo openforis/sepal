@@ -1,4 +1,4 @@
-require('#sepal/log').configureServer(require('./log.json'))
+require('#sepal/log').configureServer(require('#config/log.json'))
 
 const {amqpUri, redisUri, port, secure} = require('./config')
 const {isMatch} = require('micromatch')
