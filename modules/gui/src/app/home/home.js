@@ -48,20 +48,6 @@ const updateUserReport$ = () =>
         })
     )
 
-const updateAssetRoots$ = () => {
-    const assetRoots$ = () =>
-        select('user.currentUser.googleTokens')
-            ? api.gee.assetRoots$()
-            : of([])
-    return timedRefresh$(assetRoots$, 600, 'asset roots').pipe(
-        map(assetRoots =>
-            actionBuilder('UPDATE_ASSET_ROOTS')
-                .set('gee.assetRoots', assetRoots)
-                .dispatch()
-        )
-    )
-}
-
 const projectStorageSpending = spending => {
     const storageUsed = spending.storageUsed
     const costPerGbMonth = spending.costPerGbMonth
@@ -118,7 +104,6 @@ class Home extends React.Component {
         super(props)
         const {stream} = props
         const errorHandler = () => Notifications.error({message: msg('home.connectivityError')})
-        stream('SCHEDULE_UPDATE_ASSET_ROOTS', updateAssetRoots$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_USER_REPORT', updateUserReport$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_USER_MESSAGES', updateUserMessages$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_TASKS', updateTasks$(), null, errorHandler)

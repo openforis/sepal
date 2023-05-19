@@ -1,6 +1,7 @@
 import {AssetInput} from './assetInput'
 import {Form} from 'widget/form/form'
 import {Layout} from './layout'
+import {catchError, exhaustMap, map, mergeMap, of, pipe, range, retryWhen, throwError, timer, zip} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser} from 'user'
@@ -10,6 +11,8 @@ import {toSafeString} from 'string'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
+import actionBuilder from 'action-builder'
+import api from 'api'
 
 const mapStateToProps = state => ({
     projects: selectFrom(state, 'process.projects'),
@@ -45,13 +48,14 @@ class _AssetDestination extends React.Component {
     }
 
     renderAssetInput() {
-        const {assetInput, label, placeholder, autoFocus} = this.props
+        const {stream, assetInput, label, placeholder, autoFocus} = this.props
         return (
             <AssetInput
                 input={assetInput}
                 label={label}
                 placeholder={placeholder}
                 autoFocus={autoFocus}
+                busyMessage={stream('UPDATE_ASSET_ROOTS').active}
                 onLoading={this.onLoading}
                 onLoaded={({metadata} = {}) => this.onLoaded(metadata?.type)}
                 onError={this.onError}
@@ -87,15 +91,22 @@ class _AssetDestination extends React.Component {
     }
 
     componentDidMount() {
-        const {assetInput} = this.props
+        const {assetRoots, assetInput, stream} = this.props
         if (!assetInput.value) {
-            assetInput.set(this.defaultAssetId() || null)
+            if (assetRoots) {
+                assetInput.set(this.defaultAssetId() || null)
+            } else {
+                stream('UPDATE_ASSET_ROOTS', updateAssetRoots$())
+            }
         }
     }
 
     componentDidUpdate(prevProps) {
-        const {assetInput, strategyInput, type} = this.props
+        const {assetRoots, assetInput, strategyInput, type} = this.props
         const {currentType} = this.state
+        if (!prevProps.assetRoots && assetRoots && !assetInput.value) {
+            assetInput.set(this.defaultAssetId() || null)
+        }
         if (currentType && strategyInput.value && assetInput.error) {
             assetInput.setInvalid(null)
         }
@@ -160,6 +171,15 @@ class _AssetDestination extends React.Component {
         }
     }
 }
+
+const updateAssetRoots$ = () =>
+    api.gee.assetRoots$().pipe(
+        map(assetRoots =>
+            actionBuilder('UPDATE_ASSET_ROOTS')
+                .set('gee.assetRoots', assetRoots)
+                .dispatch()
+        )
+    )
 
 export const AssetDestination = compose(
     _AssetDestination,
