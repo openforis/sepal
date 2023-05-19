@@ -26,22 +26,25 @@ const _ButtonGroup = ({className, contentClassName, layout, alignment, spacing, 
             mapChild(child, index, children.length)
         )
 
-    return (
-        <Widget
-            ref={forwardedRef}
-            className={className}
-            contentClassName={contentClassName}
-            label={label}
-            layout={layout}
-            alignment={alignment}
-            spacing={spacing}
-            framed={framed}
-            disabled={disabled}
-            onMouseOver={onMouseOver}
-            onMouseOut={onMouseOut}>
-            {spacing === 'none' ? mapChildren(_.compact(children)) : children}
-        </Widget>
-    )
+    return children
+        ? (
+            <Widget
+                ref={forwardedRef}
+                className={className}
+                contentClassName={contentClassName}
+                label={label}
+                layout={layout}
+                alignment={alignment}
+                spacing={spacing}
+                framed={framed}
+                disabled={disabled}
+                onMouseOver={onMouseOver}
+                onMouseOut={onMouseOut}>
+                {spacing === 'none' ? mapChildren(_.compact(children)) : children}
+            </Widget>
+        
+        )
+        : null
 }
 
 export const ButtonGroup = compose(
