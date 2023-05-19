@@ -176,7 +176,7 @@ const execute$ = (url, method, {retries, query, username, password, headers, val
                         if (error.status < 500 || retry > retries)
                             return throwError(() => error)
                         else
-                            return timer(Math.pow(2, retry) * 200)
+                            return timer(Math.pow(2, retry) * 500)
                     }
                 )
             )
