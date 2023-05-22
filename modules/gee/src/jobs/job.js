@@ -30,7 +30,7 @@ module.exports = {
         before = [require('#gee/jobs/ee/initialize')],
         services,
         args = ctx => [{...ctx.request.query, ...ctx.request.body}, getCredentials(ctx)],
-        worker$,
+        worker$
     }) =>
         Job(logConfig)({
             jobName,
@@ -43,6 +43,6 @@ module.exports = {
             before,
             services,
             args,
-            worker$,
+            worker$
         })
 }
