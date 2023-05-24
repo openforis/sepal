@@ -18,9 +18,7 @@ export default {
         }),
 
     assetRoots$: () =>
-        get$('/api/gee/assetRoots', {
-            retries: 0
-        }),
+        get$('/api/gee/assetRoots'),
 
     assetMetadata$: ({asset, expectedType}) =>
         postJson$('/api/gee/assetMetadata', {

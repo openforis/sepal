@@ -1,6 +1,6 @@
 import {ActivationContext} from 'widget/activation/activationContext'
 import {PortalContainer} from 'widget/portal'
-import {catchError, exhaustMap, map, of, retry, timer} from 'rxjs'
+import {catchError, exhaustMap, map, mergeMap, of, pipe, range, retryWhen, throwError, timer, zip} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {getLogger} from 'log'
@@ -27,11 +27,7 @@ const mapStateToProps = () => ({
 const timedRefresh$ = (api$, refreshSeconds = 60, name) =>
     timer(0, refreshSeconds * 1000).pipe(
         exhaustMap(() => api$()),
-        catchError(error => {
-            log.warn(`Failed to refresh ${name}`, error)
-            throw error
-        }),
-        retry()
+        retry({description: `Failed to refresh ${name}`})
     )
 
 const updateUserReport$ = () =>
@@ -47,20 +43,6 @@ const updateUserReport$ = () =>
                 .dispatch()
         })
     )
-
-const updateAssetRoots$ = () => {
-    const assetRoots$ = () =>
-        select('user.currentUser.googleTokens')
-            ? api.gee.assetRoots$()
-            : of([])
-    return timedRefresh$(assetRoots$, 600, 'asset roots').pipe(
-        map(assetRoots =>
-            actionBuilder('UPDATE_ASSET_ROOTS')
-                .set('gee.assetRoots', assetRoots)
-                .dispatch()
-        )
-    )
-}
 
 const projectStorageSpending = spending => {
     const storageUsed = spending.storageUsed
@@ -118,7 +100,6 @@ class Home extends React.Component {
         super(props)
         const {stream} = props
         const errorHandler = () => Notifications.error({message: msg('home.connectivityError')})
-        stream('SCHEDULE_UPDATE_ASSET_ROOTS', updateAssetRoots$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_USER_REPORT', updateUserReport$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_USER_MESSAGES', updateUserMessages$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_TASKS', updateTasks$(), null, errorHandler)
@@ -144,6 +125,24 @@ class Home extends React.Component {
         )
     }
 }
+
+const retry = ({minDelay = 500, maxDelay = 30000, exponentiality = 2, description} = {}) => pipe(
+    retryWhen(error$ =>
+        zip(
+            error$,
+            timer(0, 0)
+        ).pipe(
+            mergeMap(
+                ([error, retry]) => {
+                    const exponentialBackoff = Math.pow(exponentiality, retry) * minDelay
+                    const cappedExponentialBackoff = Math.min(exponentialBackoff, maxDelay)
+                    console.error(`Retrying ${description ? `${description} ` : ''}(${retry}) in ${cappedExponentialBackoff}ms`, error)
+                    return timer(cappedExponentialBackoff)
+                }
+            )
+        )
+    )
+)
 
 Home.propTypes = {
     floatingFooter: PropTypes.bool.isRequired,
