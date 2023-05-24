@@ -109,6 +109,7 @@ class _FormDatePicker extends React.Component {
         const {activator: {activatables: {datePicker: {activate, active, canActivate}}}} = this.props
         return (
             <Button
+                key='button'
                 chromeless
                 shape='none'
                 icon='calendar-alt'
