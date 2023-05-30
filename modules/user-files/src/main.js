@@ -7,6 +7,7 @@ const routes = require('./routes')
 const {initMessageQueue} = require('#sepal/messageQueue')
 const {message$} = require('./messageService')
 const server = require('#sepal/httpServer')
+const {initScheduler} = require('#sepal/worker/scheduler')
 
 const main = async () => {
     await initMessageQueue(amqpUri, {
@@ -20,6 +21,8 @@ const main = async () => {
         routes
     })
 
+    initScheduler()
+    
     log.info('Initialized')
 }
 
