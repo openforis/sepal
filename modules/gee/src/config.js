@@ -13,6 +13,7 @@ program
     .option('--sepal-username <value>')
     .option('--sepal-password <value>')
     .option('--port <number>', 'Port', DEFAULT_PORT)
+    .option('--instances <number>', 'Instances', parseInt)
     .parse(process.argv)
     
 const {geeEmail,
@@ -21,7 +22,8 @@ const {geeEmail,
     sepalEndpoint,
     sepalUsername,
     sepalPassword,
-    port
+    port,
+    instances
 } = program.opts()
 
 const readFile = path => {
@@ -47,5 +49,6 @@ module.exports = {
     sepalEndpoint,
     sepalUsername,
     sepalPassword,
-    port
+    port,
+    instances
 }

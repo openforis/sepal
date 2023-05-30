@@ -2,7 +2,7 @@ require('#sepal/log').configureServer(require('#config/log.json'))
 
 const log = require('#sepal/log').getLogger('main')
 
-const {amqpUri, port} = require('./config')
+const {amqpUri, port, instances} = require('./config')
 const routes = require('./routes')
 const {initMessageQueue} = require('#sepal/messageQueue')
 const {message$} = require('./messageService')
@@ -21,7 +21,7 @@ const main = async () => {
         routes
     })
 
-    initScheduler()
+    initScheduler({instances})
     
     log.info('Initialized')
 }
