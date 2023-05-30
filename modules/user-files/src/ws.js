@@ -1,6 +1,5 @@
 const Job = require('#sepal/worker/job')
 const {messageService, sendMessage$} = require('./messageService')
-const logConfig = require('#config/log.json')
 
 const getSepalUser = request => {
     const sepalUser = request.headers['sepal-user']
@@ -227,7 +226,7 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
     )
 }
 
-module.exports = Job(logConfig)({
+module.exports = Job()({
     jobName: 'Files',
     jobPath: __filename,
     before: [],

@@ -1,5 +1,4 @@
 const Job = require('#sepal/worker/job')
-const logConfig = require('#config/log.json')
 
 const getSepalUser = ctx => {
     const sepalUser = ctx.request.headers['sepal-user']
@@ -32,7 +31,7 @@ module.exports = {
         args = ctx => [{...ctx.request.query, ...ctx.request.body}, getCredentials(ctx)],
         worker$
     }) =>
-        Job(logConfig)({
+        Job()({
             jobName,
             jobPath,
             initArgs,
