@@ -2,7 +2,7 @@ require('#sepal/log').configureServer(require('#config/log.json'))
 
 const log = require('#sepal/log').getLogger('main')
 
-const {port} = require('./config')
+const {port, instances} = require('./config')
 const routes = require('./routes')
 const server = require('#sepal/httpServer')
 const {initScheduler} = require('#sepal/worker/scheduler')
@@ -13,7 +13,7 @@ const main = async () => {
         routes
     })
 
-    initScheduler()
+    initScheduler({instances})
     
     log.info('Initialized')
 }

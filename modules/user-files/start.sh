@@ -12,12 +12,14 @@ then
     src/main.js \
     --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
     --home-dir /sepalUsers \
-    --poll-interval-milliseconds ${POLL_INTERVAL_MS}
+    --poll-interval-milliseconds ${POLL_INTERVAL_MS} \
+    --instances "$INSTANCES"
 else
   echo "Starting node"
   exec node \
     src/main.js \
     --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
     --home-dir /sepalUsers \
-    --poll-interval-milliseconds ${POLL_INTERVAL_MS}
+    --poll-interval-milliseconds ${POLL_INTERVAL_MS} \
+    --instances "$INSTANCES"
 fi

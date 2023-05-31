@@ -32,7 +32,8 @@ then
     --sepal-username "sepalAdmin" \
     --sepal-password "$SEPAL_ADMIN_PASSWORD" \
     --home-dir $HOME_DIR \
-    --username $USERNAME
+    --username $USERNAME \
+    --instances "$INSTANCES"
 else
   echo "Starting node"
   exec sudo -Eu $USERNAME "PATH=$PATH" node \
@@ -46,5 +47,6 @@ else
     --sepal-username "sepalAdmin" \
     --sepal-password "$SEPAL_ADMIN_PASSWORD" \
     --home-dir $HOME_DIR \
-    --username $USERNAME
+    --username $USERNAME \
+    --instances "$INSTANCES"
 fi
