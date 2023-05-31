@@ -86,7 +86,7 @@ export const recipeAccess = () =>
                             if (sourceRecipe.type === 'ASSET') {
                                 return of(sourceRecipe)
                             } else {
-                                return this.loadSourceRecipe$(sourceRecipe.recipeId)
+                                return this.loadSourceRecipe$(sourceRecipe.id)
                             }
                         } else {
                             this.cacheRecipe(recipe)
