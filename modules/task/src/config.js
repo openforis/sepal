@@ -18,7 +18,6 @@ program
     .option('--home-dir <value>')
     .option('--username <value>')
     .option('--port <number>', 'Port', DEFAULT_PORT)
-    .option('--instances <number>', 'Instances', parseInt)
     .parse(process.argv)
 
 const {
@@ -34,7 +33,6 @@ const {
     homeDir,
     username,
     port,
-    instances
 } = program.opts()
 
 const readFile = path => {
@@ -65,6 +63,5 @@ module.exports = {
     sepalPassword,
     homeDir,
     username,
-    port,
-    instances
+    port
 }
