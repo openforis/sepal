@@ -1,5 +1,5 @@
-const Job = require('#sepal/worker/job')
-const {messageService, sendMessage$} = require('./messageService')
+// const Job = require('#sepal/worker/job')
+// const {messageService, sendMessage$} = require('./messageService')
 
 const getSepalUser = request => {
     const sepalUser = request.headers['sepal-user']
@@ -118,9 +118,10 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
         const removePaths = (paths, options) =>
             Promise.all(
                 paths.map(path => removePath(path, options))
-            ).then(
-                () => sendMessage$({username}).subscribe()
             )
+            // .then(
+            //     () => sendMessage$({username}).subscribe()
+            // )
     
         const removePath = (path, options) => {
             unmonitor(path, options)
@@ -226,12 +227,15 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
     )
 }
 
-module.exports = Job()({
-    jobName: 'Files',
-    jobPath: __filename,
-    before: [],
-    initArgs: () => getInitArgs(),
-    services: [messageService],
-    args: request => [getSepalUser(request).username],
-    worker$
-})
+module.exports = ctx =>
+    worker$(getSepalUser(ctx.request).username, {args$: ctx.args$, initArgs: getInitArgs()})
+
+// module.exports = Job()({
+//     jobName: 'Files',
+//     jobPath: __filename,
+//     before: [],
+//     initArgs: () => getInitArgs(),
+//     services: [messageService],
+//     args: request => [getSepalUser(request).username],
+//     worker$
+// })
