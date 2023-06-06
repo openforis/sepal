@@ -187,6 +187,10 @@ const getBands = () => ({
         dataType: intFullRange,
         tooltip: msg('bands.bui'),
     },
+    kndvi: {
+        dataType: int10000,
+        tooltip: msg('bands.kndvi'),
+    },
     dayOfYear: {
         dataType: {precision: 'int', min: 0, max: 366},
         tooltip: msg('bands.dayOfYear'),
@@ -202,7 +206,7 @@ const bandGroups = [
     ['redEdge1', 'redEdge2', 'redEdge3', 'redEdge4'],
     ['aerosol', 'waterVapor', 'pan', 'cirrus', 'thermal', 'thermal2'],
     ['brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'],
-    ['ndvi', 'ndmi', 'ndwi', 'mndwi', 'ndfi', 'evi', 'evi2', 'savi', 'nbr', 'mvi', 'ui', 'ndbi', 'ibi', 'nbi', 'ebbi', 'bui'],
+    ['ndvi', 'ndmi', 'ndwi', 'mndwi', 'ndfi', 'evi', 'evi2', 'savi', 'nbr', 'mvi', 'ui', 'ndbi', 'ibi', 'nbi', 'ebbi', 'bui', 'kndvi'],
     ['dayOfYear', 'daysFromTarget']
 ]
 

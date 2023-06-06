@@ -103,6 +103,7 @@
       "nbi": "New Built-up Index: red * swir1 / nir",
       "ebbi": "Enhanced Built-Up and Bareness Index: (swir1 - nir) / (10 * sqrt(swir1 + thermal))",
       "bui": "Built-Up Index: (red - swir1) / (red + swir1) + (swir2 - swir1) / (swir2 + swir1)",
+      "kndvi": "Kernel Normalized Difference Vegetation Index",
       "red, green, blue": "Natural color: red, green, blue",
       "nir, red, green": "False color: nir, red, green",
       "nir, swir1, red": "False color: nir, swir1, red",
