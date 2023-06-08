@@ -103,6 +103,7 @@
         "nbi": "",
         "ebbi": "",
         "bui": "",
+        "kndvi": "",
         "red, green, blue": "",
         "nir, red, green": "",
         "nir, swir1, red": "",
@@ -3241,7 +3242,8 @@
                         },
                         "sensitivity": {
                             "label": "",
-                            "tooltip": ""
+                            "tooltip": "",
+                            "value": ""
                         },
                         "wetlandMaskAsset": {
                             "label": "",
