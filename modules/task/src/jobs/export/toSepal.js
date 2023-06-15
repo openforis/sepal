@@ -1,6 +1,6 @@
 const ee = require('#sepal/ee')
 const {concat, defer, map, switchMap} = require('rxjs')
-const {finalize, swallow} = require('#sepal/rxjs')
+const {finalizeObservable, swallow} = require('#sepal/rxjs')
 const drive = require('#task/drive')
 const {initUserBucket$} = require('#task/cloudStorageBucket')
 const cloudStorage = require('#task/cloudStorageDownload')
@@ -9,7 +9,7 @@ const {getCurrentContext$} = require('#task/jobs/service/context')
 const {exportLimiter$} = require('#task/jobs/service/exportLimiter')
 const {driveSerializer$} = require('#task/jobs/service/driveSerializer')
 const {gcsSerializer$} = require('#task/jobs/service/gcsSerializer')
-const task$ = require('#task/ee/task')
+const {task$} = require('#task/ee/task')
 
 const CONCURRENT_FILE_DOWNLOAD = 3
 
@@ -23,7 +23,30 @@ const createDriveFolder$ = folder =>
         swallow()
     )
 
-const exportImageToSepal$ = ({
+const exportToDrive$ = (taskId, {task, description, folder, _retries}) => {
+    log.debug(() => ['Earth Engine <to Google Drive>:', description])
+    return exportLimiter$(
+        concat(
+            createDriveFolder$(folder),
+            task$(taskId, task, description)
+        )
+    )
+}
+
+const downloadFromDrive$ = ({path, downloadDir}) =>
+    drive.downloadSingleFolderByPath$(path, downloadDir, {
+        concurrency: CONCURRENT_FILE_DOWNLOAD,
+        deleteAfterDownload: true
+    })
+
+const exportToCloudStorage$ = (taskId, {task, description, _retries}) => {
+    log.debug(() => ['Earth Engine <to Cloud Storage>:', description])
+    return exportLimiter$(
+        task$(taskId, task, description)
+    )
+}
+
+const exportImageToSepal$ = (taskId, {
     image,
     folder,
     description,
@@ -47,12 +70,6 @@ const exportImageToSepal$ = ({
     const prefix = description
 
     const throughCloudStorage$ = region => {
-        const exportToCloudStorage$ = ({task, description, _retries}) => {
-            log.debug(() => ['Earth Engine <to Cloud Storage>:', description])
-            return exportLimiter$(
-                task$(task, description)
-            )
-        }
         const cloudStoragePrefix = `${folder}/`
         return defer(() =>
             gcsSerializer$(
@@ -82,20 +99,23 @@ const exportImageToSepal$ = ({
                 )
                 const task = ee.batch.ExportTask.create(serverConfig)
                 return concat(
-                    exportToCloudStorage$({
+                    exportToCloudStorage$(taskId, {
                         task,
                         description: `export to Sepal through CS (${description})`,
                         retries
                     }),
-                    cloudStorage.download$({
+                    cloudStorage.download$(taskId, {
                         bucketPath,
                         prefix: cloudStoragePrefix,
                         downloadDir,
                         deleteAfterDownload: false
                     })
                 ).pipe(
-                    finalize(() => cloudStorage.delete$({bucketPath, prefix: cloudStoragePrefix}),
-                        `Delete Cloud Storage files: ${bucketPath}:${cloudStoragePrefix}`)
+                    finalizeObservable(
+                        () => cloudStorage.delete$({bucketPath, prefix: cloudStoragePrefix}),
+                        taskId,
+                        `Delete Cloud Storage files: ${bucketPath}:${cloudStoragePrefix}`
+                    )
                 )
             }
             )
@@ -103,22 +123,6 @@ const exportImageToSepal$ = ({
     }
 
     const throughDrive$ = region => {
-        const exportToDrive$ = ({task, description, folder, _retries}) => {
-            log.debug(() => ['Earth Engine <to Google Drive>:', description])
-            return exportLimiter$(
-                concat(
-                    createDriveFolder$(folder),
-                    task$(task, description)
-                )
-            )
-        }
-
-        const downloadFromDrive$ = ({path, downloadDir}) =>
-            drive.downloadSingleFolderByPath$(path, downloadDir, {
-                concurrency: CONCURRENT_FILE_DOWNLOAD,
-                deleteAfterDownload: true
-            })
-
         const serverConfig = ee.batch.Export.convertToServerParams(
             {
                 image, description, folder, fileNamePrefix: prefix, dimensions, region, scale, crs,
@@ -129,18 +133,22 @@ const exportImageToSepal$ = ({
         )
         const task = ee.batch.ExportTask.create(serverConfig)
         return concat(
-            exportToDrive$({
+            exportToDrive$(taskId, {
                 task,
                 description: `export to Sepal through Drive (${description})`,
                 folder,
                 retries
             }),
-            downloadFromDrive$({
+            downloadFromDrive$(taskId, {
                 path: drivePath(folder),
                 downloadDir
             })
         ).pipe(
-            finalize(() => drive.removeFolderByPath$({path: drivePath(folder)}), `Delete drive folder: ${folder}`)
+            finalizeObservable(
+                () => drive.removeFolderByPath$({path: drivePath(folder)}),
+                taskId,
+                `Delete drive folder: ${folder}`
+            )
         )
     }
 

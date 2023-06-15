@@ -5,27 +5,27 @@ const {toVisualizationProperties} = require('../ee/visualizations')
 const {formatProperties} = require('./formatProperties')
 
 module.exports = {
-    submit$: (_id, {
+    submit$: (taskId, {
         image: {recipe, ...retrieveOptions}
     }) => {
         const description = recipe.title || recipe.placeholder
-        return export$({description, recipe, ...retrieveOptions})
+        return export$(taskId, {description, recipe, ...retrieveOptions})
     }
 }
 
-const export$ = ({recipe, bands, visualizations, scale, properties, ...retrieveOptions}) => {
+const export$ = (taskId, {recipe, bands, visualizations, scale, properties, ...retrieveOptions}) => {
     const factory = ImageFactory(recipe, bands)
     return forkJoin({
         image: factory.getImage$(),
         geometry: factory.getGeometry$()
     }).pipe(
         switchMap(({image, geometry}) => {
-            const formattedProperties = formatProperties({ ...properties, scale })
+            const formattedProperties = formatProperties({...properties, scale})
             const visualizationProperties = toVisualizationProperties(visualizations, bands)
             const imageWithProperties = image
                 .set(formattedProperties)
                 .set(visualizationProperties)
-            return exportImageToAsset$({
+            return exportImageToAsset$(taskId, {
                 ...retrieveOptions,
                 image: imageWithProperties,
                 region: geometry.bounds(scale),

@@ -1,11 +1,11 @@
 const ee = require('#sepal/ee')
 const {interval, of, throwError, catchError, distinctUntilChanged, map, exhaustMap, switchMap, takeWhile, tap} = require('rxjs')
-const {finalize} = require('#sepal/rxjs')
+const {finalizeObservable} = require('#sepal/rxjs')
 const MONITORING_FREQUENCY = 10000
 const {UNSUBMITTED, READY, RUNNING, FAILED} = ee.data.ExportState
 const log = require('#sepal/log').getLogger('ee')
 
-const runTask$ = (task, description) => {
+const task$ = (taskId, task, description) => {
     const start$ = task =>
         ee.$({
             operation: `start task (${description})`,
@@ -107,9 +107,13 @@ const runTask$ = (task, description) => {
     return of(task).pipe(
         switchMap(task => start$(task)),
         switchMap(taskId => monitor$(taskId).pipe(
-            finalize(() => cleanup$(taskId), `Cleanup EE task ${taskId}`)
+            finalizeObservable(
+                () => cleanup$(taskId),
+                taskId,
+                `Cleanup EE task ${taskId}`
+            )
         ))
     )
 }
 
-module.exports = runTask$
+module.exports = {task$}

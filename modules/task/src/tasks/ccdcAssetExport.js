@@ -5,7 +5,7 @@ const {toVisualizationProperties} = require('../ee/visualizations')
 const {formatProperties} = require('./formatProperties')
 
 module.exports = {
-    submit$: (_id, {recipe, bands, scale, visualizations, properties, ...other}) => {
+    submit$: (taskId, {recipe, bands, scale, visualizations, properties, ...other}) => {
         const segments = ccdc(recipe, {selection: bands})
         return forkJoin({
             segments: segments.getImage$(),
@@ -14,7 +14,7 @@ module.exports = {
             switchMap(({segments, geometry}) => {
                 const formattedProperties = formatProperties({...properties, scale})
                 const allBands = getAllBands(bands)
-                return exportImageToAsset$({
+                return exportImageToAsset$(taskId, {
                     ...other,
                     image: segments
                         .set(formattedProperties)

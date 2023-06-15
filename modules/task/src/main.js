@@ -12,7 +12,7 @@ const main = async () => {
         port,
         routes
     })
-    initScheduler({instances: 2})
+    initScheduler({instances: 1})
 
     log.info('Initialized')
 }

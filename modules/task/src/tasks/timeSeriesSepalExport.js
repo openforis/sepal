@@ -21,7 +21,7 @@ const DATE_DELTA = 3
 const DATE_DELTA_UNIT = 'months'
 
 module.exports = {
-    submit$: (_id, {workspacePath, description, ...retrieveOptions}) =>
+    submit$: (taskId, {workspacePath, description, ...retrieveOptions}) =>
         getCurrentContext$().pipe(
             switchMap(({config}) => {
                 const preferredDownloadDir = workspacePath
@@ -29,7 +29,7 @@ module.exports = {
                     : `${config.homeDir}/downloads/${description}/`
                 return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
                     switchMap(downloadDir =>
-                        export$({description, downloadDir, ...retrieveOptions})
+                        export$(taskId, {description, downloadDir, ...retrieveOptions})
                     )
                 )
             })

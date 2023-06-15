@@ -4,12 +4,12 @@ const {swallow} = require('#sepal/rxjs')
 const tile = require('#sepal/ee/tile')
 const Path = require('path')
 const {exportLimiter$} = require('#task/jobs/service/exportLimiter')
-const task$ = require('#task/ee/task')
+const {task$} = require('#task/ee/task')
 const {progress} = require('#task/rxjs/operators')
 const log = require('#sepal/log').getLogger('task')
 const _ = require('lodash')
 
-const exportImageToAsset$ = ({
+const exportImageToAsset$ = (taskId, {
     image,
     description,
     assetId,
@@ -31,10 +31,10 @@ const exportImageToAsset$ = ({
     if (ee.sepal.getAuthType() === 'SERVICE_ACCOUNT')
         throw new Error('Cannot export to asset using service account.')
     const export$ = ({description, assetId}) => assetType === 'ImageCollection'
-        ? imageToAssetCollection$({
+        ? imageToAssetCollection$(taskId, {
             image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, tileSize, retries
         })
-        : imageToAsset$({
+        : imageToAsset$(taskId, {
             image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, retries
         })
     return assetDestination$(description, assetId).pipe(
@@ -47,7 +47,7 @@ const exportImageToAsset$ = ({
     )
 }
 
-const imageToAssetCollection$ = ({
+const imageToAssetCollection$ = (taskId, {
     image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, tileSize, retries
 }) => {
     const tileFeatures = tile(ee.FeatureCollection([ee.Feature(region)]), tileSize)
@@ -150,7 +150,7 @@ const imageToAssetCollection$ = ({
         const tileGeometry = tileFeatures
             .filter(ee.Filter.eq('system:index', tileId))
             .geometry()
-        const export$ = () => imageToAsset$({
+        const export$ = () => imageToAsset$(taskId, {
             image,
             description: `${description}_${tileIndex}`,
             assetId: tileAssetId,
@@ -192,7 +192,7 @@ const imageToAssetCollection$ = ({
     )
 }
 
-const imageToAsset$ = ({
+const imageToAsset$ = (taskId, {
     image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, retries
 }) => {
     const exportToAsset$ = ({task, description, assetId, _retries}) => {
@@ -201,7 +201,7 @@ const imageToAsset$ = ({
                 strategy === 'replace'
                     ? ee.deleteAssetRecursive$(assetId, ['ImageCollection', 'Image'], 0).pipe(swallow())
                     : of(),
-                task$(task, description)
+                task$(taskId, task, description)
             )
         )
     }
