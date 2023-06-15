@@ -4,6 +4,7 @@ KEY_FILE=$2
 TMP_KEY_FILE=$3
 sudo cp ${KEY_FILE} ${TMP_KEY_FILE}
 sudo chown node:node ${TMP_KEY_FILE}
+sudo chmod 600 ${TMP_KEY_FILE}
 while :
 do
 	SECONDS=0
