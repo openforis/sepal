@@ -36,7 +36,7 @@ module.exports = {
         )
 }
 
-const export$ = ({
+const export$ = (taskId, {
     downloadDir,
     description,
     recipe,
@@ -167,7 +167,7 @@ const export$ = ({
     const exportChunk$ = ({tileIndex, timeSeries, dateRange}) => {
         const chunkDescription = `${description}_${tileIndex}_${dateRange}`
         const chunkDownloadDir = `${downloadDir}/${tileIndex}/chunk-${dateRange}`
-        const export$ = exportImageToSepal$({
+        const export$ = exportImageToSepal$(taskId, {
             image: timeSeries,
             folder: chunkDescription,
             description: chunkDescription,
