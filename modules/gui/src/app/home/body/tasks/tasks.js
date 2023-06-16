@@ -79,7 +79,6 @@ class Tasks extends React.Component {
             CANCELING: 'normal',
             CANCELED: 'normal'
         }
-        console.log(`status: ${task.status}`)
         return {
             icon: iconMap[task.status],
             iconVariant: iconVariantMap[task.status]
