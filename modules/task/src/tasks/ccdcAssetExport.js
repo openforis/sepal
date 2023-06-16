@@ -16,17 +16,19 @@ module.exports = {
                 const allBands = getAllBands(bands)
                 return exportImageToAsset$(taskId, {
                     ...other,
-                    image: segments
-                        .set(formattedProperties)
-                        .set('startDate', recipe.model.dates.startDate)
-                        .set('endDate', recipe.model.dates.endDate)
-                        .set('dateFormat', recipe.model.ccdcOptions.dateFormat)
-                        .set('surfaceReflectance', recipe.model.options.corrections?.includes('SR') && 1)
-                        .set(toVisualizationProperties(visualizations, {selection: allBands})),
+                    image: segments,
                     region: geometry.bounds(),
                     scale,
                     pyramidingPolicy: {'.default': 'sample'},
-                    maxPixels: 1e13
+                    maxPixels: 1e13,
+                    properties: {
+                        formattedProperties,
+                        startDate: recipe.model.dates.startDate,
+                        endDate: recipe.model.dates.endDate,
+                        dateFormat: recipe.model.ccdcOptions.dateFormat,
+                        surfaceReflectance: recipe.model.options.corrections?.includes('SR') && 1,
+                        ...toVisualizationProperties(visualizations, {selection: allBands})
+                    }
                 })
             })
         )

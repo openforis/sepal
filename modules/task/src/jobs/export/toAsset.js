@@ -24,7 +24,8 @@ const exportImageToAsset$ = (taskId, {
     maxPixels = 1e13,
     shardSize = 256,
     tileSize,
-    retries = 0
+    properties,
+    retries = 0,
 }) => {
     crsTransform = crsTransform || undefined
     region = region || image.geometry()
@@ -32,10 +33,10 @@ const exportImageToAsset$ = (taskId, {
         throw new Error('Cannot export to asset using service account.')
     const export$ = ({description, assetId}) => assetType === 'ImageCollection'
         ? imageToAssetCollection$(taskId, {
-            image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, tileSize, retries
+            image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, tileSize, properties, retries
         })
         : imageToAsset$(taskId, {
-            image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, retries
+            image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, properties, retries
         })
     return assetDestination$(description, assetId).pipe(
         switchMap(({description, assetId}) =>
@@ -48,7 +49,7 @@ const exportImageToAsset$ = (taskId, {
 }
 
 const imageToAssetCollection$ = (taskId, {
-    image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, tileSize, retries
+    image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, tileSize, properties, retries
 }) => {
     const tileFeatures = tile(ee.FeatureCollection([ee.Feature(region)]), tileSize)
 
@@ -78,11 +79,7 @@ const imageToAssetCollection$ = (taskId, {
             }),
             last(),
             switchMap(() =>
-                ee.replaceAssetProperties$(
-                    assetId,
-                    image.toDictionary(image.propertyNames()),
-                    1
-                )
+                ee.replaceAssetProperties$(assetId, properties, 1)
             ),
             swallow()
         )
@@ -162,6 +159,7 @@ const imageToAssetCollection$ = (taskId, {
             crs, crsTransform,
             maxPixels,
             shardSize,
+            properties,
             retries
         })
         return concat(
@@ -193,7 +191,7 @@ const imageToAssetCollection$ = (taskId, {
 }
 
 const imageToAsset$ = (taskId, {
-    image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, retries
+    image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, properties, retries
 }) => {
     const exportToAsset$ = ({task, description, assetId, _retries}) => {
         return exportLimiter$(
@@ -208,7 +206,7 @@ const imageToAsset$ = (taskId, {
     return formatRegion$(region).pipe(
         switchMap(region => {
             const serverConfig = ee.batch.Export.convertToServerParams(
-                _.cloneDeep({image, description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize}), // It seems like EE modifies the pyramidingPolicy
+                _.cloneDeep({image: image.set(properties), description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize}), // It seems like EE modifies the pyramidingPolicy
                 ee.data.ExportDestination.ASSET,
                 ee.data.ExportType.IMAGE
             )

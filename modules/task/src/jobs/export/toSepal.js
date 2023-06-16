@@ -139,7 +139,7 @@ const exportImageToSepal$ = (taskId, {
                 folder,
                 retries
             }),
-            downloadFromDrive$(taskId, {
+            downloadFromDrive$({
                 path: drivePath(folder),
                 downloadDir
             })

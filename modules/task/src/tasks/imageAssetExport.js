@@ -22,14 +22,12 @@ const export$ = (taskId, {recipe, bands, visualizations, scale, properties, ...r
         switchMap(({image, geometry}) => {
             const formattedProperties = formatProperties({...properties, scale})
             const visualizationProperties = toVisualizationProperties(visualizations, bands)
-            const imageWithProperties = image
-                .set(formattedProperties)
-                .set(visualizationProperties)
             return exportImageToAsset$(taskId, {
                 ...retrieveOptions,
-                image: imageWithProperties,
+                image,
                 region: geometry.bounds(scale),
-                scale
+                scale,
+                properties: {...formattedProperties, ...visualizationProperties}
             })
         }
         )

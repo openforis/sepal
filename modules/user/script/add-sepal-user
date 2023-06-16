@@ -6,14 +6,26 @@ USER_GROUP=$3
 USER_HOME=/home/$USERNAME
 USER_DATA_HOME=/sepal/home/$USERNAME
 
+function user_id () {
+    ldapsearch -x -LLL -h "${LDAP_HOST}" -b uid=$1,ou=People,dc=sepal,dc=org -w "${LDAP_ADMIN_PASSWORD}" -D "cn=admin,dc=sepal,dc=org" uidNumber | grep uidNumber | sed -E "s/uidNumber: ([0-9]+)/\\1/"
+}
+
+function group_id () {
+    ldapsearch -x -LLL -h "${LDAP_HOST}" -b cn=$1,ou=Groups,dc=sepal,dc=org -w "${LDAP_ADMIN_PASSWORD}" -D "cn=admin,dc=sepal,dc=org" gidNumber | grep gidNumber | sed -E "s/gidNumber: ([0-9]+)/\\1/"
+}
+
+function user_exists () {
+    ldapsearch -x -LLL -h "${LDAP_HOST}" -b uid=$1,ou=People,dc=sepal,dc=org -w "${LDAP_ADMIN_PASSWORD}" -D "cn=admin,dc=sepal,dc=org" sub '(objectClass=*)' > /dev/null 2>&1
+    return $?
+}
+
+
 echo "add-sepal-user | username: $USERNAME"
-if ! ldapid "$USERNAME"; then
-    echo "add-sepal-user | Adding user: $USERNAME"
-    sss_cache -E
+if ! user_exists "$USERNAME"; then
     ldapaddgroup $USERNAME
     ldapadduser $USERNAME $USERNAME
-    userId=$(ldapid "$USERNAME" | sed -E "s/.*uid=([0-9]+).*/\\1/")
-    groupId=$(ldapgid "$USERNAME" | sed -E "s/.*gid=([0-9]+).*/\\1/")
+    userId=$(user_id "$USERNAME")
+    groupId=$(group_id "$USERNAME")
 
     if [ -n "$PASSWORD" ]; then
         echo "add-sepal-user | Setting password"
@@ -28,7 +40,7 @@ if ! ldapid "$USERNAME"; then
     # When user is a SEPAL user, add user to group and create user home directory structure
     if [ -n "$USER_GROUP" ]; then
         echo "add-sepal-user | Adding secondary group: $USER_GROUP"
-        userGroupId=$(ldapgid "$USER_GROUP" | sed -E "s/.*gid=([0-9]+).*/\\1/")
+        userGroupId=$(group_id "$USER_GROUP")
         ldapaddusertogroup $USERNAME $userGroupId
 
         echo "add-sepal-user | Creating user data home dir: $USER_DATA_HOME"
