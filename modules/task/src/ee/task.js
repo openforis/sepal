@@ -17,11 +17,11 @@ const task$ = (taskId, task, description) => {
                 )
         })
 
-    const status$ = (taskId, maxRetries) =>
+    const status$ = (eeTaskId, maxRetries) =>
         ee.$({
-            operation: `get task status (${description}, ${taskId})`,
+            operation: `get task status (${description}, ${eeTaskId})`,
             ee: (resolve, reject) =>
-                ee.data.getTaskStatus(taskId,
+                ee.data.getTaskStatus(eeTaskId,
                     (status, error) => error
                         ? reject(error)
                         : resolve(status)
@@ -31,11 +31,11 @@ const task$ = (taskId, task, description) => {
             map(([status]) => status)
         )
 
-    const cancel$ = (taskId, maxRetries) =>
+    const cancel$ = (eeTaskId, maxRetries) =>
         ee.$({
-            operation: `cancel task (${description}, ${taskId})`,
+            operation: `cancel task (${description}, ${eeTaskId})`,
             ee: (resolve, reject) =>
-                ee.data.cancelTask(taskId,
+                ee.data.cancelTask(eeTaskId,
                     (_canceled, error) => error
                         ? reject(error)
                         : resolve()
@@ -43,9 +43,9 @@ const task$ = (taskId, task, description) => {
             maxRetries
         })
 
-    const monitor$ = taskId =>
+    const monitor$ = eeTaskId =>
         interval(MONITORING_FREQUENCY).pipe(
-            exhaustMap(() => status$(taskId)),
+            exhaustMap(() => status$(eeTaskId)),
             switchMap(({state, error_message: error}) =>
                 (error || state === FAILED)
                     ? throwError(() => new Error(error))
@@ -81,23 +81,23 @@ const task$ = (taskId, task, description) => {
         }
     }
 
-    const cleanup$ = taskId => {
-        log.debug(() => `EE task cleanup starting (${description}, ${taskId})`)
-        return status$(taskId, 0).pipe(
+    const cleanup$ = eeTaskId => {
+        log.debug(() => `EE task cleanup starting (${description}, ${eeTaskId})`)
+        return status$(eeTaskId, 0).pipe(
             map(({state}) => isRunning(state)),
             switchMap(running =>
                 running
-                    ? cancel$(taskId, 3).pipe(
+                    ? cancel$(eeTaskId, 3).pipe(
                         map(() => true)
                     )
                     : of(false)
             ),
             tap(wasRunning =>
-                log.info(`EE task ${wasRunning ? 'cancelled' : 'completed'} (${description}, ${taskId})`)
+                log.info(`EE task ${wasRunning ? 'cancelled' : 'completed'} (${description}, ${eeTaskId})`)
             ),
             catchError(error => {
-                log.error(`EE task failed to cancel. Trying again, without loading status first (${description}, ${taskId})`, error)
-                return cancel$(taskId, 0)
+                log.error(`EE task failed to cancel. Trying again, without loading status first (${description}, ${eeTaskId})`, error)
+                return cancel$(eeTaskId, 0)
             })
         )
     }
@@ -106,11 +106,11 @@ const task$ = (taskId, task, description) => {
 
     return of(task).pipe(
         switchMap(task => start$(task)),
-        switchMap(taskId => monitor$(taskId).pipe(
+        switchMap(eeTaskId => monitor$(eeTaskId).pipe(
             finalizeObservable(
-                () => cleanup$(taskId),
+                () => cleanup$(eeTaskId),
                 taskId,
-                `Cleanup EE task ${taskId}`
+                `Cleanup EE task ${eeTaskId}`
             )
         ))
     )
