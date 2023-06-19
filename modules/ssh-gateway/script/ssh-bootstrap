@@ -5,10 +5,10 @@ if [ -z "$SSH_ORIGINAL_COMMAND" ]; then
 fi
 sshScriptFile=$(mktemp /tmp/$USER-ssh.XXXXXX) > /dev/null 2>&1
 chmod +x $sshScriptFile
-chmod 700 /home/${USER}/.ssh
-chmod 644 /home/${USER}/.ssh/config
-chmod 400 /home/${USER}/.ssh/id_rsa
-chmod 644 /home/${USER}/.ssh/id_rsa.pub
+chmod 700 /home/${USER}/.ssh  > /dev/null 2>&1
+chmod 644 /home/${USER}/.ssh/config > /dev/null 2>&1
+chmod 400 /home/${USER}/.ssh/id_rsa > /dev/null 2>&1
+chmod 644 /home/${USER}/.ssh/id_rsa.pub > /dev/null 2>&1
 cd /usr/local/src/sepal/modules/ssh-gateway
 node src/main.js \
     --${interactive} \
