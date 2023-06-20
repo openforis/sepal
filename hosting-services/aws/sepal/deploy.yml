@@ -37,9 +37,9 @@
         - "vm.max_map_count=1048576"
 
     # monit
-    - name: Install EPEL repository
-      yum:
-        name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+    # - name: Install EPEL repository
+    #   yum:
+    #     name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
 
     - name: Install monit
       yum:
