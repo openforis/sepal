@@ -1,0 +1,6 @@
+version: "3.9"
+
+services:
+  prometheus:
+    volumes:
+      - ${SEPAL_PROJECT_DIR}/modules/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro

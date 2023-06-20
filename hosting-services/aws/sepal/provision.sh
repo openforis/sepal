@@ -4,7 +4,7 @@ set -e
 export VERSION=$1
 export CONFIG_HOME=$2
 export PRIVATE_KEY=$CONFIG_HOME/certificates/aws.pem
-export LOCAL_IP_ADDRESS=$(curl -s api.ipify.org)
+export LOCAL_IP_ADDRESS=$(curl -s ifconfig.me)
 
 # Export all in env file
 set -a

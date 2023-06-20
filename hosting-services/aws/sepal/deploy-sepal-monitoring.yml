@@ -1,4 +1,4 @@
-- name: Configure Sepal Storage instance
+- name: Configure Sepal Monitoring instance
   hosts: all
   user: ec2-user
   become: yes
@@ -14,7 +14,7 @@
         path: /etc/profile
         block: |
           # Bash prompt
-          PS1='{{ lookup('env', 'BASH_PROMPT_STORAGE') }}'
+          PS1='{{ lookup('env', 'BASH_PROMPT_MONITORING') }}'
 
     # set locale
     - name: Set locale
@@ -27,6 +27,14 @@
 
     - file: path="/data/sepal/etc" state=directory
     - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
+
+    - name: Install yum packages
+      yum:
+        name: 
+          - "@Development Tools"
+          - rsyslog
+          - docker
+          - python-pip
 
     # rsyslog
     - name: Copy rsyslog.conf
@@ -77,24 +85,13 @@
         src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
-    - name: Install docker
-      command: "amazon-linux-extras install docker -y"
-
-    - name: Install Development Tools
-      yum:
-        name: "@Development Tools"
-
-    - name: Install pip
-      yum:
-        name: python-pip
-
     - name: Create /etc/docker
       file:
         path: "/etc/docker"
         state: directory
 
     - name: Copy /etc/docker/daemon.json
-      template: src=docker/storage-daemon.json dest=/etc/docker/daemon.json
+      template: src=docker/monitoring-daemon.json dest=/etc/docker/daemon.json
 
     - name: Add ec2-user to docker group
       user:
@@ -108,40 +105,10 @@
         enabled: yes
         masked: no
 
-    - name: pip install docker
-      pip:
-        name: "docker"
-        executable: pip3
-
-    # EFS
-    - name: Install amazon-efs-utils
-      yum:
-        name: "amazon-efs-utils"
-
-    - name: Create /data
-      file:
-        path: "/data"
-        state: directory
-
-    - name: Create /data/sepal
-      file:
-        path: "/data/sepal"
-        state: directory
-
-    - name: Create /data/sepal/home
-      file:
-        path: "/data/sepal/home"
-        state: directory
-
-    - name: Mount EFS user home dirs
-      mount:
-        name: "/data/sepal/home"
-        fstype: "efs"
-        state: "mounted"
-        src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/home"
-        opts: "defaults,_netdev"
-        dump: 0
-        passno: 0
+    # - name: pip install docker
+    #   pip:
+    #     name: "docker"
+    #     executable: pip3
 
     - docker_network: name=sepal
 
@@ -171,7 +138,6 @@
         dest: /etc/sepal/env
 
   roles:
-    - { role: live-patching }
+    # - { role: live-patching }
     - { role: docker-login }
-    # - { role: run-module, module: user-storage-backup }
-    - { role: run-module, module: user-storage }
+    - { role: run-module, module: monitoring }

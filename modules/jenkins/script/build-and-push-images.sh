@@ -40,6 +40,7 @@ build sandbox-base
 build r-proxy
 start r-proxy
 
+build monitoring
 build email
 build sys-monitor
 build letsencrypt
@@ -69,6 +70,7 @@ build sepal-server
 
 echo "${DOCKER_REGISTRY_PASSWORD}" | docker login localhost -u "${DOCKER_REGISTRY_USERNAME}" --password-stdin
 
+push monitoring
 push sys-monitor
 push email
 push backup

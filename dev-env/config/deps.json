@@ -85,7 +85,7 @@
         "build": {},
         "run": []
     },
-    "prometheus": {
+    "monitoring": {
         "build": {},
         "run": []
     },

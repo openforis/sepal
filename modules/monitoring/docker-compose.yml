@@ -4,7 +4,7 @@ services:
   prometheus:
     build:
       context: ../..
-      dockerfile: ./modules/prometheus/prometheus.dockerfile
+      dockerfile: ./modules/monitoring/prometheus.dockerfile
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/prometheus:${SEPAL_VERSION:-latest}"
     container_name: prometheus
     ports:
@@ -14,7 +14,6 @@ services:
       - TARGET_PASSWORD=${SEPAL_ADMIN_PASSWORD}
       - SEPAL_HOST=${SEPAL_HOST}
     volumes:
-      - ${SEPAL_PROJECT_DIR}/modules/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - "${SEPAL_DATA_DIR}/prometheus:/prometheus"
     depends_on:
     - cadvisor
