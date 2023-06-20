@@ -69,9 +69,9 @@ class _ValuesLayer extends React.Component {
     clampingIndicator(clamping) {
         switch(clamping) {
         case -1:
-            return '\u2265'
-        case 1:
             return '\u2264'
+        case 1:
+            return '\u2265'
         default:
             return ' '
         }

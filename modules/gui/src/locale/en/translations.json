@@ -2941,6 +2941,21 @@
                 },
                 "label": "Orbits"
               },
+              "orbitNumbers": {
+                "all": {
+                  "label": "All",
+                  "tooltip": "Include values from all orbit numbers for a pixel."
+                },
+                "dominant": {
+                  "label": "Dominant",
+                  "tooltip": "Only include values from the dominant orbit number for a pixel."
+                },
+                "adjacent": {
+                  "label": "Adjacent",
+                  "tooltip": "Include values from the dominant orbit of both ascending and descending orbits."
+                },
+                "label": "Orbit overlap"
+              },
               "outlierRemoval": {
                 "aggressive": {
                   "label": "Aggressive",
@@ -2956,24 +2971,119 @@
                   "tooltip": "Don't remove outliers."
                 }
               },
-              "speckleFilter": {
-                "label": "Speckle filter",
+              "mask": {
+                "label": "Border noise correction",
+                "sides": {
+                  "label": "Sides",
+                  "tooltip": "Mask sides of slices."
+                },
+                "firstLast": {
+                  "label": "First/Last",
+                  "tooltip": "Mask the beginning of the first slice and the end of the last slice."
+                }
+              },
+              "maskOptions": {
+                "title": "Border noise correction options",
+                "minAngle": {
+                  "label": "Min angle"
+                },
+                "maxAngle": {
+                  "label": "Max angle"
+                }
+              },
+              "spatialSpeckleFilter": {
+                "label": "Spatial speckle filter",
                 "none": {
                   "label": "None",
                   "tooltip": "Don't apply any speckle filter."
                 },
-                "quegan": {
-                  "label": "Quegan",
-                  "tooltip": "Quegan MT Filter is applied."
+                "boxcar": {
+                  "label": "Boxcar",
+                  "tooltip": "Boxcar filtering is applied."
+                },
+                "gammaMap": {
+                  "label": "Gamma Map",
+                  "tooltip": "Gamma Map filtering is applied."
+                },
+                "lee": {
+                  "label": "Lee",
+                  "tooltip": "Lee filtering is applied."
                 },
                 "refinedLee": {
                   "label": "Refined Lee",
                   "tooltip": "Refined Lee filtering is applied. This can be very slow, but often gives good results."
                 },
+                "leeSigma": {
+                  "label": "Lee Sigma",
+                  "tooltip": "Lee Sigma filtering is applied."
+                },
                 "snic": {
                   "label": "SNIC",
                   "tooltip": "Simple Non-Iterative Clustering is used to filter out speckle."
                 }
+              },
+              "spatialSpeckleFilterOptions": {
+                "kernelSize": {
+                    "label": "Kernel size"
+                },
+                "sigma": {
+                    "label": "Sigma"
+                },
+                "strongScatterers": {
+                    "retain": {
+                        "label": "Retain",
+                        "tooltip": "Retain original value for strong scatterers. They don't tend to include much speckle and some speckle filtering algorithms tends to blur them."
+                    },
+                    "filter": {
+                        "label": "Filter",
+                        "tooltip": "Apply spatial speckle filter also to strong scatterers. It can cause some speckle filtering algorithms to blur them."
+                    },
+                    "label": "Strong scatterers"
+                },
+                "strongScattererValue1": {
+                    "label": "VV threshold",
+                    "tooltip": "The threshold to consider VV a strong scatterer when performing Lee-Sigma spatial speckle filtering."
+                },
+                "strongScattererValue2": {
+                    "label": "VH threshold",
+                    "tooltip": "The threshold to consider VH a strong scatterer when performing Lee-Sigma spatial speckle filtering."
+                },
+                "snicSize": {
+                    "label": "Seed spacing",
+                    "tooltip": "The superpixel seed location spacing, in pixels. If 'seeds' image is provided, no grid is produced."
+                },
+                "snicCompactness": {
+                    "label": "Compactness",
+                    "tooltip": "Compactness factor. Larger values cause clusters to be more compact (square). Setting this to 0 disables spatial distance weighting.",
+                    "value": "{value}"
+                },
+                "title": "Spatial speckle filter options"
+              },
+              "multitemporalSpeckleFilterOptions": {
+                "numberOfImages": {
+                    "label": "Number of images",
+                    "value": "{value} images"
+                },
+                "title": "Multitemporal speckle filter options"
+              },
+              "multitemporalSpeckleFilter": {
+                "label": "Multitemporal speckle filter",
+                "none": {
+                  "label": "None",
+                  "tooltip": "Don't apply any multitemporal speckle filter."
+                },
+                "quegan": {
+                  "label": "Quegan",
+                  "tooltip": "Apply Quegan multi-temporal filter."
+                },
+                "rabasar": {
+                  "label": "RABASAR",
+                  "tooltip": "Apply RABASAR multi-temporal filter."
+                }
+              },
+              "minObservations": {
+                "label": "Min observations",
+                "value": "{value} observation(s)"
               }
             },
             "title": "Options",
@@ -2985,6 +3095,399 @@
           "label": "Radar mosaic"
         },
         "tabPlaceholder": "Radar_mosaic"
+      },
+
+      "baytsAlerts": {
+        "create": "BayTS Alerts",
+        "description": "Generate forest change alerts using Sentinel-1 radar time-series and probabilistic updating, based on the RADD processing pipeline.",
+        "imageLayerForm": {
+          "mosaicType": {
+            "label": "Mosaic",
+            "latest": {
+              "label": "Latest",
+              "tooltip": "Render a composite of the latest available imagery in the period"
+            },
+            "median": {
+              "label": "Median",
+              "tooltip": "Render a median composite of the period"
+            }
+          },
+          "visualizationType": {
+            "alerts": {
+              "label": "Alerts",
+              "tooltip": "Render alerts"
+            },
+            "first": {
+              "label": "First",
+              "tooltip": "Render a composite of the first value in the monitoring period"
+            },
+            "label": "Type",
+            "last": {
+              "label": "Last",
+              "tooltip": "Render a composite of the last value in the monitoring period"
+            }
+          },
+          "previouslyConfirmed": {
+            "include": {
+              "label": "Include",
+              "tooltip": "Include alerts confirmed before the monitoring period"
+            },
+            "exclude": {
+              "label": "Exclude",
+              "tooltip": "Exclude alerts confirmed before the monitoring period"
+            },
+            "label": "Previously confirmed"
+          },
+          "minConfidence": {
+            "all": {
+              "label": "All",
+              "tooltip": "Show all alerts independent on their confidence"
+            },
+            "low": {
+              "label": "Low",
+              "tooltip": "Show alerts with low or high confidence"
+            },
+            "high": {
+              "label": "High",
+              "tooltip": "Show only alerts with high confidence"
+            },
+            "label": "Min confidence"
+          }
+        },
+        "layers": {
+          "imageLayer": {
+            "changes": "Changes",
+            "dates": "Dates",
+            "observations": "Observations"
+          }
+        },
+        "panel": {
+          "date": {
+            "button": "DAT",
+            "form": {
+              "durationUnit": {
+                "placeholder": "Unit...",
+                "DAYS": "Days",
+                "MONTHS": "Months",
+                "WEEKS": "Weeks"
+              },
+              "monitoring": {
+                "duration": {
+                  "label": "Monitoring duration",
+                  "placeholder": "Duration..."
+                }
+              },
+              "monitoringEnd": {
+                "label": "Monitoring end",
+                "tooltip": "The date when monitoring ends. You typically set this to today's date"
+              }
+            },
+            "title": "Date range",
+            "tooltip": "Specify date range to get alerts for"
+          },
+          "options": {
+            "button": "OPT",
+            "form": {
+                "highConfidenceThreshold": {
+                    "label": "High-conf threshold",
+                    "tooltip": "The needed change probability for a high-confidence alert"
+                },
+                "lowConfidenceThreshold": {
+                    "label": "Low-conf threshold",
+                    "tooltip": "The needed change probability for a low-confidence alert",
+                    "tooLarge": "Must be smaller than the high-conf threshold"
+                },
+                "minChangeProbability": {
+                    "label": "Min change prob",
+                    "tooltip": "Min probability to consider an observation a potential change"
+                },
+                "minNonForestProbability": {
+                    "label": "Min non-forest prob",
+                    "tooltip": "Min probability to consider an observation to potentially be non-forest"
+                },
+                "maxDays": {
+                    "label": "Max days",
+                    "tooltip": "The max number of days before a lower confidence get unflagged"
+                },
+                "normalization": {
+                    "label": "Normalization",
+                    "tooltip": "Enable or disable image normalization. When enabled, less false changes, due to seasonality, will be detected.",
+                    "disabled": {
+                        "label": "Disabled",
+                        "tooltip": "Disable image normalization"
+                    },
+                    "enabled": {
+                        "label": "Enabled",
+                        "tooltip": "Enable image normalization"
+                    }
+                },
+                "previousAlertsAsset": {
+                    "label": "Previous alerts asset",
+                    "placeholder": "Previous alerts asset...",
+                    "tooltip": "EE asset containing previous alerts as a starting point for the algorithm",
+                    "missingBands": "The asset is missing required bands: {missingBands}"
+                },
+                "sensitivityButton": {
+                    "tooltip": "Determine how sensitive the algorithm should be to pick up changes",
+                    "low": {
+                        "label": "Low",
+                        "tooltip": "Use low sensitivity"
+                    },
+                    "medium": {
+                        "label": "Medium",
+                        "tooltip": "Use medium sensitivity"
+                    },
+                    "high": {
+                        "label": "High",
+                        "tooltip": "Use high sensitivity"
+                    }
+                },
+                "sensitivity": {
+                    "label": "Sensitivy",
+                    "tooltip": "Determine how sensitive the algorithm should be to pick up changes. Medium sensitivity is 1. The bigger the number the less sensitive to change the algorithm will be."
+                },
+                "wetlandMaskAsset": {
+                    "label": "Wetland Mask Asset",
+                    "placeholder": "Wetland mask...",
+                    "tooltip": "When a wetland mask is specified, the algorith will treat these areas slightly different"
+                }
+            },
+            "title": "BayTS alert options",
+            "tooltip": "Configure sensitivity in detecting changes"
+          },
+          "preprocess": {
+            "button": "PRC",
+            "title": "Pre-process",
+            "tooltip": "Configure imagery pre-processing"
+          },
+          "reference": {
+            "asset": {
+              "label": "Earth Engine Asset",
+              "title": "Earth Engine Asset",
+              "notBayTSHistorical": "Asset is not a BayTS historical image or image collection"
+            },
+            "button": "REF",
+            "form": {
+              "asset": {
+                "invalid": "Asset must be an exported BayTS historical asset",
+                "label": "BayTS historical asset",
+                "placeholder": "Enter BayTS historical asset ID",
+                "required": "An asset ID must be specified"
+              }
+            },
+            "recipe": {
+              "label": "Saved SEPAL recipe",
+              "title": "Saved SEPAL recipe"
+            },
+            "title": "Source",
+            "tooltip": "Select BayTS historical asset or recipe to use as reference for alerts"
+          }
+        },
+        "preview": {
+          "description": "Preview of change alerts, generated on the fly by EE.",
+          "error": "Failed to generate preview",
+          "initializing": "Loading preview...",
+          "label": "Change alerts",
+          "loading": "Loading tiles: {pending}",
+          "tilesFailed": "{failed} failed"
+        },
+        "reference": {
+          "asset": {
+            "loadError": "Failed to load asset"
+          },
+          "recipe": {
+            "loadError": "Failed to load recipe"
+          }
+        },
+        "tabPlaceholder": "BayTS_alerts"
+      },      
+      "baytsHistorical": {
+        "create": "BayTS Historical Layer",
+        "description": "Create an historical layer as reference for BayTS alerts.",
+        "panel": {
+          "dates": {
+            "button": "DAT",
+            "form": {
+              "fromDate": {
+                "label": "From date",
+                "malformed": "Invalid date"
+              },
+              "toDate": {
+                "label": "To date",
+                "malformed": "Invalid date"
+              }
+            },
+            "title": "Date range",
+            "tooltip": "Specify date range"
+          },
+          "options": {
+            "button": "OPT",
+            "form": {
+              "geometricCorrection": {
+                "ellipsoid": {
+                  "label": "Ellipsoid",
+                  "tooltip": "Ellipsoid correction (gamma0 correction) is applied."
+                },
+                "label": "Geometric correction",
+                "none": {
+                  "label": "None",
+                  "tooltip": "No geometric correction is applied."
+                },
+                "terrain": {
+                  "label": "Terrain",
+                  "tooltip": "Terrain correction is applied."
+                }
+              },
+              "orbits": {
+                "ascending": {
+                  "label": "Ascending",
+                  "tooltip": "Include scenes from ascending orbits."
+                },
+                "descending": {
+                  "label": "Descending",
+                  "tooltip": "Include scenes from descending orbits."
+                },
+                "label": "Orbits"
+              },
+              "outlierRemoval": {
+                "aggressive": {
+                  "label": "Aggressive",
+                  "tooltip": "Remove more outliers."
+                },
+                "label": "Outlier removal",
+                "moderate": {
+                  "label": "Moderate",
+                  "tooltip": "Remove outliers."
+                },
+                "none": {
+                  "label": "None",
+                  "tooltip": "Don't remove outliers."
+                }
+              },
+              "mask": {
+                "label": "Border noise correction",
+                "sides": {
+                  "label": "Sides",
+                  "tooltip": "Mask sides of slices."
+                },
+                "firstLast": {
+                  "label": "First/Last",
+                  "tooltip": "Mask the beginning of the first slice and the end of the last slice."
+                }
+              },
+              "maskOptions": {
+                "title": "Border noise correction options",
+                "minAngle": {
+                  "label": "Min angle"
+                },
+                "maxAngle": {
+                  "label": "Max angle"
+                }
+              },
+              "spatialSpeckleFilter": {
+                "label": "Spatial speckle filter",
+                "none": {
+                  "label": "None",
+                  "tooltip": "Don't apply any speckle filter."
+                },
+                "boxcar": {
+                  "label": "Boxcar",
+                  "tooltip": "Boxcar filtering is applied."
+                },
+                "gammaMap": {
+                  "label": "Gamma Map",
+                  "tooltip": "Gamma Map filtering is applied."
+                },
+                "lee": {
+                  "label": "Lee",
+                  "tooltip": "Lee filtering is applied."
+                },
+                "refinedLee": {
+                  "label": "Refined Lee",
+                  "tooltip": "Refined Lee filtering is applied. This can be very slow, but often gives good results."
+                },
+                "leeSigma": {
+                  "label": "Lee Sigma",
+                  "tooltip": "Lee Sigma filtering is applied."
+                },
+                "snic": {
+                  "label": "SNIC",
+                  "tooltip": "Simple Non-Iterative Clustering is used to filter out speckle."
+                }
+              },
+              "spatialSpeckleFilterOptions": {
+                "kernelSize": {
+                    "label": "Kernel size"
+                },
+                "sigma": {
+                    "label": "Sigma"
+                },
+                "strongScatterers": {
+                    "retain": {
+                        "label": "Retain",
+                        "tooltip": "Retain original value for strong scatterers. They don't tend to include much speckle and some speckle filtering algorithms tends to blur them."
+                    },
+                    "filter": {
+                        "label": "Filter",
+                        "tooltip": "Apply spatial speckle filter also to strong scatterers. It can cause some speckle filtering algorithms to blur them."
+                    },
+                    "label": "Strong scatterers"
+                },
+                "strongScattererValue1": {
+                    "label": "VV threshold",
+                    "tooltip": "The threshold to consider VV a strong scatterer when performing Lee-Sigma spatial speckle filtering."
+                },
+                "strongScattererValue2": {
+                    "label": "VH threshold",
+                    "tooltip": "The threshold to consider VH a strong scatterer when performing Lee-Sigma spatial speckle filtering."
+                },
+                "snicSize": {
+                    "label": "Seed spacing",
+                    "tooltip": "The superpixel seed location spacing, in pixels. If 'seeds' image is provided, no grid is produced."
+                },
+                "snicCompactness": {
+                    "label": "Compactness",
+                    "tooltip": "Compactness factor. Larger values cause clusters to be more compact (square). Setting this to 0 disables spatial distance weighting.",
+                    "value": "{value}"
+                },
+                "title": "Spatial speckle filter options"
+              },
+              "multitemporalSpeckleFilterOptions": {
+                "numberOfImages": {
+                    "label": "Number of images",
+                    "value": "{value} images"
+                },
+                "title": "Multitemporal speckle filter options"
+              },
+              "multitemporalSpeckleFilter": {
+                "label": "Multitemporal speckle filter",
+                "none": {
+                  "label": "None",
+                  "tooltip": "Don't apply any multitemporal speckle filter."
+                },
+                "quegan": {
+                  "label": "Quegan",
+                  "tooltip": "Apply Quegan multi-temporal filter."
+                },
+                "rabasar": {
+                  "label": "RABASAR",
+                  "tooltip": "Apply RABASAR multi-temporal filter."
+                }
+              },
+              "minObservations": {
+                "label": "Min observations",
+                "value": "{value} observation(s)"
+              }
+            },
+            "title": "Options",
+            "tooltip": "Configure BayTS historical layer options"
+          }
+        },
+        "preview": {
+          "description": "Preview of BayTS historical layer, generated on the fly by EE.",
+          "label": "BayTS historical"
+        },
+        "tabPlaceholder": "BAYTS_historical"
       },
 
       "phenology": {
@@ -3200,7 +3703,17 @@
         "name": "Name",
         "newRecipe": {
           "title": "Create recipe",
-          "tooltip": "Create a new SEPAL recipe"
+          "tooltip": "Create a new SEPAL recipe",
+          "search.placeholder": "Search recipe types",
+          "tags": {
+            "ALL": "All",
+            "OPTICAL": "Optical",
+            "RADAR": "Radar",
+            "MOSAIC": "Mosaic",
+            "CHANGE": "Change",
+            "TIME_SERIES": "Time series",
+            "ALERTS": "Alerts"
+          }
         },
         "edit": {
           "label": "Edit"

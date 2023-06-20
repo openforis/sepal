@@ -1,12 +1,16 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
+import {HoverDetector} from './hover'
 import {Layout} from './layout'
-import {Subject, animationFrames, distinctUntilChanged, fromEvent, map, mergeWith, switchMap, takeUntil, timer} from 'rxjs'
+import {Subject, animationFrames, distinctUntilChanged, fromEvent, map, mergeWith, switchMap, takeUntil, tap, timer} from 'rxjs'
 import {compose} from 'compose'
 import {withSubscriptions} from 'subscription'
+import Keybinding from './keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './fastList.module.css'
+
+const NOT_HOVERED = -1
 
 class _FastList extends React.PureComponent {
     resize$ = new Subject()
@@ -18,18 +22,25 @@ class _FastList extends React.PureComponent {
         firstVisibleItem: 0,
         lastVisibleItem: 0,
         marginTop: 0,
-        marginBottom: 0
+        marginBottom: 0,
+        keyboardHover: NOT_HOVERED,
+        mouseHover: false
     }
 
     constructor(props) {
         super(props)
         this.initScrollable = this.initScrollable.bind(this)
         this.renderItem = this.renderItem.bind(this)
+        this.handleArrowDown = this.handleArrowDown.bind(this)
+        this.handleArrowUp = this.handleArrowUp.bind(this)
+        this.handleEnter = this.handleEnter.bind(this)
+        this.handleEscape = this.handleEscape.bind(this)
+        this.setMouseHover = this.setMouseHover.bind(this)
     }
     
     render() {
         const {items} = this.props
-        return items
+        return items?.length
             ? this.renderSingleItemSampler() || this.renderSpacedItemSampler() || this.renderList()
             : null
     }
@@ -64,19 +75,29 @@ class _FastList extends React.PureComponent {
     }
 
     renderList() {
-        const {firstVisibleItem, lastVisibleItem, marginTop, marginBottom} = this.state
+        const {firstVisibleItem, lastVisibleItem, marginTop, marginBottom, keyboardHover, mouseHover} = this.state
+        const keymap = {
+            'ArrowDown': this.handleArrowDown,
+            'ArrowUp': this.handleArrowUp,
+            'Enter': keyboardHover !== NOT_HOVERED ? this.handleEnter : null,
+            'Escape': keyboardHover !== NOT_HOVERED ? this.handleEscape : null
+        }
         return (
-            <ElementResizeDetector resize$={this.resize$}>
-                <div
-                    ref={this.initScrollable}
-                    className={styles.container}>
-                    <div className={styles.scrollable}>
-                        {this.renderFiller(marginTop)}
-                        {this.renderItems(firstVisibleItem, lastVisibleItem)}
-                        {this.renderFiller(marginBottom)}
+            // <HoverDetector onHover={this.setMouseHover}>
+            <Keybinding keymap={!mouseHover ? keymap : null}>
+                <ElementResizeDetector resize$={this.resize$}>
+                    <div
+                        ref={this.initScrollable}
+                        className={styles.container}>
+                        <div className={styles.scrollable}>
+                            {this.renderFiller(marginTop)}
+                            {this.renderItems(firstVisibleItem, lastVisibleItem)}
+                            {this.renderFiller(marginBottom)}
+                        </div>
                     </div>
-                </div>
-            </ElementResizeDetector>
+                </ElementResizeDetector>
+            </Keybinding>
+            // </HoverDetector>
         )
     }
 
@@ -88,7 +109,8 @@ class _FastList extends React.PureComponent {
                 style={{
                     '--height': height,
                     '--itemHeight': itemHeight
-                }}/>
+                }}
+            />
         )
     }
 
@@ -101,10 +123,11 @@ class _FastList extends React.PureComponent {
         )
     }
 
-    renderItem(item) {
+    renderItem(item, index) {
         const {itemKey, children} = this.props
+        const {keyboardHover, mouseHover} = this.state
         return (
-            <FastListItem item={item} key={itemKey(item)}>
+            <FastListItem item={item} key={itemKey(item)} hovered={!mouseHover && keyboardHover === index}>
                 {children}
             </FastListItem>
         )
@@ -138,6 +161,7 @@ class _FastList extends React.PureComponent {
         if (element) {
             element.scrollTop = 0
             this.update(0, element.clientHeight)
+            this.setState({keyboardHover: NOT_HOVERED})
         }
     }
 
@@ -147,6 +171,29 @@ class _FastList extends React.PureComponent {
             itemHeight: spacedItemHeight || singleItemHeight,
             itemSpacing: Math.max(0, spacedItemHeight - singleItemHeight)
         }
+    }
+
+    handleArrowDown() {
+        const {items} = this.props
+        this.setState(({keyboardHover}) => ({keyboardHover: Math.min(keyboardHover + 1, items.length - 1)}))
+    }
+
+    handleArrowUp() {
+        this.setState(({keyboardHover}) => ({keyboardHover: Math.max(keyboardHover - 1, NOT_HOVERED)}))
+    }
+
+    handleEnter() {
+        const {items, onEnter} = this.props
+        const {keyboardHover} = this.state
+        onEnter && onEnter(items[keyboardHover])
+    }
+
+    handleEscape() {
+        this.setState({keyboardHover: NOT_HOVERED})
+    }
+
+    setMouseHover(mouseHover) {
+        this.setState({mouseHover})
     }
 
     update(scrollTop, clientHeight) {
@@ -187,12 +234,26 @@ FastList.defaultProps = {
 
 class FastListItem extends React.PureComponent {
     render() {
-        const {item, children} = this.props
-        return children(item)
+        const {item, hovered, children} = this.props
+        // return children(item, hovered)
+        return (
+            <div ref={hovered ? this.hovered : null}>
+                {children(item, hovered)}
+            </div>
+        )
+    }
+
+    hovered(element) {
+        if (element) {
+            element.scrollIntoViewIfNeeded
+                ? element.scrollIntoViewIfNeeded()
+                : element.scrollIntoView()
+        }
     }
 }
 
 FastListItem.propTypes = {
     children: PropTypes.func.isRequired,
-    item: PropTypes.object.isRequired
+    item: PropTypes.object.isRequired,
+    hovered: PropTypes.any
 }

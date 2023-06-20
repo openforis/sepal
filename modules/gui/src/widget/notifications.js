@@ -175,15 +175,14 @@ class _Notifications extends React.Component {
     render() {
         return (
             <ScrollableContainer className={styles.container}>
-                <Scrollable hideScrollbar>
+                <Scrollable className={styles.scrollable} hideScrollbar>
                     {this.renderNotifications()}
                 </Scrollable>
             </ScrollableContainer>
         )
     }
 
-    isUniqueGroup(notification) {
-        const {notifications} = this.state
+    isUniqueGroup(notifications, notification) {
         const noGroup = !notification.group
         const uniqueGroup = !Object.values(notifications).find(({group}) => group === notification.group)
         return noGroup || uniqueGroup
@@ -194,7 +193,7 @@ class _Notifications extends React.Component {
         addSubscription(
             publish$.subscribe(notification => {
                 this.setState(({notifications}) => {
-                    if (this.isUniqueGroup(notification)) {
+                    if (this.isUniqueGroup(notifications, notification)) {
                         return {
                             notifications: {
                                 ...notifications,

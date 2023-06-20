@@ -50,17 +50,12 @@ class _Mapping extends React.Component {
         )
     }
 
-    onClick() {
-
-    }
-
     renderEntryMapping(entry) {
         const {activator: {activatables}} = this.props
         const onClick = activatables[`entryMapping-${entry.id}}`].activate
         return (
             <ListItem
                 key={entry.id}
-                onClick={onClick}
                 expansion={this.renderMappingOverview(entry)}
                 expansionClickable
                 expanded>
@@ -101,6 +96,7 @@ class _Mapping extends React.Component {
                         />
                     }
                     images={images}
+                    booleanOperator={booleanOperator}
                     constraints={constraints}
                     onChange={({constraints, booleanOperator}) => this.updateConstraints(id, constraints, booleanOperator)}
                 />

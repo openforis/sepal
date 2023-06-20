@@ -272,17 +272,19 @@ export default class UserList extends React.Component {
             <FastList
                 items={users}
                 itemKey={user => _.compact([user.id, user.username, this.getHighLightMatcher()]).join('|')}
-                overflow={50}>
+                overflow={50}
+                onEnter={this.onSelect}>
                 {this.renderUser}
             </FastList>
         )
     }
 
-    renderUser(user) {
+    renderUser(user, hovered) {
         return (
             <UserItem
                 user={user}
                 highlight={this.getHighLightMatcher()}
+                hovered={hovered}
                 onClick={this.onSelect}
             />
         )
@@ -344,7 +346,7 @@ class UserItem extends React.PureComponent {
     }
 
     render() {
-        const {user} = this.props
+        const {user, hovered} = this.props
         const {name, status, googleTokens, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
         const isGoogleUser = !!googleTokens
         return (
@@ -356,7 +358,8 @@ class UserItem extends React.PureComponent {
                     lookStyles.noTransitions,
                     styles.grid,
                     styles.user,
-                    status ? styles.clickable : null
+                    status ? styles.clickable : null,
+                    hovered ? lookStyles.hoverForced : null
                 ].join(' ')}
                 onClick={this.onClick}>
                 {this.renderName(name)}
@@ -463,6 +466,7 @@ class UserItem extends React.PureComponent {
 
 UserItem.propTypes = {
     highlighter: PropTypes.string,
+    hovered: PropTypes.any,
     user: PropTypes.object,
     onClick: PropTypes.func
 }

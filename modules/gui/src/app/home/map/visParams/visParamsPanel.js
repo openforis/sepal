@@ -584,12 +584,13 @@ class _VisParamsPanel extends React.Component {
             ? inputs.palette.value.map(({color}) => color)
             : ['#000000', '#FFFFFF']
         const id = prevVisParams && prevVisParams.id ? prevVisParams.id : guid()
+        const dataType = prevVisParams?.dataType
         const visParams = normalize(
             type === 'continuous'
-                ? {id, type, bands, inverted, min, max, palette, userDefined: true}
+                ? {id, type, bands, dataType, inverted, min, max, palette, userDefined: true}
                 : type === 'categorical'
                     ? this.toCategoricalVisParams(id)
-                    : {id, type, bands, inverted, min, max, gamma, userDefined: true}
+                    : {id, type, bands, dataType, inverted, min, max, gamma, userDefined: true}
         )
         const toDelete = this.overridingVisParams() || {}
         recipeActionBuilder('SAVE_VIS_PARAMS', {visParams})

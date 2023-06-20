@@ -50,6 +50,9 @@ export const cloneDeep = entity =>
 
 export const isEqual = (a, b) =>
     _.isEqualWith(a, b, (a, b) => {
+        if (a instanceof Function && b instanceof Function) {
+            return true
+        }
         if (_.isPlainObject(a) && _.isPlainObject(b) || _.isArray(a) && _.isArray(b)) {
             const aHash = a[HASH_KEY]
             if (!_.isEmpty(aHash)) {

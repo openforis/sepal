@@ -1,3 +1,5 @@
+import {BaytsAlertsImageLayer} from './baytsAlerts/baytsAlertsImageLayer'
+import {BaytsHistoricalImageLayer} from './baytsHistorical/baytsHistoricalImageLayer'
 import {CCDCSliceImageLayer} from './ccdcSlice/ccdcSliceImageLayer'
 import {ChangeAlertsImageLayer} from './changeAlerts/changeAlertsImageLayer'
 import {ClassChangeImageLayer} from './classChange/classChangeImageLayer'
@@ -102,13 +104,21 @@ class _RecipeImageLayer extends React.Component {
             return (
                 <MaskingImageLayer {...props}/>
             )
+        case 'BAYTS_HISTORICAL':
+            return (
+                <BaytsHistoricalImageLayer {...props}/>
+            )
+        case 'BAYTS_ALERTS':
+            return (
+                <BaytsAlertsImageLayer {...props}/>
+            )
         default:
             return null
         }
     }
 
     componentDidMount() {
-        if (this.selfManagedVisualiations()) {
+        if (this.selfManagedVisualizations()) {
             return
         }
         const {layerConfig: {visParams}} = this.props
@@ -118,7 +128,7 @@ class _RecipeImageLayer extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (this.selfManagedVisualiations()) {
+        if (this.selfManagedVisualizations()) {
             return
         }
         const {layerConfig: {visParams: prevVisParams}} = prevProps
@@ -142,7 +152,7 @@ class _RecipeImageLayer extends React.Component {
         }
     }
 
-    selfManagedVisualiations() {
+    selfManagedVisualizations() {
         const {recipe} = this.props
         return recipe && ['CCDC_SLICE', 'CHANGE_ALERTS'].includes(recipe.type)
     }

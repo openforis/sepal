@@ -7,6 +7,7 @@ import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.user.api.GoogleRecaptcha
 import org.openforis.sepal.component.user.api.EmailGateway
 import org.openforis.sepal.component.user.api.UserRepository
+import org.openforis.sepal.component.user.internal.TokenManager
 import org.openforis.sepal.messagebroker.MessageBroker
 import org.openforis.sepal.messagebroker.MessageQueue
 import org.openforis.sepal.user.User
@@ -26,6 +27,7 @@ class RequestPasswordReset extends AbstractCommand<Void> {
 
 class RequestPasswordResetHandler implements CommandHandler<Void, RequestPasswordReset> {
     private static final Logger LOG = LoggerFactory.getLogger(this)
+    private final TokenManager tokenManager
     private final UserRepository userRepository
     private final EmailGateway emailGateway
     private final MessageQueue<Map> messageQueue
@@ -34,12 +36,14 @@ class RequestPasswordResetHandler implements CommandHandler<Void, RequestPasswor
 
 GoogleRecaptcha googleRecaptcha
     RequestPasswordResetHandler(
+        TokenManager tokenManager,
         UserRepository userRepository,
         EmailGateway emailGateway,
         MessageBroker messageBroker,
         Clock clock,
         GoogleRecaptcha googleRecaptcha
     ) {
+        this.tokenManager = tokenManager
         this.userRepository = userRepository
         this.emailGateway = emailGateway
         this.messageQueue = messageBroker.createMessageQueue('user.send_password_reset_email', Map) {
@@ -52,7 +56,6 @@ GoogleRecaptcha googleRecaptcha
     Void execute(RequestPasswordReset command) {
         if (googleRecaptcha.isValid(command.recaptchaToken, 'REQUEST_PASSWORD_RESET')) {
             def user = userRepository.findUserByEmail(command.email)
-            def token = UUID.randomUUID() as String
             def optional = command.optional
 
             if (!user) {
@@ -64,7 +67,7 @@ GoogleRecaptcha googleRecaptcha
                 LOG.info("Ignoring password reset request for locked user: " + user)
                 return null
             }
-
+            def token = tokenManager.getOrGenerateToken(user.username)
             userRepository.updateToken(user.username, token, clock.now())
             messageQueue.publish(user: user, token: token, optional: optional)
         }

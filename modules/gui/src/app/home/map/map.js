@@ -210,6 +210,9 @@ class _Map extends React.Component {
         const {googleMap} = map.getGoogle()
 
         const listeners = [
+            googleMap.addListener('idle',
+                () => this.viewChanged$.next()
+            ),
             googleMap.addListener('mouseout',
                 () => this.synchronizeCursor(id, null)
             ),
@@ -474,7 +477,7 @@ class _Map extends React.Component {
     areaCursor$(id) {
         return this.cursor$.pipe(
             share(),
-            lastInWindow(100),
+            lastInWindow(50),
             switchMap(({screenPixel, mapPixel, cursorArea, latLng}) => {
                 const map = this.getMap(id)
                 const area = this.getArea(id)
@@ -671,7 +674,8 @@ class _Map extends React.Component {
             source,
             layerConfig,
             map,
-            boundsChanged$: this.viewChanged$.pipe(share()),
+            boundsChanged$: this.viewChanged$,
+            // boundsChanged$: this.viewChanged$.pipe(share()),
             dragging$: combineLatest([this.draggingMap$, this.draggingSplit$]).pipe(
                 share(),
                 rxMap(([draggingMap, draggingSplit]) => draggingMap || draggingSplit)
@@ -767,9 +771,9 @@ class _Map extends React.Component {
                 view => updateView$.next(view)
             ),
             this.linked$.pipe(
-                finalize(() => linked$.next(false))
+                finalize(() => linked$.next({linked: false}))
             ).subscribe(
-                linked => linked$.next(linked)
+                linked => linked$.next({linked, view: this.viewUpdates$.getValue()})
             )
         )
     }

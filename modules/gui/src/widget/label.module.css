@@ -1,5 +1,6 @@
 .label {
     --label-color: hsl(0, 0%, 70%);
+    --small-font-size: .7rem;
     --normal-font-size: .8rem;
     --large-font-size: .9rem;
     display: flex;
@@ -12,6 +13,10 @@
     color: var(--label-color);
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.label.small {
+    --font-size: var(--small-font-size);
 }
 
 .label.normal {

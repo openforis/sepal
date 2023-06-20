@@ -179,17 +179,19 @@ class _Maps extends React.Component {
         const linked$ = new Subject()
         const scrollWheelEnabled$ = this.scrollWheelEnabled$
 
-        const setLinked = linked => {
-            const currentView = this.getCurrentView()
+        const setLinked = (linked, view) => {
             if (linked) {
+                const currentView = this.getCurrentView()
                 this.linkedMaps.add(mapId)
+                if (this.linkedMaps.size === 1) {
+                    this.view$.next({mapId, view})
+                } else if (currentView) {
+                    requestedView$.next(currentView)
+                }
             } else {
                 this.linkedMaps.delete(mapId)
             }
             log.debug(() => `${mapTag(mapId)} ${linked ? 'linked' : 'unlinked'}, now ${this.linkedMaps.size} linked.`)
-            if (linked && this.linkedMaps.size > 1 && currentView) {
-                requestedView$.next(currentView)
-            }
         }
 
         const updateView = view => {
@@ -213,7 +215,7 @@ class _Maps extends React.Component {
             linked$.pipe(
                 distinctUntilChanged()
             ).subscribe(
-                linked => setLinked(linked)
+                ({linked, view}) => setLinked(linked, view)
             ),
             updateView$.pipe(
                 debounceTime(500),

@@ -90,7 +90,7 @@ Label.propTypes = {
     disabled: PropTypes.any,
     error: PropTypes.any,
     msg: PropTypes.any,
-    size: PropTypes.oneOf(['normal', 'large']),
+    size: PropTypes.oneOf(['small', 'normal', 'large']),
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any
 }

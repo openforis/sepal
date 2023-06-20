@@ -36,6 +36,10 @@ class ReleaseInstanceHandler implements CommandHandler<Void, ReleaseInstance> {
     Void execute(ReleaseInstance command) {
         try {
             def instance = instanceProvider.getInstance(command.instanceId)
+            if (!instance) {
+                LOG.info("Not finding instance to release. instanceId: ${command.instanceId}")
+                return null
+            }
             def raceCondition = !instanceRepository.released(command.instanceId)
             if (raceCondition) {
                 LOG.info("Encountered race-condition when releasing instance. instance: $instance")

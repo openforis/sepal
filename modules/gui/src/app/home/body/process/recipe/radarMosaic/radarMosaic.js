@@ -54,6 +54,7 @@ export default () => ({
         creationDescription: msg('process.radarMosaic.description'),
         tabPlaceholder: msg('process.radarMosaic.tabPlaceholder'),
     },
+    tags: ['MOSAIC'],
     components: {
         recipe: RadarMosaic
     },

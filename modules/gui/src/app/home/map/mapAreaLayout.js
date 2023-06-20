@@ -19,6 +19,7 @@ const LAYER_ID = 'imageLayer'
 class _MapAreaLayout extends React.Component {
     render() {
         const {mapArea: {area}, form, map, areas} = this.props
+        
         return (
             <SplitOverlay area={area}>
                 <MapAreaMenu area={area} form={form}/>

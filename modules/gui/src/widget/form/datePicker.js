@@ -1,10 +1,11 @@
 import {Button} from 'widget/button'
 import {Input} from 'widget/input'
+import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {ScrollableList} from 'widget/list'
 import {Widget} from 'widget/widget'
-import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
+import {withActivatable} from 'widget/activation/activatable'
 import {withActivators} from 'widget/activation/activator'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
@@ -80,7 +81,6 @@ class _FormDatePicker extends React.Component {
                 tooltipPlacement={tooltipPlacement}
                 contenClassName={styles.input}>
                 {this.renderInput()}
-                {this.renderButton()}
             </Widget>
         )
     }
@@ -98,6 +98,9 @@ class _FormDatePicker extends React.Component {
                 className={styles.input}
                 onChange={this.onChange}
                 onBlur={this.onBlur}
+                buttons={[
+                    this.renderButton()
+                ]}
             />
         )
     }
@@ -106,7 +109,6 @@ class _FormDatePicker extends React.Component {
         const {activator: {activatables: {datePicker: {activate, active, canActivate}}}} = this.props
         return (
             <Button
-                additionalClassName={styles.panelTrigger}
                 chromeless
                 shape='none'
                 icon='calendar-alt'

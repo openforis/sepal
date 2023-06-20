@@ -33,13 +33,14 @@ class _PaletteLayer extends React.Component {
     }
 
     render() {
-        const {cursorValue$, mapArea: {area}, areas} = this.props
+        const {cursorValue$} = this.props
         if (!cursorValue$) {
             return null
         }
-        const {min, max, palette, inverted} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
+        const {min, max, palette, inverted, dataType} = this.getVisualizationParameters()
         return palette
             ? this.renderPalette({
+                dataType,
                 min: min[0],
                 max: max[0],
                 palette,
@@ -48,17 +49,20 @@ class _PaletteLayer extends React.Component {
             : null
     }
 
-    renderPalette({min, max, palette, inverted}) {
+    renderPalette({dataType, min, max, palette, inverted}) {
         const {value, paletteWidth, formattedMin, formattedMax, magnitude} = this.state
         const cursorValues = value.map((v, i) => {
-            return <CursorValue
-                key={i}
-                value={Math.min(max, Math.max(min, value))}
-                min={min}
-                max={max}
-                magnitude={magnitude}
-                paletteWidth={paletteWidth}
-            />
+            return (
+                <CursorValue
+                    key={i}
+                    value={Math.min(max, Math.max(min, value))}
+                    min={min}
+                    max={max}
+                    dataType={dataType}
+                    magnitude={magnitude}
+                    paletteWidth={paletteWidth}
+                />
+            )
         })
 
         return (
@@ -93,6 +97,11 @@ class _PaletteLayer extends React.Component {
         }
     }
 
+    getVisualizationParameters() {
+        const {mapArea: {area}, areas} = this.props
+        return selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
+    }
+
     getMinMax(props) {
         const {mapArea: {area}, areas} = props
         const {min, max} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
@@ -100,9 +109,10 @@ class _PaletteLayer extends React.Component {
     }
 
     formatMinMax({min, max}) {
+        const {dataType} = this.getVisualizationParameters()
         const magnitude = format.stepMagnitude({min, max, minSteps: MIN_STEPS})
-        const formattedMin = format.numberToMagnitude({value: min && min[0], magnitude})
-        const formattedMax = format.numberToMagnitude({value: max && max[0], magnitude})
+        const formattedMin = formatValue({dataType, value: min && min[0], magnitude})
+        const formattedMax = formatValue({dataType, value: max && max[0], magnitude})
         this.setState({formattedMin, formattedMax, magnitude})
     }
 }
@@ -114,7 +124,7 @@ class _CursorValue extends React.Component {
     targetPosition$ = new Subject()
 
     render() {
-        const {value, min, max, magnitude} = this.props
+        const {dataType, value, min, max, magnitude} = this.props
         const {position} = this.state
         const prefix = value <= min
             ? <>&#8804; </>
@@ -122,13 +132,13 @@ class _CursorValue extends React.Component {
                 ? <>&#8805; </>
                 : ''
         const formatted = value <= min
-            ? format.numberToMagnitude({value: min, magnitude})
+            ? formatValue({dataType, value: min, magnitude})
             : value >= max
-                ? format.numberToMagnitude({value: max, magnitude})
-                : format.numberToMagnitude({value, magnitude})
+                ? formatValue({dataType, value: max, magnitude})
+                : formatValue({dataType, value, magnitude})
         return (
             <div
-                className={styles.cursorValue}
+                className={[styles.cursorValue, styles[dataType || 'default']].join(' ')}
                 style={{'--left': `${position}px`}}>
                 {prefix}
                 {formatted}
@@ -198,6 +208,13 @@ const Value = ({value}) => {
             {value}
         </div>
     )
+}
+
+const formatValue = ({dataType, value, magnitude}) => {
+    switch (dataType) {
+    case 'fractionalYears': return format.date(format.fractionalYearsToDate(value))
+    default: return format.numberToMagnitude({value, magnitude})
+    }
 }
 
 export const PaletteLayer = compose(

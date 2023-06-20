@@ -1,0 +1,16 @@
+.panel {
+    max-width: 26rem;
+}
+    
+.scaleChange {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.scaleChange div {
+    color: hsl(var(--selected-hue), var(--selected-sat), 45%);
+}
+
+.scaleChange div:hover {
+    color: hsl(var(--selected-hue), var(--selected-sat), 50%);
+}

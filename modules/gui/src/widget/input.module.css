@@ -32,7 +32,7 @@
 
 .input input:read-only,
 .input textarea:read-only {
-    opacity: .6;
+    opacity: .8;
     pointer-events: none;
 }
 

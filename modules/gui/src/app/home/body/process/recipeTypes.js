@@ -1,3 +1,5 @@
+import baytsAlerts from './recipe/baytsAlerts/baytsAlerts'
+import baytsHistorical from './recipe/baytsHistorical/baytsHistorical'
 import ccdc from './recipe/ccdc/ccdc'
 import ccdcSlice from './recipe/ccdcSlice/ccdcSlice'
 import changeAlerts from './recipe/changeAlerts/changeAlerts'
@@ -24,6 +26,8 @@ export const listRecipeTypes = () => ([
     indexChange(),
     remapping(),
     changeAlerts(),
+    // baytsHistorical(),
+    // baytsAlerts(),
     phenology(),
     masking()
 ])
