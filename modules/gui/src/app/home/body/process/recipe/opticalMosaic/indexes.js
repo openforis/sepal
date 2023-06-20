@@ -22,6 +22,7 @@ const requiredBandsByOpticalIndex = {
     ui: ['nir', 'swir2'],
     ndbi: ['nir', 'swir1'],
     ibi: ['green', 'red', 'nir', 'swir1'],
-    bui: ['red', 'swir1', 'swir2']
+    bui: ['red', 'swir1', 'swir2'],
+    kndvi: ['red', 'nir']
 
 }

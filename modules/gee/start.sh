@@ -10,6 +10,7 @@ then
   [[ -d node_modules ]] || npm install
   NODE_TLS_REJECT_UNAUTHORIZED=1 exec nodemon \
     --watch "${MODULE}/src" \
+    --watch "${MODULE}/config" \
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9232 \
     src/main.js \
@@ -17,7 +18,8 @@ then
     --gee-key "$EE_PRIVATE_KEY" \
     --sepal-endpoint "$SEPAL_ENDPOINT" \
     --sepal-username "sepalAdmin" \
-    --sepal-password "$SEPAL_ADMIN_PASSWORD"
+    --sepal-password "$SEPAL_ADMIN_PASSWORD" \
+    --instances "$INSTANCES"
 else
   echo "Starting node"
   exec node \
@@ -26,5 +28,6 @@ else
     --gee-key "$EE_PRIVATE_KEY" \
     --sepal-endpoint "$SEPAL_ENDPOINT" \
     --sepal-username "sepalAdmin" \
-    --sepal-password "$SEPAL_ADMIN_PASSWORD"
+    --sepal-password "$SEPAL_ADMIN_PASSWORD" \
+    --instances "$INSTANCES"
 fi

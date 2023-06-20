@@ -26,8 +26,8 @@ export const listRecipeTypes = () => ([
     indexChange(),
     remapping(),
     changeAlerts(),
-    // baytsHistorical(),
-    // baytsAlerts(),
+    baytsHistorical(),
+    baytsAlerts(),
     phenology(),
     masking()
 ])

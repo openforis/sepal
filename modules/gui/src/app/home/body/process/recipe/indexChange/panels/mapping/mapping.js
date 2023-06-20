@@ -52,10 +52,11 @@ class _Mapping extends React.Component {
 
     renderEntryMapping(entry) {
         const {activator: {activatables}} = this.props
-        const onClick = activatables[`entryMapping-${entry.id}}`].activate
+        const onClick = () => activatables[`entryMapping-${entry.id}}`].activate()
         return (
             <ListItem
                 key={entry.id}
+                onClick={onClick}
                 expansion={this.renderMappingOverview(entry)}
                 expansionClickable
                 expanded>

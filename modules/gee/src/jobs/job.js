@@ -1,5 +1,4 @@
 const Job = require('#sepal/worker/job')
-const logConfig = require('#gee/log.json')
 
 const getSepalUser = ctx => {
     const sepalUser = ctx.request.headers['sepal-user']
@@ -30,9 +29,9 @@ module.exports = {
         before = [require('#gee/jobs/ee/initialize')],
         services,
         args = ctx => [{...ctx.request.query, ...ctx.request.body}, getCredentials(ctx)],
-        worker$,
+        worker$
     }) =>
-        Job(logConfig)({
+        Job()({
             jobName,
             jobPath,
             initArgs,
@@ -43,6 +42,6 @@ module.exports = {
             before,
             services,
             args,
-            worker$,
+            worker$
         })
 }

@@ -6,10 +6,10 @@ import {Markdown} from 'widget/markdown'
 import {Msg, msg} from 'translate'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
-import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {v4 as uuid} from 'uuid'
+import {withActivatable} from 'widget/activation/activatable'
 import {withActivators} from 'widget/activation/activator'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
@@ -315,11 +315,11 @@ class _UserMessagesButton extends React.Component {
     }
 
     componentDidUpdate() {
-        const {unreadUserMessages} = this.props
+        const {unreadUserMessages, activator: {activatables: {userMessages}}} = this.props
         const {shown} = this.state
-        if (unreadUserMessages && !shown) {
-            const {activator: {activatables: {userMessages}}} = this.props
-            this.setState({shown: true}, () => userMessages.activate())
+        if (unreadUserMessages && !shown && userMessages.canActivate) {
+            userMessages.activate()
+            this.setState({shown: true})
         }
     }
 }

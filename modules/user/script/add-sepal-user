@@ -6,14 +6,46 @@ USER_GROUP=$3
 USER_HOME=/home/$USERNAME
 USER_DATA_HOME=/sepal/home/$USERNAME
 
+function user_id () {
+    uid=${1}
+    ldapsearch -x -LLL \
+      -h "${LDAP_HOST}" \
+      -b "uid=${uid},ou=People,dc=sepal,dc=org" \
+      -w "${LDAP_ADMIN_PASSWORD}" \
+      -D "cn=admin,dc=sepal,dc=org" uidNumber \
+      | grep uidNumber \
+      | sed -E "s/uidNumber: ([0-9]+)/\\1/"
+}
+
+function group_id () {
+    cn=${1}
+    ldapsearch -x -LLL \
+      -h "${LDAP_HOST}" \
+      -b "cn=${cn},ou=Groups,dc=sepal,dc=org" \
+      -w "${LDAP_ADMIN_PASSWORD}" \
+      -D "cn=admin,dc=sepal,dc=org" gidNumber \
+      | grep gidNumber \
+      | sed -E "s/gidNumber: ([0-9]+)/\\1/"
+}
+
+function user_exists () {
+    uid=${1}
+    ldapsearch -x -LLL \
+      -h "${LDAP_HOST}" \
+      -b "uid=${uid},ou=People,dc=sepal,dc=org" \
+      -w "${LDAP_ADMIN_PASSWORD}" \
+      -D "cn=admin,dc=sepal,dc=org" sub '(objectClass=*)' \
+      > /dev/null 2>&1
+    return $?
+}
+
+
 echo "add-sepal-user | username: $USERNAME"
-if ! ldapid "$USERNAME"; then
-    echo "add-sepal-user | Adding user: $USERNAME"
-    sss_cache -E
+if ! user_exists "$USERNAME"; then
     ldapaddgroup $USERNAME
     ldapadduser $USERNAME $USERNAME
-    userId=$(ldapid "$USERNAME" | sed -E "s/.*uid=([0-9]+).*/\\1/")
-    groupId=$(ldapgid "$USERNAME" | sed -E "s/.*gid=([0-9]+).*/\\1/")
+    userId=$(user_id "$USERNAME")
+    groupId=$(group_id "$USERNAME")
 
     if [ -n "$PASSWORD" ]; then
         echo "add-sepal-user | Setting password"
@@ -28,7 +60,7 @@ if ! ldapid "$USERNAME"; then
     # When user is a SEPAL user, add user to group and create user home directory structure
     if [ -n "$USER_GROUP" ]; then
         echo "add-sepal-user | Adding secondary group: $USER_GROUP"
-        userGroupId=$(ldapgid "$USER_GROUP" | sed -E "s/.*gid=([0-9]+).*/\\1/")
+        userGroupId=$(group_id "$USER_GROUP")
         ldapaddusertogroup $USERNAME $userGroupId
 
         echo "add-sepal-user | Creating user data home dir: $USER_DATA_HOME"
@@ -41,9 +73,17 @@ if ! ldapid "$USERNAME"; then
         chmod -R 770 $USER_DATA_HOME
         chmod -R g+s $USER_DATA_HOME
     fi
+
     echo "add-sepal-user | Creating user ssh home dir: $USER_HOME/.ssh"
     mkdir -p $USER_HOME/.ssh
     chmod -R 770 $USER_HOME
+    chown -R $userId:$groupId $USER_HOME
+    chmod 400 $USER_HOME/.ssh/* # secure the keys
+
+    echo "Host *
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    LogLevel QUIET" > $USER_HOME/.ssh/config
 
     echo "add-sepal-user | Creating user key pair for $USERNAME"
     ssh-keygen -t rsa -b 4096 -C "Sandbox key for $USERNAME" -f $USER_HOME/.ssh/id_rsa -N ""
@@ -53,14 +93,6 @@ changetype: modify
 replace: sshpublickey
 sshpublickey: $(cat $USER_HOME/.ssh/id_rsa.pub)
 !
-
-    chown -R $userId:$groupId $USER_HOME
-    chmod 400 $USER_HOME/.ssh/* # secure the keys
-
-    echo "Host *
-    StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
-    LogLevel QUIET" > $USER_HOME/.ssh/config
 else
     echo "add-sepal-user | User already created: $USERNAME"
 fi

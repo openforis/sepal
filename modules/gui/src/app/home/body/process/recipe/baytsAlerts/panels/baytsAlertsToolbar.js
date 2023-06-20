@@ -37,7 +37,7 @@ class BaytsAlertsToolbar extends React.Component {
                 <Retrieve/>
                 <Reference/>
                 <Date/>
-                <Preprocess/>
+                <Preprocess monitor/>
                 <Options/>
 
                 <Toolbar

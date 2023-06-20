@@ -32,7 +32,7 @@ const {
     sepalPassword,
     homeDir,
     username,
-    port
+    port,
 } = program.opts()
 
 const readFile = path => {

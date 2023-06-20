@@ -20,7 +20,6 @@ class _SplitHandle extends React.Component {
 
     render() {
         const {classNames} = this.props
-        log.debug('render')
         return (
             <div ref={this.ref} className={classNames.join(' ')}/>
         )

@@ -32,7 +32,7 @@ export const defaultModel = {
         mask: ['SIDES', 'FIRST_LAST'],
         minAngle: 30.88,
         maxAngle: 45.35,
-        minObservations: 1,
+        minObservations: 20,
     }
 }
 

@@ -145,10 +145,10 @@ class JdbcUserRepository implements UserRepository {
                 SELECT token, token_generation_time
                 FROM sepal_user 
                 WHERE username = ?''', [username]) {
-            status = [
+            status = it.token ? [
                 token: it.token,
                 generationTime: it.token_generation_time,
-            ]
+            ] : null
         }
         return status
     }
