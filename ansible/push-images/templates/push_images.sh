@@ -2,7 +2,7 @@
 set -e
 
 echo "{{ docker_password }}" | docker login localhost -u "{{ docker_username }}" --password-stdin
-docker push localhost/openforis/monitoring:{{ version }}
+docker push localhost/openforis/prometheus:{{ version }}
 docker push localhost/openforis/sys-monitor:{{ version }}
 docker push localhost/openforis/email:{{ version }}
 docker push localhost/openforis/backup:{{ version }}
