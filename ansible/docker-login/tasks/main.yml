@@ -1,6 +1,7 @@
 ---
+
 - docker_login:
     api_version: "1.38"
-    registry_url: "{{ lookup('env', 'DOCKER_REPOSITORY_HOST') }}"
-    username: "{{ lookup('env', 'DOCKER_USERNAME') }}"
-    password: "{{ lookup('env', 'DOCKER_PASSWORD') }}"
+    registry_url: "{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
+    username: "{{ lookup('env', 'DOCKER_REGISTRY_USERNAME') }}"
+    password: "{{ lookup('env', 'DOCKER_REGISTRY_PASSWORD') }}"
