@@ -138,6 +138,5 @@
         dest: /etc/sepal/env
 
   roles:
-    # - { role: live-patching }
     - { role: docker-login }
     - { role: run-module, module: monitoring }

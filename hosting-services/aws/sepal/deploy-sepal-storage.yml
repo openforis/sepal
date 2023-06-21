@@ -28,6 +28,14 @@
     - file: path="/data/sepal/etc" state=directory
     - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
 
+    - name: Install yum packages
+      yum:
+        name: 
+          - "@Development Tools"
+          - rsyslog
+          - docker
+          - python-pip
+
     # rsyslog
     - name: Copy rsyslog.conf
       template: src="rsyslog.conf" dest=/etc/rsyslog.conf
@@ -77,17 +85,6 @@
         src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
-    - name: Install docker
-      command: "amazon-linux-extras install docker -y"
-
-    - name: Install Development Tools
-      yum:
-        name: "@Development Tools"
-
-    - name: Install pip
-      yum:
-        name: python-pip
-
     - name: Create /etc/docker
       file:
         path: "/etc/docker"
@@ -107,11 +104,6 @@
         state: started
         enabled: yes
         masked: no
-
-    - name: pip install docker
-      pip:
-        name: "docker"
-        executable: pip3
 
     # EFS
     - name: Install amazon-efs-utils
@@ -171,7 +163,5 @@
         dest: /etc/sepal/env
 
   roles:
-    - { role: live-patching }
     - { role: docker-login }
-    # - { role: run-module, module: user-storage-backup }
     - { role: run-module, module: user-storage }
