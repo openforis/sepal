@@ -1,5 +1,6 @@
 import re
 import subprocess
+import traceback
 
 import sys
 from datetime import timedelta
@@ -59,7 +60,11 @@ def backup(bucket, backup_date, dates, dirs):
         bucket, dates[-1], bucket, (backup_date_str))))
     for dir in dirs:
         parts = dir.split(':')
-        execute(('aws s3 sync %s s3://%s/system/%s/%s --delete' % (parts[0], bucket, backup_date_str, parts[1])))
+        try:
+            execute(('aws s3 sync %s s3://%s/system/%s/%s --delete' % (parts[0], bucket, backup_date_str, parts[1])))
+        except:
+            print('Failed to backup %s' % (dir))
+            traceback.print_exc()
     return dates + [backup_date]
 
 
@@ -69,7 +74,7 @@ def prune(bucket, day):
 
 def execute(command):
     print('Executing ' + command)
-    return subprocess.check_output(command.split(' '))
+    return str(subprocess.check_output(command.split(' ')))
 
 
 if len(sys.argv) < 3:
