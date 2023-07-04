@@ -13,6 +13,7 @@ class User implements groovymvc.security.User {
     String username
     String email
     String organization
+    String intendedUse
     GoogleTokens googleTokens
     boolean emailNotificationsEnabled
     Status status
@@ -44,6 +45,7 @@ class User implements groovymvc.security.User {
                 username: username,
                 email: email,
                 organization: organization,
+                intendedUse: intendedUse,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 status: status,
                 roles: roles,
@@ -51,13 +53,14 @@ class User implements groovymvc.security.User {
                 updateTime: updateTime)
     }
 
-    User withDetails(String name, String email, String organization, boolean emailNotificationsEnabled, boolean admin) {
+    User withDetails(String name, String email, String organization, String intendedUse, boolean emailNotificationsEnabled, boolean admin) {
         new User(
                 id: id,
                 name: name,
                 username: username,
                 email: email,
                 organization: organization,
+                intendedUse: intendedUse,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 status: status,
                 roles: admin ? [Roles.ADMIN] : [],
@@ -72,6 +75,7 @@ class User implements groovymvc.security.User {
                 username: username,
                 email: email,
                 organization: organization,
+                intendedUse: intendedUse,
                 emailNotificationsEnabled: true,
                 status: status,
                 roles: admin ? [Roles.ADMIN] : [],
@@ -86,6 +90,7 @@ class User implements groovymvc.security.User {
                 username: username,
                 email: email,
                 organization: organization,
+                intendedUse: intendedUse,
                 emailNotificationsEnabled: false,
                 status: status,
                 roles: admin ? [Roles.ADMIN] : [],
@@ -100,6 +105,22 @@ class User implements groovymvc.security.User {
                 username: username,
                 email: email,
                 organization: organization,
+                intendedUse: intendedUse,
+                emailNotificationsEnabled: emailNotificationsEnabled,
+                status: status,
+                roles: roles,
+                creationTime: creationTime,
+                updateTime: updateTime)
+    }
+
+    User withStatus(Status status) {
+        new User(
+                id: id,
+                name: name,
+                username: username,
+                email: email,
+                organization: organization,
+                intendedUse: intendedUse,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 status: status,
                 roles: roles,
@@ -114,6 +135,7 @@ class User implements groovymvc.security.User {
                 username: username,
                 email: email,
                 organization: organization,
+                intendedUse: intendedUse,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 status: ACTIVE,
                 roles: roles,
@@ -128,6 +150,7 @@ class User implements groovymvc.security.User {
                 username: username,
                 email: email,
                 organization: organization,
+                intendedUse: intendedUse,
                 googleTokens: googleTokens ? [
                         accessToken: googleTokens.accessToken,
                         accessTokenExpiryDate: googleTokens.accessTokenExpiryDate,

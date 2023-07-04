@@ -1,7 +1,0 @@
-{
-    "port": 5106,
-    "categories": {
-        "apps": "debug",
-        "terminal": "debug"
-    }
-}

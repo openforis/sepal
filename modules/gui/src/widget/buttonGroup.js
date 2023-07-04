@@ -8,7 +8,7 @@ import withForwardedRef from 'ref'
 
 const Context = React.createContext()
 
-export const withButtonGroupContext = withContext(Context, 'buttonGroupContext')
+export const withButtonGroup = withContext(Context, 'buttonGroup')
 
 const _ButtonGroup = ({className, contentClassName, layout, alignment, spacing, framed, label, disabled, onMouseOver, onMouseOut, forwardedRef, children}) => {
     const mapChild = (child, index, childrenCount) => {
@@ -26,22 +26,25 @@ const _ButtonGroup = ({className, contentClassName, layout, alignment, spacing, 
             mapChild(child, index, children.length)
         )
 
-    return (
-        <Widget
-            ref={forwardedRef}
-            className={className}
-            contentClassName={contentClassName}
-            label={label}
-            layout={layout}
-            alignment={alignment}
-            spacing={spacing}
-            framed={framed}
-            disabled={disabled}
-            onMouseOver={onMouseOver}
-            onMouseOut={onMouseOut}>
-            {spacing === 'none' ? mapChildren(_.compact(children)) : children}
-        </Widget>
-    )
+    return children
+        ? (
+            <Widget
+                ref={forwardedRef}
+                className={className}
+                contentClassName={contentClassName}
+                label={label}
+                layout={layout}
+                alignment={alignment}
+                spacing={spacing}
+                framed={framed}
+                disabled={disabled}
+                onMouseOver={onMouseOver}
+                onMouseOut={onMouseOut}>
+                {spacing === 'none' ? mapChildren(_.compact(children)) : children}
+            </Widget>
+        
+        )
+        : null
 }
 
 export const ButtonGroup = compose(

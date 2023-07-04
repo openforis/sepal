@@ -1,13 +1,15 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
-import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
+import {credentialsPosted, invalidCredentials, login$} from 'user'
 import {msg} from 'translate'
-import {publishEvent} from 'eventPublisher'
+import Keybinding from 'widget/keybinding'
+import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import styles from './login.module.css'
 
 const fields = {
@@ -17,101 +19,128 @@ const fields = {
         .notBlank('landing.login.password.required')
 }
 
-const signUp = () => {
-    publishEvent('sign_up')
-    return window.location = 'https://docs.google.com/forms/d/e/1FAIpQLSci4hopXNtMOQKJzsUybaJETrAPQp8j6TCqycSBQ0XO37jBwA/viewform?c=0&w=1'
-}
-
 const mapStateToProps = () => ({
     errors: invalidCredentials() ? {password: msg('landing.login.password.invalid')} : {}
 })
 
-class Login extends React.Component {
-    login({username, password}) {
-        const {stream} = this.props
-        stream('LOGIN', login$({username, password}))
-    }
+class _Login extends React.Component {
+    ref = React.createRef()
 
-    componentWillUnmount() {
-        resetInvalidCredentials()
-    }
-
-    forgotPassword() {
-        const {onForgotPassword} = this.props
-        onForgotPassword()
+    constructor(props) {
+        super(props)
+        this.reset = this.reset.bind(this)
+        this.submit = this.submit.bind(this)
     }
 
     render() {
-        const {form, inputs: {username, password}, stream} = this.props
         return (
-            <Form className={styles.form} onSubmit={() => this.login(form.values())}>
-                <Layout spacing='loose'>
-                    <Form.Input
-                        label={msg('landing.login.username.label')}
-                        input={username}
-                        placeholder={msg('landing.login.username.placeholder')}
-                        autoFocus
-                        tabIndex={1}
-                        errorMessage
-                    />
-                    <Form.Input
-                        label={msg('landing.login.password.label')}
-                        input={password}
-                        type='password'
-                        placeholder={msg('landing.login.password.placeholder')}
-                        tabIndex={2}
-                        errorMessage
-                    />
-                    <ButtonGroup layout='horizontal' alignment='fill'>
-                        <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
-                            <Button
-                                chromeless
-                                look='transparent'
-                                size='large'
-                                shape='pill'
-                                label={msg('landing.login.sign-up')}
-                                tabIndex={4}
-                                onMouseDown={e => e.preventDefault()}
-                                onClick={signUp}
-                            />
-                            <Button
-                                chromeless
-                                look='transparent'
-                                size='large'
-                                shape='pill'
-                                label={msg('landing.login.forgot-password-link')}
-                                tabIndex={5}
-                                onMouseDown={e => e.preventDefault()}
-                                onClick={() => this.forgotPassword()}
-                            />
-                        </ButtonGroup>
-                        <ButtonGroup layout='horizontal-nowrap' alignment='fill'>
-                            <Button
-                                type='submit'
-                                look='apply'
-                                size='x-large'
-                                shape='pill'
-                                additionalClassName={styles.loginButton}
-                                icon={stream('LOGIN').active ? 'spinner' : 'sign-in-alt'}
-                                label={msg('landing.login.button')}
-                                disabled={form.isInvalid() || stream('LOGIN').active}
-                                tabIndex={3}
-                            />
-                        </ButtonGroup>
+            <Form
+                className={styles.form}
+                onSubmit={this.submit}>
+                {this.renderForm()}
+            </Form>
+        )
+    }
+
+    renderForm() {
+        const {form, inputs: {username, password}, onSignUp, onForgotPassword, stream} = this.props
+        return (
+            <Layout spacing='loose'>
+                <Keybinding keymap={{'Escape': this.reset}}/>
+                <Form.Input
+                    ref={this.ref}
+                    label={msg('user.userDetails.form.username.label')}
+                    input={username}
+                    placeholder={msg('landing.login.username.placeholder')}
+                    autoFocus
+                    tabIndex={1}
+                    errorMessage
+                />
+                <Form.Input
+                    label={msg('user.userDetails.form.password.label')}
+                    input={password}
+                    type='password'
+                    placeholder={msg('landing.login.password.placeholder')}
+                    tabIndex={2}
+                    errorMessage
+                />
+                <Layout>
+                    <ButtonGroup layout='horizontal' alignment='distribute'>
+                        <Button
+                            look='add'
+                            size='x-large'
+                            shape='pill'
+                            label={msg('landing.login.sign-up')}
+                            tabIndex={4}
+                            // disabled={form.isDirty()}
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={onSignUp}
+                        />
+                        <Button
+                            type='submit'
+                            look='apply'
+                            size='x-large'
+                            shape='pill'
+                            additionalClassName={styles.loginButton}
+                            icon={stream('LOGIN').active ? 'spinner' : 'sign-in-alt'}
+                            label={msg('landing.login.button')}
+                            disabled={form.isInvalid() || stream('LOGIN').active}
+                            tabIndex={3}
+                        />
+                    </ButtonGroup>
+                    <ButtonGroup layout='horizontal' alignment='right'>
+                        <Button
+                            chromeless
+                            look='transparent'
+                            size='x-large'
+                            shape='pill'
+                            label={msg('landing.login.forgot-password-link')}
+                            tabIndex={5}
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={onForgotPassword}
+                        />
                     </ButtonGroup>
                 </Layout>
-            </Form>
+            </Layout>
+        )
+    }
+
+    reset() {
+        const {form} = this.props
+        const username = this.ref.current
+        if (username) {
+            username.focus()
+            setTimeout(form.reset)
+        }
+    }
+
+    submit() {
+        const {form} = this.props
+        this.login(form.values())
+    }
+
+    login(credentials) {
+        const {stream} = this.props
+        stream('LOGIN',
+            login$(credentials),
+            user => {
+                credentialsPosted(user)
+            },
+            () => {
+                Notifications.error({message: msg('landing.login.error')})
+            }
         )
     }
 }
 
+export const Login = compose(
+    _Login,
+    withForm({fields, mapStateToProps})
+)
+
 Login.propTypes = {
     onForgotPassword: PropTypes.func.isRequired,
+    onSignUp: PropTypes.func.isRequired,
     form: PropTypes.object,
     inputs: PropTypes.object
 }
-
-export default compose(
-    Login,
-    form({fields, mapStateToProps})
-)

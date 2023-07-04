@@ -78,6 +78,7 @@
     border-radius: var(--border-radius);
     border-top-left-radius: 0;
     border-top-right-radius: 0;
+    pointer-events: all;
 }
 
 .dragging.original {
@@ -99,6 +100,10 @@
     cursor: grab;
 }
 
+.draggableContainer * {
+    pointer-events: none;
+}
+
 .draggableClone {
     position: absolute;
     top: calc(var(--y) * 1px);
@@ -107,6 +112,7 @@
     height: calc(var(--height) * 1px);
     display: flex;
     z-index: 1;
+    user-select: none;
 }
 
 .draggableClone > * {

@@ -37,24 +37,24 @@ class FindUsersExceedingBudget_Test extends AbstractBudgetTest {
     }
 
     void exceedingInstanceBudget() {
-        updateDefaultBudget(new Budget(instanceSpending: 1, storageSpending: 9999, storageQuota: 9999))
+        updateDefaultBudget(createBudget(instanceSpending: 1, storageSpending: 9999, storageQuota: 9999))
         session(start: '2016-01-01', hours: 9999, hourlyCost: 9999)
     }
 
     void exceedingStorageBudget() {
-        updateDefaultBudget(new Budget(storageSpending: 1, storageQuota: 9999))
+        updateDefaultBudget(createBudget(storageSpending: 1, storageQuota: 9999))
         storageCost(9999)
         storage(gb: 1, days: 9999)
     }
 
     void exceedingStorageQuota() {
-        updateDefaultBudget(new Budget(storageSpending: 9999, storageQuota: 1))
+        updateDefaultBudget(createBudget(storageSpending: 9999, storageQuota: 1))
         storageCost(1)
         storage(gb: 9999, days: 1)
     }
 
     void notExceedingBudget() {
-        updateDefaultBudget(new Budget(instanceSpending: 9999, storageSpending: 9999, storageQuota: 9999))
+        updateDefaultBudget(createBudget(instanceSpending: 9999, storageSpending: 9999, storageQuota: 9999))
         session(start: '2016-01-01', hours: 1, hourlyCost: 1)
     }
 }

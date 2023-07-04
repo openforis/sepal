@@ -1,10 +1,10 @@
-import * as PropTypes from 'prop-types'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 
 const mapRecipeToProps = recipe => ({

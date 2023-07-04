@@ -1,4 +1,4 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Histogram, histogramStretch} from './histogram'
 import {Layout} from 'widget/layout'
 import {LegendBuilder, defaultColor} from 'app/home/map/legendBuilder'
@@ -6,14 +6,14 @@ import {Palette} from './palette'
 import {Panel} from 'widget/panel/panel'
 import {Subject, filter, takeUntil} from 'rxjs'
 import {Widget} from 'widget/widget'
-import {activatable} from 'widget/activation/activatable'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {downloadCsv} from 'widget/download'
 import {msg} from 'translate'
 import {normalize} from 'app/home/map/visParams/visParams'
 import {selectFrom} from 'stateUtils'
-import {withMapContext} from 'app/home/map/mapContext'
+import {withActivatable} from 'widget/activation/activatable'
+import {withActivators} from 'widget/activation/activator'
+import {withMap} from 'app/home/map/mapContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
 import Confirm from 'widget/confirm'
@@ -480,7 +480,7 @@ class _VisParamsPanel extends React.Component {
     }
 
     initHistogram(name, {stretch}) {
-        const {stream, activatable: {recipe}, aoi, mapContext: {map: {getBounds}}} = this.props
+        const {stream, activatable: {recipe}, aoi, map: {getBounds}} = this.props
         const {histograms} = this.state
         const histogram = histograms[name]
         const updateHistogram = (data, stretch) => this.setState(({histograms}) =>
@@ -554,7 +554,7 @@ class _VisParamsPanel extends React.Component {
     }
 
     loadDistinctBandValues() {
-        const {activatable: {recipe}, aoi, stream, inputs: {name1}, mapContext: {map: {getBounds}}} = this.props
+        const {activatable: {recipe}, aoi, stream, inputs: {name1}, map: {getBounds}} = this.props
         const toEntries = values => values.map(value => ({
             id: guid(),
             value,
@@ -584,12 +584,13 @@ class _VisParamsPanel extends React.Component {
             ? inputs.palette.value.map(({color}) => color)
             : ['#000000', '#FFFFFF']
         const id = prevVisParams && prevVisParams.id ? prevVisParams.id : guid()
+        const dataType = prevVisParams?.dataType
         const visParams = normalize(
             type === 'continuous'
-                ? {id, type, bands, inverted, min, max, palette, userDefined: true}
+                ? {id, type, bands, dataType, inverted, min, max, palette, userDefined: true}
                 : type === 'categorical'
                     ? this.toCategoricalVisParams(id)
-                    : {id, type, bands, inverted, min, max, gamma, userDefined: true}
+                    : {id, type, bands, dataType, inverted, min, max, gamma, userDefined: true}
         )
         const toDelete = this.overridingVisParams() || {}
         recipeActionBuilder('SAVE_VIS_PARAMS', {visParams})
@@ -634,15 +635,15 @@ const policy = () => ({
 
 export const VisParamsPanel = compose(
     _VisParamsPanel,
-    form({fields}),
+    withForm({fields}),
     withRecipe(mapRecipeToProps),
-    withMapContext(),
-    activatable({
+    withMap(),
+    withActivatable({
         id: ({area}) => `visParams-${area}`,
         policy,
         alwaysAllow: true
     }),
-    activator('legendImport')
+    withActivators('legendImport')
 )
 
 class BandForm extends React.Component {

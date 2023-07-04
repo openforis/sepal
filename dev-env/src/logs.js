@@ -8,7 +8,7 @@ const logsModule = async (module, {follow, tail, since, until} = {}) => {
         if (isModule(module)) {
             if (isRunnable(module)) {
                 const logsOptions = _.compact([
-                    follow ? '--follow' : null,
+                    tail || follow ? '--follow' : null,
                     tail ? '--since 0s' : '',
                     since ? `--since ${since}` : '',
                     until ? `--until ${until}` : ''

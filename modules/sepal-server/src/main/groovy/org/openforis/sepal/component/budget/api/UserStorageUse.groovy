@@ -11,7 +11,7 @@ class UserStorageUse {
     double quota
 
     boolean isBudgetExceeded() {
-        spending > budget
+        spending >= budget
     }
 
     boolean isQuotaExceeded() {

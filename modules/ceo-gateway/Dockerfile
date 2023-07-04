@@ -1,4 +1,4 @@
-FROM node:10.15.2-stretch
+FROM node:18-bullseye
 EXPOSE 8001
 
 ENV MODULE_NAME ceo-gateway
@@ -11,7 +11,7 @@ WORKDIR ${ROOT}
 ADD modules/${MODULE_NAME}/package.json ${ROOT}/package.json
 
 RUN apt-get update && \
-    apt-get install sudo && \
+    apt-get install -y sudo && \
     adduser node sudo && \
     echo "node ALL = (root) NOPASSWD: /usr/bin/ssh" >> /etc/sudoers && \
     npm install

@@ -1,4 +1,3 @@
-import * as PropTypes from 'prop-types'
 import {Button} from 'widget/button'
 import {EditLegendPanel} from './editLegendPanel'
 import {Layout} from 'widget/layout'
@@ -6,11 +5,12 @@ import {LegendItem} from './legendItem'
 import {ListItem} from 'widget/listItem'
 import {NoData} from 'widget/noData'
 import {Widget} from 'widget/widget'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {withActivators} from 'widget/activation/activator'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import PropTypes from 'prop-types'
 import React from 'react'
 
 const mapRecipeToProps = (recipe, {componentId}) => ({
@@ -117,7 +117,7 @@ const toUpdatedEntryPath = componentId => ['ui', 'widget.Legend', componentId, '
 export const Legend = compose(
     _Legend,
     withRecipe(mapRecipeToProps),
-    activator('editLegendPanel')
+    withActivators('editLegendPanel')
 )
 
 Legend.propTypes = {

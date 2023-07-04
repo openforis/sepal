@@ -1,0 +1,13 @@
+{
+    "port": 5103,
+    "categories": {
+        "config": "info",
+        "filesystem": "info",
+        "jobQueue": "info",
+        "main": "info",
+        "messageHandler": "info",
+        "messageQueue": "info",
+        "persistence": "info",
+        "scan": "info"
+    }
+}

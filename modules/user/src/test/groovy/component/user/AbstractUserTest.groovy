@@ -38,6 +38,7 @@ class AbstractUserTest extends Specification {
     final changeListener = new FakeUserChangeListener()
     final clock = new FakeClock()
     final homeDirectory = File.createTempDir()
+    final recaptcha = new FakeGoogleRecaptcha()
     final component = new UserComponent(
             connectionManager,
             externalUserDataGateway,
@@ -49,7 +50,8 @@ class AbstractUserTest extends Specification {
             googleEarthEngineWhitelistChecker,
             new FakeGoogleAccessTokenFileGateway(homeDirectory.absolutePath),
             changeListener,
-            clock
+            clock,
+            recaptcha
     )
 
     final testUsername = 'test-user'
@@ -73,6 +75,18 @@ class AbstractUserTest extends Specification {
         component.submit(
                 new EmailNotificationsEnabled(email: email)
         )
+    }
+
+    User signUpUser(Map args = [:]) {
+        component.submit(
+                new SignUpUser(
+                        username: username(args),
+                        name: args.name ?: testName,
+                        email: args.email ?: testEmail,
+                        organization: args.testOrganization ?: testOrganization,
+                        intendedUse: args.testIntendedUse ?: testIntendedUse
+                ))
+
     }
 
     User inviteUser(Map args = [:]) {

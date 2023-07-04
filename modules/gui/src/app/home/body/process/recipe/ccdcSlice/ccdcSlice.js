@@ -54,6 +54,7 @@ export default () => ({
         creationDescription: msg('process.ccdcSlice.description'),
         tabPlaceholder: msg('process.ccdcSlice.tabPlaceholder')
     },
+    tags: ['TIME_SERIES'],
     components: {
         recipe: CcdcSlice
     },

@@ -5,7 +5,7 @@ import org.openforis.sepal.user.User
 
 @Immutable
 class TokenStatus {
-    public static final int MAX_AGE_DAYS = 7
+    public static final int MAX_AGE_DAYS = 1
 
     String token
     Date generationTime

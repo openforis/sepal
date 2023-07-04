@@ -1,13 +1,13 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const MAX_PIXELS = 1e5
 const MAX_VALUE_COUNT = 256
 
 const worker$ = ({recipe, band, aoi, mapBounds}) => {
-    const ImageFactory = require('sepal/ee/imageFactory')
-    const ee = require('sepal/ee')
+    const ImageFactory = require('#sepal/ee/imageFactory')
+    const ee = require('#sepal/ee')
     const {switchMap, tap} = require('rxjs')
-    const {toGeometry} = require('sepal/ee/aoi')
+    const {toGeometry} = require('#sepal/ee/aoi')
 
     const {getImage$} = ImageFactory(recipe, {selection: [band]})
     const distinctValues = image => {
@@ -30,7 +30,8 @@ const worker$ = ({recipe, band, aoi, mapBounds}) => {
             geometry,
             scale: 1,
             bestEffort: true,
-            maxPixels: MAX_PIXELS
+            maxPixels: MAX_PIXELS,
+            tileScale: 16
         })
         const min = minMax.getNumber(`${band}_min`).floor()
         const max = minMax.getNumber(`${band}_max`).ceil()
@@ -43,7 +44,8 @@ const worker$ = ({recipe, band, aoi, mapBounds}) => {
             geometry,
             scale: 1,
             bestEffort: true,
-            maxPixels: MAX_PIXELS
+            maxPixels: MAX_PIXELS,
+            tileScale: 16
         })
         const array = ee.Array(histogram.get(band))
         return array

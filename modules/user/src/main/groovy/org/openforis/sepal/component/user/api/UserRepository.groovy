@@ -16,6 +16,8 @@ interface UserRepository {
 
     User lookupUser(String username)
 
+    User findUserByUsername(String username)
+    
     User findUserByEmail(String email)
 
     boolean emailNotificationsEnabled(String email)
@@ -23,6 +25,8 @@ interface UserRepository {
     void updateToken(String username, String token, Date tokenGenerationTime)
 
     Map tokenStatus(String token)
+    
+    Map tokenStatusByUsername(String username)
 
     void invalidateToken(String token)
 

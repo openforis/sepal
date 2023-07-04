@@ -1,9 +1,9 @@
-import * as PropTypes from 'prop-types'
 import {BandSpec} from './bandSpec'
 import {Layout} from 'widget/layout'
 import {bandsAvailableToAdd, defaultBand} from 'app/home/body/process/recipe/remapping/remappingRecipe'
 import {compose} from 'compose'
 import {withScrollable} from 'widget/scrollable'
+import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
 

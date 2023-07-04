@@ -16,7 +16,7 @@ RUN apt-get install -y nodejs
 RUN groupadd --gid 1000 node && \
     useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
-RUN npm install -g npm nodemon
+RUN npm install -g nodemon
 
 # Set bash prompt
 RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
@@ -42,6 +42,7 @@ RUN npm install
 
 USER root
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/config ${MODULE}/config
 ADD modules/${MODULE_NAME}/wait_until_initialized.sh /usr/local/bin
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 RUN chmod +x -R /usr/local/bin && sync

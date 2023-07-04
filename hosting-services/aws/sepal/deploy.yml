@@ -28,6 +28,14 @@
         - "LANG=en_US.utf-8"
         - "LC_ALL=en_US.utf-8"
 
+    # increase max_map_count to prevent out of memory errors
+    - name: Increase max_map_count
+      lineinfile:
+        path: /etc/sysctl.conf
+        line: "{{ item }}"
+      with_items:
+        - "vm.max_map_count=1048576"
+
     # monit
     - name: Install EPEL repository
       yum:

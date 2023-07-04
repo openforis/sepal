@@ -49,8 +49,7 @@
 
 .valueSelectionCombo {
     position: absolute;
-    right: 0;
-    left: 0;
+    right: 1.5rem;
     background-color: var(--modal-background);
 }
 

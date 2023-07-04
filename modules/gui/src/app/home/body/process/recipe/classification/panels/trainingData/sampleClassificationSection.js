@@ -1,4 +1,3 @@
-import * as PropTypes from 'prop-types'
 import {AssetSelect} from 'widget/assetSelect'
 import {FormCombo} from 'widget/form/combo'
 import {Layout} from 'widget/layout'
@@ -6,8 +5,12 @@ import {NumberButtons} from 'widget/numberButtons'
 import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import api from 'api'
+
+const mapRecipeToProps = recipe => ({recipe})
 
 class SampleClassificationSection extends Component {
     cancel$ = new Subject()
@@ -133,13 +136,13 @@ class SampleClassificationSection extends Component {
     loadInputData({asset, count, scale, classBand}) {
         if (!asset || !count || !scale)
             return
-        const {stream, inputs: {name, inputData, columns, valueColumn}} = this.props
+        const {stream, inputs: {name, inputData, columns, valueColumn}, recipe} = this.props
         this.cancel$.next()
         name.set(null)
         inputData.set(null)
         columns.set(null)
         stream('SAMPLE_IMAGE',
-            api.gee.sampleImage$({asset, count, scale, classBand}).pipe(
+            api.gee.sampleImage$({asset, count, scale, classBand, recipe}).pipe(
                 takeUntil(this.cancel$)
             ),
             featureCollection => {
@@ -175,5 +178,6 @@ SampleClassificationSection.propTypes = {
 }
 
 export default compose(
-    SampleClassificationSection
+    SampleClassificationSection,
+    withRecipe(mapRecipeToProps),
 )

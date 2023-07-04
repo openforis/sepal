@@ -5,6 +5,7 @@ import {logout$, updateUser} from 'user'
 import {msg} from 'translate'
 import {webSocket} from 'rxjs/webSocket'
 import Notifications from 'widget/notifications'
+import _ from 'lodash'
 import base64 from 'base-64'
 
 const log = getLogger('http')
@@ -141,11 +142,12 @@ const execute$ = (url, method, {retries, query, username, password, headers, val
     let urlWithQuery = queryString ? `${url}?${queryString}` : url
     if (!url.startsWith('http://') && !url.startsWith('https://'))
         headers = {'No-auth-challenge': true, ...headers}
-    if (username || password)
+    if (username || password) {
         headers = {
             'Authorization': `Basic ${base64.encode(`${username}:${password}`)}`,
             ...headers
         }
+    }
     return ajax({url: urlWithQuery, method, headers, ...args}).pipe(
         tap(({responseHeaders}) => {
             if (responseHeaders['sepal-user']) { // Make sure the user is up-to-date. Google Tokens might have changed
@@ -174,7 +176,7 @@ const execute$ = (url, method, {retries, query, username, password, headers, val
                         if (error.status < 500 || retry > retries)
                             return throwError(() => error)
                         else
-                            return timer(Math.pow(2, retry) * 200)
+                            return timer(Math.pow(2, retry) * 500)
                     }
                 )
             )

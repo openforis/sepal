@@ -1,11 +1,11 @@
 const {exportImageToAsset$} = require('../jobs/export/toAsset')
 const {forkJoin, switchMap} = require('rxjs')
-const ccdc = require('sepal/ee/timeSeries/ccdc')
+const ccdc = require('#sepal/ee/timeSeries/ccdc')
 const {toVisualizationProperties} = require('../ee/visualizations')
 const {formatProperties} = require('./formatProperties')
 
 module.exports = {
-    submit$: (_id, {recipe, bands, scale, visualizations, properties, ...other}) => {
+    submit$: (taskId, {recipe, bands, scale, visualizations, properties, ...other}) => {
         const segments = ccdc(recipe, {selection: bands})
         return forkJoin({
             segments: segments.getImage$(),
@@ -14,19 +14,21 @@ module.exports = {
             switchMap(({segments, geometry}) => {
                 const formattedProperties = formatProperties({...properties, scale})
                 const allBands = getAllBands(bands)
-                return exportImageToAsset$({
+                return exportImageToAsset$(taskId, {
                     ...other,
-                    image: segments
-                        .set(formattedProperties)
-                        .set('startDate', recipe.model.dates.startDate)
-                        .set('endDate', recipe.model.dates.endDate)
-                        .set('dateFormat', recipe.model.ccdcOptions.dateFormat)
-                        .set('surfaceReflectance', recipe.model.options.corrections.includes('SR') && 1)
-                        .set(toVisualizationProperties(visualizations, {selection: allBands})),
+                    image: segments,
                     region: geometry.bounds(),
                     scale,
                     pyramidingPolicy: {'.default': 'sample'},
-                    maxPixels: 1e13
+                    maxPixels: 1e13,
+                    properties: {
+                        formattedProperties,
+                        startDate: recipe.model.dates.startDate,
+                        endDate: recipe.model.dates.endDate,
+                        dateFormat: recipe.model.ccdcOptions.dateFormat,
+                        surfaceReflectance: recipe.model.options.corrections?.includes('SR') && 1,
+                        ...toVisualizationProperties(visualizations, {selection: allBands})
+                    }
                 })
             })
         )

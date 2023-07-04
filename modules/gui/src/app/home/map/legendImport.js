@@ -1,10 +1,10 @@
 import {FileSelect} from 'widget/fileSelect'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {FormCombo} from 'widget/form/combo'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {Widget} from 'widget/widget'
-import {activatable} from 'widget/activation/activatable'
+import {withActivatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {parseCsvFile$} from 'csv'
@@ -244,13 +244,13 @@ const trim = value => _.isString(value) ? value.trim() : value
 
 export const LegendImport = compose(
     _LegendImport,
-    activatable({
+    withActivatable({
         id: 'legendImport',
         policy,
         alwaysAllow: true
     }),
     withRecipe(),
-    form({fields}),
+    withForm({fields}),
 )
 
 export const getValidMappings = (columns, rows) => {

@@ -5,10 +5,19 @@ import _ from 'lodash'
 const log = getLogger('sepalMap')
 
 export class SepalMap {
-    constructor(google, googleMap) {
+    constructor({google, googleMap}) {
         log.debug('creating new SepalMap')
         this.google = google
         this.googleMap = googleMap
+        this.toGoogleBounds = this.toGoogleBounds.bind(this)
+        this.zoomIn = this.zoomIn.bind(this)
+        this.zoomOut = this.zoomOut.bind(this)
+        this.setZoom = this.setZoom.bind(this)
+        this.getZoom = this.getZoom.bind(this)
+        this.setView = this.setView.bind(this)
+        this.fitBounds = this.fitBounds.bind(this)
+        this.getBounds = this.getBounds.bind(this)
+        this.getGoogle = this.getGoogle.bind(this)
 
         this.cursor = new google.maps.Marker({
             clickable: false,
@@ -57,7 +66,6 @@ export class SepalMap {
     layerById = {}
     hiddenLayerById = {}
     removeLayer$ = new Subject()
-    zoomArea$ = new Subject()
 
     drawingOptions = {
         fillColor: '#FBFAF2',
@@ -96,6 +104,24 @@ export class SepalMap {
                 googleMap.setOptions({draggableCursor: 'pointer'})
                 return google.maps.event.removeListener(listenerId)
             }
+        }
+    }
+
+    // Drawing mode
+
+    enableDrawingMode(options, callback) {
+        const {google, googleMap} = this
+        this.disableDrawingMode()
+        this.drawingManager = new google.maps.drawing.DrawingManager(options)
+        google.maps.event.addListener(this.drawingManager, 'overlaycomplete', callback)
+        this.drawingManager.setMap(googleMap)
+    }
+
+    disableDrawingMode() {
+        const {google} = this
+        if (this.drawingManager) {
+            this.drawingManager.setMap(null)
+            google.maps.event.clearListeners(this.drawingManager, 'overlaycomplete')
         }
     }
 
@@ -160,7 +186,7 @@ export class SepalMap {
         }
     }
 
-    // Zooming
+    // Zoom
 
     getZoom() {
         const {googleMap} = this
@@ -193,38 +219,58 @@ export class SepalMap {
         this.setZoom(googleMap.getZoom() - 1)
     }
 
-    zoomArea() {
+    enableZoomArea(callback) {
         const {google, googleMap} = this
-        this.drawingManager = new google.maps.drawing.DrawingManager({
+        log.debug('enableZoomArea')
+        this.enableDrawingMode({
             drawingMode: google.maps.drawing.OverlayType.RECTANGLE,
             drawingControl: false,
             rectangleOptions: this.drawingOptions
+        }, ({type, overlay: rectangle}) => {
+            if (type === 'rectangle') {
+                rectangle.setMap(null)
+                googleMap.fitBounds(rectangle.bounds)
+                callback()
+            } else {
+                log.warn(`Expecting overlaycomplete event type rectangle but got ${type}`)
+            }
         })
-        const zoomAreaComplete = e => {
-            const rectangle = e.overlay
-            rectangle.setMap(null)
-            googleMap.fitBounds(rectangle.bounds)
-            this.cancelZoomArea()
-            this.zoomArea$.next()
-        }
-        google.maps.event.addListener(this.drawingManager, 'overlaycomplete', zoomAreaComplete)
-        this.drawingManager.setMap(googleMap)
     }
 
-    getZoomArea$() {
-        return this.zoomArea$
-    }
-
-    cancelZoomArea() {
+    disableZoomArea() {
+        log.debug('disableZoomArea')
         this.disableDrawingMode()
     }
 
-    disableDrawingMode() {
+    // Polygon
+
+    enablePolygonDrawing(callback) {
         const {google} = this
-        if (this.drawingManager) {
-            this.drawingManager.setMap(null)
-            google.maps.event.clearListeners(this.drawingManager, 'overlaycomplete')
-        }
+        log.debug('enablePolygonDrawing')
+        this.enableDrawingMode({
+            drawingMode: google.maps.drawing.OverlayType.POLYGON,
+            drawingControl: false,
+            drawingControlOptions: {
+                position: google.maps.ControlPosition.TOP_CENTER,
+                drawingModes: ['polygon']
+            },
+            polygonOptions: this.drawingOptions,
+        }, ({type, overlay: polygon}) => {
+            if (type === 'polygon') {
+                polygon.setMap(null)
+                const toPolygonPath = polygon => polygon.getPaths().getArray()[0].getArray().map(latLng =>
+                    [latLng.lng(), latLng.lat()]
+                )
+                callback(toPolygonPath(polygon))
+            } else {
+                log.warn(`Expecting overlaycomplete event type polygon but got ${type}`)
+            }
+        })
+    }
+
+    disablePolygonDrawing() {
+        log.debug('disablePolygonDrawing')
+        this.disableDrawingMode()
     }
 
     // Bounds
@@ -256,13 +302,12 @@ export class SepalMap {
     }
 
     fitBounds(bounds) {
-        const PADDING = 2 // compensate for attribution masking
         const {googleMap} = this
         const nextBounds = this.toGoogleBounds(bounds)
         const currentBounds = googleMap.getBounds()
         const boundsChanged = !currentBounds || !currentBounds.equals(nextBounds)
         if (boundsChanged) {
-            googleMap.fitBounds(nextBounds, PADDING)
+            googleMap.fitBounds(nextBounds)
         }
     }
 
@@ -315,42 +360,6 @@ export class SepalMap {
         closeMarker.setMap(googleMap)
         return {
             remove
-        }
-    }
-
-    // Polygon
-
-    drawPolygon(id, callback) {
-        this.drawingPolygon = {id, callback}
-        this.redrawPolygon()
-    }
-
-    redrawPolygon() {
-        const {google, googleMap} = this
-        if (this.drawingPolygon) {
-            this.disableDrawingMode()
-            const {callback} = this.drawingPolygon
-            this.drawingManager = new google.maps.drawing.DrawingManager({
-                drawingMode: google.maps.drawing.OverlayType.POLYGON,
-                drawingControl: false,
-                drawingControlOptions: {
-                    position: google.maps.ControlPosition.TOP_CENTER,
-                    drawingModes: ['polygon']
-                },
-                circleOptions: this.drawingOptions,
-                polygonOptions: this.drawingOptions,
-                rectangleOptions: this.drawingOptions
-            })
-            const drawingListener = e => {
-                const polygon = e.overlay
-                polygon.setMap(null)
-                const toPolygonPath = polygon => polygon.getPaths().getArray()[0].getArray().map(latLng =>
-                    [latLng.lng(), latLng.lat()]
-                )
-                callback(toPolygonPath(polygon))
-            }
-            google.maps.event.addListener(this.drawingManager, 'overlaycomplete', drawingListener)
-            this.drawingManager.setMap(googleMap)
         }
     }
 

@@ -5,6 +5,15 @@
     grid-gap: 2rem;
     padding: 25vh 5% 2rem;
     min-height: 100vh;
+    position: relative;
+}
+
+.github {
+    z-index: 1;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    margin: 0 5% 2rem 0;
 }
 
 .pulse:not(:hover) {

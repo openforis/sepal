@@ -32,9 +32,10 @@ class MenuMode extends React.Component {
                 iconAttributes={{
                     flip: 'horizontal'
                 }}
-                onClick={() => this.toggle(floating)}
                 tooltip={msg(floating ? 'home.sections.expand' : 'home.sections.collapse')}
-                tooltipPlacement='right'/>
+                tooltipPlacement='right'
+                onClick={() => this.toggle(floating)}
+            />
         )
     }
 }

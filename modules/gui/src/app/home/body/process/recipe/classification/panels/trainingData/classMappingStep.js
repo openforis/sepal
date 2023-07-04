@@ -1,27 +1,31 @@
-import * as PropTypes from 'prop-types'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Combo} from 'widget/combo'
+import {CrudItem} from 'widget/crudItem'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
+import {LegendItem} from 'widget/legend/legendItem'
+import {ListItem} from 'widget/listItem'
 import {compose} from 'compose'
+import {filterReferenceData$, remapReferenceData$} from './inputData'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {toReferenceData$} from './inputData'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import ButtonPopup from 'widget/buttonPopup'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
+import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
 import styles from './classStep.module.css'
 
 const mapRecipeToProps = recipe => ({
-    legend: selectFrom(recipe, 'model.legend')
+    legend: selectFrom(recipe, 'model.legend'),
+    recipe
 })
 
 class ClassMappingStep extends Component {
     state = {
-        addingMapping: null,
         columnValues: [],
         customMapping: {},
         mappingError: null
@@ -38,7 +42,7 @@ class ClassMappingStep extends Component {
     }
 
     renderSingleColumnForm() {
-        const {inputs: {classColumnFormat, valueMapping}} = this.props
+        const {inputs: {classColumnFormat}} = this.props
         const {columnValues} = this.state
         if (classColumnFormat.value !== 'SINGLE_COLUMN')
             return null
@@ -46,100 +50,87 @@ class ClassMappingStep extends Component {
         return this.renderClasses(
             legendValue =>
                 this.renderSelectionMapping({
-                    label: msg('Column value(s)'),
-                    noDataMessage: msg('No column value selected for this class'),
+                    label: msg('process.classification.panel.trainingData.classMapping.columnValues'),
+                    noDataMessage: msg('process.classification.panel.trainingData.classMapping.noColumValuesSelected'),
                     values: columnValues,
-                    mapping: valueMapping,
+                    mappingType: 'valueMapping',
                     legendValue
                 })
         )
     }
 
     renderMultipleColumnsForm() {
-        const {inputs: {classColumnFormat, columnMapping}} = this.props
+        const {inputs: {classColumnFormat}} = this.props
         if (classColumnFormat.value !== 'MULTIPLE_COLUMNS')
             return null
 
         const columns = this.columns()
         return this.renderClasses(
             legendValue => this.renderSelectionMapping({
-                label: msg('Column(s)'),
-                noDataMessage: msg('No column selected for this class'),
+                label: msg('process.classification.panel.trainingData.classMapping.columnValues'),
+                noDataMessage: msg('process.classification.panel.trainingData.classMapping.noColumValuesSelected'),
                 values: columns,
-                mapping: columnMapping,
+                mappingType: 'columnMapping',
                 legendValue
             })
         )
     }
 
-    renderSelectionMapping({label, noDataMessage, values, mapping, legendValue}) {
-        const {addingMapping} = this.state
-        const valueOptions = values.map(value => ({value, label: `${value}`}))
+    renderSelectionMapping({label, noDataMessage, values, mappingType, legendValue}) {
+        const mapping = this.getMapping(mappingType)
         return (
             <React.Fragment>
-                {/* <Widget
-                    className={styles.valueSelectionRow}
-                    type='horizontal-nowrap'
-                    spacing='compact'
-                    label={label}>
-                    <Layout type='horizontal-nowrap' spacing='compact'>
-                        {addingMapping === legendValue
-                            ? <Combo
-                                className={styles.valueSelectionCombo}
-                                standalone='true'
-                                autoFocus
-                                options={valueOptions}
-                                disabled={!valueOptions.length}
-                                onChange={option => {
-                                    this.addMapping(mapping, legendValue, option.value)
-                                    this.openSelector(null)
-                                }}
-                                onCancel={() => this.openSelector(null)}
-                            />
-                            : null}
-                        {this.renderCount(legendValue)}
-                        <Button
-                            icon='plus'
-                            look='add'
-                            shape='circle'
-                            size='small'
-                            onClick={() => this.openSelector(legendValue)}/>
-                    </Layout>
-                </Widget> */}
                 <Layout type='horizontal-nowrap' spacing='compact' className={styles.valueSelectionRow}>
                     <Label msg={label}/>
-                    <Layout type='horizontal-nowrap' spacing='compact'>
-                        {addingMapping === legendValue
-                            ? <Combo
-                                className={styles.valueSelectionCombo}
-                                standalone='true'
-                                autoFocus
-                                options={valueOptions}
-                                disabled={!valueOptions.length}
-                                onChange={option => {
-                                    this.addMapping(mapping, legendValue, option.value)
-                                    this.openSelector(null)
-                                }}
-                                onCancel={() => this.openSelector(null)}
-                            />
-                            : null}
-                        {this.renderCount(legendValue)}
-                        <Button
-                            icon='plus'
-                            look='add'
-                            shape='circle'
-                            size='small'
-                            onClick={() => this.openSelector(legendValue)}/>
-                    </Layout>
+                    <Layout.Spacer/>
+                    {this.renderCount(legendValue)}
+                    {this.renderSelectionWidget({values, mappingType, legendValue})}
                 </Layout>
                 <ButtonGroup>
-                    {this.renderMapping(mapping, legendValue)}
+                    {this.renderMapping(mappingType, legendValue)}
                 </ButtonGroup>
-                {!mapping.value[legendValue] || !mapping.value[legendValue].length
+                {!mapping?.value[legendValue] || !mapping?.value[legendValue].length
                     ? <div className={styles.noData}>{noDataMessage}</div>
                     : null
                 }
             </React.Fragment>
+        )
+    }
+
+    renderSelectionWidget({values, mappingType, legendValue}) {
+        const mappedValues = (this.getMapping(mappingType).value || {})[legendValue] || []
+        const valueOptions = values
+            .map(value => ({value, label: `${value}`}))
+            .filter(({value}) => !mappedValues.includes(value))
+        return (
+            <ButtonPopup
+                key='selectionWidget'
+                look='add'
+                shape='circle'
+                icon='plus'
+                size='x-small'
+                noChevron
+                vPlacement='below'
+                hPlacement='over-left'
+                tooltip={msg('process.classification.panel.trainingData.classMapping.addColumns.tooltip')}>
+                {onBlur => (
+                    <Combo
+                        placement='below'
+                        alignment='left'
+                        placeholder={msg('process.classification.panel.trainingData.classMapping.addColumns.placeholder')}
+                        options={valueOptions}
+                        disabled={!valueOptions.length}
+                        stayOpenOnSelect
+                        autoOpen
+                        autoFocus
+                        allowClear
+                        onCancel={onBlur}
+                        onChange={option => {
+                            this.addMapping(this.getMapping(mappingType), legendValue, option.value)
+                        }}
+                    />
+                )}
+            </ButtonPopup>
         )
     }
 
@@ -158,13 +149,18 @@ class ClassMappingStep extends Component {
         )
     }
 
-    renderMapping(mapping, legendValue) {
-        const values = (mapping.value || {})[legendValue] || []
+    renderMapping(mappingType, legendValue) {
+        const values = (this.getMapping(mappingType).value || {})[legendValue] || []
         return values.map(value =>
-            <MappedValue
+            <Button
                 key={value}
-                value={value}
-                onClick={() => this.removeMapping(mapping, legendValue, value)}/>
+                label={value}
+                size='small'
+                air='less'
+                tooltip={msg('process.classification.panel.trainingData.classMapping.removeColumnValue')}
+                onClick={() => this.removeMapping(this.getMapping(mappingType), legendValue, value)}
+                icon='times'
+            />
         )
     }
 
@@ -182,7 +178,7 @@ class ClassMappingStep extends Component {
                         <div className={styles.expressionRow}>
                             <Input
                                 className={styles.expression}
-                                placeholder={msg('Enter expression')}
+                                placeholder={msg('process.classification.panel.trainingData.classMapping.enterExpression')}
                                 value={this.state.customMapping[legendValue] || ''}
                                 errorMessage={errorMessage}
                                 onChange={e => {
@@ -207,37 +203,50 @@ class ClassMappingStep extends Component {
     }
 
     renderClasses(legendValueRenderer) {
-        const {legend, inputs: {defaultValue}} = this.props
+        const {legend} = this.props
         const renderEntry = ({id, color, value, label}) =>
-            <div key={id} className={styles.mapping}>
-                <Layout type='horizontal-nowrap'>
-                    <div className={styles.entry}>
-                        <div className={styles.color} style={{'--color': color}}/>
-                        <div className={styles.value}>{value}</div>
-                        <div className={styles.label}>{label}</div>
-                    </div>
-                    <Button
-                        label={'Default'}
-                        labelStyle='smallcaps'
-                        tooltip={'Class to use for locations where no column value was mapped'}
-                        look={defaultValue.value === value ? 'selected' : 'default'}
-                        shape='pill'
-                        size='small'
-                        onClick={() => defaultValue.set(defaultValue.value === value ? null : value)}
-                    />
-                </Layout>
-                <div className={styles.input}>
-                    {legendValueRenderer(value)}
-                </div>
-            </div>
+            <ListItem
+                key={id}
+                expansion={legendValueRenderer(value)}
+                expanded>
+                <CrudItem
+                    content={this.renderLegendItem({color, value, label})}
+                    inlineComponents={[this.renderDefaultButton(value)]}
+                />
+            </ListItem>
 
         return legend.entries.map(renderEntry)
     }
 
-    openSelector(legendValue) {
-        this.setState({addingMapping: legendValue})
+    renderLegendItem({color, value, label}) {
+        return (
+            <LegendItem
+                color={color}
+                label={label}
+                value={value}
+            />
+        )
     }
 
+    renderDefaultButton(value) {
+        const {inputs: {defaultValue}} = this.props
+        return (
+            <Button
+                key='default'
+                shape='pill'
+                look={defaultValue.value === value ? 'selected' : 'default'}
+                size='small'
+                label='Default'
+                tooltip={'Class to use for locations where no column value was mapped'}
+                onClick={() => defaultValue.set(defaultValue.value === value ? null : value)}
+            />
+        )
+    }
+
+    getMapping(mappingType) {
+        return this.props.inputs[mappingType]
+    }
+ 
     addMapping(mapping, legendValue, value) {
         const valuesByLegendValue = {...mapping.value}
         Object.keys(valuesByLegendValue)
@@ -273,6 +282,7 @@ class ClassMappingStep extends Component {
             }
         }
         referenceData.set(null)
+        this.filterReferenceData()
     }
 
     componentDidUpdate(prevProps) {
@@ -285,16 +295,28 @@ class ClassMappingStep extends Component {
             || !_.isEqual(customMapping.value, prevCustomMapping.value)
             || !_.isEqual(defaultValue.value, prevDefaultValue.value)
         if (notAlreadyUpdatingReferenceData && (noReferenceData || updatedMapping)) {
-            this.updateReferenceData()
+            this.remapReferenceData()
         }
     }
 
-    updateReferenceData() {
+    filterReferenceData() {
+        const {stream, inputs, recipe} = this.props
+        stream('UPDATE_REFERENCE_DATA',
+            filterReferenceData$({inputs, recipe}),
+            referenceData => this.setState({referenceData})
+        )
+    }
+
+    remapReferenceData() {
         const {stream, inputs} = this.props
+        const {referenceData} = this.state
+        if (!referenceData) {
+            return
+        }
         inputs.referenceData.set(null) // Unset while updating
         stream('UPDATE_REFERENCE_DATA',
-            toReferenceData$(inputs),
-            updatedReferenceData => inputs.referenceData.set(updatedReferenceData),
+            remapReferenceData$({inputs, referenceData}),
+            remappedReferenceData => inputs.referenceData.set(remappedReferenceData),
             e => {
                 inputs.referenceData.set({counts: {}, referenceData: []})
                 this.setState({mappingError: e})
@@ -375,11 +397,3 @@ export default compose(
     withRecipe(mapRecipeToProps)
 )
 
-const MappedValue = ({value, onClick}) => {
-    return <Button
-        label={`${value}`}
-        shape='pill'
-        onClick={() => onClick && onClick()}
-        tooltip={msg('Remove column value')}
-    />
-}

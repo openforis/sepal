@@ -1,5 +1,5 @@
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions, loadCCDCObservations$, loadCCDCSegments$, toDates} from '../changeAlertsRecipe'
 import {Subject, takeUntil} from 'rxjs'
@@ -23,8 +23,6 @@ const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     latLng: selectFrom(recipe, 'ui.chartPixel'),
     dateFormat: selectFrom(recipe, 'model.reference.dateFormat'),
-    classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
-    classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
     corrections: selectFrom(recipe, 'model.options.corrections'),
     dataSets: selectFrom(recipe, 'model.sources.dataSets'),
     band: selectFrom(recipe, 'model.sources.band'),
@@ -186,8 +184,7 @@ class ChartPixel extends React.Component {
     }
 
     bandOptions() {
-        const {bands, baseBands, classificationLegend, classifierType, corrections, dataSets} = this.props
-        const classification = {classificationLegend, classifierType, include: ['regression', 'probabilities']}
+        const {bands, baseBands, corrections, dataSets} = this.props
         const rmseBands = bands
             .filter(band => band.endsWith('_rmse'))
             .map(band => band.slice(0, -5))
@@ -196,8 +193,7 @@ class ChartPixel extends React.Component {
             .filter(band => rmseBands.includes(band))
         const observationBands = getAvailableBands({
             dataSets: Object.values(dataSets).flat(),
-            corrections,
-            classification
+            corrections
         })
         const intersection = _.intersection(ccdcBands, observationBands)
         return intersection.map(name => ({value: name, label: name}))
@@ -215,5 +211,5 @@ ChartPixel.propTypes = {}
 export default compose(
     ChartPixel,
     withRecipe(mapRecipeToProps),
-    form({fields})
+    withForm({fields})
 )

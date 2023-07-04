@@ -24,6 +24,8 @@ class ButtonPopup extends React.Component {
     constructor() {
         super()
         this.handleBlur = this.handleBlur.bind(this)
+        this.togglePopup = this.togglePopup.bind(this)
+        this.onClick = this.onClick.bind(this)
     }
 
     render() {
@@ -45,7 +47,7 @@ class ButtonPopup extends React.Component {
     }
 
     renderSingleButton() {
-        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
+        const {disabled, chromeless, shape, look, icon, size, tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
         return (
             <Button
                 ref={this.buttonRef}
@@ -55,21 +57,20 @@ class ButtonPopup extends React.Component {
                 icon={icon}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
+                size={size}
                 width={width}
-                onClick={() => this.togglePopup()}
+                onClick={this.togglePopup}
                 onMouseOver={onMouseOver}
                 onMouseOut={onMouseOut}
                 disabled={disabled}
                 label={this.getLabel()}
-                tail={
-                    <Icon name={this.getIcon()} dimmed={this.getIconDimmed()}/>
-                }
+                tail={this.getChevron()}
             />
         )
     }
 
     renderMultiButton() {
-        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement, width, onClick, onMouseOver, onMouseOut} = this.props
+        const {disabled, chromeless, shape, look, icon, size, tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
         return (
             <ButtonGroup
                 ref={this.buttonRef}
@@ -83,8 +84,9 @@ class ButtonPopup extends React.Component {
                     icon={icon}
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
+                    size={size}
                     width={width}
-                    onClick={e => onClick && onClick(e)}
+                    onClick={this.onClick}
                     disabled={disabled}
                     label={this.getLabel()}
                 />
@@ -96,18 +98,38 @@ class ButtonPopup extends React.Component {
                     iconDimmed={this.getIconDimmed()}
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
+                    size={size}
                     width={width}
-                    onClick={() => this.togglePopup()}
+                    onClick={this.togglePopup}
                     disabled={disabled}
                 />
             </ButtonGroup>
         )
     }
 
+    onClick(e) {
+        const {onClick} = this.props
+        onClick && onClick(e)
+    }
+
+    componentDidMount() {
+        const {showPopupOnMount} = this.props
+        if (showPopupOnMount) {
+            this.setState({showPopup: true})
+        }
+    }
+
     getLabel() {
         const {label} = this.props
         const {selectedOption} = this.state
         return (selectedOption && (selectedOption.buttonLabel || selectedOption.label)) || label
+    }
+
+    getChevron() {
+        const {noChevron} = this.props
+        return noChevron
+            ? null
+            : <Icon name={this.getIcon()} dimmed={this.getIconDimmed()}/>
     }
 
     getIcon() {
@@ -158,7 +180,7 @@ class ButtonPopup extends React.Component {
         if (e) {
             if (!stayOpenOnBlur) {
                 const isButtonClick = e => this.buttonRef.current && this.buttonRef.current.contains(e.target)
-                const isPopupClick = e => this.popupRef.current && this.popupRef.current && this.popupRef.current.contains(e.target)
+                const isPopupClick = e => this.popupRef.current && this.popupRef.current.contains(e.target)
                 if (!isButtonClick(e) && !isPopupClick(e)) {
                     this.hidePopup()
                 }
@@ -183,9 +205,12 @@ ButtonPopup.propTypes = {
     icon: PropTypes.string,
     label: PropTypes.any,
     look: PropTypes.string,
-    shape: PropTypes.oneOf(['rectangle', 'pill']),
+    noChevron: PropTypes.any,
+    shape: PropTypes.oneOf(['circle', 'rectangle', 'pill']),
+    showPopupOnMount: PropTypes.any,
+    size: PropTypes.any,
     stayOpenOnBlur: PropTypes.any,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     vPlacement: PropTypes.oneOf(['above', 'below', 'over-above', 'over-below']),
     width: PropTypes.string,

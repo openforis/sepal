@@ -1,3 +1,5 @@
+![banner](https://raw.githubusercontent.com/openforis/sepal-doc/master/docs/source/_images/sepal_header.png)
+
 SEPAL
 =====
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/openforis/sepal/blob/master/license.txt)
@@ -6,6 +8,17 @@ SEPAL
 
 SEPAL is a cloud computing platform for geographical data processing. It enables users to quickly process large amount
 of data without high network bandwidth requirements or need to invest in high-performance computing infrastructure.
+
+--------------------------------------------------------------------------------
+
+Currently available in the following languages:
+
+| English | Français | Español |
+|---------|----------|---------|
+
+You can contribute to the translation effort on our [crowdin project](https://crowdin.com/project/sepal).
+
+--------------------------------------------------------------------------------
 
 Background
 ----------

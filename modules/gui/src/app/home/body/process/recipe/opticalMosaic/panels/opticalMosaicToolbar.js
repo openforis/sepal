@@ -1,4 +1,5 @@
 import {Retrieve} from 'app/home/body/process/recipe/opticalMosaic/panels/retrieve/retrieve'
+import {RetrieveButton} from '../../retrieveButton'
 import {SceneSelectionType} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
@@ -66,12 +67,7 @@ class MosaicToolbar extends React.Component {
                         icon='trash'
                         tooltip={msg('process.mosaic.panel.clearSelectedScenes.tooltip')}
                         disabled={!scenesSelected}/>
-                    <Toolbar.ActivationButton
-                        id='retrieve'
-                        icon='cloud-download-alt'
-                        tooltip={msg('process.retrieve.tooltip')}
-                        disabled={!initialized || (selectScenes && !scenesSelected)}
-                    />
+                    <RetrieveButton disabled={selectScenes && !scenesSelected}/>
                 </Toolbar>
                 <Toolbar
                     vertical

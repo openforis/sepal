@@ -16,12 +16,12 @@ RUN chmod +x /usr/local/bin/fix_sepal_users_permissions
 
 # RUN groupadd --gid 9999 sepal && adduser node sepal
 RUN apt-get update && \
-    apt-get install sudo && \
+    apt-get install -y sudo && \
     adduser node sudo && \
     echo 'node ALL=(root) NOPASSWD: /usr/bin/diskus' >> /etc/sudoers && \
     echo 'node ALL=(root) NOPASSWD: /usr/local/bin/fix_sepal_users_permissions' >> /etc/sudoers
 
-RUN npm install -g npm nodemon
+RUN npm install -g nodemon
 
 # Set bash prompt
 RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
@@ -46,4 +46,5 @@ USER node
 RUN npm install
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/config ${MODULE}/config
 CMD /usr/local/bin/start.sh

@@ -1,12 +1,13 @@
 import {ContentPadding} from 'widget/sectionLayout'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {forkJoin, of, timer} from 'rxjs'
+import {forkJoin, map, of, switchMap, tap, timer} from 'rxjs'
+import {get$} from 'http-client'
 import {getLogger} from 'log'
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
 import {runApp$} from 'apps'
-import {withTabContext} from 'widget/tabs/tabContext'
+import {withTab} from 'widget/tabs/tabContext'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -15,9 +16,17 @@ import styles from './appInstance.module.css'
 const log = getLogger('apps')
 
 class AppInstance extends React.Component {
+    iFrameRef = React.createRef()
+
     state = {
         appState: 'REQUESTED',
-        src: undefined
+        src: undefined,
+        srcDoc: undefined
+    }
+
+    constructor() {
+        super()
+        this.iFrameLoaded = this.iFrameLoaded.bind(this)
     }
 
     render() {
@@ -40,18 +49,19 @@ class AppInstance extends React.Component {
     }
 
     renderIFrame() {
-        const {app: {label, alt}, stream} = this.props
-        const {appState, src} = this.state
-        return stream('RUN_APP').completed
+        const {app: {label, alt}} = this.props
+        const {src, srcDoc} = this.state
+        return this.useIFrameSrc() || srcDoc
             ? (
                 <iframe
+                    ref={this.iFrameRef}
                     width='100%'
                     height='100%'
                     frameBorder='0'
-                    src={src}
+                    src={this.useIFrameSrc() ? src : undefined}
                     title={label || alt}
-                    style={{border: 'none', display: appState === 'READY' ? 'block' : 'none'}}
-                    onLoad={() => this.ready()}
+                    style={{border: 'none', display: 'block'}}
+                    onLoad={this.iFrameLoaded}
                 />
             )
             : null
@@ -68,16 +78,41 @@ class AppInstance extends React.Component {
     }
 
     componentDidMount() {
-        const {app: {endpoint, path}, busy$, stream} = this.props
-        if (endpoint) {
-            this.setState({src: `/api${path}`}, () => {
-                busy$.next(true)
-                this.runApp()
-            })
-        } else {
+        const {app: {endpoint, path}, tab: {busy$}, stream} = this.props
+        if (!endpoint) {
             this.setState({appState: 'INITIALIZED', src: path}, () =>
                 stream('RUN_APP', of())
             )
+        } else {
+            busy$.next(true)
+            this.runApp()
+        }
+    }
+
+    componentDidUpdate(_prevProps, prevState) {
+        const {tab: {busy$}} = this.props
+        const {srcDoc} = this.state
+        const iFrame = this.iFrameRef.current
+        if (!this.useIFrameSrc() && srcDoc && !prevState.srcDoc && iFrame) {
+            const doc = iFrame.contentWindow.document
+            doc.open()
+            doc.write(srcDoc)
+            doc.close()
+            busy$.next(false)
+        }
+    }
+
+    useIFrameSrc() {
+        const {app: {endpoint}} = this.props
+        return !endpoint || ['rstudio', 'shiny'].includes(endpoint)
+    }
+
+    iFrameLoaded() {
+        const {tab: {busy$}} = this.props
+        const {src} = this.state
+        if (this.useIFrameSrc() && src) {
+            busy$.next(false)
+            this.setState({appState: 'READY'})
         }
     }
 
@@ -88,38 +123,37 @@ class AppInstance extends React.Component {
             forkJoin([
                 runApp$(app.path),
                 timer(500)
-            ]),
-            () => this.onInitialized(),
+            ]).pipe(
+                tap(() => this.setState({appState: 'INITIALIZED'})),
+                switchMap(() => {
+                    if (this.useIFrameSrc()) {
+                        return of({src: `/api${app.path}`})
+                    } else {
+                        return get$(`api${app.path}`, {responseType: 'text', retries: 9}).pipe(
+                            map(srcDoc => ({srcDoc}))
+                        )
+                    }
+                    
+                })
+            ),
+            result => this.setState(result),
             error => this.onError(error)
         )
     }
 
     onError(error) {
-        const {app, busy$} = this.props
+        const {app, tab: {busy$}} = this.props
         log.error('Failed to load app', error)
         this.setState({appState: 'FAILED'})
         Notifications.error({message: msg('apps.run.error', {label: app.label || app.alt})})
         busy$.next(false)
-    }
-
-    onInitialized() {
-        this.setState(({appState}) =>
-            appState === 'READY'
-                ? null
-                : {appState: 'INITIALIZED'}
-        )
-    }
-
-    ready() {
-        const {busy$} = this.props
-        busy$.next(false)
-        this.setState({appState: 'READY'})
     }
 }
 
 AppInstance.propTypes = {
     app: PropTypes.shape({
         alt: PropTypes.string,
+        endpoint: PropTypes.string,
         label: PropTypes.string,
         path: PropTypes.string
     })
@@ -133,5 +167,5 @@ AppInstance.contextTypes = {
 export default compose(
     AppInstance,
     connect(),
-    withTabContext()
+    withTab()
 )

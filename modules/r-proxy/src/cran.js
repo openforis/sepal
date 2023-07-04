@@ -5,10 +5,13 @@ const {cranRepo, CRAN_ROOT, libPath} = require('./config')
 const {runScript} = require('./script')
 const readline = require('readline')
 const https = require('https')
-const log = require('sepal/log').getLogger('cran')
+const log = require('#sepal/log').getLogger('cran')
 const {compare} = require('compare-versions')
+const {makePackage, cleanupPackage} = require('./bundle')
 
-const BIN = Path.join(CRAN_ROOT, 'bin/contrib')
+const SRC = 'src/contrib'
+const BIN = 'bin/contrib'
+const TMP = '.bin/contrib'
 
 const isCranRepoPath = path =>
     isChildOf(CRAN_ROOT, path)
@@ -39,7 +42,7 @@ const getCranPackageFilename = (name, version) =>
     `${name}_${version}.tar.gz`
 
 const isUpdatable = async (name, version) => {
-    const packages = await getFiles(BIN)
+    const packages = await getFiles(Path.join(CRAN_ROOT, BIN))
     const packageNameFilter = minimatch.filter(getCranPackageFilename(name, '*'))
     const packageVersionFilter = filename => filename === getCranPackageFilename(name, version)
     const matchingPackages = packages.filter(packageNameFilter)
@@ -64,10 +67,8 @@ const getCranTarget = (base, name, options) =>
 const toBinaryPackagePath = requestPath =>
     requestPath.replace(/^\/src\//, '/bin/')
 
-const isCranPackageCached = async (name, version) => {
-    const path = getCranRepoPath(Path.join('bin/contrib', getCranPackageFilename(name, version)))
-    return isFile(path)
-}
+const isCranPackageCached = async (name, version) =>
+    isFile(getCranRepoPath(Path.join(BIN, getCranPackageFilename(name, version))))
         
 const installCranPackage = async (name, version, repo) => {
     try {
@@ -81,20 +82,17 @@ const installCranPackage = async (name, version, repo) => {
     }
 }
     
-const bundleCranPackage = async (name, version) => {
-    try {
-        log.debug(`Bundling ${name}/${version}`)
-        await runScript('bundle_cran_package.sh', [name, version, libPath, CRAN_ROOT], {showStdOut: true, showStdErr: true})
-        log.info(`Bundled ${name}/${version}`)
-        return true
-    } catch (error) {
-        log.warn(`Could not bundle ${name}/${version}`, error)
-        return false
-    }
+const makeCranPackage = async (name, version, repo) => {
+    const packageFilename = `${name}_${version}.tar.gz`
+    const srcPath = Path.join(CRAN_ROOT, SRC, packageFilename)
+    const binPath = Path.join(CRAN_ROOT, BIN, packageFilename)
+    const tmpPath = Path.join(CRAN_ROOT, TMP, packageFilename)
+    const success = await isCranPackageCached(name, version) || (
+        await installCranPackage(name, version, repo) && await makePackage(name, srcPath, binPath, tmpPath)
+    )
+    await cleanupPackage(name, srcPath, binPath, tmpPath)
+    return success
 }
-
-const makeCranPackage = async (name, version, repo) =>
-    await isCranPackageCached(name, version) || await installCranPackage(name, version, repo) && await bundleCranPackage(name, version)
 
 const updateCranPackage = async ({name, version}) => {
     if (await isUpdatable(name, version)) {

@@ -23,7 +23,7 @@ class _RecipeHome extends React.Component {
         const {recipeId} = this.props
         return (
             <SectionLayout>
-                <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
+                <Content className={styles.container} horizontalPadding verticalPadding menuPadding>
                     <RecipeList
                         recipeId={recipeId}
                         onClick={recipeId => this.openRecipe(recipeId)}

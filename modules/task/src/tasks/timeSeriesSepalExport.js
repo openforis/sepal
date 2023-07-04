@@ -1,27 +1,27 @@
-const {toFeatureCollection} = require('sepal/ee/aoi')
-const {hasImagery: hasOpticalImagery} = require('sepal/ee/optical/collection')
-const {hasImagery: hasRadarImagery} = require('sepal/ee/radar/collection')
-const {hasImagery: hasPlanetImagery} = require('sepal/ee/planet/collection')
-const tile = require('sepal/ee/tile')
+const {toFeatureCollection} = require('#sepal/ee/aoi')
+const {hasImagery: hasOpticalImagery} = require('#sepal/ee/optical/collection')
+const {hasImagery: hasRadarImagery} = require('#sepal/ee/radar/collection')
+const {hasImagery: hasPlanetImagery} = require('#sepal/ee/planet/collection')
+const tile = require('#sepal/ee/tile')
 const {exportImageToSepal$} = require('../jobs/export/toSepal')
-const {mkdirSafe$} = require('task/rxjs/fileSystem')
+const {mkdirSafe$} = require('#task/rxjs/fileSystem')
 const {concat, forkJoin, from, of, map, mergeMap, scan, switchMap, tap} = require('rxjs')
-const {swallow} = require('sepal/rxjs')
+const {swallow} = require('#sepal/rxjs')
 const Path = require('path')
-const {terminal$} = require('sepal/terminal')
-const {sequence} = require('sepal/utils/array')
+const {terminal$} = require('#sepal/terminal')
+const {sequence} = require('#sepal/utils/array')
 const moment = require('moment')
-const ee = require('sepal/ee')
-const {getCurrentContext$} = require('task/jobs/service/context')
-const {getCollection$} = require('sepal/ee/timeSeries/collection')
+const ee = require('#sepal/ee')
+const {getCurrentContext$} = require('#task/jobs/service/context')
+const {getCollection$} = require('#sepal/ee/timeSeries/collection')
 const _ = require('lodash')
-const log = require('sepal/log').getLogger('task')
+const log = require('#sepal/log').getLogger('task')
 
 const DATE_DELTA = 3
 const DATE_DELTA_UNIT = 'months'
 
 module.exports = {
-    submit$: (_id, {workspacePath, description, ...retrieveOptions}) =>
+    submit$: (taskId, {workspacePath, description, ...retrieveOptions}) =>
         getCurrentContext$().pipe(
             switchMap(({config}) => {
                 const preferredDownloadDir = workspacePath
@@ -29,14 +29,14 @@ module.exports = {
                     : `${config.homeDir}/downloads/${description}/`
                 return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
                     switchMap(downloadDir =>
-                        export$({description, downloadDir, ...retrieveOptions})
+                        export$(taskId, {description, downloadDir, ...retrieveOptions})
                     )
                 )
             })
         )
 }
 
-const export$ = ({
+const export$ = (taskId, {
     downloadDir,
     description,
     recipe,
@@ -167,7 +167,7 @@ const export$ = ({
     const exportChunk$ = ({tileIndex, timeSeries, dateRange}) => {
         const chunkDescription = `${description}_${tileIndex}_${dateRange}`
         const chunkDownloadDir = `${downloadDir}/${tileIndex}/chunk-${dateRange}`
-        const export$ = exportImageToSepal$({
+        const export$ = exportImageToSepal$(taskId, {
             image: timeSeries,
             folder: chunkDescription,
             description: chunkDescription,

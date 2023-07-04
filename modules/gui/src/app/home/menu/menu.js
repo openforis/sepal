@@ -4,6 +4,7 @@ import {connect, select} from 'store'
 import {currentUser} from 'user'
 import {isPathInLocation} from 'route'
 import {msg} from 'translate'
+import {usageHint} from '../user/usage'
 import MenuMode, {isFloating} from './menuMode'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -23,7 +24,7 @@ class Menu extends React.Component {
             <div className={className}>
                 <div className={[styles.menu, floating && styles.floating].join(' ')}>
                     <div className={styles.section}>
-                        <SectionLink name='process' icon='globe' disabled={budgetExceeded}/>
+                        <SectionLink name='process' icon='globe'/>
                         <SectionLink name='browse' icon='folder-open'/>
                         <SectionLink name='terminal' icon='terminal' disabled={budgetExceeded}/>
                         <SectionLink name='app-launch-pad' icon='wrench' disabled={budgetExceeded}/>
@@ -58,7 +59,7 @@ const Link = ({name, icon, href}) =>
         tooltip={msg(`home.sections.${name}`)}
         tooltipPlacement='right'
         linkUrl={href}
-        linkTarget={'_blank'}
+        linkTarget='_blank'
     />
 
 const _SectionLink = ({active, name, icon, disabled}) => {
@@ -69,8 +70,13 @@ const _SectionLink = ({active, name, icon, disabled}) => {
             className={[styles[name], activeClass].join(' ')}
             icon={icon}
             route={link}
-            tooltip={msg(`home.sections.${name}`)}
+            tooltip={[
+                msg(`home.sections.${name}`),
+                (disabled ? msg('user.quotaUpdate.info') : null)
+            ]}
             tooltipPlacement='right'
+            tooltipAllowedWhenDisabled
+            tooltipOnVisible={enabled => disabled && usageHint(enabled)}
             disabled={disabled}
         />
     )

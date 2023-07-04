@@ -1,10 +1,10 @@
 package org.openforis.sepal.component.workersession
 
 import groovymvc.Controller
-import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.budget.BudgetComponent
-import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
+import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.hostingservice.api.InstanceType
+import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
 import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workersession.adapter.BudgetComponentAdapter
 import org.openforis.sepal.component.workersession.adapter.InstanceComponentAdapter
@@ -19,15 +19,21 @@ import org.openforis.sepal.component.workersession.query.*
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.event.RabbitMQTopic
+import org.openforis.sepal.event.Topic
 import org.openforis.sepal.event.TopicEventDispatcher
 import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.Config
 import org.openforis.sepal.util.SystemClock
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class WorkerSessionComponent extends DataSourceBackedComponent implements EndpointRegistry {
+    private static final Logger LOG = LoggerFactory.getLogger(this)
+    private static final COMPONENT_NAME = 'workersession'
+    private final Topic userTopic
     private final Clock clock
     private final List<InstanceType> instanceTypes
 
@@ -35,17 +41,21 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
             BudgetComponent budgetComponent,
             WorkerInstanceComponent workerInstanceComponent,
             HostingServiceAdapter hostingServiceAdapter,
-            SqlConnectionManager connectionManager) {
+            SqlConnectionManager connectionManager
+    ) {
         def config = new WorkerSessionConfig()
         new WorkerSessionComponent(
                 connectionManager,
-                new TopicEventDispatcher(new RabbitMQTopic('workerSession', config.rabbitMQHost, config.rabbitMQPort)),
+                new TopicEventDispatcher(
+                    new RabbitMQTopic('workerSession', config.rabbitMQHost, config.rabbitMQPort)
+                ),
                 new BudgetComponentAdapter(budgetComponent),
                 new InstanceComponentAdapter(hostingServiceAdapter.instanceTypes, workerInstanceComponent),
                 new RestGoogleOAuthGateway(config.googleOAuthEndpoint),
                 hostingServiceAdapter.instanceTypes,
                 new SystemClock(),
-                new File('/data/home')
+                new File('/data/home'),
+                new RabbitMQTopic('user', config.rabbitMQHost, config.rabbitMQPort)
         )
     }
 
@@ -57,10 +67,13 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
             GoogleOAuthGateway googleOAuthGateway,
             List<InstanceType> instanceTypes,
             Clock clock,
-            File homeDir) {
+            File homeDir,
+            Topic userTopic
+        ) {
         super(connectionManager, eventDispatcher)
         this.instanceTypes = instanceTypes
         this.clock = clock
+        this.userTopic = userTopic
         def sessionRepository = new JdbcWorkerSessionRepository(connectionManager, clock)
 
         command(RequestSession, new RequestSessionHandler(sessionRepository, budgetManager, instanceManager, clock))
@@ -110,6 +123,15 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
         schedule(5, MINUTES,
                 new RefreshGoogleTokens()
         )
+        subscribe(COMPONENT_NAME, userTopic) { message, type ->
+            if (type == 'user.UserLocked') {
+                submit(new CloseUserSessions(username: message.username as String))
+            }
+        }
+    }
+
+    void onStop() {
+        userTopic.close()
     }
 
     List<InstanceType> getInstanceTypes() {

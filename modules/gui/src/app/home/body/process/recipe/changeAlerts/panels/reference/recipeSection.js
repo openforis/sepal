@@ -15,7 +15,9 @@ class RecipeSection extends React.Component {
         const {inputs: {recipe}} = this.props
         return (
             <RecipeInput
-                filter={type => type.id === 'CCDC'}
+                filter={type => {
+                    return type.id === 'CCDC' || type.sourceRecipe // TODO: Include optional sourceType on recipes (store as column in db). Default to type
+                }}
                 input={recipe}
                 autoFocus
                 errorMessage

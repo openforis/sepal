@@ -1,15 +1,15 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {ViewportResizeDetector} from 'widget/viewportResizeDetector'
 import {Widget} from 'widget/widget'
-import {animationFrames, combineLatest, distinctUntilChanged, fromEvent, map, merge, of, scan, switchMap, withLatestFrom} from 'rxjs'
+import {animationFrames, combineLatest, distinctUntilChanged, fromEvent, map, merge, of, scan, switchMap, throttleTime, withLatestFrom} from 'rxjs'
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import Hammer from 'hammerjs'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './slider.module.css'
-import withSubscriptions from 'subscription'
 
 const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
 
@@ -49,6 +49,12 @@ const denormalize = (value, min, max, scale, invert) =>
 class SliderContainer extends React.Component {
     clickTarget = React.createRef()
 
+    constructor() {
+        super()
+        this.normalize = this.normalize.bind(this)
+        this.denormalize = this.denormalize.bind(this)
+    }
+
     renderTick({position, value, label}) {
         const left = `${Math.trunc(position)}px`
         return (
@@ -75,7 +81,7 @@ class SliderContainer extends React.Component {
     }
 
     renderDynamics() {
-        const {value, width, range, decimals, ticks, snap, minValue, maxValue, invert, onChange} = this.props
+        const {value, width, range, decimals, ticks, snap, minValue, maxValue, invert, onChange, onPreview} = this.props
         return (
             <SliderDynamics
                 value={value}
@@ -88,17 +94,22 @@ class SliderContainer extends React.Component {
                 range={range}
                 invert={invert}
                 clickTarget={this.clickTarget}
-                normalize={value => {
-                    const {scale, minValue, maxValue} = this.props
-                    return normalize(value, minValue, maxValue, scale, invert)
-                }}
-                denormalize={value => {
-                    const {scale, minValue, maxValue} = this.props
-                    return denormalize(value, minValue, maxValue, scale, invert)
-                }}
+                normalize={this.normalize}
+                denormalize={this.denormalize}
                 onChange={onChange}
+                onPreview={onPreview}
             />
         )
+    }
+
+    normalize(value) {
+        const {scale, minValue, maxValue, invert} = this.props
+        return normalize(value, minValue, maxValue, scale, invert)
+    }
+
+    denormalize(value) {
+        const {scale, minValue, maxValue, invert} = this.props
+        return denormalize(value, minValue, maxValue, scale, invert)
     }
 
     render() {
@@ -309,7 +320,13 @@ class _SliderDynamics extends React.Component {
             distinctUntilChanged()
         )
 
-        const updateInput$ = merge(clickPosition$, panEnd$)
+        const finalValue$ = merge(clickPosition$, panEnd$)
+
+        const previewValue$ = targetPosition$.pipe(
+            throttleTime(50, null, {leading: true, trailing: true}),
+            map(targetPosition => this.toRoundedValue(targetPosition)),
+            distinctUntilChanged()
+        )
 
         addSubscription(
             handlePosition$.subscribe(position =>
@@ -324,7 +341,10 @@ class _SliderDynamics extends React.Component {
             inhibitInput$.subscribe(inhibit =>
                 this.setInhibitInput(inhibit)
             ),
-            updateInput$.subscribe(() =>
+            previewValue$.subscribe(targetValue => {
+                this.updateTargetValue(targetValue)
+            }),
+            finalValue$.subscribe(() =>
                 this.updateInputValue()
             )
         )
@@ -346,6 +366,13 @@ class _SliderDynamics extends React.Component {
     toValue(position) {
         const {denormalize, width} = this.props
         return denormalize(position / width)
+    }
+
+    toRoundedValue(position) {
+        const {decimals} = this.props
+        const value = this.toValue(this.snapPosition(position))
+        const factor = Math.pow(10, decimals)
+        return Math.round(value * factor) / factor
     }
 
     clampPosition(position) {
@@ -384,12 +411,16 @@ class _SliderDynamics extends React.Component {
     }
 
     updateInputValue() {
-        const {decimals, onChange} = this.props
+        const {onChange} = this.props
         const {previewPosition} = this.state
-        const value = this.toValue(this.snapPosition(previewPosition))
-        const factor = Math.pow(10, decimals)
-        const roundedValue = Math.round(value * factor) / factor
+        const roundedValue = this.toRoundedValue(previewPosition)
+        this.updateTargetValue(null)
         onChange && onChange(roundedValue)
+    }
+
+    updateTargetValue(targetValue) {
+        const {onPreview} = this.props
+        onPreview && onPreview(targetValue)
     }
 
     setPreviewPosition(previewPosition) {
@@ -430,7 +461,8 @@ SliderDynamics.propTypes = {
     snap: PropTypes.bool,
     ticks: PropTypes.array,
     width: PropTypes.number,
-    onChange: PropTypes.func
+    onChange: PropTypes.func,
+    onPreview: PropTypes.func
 }
 
 export class Slider extends React.Component {
@@ -438,7 +470,14 @@ export class Slider extends React.Component {
         width: null,
         ticks: [],
         minValue: null,
-        maxValue: null
+        maxValue: null,
+        previewValue: null
+    }
+
+    constructor() {
+        super()
+        this.onPreview = this.onPreview.bind(this)
+        this.onResize = this.onResize.bind(this)
     }
 
     static getDerivedStateFromProps(props, state) {
@@ -470,14 +509,21 @@ export class Slider extends React.Component {
         }
     }
 
+    getDisplayValue(previewValue, fallbackValue) {
+        return !_.isNil(previewValue)
+            ? previewValue
+            : fallbackValue
+    }
+
     renderInfo() {
         const {value, info, alignment} = this.props
-        const {ticks} = this.state
+        const {ticks, previewValue} = this.state
         const tick = ticks && ticks.find(tick => tick.value === value)
-        const label = (tick && tick.label) || value
+        const label = this.getDisplayValue(previewValue, tick?.label || value)
+        const displayValue = this.getDisplayValue(previewValue, value)
         return info ? (
             <div className={[styles.info, styles.alignment, styles[alignment]].join(' ')}>
-                {_.isFunction(info) ? info(label, value) : info}
+                {_.isFunction(info) ? info(label, displayValue) : info}
             </div>
         ) : null
     }
@@ -487,11 +533,15 @@ export class Slider extends React.Component {
         return (
             <div className={styles.container}>
                 <div className={styles.slider}>
-                    <ElementResizeDetector onResize={({width}) => this.setState({width})}/>
+                    <ElementResizeDetector onResize={this.onResize}/>
                     {width ? this.renderContainer() : null}
                 </div>
             </div>
         )
+    }
+
+    onResize({width}) {
+        this.setState({width})
     }
 
     renderContainer() {
@@ -511,6 +561,7 @@ export class Slider extends React.Component {
                 info={info}
                 width={width}
                 onChange={onChange}
+                onPreview={this.onPreview}
             />
         )
 
@@ -530,6 +581,10 @@ export class Slider extends React.Component {
                 {this.renderSlider()}
             </Widget>
         )
+    }
+
+    onPreview(previewValue) {
+        this.setState({previewValue})
     }
 }
 
@@ -552,7 +607,7 @@ Slider.propTypes = {
         // PropTypes.number,
         PropTypes.array
     ]),
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     value: PropTypes.any,
     onChange: PropTypes.func

@@ -8,6 +8,7 @@ import org.openforis.sepal.component.workersession.api.Spending
 import org.openforis.sepal.component.workersession.api.UserSessionReport
 import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.command.CloseSession
+import org.openforis.sepal.component.workersession.command.CloseUserSessions
 import org.openforis.sepal.component.workersession.command.Heartbeat
 import org.openforis.sepal.component.workersession.command.RequestSession
 import org.openforis.sepal.component.workersession.command.SetEarliestTimeoutTime
@@ -66,6 +67,10 @@ class SandboxSessionEndpoint {
             }
             delete('/sessions/{username}/session/{sessionId}', [ADMIN]) {
                 otherUser(requestContext).closeSession()
+                send toJson(status: 'OK')
+            }
+            delete('/sessions/{username}', [ADMIN]) {
+                otherUser(requestContext).closeUserSessions()
                 send toJson(status: 'OK')
             }
         }
@@ -156,6 +161,15 @@ class SandboxSessionEndpoint {
                 component.submit(new CloseSession(
                         sessionId: params.required('sessionId'),
                         username: username
+                ))
+            }
+        }
+
+        void closeUserSessions() {
+            context.with {
+                response.status = 204
+                component.submit(new CloseUserSessions(
+                        username: params.required('username')
                 ))
             }
         }

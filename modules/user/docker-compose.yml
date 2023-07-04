@@ -28,10 +28,11 @@ services:
       GOOGLE_OAUTH_CALLBACK_BASE_URL: "${GOOGLE_OAUTH_CALLBACK_BASE_URL}"
       GOOGLE_OAUTH_CLIENT_ID: "${GOOGLE_OAUTH_CLIENT_ID}"
       GOOGLE_OAUTH_CLIENT_SECRET: "${GOOGLE_OAUTH_CLIENT_SECRET}"
+      GOOGLE_RECAPTCHA_SECRET_KEY: "${GOOGLE_RECAPTCHA_SECRET_KEY}"
     networks:
       - sepal
     healthcheck:
-      test: test -f /data/module_initialized
+      # test: test -f /data/module_initialized
       timeout: 60s
       interval: 1s
       retries: 60

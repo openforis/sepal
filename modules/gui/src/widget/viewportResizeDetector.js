@@ -31,15 +31,12 @@ ViewportResizeDetector.propTypes = {
 }
 
 export const withViewportDimensions = () =>
-    WrappedComponent => {
-        class HigherOrderComponent extends React.Component {
-            render() {
-                return React.createElement(WrappedComponent, this.props)
-            }
-        }
-
-        return compose(
-            HigherOrderComponent,
+    WrappedComponent =>
+        compose(
+            class WithViewportDimensionsHOC extends React.Component {
+                render() {
+                    return React.createElement(WrappedComponent, this.props)
+                }
+            },
             connect(mapStateToProps)
         )
-    }

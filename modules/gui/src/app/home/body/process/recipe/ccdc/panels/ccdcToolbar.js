@@ -1,5 +1,6 @@
 import {RecipeActions} from '../ccdcRecipe'
 import {Retrieve} from 'app/home/body/process/recipe/ccdc/panels/retrieve/retrieve'
+import {RetrieveButton} from '../../retrieveButton'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -58,11 +59,7 @@ class CcdcToolbar extends React.Component {
                         disabled={!initialized}
                         showGoogleSatellite
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
-                    <Toolbar.ActivationButton
-                        id='retrieve'
-                        icon='cloud-download-alt'
-                        tooltip={msg('process.retrieve.tooltip')}
-                        disabled={!initialized}/>
+                    <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical

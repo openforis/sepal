@@ -1,5 +1,5 @@
 import {CrudItem} from 'widget/crudItem'
-import {Form, form} from '../form/form'
+import {Form, withForm} from '../form/form'
 import {Layout} from '../layout'
 import {Legend} from '../legend/legend'
 import {ListItem} from 'widget/listItem'
@@ -65,6 +65,7 @@ class _Constraint extends React.Component {
                         {this.renderValue()}
                     </Layout>
                 }
+                expansionInteractive
                 onClick={onClick}>
                 <CrudItem
                     title={imageSpec ? imageSpec.description : msg('widget.imageConstraints.image.notSelected')}
@@ -328,6 +329,6 @@ class _Constraint extends React.Component {
 
 export const Constraint = compose(
     _Constraint,
-    form({fields})
+    withForm({fields})
 )
 

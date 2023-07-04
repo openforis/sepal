@@ -1,5 +1,6 @@
 import {RecipeActions} from '../ccdcSliceRecipe'
 import {Retrieve} from './retrieve/retrieve'
+import {RetrieveButton} from '../../retrieveButton'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -48,11 +49,7 @@ class CcdcSliceToolbar extends React.Component {
                         disabled={!initialized || !baseBands}
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}
                     />
-                    <Toolbar.ActivationButton
-                        id='retrieve'
-                        icon='cloud-download-alt'
-                        tooltip={msg('process.ccdcSlice.panel.retrieve.tooltip')}
-                        disabled={!initialized || !baseBands}/>
+                    <RetrieveButton disabled={!baseBands} tooltip={msg('process.ccdcSlice.panel.retrieve.tooltip')}/>
                 </Toolbar>
                 <Toolbar
                     vertical

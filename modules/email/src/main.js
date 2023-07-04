@@ -1,10 +1,12 @@
-require('sepal/log').configureServer(require('./log.json'))
-const log = require('sepal/log').getLogger('main')
+require('#sepal/log').configureServer(require('#config/log.json'))
+
+const log = require('#sepal/log').getLogger('main')
 
 const _ = require('lodash')
 
-const {initMessageQueue} = require('sepal/messageQueue')
-const {amqpUri} = require('./config')
+const {initMessageQueue} = require('#sepal/messageQueue')
+const {amqpUri, port} = require('./config')
+const server = require('#sepal/httpServer')
 const {logStats} = require('./emailQueue')
 const {messageHandler} = require('./messageHandler')
 
@@ -16,7 +18,10 @@ const main = async () => {
         ]
     })
 
+    await server.start({port})
+
     await logStats()
+    
     log.info('Initialized')
 }
 

@@ -17,7 +17,6 @@ export class BandSpec extends React.Component {
             <ListItem
                 expansion={this.renderExpansion()}
                 expanded={selected}
-                expansionClickable={false}
                 disabled={disabled}
                 onClick={() => onClick(id)}>
                 <CrudItem

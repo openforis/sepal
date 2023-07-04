@@ -1,13 +1,13 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const PROBABILITY_THRESHOLD = 75
 const NUMBER_OF_POINTS = 5
 
 const worker$ = recipe => {
-    const ee = require('sepal/ee')
+    const ee = require('#sepal/ee')
     const {map, switchMap} = require('rxjs')
-    const classify = require('sepal/ee/classification/classification')
-    const {getRows$} = require('sepal/ee/table')
+    const classify = require('#sepal/ee/classification/classification')
+    const {getRows$} = require('#sepal/ee/table')
     const _ = require('lodash')
 
     const overrideClassifierType = () => {
@@ -25,7 +25,8 @@ const worker$ = recipe => {
                     numPoints: NUMBER_OF_POINTS,
                     classBand: 'class',
                     scale: 30,
-                    geometries: true
+                    geometries: true,
+                    tileScale: 16
                 })
         ),
         switchMap(points =>

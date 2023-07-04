@@ -4,19 +4,26 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 export class FormPanelButtons extends React.Component {
+    constructor() {
+        super()
+        this.renderFormPanelContext = this.renderFormPanelContext.bind(this)
+    }
+
     render() {
         return (
             <FormPanelContext.Consumer>
-                {props => {
-                    const renderProps = {...props, ...this.props}
-                    const inWizard = renderProps.wizard && renderProps.wizard.includes(renderProps.id)
-                    return inWizard ? this.renderWizard(renderProps) : this.renderForm(renderProps)
-                }}
+                {this.renderFormPanelContext}
             </FormPanelContext.Consumer>
         )
     }
 
-    renderForm({isActionForm, dirty, invalid, onOk, onCancel}) {
+    renderFormPanelContext(props) {
+        const renderProps = {...props, ...this.props}
+        const inWizard = renderProps.wizard && renderProps.wizard.includes(renderProps.id)
+        return inWizard ? this.renderInWizard(renderProps) : this.renderInForm(renderProps)
+    }
+
+    renderInForm({isActionForm, dirty, invalid, onOk, onCancel}) {
         const {applyLabel} = this.props
         const canSubmit = isActionForm || dirty
         return (
@@ -45,7 +52,7 @@ export class FormPanelButtons extends React.Component {
         )
     }
 
-    renderWizard({closable, isActionForm, dirty, invalid, first, last, onBack, onNext, onDone, onCancel}) {
+    renderInWizard({closable, isActionForm, dirty, invalid, first, last, onBack, onNext, onDone, onCancel}) {
         const {applyLabel} = this.props
         const canSubmit = isActionForm || dirty
         return (

@@ -103,6 +103,7 @@
         "nbi": "",
         "ebbi": "",
         "bui": "",
+        "kndvi": "",
         "red, green, blue": "",
         "nir, red, green": "",
         "nir, swir1, red": "",
@@ -126,14 +127,18 @@
             "download": {
                 "tooltip": ""
             },
-            "hideDotFiles": {
-                "tooltip": ""
-            },
             "remove": {
                 "tooltip": ""
             },
-            "showDotFiles": {
-                "tooltip": ""
+            "dotFiles": {
+                "label": "",
+                "hide.tooltip": "",
+                "show.tooltip": ""
+            },
+            "splitDirs": {
+                "label": "",
+                "split.tooltip": "",
+                "mix.tooltip": ""
             },
             "sorting": {
                 "date.label": "",
@@ -163,6 +168,8 @@
         "copyToClipboard": "",
         "discard": "",
         "done": "",
+        "disabled": "",
+        "enabled": "",
         "less": "",
         "more": "",
         "next": "",
@@ -291,9 +298,10 @@
             "instructions": "",
             "invalid": "",
             "label": "",
-            "placeholder": "",
+            "email.placeholder": "",
             "required": "",
-            "success": ""
+            "success": "",
+            "error": ""
         },
         "intro": {
             "about": {
@@ -337,8 +345,47 @@
             }
         },
         "launch": "",
+        "documentation": "",
         "loadCurrentUser": {
             "error": ""
+        },
+        "signup": {
+            "button": "",
+            "username": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "format": "",
+                "duplicate": "",
+                "cannotValidate": ""
+            },
+            "name": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "invalid": ""
+            },
+            "email": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "format": "",
+                "duplicate": "",
+                "cannotValidate": ""
+            },
+            "organization": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "invalid": ""
+            },
+            "intendedUse": {
+                "label": "",
+                "placeholder": "",
+                "required": "",
+                "invalid": ""
+            },
+            "success": ""
         },
         "login": {
             "button": "",
@@ -373,12 +420,12 @@
                 "required": ""
             },
             "success": "",
+            "error": "",
             "username": {
                 "label": ""
             },
             "validating-link": ""
         },
-        "signup": "",
         "tagline": "",
         "title": "",
         "validate-token": {
@@ -613,6 +660,10 @@
             "edit.tooltip": "",
             "clone.tooltip": "",
             "remove.tooltip": ""
+        },
+        "drawingMode": {
+            "zoomarea": "",
+            "polygon": ""
         }
     },
     "featureLayerSources": {
@@ -661,7 +712,10 @@
         },
         "Planet": {
             "label": "",
-            "nicfiDescription": ""
+            "nicfiDescription": "",
+            "bands": {
+                "tooltip": ""
+            }
         },
         "GoogleSatellite": {
             "label": "",
@@ -1267,6 +1321,18 @@
                         "minNumberOfChanges": {
                             "label": "",
                             "tooltip": ""
+                        },
+                        "mustBeConfirmedInMonitoring": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "mustBeStableBeforeChange": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "mustStayChanged": {
+                            "label": "",
+                            "tooltip": ""
                         }
                     },
                     "title": "",
@@ -1466,13 +1532,7 @@
                 },
                 "sources": {
                     "button": "",
-                    "classificationLoadError": "",
                     "form": {
-                        "classification": {
-                            "label": "",
-                            "placeholder": "",
-                            "tooltip": ""
-                        },
                         "band": {
                             "label": ""
                         },
@@ -1818,6 +1878,10 @@
                         "title": ""
                     },
                     "bandSetSpec": {
+                        "addBands": {
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
                         "imageBands": {
                             "label": ""
                         },
@@ -1935,6 +1999,16 @@
                 },
                 "trainingData": {
                     "button": "",
+                    "classMapping": {
+                        "addColumns": {
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "columnValues": "",
+                        "enterExpression": "",
+                        "noColumValuesSelected": "",
+                        "removeColumnValue": ""
+                    },
                     "clearCollected": {
                         "confirmation": {
                             "label": "",
@@ -2215,6 +2289,44 @@
                         "value": ""
                     },
                     "title": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "masking": {
+            "create": "",
+            "description": "",
+            "layers": {
+                "imageLayer": {
+                    "preSets": ""
+                }
+            },
+            "panel": {
+                "inputImage": {
+                    "asset": {
+                        "label": "",
+                        "placeholder": "",
+                        "title": ""
+                    },
+                    "imageMask": {
+                        "button": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "title": ""
+                    },
+                    "imageToMask": {
+                        "button": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "title": ""
+                    },
+                    "recipe": {
+                        "label": "",
+                        "placeholder": "",
+                        "title": ""
+                    }
                 }
             },
             "tabPlaceholder": ""
@@ -2873,6 +2985,184 @@
             },
             "tabPlaceholder": ""
         },
+        "phenology": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "dates": {
+                    "button": "",
+                    "form": {
+                        "fromYear": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "toYear": {
+                            "beforeFromYear": "",
+                            "label": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "preprocess": {
+                    "button": "",
+                    "form": {
+                        "cloudDetection": {
+                            "label": "",
+                            "cloudScore": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "pino26": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "qa": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "cloudMasking": {
+                            "aggressive": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "moderate": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "corrections": {
+                            "brdf": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "surfaceReflectance": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "shadowMasking": {
+                            "label": "",
+                            "off": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "on": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "snowMasking": {
+                            "label": "",
+                            "off": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "on": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "sources": {
+                    "button": "",
+                    "classificationLoadError": "",
+                    "form": {
+                        "classification": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        },
+                        "band": {
+                            "label": ""
+                        },
+                        "cloudPercentageThreshold": {
+                            "label": "",
+                            "value": "",
+                            "tooltip": ""
+                        },
+                        "dataSets": {
+                            "label": "",
+                            "optical": {
+                                "label": ""
+                            },
+                            "options": {
+                                "LANDSAT_7": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_7_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_8": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_8_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_9": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_9_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_TM": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "LANDSAT_TM_T2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SENTINEL_1": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "SENTINEL_2": {
+                                    "label": "",
+                                    "tooltip": ""
+                                }
+                            },
+                            "radar": {
+                                "label": ""
+                            }
+                        },
+                        "dataSetType": {
+                            "label": ""
+                        },
+                        "dataSetTypes": {
+                            "OPTICAL": "",
+                            "PLANET": "",
+                            "RADAR": ""
+                        },
+                        "required": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "label": ""
+            },
+            "tabPlaceholder": ""
+        },
         "projects": {
             "title": "",
             "label": "",
@@ -2983,6 +3273,9 @@
                         }
                     },
                     "recipe": {
+                        "title": ""
+                    },
+                    "sections": {
                         "title": ""
                     },
                     "title": ""
@@ -3320,8 +3613,18 @@
             }
         },
         "none": "",
+        "copyToClipboard": {
+            "tooltip": "",
+            "success": ""
+        },
+        "remove": {
+            "tooltip": ""
+        },
         "removeAll": {
             "label": "",
+            "tooltip": ""
+        },
+        "stop": {
             "tooltip": ""
         },
         "retrieve": {
@@ -3445,11 +3748,19 @@
                 "error": ""
             }
         },
+        "status": {
+            "label": "",
+            "UNKNOWN": "",
+            "ACTIVE": "",
+            "LOCKED": "",
+            "PENDING": ""
+        },
+        "role": {
+            "admin": "",
+            "user": ""
+        },
         "userDetails": {
             "form": {
-                "admin": {
-                    "label": ""
-                },
                 "email": {
                     "label": "",
                     "required": "",
@@ -3496,23 +3807,18 @@
                     "label": "",
                     "required": ""
                 },
-                "role": {
-                    "label": ""
-                },
-                "status": {
-                    "ACTIVE": "",
+                "intendedUse": {
                     "label": "",
-                    "LOCKED": "",
-                    "PENDING": ""
-                },
-                "user": {
-                    "label": ""
+                    "required": ""
                 },
                 "username": {
                     "format": "",
                     "label": "",
                     "required": "",
                     "unique": ""
+                },
+                "password": {
+                    "label": ""
                 }
             },
             "resetPassword": {
@@ -3520,11 +3826,28 @@
                 "tooltip": "",
                 "message": ""
             },
+            "lock": {
+                "label": "",
+                "tooltip": "",
+                "message": "",
+                "error": "",
+                "success": ""
+            },
+            "unlock": {
+                "label": "",
+                "tooltip": "",
+                "message": "",
+                "error": "",
+                "success": ""
+            },
             "switchingToSEPALGoogleAccount": "",
             "title": "",
             "update": {
                 "error": "",
                 "success": ""
+            },
+            "confirmation": {
+                "message": ""
             }
         },
         "userSession": {
@@ -3620,6 +3943,9 @@
                 "pending": {
                     "label": ""
                 },
+                "locked": {
+                    "label": ""
+                },
                 "budgetUpdateRequest": {
                     "label": ""
                 }
@@ -3669,8 +3995,7 @@
             "single": {
                 "drop": "",
                 "dropOrClick": "",
-                "reject": "",
-                "tooMany": ""
+                "reject": ""
             }
         },
         "imageConstraints": {
@@ -3764,5 +4089,6 @@
             },
             "newTab": ""
         }
-    }
+    },
+    "chromeOnHighResDisplayWarning": ""
 }

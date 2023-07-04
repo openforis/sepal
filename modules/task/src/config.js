@@ -1,6 +1,6 @@
 const program = require('commander')
 const fs = require('fs')
-const log = require('sepal/log').getLogger('config')
+const log = require('#sepal/log').getLogger('config')
 const _ = require('lodash')
 
 const DEFAULT_PORT = 1026
@@ -32,7 +32,7 @@ const {
     sepalPassword,
     homeDir,
     username,
-    port
+    port,
 } = program.opts()
 
 const readFile = path => {

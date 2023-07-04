@@ -19,7 +19,12 @@
     --half-center-handle-size: 15px;
     --half-axis-handle-size: 1px;
     --handle-comfort-margin: -.25rem;
+
     --half-area-marker-size: 2.5rem;
+    --area-marker-distance: 0rem;
+    /* --half-area-marker-size: 1rem;
+    --area-marker-distance: 2rem; */
+
     --idle-color: #808080;
     --dragging-color: #c0c0c0;
     --color: var(--idle-color);
@@ -128,22 +133,18 @@
 
 .area.top {
     --area-bottom: calc(var(--bottom) - var(--clip-offset));
-    margin-bottom: calc(var(--half-axis-handle-size)); 
 }
 
 .area.bottom {
     --area-top: calc(var(--top) + var(--clip-offset));
-    margin-top: calc(var(--half-axis-handle-size) + 1px); 
 }
 
 .area.left {
     --area-right: calc(var(--right) - var(--clip-offset));
-    margin-right: calc(var(--half-axis-handle-size)); 
 }
 
 .area.right {
     --area-left: calc(var(--left) + var(--clip-offset));
-    margin-left: calc(var(--half-axis-handle-size) + 1px); 
 }
 
 /* active area indicator */
@@ -153,51 +154,51 @@
     position: absolute;
     width: calc(2 * var(--half-area-marker-size) + 1px);
     height: calc(2 * var(--half-area-marker-size) + 1px);
-    background-color: rgba(255, 0, 0, .6);
     border: 1px solid rgba(0, 0, 0, .9);
+    background-color: rgba(255, 0, 0, .75);
     box-sizing: border-box;
     border-radius: 100%;
     pointer-events: none;
 }
 
 .area.partial.top:not(.left):not(.right):hover::after {
-    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) + var(--area-marker-distance) * 1.4142);
     left: calc(var(--left) - var(--half-area-marker-size));
 }
 
 .area.partial.bottom:not(.left):not(.right):hover::after {
-    top: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    top: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size) + var(--area-marker-distance) * 1.4142 - 1px);
     left: calc(var(--left) - var(--half-area-marker-size));
 }
 
 .area.partial.left:not(.top):not(.bottom):hover::after {
     top: calc(var(--top) - var(--half-area-marker-size));
-    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) + var(--area-marker-distance) * 1.4142);
 }
 
 .area.partial.right:not(.top):not(.bottom):hover::after {
     top: calc(var(--top) - var(--half-area-marker-size));
-    left: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    left: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size) + var(--area-marker-distance) * 1.4142 - 1px);
 }
 
 .area.partial.top.left:hover::after {
-    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
-    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) + var(--area-marker-distance));
+    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) + var(--area-marker-distance));
 }
 
 .area.partial.top.right:hover::after {
-    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
-    left: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    bottom: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) + var(--area-marker-distance));
+    left: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size) + var(--area-marker-distance) - 1px);
 }
 
 .area.partial.bottom.left:hover::after {
-    top: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
-    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    top: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size) + var(--area-marker-distance) - 1px);
+    right: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) + var(--area-marker-distance));
 }
 
 .area.partial.bottom.right:hover::after {
-    top: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
-    left: calc(-1 * var(--half-area-marker-size) - var(--half-axis-handle-size) - 1px);
+    top: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size) + var(--area-marker-distance) - 1px);
+    left: calc(-1 * var(--half-area-marker-size) + var(--half-axis-handle-size) + var(--area-marker-distance) - 1px);
 }
 
 /* areaOverlay */

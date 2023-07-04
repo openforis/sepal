@@ -1,0 +1,16 @@
+.panel {
+    max-width: 20rem;
+}
+
+.dateRange {
+    color: #ccc;
+    font-size: 0.8rem;
+}
+
+.durationUnit {
+    width: 7rem;
+}
+
+.unit {
+    width: 4rem;
+}

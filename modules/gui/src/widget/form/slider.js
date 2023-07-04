@@ -3,8 +3,13 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 export class FormSlider extends React.Component {
+    constructor() {
+        super()
+        this.onChange = this.onChange.bind(this)
+    }
+
     render() {
-        const {input, alignment, decimals, disabled, info, invert, label, maxValue, minValue, range, scale, snap, ticks, tooltip, tooltipPlacement, onChange} = this.props
+        const {input, alignment, decimals, disabled, info, invert, label, maxValue, minValue, range, scale, snap, ticks, tooltip, tooltipPlacement} = this.props
         return (
             <Slider
                 value={input.value}
@@ -22,12 +27,15 @@ export class FormSlider extends React.Component {
                 ticks={ticks}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
-                onChange={value => {
-                    input.set(value)
-                    onChange && onChange(value)
-                }}
+                onChange={this.onChange}
             />
         )
+    }
+
+    onChange(value) {
+        const {input, onChange} = this.props
+        input.set(value)
+        onChange && onChange(value)
     }
 }
 
@@ -51,7 +59,7 @@ FormSlider.propTypes = {
         // PropTypes.number,
         PropTypes.array
     ]),
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     onChange: PropTypes.func
 }

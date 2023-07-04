@@ -1,45 +1,50 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
 import {Panel} from 'widget/panel/panel'
+import {UserStatus} from './userStatus'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
 import {select} from 'store'
+import Confirm from 'widget/confirm'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './userDetails.module.css'
 
-const isNoMatchingUser = (id, check) => !(select('users') || []).find(user => user.id !== id && check(user))
+const isUniqueUser = (id, check) => !(select('users.users') || []).find(user => user.id !== id && check(user))
+
 const fields = {
     id: new Form.Field(),
     username: new Form.Field()
         .notBlank('user.userDetails.form.username.required')
         .match(/^[a-zA-Z_][a-zA-Z0-9]{0,29}$/, 'user.userDetails.form.username.format')
-        .predicate((username, {id}) => isNoMatchingUser(id, user => user.username === username), 'user.userDetails.form.username.unique'),
+        .predicate((username, {id}) => isUniqueUser(id, user => user.username?.toLowerCase() === username?.toLowerCase()), 'user.userDetails.form.username.unique'),
     name: new Form.Field()
         .notBlank('user.userDetails.form.name.required'),
     email: new Form.Field()
         .notBlank('user.userDetails.form.email.required')
         .email('user.userDetails.form.email.required')
-        .predicate((email, {id}) => isNoMatchingUser(id, user => user.email === email), 'user.userDetails.form.email.unique'),
+        .predicate((email, {id}) => isUniqueUser(id, user => user.email?.toLowerCase() === email?.toLowerCase()), 'user.userDetails.form.email.unique'),
     organization: new Form.Field()
         .notBlank('user.userDetails.form.organization.required'),
+    intendedUse: new Form.Field(),
+    // .notBlank('user.userDetails.form.intendedUse.required'),
     admin: new Form.Field(),
     instanceSpending: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.instanceSpending.atLeast1')
         .int('user.userDetails.form.monthlyBudget.instanceSpending.atLeast1')
-        .min(1, 'user.userDetails.form.monthlyBudget.instanceSpending.atLeast1'),
+        .min(0, 'user.userDetails.form.monthlyBudget.instanceSpending.atLeast1'),
     storageSpending: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.storageSpending.atLeast1')
         .int('user.userDetails.form.monthlyBudget.storageSpending.atLeast1')
-        .min(1, 'user.userDetails.form.monthlyBudget.storageSpending.atLeast1'),
+        .min(0, 'user.userDetails.form.monthlyBudget.storageSpending.atLeast1'),
     storageQuota: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
         .int('user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
-        .min(1, 'user.userDetails.form.monthlyBudget.storageQuota.atLeast1'),
+        .min(0, 'user.userDetails.form.monthlyBudget.storageQuota.atLeast1'),
     userRequestInstanceSpendingState: new Form.Field().notNil(),
     userRequestStorageSpendingState: new Form.Field().notNil(),
     userRequestStorageQuotaState: new Form.Field().notNil()
@@ -47,14 +52,14 @@ const fields = {
 
 const mapStateToProps = (state, ownProps) => {
     const {userDetails} = ownProps
-    const {id, newUser, username, name, email, organization, admin = false} = userDetails
+    const {id, newUser, username, name, email, organization, intendedUse, admin = false} = userDetails
     const {quota: {budget: {instanceSpending, storageSpending, storageQuota} = {}, budgetUpdateRequest}} = userDetails
     const userRequestInstanceSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageSpendingState = budgetUpdateRequest ? null : false
     const userRequestStorageQuotaState = budgetUpdateRequest ? null : false
     return {
         values: {
-            id, newUser, username, name, email, organization, admin, instanceSpending, storageSpending, storageQuota,
+            id, newUser, username, name, email, organization, intendedUse, admin, instanceSpending, storageSpending, storageQuota,
             userRequestInstanceSpendingState, userRequestStorageSpendingState, userRequestStorageQuotaState
         }
     }
@@ -73,7 +78,7 @@ class UserDetails extends React.Component {
     }
 
     render() {
-        const {form, inputs: {username, name, email, organization, instanceSpending, storageSpending, storageQuota}} = this.props
+        const {form, inputs: {username, name, email, organization, intendedUse, instanceSpending, storageSpending, storageQuota, admin}} = this.props
         const newUser = !this.props.userDetails.username
         return (
             <Form.Panel
@@ -81,12 +86,22 @@ class UserDetails extends React.Component {
                 form={form}
                 statePath='userDetails'
                 modal
+                confirmation={
+                    admin.isDirty() ?
+                        ({confirm, cancel}) =>
+                            <Confirm
+                                message={msg('user.userDetails.confirmation.message', {role: msg(`user.role.${admin.value ? 'admin' : 'user'}`)})}
+                                onConfirm={confirm}
+                                onCancel={cancel}
+                            />
+                        : null
+                }
                 onApply={userDetails => this.save(userDetails)}
                 onClose={() => this.cancel()}>
                 <Panel.Header
                     icon='user'
                     title={msg('user.userDetails.title')}
-                    label={this.renderUserRoleButtons()}
+                    label={this.renderHeaderButtons()}
                 />
                 <Panel.Content>
                     <Layout>
@@ -120,6 +135,13 @@ class UserDetails extends React.Component {
                             autoComplete={false}
                             spellCheck={false}
                             errorMessage
+                        />
+                        <Form.Input
+                            label={msg('user.userDetails.form.intendedUse.label')}
+                            input={intendedUse}
+                            spellCheck={false}
+                            textArea
+                            minRows={4}
                         />
                         <Form.FieldSet
                             className={styles.monthlyLimits}
@@ -157,16 +179,59 @@ class UserDetails extends React.Component {
                     </Layout>
                 </Panel.Content>
                 <Form.PanelButtons>
-                    <ModalConfirmationButton
-                        label={msg('user.userDetails.resetPassword.label')}
-                        icon='envelope'
-                        tooltip={msg('user.userDetails.resetPassword.tooltip')}
-                        message={msg('user.userDetails.resetPassword.message')}
-                        disabled={email.isInvalid()}
-                        onConfirm={() => this.requestPasswordReset(email.value)}
-                    />
+                    {this.renderLockUnlockButton()}
+                    {this.renderResetPasswordButton()}
                 </Form.PanelButtons>
             </Form.Panel>
+        )
+    }
+
+    renderResetPasswordButton() {
+        const {userDetails: {status}, inputs: {email}, form} = this.props
+        return (
+            <ModalConfirmationButton
+                label={msg('user.userDetails.resetPassword.label')}
+                icon='key'
+                tooltip={msg('user.userDetails.resetPassword.tooltip')}
+                message={msg('user.userDetails.resetPassword.message')}
+                disabled={UserStatus.isLocked(status) || email.isInvalid() || form.isDirty()}
+                onConfirm={() => this.requestPasswordReset(email.value)}
+            />
+        )
+    }
+
+    renderLockUnlockButton() {
+        const {userDetails: {status}} = this.props
+        return UserStatus.isLocked(status)
+            ? this.renderUnlockButton()
+            : this.renderLockButton()
+    }
+
+    renderLockButton() {
+        const {form} = this.props
+        return (
+            <ModalConfirmationButton
+                label={msg('user.userDetails.lock.label')}
+                icon='lock'
+                tooltip={msg('user.userDetails.lock.tooltip')}
+                message={msg('user.userDetails.lock.message')}
+                disabled={form.isDirty()}
+                onConfirm={() => this.lock()}
+            />
+        )
+    }
+
+    renderUnlockButton() {
+        const {inputs: {email}, form} = this.props
+        return (
+            <ModalConfirmationButton
+                label={msg('user.userDetails.unlock.label')}
+                icon='lock-open'
+                tooltip={msg('user.userDetails.unlock.tooltip')}
+                message={msg('user.userDetails.unlock.message')}
+                disabled={email.isInvalid() || form.isDirty()}
+                onConfirm={() => this.unlock()}
+            />
         )
     }
 
@@ -194,6 +259,23 @@ class UserDetails extends React.Component {
         }
     }
 
+    renderHeaderButtons() {
+        return (
+            <Layout type='horizontal-nowrap'>
+                {this.renderStatus()}
+                {this.renderUserRoleButtons()}
+            </Layout>
+        )
+    }
+
+    renderStatus() {
+        const {userDetails: {status, googleTokens}} = this.props
+        const isGoogleUser = !!googleTokens
+        return (
+            <UserStatus status={status} isGoogleUser={isGoogleUser}/>
+        )
+    }
+
     renderUserRoleButtons() {
         const {inputs: {admin}} = this.props
         return (
@@ -202,10 +284,10 @@ class UserDetails extends React.Component {
                 multiple={false}
                 options={[{
                     value: false,
-                    label: msg('user.userDetails.form.user.label')
+                    label: msg('user.role.user')
                 }, {
                     value: true,
-                    label: msg('user.userDetails.form.admin.label')
+                    label: msg('user.role.admin')
                 }]}
             />
         )
@@ -288,19 +370,31 @@ class UserDetails extends React.Component {
 
     requestPasswordReset(email) {
         this.props.stream('REQUEST_PASSWORD_RESET',
-            requestPasswordReset$(email),
+            requestPasswordReset$({email, optional: false}),
             () => Notifications.success({message: msg('landing.forgot-password.success', {email})})
         )
+    }
+
+    lock() {
+        const {userDetails: {username}, onLock} = this.props
+        onLock(username)
+    }
+
+    unlock() {
+        const {userDetails: {username}, onUnlock} = this.props
+        onUnlock(username)
     }
 }
 
 UserDetails.propTypes = {
     userDetails: PropTypes.object.isRequired,
     onCancel: PropTypes.func.isRequired,
+    onLock: PropTypes.func.isRequired,
     onSave: PropTypes.func.isRequired,
+    onUnlock: PropTypes.func.isRequired,
 }
 
 export default compose(
     UserDetails,
-    form({fields, mapStateToProps})
+    withForm({fields, mapStateToProps})
 )

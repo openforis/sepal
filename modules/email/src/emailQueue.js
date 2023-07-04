@@ -2,7 +2,7 @@ const {send, tag} = require('./email')
 const {redisUri, concurrency} = require('./config')
 const {filterEmailNotificationsEnabled} = require('./user')
 const Bull = require('bull')
-const log = require('sepal/log').getLogger('emailQueue')
+const log = require('#sepal/log').getLogger('emailQueue')
 const {default: ShortUniqueId} = require('short-unique-id')
 const uid = new ShortUniqueId()
 

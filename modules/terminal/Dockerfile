@@ -1,4 +1,4 @@
-FROM node:17-bullseye
+FROM node:18-bullseye
 EXPOSE 8000
 
 ENV MODULE_NAME terminal
@@ -6,11 +6,11 @@ ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
 RUN apt-get update && \
-    apt-get install sudo && \
+    apt-get install -y sudo && \
     adduser node sudo && \
     echo 'node    ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
 
-RUN npm install -g npm nodemon
+RUN npm install -g nodemon
 
 # Set bash prompt
 RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
@@ -37,6 +37,7 @@ RUN chmod +x /usr/local/bin/ssh_gateway.sh
 
 USER node
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/config ${MODULE}/config
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 
 CMD start.sh

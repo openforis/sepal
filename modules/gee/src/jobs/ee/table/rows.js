@@ -1,8 +1,8 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const worker$ = ({tableId}) => {
-    const ee = require('sepal/ee')
-    const {getRows$} = require('sepal/ee/table')
+    const ee = require('#sepal/ee')
+    const {getRows$} = require('#sepal/ee/table')
     return getRows$(ee.FeatureCollection(tableId), 'load table rows')
 }
 

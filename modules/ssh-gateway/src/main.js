@@ -23,7 +23,7 @@ const writeSession$ = session => {
         const contents = `#!/usr/bin/env bash
         $(alive.sh ${session.id} > ~/alive.log 2>&1 &) && ssh \
         -i "${userKeyFile}" \
-        -l "${session.username}" \
+        -l "sepal-user" \
         -q \
         -oStrictHostKeyChecking=no \
         -oUserKnownHostsFile=/dev/null \

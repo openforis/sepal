@@ -43,11 +43,7 @@ abstract class AbstractBudgetTest extends Specification {
     final userRepository = Mock(UserRepository)
     final clock = new FakeClock()
 
-    final defaultBudget = new Budget(
-            instanceSpending: 10,
-            storageSpending: 10,
-            storageQuota: 100,
-    )
+    final defaultBudget = createBudget()
 
     final component = new BudgetComponent(
             connectionManager,
@@ -66,7 +62,9 @@ abstract class AbstractBudgetTest extends Specification {
             new FakeGoogleOAuthGateway(),
             [new InstanceType(id: testInstanceType, name: testInstanceType, hourlyCost: 123d, idleCount: 1)],
             clock,
-            workDir)
+            workDir,
+            new FakeTopic()
+    )
 
     final events = [] as List<Event>
 
@@ -172,6 +170,14 @@ abstract class AbstractBudgetTest extends Specification {
             clock.forward((hours * 60d * 60d) as long, TimeUnit.SECONDS)
             updateStorageUsage(gbUsed: gb)
         }
+    }
+
+    final Budget createBudget(args = [:]) {
+        return new Budget(
+            instanceSpending: args.instanceSpending ?: 10, 
+            storageSpending: args.storageSpending ?: 10, 
+            storageQuota: args.storageQuota ?: 100
+        )
     }
 
     Map<String, UserSpendingReport> generateSpendingReport() {

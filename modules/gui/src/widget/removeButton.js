@@ -9,7 +9,7 @@ export default class RemoveButton extends React.Component {
         const {message} = this.props
         return message
             ? this.renderModalConfirmationButton()
-            : this.renderTooltipConfirmationButton()
+            : this.renderInlineConfirmationButton()
     }
 
     renderModalConfirmationButton() {
@@ -34,7 +34,7 @@ export default class RemoveButton extends React.Component {
         )
     }
 
-    renderTooltipConfirmationButton() {
+    renderInlineConfirmationButton() {
         const {chromeless, icon, label, confirmationLabel, tooltip, tooltipPlacement, shape, size, onRemove, disabled, unsafe} = this.props
         return (
             <InlineConfirmationButton

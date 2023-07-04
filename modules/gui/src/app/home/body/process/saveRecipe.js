@@ -1,11 +1,11 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
 import {closeRecipe, saveRecipe} from './recipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {toSafeString} from 'string'
+import {withActivatable} from 'widget/activation/activatable'
 import React from 'react'
 import styles from './saveRecipe.module.css'
 
@@ -91,6 +91,6 @@ const policy = () => ({
 
 export default compose(
     SaveRecipe,
-    form({fields, mapStateToProps}),
-    activatable({id: 'saveRecipeDialog', policy})
+    withForm({fields, mapStateToProps}),
+    withActivatable({id: 'saveRecipeDialog', policy})
 )

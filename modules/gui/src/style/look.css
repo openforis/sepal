@@ -15,6 +15,7 @@ html {
 
     /* disabled */
 
+    --look-hover-disabled-opacity: .8;
     --look-disabled-opacity: .5;
 
     /* default */

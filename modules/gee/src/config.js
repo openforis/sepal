@@ -1,6 +1,6 @@
 const program = require('commander')
 const fs = require('fs')
-const log = require('sepal/log').getLogger('config')
+const log = require('#sepal/log').getLogger('config')
 const _ = require('lodash')
 
 const DEFAULT_PORT = 5001
@@ -13,6 +13,7 @@ program
     .option('--sepal-username <value>')
     .option('--sepal-password <value>')
     .option('--port <number>', 'Port', DEFAULT_PORT)
+    .option('--instances <number>', 'Instances', parseInt)
     .parse(process.argv)
     
 const {geeEmail,
@@ -21,7 +22,8 @@ const {geeEmail,
     sepalEndpoint,
     sepalUsername,
     sepalPassword,
-    port
+    port,
+    instances
 } = program.opts()
 
 const readFile = path => {
@@ -47,5 +49,6 @@ module.exports = {
     sepalEndpoint,
     sepalUsername,
     sepalPassword,
-    port
+    port,
+    instances
 }

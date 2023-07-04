@@ -48,6 +48,9 @@ const indexByName = {
     },
     bui: {
         requiredBands: ['red', 'swir1', 'swir2']
+    },
+    kndvi: {
+        requiredBands: ['red', 'nir']
     }
 }
 

@@ -1,0 +1,13 @@
+.fadeOut {
+    animation-name: fadeOut;
+    animation-duration: calc(var(--animation-duration-ms) * 1ms);
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-in-out;
+}
+
+@keyframes fadeOut {
+    100% {
+        opacity: 0;
+        visibility: hidden; /* Disables event capturing */
+    }
+}

@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
 
-python3 -m pip install sepal-ui==2.8.0
+python3 -m pip install sepal-ui==2.15.2

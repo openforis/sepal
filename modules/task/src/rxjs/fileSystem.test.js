@@ -3,7 +3,7 @@ const fs = require('fs')
 const os = require('os')
 const Path = require('path')
 const {ls$, mkdir$, mkdirSafe$} = require('./fileSystem')
-const {stream, emitsOne, emitsNothing, throwsError} = require('sepal/test/rxjs')
+const {stream, emitsOne, emitsNothing, throwsError} = require('#sepal/test/rxjs')
 
 let emptyDirPath
 

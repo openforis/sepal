@@ -1,5 +1,5 @@
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
-import {faGoogle} from '@fortawesome/free-brands-svg-icons'
+import {fab} from '@fortawesome/free-brands-svg-icons'
 import {far} from '@fortawesome/free-regular-svg-icons'
 import {fas} from '@fortawesome/free-solid-svg-icons'
 import {library} from '@fortawesome/fontawesome-svg-core'
@@ -9,7 +9,7 @@ import Tooltip from 'widget/tooltip'
 import _ from 'lodash'
 import styles from './icon.module.css'
 
-library.add(faGoogle)
+library.add(fab)
 library.add(far)
 library.add(fas)
 
@@ -26,13 +26,16 @@ const fontAwesomeCollection = type => {
     }
 }
 
+const OMITTED_ATTRIBUTES = ['icon', 'name', 'type', 'className', 'variant']
+
 export default class Icon extends React.Component {
     render() {
-        const {tooltip, tooltipPlacement, tooltipDelay, tooltipDisabled} = this.props
+        const {tooltip, tooltipPlacement, tooltipClickTrigger, tooltipDelay, tooltipDisabled} = this.props
         return (
             <Tooltip
                 msg={tooltip}
                 placement={tooltipPlacement}
+                clickTrigger={tooltipClickTrigger}
                 delay={tooltipDelay}
                 disabled={tooltipDisabled}>
                 {this.renderIcon()}
@@ -49,19 +52,25 @@ export default class Icon extends React.Component {
         ].join(' ')
     }
 
+    isSpinner(name) {
+        return [
+            'spinner',
+            'circle-notch'
+        ].includes(name)
+    }
+
     renderIcon() {
         const {name, type, size, attributes} = this.props
-        const filteredAttributes = _.omit({spin: name === 'spinner', ...attributes}, [
-            'icon', 'name', 'type', 'className', 'variant'
-        ])
-        const icon = [fontAwesomeCollection(type), name]
+        const filteredAttributes = _.omit({spin: this.isSpinner(name), ...attributes}, OMITTED_ATTRIBUTES)
+        const icon = [fontAwesomeCollection(type || 'solid'), name]
         return (
-            <FontAwesomeIcon
-                icon={icon}
-                size={size}
-                className={this.classNames()}
-                {...filteredAttributes}
-            />
+            <span className={this.classNames()}>
+                <FontAwesomeIcon
+                    icon={icon}
+                    size={size}
+                    {...filteredAttributes}
+                />
+            </span>
         )
     }
 }
@@ -73,9 +82,10 @@ Icon.propTypes = {
     dimmed: PropTypes.any,
     size: PropTypes.string,
     tooltip: PropTypes.any,
+    tooltipClickTrigger: PropTypes.any,
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
-    tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
+    tooltipPlacement: PropTypes.any,
     type: PropTypes.oneOf(['solid', 'regular', 'brands']),
     variant: PropTypes.oneOf(['normal', 'error', 'info', 'success', 'warning'])
 }

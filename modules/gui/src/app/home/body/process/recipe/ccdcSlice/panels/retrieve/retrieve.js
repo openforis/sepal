@@ -19,10 +19,8 @@ import _ from 'lodash'
 import styles from './retrieve.module.css'
 
 const fields = {
-    baseBands: new Form.Field()
-        .predicate(selection => selection && selection.length, 'process.ccdcSlice.panel.retrieve.form.baseBands.atLeastOne'),
-    bandTypes: new Form.Field()
-        .predicate(selection => selection && selection.length, 'process.ccdcSlice.panel.retrieve.form.bandTypes.atLeastOne'),
+    baseBands: new Form.Field(),
+    bandTypes: new Form.Field(),
     segmentBands: new Form.Field(),
     scale: new Form.Field()
         .int()
@@ -62,6 +60,10 @@ const constraints = {
         .skip(({destination}) => destination !== 'SEPAL')
         .predicate(({fileDimensionsMultiple, shardSize}) =>
             fileDimensionsMultiple * shardSize <= 131072, 'process.retrieve.form.fileDimensionsMultiple.tooLarge'
+        ),
+    bandSelected: new Form.Constraint(['baseBands', 'bandTypes', 'segmentBands'])
+        .predicate(({baseBands, bandTypes, segmentBands}) =>
+            (baseBands?.length && bandTypes?.length) || segmentBands?.length, 'process.ccdcSlice.panel.retrieve.form.baseBands.atLeastOne'
         )
 }
 
@@ -501,13 +503,15 @@ class _Retrieve extends React.Component {
     }
 
     retrieve(values) {
-        const project = this.findProject()
         const {assetId, workspacePath} = values
-        updateProject({
-            ...project,
-            defaultAssetFolder: assetId ? Path.dirname(assetId) : project.defaultAssetFolder,
-            defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : project.defaultWorkspaceFolder
-        })
+        const project = this.findProject()
+        if (project) {
+            updateProject({
+                ...project,
+                defaultAssetFolder: assetId ? Path.dirname(assetId) : project?.defaultAssetFolder,
+                defaultWorkspaceFolder: workspacePath ? Path.dirname(workspacePath) : project?.defaultWorkspaceFolder
+            })
+        }
         this.recipeActions.retrieve(values).dispatch()
     }
 

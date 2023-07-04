@@ -1,12 +1,12 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const worker$ = ({recipe, latLng, bands}) => {
-    const {toGeometry} = require('sepal/ee/aoi')
+    const {toGeometry} = require('#sepal/ee/aoi')
     const {of, map, switchMap} = require('rxjs')
-    const ccdc = require('sepal/ee/timeSeries/ccdc')
-    const imageFactory = require('sepal/ee/imageFactory')
+    const ccdc = require('#sepal/ee/timeSeries/ccdc')
+    const imageFactory = require('#sepal/ee/imageFactory')
     const _ = require('lodash')
-    const ee = require('sepal/ee')
+    const ee = require('#sepal/ee')
 
     const aoi = {type: 'POINT', ...latLng}
     const geometry = toGeometry(aoi)
@@ -18,7 +18,8 @@ const worker$ = ({recipe, latLng, bands}) => {
                     segments.reduceRegion({
                         reducer: ee.Reducer.first(),
                         geometry,
-                        scale: 10
+                        scale: 10,
+                        tileScale: 16
                     }),
                     `Get CCDC segments for pixel (${latLng})`
                 )
@@ -27,7 +28,10 @@ const worker$ = ({recipe, latLng, bands}) => {
         )
 
     const assetSegments$ = () =>
-        of(new ee.Image(recipe.id))
+        imageFactory({
+            type: 'ASSET',
+            id: recipe.id
+        }).getImage$()
 
     const recipeRef$ = () => imageFactory(recipe, {selection: bands}).getRecipe$()
 

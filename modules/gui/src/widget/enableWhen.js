@@ -1,8 +1,8 @@
 import React from 'react'
 
 export const enabled = ({when, onDisable}) =>
-    WrappedComponent => {
-        class HigherOrderComponent extends React.Component {
+    WrappedComponent =>
+        class EnabledHOC extends React.Component {
             state = {enabled: true}
 
             static getDerivedStateFromProps(props) {
@@ -17,10 +17,8 @@ export const enabled = ({when, onDisable}) =>
 
             componentDidUpdate(prevProps, prevState) {
                 const wasDisabled = prevState.enabled && !this.state.enabled
-                if (wasDisabled)
+                if (wasDisabled) {
                     onDisable && onDisable(this.props)
+                }
             }
         }
-
-        return HigherOrderComponent
-    }

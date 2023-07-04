@@ -23,15 +23,20 @@ class AuthenticateHandler implements CommandHandler<User, Authenticate> {
     private final UserRepository userRepository
     private final Clock clock
 
-    AuthenticateHandler(UsernamePasswordVerifier usernamePasswordVerifier, UserRepository userRepository, Clock clock) {
+    AuthenticateHandler(
+        UsernamePasswordVerifier usernamePasswordVerifier, 
+        UserRepository userRepository, 
+        Clock clock
+    ) {
         this.usernamePasswordVerifier = usernamePasswordVerifier
         this.userRepository = userRepository
         this.clock = clock
     }
 
     User execute(Authenticate command) {
-        if (!usernamePasswordVerifier.verify(command.username, command.password))
+        if (!usernamePasswordVerifier.verify(command.username, command.password)) {
             return null
+        }
         userRepository.setLastLoginTime(command.username, clock.now())
         return userRepository.lookupUser(command.username)
     }

@@ -1,11 +1,12 @@
-import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
-import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import {Content, SectionLayout} from 'widget/sectionLayout'
 import {FastList} from 'widget/fastList'
 import {Layout} from 'widget/layout'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
+import {SortButton} from 'widget/sortButton'
 import {UserResourceUsage} from 'app/home/user/userResourceUsage'
+import {UserStatus} from './userStatus'
 import {msg} from 'translate'
 import {simplifyString, splitString} from 'string'
 import Highlight from 'react-highlighter'
@@ -16,10 +17,17 @@ import React from 'react'
 import _ from 'lodash'
 import format from 'format'
 import lookStyles from 'style/look.module.css'
+import memoizeOne from 'memoize-one'
 import moment from 'moment'
 import styles from './userList.module.css'
 
 const IGNORE = 'IGNORE'
+
+const getHighlightMatcher = memoizeOne(
+    filterValues => filterValues.length
+        ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
+        : ''
+)
 
 export default class UserList extends React.Component {
     state = {
@@ -38,11 +46,11 @@ export default class UserList extends React.Component {
         this.setStatusFilter = this.setStatusFilter.bind(this)
     }
 
-    setSorting(sortingOrder, defaultSorting) {
+    setSorting(sortingOrder, defaultSortingDirection) {
         this.setState(prevState => {
             const sortingDirection = sortingOrder === prevState.sortingOrder
                 ? -prevState.sortingDirection
-                : defaultSorting
+                : defaultSortingDirection
             return {
                 ...prevState,
                 sortingOrder,
@@ -80,7 +88,7 @@ export default class UserList extends React.Component {
     userMatchesTextFilter(user) {
         const {textFilterValues} = this.state
         const searchMatchers = textFilterValues.map(filter => RegExp(filter, 'i'))
-        const searchProperties = ['name', 'username', 'email', 'organization']
+        const searchProperties = ['name', 'username', 'email', 'organization', 'intendedUse']
         return textFilterValues
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
@@ -94,9 +102,11 @@ export default class UserList extends React.Component {
         const {statusFilter} = this.state
         switch (statusFilter) {
         case 'PENDING':
-            return this.isUserPending(user)
+            return UserStatus.isPending(user.status)
         case 'ACTIVE':
-            return this.isUserActive(user)
+            return UserStatus.isActive(user.status)
+        case 'LOCKED':
+            return UserStatus.isLocked(user.status)
         case 'OVERBUDGET':
             return this.isUserOverBudget(user)
         case 'BUDGET_UPDATE':
@@ -106,19 +116,11 @@ export default class UserList extends React.Component {
         }
     }
 
-    isUserPending({status}) {
-        return status === 'PENDING'
-    }
-
-    isUserActive({status}) {
-        return status === 'ACTIVE'
-    }
-
     isUserOverBudget({quota: {budget, current} = {}}) {
         return budget && current && (
-            current.instanceSpending > budget.instanceSpending
-            || current.storageSpending > budget.storageSpending
-            || current.storageQuota > budget.storageQuota
+            current.instanceSpending >= budget.instanceSpending && budget.instanceSpending > 0
+            || current.storageSpending >= budget.storageSpending && budget.storageSpending > 0
+            || current.storageQuota >= budget.storageQuota && budget.storageQuota > 0
         )
     }
 
@@ -137,28 +139,19 @@ export default class UserList extends React.Component {
         this.search.current.focus()
     }
 
-    getSortingHandleIcon(column, defaultSorting) {
+    renderColumnHeader({column, label, defaultSortingDirection, classNames = []}) {
         const {sortingOrder, sortingDirection} = this.state
-        return sortingOrder === column
-            ? sortingDirection === defaultSorting
-                ? 'sort-down'
-                : 'sort-up'
-            : 'sort'
-    }
-
-    renderColumnHeader({column, label, defaultSorting, classNames = []}) {
-        const {sortingOrder} = this.state
         return (
-            <Button
-                chromeless
-                look='transparent'
+            <SortButton
+                key={column}
+                additionalClassName={classNames.join(' ')}
                 shape='none'
                 label={label}
-                labelStyle={sortingOrder === column ? 'smallcaps-highlight' : 'smallcaps'}
-                icon={this.getSortingHandleIcon(column, defaultSorting)}
-                iconPlacement='right'
-                additionalClassName={classNames.join(' ')}
-                onClick={() => this.setSorting(column, defaultSorting)}/>
+                sorted={sortingOrder === column}
+                sortingDirection={sortingDirection}
+                defaultSortingDirection={defaultSortingDirection}
+                onChange={sortingDirection => this.setSorting(column, sortingDirection)}
+            />
         )
     }
 
@@ -174,55 +167,55 @@ export default class UserList extends React.Component {
                 {this.renderColumnHeader({
                     column: 'name',
                     label: msg('user.userDetails.form.name.label'),
-                    defaultSorting: 1,
+                    defaultSortingDirection: 1,
                     classNames: [styles.name]
                 })}
                 {this.renderColumnHeader({
                     column: 'status',
-                    label: msg('user.userDetails.form.status.label'),
-                    defaultSorting: 1,
+                    label: msg('user.status.label'),
+                    defaultSortingDirection: 1,
                     classNames: [styles.status]
                 })}
                 {this.renderColumnHeader({
                     column: 'updateTime',
                     label: msg('user.userDetails.form.lastUpdate.label'),
-                    defaultSorting: -1,
+                    defaultSortingDirection: -1,
                     classNames: [styles.updateTime]
                 })}
                 {this.renderColumnHeader({
                     column: 'quota.budget.instanceSpending',
                     label: msg('user.report.resources.max'),
-                    defaultSorting: -1,
+                    defaultSortingDirection: -1,
                     classNames: [styles.instanceBudgetMax, styles.number]
                 })}
                 {this.renderColumnHeader({
                     column: 'quota.current.instanceSpending',
                     label: msg('user.report.resources.used'),
-                    defaultSorting: -1,
+                    defaultSortingDirection: -1,
                     classNames: [styles.instanceBudgetUsed, styles.number]
                 })}
                 {this.renderColumnHeader({
                     column: 'quota.budget.storageSpending',
                     label: msg('user.report.resources.max'),
-                    defaultSorting: -1,
+                    defaultSortingDirection: -1,
                     classNames: [styles.storageBudgetMax, styles.number]
                 })}
                 {this.renderColumnHeader({
                     column: 'quota.current.storageSpending',
                     label: msg('user.report.resources.used'),
-                    defaultSorting: -1,
+                    defaultSortingDirection: -1,
                     classNames: [styles.storageBudgetUsed, styles.number]
                 })}
                 {this.renderColumnHeader({
                     column: 'quota.budget.storageQuota',
                     label: msg('user.report.resources.max'),
-                    defaultSorting: -1,
+                    defaultSortingDirection: -1,
                     classNames: [styles.storageSpaceMax, styles.number]
                 })}
                 {this.renderColumnHeader({
                     column: 'quota.current.storageQuota',
                     label: msg('user.report.resources.used'),
-                    defaultSorting: -1,
+                    defaultSortingDirection: -1,
                     classNames: [styles.storageSpaceUsed, styles.number]
                 })}
             </div>
@@ -250,6 +243,9 @@ export default class UserList extends React.Component {
             label: msg('users.filter.status.active.label'),
             value: 'ACTIVE'
         }, {
+            label: msg('users.filter.status.locked.label'),
+            value: 'LOCKED'
+        }, {
             label: msg('users.filter.status.overbudget.label'),
             value: 'OVERBUDGET'
         }, {
@@ -269,39 +265,42 @@ export default class UserList extends React.Component {
     }
 
     renderInfo(users) {
+        const oneMonthAgo = moment().subtract(1, 'months')
+        const lastMonthUserCount = users.filter(user => oneMonthAgo.isBefore(user.updateTime)).length
         return (
             <div className={styles.count}>
-                {msg('users.count', {count: users.length})}
+                {msg('users.count', {count: users.length, lastMonthUserCount})}
             </div>
         )
     }
 
     renderUsers(users) {
+        const itemKey = user => `${user.id}|${user.username}|${this.getHighlightMatcher()}`
         return (
             <FastList
                 items={users}
-                itemKey={user => _.compact([user.id, user.username, this.getHighLightMatcher()]).join('|')}
-                overflow={50}>
-                {this.renderUser}
-            </FastList>
+                itemKey={itemKey}
+                itemRenderer={this.renderUser}
+                overflow={50}
+                onEnter={this.onSelect}
+            />
         )
     }
 
-    renderUser(user) {
+    renderUser(user, hovered) {
         return (
             <UserItem
                 user={user}
-                highlight={this.getHighLightMatcher()}
+                highlight={this.getHighlightMatcher()}
+                hovered={hovered}
                 onClick={this.onSelect}
             />
         )
     }
 
-    getHighLightMatcher() {
+    getHighlightMatcher() {
         const {textFilterValues} = this.state
-        return textFilterValues.length
-            ? new RegExp(`(?:${textFilterValues.join('|')})`, 'i')
-            : ''
+        return getHighlightMatcher(textFilterValues)
     }
 
     onSelect(user) {
@@ -313,7 +312,6 @@ export default class UserList extends React.Component {
         const users = this.getUsers()
         return (
             <SectionLayout>
-                <TopBar label={msg('home.sections.users')}/>
                 <Content horizontalPadding verticalPadding menuPadding>
                     <ScrollableContainer>
                         <Unscrollable>
@@ -354,8 +352,9 @@ class UserItem extends React.PureComponent {
     }
 
     render() {
-        const {user} = this.props
-        const {name, status, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
+        const {user, hovered} = this.props
+        const {name, status, googleTokens, updateTime, quota: {budget, current, budgetUpdateRequest} = {}} = user
+        const isGoogleUser = !!googleTokens
         return (
             <div
                 className={[
@@ -365,11 +364,12 @@ class UserItem extends React.PureComponent {
                     lookStyles.noTransitions,
                     styles.grid,
                     styles.user,
-                    status ? styles.clickable : null
+                    status ? styles.clickable : null,
+                    hovered ? lookStyles.hoverForced : null
                 ].join(' ')}
                 onClick={this.onClick}>
                 {this.renderName(name)}
-                {this.renderStatus(status)}
+                {this.renderStatus(status, isGoogleUser)}
                 {this.renderLastUpdate(updateTime)}
                 {this.renderBudgetUpdateRequest(budgetUpdateRequest)}
                 {this.renderInstanceSpending(budget, current)}
@@ -388,23 +388,23 @@ class UserItem extends React.PureComponent {
         )
     }
 
-    renderStatus(status) {
+    renderStatus(status, isGoogleUser) {
         return (
             <div>
-                {status ? this.renderDefinedStatus(status) : this.renderUndefinedStatus() }
+                {status ? this.renderDefinedStatus(status, isGoogleUser) : this.renderUndefinedStatus() }
             </div>
         )
     }
 
-    renderDefinedStatus(status) {
+    renderDefinedStatus(status, isGoogleUser) {
         return (
-            <div>{msg(`user.userDetails.form.status.${status}`)}</div>
+            <UserStatus status={status} isGoogleUser={isGoogleUser}/>
         )
     }
 
     renderUndefinedStatus() {
         return (
-            <Icon name='spinner'/>
+            <UserStatus/>
         )
     }
 
@@ -472,6 +472,7 @@ class UserItem extends React.PureComponent {
 
 UserItem.propTypes = {
     highlighter: PropTypes.string,
+    hovered: PropTypes.any,
     user: PropTypes.object,
     onClick: PropTypes.func
 }

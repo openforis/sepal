@@ -1,13 +1,12 @@
-import {RecipeContext} from 'app/home/body/process/recipeContext'
+import {Recipe} from 'app/home/body/process/recipeContext'
 import {RecipeHome} from './recipeHome'
-import {StaticMap} from 'app/home/map/staticMap'
 import {Tabs, getTabsInfo} from 'widget/tabs/tabs'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {getRecipeType} from './recipeTypes'
 import {loadProjects$, loadRecipes$, recipePath, saveRecipe} from './recipe'
 import {msg} from 'translate'
-import {select} from '../../../../store'
+import {select} from 'store'
+import {withActivators} from 'widget/activation/activator'
 import {withLeaveAlert} from 'widget/leaveAlert'
 import CloseRecipe from './closeRecipe'
 import Notifications from 'widget/notifications'
@@ -20,22 +19,25 @@ import _ from 'lodash'
 export const getProcessTabsInfo = () => getTabsInfo('process')
 
 class Process extends React.Component {
+    constructor(props) {
+        super(props)
+        this.isLandingTab = this.isLandingTab.bind(this)
+        this.renderMenu = this.renderMenu.bind(this)
+        this.renderTab = this.renderTab.bind(this)
+        this.onCloseTab = this.onCloseTab.bind(this)
+    }
+
     render() {
         return (
             <React.Fragment>
                 <Tabs
                     label={msg('home.sections.process')}
                     statePath='process'
-                    isLandingTab={({type}) => !type}
-                    tabActions={recipeId => this.renderMenu(recipeId)}
-                    onTitleChanged={tab => saveRecipe(tab)}
-                    onClose={(tab, close) => this.onCloseTab(tab, close)}
-                >
-                    {({id, type}) =>
-                        <RecipeContext recipeId={id}>
-                            {this.renderRecipe(id, type)}
-                        </RecipeContext>
-                    }
+                    isLandingTab={this.isLandingTab}
+                    tabActions={this.renderMenu}
+                    onTitleChanged={saveRecipe}
+                    onClose={this.onCloseTab}>
+                    {this.renderTab}
                 </Tabs>
                 <CloseRecipe/>
                 <SaveRecipe/>
@@ -43,12 +45,24 @@ class Process extends React.Component {
         )
     }
 
+    isLandingTab({type}) {
+        return !type
+    }
+
+    renderTab({id, type}) {
+        return (
+            <Recipe id={id}>
+                {this.renderRecipe(id, type)}
+            </Recipe>
+        )
+    }
+
     renderMenu(recipeId) {
         return (
-            <RecipeContext recipeId={recipeId}>
+            <Recipe id={recipeId}>
                 <ProcessMenu recipeId={recipeId}/>
                 <Revisions recipeId={recipeId}/>
-            </RecipeContext>
+            </Recipe>
         )
     }
 
@@ -66,9 +80,7 @@ class Process extends React.Component {
 
     renderRecipeHome(recipeId) {
         return (
-            <StaticMap>
-                <RecipeHome recipeId={recipeId}/>
-            </StaticMap>
+            <RecipeHome recipeId={recipeId}/>
         )
     }
 
@@ -117,6 +129,6 @@ const mapStateToLeaveAlert = () => {
 
 export default compose(
     Process,
-    activator('closeRecipeDialog'),
+    withActivators('closeRecipeDialog'),
     withLeaveAlert(mapStateToLeaveAlert)
 )

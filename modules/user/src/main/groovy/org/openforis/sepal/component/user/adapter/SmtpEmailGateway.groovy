@@ -21,21 +21,35 @@ class SmtpEmailGateway implements EmailGateway {
                 preheader: 'An account on Sepal has been created for you.',
                 body: '/org/openforis/sepal/component/user/adapter/email-invitation.html',
                 binding: [
-                        user          : user,
+                        user: user,
                         activationLink: "https://$sepalHost/setup-account?token=$token"
                 ]
         )
         server.send(to, template)
     }
 
-    void sendPasswordReset(User user, String token) {
+    void sendOptionalPasswordReset(User user, String token) {
         String to = user.email
         def template = new EmailTemplate(
                 subject: 'Sepal Password Reset',
-                preheader: 'A request to reset your Sepal password have been made.',
-                body: '/org/openforis/sepal/component/user/adapter/email-password-reset.html',
+                preheader: 'A request to reset your Sepal password has been made.',
+                body: '/org/openforis/sepal/component/user/adapter/email-password-reset-optional.html',
                 binding: [
-                        user          : user,
+                        user: user,
+                        passwordResetLink: "https://$sepalHost/reset-password?token=$token"
+                ]
+        )
+        server.send(to, template)
+    }
+
+    void sendMandatoryPasswordReset(User user, String token) {
+        String to = user.email
+        def template = new EmailTemplate(
+                subject: 'Sepal Password Reset',
+                preheader: 'To access SEPAL you have to reset your password.',
+                body: '/org/openforis/sepal/component/user/adapter/email-password-reset-mandatory.html',
+                binding: [
+                        user: user,
                         passwordResetLink: "https://$sepalHost/reset-password?token=$token"
                 ]
         )

@@ -1,4 +1,4 @@
-const {LimiterService} = require('sepal/service/limiter')
+const {LimiterService} = require('#sepal/service/limiter')
 
 const options = {
     maxConcurrency: 1

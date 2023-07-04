@@ -1,11 +1,11 @@
 const {Subject, EMPTY, merge, of, mergeMap, shareReplay, filter, tap, switchMap, catchError} = require('rxjs')
-const log = require('sepal/log').getLogger('task')
+const log = require('#sepal/log').getLogger('task')
 const executeTask$ = require('./taskRunner')
-const {lastInWindow, repeating} = require('sepal/rxjs')
-const {post$} = require('sepal/httpClient')
+const {lastInWindow, repeating} = require('#sepal/rxjs')
+const {post$} = require('#sepal/httpClient')
 const {getConfig, switchedToServiceAccount$} = require('./context')
-const {errorReport} = require('sepal/exception')
-const {tag} = require('sepal/tag')
+const {errorReport} = require('#sepal/exception')
+const {tag} = require('#sepal/tag')
 
 const taskTag = id => tag('Task', id)
 

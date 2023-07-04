@@ -17,6 +17,10 @@
     pointer-events: all;
 }
 
+.view {
+    background-color: #131314;
+}
+
 .map::before {
     pointer-events: none;
     content: '';
@@ -28,16 +32,23 @@
 }
 
 .overlay {
-    display: none;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .overlay.active {
-    display: block;
     opacity: .75;
+    pointer-events: all;
 }
 
 .recipe {
     position: relative;
     width: 100%;
     height: 100%;
+}
+
+.drawingMode {
+    position: absolute;
+    top: .5rem;
+    left: .5rem;
 }

@@ -5,9 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <meta name="theme-color" content="#000000">
     <link rel="manifest" href="%PUBLIC_URL%/resource/manifest.json">
-    <link rel="shortcut icon" href="%PUBLIC_URL%/resource/favicon.png">
+
+    <!-- Icon specific -->
+    <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/resource/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/resource/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/resource/favicon-16x16.png">
+    <link rel="mask-icon" href="%PUBLIC_URL%/resource/safari-pinned-tab.svg" color="#186691">
+    <meta name="msapplication-TileColor" content="#186691">
+    <meta name="theme-color" content="#ffffff">
+
     <!-- Apple specific -->
-    <link rel="apple-touch-icon" sizes="129x129" href="%PUBLIC_URL%/resource/favicon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="format-detection" content="telephone=no">
@@ -16,15 +23,29 @@
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro: 200,300,400,600,700,900,200italic,300italic,400italic,600italic,700italic,900italic" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Merriweather: 400,300,300italic,400italic,700,700italic,900,900italic" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Ubuntu+Mono: 400,700" rel="stylesheet">
-    <script async src="https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ANALYTICS_ID}"></script>
     <script>
         window.process = {} // HACK: temporary fix after switching to create-react-app 5
         window.googleAnalyticsId = '${GOOGLE_ANALYTICS_ID}'
         window.googleMapsApiKey = '${GOOGLE_MAPS_API_KEY}'
+        window.googleRecaptchaSiteKey = '${GOOGLE_RECAPTCHA_SITE_KEY}'
+        window._sepal_global_ = {
+            gitCommit: '%REACT_APP_GIT_COMMIT%' || '${GIT_COMMIT}',
+            buildNumber: '%REACT_APP_BUILD_NUMBER%' || '${BUILD_NUMBER}',
+            googleAnalyticsId: '%REACT_APP_GOOGLE_ANALYTICS_ID%' || '${GOOGLE_ANALYTICS_ID}',
+            googleMapsApiKey: '%REACT_APP_GOOGLE_MAPS_API_KEY%' || '${GOOGLE_MAPS_API_KEY}',
+            googleRecaptchaSiteKey: '%REACT_APP_GOOGLE_RECAPTCHA_SITE_KEY%' || '${GOOGLE_RECAPTCHA_SITE_KEY}'
+        }
+        var scriptElement = document.createElement("script");
+        scriptElement.async = true
+        scriptElement.src = 'https://www.googletagmanager.com/gtag/js?id=' + window._sepal_global_.googleAnalyticsId
+        document.head.appendChild(scriptElement)
+    </script>
+    <script>
+        window.process = {} // HACK: temporary fix after switching to create-react-app 5
         window.dataLayer = window.dataLayer || []
         function gtag(){dataLayer.push(arguments)}
         gtag('js', new Date())
-        gtag('config', window.googleAnalyticsId)
+        gtag('config', window._sepal_global_.googleAnalyticsId)
     </script>
 
     <title>S E P A L</title>

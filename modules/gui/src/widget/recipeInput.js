@@ -27,9 +27,14 @@ const mapRecipeToProps = recipe => {
 
 class _RecipeInput extends React.Component {
     state = {
-        all: false
+        all: false,
+        result: undefined
     }
     cancel$ = new Subject()
+
+    shouldComponentUpdate() {
+        return true
+    }
 
     render() {
         const {stream, input, label, placeholder, autoFocus} = this.props
@@ -71,6 +76,13 @@ class _RecipeInput extends React.Component {
         )
     }
 
+    componentDidMount() {
+        const {input} = this.props
+        if (input.value) {
+            this.loadRecipe(input.value)
+        }
+    }
+
     getOptions() {
         const {projectId, projects, recipes, filter} = this.props
         const {all} = this.state
@@ -108,19 +120,23 @@ class _RecipeInput extends React.Component {
             onLoading && onLoading(recipeId)
             stream('LOAD_RECIPE',
                 loadRecipe$(recipeId).pipe(
-                    switchMap(recipe =>
-                        api.gee.bands$({recipe}).pipe(
+                    switchMap(recipe => {
+                        return api.gee.bands$({recipe}).pipe(
                             map(bandNames => ({
                                 recipe,
                                 bandNames,
                                 type: getRecipeType(recipe.type)
                             }))
                         )
+                    }
                     )
                 ).pipe(
                     takeUntil(this.cancel$)
                 ),
-                result => onLoaded && onLoaded(result),
+                result => {
+                    this.setState({result})
+                    return onLoaded && onLoaded(result)
+                },
                 error => onError && onError(error)
             )
         }

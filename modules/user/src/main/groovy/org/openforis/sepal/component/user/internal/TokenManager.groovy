@@ -17,18 +17,27 @@ class TokenManager {
     }
 
     TokenStatus validate(String token, boolean canExpire = true) {
-        def map = userRepository.tokenStatus(token)
-        if (!map)
+        def tokenStatus = userRepository.tokenStatus(token)
+        if (!tokenStatus)
             return null
-        def generationTime = map.generationTime as Date
-        def expired = canExpire && generationTime < clock.now() - MAX_AGE_DAYS
+        def generationTime = tokenStatus.generationTime as Date
+        def expired = canExpire && isExpired(tokenStatus)
         return new TokenStatus(
                 token: token,
                 generationTime: generationTime,
-                user: map.user as User,
+                user: tokenStatus.user as User,
                 expired: expired
         )
 
+    }
+
+    private isExpired(tokenStatus) {
+        return (tokenStatus.generationTime as Date) < clock.now() - MAX_AGE_DAYS
+    }
+
+    String getOrGenerateToken(String username) {
+        def tokenStatus = userRepository.tokenStatusByUsername(username)
+        return tokenStatus && !isExpired(tokenStatus) ? tokenStatus.token : UUID.randomUUID().toString()
     }
 
     void invalidate(String token) {

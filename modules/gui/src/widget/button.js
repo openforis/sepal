@@ -2,7 +2,8 @@ import {EMPTY, combineLatest, distinctUntilChanged, fromEvent, switchMap, take, 
 import {Link} from 'route'
 import {compose} from 'compose'
 import {download} from 'widget/download'
-import {withButtonGroupContext} from './buttonGroup'
+import {withButtonGroup} from './buttonGroup'
+import {withSubscriptions} from 'subscription'
 import Icon from 'widget/icon'
 import Keybinding from './keybinding'
 import PropTypes from 'prop-types'
@@ -12,7 +13,6 @@ import _ from 'lodash'
 import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
 import withForwardedRef from 'ref'
-import withSubscriptions from 'subscription'
 
 const CLICK_HOLD_DURATION_MS = 600
 const CLICK_CANCEL_DELAY_MS = 250
@@ -25,6 +25,18 @@ class _Button extends React.Component {
         const {onClickHold} = props
         this.button = onClickHold && React.createRef()
         this.handleClick = this.handleClick.bind(this)
+        this.handleMouseOver = this.handleMouseOver.bind(this)
+        this.handleMouseOut = this.handleMouseOut.bind(this)
+        this.handleMouseDown = this.handleMouseDown.bind(this)
+        this.preventDefault = this.preventDefault.bind(this)
+        this.renderKeybinding = this.renderKeybinding.bind(this)
+        this.renderVisible = this.renderVisible.bind(this)
+        this.renderWrapper = this.renderWrapper.bind(this)
+        this.renderLink = this.renderLink.bind(this)
+        this.renderTooltip = this.renderTooltip.bind(this)
+        this.renderDisabled = this.renderDisabled.bind(this)
+        this.renderButton = this.renderButton.bind(this)
+        this.renderContents = this.renderContents.bind(this)
     }
 
     stopPropagation() {
@@ -32,24 +44,42 @@ class _Button extends React.Component {
         return stopPropagation
     }
 
-    active() {
+    isActive() {
         const {disabled, busy} = this.props
         return !disabled && !busy
     }
 
-    linked() {
+    isLinked() {
         const {onMouseDown, onClick, onClickHold, route, linkUrl, downloadUrl, type} = this.props
         return onMouseDown || onClick || onClickHold || route || linkUrl || downloadUrl || ['submit', 'reset'].includes(type)
     }
 
-    nonInteractive() {
+    isNonInteractive() {
+        return !this.isActive()
+    }
+
+    isHoverRequired() {
         const {tooltip, tooltipPanel} = this.props
-        return !this.active() || !(this.linked() || tooltip || tooltipPanel)
+        return this.isLinked() || tooltip || tooltipPanel
+    }
+
+    isHoverDisabled() {
+        const {hover} = this.props
+        return _.isNil(hover)
+            ? !this.isHoverRequired()
+            : hover === false
+    }
+
+    isHoverForced() {
+        const {hover} = this.props
+        return _.isNil(hover)
+            ? false
+            : hover === true
     }
 
     classNames() {
         const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle, hint,
-            alignment, width, onClickHold, hover, disableTransitions, buttonGroupContext: {joinLeft, joinRight} = {}} = this.props
+            alignment, width, onClickHold, disableTransitions, buttonGroup: {joinLeft, joinRight} = {}} = this.props
         return className ? className : [
             styles.button,
             styles[`size-${size}`],
@@ -63,14 +93,18 @@ class _Button extends React.Component {
             lookStyles.look,
             lookStyles[look],
             chromeless ? lookStyles.chromeless : null,
-            hover === true ? lookStyles.hover : null,
-            hover === false ? lookStyles.noHover : null,
+            this.isHoverForced() ? lookStyles.hoverForced : null,
+            this.isHoverDisabled() ? lookStyles.hoverDisabled : null,
+            this.isNonInteractive() ? lookStyles.nonInteractive : null,
             disableTransitions ? lookStyles.noTransitions : null,
-            this.nonInteractive() ? lookStyles.nonInteractive : null,
             onClickHold ? styles.hold : null,
             hint ? styles.hint : null,
             additionalClassName
         ].join(' ')
+    }
+
+    preventDefault(e) {
+        e.preventDefault()
     }
 
     handleMouseOver(e) {
@@ -97,12 +131,16 @@ class _Button extends React.Component {
         }
     }
 
-    handleClick(e) {
-        const {onClick, downloadUrl, downloadFilename} = this.props
-        onClick && onClick(e)
-        downloadUrl && download(downloadUrl, downloadFilename)
-        if (this.stopPropagation()) {
+    handleClick(e, forceHandle = false) {
+        const {onClick, onClickHold, downloadUrl, downloadFilename} = this.props
+        if (onClickHold && !forceHandle) {
             e.stopPropagation()
+        } else {
+            onClick && onClick(e)
+            downloadUrl && download(downloadUrl, downloadFilename)
+            if (this.stopPropagation()) {
+                e.stopPropagation()
+            }
         }
     }
 
@@ -114,8 +152,32 @@ class _Button extends React.Component {
         }
     }
 
+    getKeymap(keybinding) {
+        return _.isArray(keybinding)
+            ? _.reduce(keybinding, (keymap, key) => ({...keymap, [key]: this.handleClick}), {})
+            : {[keybinding]: this.handleClick}
+    }
+
+    renderKeybinding([current, ...next]) {
+        const {keybinding, hidden} = this.props
+        return keybinding
+            ? (
+                <Keybinding
+                    keymap={this.getKeymap(keybinding)}
+                    disabled={hidden || !this.isActive()}>
+                    {current(next)}
+                </Keybinding>
+            )
+            : current(next)
+    }
+
+    renderVisible([current, ...next]) {
+        const {hidden} = this.props
+        return hidden ? null : current(next)
+    }
+
     // The Tooltip component stops propagation of events, thus the ref has to be on a wrapping element.
-    renderWrapper(contents) {
+    renderWrapper([current, ...next]) {
         const {onClickHold} = this.props
         const style = {
             '--click-hold-delay-ms': `${CLICK_CANCEL_DELAY_MS}ms`,
@@ -123,32 +185,32 @@ class _Button extends React.Component {
         }
         return onClickHold ? (
             <span ref={this.button} className={styles.wrapper} style={style}>
-                {contents}
+                {current(next)}
             </span>
-        ) : contents
+        ) : current(next)
     }
 
-    renderLink(contents) {
+    renderLink([current, ...next]) {
         const {route, linkUrl} = this.props
         if (!route && !linkUrl) {
-            return contents
+            return current(next)
         }
         if (route && linkUrl) {
             throw Error('Cannot specify route and linkUrl at the same time.')
         }
         if (route) {
-            return this.renderRouteLink(contents)
+            return this.renderRouteLink(current(next))
         }
         if (linkUrl) {
-            return this.renderPlainLink(contents)
+            return this.renderPlainLink(current(next))
         }
     }
 
     renderPlainLink(contents) {
         const {linkUrl, linkTarget} = this.props
-        return this.active() && linkUrl
+        return this.isActive() && linkUrl
             ? (
-                <a href={linkUrl} rel='noopener noreferrer' target={linkTarget} onMouseDown={e => e.preventDefault()}>
+                <a href={linkUrl} rel='noopener noreferrer' target={linkTarget} onMouseDown={this.preventDefault}>
                     {contents}
                 </a>
             )
@@ -157,86 +219,80 @@ class _Button extends React.Component {
 
     renderRouteLink(contents) {
         const {route} = this.props
-        return this.active() && route
+        return this.isActive() && route
             ? (
-                <Link to={route} onMouseDown={e => e.preventDefault()}>
+                <Link to={route} onMouseDown={this.preventDefault}>
                     {contents}
                 </Link>
             )
             : contents
     }
 
-    renderTooltip(contents) {
-        const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipVisible, tooltipClickTrigger} = this.props
+    renderTooltip([current, ...next]) {
+        const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipVisible, tooltipClickTrigger, tooltipAllowedWhenDisabled} = this.props
         const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
         const message = tooltipPanel || tooltip
         const visibility = _.isNil(tooltipVisible) ? {} : {visible: tooltipVisible}
-        return this.active() && message ? (
+        return (tooltipAllowedWhenDisabled || this.isActive()) && message ? (
             <Tooltip
                 msg={message}
                 placement={tooltipPlacement}
                 delay={tooltipDelay}
                 hoverTrigger={!tooltipPanel}
-                clickTrigger={tooltipClickTrigger || !this.linked()}
+                clickTrigger={tooltipClickTrigger || !this.isLinked()}
                 overlayInnerStyle={overlayInnerStyle}
                 overlayStyle={{visibility: tooltipDisabled ? 'hidden' : 'visible'}}
                 onVisibleChange={tooltipOnVisible}
                 {...visibility}
             >
-                {contents}
+                {current(next)}
             </Tooltip>
-        ) : contents
+        ) : current(next)
     }
 
-    getKeymap(keybinding) {
-        return _.isArray(keybinding)
-            ? _.reduce(keybinding, (keymap, key) => ({...keymap, [key]: this.handleClick}), {})
-            : {[keybinding]: this.handleClick}
-    }
-
-    renderKeybinding(contents) {
-        const {keybinding} = this.props
-        return this.active() && keybinding
+    renderDisabled([current, ...next]) {
+        const {tooltipAllowedWhenDisabled} = this.props
+        return tooltipAllowedWhenDisabled && !this.isActive()
             ? (
-                <Keybinding keymap={this.getKeymap(keybinding)}>
-                    {contents}
-                </Keybinding>
-            )
-            : contents
+                <div style={{pointerEvents: 'all'}}>
+                    {current(next)}
+                </div>
+            ) : current(next)
     }
 
-    renderButton(contents) {
-        const {type, style, tabIndex, onClickHold, forwardedRef} = this.props
+    renderButton([current, ...next]) {
+        const {type, style, tabIndex, forwardedRef} = this.props
         return (
             <button
                 ref={forwardedRef}
                 type={type}
                 className={this.classNames()}
-                style={style}
+                style={this.isActive() ? style : {...style, pointerEvents: 'none'}}
                 tabIndex={tabIndex}
-                disabled={!this.active()}
-                onMouseOver={e => this.handleMouseOver(e)}
-                onMouseOut={e => this.handleMouseOut(e)}
-                onMouseDown={e => this.handleMouseDown(e)}
-                onClick={e => onClickHold ? e.stopPropagation() : this.handleClick(e)}
-            >
-                {contents}
+                disabled={!this.isActive()}
+                onMouseOver={this.handleMouseOver}
+                onMouseOut={this.handleMouseOut}
+                onMouseDown={this.handleMouseDown}
+                onClick={this.handleClick}>
+                {current(next)}
             </button>
         )
     }
 
     renderIcon() {
         const {busy, icon, iconType, iconVariant, iconDimmed, iconClassName, iconAttributes} = this.props
-        return (
-            <Icon
-                name={busy ? 'spinner' : icon}
-                type={iconType}
-                variant={iconVariant}
-                dimmed={iconDimmed}
-                className={iconClassName}
-                attributes={iconAttributes}
-            />
-        )
+        return React.isValidElement(icon)
+            ? icon
+            : (
+                <Icon
+                    name={busy ? 'spinner' : icon}
+                    type={iconType}
+                    variant={iconVariant}
+                    dimmed={iconDimmed}
+                    className={iconClassName}
+                    attributes={iconAttributes}
+                />
+            )
     }
 
     renderLabel() {
@@ -260,20 +316,17 @@ class _Button extends React.Component {
     }
 
     render() {
-        const {hidden} = this.props
-        return !hidden ? (
-            this.renderWrapper(
-                this.renderLink(
-                    this.renderTooltip(
-                        this.renderKeybinding(
-                            this.renderButton(
-                                this.renderContents()
-                            )
-                        )
-                    )
-                )
-            )
-        ) : null
+        const [current, ...next] = [
+            this.renderKeybinding,
+            this.renderVisible,
+            this.renderWrapper,
+            this.renderLink,
+            this.renderTooltip,
+            this.renderDisabled,
+            this.renderButton,
+            this.renderContents
+        ]
+        return current(next)
     }
 
     getContent() {
@@ -290,7 +343,7 @@ class _Button extends React.Component {
             const mouseUp$ = fromEvent(button, 'mouseup')
             const mouseEnter$ = fromEvent(button, 'mouseenter')
             const cancel$ = windowMouseUp$
-            const mouseTrigger$ = combineLatest(mouseDown$, mouseEnter$)
+            const mouseTrigger$ = combineLatest([mouseDown$, mouseEnter$])
             const mouseActivate$ = mouseUp$
 
             // Click-hold is triggered if button pressed more than CLICK_HOLD_DELAY_MS.
@@ -312,7 +365,7 @@ class _Button extends React.Component {
             addSubscription(
                 clickHold$.subscribe(e => {
                     const {onClickHold} = this.props
-                    if (this.active() && onClickHold) {
+                    if (this.isActive() && onClickHold) {
                         this.handleClickHold(e)
                     }
                 })
@@ -336,8 +389,8 @@ class _Button extends React.Component {
             addSubscription(
                 click$.subscribe(e => {
                     const {onClick} = this.props
-                    if (this.active() && onClick) {
-                        this.handleClick(e)
+                    if (this.isActive() && onClick) {
+                        this.handleClick(e, true)
                     }
                 })
             )
@@ -345,12 +398,13 @@ class _Button extends React.Component {
     }
 }
 
-export const Button = compose(
-    _Button,
-    withSubscriptions(),
-    withButtonGroupContext(),
-    withForwardedRef()
-)
+export const Button =
+    compose(
+        React.memo(_Button),
+        withSubscriptions(),
+        withButtonGroup(),
+        withForwardedRef()
+    )
 
 Button.propTypes = {
     additionalClassName: PropTypes.string,
@@ -367,8 +421,8 @@ Button.propTypes = {
     downloadUrl: PropTypes.any,
     hidden: PropTypes.any,
     hint: PropTypes.any,
-    hover: PropTypes.any,
-    icon: PropTypes.string,
+    hover: PropTypes.any, // three-state
+    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     iconAttributes: PropTypes.any,
     iconClassName: PropTypes.any,
     iconDimmed: PropTypes.any,
@@ -389,6 +443,7 @@ Button.propTypes = {
     tabIndex: PropTypes.number,
     tail: PropTypes.any,
     tooltip: PropTypes.any,
+    tooltipAllowedWhenDisabled: PropTypes.any,
     tooltipClickTrigger: PropTypes.any,
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,

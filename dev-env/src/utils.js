@@ -25,6 +25,7 @@ export const STATUS = {
     CLEANING_PACKAGES: 'CLEANING_PACKAGES',
     INSTALLING_PACKAGES: 'INSTALLING_PACKAGES',
     INSTALLED_PACKAGES: 'INSTALLED_PACKAGES',
+    REBUILDING_PACKAGES: 'REBUILDING_PACKAGES',
     SKIPPED: 'SKIPPED'
 }
 
@@ -231,14 +232,20 @@ export const isModule = name => {
 }
 
 export const isRunnable = module =>
-    (isModule(module) || {}).run
+    isModule(module)?.run
 
-export const isServiceRunning = async (module, serviceName) => {
+export const isGradleModule = module =>
+    isModule(module)?.gradle
+    
+export const isRunning = async (module, serviceName) => {
     const result = await getStatus([module], true)
     const services = _(result).get(['0', 'services'])
     if (services) {
-        const service = services.find(({name}) => name === serviceName)
-        return service && service.state === 'RUNNING'
+        if (serviceName) {
+            return services.find(service => service.name === serviceName)?.state === 'RUNNING'
+        } else {
+            return services.every(service => service.state === 'RUNNING')
+        }
     }
     return false
 }

@@ -3,6 +3,7 @@
 import {program, Option} from 'commander'
 import {showStatus, exit} from './utils.js'
 import {build} from './build.js'
+import {buildRestart} from './buildRestart.js'
 import {start} from './start.js'
 import {stop} from './stop.js'
 import {restart} from './restart.js'
@@ -41,9 +42,21 @@ const main = async () => {
         .argument('[module...]', 'Modules to build')
         .action(build)
     
+    program.command('buildrestart')
+        .description('Build and restart modules')
+        .option('-nc, --no-cache', 'No cache')
+        .option('-r, --recursive', 'Recursive')
+        .option('-d, --dependencies', 'Restart dependencies')
+        .option('-l, --log-tail', 'Show log tail')
+        .option('-t, --log-tail', 'Show log tail')
+        .option('-v, --verbose', 'Verbose')
+        .option('-q, --quiet', 'Quiet')
+        .argument('[module...]', 'Modules to build')
+        .action(buildRestart)
+    
     program.command('stop')
         .description('Stop modules')
-        .option('-d, --dependencies', 'Stop dependencies too')
+        .option('-d, --dependencies', 'Stop dependencies')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .argument('[module...]', 'Modules to stop')
@@ -51,26 +64,27 @@ const main = async () => {
     
     program.command('start')
         .description('Start modules')
-        .option('-d, --dependencies', 'Start dependencies too', true)
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .option('-l, --log-tail', 'Show log tail')
+        .option('-t, --log-tail', 'Show log tail')
         .argument('[module...]', 'Modules to start')
         .action(start)
     
     program.command('restart')
         .description('Restart modules')
-        .option('-d, --dependencies', 'Restart dependencies too')
+        .option('-d, --dependencies', 'Restart dependencies')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .option('-l, --log-tail', 'Show log tail')
+        .option('-t, --log-tail', 'Show log tail')
         .argument('[module...]', 'Modules to start')
         .action(restart)
     
     program.command('logs')
         .description('Show module log')
         .option('-f, --follow', 'Follow')
-        .option('-t, --tail', 'Tail')
+        .option('-t, --tail', 'Tail (shortcut for --since 0 --follow)')
         .option('-s, --since <time>', 'Since relative or absolute time')
         .option('-u, --until <time>', 'Until relative or absolute time')
         .argument('[module...]', 'Modules')
@@ -80,6 +94,7 @@ const main = async () => {
         .description('Start module shell')
         .option('-r, --root', 'Start as root')
         .argument('<module>', 'Module')
+        .argument('[service]', 'Service')
         .action(shell)
 
     program.command('npm-update')

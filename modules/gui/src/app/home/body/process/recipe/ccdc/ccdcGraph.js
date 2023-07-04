@@ -75,10 +75,18 @@ export class CCDCGraph extends React.Component {
     }
 
     renderPoint() {
-        const {observations} = this.props
+        const {segments} = this.props
         const {point} = this.state
         if (!point)
             return null
+        return segments
+            ? this.renderPointWithModel()
+            : this.renderObservation()
+    }
+
+    renderPointWithModel() {
+        const {observations} = this.props
+        const {point} = this.state
         const hasModel = _.isFinite(point.model)
         const hasObservation = _.isFinite(point.observation)
         return (
@@ -150,6 +158,26 @@ export class CCDCGraph extends React.Component {
                         ? point.observationCount
                         : <React.Fragment>&ndash;</React.Fragment>
                     }
+                </Widget>
+            </div>
+        )
+    }
+
+    renderObservation() {
+        const {point} = this.state
+        return (
+            <div
+                className={styles.point}
+                style={point.left ? {right: 0} : null}>
+                <Widget
+                    className={styles.date}
+                    label={msg('process.ccdc.mapToolbar.ccdcGraph.date.label')}>
+                    {moment(point.date).format('YYYY-MM-DD')}
+                </Widget>
+                <Widget
+                    className={styles.observation}
+                    label={msg('process.ccdc.mapToolbar.ccdcGraph.observation.label')}>
+                    {format.number({value: point.observation, precisionDigits: 3})}
                 </Widget>
             </div>
         )

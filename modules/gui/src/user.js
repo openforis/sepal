@@ -1,5 +1,4 @@
-import {EMPTY, catchError, map, of, switchMap, tap} from 'rxjs'
-import {history} from 'route'
+import {catchError, map, of, switchMap, tap} from 'rxjs'
 import {msg} from 'translate'
 import {publishCurrentUserEvent, publishEvent} from 'eventPublisher'
 import {select} from 'store'
@@ -22,16 +21,11 @@ export const loadUser$ = () =>
 
 export const login$ = ({username, password}) => {
     resetInvalidCredentials()
-    return api.user.login$(username, password).pipe(
-        catchError(() => {
-            Notifications.error({message: msg('landing.login.error')})
-            return EMPTY
-        }),
+    return api.user.login$({username, password}).pipe(
         tap(user => {
             publishEvent(user ? 'login' : 'login_failed')
             publishCurrentUserEvent(user)
-        }),
-        map(user => credentialsPosted(user))
+        })
     )
 }
 
@@ -40,20 +34,16 @@ export const logout$ = () =>
         tap(() => document.location = '/' /* force full state reset*/)
     )
 
-export const resetPassword$ = ({token, username, password, type}) =>
-    api.user.resetPassword$(token, username, password).pipe(
-        tap(() => publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')),
-        switchMap(() => api.user.login$(username, password)),
-        tap(user => {
-            credentialsPosted(user)
-            history().push('/process')
-            Notifications.success({message: msg('landing.reset-password.success')})
-        }),
-        catchError(() => {
-            Notifications.error({message: msg('landing.login.error')})
-            return EMPTY
-        })
+export const resetPassword$ = ({token, username, password, type, recaptchaToken}) => {
+    return api.user.resetPassword$({token, password, recaptchaToken}).pipe(
+        tap(() =>
+            publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')
+        ),
+        switchMap(() =>
+            login$({username, password})
+        )
     )
+}
 
 export const updateUser = user => {
     publishCurrentUserEvent(user)
@@ -83,8 +73,8 @@ export const requestUserAccess$ = () =>
         tap(({url}) => window.location = url)
     )
 
-export const requestPasswordReset$ = email =>
-    api.user.requestPasswordReset$(email).pipe(
+export const requestPasswordReset$ = ({email, optional}, recaptchaToken) =>
+    api.user.requestPasswordReset$({email, optional, recaptchaToken}).pipe(
         tap(() => publishEvent('requested_password_reset')),
     )
 
@@ -99,18 +89,31 @@ export const validateToken$ = token =>
         })
     )
 
-export const updateCurrentUserDetails$ = ({name, email, organization, emailNotificationsEnabled}) => {
-    return api.user.updateCurrentUserDetails$({name, email, organization, emailNotificationsEnabled}).pipe(
+export const signUp$ = (userDetails, recaptchaToken) =>
+    api.user.signUp$(userDetails, recaptchaToken)
+
+export const validateUsername$ = ({username, recaptchaToken}) =>
+    api.user.validateUsername$({username, recaptchaToken}).pipe(
+        map(({valid}) => valid)
+    )
+    
+export const validateEmail$ = ({email, recaptchaToken}) =>
+    api.user.validateEmail$({email, recaptchaToken}).pipe(
+        map(({valid}) => valid)
+    )
+
+export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled}) =>
+    api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled}).pipe(
         map(({name, email, organization}) =>
-            actionBuilder('UPDATE_USER_DETAILS', {name, email, organization})
+            actionBuilder('UPDATE_USER_DETAILS', {name, email, organization, intendedUse})
                 .set('user.currentUser.name', name)
                 .set('user.currentUser.email', email)
                 .set('user.currentUser.organization', organization)
+                .set('user.currentUser.intendedUse', intendedUse)
                 .set('user.currentUser.emailNotificationsEnabled', emailNotificationsEnabled)
                 .dispatch()
         )
     )
-}
 
 export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
     api.user.changePassword$({oldPassword, newPassword})
@@ -135,7 +138,7 @@ export const stopCurrentUserSession$ = session =>
         )
     )
 
-const credentialsPosted = user =>
+export const credentialsPosted = user =>
     actionBuilder('CREDENTIALS_POSTED')
         .set('user.currentUser', user)
         .set('user.login.invalidCredentials', !user)

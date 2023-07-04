@@ -178,7 +178,7 @@ const valuesToModel = values => {
             minObservations: parseInt(values.minObservations),
             chiSquareProbability: parseFloat(values.chiSquareProbability),
             minNumOfYearsScaler: parseFloat(values.minNumOfYearsScaler),
-            lambda: parseInt(values.lambda),
+            lambda: parseFloat(values.lambda),
             maxIterations: parseInt(values.maxIterations)
         }
     } else {

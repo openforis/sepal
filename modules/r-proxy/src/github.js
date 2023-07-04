@@ -3,13 +3,18 @@ const {opendir} = require('fs/promises')
 const {isChildOf, isFile} = require('./filesystem')
 const {GITHUB_ROOT, LOCAL_CRAN_REPO, libPath} = require('./config')
 const {runScript} = require('./script')
-const log = require('sepal/log').getLogger('github')
+const {makePackage, cleanupPackage} = require('./bundle')
+const log = require('#sepal/log').getLogger('github')
+
+const SRC = 'src'
+const BIN = 'bin'
+const TMP = '.bin'
 
 const isGitHubRepoPath = path =>
     isChildOf(GITHUB_ROOT, path)
 
 const getGitHubRepoPath = (section, path = '') => {
-    if (!['src', 'bin'].includes(section)) {
+    if (![SRC, BIN].includes(section)) {
         throw new Error('Illegal section:', section)
     }
     const repoPath = Path.join(GITHUB_ROOT, section, path)
@@ -30,7 +35,7 @@ const getGitHubPackageInfo = path => {
 }
 
 const isGitHubPackageSourceCached = async path =>
-    isFile(getGitHubRepoPath('src', path))
+    isFile(getGitHubRepoPath(SRC, path))
 
 const getGitHubTarget = path =>
     `https://github.com/${path}`
@@ -58,26 +63,20 @@ const installRemotePackage = async (name, url) => {
         return false
     }
 }
-        
-const bundleGitHubPackage = async (name, path) => {
-    try {
-        log.debug(`Bundling ${name} (${path})`)
-        await runScript('bundle_github_package.sh', [name, path, libPath, GITHUB_ROOT], {showStdOut: true, showStdErr: true})
-        log.info(`Bundled ${name} (${path})`)
-        return true
-    } catch (error) {
-        log.warn(`Could not bundle ${name} (${path})`, error)
-        return false
-    }
-}
-    
+
 const ensureGitHubPackageInstalled = async (name, path) =>
     await isGitHubPackageSourceCached(path)
-        ? await installLocalPackage(name, getGitHubRepoPath('src', path))
+        ? await installLocalPackage(name, getGitHubRepoPath(SRC, path))
         : await installRemotePackage(name, getGitHubTarget(path))
         
-const makeGitHubPackage = async (name, path) =>
-    await ensureGitHubPackageInstalled(name, path) && await bundleGitHubPackage(name, path)
+const makeGitHubPackage = async (name, path) => {
+    const srcPath = Path.join(GITHUB_ROOT, SRC, path)
+    const binPath = Path.join(GITHUB_ROOT, BIN, path)
+    const tmpPath = Path.join(GITHUB_ROOT, TMP, path)
+    const success = await ensureGitHubPackageInstalled(name, path) && await makePackage(name, srcPath, binPath, tmpPath)
+    await cleanupPackage(name, srcPath, binPath, tmpPath)
+    return success
+}
     
 const updateGitHubPackage = async ({name, path}) => {
     log.info(`Updating: ${name} (${path})`)
@@ -86,7 +85,7 @@ const updateGitHubPackage = async ({name, path}) => {
 }
     
 const checkGitHubUpdates = async enqueueUpdateGitHubPackage => {
-    scanDir(enqueueUpdateGitHubPackage, getGitHubRepoPath('bin'))
+    scanDir(enqueueUpdateGitHubPackage, getGitHubRepoPath(BIN))
 }
 
 const scanDir = async (enqueueUpdateGitHubPackage, baseDir, dir = '') => {

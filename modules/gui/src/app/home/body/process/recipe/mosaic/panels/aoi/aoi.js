@@ -7,9 +7,7 @@ import {SectionSelection} from './sectionSelection'
 import {compose} from 'compose'
 import {countryEETable} from 'app/home/map/aoiLayer'
 import {msg} from 'translate'
-import {withMap} from 'app/home/map/mapContext'
 import PanelSections from 'widget/panelSections'
-import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './aoi.module.css'
 
@@ -146,6 +144,5 @@ const modelToValues = (model = {}) => {
 
 export default compose(
     Aoi,
-    recipeFormPanel({id: 'aoi', fields, modelToValues, valuesToModel}),
-    withMap()
+    recipeFormPanel({id: 'aoi', fields, modelToValues, valuesToModel})
 )

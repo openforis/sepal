@@ -1,13 +1,13 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {LegendBuilder, defaultColor} from 'app/home/map/legendBuilder'
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {downloadCsv} from '../download'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withMapContext} from 'app/home/map/mapContext'
+import {withActivatable} from 'widget/activation/activatable'
+import {withActivators} from 'widget/activation/activator'
+import {withMap} from 'app/home/map/mapContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import ButtonSelect from 'widget/buttonSelect'
 import Notifications from 'widget/notifications'
@@ -167,7 +167,7 @@ class _EditLegendPanel extends React.Component {
     }
 
     loadDistinctBandValues() {
-        const {activatable: {band, recipe}, aoi, stream, mapContext: {map: {getBounds}}} = this.props
+        const {activatable: {band, recipe}, aoi, stream, map: {getBounds}} = this.props
         const toEntries = values => values.map(value => ({
             id: guid(),
             value,
@@ -200,13 +200,13 @@ const policy = () => ({
 
 export const EditLegendPanel = compose(
     _EditLegendPanel,
-    form({fields}),
+    withForm({fields}),
     withRecipe(mapRecipeToProps),
-    withMapContext(),
-    activatable({
+    withMap(),
+    withActivatable({
         id: 'editLegendPanel',
         policy,
         alwaysAllow: true
     }),
-    activator('legendImport')
+    withActivators('legendImport')
 )

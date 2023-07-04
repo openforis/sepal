@@ -2,10 +2,9 @@ import {Buttons} from '../buttons'
 import {Constraint} from './constraint'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from '../../translate'
-import {withMapContext} from 'app/home/map/mapContext'
+import {withActivatable} from 'widget/activation/activatable'
 import PropTypes from 'prop-types'
 import React from 'react'
 import guid from 'guid'
@@ -75,12 +74,15 @@ class _ImageConstraints extends React.Component {
     }
 
     componentDidMount() {
-        const {constraints = []} = this.props
+        const {booleanOperator, constraints = []} = this.props
         this.setState({constraints})
         if (constraints.length) {
             this.setState({constraints})
         } else {
             this.addConstraint()
+        }
+        if (booleanOperator) {
+            this.setState({booleanOperator})
         }
     }
 
@@ -178,8 +180,7 @@ const policy = () => ({
 
 export const ImageConstraints = compose(
     _ImageConstraints,
-    withMapContext(),
-    activatable({
+    withActivatable({
         id: ({id}) => id,
         policy,
         alwaysAllow: true
@@ -191,5 +192,6 @@ ImageConstraints.propTypes = {
     images: PropTypes.array.isRequired,
     title: PropTypes.any.isRequired,
     onChange: PropTypes.func.isRequired,
+    booleanOperator: PropTypes.func,
     icon: PropTypes.string,
 }

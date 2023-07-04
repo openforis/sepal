@@ -1,6 +1,7 @@
 import {Legend} from '../legend/legend'
 import {RecipeActions} from '../classificationRecipe'
 import {Retrieve} from './retrieve/retrieve'
+import {RetrieveButton} from '../../retrieveButton'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -49,11 +50,7 @@ class ClassificationToolbar extends React.Component {
                         tooltip={msg(collecting
                             ? 'process.classification.collect.disable.tooltip'
                             : 'process.classification.collect.enable.tooltip')}/>
-                    <Toolbar.ActivationButton
-                        id='retrieve'
-                        icon='cloud-download-alt'
-                        tooltip={msg('process.retrieve.tooltip')}
-                        disabled={!initialized}/>
+                    <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical

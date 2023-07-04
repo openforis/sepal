@@ -1,14 +1,14 @@
 const {BehaviorSubject, concat, of, throwError, catchError, distinctUntilChanged, first, map, takeUntil, tap} = require('rxjs')
-const {finalize$} = require('sepal/rxjs')
-const {job} = require('task/jobs/job')
-const log = require('sepal/log').getLogger('task')
+const {finalizeObservable$} = require('#sepal/rxjs')
+const {job} = require('#task/jobs/job')
+const log = require('#sepal/log').getLogger('task')
 const _ = require('lodash')
 
-const {contextService} = require('task/jobs/service/context')
-const {exportLimiterService} = require('task/jobs/service/exportLimiter')
-const {driveLimiterService} = require('task/jobs/service/driveLimiter')
-const {driveSerializerService} = require('task/jobs/service/driveSerializer')
-const {gcsSerializerService} = require('task/jobs/service/gcsSerializer')
+const {contextService} = require('#task/jobs/service/context')
+const {exportLimiterService} = require('#task/jobs/service/exportLimiter')
+const {driveLimiterService} = require('#task/jobs/service/driveLimiter')
+const {driveSerializerService} = require('#task/jobs/service/driveSerializer')
+const {gcsSerializerService} = require('#task/jobs/service/gcsSerializer')
 
 const tasks = {
     'image.asset_export': () => require('./tasks/imageAssetExport'),
@@ -17,7 +17,7 @@ const tasks = {
     'ccdc.asset_export': () => require('./tasks/ccdcAssetExport')
 }
 
-const {tag} = require('sepal/tag')
+const {tag} = require('#sepal/tag')
 
 const taskTag = id => tag('Task', id)
 
@@ -82,9 +82,14 @@ const executeTask$ = ({id, name, params}, {cmd$}) => {
             takeUntil(cancel$.pipe(
                 tap(() => finalState$.next(cancelState))
             )),
-            catchError(e => concat(finalize$, throwError(() => e)))
+            catchError(e =>
+                concat(
+                    finalizeObservable$(id),
+                    throwError(() => e)
+                )
+            )
         ),
-        finalize$,
+        finalizeObservable$(id),
         finalState$.pipe(first())
     )
 }
@@ -96,7 +101,7 @@ const executeTask$ = ({id, name, params}, {cmd$}) => {
 module.exports = job({
     jobName: 'execute task',
     jobPath: __filename,
-    before: [require('task/jobs/configure'), require('task/jobs/ee/initialize')],
+    before: [require('#task/jobs/configure'), require('#task/jobs/ee/initialize')],
     services: [contextService, exportLimiterService, driveLimiterService, driveSerializerService, gcsSerializerService],
     args: ({task}) => [task],
     worker$: executeTask$

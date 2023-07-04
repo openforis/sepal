@@ -3,14 +3,25 @@
     top: 0;
     bottom: 0;
     right: 0;
-    width: 0; /* width set to zero to avoid weird interference with FastList scrolling */
     pointer-events: none;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     z-index: 2;
     padding: .5rem;
-    overflow: visible;
+    padding-bottom: 0;
+}
+
+.scrollable {
+    pointer-events: none;
+}
+
+.wrapper {
+    pointer-events: all; /* prevent unwanted clicks in the inter-notification margin */
+}
+
+.wrapper .notification {
+    margin-bottom: .5rem;
 }
 
 .notification {
@@ -29,32 +40,50 @@
     border-radius: var(--container-border-radius);
     overflow: hidden;
     word-wrap: break-word;
+    box-sizing: border-box;
+    user-select: none;
 }
 
-.notification:not(.dismissing) {
+.notification.adding {
+    pointer-events: none;
     animation: add var(--publish-animation-duration-ms) ease-in-out normal forwards;
 }
 
 @keyframes add {
     0% {
-        transform: translateX(50%);
+        transform: translateX(100%);
+        margin-top: -100%;
         opacity: 0;
+    }
+    70% {
+        opacity: 0;
+    }
+    100% {
+        transform: none;
+        margin-top: 0;
+        opacity: 1;
     }
 }
 
-.notification.dismissing {
-    animation: remove var(--dismiss-animation-duration-ms) ease-in-out reverse forwards;
+.notification.removing {
+    pointer-events: none;
+    animation: remove var(--dismiss-animation-duration-ms) ease-out normal forwards;
 }
 
 @keyframes remove {
     0% {
-        transform: translateX(50%);
+        transform: none;
+        margin-top: 0;
+        opacity: 1;
+    }
+    30% {
         opacity: 0;
     }
-}
-
-.notification:not(:first-child) {
-    margin-top: .5rem;
+    100% {
+        transform: translateX(100%);
+        margin-top: -100%;
+        opacity: 0;
+    }
 }
 
 .notification.success {

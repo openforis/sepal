@@ -1,4 +1,4 @@
-const log = require('sepal/log').getLogger('proxy/cran')
+const log = require('#sepal/log').getLogger('proxy/cran')
 const httpProxy = require('http-proxy')
 const fs = require('fs')
 const {mkdir} = require('fs/promises')

@@ -1,13 +1,18 @@
-import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {Buttons} from 'widget/buttons'
+import {Content, SectionLayout} from 'widget/sectionLayout'
+import {Layout} from 'widget/layout'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {SortButtons} from 'widget/sortButtons'
+import {Tabs} from 'widget/tabs/tabs'
+import {ToggleButton} from 'widget/toggleButton'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {dotSafe} from 'stateUtils'
 import {msg} from 'translate'
 import {orderBy} from 'natural-orderby'
+import {withEnableDetector} from 'enabled'
+import {withSubscriptions} from 'subscription'
 import Icon from 'widget/icon'
 import Path from 'path'
 import PropTypes from 'prop-types'
@@ -19,16 +24,22 @@ import api from 'api'
 import format from 'format'
 import lookStyles from 'style/look.module.css'
 import styles from './browse.module.css'
-import withSubscriptions from 'subscription'
 const moment = require('moment')
 
-const TREE = 'files.tree'
-const SHOW_DOT_FILES = 'files.showDotFiles'
 const ANIMATION_DURATION_MS = 1000
 
-const mapStateToProps = () => ({
-    tree: select(TREE) || {},
-    showDotFiles: select(SHOW_DOT_FILES)
+const basePath = id => ['browse', id]
+const TREE = 'tree'
+const SHOW_DOT_FILES = 'showDotFiles'
+const SPLIT_DIRS = 'splitDirs'
+const SORTING = 'sorting'
+
+const mapStateToProps = (state, ownProps) => ({
+    tree: select([basePath(ownProps.id), TREE]) || {},
+    showDotFiles: select([basePath(ownProps.id), SHOW_DOT_FILES]),
+    splitDirs: select([basePath(ownProps.id), SPLIT_DIRS]),
+
+    sorting: select([basePath(ownProps.id), SORTING]) || {sortingOrder: 'name', sortingDirection: 1}
 })
 
 const pathSections = path =>
@@ -40,24 +51,24 @@ const treePath = (path = '/') =>
             (treePath, pathElement) => treePath.concat(['items', pathElement]), []
         ) : []
 
-class Browse extends React.Component {
+class _FileBrowser extends React.Component {
 
     userFiles = api.userFiles.userFiles()
-
-    state = {
-        sorting: 'name'
-    }
 
     constructor() {
         super()
         this.processUpdates = this.processUpdates.bind(this)
         this.processUpdate = this.processUpdate.bind(this)
+        this.removeSelected = this.removeSelected.bind(this)
+        this.clearSelection = this.clearSelection.bind(this)
+        this.toggleDotFiles = this.toggleDotFiles.bind(this)
+        this.toggleSplitDirs = this.toggleSplitDirs.bind(this)
+        this.setSorting = this.setSorting.bind(this)
     }
 
     componentDidMount() {
-        const {addSubscription, onEnable, onDisable} = this.props
-        onEnable(() => this.enabled(true))
-        onDisable(() => this.enabled(false))
+        const {addSubscription, enableDetector: {onChange}} = this.props
+        onChange(enabled => this.enabled(enabled))
         addSubscription(
             this.userFiles.downstream$.subscribe(
                 updates => this.processUpdates(updates)
@@ -70,8 +81,9 @@ class Browse extends React.Component {
     }
 
     processUpdate(actionBuilder, {path, items}) {
+        const {id} = this.props
         const selected = this.getNode(path).selected || {}
-        actionBuilder.assign([TREE, dotSafe(treePath(path))], {
+        actionBuilder.assign([basePath(id), TREE, dotSafe(treePath(path))], {
             items,
             opened: true,
             selected: _.pick(selected, _.keys(items))
@@ -95,7 +107,8 @@ class Browse extends React.Component {
     }
 
     getNode(path) {
-        return _.get(this.props.tree, treePath(path), this.props.tree)
+        const {tree} = this.props
+        return _.get(tree, treePath(path), tree)
     }
 
     getFiles(path) {
@@ -103,9 +116,10 @@ class Browse extends React.Component {
     }
 
     removePaths(paths) {
+        const {id} = this.props
         actionBuilder('REMOVE_PATH_PENDING', {paths})
             .forEach(paths, (actionBuilder, path) =>
-                actionBuilder.set([TREE, dotSafe(treePath(path)), 'removing'], true)
+                actionBuilder.set([basePath(id), TREE, dotSafe(treePath(path)), 'removing'], true)
             )
             .dispatch()
 
@@ -113,10 +127,11 @@ class Browse extends React.Component {
     }
 
     pruneRemovedNodes(actionBuilder, path) {
+        const {id} = this.props
         _.forEach(this.getFiles(path), (file, name) => {
             const childPath = this.childPath(path, name)
             if (file.removed) {
-                actionBuilder.del([TREE, dotSafe(treePath(childPath))])
+                actionBuilder.del([basePath(id), TREE, dotSafe(treePath(childPath))])
             } else if (this.isDirectory(file)) {
                 this.pruneRemovedNodes(actionBuilder, childPath)
             }
@@ -152,18 +167,20 @@ class Browse extends React.Component {
     }
 
     expandDirectory(path) {
+        const {id} = this.props
         actionBuilder('EXPAND_DIRECTORY')
-            .set([TREE, dotSafe(treePath(path)), 'opened'], true)
+            .set([basePath(id), TREE, dotSafe(treePath(path)), 'opened'], true)
             .dispatch()
         this.userFiles.upstream$.next({monitor: path})
         this.scanOpenDirs(path)
     }
 
     collapseDirectory(path) {
+        const {id} = this.props
         const ab = actionBuilder('COLLAPSE_DIRECTORY', {path})
         this.deselectDescendants(ab, path)
         ab
-            .set([TREE, dotSafe(treePath(path)), 'opened'], false)
+            .set([basePath(id), TREE, dotSafe(treePath(path)), 'opened'], false)
             .dispatch()
         this.userFiles.upstream$.next({unmonitor: path})
     }
@@ -196,9 +213,10 @@ class Browse extends React.Component {
     }
 
     deselectDescendants(actionBuilder, path) {
+        const {id} = this.props
         _.forEach(this.getFiles(path), (file, name) => {
             const childPath = this.childPath(path, name)
-            actionBuilder.del([TREE, dotSafe(treePath(path)), 'selected', dotSafe(name)])
+            actionBuilder.del([basePath(id), TREE, dotSafe(treePath(path)), 'selected', dotSafe(name)])
             if (this.isDirectory(file)) {
                 this.deselectDescendants(actionBuilder, childPath)
             }
@@ -207,6 +225,7 @@ class Browse extends React.Component {
     }
 
     selectItem(path) {
+        const {id} = this.props
         const deselectHierarchy = (actionBuilder, path) => {
             this.deselectAncestors(actionBuilder, path)
             this.deselectDescendants(actionBuilder, path)
@@ -214,14 +233,15 @@ class Browse extends React.Component {
         }
         const {dir, base} = this.parsePath(path)
         deselectHierarchy(actionBuilder('SELECT_ITEM', {path}), path)
-            .set([TREE, dotSafe(treePath(dir)), 'selected', dotSafe(base)], true)
+            .set([basePath(id), TREE, dotSafe(treePath(dir)), 'selected', dotSafe(base)], true)
             .dispatch()
     }
 
     deselectItem(path) {
+        const {id} = this.props
         const {dir, base} = this.parsePath(path)
         actionBuilder('DESELECT_ITEM', {path})
-            .del([TREE, dotSafe(treePath(dir)), 'selected', dotSafe(base)])
+            .del([basePath(id), TREE, dotSafe(treePath(dir)), 'selected', dotSafe(base)])
             .dispatch()
     }
 
@@ -262,9 +282,18 @@ class Browse extends React.Component {
         }
     }
 
-    showDotFiles(show) {
+    toggleDotFiles() {
+        const {showDotFiles, id} = this.props
+        const show = !showDotFiles
         actionBuilder('SET_SHOW_DOT_FILES', {show})
-            .set(SHOW_DOT_FILES, show)
+            .set([basePath(id), SHOW_DOT_FILES], show)
+            .dispatch()
+    }
+
+    toggleSplitDirs() {
+        const {splitDirs, id} = this.props
+        actionBuilder('TOGGLE_SPLIT_DIRS')
+            .set([basePath(id), SPLIT_DIRS], !splitDirs)
             .dispatch()
     }
 
@@ -276,83 +305,83 @@ class Browse extends React.Component {
         })
     }
 
-    renderToolbar(selected, nothingSelected) {
+    renderToolbar() {
+        const {showDotFiles, splitDirs, sorting: {sortingOrder, sortingDirection}} = this.props
+        const selected = this.countSelectedItems()
+        const nothingSelected = selected.files === 0 && selected.directories === 0
         const oneFileSelected = selected.files === 1 && selected.directories === 0
         const selectedFiles = this.selectedItems().files
         const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
         const downloadUrl = selectedFile && api.userFiles.downloadUrl(selectedFile)
         const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
-        const {showDotFiles} = this.props
-        let dotFilesTooltip = `browse.controls.${showDotFiles ? 'hideDotFiles' : 'showDotFiles'}.tooltip`
         return (
-            <div className={styles.toolbar}>
-                <ButtonGroup>
-                    <Button
+            <ButtonGroup layout='horizontal-nowrap'>
+                <Button
+                    chromeless
+                    shape='circle'
+                    icon='download'
+                    tooltip={msg('browse.controls.download.tooltip')}
+                    tooltipPlacement='bottom'
+                    disabled={!oneFileSelected}
+                    downloadUrl={downloadUrl}
+                    downloadFilename={downloadFilename}
+                />
+                <RemoveButton
+                    chromeless
+                    shape='circle'
+                    tooltip={msg('browse.controls.remove.tooltip')}
+                    tooltipPlacement='bottom'
+                    disabled={nothingSelected}
+                    onRemove={this.removeSelected}
+                />
+                <Button
+                    chromeless
+                    shape='circle'
+                    icon='rotate-left'
+                    tooltip={msg('browse.controls.clearSelection.tooltip')}
+                    tooltipPlacement='bottom'
+                    disabled={nothingSelected}
+                    onClick={this.clearSelection}
+                />
+                <ButtonGroup spacing='tight'>
+                    <ToggleButton
                         chromeless
-                        size='large'
-                        shape='circle'
-                        icon={showDotFiles ? 'eye' : 'eye-slash'}
-                        tooltip={msg(dotFilesTooltip)}
+                        shape='pill'
+                        label={msg('browse.controls.dotFiles.label')}
+                        tooltip={msg(`browse.controls.dotFiles.${showDotFiles ? 'hide' : 'show'}.tooltip`)}
                         tooltipPlacement='bottom'
-                        onClick={() => this.showDotFiles(!showDotFiles)}
+                        selected={showDotFiles}
+                        onChange={this.toggleDotFiles}
                     />
-                    <Button
+                    <ToggleButton
                         chromeless
-                        size='large'
-                        shape='circle'
-                        icon='download'
-                        tooltip={msg('browse.controls.download.tooltip')}
+                        shape='pill'
+                        label={msg('browse.controls.splitDirs.label')}
+                        tooltip={msg(`browse.controls.splitDirs.${splitDirs ? 'mix' : 'split'}.tooltip`)}
                         tooltipPlacement='bottom'
-                        downloadUrl={downloadUrl}
-                        downloadFilename={downloadFilename}
-                        disabled={!oneFileSelected}
+                        selected={splitDirs}
+                        onChange={this.toggleSplitDirs}
                     />
-                    <RemoveButton
-                        chromeless
-                        size='large'
-                        shape='circle'
-                        tooltip={msg('browse.controls.remove.tooltip')}
-                        tooltipPlacement='bottom'
-                        onRemove={() => this.removeSelected()}
-                        disabled={nothingSelected}/>
-                    <Button
-                        chromeless
-                        size='large'
-                        shape='circle'
-                        icon='times'
-                        tooltip={msg('browse.controls.clearSelection.tooltip')}
-                        tooltipPlacement='bottom'
-                        onClick={() => this.clearSelection()}
-                        disabled={nothingSelected}
+                    <SortButtons
+                        labels={{
+                            name: msg('browse.controls.sorting.name.label'),
+                            date: msg('browse.controls.sorting.date.label'),
+                        }}
+                        sortingOrder={sortingOrder}
+                        sortingDirection={sortingDirection}
+                        onChange={this.setSorting}
                     />
                 </ButtonGroup>
-            </div>
+            </ButtonGroup>
         )
     }
 
-    renderSortingButtons() {
-        const {sorting} = this.state
-        const options = [{
-            label: msg('browse.controls.sorting.date.label'),
-            value: 'date'
-        }, {
-            label: msg('browse.controls.sorting.name.label'),
-            value: 'name'
-        }]
-        return (
-            <Buttons
-                chromeless
-                layout='horizontal-nowrap'
-                spacing='none'
-                options={options}
-                selected={sorting}
-                onChange={sorting => this.setSorting(sorting)}
-            />
-        )
-    }
+    setSorting(sortingOrder, sortingDirection) {
+        const {id} = this.props
+        actionBuilder('SET_SORTING', {sortingOrder, sortingDirection})
+            .set([basePath(id), SORTING], {sortingOrder, sortingDirection})
+            .dispatch()
 
-    setSorting(sorting) {
-        this.setState({sorting})
     }
 
     renderNodeInfo(file) {
@@ -393,13 +422,27 @@ class Browse extends React.Component {
             e.stopPropagation()
             this.toggleDirectory(path, directory)
         }
-        return expanded && !directory.items
-            ? this.renderSpinner()
-            : (
-                <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}>
-                    <Icon name={'chevron-right'} className={expanded ? styles.expanded : styles.collapsed}/>
-                </span>
-            )
+        const busy = expanded && !directory.items
+        return (
+            <span
+                className={[styles.icon, styles.directory].join(' ')}
+                onClick={toggleDirectory}>
+                <Icon
+                    name={'chevron-right'}
+                    className={expanded ? styles.expanded : styles.collapsed}
+                    attributes={{
+                        fade: busy
+                    }}
+                />
+            </span>
+        )
+        // return busy
+        //     ? this.renderSpinner()
+        //     : (
+        //         <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}>
+        //             <Icon name={'chevron-right'} className={expanded ? styles.expanded : styles.collapsed}/>
+        //         </span>
+        //     )
     }
 
     renderFileIcon(fileName) {
@@ -459,16 +502,47 @@ class Browse extends React.Component {
     }
 
     getSorter() {
-        const {sorting} = this.state
+        const {splitDirs, sorting: {sortingOrder, sortingDirection}} = this.props
+        const orderMap = {
+            '-1': 'desc',
+            '1': 'asc'
+        }
+
+        const dirSorter = {
+            order: splitDirs ? ([_, {dir}]) => dir : null,
+            direction: splitDirs ? 'desc' : null
+        }
+
+        const nameSorter = {
+            order: ([name]) => name,
+            direction: orderMap[sortingDirection]
+        }
+
+        const dateSorter = {
+            order: ([_, {mtime}]) => mtime,
+            direction: orderMap[-sortingDirection]
+        }
+
         const naturalSortingDirectoriesFirst = items =>
-            orderBy(items, [([_, {dir}]) => dir, ([name]) => name], ['desc', 'asc'])
+            orderBy(
+                items,
+                _.compact([dirSorter.order, nameSorter.order]),
+                _.compact([dirSorter.direction, nameSorter.direction])
+            )
+
         const dateSortingDirectoriesFirst = items =>
-            orderBy(items, [([_, {dir}]) => dir, ([_, {mtime}]) => mtime], ['desc', 'desc'])
+            orderBy(
+                items,
+                _.compact([dirSorter.order, dateSorter.order]),
+                _.compact([dirSorter.direction, dateSorter.direction])
+            )
+            
         const sortingMap = {
             name: naturalSortingDirectoriesFirst,
             date: dateSortingDirectoriesFirst
         }
-        return sortingMap[sorting]
+
+        return sortingMap[sortingOrder]
     }
 
     renderListItems(path, items, depth) {
@@ -484,45 +558,62 @@ class Browse extends React.Component {
             : null
     }
 
-    render() {
+    renderInfo() {
         const selected = this.countSelectedItems()
-        const nothingSelected = selected.files === 0 && selected.directories === 0
         return (
-            <SectionLayout className={styles.browse}>
-                <TopBar label={msg('home.sections.browse')}>
-                    {this.renderToolbar(selected, nothingSelected)}
-                </TopBar>
-                <Content menuPadding horizontalPadding verticalPadding>
+            <div className={styles.info}>
+                {msg('browse.selected', {
+                    files: selected.files,
+                    directories: selected.directories
+                })}
+            </div>
+        )
+    }
+
+    render() {
+        const {tree} = this.props
+        return (
+            <SectionLayout>
+                <Content className={styles.browse} menuPadding horizontalPadding verticalPadding>
                     <ScrollableContainer>
                         <Scrollable direction='xy'>
-                            <div className={styles.sortingButtons}>
-                                {this.renderSortingButtons()}
-                            </div>
+                            <Layout type='horizontal'>
+                                {this.renderInfo()}
+                                <Layout type='horizontal' spacing='none'>
+                                    {this.renderToolbar()}
+                                </Layout>
+                            </Layout>
                             <div className={styles.fileList}>
-                                {this.renderList('/', this.props.tree)}
+                                {this.renderList('/', tree)}
                             </div>
                         </Scrollable>
                     </ScrollableContainer>
                 </Content>
-                {nothingSelected ? null : (
-                    <BottomBar className={styles.info}>
-                        {msg('browse.selected', {
-                            files: selected.files,
-                            directories: selected.directories
-                        })}
-                    </BottomBar>
-                )}
             </SectionLayout>
         )
     }
 }
 
-Browse.propTypes = {
+const FileBrowser = compose(
+    _FileBrowser,
+    connect(mapStateToProps),
+    withEnableDetector(),
+    withSubscriptions()
+)
+
+FileBrowser.propTypes = {
+    id: PropTypes.string,
     tree: PropTypes.object
 }
 
-export default compose(
-    Browse,
-    connect(mapStateToProps),
-    withSubscriptions()
-)
+export class Browse extends React.Component {
+    render() {
+        return (
+            <Tabs
+                label={msg('home.sections.browse')}
+                statePath='terminal'>
+                {({id}) => <FileBrowser id={id}/>}
+            </Tabs>
+        )
+    }
+}

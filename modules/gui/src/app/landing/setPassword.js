@@ -1,12 +1,14 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {CenteredProgress} from 'widget/progress'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
+import {credentialsPosted, resetPassword$, tokenUser, validateToken$} from 'user'
 import {history, query} from 'route'
 import {msg} from 'translate'
-import {resetPassword$, tokenUser, validateToken$} from 'user'
+import {switchMap} from 'rxjs'
+import {withRecaptcha} from 'widget/recaptcha'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -38,15 +40,22 @@ const mapStateToProps = () => ({
     user: tokenUser()
 })
 
-class SetPassword extends React.Component {
+class _SetPassword extends React.Component {
+    constructor(props) {
+        super(props)
+        this.submit = this.submit.bind(this)
+    }
+
     componentDidMount() {
         const {stream} = this.props
         const token = query().token
         stream('VALIDATE_TOKEN',
             validateToken$(token),
-            user => actionBuilder('TOKEN_VALIDATED')
-                .set('user.tokenUser', user)
-                .dispatch(),
+            user => {
+                actionBuilder('TOKEN_VALIDATED')
+                    .set('user.tokenUser', user)
+                    .dispatch()
+            },
             () => {
                 Notifications.error({
                     message: msg('landing.validate-token.error'),
@@ -62,10 +71,29 @@ class SetPassword extends React.Component {
         username.set(user && user.username)
     }
 
-    resetPassword({username, password}) {
-        const {stream, type} = this.props
+    submit() {
+        const {inputs: {username, password}} = this.props
+        this.resetPassword(username.value, password.value)
+    }
+
+    resetPassword(username, password) {
+        const {type, recaptcha: {recaptcha$}, stream} = this.props
         const token = query().token
-        stream('RESET_PASSWORD', resetPassword$({token, username, password, type}))
+        stream('RESET_PASSWORD',
+            recaptcha$('RESET_PASSWORD').pipe(
+                switchMap(recaptchaToken =>
+                    resetPassword$({token, username, password, type, recaptchaToken})
+                )
+            ),
+            user => {
+                credentialsPosted(user)
+                history().push('/process')
+                Notifications.success({message: msg('landing.reset-password.success')})
+            },
+            () => {
+                Notifications.error({message: msg('landing.reset-password.error')})
+            }
+        )
     }
 
     render() {
@@ -85,7 +113,9 @@ class SetPassword extends React.Component {
         const {form, inputs: {username, password, password2}, stream} = this.props
         const resettingPassword = stream('RESET_PASSWORD').active
         return (
-            <Form className={styles.form} onSubmit={() => this.resetPassword(form.values())}>
+            <Form
+                className={styles.form}
+                onSubmit={this.submit}>
                 <Layout spacing='loose'>
                     <Form.Input
                         label={msg('landing.reset-password.username.label')}
@@ -128,12 +158,13 @@ class SetPassword extends React.Component {
     }
 }
 
+export const SetPassword = compose(
+    _SetPassword,
+    withForm({fields, constraints, mapStateToProps}),
+    withRecaptcha()
+)
+
 SetPassword.propTypes = {
     type: PropTypes.oneOf(['reset', 'assign']).isRequired,
     user: PropTypes.object
 }
-
-export default compose(
-    SetPassword,
-    form({fields, constraints, mapStateToProps})
-)

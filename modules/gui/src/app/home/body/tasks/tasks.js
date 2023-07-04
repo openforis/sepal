@@ -1,104 +1,158 @@
 import {Button} from 'widget/button'
-import {ButtonGroup} from 'widget/buttonGroup'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
-import {HoverDetector, HoverOverlay} from 'widget/hover'
-import {Progress} from 'widget/progress'
+import {CrudItem} from 'widget/crudItem'
+import {FastList} from 'widget/fastList'
+import {InlineConfirmationButton} from 'widget/inlineConfirmationButton'
+import {ListItem} from 'widget/listItem'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Shape} from 'widget/shape'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
+import Notifications from 'widget/notifications'
 import React from 'react'
 import api from 'api'
 import clipboard from 'clipboard'
-import look from 'style/look.module.css'
 import styles from './tasks.module.css'
 
 const mapStateToProps = state => ({
-    tasks: state.tasks,
+    tasks: state.tasks
 })
 
 class Tasks extends React.Component {
     constructor(props) {
         super(props)
+        this.renderTask = this.renderTask.bind(this)
         this.state = {tasks: props.tasks || []}
     }
 
-    renderOverlay(task) {
-        return (
-            <div className={styles.overlay}>
-                {['FAILED', 'COMPLETED', 'CANCELED'].includes(task.status) ? (
-                    <ButtonGroup layout='vertical'>
-                        <Button
-                            icon='copy'
-                            label={msg('button.copyToClipboard')}
-                            onClick={() => this.copyToClipboard(task)}/>
-                        <Button
-                            look={'cancel'}
-                            icon='times'
-                            label={msg('button.remove')}
-                            onClick={() => this.removeTask(task)}/>
-                    </ButtonGroup>
-                ) : ['PENDING', 'ACTIVE'].includes(task.status) ?
-                    <Button
-                        className={styles.stop}
-                        icon='stop'
-                        label={msg('button.stop')}
-                        onClick={() => this.stopTask(task)}/>
-                    : null}
-            </div>
-        )
+    isRunning(task) {
+        return ['PENDING', 'ACTIVE'].includes(task.status)
+    }
+
+    isStopped(task) {
+        return ['FAILED', 'COMPLETED', 'CANCELED'].includes(task.status)
+    }
+
+    renderStopButton(task) {
+        return this.isRunning(task) ? (
+            <InlineConfirmationButton
+                key={'stop'}
+                chromeless
+                shape='circle'
+                icon='times'
+                onConfirm={() => this.stopTask(task)}
+                tooltip={msg('tasks.stop.tooltip')}
+                tooltipPlacement='left'
+            />
+        ) : null
+    }
+
+    renderCopyButton(task) {
+        return this.isStopped(task) ? (
+            <Button
+                key={'copy'}
+                chromeless
+                shape='circle'
+                icon='copy'
+                onClick={() => this.copyToClipboard(task)}
+                tooltip={msg('tasks.copyToClipboard.tooltip')}
+                tooltipPlacement='left'
+            />
+        ) : null
+    }
+
+    getStatusIcon(task) {
+        const iconMap = {
+            PENDING: 'spinner',
+            ACTIVE: 'spinner',
+            COMPLETED: 'circle-check',
+            FAILED: 'circle-xmark',
+            CANCELING: 'spinner',
+            CANCELED: 'circle-xmark'
+        }
+        const iconVariantMap = {
+            PENDING: 'info',
+            ACTIVE: 'info',
+            COMPLETED: 'success',
+            FAILED: 'error',
+            CANCELING: 'normal',
+            CANCELED: 'normal'
+        }
+        return {
+            icon: iconMap[task.status],
+            iconVariant: iconVariantMap[task.status]
+        }
     }
 
     renderTask(task) {
+        const {icon, iconVariant} = this.getStatusIcon(task)
         return (
-            <HoverDetector key={task.id} className={[styles.task, look.look, look.transparent].join(' ')}>
-                <div className={styles.name}>{task.name}</div>
-                <Progress className={styles.progress} status={task.status}/>
-                <div className={styles.statusDescription}>{this.getDescription(task)}</div>
-                <HoverOverlay>
-                    {this.renderOverlay(task)}
-                </HoverOverlay>
-            </HoverDetector>
+            <ListItem key={task.id}>
+                <CrudItem
+                    title={task.name}
+                    description={this.getDescription(task)}
+                    icon={icon}
+                    iconSize='lg'
+                    iconVariant={iconVariant}
+                    // timestamp={recipe.updateTime}
+                    inlineComponents={[
+                        this.renderStopButton(task),
+                        this.renderCopyButton(task)
+                    ]}
+                    removeTooltip={msg('tasks.remove.tooltip')}
+                    removeDisabled={!this.isStopped(task)}
+                    onRemove={() => this.removeTask(task)}
+                />
+            </ListItem>
         )
     }
 
     renderTasks() {
         const {tasks} = this.state
         return tasks.length
-            ? (
-                <ScrollableContainer>
-                    <Scrollable className={styles.tasks}>
-                        {tasks.map(task => this.renderTask(task))}
-                    </Scrollable>
-                </ScrollableContainer>
-            )
-            : (
-                <div className={styles.noTasks}>
-                    <Shape
-                        look='transparent'
-                        shape='pill'
-                        size='normal'
-                        air='more'>
-                        {msg('tasks.none')}
-                    </Shape>
-                </div>
-            )
+            ? this.renderTaskList(tasks)
+            : this.renderNoTasks()
+    }
+
+    renderTaskList(tasks) {
+        const itemKey = task => `${task.id}`
+        return (
+            <FastList
+                items={tasks}
+                itemKey={itemKey}
+                itemRenderer={this.renderTask}
+                spacing='tight'
+                overflow={50}
+            />
+        )
+    }
+
+    renderNoTasks() {
+        return (
+            <div className={styles.noTasks}>
+                <Shape
+                    look='transparent'
+                    shape='pill'
+                    size='normal'
+                    air='more'>
+                    {msg('tasks.none')}
+                </Shape>
+            </div>
+        )
     }
 
     renderToolbar() {
         return (
-            <div className={styles.toolbar}>
-                <Button
-                    chromeless
-                    size='large'
-                    icon='trash'
-                    label={msg('tasks.removeAll.label')}
-                    tooltip={msg('tasks.removeAll.tooltip')}
-                    tooltipPlacement='bottom'
-                    onClick={() => this.removeAllTasks()}
-                    disabled={!this.inactiveTasks().length}/>
-            </div>
+            <InlineConfirmationButton
+                chromeless
+                shape='circle'
+                icon='trash'
+                disabled={!this.inactiveTasks().length}
+                tooltip={msg('tasks.removeAll.tooltip')}
+                tooltipPlacement='bottom'
+                onConfirm={() => this.removeAllTasks()}
+            />
         )
     }
 
@@ -109,7 +163,11 @@ class Tasks extends React.Component {
                     {this.renderToolbar()}
                 </TopBar>
                 <Content horizontalPadding verticalPadding menuPadding>
-                    {this.renderTasks()}
+                    <ScrollableContainer>
+                        <Scrollable direction='x'>
+                            {this.renderTasks()}
+                        </Scrollable>
+                    </ScrollableContainer>
                 </Content>
             </SectionLayout>
         )
@@ -143,6 +201,7 @@ class Tasks extends React.Component {
 
     copyToClipboard(task) {
         clipboard.copy(JSON.stringify(task, null, '  '))
+        Notifications.success({message: msg('tasks.copyToClipboard.success')})
     }
 
     removeTask(task) {

@@ -14,6 +14,10 @@ class TopicPublishingUserChangeListener implements UserChangeListener {
         topic.publish(user, 'UserUpdated')
     }
 
+    void locked(String username, Map user) {
+        topic.publish(user, 'UserLocked')
+    }
+
     void close() {
         topic.close()
     }

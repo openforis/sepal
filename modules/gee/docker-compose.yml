@@ -14,9 +14,12 @@ services:
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
       EE_ACCOUNT: "${EE_ACCOUNT}"
       EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
+      INSTANCES: "40"
     networks:
       - sepal
     restart: always
+    ulimits:
+      core: 0
 
 networks:
   sepal:

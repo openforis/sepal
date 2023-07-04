@@ -33,8 +33,6 @@ import partner_sig from './intro/partners/sig.png'
 import partner_wageningen from './intro/partners/wageningen.png'
 import styles from './intro.module.css'
 
-const signupUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSci4hopXNtMOQKJzsUybaJETrAPQp8j6TCqycSBQ0XO37jBwA/viewform?c=0&w=1'
-
 const Intro = ({onLaunch}) =>
     <ScrollableContainer>
         <Scrollable className={styles.intro}>
@@ -49,29 +47,40 @@ const Main = ({onLaunch}) =>
         <div id='main' className={styles.main}>
             <Title className={styles.title}/>
             <Tagline className={styles.tagline}/>
-            <ButtonGroup layout='horizontal-nowrap' spacing='loose'>
-                <Button
-                    look='default'
-                    size='x-large'
-                    air='more'
-                    label={msg('landing.signup')}
-                    tabIndex={1}
-                    linkUrl={signupUrl}
-                    linkTarget='_self'
-                    additionalClassName={styles.button}
-                />
+            <ButtonGroup layout='horizontal'>
                 <Button
                     type='submit'
                     look='apply'
                     size='x-large'
                     air='more'
                     label={msg('landing.launch')}
-                    tabIndex={2}
+                    tabIndex={1}
                     onClick={onLaunch}
                     additionalClassName={styles.button}
                 />
+                <Button
+                    look='transparent'
+                    size='x-large'
+                    air='more'
+                    label={msg('landing.documentation')}
+                    linkUrl='https://docs.sepal.io/'
+                />
             </ButtonGroup>
-            <ButtonGroup layout='horizontal-nowrap' alignment='center'>
+            <ButtonGroup
+                layout='horizontal'
+                alignment='right'
+                className={styles.github}>
+                <Button
+                    look='transparent'
+                    size='x-large'
+                    shape='pill'
+                    icon='github'
+                    iconType='brands'
+                    label='GitHub'
+                    linkUrl='https://github.com/openforis/sepal'
+                />
+            </ButtonGroup>
+            <ButtonGroup layout='horizontal' alignment='center'>
                 <Button
                     look='transparent'
                     shape='circle'

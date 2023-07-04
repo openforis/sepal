@@ -1,3 +1,5 @@
+import {defaultModel as defaultOpticalModel} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {defaultModel as defaultRadarModel} from 'app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
 import {recipeActionBuilder} from 'app/home/body/process/recipe'
@@ -17,6 +19,8 @@ export const defaultModel = {
         }
     },
     options: {
+        ...defaultOpticalModel.compositeOptions,
+        ...defaultRadarModel.options,
         corrections: [],
         cloudDetection: ['QA', 'CLOUD_SCORE'],
         cloudMasking: 'MODERATE',

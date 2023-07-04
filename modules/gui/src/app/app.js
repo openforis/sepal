@@ -21,7 +21,7 @@ const mapStateToProps = state => ({
     hasDimensions: !!selectFrom(state, 'dimensions')
 })
 
-class App extends React.Component {
+class _App extends React.Component {
     render() {
         const {hasDimensions} = this.props
         return (
@@ -48,17 +48,17 @@ class App extends React.Component {
     }
 }
 
-App.propTypes = {
-    currentUser: PropTypes.object
-}
-
 const Loader = () =>
     <div className="app-loader">
         <span/>
         <p>S E P A L</p>
     </div>
 
-export default compose(
-    App,
+export const App = compose(
+    _App,
     connect(mapStateToProps)
 )
+
+App.propTypes = {
+    currentUser: PropTypes.object
+}

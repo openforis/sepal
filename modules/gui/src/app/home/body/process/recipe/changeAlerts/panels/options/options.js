@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
@@ -8,13 +9,18 @@ import React from 'react'
 import styles from './options.module.css'
 
 const fields = {
+    advanced: new Form.Field(),
     minConfidence: new Form.Field(),
     numberOfObservations: new Form.Field(),
-    minNumberOfChanges: new Form.Field()
+    minNumberOfChanges: new Form.Field(),
+    mustBeConfirmedInMonitoring: new Form.Field(),
+    mustBeStableBeforeChange: new Form.Field(),
+    mustStayChanged: new Form.Field(),
 }
 
 class Options extends React.Component {
     render() {
+        const {inputs: {advanced}} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -25,18 +31,54 @@ class Options extends React.Component {
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-                <Form.PanelButtons/>
+                <Form.PanelButtons>
+                    <Button
+                        label={advanced.value ? msg('button.less') : msg('button.more')}
+                        onClick={() => this.setAdvanced(!advanced.value)}/>
+                </Form.PanelButtons>
             </RecipeFormPanel>
         )
     }
 
     renderContent() {
+        const {inputs: {advanced}} = this.props
         return (
             <Layout>
                 {this.renderMinConfidence()}
                 {this.renderNumberOfObservations()}
                 {this.renderMinNumberOfChanges()}
+                {advanced.value ? this.renderAdvanced() : null}
             </Layout>
+        )
+    }
+
+    renderAdvanced() {
+        const {inputs: {mustBeConfirmedInMonitoring, mustBeStableBeforeChange, mustStayChanged}} = this.props
+        const options = [
+            {value: true, label: msg('button.enabled')},
+            {value: false, label: msg('button.disabled')}
+        ]
+        return (
+            <React.Fragment>
+                <Form.Buttons
+                    label={msg('process.changeAlerts.panel.options.form.mustBeConfirmedInMonitoring.label')}
+                    tooltip={msg('process.changeAlerts.panel.options.form.mustBeConfirmedInMonitoring.tooltip')}
+                    input={mustBeConfirmedInMonitoring}
+                    options={options}
+                />
+                <Form.Buttons
+                    label={msg('process.changeAlerts.panel.options.form.mustBeStableBeforeChange.label')}
+                    tooltip={msg('process.changeAlerts.panel.options.form.mustBeStableBeforeChange.tooltip')}
+                    input={mustBeStableBeforeChange}
+                    options={options}
+                />
+                <Form.Buttons
+                    label={msg('process.changeAlerts.panel.options.form.mustStayChanged.label')}
+                    tooltip={msg('process.changeAlerts.panel.options.form.mustStayChanged.tooltip')}
+                    input={mustStayChanged}
+                    options={options}
+                />
+            </React.Fragment>
         )
     }
 
@@ -89,6 +131,24 @@ class Options extends React.Component {
                 snap
             />
         )
+    }
+
+    componentDidMount() {
+        const {inputs: {mustBeConfirmedInMonitoring, mustBeStableBeforeChange, mustStayChanged}} = this.props
+        if (typeof mustBeConfirmedInMonitoring.value != 'boolean') {
+            mustBeConfirmedInMonitoring.set(true)
+        }
+        if (typeof mustBeStableBeforeChange.value != 'boolean') {
+            mustBeStableBeforeChange.set(true)
+        }
+        if (typeof mustStayChanged.value != 'boolean') {
+            mustStayChanged.set(true)
+        }
+    }
+
+    setAdvanced(enabled) {
+        const {inputs: {advanced}} = this.props
+        advanced.set(enabled)
     }
 }
 

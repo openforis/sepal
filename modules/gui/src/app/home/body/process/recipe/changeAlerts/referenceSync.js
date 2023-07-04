@@ -1,5 +1,6 @@
-import {Subject, map, of, switchMap, takeUntil} from 'rxjs'
+import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'
+import {connect} from 'store'
 import {getAllVisualizations} from '../ccdc/ccdcRecipe'
 import {getAvailableBands} from 'sources'
 import {msg} from 'translate'
@@ -12,146 +13,136 @@ import React from 'react'
 import _ from 'lodash'
 import api from 'api'
 
-const mapRecipeToProps = (recipe, ownProps) => {
-    return {
-        ...ownProps,
-        reference: selectFrom(recipe, 'model.reference') || {}
-    }
+const mapRecipeToProps = (recipe, ownProps) => ({
+    ...ownProps,
+    referenceSourceId: selectFrom(recipe, 'ui.reference.sourceId'),
+    referenceSourceType: selectFrom(recipe, 'ui.reference.sourceType'),
+    recipeId: recipe.id
+})
+
+const mapStateToProps = (state, ownProps) => {
+    const {recipeId, referenceSourceId, referenceSourceType} = ownProps
+    const reference = referenceSourceType === 'ASSET'
+        ? {type: 'ASSET', id: referenceSourceId}
+        : referenceSourceId
+            ? selectFrom(state, ['process.loadedRecipes', referenceSourceId])
+            : selectFrom(state, ['process.loadedRecipes', recipeId, 'model.reference'])
+    return {reference}
 }
 
 class _ReferenceSync extends React.Component {
     cancel$ = new Subject()
+
+    shouldComponentUpdate(nextProps) {
+        const {reference} = this.props
+        const {reference: nextReference} = nextProps
+        return !_.isEqual(reference, nextReference)
+    }
 
     render() {
         return null
     }
 
     componentDidMount() {
-        this.initReference()
+        const {reference} = this.props
+        this.fetchRecipe(reference)
     }
 
     componentDidUpdate(prevProps) {
-        const {reference: prevReference} = prevProps
         const {reference} = this.props
-        if (reference.id !== prevReference.id
-            || selectFrom(reference, 'classification.id') !== selectFrom(prevReference, 'classification.id')) {
-            this.cancel$.next()
-        }
-        this.initReference(prevReference)
+        this.fetchRecipe(reference, prevProps.reference)
     }
 
-    initReference(prevReference) {
-        const {reference} = this.props
-        if (!reference.id) {
+    fetchRecipe(recipe, prevReference) {
+        const {stream, loadSourceRecipe$, recipeActionBuilder} = this.props
+        const type = recipe.type
+        if (!type) {
             return
         }
-        reference.type === 'RECIPE_REF'
-            ? this.initRecipe()
-            : this.initAsset(prevReference)
+        if (type === 'RECIPE_REF') {
+            !stream('FETCH_REFERENCE').active && stream('FETCH_REFERENCE',
+                loadSourceRecipe$(recipe.id),
+                ccdcRecipe => {
+                    const {id, type} = ccdcRecipe
+                    recipeActionBuilder('SET_REFERENCE_SOURCE_ID', {id, type})
+                        .set('ui.reference.sourceId', id)
+                        .set('ui.reference.sourceType', type)
+                        .dispatch()
+                },
+                error => Notifications.error({message: msg('process.changeAlerts.reference.recipe.loadError'), error})
+            )
+        } else if (type === 'ASSET') {
+            this.initAsset(prevReference)
+        } else {
+            this.updateRecipeReference({ccdcRecipe: recipe})
+        }
     }
 
     initAsset(prevReference = {}) {
         const {stream, reference = {}} = this.props
-        if (reference.id && reference.id === prevReference.id || stream('LOAD').active) {
+        if ((reference.id && reference.id === prevReference.id) || stream('LOAD').active) {
             return
         }
         stream('LOAD',
             api.gee.imageMetadata$({asset: reference.id}).pipe(
                 takeUntil(this.cancel$)
             ),
-            metadata => this.updateAssetReference(reference.id, metadata, reference),
+            metadata => this.updateAssetReference(metadata, reference),
             error => Notifications.error({message: msg('process.changeAlerts.reference.asset.loadError'), error})
         )
     }
 
-    initRecipe() {
-        const {stream, reference, loadedRecipes} = this.props
-        const ccdcRecipe = loadedRecipes[reference.id]
-        if (ccdcRecipe) {
-            const classificationId = selectFrom(ccdcRecipe, 'model.sources.classification')
-            const classificationRecipe = classificationId && loadedRecipes[classificationId]
-            if (classificationId && !classificationRecipe) {
-                this.loadClassificationRecipe({ccdcRecipe, classificationId})
-            } else {
-                this.updateRecipeReference({ccdcRecipe, classificationRecipe})
-            }
-        } else if (!stream('LOAD').active) {
-            this.loadCcdcRecipe(reference.id)
-        }
-    }
-
-    loadCcdcRecipe(recipeId) {
-        const {stream, loadRecipe$} = this.props
-        stream('LOAD',
-            loadRecipe$(recipeId).pipe(
-                switchMap(ccdcRecipe => ccdcRecipe.model.sources.classification
-                    ? loadRecipe$(ccdcRecipe.model.sources.classification).pipe(
-                        map(classificationRecipe => ({ccdcRecipe, classificationRecipe}))
-                    )
-                    : of({ccdcRecipe})
-                ),
-                takeUntil(this.cancel$)
-            ),
-            ({ccdcRecipe, classificationRecipe}) => {
-                this.updateRecipeReference({ccdcRecipe, classificationRecipe})
-            },
-            error => Notifications.error({message: msg('process.changeAlerts.reference.recipe.loadError'), error})
-        )
-    }
-
-    loadClassificationRecipe({ccdcRecipe, classificationId}) {
-        const {stream, loadRecipe$} = this.props
-        if (!stream('LOAD').active) {
-            stream('LOAD',
-                loadRecipe$(classificationId).pipe(
-                    takeUntil(this.cancel$)
-                ),
-                classificationRecipe => {
-                    this.updateRecipeReference({ccdcRecipe, classificationRecipe})
-                },
-                error => Notifications.error({message: msg('process.changeAlerts.reference.recipe.loadError'), error})
-            )
-        }
-    }
-
-    updateAssetReference(id, metadata, reference) {
+    updateAssetReference(metadata, reference) {
         const {recipeActionBuilder} = this.props
         const assetDateFormat = metadata.properties.dateFormat
         const dateFormat = assetDateFormat === undefined ? reference.dateFormat : assetDateFormat
         const referenceDetails = {
-            type: 'ASSET',
-            id,
             ...toAssetReference(metadata.bands, metadata.properties),
             dateFormat
         }
-        recipeActionBuilder('UPDATE_REFERENCE', {referenceDetails})
-            .set('model.reference', referenceDetails)
-            .dispatch()
+        const builder = recipeActionBuilder('UPDATE_REFERENCE', {referenceDetails})
+            .assign('model.reference', referenceDetails)
+        
+        const assignOptions = builder => {
+            const assetOptionsString = metadata?.properties?.recipe_options
+            if (assetOptionsString) {
+                const assetOptions = JSON.parse(assetOptionsString)
+                return builder
+                    .assign('model.options', assetOptions)
+            } else {
+                return builder
+            }
+        }
+        const assignSources = builder => {
+            const assetSourcesString = metadata?.properties?.recipe_sources
+            if (assetSourcesString) {
+                return builder
+                    .assign('model.sources', JSON.parse(assetSourcesString))
+            } else {
+                return builder
+            }
+        }
+
+        assignSources(assignOptions(builder)).dispatch()
     }
 
-    updateRecipeReference({ccdcRecipe, classificationRecipe}) {
+    updateRecipeReference({ccdcRecipe}) {
         const {reference, recipeActionBuilder} = this.props
-        const nextReference = this.recipeReference({ccdcRecipe, classificationRecipe})
+        const nextReference = this.recipeReference({ccdcRecipe})
         if (!_.isEqual(reference, nextReference)) {
             recipeActionBuilder('UPDATE_REFERENCE', {reference})
+                .assign('model.sources', ccdcRecipe.model.sources)
+                .assign('model.options', ccdcRecipe.model.options)
                 .set('model.reference', nextReference)
                 .dispatch()
         }
     }
 
-    recipeReference({ccdcRecipe, classificationRecipe}) {
+    recipeReference({ccdcRecipe}) {
         const corrections = ccdcRecipe.model.options.corrections
         const baseBands = getAvailableBands({
             dataSets: Object.values(ccdcRecipe.model.sources.dataSets).flat(),
-            corrections,
-            classification: classificationRecipe
-                ? {
-                    id: classificationRecipe.id,
-                    classifierType: classificationRecipe.model.classifier.type,
-                    classificationLegend: classificationRecipe.model.legend,
-                    include: ['regression', 'probabilities']
-                }
-                : {}
+            corrections
         }).map(name => ({
             name,
             bandTypes: ['value', 'rmse', 'magnitude', 'intercept', 'slope',
@@ -178,6 +169,7 @@ class _ReferenceSync extends React.Component {
 
 export const ReferenceSync = compose(
     _ReferenceSync,
+    connect(mapStateToProps),
     withRecipe(mapRecipeToProps),
     recipeAccess()
 )

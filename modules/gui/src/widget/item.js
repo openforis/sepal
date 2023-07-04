@@ -1,4 +1,5 @@
 import Highlight from 'react-highlighter'
+import Icon from './icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import moment from 'moment'
@@ -8,12 +9,29 @@ export class Item extends React.Component {
     render() {
         return (
             <div className={styles.item}>
+                {this.renderIcon()}
                 {this.renderImage()}
                 {this.renderInfo()}
                 {this.renderTimestamp()}
                 {this.renderInline()}
             </div>
         )
+    }
+
+    renderIcon() {
+        const {icon, iconSize, iconType, iconVariant} = this.props
+        return icon
+            ? (
+                <div className={styles.icon}>
+                    <Icon
+                        name={icon}
+                        size={iconSize}
+                        type={iconType}
+                        variant={iconVariant}
+                    />
+                </div>
+            )
+            : null
     }
 
     renderImage() {
@@ -50,10 +68,10 @@ export class Item extends React.Component {
     }
 
     renderInfo() {
-        const {title, description} = this.props
+        const {title, description, nonClickable} = this.props
         return title || description
             ? (
-                <div className={styles.info}>
+                <div className={[styles.info, nonClickable ? styles.nonClickable : styles.clickable].join(' ')}>
                     {this.renderTitle()}
                     {this.renderDescription()}
                 </div>
@@ -103,7 +121,12 @@ Item.propTypes = {
     highlightClassName: PropTypes.string,
     highlightDescription: PropTypes.any,
     highlightTitle: PropTypes.any,
+    icon: PropTypes.any,
+    iconSize: PropTypes.any,
+    iconType: PropTypes.string,
+    iconVariant: PropTypes.string,
     image: PropTypes.any,
+    nonClickable: PropTypes.any,
     timestamp: PropTypes.any,
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
 }

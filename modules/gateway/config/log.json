@@ -1,0 +1,11 @@
+{
+    "port": 5100,
+    "categories": {
+        "auth": "info",
+        "gateway": "info",
+        "proxy": "info",
+        "session": "info",
+        "user": "info",
+        "userstore": "info"
+    }
+}

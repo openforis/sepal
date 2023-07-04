@@ -5,13 +5,13 @@ import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
+import {withSubscriptions} from 'subscription'
 import FloatingBox from 'widget/floatingBox'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './buttonSelect.module.css'
-import withSubscriptions from 'subscription'
 
 // const SELECTION_DELAY_MS = 350
 
@@ -33,6 +33,10 @@ class ButtonSelect extends React.Component {
     constructor() {
         super()
         this.handleBlur = this.handleBlur.bind(this)
+        this.toggleOptions = this.toggleOptions.bind(this)
+        this.hideOptions = this.hideOptions.bind(this)
+        this.onClick = this.onClick.bind(this)
+        this.onSelect = this.onSelect.bind(this)
     }
 
     render() {
@@ -65,7 +69,7 @@ class ButtonSelect extends React.Component {
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 width={width}
-                onClick={() => this.toggleOptions()}
+                onClick={this.toggleOptions}
                 onMouseOver={onMouseOver}
                 onMouseOut={onMouseOut}
                 disabled={disabled}
@@ -78,7 +82,7 @@ class ButtonSelect extends React.Component {
     }
 
     renderMultiButton() {
-        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement, width, onClick, onMouseOver, onMouseOut} = this.props
+        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement, width, onMouseOver, onMouseOut} = this.props
         return (
             <ButtonGroup
                 ref={this.input}
@@ -95,7 +99,7 @@ class ButtonSelect extends React.Component {
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
                     width={width}
-                    onClick={e => onClick && onClick(e)}
+                    onClick={this.onClick}
                     disabled={disabled}
                     label={this.getLabel()}
                 />
@@ -106,11 +110,16 @@ class ButtonSelect extends React.Component {
                     icon={this.getChevronIcon()}
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
-                    onClick={() => this.toggleOptions()}
+                    onClick={this.toggleOptions}
                     disabled={disabled}
                 />
             </ButtonGroup>
         )
+    }
+
+    onClick(e) {
+        const {onClick} = this.props
+        onClick && onClick(e)
     }
 
     getLabel() {
@@ -138,8 +147,8 @@ class ButtonSelect extends React.Component {
                     className={optionsClassName || styles.options}
                     options={flattenedOptions}
                     selectedOption={selectedOption}
-                    onSelect={option => this.select$.next(option)}
-                    onCancel={() => this.hideOptions()}
+                    onSelect={this.onSelect}
+                    onCancel={this.hideOptions}
                     autoCenter={!selected}
                     tooltipPlacement={optionTooltipPlacement}
                     air='more'
@@ -147,6 +156,10 @@ class ButtonSelect extends React.Component {
                 />
             </FloatingBox>
         )
+    }
+
+    onSelect(option) {
+        this.select$.next(option)
     }
 
     toggleOptions() {
@@ -268,7 +281,7 @@ ButtonSelect.propTypes = {
     optionTooltipPlacement: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
     shape: PropTypes.string,
-    tooltip: PropTypes.string,
+    tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     width: PropTypes.string,
     onClick: PropTypes.func,

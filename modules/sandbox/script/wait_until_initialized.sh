@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 ports=$(echo $1 | tr ";" "\n")
-username=$2
 for port in $ports;
 do
     for i in {30..0}; do
@@ -19,17 +18,3 @@ do
     fi
 done
 
-
-for i in {30..0}; do
-    if [ $(getent passwd $username | wc -l) -eq 1 ]; then
-        break
-    fi
-    echo "Waiting for user $username to be initialized..."
-    /bin/sleep 1
-done
-if [ "$i" = 0 ]; then
-    echo >&2 "User $username not initialized"
-    exit 1
-else
-    echo "User $username initialized"
-fi

@@ -1,9 +1,9 @@
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './droppable.module.css'
-import withSubscriptions from 'subscription'
 
 class _Droppable extends React.Component {
     state = {
@@ -128,7 +128,7 @@ Droppable.propTypes = {
     // className: PropTypes.string,
     // disabled: PropTypes.any,
     // dragCloneClassName: PropTypes.string,
-    // dragTooltip: PropTypes.string,
+    // dragtooltip: PropTypes.any,
     // dragValue: PropTypes.any,
     // main: PropTypes.any,
     // showHandle: PropTypes.any,

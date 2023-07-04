@@ -11,6 +11,7 @@ import {connect} from 'store'
 import {msg} from 'translate'
 import {post$} from 'http-client'
 import {v4 as uuid} from 'uuid'
+import {withEnableDetector} from 'enabled'
 import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -83,7 +84,7 @@ class _TerminalSession extends React.Component {
 
     render() {
         return (
-            <ElementResizeDetector onResize={() => this.fit$.next()}>
+            <ElementResizeDetector resize$={this.fit$}>
                 <ContentPadding menuPadding horizontalPadding verticalPadding>
                     <Keybinding keymap={{' ': null}} priority>
                         <div className={styles.terminal} ref={this.terminalContainer}></div>
@@ -118,16 +119,16 @@ class _TerminalSession extends React.Component {
 
     startTerminal(sessionId) {
         const {terminal, terminalContainer, webSocket, resize$} = this
-        const {onEnable, onDisable} = this.props
-        terminal.setOption('allowTransparency', true)
-        terminal.setOption('fontSize', 13)
-        terminal.setOption('bellStyle', 'both')
+        const {enableDetector: {onEnable, onDisable}} = this.props
+        terminal.options.allowTransparency = true
+        terminal.options.fontSize = 13
+        terminal.options.bellStyle = 'both'
         terminal.open(terminalContainer.current)
         // for some reason theme must be defined after open...
-        terminal.setOption('theme', {
-            background: 'transparent',
+        terminal.options.theme = {
+            background: '#00000000',
             foreground: '#ccc'
-        })
+        }
         terminal.onResize(
             dimensions => resize$.next({sessionId, dimensions})
         )
@@ -149,5 +150,6 @@ class _TerminalSession extends React.Component {
 
 const TerminalSession = compose(
     _TerminalSession,
-    connect()
+    connect(),
+    withEnableDetector()
 )

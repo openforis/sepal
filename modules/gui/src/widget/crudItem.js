@@ -31,18 +31,23 @@ export class CrudItem extends React.Component {
     }
 
     renderDefaultContent() {
-        const {title, description, image, timestamp, highlight, highlightClassName, highlightTitle, highlightDescription} = this.props
+        const {title, description, icon, iconSize, iconType, iconVariant, image, timestamp, highlight, highlightClassName, highlightTitle, highlightDescription, onClick} = this.props
         return (
             <Item
                 className={styles.content}
                 title={title}
                 description={description}
+                icon={icon}
+                iconSize={iconSize}
+                iconType={iconType}
+                iconVariant={iconVariant}
                 image={image}
                 timestamp={timestamp}
                 highlight={highlight}
                 highlightClassName={highlightClassName}
                 highlightTitle={highlightTitle}
                 highlightDescription={highlightDescription}
+                nonClickable={!onClick}
             />
         )
     }
@@ -74,7 +79,6 @@ export class CrudItem extends React.Component {
                 <Button
                     chromeless
                     shape='circle'
-                    size='large'
                     icon='info-circle'
                     tooltip={infoTooltip}
                     tooltipPlacement={tooltipPlacement}
@@ -92,7 +96,6 @@ export class CrudItem extends React.Component {
                 <Button
                     chromeless
                     shape='circle'
-                    size='large'
                     icon='edit'
                     tooltip={editTooltip}
                     tooltipPlacement={tooltipPlacement}
@@ -110,7 +113,6 @@ export class CrudItem extends React.Component {
                 <Button
                     chromeless
                     shape='circle'
-                    size='large'
                     icon='clone'
                     tooltip={duplicateTooltip}
                     tooltipPlacement={tooltipPlacement}
@@ -128,7 +130,6 @@ export class CrudItem extends React.Component {
                 <RemoveButton
                     chromeless
                     shape='circle'
-                    size='large'
                     title={removeTitle}
                     message={removeMessage}
                     tooltip={removeTooltip}
@@ -150,7 +151,6 @@ export class CrudItem extends React.Component {
                 <CheckButton
                     chromeless
                     shape='circle'
-                    size='large'
                     checked={selected}
                     tooltip={selectTooltip}
                     tooltipPlacement={tooltipPlacement}
@@ -168,25 +168,29 @@ CrudItem.propTypes = {
     content: PropTypes.any,
     description: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     duplicateDisabled: PropTypes.any,
-    duplicateTooltip: PropTypes.string,
+    duplicatetooltip: PropTypes.any,
     editDisabled: PropTypes.any,
-    editTooltip: PropTypes.string,
+    edittooltip: PropTypes.any,
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     highlightClassName: PropTypes.string,
     highlightDescription: PropTypes.any,
     highlightTitle: PropTypes.any,
+    icon: PropTypes.any,
+    iconSize: PropTypes.any,
+    iconType: PropTypes.any,
+    iconVariant: PropTypes.any,
     image: PropTypes.any,
     infoDisabled: PropTypes.any,
-    infoTooltip: PropTypes.string,
+    infotooltip: PropTypes.any,
     inlineComponents: PropTypes.any,
     removeContent: PropTypes.any,
     removeDisabled: PropTypes.any,
     removeMessage: PropTypes.string,
     removeTitle: PropTypes.string,
-    removeTooltip: PropTypes.string,
+    removetooltip: PropTypes.any,
     selectDisabled: PropTypes.any,
     selected: PropTypes.any,
-    selectTooltip: PropTypes.string,
+    selecttooltip: PropTypes.any,
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     tooltipPlacement: PropTypes.string,
     unsafeRemove: PropTypes.any,

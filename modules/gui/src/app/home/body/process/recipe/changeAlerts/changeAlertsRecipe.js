@@ -1,3 +1,5 @@
+import {defaultModel as defaultOpticalModel} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {defaultModel as defaultRadarModel} from 'app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
 import {getRecipeType} from 'app/home/body/process/recipeTypes'
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
@@ -27,6 +29,8 @@ export const defaultModel = {
         }
     },
     options: {
+        ...defaultOpticalModel.compositeOptions,
+        ...defaultRadarModel.options,
         corrections: ['SR'],
         cloudDetection: ['QA', 'CLOUD_SCORE'],
         cloudMasking: 'AGGRESSIVE',
@@ -39,7 +43,10 @@ export const defaultModel = {
     changeAlertsOptions: {
         minConfidence: 5,
         numberOfObservations: 3,
-        minNumberOfChanges: 3
+        minNumberOfChanges: 3,
+        mustBeConfirmedInMonitoring: true,
+        mustBeStableBeforeChange: true,
+        mustStayChanged: true,
     }
 }
 
@@ -65,11 +72,6 @@ export const RecipeActions = id => {
                     'ui.retrieveOptions': retrieveOptions
                 })
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        },
-        setClassification({classificationLegend, classifierType} = {}) {
-            actionBuilder('SET_CLASSIFICATION', {classificationLegend, classifierType})
-                .set('ui.classification', {classificationLegend, classifierType})
                 .dispatch()
         }
     }
@@ -126,6 +128,16 @@ const submitRetrieveRecipeTask = recipe => {
     const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
     const pyramidingPolicy = {'.default': 'sample'}
     const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
+    const recipeProperties = {
+        recipe_id: recipe.id,
+        recipe_projectId: recipe.projectId,
+        recipe_type: recipe.type,
+        recipe_title: recipe.title || recipe.placeholder,
+        ..._(recipe.model)
+            .mapValues(value => JSON.stringify(value))
+            .mapKeys((_value, key) => `recipe_${key}`)
+            .value()
+    }
     const task = {
         operation,
         params: {
@@ -137,7 +149,7 @@ const submitRetrieveRecipeTask = recipe => {
                 bands: {selection: bands},
                 visualizations,
                 pyramidingPolicy,
-                properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
+                properties: {...recipeProperties, 'system:time_start': timeStart, 'system:time_end': timeEnd}
             }
         }
     }

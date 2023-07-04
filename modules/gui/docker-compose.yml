@@ -14,6 +14,7 @@ services:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       GOOGLE_ANALYTICS_ID: "${GOOGLE_ANALYTICS_ID}"
       GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY}"
+      GOOGLE_RECAPTCHA_SITE_KEY: "${GOOGLE_RECAPTCHA_SITE_KEY}"
     networks:
       - sepal
     restart: always

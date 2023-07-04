@@ -1,6 +1,5 @@
-const Job = require('sepal/worker/job')
-const {messageService, sendMessage$} = require('./messageService')
-const logConfig = require('./log.json')
+// const Job = require('#sepal/worker/job')
+// const {messageService, sendMessage$} = require('./messageService')
 
 const getSepalUser = request => {
     const sepalUser = request.headers['sepal-user']
@@ -18,10 +17,10 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
     const Path = require('path')
     const {realpath, readdir, stat, rm} = require('fs/promises')
     const {EMPTY, catchError, concat, timer, Subject, finalize, from, exhaustMap, distinctUntilChanged, takeUntil, takeWhile, switchMap} = require('rxjs')
-    const {minDuration$} = require('sepal/rxjs')
+    const {minDuration$} = require('#sepal/rxjs')
     const _ = require('lodash')
     const {resolvePath} = require('./filesystem')
-    const log = require('sepal/log').getLogger('ws')
+    const log = require('#sepal/log').getLogger('ws')
     
     const REMOVE_COMFORT_DELAY_MS = 1000
 
@@ -119,9 +118,10 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
         const removePaths = (paths, options) =>
             Promise.all(
                 paths.map(path => removePath(path, options))
-            ).then(
-                () => sendMessage$({username}).subscribe()
             )
+            // .then(
+            //     () => sendMessage$({username}).subscribe()
+            // )
     
         const removePath = (path, options) => {
             unmonitor(path, options)
@@ -227,12 +227,15 @@ const worker$ = (username, {args$, initArgs: {homeDir, pollIntervalMilliseconds}
     )
 }
 
-module.exports = Job(logConfig)({
-    jobName: 'Files',
-    jobPath: __filename,
-    before: [],
-    initArgs: () => getInitArgs(),
-    services: [messageService],
-    args: request => [getSepalUser(request).username],
-    worker$
-})
+module.exports = ctx =>
+    worker$(getSepalUser(ctx.request).username, {args$: ctx.args$, initArgs: getInitArgs()})
+
+// module.exports = Job()({
+//     jobName: 'Files',
+//     jobPath: __filename,
+//     before: [],
+//     initArgs: () => getInitArgs(),
+//     services: [messageService],
+//     args: request => [getSepalUser(request).username],
+//     worker$
+// })

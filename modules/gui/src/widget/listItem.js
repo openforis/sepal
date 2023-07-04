@@ -1,5 +1,6 @@
 import {Subject, animationFrames, debounceTime, delay, distinctUntilChanged, filter, fromEvent, map, switchMap, takeUntil, timer} from 'rxjs'
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import Hammer from 'hammerjs'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
@@ -7,7 +8,6 @@ import React from 'react'
 import _ from 'lodash'
 import lookStyles from 'style/look.module.css'
 import styles from './listItem.module.css'
-import withSubscriptions from 'subscription'
 
 const EXPAND_DELAYED_TIMEOUT_MS = 1000
 const CLICKABLE_PAN_THRESHOLD_PX = 10
@@ -115,7 +115,7 @@ class _ListItem extends React.Component {
 
     onClick() {
         const {onClick} = this.props
-        if (!this.isDisabled() && !this.isDragging()) {
+        if (!this.isDisabled()) {
             if (onClick) {
                 onClick()
             } else if (this.isToggleable()) {
@@ -129,37 +129,43 @@ class _ListItem extends React.Component {
         expansionClickable || e.stopPropagation()
     }
 
-    render() {
-        return (
-            <React.Fragment>
-                {this.renderStatic()}
-                {this.isDragging() ? this.renderClone() : null}
-            </React.Fragment>
-        )
-    }
-
-    renderStatic() {
-        return this.renderItem(true)
-    }
-
     getSharedClassName(clickable) {
-        return _.flatten([
+        const {expansionInteractive, hovered} = this.props
+        return [
             lookStyles.look,
             lookStyles.transparent,
             lookStyles.noTransitions,
-            clickable ? null : [lookStyles.noHover, lookStyles.nonClickable],
-            (this.isDragging() || this.isDraggable() && !this.isClickable()) ? lookStyles.draggable : null,
-            // this.isDisabled() ? lookStyles.nonInteractive : null
-            this.isDisabled() ? lookStyles.disabled : null
-        ])
+            // clickable ? null : lookStyles.hoverDisabled,
+            // (this.isDragging() || this.isDraggable() && !this.isClickable()) ? lookStyles.draggable : null,
+            (this.isDragging() || this.isDraggable() && !clickable)
+                ? lookStyles.draggable
+                : clickable
+                    ? null
+                    : lookStyles.hoverDisabled,
+            expansionInteractive
+                ? lookStyles.interactive
+                : null,
+            this.isDisabled() ? lookStyles.disabled : null,
+            hovered ? lookStyles.hoverForced : null
+        ]
     }
 
-    getItemClassName(original) {
+    getItemClassName() {
         const {className, expansionClickable} = this.props
         return _.flatten([
             expansionClickable ? this.getSharedClassName(this.isClickable()) : null,
             styles.verticalWrapper,
-            original ? styles.original : styles.clone,
+            styles.original,
+            className
+        ]).join(' ')
+    }
+
+    getGhostClassName() {
+        const {className, expansionClickable} = this.props
+        return _.flatten([
+            expansionClickable ? this.getSharedClassName(this.isClickable()) : null,
+            styles.verticalWrapper,
+            styles.clone,
             className
         ]).join(' ')
     }
@@ -182,52 +188,37 @@ class _ListItem extends React.Component {
         ]).join(' ')
     }
 
-    renderItem(original) {
+    render() {
+        return (
+            <React.Fragment>
+                {this.renderItem()}
+                {this.isDragging() ? this.renderDraggableClone() : null}
+            </React.Fragment>
+        )
+    }
+
+    renderItem() {
         return (
             <div
-                className={this.getItemClassName(original)}
+                className={this.getItemClassName()}
                 onClick={this.onClick}
                 onMouseOver={this.onMouseOver}
                 onMouseOut={this.onMouseOut}>
                 <div className={styles.horizontalWrapper}>
-                    {this.renderMain(original)}
+                    <div ref={this.draggable}
+                        className={this.getMainClassName()}>
+                        {this.isDraggable() ? this.renderDragHandle() : null}
+                        <div className={styles.content}>
+                            {this.getMainContent()}
+                        </div>
+                    </div>
                     {this.renderExpansion()}
                 </div>
             </div>
         )
     }
 
-    renderMain(original) {
-        return (
-            <div ref={original ? this.draggable : null}
-                className={this.getMainClassName()}>
-                {this.isDraggable() ? this.renderDragHandle() : null}
-                <div className={styles.content}>
-                    {this.getMainContent()}
-                </div>
-            </div>
-        )
-    }
-
-    renderDragHandle() {
-        return (
-            <div className={styles.dragHandle}/>
-        )
-    }
-
-    renderExpansion() {
-        return this.isExpanded()
-            ? (
-                <div
-                    className={this.getExpansionClassName()}
-                    onClick={this.onExpansionClick}>
-                    {this.getExpansionContent()}
-                </div>
-            )
-            : null
-    }
-
-    renderClone() {
+    renderDraggableClone() {
         const {position, size} = this.state
         const {dragCloneClassName} = this.props
         if (position && size) {
@@ -242,12 +233,38 @@ class _ListItem extends React.Component {
                                 '--width': size.width,
                                 '--height': size.height
                             }}>
-                            {this.renderItem(false)}
+                            <div className={this.getGhostClassName()}>
+                                <div className={styles.horizontalWrapper}>
+                                    <div className={this.getMainClassName()}>
+                                        {this.renderDragHandle()}
+                                        <div className={styles.content}>
+                                            {this.getMainContent()}
+                                        </div>
+                                    </div>
+                                    {this.renderExpansion()}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </Portal>
             )
         }
+    }
+
+    renderDragHandle() {
+        return (
+            <div className={styles.dragHandle}/>
+        )
+    }
+
+    renderExpansion() {
+        return this.isExpanded() ? (
+            <div
+                className={this.getExpansionClassName()}
+                onClick={this.onExpansionClick}>
+                {this.getExpansionContent()}
+            </div>
+        ) : null
     }
 
     initializeDraggable() {
@@ -394,12 +411,14 @@ ListItem.propTypes = {
     disabled: PropTypes.any,
     drag$: PropTypes.object,
     dragCloneClassName: PropTypes.string,
-    dragTooltip: PropTypes.string,
+    dragtooltip: PropTypes.any,
     dragValue: PropTypes.any,
     expanded: PropTypes.any,
     expansion: PropTypes.any,
     expansionClassName: PropTypes.string,
     expansionClickable: PropTypes.any,
+    expansionInteractive: PropTypes.any,
+    hovered: PropTypes.any,
     main: PropTypes.any,
     onClick: PropTypes.func,
     onDrag: PropTypes.func,

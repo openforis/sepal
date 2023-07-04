@@ -21,7 +21,7 @@ class GenerateUserSpendingReport_Test extends AbstractBudgetTest {
     }
 
     def 'Given an update default budget, when generating report, report matches user budget'() {
-        updateDefaultBudget(new Budget(instanceSpending: 11, storageSpending: 22, storageQuota: 33))
+        updateDefaultBudget(createBudget(instanceSpending: 11, storageSpending: 22, storageQuota: 33))
 
         when:
         def report = userSpendingReport()
@@ -33,7 +33,7 @@ class GenerateUserSpendingReport_Test extends AbstractBudgetTest {
     }
 
     def 'Given a user budget, when generating report, report matches user budget'() {
-        updateUserBudget(new Budget(instanceSpending: 11, storageSpending: 22, storageQuota: 33))
+        updateUserBudget(createBudget(instanceSpending: 11, storageSpending: 22, storageQuota: 33))
 
         when:
         def report = userSpendingReport()

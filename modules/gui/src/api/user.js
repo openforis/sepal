@@ -27,34 +27,57 @@ export default {
     loadCurrentUserReport$: () =>
         get$('/api/sessions/report'),
 
-    login$: (username, password) =>
+    signUp$: ({username, name, email, organization, intendedUse}, recaptchaToken) =>
+        post$('/api/user/signup', {
+            body: {
+                username,
+                name,
+                email,
+                organization,
+                intendedUse,
+                recaptchaToken,
+                action: 'SIGN_UP'
+            }
+        }),
+
+    login$: ({username, password}) =>
         post$('/api/user/login', {
             username,
             password,
-            validStatuses: [200, 401]
+            validStatuses: [200, 401],
         }),
 
     logout$: () =>
         post$('/api/user/logout'),
 
-    requestPasswordReset$: email =>
+    requestPasswordReset$: ({email, optional, recaptchaToken}) =>
         post$('/api/user/password/reset-request', {
-            body: {email}
+            body: {email, optional, recaptchaToken}
         }),
 
     validateToken$: token =>
-        post$('/api/user/validate-token', {
+        post$('/api/user/validate/token', {
             body: {token}
         }),
 
-    resetPassword$: (token, username, password) =>
+    validateUsername$: ({username, recaptchaToken}) =>
+        post$('/api/user/validate/username', {
+            body: {username, recaptchaToken}
+        }),
+    
+    validateEmail$: ({email, recaptchaToken}) =>
+        post$('/api/user/validate/email', {
+            body: {email, recaptchaToken}
+        }),
+    
+    resetPassword$: ({token, password, recaptchaToken}) =>
         post$('/api/user/password/reset', {
-            body: {token, password}
+            body: {token, password, recaptchaToken}
         }),
 
-    updateCurrentUserDetails$: ({name, email, organization, emailNotificationsEnabled}) =>
+    updateCurrentUserDetails$: ({name, email, organization, intendedUse, emailNotificationsEnabled}) =>
         post$('/api/user/current/details', {
-            body: {name, email, organization, emailNotificationsEnabled}
+            body: {name, email, organization, intendedUse, emailNotificationsEnabled}
         }),
 
     changePassword$: ({oldPassword, newPassword}) =>
@@ -94,6 +117,16 @@ export default {
     updateUser$: userDetails =>
         post$('/api/user/details', {
             body: userDetails
+        }),
+
+    lockUser$: username =>
+        post$('/api/user/lock', {
+            body: {username}
+        }),
+
+    unlockUser$: username =>
+        post$('/api/user/unlock', {
+            body: {username}
         }),
 
     updateUserBudget$: budget =>

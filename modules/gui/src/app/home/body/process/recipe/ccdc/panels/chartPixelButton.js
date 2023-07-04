@@ -27,10 +27,12 @@ class ChartPixelButton extends React.Component {
 
     startSelecting() {
         const {map, onPixelSelected} = this.props
-        const clickListener = map.addClickListenerOnce(latLng => {
-            this.setState({isSelecting: false})
-            onPixelSelected(latLng)
-        })
+        const clickListener = map.addOneShotClickListener(
+            latLng => {
+                this.setState({isSelecting: false})
+                onPixelSelected(latLng)
+            }
+        )
 
         this.setState({isSelecting: true, clickListener})
     }

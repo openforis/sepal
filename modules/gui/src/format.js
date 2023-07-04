@@ -1,4 +1,4 @@
-import NumberFormat from 'react-number-format'
+import {NumericFormat} from 'react-number-format'
 import React from 'react'
 import _ from 'lodash'
 import moment from 'moment'
@@ -6,7 +6,7 @@ import moment from 'moment'
 const integer = value => decimal(value, 0)
 
 const decimal = (value, decimals = 2) =>
-    <NumberFormat
+    <NumericFormat
         value={value}
         displayType={'text'}
         thousandSeparator={true}
@@ -20,7 +20,7 @@ const dollarsPerHour = (value, {precisionDigits = 3, prefix = '$'} = {}) => numb
 const dollarsPerMonth = (value, {precisionDigits = 3, prefix = '$'} = {}) => number({value, precisionDigits, minScale: '', prefix, suffix: '/mon'})
 
 const hours = (value, decimals = 2) =>
-    <NumberFormat
+    <NumericFormat
         value={value}
         displayType={'text'}
         thousandSeparator={true}
@@ -29,7 +29,7 @@ const hours = (value, decimals = 2) =>
         suffix={'h'}/>
 
 const percent = (part, total, decimals = 2) =>
-    <NumberFormat
+    <NumericFormat
         value={total > 0 ? 100 * part / total : 0}
         displayType={'text'}
         thousandSeparator={true}
@@ -48,6 +48,16 @@ const date = date =>
 
 const fileSize = (size, {scale, precisionDigits, unit = 'B'} = {}) =>
     number({value: size, scale, precisionDigits, unit})
+
+const fractionalYearsToDate = fractionalYear => {
+    const year = Math.floor(fractionalYear)
+    const fraction = fractionalYear - year
+    const startOfYear = moment({year, month: 0, day: 1})
+    const startOfNextYear = moment(startOfYear).add(1, 'years')
+    const daysOfYear = startOfNextYear.diff(startOfYear, 'days')
+
+    return startOfYear.add(Math.floor(daysOfYear * fraction), 'days').toDate()
+}
 
 // scale: the magnitude of the input value (e.g. 'k')
 // minScale: the minimum magnitude of the output value (e.g. '')
@@ -206,6 +216,7 @@ export default {
     percent,
     fullDateTime,
     fullDate,
+    fractionalYearsToDate,
     date,
     fileSize,
     number,

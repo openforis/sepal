@@ -29,25 +29,25 @@ export default class Label extends React.Component {
     }
 
     renderLeft() {
-        const {tooltip, tooltipPlacement} = this.props
         return (
-            <Tooltip
-                msg={tooltip}
-                placement={tooltipPlacement}
-                clickTrigger={isMobile()}>
-                <div>
-                    {this.renderContents()}
-                    {this.renderTooltipIcon()}
-                </div>
-            </Tooltip>
+            <div>
+                {this.renderContents()}
+                {this.renderTooltipIcon()}
+            </div>
         )
     }
 
     renderTooltipIcon() {
-        const {tooltip} = this.props
+        const {tooltip, tooltipPlacement} = this.props
         return tooltip
             ? (
-                <Icon className={styles.info} name='question-circle'/>
+                <Icon
+                    className={styles.info}
+                    name='question-circle'
+                    tooltip={tooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    tooltipClickTrigger={true}
+                />
             )
             : null
     }
@@ -90,7 +90,7 @@ Label.propTypes = {
     disabled: PropTypes.any,
     error: PropTypes.any,
     msg: PropTypes.any,
-    size: PropTypes.oneOf(['normal', 'large']),
+    size: PropTypes.oneOf(['small', 'normal', 'large']),
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any
 }

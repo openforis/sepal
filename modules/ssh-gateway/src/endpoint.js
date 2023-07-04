@@ -1,4 +1,4 @@
-const {delete$, get$, post$} = require('sepal/httpClient')
+const {delete$, get$, post$} = require('#sepal/httpClient')
 const {filter, first, interval, map, switchMap} = require('rxjs')
 const {
     username,
@@ -18,7 +18,7 @@ const endpointConfig = {
 const exceededBudget = info => {
     const spending = info.spending
     const exceeded = (spending, budget, message) => {
-        if (spending > budget) {
+        if (spending >= budget) {
             println(`\n${message}`)
             return true
         } else {

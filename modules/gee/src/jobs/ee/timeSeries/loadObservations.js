@@ -1,11 +1,11 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
 const worker$ = ({recipe, bands, latLng}) => {
-    const {getCollection$} = require('sepal/ee/timeSeries/collection')
-    const {toGeometry} = require('sepal/ee/aoi')
-    const {getRows$} = require('sepal/ee/table')
+    const {getCollection$} = require('#sepal/ee/timeSeries/collection')
+    const {toGeometry} = require('#sepal/ee/aoi')
+    const {getRows$} = require('#sepal/ee/table')
     const {switchMap} = require('rxjs')
-    const ee = require('sepal/ee')
+    const ee = require('#sepal/ee')
     const aoi = {type: 'POINT', ...latLng}
     const geometry = toGeometry(aoi)
 
@@ -17,7 +17,8 @@ const worker$ = ({recipe, bands, latLng}) => {
                 const value = image.reduceRegion({
                     reducer: ee.Reducer.first(),
                     geometry,
-                    scale: 10
+                    scale: 10,
+                    tileScale: 16
                 }).getNumber(band) // Expect a single band in the recipe
                 return ee.Feature(null, {date: image.date(), value})
             })

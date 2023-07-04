@@ -18,7 +18,7 @@
 
 .grid {
     display: grid;
-    grid-template-columns: 3fr 2fr 3fr 1fr repeat(6, 2fr);
+    grid-template-columns: 3fr 3fr 3fr 1fr repeat(6, 2fr);
     grid-template-rows: auto;
     column-gap: 1rem;
     width: 100%;
@@ -130,7 +130,7 @@
     min-width: 60rem;
 }
 
-.users > :nth-child(even) {
+.user:nth-child(even) {
     background-color: hsla(0, 0%, 100%, .03);
 }
 

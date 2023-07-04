@@ -1,21 +1,22 @@
-import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {ChangePassword, ChangePasswordButton} from './changePassword'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {GoogleAccount, GoogleAccountButton} from './googleAccount'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {Subject} from 'rxjs'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser, updateCurrentUserDetails$} from 'user'
 import {msg} from 'translate'
+import {withActivatable} from 'widget/activation/activatable'
+import {withActivators} from 'widget/activation/activator'
+import {withSubscriptions} from 'subscription'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import React from 'react'
+import _ from 'lodash'
 import styles from './userDetails.module.css'
-import withSubscriptions from 'subscription'
 
 const fields = {
     name: new Form.Field()
@@ -23,7 +24,9 @@ const fields = {
     email: new Form.Field()
         .notBlank('user.userDetails.form.email.required'),
     organization: new Form.Field(),
-    emailNotificationsEnabled: new Form.Field()
+    intendedUse: new Form.Field(),
+    // .notBlank('user.userDetails.form.intendedUse.required'),
+    emailNotificationsEnabled: new Form.Field(),
 }
 
 const mapStateToProps = state => {
@@ -34,6 +37,7 @@ const mapStateToProps = state => {
             name: user.name,
             email: user.email,
             organization: user.organization,
+            intendedUse: user.intendedUse,
             emailNotificationsEnabled: user.emailNotificationsEnabled
         },
         tasks: state.tasks
@@ -57,9 +61,14 @@ class _UserDetails extends React.Component {
     }
 
     renderPanel() {
-        const {inputs: {name, email, organization, emailNotificationsEnabled}} = this.props
+        const {inputs: {name, email, organization, intendedUse, emailNotificationsEnabled}} = this.props
         return (
             <React.Fragment>
+                <Panel.Header
+                    icon='user'
+                    title={msg('user.userDetails.title')}
+                    label={this.renderConnectionStatus()}
+                />
                 <Panel.Content>
                     <Layout>
                         <Form.Input
@@ -79,6 +88,14 @@ class _UserDetails extends React.Component {
                             label={msg('user.userDetails.form.organization.label')}
                             input={organization}
                             spellCheck={false}
+                        />
+                        <Form.Input
+                            label={msg('user.userDetails.form.intendedUse.label')}
+                            input={intendedUse}
+                            spellCheck={false}
+                            errorMessage
+                            textArea
+                            minRows={4}
                         />
                         <Form.Buttons
                             label={msg('user.userDetails.form.emailNotifications.label')}
@@ -139,13 +156,7 @@ class _UserDetails extends React.Component {
                 modal
                 onApply={userDetails => this.updateUserDetails(userDetails)}
                 onClose={deactivate}>
-                <Panel.Header
-                    icon='user'
-                    title={msg('user.userDetails.title')}
-                    label={this.renderConnectionStatus()}
-                />
                 {this.renderPanel()}
-                {/* {this.renderProgress()} */}
             </Form.Panel>
         )
     }
@@ -159,8 +170,8 @@ const policy = () => ({
 
 const UserDetails = compose(
     _UserDetails,
-    form({fields, mapStateToProps}),
-    activatable({id: 'userDetails', policy, alwaysAllow: true})
+    withForm({fields, mapStateToProps}),
+    withActivatable({id: 'userDetails', policy, alwaysAllow: true})
 )
 
 UserDetails.propTypes = {}
@@ -170,12 +181,15 @@ class _UserDetailsButton extends React.Component {
         hint: false
     }
 
+    isUserGoogleAccount() {
+        const {user} = this.props
+        return user.googleTokens
+    }
+
     render() {
         return (
             <React.Fragment>
-                <Activator id='userDetails'>
-                    {({active, activate}) => this.renderButton({active, activate})}
-                </Activator>
+                {this.renderButton()}
                 <UserDetails/>
                 <ChangePassword/>
                 <GoogleAccount/>
@@ -183,29 +197,49 @@ class _UserDetailsButton extends React.Component {
         )
     }
 
-    renderButton({active, activate}) {
+    renderButton() {
+        const {className, user: {username}, activator: {activatables: {userDetails}}} = this.props
         const {hint} = this.state
-        const {className, username} = this.props
-        return (
+        return userDetails ? (
             <Button
                 chromeless
                 look='transparent'
                 size='large'
                 air='less'
                 additionalClassName={className}
-                icon='user'
+                icon={this.isUserGoogleAccount() ? 'google' : 'user'}
+                iconType={this.isUserGoogleAccount() ? 'brands' : null}
                 label={username}
-                disabled={active}
-                onClick={activate}
+                disabled={userDetails.active}
                 tooltip={msg('home.sections.user.profile')}
                 tooltipPlacement='top'
-                tooltipDisabled={active}
+                tooltipDisabled={userDetails.active}
                 hint={hint}
+                onClick={userDetails.activate}
             />
-        )
+        ) : null
     }
 
     componentDidMount() {
+        // this.autoTrigger()
+        this.initializeHints()
+    }
+
+    componentDidUpdate() {
+        // this.autoTrigger()
+    }
+
+    autoTrigger() {
+        const {user, activator: {activatables: {userDetails}}} = this.props
+        const MANDATORY_FIELDS = ['intendedUse']
+        if (userDetails) {
+            if (_.some(MANDATORY_FIELDS, field => _.isEmpty(user[field]))) {
+                userDetails.activate()
+            }
+        }
+    }
+
+    initializeHints() {
         const {addSubscription} = this.props
         addSubscription(
             hint$.subscribe(hint => this.setState({hint}))
@@ -216,9 +250,10 @@ class _UserDetailsButton extends React.Component {
 export const UserDetailsButton = compose(
     _UserDetailsButton,
     connect(state => ({
-        username: state.user.currentUser.username
+        user: state.user.currentUser
     })),
-    withSubscriptions()
+    withSubscriptions(),
+    withActivators('userDetails')
 )
 
 UserDetailsButton.propTypes = {}

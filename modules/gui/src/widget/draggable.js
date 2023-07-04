@@ -1,5 +1,6 @@
 import {animationFrames, debounceTime, distinctUntilChanged, filter, fromEvent, map, share, switchMap} from 'rxjs'
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import Hammer from 'hammerjs'
 import Keybinding from 'widget/keybinding'
 import Portal from 'widget/portal'
@@ -7,7 +8,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './draggable.module.css'
-import withSubscriptions from 'subscription'
 
 const CLICKABLE_PAN_THRESHOLD_PX = 10
 
@@ -332,7 +332,7 @@ Draggable.propTypes = {
     disabled: PropTypes.any,
     dragCloneClassName: PropTypes.string,
     dragPlaceholderClassName: PropTypes.string,
-    dragTooltip: PropTypes.string,
+    dragtooltip: PropTypes.any,
     dragValue: PropTypes.any,
     hidden: PropTypes.any,
     index: PropTypes.any,

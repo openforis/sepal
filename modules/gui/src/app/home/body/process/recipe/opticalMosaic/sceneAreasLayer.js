@@ -1,10 +1,10 @@
 import {MapLayer} from 'app/home/map/mapLayer'
 import {SceneAreaMarker} from './sceneAreaMarker'
 import {SceneSelectionType} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {enabled} from 'widget/enableWhen'
 import {selectFrom} from 'stateUtils'
+import {withActivators} from 'widget/activation/activator'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -64,7 +64,7 @@ class _SceneAreasLayer extends React.Component {
 export const SceneAreasLayer = compose(
     _SceneAreasLayer,
     enabled({when: ({manualSelection}) => manualSelection}),
-    activator('sceneSelection'),
+    withActivators('sceneSelection'),
     withRecipe(mapRecipeToProps)
 )
 

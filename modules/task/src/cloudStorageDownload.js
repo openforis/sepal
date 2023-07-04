@@ -1,10 +1,10 @@
 const fs = require('fs')
 const {Subject, EMPTY, concat, defer, of, catchError, expand, map, mergeMap, scan, switchMap} = require('rxjs')
-const {fromPromise, finalize, retry, swallow} = require('sepal/rxjs')
+const {fromPromise, finalizeObservable, retry, swallow} = require('#sepal/rxjs')
 const {cloudStorage$} = require('./cloudStorage')
 const path = require('path')
 const format = require('./format')
-const log = require('sepal/log').getLogger('cloudStorage')
+const log = require('#sepal/log').getLogger('cloudStorage')
 
 const CHUNK_SIZE = 10 * 1024 * 1024
 const CONCURRENT_FILE_DOWNLOAD = 1
@@ -18,7 +18,7 @@ const do$ = (description, promise) => defer(() => {
         retry(RETRIES)
     )
 })
-const download$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) =>
+const download$ = (taskId, {bucketPath, prefix, downloadDir, deleteAfterDownload}) =>
     cloudStorage$().pipe(
         map(cloudStorage => cloudStorage.bucket(`gs://${bucketPath}`)),
         switchMap(bucket =>
@@ -29,7 +29,7 @@ const download$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) =>
                 map(response => response[0]),
                 switchMap(files => concat(
                     of(getProgress({files})),
-                    downloadFiles$({files, prefix, downloadDir, deleteAfterDownload})
+                    downloadFiles$(taskId, {files, prefix, downloadDir, deleteAfterDownload})
                 ))
             )
         ),
@@ -73,10 +73,10 @@ const getProgress = ({
 
 const initialState = files => getProgress({files})
 
-const downloadFiles$ = ({files, prefix, downloadDir, deleteAfterDownload}) => {
+const downloadFiles$ = (taskId, {files, prefix, downloadDir, deleteAfterDownload}) => {
     return of(files).pipe(
         switchMap(files => of(...files)),
-        mergeMap(file => downloadFile$({file, prefix, downloadDir, deleteAfterDownload}), CONCURRENT_FILE_DOWNLOAD),
+        mergeMap(file => downloadFile$(taskId, {file, prefix, downloadDir, deleteAfterDownload}), CONCURRENT_FILE_DOWNLOAD),
         scan((currentProgress, fileProgress) => getProgress({
             files,
             currentProgress,
@@ -85,7 +85,7 @@ const downloadFiles$ = ({files, prefix, downloadDir, deleteAfterDownload}) => {
     )
 }
 
-const downloadFile$ = ({file, prefix, downloadDir, deleteAfterDownload}) => {
+const downloadFile$ = (taskId, {file, prefix, downloadDir, deleteAfterDownload}) => {
     const relativePath = file.metadata.name.substring(prefix.length)
     const toFilePath = prefix.endsWith('/')
         ? path.join(downloadDir, relativePath)
@@ -113,8 +113,13 @@ const downloadFile$ = ({file, prefix, downloadDir, deleteAfterDownload}) => {
             })
             .pipe(fs.createWriteStream(toFilePath, start ? {flags: 'a'} : {}))
         return deleteAfterDownload
-            ? chunk$.pipe(finalize(() => deleteFile$(file), `Delete after download: ${file}`))
-            : chunk$
+            ? chunk$.pipe(
+                finalizeObservable(
+                    () => deleteFile$(file),
+                    taskId,
+                    `Delete after download: ${file}`
+                )
+            ) : chunk$
     }
 
     return createDirs$(path.dirname(toFilePath)).pipe(

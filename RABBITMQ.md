@@ -1,34 +1,34 @@
 RabbitMQ "sepal.topic" exchange documentation
 
-# (module name)
-    S: [topic]                          Q: [queue]
-    P: [topic]                          M: [message shape]
+- email.send: {from, to, cc, bcc, subject, content, contentType}
+- files.FilesDeleted: {username, path}
+    - pub: sepal-server
+    - sub: user-storage
 
-# email
-    S: email.send                       Q: email.send
-    S: user.emailNotificationsEnabled   Q: email.emailNotificationsEnabled
+- files.update: {username}
+    - pub: user-files
+    - sub: <none>
 
-# sys-monitor
-    P: email.send                       M: {from, to, subject, content}
+- user.emailNotificationsEnabled: {username, enabled}
+    - pub: ???
+    - sub: email
 
-# user-files
-    P: files.update                     M: {username}
-    
-# user-storage
-    P: userStorage.size                 M: {username, size}
-    S: workerSession.#                  Q: userStorage.workerSession
-    S: files.#                          Q: userStorage.files
+- user.UserLocked: {user}
+    - pub: user
+    - sub: gateway, sepal-server
 
-# sepal-storage:budget
-    P: budget.?
-    S: user.*                           Q: budget.user
-    S: userStorage.*                    Q: budget.userStorage
+- user.UserUpdated: {user}
+    - pub: user
+    - sub: <none>
 
-# sepal-storage:workerInstance
-    P: workerInstance.?
+- userStorage.size: {username, size}
+    - pub: user-storage
+    - sub: sepal-server
 
-# sepal-storage:workerSession
-    P: workerSession.?
+- workerSession.WorkerSessionActivated: {username}
+    - pub: ???
+    - sub: user-storage
 
-# user
-    P: user.?
+- workerSession.WorkerSessionClosed: {username}
+    - pub: ???
+    - sub: user-storage

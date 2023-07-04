@@ -1,4 +1,4 @@
-import {BehaviorSubject, Subject, debounceTime, distinctUntilChanged, filter, finalize, from, map, merge, of, switchMap, zip} from 'rxjs'
+import {BehaviorSubject, Subject, debounceTime, distinctUntilChanged, filter, from, map, merge, of, switchMap, zip} from 'rxjs'
 import {Loader} from 'google-maps'
 import {SepalMap} from './sepalMap'
 import {compose} from 'compose'
@@ -7,24 +7,24 @@ import {getLogger} from 'log'
 import {mapTag, mapViewTag} from 'tag'
 import {v4 as uuid} from 'uuid'
 import {withContext} from 'context'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
-import withSubscriptions from 'subscription'
 
 const log = getLogger('maps')
 
-const GOOGLE_MAPS_VERSION = '3.47'
+const GOOGLE_MAPS_VERSION = '3.52'
 const GOOGLE_MAPS_LIBRARIES = ['drawing', 'places']
 
 const DEFAULT_ZOOM = 3
 export const MIN_ZOOM = 3
 export const MAX_ZOOM = 23
 
-export const MapsContext = React.createContext()
+const Context = React.createContext()
 
-export const withMapsContext = withContext(MapsContext, 'mapsContext')
+export const withMapsContext = withContext(Context, 'mapsContext')
 
 class _Maps extends React.Component {
     state = {
@@ -32,7 +32,7 @@ class _Maps extends React.Component {
     }
 
     view$ = new BehaviorSubject()
-    scrollWheel$ = new BehaviorSubject()
+    scrollWheelEnabled$ = new BehaviorSubject()
     linkedMaps = new Set()
 
     constructor(props) {
@@ -148,10 +148,10 @@ class _Maps extends React.Component {
         return googleMap
     }
 
-    createSepalMap(mapElement, options, style) {
+    createSepalMap({element, options, style}) {
         const {google: {google}} = this.state
-        const googleMap = this.createGoogleMap(mapElement, options, style)
-        return new SepalMap(google, googleMap)
+        const googleMap = this.createGoogleMap(element, options, style)
+        return new SepalMap({google, googleMap})
     }
 
     getCurrentView() {
@@ -177,19 +177,21 @@ class _Maps extends React.Component {
 
         const updateView$ = new Subject()
         const linked$ = new Subject()
-        const scrollWheel$ = this.scrollWheel$
+        const scrollWheelEnabled$ = this.scrollWheelEnabled$
 
-        const setLinked = linked => {
-            const currentView = this.getCurrentView()
+        const setLinked = (linked, view) => {
             if (linked) {
+                const currentView = this.getCurrentView()
                 this.linkedMaps.add(mapId)
+                if (this.linkedMaps.size === 1) {
+                    this.view$.next({mapId, view})
+                } else if (currentView) {
+                    requestedView$.next(currentView)
+                }
             } else {
                 this.linkedMaps.delete(mapId)
             }
             log.debug(() => `${mapTag(mapId)} ${linked ? 'linked' : 'unlinked'}, now ${this.linkedMaps.size} linked.`)
-            if (linked && this.linkedMaps.size > 1 && currentView) {
-                requestedView$.next(currentView)
-            }
         }
 
         const updateView = view => {
@@ -211,33 +213,32 @@ class _Maps extends React.Component {
 
         addSubscription(
             linked$.pipe(
-                distinctUntilChanged(),
-                finalize(() => setLinked(false))
+                distinctUntilChanged()
             ).subscribe(
-                linked => setLinked(linked)
+                ({linked, view}) => setLinked(linked, view)
             ),
             updateView$.pipe(
-                debounceTime(100),
+                debounceTime(500),
                 distinctUntilChanged()
             ).subscribe(
                 view => updateView(view)
             )
         )
 
-        return {mapId, googleMapsApiKey, nicfiPlanetApiKey, view$, updateView$, linked$, scrollWheel$}
+        return {mapId, googleMapsApiKey, nicfiPlanetApiKey, view$, updateView$, linked$, scrollWheelEnabled$}
     }
 
     render() {
         const {children} = this.props
         const {error, initialized} = this.state
         return (
-            <MapsContext.Provider value={{
+            <Context.Provider value={{
                 createGoogleMap: this.createGoogleMap,
                 createSepalMap: this.createSepalMap,
                 createMapContext: this.createMapContext
             }}>
                 {children(initialized, error)}
-            </MapsContext.Provider>
+            </Context.Provider>
         )
     }
 
@@ -249,9 +250,9 @@ class _Maps extends React.Component {
         const {addSubscription} = this.props
         const LOCAL_STORAGE_KEY = 'ScrollWheelMapZooming'
         const enabled = localStorage.getItem(LOCAL_STORAGE_KEY)
-        this.scrollWheel$.next(!enabled || enabled === 'true')
+        this.scrollWheelEnabled$.next(!enabled || enabled === 'true')
         addSubscription(
-            this.scrollWheel$.subscribe(
+            this.scrollWheelEnabled$.subscribe(
                 enabled => localStorage.setItem(LOCAL_STORAGE_KEY, enabled)
             )
         )

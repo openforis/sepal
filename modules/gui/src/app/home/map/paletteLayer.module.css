@@ -19,7 +19,6 @@
     max-width: 40rem;
     margin: 0 3rem;
     align-items: center;
-
 }
 
 .value {
@@ -40,11 +39,10 @@
 
 .cursorValue {
     /*--left: ''; injected */
-    --width: 5rem;
     position: absolute;
     top: -1.85rem;
     left: calc(var(--left) - var(--width) / 2);
-    width: 5rem;
+    width: var(--width);
     padding: .5rem;
     font-size: .8rem;
     line-height: .8rem;
@@ -54,6 +52,14 @@
     border-radius: 6px;
     box-shadow: 0 0 4px rgba(0, 0, 0, 0.17);
     white-space: nowrap;
+}
+
+.cursorValue.default {
+    --width: 5rem;
+}
+
+.cursorValue.fractionalYears {
+    --width: 7rem;
 }
 
 .arrow {

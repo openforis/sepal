@@ -1,13 +1,15 @@
-import {Activator} from 'widget/activation/activator'
 import {BudgetUpdateRequest} from './userBudgetUpdateRequest'
 import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
+import {Subject} from 'rxjs'
 import {Widget} from 'widget/widget'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
+import {withActivatable} from 'widget/activation/activatable'
+import {withActivators} from 'widget/activation/activator'
+import {withSubscriptions} from 'subscription'
 import React from 'react'
 import UserResources from './userResources'
 import UserSession from './userSession'
@@ -106,48 +108,87 @@ const policy = () => ({
 const Usage = compose(
     _Usage,
     connect(mapStateToProps),
-    activatable({id: 'userReport', policy, alwaysAllow: true})
+    withActivatable({id: 'userReport', policy, alwaysAllow: true})
 )
 
 Usage.propTypes = {}
 
-const _UsageButton = ({userReport, budgetExceeded, budgetWarning}) => {
-    const hourlySpending = userReport.sessions
-        ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
-        : 0
-    const label = budgetExceeded
-        ? msg('home.sections.user.report.budgetExceeded')
-        : format.unitsPerHour(hourlySpending)
-    return (
-        <React.Fragment>
-            <Activator id='userReport'>
-                {({active, activate}) =>
-                    <Button
-                        chromeless
-                        look='transparent'
-                        size='large'
-                        air='less'
-                        additionalClassName={budgetExceeded ? styles.budgetExceeded
-                            : budgetWarning ? styles.budgetWarning : null}
-                        icon='dollar-sign'
-                        label={label}
-                        disabled={active}
-                        onClick={() => activate()}
-                        tooltip={msg('home.sections.user.report.tooltip')}
-                        tooltipPlacement='top'
-                        tooltipDisabled={active}/>
-                }
-            </Activator>
-            <Usage/>
-        </React.Fragment>
-    )
+const hint$ = new Subject()
+
+class _UsageButton extends React.Component {
+    state = {
+        hint: false
+    }
+
+    render() {
+        return (
+            <React.Fragment>
+                <Usage/>
+                {this.renderButton()}
+            </React.Fragment>
+        )
+    }
+
+    renderButton() {
+        const {userReport, hasBudget, budgetExceeded, budgetWarning, activator: {activatables: {userReport: {active, activate}}}} = this.props
+        const {hint} = this.state
+        const hourlySpending = userReport.sessions
+            ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
+            : 0
+        const label = hasBudget && budgetExceeded
+            ? msg('home.sections.user.report.budgetExceeded')
+            : format.unitsPerHour(hourlySpending)
+        const additionalClassName = hasBudget
+            ? budgetExceeded
+                ? styles.budgetExceeded
+                : budgetWarning
+                    ? styles.budgetWarning
+                    : null
+            : null
+
+        return (
+            <Button
+                chromeless
+                look='transparent'
+                size='large'
+                air='less'
+                additionalClassName={additionalClassName}
+                icon='dollar-sign'
+                label={label}
+                disabled={active}
+                tooltip={msg('home.sections.user.report.tooltip')}
+                tooltipPlacement='top'
+                tooltipDisabled={active}
+                hint={hint}
+                onClick={activate}
+            />
+
+        )
+    }
+
+    initializeHints() {
+        const {addSubscription} = this.props
+        addSubscription(
+            hint$.subscribe(hint => this.setState({hint}))
+        )
+    }
+
+    componentDidMount() {
+        this.initializeHints()
+    }
 }
 
 export const UsageButton = compose(
     _UsageButton,
     connect(state => ({
         userReport: (state.user && state.user.currentUserReport) || {},
+        hasBudget: select('user.hasBudget'),
         budgetExceeded: select('user.budgetExceeded'),
         budgetWarning: select('user.budgetWarning'),
-    }))
+    })),
+    withSubscriptions(),
+    withActivators('userReport')
 )
+
+export const usageHint = visible =>
+    hint$.next(visible)

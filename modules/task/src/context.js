@@ -1,8 +1,8 @@
 const {BehaviorSubject, timer, EMPTY, catchError, filter, switchMap, tap, map, pairwise} = require('rxjs')
 const fs = require('fs')
 const path = require('path')
-const {mkdir$} = require('task/rxjs/fileSystem')
-const log = require('sepal/log').getLogger('context')
+const {mkdir$} = require('#task/rxjs/fileSystem')
+const log = require('#sepal/log').getLogger('context')
 const _ = require('lodash')
 const config = require('./config')
 

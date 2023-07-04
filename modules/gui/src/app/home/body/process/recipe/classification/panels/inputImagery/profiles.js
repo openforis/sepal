@@ -62,6 +62,6 @@ export const isProfileDisabled = (profile, availableBands) =>
 export const getProfileBandSetSpecs = (profile, availableBands) =>
     availableBands
         ? profilesByName[profile](availableBands).bandSetSpecs
-            .map(spec => BandSetSpec.filter(spec, availableBands))
+            .map(spec => ({...spec, includes: BandSetSpec.filter(spec, availableBands)}))
             .filter(spec => !BandSetSpec.isEmpty(spec, availableBands))
         : []

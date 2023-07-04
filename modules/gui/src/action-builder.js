@@ -82,7 +82,10 @@ const actionBuilder = (type, props, prefix) => {
             return {
                 type,
                 ...props,
-                reduce(state = {}) {
+                reduce(state = {
+                    state: {},
+                    hash: {}
+                }) {
                     const updatedState = applyOperations(state)
                     applySideEffects(updatedState)
                     return updatedState

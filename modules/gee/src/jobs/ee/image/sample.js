@@ -1,16 +1,22 @@
-const {job} = require('gee/jobs/job')
+const {job} = require('#gee/jobs/job')
 
-const worker$ = ({asset, count, scale, classBand}) => {
-    const ImageFactory = require('sepal/ee/imageFactory')
-    const {switchMap} = require('rxjs')
-    const {getRows$} = require('sepal/ee/table')
-    return ImageFactory({type: 'ASSET', id: asset}).getImage$().pipe(
-        switchMap(image => {
+const worker$ = ctx => {
+    const {asset, count, scale, classBand, recipe} = ctx
+    const ImageFactory = require('#sepal/ee/imageFactory')
+    const {forkJoin, switchMap} = require('rxjs')
+    const {getRows$} = require('#sepal/ee/table')
+    return forkJoin({
+        image: ImageFactory({type: 'ASSET', id: asset}).getImage$(),
+        geometry: ImageFactory(recipe).getGeometry$()
+    }).pipe(
+        switchMap(({image, geometry}) => {
             const samples = image.stratifiedSample({
                 numPoints: parseInt(count),
                 classBand: classBand || undefined,
                 scale: parseInt(scale),
-                geometries: true
+                region: geometry,
+                geometries: true,
+                tileScale: 16
             })
             return getRows$(samples, 'sample image')
         })
@@ -20,6 +26,6 @@ const worker$ = ({asset, count, scale, classBand}) => {
 module.exports = job({
     jobName: 'Sample image',
     jobPath: __filename,
-    args: ctx => [ctx.request.query],
+    args: ctx => [ctx.request.body],
     worker$
 })

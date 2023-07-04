@@ -7,6 +7,7 @@ then
   [[ -d node_modules ]] || npm install
   NODE_TLS_REJECT_UNAUTHORIZED=0 exec nodemon \
     --watch "${MODULE}"/src \
+    --watch "${MODULE}/config" \
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9236 \
     src/main.js \

@@ -53,7 +53,7 @@ RUN curl -sL https://deb.nodesource.com/setup_18.x | bash && apt-get update && a
 
 # Install global npm packages
 
-RUN npm install -g npm npm-check-updates wscat
+RUN npm install -g npm-check-updates wscat
 
 # Set bash prompt
 
@@ -77,7 +77,7 @@ RUN npm install
 # Install Java and Gradle
 
 ENV SDKMAN_DIR=/usr/local/lib/sdkman
-RUN curl -s get.sdkman.io | bash && \
+RUN curl -s https://get.sdkman.io | bash && \
     source "$SDKMAN_DIR/bin/sdkman-init.sh" && \
     yes | sdk install java 11.0.11.hs-adpt && \
     sdk install gradle 6.9.1

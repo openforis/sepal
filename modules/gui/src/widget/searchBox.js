@@ -3,13 +3,13 @@ import {ScrollableList} from 'widget/list'
 import {Shape} from 'widget/shape'
 import {Subject, debounceTime, distinctUntilChanged, filter, merge} from 'rxjs'
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './searchBox.module.css'
-import withSubscriptions from 'subscription'
 
 class _SearchBox extends React.Component {
     inputRef = React.createRef()
@@ -30,7 +30,9 @@ class _SearchBox extends React.Component {
         this.showOptions = this.showOptions.bind(this)
         this.hideOptions = this.hideOptions.bind(this)
         this.selectOption = this.selectOption.bind(this)
+        this.clear = this.clear.bind(this)
         this.focus = this.focus.bind(this)
+        this.onChange = this.onChange.bind(this)
     }
 
     render() {
@@ -38,8 +40,8 @@ class _SearchBox extends React.Component {
         const {value, showOptions} = this.state
         return (
             <Keybinding keymap={{
-                Escape: () => this.setValue(''),
-                ArrowDown: () => this.showOptions(),
+                Escape: this.clear,
+                ArrowDown: this.showOptions,
                 'Ctrl+f': this.focus,
                 'Meta+f': this.focus
             }}>
@@ -59,12 +61,20 @@ class _SearchBox extends React.Component {
                         border={false}
                         onFocus={this.showOptions}
                         onClick={this.showOptions}
-                        onChange={e => this.setValue(e.target.value)}
+                        onChange={this.onChange}
                     />
                 </Shape>
                 {showOptions ? this.renderOptions() : null}
             </Keybinding>
         )
+    }
+
+    clear() {
+        this.setValue('')
+    }
+
+    onChange(e) {
+        this.setValue(e.target.value)
     }
 
     renderOptions() {

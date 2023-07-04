@@ -1,3 +1,5 @@
+import {defaultModel as defaultOpticalModel} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {defaultModel as defaultRadarModel} from 'app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
 import {getRecipeType} from 'app/home/body/process/recipeTypes'
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
@@ -53,6 +55,8 @@ export const defaultModel = {
         breakpointBands: ['ndfi']
     },
     options: {
+        ...defaultOpticalModel.compositeOptions,
+        ...defaultRadarModel.options,
         corrections: [],
         cloudDetection: ['QA', 'CLOUD_SCORE'],
         cloudMasking: 'MODERATE',
@@ -190,6 +194,16 @@ const submitRetrieveRecipeTask = recipe => {
     const visualizations = getAllVisualizations(recipe)
     const [timeStart, timeEnd] = (getRecipeType(recipe.type).getDateRange(recipe) || []).map(date => date.valueOf())
     const operation = 'ccdc.asset_export'
+    const recipeProperties = {
+        recipe_id: recipe.id,
+        recipe_projectId: recipe.projectId,
+        recipe_type: recipe.type,
+        recipe_title: recipe.title || recipe.placeholder,
+        ..._(recipe.model)
+            .mapValues(value => JSON.stringify(value))
+            .mapKeys((_value, key) => `recipe_${key}`)
+            .value()
+    }
     const task = {
         operation,
         params: {
@@ -199,7 +213,7 @@ const submitRetrieveRecipeTask = recipe => {
             ...recipe.ui.retrieveOptions,
             bands: recipe.ui.retrieveOptions.bands,
             visualizations,
-            properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
+            properties: {...recipeProperties, 'system:time_start': timeStart, 'system:time_end': timeEnd}
         }
     }
     publishEvent('submit_task', {

@@ -1,5 +1,6 @@
 package org.openforis.sepal.component.user.adapter
 
+import groovy.sql.GroovyResultSet
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import org.openforis.sepal.component.user.api.UserRepository
@@ -22,18 +23,21 @@ class JdbcUserRepository implements UserRepository {
 
     User insertUser(User user, String token) {
         def result = sql.executeInsert('''
-                INSERT INTO sepal_user (username, name, email, organization, email_notifications_enabled, token, admin, system_user, status, 
+                INSERT INTO sepal_user (username, name, email, organization, intended_use, email_notifications_enabled, token, admin, system_user, status, 
                             creation_time, update_time) 
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                [user.username, user.name, user.email, user.organization, user.emailNotificationsEnabled, token, user.admin, user.systemUser,
-                 User.Status.PENDING.name(), user.creationTime, user.updateTime])
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                [
+                    user.username, user.name, user.email, user.organization, user.intendedUse, user.emailNotificationsEnabled,
+                    token, user.admin, user.systemUser, User.Status.PENDING.name(), user.creationTime, user.updateTime
+                ]
+        )
         return user.withId(result[0][0] as long)
     }
 
     void updateUserDetails(User user) {
         sql.executeUpdate('''
-                UPDATE sepal_user SET name = ?, email = ?, organization = ?, email_notifications_enabled = ?, admin = ?, update_time = ? 
-                WHERE username = ?''', [user.name, user.email, user.organization, user.emailNotificationsEnabled, user.admin, user.updateTime, user.username])
+                UPDATE sepal_user SET name = ?, email = ?, organization = ?, intended_use = ?, email_notifications_enabled = ?, admin = ?, update_time = ? 
+                WHERE username = ?''', [user.name, user.email, user.organization, user.intendedUse, user.emailNotificationsEnabled, user.admin, user.updateTime, user.username])
     }
 
     void deleteUser(String username) {
@@ -41,14 +45,16 @@ class JdbcUserRepository implements UserRepository {
     }
 
     List<User> listUsers() {
-        sql.rows('''
-                SELECT id, username, name, email, organization, email_notifications_enabled, admin, system_user, status, 
+        def users = []
+        sql.eachRow('''
+                SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, system_user, status, 
                        google_refresh_token,  google_access_token, google_access_token_expiration, 
                        creation_time, update_time
                 FROM sepal_user 
-                ORDER BY creation_time DESC''').collect {
-            createUser(it)
+                ORDER BY creation_time DESC''') {
+            users << toUser(it)
         }
+        return users
     }
 
     void setLastLoginTime(String username, Date loginTime) {
@@ -62,25 +68,45 @@ class JdbcUserRepository implements UserRepository {
     }
 
     User lookupUser(String username) {
-        def row = sql.firstRow('''
-                SELECT id, username, name, email, organization, email_notifications_enabled, admin, system_user, status, 
+        def user = null
+        sql.eachRow('''
+                SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, system_user, status, 
                        google_refresh_token,  google_access_token, google_access_token_expiration, 
                        creation_time, update_time
                 FROM sepal_user 
-                WHERE username = ?''', [username])
-        if (!row)
+                WHERE username = ?''', [username]) {
+            user = toUser(it)
+        }
+        if (user)
+            return user
+        else
             throw new IllegalStateException('User not in repository: ' + username)
-        return createUser(row)
+    }
+
+    User findUserByUsername(String username) {
+        def user = null
+        sql.eachRow('''
+                SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, system_user, status, 
+                       google_refresh_token,  google_access_token, google_access_token_expiration, 
+                       creation_time, update_time
+                FROM sepal_user 
+                WHERE username = ?''', [username]) {
+            user = toUser(it)
+        }
+        return user
     }
 
     User findUserByEmail(String email) {
-        def row = sql.firstRow('''
-                SELECT id, username, name, email, organization, email_notifications_enabled, admin, system_user, status, 
+        def user = null
+        sql.eachRow('''
+                SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, system_user, status, 
                        google_refresh_token,  google_access_token, google_access_token_expiration, 
                        creation_time, update_time
                 FROM sepal_user 
-                WHERE email = ?''', [email])
-        return row ? createUser(row) : null
+                WHERE email = ?''', [email]) {
+            user = toUser(it)
+        }
+        return user
     }
 
     boolean emailNotificationsEnabled(String email) {
@@ -98,17 +124,33 @@ class JdbcUserRepository implements UserRepository {
     }
 
     Map tokenStatus(String token) {
-        def row = sql.firstRow('''
-                SELECT id, username, name, email, organization, email_notifications_enabled, admin, status, system_user, token_generation_time, 
+        def status = null
+        sql.eachRow('''
+                SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, status, system_user, token_generation_time, 
                        google_refresh_token,  google_access_token, google_access_token_expiration, 
                        creation_time, update_time 
                 FROM sepal_user 
-                WHERE token = ?''', [token])
+                WHERE token = ?''', [token]) {
+            status = [
+                generationTime: it.token_generation_time,
+                user: toUser(it)
+            ]
+        }
+        return status
+    }
 
-        return row ? [
-                generationTime: row.token_generation_time,
-                user: createUser(row)
-        ] : null
+    Map tokenStatusByUsername(String username) {
+        def status = null
+        sql.eachRow('''
+                SELECT token, token_generation_time
+                FROM sepal_user 
+                WHERE username = ?''', [username]) {
+            status = it.token ? [
+                token: it.token,
+                generationTime: it.token_generation_time,
+            ] : null
+        }
+        return status
     }
 
     void invalidateToken(String token) {
@@ -135,13 +177,14 @@ class JdbcUserRepository implements UserRepository {
         ])
     }
 
-    private User createUser(GroovyRowResult row) {
+    private User toUser(row) {
         def user = new User(
                 id: row.id,
                 name: row.name,
                 username: row.username,
                 email: row.email,
                 organization: row.organization,
+                intendedUse: row.longText('intended_use'),
                 emailNotificationsEnabled: row.email_notifications_enabled,
                 roles: (row.admin ? [Roles.ADMIN] : []).toSet(),
                 systemUser: row.system_user,

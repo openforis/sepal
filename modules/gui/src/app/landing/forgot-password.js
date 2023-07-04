@@ -1,12 +1,13 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
-import Label from 'widget/label'
+import {switchMap} from 'rxjs'
+import {withRecaptcha} from 'widget/recaptcha'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -19,76 +20,100 @@ const fields = {
 }
 
 class _ForgotPassword extends React.Component {
-    cancel() {
-        const {onCancel} = this.props
-        onCancel()
-    }
-
-    requestPasswordReset(email) {
-        this.props.stream('REQUEST_PASSWORD_RESET',
-            requestPasswordReset$(email),
-            () => {
-                Notifications.success({message: msg('landing.forgot-password.success', {email})})
-                this.cancel()
-            }
-        )
+    constructor(props) {
+        super(props)
+        this.submit = this.submit.bind(this)
     }
 
     render() {
-        const {form, inputs: {email}, action} = this.props
         return (
             <Form
                 className={styles.form}
-                onSubmit={() => this.requestPasswordReset(email.value)}>
-                <div className={styles.inputs}>
-                    <Layout spacing='loose'>
-                        <Widget
-                            label={msg('landing.forgot-password.label')}
-                            contentClassName={styles.instructions}>
-                            {msg('landing.forgot-password.instructions')}
-                        </Widget>
-                        <Form.Input
-                            input={email}
-                            placeholder={msg('landing.forgot-password.placeholder')}
-                            autoFocus
-                            autoComplete='off'
-                            tabIndex={1}
-                            validate='onBlur'
-                            errorMessage
-                        />
-                        <ButtonGroup layout='horizontal-nowrap' alignment='spaced'>
-                            <Button
-                                chromeless
-                                look='transparent'
-                                size='large'
-                                shape='pill'
-                                icon='undo'
-                                label={msg('landing.forgot-password.cancel-link')}
-                                tabIndex={3}
-                                onMouseDown={e => e.preventDefault()}
-                                onClick={() => this.cancel()}
-                            />
-                            <Button
-                                type='submit'
-                                look='apply'
-                                size='x-large'
-                                shape='pill'
-                                icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'envelope'}
-                                label={msg('landing.forgot-password.button')}
-                                disabled={form.isInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
-                                tabIndex={2}
-                            />
-                        </ButtonGroup>
-                    </Layout>
-                </div>
+                onSubmit={this.submit}>
+                {this.renderForm()}
             </Form>
+        )
+    }
+
+    renderForm() {
+        const {form, inputs: {email}, action, onCancel} = this.props
+        return (
+            <div className={styles.inputs}>
+                <Layout spacing='loose'>
+                    <Widget
+                        label={msg('landing.forgot-password.label')}
+                        contentClassName={styles.instructions}>
+                        {msg('landing.forgot-password.instructions')}
+                    </Widget>
+                    <Form.Input
+                        label={msg('user.userDetails.form.email.label')}
+                        input={email}
+                        placeholder={msg('landing.forgot-password.email.placeholder')}
+                        autoFocus
+                        autoComplete='off'
+                        tabIndex={1}
+                        validate='onBlur'
+                        errorMessage
+                    />
+                    <ButtonGroup layout='horizontal-nowrap' alignment='spaced'>
+                        <Button
+                            chromeless
+                            look='transparent'
+                            size='x-large'
+                            shape='pill'
+                            icon='arrow-left'
+                            label={msg('landing.forgot-password.cancel-link')}
+                            tabIndex={3}
+                            keybinding='Escape'
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={onCancel}
+                        />
+                        <Button
+                            type='submit'
+                            look='apply'
+                            size='x-large'
+                            shape='pill'
+                            icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'envelope'}
+                            label={msg('landing.forgot-password.button')}
+                            disabled={form.isInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
+                            tabIndex={2}
+                        />
+                    </ButtonGroup>
+                </Layout>
+            </div>
+        )
+    }
+
+    submit() {
+        const {inputs: {email}} = this.props
+        this.requestPasswordReset(email.value)
+    }
+
+    requestPasswordReset(email) {
+        const {recaptcha: {recaptcha$}, stream} = this.props
+        const {onCancel} = this.props
+        stream('REQUEST_PASSWORD_RESET',
+            recaptcha$('REQUEST_PASSWORD_RESET').pipe(
+                switchMap(recaptchaToken =>
+                    requestPasswordReset$({email, optional: true}, recaptchaToken)
+                )
+            ),
+            () => {
+                Notifications.success({message: msg('landing.forgot-password.success', {email})})
+                onCancel()
+            },
+            () => {
+                Notifications.error({message: msg('landing.forgot-password.error')})
+                onCancel()
+            }
         )
     }
 }
 
 export const ForgotPassword = compose(
     _ForgotPassword,
-    form({fields})
+    withForm({fields}),
+    withRecaptcha()
 )
 
 ForgotPassword.propTypes = {

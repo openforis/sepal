@@ -1,5 +1,6 @@
 import {RecipeActions} from '../timeSeriesRecipe'
 import {Retrieve} from 'app/home/body/process/recipe/timeSeries/panels/retrieve/retrieve'
+import {RetrieveButton} from '../../retrieveButton'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -55,11 +56,7 @@ class TimeSeriesToolbar extends React.Component {
                         disabled={!initialized}
                         showGoogleSatellite
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
-                    <Toolbar.ActivationButton
-                        id='retrieve'
-                        icon='cloud-download-alt'
-                        tooltip={msg('process.retrieve.tooltip')}
-                        disabled={!initialized}/>
+                    <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
                     vertical
