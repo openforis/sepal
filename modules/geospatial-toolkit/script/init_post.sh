@@ -16,7 +16,7 @@ printf '%s\n' \
     'SHELL="/bin/bash"' \
     'SEPAL="true"' \
     'PROJ_LIB="/usr/share/proj"' \
-    'LOCALTILESERVER_CLIENT_PREFIX="/api/sandbox/jupyter/proxy/{port}"'
+    'LOCALTILESERVER_CLIENT_PREFIX="/api/sandbox/jupyter/proxy/{port}"' \
     >> /etc/environment
 
 # Remove redundant files
