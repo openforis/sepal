@@ -1,9 +1,11 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from './buttonGroup'
 import {Layout} from 'widget/layout'
+import {Subject, debounceTime, distinctUntilChanged} from 'rxjs'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
+import {withSubscriptions} from 'subscription'
 import Icon from './icon'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -13,6 +15,8 @@ import Tooltip from 'widget/tooltip'
 import styles from './input.module.css'
 import withForwardedRef from 'ref'
 
+const DEBOUNCE_TIME_MS = 750
+
 const checkProtectedKey = (e, protectedKeyCodes) => {
     if (protectedKeyCodes.includes(e.code)) {
         e.stopPropagation()
@@ -20,11 +24,6 @@ const checkProtectedKey = (e, protectedKeyCodes) => {
 }
 
 class _Input extends React.Component {
-    state = {
-        value: '',
-        focused: false
-    }
-
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
@@ -35,6 +34,13 @@ class _Input extends React.Component {
         this.onClear = this.onClear.bind(this)
         this.onWheel = this.onWheel.bind(this)
         this.checkProtectedKey = this.checkProtectedKey.bind(this)
+    }
+
+    change$ = new Subject()
+
+    state = {
+        value: '',
+        focused: false
     }
 
     checkProtectedKey(e) {
@@ -144,6 +150,7 @@ class _Input extends React.Component {
 
     onChange(e) {
         const {onChange} = this.props
+        this.change$.next(e.target.value)
         onChange && onChange(e)
     }
 
@@ -226,10 +233,25 @@ class _Input extends React.Component {
         const {type} = this.props
         return type === 'search'
     }
+
+    componentDidMount() {
+        const {addSubscription, onChangeDebounced} = this.props
+        if (onChangeDebounced) {
+            addSubscription(
+                this.change$.pipe(
+                    debounceTime(DEBOUNCE_TIME_MS),
+                    distinctUntilChanged()
+                ).subscribe(
+                    value => onChangeDebounced(value)
+                )
+            )
+        }
+    }
 }
 
 export const Input = compose(
     _Input,
+    withSubscriptions(),
     withForwardedRef()
 )
 
@@ -264,6 +286,7 @@ Input.propTypes = {
     value: PropTypes.any,
     onBlur: PropTypes.func,
     onChange: PropTypes.func,
+    onChangeDebounced: PropTypes.func,
     onClick: PropTypes.func,
     onFocus: PropTypes.func
 }
@@ -280,10 +303,6 @@ Input.defaultProps = {
 }
 
 class _Textarea extends React.Component {
-    state = {
-        focused: false
-    }
-
     constructor(props) {
         super(props)
         this.onFocus = this.onFocus.bind(this)
@@ -291,6 +310,12 @@ class _Textarea extends React.Component {
         this.onChange = this.onChange.bind(this)
         this.checkProtectedKey = this.checkProtectedKey.bind(this)
         this.ref = props.forwardedRef || React.createRef()
+    }
+
+    change$ = new Subject()
+
+    state = {
+        focused: false
     }
 
     checkProtectedKey(e) {
@@ -365,12 +390,28 @@ class _Textarea extends React.Component {
 
     onChange(e) {
         const {onChange} = this.props
+        this.change$.next(e.target.value)
         onChange && onChange(e)
+    }
+
+    componentDidMount() {
+        const {addSubscription, onChangeDebounced} = this.props
+        if (onChangeDebounced) {
+            addSubscription(
+                this.change$.pipe(
+                    debounceTime(DEBOUNCE_TIME_MS),
+                    distinctUntilChanged()
+                ).subscribe(
+                    value => onChangeDebounced(value)
+                )
+            )
+        }
     }
 }
 
 export const Textarea = compose(
     _Textarea,
+    withSubscriptions(),
     withForwardedRef()
 )
 
@@ -394,6 +435,7 @@ Textarea.propTypes = {
     value: PropTypes.any,
     onBlur: PropTypes.func,
     onChange: PropTypes.func,
+    onChangeDebounced: PropTypes.func,
     onFocuse: PropTypes.func
 }
 
