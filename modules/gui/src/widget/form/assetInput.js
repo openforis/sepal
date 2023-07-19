@@ -12,10 +12,12 @@ import guid from 'guid'
 class _FormAssetInput extends React.Component {
     constructor(props) {
         super(props)
+        this.loadMetadata = this.loadMetadata.bind(this)
         this.onError = this.onError.bind(this)
     }
 
     assetChanged$ = new Subject()
+    
     state = {
         loading: null
     }
@@ -31,9 +33,7 @@ class _FormAssetInput extends React.Component {
                 input={input}
                 autoFocus={autoFocus}
                 spellCheck={false}
-                onChangeDebounced={asset => {
-                    return asset.length && this.loadMetadata(asset)
-                }}
+                onChangeDebounced={this.loadMetadata}
                 busyMessage={(busyMessage || this.props.stream('LOAD_ASSET_METADATA').active) && msg('widget.loading')}
                 disabled={disabled}
                 errorMessage
@@ -73,7 +73,7 @@ class _FormAssetInput extends React.Component {
     loadMetadata(asset) {
         const {expectedType, onLoading, onLoaded, stream} = this.props
         const {loading} = this.state
-        if (loading === asset) {
+        if (asset.length === 0 || loading === asset) {
             return
         }
         this.setState({loading: asset})
