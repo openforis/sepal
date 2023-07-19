@@ -1,9 +1,9 @@
-import {AssetInput} from './assetInput'
+import {Form} from './form'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-export class AssetSelect extends React.Component {
+export class FormAssetSelect extends React.Component {
     constructor(props) {
         super(props)
         this.onError = this.onError.bind(this)
@@ -12,7 +12,7 @@ export class AssetSelect extends React.Component {
     render() {
         const {className, input, label, placeholder, autoFocus, expectedType, disabled, onLoading, onLoaded} = this.props
         return (
-            <AssetInput
+            <Form.AssetInput
                 className={className}
                 input={input}
                 label={label}
@@ -38,11 +38,11 @@ export class AssetSelect extends React.Component {
     }
 }
 
-AssetSelect.defaultProps = {
+FormAssetSelect.defaultProps = {
     expectedType: ['Image', 'ImageCollection']
 }
 
-AssetSelect.propTypes = {
+FormAssetSelect.propTypes = {
     input: PropTypes.object.isRequired,
     autoFocus: PropTypes.any,
     className: PropTypes.any,

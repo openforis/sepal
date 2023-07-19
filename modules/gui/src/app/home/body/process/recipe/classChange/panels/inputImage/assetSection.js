@@ -1,4 +1,4 @@
-import {AssetSelect} from 'widget/assetSelect'
+import {Form} from 'widget/form/form'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -8,7 +8,7 @@ export default class AssetSection extends React.Component {
     render() {
         const {input, onLoading} = this.props
         return (
-            <AssetSelect
+            <Form.AssetSelect
                 className={style.inputComponent}
                 input={input}
                 label={msg('process.classChange.panel.inputImage.asset.label')}

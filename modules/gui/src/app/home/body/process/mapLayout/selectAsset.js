@@ -1,4 +1,5 @@
-import {AssetSelect} from 'widget/assetSelect'
+// import {AssetBrowser} from 'widget/assetBrowser'
+// import {AssetSelect} from 'widget/assetSelect'
 import {Form, withForm} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
 import {Subject} from 'rxjs'
@@ -58,24 +59,29 @@ class _SelectAsset extends React.Component {
     renderContent() {
         const {inputs: {asset}} = this.props
         return (
-            <AssetSelect
-                input={asset}
-                label={msg('map.layout.addImageLayerSource.types.Asset.form.asset.label')}
-                autoFocus
-                expectedType={['Image', 'ImageCollection']}
-                onLoading={() => this.setState({
-                    loadedAsset: false,
-                    asset: null,
-                    metadata: null,
-                    visualizations: null
-                })}
-                onLoaded={({asset, metadata, visualizations}) => this.setState({
-                    loadedAsset: true,
-                    asset,
-                    metadata,
-                    visualizations
-                })}
-            />
+            <div>
+                <Form.AssetSelect
+                    input={asset}
+                    label={msg('map.layout.addImageLayerSource.types.Asset.form.asset.label')}
+                    autoFocus
+                    expectedType={['Image', 'ImageCollection']}
+                    onLoading={() => this.setState({
+                        loadedAsset: false,
+                        asset: null,
+                        metadata: null,
+                        visualizations: null
+                    })}
+                    onLoaded={({asset, metadata, visualizations}) => this.setState({
+                        loadedAsset: true,
+                        asset,
+                        metadata,
+                        visualizations
+                    })}
+                />
+                {/* <AssetBrowser
+                    input={asset}
+                /> */}
+            </div>
         )
     }
 

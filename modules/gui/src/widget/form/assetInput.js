@@ -1,4 +1,4 @@
-import {Form} from './form/form'
+import {Form} from './form'
 import {Subject, takeUntil, tap} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -9,7 +9,7 @@ import React from 'react'
 import api from 'api'
 import guid from 'guid'
 
-class _AssetInput extends React.Component {
+class _FormAssetInput extends React.Component {
     assetChanged$ = new Subject()
     state = {
         loading: null
@@ -84,12 +84,12 @@ class _AssetInput extends React.Component {
     }
 }
 
-export const AssetInput = compose(
-    _AssetInput,
+export const FormAssetInput = compose(
+    _FormAssetInput,
     connect()
 )
 
-AssetInput.propTypes = {
+FormAssetInput.propTypes = {
     input: PropTypes.object.isRequired,
     autoFocus: PropTypes.any,
     busyMessage: PropTypes.any,

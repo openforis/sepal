@@ -1,4 +1,3 @@
-import {AssetSelect} from 'widget/assetSelect'
 import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
@@ -128,7 +127,7 @@ class Options extends React.Component {
     renderPreviousAlertsAsset() {
         const {inputs: {previousAlertsAsset}} = this.props
         return (
-            <AssetSelect
+            <Form.AssetSelect
                 input={previousAlertsAsset}
                 label={msg('process.baytsAlerts.panel.options.form.previousAlertsAsset.label')}
                 placeholder={msg('process.baytsAlerts.panel.options.form.previousAlertsAsset.placeholder')}
@@ -143,7 +142,7 @@ class Options extends React.Component {
     renderWetlandMaskAsset() {
         const {inputs: {wetlandMaskAsset}} = this.props
         return (
-            <AssetSelect
+            <Form.AssetSelect
                 input={wetlandMaskAsset}
                 label={msg('process.baytsAlerts.panel.options.form.wetlandMaskAsset.label')}
                 placeholder={msg('process.baytsAlerts.panel.options.form.wetlandMaskAsset.placeholder')}

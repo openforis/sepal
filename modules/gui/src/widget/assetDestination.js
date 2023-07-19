@@ -1,10 +1,9 @@
-import {AssetInput} from './assetInput'
 import {Form} from 'widget/form/form'
 import {Layout} from './layout'
-import {catchError, exhaustMap, map, mergeMap, of, pipe, range, retryWhen, throwError, timer, zip} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser} from 'user'
+import {map} from 'rxjs'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {toSafeString} from 'string'
@@ -50,7 +49,7 @@ class _AssetDestination extends React.Component {
     renderAssetInput() {
         const {stream, assetInput, label, placeholder, autoFocus} = this.props
         return (
-            <AssetInput
+            <Form.AssetInput
                 input={assetInput}
                 label={label}
                 placeholder={placeholder}

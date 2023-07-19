@@ -1,4 +1,3 @@
-import {AssetSelect} from 'widget/assetSelect'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
@@ -165,7 +164,7 @@ class Sources extends React.Component {
             return null
         }
         return (
-            <AssetSelect
+            <Form.AssetSelect
                 input={asset}
                 label={msg('process.planetMosaic.panel.sources.form.asset.label')}
                 placeholder={msg('process.planetMosaic.panel.sources.form.asset.placeholder')}

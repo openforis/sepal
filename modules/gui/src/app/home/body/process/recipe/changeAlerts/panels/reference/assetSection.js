@@ -1,4 +1,3 @@
-import {AssetSelect} from 'widget/assetSelect'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Subject} from 'rxjs'
@@ -26,7 +25,7 @@ class AssetSection extends React.Component {
         const {inputs: {asset, dateFormat}} = this.props
         return (
             <Layout>
-                <AssetSelect
+                <Form.AssetSelect
                     input={asset}
                     label={msg('process.changeAlerts.panel.reference.form.asset.label')}
                     placeholder={msg('process.changeAlerts.panel.reference.form.asset.placeholder')}

@@ -1,4 +1,4 @@
-import {AssetSelect} from 'widget/assetSelect'
+import {Form} from 'widget/form/form'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -19,7 +19,7 @@ class AssetSection extends React.Component {
     render() {
         const {inputs: {asset}} = this.props
         return (
-            <AssetSelect
+            <Form.AssetSelect
                 input={asset}
                 label={msg('process.baytsAlerts.panel.reference.form.asset.label')}
                 placeholder={msg('process.baytsAlerts.panel.reference.form.asset.placeholder')}
