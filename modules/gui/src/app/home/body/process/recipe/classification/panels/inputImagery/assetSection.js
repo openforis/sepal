@@ -8,7 +8,7 @@ export default class AssetSection extends React.Component {
     render() {
         const {input, onLoading, onLoaded} = this.props
         return (
-            <Form.AssetSelect
+            <Form.AssetInput
                 className={style.inputComponent}
                 input={input}
                 label={msg('process.classification.panel.inputImagery.form.asset.label')}

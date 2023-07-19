@@ -60,7 +60,7 @@ class _SelectAsset extends React.Component {
         const {inputs: {asset}} = this.props
         return (
             <div>
-                <Form.AssetSelect
+                <Form.AssetInput
                     input={asset}
                     label={msg('map.layout.addImageLayerSource.types.Asset.form.asset.label')}
                     autoFocus

@@ -1,4 +1,4 @@
-import {Form} from './form'
+import {FormInput} from './input'
 import {Subject, takeUntil, tap} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -10,6 +10,11 @@ import api from 'api'
 import guid from 'guid'
 
 class _FormAssetInput extends React.Component {
+    constructor(props) {
+        super(props)
+        this.onError = this.onError.bind(this)
+    }
+
     assetChanged$ = new Subject()
     state = {
         loading: null
@@ -18,7 +23,7 @@ class _FormAssetInput extends React.Component {
     render() {
         const {className, input, label, placeholder, tooltip, autoFocus, busyMessage, disabled} = this.props
         return (
-            <Form.Input
+            <FormInput
                 className={className}
                 label={label}
                 placeholder={placeholder}
@@ -52,8 +57,21 @@ class _FormAssetInput extends React.Component {
         }
     }
 
+    onError(error) {
+        const {input, onError} = this.props
+        if (onError) {
+            onError(error)
+        } else {
+            input.setInvalid(
+                error.response && error.response.messageKey
+                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+                    : msg('widget.assetInput.loadError')
+            )
+        }
+    }
+
     loadMetadata(asset) {
-        const {expectedType, onError, onLoading, onLoaded, stream} = this.props
+        const {expectedType, onLoading, onLoaded, stream} = this.props
         const {loading} = this.state
         if (loading === asset) {
             return
@@ -79,7 +97,7 @@ class _FormAssetInput extends React.Component {
                         : undefined
                 } : null)
             },
-            onError
+            this.onError
         )
     }
 }
@@ -90,12 +108,12 @@ export const FormAssetInput = compose(
 )
 
 FormAssetInput.propTypes = {
+    expectedType: PropTypes.any.isRequired,
     input: PropTypes.object.isRequired,
     autoFocus: PropTypes.any,
     busyMessage: PropTypes.any,
     className: PropTypes.any,
     disabled: PropTypes.any,
-    expectedType: PropTypes.any,
     label: PropTypes.any,
     placeholder: PropTypes.string,
     tooltip: PropTypes.any,
