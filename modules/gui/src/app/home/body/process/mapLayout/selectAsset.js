@@ -1,8 +1,5 @@
-// import {AssetBrowser} from 'widget/assetBrowser'
-// import {AssetSelect} from 'widget/assetSelect'
 import {Form, withForm} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
-import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'
@@ -23,11 +20,12 @@ class _SelectAsset extends React.Component {
         visualizations: null
     }
 
-    assetChanged$ = new Subject()
-
     constructor(props) {
         super(props)
         this.add = this.add.bind(this)
+        this.onLoading = this.onLoading.bind(this)
+        this.onLoaded = this.onLoaded.bind(this)
+
     }
 
     render() {
@@ -60,29 +58,34 @@ class _SelectAsset extends React.Component {
         const {inputs: {asset}} = this.props
         return (
             <div>
-                <Form.AssetInput
+                <Form.AssetCombo
                     input={asset}
                     label={msg('map.layout.addImageLayerSource.types.Asset.form.asset.label')}
                     autoFocus
                     expectedType={['Image', 'ImageCollection']}
-                    onLoading={() => this.setState({
-                        loadedAsset: false,
-                        asset: null,
-                        metadata: null,
-                        visualizations: null
-                    })}
-                    onLoaded={({asset, metadata, visualizations}) => this.setState({
-                        loadedAsset: true,
-                        asset,
-                        metadata,
-                        visualizations
-                    })}
+                    onLoading={this.onLoading}
+                    onLoaded={this.onLoaded}
                 />
-                {/* <AssetBrowser
-                    input={asset}
-                /> */}
             </div>
         )
+    }
+
+    onLoading() {
+        this.setState({
+            loadedAsset: false,
+            asset: null,
+            metadata: null,
+            visualizations: null
+        })
+    }
+
+    onLoaded({asset, metadata, visualizations}) {
+        this.setState({
+            loadedAsset: true,
+            asset,
+            metadata,
+            visualizations
+        })
     }
 
     add() {
@@ -102,7 +105,6 @@ class _SelectAsset extends React.Component {
             .dispatch()
         deactivate()
     }
-
 }
 
 const policy = () => ({
