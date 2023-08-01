@@ -243,7 +243,7 @@ class _Combo extends React.Component {
                     air='more'
                     className={optionsClassName || styles.options}
                     options={flattenedOptions}
-                    selectedOption={selectedOption}
+                    selectedValue={selectedOption?.value}
                     onSelect={this.selectOption}
                     onCancel={this.resetFilterOrClose}
                     autoCenter={!selected}
