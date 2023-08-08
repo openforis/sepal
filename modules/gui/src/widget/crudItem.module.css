@@ -14,3 +14,75 @@
     /* z-index: 1; */
     flex-shrink: 0;
 }
+
+.item {
+    --item-spacing: .75rem;
+    position: relative;
+    align-items: center;
+    display: flex;
+    flex-grow: 1;
+}
+
+.item > :not(:first-child) {
+    margin-left: var(--item-spacing);
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    overflow: hidden;
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.info > * {
+    white-space: normal;
+    word-break: break-word;
+    overflow: hidden;
+}
+
+.inline {
+    flex-shrink: 0;
+}
+
+.title {
+    font-size: .8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #808080;
+    white-space: nowrap;
+}
+
+.description {
+    font-size: .9rem;
+    white-space: normal;
+    word-wrap: break-word;
+    text-align: left;
+}
+
+.timestamp {
+    pointer-events: none; /* avoid interfering with click target */
+    font-size: small;
+    /* margin-right: 2rem; */
+    color: gray;
+    flex-shrink: 0;
+}
+
+@media screen and (max-width: 600px) {
+    .timestamp {
+        font-size: small;
+        margin-right: .5rem;
+        color: gray;
+    }
+}
+
+.highlight {
+    font-weight: bolder;
+    color: yellow;
+    background-color: transparent;
+}
+
+.icon {
+    margin-left: calc(var(--item-spacing) - .5rem); /* make left-right spacing the same */
+}
