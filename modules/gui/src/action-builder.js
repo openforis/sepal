@@ -6,8 +6,8 @@ const actionBuilder = (type, props, prefix) => {
     const operations = []
     const sideEffects = []
 
-    const addOperation = (path, func) =>
-        operations.push(
+    const addOperation = (path, func, apply = true) =>
+        apply && operations.push(
             state => func(new Mutator(state, [prefix, path]))
         )
 
@@ -23,48 +23,48 @@ const actionBuilder = (type, props, prefix) => {
         )
 
     return {
-        set(path, value) {
-            addOperation(path, mutator => mutator.set(value))
+        set(path, value, apply) {
+            addOperation(path, mutator => mutator.set(value), apply)
             return this
         },
 
-        assign(path, value) {
-            addOperation(path, mutator => mutator.assign(value))
+        assign(path, value, apply) {
+            addOperation(path, mutator => mutator.assign(value), apply)
             return this
         },
 
-        merge(path, value) {
-            addOperation(path, mutator => mutator.merge(value))
+        merge(path, value, apply) {
+            addOperation(path, mutator => mutator.merge(value), apply)
             return this
         },
 
-        push(path, value) {
-            addOperation(path, mutator => mutator.push(value))
+        push(path, value, apply) {
+            addOperation(path, mutator => mutator.push(value), apply)
             return this
         },
 
-        pushUnique(path, value, key) {
-            addOperation(path, mutator => mutator.pushUnique(value, key))
+        pushUnique(path, value, key, apply) {
+            addOperation(path, mutator => mutator.pushUnique(value, key), apply)
             return this
         },
 
-        del(path) {
-            addOperation(path, mutator => mutator.del())
+        del(path, apply) {
+            addOperation(path, mutator => mutator.del(), apply)
             return this
         },
 
-        sort(path, key) {
-            addOperation(path, mutator => mutator.sort(key))
+        sort(path, key, apply) {
+            addOperation(path, mutator => mutator.sort(key), apply)
             return this
         },
 
-        unique(path) {
-            addOperation(path, mutator => mutator.unique())
+        unique(path, apply) {
+            addOperation(path, mutator => mutator.unique(), apply)
             return this
         },
 
-        setAll(values) {
-            Object.keys(values).forEach(path => this.set(path, values[path]))
+        setAll(values, apply) {
+            Object.keys(values).forEach(path => this.set(path, values[path], apply))
             return this
         },
 
