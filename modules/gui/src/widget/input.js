@@ -17,8 +17,8 @@ import withForwardedRef from 'ref'
 
 const DEBOUNCE_TIME_MS = 750
 
-const checkProtectedKey = (e, protectedKeyCodes) => {
-    if (protectedKeyCodes.includes(e.code)) {
+const captureKeypress = (e, keyCodes) => {
+    if (keyCodes.includes(e.code)) {
         e.stopPropagation()
     }
 }
@@ -33,7 +33,7 @@ class _Input extends React.Component {
         this.onChange = this.onChange.bind(this)
         this.onClear = this.onClear.bind(this)
         this.onWheel = this.onWheel.bind(this)
-        this.checkProtectedKey = this.checkProtectedKey.bind(this)
+        this.captureEvents = this.captureEvents.bind(this)
     }
 
     change$ = new Subject()
@@ -43,8 +43,16 @@ class _Input extends React.Component {
         focused: false
     }
 
-    checkProtectedKey(e) {
-        return checkProtectedKey(e, ['ArrowLeft', 'ArrowRight', 'Home', 'End'])
+    captureEvents(e) {
+        const {value} = this.state
+        if (value.length) {
+            captureKeypress(e, [
+                'ArrowLeft',
+                'ArrowRight',
+                'Home',
+                'End'
+            ])
+        }
     }
 
     render() {
@@ -123,7 +131,7 @@ class _Input extends React.Component {
                         onBlur={this.onBlur}
                         onChange={this.onChange}
                         onWheel={this.onWheel} // disable mouse wheel on input type=number
-                        onKeyDown={this.checkProtectedKey}
+                        onKeyDown={this.captureEvents}
                     />
                 </Tooltip>
                 {/* </div> */}
@@ -308,7 +316,7 @@ class _Textarea extends React.Component {
         this.onFocus = this.onFocus.bind(this)
         this.onBlur = this.onBlur.bind(this)
         this.onChange = this.onChange.bind(this)
-        this.checkProtectedKey = this.checkProtectedKey.bind(this)
+        this.captureEvents = this.captureEvents.bind(this)
         this.ref = props.forwardedRef || React.createRef()
     }
 
@@ -318,8 +326,17 @@ class _Textarea extends React.Component {
         focused: false
     }
 
-    checkProtectedKey(e) {
-        return checkProtectedKey(e, ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'])
+    captureEvents(e) {
+        captureKeypress(e, [
+            'ArrowLeft',
+            'ArrowRight',
+            'ArrowUp',
+            'ArrowDown',
+            'Home',
+            'End',
+            'PageUp',
+            'PageDown'
+        ])
     }
 
     render() {
@@ -369,7 +386,7 @@ class _Textarea extends React.Component {
                         onFocus={this.onFocus}
                         onBlur={this.onBlur}
                         onChange={this.onChange}
-                        onKeyDown={this.checkProtectedKey}
+                        onKeyDown={this.captureEvents}
                     />
                 </Tooltip>
             </Keybinding>
