@@ -20,6 +20,12 @@ export default {
     assetRoots$: () =>
         get$('/api/gee/assetRoots'),
 
+    listAssets$: ({id}) =>
+        get$('/api/gee/asset/list', {
+            query: {id},
+            retries: 0
+        }),
+
     assetMetadata$: ({asset, expectedType}) =>
         postJson$('/api/gee/assetMetadata', {
             body: {asset, expectedType},

@@ -1,3 +1,4 @@
+import {FormAssetCombo} from './assetCombo'
 import {FormAssetInput} from 'widget/form/assetInput'
 import {FormButtons} from 'widget/form/buttons'
 import {FormCheckbox} from 'widget/form/checkbox'
@@ -352,6 +353,7 @@ Form.propTypes = {
 }
 
 Form.AssetInput = FormAssetInput
+Form.AssetCombo = FormAssetCombo
 Form.Buttons = FormButtons
 Form.Checkbox = FormCheckbox
 Form.Combo = FormCombo

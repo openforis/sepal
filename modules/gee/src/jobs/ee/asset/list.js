@@ -1,7 +1,7 @@
 const {job} = require('#gee/jobs/job')
 
 const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
-    const {map, merge, toArray} = require('rxjs')
+    const {map, merge, toArray, catchError, EMPTY} = require('rxjs')
     const Path = require('path')
     const http = require('#sepal/httpClient')
     const _ = require('lodash')
@@ -11,6 +11,7 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
     }
 
     const headers = {Authorization: `Bearer ${googleTokens.accessToken}`}
+
     return id
         ? assets$(id)
         : roots$()
@@ -61,8 +62,11 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
                         name,
                         type
                     }))
-            )
-            
+            ),
+            catchError(error => {
+                // console.log(error)
+                return EMPTY
+            })
         )
     }
     
@@ -77,7 +81,11 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
                         name: projectId,
                         type
                     }))
-            )
+            ),
+            catchError(error => {
+                // console.log(error)
+                return EMPTY
+            })
         )
     }
 }

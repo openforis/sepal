@@ -1,10 +1,10 @@
 import {ActivationContext} from 'widget/activation/activationContext'
 import {PortalContainer} from 'widget/portal'
-import {catchError, exhaustMap, map, mergeMap, of, pipe, range, retryWhen, throwError, timer, zip} from 'rxjs'
 import {compose} from 'compose'
-import {connect, select} from 'store'
-import {getLogger} from 'log'
+import {connect} from 'store'
+import {exhaustMap, map, mergeMap, pipe, retryWhen, timer, zip} from 'rxjs'
 import {isFloating} from './menu/menuMode'
+import {loadAssets$} from 'widget/assets'
 import {msg} from 'translate'
 import Body from './body/body'
 import Footer from './footer/footer'
@@ -16,8 +16,6 @@ import actionBuilder from 'action-builder'
 import api from 'api'
 import moment from 'moment'
 import styles from './home.module.css'
-
-const log = getLogger('schedule')
 
 const mapStateToProps = () => ({
     floatingMenu: isFloating(),
@@ -103,6 +101,7 @@ class Home extends React.Component {
         stream('SCHEDULE_UPDATE_USER_REPORT', updateUserReport$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_USER_MESSAGES', updateUserMessages$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_TASKS', updateTasks$(), null, errorHandler)
+        stream('LOAD_ASSETS', loadAssets$())
     }
 
     render() {
