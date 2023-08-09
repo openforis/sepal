@@ -157,7 +157,7 @@ class _FormAssetCombo extends React.Component {
                 }]
             } : null,
             recentAssets.length ? {
-                label: msg('assets.recentAssets'),
+                label: msg('asset.recentAssets'),
                 options: recentAssets.map(asset => ({
                     label: asset,
                     value: asset,
@@ -166,7 +166,7 @@ class _FormAssetCombo extends React.Component {
                 }))
             } : null,
             userAssets.length ? {
-                label: msg('assets.userAssets'),
+                label: msg('asset.userAssets'),
                 options: userAssets.map(({id, name, type}) => ({
                     label: name,
                     value: id,
@@ -175,7 +175,7 @@ class _FormAssetCombo extends React.Component {
                 }))
             } : null,
             otherAssets.length ? {
-                label: msg('assets.otherAssets'),
+                label: msg('asset.otherAssets'),
                 options: otherAssets.map(asset => ({
                     label: asset,
                     value: asset,
