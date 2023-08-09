@@ -56,11 +56,12 @@ export const ScrollableList = compose(
 ScrollableList.propTypes = {
     options: PropTypes.arrayOf(
         PropTypes.shape({
+            alias: PropTypes.any,
             disabled: PropTypes.any,
+            group: PropTypes.any,
             key: PropTypes.any,
             label: PropTypes.any,
             render: PropTypes.func,
-            secondary: PropTypes.any,
             value: PropTypes.any
         })
     ).isRequired,
@@ -200,14 +201,10 @@ class List extends React.Component {
         const {tooltipPlacement, alignment, air} = this.props
         const {overrideHover} = this.state
         const key = this.getOptionKey(option)
-        const selected = this.isSelected(option) && !option.secondary
+        const selected = this.isSelected(option)
         const highlighted = this.isHighlighted(option)
-        const hover = overrideHover && highlighted || null // three-state
-        const ref = selected
-            ? this.selected
-            : highlighted
-                ? this.highlighted
-                : null
+        const hover = overrideHover && highlighted || null // hover is three-state
+        const ref = (selected && this.selected) || (highlighted && this.highlighted) || null
         return (
             <li key={key || index} ref={ref}>
                 <Button
@@ -223,7 +220,7 @@ class List extends React.Component {
                     disableTransitions
                     onMouseOver={() => this.highlight(key)}
                     onMouseOut={this.highlightSelected}
-                    onClick={() => this.selectOption(key)} >
+                    onClick={() => this.selectOption(key)}>
                     {option.render ? option.render() : null}
                 </Button>
             </li>
@@ -236,7 +233,7 @@ class List extends React.Component {
 
     isSelected(option) {
         const {selectedValue} = this.props
-        return selectedValue && option.value === selectedValue
+        return selectedValue && option.value === selectedValue && !option.alias
     }
 
     isSelectable(option) {
@@ -267,7 +264,7 @@ class List extends React.Component {
     getSelectedOption() {
         const {options, selectedValue} = this.props
         return selectedValue
-            ? options.filter(({secondary}) => !secondary).find(({value}) => value === selectedValue)
+            ? options.filter(({alias}) => !alias).find(({value}) => value === selectedValue)
             : null
     }
 
