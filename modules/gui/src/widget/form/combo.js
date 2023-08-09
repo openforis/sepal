@@ -5,7 +5,7 @@ import React from 'react'
 export const FormCombo = ({
     input, options, additionalButtons, alignment, allowClear, autoFocus, autoOpen, busyMessage, className, disabled,
     errorMessage, inputClassName, keyboard, label, matchGroups, optionsClassName, optionTooltipPlacement, placeholder, placement,
-    readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, onCancel, onChange
+    readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, onCancel, onChange, onFilterChange
 }) => {
     const onChangeHandler = option => {
         input.set(option ? option.value : null)
@@ -41,6 +41,7 @@ export const FormCombo = ({
             tooltipPlacement={tooltipPlacement}
             onCancel={onCancel}
             onChange={onChangeHandler}
+            onFilterChange={onFilterChange}
             onBlur={onBlurHandler}/>
     )
 }
@@ -70,7 +71,8 @@ FormCombo.propTypes = {
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
     onCancel: PropTypes.func,
-    onChange: PropTypes.func
+    onChange: PropTypes.func,
+    onFilterChange: PropTypes.func
 }
 
 FormCombo.defaultProps = {
