@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
 import {Subject, takeUntil, tap} from 'rxjs'
@@ -30,6 +31,7 @@ class _FormAssetCombo extends React.Component {
         super(props)
         this.onChange = this.onChange.bind(this)
         this.onFilterChange = this.onFilterChange.bind(this)
+        this.reloadAssets = this.reloadAssets.bind(this)
     }
 
     filterChanged$ = new Subject()
@@ -37,8 +39,6 @@ class _FormAssetCombo extends React.Component {
 
     state = {
         filter: '',
-        recentAssets: [],
-        assetsLoading: false,
         loading: false
     }
 
@@ -56,18 +56,30 @@ class _FormAssetCombo extends React.Component {
                 onChange={this.onChange}
                 onFilterChange={this.onFilterChange}
                 additionalButtons={[
-                    // <Button
-                    //     key='info'
-                    //     chromeless
-                    //     shape='circle'
-                    //     size='small'
-                    //     icon='file-lines'
-                    //     onClick={console.log}
-                    // />
+                    this.renderLoadingIndicator()
                 ]}
                 {...otherProps}
             />
         ) : null
+    }
+
+    renderLoadingIndicator() {
+        const {assets: {loading}} = this.props
+        return (
+            <Button
+                key='reload'
+                chromeless
+                shape='none'
+                air='none'
+                icon='rotate'
+                iconAttributes={{
+                    spin: loading
+                }}
+                tabIndex={-1}
+                disabled={loading}
+                onClick={this.reloadAssets}
+            />
+        )
     }
 
     renderTypeIcon(type) {
@@ -144,9 +156,14 @@ class _FormAssetCombo extends React.Component {
         }
     }
 
+    reloadAssets() {
+        const {assets: {reload}} = this.props
+        reload()
+    }
+
     getOptions() {
-        const {assets: {userAssets, otherAssets}} = this.props
-        const {filter, recentAssets} = this.state
+        const {assets: {userAssets, otherAssets, recentAssets}} = this.props
+        const {filter} = this.state
         return _.compact([
             filter ? {
                 options: [{
@@ -223,7 +240,7 @@ class _FormAssetCombo extends React.Component {
     }
 
     onLoaded(asset, metadata) {
-        const {onLoaded, maxRecent, assets: {userAssets, addOtherAsset}} = this.props
+        const {onLoaded, assets: {updateAssets}} = this.props
         onLoaded && onLoaded(metadata ? {
             asset,
             metadata,
@@ -234,14 +251,11 @@ class _FormAssetCombo extends React.Component {
         } : null)
 
         this.setState(
-            ({filter, recentAssets}) => ({
-                filter: filter !== asset ? filter : null,
-                recentAssets: _.uniq([asset, ...recentAssets]).slice(0, maxRecent)
+            ({filter}) => ({
+                filter: filter !== asset ? filter : null
             })
         )
-        if (!_.find(userAssets, ({id}) => id === asset)) {
-            addOtherAsset(asset)
-        }
+        updateAssets(asset)
     }
 
     onLoading(asset) {
@@ -293,7 +307,6 @@ FormAssetCombo.propTypes = {
     keyboard: PropTypes.any,
     label: PropTypes.string,
     matchGroups: PropTypes.any,
-    maxRecent: PropTypes.number,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,
@@ -307,8 +320,4 @@ FormAssetCombo.propTypes = {
     onError: PropTypes.func,
     onLoaded: PropTypes.func,
     onLoading: PropTypes.func
-}
-
-FormAssetCombo.defaultProps = {
-    maxRecent: 3
 }
