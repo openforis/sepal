@@ -280,7 +280,7 @@ class _Button extends React.Component {
     }
 
     renderIcon() {
-        const {busy, icon, iconType, iconVariant, iconDimmed, iconClassName, iconAttributes} = this.props
+        const {busy, icon, iconType, iconVariant, iconDimmed, iconClassName, iconAttributes, buttonGroup: {dimmed: buttonGroupDimmed} = {}} = this.props
         return React.isValidElement(icon)
             ? icon
             : (
@@ -288,7 +288,7 @@ class _Button extends React.Component {
                     name={busy ? 'spinner' : icon}
                     type={iconType}
                     variant={iconVariant}
-                    dimmed={iconDimmed}
+                    dimmed={iconDimmed || buttonGroupDimmed}
                     className={iconClassName}
                     attributes={iconAttributes}
                 />
