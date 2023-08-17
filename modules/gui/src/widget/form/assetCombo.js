@@ -121,28 +121,16 @@ class _FormAssetCombo extends React.Component {
     }
 
     componentDidMount() {
-        const {assets: {userAssets, otherAssets}, input} = this.props
+        const {input} = this.props
         if (input.value) {
             this.loadMetadata(input.value)
         }
-        if (userAssets) {
-            this.updateUserAssets(userAssets)
-        }
-        if (otherAssets) {
-            this.updateOtherAssets(otherAssets)
-        }
     }
     
-    componentDidUpdate({assets: {userAssets: prevUserAssets, otherAssets: prevOtherAssets}, input: prevInput}) {
-        const {assets: {userAssets, otherAssets}, input} = this.props
+    componentDidUpdate({input: prevInput}) {
+        const {input} = this.props
         if (input.value && !prevInput?.value) {
             this.loadMetadata(input.value)
-        }
-        if (!isEqual(userAssets, prevUserAssets)) {
-            this.updateUserAssets(userAssets)
-        }
-        if (!isEqual(otherAssets, prevOtherAssets)) {
-            this.updateOtherAssets(otherAssets)
         }
     }
 
@@ -202,13 +190,13 @@ class _FormAssetCombo extends React.Component {
         ])
     }
 
-    updateUserAssets(userAssets) {
-        this.setState({userAssets})
-    }
+    // updateUserAssets(userAssets) {
+    //     this.setState({userAssets})
+    // }
 
-    updateOtherAssets(otherAssets) {
-        this.setState({otherAssets})
-    }
+    // updateOtherAssets(otherAssets) {
+    //     this.setState({otherAssets})
+    // }
 
     onFilterChange(filter) {
         this.setState({filter})
