@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
-import {Subject, takeUntil, tap} from 'rxjs'
+import {Subject, of, switchMap, takeUntil, tap} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {isEqual} from 'hash'
@@ -82,25 +82,11 @@ class _FormAssetCombo extends React.Component {
         )
     }
 
-    renderTypeIcon(type) {
-        return (
-            <Icon
-                key='type'
-                name={this.getTypeIcon(type)}
-                size='xs'
-                variant='info'
-                tooltip={type}
-                tooltipPlacement='right'
-            />
-        )
-    }
-
-    renderItem({id, name, type}) {
+    renderItem({id, type}) {
         const {filter} = this.state
         return (
             <CrudItem
                 key={id}
-                title={name}
                 description={id}
                 highlight={getHighlightMatcher(filter)}
                 inlineComponents={[
@@ -112,12 +98,16 @@ class _FormAssetCombo extends React.Component {
 
     renderItemType(type) {
         const ICONS = {
-            IMAGE: 'image',
-            IMAGECOLLECTION: 'images'
+            Folder: 'folder',
+            Image: 'image',
+            ImageCollection: 'images',
+            Table: 'table'
         }
         const TOOLTIPS = {
-            IMAGE: msg('asset.image'),
-            IMAGECOLLECTION: msg('asset.imageCollection')
+            Folder: msg('asset.folder'),
+            Image: msg('asset.image'),
+            ImageCollection: msg('asset.imageCollection'),
+            Table: msg('asset.table')
         }
         const name = ICONS[type]
         return name ? (
@@ -157,8 +147,13 @@ class _FormAssetCombo extends React.Component {
     }
 
     reloadAssets() {
-        const {assets: {reload}} = this.props
-        reload()
+        const {assets: {reloadAssets}} = this.props
+        reloadAssets()
+    }
+
+    isAllowedType(type) {
+        const {allowedTypes} = this.props
+        return allowedTypes.includes(type)
     }
 
     getOptions() {
@@ -175,29 +170,34 @@ class _FormAssetCombo extends React.Component {
             } : null,
             recentAssets.length ? {
                 label: msg('asset.recentAssets'),
-                options: recentAssets.map(asset => ({
-                    label: asset,
-                    value: asset,
-                    alias: true,
-                    render: () => this.renderItem({id: asset})
-                }))
+                options: recentAssets
+                    .filter(({type}) => this.isAllowedType(type))
+                    .map(({id, type}) => ({
+                        label: id,
+                        value: id,
+                        alias: true,
+                        render: () => this.renderItem({id, type})
+                    }))
             } : null,
             userAssets.length ? {
                 label: msg('asset.userAssets'),
-                options: userAssets.map(({id, name, type}) => ({
-                    label: name,
-                    value: id,
-                    searchableText: id,
-                    render: () => this.renderItem({id, name, type})
-                }))
+                options: userAssets
+                    .filter(({type}) => this.isAllowedType(type))
+                    .map(({id, type}) => ({
+                        label: id,
+                        value: id,
+                        render: () => this.renderItem({id, type})
+                    }))
             } : null,
             otherAssets.length ? {
                 label: msg('asset.otherAssets'),
-                options: otherAssets.map(asset => ({
-                    label: asset,
-                    value: asset,
-                    render: () => this.renderItem({id: asset})
-                }))
+                options: otherAssets
+                    .filter(({type}) => this.isAllowedType(type))
+                    .map(({id, type}) => ({
+                        label: id,
+                        value: id,
+                        render: () => this.renderItem({id, type})
+                    }))
             } : null
         ])
     }
@@ -226,8 +226,8 @@ class _FormAssetCombo extends React.Component {
         this.loadMetadata(asset)
     }
 
-    onError(error) {
-        const {input, onError} = this.props
+    onError(asset, error) {
+        const {input, onError, assets: {removeAsset}} = this.props
         if (onError) {
             onError(error)
         } else {
@@ -237,10 +237,11 @@ class _FormAssetCombo extends React.Component {
                     : msg('widget.assetInput.loadError')
             )
         }
+        removeAsset(asset)
     }
 
     onLoaded(asset, metadata) {
-        const {onLoaded, assets: {updateAssets}} = this.props
+        const {onLoaded, assets: {updateAsset}} = this.props
         onLoaded && onLoaded(metadata ? {
             asset,
             metadata,
@@ -255,7 +256,7 @@ class _FormAssetCombo extends React.Component {
                 filter: filter !== asset ? filter : null
             })
         )
-        updateAssets(asset)
+        updateAsset({id: asset, type: metadata.type})
     }
 
     onLoading(asset) {
@@ -265,21 +266,39 @@ class _FormAssetCombo extends React.Component {
         onLoading && onLoading(asset)
     }
 
+    getAssetType(asset) {
+        const {assets: {userAssets, otherAssets}} = this.props
+        return userAssets.find(({id}) => id === asset)?.type
+            || otherAssets.find(({id}) => id === asset)?.type
+    }
+
+    getMetadata$(asset) {
+        const {allowedTypes} = this.props
+        const assetType = this.getAssetType(asset)
+        return assetType === 'Image'
+            ? api.gee.imageMetadata$({asset})
+            : api.gee.assetMetadata$({asset, expectedType: allowedTypes}).pipe(
+                switchMap(assetMetadata =>
+                    assetMetadata.type === 'Image'
+                        ? api.gee.imageMetadata$({asset})
+                        : of(assetMetadata)
+                )
+            )
+    
+    }
+
     loadMetadata(asset) {
-        const {expectedType, onLoaded, stream} = this.props
+        const {stream} = this.props
         const {loading} = this.state
-        if (onLoaded && this.isAssetLike(asset) && asset !== loading) {
+        if (this.isAssetLike(asset) && asset !== loading) {
             this.onLoading(asset)
             stream('LOAD_ASSET_METADATA',
-                (expectedType === 'Image'
-                    ? api.gee.imageMetadata$({asset})
-                    : api.gee.assetMetadata$({asset, expectedType})
-                ).pipe(
+                this.getMetadata$(asset).pipe(
                     takeUntil(this.assetChanged$.pipe()),
                     tap(() => this.setState({loading: null}))
                 ),
                 metadata => this.onLoaded(asset, metadata),
-                error => this.onError(error)
+                error => this.onError(asset, error)
             )
         }
     }
@@ -292,7 +311,7 @@ export const FormAssetCombo = compose(
 )
 
 FormAssetCombo.propTypes = {
-    expectedType: PropTypes.any.isRequired,
+    allowedTypes: PropTypes.array.isRequired,
     input: PropTypes.any.isRequired,
     additionalButtons: PropTypes.any,
     alignment: PropTypes.any,

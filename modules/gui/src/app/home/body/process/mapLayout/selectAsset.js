@@ -62,7 +62,7 @@ class _SelectAsset extends React.Component {
                     input={asset}
                     label={msg('map.layout.addImageLayerSource.types.Asset.form.asset.label')}
                     autoFocus
-                    expectedType={['Image', 'ImageCollection']}
+                    allowedTypes={['Image', 'ImageCollection']}
                     onLoading={this.onLoading}
                     onLoaded={this.onLoaded}
                 />

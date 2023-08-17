@@ -108,12 +108,12 @@ export const FormAssetInput = compose(
 )
 
 FormAssetInput.propTypes = {
-    expectedType: PropTypes.any.isRequired,
     input: PropTypes.object.isRequired,
     autoFocus: PropTypes.any,
     busyMessage: PropTypes.any,
     className: PropTypes.any,
     disabled: PropTypes.any,
+    expectedType: PropTypes.any,
     label: PropTypes.any,
     placeholder: PropTypes.string,
     tooltip: PropTypes.any,

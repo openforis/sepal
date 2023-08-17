@@ -46,7 +46,7 @@ const loadAssetsNode$ = (path = [], node = {}) =>
         mergeMap(node =>
             of(node).pipe(
                 concatWith(
-                    node.type === 'FOLDER'
+                    node.type === 'Folder'
                         ? loadAssetsNode$([...path, node.id], node)
                         : EMPTY
                 )
@@ -65,10 +65,10 @@ export const loadAssets$ = () => {
             assetTree,
             assetList: Tree.flatten(assetTree)
                 .map(
-                    ({path, props: {name, type} = {}} = {}) => ({id: _.last(path), name, type})
+                    ({path, props: {type} = {}} = {}) => ({id: _.last(path), type})
                 )
                 .filter(
-                    ({id, type}) => id && type !== 'FOLDER'
+                    ({id, type}) => id && type !== 'Folder'
                 )
         })),
         tap(({assetTree, assetList}) =>
@@ -86,6 +86,29 @@ export const loadAssets$ = () => {
     )
 }
 
+const updateAsset = asset => {
+    const recentAssets = select('assets.recent') || []
+    const userAssets = select('assets.user') || []
+    const otherAssets = select('assets.other') || []
+    const isUserAsset = _.find(userAssets, ({id}) => id === asset.id)
+    actionBuilder('UPDATE_ASSET')
+        .set('assets.other', _.uniqBy([...otherAssets, asset], 'id'), !isUserAsset)
+        .set('assets.recent', _.uniqBy([asset, ...recentAssets], 'id').slice(0, MAX_RECENT_ASSETS))
+        .dispatch()
+}
+
+const removeAsset = id => {
+    actionBuilder('REMOVE_ASSET')
+        .del(['assets.recent', {id}])
+        .del(['assets.user', {id}])
+        .del(['assets.other', {id}])
+        .dispatch()
+}
+
+const reloadAssets = () => {
+    loadAssets$().subscribe()
+}
+
 export const withAssets = () =>
     WrappedComponent =>
         compose(
@@ -97,24 +120,14 @@ export const withAssets = () =>
             },
             connect(() => ({
                 assets: {
-                    // tree: select('assets.tree') || {},
+                    tree: select('assets.tree') || {},
                     userAssets: select('assets.user') || [],
                     otherAssets: select('assets.other') || [],
                     recentAssets: select('assets.recent') || [],
                     loading: select('assets.loading') || false,
-                    updateAssets: asset => {
-                        const recentAssets = select('assets.recent') || []
-                        const userAssets = select('assets.user') || []
-                        const otherAssets = select('assets.other') || []
-                        const isUserAsset = _.find(userAssets, ({id}) => id === asset)
-                        actionBuilder('UPDATE_ASSETS')
-                            .set('assets.other', _.uniq([...otherAssets, asset]), !isUserAsset)
-                            .set('assets.recent', _.uniq([asset, ...recentAssets]).slice(0, MAX_RECENT_ASSETS))
-                            .dispatch()
-                    },
-                    reload: () => {
-                        loadAssets$().subscribe()
-                    }
+                    updateAsset,
+                    removeAsset,
+                    reloadAssets
                 }
             }))
         )

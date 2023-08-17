@@ -42,10 +42,12 @@ const worker$ = ({asset, recipe}) => {
             )
         )
 
-    const image$ = ImageFactory(asset
-        ? {type: 'ASSET', id: asset}
-        : recipe
+    const image$ = ImageFactory(
+        asset
+            ? {type: 'ASSET', id: asset}
+            : recipe
     ).getImage$()
+
     return image$.pipe(
         switchMap(image => ee.getInfo$(image, 'get image metadata')),
         map(({bands, properties}) => {
@@ -54,7 +56,8 @@ const worker$ = ({asset, recipe}) => {
             return {
                 bands: bands.map(({id}) => id),
                 dataTypes,
-                properties
+                properties,
+                type: 'Image'
             }
         }),
         catchError(handleError$)

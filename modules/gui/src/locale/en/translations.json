@@ -60,8 +60,10 @@
       "failedToLoad": "Failed to load EE asset",
       "notFound": "Asset not found",
       "unauthorized": "You don't have access to this asset",
+      "folder": "Folder",
       "image": "Image",
       "imageCollection": "Image collection",
+      "table": "Table",
       "recentAssets": "Recent assets",
       "userAssets": "User assets",
       "otherAssets": "Other assets"
