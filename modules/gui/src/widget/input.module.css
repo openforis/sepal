@@ -2,8 +2,14 @@
     position: relative;
 }
 
-.dim > :not(:hover) {
-    opacity: .5;
+.prefix {
+    font-size: .9rem;
+    opacity: .6;
+}
+
+.suffix {
+    font-size: .9rem;
+    opacity: .6;
 }
 
 .input input,

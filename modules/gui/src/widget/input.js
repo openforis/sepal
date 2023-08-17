@@ -165,9 +165,7 @@ class _Input extends React.Component {
     renderSearch() {
         return this.isSearchInput()
             ? (
-                <div className={styles.dim}>
-                    <Icon name='search'/>
-                </div>
+                <Icon name='search' dimmed/>
             )
             : null
     }
@@ -176,7 +174,7 @@ class _Input extends React.Component {
         const {prefix} = this.props
         return prefix
             ? (
-                <div className={styles.dim}>
+                <div className={styles.prefix}>
                     {prefix}
                 </div>
             )
@@ -200,11 +198,11 @@ class _Input extends React.Component {
             ? this.renderClearButton()
             : additionalButtons || buttons
                 ? (
-                    <ButtonGroup layout='horizontal-nowrap'>
+                    <ButtonGroup layout='horizontal-nowrap' dimmed>
                         <ButtonGroup layout='horizontal-nowrap'>
                             {additionalButtons}
                         </ButtonGroup>
-                        <ButtonGroup layout='horizontal-nowrap' contentClassName={styles.dim}>
+                        <ButtonGroup layout='horizontal-nowrap'>
                             {buttons}
                         </ButtonGroup>
                     </ButtonGroup>
@@ -214,7 +212,7 @@ class _Input extends React.Component {
 
     renderClearButton() {
         return (
-            <ButtonGroup layout='horizontal-nowrap'>
+            <ButtonGroup layout='horizontal-nowrap' dimmed>
                 <Button
                     chromeless
                     shape='none'
