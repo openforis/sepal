@@ -30,6 +30,8 @@ sudo -iu $sandbox_user PATH=$PATH PROJ_LIB=/usr/share/proj NODE_PATH=$NODE_PATH:
  --ServerApp.ip=0.0.0.0\
  --ServerApp.port=8888\
  --ServerApp.token=''\
+ --ServerApp.password=''\
+ --ServerApp.disable_check_xsrf=True\
  --ServerApp.base_url='/api/sandbox/jupyter/'\
  --ServerApp.notebook_dir="/home/$sandbox_user"\
  --FileContentsManager.delete_to_trash=False\
