@@ -190,14 +190,6 @@ class _FormAssetCombo extends React.Component {
         ])
     }
 
-    // updateUserAssets(userAssets) {
-    //     this.setState({userAssets})
-    // }
-
-    // updateOtherAssets(otherAssets) {
-    //     this.setState({otherAssets})
-    // }
-
     onFilterChange(filter) {
         this.setState({filter})
     }
