@@ -1,6 +1,5 @@
 import {Button} from 'widget/button'
 import {Input} from 'widget/input'
-import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {ScrollableList} from 'widget/list'
 import {Widget} from 'widget/widget'
