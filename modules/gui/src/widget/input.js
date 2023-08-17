@@ -86,7 +86,7 @@ class _Input extends React.Component {
 
     renderContent() {
         return (
-            <Layout type='horizontal-nowrap' spacing='none'>
+            <Layout type='horizontal-nowrap' spacing='compact'>
                 {this.renderSearch()}
                 {this.renderPrefix()}
                 {this.renderInput()}
@@ -165,7 +165,7 @@ class _Input extends React.Component {
     renderSearch() {
         return this.isSearchInput()
             ? (
-                <div className={[styles.search, styles.dim].join(' ')}>
+                <div className={styles.dim}>
                     <Icon name='search'/>
                 </div>
             )
@@ -176,7 +176,7 @@ class _Input extends React.Component {
         const {prefix} = this.props
         return prefix
             ? (
-                <div className={[styles.prefix, styles.dim].join(' ')}>
+                <div className={styles.dim}>
                     {prefix}
                 </div>
             )
@@ -187,7 +187,7 @@ class _Input extends React.Component {
         const {suffix} = this.props
         return suffix
             ? (
-                <div className={[styles.suffix, styles.dim].join(' ')}>
+                <div className={styles.suffix}>
                     {suffix}
                 </div>
             )

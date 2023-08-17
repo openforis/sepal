@@ -6,18 +6,6 @@
     opacity: .5;
 }
 
-.search {
-    padding-right: .25rem;
-}
-
-.prefix {
-    padding-right: .25rem;
-}
-
-.suffix {
-    padding-left: .25rem;
-}
-
 .input input,
 .input textarea {
     font-size: .9rem;
