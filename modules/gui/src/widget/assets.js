@@ -73,8 +73,8 @@ export const loadAssets = () => {
                 ({path, props}) => ({id: _.last(path), ...props})
             )
             actionBuilder('LOAD_ASSETS')
-                .set('assets.tree', assetTree)
-                .set('assets.user', assetList)
+                .setIfChanged('assets.tree', assetTree)
+                .setIfChanged('assets.user', assetList)
                 .dispatch()
         },
         error: () => {
