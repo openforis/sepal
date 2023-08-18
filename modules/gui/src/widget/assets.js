@@ -1,13 +1,15 @@
-import {EMPTY, concatWith, finalize, map, mergeMap, of, switchMap, tap} from 'rxjs'
 import {Tree} from 'tree'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {map, mergeWith, of, switchMap, tap, throttleTime} from 'rxjs'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
 
 const MAX_RECENT_ASSETS = 5
+
+const assetTree = Tree.createNode()
 
 const updateAssetRoots$ = () =>
     api.gee.assetRoots$().pipe(
@@ -39,51 +41,61 @@ export const withAssetRoots = () =>
             }))
         )
 
-const loadAssetsNode$ = (path = [], node = {}) =>
+const loadNode$ = (path = [], node = {}) =>
     api.gee.listAssets$(node).pipe(
-        switchMap(items => of(...items)),
-        map(node => ({...node, path})),
-        mergeMap(node =>
-            of(node).pipe(
-                concatWith(
-                    node.type === 'Folder'
-                        ? loadAssetsNode$([...path, node.id], node)
-                        : EMPTY
-                )
+        switchMap(nodes =>
+            of({path, nodes}).pipe(
+                mergeWith(...loadNodes$(path, nodes))
             )
         )
     )
 
-export const loadAssets$ = () => {
-    const tree = Tree.createNode()
-    actionBuilder('UPDATE_USER_ASSETS')
+const loadNodes$ = (path, nodes) =>
+    nodes
+        .filter(({type}) => type === 'Folder')
+        .map(node => loadNode$([...path, node.id], node))
+
+const loadAssets$ = () =>
+    loadNode$().pipe(
+        tap(({path, nodes}) => Tree.setItems(assetTree, path, nodes)),
+        throttleTime(1000, null, {leading: true, trailing: true})
+    )
+
+export const loadAssets = () => {
+    actionBuilder('LOAD_ASSETS')
         .set('assets.loading', true)
         .dispatch()
-    return loadAssetsNode$().pipe(
-        map(({path, id, ...props}) => Tree.setNode(tree, path, id, props)),
-        map(assetTree => ({
-            assetTree,
-            assetList: Tree.flatten(assetTree)
-                .map(
-                    ({path, props: {type} = {}} = {}) => ({id: _.last(path), type})
-                )
-                .filter(
-                    ({id, type}) => id && type !== 'Folder'
-                )
-        })),
-        tap(({assetTree, assetList}) =>
-            actionBuilder('UPDATE_USER_ASSETS')
+    const t0 = Date.now()
+    console.log('Loading assets tree')
+    loadAssets$().subscribe({
+        next: () => {
+            const assetList = Tree.flatten(assetTree).map(
+                ({path, props}) => ({id: _.last(path), ...props})
+            )
+            console.log(assetList)
+            actionBuilder('LOAD_ASSETS')
                 .set('assets.tree', assetTree)
                 .set('assets.user', assetList)
                 .set('assets.loading', true)
                 .dispatch()
-        ),
-        finalize(() =>
-            actionBuilder('FINALIZE_USER_ASSETS')
-                .set('assets.loading', false)
+        },
+        error: () => {
+            const t1 = Date.now()
+            console.log(`Asset tree loading failed after ${t1 - t0} ms`)
+            actionBuilder('LOAD_ASSETS')
+                .set('assets.error', true)
+                .del('assets.loading')
                 .dispatch()
-        )
-    )
+        },
+        complete: () => {
+            const t1 = Date.now()
+            console.log(`Asset tree loaded in ${t1 - t0} ms`)
+            actionBuilder('LOAD_ASSETS')
+                .del('assets.error')
+                .del('assets.loading')
+                .dispatch()
+        }
+    })
 }
 
 const updateAsset = asset => {
@@ -104,18 +116,16 @@ const removeAsset = id => {
         .del(['assets.other', {id}])
         .dispatch()
 }
-
-const reloadAssets = () => {
-    loadAssets$().subscribe()
-}
-
 export const withAssets = () =>
     WrappedComponent =>
         compose(
             class WithAssetsHOC extends React.Component {
                 render() {
                     const {assets} = this.props
-                    return React.createElement(WrappedComponent, {...this.props, assets})
+                    return React.createElement(WrappedComponent, {
+                        ...this.props,
+                        assets
+                    })
                 }
             },
             connect(() => ({
@@ -127,7 +137,7 @@ export const withAssets = () =>
                     loading: select('assets.loading') || false,
                     updateAsset,
                     removeAsset,
-                    reloadAssets
+                    reloadAssets: loadAssets
                 }
             }))
         )

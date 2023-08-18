@@ -7,6 +7,9 @@ const ITEMS = 'items'
 const assertNode = node =>
     assertValue(node, _.isObject, 'node must be provided', true)
 
+const assertItems = items =>
+    assertValue(items, _.isArray, 'items must be provided', true)
+
 const assertId = id =>
     assertValue(id, _.isString, 'id must be provided', true)
 
@@ -50,7 +53,20 @@ const setNode = (tree, path, id, props) => {
     assertId(id)
     assertProps(props)
     _.set(tree, getItemPath(path, id), createNode(props))
-    return tree
+}
+
+const setItems = (tree, path, items) => {
+    assertNode(tree)
+    assertPath(path)
+    assertItems(items)
+    const nodes = items.reduce(
+        (acc, {id, ...props}) => ({...acc, [id]: {
+            props,
+            items: _.get(tree, getItemsPath([...path, id]))
+        }}),
+        {}
+    )
+    _.set(tree, getItemsPath(path), nodes)
 }
 
 const getProperties = (tree, path) => {
@@ -64,7 +80,6 @@ const setProperties = (tree, path, props) => {
     assertPath(path)
     assertProps(props)
     _.set(tree, getPropertiesPath(path), props)
-    return tree
 }
 
 const getProperty = (tree, path, prop) => {
@@ -79,19 +94,21 @@ const setProperty = (tree, path, prop, value) => {
     assertPath(path)
     assertProp(prop)
     _.set(tree, getPropertyPath(path, prop), value)
-    return tree
 }
 
 const flatten = (node = {}, path = []) => {
     assertNode(node)
     assertPath(path)
     const {[PROPS]: props, [ITEMS]: items} = node
-    return [{path, props}, ..._.map(items, (node, id) => flatten(node, [...path, id]))].flat()
+    const childItems = _.map(items,
+        (node, id) => flatten(node, [...path, id])
+    )
+    return _.compact([
+        path.length ? {path, props} : null,
+        ...childItems
+    ]).flat()
 }
 
-const getItems = node =>
-    node.items
-
 export const Tree = {
-    createNode, getNode, setNode, getProperties, setProperties, getProperty, setProperty, getItems, flatten
+    createNode, getNode, setNode, setItems, getProperties, setProperties, getProperty, setProperty, flatten
 }
