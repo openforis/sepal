@@ -29,11 +29,11 @@ class EmailServer {
         username = c.string('username')
         password = c.string('password')
         props = System.getProperties()
-        props["mail.smtp.starttls.enable"] = true
         props["mail.smtp.ssl.trust"] = host
         props["mail.smtp.auth"] = true
         props["mail.smtp.starttls.enable"] = true
-        props["mail.smtp.starttls.required"] = false
+        props["mail.smtp.starttls.required"] = true
+        props["mail.smtp.ssl.protocols"] = 'TLSv1.2'
         props["mail.smtp.host"] = host
         props["mail.smtp.port"] = this.port
     }
