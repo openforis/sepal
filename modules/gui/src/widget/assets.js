@@ -75,7 +75,6 @@ export const loadAssets = () => {
             actionBuilder('LOAD_ASSETS')
                 .set('assets.tree', assetTree)
                 .set('assets.user', assetList)
-                .set('assets.loading', true)
                 .dispatch()
         },
         error: () => {
