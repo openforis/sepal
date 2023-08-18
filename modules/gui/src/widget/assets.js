@@ -72,7 +72,6 @@ export const loadAssets = () => {
             const assetList = Tree.flatten(assetTree).map(
                 ({path, props}) => ({id: _.last(path), ...props})
             )
-            console.log(assetList)
             actionBuilder('LOAD_ASSETS')
                 .set('assets.tree', assetTree)
                 .set('assets.user', assetList)
