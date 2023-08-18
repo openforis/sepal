@@ -1,4 +1,4 @@
-import {addHash, cloneDeep, createHash} from 'hash'
+import {addHash, cloneDeep, createHash, isEqual} from 'hash'
 import _ from 'lodash'
 import flatten from 'flat'
 
@@ -164,7 +164,10 @@ export class Mutator {
     set(value) {
         this.assertValueType(value)
         return this.mutate((pathState, pathKey) => {
-            pathState[pathKey] = cloneDeep(value)
+            const updatedValue = cloneDeep(value)
+            if (!isEqual(pathState[pathKey], updatedValue)) {
+                pathState[pathKey] = updatedValue
+            }
         })
     }
 
