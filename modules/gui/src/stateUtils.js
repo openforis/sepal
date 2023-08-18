@@ -164,9 +164,15 @@ export class Mutator {
     set(value) {
         this.assertValueType(value)
         return this.mutate((pathState, pathKey) => {
-            const updatedValue = cloneDeep(value)
-            if (!isEqual(pathState[pathKey], updatedValue)) {
-                pathState[pathKey] = updatedValue
+            pathState[pathKey] = cloneDeep(value)
+        })
+    }
+
+    setIfChanged(value) {
+        this.assertValueType(value)
+        return this.mutate((pathState, pathKey) => {
+            if (!_.isEqual(pathState[pathKey], value)) {
+                pathState[pathKey] = cloneDeep(value)
             }
         })
     }

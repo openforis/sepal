@@ -1,5 +1,6 @@
 import {Mutator, resolve} from 'stateUtils'
 import {dispatch} from 'store'
+import {isEqual} from 'hash'
 import _ from 'lodash'
 
 const actionBuilder = (type, props, prefix) => {
@@ -25,6 +26,11 @@ const actionBuilder = (type, props, prefix) => {
     return {
         set(path, value, apply) {
             addOperation(path, mutator => mutator.set(value), apply)
+            return this
+        },
+
+        setIfChanged(path, value, apply) {
+            addOperation(path, mutator => mutator.setIfChanged(value), apply)
             return this
         },
 
@@ -91,6 +97,7 @@ const actionBuilder = (type, props, prefix) => {
                     return updatedState
                 },
                 dispatch() {
+                    console.log('DISPATCH', type)
                     dispatch(this)
                 }
             }
