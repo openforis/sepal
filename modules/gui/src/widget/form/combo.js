@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 export const FormCombo = ({
-    input, options, additionalButtons, alignment, allowClear, autoFocus, autoOpen, border, busyMessage, className, disabled,
+    input, options, buttons, alignment, allowClear, autoFocus, autoOpen, border, busyMessage, className, disabled,
     errorMessage, inputClassName, keyboard, label, labelButtons, matchGroups, optionsClassName, optionTooltipPlacement, placeholder, placement,
     readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, onCancel, onChange, onFilterChange
 }) => {
@@ -18,7 +18,7 @@ export const FormCombo = ({
         <Combo
             value={input.value}
             options={options}
-            additionalButtons={additionalButtons}
+            buttons={buttons}
             alignment={alignment}
             allowClear={allowClear}
             autoFocus={autoFocus}
@@ -51,13 +51,13 @@ export const FormCombo = ({
 FormCombo.propTypes = {
     input: PropTypes.any.isRequired,
     options: PropTypes.any.isRequired,
-    additionalButtons: PropTypes.any,
     alignment: PropTypes.any,
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
     autoOpen: PropTypes.any,
     border: PropTypes.any,
     busyMessage: PropTypes.any,
+    buttons: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,

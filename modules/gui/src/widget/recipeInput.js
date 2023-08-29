@@ -41,7 +41,7 @@ class _RecipeInput extends React.Component {
         const {all} = this.state
         const options = this.getOptions()
 
-        const additionalButtons = [
+        const buttons = [
             <Buttons
                 key={'inverted'}
                 selected={[all]}
@@ -67,7 +67,7 @@ class _RecipeInput extends React.Component {
                 placeholder={placeholder || msg('widget.recipeInput.placeholder')}
                 options={options}
                 autoFocus={autoFocus}
-                additionalButtons={additionalButtons}
+                buttons={buttons}
                 errorMessage
                 matchGroups
                 busyMessage={stream('LOAD_RECIPE').active}

@@ -114,7 +114,7 @@ class _Combo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, readOnly, border, inputClassName, additionalButtons = []} = this.props
+        const {placeholder, autoFocus, readOnly, border, inputClassName, buttons = []} = this.props
         const {filter, selectedOption, showOptions} = this.state
         return (
             <Keybinding
@@ -142,10 +142,10 @@ class _Combo extends React.Component {
                         disabled={!this.isActive()}
                         readOnly={readOnly || isMobile()}
                         buttons={[
+                            ...buttons,
                             this.renderClearButton(),
                             this.renderToggleOptionsButton()
                         ]}
-                        additionalButtons={additionalButtons}
                         onChange={this.onChange}
                         onFocus={this.onFocus}
                         onBlur={this.onInputBlur}
@@ -452,13 +452,13 @@ Combo.propTypes = {
             value: PropTypes.any,
         })
     ).isRequired,
-    additionalButtons: PropTypes.arrayOf(PropTypes.node),
     alignment: PropTypes.oneOf(['left', 'center', 'right', 'fit']),
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
     autoOpen: PropTypes.any,
     border: PropTypes.any,
     busyMessage: PropTypes.any,
+    buttons: PropTypes.arrayOf(PropTypes.node),
     className: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,

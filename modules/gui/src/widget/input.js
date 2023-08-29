@@ -193,18 +193,15 @@ class _Input extends React.Component {
     }
 
     renderButtons() {
-        const {value, additionalButtons, buttons} = this.props
+        const {value, buttons} = this.props
         return value && this.isSearchInput()
             ? this.renderClearButton()
-            : additionalButtons || buttons
+            : buttons
                 ? (
-                    <ButtonGroup layout='horizontal-nowrap' dimmed>
-                        <ButtonGroup layout='horizontal-nowrap'>
-                            {additionalButtons}
-                        </ButtonGroup>
-                        <ButtonGroup layout='horizontal-nowrap'>
-                            {buttons}
-                        </ButtonGroup>
+                    <ButtonGroup
+                        layout='horizontal-nowrap'
+                        dimmed>
+                        {buttons}
                     </ButtonGroup>
                 )
                 : null
@@ -212,7 +209,9 @@ class _Input extends React.Component {
 
     renderClearButton() {
         return (
-            <ButtonGroup layout='horizontal-nowrap' dimmed>
+            <ButtonGroup
+                layout='horizontal-nowrap'
+                dimmed>
                 <Button
                     chromeless
                     shape='none'
@@ -262,7 +261,6 @@ export const Input = compose(
 )
 
 Input.propTypes = {
-    additionalButtons: PropTypes.arrayOf(PropTypes.node),
     autoCapitalize: PropTypes.any,
     autoComplete: PropTypes.any,
     autoCorrect: PropTypes.any,

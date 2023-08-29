@@ -19,7 +19,7 @@ class _FormInput extends React.Component {
     }
 
     renderInput() {
-        const {form, forwardedRef, className, input, errorMessage, busyMessage, type, tabIndex, additionalButtons, ...props} = this.props
+        const {form, forwardedRef, className, input, errorMessage, busyMessage, type, tabIndex, buttons, ...props} = this.props
         return (
             <Input
                 {...props}
@@ -31,7 +31,7 @@ class _FormInput extends React.Component {
                 errorMessage={getErrorMessage(form, errorMessage === true ? input : errorMessage)}
                 busyMessage={busyMessage}
                 tabIndex={tabIndex}
-                additionalButtons={additionalButtons}
+                buttons={buttons}
                 onChange={this.onChange}
                 onBlur={this.onblur}
             />
@@ -87,12 +87,12 @@ export const FormInput = compose(
 
 FormInput.propTypes = {
     input: PropTypes.object.isRequired,
-    additionalButtons: PropTypes.arrayOf(PropTypes.node),
     autoCapitalize: PropTypes.any,
     autoComplete: PropTypes.any,
     autoCorrect: PropTypes.any,
     autoFocus: PropTypes.any,
     busyMessage: PropTypes.any,
+    buttons: PropTypes.arrayOf(PropTypes.node),
     className: PropTypes.string,
     errorMessage: PropTypes.any,
     inputTooltip: PropTypes.any,
