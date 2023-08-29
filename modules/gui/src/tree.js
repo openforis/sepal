@@ -60,10 +60,13 @@ const setItems = (tree, path, items) => {
     assertPath(path)
     assertItems(items)
     const nodes = items.reduce(
-        (acc, {id, ...props}) => ({...acc, [id]: {
-            props,
-            items: _.get(tree, getItemsPath([...path, id]))
-        }}),
+        (acc, {id, ...props}) => ({
+            ...acc,
+            [id]: {
+                props,
+                items: _.get(tree, getItemsPath([...path, id]))
+            }
+        }),
         {}
     )
     _.set(tree, getItemsPath(path), nodes)

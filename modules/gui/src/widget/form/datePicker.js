@@ -77,8 +77,7 @@ class _FormDatePicker extends React.Component {
             <Widget
                 label={label}
                 tooltip={tooltip}
-                tooltipPlacement={tooltipPlacement}
-                contenClassName={styles.input}>
+                tooltipPlacement={tooltipPlacement}>
                 {this.renderInput()}
             </Widget>
         )
