@@ -1,14 +1,12 @@
 import {Button} from 'widget/button'
-import {Form} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {ScrollableList} from 'widget/list'
-import {Subject} from 'rxjs'
+import {Widget} from './widget'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
 import {simplifyString, splitString} from 'string'
-import {withSubscriptions} from 'subscription'
 import AutoFocus from 'widget/autoFocus'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
@@ -25,7 +23,6 @@ class _Combo extends React.Component {
     inputContainer = React.createRef()
     input = React.createRef()
     list = React.createRef()
-    select$ = new Subject()
     
     state = {
         showOptions: false,
@@ -51,7 +48,6 @@ class _Combo extends React.Component {
         this.resetFilterOrClose = this.resetFilterOrClose.bind(this)
         this.resetFilterOrClearSelection = this.resetFilterOrClearSelection.bind(this)
         this.selectOption = this.selectOption.bind(this)
-        this.onOptionSelected = this.onOptionSelected.bind(this)
     }
 
     isActive() {
@@ -93,7 +89,7 @@ class _Combo extends React.Component {
         const {errorMessage, busyMessage, disabled, className, label, labelButtons, tooltip, tooltipPlacement} = this.props
         const {showOptions} = this.state
         return (
-            <Form.FieldSet
+            <Widget
                 className={[styles.container, className].join(' ')}
                 label={label}
                 labelButtons={labelButtons}
@@ -109,7 +105,7 @@ class _Combo extends React.Component {
                     {this.renderInput()}
                 </div>
                 {showOptions ? this.renderOptions() : null}
-            </Form.FieldSet>
+            </Widget>
         )
     }
 
@@ -291,17 +287,6 @@ class _Combo extends React.Component {
     }
 
     selectOption(option) {
-        this.select$.next(option)
-    }
-
-    handleSelect() {
-        const {addSubscription} = this.props
-        addSubscription(
-            this.select$.subscribe(this.onOptionSelected)
-        )
-    }
-
-    onOptionSelected(option) {
         const {onChange, stayOpenOnSelect} = this.props
         this.setState({
             selectedOption: option,
@@ -333,7 +318,6 @@ class _Combo extends React.Component {
         const {autoOpen} = this.props
         this.setFilter()
         autoOpen && this.showOptions()
-        this.handleSelect()
     }
 
     componentDidUpdate({value: prevValue, selectedOption: prevSelectedOption}, {filter: prevFilter}) {
@@ -425,7 +409,6 @@ class _Combo extends React.Component {
 
 export const Combo = compose(
     _Combo,
-    withSubscriptions(),
     connect(mapStateToProps)
 )
 
