@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
 import {Subject, of, switchMap, takeUntil, tap} from 'rxjs'
@@ -33,7 +34,6 @@ class _FormAssetCombo extends React.Component {
         this.reloadAssets = this.reloadAssets.bind(this)
     }
 
-    filterChanged$ = new Subject()
     assetChanged$ = new Subject()
 
     state = {
@@ -54,28 +54,54 @@ class _FormAssetCombo extends React.Component {
                 busyMessage={(busyMessage || this.props.stream('LOAD_ASSET_METADATA').active) && msg('widget.loading')}
                 onChange={this.onChange}
                 onFilterChange={this.onFilterChange}
-                additionalButtons={[
-                    this.renderLoadingIndicator()
-                ]}
+                labelButtons={this.renderLabelButtons()}
                 {...otherProps}
             />
         ) : null
     }
 
-    renderLoadingIndicator() {
-        const {assets: {loading}} = this.props
+    renderLabelButtons() {
+        return (
+            <ButtonGroup spacing='none'>
+                {this.renderReloadButton()}
+                {/* {this.renderSettingsButton()} */}
+            </ButtonGroup>
+        )
+    }
+
+    renderReloadButton() {
+        const {assets: {loading: assetsLoading}} = this.props
         return (
             <Button
                 key='reload'
                 chromeless
-                shape='none'
-                air='none'
+                shape='circle'
                 icon='rotate'
                 iconAttributes={{
-                    spin: loading
+                    spin: assetsLoading
                 }}
+                size='small'
+                tooltip={msg('asset.reload')}
                 tabIndex={-1}
-                disabled={loading}
+                disabled={assetsLoading}
+                onClick={this.reloadAssets}
+            />
+        )
+    }
+
+    renderSettingsButton() {
+        // const {assets: {loading: assetsLoading}} = this.props
+        return (
+            <Button
+                key='settings'
+                chromeless
+                shape='circle'
+                icon='gear'
+                size='small'
+                tooltip={msg('asset.settings')}
+                tabIndex={-1}
+                // disabled={assetsLoading}
+                disabled // temporarily disabled until implemented
                 onClick={this.reloadAssets}
             />
         )
@@ -292,7 +318,6 @@ export const FormAssetCombo = compose(
 FormAssetCombo.propTypes = {
     allowedTypes: PropTypes.array.isRequired,
     input: PropTypes.any.isRequired,
-    additionalButtons: PropTypes.any,
     alignment: PropTypes.any,
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
