@@ -1,6 +1,5 @@
 import {Input, Textarea} from 'widget/input'
 import {compose} from 'compose'
-import {getErrorMessage} from 'widget/form/error'
 import {withFormContext} from 'widget/form/context'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -28,7 +27,7 @@ class _FormInput extends React.Component {
                 type={type}
                 name={input && input.name}
                 value={this.getValue()}
-                errorMessage={getErrorMessage(form, errorMessage === true ? input : errorMessage)}
+                errorMessage={form.getErrorMessage(errorMessage === true ? input : errorMessage)}
                 busyMessage={busyMessage}
                 tabIndex={tabIndex}
                 buttons={buttons}
@@ -54,7 +53,7 @@ class _FormInput extends React.Component {
                 className={className}
                 name={input.name}
                 value={input.value || ''}
-                errorMessage={getErrorMessage(form, errorMessage === true ? input : errorMessage)}
+                errorMessage={form.getErrorMessage(errorMessage === true ? input : errorMessage)}
                 busyMessage={busyMessage}
                 tabIndex={tabIndex}
                 minRows={minRows}
