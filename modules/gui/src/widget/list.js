@@ -398,8 +398,12 @@ class List extends React.Component {
 
     componentDidUpdate() {
         const {highlightedOptionKey} = this.state
-        if (highlightedOptionKey && !this.getOption(highlightedOptionKey)) {
-            this.highlightSelectedOption()
+        if (highlightedOptionKey) {
+            if (!this.getOption(highlightedOptionKey)) {
+                this.highlightSelectedOption()
+            }
+        } else {
+            this.highlightFirst()
         }
     }
 }
