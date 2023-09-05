@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
-import {Subject, of, switchMap, takeUntil, tap} from 'rxjs'
+import {Subject, first, of, switchMap, takeUntil, tap} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
@@ -242,6 +242,9 @@ class _FormAssetCombo extends React.Component {
                     : msg('widget.assetInput.loadError')
             )
         }
+
+        this.setState({loading: false})
+
         removeAsset(asset)
     }
 
@@ -258,6 +261,7 @@ class _FormAssetCombo extends React.Component {
 
         this.setState(
             ({filter}) => ({
+                loading: false,
                 filter: filter !== asset ? filter : null
             })
         )
@@ -297,14 +301,15 @@ class _FormAssetCombo extends React.Component {
         const {loading} = this.state
         if (this.isAssetLike(asset) && asset !== loading) {
             this.onLoading(asset)
-            stream('LOAD_ASSET_METADATA',
-                this.getMetadata$(asset).pipe(
+            stream({
+                name: 'LOAD_ASSET_METADATA',
+                stream$: this.getMetadata$(asset).pipe(
                     takeUntil(this.assetChanged$.pipe()),
-                    tap(() => this.setState({loading: null}))
+                    first()
                 ),
-                metadata => this.onLoaded(asset, metadata),
-                error => this.onError(asset, error)
-            )
+                onNext: metadata => this.onLoaded(asset, metadata),
+                onError: error => this.onError(asset, error)
+            })
         }
     }
 }
