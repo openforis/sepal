@@ -19,7 +19,7 @@ class AssetSection extends React.Component {
     render() {
         const {inputs: {asset}} = this.props
         return (
-            <Form.AssetInput
+            <Form.AssetCombo
                 input={asset}
                 label={msg('process.baytsAlerts.panel.reference.form.asset.label')}
                 placeholder={msg('process.baytsAlerts.panel.reference.form.asset.placeholder')}

@@ -9,7 +9,7 @@ export default class AssetSection extends React.Component {
     render() {
         const {input, onLoading} = this.props
         return (
-            <Form.AssetInput
+            <Form.AssetCombo
                 className={style.inputComponent}
                 input={input}
                 label={msg('process.masking.panel.inputImage.asset.label')}

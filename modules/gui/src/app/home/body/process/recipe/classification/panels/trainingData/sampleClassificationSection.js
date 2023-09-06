@@ -83,7 +83,7 @@ class SampleClassificationSection extends Component {
     renderAssetToSample() {
         const {inputs: {assetToSample}} = this.props
         return (
-            <Form.AssetInput
+            <Form.AssetCombo
                 label={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.label')}
                 autoFocus
                 input={assetToSample}

@@ -70,7 +70,7 @@ class Sources extends React.Component {
     renderAssetId() {
         const {inputs: {asset, validAsset}} = this.props
         return (
-            <Form.AssetInput
+            <Form.AssetCombo
                 input={asset}
                 label={msg('process.planetMosaic.panel.sources.form.asset.label')}
                 placeholder={msg('process.planetMosaic.panel.sources.form.asset.placeholder')}

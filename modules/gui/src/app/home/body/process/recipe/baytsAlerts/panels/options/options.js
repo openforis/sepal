@@ -127,7 +127,7 @@ class Options extends React.Component {
     renderPreviousAlertsAsset() {
         const {inputs: {previousAlertsAsset}} = this.props
         return (
-            <Form.AssetInput
+            <Form.AssetCombo
                 input={previousAlertsAsset}
                 label={msg('process.baytsAlerts.panel.options.form.previousAlertsAsset.label')}
                 placeholder={msg('process.baytsAlerts.panel.options.form.previousAlertsAsset.placeholder')}
@@ -142,7 +142,7 @@ class Options extends React.Component {
     renderWetlandMaskAsset() {
         const {inputs: {wetlandMaskAsset}} = this.props
         return (
-            <Form.AssetInput
+            <Form.AssetCombo
                 input={wetlandMaskAsset}
                 label={msg('process.baytsAlerts.panel.options.form.wetlandMaskAsset.label')}
                 placeholder={msg('process.baytsAlerts.panel.options.form.wetlandMaskAsset.placeholder')}

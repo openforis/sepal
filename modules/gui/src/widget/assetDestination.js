@@ -49,7 +49,7 @@ class _AssetDestination extends React.Component {
     renderAssetInput() {
         const {stream, assetInput, label, placeholder, autoFocus} = this.props
         return (
-            <Form.AssetInput
+            <Form.AssetCombo
                 input={assetInput}
                 label={label}
                 placeholder={placeholder}

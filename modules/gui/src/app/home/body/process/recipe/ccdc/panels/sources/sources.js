@@ -174,7 +174,7 @@ class Sources extends React.Component {
             return null
         }
         return (
-            <Form.AssetInput
+            <Form.AssetCombo
                 input={asset}
                 label={msg('process.planetMosaic.panel.sources.form.asset.label')}
                 placeholder={msg('process.planetMosaic.panel.sources.form.asset.placeholder')}

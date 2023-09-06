@@ -23,7 +23,7 @@ class AssetSection extends React.Component {
         const {inputs: {asset, dateFormat}} = this.props
         return (
             <Layout>
-                <Form.AssetInput
+                <Form.AssetCombo
                     input={asset}
                     label={msg('process.ccdcSlice.panel.source.form.asset.label')}
                     placeholder={msg('process.ccdcSlice.panel.source.form.asset.placeholder')}
