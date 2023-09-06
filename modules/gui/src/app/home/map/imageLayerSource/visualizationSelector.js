@@ -66,6 +66,7 @@ class _VisualizationSelector extends React.Component {
                 placeholder={'Select bands to visualize...'}
                 options={options}
                 value={selectedOption && selectedOption.value}
+                placement='below'
                 onChange={({visParams}) => this.selectVisParams(visParams)}
             />
         )
