@@ -223,7 +223,7 @@ class _VisParamsPanel extends React.Component {
             <ButtonSelect
                 chromeless
                 shape='pill'
-                placement='below'
+                // placement='below'
                 input={type}
                 tooltipPlacement='bottom'
                 options={[{

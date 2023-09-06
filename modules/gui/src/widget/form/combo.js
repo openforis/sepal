@@ -104,9 +104,3 @@ FormCombo.propTypes = {
     onChange: PropTypes.func,
     onFilterChange: PropTypes.func
 }
-
-FormCombo.defaultProps = {
-    alignment: 'left',
-    placement: 'below',
-    tooltipPlacement: 'top'
-}

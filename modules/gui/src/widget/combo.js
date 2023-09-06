@@ -453,7 +453,7 @@ Combo.propTypes = {
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,
-    placement: PropTypes.oneOf(['above', 'below']),
+    placement: PropTypes.oneOf(['above', 'below', 'above-otherwise-below', 'below-otherwise-above']),
     readOnly: PropTypes.any,
     stayOpenOnSelect: PropTypes.any,
     tooltip: PropTypes.any,
@@ -468,6 +468,6 @@ Combo.propTypes = {
 Combo.defaultProps = {
     alignment: 'left',
     border: 'true',
-    placement: 'below',
+    placement: 'below-otherwise-above',
     tooltipPlacement: 'top'
 }

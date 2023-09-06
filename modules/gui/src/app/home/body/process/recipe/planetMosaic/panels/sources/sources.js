@@ -75,6 +75,7 @@ class Sources extends React.Component {
                 label={msg('process.planetMosaic.panel.sources.form.asset.label')}
                 placeholder={msg('process.planetMosaic.panel.sources.form.asset.placeholder')}
                 expectedType='ImageCollection'
+                placement='below-otherwise-above'
                 autoFocus
                 onLoading={() => validAsset.set('')}
                 onLoaded={() => validAsset.set('valid')}

@@ -187,7 +187,7 @@ class _RecipeList extends React.Component {
                 tooltip={msg('process.recipe.move.tooltip')}>
                 {onBlur => (
                     <Combo
-                        placement='below'
+                        // placement='below'
                         alignment='left'
                         placeholder={msg('process.recipe.move.destinationProject')}
                         options={this.getDestinations()}
