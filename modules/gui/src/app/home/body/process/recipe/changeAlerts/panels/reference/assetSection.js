@@ -30,7 +30,7 @@ class AssetSection extends React.Component {
                     label={msg('process.changeAlerts.panel.reference.form.asset.label')}
                     placeholder={msg('process.changeAlerts.panel.reference.form.asset.placeholder')}
                     autoFocus
-                    expectedType={['Image', 'ImageCollection']}
+                    allowedTypes={['Image', 'ImageCollection']}
                     onLoaded={this.onLoaded}
                 />
                 <Form.Buttons

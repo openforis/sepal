@@ -27,7 +27,7 @@ class AssetSection extends React.Component {
                     input={asset}
                     label={msg('process.ccdcSlice.panel.source.form.asset.label')}
                     placeholder={msg('process.ccdcSlice.panel.source.form.asset.placeholder')}
-                    expectedType={['Image', 'ImageCollection']}
+                    allowedTypes={['Image', 'ImageCollection']}
                     autoFocus
                     onLoaded={this.onLoaded}
                 />

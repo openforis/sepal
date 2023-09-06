@@ -14,7 +14,7 @@ export default class AssetSection extends React.Component {
                 label={msg('process.classChange.panel.inputImage.asset.label')}
                 placeholder={msg('process.classChange.panel.inputImage.asset.placeholder')}
                 autoFocus
-                expectedType={['Image', 'ImageCollection']}
+                allowedTypes={['Image', 'ImageCollection']}
                 onLoading={onLoading}
                 onLoaded={({asset, metadata, visualizations}) => {
                     this.onLoaded({asset, metadata, visualizations})

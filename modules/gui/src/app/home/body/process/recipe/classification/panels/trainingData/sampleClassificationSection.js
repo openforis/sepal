@@ -88,7 +88,7 @@ class SampleClassificationSection extends Component {
                 autoFocus
                 input={assetToSample}
                 placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.placeholder')}
-                expectedType={['Image', 'ImageCollection']}
+                allowedTypes={['Image', 'ImageCollection']}
                 errorMessage
                 onLoading={() => this.setState({bands: []})}
                 onLoaded={({metadata}) => {

@@ -24,7 +24,7 @@ class AssetSection extends React.Component {
                 label={msg('process.baytsAlerts.panel.reference.form.asset.label')}
                 placeholder={msg('process.baytsAlerts.panel.reference.form.asset.placeholder')}
                 autoFocus
-                expectedType={['Image', 'ImageCollection']}
+                allowedTypes={['Image', 'ImageCollection']}
                 onLoaded={this.onLoaded}
             />
         )

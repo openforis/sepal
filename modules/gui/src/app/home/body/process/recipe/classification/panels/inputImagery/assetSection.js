@@ -14,7 +14,7 @@ export default class AssetSection extends React.Component {
                 label={msg('process.classification.panel.inputImagery.form.asset.label')}
                 placeholder={msg('process.classification.panel.inputImagery.form.asset.placeholder')}
                 autoFocus
-                expectedType={['Image', 'ImageCollection']}
+                allowedTypes={['Image', 'ImageCollection']}
                 onLoading={onLoading}
                 onLoaded={({asset, metadata, visualizations}) => {
                     const bands = metadata.bands.map(({id}) => id)

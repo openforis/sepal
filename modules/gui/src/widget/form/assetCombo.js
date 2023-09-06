@@ -166,7 +166,7 @@ class _FormAssetCombo extends React.Component {
 
     isAllowedType(type) {
         const {allowedTypes} = this.props
-        return allowedTypes.includes(type)
+        return _.isEmpty(allowedTypes) || allowedTypes.includes(type)
     }
 
     getOptions() {

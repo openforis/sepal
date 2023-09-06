@@ -133,7 +133,7 @@ class Options extends React.Component {
                 placeholder={msg('process.baytsAlerts.panel.options.form.previousAlertsAsset.placeholder')}
                 tooltip={msg('process.baytsAlerts.panel.options.form.previousAlertsAsset.tooltip')}
                 autoFocus
-                expectedType={['Image', 'ImageCollection']}
+                allowedTypes={['Image', 'ImageCollection']}
                 onLoaded={this.onPreviousAlertsAssetLoaded}
             />
         )
@@ -147,7 +147,7 @@ class Options extends React.Component {
                 label={msg('process.baytsAlerts.panel.options.form.wetlandMaskAsset.label')}
                 placeholder={msg('process.baytsAlerts.panel.options.form.wetlandMaskAsset.placeholder')}
                 tooltip={msg('process.baytsAlerts.panel.options.form.wetlandMaskAsset.tooltip')}
-                expectedType={['Image', 'ImageCollection']}
+                allowedTypes={['Image', 'ImageCollection']}
             />
         )
     }
