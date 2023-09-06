@@ -57,16 +57,14 @@ class _SelectAsset extends React.Component {
     renderContent() {
         const {inputs: {asset}} = this.props
         return (
-            <div>
-                <Form.AssetCombo
-                    input={asset}
-                    label={msg('map.layout.addImageLayerSource.types.Asset.form.asset.label')}
-                    autoFocus
-                    allowedTypes={['Image', 'ImageCollection']}
-                    onLoading={this.onLoading}
-                    onLoaded={this.onLoaded}
-                />
-            </div>
+            <Form.AssetCombo
+                input={asset}
+                label={msg('map.layout.addImageLayerSource.types.Asset.form.asset.label')}
+                autoFocus
+                allowedTypes={['Image', 'ImageCollection']}
+                onLoading={this.onLoading}
+                onLoaded={this.onLoaded}
+            />
         )
     }
 
