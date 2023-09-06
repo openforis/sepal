@@ -11,6 +11,7 @@ import styles from './floatingBox.module.css'
 import withForwardedRef from 'ref'
 
 const MARGIN = 5
+const VERTICAL_PRIORITY_FACTOR = 2
 
 const Context = React.createContext()
 
@@ -199,7 +200,7 @@ class FloatingBox extends React.Component {
     getAboveOrBelowVerticalPosition(contentHeight) {
         const above = this.getVerticalPosition('above')
         const below = this.getVerticalPosition('below')
-        return above.maxHeight >= contentHeight || above.maxHeight >= below.maxHeight
+        return above.maxHeight >= contentHeight || above.maxHeight >= below.maxHeight / VERTICAL_PRIORITY_FACTOR
             ? above
             : below
     }
@@ -207,7 +208,7 @@ class FloatingBox extends React.Component {
     getBelowOrAboveVerticalPosition(contentHeight) {
         const below = this.getVerticalPosition('below')
         const above = this.getVerticalPosition('above')
-        return below.maxHeight >= contentHeight || below.maxHeight >= above.maxHeight
+        return below.maxHeight >= contentHeight || below.maxHeight >= above.maxHeight / VERTICAL_PRIORITY_FACTOR
             ? below
             : above
     }
