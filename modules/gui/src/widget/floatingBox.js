@@ -188,9 +188,9 @@ class FloatingBox extends React.Component {
                     maxHeight: viewportHeight - elementBottom,
                     vPlacement
                 }
-            case 'above-otherwise-below':
+            case 'above-or-below':
                 return this.getAboveOrBelowVerticalPosition(contentHeight)
-            case 'below-otherwise-above':
+            case 'below-or-above':
                 return this.getBelowOrAboveVerticalPosition(contentHeight)
             }
         }
@@ -385,7 +385,7 @@ FloatingBox.propTypes = {
     element: PropTypes.object,
     elementBlur: PropTypes.any,
     hPlacement: PropTypes.oneOf(['center', 'left', 'over-left', 'over', 'over-right', 'right']),
-    vPlacement: PropTypes.oneOf(['center', 'above', 'over-above', 'over', 'over-below', 'below', 'above-otherwise-below', 'below-otherwise-above']),
+    vPlacement: PropTypes.oneOf(['center', 'above', 'over-above', 'over', 'over-below', 'below', 'above-or-below', 'below-or-above']),
     onBlur: PropTypes.func
 }
 

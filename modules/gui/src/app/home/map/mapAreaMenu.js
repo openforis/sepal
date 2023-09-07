@@ -24,7 +24,7 @@ class _MapAreaMenuPanel extends React.Component {
         return (
             <FloatingBox
                 element={element}
-                vPlacement='above-otherwise-below'
+                vPlacement='above-or-below'
                 hPlacement='center'
                 onBlur={deactivate}
             >
