@@ -34,10 +34,9 @@ const worker$ = ({asset, allowedTypes}) => {
                 })
         )
 
-    const isAllowedType = !allowedTypes || (_.isArray(allowedTypes) && allowedTypes.includes(asset.type))
-
     return ee.getAsset$(asset, 0).pipe(
         switchMap(asset => {
+            const isAllowedType = !allowedTypes || (_.isArray(allowedTypes) && allowedTypes.includes(asset.type))
             if (isAllowedType) {
                 return asset.type === 'ImageCollection'
                     ? addFirstImageBands$(asset)
