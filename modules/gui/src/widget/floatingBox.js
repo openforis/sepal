@@ -11,7 +11,7 @@ import styles from './floatingBox.module.css'
 import withForwardedRef from 'ref'
 
 const MARGIN = 5
-const VERTICAL_PRIORITY_FACTOR = 2
+const VERTICAL_PRIORITY_MIN_PX = 150
 
 const Context = React.createContext()
 
@@ -189,8 +189,12 @@ class FloatingBox extends React.Component {
                     vPlacement
                 }
             case 'above-or-below':
-                return this.getAboveOrBelowVerticalPosition(contentHeight)
+                return this.getAboveOrBelowVerticalPosition()
             case 'below-or-above':
+                return this.getBelowOrAboveVerticalPosition()
+            case 'fit-above-or-below':
+                return this.getAboveOrBelowVerticalPosition(contentHeight)
+            case 'fit-below-or-above':
                 return this.getBelowOrAboveVerticalPosition(contentHeight)
             }
         }
@@ -200,7 +204,10 @@ class FloatingBox extends React.Component {
     getAboveOrBelowVerticalPosition(contentHeight) {
         const above = this.getVerticalPosition('above')
         const below = this.getVerticalPosition('below')
-        return above.maxHeight >= contentHeight || above.maxHeight >= below.maxHeight / VERTICAL_PRIORITY_FACTOR
+        const fitsAbove = contentHeight && above.maxHeight >= contentHeight
+        const enoughSpaceAbove = above.maxHeight >= VERTICAL_PRIORITY_MIN_PX
+        const notEnoughSpaceBelow = above.maxHeight >= below.maxHeight
+        return fitsAbove || enoughSpaceAbove || notEnoughSpaceBelow
             ? above
             : below
     }
@@ -208,7 +215,10 @@ class FloatingBox extends React.Component {
     getBelowOrAboveVerticalPosition(contentHeight) {
         const below = this.getVerticalPosition('below')
         const above = this.getVerticalPosition('above')
-        return below.maxHeight >= contentHeight || below.maxHeight >= above.maxHeight / VERTICAL_PRIORITY_FACTOR
+        const fitsBelow = contentHeight && below.maxHeight >= contentHeight
+        const enoughSpaceBelow = below.maxHeight >= VERTICAL_PRIORITY_MIN_PX
+        const notEnoughSpaceAbove = below.maxHeight >= above.maxHeight
+        return fitsBelow || enoughSpaceBelow || notEnoughSpaceAbove
             ? below
             : above
     }
@@ -385,7 +395,7 @@ FloatingBox.propTypes = {
     element: PropTypes.object,
     elementBlur: PropTypes.any,
     hPlacement: PropTypes.oneOf(['center', 'left', 'over-left', 'over', 'over-right', 'right']),
-    vPlacement: PropTypes.oneOf(['center', 'above', 'over-above', 'over', 'over-below', 'below', 'above-or-below', 'below-or-above']),
+    vPlacement: PropTypes.oneOf(['center', 'above', 'over-above', 'over', 'over-below', 'below', 'above-or-below', 'below-or-above', 'fit-above-or-below', 'fit-below-or-above']),
     onBlur: PropTypes.func
 }
 
