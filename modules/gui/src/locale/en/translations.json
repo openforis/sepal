@@ -232,7 +232,7 @@
     "gee": {
       "asset": {
         "error": {
-          "wrongType": "Asset is of type '{actualType}' while '{expectedType}' is expected."
+          "wrongType": "Asset is of type {actualType} while the only allowed types are: {allowedTypes}."
         }
       },
       "classification": {

@@ -1,6 +1,6 @@
 const {job} = require('#gee/jobs/job')
 
-const worker$ = ({asset, expectedType}) => {
+const worker$ = ({asset, allowedTypes}) => {
     const {of, catchError, map, switchMap, throwError} = require('rxjs')
     const {ClientException, NotFoundException} = require('#sepal/exception')
     const ee = require('#sepal/ee')
@@ -34,18 +34,21 @@ const worker$ = ({asset, expectedType}) => {
                 })
         )
 
+    const isAllowedType = !allowedTypes || (_.isArray(allowedTypes) && allowedTypes.includes(asset.type))
+
     return ee.getAsset$(asset, 0).pipe(
         switchMap(asset => {
-            if (!expectedType || asset.type === expectedType || (_.isArray(expectedType) && expectedType.includes(asset.type))) {
+            if (isAllowedType) {
                 return asset.type === 'ImageCollection'
                     ? addFirstImageBands$(asset)
                     : of(asset)
             } else {
-                return throwError(() => new ClientException(`Asset is of type ${asset.type} while ${expectedType} is expected.`, {
+                const prettyAllowedTypes = allowedTypes.join(', ')
+                return throwError(() => new ClientException(`Asset is of type ${asset.type} while the only allowed types are: ${prettyAllowedTypes}.`, {
                     userMessage: {
-                        message: `Not an ${expectedType}`,
+                        message: 'Type not allowed',
                         key: 'gee.asset.error.wrongType',
-                        args: {asset, expectedType, actualType: asset.type}
+                        args: {asset, allowedTypes: prettyAllowedTypes, actualType: asset.type}
                     }
                 }))
             }

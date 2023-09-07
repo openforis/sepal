@@ -26,9 +26,9 @@ export default {
             retries: 0
         }),
 
-    assetMetadata$: ({asset, expectedType}) =>
+    assetMetadata$: ({asset, allowedTypes}) =>
         postJson$('/api/gee/assetMetadata', {
-            body: {asset, expectedType},
+            body: {asset, allowedTypes},
             retries: 0
         }),
 

@@ -286,7 +286,7 @@ class _FormAssetCombo extends React.Component {
         const assetType = this.getAssetType(asset)
         return assetType === 'Image'
             ? api.gee.imageMetadata$({asset})
-            : api.gee.assetMetadata$({asset, expectedType: allowedTypes}).pipe(
+            : api.gee.assetMetadata$({asset, allowedTypes}).pipe(
                 switchMap(assetMetadata =>
                     assetMetadata.type === 'Image'
                         ? api.gee.imageMetadata$({asset})

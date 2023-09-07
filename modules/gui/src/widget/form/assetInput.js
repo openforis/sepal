@@ -82,7 +82,7 @@ class _FormAssetInput extends React.Component {
         stream('LOAD_ASSET_METADATA',
             (expectedType === 'Image'
                 ? api.gee.imageMetadata$({asset})
-                : api.gee.assetMetadata$({asset, expectedType})
+                : api.gee.assetMetadata$({asset, allowedTypes: expectedType})
             ).pipe(
                 takeUntil(this.assetChanged$.pipe()),
                 tap(() => this.setState({loading: null}))
