@@ -25,7 +25,7 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
     const roots$ = () =>
         merge(
             legacyRoots$(),
-            cloudProjectRoots$()
+            // cloudProjectRoots$()
         ).pipe(
             toArray(),
             map(roots => _.sortBy(roots.flat(), 'id'))
@@ -42,16 +42,16 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
             )
         )
     
-    const cloudProjectRoots$ = () =>
-        http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {headers}).pipe(
-            map(({body}) => JSON.parse(body)),
-            map(({projects}) =>
-                projects .map(({projectId}) => ({
-                    id: `projects/${projectId}/assets`,
-                    type: 'Folder'
-                }))
-            )
-        )
+    // const cloudProjectRoots$ = () =>
+    //     http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {headers}).pipe(
+    //         map(({body}) => JSON.parse(body)),
+    //         map(({projects}) =>
+    //             projects .map(({projectId}) => ({
+    //                 id: `projects/${projectId}/assets`,
+    //                 type: 'Folder'
+    //             }))
+    //         )
+    //     )
 
     return id
         ? assets$(id)
