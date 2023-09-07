@@ -115,7 +115,6 @@ class ClassMappingStep extends Component {
                 tooltip={msg('process.classification.panel.trainingData.classMapping.addColumns.tooltip')}>
                 {onBlur => (
                     <Combo
-                        // placement='below'
                         alignment='left'
                         placeholder={msg('process.classification.panel.trainingData.classMapping.addColumns.placeholder')}
                         options={valueOptions}

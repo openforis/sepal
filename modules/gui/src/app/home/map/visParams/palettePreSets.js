@@ -63,7 +63,6 @@ export const PalettePreSets = ({onSelect, count, className, autoFocus, disabled}
             ]}
             disabled={disabled}
             onChange={({value}) => onSelect(value)}
-            
         />
     )
 }
