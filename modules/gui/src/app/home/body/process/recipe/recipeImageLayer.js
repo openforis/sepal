@@ -1,3 +1,4 @@
+import {AssetImageLayer} from './asset/assetImageLayer'
 import {BaytsAlertsImageLayer} from './baytsAlerts/baytsAlertsImageLayer'
 import {BaytsHistoricalImageLayer} from './baytsHistorical/baytsHistoricalImageLayer'
 import {CCDCSliceImageLayer} from './ccdcSlice/ccdcSliceImageLayer'
@@ -111,6 +112,10 @@ class _RecipeImageLayer extends React.Component {
         case 'BAYTS_ALERTS':
             return (
                 <BaytsAlertsImageLayer {...props}/>
+            )
+        case 'ASSET_MOSAIC':
+            return (
+                <AssetImageLayer {...props}/>
             )
         default:
             return null

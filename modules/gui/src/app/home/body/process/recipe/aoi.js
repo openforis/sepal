@@ -24,7 +24,7 @@ class _Aoi extends React.Component {
     }
 
     loadBounds() {
-        const {stream, recipe, value, map, recipeActionBuilder} = this.props
+        const {aoi, stream, recipe, value, map, recipeActionBuilder} = this.props
         if (value) {
             stream('LOAD_BOUNDS',
                 api.gee.recipeBounds$(recipe),

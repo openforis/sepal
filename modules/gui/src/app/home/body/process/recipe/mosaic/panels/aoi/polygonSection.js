@@ -9,7 +9,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
-import styles from './polygonSection.module.css'
+import styles from './aoi.module.css'
 
 const mapRecipeToProps = recipe => ({
     overlay: selectFrom(recipe, 'layers.overlay'),
@@ -37,7 +37,7 @@ class _PolygonSection extends React.Component {
     render() {
         return (
             <Layout spacing='compact'>
-                <div className={styles.polygon}>
+                <div className={styles.description}>
                     {msg('process.mosaic.panel.areaOfInterest.form.polygon.description')}
                 </div>
                 <PreviewMap/>

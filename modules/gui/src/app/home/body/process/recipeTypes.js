@@ -1,3 +1,4 @@
+import asset from './recipe/asset/asset'
 import baytsAlerts from './recipe/baytsAlerts/baytsAlerts'
 import baytsHistorical from './recipe/baytsHistorical/baytsHistorical'
 import ccdc from './recipe/ccdc/ccdc'
@@ -29,7 +30,8 @@ export const listRecipeTypes = () => ([
     baytsHistorical(),
     baytsAlerts(),
     phenology(),
-    masking()
+    masking(),
+    asset(),
 ])
 
 export const getRecipeType = id => listRecipeTypes().find(recipeType => recipeType.id === id)

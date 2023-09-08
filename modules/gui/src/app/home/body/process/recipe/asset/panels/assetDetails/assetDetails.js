@@ -1,0 +1,85 @@
+import {AssetSelect} from 'widget/assetSelect'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
+import {Panel} from 'widget/panel/panel'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
+import {msg} from 'translate'
+import React from 'react'
+import styles from './assetDetails.module.css'
+
+const fields = {
+    assetId: new Form.Field()
+        .notBlank(),
+    type: new Form.Field()
+        .notEmpty(),
+    bands: new Form.Field()
+        .notEmpty(),
+    visualizations: new Form.Field(),
+    metadata: new Form.Field(),
+}
+
+class AssetDetails extends React.Component {
+    constructor(props) {
+        super(props)
+        this.onLoading = this.onLoading.bind(this)
+        this.onLoaded = this.onLoaded.bind(this)
+    }
+
+    render() {
+        return (
+            <RecipeFormPanel
+                className={styles.panel}
+                placement='bottom-right'>
+                <Panel.Header
+                    icon='calendar-alt'
+                    title={msg('process.asset.panel.assetId.title')}/>
+                <Panel.Content>
+                    <Layout>
+                        {this.renderAssetSelector()}
+                    </Layout>
+                </Panel.Content>
+                <Form.PanelButtons/>
+            </RecipeFormPanel>
+        )
+    }
+
+    renderAssetSelector() {
+        const {inputs: {assetId}} = this.props
+        return (
+            <AssetSelect
+                input={assetId}
+                label={msg('process.asset.panel.assetDetails.form.assetId.label')}
+                placeholder={msg('process.asset.panel.assetDetails.form.assetId.placeholder')}
+                expectedType={['Image', 'ImageCollection']}
+                autoFocus
+                onLoading={this.onLoading}
+                onLoaded={this.onLoaded}
+            />
+        )
+    }
+
+    onLoading() {
+        const {inputs: {type, bands, visualizations, metadata}} = this.props
+        type.set(null)
+        bands.set([])
+        visualizations.set([])
+        metadata.set({})
+    }
+
+    onLoaded(foo) {
+        const {metadata, visualizations} = foo
+        const {inputs} = this.props
+        inputs.type.set(metadata.type)
+        inputs.bands.set(metadata.bands)
+        inputs.visualizations.set(visualizations)
+        inputs.metadata.set(metadata)
+    }
+}
+
+AssetDetails.propTypes = {}
+
+export default compose(
+    AssetDetails,
+    recipeFormPanel({id: 'assetDetails', fields})
+)

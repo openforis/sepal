@@ -2295,6 +2295,117 @@
         },
         "tabPlaceholder": "Index_change"
       },
+      "asset": {
+        "create": "EE Asset",
+        "description": "Create and configure an image from an EE image or image collection asset.",
+        "panel": {
+          "assetDetails": {
+            "button": "SRC",
+            "form": {
+                "assetId": {
+                    "label": "EE Asset",
+                    "placeholder": "Select EE Asset..."
+                }
+            },
+            "title": "EE Asset",
+            "tooltip": "Select EE asset"
+          },
+          "dates": {
+            "button": "DAT",
+            "form": {
+              "fromDate": {
+                "label": "From date",
+                "malformed": "Invalid date"
+              },
+              "targetDate": {
+                "label": "Target date",
+                "malformed": "Invalid date"
+              },
+              "toDate": {
+                "label": "To date",
+                "malformed": "Invalid date"
+              },
+              "type": {
+                "label": "Type",
+                "ALL_DATES": {
+                  "label": "All dates",
+                  "tooltip": "Include images from all dates."
+                },
+                "CUSTOM_DATE_RANGE": {
+                  "label": "Date range",
+                  "tooltip": "Include images from a custom date range."
+                },
+                "YEAR": {
+                  "label": "Year",
+                  "tooltip": "Include images from a specified calendar year."
+                }
+              },
+              "year": {
+                "label": "Year",
+                "malformed": "Not a year"
+              }
+            },
+            "title": "Dates",
+            "tooltip": "Specify dates"
+          },
+          "filter": {
+            "button": "FLT",
+            "form": {
+
+            },
+            "title": "Collection Filter",
+            "tooltip": "Filter down collection to images of interest"
+          },
+          "mask": {
+            "button": "MSK",
+            "form": {
+
+            },
+            "title": "Mask imagery",
+            "tooltip": "Mask out unwanted areas of imagery"
+          },
+          "composite": {
+            "button": "CMP",
+            "form": {
+                "type": {
+                    "label": "Type",
+                    "MOSAIC": {
+                        "label": "Mosaic",
+                        "tooltip": "Simple spatial composition"
+                    },
+                    "MEDIAN": {
+                        "label": "Median",
+                        "tooltip": "Take the median of each band for the images in the collection"
+                    },
+                    "MEAN": {
+                        "label": "Mean",
+                        "tooltip": "Take the mean of each band for the images in the collection"
+                    },
+                    "MIN": {
+                        "label": "Min",
+                        "tooltip": "Use the minimum value of each band for the images in the collection"
+                    },
+                    "MAX": {
+                        "label": "Max",
+                        "tooltip": "Use the maximum value of each band for the images in the collection"
+                    },
+                    "MODE": {
+                        "label": "Mode",
+                        "tooltip": "Use the most common value of each band for the images in the collection. This only make sense for categorical bands"
+                    }
+                }
+            },
+            "title": "Composite",
+            "tooltip": "Combine images in image collection into a single image"
+          }
+        },
+        "layers": {
+          "imageLayer": {
+            "preSets": "Pre-sets"
+          }
+        },
+        "tabPlaceholder": "EE_Asset"
+      },
       "masking": {
         "create": "Masking",
         "description": "Apply a mask to an image.",
@@ -2381,6 +2492,10 @@
                 "info": "{buffer} km buffer",
                 "label": "Buffer",
                 "tooltip": "Area of interest and preview will take longer to show up when buffering is enabled."
+              },
+              "assetBounds": {
+                "description": "Use bounds of selected EE asset.",
+                "title": "EE asset bounds"
               },
               "country": {
                 "area": {
@@ -3097,7 +3212,6 @@
         },
         "tabPlaceholder": "Radar_mosaic"
       },
-
       "baytsAlerts": {
         "create": "BAYTS Alerts",
         "description": "Generate forest change alerts using Sentinel-1 time-series and probabilistic change detection (based on the RADD processing pipeline).",
@@ -3491,7 +3605,6 @@
         },
         "tabPlaceholder": "BAYTS_historical"
       },
-
       "phenology": {
         "create": "Land surface phenology",
         "description": "Create land surface phenology.",
