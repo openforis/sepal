@@ -418,13 +418,13 @@ Combo.propTypes = {
             alias: PropTypes.any,
             disabled: PropTypes.any,
             key: PropTypes.string,
-            label: PropTypes.string,
+            label: PropTypes.any,
             options: PropTypes.arrayOf(
                 PropTypes.shape({
                     alias: PropTypes.any,
                     disabled: PropTypes.any,
                     key: PropTypes.string,
-                    label: PropTypes.string,
+                    label: PropTypes.any,
                     render: PropTypes.func,
                     searchableText: PropTypes.string,
                     value: PropTypes.any,
