@@ -76,7 +76,7 @@ RUN apt-get -y update && apt-get install -y \
 
 # Install GIS utilities
 RUN apt-get update -y && apt-get install -y \
-    gdal-bin=3.6.2+dfsg-1~jammy0 \
+    gdal-bin=3.6.4+dfsg-1~jammy0 \
     proj-bin=9.1.1-1~jammy0 \
     gsl-bin \
     saga \
