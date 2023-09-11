@@ -49,8 +49,8 @@ const _ButtonGroup = ({className, contentClassName, layout, alignment, spacing, 
 
 export const ButtonGroup = compose(
     _ButtonGroup,
-    withForwardedRef(),
-    withButtonGroup()
+    withButtonGroup(),
+    withForwardedRef()
 )
 
 ButtonGroup.propTypes = {
