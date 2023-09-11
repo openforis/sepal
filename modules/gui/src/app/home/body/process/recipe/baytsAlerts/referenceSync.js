@@ -122,13 +122,11 @@ class _ReferenceSync extends React.Component {
         if (!_.isEqual(reference, nextReference)) {
             recipeActionBuilder('UPDATE_REFERENCE', {reference})
                 .assign('model.options', historicalRecipe.model.options)
-                .set('model.reference', nextReference)
                 .dispatch()
         }
     }
 
     recipeReference({historicalRecipe}) {
-        const segmentBands = [{name: 'tStart'}, {name: 'tEnd'}, {name: 'tBreak'}, {name: 'numObs'}, {name: 'changeProb'}]
         const bands = [] // TODO: How to get the bands in a way that also works with a masking recipe?
         return {
             type: 'RECIPE_REF',

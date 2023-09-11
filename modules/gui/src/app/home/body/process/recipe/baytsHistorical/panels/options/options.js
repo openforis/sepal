@@ -59,7 +59,7 @@ class Options extends React.Component {
     }
 
     renderAdvanced() {
-        const {inputs: {mask, spatialSpeckleFilter, strongScatterers}} = this.props
+        const {monitor, inputs: {mask}} = this.props
         return (
             <Layout>
                 {this.renderOrbits()}
@@ -69,21 +69,22 @@ class Options extends React.Component {
                 {this.renderSpatialSpeckleFilter()}
                 {this.usingSpatialSpeckleFilter() ? this.renderSpatialSpeckleFilterOptions() : null}
                 {this.usingSpatialSpeckleFilter() ? this.renderMultitemporalSpeckleFilter() : null}
-                {this.usingMultitemporalSpeckleFilter() ? this.renderMultitemporalSpeckleFilterOptions() : null}
-                {this.renderOutlierRemoval()}
-                {this.renderMinObservations()}
+                {!monitor && this.usingMultitemporalSpeckleFilter() ? this.renderMultitemporalSpeckleFilterOptions() : null}
+                {!monitor ? this.renderOutlierRemoval() : null}
+                {!monitor ? this.renderMinObservations() : null}
             </Layout>
         )
     }
 
     renderSimple() {
+        const {monitor} = this.props
         return (
             <Layout>
                 {this.renderOrbits()}
                 {this.renderGeometricCorrection()}
                 {this.renderSpatialSpeckleFilter()}
                 {this.usingSpatialSpeckleFilter() ? this.renderMultitemporalSpeckleFilter() : null}
-                {this.renderOutlierRemoval()}
+                {!monitor ? this.renderOutlierRemoval() : null}
             </Layout>
         )
     }
@@ -371,9 +372,8 @@ const valuesToModel = values => ({
 })
 
 Options.propTypes = {
-    disabled: PropTypes.any,
-    recipeId: PropTypes.string,
-    sources: PropTypes.any
+    monitor: PropTypes.any
+
 }
 
 export default compose(

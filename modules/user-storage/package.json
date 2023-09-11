@@ -11,7 +11,7 @@
     "license": "ISC",
     "dependencies": {
         "bull": "^4.10.4",
-        "commander": "^10.0.1",
+        "commander": "^11.0.0",
         "date-fns": "^2.30.0",
         "ioredis": "^5.3.2",
         "lodash": "^4.17.21",
@@ -22,7 +22,7 @@
         "uuid": "^9.0.0"
     },
     "devDependencies": {
-        "eslint": "^8.40.0",
+        "eslint": "^8.43.0",
         "jest": "^29.5.0",
         "jest-expect-message": "^1.1.3"
     },

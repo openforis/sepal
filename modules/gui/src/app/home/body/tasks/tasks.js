@@ -68,6 +68,7 @@ class Tasks extends React.Component {
             ACTIVE: 'spinner',
             COMPLETED: 'circle-check',
             FAILED: 'circle-xmark',
+            CANCELING: 'spinner',
             CANCELED: 'circle-xmark'
         }
         const iconVariantMap = {
@@ -75,6 +76,7 @@ class Tasks extends React.Component {
             ACTIVE: 'info',
             COMPLETED: 'success',
             FAILED: 'error',
+            CANCELING: 'normal',
             CANCELED: 'normal'
         }
         return {
