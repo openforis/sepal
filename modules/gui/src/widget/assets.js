@@ -114,6 +114,7 @@ const removeAsset = id => {
         .del(['assets.other', {id}])
         .dispatch()
 }
+
 export const withAssets = () =>
     WrappedComponent =>
         compose(

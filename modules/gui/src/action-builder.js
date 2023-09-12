@@ -97,7 +97,6 @@ const actionBuilder = (type, props, prefix) => {
                     return updatedState
                 },
                 dispatch() {
-                    console.log('DISPATCH', type)
                     dispatch(this)
                 }
             }
