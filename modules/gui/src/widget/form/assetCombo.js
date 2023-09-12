@@ -17,13 +17,9 @@ import api from 'api'
 import memoizeOne from 'memoize-one'
 
 const getHighlightMatcher = memoizeOne(
-    filter => {
-        if (filter) {
-            const filterValues = _.compact(filter.split(/\s+/))
-            return new RegExp(`(?:${filterValues.join('|')})`, 'i')
-        }
-        return ''
-    }
+    filter => filter
+        ? new RegExp(`(?:${_.compact(filter.split(/\s+/)).join('|')})`, 'i')
+        : ''
 )
 
 class _FormAssetCombo extends React.Component {
