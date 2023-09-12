@@ -34,6 +34,11 @@ const worker$ = ({asset, allowedTypes}) => {
                 })
         )
 
+    const addBandNames = asset =>
+        asset.bands
+            ? {...asset, bandNames: asset.bands.map(({id}) => id)}
+            : asset
+
     return ee.getAsset$(asset, 0).pipe(
         switchMap(asset => {
             const isAllowedType = !allowedTypes || (_.isArray(allowedTypes) && allowedTypes.includes(asset.type))
@@ -52,10 +57,7 @@ const worker$ = ({asset, allowedTypes}) => {
                 }))
             }
         }),
-        map(asset => ({
-            ...asset,
-            bandNames: asset.bands.map(({id}) => id)
-        })),
+        map(addBandNames),
         catchError(handleError$)
     )
 }
