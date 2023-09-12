@@ -148,8 +148,8 @@ class _AssetDestination extends React.Component {
         if (currentType) {
             assetInput.setInvalid(msg(
                 ['Image', 'ImageCollection'].includes(currentType)
-                    ? 'widget.assetDestination.exists.replacable'
-                    : 'widget.assetDestination.exists.notReplacable'
+                    ? 'widget.assetDestination.exists.replaceable'
+                    : 'widget.assetDestination.exists.notReplaceable'
             ))
         } else {
             strategyInput.set('new')

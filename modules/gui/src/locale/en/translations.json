@@ -4487,8 +4487,8 @@
     "widget": {
       "assetDestination": {
         "exists": {
-          "notReplacable": "This asset already exists, but isn't an image or image collection, so you cannot overwrite it",
-          "replacable": "This asset already exists, you have to confirm if you want to overwrite it or not"
+          "notReplaceable": "This asset already exists, but isn't an image or image collection, so you cannot overwrite it",
+          "replaceable": "This asset already exists, you have to confirm if you want to overwrite it or not"
         },
         "loadError": "Unable to load asset",
         "replace": {
