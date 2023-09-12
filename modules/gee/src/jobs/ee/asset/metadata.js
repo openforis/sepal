@@ -52,6 +52,10 @@ const worker$ = ({asset, allowedTypes}) => {
                 }))
             }
         }),
+        map(asset => ({
+            ...asset,
+            bandNames: asset.bands.map(({id}) => id)
+        })),
         catchError(handleError$)
     )
 }

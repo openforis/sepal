@@ -59,7 +59,7 @@ class _SourceSync extends React.Component {
             return
         }
         stream('LOAD',
-            api.gee.imageMetadata$({asset: source.id}).pipe(
+            api.gee.assetMetadata$({asset: source.id}).pipe(
                 takeUntil(this.cancel$)
             ),
             metadata => this.updateAssetSource(source.id, metadata, source),
@@ -119,7 +119,8 @@ class _SourceSync extends React.Component {
 
     updateAssetSource(id, metadata, source) {
         const {recipeActionBuilder} = this.props
-        const bands = metadata.bands
+        // const bands = metadata.bands
+        const bands = metadata.bandNames
         const bandAndType = _.chain(bands)
             .map(sourceBand => sourceBand.match(baseBandPattern))
             .filter(match => match)

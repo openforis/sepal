@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
-import {Subject, first, of, switchMap, takeUntil, tap} from 'rxjs'
+import {Subject, first, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
@@ -283,17 +283,7 @@ class _FormAssetCombo extends React.Component {
 
     getMetadata$(asset) {
         const {allowedTypes} = this.props
-        const assetType = this.getAssetType(asset)
-        return assetType === 'Image'
-            ? api.gee.imageMetadata$({asset})
-            : api.gee.assetMetadata$({asset, allowedTypes}).pipe(
-                switchMap(assetMetadata =>
-                    assetMetadata.type === 'Image'
-                        ? api.gee.imageMetadata$({asset})
-                        : of(assetMetadata)
-                )
-            )
-    
+        return api.gee.assetMetadata$({asset, allowedTypes})
     }
 
     loadMetadata(asset) {
