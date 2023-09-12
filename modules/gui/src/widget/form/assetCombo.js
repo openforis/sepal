@@ -50,7 +50,7 @@ class _FormAssetCombo extends React.Component {
             <Form.Combo
                 options={options}
                 busyMessage={this.getBusyMessage()}
-                labelButtons={this.renderLabelButtons()}
+                buttons={[this.renderReloadButton()]}
                 onChange={this.onChange}
                 onFilterChange={this.onFilterChange}
                 {...otherProps}
@@ -72,10 +72,10 @@ class _FormAssetCombo extends React.Component {
             <Button
                 key='reload'
                 chromeless
-                shape='circle'
+                shape='none'
+                air='none'
                 icon='rotate'
                 iconAttributes={{spin: loading}}
-                size='small'
                 tooltip={msg('asset.reload')}
                 tabIndex={-1}
                 disabled={loading}
