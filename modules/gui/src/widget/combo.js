@@ -212,9 +212,11 @@ class _Combo extends React.Component {
     renderToggleOptionsButton() {
         const {placement} = this.props
         const {showOptions} = this.state
-        const icon = {
-            below: 'chevron-down',
-            above: 'chevron-up'
+        const ICON = {
+            'below': 'chevron-down',
+            'below-or-above': 'chevron-down',
+            'above': 'chevron-up',
+            'above-or-below': 'chevron-up'
         }
         return (
             <Button
@@ -222,7 +224,7 @@ class _Combo extends React.Component {
                 chromeless
                 shape='none'
                 air='none'
-                icon={icon[placement]}
+                icon={ICON[placement]}
                 iconAttributes={{
                     fixedWidth: true,
                     flip: showOptions ? 'vertical' : null
