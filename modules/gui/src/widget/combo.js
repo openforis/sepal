@@ -197,7 +197,8 @@ class _Combo extends React.Component {
                     chromeless
                     shape='none'
                     air='none'
-                    icon='times'
+                    size='large'
+                    icon='xmark'
                     iconAttributes={{
                         fixedWidth: true
                     }}
