@@ -16,6 +16,9 @@ import _ from 'lodash'
 import api from 'api'
 import memoizeOne from 'memoize-one'
 
+// check for allowed characters and minimum path depth (3)
+const ASSET_PATTERN = new RegExp('^[a-zA-Z0-9-_]+(/[a-zA-Z0-9-_]+){2,}$')
+
 const getHighlightMatcher = memoizeOne(
     filter => filter
         ? new RegExp(`(?:${_.compact(filter.split(/\s+/)).join('|')})`, 'i')
@@ -39,7 +42,6 @@ class _FormAssetCombo extends React.Component {
 
     render() {
         const {
-            busyMessage,
             options: _options, onChange: _onChange, // overridden
             ...otherProps
         } = this.props
@@ -47,10 +49,10 @@ class _FormAssetCombo extends React.Component {
         return options ? (
             <Form.Combo
                 options={options}
-                busyMessage={(busyMessage || this.props.stream('LOAD_ASSET_METADATA').active) && msg('widget.loading')}
+                busyMessage={this.getBusyMessage()}
+                labelButtons={this.renderLabelButtons()}
                 onChange={this.onChange}
                 onFilterChange={this.onFilterChange}
-                labelButtons={this.renderLabelButtons()}
                 {...otherProps}
             />
         ) : null
@@ -65,20 +67,18 @@ class _FormAssetCombo extends React.Component {
     }
 
     renderReloadButton() {
-        const {assets: {loading: assetsLoading}} = this.props
+        const {assets: {loading}} = this.props
         return (
             <Button
                 key='reload'
                 chromeless
                 shape='circle'
                 icon='rotate'
-                iconAttributes={{
-                    spin: assetsLoading
-                }}
+                iconAttributes={{spin: loading}}
                 size='small'
                 tooltip={msg('asset.reload')}
                 tabIndex={-1}
-                disabled={assetsLoading}
+                disabled={loading}
                 onClick={this.reloadAssets}
             />
         )
@@ -92,31 +92,33 @@ class _FormAssetCombo extends React.Component {
                 description={id}
                 highlight={getHighlightMatcher(filter)}
                 inlineComponents={[
-                    this.renderItemType(type)
+                    this.renderItemTypeIcon(type)
                 ]}
             />
         )
     }
 
-    renderItemType(type) {
-        const ICONS = {
+    renderItemTypeIcon(type) {
+        const ASSET_ICON = {
             Folder: 'folder',
             Image: 'image',
             ImageCollection: 'images',
             Table: 'table'
         }
-        const TOOLTIPS = {
+        
+        const ASSET_TOOLTIP = {
             Folder: msg('asset.folder'),
             Image: msg('asset.image'),
             ImageCollection: msg('asset.imageCollection'),
             Table: msg('asset.table')
         }
-        const name = ICONS[type]
+        
+        const name = ASSET_ICON[type]
         return name ? (
             <Icon
                 key='type'
                 name={name}
-                tooltip={TOOLTIPS[type]}
+                tooltip={ASSET_TOOLTIP[type]}
                 tooltipPlacement='right'
             />
         ) : null
@@ -136,6 +138,11 @@ class _FormAssetCombo extends React.Component {
         }
     }
 
+    getBusyMessage() {
+        const {busyMessage, stream} = this.props
+        return (busyMessage || stream('LOAD_ASSET_METADATA').active) && msg('widget.loading')
+    }
+
     reloadAssets() {
         const {assets: {reloadAssets}} = this.props
         reloadAssets()
@@ -144,6 +151,10 @@ class _FormAssetCombo extends React.Component {
     isAllowedType(type) {
         const {allowedTypes} = this.props
         return _.isEmpty(allowedTypes) || allowedTypes.includes(type)
+    }
+
+    isAssetLike(asset) {
+        return ASSET_PATTERN.test(asset)
     }
 
     getOptions() {
@@ -196,12 +207,6 @@ class _FormAssetCombo extends React.Component {
         this.setState({filter})
     }
 
-    isAssetLike(asset) {
-        // check for allowed characters and minimum path depth (3)
-        const ASSET_PATTERN = new RegExp('^[a-zA-Z0-9-_]+(/[a-zA-Z0-9-_]+){2,}$')
-        return ASSET_PATTERN.test(asset)
-    }
-
     onChange({value: asset}) {
         const {onChange} = this.props
         onChange && onChange(asset)
@@ -219,9 +224,8 @@ class _FormAssetCombo extends React.Component {
                     : msg('widget.assetInput.loadError')
             )
         }
-
+        
         this.setState({loading: false})
-
         removeAsset(asset)
     }
 
