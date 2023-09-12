@@ -64,7 +64,6 @@ class _FormAssetCombo extends React.Component {
         return (
             <ButtonGroup spacing='none'>
                 {this.renderReloadButton()}
-                {/* {this.renderSettingsButton()} */}
             </ButtonGroup>
         )
     }
@@ -84,24 +83,6 @@ class _FormAssetCombo extends React.Component {
                 tooltip={msg('asset.reload')}
                 tabIndex={-1}
                 disabled={assetsLoading}
-                onClick={this.reloadAssets}
-            />
-        )
-    }
-
-    renderSettingsButton() {
-        // const {assets: {loading: assetsLoading}} = this.props
-        return (
-            <Button
-                key='settings'
-                chromeless
-                shape='circle'
-                icon='gear'
-                size='small'
-                tooltip={msg('asset.settings')}
-                tabIndex={-1}
-                // disabled={assetsLoading}
-                disabled // temporarily disabled until implemented
                 onClick={this.reloadAssets}
             />
         )
