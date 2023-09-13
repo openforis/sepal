@@ -14,7 +14,7 @@ yum install -y gcc kernel-devel-$(uname -r)
 #       Product Series: T-Series
 #       Product: Tesla T4
 # wget https://us.download.nvidia.com/tesla/525.105.17/NVIDIA-Linux-x86_64-525.105.17.run
-https://us.download.nvidia.com/tesla/525.125.06/NVIDIA-Linux-x86_64-525.125.06.run
+wget https://us.download.nvidia.com/tesla/525.125.06/NVIDIA-Linux-x86_64-525.125.06.run
 chmod +x NVIDIA-Linux-x86_64*.run
 CC=/usr/bin/gcc10-cc /bin/sh ./NVIDIA-Linux-x86_64*.run -s
 chmod +x /usr/local/bin/init-gpu-drivers.sh
