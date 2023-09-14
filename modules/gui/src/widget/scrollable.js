@@ -13,6 +13,7 @@ const ScrollableContainerContext = React.createContext()
 
 export class ScrollableContainer extends React.Component {
     ref = React.createRef()
+    
     state = {
         height: 0
     }
@@ -259,7 +260,7 @@ class _Scrollable extends Component {
             ),
             scroll$(this.horizontalScroll$, 'x').subscribe(
                 offset => this.setOffset(offset, 'x')
-            ),
+            )
         )
     }
 
