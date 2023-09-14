@@ -25,6 +25,8 @@ class _Button extends React.Component {
         const {onClickHold} = props
         this.button = onClickHold && React.createRef()
         this.handleClick = this.handleClick.bind(this)
+        this.handleMouseEnter = this.handleMouseEnter.bind(this)
+        this.handleMouseLeave = this.handleMouseLeave.bind(this)
         this.handleMouseOver = this.handleMouseOver.bind(this)
         this.handleMouseOut = this.handleMouseOut.bind(this)
         this.handleMouseDown = this.handleMouseDown.bind(this)
@@ -105,6 +107,22 @@ class _Button extends React.Component {
 
     preventDefault(e) {
         e.preventDefault()
+    }
+
+    handleMouseEnter(e) {
+        const {onMouseEnter} = this.props
+        onMouseEnter && onMouseEnter(e)
+        if (this.stopPropagation()) {
+            e.stopPropagation()
+        }
+    }
+
+    handleMouseLeave(e) {
+        const {onMouseLeave} = this.props
+        onMouseLeave && onMouseLeave(e)
+        if (this.stopPropagation()) {
+            e.stopPropagation()
+        }
     }
 
     handleMouseOver(e) {
@@ -270,6 +288,8 @@ class _Button extends React.Component {
                 style={this.isActive() ? style : {...style, pointerEvents: 'none'}}
                 tabIndex={tabIndex}
                 disabled={!this.isActive()}
+                onMouseEnter={this.handleMouseEnter}
+                onMouseLeave={this.handleMouseLeave}
                 onMouseOver={this.handleMouseOver}
                 onMouseOut={this.handleMouseOut}
                 onMouseDown={this.handleMouseDown}
@@ -456,6 +476,8 @@ Button.propTypes = {
     onClick: PropTypes.func,
     onClickHold: PropTypes.func,
     onMouseDown: PropTypes.func,
+    onMouseEnter: PropTypes.func,
+    onMouseLeave: PropTypes.func,
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func
 }
