@@ -365,7 +365,7 @@ class UserItem extends React.PureComponent {
                     styles.grid,
                     styles.user,
                     status ? styles.clickable : null,
-                    hovered ? lookStyles.hoverForced : null
+                    hovered ? lookStyles.hoverForcedOn : null
                 ].join(' ')}
                 onClick={this.onClick}>
                 {this.renderName(name)}

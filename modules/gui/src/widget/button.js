@@ -63,14 +63,14 @@ class _Button extends React.Component {
         return this.isLinked() || tooltip || tooltipPanel
     }
 
-    isHoverDisabled() {
+    isHoverForcedOff() {
         const {hover} = this.props
         return _.isNil(hover)
             ? !this.isHoverRequired()
             : hover === false
     }
 
-    isHoverForced() {
+    isHoverForcedOn() {
         const {hover} = this.props
         return _.isNil(hover)
             ? false
@@ -93,8 +93,8 @@ class _Button extends React.Component {
             lookStyles.look,
             lookStyles[look],
             chromeless ? lookStyles.chromeless : null,
-            this.isHoverForced() ? lookStyles.hoverForced : null,
-            this.isHoverDisabled() ? lookStyles.hoverDisabled : null,
+            this.isHoverForcedOn() ? lookStyles.hoverForcedOn : null,
+            this.isHoverForcedOff() ? lookStyles.hoverForcedOff : null,
             this.isNonInteractive() ? lookStyles.nonInteractive : null,
             disableTransitions ? lookStyles.noTransitions : null,
             onClickHold ? styles.hold : null,
