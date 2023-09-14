@@ -34,8 +34,8 @@ class _Combo extends React.Component {
         focused: false
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.onChange = this.onChange.bind(this)
         this.onFocus = this.onFocus.bind(this)
         this.onClick = this.onClick.bind(this)
@@ -291,19 +291,23 @@ class _Combo extends React.Component {
 
     selectOption(option) {
         const {onChange, stayOpenOnSelect} = this.props
-        this.setState({
-            selectedOption: option,
-            selected: true
-        }, () => {
-            if (stayOpenOnSelect) {
-                this.showOptions()
-                this.focusInput()
-            } else {
-                this.hideOptions()
-                this.setFilter()
-            }
-            onChange && onChange(option)
-        })
+        if (option.filter) {
+            this.setFilter(option.filter)
+        } else {
+            this.setState({
+                selectedOption: option,
+                selected: true
+            }, () => {
+                if (stayOpenOnSelect) {
+                    this.showOptions()
+                    this.focusInput()
+                } else {
+                    this.hideOptions()
+                    this.setFilter()
+                }
+                onChange && onChange(option)
+            })
+        }
     }
 
     onOptionsBlur(e) {
@@ -420,12 +424,14 @@ Combo.propTypes = {
         PropTypes.shape({
             alias: PropTypes.any,
             disabled: PropTypes.any,
+            filter: PropTypes.any,
             key: PropTypes.string,
             label: PropTypes.any,
             options: PropTypes.arrayOf(
                 PropTypes.shape({
                     alias: PropTypes.any,
                     disabled: PropTypes.any,
+                    filter: PropTypes.any,
                     key: PropTypes.string,
                     label: PropTypes.any,
                     render: PropTypes.func,
