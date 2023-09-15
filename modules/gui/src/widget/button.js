@@ -113,17 +113,11 @@ class _Button extends React.Component {
     handleMouseEnter(e) {
         const {onMouseEnter} = this.props
         onMouseEnter && onMouseEnter(e)
-        if (this.stopPropagation()) {
-            e.stopPropagation()
-        }
     }
 
     handleMouseLeave(e) {
         const {onMouseLeave} = this.props
         onMouseLeave && onMouseLeave(e)
-        if (this.stopPropagation()) {
-            e.stopPropagation()
-        }
     }
 
     handleMouseOver(e) {
