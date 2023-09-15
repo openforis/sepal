@@ -97,10 +97,10 @@ export const loadAssets = () => {
 }
 
 const updateAsset = asset => {
+    const roots = Object.keys(select('assets.tree.items') || {})
     const recentAssets = select('assets.recent') || []
-    const userAssets = select('assets.user') || []
     const otherAssets = select('assets.other') || []
-    const isUserAsset = _.find(userAssets, ({id}) => id === asset.id)
+    const isUserAsset = _.find(roots, root => asset.id.startsWith(root))
     actionBuilder('UPDATE_ASSET')
         .set('assets.other', _.uniqBy([...otherAssets, asset], 'id'), !isUserAsset)
         .set('assets.recent', _.uniqBy([asset, ...recentAssets], 'id').slice(0, MAX_RECENT_ASSETS))

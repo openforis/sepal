@@ -1,5 +1,4 @@
 import {Form} from 'widget/form/form'
-import {Layout} from './layout'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser} from 'user'
@@ -36,18 +35,7 @@ class _AssetDestination extends React.Component {
     }
 
     render() {
-        const {currentType} = this.state
-        const showStrategy = ['Image', 'ImageCollection'].includes(currentType)
-        return (
-            <Layout spacing='tight'>
-                {this.renderAssetInput()}
-                {showStrategy ? this.renderStrategy() : null}
-            </Layout>
-        )
-    }
-
-    renderAssetInput() {
-        const {stream, assetInput, label, placeholder, autoFocus} = this.props
+        const {stream, assetInput, type, label, placeholder, autoFocus} = this.props
         return (
             <Form.AssetCombo
                 input={assetInput}
@@ -55,6 +43,8 @@ class _AssetDestination extends React.Component {
                 placeholder={placeholder}
                 autoFocus={autoFocus}
                 busyMessage={stream('UPDATE_ASSET_ROOTS').active}
+                preferredTypes={[type]}
+                labelButtons={[this.renderStrategy()]}
                 onLoading={this.onLoading}
                 onLoaded={({metadata} = {}) => this.onLoaded(metadata?.type)}
                 onError={this.onError}
@@ -77,8 +67,10 @@ class _AssetDestination extends React.Component {
                 tooltip: msg('widget.assetDestination.replace.tooltip')
             }
         ].filter(({value}) => value !== 'resume' || (type === 'ImageCollection' && currentType === 'ImageCollection'))
-        return (
+        const show = ['Image', 'ImageCollection'].includes(currentType)
+        return show ? (
             <Form.Buttons
+                key='strategy'
                 input={strategyInput}
                 options={options}
                 size='x-small'
@@ -86,7 +78,7 @@ class _AssetDestination extends React.Component {
                 shape='pill'
                 air='less'
             />
-        )
+        ) : null
     }
 
     componentDidMount() {
@@ -157,16 +149,13 @@ class _AssetDestination extends React.Component {
     }
 
     onError(error) {
-        const {assetInput, onError} = this.props
+        const {onError} = this.props
         if (error.status === 404) {
             this.onLoaded()
+            return true
         } else {
             onError && onError(error)
-            assetInput.setInvalid(
-                error.response && error.response.messageKey
-                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                    : msg('widget.assetInput.loadError')
-            )
+            return false
         }
     }
 }

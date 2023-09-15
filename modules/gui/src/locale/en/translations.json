@@ -64,6 +64,7 @@
       "image": "Image",
       "imageCollection": "Image collection",
       "table": "Table",
+      "new": "New asset",
       "recentAssets": "Recent assets",
       "userAssets": "User assets",
       "otherAssets": "Other assets",

@@ -9,7 +9,6 @@ import {msg} from 'translate'
 import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualizationParser'
 import {v4 as uuid} from 'uuid'
 import {withAssets} from 'widget/assets'
-import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -42,6 +41,7 @@ class _FormAssetCombo extends React.Component {
 
     render() {
         const {
+            busyMessage,
             options: _options, onChange: _onChange, // overridden
             ...otherProps
         } = this.props
@@ -49,7 +49,7 @@ class _FormAssetCombo extends React.Component {
         return options ? (
             <Form.Combo
                 options={options}
-                busyMessage={this.getBusyMessage()}
+                busyMessage={(busyMessage || this.props.stream('LOAD_ASSET_METADATA').active) && msg('widget.loading')}
                 buttons={[this.renderReloadButton()]}
                 onChange={this.onChange}
                 onFilterChange={this.onFilterChange}
@@ -91,37 +91,32 @@ class _FormAssetCombo extends React.Component {
                 key={id}
                 description={id}
                 highlight={getHighlightMatcher(filter)}
-                inlineComponents={[
-                    this.renderItemTypeIcon(type)
-                ]}
+                icon={this.getItemTypeIcon(type)}
+                iconTooltip={this.getItemTooltip(type)}
+                iconVariant={type === 'Folder' ? 'info' : null}
+                tooltipPlacement='top'
             />
         )
     }
 
-    renderItemTypeIcon(type) {
+    getItemTypeIcon(type) {
         const ASSET_ICON = {
-            Folder: 'folder',
+            Folder: 'folder-open',
             Image: 'image',
             ImageCollection: 'images',
             Table: 'table'
         }
-        
+        return ASSET_ICON[type] || 'asterisk'
+    }
+    
+    getItemTooltip(type) {
         const ASSET_TOOLTIP = {
             Folder: msg('asset.folder'),
             Image: msg('asset.image'),
             ImageCollection: msg('asset.imageCollection'),
             Table: msg('asset.table')
         }
-        
-        const name = ASSET_ICON[type]
-        return name ? (
-            <Icon
-                key='type'
-                name={name}
-                tooltip={ASSET_TOOLTIP[type]}
-                tooltipPlacement='right'
-            />
-        ) : null
+        return ASSET_TOOLTIP[type] || msg('asset.new')
     }
 
     componentDidMount() {
@@ -138,11 +133,6 @@ class _FormAssetCombo extends React.Component {
         }
     }
 
-    getBusyMessage() {
-        const {busyMessage, stream} = this.props
-        return (busyMessage || stream('LOAD_ASSET_METADATA').active) && msg('widget.loading')
-    }
-
     reloadAssets() {
         const {assets: {reloadAssets}} = this.props
         reloadAssets()
@@ -151,6 +141,11 @@ class _FormAssetCombo extends React.Component {
     isAllowedType(type) {
         const {allowedTypes} = this.props
         return _.isEmpty(allowedTypes) || allowedTypes.includes(type)
+    }
+
+    isPreferredType(type) {
+        const {preferredTypes} = this.props
+        return !type || _.isEmpty(preferredTypes) || preferredTypes.includes(type)
     }
 
     isAssetLike(asset) {
@@ -171,36 +166,34 @@ class _FormAssetCombo extends React.Component {
             } : null,
             recentAssets.length ? {
                 label: msg('asset.recentAssets'),
-                options: recentAssets
-                    .filter(({type}) => this.isAllowedType(type))
-                    .map(({id, type}) => ({
-                        label: id,
-                        value: id,
-                        alias: true,
-                        render: () => this.renderItem({id, type})
-                    }))
+                options: this.getAssets(recentAssets, {
+                    alias: true
+                })
             } : null,
             userAssets.length ? {
                 label: msg('asset.userAssets'),
-                options: userAssets
-                    .filter(({type}) => this.isAllowedType(type))
-                    .map(({id, type}) => ({
-                        label: id,
-                        value: id,
-                        render: () => this.renderItem({id, type})
-                    }))
+                options: this.getAssets(userAssets, {
+                    filter: (id, type) => type === 'Folder' && `${id}/`
+                })
             } : null,
             otherAssets.length ? {
                 label: msg('asset.otherAssets'),
-                options: otherAssets
-                    .filter(({type}) => this.isAllowedType(type))
-                    .map(({id, type}) => ({
-                        label: id,
-                        value: id,
-                        render: () => this.renderItem({id, type})
-                    }))
+                options: this.getAssets(otherAssets)
             } : null
         ])
+    }
+
+    getAssets(assets, {alias, filter} = {}) {
+        return assets
+            .filter(({type}) => this.isAllowedType(type))
+            .map(({id, type}) => ({
+                label: id,
+                value: id,
+                alias,
+                filter: filter && filter(id, type),
+                dimmed: !this.isPreferredType(type),
+                render: () => this.renderItem({id, type})
+            }))
     }
 
     onFilterChange(filter) {
@@ -214,23 +207,35 @@ class _FormAssetCombo extends React.Component {
     }
 
     onError(asset, error) {
-        const {input, onError, assets: {removeAsset}} = this.props
-        if (onError) {
-            onError(error)
-        } else {
-            input.setInvalid(
-                error.response && error.response.messageKey
-                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                    : msg('widget.assetInput.loadError')
-            )
-        }
-        
+        const {onError, assets: {updateAsset}} = this.props
         this.setState({loading: false})
+        if (!onError || !onError(error)) {
+            this.defaultOnError(asset, error)
+        } else {
+            updateAsset({id: asset})
+        }
+    }
+
+    defaultOnError(asset, error) {
+        const {input, assets: {removeAsset}} = this.props
+        input.setInvalid(
+            error.response && error.response.messageKey
+                ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+                : msg('widget.assetInput.loadError')
+        )
         removeAsset(asset)
     }
 
     onLoaded(asset, metadata) {
         const {onLoaded, assets: {updateAsset}} = this.props
+
+        this.setState(
+            ({filter}) => ({
+                loading: false,
+                filter: filter !== asset ? filter : null
+            })
+        )
+
         onLoaded && onLoaded(metadata ? {
             asset,
             metadata,
@@ -240,12 +245,6 @@ class _FormAssetCombo extends React.Component {
                 : undefined
         } : null)
 
-        this.setState(
-            ({filter}) => ({
-                loading: false,
-                filter: filter !== asset ? filter : null
-            })
-        )
         updateAsset({id: asset, type: metadata.type})
     }
 
@@ -292,10 +291,10 @@ export const FormAssetCombo = compose(
 )
 
 FormAssetCombo.propTypes = {
-    allowedTypes: PropTypes.array.isRequired,
     input: PropTypes.any.isRequired,
     alignment: PropTypes.any,
     allowClear: PropTypes.any,
+    allowedTypes: PropTypes.array,
     autoFocus: PropTypes.any,
     autoOpen: PropTypes.any,
     busyMessage: PropTypes.any,
@@ -305,11 +304,13 @@ FormAssetCombo.propTypes = {
     inputClassName: PropTypes.string,
     keyboard: PropTypes.any,
     label: PropTypes.string,
+    labelButtons: PropTypes.any,
     matchGroups: PropTypes.any,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,
     placement: PropTypes.any,
+    preferredTypes: PropTypes.array,
     readOnly: PropTypes.any,
     stayOpenOnSelect: PropTypes.any,
     tooltip: PropTypes.any,
