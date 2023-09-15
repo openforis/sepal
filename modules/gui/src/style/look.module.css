@@ -14,6 +14,8 @@
     --look-default-active-background-color: hsla(var(--look-default-h), var(--look-default-s), calc(var(--look-default-l) + var(--look-active-background-l-offset)), var(--look-default-a));
     --look-default-active-border-color: hsla(var(--look-default-h), var(--look-default-s), calc(var(--look-default-l) + var(--look-active-border-l-offset)), var(--look-default-a));
 
+    --look-default-dimmed-color: hsla(0, 0%, 50%, 1);
+
     /* highlight */
 
     --look-highlight-color: hsla(0, 0%, 100%, 1);
@@ -119,6 +121,12 @@
     color: var(--look-default-color);
     background-color: transparent;
     border-color: transparent !important;
+}
+
+/* dimmed chromeless */
+
+.look.chromeless.dimmed {
+    color: var(--look-default-dimmed-color);
 }
 
 /* noHover */

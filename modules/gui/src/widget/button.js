@@ -80,7 +80,7 @@ class _Button extends React.Component {
     }
 
     classNames() {
-        const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle, hint,
+        const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle, hint, dimmed,
             alignment, width, onClickHold, disableTransitions, buttonGroup: {joinLeft, joinRight} = {}} = this.props
         return className ? className : [
             styles.button,
@@ -98,6 +98,7 @@ class _Button extends React.Component {
             this.isHoverForcedOn() ? lookStyles.hoverForcedOn : null,
             this.isHoverForcedOff() ? lookStyles.hoverForcedOff : null,
             this.isNonInteractive() ? lookStyles.nonInteractive : null,
+            dimmed ? lookStyles.dimmed : null,
             disableTransitions ? lookStyles.noTransitions : null,
             onClickHold ? styles.hold : null,
             hint ? styles.hint : null,
@@ -435,6 +436,7 @@ Button.propTypes = {
     chromeless: PropTypes.any,
     className: PropTypes.string,
     content: PropTypes.any,
+    dimmed: PropTypes.any,
     disabled: PropTypes.any,
     disableTransitions: PropTypes.any,
     downloadFilename: PropTypes.any,
