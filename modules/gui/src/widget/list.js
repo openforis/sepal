@@ -214,6 +214,7 @@ class _List extends React.Component {
                     chromeless={!selected}
                     look={selected ? 'selected' : 'highlight'}
                     air={air}
+                    dimmed={option.dimmed}
                     label={option.render ? null : option.label}
                     tooltip={option.tooltip}
                     tooltipPlacement={tooltipPlacement}
