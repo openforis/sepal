@@ -232,7 +232,6 @@ class _DatePickerPanel extends React.Component {
                     selectedValue={selectedYear}
                     onSelect={option => this.updateDate('year', option.value)}
                     alignment='center'
-                    keyboard={false}
                     autoCenter
                 />
             </div>
