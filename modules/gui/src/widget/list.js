@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
-import {ReplaySubject, Subject, delay, distinctUntilChanged, exhaustMap, first, fromEvent, merge, of, switchMap, takeUntil, tap, throttleTime, timer} from 'rxjs'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {Subject, debounceTime, delay, distinctUntilChanged, exhaustMap, first, fromEvent, merge, of, switchMap, takeUntil, timer} from 'rxjs'
 import {compose} from 'compose'
 import {isEqual} from 'hash'
 import {msg} from 'translate'
@@ -88,7 +88,7 @@ ScrollableList.defaultProps = {
 
 class _List extends React.Component {
     autoCenter$ = new Subject()
-    mouseEnter$ = new ReplaySubject(1)
+    mouseEnter$ = new Subject()
     mouseLeave$ = new Subject()
 
     state = {
@@ -131,6 +131,7 @@ class _List extends React.Component {
         const {overScroll} = this.props
         return (
             <ul
+                onMouseLeave={this.onMouseLeave}
                 ref={this.list}
                 style={{
                     '--scrollable-container-height': overScroll ? containerHeight : 0
@@ -223,7 +224,6 @@ class _List extends React.Component {
                     alignment={alignment}
                     disableTransitions
                     onMouseEnter={() => this.mouseEnter$.next(key)}
-                    onMouseLeave={this.onMouseLeave}
                     onClick={() => this.selectOption(key)}>
                     {option.render ? option.render() : null}
                 </Button>
@@ -300,10 +300,9 @@ class _List extends React.Component {
         return this.getOptionKey(_.findLast(options, option => this.isSelectable(option)))
     }
 
-    highlightPointedOption(highlightedOptionKey) {
+    highlightOption(highlightedOptionKey) {
         this.setState({
-            highlightedOptionKey,
-            keyboardNavigation: false
+            highlightedOptionKey
         })
     }
 
@@ -381,36 +380,47 @@ class _List extends React.Component {
         this.highlightSelectedOption()
     }
 
-    initializeHighlightHandler() {
+    initializeMouseHandler() {
         const {addSubscription} = this.props
-        const mouseHighlight$ = fromEvent(document, 'mousemove').pipe(
+        const mouseMove$ = fromEvent(document, 'mousemove')
+        const mousePointOption$ = mouseMove$.pipe(
             exhaustMap(() => this.mouseEnter$.pipe(
                 first(),
-                takeUntil(timer(100))
+                takeUntil(timer(500))
             )),
             distinctUntilChanged()
         )
-        const mouseLeave$ = this.mouseLeave$.pipe(
+        const mouseHighlightOption$ = mousePointOption$.pipe(
+            debounceTime(500)
+        )
+        const mouseOut$ = this.mouseLeave$.pipe(
             switchMap(() => of(null).pipe(
-                delay(100),
+                delay(500),
                 takeUntil(this.mouseEnter$)
-            )),
-            distinctUntilChanged()
+            ))
         )
         addSubscription(
-            mouseHighlight$.subscribe(
-                key => this.highlightPointedOption(key)
+            mousePointOption$.subscribe(
+                () => this.disableKeyboardNavigation()
             ),
-            mouseLeave$.subscribe(
+            mouseHighlightOption$.subscribe(
+                key => this.highlightOption(key)
+            ),
+            mouseOut$.subscribe(
                 () => this.highlightSelectedOption()
             )
-                
+        )
+    }
+
+    disableKeyboardNavigation() {
+        this.setState(
+            ({keyboardNavigation}) => (keyboardNavigation ? {keyboardNavigation: false} : null)
         )
     }
 
     componentDidMount() {
         this.initializeAutoCenter()
-        this.initializeHighlightHandler()
+        this.initializeMouseHandler()
     }
 
     componentDidUpdate({options: prevOptions}) {
