@@ -355,7 +355,7 @@ class _List extends React.Component {
         this.setState({
             highlightedOptionKey,
             keyboardNavigation: true
-        }, () => this.autoCenter$.next(false))
+        }, () => this.autoCenter$.next())
     }
 
     centerSelectedOption() {
