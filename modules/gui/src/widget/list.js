@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {Subject, debounceTime, delay, distinctUntilChanged, exhaustMap, first, fromEvent, merge, of, switchMap, takeUntil, timer} from 'rxjs'
+import {Subject, debounceTime, distinctUntilChanged, exhaustMap, first, fromEvent, merge, switchMap, takeUntil, timer} from 'rxjs'
 import {compose} from 'compose'
 import {isEqual} from 'hash'
 import {msg} from 'translate'
@@ -379,8 +379,11 @@ class _List extends React.Component {
 
     initializeMouseHandler() {
         const {addSubscription} = this.props
-        const mouseMove$ = fromEvent(document, 'mousemove')
-        const mousePointOption$ = mouseMove$.pipe(
+        const mouseActivity$ = merge(
+            fromEvent(document, 'mousemove'),
+            fromEvent(document, 'wheel')
+        )
+        const mousePointOption$ = mouseActivity$.pipe(
             exhaustMap(() => this.mouseEnter$.pipe(
                 first(),
                 takeUntil(timer(500))
