@@ -67,16 +67,12 @@ class _Button extends React.Component {
 
     isHoverForcedOff() {
         const {hover} = this.props
-        return _.isNil(hover)
-            ? !this.isHoverRequired()
-            : hover === false
+        return hover === false || !this.isHoverRequired()
     }
 
     isHoverForcedOn() {
         const {hover} = this.props
-        return _.isNil(hover)
-            ? false
-            : hover === true
+        return hover === true
     }
 
     classNames() {
@@ -171,26 +167,26 @@ class _Button extends React.Component {
             : {[keybinding]: this.handleClick}
     }
 
-    renderKeybinding([current, ...next]) {
+    renderKeybinding(contents) {
         const {keybinding, hidden} = this.props
         return keybinding
             ? (
                 <Keybinding
                     keymap={this.getKeymap(keybinding)}
                     disabled={hidden || !this.isActive()}>
-                    {current(next)}
+                    {contents}
                 </Keybinding>
             )
-            : current(next)
+            : contents
     }
 
-    renderVisible([current, ...next]) {
+    renderVisible(contents) {
         const {hidden} = this.props
-        return hidden ? null : current(next)
+        return hidden ? null : contents
     }
 
     // The Tooltip component stops propagation of events, thus the ref has to be on a wrapping element.
-    renderWrapper([current, ...next]) {
+    renderWrapper(contents) {
         const {onClickHold} = this.props
         const style = {
             '--click-hold-delay-ms': `${CLICK_CANCEL_DELAY_MS}ms`,
@@ -198,24 +194,24 @@ class _Button extends React.Component {
         }
         return onClickHold ? (
             <span ref={this.button} className={styles.wrapper} style={style}>
-                {current(next)}
+                {contents}
             </span>
-        ) : current(next)
+        ) : contents
     }
 
-    renderLink([current, ...next]) {
+    renderLink(contents) {
         const {route, linkUrl} = this.props
         if (!route && !linkUrl) {
-            return current(next)
+            return contents
         }
         if (route && linkUrl) {
             throw Error('Cannot specify route and linkUrl at the same time.')
         }
         if (route) {
-            return this.renderRouteLink(current(next))
+            return this.renderRouteLink(contents)
         }
         if (linkUrl) {
-            return this.renderPlainLink(current(next))
+            return this.renderPlainLink(contents)
         }
     }
 
@@ -241,7 +237,7 @@ class _Button extends React.Component {
             : contents
     }
 
-    renderTooltip([current, ...next]) {
+    renderTooltip(contents) {
         const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipVisible, tooltipClickTrigger, tooltipAllowedWhenDisabled} = this.props
         const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
         const message = tooltipPanel || tooltip
@@ -258,22 +254,22 @@ class _Button extends React.Component {
                 onVisibleChange={tooltipOnVisible}
                 {...visibility}
             >
-                {current(next)}
+                {contents}
             </Tooltip>
-        ) : current(next)
+        ) : contents
     }
 
-    renderDisabled([current, ...next]) {
+    renderDisabled(contents) {
         const {tooltipAllowedWhenDisabled} = this.props
         return tooltipAllowedWhenDisabled && !this.isActive()
             ? (
                 <div style={{pointerEvents: 'all'}}>
-                    {current(next)}
+                    {contents}
                 </div>
-            ) : current(next)
+            ) : contents
     }
 
-    renderButton([current, ...next]) {
+    renderButton(contents) {
         const {type, style, tabIndex, forwardedRef} = this.props
         return (
             <button
@@ -289,7 +285,7 @@ class _Button extends React.Component {
                 onMouseOut={this.handleMouseOut}
                 onMouseDown={this.handleMouseDown}
                 onClick={this.handleClick}>
-                {current(next)}
+                {contents}
             </button>
         )
     }
@@ -331,7 +327,7 @@ class _Button extends React.Component {
     }
 
     render() {
-        const [current, ...next] = [
+        const renderSteps = [
             this.renderKeybinding,
             this.renderVisible,
             this.renderWrapper,
@@ -341,7 +337,8 @@ class _Button extends React.Component {
             this.renderButton,
             this.renderContents
         ]
-        return current(next)
+        
+        return renderSteps.reduceRight((content, renderStep) => renderStep(content), null)
     }
 
     getContent() {

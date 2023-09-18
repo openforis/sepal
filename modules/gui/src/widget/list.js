@@ -391,8 +391,7 @@ class _List extends React.Component {
             debounceTime(100)
         )
         const mouseOut$ = this.mouseLeave$.pipe(
-            switchMap(() => of(null).pipe(
-                delay(500),
+            switchMap(() => timer(500).pipe(
                 takeUntil(this.mouseEnter$)
             ))
         )
