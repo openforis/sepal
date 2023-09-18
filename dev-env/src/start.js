@@ -25,9 +25,9 @@ const startModule = async (module, options = {}, rootModule, gradleOptions) => {
                     args: [module, SEPAL_SRC, ENV_FILE],
                     showStdOut: options.verbose
                 })
-                if (rootModule && options.logTail) {
+                if (rootModule && (options.log || options.logTail)) {
                     await showStatus([module])
-                    await logs(module, {follow: true, tail: true})
+                    await logs(module, options.logTail ? {follow: true, tail: true} : undefined)
                 } else {
                     await waitModuleRunning(module)
                 }
