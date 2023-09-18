@@ -310,35 +310,28 @@ class _List extends React.Component {
         this.setState(({highlightedOptionKey}) => ({
             highlightedOptionKey: this.getPreviousSelectableOptionKey(highlightedOptionKey),
             keyboardNavigation: true
-        }), this.scroll)
+        }), this.scrollHighlightedOption)
     }
 
     highlightNextOption() {
         this.setState(({highlightedOptionKey}) => ({
             highlightedOptionKey: this.getNextSelectableOptionKey(highlightedOptionKey),
             keyboardNavigation: true
-        }), this.scroll)
+        }), this.scrollHighlightedOption)
     }
 
     highlightFirstOption() {
         this.setState({
             highlightedOptionKey: this.getFirstSelectableOptionKey(),
             keyboardNavigation: true
-        }, this.scroll)
+        }, this.scrollHighlightedOption)
     }
 
     highlightLastOption() {
         this.setState({
             highlightedOptionKey: this.getLastSelectableOptionKey(),
             keyboardNavigation: true
-        }, this.scroll)
-    }
-
-    scroll() {
-        this.highlighted.current && this.highlighted.current.scrollIntoView({
-            behavior: 'auto',
-            block: 'nearest'
-        })
+        }, this.scrollHighlightedOption)
     }
 
     getOption(key) {
@@ -367,8 +360,12 @@ class _List extends React.Component {
 
     centerSelectedOption() {
         const {scrollable} = this.props
-        scrollable.scrollToTop()
         scrollable.centerElement(this.selected.current)
+    }
+    
+    scrollHighlightedOption() {
+        const {scrollable} = this.props
+        scrollable.scrollElement(this.highlighted.current)
     }
 
     initializeAutoCenter() {
@@ -391,7 +388,7 @@ class _List extends React.Component {
             distinctUntilChanged()
         )
         const mouseHighlightOption$ = mousePointOption$.pipe(
-            debounceTime(500)
+            debounceTime(100)
         )
         const mouseOut$ = this.mouseLeave$.pipe(
             switchMap(() => of(null).pipe(

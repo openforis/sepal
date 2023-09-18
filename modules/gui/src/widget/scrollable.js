@@ -104,6 +104,7 @@ class _Scrollable extends Component {
             scrollLine: this.scrollLine.bind(this),
             reset: this.reset.bind(this),
             centerElement: this.centerElement.bind(this),
+            scrollElement: this.scrollElement.bind(this),
             getElement: this.getScrollableElement.bind(this)
         }
         const keymap = ['y', 'xy'].includes(direction) ? {
@@ -200,6 +201,13 @@ class _Scrollable extends Component {
         if (element) {
             this.scrollTo(element.offsetTop - (this.getClientHeight() - element.clientHeight) / 2)
         }
+    }
+
+    scrollElement(element) {
+        element?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        })
     }
 
     reset(callback) {
