@@ -34,6 +34,7 @@ module.exports = {
         Job()({
             jobName,
             jobPath,
+            schedulerName: 'GoogleEarthEngine',
             initArgs,
             maxConcurrency,
             minIdleCount,
