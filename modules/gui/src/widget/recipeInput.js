@@ -69,7 +69,6 @@ class _RecipeInput extends React.Component {
                 autoFocus={autoFocus}
                 buttons={buttons}
                 errorMessage
-                matchGroups
                 busyMessage={stream('LOAD_RECIPE').active}
                 onChange={({value}) => this.loadRecipe(value)}
             />
@@ -103,6 +102,7 @@ class _RecipeInput extends React.Component {
                     : msg('process.project.noProjectOption')
                 return {
                     label: group,
+                    filterOptions: isMatchingGroup => !isMatchingGroup,
                     options: groups[projectId]
                         .map(recipe => ({
                             value: recipe.id,

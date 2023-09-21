@@ -371,16 +371,18 @@ class _Combo extends React.Component {
         return RegExp(`^${parts.join('')}.*$`, 'i')
     }
 
-    filterGroup(group) {
-        const {matchGroups} = this.props
+    filterOptions(group) {
         const {matcher} = this.state
+        const isMatchingGroup = matcher.test(simplifyString(group.searchableText || group.label))
+        const filterOptions = _.isFunction(group.filterOptions)
+            ? group.filterOptions(isMatchingGroup)
+            : group.filterOptions !== false
+        const options = filterOptions
+            ? this.getFilteredOptions(group.options)
+            : group.options
         const filtered = {
             ...group,
-            options: matchGroups
-                ? matcher.test(simplifyString(group.searchableText || group.label))
-                    ? group.options
-                    : this.getFilteredOptions(group.options)
-                : this.getFilteredOptions(group.options)
+            options
         }
         return filtered.options.length ? filtered : null
     }
@@ -390,7 +392,7 @@ class _Combo extends React.Component {
         return _.compact(
             options.map(option =>
                 option.options
-                    ? this.filterGroup(option)
+                    ? this.filterOptions(option)
                     : matcher.test(simplifyString(option.searchableText || option.label))
                     // : matcher.test(option.searchableText || option.label)
                         ? option
@@ -425,6 +427,7 @@ Combo.propTypes = {
             alias: PropTypes.any,
             disabled: PropTypes.any,
             filter: PropTypes.any,
+            filterOptions: PropTypes.any,
             key: PropTypes.string,
             label: PropTypes.any,
             options: PropTypes.arrayOf(
@@ -458,7 +461,6 @@ Combo.propTypes = {
     keyboard: PropTypes.any,
     label: PropTypes.any,
     labelButtons: PropTypes.any,
-    matchGroups: PropTypes.any,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,
