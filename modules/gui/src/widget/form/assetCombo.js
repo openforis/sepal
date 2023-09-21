@@ -5,6 +5,7 @@ import {Form} from 'widget/form/form'
 import {Subject, first, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {escapeRegExp, splitString} from 'string'
 import {msg} from 'translate'
 import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualizationParser'
 import {v4 as uuid} from 'uuid'
@@ -20,7 +21,7 @@ const ASSET_PATTERN = new RegExp('^[a-zA-Z0-9-_]+(/[a-zA-Z0-9-_]+){2,}$')
 
 const getHighlightMatcher = memoizeOne(
     filter => filter
-        ? new RegExp(`(?:${_.compact(filter.split(/\s+/)).join('|')})`, 'i')
+        ? new RegExp(`(?:${_.compact(splitString(escapeRegExp(filter))).join('|')})`, 'i')
         : ''
 )
 
