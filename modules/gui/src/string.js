@@ -33,3 +33,6 @@ export const toSafeString = s =>
             removePunctuation: false
         }).replace(/[^\w-.]/g, '_')
         : s
+
+export const escapeRegExp = string =>
+    string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // $& means the whole matched string
