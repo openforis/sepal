@@ -127,5 +127,11 @@ export default {
     nextReferenceDataPoints$: recipe =>
         postJson$('/api/gee/nextReferenceDataPoints', {
             body: recipe
-        })
+        }),
+
+    awesomeGeeCommunityDatasets$: search =>
+        get$('/api/gee/datasets/awesome-gee-community', {
+            query: {search},
+            retries: 0
+        }),
 }

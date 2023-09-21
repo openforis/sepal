@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
-import {Subject, first, takeUntil} from 'rxjs'
+import {Subject, debounceTime, first, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {escapeRegExp, splitString} from 'string'
@@ -10,6 +10,8 @@ import {msg} from 'translate'
 import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualizationParser'
 import {v4 as uuid} from 'uuid'
 import {withAssets} from 'widget/assets'
+import {withSubscriptions} from 'subscription'
+import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -34,6 +36,7 @@ class _FormAssetCombo extends React.Component {
     }
 
     assetChanged$ = new Subject()
+    filter$ = new Subject()
 
     state = {
         filter: '',
@@ -85,12 +88,12 @@ class _FormAssetCombo extends React.Component {
         )
     }
 
-    renderItem({id, type}) {
+    renderAsset({title, id, type}) {
         const {filter} = this.state
         return (
             <CrudItem
                 key={id}
-                description={id}
+                description={title || id}
                 highlight={getHighlightMatcher(filter)}
                 icon={this.getItemTypeIcon(type)}
                 iconTooltip={this.getItemTooltip(type)}
@@ -125,6 +128,44 @@ class _FormAssetCombo extends React.Component {
         if (input.value) {
             this.loadMetadata(input.value)
         }
+        this.initializeAwesomeGeeCommunityDatasetsSearch()
+    }
+
+    initializeAwesomeGeeCommunityDatasetsSearch() {
+        const {addSubscription} = this.props
+        addSubscription(
+            this.filter$.pipe(
+                debounceTime(250)
+            ).subscribe(
+                filter => filter.length
+                    ? this.searchAwesomeGeeCommunityDatasets(filter)
+                    : this.searchAwesomeGeeCommunityDatasets(this.props.input.value)
+            )
+        )
+    }
+
+    isSearchingAwesomeGeeCommunityDatasets() {
+        const {stream} = this.props
+        return stream('LOAD_ASSET_METADATA').active
+    }
+
+    searchAwesomeGeeCommunityDatasets(filter) {
+        const {stream} = this.props
+        if (filter.length > 2) {
+            stream({
+                name: 'LOAD_ASSET_METADATA',
+                stream$: api.gee.awesomeGeeCommunityDatasets$(filter),
+                onNext: awesomeGeeCommunityDatasets => {
+                    this.setState({awesomeGeeCommunityDatasets})
+                },
+                onError: error => {
+                    this.setState({awesomeGeeCommunityDatasets: null})
+                    Notifications.error({message: msg('asset.awesomeGeeCommunityDatasets.failedToLoad', {error}), error})
+                }
+            })
+        } else {
+            this.setState({awesomeGeeCommunityDatasets: null})
+        }
     }
     
     componentDidUpdate({input: prevInput}) {
@@ -154,91 +195,151 @@ class _FormAssetCombo extends React.Component {
     }
 
     getOptions() {
-        const {assets: {userAssets, otherAssets, recentAssets}} = this.props
-        const {filter} = this.state
         return _.compact([
-            filter ? {
-                options: [{
-                    label: filter,
-                    value: filter,
-                    disabled: !this.isAssetLike(filter),
-                    alias: true
-                }]
-            } : null,
-            recentAssets.length ? {
-                label: msg('asset.recentAssets'),
-                options: this.getAssets(recentAssets, {
-                    alias: true
-                })
-            } : null,
-            userAssets.length ? {
-                label: msg('asset.userAssets'),
-                options: this.getAssets(userAssets, {
-                    filter: (id, type) => type === 'Folder' && `${id}/`
-                })
-            } : null,
-            otherAssets.length ? {
-                label: msg('asset.otherAssets'),
-                options: this.getAssets(otherAssets)
-            } : null
+            this.getCurrentFilterOptions(),
+            this.getRecentAssetsOptions(),
+            this.getUserAssetsOptions(),
+            this.getOtherAssetsOptions(),
+            this.getAwesomeGeeCommunityDatasetsOptions()
         ])
     }
 
-    getAssets(assets, {alias, filter} = {}) {
+    getCurrentFilterOptions() {
+        const {filter} = this.state
+        return filter ? {
+            options: [{
+                label: filter,
+                value: filter,
+                disabled: !this.isAssetLike(filter),
+                alias: true
+            }]
+        } : null
+    }
+
+    getRecentAssetsOptions() {
+        const {assets: {recentAssets}} = this.props
+        return recentAssets?.length ? {
+            label: msg('asset.recentAssets'),
+            options: this.getAssetOptions(recentAssets, {
+                alias: true
+            })
+        } : null
+    }
+
+    getUserAssetsOptions() {
+        const {assets: {userAssets}} = this.props
+        return userAssets?.length ? {
+            label: msg('asset.userAssets'),
+            options: this.getAssetOptions(userAssets, {
+                filter: (id, type) => type === 'Folder' && `${id}/`
+            })
+        } : null
+    }
+
+    getOtherAssetsOptions() {
+        const {assets: {otherAssets}} = this.props
+        return otherAssets?.length ? {
+            label: msg('asset.otherAssets'),
+            options: this.getAssetOptions(otherAssets)
+        } : null
+    }
+
+    getAwesomeGeeCommunityDatasetsSearchingOption() {
+        return [{
+            label: msg('asset.awesomeGeeCommunityDatasets.searching'),
+            disabled: true
+        }]
+    }
+
+    getAwesomeGeeCommunityDatasetsNoResultsOption() {
+        return [{
+            label: msg('asset.awesomeGeeCommunityDatasets.noResults'),
+            disabled: true
+        }]
+    }
+
+    getAwesomeGeeCommunityDatasetsOptions() {
+        const {awesomeGeeCommunityDatasets} = this.state
+        const searching = this.isSearchingAwesomeGeeCommunityDatasets()
+        const options = searching
+            ? this.getAwesomeGeeCommunityDatasetsSearchingOption()
+            : awesomeGeeCommunityDatasets?.length
+                ? this.getDatasetOptions(awesomeGeeCommunityDatasets)
+                : this.getAwesomeGeeCommunityDatasetsNoResultsOption()
+        return {
+            label: msg('asset.awesomeGeeCommunityDatasets.title'),
+            filterOptions: false,
+            options
+        }
+    }
+
+    getAssetOptions(assets, {alias, filter} = {}) {
         return assets
             .filter(({type}) => this.isAllowedType(type))
-            .map(({id, type}) => ({
-                label: id,
+            .map(({title, id, type}) => ({
+                label: title || id,
                 value: id,
                 alias,
                 filter: filter && filter(id, type),
                 dimmed: !this.isPreferredType(type),
-                render: () => this.renderItem({id, type})
+                render: () => this.renderAsset({id, type})
+            }))
+    }
+
+    getDatasetOptions(dataset) {
+        return dataset
+            .map(({title, id, provider, type, tags}) => ({
+                label: title,
+                value: id,
+                render: () => this.renderAsset({title, id, provider, type, tags}),
+                searchableText: [title, id, provider, type, tags].join('|')
             }))
     }
 
     onFilterChange(filter) {
         this.setState({filter})
+        this.filter$.next(filter)
     }
 
-    onChange({value: asset}) {
+    onChange(option) {
+        const {value: asset} = option
         const {onChange} = this.props
         onChange && onChange(asset)
         this.loadMetadata(asset)
     }
 
-    onError(asset, error) {
+    onError(assetId, error) {
         const {onError, assets: {updateAsset}} = this.props
         this.setState({loading: false})
         if (!onError || !onError(error)) {
-            this.defaultOnError(asset, error)
+            this.defaultOnError(assetId, error)
         } else {
-            updateAsset({id: asset})
+            updateAsset({id: assetId})
         }
     }
 
-    defaultOnError(asset, error) {
+    defaultOnError(assetId, error) {
         const {input, assets: {removeAsset}} = this.props
         input.setInvalid(
             error.response && error.response.messageKey
                 ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
                 : msg('widget.assetInput.loadError')
         )
-        removeAsset(asset)
+        removeAsset(assetId)
     }
 
-    onLoaded(asset, metadata) {
+    onLoaded(assetId, metadata) {
         const {onLoaded, assets: {updateAsset}} = this.props
 
         this.setState(
             ({filter}) => ({
                 loading: false,
-                filter: filter !== asset ? filter : null
+                filter: filter !== assetId ? filter : null
             })
         )
 
         onLoaded && onLoaded(metadata ? {
-            asset,
+            asset: assetId,
             metadata,
             visualizations: metadata.bands
                 ? toVisualizations(metadata.properties, metadata.bands)
@@ -246,7 +347,7 @@ class _FormAssetCombo extends React.Component {
                 : undefined
         } : null)
 
-        updateAsset({id: asset, type: metadata.type})
+        updateAsset({id: assetId, type: metadata.type})
     }
 
     onLoading(asset) {
@@ -288,6 +389,7 @@ class _FormAssetCombo extends React.Component {
 export const FormAssetCombo = compose(
     _FormAssetCombo,
     connect(),
+    withSubscriptions(),
     withAssets()
 )
 
@@ -306,7 +408,6 @@ FormAssetCombo.propTypes = {
     keyboard: PropTypes.any,
     label: PropTypes.string,
     labelButtons: PropTypes.any,
-    matchGroups: PropTypes.any,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,

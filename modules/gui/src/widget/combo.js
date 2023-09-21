@@ -291,7 +291,7 @@ class _Combo extends React.Component {
 
     selectOption(option) {
         const {onChange, stayOpenOnSelect} = this.props
-        if (option.filter) {
+        if (option?.filter) {
             this.setFilter(option.filter)
         } else {
             this.setState({
@@ -361,7 +361,7 @@ class _Combo extends React.Component {
 
     getInputOption(flattenedOptions) {
         const {value} = this.props
-        return flattenedOptions.find(option => !option.group && option.value === value)
+        return flattenedOptions.find(option => !option.group && !option.alias && option.value === value)
     }
 
     matcher(filter) {

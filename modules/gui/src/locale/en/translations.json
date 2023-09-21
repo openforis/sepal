@@ -69,7 +69,13 @@
       "userAssets": "User assets",
       "otherAssets": "Other assets",
       "reload": "Reload assets",
-      "settings": "Asset settings"
+      "settings": "Asset settings",
+      "awesomeGeeCommunityDatasets": {
+        "title": "Awesome GEE Community Datasets",
+        "failedToLoad": "Failed to load Awesome GEE Community Datasets",
+        "searching": "Searching...",
+        "noResults": "No matching datasets found"
+      }
     },
     "bands": {
       "aerosol": "Aerosol",

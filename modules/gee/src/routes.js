@@ -21,6 +21,7 @@ const tableColumnValues$ = require('#gee/jobs/ee/table/columnValues')
 const tableRows$ = require('#gee/jobs/ee/table/rows')
 const tableQuery$ = require('#gee/jobs/ee/table/query')
 const tableMap$ = require('#gee/jobs/ee/table/map')
+const awesomeGeeCommunityDatasets$ = require('#gee/jobs/datasets/awesome-gee-community')
 const check$ = require('#gee/jobs/ee/check')
 
 module.exports = router =>
@@ -46,4 +47,5 @@ module.exports = router =>
         .get('/table/columnValues', stream(ctx => tableColumnValues$(ctx)))
         .post('/table/query', stream(ctx => tableQuery$(ctx)))
         .get('/table/map', stream(ctx => tableMap$(ctx)))
+        .get('/datasets/awesome-gee-community', stream(ctx => awesomeGeeCommunityDatasets$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))

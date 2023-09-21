@@ -102,9 +102,18 @@ const updateAsset = asset => {
     const otherAssets = select('assets.other') || []
     const isUserAsset = _.find(roots, root => asset.id.startsWith(root))
     actionBuilder('UPDATE_ASSET')
-        .set('assets.other', _.uniqBy([...otherAssets, asset], 'id'), !isUserAsset)
         .set('assets.recent', _.uniqBy([asset, ...recentAssets], 'id').slice(0, MAX_RECENT_ASSETS))
         .dispatch()
+
+    api.gee.awesomeGeeCommunityDatasets$(asset.id).subscribe(
+        result => {
+            if (result.length === 0 && !isUserAsset) {
+                actionBuilder('UPDATE_ASSET')
+                    .set('assets.other', _.uniqBy([...otherAssets, asset], 'id'))
+                    .dispatch()
+            }
+        }
+    )
 }
 
 const removeAsset = id => {
