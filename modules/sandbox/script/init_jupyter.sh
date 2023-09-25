@@ -23,6 +23,7 @@ R -e "IRkernel::installspec(user = FALSE)"
 /usr/bin/python3 -m pip install ipyleaflet
 /usr/bin/python3 -m pip install ipyvuetify
 /usr/bin/python3 -m pip install lckr-jupyterlab-variableinspector
+/usr/bin/python3 -m pip install sidecar
 
 git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
 /usr/bin/python3 -m pip install jupyter_latex_envs # Required for jupyter_contrib_nbextensions
