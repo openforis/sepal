@@ -40,7 +40,7 @@ class _FormAssetCombo extends React.Component {
 
     state = {
         filter: '',
-        loading: false
+        loadingMetadata: false
     }
 
     render() {
@@ -71,7 +71,7 @@ class _FormAssetCombo extends React.Component {
     }
 
     renderReloadButton() {
-        const {assets: {loading}} = this.props
+        const {assets: {loading: loadingUserAssets}} = this.props
         return (
             <Button
                 key='reload'
@@ -79,10 +79,10 @@ class _FormAssetCombo extends React.Component {
                 shape='none'
                 air='none'
                 icon='rotate'
-                iconAttributes={{spin: loading}}
+                iconAttributes={{spin: loadingUserAssets}}
                 tooltip={msg('asset.reload')}
                 tabIndex={-1}
-                disabled={loading}
+                disabled={loadingUserAssets}
                 onClick={this.reloadAssets}
             />
         )
@@ -310,7 +310,7 @@ class _FormAssetCombo extends React.Component {
 
     onError(assetId, error) {
         const {onError, assets: {updateAsset}} = this.props
-        this.setState({loading: false})
+        this.setState({loadingMetadata: false})
         if (!onError || !onError(error)) {
             this.defaultOnError(assetId, error)
         } else {
@@ -333,7 +333,7 @@ class _FormAssetCombo extends React.Component {
 
         this.setState(
             ({filter}) => ({
-                loading: false,
+                loadingMetadata: false,
                 filter: filter !== assetId ? filter : null
             })
         )
@@ -352,7 +352,7 @@ class _FormAssetCombo extends React.Component {
 
     onLoading(asset) {
         const {onLoading} = this.props
-        this.setState({loading: asset})
+        this.setState({loadingMetadata: asset})
         this.assetChanged$.next()
         onLoading && onLoading(asset)
     }
@@ -370,8 +370,8 @@ class _FormAssetCombo extends React.Component {
 
     loadMetadata(asset) {
         const {stream} = this.props
-        const {loading} = this.state
-        if (this.isAssetLike(asset) && asset !== loading) {
+        const {loadingMetadata} = this.state
+        if (this.isAssetLike(asset) && asset !== loadingMetadata) {
             this.onLoading(asset)
             stream({
                 name: 'LOAD_ASSET_METADATA',
