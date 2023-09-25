@@ -15,9 +15,10 @@ wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/
 dpkg -i cuda-keyring_1.0-1_all.deb
 apt-get -y update
 # *** Ensure same nvidia driver version is used both here (in the container) and in install-gpu-drivers.sh (on the host) ***
+#   nvidia-driver-525=525.125.06-0ubuntu1 \
 apt-get install -y --no-install-recommends \
-  nvidia-driver-525=525.125.06-0ubuntu1 \
-  cuda-toolkit-12-0
+  nvidia-driver-515=515.105.01-0ubuntu1 \
+  cuda-toolkit-11-7
 
 pip3 install pyopencl
 pip3 install testresources
