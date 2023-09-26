@@ -393,8 +393,7 @@ class _Combo extends React.Component {
             options.map(option =>
                 option.options
                     ? this.filterOptions(option)
-                    : matcher.test(simplifyString(option.searchableText || option.label))
-                    // : matcher.test(option.searchableText || option.label)
+                    : option.filterOption === false || matcher.test(option.searchableText || option.label)
                         ? option
                         : null
             )
@@ -435,6 +434,7 @@ Combo.propTypes = {
                     alias: PropTypes.any,
                     disabled: PropTypes.any,
                     filter: PropTypes.any,
+                    filterOption: PropTypes.any,
                     key: PropTypes.string,
                     label: PropTypes.any,
                     render: PropTypes.func,
