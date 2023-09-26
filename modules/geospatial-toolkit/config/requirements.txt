@@ -5,7 +5,6 @@ scipy
 shapely
 shapely-geojson
 tqdm
-xarray-leaflet
 GDAL==$GDAL_VERSION
 bqplot
 numpy
@@ -31,7 +30,6 @@ numpydoc
 git+https://github.com/12rambau/bfast.git
 
 ########  sepal modules  ########
-geemap
 Unidecode
 pyperclip
 python-dateutil
