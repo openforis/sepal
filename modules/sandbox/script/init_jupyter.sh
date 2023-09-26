@@ -16,7 +16,7 @@ R -e "pacman::p_load('IRkernel')"
 R -e "IRkernel::installspec(user = FALSE)"
 
 /usr/bin/python3 -m pip install jupyterlab
-/usr/bin/python3 -m pip install ipywidgets==7.7.2 # https://github.com/voila-dashboards/voila/issues/1202#issuecomment-1255040572 until we wait.
+/usr/bin/python3 -m pip install ipywidgets
 /usr/bin/python3 -m pip install jupyterlab-language-pack-fr-FR
 /usr/bin/python3 -m pip install jupyterlab-language-pack-es-ES
 /usr/bin/python3 -m pip install folium

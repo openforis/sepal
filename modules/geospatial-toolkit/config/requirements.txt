@@ -41,8 +41,8 @@ PyPDF2 # more recent version are avaiable (PyPDF4)
 rasterio
 openpyxl
 pre-commit
-ipywidgets==7.7.2
-ipyvuetify==1.8.2
+ipywidgets
+ipyvuetify
 
 
 ########  web api  ########
