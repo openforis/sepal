@@ -384,7 +384,7 @@ class _Combo extends React.Component {
             ...group,
             options
         }
-        return filtered.options.length ? filtered : null
+        return filtered.options.length || group.showEmptyGroup ? filtered : null
     }
 
     getFilteredOptions(options) {
@@ -444,6 +444,7 @@ Combo.propTypes = {
             ),
             render: PropTypes.func,
             searchableText: PropTypes.string,
+            showEmptyGroup: PropTypes.any,
             value: PropTypes.any,
         })
     ).isRequired,
