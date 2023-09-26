@@ -41,8 +41,5 @@ npm install -g js-beautify
 /usr/bin/ijsinstall --install=global
 
 # Manually installing de-indent, otherwise jupyter lab build fails.
-cd /usr/local/share/jupyter/lab/staging
-npm install de-indent
-cd /
-
+/usr/bin/python3 /usr/local/bin/jupyter lab build || npm install --prefix /usr/local/share/jupyter/lab/staging de-indent
 /usr/bin/python3 /usr/local/bin/jupyter lab build
