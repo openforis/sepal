@@ -271,7 +271,7 @@ CrudItem.propTypes = {
     iconVariant: PropTypes.any,
     image: PropTypes.any,
     infoDisabled: PropTypes.any,
-    infotooltip: PropTypes.any,
+    infoTooltip: PropTypes.any,
     inlineComponents: PropTypes.any,
     removeContent: PropTypes.any,
     removeDisabled: PropTypes.any,
