@@ -13,6 +13,7 @@ const ScrollableContainerContext = React.createContext()
 
 export class ScrollableContainer extends React.Component {
     ref = React.createRef()
+    
     state = {
         height: 0
     }
@@ -103,6 +104,7 @@ class _Scrollable extends Component {
             scrollLine: this.scrollLine.bind(this),
             reset: this.reset.bind(this),
             centerElement: this.centerElement.bind(this),
+            scrollElement: this.scrollElement.bind(this),
             getElement: this.getScrollableElement.bind(this)
         }
         const keymap = ['y', 'xy'].includes(direction) ? {
@@ -201,6 +203,13 @@ class _Scrollable extends Component {
         }
     }
 
+    scrollElement(element) {
+        element?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        })
+    }
+
     reset(callback) {
         const verticalOffset = this.getOffset('y')
         const horizontalOffset = this.getOffset('x')
@@ -259,7 +268,7 @@ class _Scrollable extends Component {
             ),
             scroll$(this.horizontalScroll$, 'x').subscribe(
                 offset => this.setOffset(offset, 'x')
-            ),
+            )
         )
     }
 

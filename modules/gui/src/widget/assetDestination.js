@@ -1,10 +1,8 @@
-import {AssetInput} from './assetInput'
 import {Form} from 'widget/form/form'
-import {Layout} from './layout'
-import {catchError, exhaustMap, map, mergeMap, of, pipe, range, retryWhen, throwError, timer, zip} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser} from 'user'
+import {map} from 'rxjs'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {toSafeString} from 'string'
@@ -37,25 +35,16 @@ class _AssetDestination extends React.Component {
     }
 
     render() {
-        const {currentType} = this.state
-        const showStrategy = ['Image', 'ImageCollection'].includes(currentType)
+        const {stream, assetInput, type, label, placeholder, autoFocus} = this.props
         return (
-            <Layout spacing='tight'>
-                {this.renderAssetInput()}
-                {showStrategy ? this.renderStrategy() : null}
-            </Layout>
-        )
-    }
-
-    renderAssetInput() {
-        const {stream, assetInput, label, placeholder, autoFocus} = this.props
-        return (
-            <AssetInput
+            <Form.AssetCombo
                 input={assetInput}
                 label={label}
                 placeholder={placeholder}
                 autoFocus={autoFocus}
                 busyMessage={stream('UPDATE_ASSET_ROOTS').active}
+                preferredTypes={[type]}
+                labelButtons={[this.renderStrategy()]}
                 onLoading={this.onLoading}
                 onLoaded={({metadata} = {}) => this.onLoaded(metadata?.type)}
                 onError={this.onError}
@@ -78,8 +67,10 @@ class _AssetDestination extends React.Component {
                 tooltip: msg('widget.assetDestination.replace.tooltip')
             }
         ].filter(({value}) => value !== 'resume' || (type === 'ImageCollection' && currentType === 'ImageCollection'))
-        return (
+        const show = ['Image', 'ImageCollection'].includes(currentType)
+        return show ? (
             <Form.Buttons
+                key='strategy'
                 input={strategyInput}
                 options={options}
                 size='x-small'
@@ -87,7 +78,7 @@ class _AssetDestination extends React.Component {
                 shape='pill'
                 air='less'
             />
-        )
+        ) : null
     }
 
     componentDidMount() {
@@ -149,8 +140,8 @@ class _AssetDestination extends React.Component {
         if (currentType) {
             assetInput.setInvalid(msg(
                 ['Image', 'ImageCollection'].includes(currentType)
-                    ? 'widget.assetDestination.exists.replacable'
-                    : 'widget.assetDestination.exists.notReplacable'
+                    ? 'widget.assetDestination.exists.replaceable'
+                    : 'widget.assetDestination.exists.notReplaceable'
             ))
         } else {
             strategyInput.set('new')
@@ -158,16 +149,13 @@ class _AssetDestination extends React.Component {
     }
 
     onError(error) {
-        const {assetInput, onError} = this.props
+        const {onError} = this.props
         if (error.status === 404) {
             this.onLoaded()
+            return true
         } else {
             onError && onError(error)
-            assetInput.setInvalid(
-                error.response && error.response.messageKey
-                    ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                    : msg('widget.assetInput.loadError')
-            )
+            return false
         }
     }
 }

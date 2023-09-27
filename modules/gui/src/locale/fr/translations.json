@@ -3959,8 +3959,8 @@
     "widget": {
         "assetDestination": {
             "exists": {
-                "notReplacable": "",
-                "replacable": ""
+                "notReplaceable": "",
+                "replaceable": ""
             },
             "loadError": "Impossible de charger l'Asset",
             "replace": {

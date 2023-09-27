@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
-import {Item} from 'widget/item'
+import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
@@ -24,7 +24,7 @@ class _MapAreaMenuPanel extends React.Component {
         return (
             <FloatingBox
                 element={element}
-                vPlacement='above-otherwise-below'
+                vPlacement='above-or-below'
                 hPlacement='center'
                 onBlur={deactivate}
             >
@@ -165,7 +165,7 @@ class _MapAreaMenu extends React.Component {
         const source = imageLayerSources.find(({id}) => id === imageLayer.sourceId)
         const {description} = getImageLayerSource({recipe, source})
         return (
-            <Item title={msg(`imageLayerSources.${source.type}.label`)} description={description}/>
+            <CrudItem title={msg(`imageLayerSources.${source.type}.label`)} description={description}/>
         )
     }
 

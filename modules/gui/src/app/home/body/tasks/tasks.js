@@ -93,7 +93,7 @@ class Tasks extends React.Component {
                     title={task.name}
                     description={this.getDescription(task)}
                     icon={icon}
-                    iconSize='lg'
+                    iconSize='xl'
                     iconVariant={iconVariant}
                     // timestamp={recipe.updateTime}
                     inlineComponents={[

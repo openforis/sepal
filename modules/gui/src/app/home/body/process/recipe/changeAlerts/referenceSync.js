@@ -84,7 +84,7 @@ class _ReferenceSync extends React.Component {
             return
         }
         stream('LOAD',
-            api.gee.imageMetadata$({asset: reference.id}).pipe(
+            api.gee.assetMetadata$({asset: reference.id}).pipe(
                 takeUntil(this.cancel$)
             ),
             metadata => this.updateAssetReference(metadata, reference),
@@ -97,7 +97,7 @@ class _ReferenceSync extends React.Component {
         const assetDateFormat = metadata.properties.dateFormat
         const dateFormat = assetDateFormat === undefined ? reference.dateFormat : assetDateFormat
         const referenceDetails = {
-            ...toAssetReference(metadata.bands, metadata.properties),
+            ...toAssetReference(metadata.bandNames, metadata.properties),
             dateFormat
         }
         const builder = recipeActionBuilder('UPDATE_REFERENCE', {referenceDetails})

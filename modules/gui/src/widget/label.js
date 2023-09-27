@@ -1,9 +1,9 @@
 import {ButtonGroup} from './buttonGroup'
-import {isMobile} from './userAgent'
+import {Layout} from './layout'
 import Icon from './icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Tooltip from './tooltip'
+import _ from 'lodash'
 import styles from './label.module.css'
 
 export default class Label extends React.Component {
@@ -25,16 +25,32 @@ export default class Label extends React.Component {
 
     renderContents() {
         const {msg, children} = this.props
-        return children ? children : msg
+        const content = children ? children : msg
+        return React.isValidElement(content)
+            ? content
+            : <div>{content}</div>
     }
 
     renderLeft() {
         return (
-            <div>
+            <Layout type='horizontal-nowrap' spacing='compact'>
                 {this.renderContents()}
                 {this.renderTooltipIcon()}
-            </div>
+                {this.renderError()}
+            </Layout>
         )
+    }
+
+    renderRight() {
+        const {error, buttons} = this.props
+        return error || buttons
+            ? (
+                <ButtonGroup>
+                    {/* {this.renderError()} */}
+                    {buttons ? buttons : null}
+                </ButtonGroup>
+            )
+            : null
     }
 
     renderTooltipIcon() {
@@ -52,39 +68,30 @@ export default class Label extends React.Component {
             : null
     }
 
-    renderRight() {
-        const {error, buttons} = this.props
-        return error || buttons
-            ? (
-                <ButtonGroup spacing='tight'>
-                    {buttons ? buttons : null}
-                    {error ? this.renderError() : null}
-                </ButtonGroup>
-            )
-            : null
-    }
-
     renderError() {
         const {error} = this.props
-        return (
+        return error ? (
             <Icon
                 className={styles.error}
                 name='exclamation-triangle'
                 variant='error'
                 tooltip={error}
-                tooltipPlacement='left'
+                tooltipPlacement='right'
                 tooltipDelay={0}
                 attributes={{
                     fade: true
                 }}
             />
-        )
+        ) : null
     }
 }
 
 Label.propTypes = {
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
-    buttons: PropTypes.arrayOf(PropTypes.node),
+    buttons: PropTypes.oneOfType([
+        PropTypes.node,
+        PropTypes.arrayOf(PropTypes.node)
+    ]),
     children: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,

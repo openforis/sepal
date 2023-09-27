@@ -1,14 +1,12 @@
 import {Button} from 'widget/button'
-import {Form} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {ScrollableList} from 'widget/list'
-import {Subject} from 'rxjs'
+import {Widget} from './widget'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {escapeRegExp, simplifyString, splitString} from 'string'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
-import {simplifyString, splitString} from 'string'
-import {withSubscriptions} from 'subscription'
 import AutoFocus from 'widget/autoFocus'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
@@ -25,7 +23,6 @@ class _Combo extends React.Component {
     inputContainer = React.createRef()
     input = React.createRef()
     list = React.createRef()
-    select$ = new Subject()
     
     state = {
         showOptions: false,
@@ -37,8 +34,8 @@ class _Combo extends React.Component {
         focused: false
     }
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.onChange = this.onChange.bind(this)
         this.onFocus = this.onFocus.bind(this)
         this.onClick = this.onClick.bind(this)
@@ -46,11 +43,11 @@ class _Combo extends React.Component {
         this.onInputBlur = this.onInputBlur.bind(this)
         this.onOptionsBlur = this.onOptionsBlur.bind(this)
         this.showOptions = this.showOptions.bind(this)
+        this.editFilter = this.editFilter.bind(this)
         this.setFilter = this.setFilter.bind(this)
         this.resetFilterOrClose = this.resetFilterOrClose.bind(this)
         this.resetFilterOrClearSelection = this.resetFilterOrClearSelection.bind(this)
         this.selectOption = this.selectOption.bind(this)
-        this.onOptionSelected = this.onOptionSelected.bind(this)
     }
 
     isActive() {
@@ -92,7 +89,7 @@ class _Combo extends React.Component {
         const {errorMessage, busyMessage, disabled, className, label, labelButtons, tooltip, tooltipPlacement} = this.props
         const {showOptions} = this.state
         return (
-            <Form.FieldSet
+            <Widget
                 className={[styles.container, className].join(' ')}
                 label={label}
                 labelButtons={labelButtons}
@@ -108,12 +105,12 @@ class _Combo extends React.Component {
                     {this.renderInput()}
                 </div>
                 {showOptions ? this.renderOptions() : null}
-            </Form.FieldSet>
+            </Widget>
         )
     }
 
     renderInput() {
-        const {placeholder, autoFocus, readOnly, border, value, inputClassName, additionalButtons = []} = this.props
+        const {placeholder, autoFocus, readOnly, border, inputClassName, buttons = []} = this.props
         const {filter, selectedOption, showOptions} = this.state
         return (
             <Keybinding
@@ -121,10 +118,11 @@ class _Combo extends React.Component {
                 keymap={{
                     ArrowUp: this.showOptions,
                     ArrowDown: this.showOptions,
-                    ArrowLeft: this.showOptions,
-                    ArrowRight: this.showOptions,
+                    ArrowLeft: _.isEmpty(filter) ? this.editFilter : null,
+                    ArrowRight: _.isEmpty(filter) ? this.editFilter : null,
                     Home: this.showOptions,
-                    End: this.showOptions
+                    End: this.showOptions,
+                    Enter: null
                 }}>
                 <AutoFocus element={this.input.current} focusEnabled={autoFocus}>
                     <Input
@@ -136,14 +134,14 @@ class _Combo extends React.Component {
                         ].join(' ')}
                         border={border}
                         value={filter}
-                        placeholder={selectedOption && !_.isNil(value) ? selectedOption.label : placeholder}
+                        placeholder={this.getSelectedOptionValue() || placeholder}
                         disabled={!this.isActive()}
                         readOnly={readOnly || isMobile()}
                         buttons={[
+                            ...buttons,
                             this.renderClearButton(),
                             this.renderToggleOptionsButton()
                         ]}
-                        additionalButtons={additionalButtons}
                         onChange={this.onChange}
                         onFocus={this.onFocus}
                         onBlur={this.onInputBlur}
@@ -153,8 +151,19 @@ class _Combo extends React.Component {
         )
     }
 
+    getSelectedOptionValue() {
+        const {value} = this.props
+        const {selectedOption} = this.state
+        return selectedOption && !_.isNil(value) ? selectedOption.label : null
+    }
+
+    editFilter() {
+        this.setFilter(this.getSelectedOptionValue() || '')
+    }
+
     onChange(e) {
-        this.setFilter(e.target.value)
+        const filter = e.target.value
+        this.setFilter(filter)
     }
 
     onFocus() {
@@ -188,7 +197,8 @@ class _Combo extends React.Component {
                     chromeless
                     shape='none'
                     air='none'
-                    icon='times'
+                    size='large'
+                    icon='xmark'
                     iconAttributes={{
                         fixedWidth: true
                     }}
@@ -202,9 +212,11 @@ class _Combo extends React.Component {
     renderToggleOptionsButton() {
         const {placement} = this.props
         const {showOptions} = this.state
-        const icon = {
-            below: 'chevron-down',
-            above: 'chevron-up'
+        const ICON = {
+            'below': 'chevron-down',
+            'below-or-above': 'chevron-down',
+            'above': 'chevron-up',
+            'above-or-below': 'chevron-up'
         }
         return (
             <Button
@@ -212,7 +224,7 @@ class _Combo extends React.Component {
                 chromeless
                 shape='none'
                 air='none'
-                icon={icon[placement]}
+                icon={ICON[placement]}
                 iconAttributes={{
                     fixedWidth: true,
                     flip: showOptions ? 'vertical' : null
@@ -243,7 +255,7 @@ class _Combo extends React.Component {
                     air='more'
                     className={optionsClassName || styles.options}
                     options={flattenedOptions}
-                    selectedOption={selectedOption}
+                    selectedValue={selectedOption?.value}
                     onSelect={this.selectOption}
                     onCancel={this.resetFilterOrClose}
                     autoCenter={!selected}
@@ -257,6 +269,8 @@ class _Combo extends React.Component {
     }
 
     setFilter(filter = '') {
+        const {onFilterChange} = this.props
+        onFilterChange && onFilterChange(filter)
         this.setState({
             filter,
             matcher: this.matcher(filter)
@@ -271,39 +285,29 @@ class _Combo extends React.Component {
     }
 
     resetFilterOrClose() {
-        const {filter} = this.state
         this.setFilter()
-        if (!filter) {
-            this.hideOptions()
-        }
+        this.hideOptions()
     }
 
     selectOption(option) {
-        this.select$.next(option)
-    }
-
-    handleSelect() {
-        const {addSubscription} = this.props
-        addSubscription(
-            this.select$.subscribe(this.onOptionSelected)
-        )
-    }
-
-    onOptionSelected(option) {
         const {onChange, stayOpenOnSelect} = this.props
-        this.setState({
-            selectedOption: option,
-            selected: true
-        }, () => {
-            if (stayOpenOnSelect) {
-                this.showOptions()
-                this.focusInput()
-            } else {
-                this.hideOptions()
-                this.setFilter()
-            }
-            onChange && onChange(option)
-        })
+        if (option?.filter) {
+            this.setFilter(option.filter)
+        } else {
+            this.setState({
+                selectedOption: option,
+                selected: true
+            }, () => {
+                if (stayOpenOnSelect) {
+                    this.showOptions()
+                    this.focusInput()
+                } else {
+                    this.hideOptions()
+                    this.setFilter()
+                }
+                onChange && onChange(option)
+            })
+        }
     }
 
     onOptionsBlur(e) {
@@ -321,13 +325,11 @@ class _Combo extends React.Component {
         const {autoOpen} = this.props
         this.setFilter()
         autoOpen && this.showOptions()
-        this.handleSelect()
     }
 
-    componentDidUpdate(prevProps, prevState) {
+    componentDidUpdate({value: prevValue, selectedOption: prevSelectedOption}, {filter: prevFilter}) {
         const {value, options} = this.props
-        const {value: prevValue, selectedOption: prevSelectedOption} = prevProps
-        const {filter, selected} = this.state
+        const {filter} = this.state
         const inputChanged = value !== prevValue
         const filteredOptions = this.getFilteredOptions(options)
         const flattenedOptions = this.getFlattenedOptions(filteredOptions)
@@ -338,7 +340,7 @@ class _Combo extends React.Component {
             ? this.getInputOption(flattenedOptions)
             : validatedSelectedOption || this.getInputOption(flattenedOptions)
 
-        if (prevState?.filter !== filter && !selected) {
+        if (filter && filter !== prevFilter) {
             this.showOptions()
         }
 
@@ -359,26 +361,28 @@ class _Combo extends React.Component {
 
     getInputOption(flattenedOptions) {
         const {value} = this.props
-        return flattenedOptions.find(option => !option.group && option.value === value)
+        return flattenedOptions.find(option => !option.group && !option.alias && option.value === value)
     }
 
     matcher(filter) {
         // match beginning of multiple words in any order (e.g. both "u k" and "k u" match "United Kingdom")
-        const parts = splitString(simplifyString(filter))
+        const parts = splitString(simplifyString(escapeRegExp(filter)))
             .map(part => part ? `(?=.*${(part)})` : '')
         return RegExp(`^${parts.join('')}.*$`, 'i')
     }
 
-    filterGroup(group) {
-        const {matchGroups} = this.props
+    filterOptions(group) {
         const {matcher} = this.state
+        const isMatchingGroup = matcher.test(simplifyString(group.searchableText || group.label))
+        const filterOptions = _.isFunction(group.filterOptions)
+            ? group.filterOptions(isMatchingGroup)
+            : group.filterOptions !== false
+        const options = filterOptions
+            ? this.getFilteredOptions(group.options)
+            : group.options
         const filtered = {
             ...group,
-            options: matchGroups
-                ? matcher.test(simplifyString(group.searchableText || group.label))
-                    ? group.options
-                    : this.getFilteredOptions(group.options)
-                : this.getFilteredOptions(group.options)
+            options
         }
         return filtered.options.length ? filtered : null
     }
@@ -388,7 +392,7 @@ class _Combo extends React.Component {
         return _.compact(
             options.map(option =>
                 option.options
-                    ? this.filterGroup(option)
+                    ? this.filterOptions(option)
                     : matcher.test(simplifyString(option.searchableText || option.label))
                     // : matcher.test(option.searchableText || option.label)
                         ? option
@@ -397,32 +401,59 @@ class _Combo extends React.Component {
         )
     }
 
-    getFlattenedOptions(options) {
+    getFlattenedOptions(options, parentKey = '') {
         return _.flatten(
-            options.map(option =>
-                option.options
-                    ? [{..._.omit(option, 'options'), group: true}, ...option.options]
-                    : option
-            )
+            options.map(option => {
+                const key = [parentKey, option.key || option.value || option.label].join('|')
+                return option.options
+                    ? [
+                        {..._.omit(option, 'options'), group: true, key},
+                        ...this.getFlattenedOptions(option.options, key)
+                    ]
+                    : {...option, key}
+            })
         )
     }
 }
 
 export const Combo = compose(
     _Combo,
-    withSubscriptions(),
     connect(mapStateToProps)
 )
 
 Combo.propTypes = {
-    options: PropTypes.any.isRequired,
-    additionalButtons: PropTypes.arrayOf(PropTypes.node),
+    options: PropTypes.arrayOf(
+        PropTypes.shape({
+            alias: PropTypes.any,
+            disabled: PropTypes.any,
+            filter: PropTypes.any,
+            filterOptions: PropTypes.any,
+            key: PropTypes.string,
+            label: PropTypes.any,
+            options: PropTypes.arrayOf(
+                PropTypes.shape({
+                    alias: PropTypes.any,
+                    disabled: PropTypes.any,
+                    filter: PropTypes.any,
+                    key: PropTypes.string,
+                    label: PropTypes.any,
+                    render: PropTypes.func,
+                    searchableText: PropTypes.string,
+                    value: PropTypes.any,
+                })
+            ),
+            render: PropTypes.func,
+            searchableText: PropTypes.string,
+            value: PropTypes.any,
+        })
+    ).isRequired,
     alignment: PropTypes.oneOf(['left', 'center', 'right', 'fit']),
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
     autoOpen: PropTypes.any,
     border: PropTypes.any,
     busyMessage: PropTypes.any,
+    buttons: PropTypes.arrayOf(PropTypes.node),
     className: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,
@@ -430,11 +461,10 @@ Combo.propTypes = {
     keyboard: PropTypes.any,
     label: PropTypes.any,
     labelButtons: PropTypes.any,
-    matchGroups: PropTypes.any,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,
-    placement: PropTypes.oneOf(['above', 'below']),
+    placement: PropTypes.oneOf(['above', 'below', 'above-or-below', 'below-or-above']),
     readOnly: PropTypes.any,
     stayOpenOnSelect: PropTypes.any,
     tooltip: PropTypes.any,
@@ -442,12 +472,13 @@ Combo.propTypes = {
     value: PropTypes.any,
     onBlur: PropTypes.func,
     onCancel: PropTypes.func,
-    onChange: PropTypes.func
+    onChange: PropTypes.func,
+    onFilterChange: PropTypes.func
 }
 
 Combo.defaultProps = {
     alignment: 'left',
     border: 'true',
-    placement: 'below',
+    placement: 'below-or-above',
     tooltipPlacement: 'top'
 }

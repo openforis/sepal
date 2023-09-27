@@ -1,6 +1,5 @@
 import {Button} from 'widget/button'
 import {Input} from 'widget/input'
-import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {ScrollableList} from 'widget/list'
 import {Widget} from 'widget/widget'
@@ -78,8 +77,7 @@ class _FormDatePicker extends React.Component {
             <Widget
                 label={label}
                 tooltip={tooltip}
-                tooltipPlacement={tooltipPlacement}
-                contenClassName={styles.input}>
+                tooltipPlacement={tooltipPlacement}>
                 {this.renderInput()}
             </Widget>
         )
@@ -227,15 +225,13 @@ class _DatePickerPanel extends React.Component {
             _.range(startYear, endYear + 1).map(year => ({label: year, value: year})),
             _.range(endYear + 1, endYear + 6).map(year => ({label: year}))
         )
-        const selectedOption = _.find(options, ({value}) => value === selectedYear)
         return (
             <div className={styles.years}>
                 <ScrollableList
                     options={options}
-                    selectedOption={selectedOption}
+                    selectedValue={selectedYear}
                     onSelect={option => this.updateDate('year', option.value)}
                     alignment='center'
-                    keyboard={false}
                     autoCenter
                 />
             </div>

@@ -139,8 +139,8 @@ class _WorkspaceDestination extends React.Component {
     //     if (currentType) {
     //         workspacePathInput.setInvalid(msg(
     //             ['Image', 'ImageCollection'].includes(currentType)
-    //                 ? 'widget.workspaceDestination.exists.replacable'
-    //                 : 'widget.workspaceDestination.exists.notReplacable'
+    //                 ? 'widget.workspaceDestination.exists.replaceable'
+    //                 : 'widget.workspaceDestination.exists.notReplaceable'
     //         ))
     //     } else {
     //         strategyInput.set('new')

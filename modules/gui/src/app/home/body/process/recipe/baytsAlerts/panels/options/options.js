@@ -1,4 +1,3 @@
-import {AssetSelect} from 'widget/assetSelect'
 import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
@@ -128,13 +127,13 @@ class Options extends React.Component {
     renderPreviousAlertsAsset() {
         const {inputs: {previousAlertsAsset}} = this.props
         return (
-            <AssetSelect
+            <Form.AssetCombo
                 input={previousAlertsAsset}
                 label={msg('process.baytsAlerts.panel.options.form.previousAlertsAsset.label')}
                 placeholder={msg('process.baytsAlerts.panel.options.form.previousAlertsAsset.placeholder')}
                 tooltip={msg('process.baytsAlerts.panel.options.form.previousAlertsAsset.tooltip')}
                 autoFocus
-                expectedType={['Image', 'ImageCollection']}
+                allowedTypes={['Image', 'ImageCollection']}
                 onLoaded={this.onPreviousAlertsAssetLoaded}
             />
         )
@@ -143,12 +142,12 @@ class Options extends React.Component {
     renderWetlandMaskAsset() {
         const {inputs: {wetlandMaskAsset}} = this.props
         return (
-            <AssetSelect
+            <Form.AssetCombo
                 input={wetlandMaskAsset}
                 label={msg('process.baytsAlerts.panel.options.form.wetlandMaskAsset.label')}
                 placeholder={msg('process.baytsAlerts.panel.options.form.wetlandMaskAsset.placeholder')}
                 tooltip={msg('process.baytsAlerts.panel.options.form.wetlandMaskAsset.tooltip')}
-                expectedType={['Image', 'ImageCollection']}
+                allowedTypes={['Image', 'ImageCollection']}
             />
         )
     }

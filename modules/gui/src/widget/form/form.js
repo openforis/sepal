@@ -1,10 +1,10 @@
+import {FormAssetCombo} from './assetCombo'
 import {FormButtons} from 'widget/form/buttons'
 import {FormCheckbox} from 'widget/form/checkbox'
 import {FormCombo} from 'widget/form/combo'
 import {FormConstraint, FormField} from 'widget/form/property'
 import {FormContext} from 'widget/form/context'
 import {FormDatePicker} from 'widget/form/datePicker'
-import {FormError} from 'widget/form/error'
 import {FormFieldSet} from 'widget/form/fieldset'
 import {FormInput} from 'widget/form/input'
 import {FormPanel} from 'widget/form/panel'
@@ -257,6 +257,19 @@ export const withForm = ({fields = {}, constraints = {}, mapStateToProps}) =>
                 Object.keys(fields).forEach(name => this.setInitialValue(name))
             }
 
+            getErrorMessage(input, errors) {
+                return _.chain([input])
+                    .flatten()
+                    .compact()
+                    .map(source =>
+                        _.isString(source)
+                            ? errors[source]
+                            : source.error
+                    )
+                    .find(error => error)
+                    .value() || ''
+            }
+
             render() {
                 const inputs = {}
                 Object.keys(fields).forEach(name => {
@@ -284,8 +297,10 @@ export const withForm = ({fields = {}, constraints = {}, mapStateToProps}) =>
                         }
                     }
                 })
+                const errors = this.filterErrors(this.state.errors)
+
                 const form = {
-                    errors: this.filterErrors(this.state.errors),
+                    errors,
                     isInvalid: this.isInvalid,
                     isDirty: () => this.isDirty(),
                     setInitialValues: values => this.setInitialValues(values),
@@ -297,7 +312,8 @@ export const withForm = ({fields = {}, constraints = {}, mapStateToProps}) =>
                         this.dirtyListeners.push(() => listener(true))
                         this.cleanListeners.push(() => listener(false))
                     },
-                    reset: () => this.reset()
+                    reset: () => this.reset(),
+                    getErrorMessage: input => this.getErrorMessage(input, errors)
                 }
                 const element = React.createElement(WrappedComponent, {
                     ...this.props, form, inputs
@@ -350,12 +366,12 @@ Form.propTypes = {
     onSubmit: PropTypes.func
 }
 
+Form.AssetCombo = FormAssetCombo
 Form.Buttons = FormButtons
 Form.Checkbox = FormCheckbox
 Form.Combo = FormCombo
 Form.Constraint = FormConstraint
 Form.DatePicker = FormDatePicker
-Form.Error = FormError
 Form.Field = FormField
 Form.FieldSet = FormFieldSet
 Form.Input = FormInput

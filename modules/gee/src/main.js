@@ -6,6 +6,7 @@ const {port, instances} = require('./config')
 const routes = require('./routes')
 const server = require('#sepal/httpServer')
 const {initScheduler} = require('#sepal/worker/scheduler')
+const {INSTANCE_PER_USER, RANDOM_INSTANCE} = require('#sepal/worker/staticPool')
 
 const main = async () => {
     await server.start({
@@ -13,7 +14,8 @@ const main = async () => {
         routes
     })
 
-    initScheduler({instances})
+    initScheduler({name: 'default', strategy: RANDOM_INSTANCE, instances: 1})
+    initScheduler({name: 'GoogleEarthEngine', strategy: INSTANCE_PER_USER, instances})
     
     log.info('Initialized')
 }

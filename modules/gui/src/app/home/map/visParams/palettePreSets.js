@@ -47,7 +47,7 @@ export const PalettePreSets = ({onSelect, count, className, autoFocus, disabled}
             placeholder={msg('map.visParams.form.palette.preset.placeholder')}
             placement='above'
             options={allOptions}
-            additionalButtons={[
+            buttons={[
                 <Button
                     key={'attribution'}
                     chromeless
@@ -63,7 +63,6 @@ export const PalettePreSets = ({onSelect, count, className, autoFocus, disabled}
             ]}
             disabled={disabled}
             onChange={({value}) => onSelect(value)}
-            
         />
     )
 }

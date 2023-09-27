@@ -189,14 +189,14 @@ class _Constraint extends React.Component {
                     autoFocus
                     errorMessage
                     className={styles.rangeInput}
-                    additionalButtons={[fromInclusiveButton]}
+                    buttons={[fromInclusiveButton]}
                 />
                 <Form.Input
                     label={msg('widget.imageConstraints.range.to.label')}
                     input={to}
                     errorMessage
                     className={styles.rangeInput}
-                    additionalButtons={[toInclusiveButton]}
+                    buttons={[toInclusiveButton]}
                 />
             </Layout>
         )

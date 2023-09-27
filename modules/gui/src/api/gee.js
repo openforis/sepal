@@ -20,9 +20,15 @@ export default {
     assetRoots$: () =>
         get$('/api/gee/assetRoots'),
 
-    assetMetadata$: ({asset, expectedType}) =>
+    listAssets$: ({id}) =>
+        get$('/api/gee/asset/list', {
+            query: {id},
+            retries: 0
+        }),
+
+    assetMetadata$: ({asset, allowedTypes}) =>
         postJson$('/api/gee/assetMetadata', {
-            body: {asset, expectedType},
+            body: {asset, allowedTypes},
             retries: 0
         }),
 
@@ -121,5 +127,11 @@ export default {
     nextReferenceDataPoints$: recipe =>
         postJson$('/api/gee/nextReferenceDataPoints', {
             body: recipe
-        })
+        }),
+
+    awesomeGeeCommunityDatasets$: search =>
+        get$('/api/gee/datasets/awesome-gee-community', {
+            query: {search},
+            retries: 0
+        }),
 }

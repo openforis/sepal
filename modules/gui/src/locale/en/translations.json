@@ -59,7 +59,23 @@
     "asset": {
       "failedToLoad": "Failed to load EE asset",
       "notFound": "Asset not found",
-      "unauthorized": "You don't have access to this asset"
+      "unauthorized": "You don't have access to this asset",
+      "folder": "Folder",
+      "image": "Image",
+      "imageCollection": "Image collection",
+      "table": "Table",
+      "new": "New asset",
+      "recentAssets": "Recent assets",
+      "userAssets": "User assets",
+      "otherAssets": "Other assets",
+      "reload": "Reload assets",
+      "settings": "Asset settings",
+      "awesomeGeeCommunityDatasets": {
+        "title": "Awesome GEE Community Datasets",
+        "failedToLoad": "Failed to load Awesome GEE Community Datasets",
+        "searching": "Searching...",
+        "noResults": "No matching datasets found"
+      }
     },
     "bands": {
       "aerosol": "Aerosol",
@@ -223,7 +239,7 @@
     "gee": {
       "asset": {
         "error": {
-          "wrongType": "Asset is of type '{actualType}' while '{expectedType}' is expected."
+          "wrongType": "Asset is of type {actualType} while the only allowed types are: {allowedTypes}."
         }
       },
       "classification": {
@@ -4591,8 +4607,8 @@
     "widget": {
       "assetDestination": {
         "exists": {
-          "notReplacable": "This asset already exists, but isn't an image or image collection, so you cannot overwrite it",
-          "replacable": "This asset already exists, you have to confirm if you want to overwrite it or not"
+          "notReplaceable": "This asset already exists, but isn't an image or image collection, so you cannot overwrite it",
+          "replaceable": "This asset already exists, you have to confirm if you want to overwrite it or not"
         },
         "loadError": "Unable to load asset",
         "replace": {
