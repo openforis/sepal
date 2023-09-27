@@ -6,13 +6,14 @@ const worker$ = ({asset, allowedTypes}) => {
     const ee = require('#sepal/ee')
     const _ = require('lodash')
 
-    const addFirstImageProperties$ = asset => {
+    const addFirstImageMetadata$ = asset => {
         const collection = ee.ImageCollection(asset.id)
         const firstImage = collection
             .merge(ee.ImageCollection([ee.Image([])]))
             .first()
-        const bands = firstImage.bandNames()
-        const bands$ = ee.getInfo$(bands, 'Get collection bands')
+        const bands$ = ee.getInfo$(firstImage, 'Get first image in collection').pipe(
+            map(({bands}) => bands)
+        )
         const firstImageProperties$ = ee.getInfo$(firstImage.toDictionary(), 'Get first image properties')
 
         const toImagePropertyTypes$ = () => {
@@ -66,7 +67,7 @@ const worker$ = ({asset, allowedTypes}) => {
             const isAllowedType = !allowedTypes || (_.isArray(allowedTypes) && allowedTypes.includes(asset.type))
             if (isAllowedType) {
                 return asset.type === 'ImageCollection'
-                    ? addFirstImageProperties$(asset)
+                    ? addFirstImageMetadata$(asset)
                     : of(asset)
             } else {
                 const prettyAllowedTypes = allowedTypes.join(', ')
