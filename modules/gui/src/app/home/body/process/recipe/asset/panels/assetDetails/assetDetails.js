@@ -1,4 +1,3 @@
-import {AssetSelect} from 'widget/assetSelect'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
@@ -47,11 +46,11 @@ class AssetDetails extends React.Component {
     renderAssetSelector() {
         const {inputs: {assetId}} = this.props
         return (
-            <AssetSelect
+            <Form.AssetCombo
                 input={assetId}
                 label={msg('process.asset.panel.assetDetails.form.assetId.label')}
                 placeholder={msg('process.asset.panel.assetDetails.form.assetId.placeholder')}
-                expectedType={['Image', 'ImageCollection']}
+                allowedTypes={['Image', 'ImageCollection']}
                 autoFocus
                 onLoading={this.onLoading}
                 onLoaded={this.onLoaded}
