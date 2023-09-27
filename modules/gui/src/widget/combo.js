@@ -361,12 +361,17 @@ class _Combo extends React.Component {
 
     getInputOption(flattenedOptions) {
         const {value} = this.props
-        return flattenedOptions.find(option => !option.group && !option.alias && option.value === value)
+        return this.getInputOptionByAlias(flattenedOptions, value, false)
+            || this.getInputOptionByAlias(flattenedOptions, value, true)
+    }
+    
+    getInputOptionByAlias(options, value, alias) {
+        return options.find(option => !option.group && !!(option.alias) === alias && option.value === value)
     }
 
     matcher(filter) {
         // match beginning of multiple words in any order (e.g. both "u k" and "k u" match "United Kingdom")
-        const parts = splitString(simplifyString(escapeRegExp(filter)))
+        const parts = splitString(simplifyString(escapeRegExp(filter), {removeNonAlphanumeric: false}))
             .map(part => part ? `(?=.*${(part)})` : '')
         return RegExp(`^${parts.join('')}.*$`, 'i')
     }

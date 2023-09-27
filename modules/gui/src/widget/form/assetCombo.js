@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
-import {Subject, debounceTime, first, takeUntil} from 'rxjs'
+import {Subject, debounceTime, first, map, switchMap, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {escapeRegExp, splitString} from 'string'
@@ -40,7 +40,9 @@ class _FormAssetCombo extends React.Component {
 
     state = {
         filter: '',
-        loadingMetadata: false
+        loadingMetadata: false,
+        awesomeGeeCommunityDatasets: [],
+        searchingAwesomeGeeCommunityDatasets: false,
     }
 
     render() {
@@ -72,6 +74,7 @@ class _FormAssetCombo extends React.Component {
 
     renderReloadButton() {
         const {assets: {loading: loadingUserAssets}} = this.props
+        const {searchingAwesomeGeeCommunityDatasets} = this.state
         return (
             <Button
                 key='reload'
@@ -79,26 +82,25 @@ class _FormAssetCombo extends React.Component {
                 shape='none'
                 air='none'
                 icon='rotate'
-                iconAttributes={{spin: loadingUserAssets}}
+                iconAttributes={{spin: loadingUserAssets || searchingAwesomeGeeCommunityDatasets}}
                 tooltip={msg('asset.reload')}
                 tabIndex={-1}
-                disabled={loadingUserAssets}
+                disabled={loadingUserAssets || searchingAwesomeGeeCommunityDatasets}
                 onClick={this.reloadAssets}
             />
         )
     }
 
     renderAsset({title, id, type}) {
-        const {filter} = this.state
+        const {highlightMatcher} = this.state
         return (
             <CrudItem
                 key={id}
                 description={title || id}
-                highlight={getHighlightMatcher(filter)}
+                highlight={highlightMatcher}
                 icon={this.getItemTypeIcon(type)}
                 iconTooltip={this.getItemTooltip(type)}
                 iconVariant={type === 'Folder' ? 'info' : null}
-                tooltipPlacement='top'
             />
         )
     }
@@ -123,51 +125,66 @@ class _FormAssetCombo extends React.Component {
         return ASSET_TOOLTIP[type] || msg('asset.new')
     }
 
+    getCurrentValue() {
+        const {input: {value}} = this.props
+        return value
+    }
+
     componentDidMount() {
         const {input} = this.props
         if (input.value) {
             this.loadMetadata(input.value)
         }
         this.initializeAwesomeGeeCommunityDatasetsSearch()
+        this.initializeSearch()
     }
 
-    initializeAwesomeGeeCommunityDatasetsSearch() {
-        const {addSubscription} = this.props
+    initializeSearch() {
+        const {addSubscription, destination} = this.props
         addSubscription(
             this.filter$.pipe(
-                debounceTime(250)
+                debounceTime(100)
             ).subscribe(
-                filter => filter.length
-                    ? this.searchAwesomeGeeCommunityDatasets(filter)
-                    : this.searchAwesomeGeeCommunityDatasets(this.props.input.value)
+                filter => this.setState({
+                    filter,
+                    highlightMatcher: getHighlightMatcher(filter),
+                    searchingAwesomeGeeCommunityDatasets: !!filter && !destination
+                })
             )
         )
     }
 
-    isSearchingAwesomeGeeCommunityDatasets() {
-        const {stream} = this.props
-        return stream('LOAD_ASSET_METADATA').active
-    }
-
-    searchAwesomeGeeCommunityDatasets(filter) {
-        const {stream} = this.props
-        if (filter.length > 2) {
-            stream({
-                name: 'LOAD_ASSET_METADATA',
-                stream$: api.gee.awesomeGeeCommunityDatasets$(filter),
-                onNext: awesomeGeeCommunityDatasets => {
-                    this.setState({awesomeGeeCommunityDatasets})
-                },
-                onError: error => {
-                    this.setState({awesomeGeeCommunityDatasets: null})
-                    Notifications.error({message: msg('asset.awesomeGeeCommunityDatasets.failedToLoad', {error}), error})
-                }
-            })
-        } else {
-            this.setState({awesomeGeeCommunityDatasets: null})
+    initializeAwesomeGeeCommunityDatasetsSearch() {
+        const {addSubscription, allowedTypes, destination} = this.props
+        if (!destination) {
+            addSubscription(
+                this.filter$.pipe(
+                    debounceTime(500),
+                    map(filter => filter.length ? filter : this.getCurrentValue()),
+                    switchMap(search =>
+                        api.gee.awesomeGeeCommunityDatasets$(search, allowedTypes).pipe(
+                            takeUntil(this.filter$)
+                        )
+                    )
+                ).subscribe({
+                    next: awesomeGeeCommunityDatasets => {
+                        this.setState({
+                            awesomeGeeCommunityDatasets,
+                            searchingAwesomeGeeCommunityDatasets: false
+                        })
+                    },
+                    error: error => {
+                        this.setState({
+                            awesomeGeeCommunityDatasets: [],
+                            searchingAwesomeGeeCommunityDatasets: false
+                        })
+                        Notifications.error({message: msg('asset.awesomeGeeCommunityDatasets.failedToLoad', {error}), error})
+                    }
+                })
+            )
         }
     }
-    
+
     componentDidUpdate({input: prevInput}) {
         const {input} = this.props
         if (input.value && !prevInput?.value) {
@@ -196,12 +213,28 @@ class _FormAssetCombo extends React.Component {
 
     getOptions() {
         return _.compact([
+            ...this.getOwnOptions(),
+            ...this.getExternalOptions()
+        ])
+    }
+
+    getOwnOptions() {
+        return [
             this.getCurrentFilterOptions(),
             this.getRecentAssetsOptions(),
-            this.getUserAssetsOptions(),
-            this.getOtherAssetsOptions(),
-            this.getAwesomeGeeCommunityDatasetsOptions()
-        ])
+            this.getUserAssetsOptions()
+        ]
+    }
+
+    getExternalOptions() {
+        const {destination} = this.props
+        return !destination
+            ? [
+                this.getOtherAssetsOptions(),
+                this.getAwesomeGeeCommunityDatasetsOptions(),
+                // this.getGoogleDatasetsOptions()
+            ]
+            : []
     }
 
     getCurrentFilterOptions() {
@@ -211,7 +244,8 @@ class _FormAssetCombo extends React.Component {
                 label: filter,
                 value: filter,
                 disabled: !this.isAssetLike(filter),
-                alias: true
+                alias: true,
+                filterOption: false
             }]
         } : null
     }
@@ -244,68 +278,43 @@ class _FormAssetCombo extends React.Component {
         } : null
     }
 
-    getAwesomeGeeCommunityDatasetsSearchingOption() {
-        return [{
-            label: msg('asset.awesomeGeeCommunityDatasets.searching'),
-            disabled: true
-        }]
-    }
-
-    getAwesomeGeeCommunityDatasetsNoResultsOption() {
-        return [{
-            label: msg('asset.awesomeGeeCommunityDatasets.noResults'),
-            disabled: true
-        }]
-    }
-
     getAwesomeGeeCommunityDatasetsOptions() {
         const {awesomeGeeCommunityDatasets} = this.state
-        const searching = this.isSearchingAwesomeGeeCommunityDatasets()
-        const options = searching
-            ? this.getAwesomeGeeCommunityDatasetsSearchingOption()
-            : awesomeGeeCommunityDatasets?.length
-                ? this.getDatasetOptions(awesomeGeeCommunityDatasets)
-                : this.getAwesomeGeeCommunityDatasetsNoResultsOption()
+        const assets = awesomeGeeCommunityDatasets.map(({title, id, provider, type, tags}) => ({
+            title,
+            id,
+            type,
+            searchableText: [title, id, provider, type, tags].join('|')
+        }))
         return {
             label: msg('asset.awesomeGeeCommunityDatasets.title'),
-            filterOptions: false,
-            options
+            options: this.getAssetOptions(assets)
         }
     }
 
     getAssetOptions(assets, {alias, filter} = {}) {
         return assets
             .filter(({type}) => this.isAllowedType(type))
-            .map(({title, id, type}) => ({
+            .map(({title, id, type, searchableText}) => ({
                 label: title || id,
                 value: id,
                 alias,
+                searchableText,
                 filter: filter && filter(id, type),
                 dimmed: !this.isPreferredType(type),
-                render: () => this.renderAsset({id, type})
-            }))
-    }
-
-    getDatasetOptions(dataset) {
-        return dataset
-            .map(({title, id, provider, type, tags}) => ({
-                label: title,
-                value: id,
-                render: () => this.renderAsset({title, id, provider, type, tags}),
-                searchableText: [title, id, provider, type, tags].join('|')
+                render: () => this.renderAsset({title, id, type})
             }))
     }
 
     onFilterChange(filter) {
-        this.setState({filter})
         this.filter$.next(filter)
     }
 
     onChange(option) {
-        const {value: asset} = option
+        const {value: assetId} = option
         const {onChange} = this.props
-        onChange && onChange(asset)
-        this.loadMetadata(asset)
+        onChange && onChange(assetId)
+        this.loadMetadata(assetId)
     }
 
     onError(assetId, error) {
@@ -368,19 +377,19 @@ class _FormAssetCombo extends React.Component {
         return api.gee.assetMetadata$({asset, allowedTypes})
     }
 
-    loadMetadata(asset) {
+    loadMetadata(assetId) {
         const {stream} = this.props
         const {loadingMetadata} = this.state
-        if (this.isAssetLike(asset) && asset !== loadingMetadata) {
-            this.onLoading(asset)
+        if (this.isAssetLike(assetId) && assetId !== loadingMetadata) {
+            this.onLoading(assetId)
             stream({
                 name: 'LOAD_ASSET_METADATA',
-                stream$: this.getMetadata$(asset).pipe(
+                stream$: this.getMetadata$(assetId).pipe(
                     takeUntil(this.assetChanged$.pipe()),
                     first()
                 ),
-                onNext: metadata => this.onLoaded(asset, metadata),
-                onError: error => this.onError(asset, error)
+                onNext: metadata => this.onLoaded(assetId, metadata),
+                onError: error => this.onError(assetId, error)
             })
         }
     }
@@ -402,6 +411,7 @@ FormAssetCombo.propTypes = {
     autoOpen: PropTypes.any,
     busyMessage: PropTypes.any,
     className: PropTypes.string,
+    destination: PropTypes.any,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,
     inputClassName: PropTypes.string,

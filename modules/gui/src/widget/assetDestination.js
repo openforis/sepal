@@ -45,6 +45,7 @@ class _AssetDestination extends React.Component {
                 busyMessage={stream('UPDATE_ASSET_ROOTS').active}
                 preferredTypes={[type]}
                 labelButtons={[this.renderStrategy()]}
+                disableExternal
                 onLoading={this.onLoading}
                 onLoaded={({metadata} = {}) => this.onLoaded(metadata?.type)}
                 onError={this.onError}
@@ -149,9 +150,10 @@ class _AssetDestination extends React.Component {
     }
 
     onError(error) {
+        const {strategyInput} = this.props
         const {onError} = this.props
         if (error.status === 404) {
-            this.onLoaded()
+            strategyInput.set('new')
             return true
         } else {
             onError && onError(error)

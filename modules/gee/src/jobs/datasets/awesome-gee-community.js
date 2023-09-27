@@ -5,11 +5,13 @@ const MAX_RESULTS = 10
 
 let cached = null
 
-const worker$ = ({search}) => {
+const worker$ = ({search, allowedTypes}) => {
     const {get$} = require('#sepal/httpClient')
     const {of, map, tap} = require('rxjs')
     const _ = require('lodash')
     const {escapeRegExp, simplifyString, splitString} = require('#sepal/string')
+
+    const searchElements = splitString(escapeRegExp(search))
 
     const getDataset$ = () =>
         cached
@@ -21,7 +23,9 @@ const worker$ = ({search}) => {
             )
 
     const mapOriginalDatasets = datasets =>
-        datasets.map(({title, id, provider, type, tags}) => ({title, id, provider, type: mapType(type), tags}))
+        datasets.map(
+            ({title, id, provider, type, tags}) => ({title: simplifyString(title), id, provider, type: mapType(type), tags})
+        )
 
     const TYPE_MAP = {
         'image': 'Image',
@@ -32,23 +36,32 @@ const worker$ = ({search}) => {
     const mapType = type =>
         TYPE_MAP[type]
 
-    const isDatasetMatching = ({title, id, provider, tags}) => {
-        const searchElements = splitString(simplifyString(escapeRegExp(search)))
-        if (searchElements.length) {
-            const searchMatchers = searchElements.map(filter => RegExp(filter, 'i'))
-            const searchProperties = [title, id, provider, tags].map(simplifyString)
-            return _.every(searchMatchers, matcher =>
-                _.find(searchProperties, property =>
-                    matcher.test(property)
+    const propertyMatchers = {
+        title: search => simplifyString(search),
+        id: search => search,
+        provider: search => simplifyString(search),
+        tags: search => search
+    }
+
+    const propertyMatcher = (property, search) =>
+        RegExp(propertyMatchers[property](search), 'i')
+
+    const isMatchingAllowedTypes = dataset =>
+        !allowedTypes || allowedTypes.includes(dataset.type)
+
+    const isMatchingText = dataset =>
+        searchElements.length
+            ? _.every(searchElements, searchElement =>
+                _.find(Object.keys(propertyMatchers), property =>
+                    propertyMatcher(property, searchElement).test(dataset[property])
                 )
             )
-        }
-        return false
-    }
+            : false
 
     const mapDatasets = datasets =>
         datasets
-            .filter(dataset => isDatasetMatching(dataset))
+            .filter(dataset => isMatchingAllowedTypes(dataset))
+            .filter(dataset => isMatchingText(dataset))
             .slice(0, MAX_RESULTS)
 
     return getDataset$().pipe(
