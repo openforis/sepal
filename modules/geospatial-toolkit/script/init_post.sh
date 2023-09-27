@@ -9,7 +9,7 @@ mkdir /var/run/sshd
 
 # Setup /etc/environment
 printf '%s\n' \
-    'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/lib/orfeo/bin:/usr/local/snap/bin:/usr/local/lib/python3.8/dist-packages/sepal_ui/bin"' \
+    'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/lib/orfeo/bin:/usr/local/snap/bin:/usr/local/lib/python3.8/dist-packages/sepal_ui/bin:/home/sepal-user/.local/bin"' \
     'JAVA_HOME="/usr/local/lib/sdkman/candidates/java/current"' \
     'SDKMAN_DIR="/usr/local/lib/sdkman"' \
     'GDAL_DATA="/usr/share/gdal"' \
