@@ -26,6 +26,7 @@ useradd sepal-user -u ${sandbox_user_id} -g ${home_group_id} -s /usr/bin/bash
 mkdir -p /home/sepal-user/.ssh
 authorized_keys=/home/$sandbox_user/.ssh/authorized_keys
 echo $USER_PUBLIC_KEY > $authorized_keys
+chown $sandbox_user_id:$home_group_id /home/sepal-user/.ssh
 chown $sandbox_user_id:$home_group_id $authorized_keys
 
 mkdir -p /home/$sandbox_user/.log/shiny
