@@ -361,12 +361,17 @@ class _Combo extends React.Component {
 
     getInputOption(flattenedOptions) {
         const {value} = this.props
-        return flattenedOptions.find(option => !option.group && !option.alias && option.value === value)
+        return this.getInputOptionByAlias(flattenedOptions, value, false)
+            || this.getInputOptionByAlias(flattenedOptions, value, true)
+    }
+    
+    getInputOptionByAlias(options, value, alias) {
+        return options.find(option => !option.group && !!(option.alias) === alias && option.value === value)
     }
 
     matcher(filter) {
         // match beginning of multiple words in any order (e.g. both "u k" and "k u" match "United Kingdom")
-        const parts = splitString(simplifyString(escapeRegExp(filter)))
+        const parts = splitString(simplifyString(escapeRegExp(filter), {removeNonAlphanumeric: false}))
             .map(part => part ? `(?=.*${(part)})` : '')
         return RegExp(`^${parts.join('')}.*$`, 'i')
     }
@@ -384,7 +389,7 @@ class _Combo extends React.Component {
             ...group,
             options
         }
-        return filtered.options.length ? filtered : null
+        return filtered.options.length || group.showEmptyGroup ? filtered : null
     }
 
     getFilteredOptions(options) {
@@ -393,8 +398,7 @@ class _Combo extends React.Component {
             options.map(option =>
                 option.options
                     ? this.filterOptions(option)
-                    : matcher.test(simplifyString(option.searchableText || option.label))
-                    // : matcher.test(option.searchableText || option.label)
+                    : option.filterOption === false || matcher.test(option.searchableText || option.label)
                         ? option
                         : null
             )
@@ -435,6 +439,7 @@ Combo.propTypes = {
                     alias: PropTypes.any,
                     disabled: PropTypes.any,
                     filter: PropTypes.any,
+                    filterOption: PropTypes.any,
                     key: PropTypes.string,
                     label: PropTypes.any,
                     render: PropTypes.func,
@@ -444,6 +449,7 @@ Combo.propTypes = {
             ),
             render: PropTypes.func,
             searchableText: PropTypes.string,
+            showEmptyGroup: PropTypes.any,
             value: PropTypes.any,
         })
     ).isRequired,

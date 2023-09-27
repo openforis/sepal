@@ -72,9 +72,7 @@
       "settings": "Asset settings",
       "awesomeGeeCommunityDatasets": {
         "title": "Awesome GEE Community Datasets",
-        "failedToLoad": "Failed to load Awesome GEE Community Datasets",
-        "searching": "Searching...",
-        "noResults": "No matching datasets found"
+        "failedToLoad": "Failed to load Awesome GEE Community Datasets"
       }
     },
     "bands": {
