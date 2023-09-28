@@ -18,6 +18,7 @@ const parseVisualization = properties => _.chain(properties)
         props.forEach(({key, value}) => visParams[key] = value)
         return normalize(visParams)
     })
+    .filter(visParams => visParams)
     .value()
 
 const parseClassProperties = (properties, bands) =>
@@ -36,6 +37,7 @@ const parseClassProperties = (properties, bands) =>
             values: properties[`${band}_class_values`],
             palette: properties[`${band}_class_palette`],
         }))
+        .filter(visParams => visParams)
 
 export const toVisualizations = (properties, bands) =>
     parseVisualization(properties).concat(parseClassProperties(properties, bands))

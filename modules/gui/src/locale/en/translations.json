@@ -74,6 +74,10 @@
         "community": "Awesome GEE Community Datasets ({matchingResults} matches)",
         "gee": "GEE Catalog ({matchingResults} matches)",
         "failedToLoad": "Failed to load Awesome GEE Community Datasets"
+      },
+      "copyId": {
+        "tooltip": "Copy asset id to clipboard",
+        "success": "Asset id copied to clipboard"
       }
     },
     "bands": {
