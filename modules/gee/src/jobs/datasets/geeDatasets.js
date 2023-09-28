@@ -11,10 +11,10 @@ const datasets = []
 const getNode$ = (url = URL) =>
     get$(url).pipe(
         map(({body}) => JSON.parse(body)),
-        switchMap(({type, title, id, 'gee:type': geeType, links}) =>
+        switchMap(({type, title, id, 'gee:type': geeType, links, providers}) =>
             type === 'Catalog'
                 ? merge(...getNodes$(links))
-                : of({title, id, type: mapType(geeType), searchTitle: simplifyString(title)})
+                : of({title, id, type: mapType(geeType), searchTitle: simplifyString(title), url: getUrl(providers)})
         )
     )
 
@@ -32,11 +32,14 @@ const TYPE_MAP = {
 const mapType = type =>
     TYPE_MAP[type]
 
+const getUrl = providers =>
+    providers.find(({roles}) => roles.includes('host'))?.url
+
 const getDatasets = (text, allowedTypes) =>
     datasets
         .filter(({type}) => isMatchingAllowedTypes(type, allowedTypes))
         .filter(dataset => isMatchingText(dataset, getSearchElements(text)))
-        .map(({title, id, type}) => ({title, id, type}))
+        .map(({title, id, type, url}) => ({title, id, type, url}))
 
 const getSearchElements = text =>
     splitString(escapeRegExp(text))

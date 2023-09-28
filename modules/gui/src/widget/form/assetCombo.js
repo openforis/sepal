@@ -114,7 +114,7 @@ class _FormAssetCombo extends React.Component {
         )
     }
 
-    renderAsset({title, id, type}) {
+    renderAsset({title, id, type, url}) {
         const {highlightMatcher} = this.state
         return (
             <CrudItem
@@ -124,8 +124,29 @@ class _FormAssetCombo extends React.Component {
                 icon={this.getItemTypeIcon(type)}
                 iconTooltip={this.getItemTooltip(type)}
                 iconVariant={type === 'Folder' ? 'info' : null}
+                inlineComponents={[
+                    this.renderReferencePageButton(url)
+                ]}
             />
         )
+    }
+
+    renderReferencePageButton(url) {
+        return url ? (
+            <Button
+                key='link'
+                chromeless
+                shape='none'
+                air='none'
+                size='small'
+                icon='arrow-up-right-from-square'
+                linkUrl={url}
+                linkTarget='_blank'
+                dimmed
+                tooltip='Open dataset reference page'
+                tooltipPlacement='topRight'
+            />
+        ) : null
     }
 
     copyIdToClipboard() {
@@ -330,10 +351,11 @@ class _FormAssetCombo extends React.Component {
 
     getGeeCatalogOptions() {
         const {datasets: {gee: {datasets: geeCatalog = [], matchingResults, moreResults} = {}}} = this.state
-        const assets = geeCatalog.map(({title, id, type}) => ({
+        const assets = geeCatalog.map(({title, id, type, url}) => ({
             title,
             id,
             type,
+            url,
             searchableText: [title, id, type].join('|')
         }))
         return {
@@ -345,14 +367,14 @@ class _FormAssetCombo extends React.Component {
     getAssetOptions(assets, {alias, filter} = {}) {
         return assets
             .filter(({type}) => this.isAllowedType(type))
-            .map(({title, id, type, searchableText}) => ({
+            .map(({title, id, type, url, searchableText}) => ({
                 label: title || id,
                 value: id,
                 alias,
                 searchableText,
                 filter: filter && filter(id, type),
                 dimmed: !this.isPreferredType(type),
-                render: () => this.renderAsset({title, id, type})
+                render: () => this.renderAsset({title, id, type, url})
             }))
     }
 
