@@ -270,24 +270,23 @@ class _Button extends React.Component {
     }
 
     renderButton(contents) {
-        const {type, style, tabIndex, forwardedRef} = this.props
-        return (
-            <button
-                ref={forwardedRef}
-                type={type}
-                className={this.classNames()}
-                style={this.isActive() ? style : {...style, pointerEvents: 'none'}}
-                tabIndex={tabIndex}
-                disabled={!this.isActive()}
-                onMouseEnter={this.handleMouseEnter}
-                onMouseLeave={this.handleMouseLeave}
-                onMouseOver={this.handleMouseOver}
-                onMouseOut={this.handleMouseOut}
-                onMouseDown={this.handleMouseDown}
-                onClick={this.handleClick}>
-                {contents}
-            </button>
-        )
+        const {type, style, tabIndex, innerButton, forwardedRef} = this.props
+        const elementType = innerButton ? 'div' : 'button'
+        const props = {
+            ref: forwardedRef,
+            type,
+            className: this.classNames(),
+            style: this.isActive() ? style : {...style, pointerEvents: 'none'},
+            tabIndex,
+            disabled: !this.isActive(),
+            onMouseEnter: this.handleMouseEnter,
+            onMouseLeave: this.handleMouseLeave,
+            onMouseOver: this.handleMouseOver,
+            onMouseOut: this.handleMouseOut,
+            onMouseDown: this.handleMouseDown,
+            onClick: this.handleClick
+        }
+        return React.createElement(elementType, props, contents)
     }
 
     renderIcon() {
@@ -442,6 +441,7 @@ Button.propTypes = {
     iconPlacement: PropTypes.oneOf(['left', 'right']),
     iconType: PropTypes.string,
     iconVariant: PropTypes.string,
+    innerButton: PropTypes.any,
     keybinding: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
     label: PropTypes.any,
     labelStyle: PropTypes.oneOf(['default', 'smallcaps', 'smallcaps-highlight']),
@@ -478,6 +478,7 @@ Button.propTypes = {
 Button.defaultProps = {
     air: 'normal',
     alignment: 'center',
+    elementType: 'button',
     iconPlacement: 'left',
     iconVariant: 'normal',
     labelStyle: 'default',
