@@ -45,7 +45,7 @@ class _FormAssetCombo extends React.Component {
         filter: '',
         loadingMetadata: false,
         datasets: {},
-        searchingAwesomeGeeCommunityDatasets: false,
+        searchingDatasets: false,
     }
 
     render() {
@@ -80,7 +80,7 @@ class _FormAssetCombo extends React.Component {
 
     renderReloadButton() {
         const {assets: {loading: loadingUserAssets}} = this.props
-        const {searchingAwesomeGeeCommunityDatasets} = this.state
+        const {searchingDatasets} = this.state
         return (
             <Button
                 key='reload'
@@ -88,10 +88,10 @@ class _FormAssetCombo extends React.Component {
                 shape='none'
                 air='none'
                 icon='rotate'
-                iconAttributes={{spin: loadingUserAssets || searchingAwesomeGeeCommunityDatasets}}
+                iconAttributes={{spin: loadingUserAssets || searchingDatasets}}
                 tooltip={msg('asset.reload')}
                 tabIndex={-1}
-                disabled={loadingUserAssets || searchingAwesomeGeeCommunityDatasets}
+                disabled={loadingUserAssets || searchingDatasets}
                 onClick={this.reloadAssets}
             />
         )
@@ -177,7 +177,7 @@ class _FormAssetCombo extends React.Component {
                 filter => this.setState({
                     filter,
                     highlightMatcher: getHighlightMatcher(filter),
-                    searchingAwesomeGeeCommunityDatasets: !!filter && !destination
+                    searchingDatasets: !!filter && !destination
                 })
             )
         )
@@ -202,13 +202,13 @@ class _FormAssetCombo extends React.Component {
                                 community,
                                 gee
                             },
-                            searchingAwesomeGeeCommunityDatasets: false
+                            searchingDatasets: false
                         })
                     },
                     error: error => {
                         this.setState({
                             datasets: {},
-                            searchingAwesomeGeeCommunityDatasets: false
+                            searchingDatasets: false
                         })
                         Notifications.error({message: msg('asset.datasets.failedToLoad', {error}), error})
                     }
