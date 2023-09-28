@@ -275,6 +275,7 @@ class _Combo extends React.Component {
             filter,
             matcher: this.matcher(filter)
         })
+        this.input.current.focus()
     }
 
     resetFilterOrClearSelection() {
