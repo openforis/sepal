@@ -70,8 +70,9 @@
       "otherAssets": "Other assets",
       "reload": "Reload assets",
       "settings": "Asset settings",
-      "awesomeGeeCommunityDatasets": {
-        "title": "Awesome GEE Community Datasets",
+      "datasets": {
+        "community": "Awesome GEE Community Datasets ({matchingResults} matches)",
+        "gee": "GEE Catalog ({matchingResults} matches)",
         "failedToLoad": "Failed to load Awesome GEE Community Datasets"
       }
     },

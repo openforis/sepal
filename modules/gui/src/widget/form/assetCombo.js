@@ -18,8 +18,9 @@ import _ from 'lodash'
 import api from 'api'
 import memoizeOne from 'memoize-one'
 
-// check for allowed characters and minimum path depth (3)
-const ASSET_PATTERN = new RegExp('^[a-zA-Z0-9-_]+(/[a-zA-Z0-9-_]+){2,}$')
+// check for allowed characters and minimum path depth (2)
+const ASSET_PATTERN = new RegExp('^[a-zA-Z0-9-_]+(/[a-zA-Z0-9-_]+){1,}$')
+const MAX_RECENT = 5
 
 const getHighlightMatcher = memoizeOne(
     filter => filter
@@ -41,7 +42,7 @@ class _FormAssetCombo extends React.Component {
     state = {
         filter: '',
         loadingMetadata: false,
-        awesomeGeeCommunityDatasets: [],
+        datasets: {},
         searchingAwesomeGeeCommunityDatasets: false,
     }
 
@@ -135,7 +136,7 @@ class _FormAssetCombo extends React.Component {
         if (input.value) {
             this.loadMetadata(input.value)
         }
-        this.initializeAwesomeGeeCommunityDatasetsSearch()
+        this.initializeDatasetsSearch()
         this.initializeSearch()
     }
 
@@ -154,7 +155,7 @@ class _FormAssetCombo extends React.Component {
         )
     }
 
-    initializeAwesomeGeeCommunityDatasetsSearch() {
+    initializeDatasetsSearch() {
         const {addSubscription, allowedTypes, destination} = this.props
         if (!destination) {
             addSubscription(
@@ -162,23 +163,26 @@ class _FormAssetCombo extends React.Component {
                     debounceTime(500),
                     map(filter => filter.length ? filter : this.getCurrentValue()),
                     switchMap(search =>
-                        api.gee.awesomeGeeCommunityDatasets$(search, allowedTypes).pipe(
+                        api.gee.datasets$(search, allowedTypes).pipe(
                             takeUntil(this.filter$)
                         )
                     )
                 ).subscribe({
-                    next: awesomeGeeCommunityDatasets => {
+                    next: ({community, gee}) => {
                         this.setState({
-                            awesomeGeeCommunityDatasets,
+                            datasets: {
+                                community,
+                                gee
+                            },
                             searchingAwesomeGeeCommunityDatasets: false
                         })
                     },
                     error: error => {
                         this.setState({
-                            awesomeGeeCommunityDatasets: [],
+                            datasets: {},
                             searchingAwesomeGeeCommunityDatasets: false
                         })
-                        Notifications.error({message: msg('asset.awesomeGeeCommunityDatasets.failedToLoad', {error}), error})
+                        Notifications.error({message: msg('asset.datasets.failedToLoad', {error}), error})
                     }
                 })
             )
@@ -204,7 +208,7 @@ class _FormAssetCombo extends React.Component {
 
     isPreferredType(type) {
         const {preferredTypes} = this.props
-        return !type || _.isEmpty(preferredTypes) || preferredTypes.includes(type)
+        return !type || type === 'Folder' || _.isEmpty(preferredTypes) || preferredTypes.includes(type)
     }
 
     isAssetLike(asset) {
@@ -232,7 +236,7 @@ class _FormAssetCombo extends React.Component {
             ? [
                 this.getOtherAssetsOptions(),
                 this.getAwesomeGeeCommunityDatasetsOptions(),
-                // this.getGoogleDatasetsOptions()
+                this.getGeeCatalogOptions()
             ]
             : []
     }
@@ -251,10 +255,14 @@ class _FormAssetCombo extends React.Component {
     }
 
     getRecentAssetsOptions() {
-        const {assets: {recentAssets}} = this.props
-        return recentAssets?.length ? {
+        const {assets: {recentAssets, userAssets}, destination} = this.props
+        const filteredRecentAssets = destination
+            ? recentAssets.filter(({id: recentAssetId, type}) => !type || userAssets.find(({id}) => id === recentAssetId))
+            : recentAssets
+
+        return filteredRecentAssets?.length ? {
             label: msg('asset.recentAssets'),
-            options: this.getAssetOptions(recentAssets, {
+            options: this.getAssetOptions(filteredRecentAssets.slice(0, MAX_RECENT), {
                 alias: true
             })
         } : null
@@ -279,16 +287,30 @@ class _FormAssetCombo extends React.Component {
     }
 
     getAwesomeGeeCommunityDatasetsOptions() {
-        const {awesomeGeeCommunityDatasets} = this.state
-        const assets = awesomeGeeCommunityDatasets.map(({title, id, provider, type, tags}) => ({
+        const {datasets: {community: {datasets: communityDatasets = [], matchingResults, moreResults} = {}}} = this.state
+        const assets = communityDatasets.map(({title, id, type}) => ({
             title,
             id,
             type,
-            searchableText: [title, id, provider, type, tags].join('|')
+            searchableText: [title, id, type].join('|')
         }))
         return {
-            label: msg('asset.awesomeGeeCommunityDatasets.title'),
-            options: this.getAssetOptions(assets)
+            label: msg('asset.datasets.community', {matchingResults}),
+            options: this.getAssetOptions(assets, {moreResults})
+        }
+    }
+
+    getGeeCatalogOptions() {
+        const {datasets: {gee: {datasets: geeCatalog = [], matchingResults, moreResults} = {}}} = this.state
+        const assets = geeCatalog.map(({title, id, type}) => ({
+            title,
+            id,
+            type,
+            searchableText: [title, id, type].join('|')
+        }))
+        return {
+            label: msg('asset.datasets.gee', {matchingResults}),
+            options: this.getAssetOptions(assets, {moreResults})
         }
     }
 

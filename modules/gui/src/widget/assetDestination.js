@@ -45,7 +45,7 @@ class _AssetDestination extends React.Component {
                 busyMessage={stream('UPDATE_ASSET_ROOTS').active}
                 preferredTypes={[type]}
                 labelButtons={[this.renderStrategy()]}
-                disableExternal
+                destination
                 onLoading={this.onLoading}
                 onLoaded={({metadata} = {}) => this.onLoaded(metadata?.type)}
                 onError={this.onError}
