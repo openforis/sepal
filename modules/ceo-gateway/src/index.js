@@ -5,7 +5,7 @@ const urljoin = require('url-join')
 const randomColor = require('randomcolor')
 const swaggerUi = require('swagger-ui-express')
 const bodyParser = require('body-parser')
-
+const cors = require('cors')
 const config = require('./config')
 const swaggerDocument = require('./swagger.json')
 
@@ -14,6 +14,7 @@ const app = express()
 app.use(bodyParser.json({ limit: '50mb' }))
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }))
 
+}));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 app.use(session({
@@ -91,24 +92,27 @@ app.post('/create-project', (req, res, next) => {
         count: classes.length,
         hue: 'random',
     })
-    const sampleValues = [{
-        id: 1,
-        question: 'CLASS',
-        answers: classes.map(function(currentValue, index) {
-            return {
-                id: index + 1,
-                answer: currentValue,
-                color: colors[index],
-            }
-        }),
-        parentQuestion: -1,
-        parentAnswer: -1,
-        dataType: 'text',
-        componentType: 'button',
-    }]
+    const sampleValues = {
+        0: {
+            question: 'CLASS',
+            answers: classes.reduce((accumulator, currentValue, index) => {
+                accumulator[index] = {
+                    answer: currentValue, 
+                    color: colors[index], 
+                    hide: false
+                }
+                return accumulator
+            }, {}),
+            parentQuestionId: -1,
+            parentAnswerIds: [],
+            dataType: 'text',
+            componentType: 'button',
+            cardOrder: 1
+        }
+    }
     const data = {
         institutionId,
-        ...(imageryId !== undefined && {imageryId}),
+        imageryId: 5,
         description: title,
         institutionId,
         name: title,
@@ -143,7 +147,7 @@ app.post('/create-project', (req, res, next) => {
                 polygons: true
             }
         },
-        sampleDistribution: 'gridded',
+        sampleDistribution: 'center',
         samplesPerPlot: '',
         sampleResolution: plotSize,
         surveyQuestions: sampleValues,
