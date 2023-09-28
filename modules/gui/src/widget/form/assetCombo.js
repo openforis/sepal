@@ -16,6 +16,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
+import clipboard from 'clipboard'
 import memoizeOne from 'memoize-one'
 
 // check for allowed characters and minimum path depth (2)
@@ -34,6 +35,7 @@ class _FormAssetCombo extends React.Component {
         this.onChange = this.onChange.bind(this)
         this.onFilterChange = this.onFilterChange.bind(this)
         this.reloadAssets = this.reloadAssets.bind(this)
+        this.copyIdToClipboard = this.copyIdToClipboard.bind(this)
     }
 
     assetChanged$ = new Subject()
@@ -57,7 +59,10 @@ class _FormAssetCombo extends React.Component {
             <Form.Combo
                 options={options}
                 busyMessage={(busyMessage || this.props.stream('LOAD_ASSET_METADATA').active) && msg('widget.loading')}
-                buttons={[this.renderReloadButton()]}
+                buttons={[
+                    this.renderCopyIdButton(),
+                    this.renderReloadButton()
+                ]}
                 onChange={this.onChange}
                 onFilterChange={this.onFilterChange}
                 {...otherProps}
@@ -92,6 +97,23 @@ class _FormAssetCombo extends React.Component {
         )
     }
 
+    renderCopyIdButton() {
+        const {input: {value}} = this.props
+        return (
+            <Button
+                key='copyId'
+                chromeless
+                shape='none'
+                air='none'
+                icon='copy'
+                tooltip={msg('asset.copyId.tooltip')}
+                tabIndex={-1}
+                disabled={!value}
+                onClick={this.copyIdToClipboard}
+            />
+        )
+    }
+
     renderAsset({title, id, type}) {
         const {highlightMatcher} = this.state
         return (
@@ -104,6 +126,12 @@ class _FormAssetCombo extends React.Component {
                 iconVariant={type === 'Folder' ? 'info' : null}
             />
         )
+    }
+
+    copyIdToClipboard() {
+        const {input: {value}} = this.props
+        clipboard.copy(value)
+        Notifications.success({message: msg('asset.copyId.success')})
     }
 
     getItemTypeIcon(type) {
