@@ -21,6 +21,7 @@
     cursor: pointer;
     font-size: var(--font-size);
     line-height: var(--font-size);
+    letter-spacing: 0;
     min-height: calc(var(--size) * var(--min-size-factor));
     min-width: calc(var(--size) * var(--min-size-factor));
     padding: 0; /* Needed for alignment of button contents */

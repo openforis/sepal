@@ -270,12 +270,15 @@ class _Combo extends React.Component {
 
     setFilter(filter = '') {
         const {onFilterChange} = this.props
+        const {showOptions} = this.state
         onFilterChange && onFilterChange(filter)
         this.setState({
             filter,
             matcher: this.matcher(filter)
         })
-        this.input.current.focus()
+        if (showOptions) {
+            this.input.current.focus()
+        }
     }
 
     resetFilterOrClearSelection() {
