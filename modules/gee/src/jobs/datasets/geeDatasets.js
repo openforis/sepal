@@ -1,12 +1,13 @@
 const {get$} = require('#sepal/httpClient')
-const {of, map, switchMap, merge} = require('rxjs')
+const {of, map, switchMap, merge, toArray, timer, tap} = require('rxjs')
 const _ = require('lodash')
 const {escapeRegExp, simplifyString, splitString} = require('#sepal/string')
 const log = require('#sepal/log').getLogger('ee')
 
 const URL = 'https://earthengine-stac.storage.googleapis.com/catalog/catalog.json'
+const REFRESH_INTERVAL_HOURS = 24
 
-const datasets = []
+let datasets = []
 
 const getNode$ = (url = URL) =>
     get$(url).pipe(
@@ -63,12 +64,19 @@ const propertyMatchers = {
     
 const propertyMatcher = (property, search) =>
     RegExp(propertyMatchers[property](search), 'i')
-    
-log.info('Loading GEE catalog')
-    
-getNode$().subscribe({
-    next: node => datasets.push(node),
-    complete: () => log.info(`GEE catalog loaded, ${datasets.length} datasets`)
+
+timer(0, REFRESH_INTERVAL_HOURS * 3600000).pipe(
+    tap(() => log.info('Loading GEE catalog')),
+    switchMap(() =>
+        getNode$().pipe(
+            toArray()
+        )
+    )
+).subscribe({
+    next: content => {
+        datasets = content
+        log.info(`GEE catalog loaded, ${datasets.length} datasets`)
+    }
 })
 
 module.exports = {getDatasets}

@@ -1,11 +1,12 @@
 // const Job = require('#sepal/worker/job')
 const {get$} = require('#sepal/httpClient')
-const {map} = require('rxjs')
+const {map, timer, tap, switchMap} = require('rxjs')
 const _ = require('lodash')
 const {escapeRegExp, simplifyString, splitString} = require('#sepal/string')
 const log = require('#sepal/log').getLogger('ee')
 
 const URL = 'https://raw.githubusercontent.com/samapriya/awesome-gee-community-datasets/master/community_datasets.json'
+const REFRESH_INTERVAL_HOURS = 24
 
 let datasets = []
 
@@ -62,11 +63,14 @@ const propertyMatchers = {
 const propertyMatcher = (property, search) =>
     RegExp(propertyMatchers[property](search), 'i')
 
-log.info('Loading Awesome GEE community datasets')
-
-getDatasets$().subscribe({
-    next: content => datasets = content,
-    complete: () => log.info(`Awesome GEE community datasets loaded, ${datasets.length} datasets`)
+timer(0, REFRESH_INTERVAL_HOURS * 3600000).pipe(
+    tap(() => log.info('Loading Awesome GEE community datasets')),
+    switchMap(() => getDatasets$())
+).subscribe({
+    next: content => {
+        datasets = content
+        log.info(`Awesome GEE community datasets loaded, ${datasets.length} datasets`)
+    }
 })
 
 module.exports = {getDatasets}
