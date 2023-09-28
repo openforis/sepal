@@ -1,22 +1,45 @@
 const {job} = require('#gee/jobs/job')
 
 const worker$ = ({asset, allowedTypes}) => {
-    const {of, catchError, map, switchMap, throwError} = require('rxjs')
+    const {of, catchError, forkJoin, map, switchMap, throwError} = require('rxjs')
     const {ClientException, NotFoundException} = require('#sepal/exception')
     const ee = require('#sepal/ee')
     const _ = require('lodash')
 
-    const addFirstImageBands$ = asset => {
+    const addFirstImageMetadata$ = asset => {
         const collection = ee.ImageCollection(asset.id)
-        const bands = ee.Algorithms.If(
-            collection.size(),
-            ee.Dictionary(ee.Algorithms.Describe(
-                collection.first()
-            )).get('bands'),
-            []
+        const firstImage = collection
+            .merge(ee.ImageCollection([ee.Image([])]))
+            .first()
+        const bands$ = ee.getInfo$(firstImage, 'Get first image in collection').pipe(
+            map(({bands}) => bands)
         )
-        return ee.getInfo$(bands, 'Get collection bands').pipe(
-            map(bands => ({...asset, bands}))
+        const firstImageProperties$ = ee.getInfo$(firstImage.toDictionary(), 'Get first image properties')
+
+        const toImagePropertyTypes$ = () => {
+            var propertyNames = firstImage.propertyNames()
+            var firstImageProperties = firstImage.toDictionary(propertyNames)
+            var imagePropertyTypes = ee.Dictionary.fromLists(
+                firstImageProperties.keys(),
+                firstImageProperties.values().map(ee.Algorithms.ObjectType)
+            )
+            return ee.getInfo$(imagePropertyTypes, 'Get first image property types')
+        }
+        return forkJoin({
+            bands: bands$,
+            imageProperties: firstImageProperties$,
+            imagePropertyTypes: toImagePropertyTypes$()
+        }).pipe(
+            map(({bands, imageProperties, imagePropertyTypes}) => {
+                const properties = {...imageProperties, ...asset.properties}
+                return ({
+                    ...asset,
+                    properties,
+                    imagePropertyTypes,
+                    bands
+                })
+            }
+            )
         )
     }
     
@@ -44,7 +67,7 @@ const worker$ = ({asset, allowedTypes}) => {
             const isAllowedType = !allowedTypes || (_.isArray(allowedTypes) && allowedTypes.includes(asset.type))
             if (isAllowedType) {
                 return asset.type === 'ImageCollection'
-                    ? addFirstImageBands$(asset)
+                    ? addFirstImageMetadata$(asset)
                     : of(asset)
             } else {
                 const prettyAllowedTypes = allowedTypes.join(', ')
