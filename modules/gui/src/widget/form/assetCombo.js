@@ -16,6 +16,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
+import clipboard from 'clipboard'
 import memoizeOne from 'memoize-one'
 
 // check for allowed characters and minimum path depth (2)
@@ -34,6 +35,7 @@ class _FormAssetCombo extends React.Component {
         this.onChange = this.onChange.bind(this)
         this.onFilterChange = this.onFilterChange.bind(this)
         this.reloadAssets = this.reloadAssets.bind(this)
+        this.copyIdToClipboard = this.copyIdToClipboard.bind(this)
     }
 
     assetChanged$ = new Subject()
@@ -43,7 +45,7 @@ class _FormAssetCombo extends React.Component {
         filter: '',
         loadingMetadata: false,
         datasets: {},
-        searchingAwesomeGeeCommunityDatasets: false,
+        searchingDatasets: false,
     }
 
     render() {
@@ -57,7 +59,10 @@ class _FormAssetCombo extends React.Component {
             <Form.Combo
                 options={options}
                 busyMessage={(busyMessage || this.props.stream('LOAD_ASSET_METADATA').active) && msg('widget.loading')}
-                buttons={[this.renderReloadButton()]}
+                buttons={[
+                    this.renderCopyIdButton(),
+                    this.renderReloadButton()
+                ]}
                 onChange={this.onChange}
                 onFilterChange={this.onFilterChange}
                 {...otherProps}
@@ -75,7 +80,7 @@ class _FormAssetCombo extends React.Component {
 
     renderReloadButton() {
         const {assets: {loading: loadingUserAssets}} = this.props
-        const {searchingAwesomeGeeCommunityDatasets} = this.state
+        const {searchingDatasets} = this.state
         return (
             <Button
                 key='reload'
@@ -83,11 +88,28 @@ class _FormAssetCombo extends React.Component {
                 shape='none'
                 air='none'
                 icon='rotate'
-                iconAttributes={{spin: loadingUserAssets || searchingAwesomeGeeCommunityDatasets}}
+                iconAttributes={{spin: loadingUserAssets || searchingDatasets}}
                 tooltip={msg('asset.reload')}
                 tabIndex={-1}
-                disabled={loadingUserAssets || searchingAwesomeGeeCommunityDatasets}
+                disabled={loadingUserAssets || searchingDatasets}
                 onClick={this.reloadAssets}
+            />
+        )
+    }
+
+    renderCopyIdButton() {
+        const {input: {value}} = this.props
+        return (
+            <Button
+                key='copyId'
+                chromeless
+                shape='none'
+                air='none'
+                icon='copy'
+                tooltip={msg('asset.copyId.tooltip')}
+                tabIndex={-1}
+                disabled={!value}
+                onClick={this.copyIdToClipboard}
             />
         )
     }
@@ -104,6 +126,12 @@ class _FormAssetCombo extends React.Component {
                 iconVariant={type === 'Folder' ? 'info' : null}
             />
         )
+    }
+
+    copyIdToClipboard() {
+        const {input: {value}} = this.props
+        clipboard.copy(value)
+        Notifications.success({message: msg('asset.copyId.success')})
     }
 
     getItemTypeIcon(type) {
@@ -149,7 +177,7 @@ class _FormAssetCombo extends React.Component {
                 filter => this.setState({
                     filter,
                     highlightMatcher: getHighlightMatcher(filter),
-                    searchingAwesomeGeeCommunityDatasets: !!filter && !destination
+                    searchingDatasets: !!filter && !destination
                 })
             )
         )
@@ -174,13 +202,13 @@ class _FormAssetCombo extends React.Component {
                                 community,
                                 gee
                             },
-                            searchingAwesomeGeeCommunityDatasets: false
+                            searchingDatasets: false
                         })
                     },
                     error: error => {
                         this.setState({
                             datasets: {},
-                            searchingAwesomeGeeCommunityDatasets: false
+                            searchingDatasets: false
                         })
                         Notifications.error({message: msg('asset.datasets.failedToLoad', {error}), error})
                     }
