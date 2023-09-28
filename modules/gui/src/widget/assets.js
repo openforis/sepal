@@ -7,7 +7,7 @@ import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
 
-const MAX_RECENT_ASSETS = 5
+const MAX_RECENT_ASSETS = 20
 
 const assetTree = Tree.createNode()
 
@@ -105,9 +105,9 @@ const updateAsset = asset => {
         .set('assets.recent', _.uniqBy([asset, ...recentAssets], 'id').slice(0, MAX_RECENT_ASSETS))
         .dispatch()
 
-    api.gee.awesomeGeeCommunityDatasets$(asset.id).subscribe(
-        result => {
-            if (result.length === 0 && !isUserAsset) {
+    api.gee.datasets$(asset.id).subscribe(
+        ({matchingResults}) => {
+            if (matchingResults === 0 && !isUserAsset) {
                 actionBuilder('UPDATE_ASSET')
                     .set('assets.other', _.uniqBy([...otherAssets, asset], 'id'))
                     .dispatch()

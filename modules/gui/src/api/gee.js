@@ -129,9 +129,9 @@ export default {
             body: recipe
         }),
 
-    awesomeGeeCommunityDatasets$: (search, allowedTypes) =>
-        get$('/api/gee/datasets/awesome-gee-community', {
-            query: {search, allowedTypes},
+    datasets$: (text, allowedTypes) =>
+        get$('/api/gee/datasets', {
+            query: {text, allowedTypes},
             retries: 0
         }),
 }
