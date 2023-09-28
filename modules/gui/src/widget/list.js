@@ -163,6 +163,7 @@ class _List extends React.Component {
         return (
             <li key={option.key || index}>
                 <Button
+                    innerButton
                     chromeless
                     look='transparent'
                     air={air}
@@ -181,6 +182,7 @@ class _List extends React.Component {
         return (
             <li key={option.key || option.value || index}>
                 <Button
+                    innerButton
                     chromeless
                     look='transparent'
                     air={air}
@@ -212,6 +214,7 @@ class _List extends React.Component {
         return (
             <li key={key || index} ref={ref}>
                 <Button
+                    innerButton
                     chromeless={!selected}
                     look={selected ? 'selected' : 'highlight'}
                     air={air}
