@@ -15,6 +15,9 @@ export const normalize = visParams => {
 
     const toArray = key => {
         const value = normalized[key]
+        if (!value) {
+            return []
+        }
         const list = _.isString(value)
             ? value.match(/(\\.|[^,])+/g).map(s => s.trim())
             : !_.isArray(value) && !_.isNil(value)
@@ -117,5 +120,5 @@ export const normalize = visParams => {
             delete normalized[key]
         }
     })
-    return normalized
+    return normalized.bands.length ? normalized : null
 }
