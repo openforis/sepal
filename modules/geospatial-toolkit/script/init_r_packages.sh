@@ -251,6 +251,7 @@ R -e "install.packages(c(\
         'sys',\
         'taxize',\
         'Taxonstand',\
+        'terra',\
         'testit',\
         'testthat',\
         'textclean',\
