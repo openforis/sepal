@@ -53,6 +53,7 @@ const setNode = (tree, path, id, props) => {
     assertId(id)
     assertProps(props)
     _.set(tree, getItemPath(path, id), createNode(props))
+    return tree
 }
 
 const setItems = (tree, path, items) => {
@@ -70,6 +71,7 @@ const setItems = (tree, path, items) => {
         {}
     )
     _.set(tree, getItemsPath(path), nodes)
+    return tree
 }
 
 const getProperties = (tree, path) => {
