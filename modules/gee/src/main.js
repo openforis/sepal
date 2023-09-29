@@ -6,7 +6,7 @@ const {port, instances} = require('./config')
 const routes = require('./routes')
 const server = require('#sepal/httpServer')
 const {initScheduler} = require('#sepal/worker/scheduler')
-const {INSTANCE_PER_USER} = require('#sepal/worker/staticPool')
+const {STICKY} = require('#sepal/worker/staticPool')
 
 const main = async () => {
     await server.start({
@@ -14,7 +14,7 @@ const main = async () => {
         routes
     })
 
-    initScheduler({name: 'GoogleEarthEngine', strategy: INSTANCE_PER_USER, instances})
+    initScheduler({name: 'GoogleEarthEngine', strategy: STICKY, instances})
     
     log.info('Initialized')
 }
