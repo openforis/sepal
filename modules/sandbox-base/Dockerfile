@@ -112,6 +112,7 @@ RUN apt-get -y update && apt-get install -y \
     libffi-dev \
     libfribidi-dev \
     libgdal-dev \
+    libgeos-dev \
     libgeos++-dev \
     libgfortran5 \
     libglade2-dev \
