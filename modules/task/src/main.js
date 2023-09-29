@@ -6,13 +6,15 @@ const server = require('#sepal/httpServer')
 const routes = require('./routes')
 const {port} = require('./config')
 const {initScheduler} = require('#sepal/worker/scheduler')
+const {STICKY} = require('#sepal/worker/staticPool')
 
 const main = async () => {
     await server.start({
         port,
         routes
     })
-    initScheduler({instances: 1})
+    
+    initScheduler({name: 'GoogleEarthEngine', strategy: STICKY, instances: 1})
 
     log.info('Initialized')
 }
