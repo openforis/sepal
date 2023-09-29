@@ -251,8 +251,8 @@ class _FormAssetCombo extends React.Component {
     }
 
     isAllowedType(type) {
-        const {allowedTypes} = this.props
-        return _.isEmpty(allowedTypes) || allowedTypes.includes(type)
+        const {allowedTypes, showFolders} = this.props
+        return _.isEmpty(allowedTypes) || (showFolders && type === 'Folder') || allowedTypes.includes(type)
     }
 
     isPreferredType(type) {
@@ -496,6 +496,7 @@ FormAssetCombo.propTypes = {
     placement: PropTypes.any,
     preferredTypes: PropTypes.array,
     readOnly: PropTypes.any,
+    showFolders: PropTypes.any,
     stayOpenOnSelect: PropTypes.any,
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
