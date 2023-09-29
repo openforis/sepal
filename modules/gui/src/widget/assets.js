@@ -1,4 +1,4 @@
-import {Subject, exhaustMap, interval, last, map, merge, mergeWith, of, scan, switchMap, tap, throttleTime} from 'rxjs'
+import {EMPTY, Subject, exhaustMap, interval, last, map, merge, mergeWith, of, scan, switchMap, tap, throttleTime} from 'rxjs'
 import {Tree} from 'tree'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -9,8 +9,10 @@ import api from 'api'
 
 const MAX_RECENT_ASSETS = 20
 const REFRESH_INTERVAL_HOURS = 2
+const TASK_CHECK_INTERVAL_MINUTES = 5
 
 const assetTree = Tree.createNode()
+let previousCompletedTasks = []
 
 const updateAssetRoots$ = () =>
     api.gee.assetRoots$().pipe(
@@ -64,6 +66,16 @@ export const loadAssets$ = () =>
         interval(REFRESH_INTERVAL_HOURS * 3600 * 1000).pipe(
             map(() => ({incremental: false}))
         ),
+        interval(TASK_CHECK_INTERVAL_MINUTES * 60 * 1000).pipe(
+            switchMap(() => api.gee.listCompletedTasks$()),
+            switchMap(completedTasks => {
+                if (_.isEqual(completedTasks, previousCompletedTasks)) {
+                    return EMPTY
+                }
+                previousCompletedTasks = completedTasks
+                return of({incremental: false})
+            })
+        ),
         reloadAssets$
     ).pipe(
         exhaustMap(({incremental}) => {
@@ -80,7 +92,7 @@ export const loadAssets$ = () =>
                     next: assetTree => {
                         console.log('Updating assets tree')
                         const assetList = Tree.flatten(assetTree).map(
-                            ({path, props}) => ({id: _.last(path), ...props})
+                            ({path, props, depth}) => ({id: _.last(path), ...props, depth})
                         )
                         actionBuilder('LOAD_ASSETS')
                             .setIfChanged('assets.tree', assetTree)
