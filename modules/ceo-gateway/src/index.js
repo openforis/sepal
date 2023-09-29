@@ -25,7 +25,7 @@ app.use(session({
 app.use(express.json())
 
 app.use(['/login', '/create-project', '/get-collected-data', '/delete-project', '/get-project-stats'], (req, res, next) => {
-    const {ceo: {url, username, password, userId}} = config
+    const {ceo: {url, username, password}} = config
     request.post({
         url: urljoin(url, 'login'),
         form: {
@@ -40,9 +40,6 @@ app.use(['/login', '/create-project', '/get-collected-data', '/delete-project', 
                 Cookie: cookie,
             },
             url: urljoin(url, 'account'),
-            qs: {
-                userId
-            },
             followRedirect: false,
         }).on('response', response => {
             const {statusCode} = response
@@ -94,29 +91,29 @@ app.post('/create-project', (req, res, next) => {
         count: classes.length,
         hue: 'random',
     })
-    const sampleValues = [{
-        id: 1,
-        question: 'CLASS',
-        answers: classes.map(function(currentValue, index) {
-            return {
-                id: index + 1,
-                answer: currentValue,
-                color: colors[index],
-            }
-        }),
-        parentQuestion: -1,
-        parentAnswer: -1,
-        dataType: 'text',
-        componentType: 'button',
-    }]
+    const sampleValues = {
+        0: {
+            question: 'CLASS',
+            answers: classes.reduce((accumulator, currentValue, index) => {
+                accumulator[index] = {
+                    answer: currentValue, 
+                    color: colors[index], 
+                    hide: false
+                }
+                return accumulator
+            }, {}),
+            parentQuestionId: -1,
+            parentAnswerIds: [],
+            dataType: 'text',
+            componentType: 'button',
+            cardOrder: 1
+        }
+    }
     const data = {
-        ...(imageryId !== undefined && {imageryId}),
+        institutionId,
+        imageryId: 5,
         description: title,
         institutionId,
-        lonMin: '',
-        lonMax: '',
-        latMin: '',
-        latMax: '',
         name: title,
         numPlots: '',
         plotDistribution: 'csv',
@@ -125,14 +122,37 @@ app.post('/create-project', (req, res, next) => {
         plotSpacing: '',
         privacyLevel: 'private',
         projectTemplate: '0',
-        sampleDistribution: 'gridded',
+        projectOptions: {
+            showGEEScript: false,
+            showPlotInformation: false,
+            collectConfidence: false,
+            autoLaunchGeoDash: true
+        }, //Can change based on preferences
+        designSettings: {
+            userAssignment: {
+                userMethod: 'none',
+                users: [],
+                percents: []
+            },
+            qaqcAssignment: {
+                qaqcMethod: 'none',
+                percent: 0,
+                smes: [],
+                timesToReview: 2
+            },
+            sampleGeometries: {
+                points: true,
+                lines: true,
+                polygons: true
+            }
+        },
+        sampleDistribution: 'center',
         samplesPerPlot: '',
         sampleResolution: plotSize,
-        sampleValues: sampleValues,
         surveyQuestions: sampleValues,
         surveyRules: [],
-        useTemplatePlots: '',
-        useTemplateWidgets: '',
+        useTemplatePlots: false,
+        useTemplateWidgets: false,
         plotFileName: 'plots.csv',
         plotFileBase64: ',' + Buffer.from(plotFile).toString('base64'),
         sampleFileName: '',
@@ -143,9 +163,6 @@ app.post('/create-project', (req, res, next) => {
             Cookie: cookie['0'],
         },
         url: urljoin(url, 'create-project'),
-        qs: {
-            institutionId,
-        },
         json: data,
     }).on('response', response => {
         const {statusCode} = response
@@ -204,13 +221,12 @@ app.get('/get-collected-data/:id', (req, res, next) => {
         if (statusCode !== 200) return res.sendStatus(statusCode)
         response.on('data', data => {
             const project = JSON.parse(data.toString())
-            const [sampleValue] = project.sampleValues || project.surveyQuestions
-            const {question, answers} = sampleValue
+            const {question, answers} = project.surveyQuestions[0] // surveyQuestions is now an object
             if (!question || !answers) return res.sendStatus(500)
-            const answersById = answers.reduce((acc, cur) => {
-                acc[cur.answer] = cur.id
-                return acc
-            }, {})
+            const answersById = Object.values(answers).reduce((acc, cur) => {
+                acc[cur.answer] = cur.id;
+                return acc;
+              }, {});
             request.get({
                 headers: {
                     Cookie: cookie['0'],
