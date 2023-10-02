@@ -1,11 +1,11 @@
-const {redisUri, autoUpdateIntervalHours, LOCAL_CRAN_REPO} = require('./config')
+const {platformVersion, redisUri, autoUpdateIntervalHours, LOCAL_CRAN_REPO} = require('./config')
 const Bull = require('bull')
 const log = require('#sepal/log').getLogger('queue')
 const {makeCranPackage, checkCranUpdates, updateCranPackage} = require('./cran')
 const {makeGitHubPackage, checkGitHubUpdates, updateGitHubPackage} = require('./github')
 // const {checkCranUpdates, checkGitHubUpdates} = require('./update')
 
-const queue = new Bull('build-queue', redisUri)
+const queue = new Bull(`build-queue-${platformVersion}`, redisUri)
 
 const QUEUE_OPTIONS = {
     removeOnComplete: true,
