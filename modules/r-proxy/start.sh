@@ -18,7 +18,7 @@ then
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9239 \
     src/main.js \
-    --os-release "${PRETTY_NAME}" \
+    --os-release "${NAME}-${VERSION_ID}" \
     --cran-repo https://cran.r-project.org \
     --repo-path /R \
     --lib-path /usr/local/lib/R/site-library \
@@ -28,7 +28,7 @@ else
   echo "Starting node"
   exec node \
     src/main.js \
-    --os-release "${PRETTY_NAME}" \
+    --os-release "${NAME}-${VERSION_ID}" \
     --cran-repo https://cran.r-project.org \
     --repo-path /R \
     --lib-path /usr/local/lib/R/site-library \

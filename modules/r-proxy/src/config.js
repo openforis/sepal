@@ -44,7 +44,9 @@ const {
 log.info('Configuration loaded')
 log.debug(config)
 
-const platformVersion = `${osRelease}-${os.release()}`.replace(/\s+/g, '_')
+const kernelVersion = os.release().match(/(\d+\.\d+)/)[0]
+const platformVersion = `${osRelease}-kernel-${kernelVersion}`.replace(/\s+/g, '_')
+
 const platformReleaseRepoPath = Path.join(repoPath, platformVersion)
 const platformReleaseLibPath = Path.join(libPath, platformVersion)
 
