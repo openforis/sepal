@@ -10,11 +10,13 @@ library(remotes)
 
 # install requested library from local file
 
+.libPaths(lib)
+
 install.packages(path, repos = NULL, lib = lib)
 
 # check if library can be loaded, otherwise uninstall it and fail
 
-if ( ! library(name, character.only = TRUE, logical.return = TRUE, lib.loc = lib) ) {
-    remove.packages(name)
+if ( ! library(name, lib.loc = lib, character.only = TRUE, logical.return = TRUE) ) {
+    remove.packages(name, lib = lib)
     quit(status = 3, save = 'no')
 }

@@ -134,4 +134,9 @@ export default {
             query: {text, allowedTypes},
             retries: 0
         }),
+
+    listCompletedTasks$: () =>
+        get$('/api/gee/task/listCompleted', {
+            retries: 0
+        }),
 }

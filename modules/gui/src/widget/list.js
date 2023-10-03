@@ -161,7 +161,7 @@ class _List extends React.Component {
     renderGroup(option, index) {
         const {alignment, air} = this.props
         return (
-            <li key={option.key || index}>
+            <li key={option.key || index} className={styles.sticky}>
                 <Button
                     innerButton
                     chromeless

@@ -1,15 +1,18 @@
+import {EMPTY, Subject, exhaustMap, interval, last, map, merge, mergeWith, of, scan, switchMap, tap, throttleTime} from 'rxjs'
 import {Tree} from 'tree'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {map, mergeWith, of, switchMap, tap, throttleTime} from 'rxjs'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
 
 const MAX_RECENT_ASSETS = 20
+const REFRESH_INTERVAL_HOURS = 2
+const TASK_CHECK_INTERVAL_MINUTES = 5
 
 const assetTree = Tree.createNode()
+let previousCompletedTasks = []
 
 const updateAssetRoots$ = () =>
     api.gee.assetRoots$().pipe(
@@ -55,46 +58,65 @@ const loadNodes$ = (path, nodes) =>
         .filter(({type}) => type === 'Folder')
         .map(node => loadNode$([...path, node.id], node))
 
-const loadAssets$ = () =>
-    loadNode$().pipe(
-        tap(({path, nodes}) => Tree.setItems(assetTree, path, nodes)),
-        throttleTime(1000, null, {leading: true, trailing: true})
-    )
+const reloadAssets$ = new Subject()
 
-export const loadAssets = () => {
-    actionBuilder('LOAD_ASSETS')
-        .set('assets.loading', true)
-        .dispatch()
-    const t0 = Date.now()
-    console.log('Loading assets tree')
-    loadAssets$().subscribe({
-        next: () => {
-            const assetList = Tree.flatten(assetTree).map(
-                ({path, props}) => ({id: _.last(path), ...props})
+export const loadAssets$ = () =>
+    merge(
+        of({incremental: true}),
+        interval(REFRESH_INTERVAL_HOURS * 3600 * 1000).pipe(
+            map(() => ({incremental: false}))
+        ),
+        interval(TASK_CHECK_INTERVAL_MINUTES * 60 * 1000).pipe(
+            switchMap(() => api.gee.listCompletedTasks$()),
+            switchMap(completedTasks => {
+                if (_.isEqual(completedTasks, previousCompletedTasks)) {
+                    return EMPTY
+                }
+                previousCompletedTasks = completedTasks
+                return of({incremental: false})
+            })
+        ),
+        reloadAssets$
+    ).pipe(
+        exhaustMap(({incremental}) => {
+            console.log(`Loading assets tree in ${incremental ? 'incremental' : 'one-shot'} mode`)
+            actionBuilder('LOAD_ASSETS')
+                .set('assets.loading', incremental)
+                .dispatch()
+            return loadNode$().pipe(
+                scan((assetTree, {path, nodes}) => Tree.setItems(assetTree, path, nodes), assetTree),
+                incremental
+                    ? throttleTime(1000, null, {leading: true, trailing: true})
+                    : last(),
+                tap({
+                    next: assetTree => {
+                        console.log('Updating assets tree')
+                        const assetList = Tree.flatten(assetTree).map(
+                            ({path, props, depth}) => ({id: _.last(path), ...props, depth})
+                        )
+                        actionBuilder('LOAD_ASSETS')
+                            .setIfChanged('assets.tree', assetTree)
+                            .setIfChanged('assets.user', assetList)
+                            .dispatch()
+                    },
+                    error: error => {
+                        console.log('Asset tree loading failed', error)
+                        actionBuilder('LOAD_ASSETS')
+                            .set('assets.error', true)
+                            .del('assets.loading')
+                            .dispatch()
+                    },
+                    complete: () => {
+                        console.log('Asset tree loaded')
+                        actionBuilder('LOAD_ASSETS')
+                            .del('assets.error')
+                            .del('assets.loading')
+                            .dispatch()
+                    }
+                })
             )
-            actionBuilder('LOAD_ASSETS')
-                .setIfChanged('assets.tree', assetTree)
-                .setIfChanged('assets.user', assetList)
-                .dispatch()
-        },
-        error: () => {
-            const t1 = Date.now()
-            console.log(`Asset tree loading failed after ${t1 - t0} ms`)
-            actionBuilder('LOAD_ASSETS')
-                .set('assets.error', true)
-                .del('assets.loading')
-                .dispatch()
-        },
-        complete: () => {
-            const t1 = Date.now()
-            console.log(`Asset tree loaded in ${t1 - t0} ms`)
-            actionBuilder('LOAD_ASSETS')
-                .del('assets.error')
-                .del('assets.loading')
-                .dispatch()
-        }
-    })
-}
+        })
+    )
 
 const updateAsset = asset => {
     const roots = Object.keys(select('assets.tree.items') || {})
@@ -145,7 +167,7 @@ export const withAssets = () =>
                     loading: select('assets.loading') || false,
                     updateAsset,
                     removeAsset,
-                    reloadAssets: loadAssets
+                    reloadAssets: () => reloadAssets$.next({incremental: true})
                 }
             }))
         )

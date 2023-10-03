@@ -53,6 +53,7 @@ const setNode = (tree, path, id, props) => {
     assertId(id)
     assertProps(props)
     _.set(tree, getItemPath(path, id), createNode(props))
+    return tree
 }
 
 const setItems = (tree, path, items) => {
@@ -70,6 +71,7 @@ const setItems = (tree, path, items) => {
         {}
     )
     _.set(tree, getItemsPath(path), nodes)
+    return tree
 }
 
 const getProperties = (tree, path) => {
@@ -99,15 +101,15 @@ const setProperty = (tree, path, prop, value) => {
     _.set(tree, getPropertyPath(path, prop), value)
 }
 
-const flatten = (node = {}, path = []) => {
+const flatten = (node = {}, path = [], depth = 0) => {
     assertNode(node)
     assertPath(path)
     const {[PROPS]: props, [ITEMS]: items} = node
     const childItems = _.map(items,
-        (node, id) => flatten(node, [...path, id])
+        (node, id) => flatten(node, [...path, id], depth + 1)
     )
     return _.compact([
-        path.length ? {path, props} : null,
+        path.length ? {path, props, depth} : null,
         ...childItems
     ]).flat()
 }

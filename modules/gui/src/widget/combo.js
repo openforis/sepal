@@ -199,9 +199,6 @@ class _Combo extends React.Component {
                     air='none'
                     size='large'
                     icon='xmark'
-                    iconAttributes={{
-                        fixedWidth: true
-                    }}
                     tabIndex={-1}
                     disabled={disabled}
                     onClick={this.resetFilterOrClearSelection}

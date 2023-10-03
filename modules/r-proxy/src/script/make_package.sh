@@ -7,7 +7,7 @@ TMP_PATH=$4
 LIB=$5
 STEP=$6
 
-build() {
+bundle() {
     mkdir -p $(dirname ${TMP_PATH})
     retVal=$?; [ $retVal -ne 0 ] && exit $retVal
     mkdir -p "${LIB}/${PACKAGE}/man"
@@ -22,13 +22,16 @@ deploy() {
 }
 
 cleanup() {
-    rm -f ${SRC_PATH} ${TMP_PATH}
+    [ -d "00LOCK-${LIB}/${PACKAGE}" ] && rm -rf \
+        "00LOCK-${LIB}/${PACKAGE}" \
+        "${LIB}/${PACKAGE}"
+    rm -rf "${SRC_PATH} ${TMP_PATH}"
     exit $?
 }
 
 case $STEP in
-    build)
-        build
+    bundle)
+        bundle
         ;;
     deploy)
         deploy
