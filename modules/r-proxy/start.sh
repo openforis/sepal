@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # remove locked libs
-rm -rf /usr/local/lib/R/site-library/00LOCK-*
+find /usr/local/lib/R/site-library/ -name "00LOCK-*" -print0 | xargs -0 rm -rf
 
 # remove cached sources
 rm -rf /R/cranroot/src/contrib/*
