@@ -7,7 +7,7 @@ const readline = require('readline')
 const https = require('https')
 const log = require('#sepal/log').getLogger('cran')
 const {compare} = require('compare-versions')
-const {makePackage, cleanupPackage} = require('./bundle')
+const {makePackage, cleanupPackage} = require('./package')
 
 const SRC = 'src/contrib'
 const BIN = 'bin/contrib'
@@ -72,7 +72,7 @@ const isCranPackageCached = async (name, version) =>
         
 const installCranPackage = async (name, version, repo) => {
     try {
-        log.debug(`Installing ${name}/${version}`)
+        log.info(`Installing ${name}/${version}`)
         await runScript('install_cran_package.r', [name, version, libPath, repo])
         log.info(`Installed ${name}/${version}`)
         return true

@@ -7,7 +7,7 @@ TMP_PATH=$4
 LIB=$5
 STEP=$6
 
-build() {
+bundle() {
     mkdir -p $(dirname ${TMP_PATH})
     retVal=$?; [ $retVal -ne 0 ] && exit $retVal
     mkdir -p "${LIB}/${PACKAGE}/man"
@@ -30,8 +30,8 @@ cleanup() {
 }
 
 case $STEP in
-    build)
-        build
+    bundle)
+        bundle
         ;;
     deploy)
         deploy

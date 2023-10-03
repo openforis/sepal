@@ -3,7 +3,7 @@ const {opendir} = require('fs/promises')
 const {isChildOf, isFile} = require('./filesystem')
 const {GITHUB_ROOT, LOCAL_CRAN_REPO, libPath} = require('./config')
 const {runScript} = require('./script')
-const {makePackage, cleanupPackage} = require('./bundle')
+const {makePackage, cleanupPackage} = require('./package')
 const log = require('#sepal/log').getLogger('github')
 
 const SRC = 'src'
@@ -42,7 +42,7 @@ const getGitHubTarget = path =>
 
 const installLocalPackage = async (name, path) => {
     try {
-        log.debug(`Installing ${name} (${path})`)
+        log.info(`Installing ${name} (${path})`)
         await runScript('install_local_package.r', [name, path, libPath, LOCAL_CRAN_REPO])
         log.info(`Installed ${name} (${path})`)
         return true
@@ -54,7 +54,7 @@ const installLocalPackage = async (name, path) => {
         
 const installRemotePackage = async (name, url) => {
     try {
-        log.debug(`Installing ${name} (${url})`)
+        log.info(`Installing ${name} (${url})`)
         await runScript('install_remote_package.r', [name, url, libPath, LOCAL_CRAN_REPO])
         log.info(`Installed ${name} (${url})`)
         return true
