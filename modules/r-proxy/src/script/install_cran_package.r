@@ -11,6 +11,8 @@ library(remotes)
 
 # install requested library from CRAN repository
 
+.libPaths(lib)
+
 install_version(name, version = version, repos = repo, lib = lib, upgrade = 'never')
 
 # check if library can be loaded, otherwise uninstall it and fail
