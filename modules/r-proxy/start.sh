@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # remove locked libs
-rm -rf /usr/local/lib/R/site-library/00LOCK-*
+find /usr/local/lib/R/site-library/ -name "00LOCK-*" -print0 | xargs -0 rm -rf
 
 # remove cached sources
 rm -rf /R/cranroot/src/contrib/*
@@ -18,7 +18,7 @@ then
     --watch "${SHARED}" \
     --inspect=0.0.0.0:9239 \
     src/main.js \
-    --os-release "${PRETTY_NAME}" \
+    --os-release "${NAME}-${VERSION_ID}" \
     --cran-repo https://cran.r-project.org \
     --repo-path /R \
     --lib-path /usr/local/lib/R/site-library \
@@ -28,7 +28,7 @@ else
   echo "Starting node"
   exec node \
     src/main.js \
-    --os-release "${PRETTY_NAME}" \
+    --os-release "${NAME}-${VERSION_ID}" \
     --cran-repo https://cran.r-project.org \
     --repo-path /R \
     --lib-path /usr/local/lib/R/site-library \
