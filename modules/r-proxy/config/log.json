@@ -1,10 +1,10 @@
 {
     "port": 5109,
     "categories": {
-        "bundle": "info",
         "config": "info",
         "cran": "info",
         "github": "info",
+        "package": "info",
         "proxy": "info",
         "proxy/cran": "info",
         "proxy/github": "info",
