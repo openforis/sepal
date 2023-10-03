@@ -22,7 +22,10 @@ deploy() {
 }
 
 cleanup() {
-    rm -f ${SRC_PATH} ${TMP_PATH}
+    [ -d "00LOCK-${LIB}/${PACKAGE}" ] && rm -rf \
+        "00LOCK-${LIB}/${PACKAGE}" \
+        "${LIB}/${PACKAGE}"
+    rm -rf "${SRC_PATH} ${TMP_PATH}"
     exit $?
 }
 
