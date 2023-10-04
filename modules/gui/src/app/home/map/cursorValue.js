@@ -30,7 +30,7 @@ export const toBandValues = (rgb, visParams, dataTypes) => {
 }
 
 const toRgb = (rgb, visParams, dataTypes) => {
-    const {min, max, gamma} = visParams
+    const {min, max, gamma = 1} = visParams
     return rgb
         .map((c, i) => 255 * Math.pow(c / 255, gamma[i]))
         .map((c, i) => min[i] + c * (max[i] - min[i]) / 255)
@@ -42,7 +42,7 @@ const toRgb = (rgb, visParams, dataTypes) => {
         )
 }
 
-const toHsv = (rgb, {bands, min, max, gamma}, dataTypes) => {
+const toHsv = (rgb, {bands, min, max, gamma = 1}, dataTypes) => {
     const correctedRgb = rgb.map((c, i) => 255 * Math.pow(c / 255, gamma[i]))
     const hsv = Color.rgb(correctedRgb).hsv().color
     const normalizedHsv = [hsv[0] / 360, hsv[1] / 100, hsv[2] / 100]
