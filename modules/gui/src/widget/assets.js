@@ -1,4 +1,4 @@
-import {EMPTY, Subject, exhaustMap, interval, last, map, merge, mergeWith, of, scan, switchMap, tap, throttleTime} from 'rxjs'
+import {EMPTY, Subject, catchError, exhaustMap, interval, last, map, merge, mergeWith, of, scan, switchMap, tap, throttleTime} from 'rxjs'
 import {Tree} from 'tree'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -46,6 +46,10 @@ export const withAssetRoots = () =>
 
 const loadNode$ = (path = [], node = {}) =>
     api.gee.listAssets$(node).pipe(
+        catchError(() => {
+            console.log('Cannot retrieve user assets')
+            return []
+        }),
         switchMap(nodes =>
             of({path, nodes}).pipe(
                 mergeWith(...loadNodes$(path, nodes))
@@ -76,7 +80,9 @@ export const loadAssets$ = () =>
                 return of({incremental: false})
             })
         ),
-        reloadAssets$
+        reloadAssets$.pipe(
+            map(() => ({incremental: true}))
+        )
     ).pipe(
         exhaustMap(({incremental}) => {
             console.log(`Loading assets tree in ${incremental ? 'incremental' : 'one-shot'} mode`)
@@ -167,7 +173,7 @@ export const withAssets = () =>
                     loading: select('assets.loading') || false,
                     updateAsset,
                     removeAsset,
-                    reloadAssets: () => reloadAssets$.next({incremental: true})
+                    reloadAssets: () => reloadAssets$.next()
                 }
             }))
         )

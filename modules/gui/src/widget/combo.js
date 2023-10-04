@@ -122,7 +122,7 @@ class _Combo extends React.Component {
                     ArrowRight: _.isEmpty(filter) ? this.editFilter : null,
                     Home: this.showOptions,
                     End: this.showOptions,
-                    Enter: null
+                    // Enter: null
                 }}>
                 <AutoFocus element={this.input.current} focusEnabled={autoFocus}>
                     <Input
