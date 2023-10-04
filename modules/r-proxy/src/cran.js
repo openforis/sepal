@@ -72,9 +72,14 @@ const isCranPackageCached = async (name, version) =>
         
 const installCranPackage = async (name, version, repo) => {
     try {
-        log.info(`Installing ${name}/${version}`)
-        await runScript('install_cran_package.r', [name, version, libPath, repo])
-        log.info(`Installed ${name}/${version}`)
+        try {
+            await runScript('check_cran_package.r', [name, version, libPath])
+            log.info(`Already installed ${name}/${version}`)
+        } catch (error) {
+            log.info(`Installing ${name}/${version}`)
+            await runScript('install_cran_package.r', [name, version, libPath, repo])
+            log.info(`Installed ${name}/${version}`)
+        }
         return true
     } catch (error) {
         log.warn(`Could not install ${name}/${version}`, error)
@@ -196,6 +201,10 @@ const checkCranUpdates = async enqueueUpdateCranPackage => {
         } else {
             // no more properties: process previous entry
             const {Package: name, Version: version, Depends: depends} = entry.get()
+            // if (depends) {
+            //     const foo = depends?.replaceAll(/\s+/g, '').split(',')
+            //     log.fatal(foo)
+            // }
             if (name && version) {
                 if (isVersionSatisfied({name, version, depends, installedVersion})) {
                     enqueueUpdateCranPackage(name, version)
