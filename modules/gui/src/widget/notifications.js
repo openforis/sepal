@@ -159,7 +159,7 @@ class _Notifications extends React.Component {
                         {message ? this.renderMessage(message) : null}
                         {error ? this.renderError(error) : null}
                         {content ? this.renderContent(content, dismiss) : null}
-                        {this.renderDismissMessage(id)}
+                        {timeout > 3 ? this.renderDismissMessage(id) : null}
                         {this.renderAutoDismissIndicator(timeout)}
                     </div>
                 </div>
