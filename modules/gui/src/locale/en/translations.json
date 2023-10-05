@@ -200,6 +200,12 @@
       "select": "Select",
       "stop": "Stop"
     },
+    "clipboard": {
+        "copy": {
+            "success": "Copied to clipboard",
+            "failure": "Could not copy to clipboard"
+        }
+    },
     "eeTable": {
       "failedToLoad": "Failed to load EE Table",
       "notFound": "EE Table not found",

@@ -5,6 +5,7 @@ import {Form} from 'widget/form/form'
 import {Subject, debounceTime, first, map, switchMap, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {copyToClipboard} from 'clipboard'
 import {escapeRegExp, splitString} from 'string'
 import {msg} from 'translate'
 import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualizationParser'
@@ -16,7 +17,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
-import clipboard from 'clipboard'
 import memoizeOne from 'memoize-one'
 
 // check for allowed characters and minimum path depth (2)
@@ -151,8 +151,7 @@ class _FormAssetCombo extends React.Component {
 
     copyIdToClipboard() {
         const {input: {value}} = this.props
-        clipboard.copy(value)
-        Notifications.success({message: msg('asset.copyId.success')})
+        copyToClipboard(value, msg('asset.copyId.success'))
     }
 
     getItemTypeIcon(type) {
