@@ -8,11 +8,10 @@ import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Shape} from 'widget/shape'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {copyToClipboard} from 'clipboard'
 import {msg} from 'translate'
-import Notifications from 'widget/notifications'
 import React from 'react'
 import api from 'api'
-import clipboard from 'clipboard'
 import styles from './tasks.module.css'
 
 const mapStateToProps = state => ({
@@ -200,8 +199,10 @@ class Tasks extends React.Component {
     }
 
     copyToClipboard(task) {
-        clipboard.copy(JSON.stringify(task, null, '  '))
-        Notifications.success({message: msg('tasks.copyToClipboard.success')})
+        copyToClipboard(
+            JSON.stringify(task, null, '  '),
+            msg('tasks.copyToClipboard.success')
+        )
     }
 
     removeTask(task) {

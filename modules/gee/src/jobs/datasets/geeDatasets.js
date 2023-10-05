@@ -1,5 +1,5 @@
 const {get$} = require('#sepal/httpClient')
-const {of, map, switchMap, merge, toArray, timer, tap} = require('rxjs')
+const {of, map, switchMap, mergeMap, toArray, timer, tap} = require('rxjs')
 const _ = require('lodash')
 const {escapeRegExp, simplifyString, splitString} = require('#sepal/string')
 const log = require('#sepal/log').getLogger('ee')
@@ -14,15 +14,19 @@ const getNode$ = (url = URL) =>
         map(({body}) => JSON.parse(body)),
         switchMap(({type, title, id, 'gee:type': geeType, links, providers}) =>
             type === 'Catalog'
-                ? merge(...getNodes$(links))
+                ? getNodes$(links).pipe(
+                    mergeMap(href => getNode$(href))
+                )
                 : of({title, id, type: mapType(geeType), searchTitle: simplifyString(title), url: getUrl(providers)})
         )
     )
 
 const getNodes$ = links =>
-    links
-        .filter(({rel}) => rel === 'child')
-        .map(({href}) => getNode$(href))
+    of(
+        ...links
+            .filter(({rel}) => rel === 'child')
+            .map(({href}) => href)
+    )
 
 const TYPE_MAP = {
     'image': 'Image',
