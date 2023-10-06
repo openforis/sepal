@@ -1,4 +1,7 @@
 const {job} = require('#gee/jobs/job')
+const {eeLimiterService} = require('#sepal/ee/eeLimiterService')
+
+const DEFAULT_MAX_RETRIES = 3
 
 const getSepalUser = ctx => {
     const sepalUser = ctx.request.headers['sepal-user']
@@ -18,6 +21,7 @@ const getCredentials = ctx => {
 }
 
 const worker$ = ({sepalUser, serviceAccountCredentials}) => {
+    const {switchMap} = require('rxjs')
     const {swallow} = require('#sepal/rxjs')
     const ee = require('#sepal/ee')
 
@@ -63,8 +67,15 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
         googleTokens
             ? authenticateUserAccount$(googleTokens)
             : authenticateServiceAccount$(serviceAccountCredentials)
-
+            
     return authenticate$({sepalUser, serviceAccountCredentials}).pipe(
+        switchMap(() => ee.$({
+            operation: 'initialize',
+            ee: (resolve, reject) => {
+                ee.setMaxRetries(DEFAULT_MAX_RETRIES)
+                ee.initialize(null, null, resolve, reject, null, sepalUser?.googleTokens?.projectId)
+            }
+        })),
         swallow()
     )
 }
@@ -73,5 +84,6 @@ module.exports = job({
     jobName: 'EE Authentication',
     before: [require('#gee/jobs/configure')],
     args: ctx => [getCredentials(ctx)],
+    services: [eeLimiterService],
     worker$
 })
