@@ -16,13 +16,6 @@
 }
 
 .options .group {
-    border: 0;
-    padding: .35rem .75rem .15rem;
-    height: 30px;
-    font-size: .8rem;
-    font-weight: 800;
-    color: #c0c0c0;
-    text-transform: uppercase;
     border-bottom: 1px solid #333;
 }
 
