@@ -92,6 +92,7 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
         command(RequestPasswordReset, new RequestPasswordResetHandler(tokenManager, userRepository, emailGateway, messageBroker, clock, recaptcha))
         command(AssociateGoogleAccount, new AssociateGoogleAccountHandler(googleOAuthClient, userRepository, googleEarthEngineWhitelistChecker, googleAccessTokenFileGateway, messageBroker, changeListener))
         command(RefreshGoogleAccessToken, new RefreshGoogleAccessTokenHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway, messageBroker, changeListener))
+        command(UpdateGoogleProject, new UpdateGoogleProjectHandler(userRepository, googleAccessTokenFileGateway, messageBroker, changeListener))        
         command(RevokeGoogleAccountAccess, new RevokeGoogleAccountAccessHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway, messageBroker, changeListener))
         command(DeleteUser, new DeleteUserHandler(externalUserDataGateway, userRepository, messageBroker, changeListener))
         command(LockUser, new LockUserHandler(externalUserDataGateway, userRepository, messageBroker, changeListener))

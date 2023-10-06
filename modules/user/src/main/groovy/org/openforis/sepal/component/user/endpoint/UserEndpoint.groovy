@@ -332,6 +332,16 @@ class UserEndpoint {
                 else
                     response.status = 204
             }
+
+            post('/google/project') {
+                component.submit(
+                    new UpdateGoogleProject(
+                            username: sepalUser.username,
+                            projectId: params.required('projectId', String)
+                    ))
+                response.addHeader('sepal-user-updated', 'true')
+                response.status = 204
+            }
         }
     }
 
