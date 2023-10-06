@@ -9,6 +9,7 @@ class GoogleTokens {
     String refreshToken
     String accessToken
     long accessTokenExpiryDate
+    String projectId
 
     boolean shouldBeRefreshed(long nowMillis) {
         def expiresInMinutes = (accessTokenExpiryDate - nowMillis) / 60 / 1000 as int

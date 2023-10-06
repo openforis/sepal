@@ -48,7 +48,7 @@ class JdbcUserRepository implements UserRepository {
         def users = []
         sql.eachRow('''
                 SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, system_user, status, 
-                       google_refresh_token,  google_access_token, google_access_token_expiration, 
+                       google_refresh_token,  google_access_token, google_access_token_expiration, google_project_id,
                        creation_time, update_time
                 FROM sepal_user 
                 ORDER BY creation_time DESC''') {
@@ -71,7 +71,7 @@ class JdbcUserRepository implements UserRepository {
         def user = null
         sql.eachRow('''
                 SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, system_user, status, 
-                       google_refresh_token,  google_access_token, google_access_token_expiration, 
+                       google_refresh_token,  google_access_token, google_access_token_expiration, google_project_id,
                        creation_time, update_time
                 FROM sepal_user 
                 WHERE username = ?''', [username]) {
@@ -87,7 +87,7 @@ class JdbcUserRepository implements UserRepository {
         def user = null
         sql.eachRow('''
                 SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, system_user, status, 
-                       google_refresh_token,  google_access_token, google_access_token_expiration, 
+                       google_refresh_token,  google_access_token, google_access_token_expiration, google_project_id,
                        creation_time, update_time
                 FROM sepal_user 
                 WHERE username = ?''', [username]) {
@@ -100,7 +100,7 @@ class JdbcUserRepository implements UserRepository {
         def user = null
         sql.eachRow('''
                 SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, system_user, status, 
-                       google_refresh_token,  google_access_token, google_access_token_expiration, 
+                       google_refresh_token,  google_access_token, google_access_token_expiration, google_project_id,
                        creation_time, update_time
                 FROM sepal_user 
                 WHERE email = ?''', [email]) {
@@ -127,7 +127,7 @@ class JdbcUserRepository implements UserRepository {
         def status = null
         sql.eachRow('''
                 SELECT id, username, name, email, organization, intended_use, email_notifications_enabled, admin, status, system_user, token_generation_time, 
-                       google_refresh_token,  google_access_token, google_access_token_expiration, 
+                       google_refresh_token,  google_access_token, google_access_token_expiration, google_project_id,
                        creation_time, update_time 
                 FROM sepal_user 
                 WHERE token = ?''', [token]) {
@@ -167,11 +167,13 @@ class JdbcUserRepository implements UserRepository {
                 SET google_refresh_token = ?,  
                     google_access_token = ?, 
                     google_access_token_expiration = ?,
+                    google_project_id = ?,
                  update_time = ?
                 WHERE username = ?''', [
                 tokens?.refreshToken,
                 tokens?.accessToken,
                 tokens ? new Date(tokens.accessTokenExpiryDate) : null,
+                tokens?.projectId,
                 clock.now(),
                 username
         ])
@@ -191,7 +193,9 @@ class JdbcUserRepository implements UserRepository {
                 googleTokens: row.google_refresh_token ? new GoogleTokens(
                         refreshToken: row.google_refresh_token,
                         accessToken: row.google_access_token,
-                        accessTokenExpiryDate: row.google_access_token_expiration.time) : null,
+                        accessTokenExpiryDate: row.google_access_token_expiration.time,
+                        projectId: row.google_project_id
+                ) : null,
                 status: row.status as User.Status,
                 creationTime: toDate(row.creation_time),
                 updateTime: toDate(row.update_time),

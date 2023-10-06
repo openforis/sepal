@@ -154,8 +154,8 @@ class User implements groovymvc.security.User {
                 googleTokens: googleTokens ? [
                         accessToken: googleTokens.accessToken,
                         accessTokenExpiryDate: googleTokens.accessTokenExpiryDate,
-                        refreshToken: googleTokens.refreshToken
-
+                        refreshToken: googleTokens.refreshToken,
+                        projectId: googleTokens.projectId
                 ] : null,
                 emailNotificationsEnabled: emailNotificationsEnabled,
                 status: status.name(),
