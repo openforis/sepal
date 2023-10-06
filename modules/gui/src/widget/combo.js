@@ -110,7 +110,7 @@ class _Combo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, readOnly, border, inputClassName, buttons = []} = this.props
+        const {placeholder, autoFocus, border, inputClassName, buttons = []} = this.props
         const {filter, selectedOption, showOptions} = this.state
         return (
             <Keybinding
@@ -136,7 +136,6 @@ class _Combo extends React.Component {
                         value={filter}
                         placeholder={this.getSelectedOptionValue() || placeholder}
                         disabled={!this.isActive()}
-                        readOnly={readOnly || isMobile()}
                         buttons={[
                             ...buttons,
                             this.renderClearButton(),
@@ -171,7 +170,7 @@ class _Combo extends React.Component {
     }
 
     focusInput() {
-        this.input.current && this.input.current.focus()
+        !isMobile() && this.input.current && this.input.current.focus()
     }
 
     onInputBlur(e) {
@@ -274,7 +273,7 @@ class _Combo extends React.Component {
             matcher: this.matcher(filter)
         })
         if (showOptions) {
-            this.input.current.focus()
+            this.focusInput()
         }
     }
 
