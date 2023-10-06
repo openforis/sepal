@@ -46,7 +46,8 @@ class GoogleAccessTokenFileGatewayImpl implements GoogleAccessTokenFileGateway {
             lockFile.createNewFile()
         file.write(JsonOutput.toJson([
                 access_token            : tokens.accessToken,
-                access_token_expiry_date: tokens.accessTokenExpiryDate
+                access_token_expiry_date: tokens.accessTokenExpiryDate,
+                project_id              : tokens.projectId
         ]))
         def gid = Files.getAttribute(Path.of(homeDirectory, username), 'unix:gid', LinkOption.NOFOLLOW_LINKS)
         Terminal.execute(configDir, 'chown', "root:$gid", configDir.absolutePath)
