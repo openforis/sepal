@@ -6,6 +6,7 @@ const log = require('#sepal/log').getLogger('ee')
 
 const URL = 'https://earthengine-stac.storage.googleapis.com/catalog/catalog.json'
 const REFRESH_INTERVAL_HOURS = 24
+const CONCURRENCY = 10
 
 let datasets = []
 
@@ -14,19 +15,26 @@ const getNode$ = (url = URL) =>
         map(({body}) => JSON.parse(body)),
         switchMap(({type, title, id, 'gee:type': geeType, links, providers}) =>
             type === 'Catalog'
-                ? getNodes$(links).pipe(
-                    mergeMap(href => getNode$(href))
+                ? getChildNodes$(links).pipe(
+                    mergeMap(url => getNode$(url), CONCURRENCY)
                 )
-                : of({title, id, type: mapType(geeType), searchTitle: simplifyString(title), url: getUrl(providers)})
+                : of({
+                    title,
+                    id,
+                    type: mapType(geeType),
+                    searchTitle: simplifyString(title),
+                    url: getUrl(providers)
+                })
         )
     )
 
-const getNodes$ = links =>
-    of(
-        ...links
-            .filter(({rel}) => rel === 'child')
-            .map(({href}) => href)
-    )
+const getChildNodes$ = links =>
+    of(...getChildNodes(links))
+
+const getChildNodes = links =>
+    links
+        .filter(({rel}) => rel === 'child')
+        .map(({href}) => href)
 
 const TYPE_MAP = {
     'image': 'Image',
