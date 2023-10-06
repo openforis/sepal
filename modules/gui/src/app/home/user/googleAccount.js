@@ -1,33 +1,48 @@
 import {Button} from 'widget/button'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
 import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
-import {connect} from 'store'
-import {currentUser, requestUserAccess$, revokeGoogleAccess$} from 'user'
+import {currentUser, projects$, requestUserAccess$, revokeGoogleAccess$, updateGoogleProject$} from 'user'
 import {msg} from 'translate'
+import {tap} from 'rxjs'
 import {withActivatable} from 'widget/activation/activatable'
 import {withActivators} from 'widget/activation/activator'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
+import actionBuilder from 'action-builder'
+import api from 'api'
 import styles from './googleAccount.module.css'
 
-const mapStateToProps = state => {
+const fields = {
+    projectId: new Form.Field()
+}
+
+const mapStateToProps = () => {
     const user = currentUser()
     return {
         user,
-        tasks: state.tasks
+        values: {
+            projectId: user?.googleTokens?.projectId
+        }
     }
 }
 
 class _GoogleAccount extends React.Component {
+    state = {
+        projects: null
+    }
+
     constructor(props) {
         super(props)
         this.close = this.close.bind(this)
         this.useUserGoogleAccount = this.useUserGoogleAccount.bind(this)
         this.useSepalGoogleAccount = this.useSepalGoogleAccount.bind(this)
+        this.updateProject = this.updateProject.bind(this)
     }
 
     useUserGoogleAccount() {
@@ -45,8 +60,12 @@ class _GoogleAccount extends React.Component {
     }
 
     close() {
-        const {activator: {activatables: {userDetails}}} = this.props
-        userDetails.activate()
+        const {activator: {activatables: {userDetails}}, activatable: {deactivate, mandatory}} = this.props
+        if (mandatory) {
+            deactivate()
+        } else {
+            userDetails.activate()
+        }
     }
 
     isUserGoogleAccount() {
@@ -102,11 +121,37 @@ class _GoogleAccount extends React.Component {
                         {msg('user.googleAccount.connected.title')}
                     </div>
                 </Layout>
+                {this.renderGoogleProjectSelector()}
                 <div className={styles.info}>
                     {msg('user.googleAccount.connected.info')}
                 </div>
                 {this.renderDisconnectButton()}
             </Layout>
+        )
+    }
+
+    getProjectOptions() {
+        const {projects} = this.state
+        return projects
+            ? projects.map(({projectId, name}) => ({
+                label: name,
+                value: projectId
+            }))
+            : []
+    }
+
+    renderGoogleProjectSelector() {
+        const {inputs: {projectId}} = this.props
+        const {projects} = this.state
+        return (
+            <Form.Combo
+                input={projectId}
+                label={msg('user.googleAccount.form.projectId.label')}
+                options={this.getProjectOptions()}
+                className={styles.durationUnit}
+                busyMessage={projects === null}
+                errorMessage
+            />
         )
     }
 
@@ -134,10 +179,15 @@ class _GoogleAccount extends React.Component {
     }
 
     render() {
+        const {form, activatable: {mandatory}} = this.props
+        const {projects} = this.state
         return (
-            <Panel
+            <Form.Panel
                 className={styles.panel}
-                type='modal'>
+                form={form}
+                modal
+                onApply={this.updateProject}
+                onClose={this.close}>
                 <Panel.Header
                     icon='key'
                     title={msg('user.googleAccount.title')}
@@ -145,15 +195,44 @@ class _GoogleAccount extends React.Component {
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-                <Panel.Buttons>
-                    <Panel.Buttons.Main>
-                        <Panel.Buttons.Close
-                            keybinding='Escape'
-                            onClick={this.close}
-                        />
-                    </Panel.Buttons.Main>
-                </Panel.Buttons>
-            </Panel>
+                <Form.PanelButtons disabled={!projects} disabledCancel={mandatory}/>
+            </Form.Panel>
+        )
+    }
+
+    updateProject({projectId}) {
+        return updateGoogleProject$(projectId).pipe(
+            tap(() => {
+                actionBuilder('UPDATE_GOOGLE_PROJECT')
+                    .set('user.currentUser.googleTokens.projectId', projectId)
+                    .dispatch()
+                Notifications.success({
+                    message: msg('user.googleAccount.form.projectId.updated')
+                })
+            })
+        )
+    }
+
+    isValidProjectId(projectId) {
+        const {projects} = this.state
+        !!projectId && projects?.find(project => project.projectId === projectId)
+    }
+
+    componentDidMount() {
+        const {inputs: {projectId}, stream} = this.props
+        stream('LOAD_GOOGLE_PROJECTS',
+            projects$(),
+            rawProjects => {
+                const activeProjects = rawProjects.filter(({lifecycleState}) => lifecycleState === 'ACTIVE')
+                const projects = activeProjects.length
+                    ? activeProjects
+                    : [{projectId: '', name: msg('user.googleAccount.form.projectId.legacy')}]
+                this.setState({projects})
+                if (!projects.find(project => project.projectId === projectId.value)) {
+                    projectId.set(projects[0].projectId)
+                }
+            },
+            error => Notifications.error({message: 'Cannot load Google Projects', error})
         )
     }
 }
@@ -165,7 +244,7 @@ const policy = () => ({
 
 export const GoogleAccount = compose(
     _GoogleAccount,
-    connect(mapStateToProps),
+    withForm({fields, mapStateToProps}),
     withActivators('userDetails'),
     withActivatable({id: 'googleAccount', policy, alwaysAllow: true})
 )

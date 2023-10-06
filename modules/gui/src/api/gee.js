@@ -139,4 +139,9 @@ export default {
         get$('/api/gee/task/listCompleted', {
             retries: 0
         }),
+
+    projects$: () =>
+        get$('/api/gee/projects', {
+            retries: 0
+        }),
 }

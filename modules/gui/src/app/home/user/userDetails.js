@@ -186,6 +186,13 @@ class _UserDetailsButton extends React.Component {
         return user.googleTokens
     }
 
+    isGoogleProjectSelectionRequired() {
+        const {user} = this.props
+        return user.googleTokens
+            && !user.googleTokens.projectId
+            && !user.googleTokens.legacyProject
+    }
+
     render() {
         return (
             <React.Fragment>
@@ -223,10 +230,19 @@ class _UserDetailsButton extends React.Component {
     componentDidMount() {
         // this.autoTrigger()
         this.initializeHints()
+        this.checkGoogleProjectId()
     }
 
     componentDidUpdate() {
         // this.autoTrigger()
+        this.checkGoogleProjectId()
+    }
+
+    checkGoogleProjectId() {
+        const {activator: {activatables: {googleAccount}}} = this.props
+        if (this.isGoogleProjectSelectionRequired()) {
+            googleAccount?.activate && googleAccount.activate({mandatory: true})
+        }
     }
 
     autoTrigger() {
@@ -253,7 +269,7 @@ export const UserDetailsButton = compose(
         user: state.user.currentUser
     })),
     withSubscriptions(),
-    withActivators('userDetails')
+    withActivators('userDetails', 'googleAccount')
 )
 
 UserDetailsButton.propTypes = {}

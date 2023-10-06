@@ -2,6 +2,7 @@ import {ActivationContext} from 'widget/activation/activationContext'
 import {PortalContainer} from 'widget/portal'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {currentUser} from 'user'
 import {exhaustMap, map, mergeMap, pipe, retryWhen, timer, zip} from 'rxjs'
 import {isFloating} from './menu/menuMode'
 import {loadAssets$} from 'widget/assets'
@@ -16,8 +17,10 @@ import actionBuilder from 'action-builder'
 import api from 'api'
 import moment from 'moment'
 import styles from './home.module.css'
+import user from 'api/user'
 
 const mapStateToProps = () => ({
+    user: currentUser(),
     floatingMenu: isFloating(),
     floatingFooter: false
 })
@@ -101,7 +104,10 @@ class Home extends React.Component {
         stream('SCHEDULE_UPDATE_USER_REPORT', updateUserReport$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_USER_MESSAGES', updateUserMessages$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_TASKS', updateTasks$(), null, errorHandler)
-        stream('SCHEDULE_UPDATE_ASSETS', loadAssets$(), null, errorHandler)
+        
+        if (props?.user?.googleTokens) {
+            stream('SCHEDULE_UPDATE_ASSETS', loadAssets$(), null, errorHandler)
+        }
     }
 
     render() {
