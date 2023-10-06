@@ -170,6 +170,10 @@
     pointer-events: all;
 }
 
+.look.hoverForcedOff {
+    cursor: default;
+}
+
 /* draggable */
 
 .look.draggable {

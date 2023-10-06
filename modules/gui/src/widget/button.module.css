@@ -175,6 +175,8 @@
 }
 
 .button .contents {
+    display: flex;
+    align-items: baseline;
     user-select: none;
 }
 
@@ -182,6 +184,10 @@
 
 .button > .contents > * + * {
     margin-left: .5rem;
+}
+
+.button > .contents > span {
+    flex-grow: 1;
 }
 
 /* labelStyle: smallcaps */
