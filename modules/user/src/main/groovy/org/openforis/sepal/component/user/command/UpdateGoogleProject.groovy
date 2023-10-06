@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory
 @Canonical
 class UpdateGoogleProject extends AbstractCommand<Void> {
     String projectId
+    boolean legacyProject
 }
 
 class UpdateGoogleProjectHandler implements CommandHandler<Void, UpdateGoogleProject> {
@@ -50,7 +51,8 @@ class UpdateGoogleProjectHandler implements CommandHandler<Void, UpdateGooglePro
                 refreshToken: tokens.refreshToken,
                 accessToken: tokens.accessToken,
                 accessTokenExpiryDate: tokens.accessTokenExpiryDate,
-                projectId: command.projectId
+                projectId: command.projectId,
+                legacyProject: command.legacyProject,
         )
         userRepository.updateGoogleTokens(command.username, updatedTokens)
         def user = userRepository.lookupUser(command.username)
