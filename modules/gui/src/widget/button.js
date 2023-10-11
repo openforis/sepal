@@ -274,7 +274,7 @@ class _Button extends React.Component {
         const elementType = innerButton ? 'div' : 'button'
         const props = {
             ref: forwardedRef,
-            type,
+            type: innerButton ? null : type,
             className: this.classNames(),
             style: this.isActive() ? style : {...style, pointerEvents: 'none'},
             tabIndex,

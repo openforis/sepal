@@ -169,12 +169,29 @@ class _List extends React.Component {
                     air={air}
                     additionalClassName={styles.group}
                     label={option.render ? option.render() : option.label}
+                    labelStyle='smallcaps'
                     width='max'
                     alignment={alignment}
-                    disabled
+                    tail={this.renderGroupTooltipIcon(option)}
                 />
             </li>
         )
+    }
+
+    renderGroupTooltipIcon({tooltip, tooltipLinkUrl}) {
+        const {tooltipPlacement} = this.props
+        return tooltip || tooltipLinkUrl ? (
+            <Button
+                innerButton
+                chromeless
+                shape='none'
+                air='none'
+                icon='info-circle'
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+                linkUrl={tooltipLinkUrl}
+            />
+        ) : null
     }
 
     renderNonSelectableOption(option, index) {

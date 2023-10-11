@@ -95,7 +95,9 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
         return new GoogleTokens(
                 refreshToken: tokens.refreshToken,
                 accessToken: response.data.access_token,
-                accessTokenExpiryDate: toTimestamp(response.data.expires_in)
+                accessTokenExpiryDate: toTimestamp(response.data.expires_in),
+                projectId: tokens.projectId,
+                legacyProject: tokens.legacyProject
         )
     }
 
