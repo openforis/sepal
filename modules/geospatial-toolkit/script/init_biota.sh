@@ -7,7 +7,7 @@ echo "*** Installing biota, sen2mosaic, deforest ***"
 echo "**********************************************"
 
 cd /usr/local/lib
-git clone https://github.com/smfm-project/biota.git
+git clone https://github.com/dfguerrerom/biota
 cd biota
 python3 setup.py install
 
