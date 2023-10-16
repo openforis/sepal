@@ -144,3 +144,9 @@ export const credentialsPosted = user =>
         .set('user.login.invalidCredentials', !user)
         .set('user.loggedOn', !!user)
         .dispatch()
+
+export const updateGoogleProject$ = projectId =>
+    api.user.updateGoogleProject$(projectId, !projectId)
+
+export const projects$ = () =>
+    api.gee.projects$()

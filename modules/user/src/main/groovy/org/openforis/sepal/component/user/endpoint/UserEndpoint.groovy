@@ -334,11 +334,12 @@ class UserEndpoint {
             }
 
             post('/google/project') {
+                def legacyProject = params.legacyProject == 'true'
                 component.submit(
                     new UpdateGoogleProject(
                             username: sepalUser.username,
-                            projectId: params.required('projectId', String),
-                            legacyProject: params.required('legacyProject', String) == 'true',
+                            projectId: legacyProject ? null : params.projectId,
+                            legacyProject: legacyProject,
                     ))
                 response.addHeader('sepal-user-updated', 'true')
                 response.status = 204

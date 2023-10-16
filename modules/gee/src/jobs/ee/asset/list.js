@@ -46,7 +46,7 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
     //     http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {headers}).pipe(
     //         map(({body}) => JSON.parse(body)),
     //         map(({projects}) =>
-    //             projects .map(({projectId}) => ({
+    //             projects.map(({projectId}) => ({
     //                 id: `projects/${projectId}/assets`,
     //                 type: 'Folder'
     //             }))

@@ -4338,6 +4338,13 @@
         "updating": "Updating..."
       },
       "googleAccount": {
+        "form": {
+            "projectId": {
+                "label": "Google Cloud project",
+                "updated": "Google Cloud project has been updated",
+                "legacy": "Legacy EE account"
+            }
+        },
         "connect": {
           "label": "Connect your Google account"
         },

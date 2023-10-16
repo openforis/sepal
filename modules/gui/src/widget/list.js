@@ -167,7 +167,6 @@ class _List extends React.Component {
                     chromeless
                     look='transparent'
                     air={air}
-                    additionalClassName={styles.group}
                     label={option.render ? option.render() : option.label}
                     labelStyle='smallcaps'
                     width='max'

@@ -15,10 +15,6 @@
     list-style: none;
 }
 
-.options .group {
-    border-bottom: 1px solid #333;
-}
-
 .sticky {
     position: sticky;
     top: 0;

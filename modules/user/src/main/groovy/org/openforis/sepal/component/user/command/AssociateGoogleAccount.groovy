@@ -50,10 +50,10 @@ class AssociateGoogleAccountHandler implements CommandHandler<GoogleTokens, Asso
 
     GoogleTokens execute(AssociateGoogleAccount command) {
         def tokens = oAuthClient.requestTokens(command.username, command.authorizationCode)
-        if (!googleEarthEngineWhitelistChecker.isWhitelisted(command.username, tokens)) {
-            LOG.info('User is not whitelisted in Google Earth Engine, using Sepal service-account. command: ' + command)
-            tokens = null
-        }
+        // if (!googleEarthEngineWhitelistChecker.isWhitelisted(command.username, tokens)) {
+        //     LOG.info('User is not whitelisted in Google Earth Engine, using Sepal service-account. command: ' + command)
+        //     tokens = null
+        // }
         userRepository.updateGoogleTokens(command.username, tokens)
         def user = userRepository.lookupUser(command.username)
         messageQueue.publish(user: user, tokens: tokens)
