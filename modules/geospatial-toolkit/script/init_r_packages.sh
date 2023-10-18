@@ -12,6 +12,10 @@ export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
 
 R CMD javareconf
 
+# Install CRAN packages via r-proxy
+
+R -e "install.packages('rgdal', version = '1.6-7', dependencies = TRUE, repos = 'http://r-proxy:8180/')"
+
 R -e "install.packages(c(\
         'abind',\
         'askpass',\
@@ -197,7 +201,6 @@ R -e "install.packages(c(\
         'reshape2',\
         'reticulate',\
         'rgbif',\
-        'rgdal',\
         'rgeos',\
         'rgexf',\
         'RgoogleMaps',\
@@ -248,7 +251,6 @@ R -e "install.packages(c(\
         'sys',\
         'taxize',\
         'Taxonstand',\
-        'terra',\
         'testit',\
         'testthat',\
         'textclean',\
@@ -293,11 +295,11 @@ R -e "install.packages(c(\
         'yaml',\
         'zeallot',\
         'zoo'
-    ), repos='http://r-proxy:8180/', upgrade = 'never')"
+    ), repos='http://r-proxy:8180/')"
 
 # Install GitHub packages via r-proxy
 
-R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/', upgrade = 'never')"
+R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/')"
 
 R -e "remotes::install_url(c(\
         'http://r-proxy:8180/github/r-barnes/dggridR/archive/refs/heads/master.tar.gz',\
@@ -306,4 +308,4 @@ R -e "remotes::install_url(c(\
         'http://r-proxy:8180/github/loicdtx/bfastSpatial/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/jreiche/bayts/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/cran/gdalUtils/archive/refs/heads/master.tar.gz'
-    ), repos='http://r-proxy:8180/', build = FALSE, upgrade = 'never')"
+    ), repos='http://r-proxy:8180/', build = FALSE)"
