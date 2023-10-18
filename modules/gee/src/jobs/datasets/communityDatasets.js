@@ -10,6 +10,12 @@ const REFRESH_INTERVAL_HOURS = 24
 
 let datasets = []
 
+const EXCLUDED_LICENSES = [
+    'Creative Commons Attribution Non Commercial 4.0 International',
+    'Creative Commons Attribution Non Commercial No Derivatives 4.0 International',
+    'Creative Commons Attribution Non Commercial Share Alike 4.0 International'
+]
+
 const getDatasets$ = () =>
     get$(URL).pipe(
         map(({body}) => JSON.parse(body)),
@@ -17,13 +23,17 @@ const getDatasets$ = () =>
     )
 
 const mapDataset = datasets =>
-    datasets.map(
-        ({title, id, type}) => ({
-            title: simplifyString(title),
-            id,
-            type: mapType(type)
-        })
-    )
+    datasets
+        .filter(
+            ({license}) => !EXCLUDED_LICENSES.includes(license)
+        )
+        .map(
+            ({title, id, type}) => ({
+                title: simplifyString(title),
+                id,
+                type: mapType(type)
+            })
+        )
 
 const TYPE_MAP = {
     'image': 'Image',

@@ -12,8 +12,8 @@ import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {currentUser} from 'user'
 import {getLanguage, msg} from 'translate'
+import {isServiceAccount} from 'user'
 import {loadApps$} from 'apps'
 import {simplifyString, splitString} from 'string'
 import {userDetailsHint} from 'app/home/user/userDetails'
@@ -29,7 +29,6 @@ import styles from './appList.module.css'
 const IGNORE = 'IGNORE'
 
 const mapStateToProps = () => ({
-    user: currentUser(),
     apps: select('apps.list'),
     tags: select('apps.tags'),
     tabs: select('apps.tabs'),
@@ -152,7 +151,7 @@ class _AppList extends React.Component {
 
     renderGoogleAccountFilter() {
         const {googleAccountFilter} = this.props
-        return this.isUsingServiceAccount() ? (
+        return isServiceAccount() ? (
             <Button
                 look={googleAccountFilter ? 'cancel' : 'default'}
                 shape='pill'
@@ -286,16 +285,11 @@ class _AppList extends React.Component {
     }
 
     isDisallowed(app) {
-        return app.googleAccountRequired && this.isUsingServiceAccount()
+        return app.googleAccountRequired && isServiceAccount()
     }
 
     isAvailable(app) {
         return !this.isDisabled(app) && !this.isDisallowed(app)
-    }
-
-    isUsingServiceAccount() {
-        const {user} = this.props
-        return !user.googleTokens
     }
 
     showInfo(app) {
