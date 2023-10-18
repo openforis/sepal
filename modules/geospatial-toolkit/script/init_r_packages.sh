@@ -12,10 +12,6 @@ export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
 
 R CMD javareconf
 
-# Install CRAN packages via r-proxy
-
-R -e "install.packages('rgdal', version = '1.6-7', dependencies = TRUE, repos = 'http://r-proxy:8180/')"
-
 R -e "install.packages(c(\
         'abind',\
         'askpass',\
@@ -294,7 +290,8 @@ R -e "install.packages(c(\
         'xts',\
         'yaml',\
         'zeallot',\
-        'zoo'
+        'zoo',
+        'https://cran.r-project.org/src/contrib/Archive/rgdal/rgdal_1.6-7.tar.gz'
     ), repos='http://r-proxy:8180/')"
 
 # Install GitHub packages via r-proxy
