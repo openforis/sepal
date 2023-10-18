@@ -32,7 +32,7 @@ class AssetDetails extends React.Component {
                 placement='bottom-right'>
                 <Panel.Header
                     icon='calendar-alt'
-                    title={msg('process.asset.panel.assetId.title')}/>
+                    title={msg('process.asset.panel.assetDetails.title')}/>
                 <Panel.Content>
                     <Layout>
                         {this.renderAssetSelector()}
