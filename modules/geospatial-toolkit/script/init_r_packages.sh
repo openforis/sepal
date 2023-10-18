@@ -290,11 +290,11 @@ R -e "install.packages(c(\
         'xts',\
         'yaml',\
         'zeallot',\
-        'zoo',
-        'https://cran.r-project.org/src/contrib/Archive/rgdal/rgdal_1.6-7.tar.gz'
+        'zoo'
     ), repos='http://r-proxy:8180/')"
 
-# Install GitHub packages via r-proxy
+# Install archived packages - this doesn't work through r-proxy
+R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/rgdal/rgdal_1.6-7.tar.gz')"
 
 R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/')"
 
