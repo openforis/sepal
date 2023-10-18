@@ -9,6 +9,9 @@ import api from 'api'
 export const currentUser = () => select('user.currentUser')
 export const invalidCredentials = () => select('user.login.invalidCredentials')
 export const tokenUser = () => select('user.tokenUser')
+export const isGoogleAccount = () => !!(currentUser()?.googleTokens)
+export const isServiceAccount = () => !isGoogleAccount()
+export const googleProjectId = () => currentUser()?.googleTokens?.projectId
 
 export const loadUser$ = () =>
     api.user.loadCurrentUser$().pipe(

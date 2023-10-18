@@ -8,7 +8,7 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {WorkspaceDestination} from 'widget/workspaceDestination'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {currentUser} from 'user'
+import {isGoogleAccount} from 'user'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {updateProject} from 'app/home/body/process/recipeList/projects'
@@ -69,7 +69,6 @@ const mapStateToProps = state => ({
 })
 
 const mapRecipeToProps = recipe => ({
-    user: currentUser(),
     projectId: recipe.projectId
 })
 
@@ -199,7 +198,7 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     renderDestination() {
-        const {toSepal, toEE, user, inputs: {destination}} = this.props
+        const {toSepal, toEE, inputs: {destination}} = this.props
         const destinationOptions = [
             {
                 value: 'SEPAL',
@@ -210,7 +209,7 @@ class _MosaicRetrievePanel extends React.Component {
                 label: msg('process.retrieve.form.destination.GEE')
             }
         ]
-            .filter(({value}) => user.googleTokens || value !== 'GEE')
+            .filter(({value}) => isGoogleAccount() || value !== 'GEE')
             .filter(({value}) => toSepal || value !== 'SEPAL')
             .filter(({value}) => toEE || value !== 'GEE')
         return (
@@ -338,10 +337,10 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     update() {
-        const {toEE, toSepal, user, inputs: {destination, assetType}} = this.props
+        const {toEE, toSepal, inputs: {destination, assetType}} = this.props
         if (toSepal && !destination.value) {
             destination.set('SEPAL')
-        } else if (user.googleTokens && toEE && !destination.value) {
+        } else if (isGoogleAccount() && toEE && !destination.value) {
             destination.set('GEE')
         }
         if (!assetType.value && destination.value === 'GEE') {
