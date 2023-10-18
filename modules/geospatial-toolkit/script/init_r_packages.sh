@@ -12,10 +12,6 @@ export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
 
 R CMD javareconf
 
-# Install CRAN packages via r-proxy
-
-R -e "install.packages('rgdal', version = '1.3-9', dependencies = TRUE, repos = 'http://r-proxy:8180/', upgrade = 'never')"
-
 R -e "install.packages(c(\
         'abind',\
         'askpass',\
@@ -201,6 +197,7 @@ R -e "install.packages(c(\
         'reshape2',\
         'reticulate',\
         'rgbif',\
+        'rgdal',\
         'rgeos',\
         'rgexf',\
         'RgoogleMaps',\
