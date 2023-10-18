@@ -7,6 +7,7 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {copyToClipboard} from 'clipboard'
 import {escapeRegExp, splitString} from 'string'
+import {isServiceAccount} from 'user'
 import {msg} from 'translate'
 import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualizationParser'
 import {v4 as uuid} from 'uuid'
@@ -103,7 +104,7 @@ class _FormAssetCombo extends React.Component {
                 iconAttributes={{spin: loadingUserAssets || searchingDatasets}}
                 tooltip={msg('asset.reload')}
                 tabIndex={-1}
-                disabled={loadingUserAssets || searchingDatasets}
+                disabled={isServiceAccount() || loadingUserAssets || searchingDatasets}
                 onClick={this.reloadAssets}
             />
         )
