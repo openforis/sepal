@@ -107,7 +107,7 @@ export const validateEmail$ = ({email, recaptchaToken}) =>
 
 export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled}) =>
     api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled}).pipe(
-        map(({name, email, organization}) =>
+        tap(({name, email, organization}) =>
             actionBuilder('UPDATE_USER_DETAILS', {name, email, organization, intendedUse})
                 .set('user.currentUser.name', name)
                 .set('user.currentUser.email', email)
@@ -123,7 +123,7 @@ export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
 
 export const updateCurrentUserSession$ = session =>
     api.user.updateCurrentUserSession$(session).pipe(
-        map(() =>
+        tap(() =>
             actionBuilder('UPDATE_USER_SESSION_POSTED', {session})
                 .assign(['user.currentUserReport.sessions', {id: session.id}], {
                     earliestTimeoutHours: session.keepAlive
@@ -134,7 +134,7 @@ export const updateCurrentUserSession$ = session =>
 
 export const stopCurrentUserSession$ = session =>
     api.user.stopCurrentUserSession$(session).pipe(
-        map(() =>
+        tap(() =>
             actionBuilder('STOP_USER_SESSION_POSTED', {session})
                 .del(['user.currentUserReport.sessions', {id: session.id}])
                 .dispatch()
@@ -149,7 +149,13 @@ export const credentialsPosted = user =>
         .dispatch()
 
 export const updateGoogleProject$ = projectId =>
-    api.user.updateGoogleProject$(projectId, !projectId)
+    api.user.updateGoogleProject$(projectId, !projectId).pipe(
+        tap(() =>
+            actionBuilder('UPDATE_GOOGLE_PROJECT')
+                .set('user.currentUser.googleTokens.projectId', projectId)
+                .dispatch()
+        )
+    )
 
 export const projects$ = () =>
     api.gee.projects$()

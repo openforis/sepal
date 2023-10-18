@@ -4233,7 +4233,7 @@
             }
         },
         "connect": {
-          "label": "Connect your Google account"
+          "label": "Connect"
         },
         "connected": {
           "info": "You have full access to SEPAL. If you disconnect your Google account from SEPAL, some features (like exporting to Earth Engine assets) will not be available.",
@@ -4241,7 +4241,7 @@
           "title": "Your SEPAL account is connected to your Google account"
         },
         "disconnect": {
-          "label": "Disconnect your Google account",
+          "label": "Disconnect",
           "warning": {
             "message": "Disconnecting your Google account would cause termination of any task started while connected. Tasks currently running: {taskCount}.",
             "title": "Warning"

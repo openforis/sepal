@@ -3683,7 +3683,7 @@
         },
         "googleAccount": {
             "connect": {
-                "label": "Connecter votre compte Google"
+                "label": "Connecter"
             },
             "connected": {
                 "info": "Vous avez un accès complet à SEPAL. Si vous déconnectez votre compte Google de SEPAL, certaines fonctionnalités (comme l'exportation en tant qu'asset Google Earth Enginee) ne seront pas disponibles.",
@@ -3691,7 +3691,7 @@
                 "title": "Votre compte SEPAL est connecté à votre compte Google"
             },
             "disconnect": {
-                "label": "Déconnecter votre compte Google",
+                "label": "Déconnecter",
                 "warning": {
                     "message": "La déconnexion de votre compte Google entraînerait l'arrêt de toute tâche commencée alors que vous êtes connecté. Tâches en cours d'exécution : {taskCount}",
                     "title": "Attention"
