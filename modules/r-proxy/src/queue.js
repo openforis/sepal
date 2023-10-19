@@ -3,7 +3,6 @@ const Bull = require('bull')
 const log = require('#sepal/log').getLogger('queue')
 const {makeCranPackage, checkCranUpdates, updateCranPackage} = require('./cran')
 const {makeGitHubPackage, checkGitHubUpdates, updateGitHubPackage} = require('./github')
-// const {checkCranUpdates, checkGitHubUpdates} = require('./update')
 
 const queue = new Bull(`build-queue-${platformVersion}`, redisUri)
 
@@ -45,16 +44,16 @@ queue.process(async ({data}) => {
     return {success: true}
 })
 
-const buildCranPackage = async ({name, version}) => {
+const buildCranPackage = async ({name, path, version}) => {
     log.debug(`Processing build/CRAN: ${name}/${version}`)
-    const success = await makeCranPackage(name, version, LOCAL_CRAN_REPO)
+    const success = await makeCranPackage({name, path, version, repo: LOCAL_CRAN_REPO})
     log.debug(`Processed build/CRAN: ${name}/${version}`)
     return {success}
 }
 
 const buildGitHubPackage = async ({name, path}) => {
     log.debug(`Processing build/GitHub: ${path}`)
-    const success = await makeGitHubPackage(name, path, LOCAL_CRAN_REPO)
+    const success = await makeGitHubPackage({name, path})
     log.debug(`Processed build/GitHub: ${path}`)
     return {success}
 }
@@ -91,10 +90,10 @@ queue.on('completed', async ({id}, {success}) => {
     }
 })
 
-const enqueueBuildCranPackage = (name, version) => {
+const enqueueBuildCranPackage = (name, path, version) => {
     const jobId = `build-cran-package-${name}/${version}`
     log.debug(`Enqueuing job: ${jobId}`)
-    return queue.add({buildCranPackage: {name, version}}, {
+    return queue.add({buildCranPackage: {name, path, version}}, {
         ...QUEUE_OPTIONS,
         jobId,
         priority: 1

@@ -80,7 +80,7 @@ const serveCached = async (req, res, path) =>
 
 const serveProxiedFile = async (req, res, target) => {
     if (await checkTarget(target, {allowRedirect: true})) {
-        log.debug(`Proxying ${req.url} to ${target}`)
+        log.info(`Proxying ${req.url} to ${target}`)
         proxy.web(req, res, {target})
         return true
     } else {
