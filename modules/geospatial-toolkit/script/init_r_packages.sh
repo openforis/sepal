@@ -307,5 +307,5 @@ R -e "remotes::install_url(c(\
         'http://r-proxy:8180/github/azvoleff/gfcanalysis/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/loicdtx/bfastSpatial/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/jreiche/bayts/archive/refs/heads/master.tar.gz',\
-        'http://r-proxy:8180/github/cran/gdalUtils/archive/refs/heads/master.tar.gz'
+        'http://r-proxy:8180/github/cran/gdalUtils/archive/refs/heads/master.tar.gz'\
     ), repos='http://r-proxy:8180/', build = FALSE)"
