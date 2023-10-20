@@ -297,7 +297,7 @@ R -e "install.packages(c(\
 R -e "install.packages(c(\
         'https://cran.r-project.org/src/contrib/Archive/rgdal/rgdal_1.6-7.tar.gz',\
         'https://cran.r-project.org/src/contrib/Archive/rgeos/rgeos_0.6-4.tar.gz'\
-    )"
+    ))"
 
 R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/')"
 
