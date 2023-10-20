@@ -124,10 +124,14 @@ export const getModules = modules => {
 
 export const getServices = async module => {
     try {
-        return JSON.parse(await exec({command: './script/docker-compose-ps.sh', args: [module, SEPAL_SRC, ENV_FILE]}))
-            .map(
-                ({Name: name, State: state, Health: health}) => ({name, state: state.toUpperCase(), health: health.toUpperCase()})
-            )
+        const result = await exec({command: './script/docker-compose-ps.sh', args: [module, SEPAL_SRC, ENV_FILE]})
+        return result
+            .split('\n')
+            .filter(line => line.length)
+            .map(line => {
+                const {Name: name, State: state, Health: health} = JSON.parse(line)
+                return {name, state: state.toUpperCase(), health: health.toUpperCase()}
+            })
     } catch (error) {
         log.error('Could not get health', error)
         return null
