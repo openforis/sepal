@@ -197,7 +197,6 @@ R -e "install.packages(c(\
         'reshape2',\
         'reticulate',\
         'rgbif',\
-        'rgeos',\
         'rgexf',\
         'RgoogleMaps',\
         'rhandsontable',\
@@ -294,10 +293,8 @@ R -e "install.packages(c(\
     ), repos='http://r-proxy:8180/')"
 
 # Install archived packages - this doesn't work through r-proxy
-R -e "install.packages(c(\
-        'https://cran.r-project.org/src/contrib/Archive/rgdal/rgdal_1.6-7.tar.gz',\
-        'https://cran.r-project.org/src/contrib/Archive/rgeos/rgeos_0.6-4.tar.gz'\
-    ))"
+R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/rgdal/rgdal_1.6-7.tar.gz')"
+R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/rgeos/rgeos_0.6-4.tar.gz')"
 
 R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/')"
 
