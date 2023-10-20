@@ -1,10 +1,11 @@
-FROM debian:bullseye
+FROM debian:bookworm
 
 SHELL ["/bin/bash", "-c"]
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV DOCKER_BUILDKIT=0
 ENV PROJECT_DIR /usr/local/src/sepal
+ENV NODE_MAJOR=18
 
 # Update and install base packages
 
@@ -45,11 +46,16 @@ RUN apt-get update && apt-get install -y docker-ce-cli
 
 RUN mkdir -p /usr/local/lib/docker/cli-plugins
 RUN curl -SL https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
+#RUN curl -SL https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
 RUN chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 # Install node.js
 
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash && apt-get update && apt-get -y install nodejs
+RUN mkdir -p /etc/apt/keyrings
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+RUN apt-get update
+RUN apt-get install nodejs -y
 
 # Install global npm packages
 
