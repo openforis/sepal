@@ -1,5 +1,5 @@
 import {compose} from './compose.js'
-import {exit, isModule, isRunnable, isRunning, showModuleStatus, MESSAGE} from './utils.js'
+import {isModule, isRunnable, isRunning, showModuleStatus, MESSAGE} from './utils.js'
 import _ from 'lodash'
 
 const shellModule = async (module, service, options = {}, _parent) => {

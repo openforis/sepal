@@ -1,6 +1,6 @@
 import {compose} from './compose.js'
 import {exec} from './exec.js'
-import {getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus, isRunning, modulePath} from './utils.js'
+import {getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus, isRunning} from './utils.js'
 import {logs} from './logs.js'
 import {getDirectRunDeps} from './deps.js'
 import {SEPAL_SRC} from './config.js'
