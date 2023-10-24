@@ -46,5 +46,19 @@ export const getDirectRunDepList = (modules, recursive) => {
     ]
 }
 
+export const getRunDependencyMap = modules =>
+    _.reduce(modules, (dependencyMap, module) => {
+        if (dependencyMap[module]) {
+            return dependencyMap
+        } else {
+            const moduleDependencies = getDirectRunDeps(module)
+            return {
+                ...dependencyMap,
+                [module]: moduleDependencies,
+                ...getRunDependencyMap(moduleDependencies)
+            }
+        }
+    }, {})
+
 export const isWatchable = module =>
     deps[module]?.watch
