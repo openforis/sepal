@@ -4,31 +4,45 @@ import {exit, getModules, isNodeModule, showModuleStatus, MESSAGE} from './utils
 import {SEPAL_SRC} from './config.js'
 import {getLibDepList} from './deps.js'
 import Path from 'path'
+import {access, rm} from 'fs/promises'
 import _ from 'lodash'
 
 const installPackages = async (module, modulePath, {verbose, clean}) => {
     await stopModule(module)
     const npmInstallOptions = [
         verbose ? '--verbose' : ''
-    ].join(' ')
+    ]
+
     if (clean) {
         showModuleStatus(module, MESSAGE.CLEANING_PACKAGES)
-        await exec({
-            command: './script/npm-clean.sh',
-            args: [modulePath],
-            enableStdIn: true,
-            showStdOut: true,
-            showStdErr: true
-        })
+        await rm(Path.join(modulePath, 'package-lock.json'), {force: true})
+        await rm(Path.join(modulePath, 'node_modules'), {recursive: true, force: true})
     }
-    showModuleStatus(module, MESSAGE.INSTALLING_PACKAGES)
-    await exec({
-        command: './script/npm-install.sh',
-        args: [modulePath, npmInstallOptions],
-        enableStdIn: true,
-        showStdOut: true,
-        showStdErr: true
-    })
+    
+    try {
+        showModuleStatus(module, MESSAGE.INSTALLING_PACKAGES)
+        await access(`${modulePath}/package.json`)
+        await exec({
+            command: 'npm',
+            args: [
+                'install',
+                ...npmInstallOptions,
+                '--install-links=false'
+            ],
+            cwd: modulePath
+        })
+        await exec({
+            command: 'npm',
+            args: [
+                'rebuild',
+                ...npmInstallOptions
+            ],
+            cwd: modulePath
+        })
+    } catch (error) {
+        console.warn(error)
+    }
+
     showModuleStatus(module, MESSAGE.INSTALLED_PACKAGES)
 }
 

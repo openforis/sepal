@@ -1,4 +1,4 @@
-import {SEPAL_SRC, ENV_FILE} from './config.js'
+import {compose} from './compose.js'
 import {start} from './start.js'
 import {exec} from './exec.js'
 import {exit, getModules, isModule, showModuleStatus, MESSAGE} from './utils.js'
@@ -10,15 +10,31 @@ const buildModule = async (module, options = {}, pull) => {
     try {
         if (isModule(module)) {
             showModuleStatus(module, MESSAGE.BUILDING)
-            const buildOptions = _.compact([
-                !options.cache ? '--no-cache' : null,
-                !options.cache && pull ? '--pull' : null,
-            ]).join(' ')
-            await exec({
-                command: './script/docker-compose-build.sh',
-                args: [module, SEPAL_SRC, ENV_FILE, buildOptions],
-                showStdOut: !options.quiet
+            const {stdout} = await exec({
+                command: 'git',
+                args: [
+                    'rev-parse',
+                    'HEAD'
+                ],
+                showStdOut: options.verbose
             })
+
+            const gitCommit = stdout.split('\n')[0]
+
+            await compose({
+                module,
+                command: 'build',
+                args: [
+                    !options.cache ? '--no-cache' : null,
+                    !options.cache && pull ? '--pull' : null,
+                ],
+                env: {
+                    BUILD_NUMBER: 'latest',
+                    GIT_COMMIT: gitCommit
+                },
+                showStdOut: options.verbose
+            })
+            
             showModuleStatus(module, MESSAGE.BUILT)
         }
     } catch (error) {

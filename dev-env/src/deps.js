@@ -45,3 +45,6 @@ export const getDirectRunDepList = (modules, recursive) => {
         ...modules
     ]
 }
+
+export const isWatchable = module =>
+    deps[module]?.watch

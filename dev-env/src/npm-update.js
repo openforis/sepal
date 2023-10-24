@@ -3,7 +3,9 @@ import {exit, getModules, isNodeModule, showModuleStatus, MESSAGE} from './utils
 import {SEPAL_SRC} from './config.js'
 import {getLibDepList} from './deps.js'
 import Path from 'path'
+import {access} from 'fs/promises'
 import _ from 'lodash'
+import {log} from './log.js'
 
 const updatePackageList = async (module, path, {upgrade, target}) => {
     const modulePath = Path.join(SEPAL_SRC, path)
@@ -11,16 +13,27 @@ const updatePackageList = async (module, path, {upgrade, target}) => {
     const ncuOptions = [
         upgrade ? '--upgrade' : '',
         upgrade ? '--interactive' : '',
-        `--target ${target}`,
+        '--target',
+        target,
         '--color',
-    ].join(' ')
-    await exec({
-        command: './script/npm-check-updates.sh',
-        args: [modulePath, ncuOptions],
-        enableStdIn: true,
-        showStdOut: true,
-        showStdErr: true
-    })
+    ]
+
+    try {
+        await access(`${modulePath}/package.json`)
+        await exec({
+            command: 'ncu',
+            args: [
+                ...ncuOptions
+            ],
+            cwd: modulePath,
+            enableStdIn: true,
+            showStdOut: true,
+            showStdErr: true
+        })
+    } catch (error) {
+        log.warn(error)
+    }
+
     showModuleStatus(module, MESSAGE.UPDATED_PACKAGES)
 }
 

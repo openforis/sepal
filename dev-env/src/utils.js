@@ -45,6 +45,7 @@ export const MESSAGE = {
     INSTALLED_PACKAGES: chalk.magentaBright('INSTALLED PACKAGES'),
     SKIPPED: chalk.grey('SKIPPED'),
     RUNNING: chalk.greenBright('RUNNING'),
+    WATCHING: chalk.greenBright('WATCHING'),
     EXITED: chalk.redBright('EXITED'),
     RESTARTING: chalk.yellowBright('RESTARTING'),
     HEALTH: {
@@ -53,6 +54,7 @@ export const MESSAGE = {
         STARTING: chalk.yellowBright('STARTING')
     }
 }
+
 const formatModule = (module, {pad = true} = {}) =>
     chalk.cyanBright(pad ? module : module)
 
@@ -122,10 +124,24 @@ export const getModules = modules => {
     }
 }
 
+export const modulePath = module =>
+    `${SEPAL_SRC}/modules/${module}`
+
 export const getServices = async module => {
     try {
-        const result = await exec({command: './script/docker-compose-ps.sh', args: [module, SEPAL_SRC, ENV_FILE]})
-        return result
+        const {stdout} = await exec({
+            command: 'docker',
+            args: [
+                'compose',
+                `--env-file=${ENV_FILE}`,
+                'ps',
+                '--format',
+                'json'
+            ],
+            cwd: `${SEPAL_SRC}/modules/${module}`
+        })
+
+        return stdout
             .split('\n')
             .filter(line => line.length)
             .map(line => {
@@ -141,7 +157,18 @@ export const getServices = async module => {
 const getBaseStatus = async modules => {
     const STATUS_MATCHER = /(\w+)\((\d+)\)/
     try {
-        return JSON.parse(await exec({command: './script/docker-compose-ls.sh'}))
+        const {stdout} = await exec({
+            command: 'docker',
+            args: [
+                'compose',
+                'ls',
+                '--all',
+                '--format',
+                'json'
+            ]
+        })
+
+        return JSON.parse(stdout)
             .map(
                 ({Name: module, Status: status}) => ({
                     module,
