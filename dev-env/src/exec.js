@@ -32,24 +32,22 @@ export const exec = ({command, args, cwd, env, detached, enableStdIn, showStdOut
                 const out = data.toString('utf8')
                 if (showStdOut) {
                     process.stdout.write(out)
-                } else {
-                    stdout += out
                 }
+                stdout += out
             })
     
             cmd.stderr?.on('data', data => {
                 const err = data.toString('utf8')
                 if (showStdErr) {
                     process.stderr.write(err)
-                } else {
-                    stderr += err
                 }
+                stderr += err
             })
     
             cmd.on('close', code =>
                 code
                     ? reject({code, stderr, stdout})
-                    : resolve({stdout})
+                    : resolve(stdout)
             )
         }
     })

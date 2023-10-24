@@ -1,27 +1,21 @@
 import {compose} from './compose.js'
 import {getModules, isModule, isRunnable, showModuleStatus, showStatus, MESSAGE} from './utils.js'
 import {getDirectRunDeps} from './deps.js'
-import {log} from './log.js'
 import _ from 'lodash'
 
 export const stopModule = async (module, options = {}, _parent) => {
-    try {
-        if (isModule(module)) {
-            if (isRunnable(module)) {
-                showModuleStatus(module, MESSAGE.STOPPING, {sameLine: true})
-                await compose({
-                    module,
-                    command: 'down',
-                    showStdOut: options.verbose
-                })
-                await showStatus([module])
-            } else {
-                showModuleStatus(module, MESSAGE.NON_RUNNABLE)
-            }
+    if (isModule(module)) {
+        if (isRunnable(module)) {
+            showModuleStatus(module, MESSAGE.STOPPING, {sameLine: true})
+            await compose({
+                module,
+                command: 'down',
+                showStdOut: options.verbose
+            })
+            await showStatus([module])
+        } else {
+            showModuleStatus(module, MESSAGE.NON_RUNNABLE)
         }
-    } catch (error) {
-        showModuleStatus(module, MESSAGE.ERROR)
-        log.error(error.stderr || error)
     }
 }
 

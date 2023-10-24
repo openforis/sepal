@@ -1,57 +1,51 @@
 import {compose} from './compose.js'
 import {exec} from './exec.js'
-import {exit, getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus, isRunning, modulePath} from './utils.js'
+import {getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus, isRunning, modulePath} from './utils.js'
 import {logs} from './logs.js'
 import {getDirectRunDeps} from './deps.js'
 import {SEPAL_SRC} from './config.js'
 import _ from 'lodash'
 
 const startModule = async (module, options = {}, rootModule, gradleOptions) => {
-    try {
-        if (isModule(module)) {
-            if (isRunnable(module)) {
-                if (gradleOptions.build && isGradleModule(module) && !await isRunning(module)) {
-                    showModuleStatus('gradle', MESSAGE.BUILDING, {sameLine: true})
+    if (isModule(module)) {
+        if (isRunnable(module)) {
+            if (gradleOptions.build && isGradleModule(module) && !await isRunning(module)) {
+                showModuleStatus('gradle', MESSAGE.BUILDING, {sameLine: true})
 
-                    await exec({
-                        command: 'gradle',
-                        args: [
-                            '-x',
-                            'test',
-                            'build'
-                        ],
-                        cwd: SEPAL_SRC,
-                        showStdOut: options.verbose
-                    })
-
-                    showModuleStatus('gradle', MESSAGE.BUILT)
-                    gradleOptions.build = false
-                }
-
-                showModuleStatus(module, MESSAGE.STARTING, {sameLine: true})
-
-                await compose({
-                    module,
-                    command: 'up',
+                await exec({
+                    command: 'gradle',
                     args: [
-                        '--detach'
+                        '-x',
+                        'test',
+                        'build'
                     ],
+                    cwd: SEPAL_SRC,
                     showStdOut: options.verbose
                 })
 
-                if (rootModule && (options.log || options.logTail)) {
-                    await showStatus([module])
-                    await logs(module, options.logTail ? {follow: true, tail: true} : undefined)
-                } else {
-                    await waitModuleRunning(module)
-                }
-            } else {
-                showModuleStatus(module, MESSAGE.NON_RUNNABLE)
+                showModuleStatus('gradle', MESSAGE.BUILT)
+                gradleOptions.build = false
             }
+
+            showModuleStatus(module, MESSAGE.STARTING, {sameLine: true})
+
+            await compose({
+                module,
+                command: 'up',
+                args: [
+                    '--detach'
+                ],
+                showStdOut: options.verbose
+            })
+            if (rootModule && (options.log || options.logTail)) {
+                await showStatus([module])
+                await logs(module, options.logTail ? {follow: true, tail: true} : undefined)
+            } else {
+                await waitModuleRunning(module)
+            }
+        } else {
+            showModuleStatus(module, MESSAGE.NON_RUNNABLE)
         }
-    } catch (error) {
-        showModuleStatus(module, MESSAGE.ERROR)
-        exit({error})
     }
 }
 

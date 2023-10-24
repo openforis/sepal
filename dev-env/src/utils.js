@@ -129,7 +129,7 @@ export const modulePath = module =>
 
 export const getServices = async module => {
     try {
-        const {stdout} = await exec({
+        const ps = await exec({
             command: 'docker',
             args: [
                 'compose',
@@ -141,7 +141,7 @@ export const getServices = async module => {
             cwd: `${SEPAL_SRC}/modules/${module}`
         })
 
-        return stdout
+        return ps
             .split('\n')
             .filter(line => line.length)
             .map(line => {
@@ -157,7 +157,7 @@ export const getServices = async module => {
 const getBaseStatus = async modules => {
     const STATUS_MATCHER = /(\w+)\((\d+)\)/
     try {
-        const {stdout} = await exec({
+        const ls = await exec({
             command: 'docker',
             args: [
                 'compose',
@@ -168,7 +168,7 @@ const getBaseStatus = async modules => {
             ]
         })
 
-        return JSON.parse(stdout)
+        return JSON.parse(ls)
             .map(
                 ({Name: module, Status: status}) => ({
                     module,
@@ -299,7 +299,8 @@ export const exit = reason => {
         process.exit(0)
     } else if (reason.error) {
         const error = reason.error
-        log.error(chalk.bgRed('Error'), error.stderr || error)
+        log.error(chalk.bgRed('Error\n'))
+        log.error(error.stderr || error)
         process.exit(1)
     } else if (reason.interrupted) {
         log.info(chalk.yellow('Interrupted (SIGINT)'))
@@ -309,3 +310,6 @@ export const exit = reason => {
         process.exit(3)
     }
 }
+
+export const firstLine = text =>
+    text.split('\n')[0]

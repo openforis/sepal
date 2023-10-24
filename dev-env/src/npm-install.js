@@ -1,6 +1,6 @@
 import {exec} from './exec.js'
 import {stopModule} from './stop.js'
-import {exit, getModules, isNodeModule, showModuleStatus, MESSAGE} from './utils.js'
+import {getModules, isNodeModule, showModuleStatus, MESSAGE} from './utils.js'
 import {SEPAL_SRC} from './config.js'
 import {getLibDepList} from './deps.js'
 import Path from 'path'
@@ -19,42 +19,33 @@ const installPackages = async (module, modulePath, {verbose, clean}) => {
         await rm(Path.join(modulePath, 'node_modules'), {recursive: true, force: true})
     }
     
-    try {
-        showModuleStatus(module, MESSAGE.INSTALLING_PACKAGES)
-        await access(`${modulePath}/package.json`)
-        await exec({
-            command: 'npm',
-            args: [
-                'install',
-                ...npmInstallOptions,
-                '--install-links=false'
-            ],
-            cwd: modulePath
-        })
-        await exec({
-            command: 'npm',
-            args: [
-                'rebuild',
-                ...npmInstallOptions
-            ],
-            cwd: modulePath
-        })
-    } catch (error) {
-        console.warn(error)
-    }
-
+    showModuleStatus(module, MESSAGE.INSTALLING_PACKAGES)
+    await access(`${modulePath}/package.json`)
+    await exec({
+        command: 'npm',
+        args: [
+            'install',
+            ...npmInstallOptions,
+            '--install-links=false'
+        ],
+        cwd: modulePath
+    })
+    await exec({
+        command: 'npm',
+        args: [
+            'rebuild',
+            ...npmInstallOptions
+        ],
+        cwd: modulePath
+    })
     showModuleStatus(module, MESSAGE.INSTALLED_PACKAGES)
+
 }
 
 const updateModule = async (module, path, options) => {
-    try {
-        const modulePath = Path.join(SEPAL_SRC, path)
-        if (await isNodeModule(modulePath)) {
-            await installPackages(module, modulePath, options)
-        }
-    } catch (error) {
-        showModuleStatus(module, MESSAGE.ERROR)
-        exit({error})
+    const modulePath = Path.join(SEPAL_SRC, path)
+    if (await isNodeModule(modulePath)) {
+        await installPackages(module, modulePath, options)
     }
 }
 
