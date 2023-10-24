@@ -75,25 +75,65 @@ const waitModuleRunning = async module =>
         wait()
     })
 
-const getModulesToStart = (modules, options = {}) => {
-    const dependencies = _.flatten(
-        modules.map(module =>
-            getModulesToStart(getDirectRunDeps(module), options)
+const getDependencyMap = modules =>
+    _.reduce(modules, (dependencyMap, module) => {
+        if (dependencyMap[module]) {
+            return dependencyMap
+        } else {
+            const moduleDependencies = getDirectRunDeps(module)
+            return {
+                ...dependencyMap,
+                [module]: moduleDependencies,
+                ...getDependencyMap(moduleDependencies)
+            }
+        }
+    }, {})
+
+const parallelStart = async (rootModules, options, gradleOptions, dependencyMap = getDependencyMap(rootModules, options)) => {
+    const independentModules = _(dependencyMap)
+        .pickBy(dependencies => dependencies.length === 0)
+        .keys()
+        .value()
+
+    await Promise.all(
+        independentModules.map(
+            async module => await startModule(module, options, rootModules.includes(module), gradleOptions)
         )
     )
 
-    return [
-        ...dependencies,
-        ...modules
-    ]
+    const updatedDependencyMap = _(dependencyMap)
+        .omit(independentModules)
+        .mapValues(dependencies => _.difference(dependencies, independentModules))
+        .value()
+
+    if (!_.isEmpty(updatedDependencyMap)) {
+        await parallelStart(rootModules, options, gradleOptions, updatedDependencyMap)
+    }
 }
+
+// const getModulesToStart = (modules, options = {}) => {
+//     const dependencies = _.flatten(
+//         modules.map(module =>
+//             getModulesToStart(getDirectRunDeps(module), options)
+//         )
+//     )
+
+//     return [
+//         ...dependencies,
+//         ...modules
+//     ]
+// }
+
+// const sequentialStart = async (rootModules, options, gradleOptions) => {
+//     const modulesToStart = _.uniq(getModulesToStart(rootModules, options))
+//     for (const module of modulesToStart) {
+//         await startModule(module, options, rootModules.includes(module), gradleOptions)
+//     }
+// }
 
 export const start = async (modules, options) => {
     const rootModules = getModules(modules)
-    const startModules = _.uniq(getModulesToStart(rootModules, options))
     const gradleOptions = {build: true}
-
-    for (const module of startModules) {
-        await startModule(module, options, rootModules.includes(module), gradleOptions)
-    }
+    await parallelStart(rootModules, options, gradleOptions)
+    // await sequentialStart(rootModules, options, gradleOptions)
 }
