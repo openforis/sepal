@@ -35,8 +35,10 @@ const getModulesToStop = (modules, options = {}, parentModules = []) => {
 }
 
 export const stop = async (modules, options) => {
-    const stopActions = _.uniq(getModulesToStop(getModules(modules), options))
-    for (const module of stopActions) {
-        await stopModule(module, _.pick(options, ['verbose', 'quiet']))
-    }
+    const modulesToStop = _.uniq(getModulesToStop(getModules(modules), options))
+    await Promise.all(
+        modulesToStop.map(
+            async module => await stopModule(module, _.pick(options, ['verbose', 'quiet']))
+        )
+    )
 }
