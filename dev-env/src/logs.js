@@ -13,7 +13,7 @@ const logsModule = async (module, {follow, tail, recent, since, until} = {}) => 
                     tail ? '--since=0s' : null,
                     recent ? '--since=5m' : null,
                     since ? `--since=${since}` : null,
-                    until ? `until=${until}` : null
+                    until ? `--until=${until}` : null
                 ],
                 showStdOut: true
             })
