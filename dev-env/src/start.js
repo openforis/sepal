@@ -37,9 +37,14 @@ const startModule = async (module, options = {}, rootModule, gradleOptions) => {
                 ],
                 showStdOut: options.verbose
             })
-            if (rootModule && (options.log || options.logTail)) {
+
+            if (rootModule && (options.log || options.logFollow || options.logRecent || options.logTail)) {
                 await showStatus([module])
-                await logs(module, options.logTail ? {follow: true, tail: true} : undefined)
+                await logs(module, {
+                    follow: options.logFollow,
+                    recent: options.logRecent,
+                    tail: options.logTail
+                })
             } else {
                 await waitModuleRunning(module)
             }
