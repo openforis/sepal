@@ -273,7 +273,7 @@ class _FormAssetCombo extends React.Component {
     }
 
     isAssetLike(asset) {
-        return ASSET_PATTERN.test(asset)
+        return asset.startsWith('gs://') || ASSET_PATTERN.test(asset)
     }
 
     getOptions() {
