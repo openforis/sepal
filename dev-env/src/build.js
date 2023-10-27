@@ -28,6 +28,7 @@ const buildModule = async (module, options = {}, pull) => {
                 !options.cache && pull ? '--pull' : null,
             ],
             env: {
+                ...process.env,
                 BUILD_NUMBER: 'latest',
                 GIT_COMMIT: gitCommit
             },
