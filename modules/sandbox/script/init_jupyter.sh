@@ -15,7 +15,7 @@ apt-get install -y libzmq3-dev
 R -e "pacman::p_load('IRkernel')"
 R -e "IRkernel::installspec(user = FALSE)"
 
-/usr/bin/python3 -m pip install 'jupyterlab<4'
+/usr/bin/python3 -m pip install 'jupyterlab'
 /usr/bin/python3 -m pip install ipywidgets
 /usr/bin/python3 -m pip install jupyterlab-language-pack-fr-FR
 /usr/bin/python3 -m pip install jupyterlab-language-pack-es-ES
