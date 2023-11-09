@@ -378,7 +378,7 @@ export class SepalMap {
         this.removeLayer(id)
         if (layer) {
             this.layerById[id] = layer
-            layer.initialize()
+            layer.add()
         }
         return true
     }
@@ -386,7 +386,7 @@ export class SepalMap {
     removeLayer(id) {
         const layer = this.getLayer(id)
         if (layer) {
-            layer.removeFromMap()
+            layer.remove()
             delete this.layerById[id]
         }
     }
@@ -405,11 +405,6 @@ export class SepalMap {
 
     isHiddenLayer(id) {
         return this.hiddenLayerById[id]
-    }
-
-    isLayerInitialized(id) {
-        const layer = this.getLayer(id)
-        return !!(layer && layer.isInitialized())
     }
 
     toggleableLayers() {

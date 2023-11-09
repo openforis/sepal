@@ -3,7 +3,7 @@ import {compose} from 'compose'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {withSubscriptions} from 'subscription'
 import {withTab} from 'widget/tabs/tabContext'
-import GoogleSatelliteLayer from '../layer/googleSatelliteLayer'
+import GoogleSatelliteLayer from '../layer2/googleSatelliteLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 

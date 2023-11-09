@@ -1,4 +1,4 @@
-import {GooglePolygonLayer} from './layer/googlePolygonLayer'
+import {GooglePolygonLayer} from './layer2/googlePolygonLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 

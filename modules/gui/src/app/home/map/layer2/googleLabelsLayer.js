@@ -1,16 +1,18 @@
+import {Layer} from './layer'
 import {MAX_ZOOM} from '../maps'
-import OverlayLayer from './overlayLayer'
+import {of, tap} from 'rxjs'
 
-export class GoogleLabelsLayer extends OverlayLayer {
-    constructor({map, layerIndex}) {
-        super({map, layerIndex})
+export class GoogleLabelsLayer extends Layer {
+    constructor({
+        map,
+        layerIndex = 0
+    }) {
+        super()
+        this.map = map
+        this.layerIndex = layerIndex
     }
 
-    equals(o) {
-        return o === this || o instanceof GoogleLabelsLayer
-    }
-
-    createOverlay() {
+    createOverlay = () => {
         const {map} = this
         const {google} = map.getGoogle()
         const styledMapType = new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
@@ -18,9 +20,38 @@ export class GoogleLabelsLayer extends OverlayLayer {
         return styledMapType
     }
 
-    hide(_hidden) {
+    addToMap = () => {
+        this.layer = this.createOverlay()
+        const {map, layerIndex, layer} = this
+        const {googleMap} = map.getGoogle()
+        if (layer) {
+            googleMap.overlayMapTypes.setAt(layerIndex, layer)
+        }
+    }
+
+    addToMap$ = () =>
+        of(true).pipe(
+            tap(() => this.addToMap())
+        )
+
+    removeFromMap = () => {
+        const {map, layerIndex, layer} = this
+        const {googleMap} = map.getGoogle()
+        if (layer) {
+            googleMap.overlayMapTypes.removeAt(layerIndex)
+            // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
+            // googleMap.overlayMapTypes.insertAt(layerIndex, null)
+            // googleMap.overlayMapTypes.removeAt(layerIndex + 1)
+        }
+    }
+
+    hide = _hidden => {
         // no-op
     }
+
+    equals = other =>
+        other === this
+            || other instanceof GoogleLabelsLayer
 }
 
 const labelsLayerStyle = [
