@@ -8,6 +8,7 @@ const log = getLogger('tileManager/queue')
 export const getRequestQueue = () => {
     const pendingRequests = []
     const pendingRequestCount = {} // by tileProviderId
+    const tileProvidersStatus = {} // by tileProviderId
 
     const getCount = tileProviderId =>
         tileProviderId
@@ -27,8 +28,14 @@ export const getRequestQueue = () => {
     }
     
     const isEmpty = () => {
-        return getCount() === 0
+        const count = Object.keys(tileProvidersStatus)
+            .filter(tileProviderId => isEnabled(tileProviderId))
+            .reduce((acc, tileProviderId) => acc + getCount(tileProviderId), 0)
+        return count === 0
     }
+
+    const isEnabled = tileProviderId =>
+        tileProviderId && tileProvidersStatus[tileProviderId]
 
     const enqueue = ({tileProviderId, requestId, request, response$, cancel$}) => {
         assertValue(tileProviderId, _.isString, 'tileProviderId must be provided', true)
@@ -39,34 +46,31 @@ export const getRequestQueue = () => {
         log.debug(() => `Enqueued ${requestTag({tileProviderId, requestId})}, enqueued: ${getCount()}`)
     }
 
-    const dequeueFIFO = () => {
-        if (pendingRequests.length) {
-            const pendingRequest = pendingRequests.shift()
-            const tileProviderId = pendingRequest.tileProviderId
-            decreaseCount(tileProviderId)
-            log.debug(() => `Dequeued FIFO ${requestTag(pendingRequest)}, enqueued: ${getCount()}`)
-            return pendingRequest
-        }
-        return null
-    }
-
     const dequeueByIndex = (index, dequeueMode = '') => {
         if (index !== -1 && index < pendingRequests.length) {
             const [pendingRequest] = pendingRequests.splice(index, 1)
             const tileProviderId = pendingRequest.tileProviderId
-            decreaseCount(tileProviderId)
-            log.debug(() => `Dequeued by ${dequeueMode} ${requestTag(pendingRequest)}, enqueued: ${getCount()}`)
-            return pendingRequest
+            if (isEnabled(tileProviderId)) {
+                decreaseCount(tileProviderId)
+                log.debug(() => `Dequeued by ${dequeueMode} ${requestTag(pendingRequest)}, enqueued: ${getCount()}`)
+                return pendingRequest
+            }
+        }
+        return null
+    }
+
+    const dequeueFIFO = () => {
+        if (pendingRequests.length) {
+            const index = pendingRequests.findIndex(({tileProviderId}) => isEnabled(tileProviderId))
+            return dequeueByIndex(index, 'FIFO')
         }
         return null
     }
 
     const dequeueByTileProviderId = tileProviderId => {
-        if (tileProviderId) {
-            const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.tileProviderId === tileProviderId)
-            if (index !== -1) {
-                return dequeueByIndex(index, 'tileProviderId')
-            }
+        if (isEnabled(tileProviderId)) {
+            const index = pendingRequests.findIndex(request => request.tileProviderId === tileProviderId)
+            return dequeueByIndex(index, tileProviderTag(tileProviderId))
         }
         return null
     }
@@ -78,7 +82,7 @@ export const getRequestQueue = () => {
 
     const discardByRequestId = requestId => {
         if (requestId) {
-            const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.requestId === requestId)
+            const index = pendingRequests.findIndex(pendingRequest => pendingRequest.requestId === requestId)
             if (index !== -1) {
                 return !!dequeueByIndex(index, 'requestId (discarded)')
             }
@@ -105,7 +109,12 @@ export const getRequestQueue = () => {
     const removeTileProvider = tileProviderId => {
         discardByTileProviderId(tileProviderId)
         delete pendingRequestCount[tileProviderId]
+        delete tileProvidersStatus[tileProviderId]
     }
 
-    return {isEmpty, enqueue, dequeueByTileProviderIds, discardByRequestId, removeTileProvider, scan, getCount}
+    const setEnabled = (tileProviderId, enabled) => {
+        tileProvidersStatus[tileProviderId] = enabled
+    }
+
+    return {isEmpty, enqueue, dequeueByTileProviderIds, discardByRequestId, removeTileProvider, scan, getCount, setEnabled}
 }
