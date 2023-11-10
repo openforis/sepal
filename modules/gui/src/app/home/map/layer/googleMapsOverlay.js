@@ -4,12 +4,14 @@ import guid from 'guid'
 
 // implements google.maps.MapType
 export class GoogleMapsOverlay {
-    constructor(tileProvider, {
+    constructor({
+        tileProvider,
         google,
         name,
         minZoom = 0,
         maxZoom = MAX_ZOOM,
-    } = {}, busy$) {
+        busy$
+    }) {
         this.tileProvider = new BalancingTileProvider({tileProvider, retries: 3, busy$})
         this.name = name
         this.minZoom = minZoom

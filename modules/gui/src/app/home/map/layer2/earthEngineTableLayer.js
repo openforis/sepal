@@ -32,7 +32,7 @@ export default class EarthEngineTableLayer extends Layer {
         const {map, busy$, minZoom, maxZoom} = this
         const tileProvider = this.createTileProvider(urlTemplate)
         const {google} = map.getGoogle()
-        return new GoogleMapsOverlay(tileProvider, {google, minZoom, maxZoom}, busy$)
+        return new GoogleMapsOverlay({tileProvider, google, minZoom, maxZoom, busy$})
     }
 
     addToMap = urlTemplate => {
