@@ -13,6 +13,7 @@ pip3 install numpy
 
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
 dpkg -i cuda-keyring_1.0-1_all.deb
+rm cuda-keyring_1.0-1_all.deb
 apt-get -y update
 # *** Ensure same nvidia driver version is used both here (in the container) and in install-gpu-drivers.sh (on the host) ***
 #   nvidia-driver-525=525.125.06-0ubuntu1 \
