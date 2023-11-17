@@ -1,5 +1,6 @@
 {
     "apps": "info",
+    "assets": "info",
     "default": "info",
     "eventPublisher": "info",
     "http": "debug",
