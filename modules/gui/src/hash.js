@@ -70,3 +70,6 @@ export const isEqual = (a, b) =>
             }
         }
     })
+
+export const isPartiallyEqual = (a, b, props) =>
+    _.isEqual(_.pick(a, props), _.pick(b, props))
