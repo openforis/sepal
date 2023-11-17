@@ -12,6 +12,7 @@ import {shell} from './shell.js'
 import {log} from './log.js'
 import {npmUpdate} from './npm-update.js'
 import {npmInstall} from './npm-install.js'
+import {npmTest} from './npm-test.js'
 
 const main = async () => {
     process.on('SIGINT', () => exit({interrupted: true}))
@@ -121,11 +122,16 @@ const main = async () => {
         .argument('[module...]', 'Modules to install')
         .action(npmInstall)
 
+    program.command('npm-test')
+        .description('Run npm interactive tests')
+        .argument('module', 'Module to test')
+        .action(npmTest)
+
     try {
         await program.parseAsync(process.argv)
         exit({normal: true})
     } catch (error) {
-        if (!['commander.helpDisplayed', 'commander.help', 'commander.version', 'commander.unknownOption', 'commander.unknownCommand', 'commander.invalidArgument'].includes(error.code)) {
+        if (!['commander.helpDisplayed', 'commander.help', 'commander.version', 'commander.unknownOption', 'commander.unknownCommand', 'commander.invalidArgument', 'commander.missingArgument'].includes(error.code)) {
             exit({error})
         }
     }
