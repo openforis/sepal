@@ -145,7 +145,8 @@
 /* disabled/inactive */
 
 .look:disabled,
-.look.disabled {
+.look.disabled,
+.look.passive {
     cursor: default !important;
     pointer-events: none !important;
 }

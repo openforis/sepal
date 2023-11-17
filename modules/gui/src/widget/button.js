@@ -94,6 +94,7 @@ class _Button extends React.Component {
             this.isHoverForcedOn() ? lookStyles.hoverForcedOn : null,
             this.isHoverForcedOff() ? lookStyles.hoverForcedOff : null,
             this.isNonInteractive() ? lookStyles.disabled : null,
+            this.isHoverRequired() ? null : lookStyles.passive,
             dimmed ? lookStyles.dimmed : null,
             disableTransitions ? lookStyles.noTransitions : null,
             onClickHold ? styles.hold : null,
