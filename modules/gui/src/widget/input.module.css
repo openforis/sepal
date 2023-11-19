@@ -2,20 +2,14 @@
     position: relative;
 }
 
-.dim > :not(:hover) {
-    opacity: .5;
-}
-
-.search {
-    padding-right: .25rem;
-}
-
 .prefix {
-    padding-right: .25rem;
+    font-size: .9rem;
+    opacity: .6;
 }
 
 .suffix {
-    padding-left: .25rem;
+    font-size: .9rem;
+    opacity: .6;
 }
 
 .input input,

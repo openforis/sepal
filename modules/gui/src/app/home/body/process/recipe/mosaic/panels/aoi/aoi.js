@@ -1,3 +1,4 @@
+import {AssetBoundsSection} from './assetBoundsSection'
 import {CountrySection} from './countrySection'
 import {EETableSection} from './eeTableSection'
 import {Form} from 'widget/form/form'
@@ -48,28 +49,39 @@ class Aoi extends React.Component {
     }
 
     render() {
-        const {recipeId, inputs, layerIndex = 1} = this.props
-        const sections = [{
-            component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
-        }, {
-            value: 'COUNTRY',
-            label: msg('process.mosaic.panel.areaOfInterest.form.country.title'),
-            title: 'COUNTRY/PROVINCE',
-            component: <CountrySection recipeId={recipeId} inputs={inputs} layerIndex={layerIndex}/>
-        }, {
-            value: 'EE_TABLE',
-            label: msg('process.mosaic.panel.areaOfInterest.form.eeTable.title'),
-            title: 'EE TABLE',
-            component: <EETableSection
-                recipeId={recipeId}
-                inputs={inputs}
-                layerIndex={layerIndex}/>
-        }, {
-            value: 'POLYGON',
-            label: msg('process.mosaic.panel.areaOfInterest.form.polygon.title'),
-            title: 'POLYGON',
-            component: <PolygonSection recipeId={recipeId} inputs={inputs} layerIndex={layerIndex}/>
-        }]
+        const {assetBounds, recipeId, inputs, layerIndex = 1} = this.props
+        const sections = [
+            {
+                component: <SectionSelection recipeId={recipeId} inputs={inputs} assetBounds={assetBounds}/>
+            },
+            assetBounds ? {
+                value: 'ASSET_BOUNDS',
+                label: msg('process.mosaic.panel.areaOfInterest.form.assetBounds.title'),
+                title: 'ASSET BOUNDS',
+                component: <AssetBoundsSection recipeId={recipeId} inputs={inputs} layerIndex={layerIndex}/>
+            } : null,
+            {
+                value: 'COUNTRY',
+                label: msg('process.mosaic.panel.areaOfInterest.form.country.title'),
+                title: 'COUNTRY/PROVINCE',
+                component: <CountrySection recipeId={recipeId} inputs={inputs} layerIndex={layerIndex}/>
+            },
+            {
+                value: 'EE_TABLE',
+                label: msg('process.mosaic.panel.areaOfInterest.form.eeTable.title'),
+                title: 'EE TABLE',
+                component: <EETableSection
+                    recipeId={recipeId}
+                    inputs={inputs}
+                    layerIndex={layerIndex}/>
+            },
+            {
+                value: 'POLYGON',
+                label: msg('process.mosaic.panel.areaOfInterest.form.polygon.title'),
+                title: 'POLYGON',
+                component: <PolygonSection recipeId={recipeId} inputs={inputs} layerIndex={layerIndex}/>
+            }
+        ].filter(option => option)
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -88,6 +100,10 @@ class Aoi extends React.Component {
 
 const valuesToModel = values => {
     switch (values.section) {
+    case 'ASSET_BOUNDS':
+        return {
+            type: 'ASSET_BOUNDS'
+        }
     case 'COUNTRY':
         return {
             type: 'EE_TABLE',
@@ -117,7 +133,9 @@ const valuesToModel = values => {
 }
 
 const modelToValues = (model = {}) => {
-    if (model.type === 'EE_TABLE')
+    if (model.type === 'ASSET_BOUNDS')
+        return {section: 'ASSET_BOUNDS'}
+    else if (model.type === 'EE_TABLE')
         if (model.id === countryEETable)
             return {
                 section: 'COUNTRY',

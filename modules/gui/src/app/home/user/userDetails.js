@@ -7,7 +7,7 @@ import {Panel} from 'widget/panel/panel'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {currentUser, updateCurrentUserDetails$} from 'user'
+import {currentUser, isGoogleAccount, updateCurrentUserDetails$} from 'user'
 import {msg} from 'translate'
 import {withActivatable} from 'widget/activation/activatable'
 import {withActivators} from 'widget/activation/activator'
@@ -53,11 +53,6 @@ class _UserDetails extends React.Component {
             () => Notifications.success({message: msg('user.userDetails.update.success')}),
             error => Notifications.error({message: msg('user.userDetails.update.error'), error})
         )
-    }
-
-    isUserGoogleAccount() {
-        const {user} = this.props
-        return user.googleTokens
     }
 
     renderPanel() {
@@ -135,11 +130,11 @@ class _UserDetails extends React.Component {
     }
 
     renderConnectionStatus() {
-        const connected = this.isUserGoogleAccount()
+        const connected = isGoogleAccount()
         return (
             <Layout type='horizontal-nowrap' spacing='compact'>
                 <Icon name='google' type='brands'/>
-                <div className={connected ? styles.connected : styles.disconnected}>
+                <div className={isGoogleAccount() ? styles.connected : styles.disconnected}>
                     {msg(connected ? 'user.googleAccount.connected.label' : 'user.googleAccount.disconnected.label')}
                 </div>
             </Layout>
@@ -181,9 +176,11 @@ class _UserDetailsButton extends React.Component {
         hint: false
     }
 
-    isUserGoogleAccount() {
+    isGoogleProjectSelectionRequired() {
         const {user} = this.props
-        return user.googleTokens
+        return isGoogleAccount()
+            && !user.googleTokens.projectId
+            && !user.googleTokens.legacyProject
     }
 
     render() {
@@ -207,8 +204,8 @@ class _UserDetailsButton extends React.Component {
                 size='large'
                 air='less'
                 additionalClassName={className}
-                icon={this.isUserGoogleAccount() ? 'google' : 'user'}
-                iconType={this.isUserGoogleAccount() ? 'brands' : null}
+                icon={isGoogleAccount() ? 'google' : 'user'}
+                iconType={isGoogleAccount() ? 'brands' : null}
                 label={username}
                 disabled={userDetails.active}
                 tooltip={msg('home.sections.user.profile')}
@@ -223,10 +220,19 @@ class _UserDetailsButton extends React.Component {
     componentDidMount() {
         // this.autoTrigger()
         this.initializeHints()
+        this.checkGoogleProjectId()
     }
 
     componentDidUpdate() {
         // this.autoTrigger()
+        this.checkGoogleProjectId()
+    }
+
+    checkGoogleProjectId() {
+        const {activator: {activatables: {googleAccount}}} = this.props
+        if (this.isGoogleProjectSelectionRequired()) {
+            googleAccount?.activate && googleAccount.activate({mandatory: true})
+        }
     }
 
     autoTrigger() {
@@ -249,11 +255,11 @@ class _UserDetailsButton extends React.Component {
 
 export const UserDetailsButton = compose(
     _UserDetailsButton,
-    connect(state => ({
-        user: state.user.currentUser
+    connect(() => ({
+        user: currentUser()
     })),
     withSubscriptions(),
-    withActivators('userDetails')
+    withActivators('userDetails', 'googleAccount')
 )
 
 UserDetailsButton.propTypes = {}

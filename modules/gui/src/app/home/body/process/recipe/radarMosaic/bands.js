@@ -32,7 +32,7 @@ const bandGroups = [
     ['VH_min', 'VH_mean', 'VH_med', 'VH_max', 'VH_std', 'VH_cv'],
     ['VV_const', 'VV_t', 'VV_phase', 'VV_amp', 'VV_res'],
     ['VH_const', 'VH_t', 'VH_phase', 'VH_amp', 'VH_res'],
-    ['orbit', 'orbit', 'dayOfYear', 'daysFromTarget']
+    ['orbit', 'dayOfYear', 'daysFromTarget']
 ]
 
 const bands = {

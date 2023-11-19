@@ -1,50 +1,64 @@
+import {compose} from './compose.js'
 import {exec} from './exec.js'
-import {exit, getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus, isRunning} from './utils.js'
+import {getModules, isModule, isRunnable, isGradleModule, showModuleStatus, MESSAGE, getStatus, showStatus, isRunning} from './utils.js'
 import {logs} from './logs.js'
-import {getDirectRunDeps} from './deps.js'
-import {SEPAL_SRC, ENV_FILE} from './config.js'
+import {getRunDependencyMap} from './deps.js'
+import {SEPAL_SRC} from './config.js'
 import _ from 'lodash'
 
 const startModule = async (module, options = {}, rootModule, gradleOptions) => {
-    try {
-        if (isModule(module)) {
-            if (isRunnable(module)) {
-                if (gradleOptions.build && isGradleModule(module) && !await isRunning(module)) {
-                    showModuleStatus('gradle', MESSAGE.BUILDING, {sameLine: true})
-                    await exec({
-                        command: './script/gradle-build.sh',
-                        args: [SEPAL_SRC],
-                        showStdOut: options.verbose
-                    })
-                    showModuleStatus('gradle', MESSAGE.BUILT)
-                    gradleOptions.build = false
-                }
-                showModuleStatus(module, MESSAGE.STARTING, {sameLine: true})
+    if (isModule(module)) {
+        if (isRunnable(module)) {
+            if (gradleOptions.build && isGradleModule(module) && !await isRunning(module)) {
+                showModuleStatus('gradle', MESSAGE.BUILDING, {sameLine: true})
+
                 await exec({
-                    command: './script/docker-compose-up.sh',
-                    args: [module, SEPAL_SRC, ENV_FILE],
+                    command: 'gradle',
+                    args: [
+                        '-x',
+                        'test',
+                        'build'
+                    ],
+                    cwd: SEPAL_SRC,
                     showStdOut: options.verbose
                 })
-                if (rootModule && options.logTail) {
-                    await showStatus([module])
-                    await logs(module, {follow: true, tail: true})
-                } else {
-                    await waitModuleRunning(module)
-                }
-            } else {
-                showModuleStatus(module, MESSAGE.NON_RUNNABLE)
+
+                showModuleStatus('gradle', MESSAGE.BUILT)
+                gradleOptions.build = false
             }
+
+            showModuleStatus(module, MESSAGE.STARTING, {sameLine: true})
+
+            await compose({
+                module,
+                command: 'up',
+                args: [
+                    '--detach'
+                ],
+                showStdOut: options.verbose
+            })
+
+            if (rootModule && (options.log || options.logFollow || options.logRecent || options.logTail)) {
+                await showStatus([module])
+                await logs(module, {
+                    follow: options.logFollow,
+                    recent: options.logRecent,
+                    tail: options.logTail
+                })
+            } else {
+                await waitModuleRunning(module)
+            }
+        } else {
+            showModuleStatus(module, MESSAGE.NON_RUNNABLE)
         }
-    } catch (error) {
-        showModuleStatus(module, MESSAGE.ERROR)
-        exit({error})
     }
 }
 
 const waitModuleRunning = async module =>
     new Promise((resolve, reject) => {
         const wait = async (count = 0) => {
-            const [{status, services}] = await getStatus([module], true)
+            const foo = await getStatus([module], true)
+            const [{status, services}] = foo
             if (status) {
                 if (services) {
                     if (_.some(services, ({state, health}) => state === 'RUNNING' && health === 'UNHEALTHY')) {
@@ -66,35 +80,36 @@ const waitModuleRunning = async module =>
         wait()
     })
 
-const getModulesToStart = (modules, options = {}) => {
-    const dependencies = _.flatten(
-        modules.map(module =>
-            getModulesToStart(getDirectRunDeps(module), options)
-        )
-    )
+const startModules = async (rootModules, options, gradleOptions, dependencyMap = getRunDependencyMap(rootModules, options)) => {
+    const independentModules = _(dependencyMap)
+        .pickBy(dependencies => dependencies.length === 0)
+        .keys()
+        .value()
 
-    return [
-        ...dependencies,
-        ...modules
-    ]
+    if (options.sequential) {
+        for (const module of independentModules) {
+            await startModule(module, options, rootModules.includes(module), gradleOptions)
+        }
+    } else {
+        await Promise.all(
+            independentModules.map(
+                async module => await startModule(module, options, rootModules.includes(module), gradleOptions)
+            )
+        )
+    }
+
+    const updatedDependencyMap = _(dependencyMap)
+        .omit(independentModules)
+        .mapValues(dependencies => _.difference(dependencies, independentModules))
+        .value()
+
+    if (!_.isEmpty(updatedDependencyMap)) {
+        await startModules(rootModules, options, gradleOptions, updatedDependencyMap)
+    }
 }
 
 export const start = async (modules, options) => {
     const rootModules = getModules(modules)
-    const startModules = _.uniq(getModulesToStart(rootModules, options))
-    // if (_.some(startModules, module => isGradleModule(module))) {
-    //     showModuleStatus('gradle', MESSAGE.BUILDING, {sameLine: true})
-    //     await exec({
-    //         command: './script/gradle-build.sh',
-    //         args: [SEPAL_SRC],
-    //         showStdOut: options.verbose
-    //     })
-    //     showModuleStatus('gradle', MESSAGE.BUILT)
-    // }
-
     const gradleOptions = {build: true}
-
-    for (const module of startModules) {
-        await startModule(module, options, rootModules.includes(module), gradleOptions)
-    }
+    await startModules(rootModules, options, gradleOptions)
 }

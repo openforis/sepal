@@ -1,6 +1,5 @@
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
-import {getErrorMessage} from 'widget/form/error'
 import {withFormContext} from 'widget/form/context'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -19,7 +18,7 @@ class _FormFieldSet extends React.Component {
                 labelButtons={labelButtons}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
-                errorMessage={errorMessage && getErrorMessage(form, errorMessage)}
+                errorMessage={errorMessage && form.getErrorMessage(errorMessage)}
                 busyMessage={busyMessage}
             >
                 {children}

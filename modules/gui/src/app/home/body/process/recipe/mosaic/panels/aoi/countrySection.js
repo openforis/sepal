@@ -107,7 +107,7 @@ class _CountrySection extends React.Component {
                 <Form.Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.country.country.label')}
                     input={country}
-                    placement='below'
+                    // placement='below'
                     options={countries || []}
                     placeholder={countryPlaceholder}
                     busyMessage={loadingCountries}
@@ -122,7 +122,7 @@ class _CountrySection extends React.Component {
                 <Form.Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.country.area.label')}
                     input={area}
-                    placement='below'
+                    // placement='below'
                     options={(countryAreas || [])}
                     placeholder={areaPlaceholder}
                     busyMessage={loadingAreas}

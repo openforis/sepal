@@ -123,12 +123,17 @@ const webSocketUrl = url => {
     }
     throw Error(`Cannot determine websocket url: ${url}`)
 }
-        
+
+const toQueryStringValue = (key, value) =>
+    `${key}=${value === null || value === undefined ? '' : encodeURIComponent(value)}`
+
 const toQueryString = object =>
     object && Object.keys(object)
         .map(key => {
             const value = object[key]
-            return `${key}=${value === null || value === undefined ? '' : encodeURIComponent(value)}`
+            return _.isArray(value)
+                ? value.map(value => toQueryStringValue(key, value)).join('&')
+                : toQueryStringValue(key, value)
         })
         .join('&')
 

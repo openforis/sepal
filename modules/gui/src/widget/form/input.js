@@ -1,30 +1,15 @@
 import {Input, Textarea} from 'widget/input'
-import {Subject, debounceTime, distinctUntilChanged} from 'rxjs'
 import {compose} from 'compose'
-import {getErrorMessage} from 'widget/form/error'
 import {withFormContext} from 'widget/form/context'
-import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import withForwardedRef from 'ref'
-
-const DEBOUNCE_TIME_MS = 750
 
 class _FormInput extends React.Component {
     constructor(props) {
         super(props)
         this.onChange = this.onChange.bind(this)
         this.onBlur = this.onBlur.bind(this)
-        const {addSubscription, onChangeDebounced} = props
-        this.change$ = new Subject()
-        addSubscription(
-            this.change$.pipe(
-                debounceTime(DEBOUNCE_TIME_MS),
-                distinctUntilChanged()
-            ).subscribe(
-                value => onChangeDebounced && onChangeDebounced(value)
-            )
-        )
     }
 
     render() {
@@ -33,7 +18,7 @@ class _FormInput extends React.Component {
     }
 
     renderInput() {
-        const {form, forwardedRef, className, input, errorMessage, busyMessage, type, tabIndex, additionalButtons, ...props} = this.props
+        const {form, forwardedRef, className, input, errorMessage, busyMessage, type, tabIndex, buttons, ...props} = this.props
         return (
             <Input
                 {...props}
@@ -42,10 +27,10 @@ class _FormInput extends React.Component {
                 type={type}
                 name={input && input.name}
                 value={this.getValue()}
-                errorMessage={getErrorMessage(form, errorMessage === true ? input : errorMessage)}
+                errorMessage={form.getErrorMessage(errorMessage === true ? input : errorMessage)}
                 busyMessage={busyMessage}
                 tabIndex={tabIndex}
-                additionalButtons={additionalButtons}
+                buttons={buttons}
                 onChange={this.onChange}
                 onBlur={this.onblur}
             />
@@ -68,7 +53,7 @@ class _FormInput extends React.Component {
                 className={className}
                 name={input.name}
                 value={input.value || ''}
-                errorMessage={getErrorMessage(form, errorMessage === true ? input : errorMessage)}
+                errorMessage={form.getErrorMessage(errorMessage === true ? input : errorMessage)}
                 busyMessage={busyMessage}
                 tabIndex={tabIndex}
                 minRows={minRows}
@@ -82,7 +67,6 @@ class _FormInput extends React.Component {
     onChange(e) {
         const {input, validate, onChange} = this.props
         input.handleChange(e)
-        this.change$.next(e.target.value)
         onChange && onChange(e)
         validate === 'onChange' && input.validate()
     }
@@ -97,18 +81,17 @@ class _FormInput extends React.Component {
 export const FormInput = compose(
     _FormInput,
     withFormContext(),
-    withSubscriptions(),
     withForwardedRef()
 )
 
 FormInput.propTypes = {
     input: PropTypes.object.isRequired,
-    additionalButtons: PropTypes.arrayOf(PropTypes.node),
     autoCapitalize: PropTypes.any,
     autoComplete: PropTypes.any,
     autoCorrect: PropTypes.any,
     autoFocus: PropTypes.any,
     busyMessage: PropTypes.any,
+    buttons: PropTypes.arrayOf(PropTypes.node),
     className: PropTypes.string,
     errorMessage: PropTypes.any,
     inputTooltip: PropTypes.any,

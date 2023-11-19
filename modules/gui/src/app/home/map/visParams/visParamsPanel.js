@@ -223,7 +223,7 @@ class _VisParamsPanel extends React.Component {
             <ButtonSelect
                 chromeless
                 shape='pill'
-                placement='below'
+                // placement='below'
                 input={type}
                 tooltipPlacement='bottom'
                 options={[{
@@ -730,7 +730,7 @@ const Band = ({invertable, onBandSelected, bands, label, inputs: {name, inverted
             options={options}
             busyMessage={!bands && msg('map.visParams.bands.loading')}
             disabled={!bands}
-            additionalButtons={invertable ? [invertedWidget] : []}
+            buttons={invertable ? [invertedWidget] : []}
             onChange={({value}) => onBandSelected && onBandSelected(value)}
         />
     )

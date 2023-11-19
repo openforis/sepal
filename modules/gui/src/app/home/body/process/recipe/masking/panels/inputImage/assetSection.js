@@ -1,4 +1,4 @@
-import {AssetSelect} from 'widget/assetSelect'
+import {Form} from 'widget/form/form'
 import {msg} from 'translate'
 import {normalize} from 'app/home/map/visParams/visParams'
 import PropTypes from 'prop-types'
@@ -9,13 +9,13 @@ export default class AssetSection extends React.Component {
     render() {
         const {input, onLoading} = this.props
         return (
-            <AssetSelect
+            <Form.AssetCombo
                 className={style.inputComponent}
                 input={input}
                 label={msg('process.masking.panel.inputImage.asset.label')}
                 placeholder={msg('process.masking.panel.inputImage.asset.placeholder')}
                 autoFocus
-                expectedType={['Image', 'ImageCollection']}
+                allowedTypes={['Image', 'ImageCollection']}
                 onLoading={onLoading}
                 onLoaded={({asset, metadata, visualizations}) => {
                     this.onLoaded({asset, metadata, visualizations})

@@ -20,6 +20,9 @@
         "Version": "{{user `VERSION`}}",
         "Region": "{{user `AWS_REGION`}}"
       },
+      "run_tags":{
+         "Name":"Packer"
+      },
       "ami_block_device_mappings": [
         {
           "device_name": "/dev/xvda",

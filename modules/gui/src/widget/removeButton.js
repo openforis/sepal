@@ -13,10 +13,11 @@ export default class RemoveButton extends React.Component {
     }
 
     renderModalConfirmationButton() {
-        const {chromeless, icon, label, tooltip, tooltipPlacement, title, message, shape, size, onRemove, disabled, unsafe, children} = this.props
+        const {chromeless, air, icon, label, tooltip, tooltipPlacement, title, message, shape, size, onRemove, disabled, unsafe, children} = this.props
         return (
             <ModalConfirmationButton
                 chromeless={chromeless}
+                air={air}
                 shape={shape}
                 size={size}
                 icon={icon}
@@ -35,10 +36,11 @@ export default class RemoveButton extends React.Component {
     }
 
     renderInlineConfirmationButton() {
-        const {chromeless, icon, label, confirmationLabel, tooltip, tooltipPlacement, shape, size, onRemove, disabled, unsafe} = this.props
+        const {chromeless, air, icon, label, confirmationLabel, tooltip, tooltipPlacement, shape, size, onRemove, disabled, unsafe} = this.props
         return (
             <InlineConfirmationButton
                 chromeless={chromeless}
+                air={air}
                 shape={shape}
                 size={size}
                 icon={icon}
@@ -56,6 +58,7 @@ export default class RemoveButton extends React.Component {
 
 RemoveButton.propTypes = {
     onRemove: PropTypes.func.isRequired,
+    air: PropTypes.any,
     children: PropTypes.any,
     chromeless: PropTypes.any,
     confirmationLabel: PropTypes.any,

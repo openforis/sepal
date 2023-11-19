@@ -1,4 +1,4 @@
-import {Item} from 'widget/item'
+import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {Shape} from 'widget/shape'
 import {compose} from 'compose'
@@ -93,11 +93,11 @@ class _ValuesLayer extends React.Component {
         const description = `${clampingIndicator} ${formatted}`.padStart(padding)
         return (
             <Shape key={key} shape='pill' size='small'>
-                <Item title={band}>
+                <CrudItem title={band}>
                     <pre className={[styles.value, clamping ? styles.clamping : null].join(' ')}>
                         {description}
                     </pre>
-                </Item>
+                </CrudItem>
             </Shape>
         )
     }

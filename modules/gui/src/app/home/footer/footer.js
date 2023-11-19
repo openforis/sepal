@@ -6,11 +6,10 @@ import {UserDetailsButton} from '../user/userDetails'
 import {UserMessagesButton} from '../user/userMessages'
 import {compose} from '../../../compose'
 import {connect} from '../../../store'
+import {copyToClipboard} from 'clipboard'
 import {logout$} from 'user'
 import {msg} from 'translate'
-import Notifications from 'widget/notifications'
 import React from 'react'
-import clipboard from 'clipboard'
 import styles from './footer.module.css'
 
 const Footer = ({className}) => {
@@ -62,11 +61,6 @@ const Title = () => {
     const buildNumber = window._sepal_global_.buildNumber
     const gitCommit = window._sepal_global_.gitCommit
     const gitShortCommit = gitCommit && `${gitCommit.substring(0, 10)}...`
-
-    const copyToClipboard = (value, message) => {
-        clipboard.copy(value)
-        Notifications.success({message})
-    }
 
     const copyBuildNumber = () =>
         copyToClipboard(buildNumber, msg('footer.buildNumberCopied'))

@@ -44,13 +44,13 @@ class _EETableSection extends React.Component {
         const {inputs: {eeTable}} = this.props
         return (
             <Layout>
-                <Form.Input
+                <Form.AssetCombo
                     label={msg('process.mosaic.panel.areaOfInterest.form.eeTable.eeTable.label')}
                     autoFocus
                     input={eeTable}
                     placeholder={msg('process.mosaic.panel.areaOfInterest.form.eeTable.eeTable.placeholder')}
-                    spellCheck={false}
-                    onChangeDebounced={tableId => tableId && this.loadColumns(tableId)}
+                    allowedTypes={['Table']}
+                    onChange={tableId => tableId && this.loadColumns(tableId)}
                     errorMessage
                     busyMessage={this.props.stream('LOAD_EE_TABLE_COLUMNS').active && msg('widget.loading')}
                 />

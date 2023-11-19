@@ -10,9 +10,9 @@ const {serveFile, checkTarget, serveError} = require('./proxy-utils')
 const buildBinaryPackage = req => {
     const requestData = getCranPackageInfo(req.url)
     if (requestData) {
-        const {name, version} = requestData
+        const {name, path, version} = requestData
         if (name !== 'PACKAGES') {
-            enqueueBuildCranPackage(name, version)
+            enqueueBuildCranPackage(name, path, version)
         } else {
             log.debug(`Skipping ${name}`)
         }
@@ -73,7 +73,7 @@ const serveCached = async (req, res) =>
 
 const serveProxiedFile = async (req, res, target) => {
     if (await checkTarget(target, {allowRedirect: false})) {
-        log.debug(`Proxying ${req.url} to ${target}`)
+        log.info(`Proxying ${req.url} to ${target}`)
         proxy.web(req, res, {target})
         return true
     } else {
@@ -83,8 +83,7 @@ const serveProxiedFile = async (req, res, target) => {
 }
 
 const serveProxied = async (req, res) => {
-    const packageInfo = getCranPackageInfo(req.url)
-    const {base, name} = packageInfo
+    const {base, name} = getCranPackageInfo(req.url)
     return await serveProxiedFile(req, res, getCranTarget(base, name, {archive: false}))
         || await serveProxiedFile(req, res, getCranTarget(base, name, {archive: true}))
 }

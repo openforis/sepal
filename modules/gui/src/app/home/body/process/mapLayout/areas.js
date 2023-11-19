@@ -146,12 +146,10 @@ class _Areas extends React.Component {
                 <div className={styles.areaContent}>
                     <ListItem
                         drag$={this.areaDrag$}
-                        dragValue={area}
-                    >
+                        dragValue={area}>
                         <CrudItem
                             title={msg(`imageLayerSources.${source.type}.label`)}
                             description={description}
-                            removeTooltip={msg('map.layout.area.remove.tooltip')}
                         />
                     </ListItem>
                 </div>

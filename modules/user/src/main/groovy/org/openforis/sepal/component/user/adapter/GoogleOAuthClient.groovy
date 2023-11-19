@@ -31,8 +31,8 @@ class GoogleOAuthException extends RuntimeException {
 class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
     public static final SCOPE = '' +
             'https://www.googleapis.com/auth/earthengine ' +
-            'https://www.googleapis.com/auth/drive '
-            //  +
+            'https://www.googleapis.com/auth/drive ' 
+            // +
             // 'https://www.googleapis.com/auth/cloudplatformprojects.readonly'
     private final String googleOAuthCallbackBaseUrl
     private final String clientId
@@ -96,7 +96,9 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
         return new GoogleTokens(
                 refreshToken: tokens.refreshToken,
                 accessToken: response.data.access_token,
-                accessTokenExpiryDate: toTimestamp(response.data.expires_in)
+                accessTokenExpiryDate: toTimestamp(response.data.expires_in),
+                projectId: tokens.projectId,
+                legacyProject: tokens.legacyProject
         )
     }
 

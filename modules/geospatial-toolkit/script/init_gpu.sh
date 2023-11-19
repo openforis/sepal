@@ -10,57 +10,16 @@ pip3 install --upgrade pip
 pip3 uninstall -y numpy
 pip3 install numpy
 
-# Based on https://www.tensorflow.org/install/gpu, but with CUDA 11.4
-# Trying with cuda-toolkit instead of cuda, to prevent wrong nvidia-driver to be installed.
-# That version must match the version on the host machine.
 
-# GPG update: https://developer.nvidia.com/blog/updating-the-cuda-linux-gpg-repository-key/
-
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
-mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
 dpkg -i cuda-keyring_1.0-1_all.deb
-apt-get update -y
-
-
-apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu2004/x86_64/7fa2af80.pub
-wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu2004/x86_64/nvidia-machine-learning-repo-ubuntu2004_1.0.0-1_amd64.deb
-apt install -y ./nvidia-machine-learning-repo-ubuntu2004_1.0.0-1_amd64.deb
-rm nvidia-machine-learning-repo-ubuntu2004_1.0.0-1_amd64.deb
-apt-get update -y
-
-# Ensure same nvidia driver version is used both in init_gpu.sh and in init-gpu-drivers.sh
-#
-# Version for different instance types:
-#   https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver
-# Find download URL:
-#   https://www.nvidia.com/Download/Find.aspx
+apt-get -y update
+# *** Ensure same nvidia driver version is used both here (in the container) and in install-gpu-drivers.sh (on the host) ***
+#   nvidia-driver-525=525.125.06-0ubuntu1 \
 apt-get install -y --no-install-recommends \
-  nvidia-driver-470=470.82.01-0ubuntu1 \
-  libnvidia-gl-470=470.82.01-0ubuntu1 \
-  nvidia-kernel-source-470=470.82.01-0ubuntu1 \
-  libnvidia-compute-470=470.82.01-0ubuntu1 \
-  libnvidia-extra-470=470.82.01-0ubuntu1 \
-  nvidia-compute-utils-470=470.82.01-0ubuntu1 \
-  libnvidia-decode-470=470.82.01-0ubuntu1 \
-  libnvidia-encode-470=470.82.01-0ubuntu1 \
-  nvidia-utils-470=470.82.01-0ubuntu1 \
-  xserver-xorg-video-nvidia-470=470.82.01-0ubuntu1 \
-  libnvidia-cfg1-470=470.82.01-0ubuntu1 \
-  libnvidia-ifr1-470=470.82.01-0ubuntu1 \
-  libnvidia-fbc1-470=470.82.01-0ubuntu1 \
-  libnvidia-common-470=470.82.01-0ubuntu1 \
-  nvidia-dkms-470=470.82.01-0ubuntu1 \
-  nvidia-kernel-common-470=470.82.01-0ubuntu1 \
-  cuda-toolkit-11-4 \
-  libcudnn8=8.2.4.15-1+cuda11.4 \
-  libcudnn8-dev=8.2.4.15-1+cuda11.4
-
-echo -n "/usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.1">/etc/OpenCL/vendors/nvidia.icd
-
-ln -sf cuda-11.4/ cuda
-ln -sf cuda-11.4/ cuda-11
+  nvidia-driver-515=515.105.01-0ubuntu1 \
+  cuda-toolkit-11-7
 
 pip3 install pyopencl
 pip3 install testresources
-pip3 install tensorflow==2.7.0
+pip3 install tensorflow

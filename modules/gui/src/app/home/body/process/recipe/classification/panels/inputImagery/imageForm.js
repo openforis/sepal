@@ -96,7 +96,6 @@ class ImageForm extends Component {
                 tooltip={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.tooltip')}>
                 {onBlur => (
                     <Combo
-                        placement='below'
                         alignment='left'
                         placeholder={msg('process.classification.panel.inputImagery.bandSetSpec.addBands.placeholder')}
                         options={options}

@@ -9,7 +9,7 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {WorkspaceDestination} from 'widget/workspaceDestination'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {currentUser} from 'user'
+import {isGoogleAccount} from 'user'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {updateProject} from 'app/home/body/process/recipeList/projects'
@@ -74,7 +74,6 @@ const mapStateToProps = state => ({
 const mapRecipeToProps = recipe => ({
     baseBands: selectFrom(recipe, 'model.source.baseBands'),
     segmentBands: selectFrom(recipe, 'model.source.segmentBands'),
-    user: currentUser(),
     projectId: recipe.projectId
 })
 
@@ -214,7 +213,7 @@ class _Retrieve extends React.Component {
     }
 
     renderDestination() {
-        const {user, inputs: {destination}} = this.props
+        const {inputs: {destination}} = this.props
         const destinationOptions = [
             {
                 value: 'SEPAL',
@@ -225,7 +224,7 @@ class _Retrieve extends React.Component {
                 label: msg('process.retrieve.form.destination.GEE')
             }
         ]
-            .filter(({value}) => user.googleTokens || value !== 'GEE')
+            .filter(({value}) => isGoogleAccount() || value !== 'GEE')
         return (
             <Form.Buttons
                 label={msg('process.retrieve.form.destination.label')}
@@ -493,9 +492,9 @@ class _Retrieve extends React.Component {
     }
 
     update() {
-        const {user, inputs: {destination, assetType}} = this.props
+        const {inputs: {destination, assetType}} = this.props
         if (!destination.value) {
-            destination.set(user.googleTokens ? 'GEE' : 'SEPAL')
+            destination.set(isGoogleAccount() ? 'GEE' : 'SEPAL')
         }
         if (!assetType.value && destination.value === 'GEE') {
             assetType.set('Image')
