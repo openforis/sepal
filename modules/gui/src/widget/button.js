@@ -318,7 +318,7 @@ class _Button extends React.Component {
         return content ? content : (
             <div className={styles.contents}>
                 {icon && iconPlacement === 'left' ? this.renderIcon() : null}
-                {label ? this.renderLabel() : null}
+                {_.isNil(label) ? null : this.renderLabel()}
                 {icon && iconPlacement === 'right' ? this.renderIcon() : null}
                 {tail}
             </div>
