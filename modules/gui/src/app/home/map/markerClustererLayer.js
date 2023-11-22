@@ -1,5 +1,5 @@
 import {MarkerClusterer} from '@googlemaps/markerclusterer'
-import Layer from './layer/layer'
+import Layer from './layer/oldlayer'
 import _ from 'lodash'
 
 const DEFAULT_COLOR = '#FFFFFF'

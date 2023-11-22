@@ -1,5 +1,5 @@
 import {EarthEngineTileProvider} from '../tileProvider/earthEngineTileProvider'
-import {GoogleMapsOverlay} from '../layer/googleMapsOverlay'
+import {GoogleMapsOverlay} from './googleMapsOverlay'
 import {Layer} from './layer'
 import {Subject, finalize, tap} from 'rxjs'
 import {isEqual} from 'hash'

@@ -1,4 +1,4 @@
-import {GoogleLabelsLayer} from './layer2/googleLabelsLayer'
+import {GoogleLabelsLayer} from './layer/googleLabelsLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 

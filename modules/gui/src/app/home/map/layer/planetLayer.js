@@ -1,4 +1,4 @@
-import {GoogleMapsOverlay} from '../layer/googleMapsOverlay'
+import {GoogleMapsOverlay} from './googleMapsOverlay'
 import {Layer} from './layer'
 import {PlanetTileProvider} from '../tileProvider/planetTileProvider'
 import {ReplaySubject, of, tap} from 'rxjs'
