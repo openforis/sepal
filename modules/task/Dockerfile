@@ -8,7 +8,9 @@ ENV MODULE_NAME task
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV JS_SHARED /usr/local/src/sepal/lib/js/shared
 ENV PYTHON_SHARED /usr/local/src/sepal/lib/python/shared
-ENV NODE_MAJOR=18
+ENV NODE_MAJOR=20
+
+# Install node.js
 
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 51716619E084DAB9
 RUN mkdir -p /etc/apt/keyrings

@@ -1,4 +1,5 @@
-FROM node:18-bullseye
+FROM node:20-bookworm
+
 EXPOSE 22
 ARG DEBIAN_FRONTEND noninteractive
 ENV MODULE_NAME ssh-gateway

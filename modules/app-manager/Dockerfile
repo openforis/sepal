@@ -6,7 +6,7 @@ ARG DEBIAN_FRONTEND noninteractive
 ENV MODULE_NAME app-manager
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
-ENV NODE_MAJOR=18
+ENV NODE_MAJOR=20
 
 ADD modules/${MODULE_NAME}/install-requirements.sh /usr/local/bin/install-requirements
 RUN chmod +x /usr/local/bin/install-requirements
@@ -33,6 +33,7 @@ RUN adduser node && adduser node sudo && echo 'node      ALL=(ALL) NOPASSWD:ALL'
 RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /home/node/.bashrc
 RUN echo "export PS1='[\[\033[1;34m\]\u@${MODULE_NAME}\[\033[0m\]:\w]\$ '" >> /root/.bashrc
 
+# Install node.js
 
 RUN mkdir -p /etc/apt/keyrings
 RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
@@ -43,8 +44,8 @@ RUN apt-get install nodejs -y
 RUN npm install -g nodemon
 
 USER node
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-RUN bash -c "source /home/node/.nvm/nvm.sh && nvm install 18"
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+RUN bash -c "source /home/node/.nvm/nvm.sh && nvm install 20"
 
 ADD lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared

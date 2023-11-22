@@ -1,4 +1,4 @@
-FROM node:18-bullseye
+FROM node:20-bookworm
 EXPOSE 8000
 
 ENV MODULE_NAME terminal

@@ -1,4 +1,4 @@
-FROM node:18-bullseye
+FROM node:20-bookworm
 
 ENV MODULE_NAME email
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
