@@ -42,7 +42,7 @@ const mapRecipeToProps = recipe => ({
 })
 
 const OVERLAY_ID = 'overlay-layer-id'
-const OVERLAY_AREA = OVERLAY_AREA
+const OVERLAY_AREA = 'overlay-area'
 
 class _Map extends React.Component {
     viewUpdates$ = new BehaviorSubject({})
