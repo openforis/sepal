@@ -16,7 +16,7 @@ const buildModule = async (module, options = {}, pull) => {
                     'rev-parse',
                     'HEAD'
                 ],
-                showStdOut: options.verbose
+                showStdOut: !options.quiet
             })
         )
 
@@ -32,7 +32,7 @@ const buildModule = async (module, options = {}, pull) => {
                 BUILD_NUMBER: 'latest',
                 GIT_COMMIT: gitCommit
             },
-            showStdOut: options.verbose
+            showStdOut: !options.quiet
         })
             
         showModuleStatus(module, MESSAGE.BUILT)
