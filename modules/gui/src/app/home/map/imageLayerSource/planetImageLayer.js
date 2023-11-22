@@ -70,6 +70,7 @@ class _PlanetImageLayer extends React.Component {
     renderBands() {
         const {layerConfig: {bands}} = this.props
         const link = <Button
+            key='link'
             tooltip={msg('imageLayerSources.Planet.bands.tooltip')}
             chromeless
             shape='circle'
