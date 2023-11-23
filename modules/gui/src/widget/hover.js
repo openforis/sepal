@@ -54,7 +54,7 @@ class _HoverDetector extends React.Component {
         ).pipe(
             distinctUntilChanged(),
             // [HACK] Prevent click-through on touch screens
-            delay(100)
+            switchMap(hover => of(hover).pipe(delay(10)))
         )
 
         addSubscription(
@@ -95,7 +95,10 @@ HoverDetector.propTypes = {
 export const HoverOverlay = props =>
     <Consumer>
         {hover =>
-            <div className={[styles.overlay, hover ? styles.hoverForcedOn : null].join(' ')}>
+            <div className={[
+                styles.overlay,
+                hover ? styles.hover : null,
+            ].join(' ')}>
                 {hover ? props.children : null}
             </div>
         }
