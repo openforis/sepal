@@ -1,5 +1,6 @@
+import {Layer} from './layer/layer'
 import {MarkerClusterer} from '@googlemaps/markerclusterer'
-import Layer from './layer/oldlayer'
+import {of, tap} from 'rxjs'
 import _ from 'lodash'
 
 const DEFAULT_COLOR = '#FFFFFF'
@@ -66,7 +67,7 @@ export default class MarkerClustererLayer extends Layer {
         })
     }
 
-    setMarkers(markers) {
+    setMarkers = markers => {
         this.mapMarkers = {}
         this.markers = markers
             .forEach(marker => {
@@ -77,7 +78,7 @@ export default class MarkerClustererLayer extends Layer {
         this.markerCluster.addMarkers(Object.values(this.mapMarkers))
     }
 
-    selectMarker(marker) {
+    selectMarker = marker => {
         this.updateIcon(marker, {
             strokeWeight: SELECTED_STROKE_WIDTH,
             strokeColor: SELECTED_STROKE_COLOR,
@@ -85,7 +86,7 @@ export default class MarkerClustererLayer extends Layer {
         })
     }
 
-    deselectMarker(marker) {
+    deselectMarker = marker => {
         if (_.isFinite(marker['class'])) {
             this.updateIcon(marker, {
                 strokeWeight: DEFAULT_STROKE_WIDTH,
@@ -97,7 +98,7 @@ export default class MarkerClustererLayer extends Layer {
         }
     }
 
-    addMarker(marker) {
+    addMarker = marker => {
         const mapMarker = this.toMapMarker(marker)
         mapMarker.setIcon({
             ...mapMarker.getIcon(),
@@ -110,7 +111,7 @@ export default class MarkerClustererLayer extends Layer {
         return mapMarker
     }
 
-    updateMarker(marker) {
+    updateMarker = marker => {
         const mapMarker = this.findMapMarker(marker)
         if (mapMarker) {
             mapMarker.data = marker
@@ -118,7 +119,7 @@ export default class MarkerClustererLayer extends Layer {
         }
     }
 
-    removeMarker(marker) {
+    removeMarker = marker => {
         const mapMarker = this.findMapMarker(marker)
         if (mapMarker) {
             this.markerCluster.removeMarker(mapMarker)
@@ -126,39 +127,44 @@ export default class MarkerClustererLayer extends Layer {
         delete this.mapMarkers[markerKey(marker)]
     }
 
-    updateIcon(marker, iconUpdate) {
+    updateIcon = (marker, iconUpdate) => {
         const mapMarker = this.findMapMarker(marker)
         if (mapMarker) {
             mapMarker.setIcon({...mapMarker.getIcon(), ...iconUpdate})
         }
     }
 
-    findMapMarker(marker) {
+    findMapMarker = marker => {
         return this.mapMarkers[markerKey(marker)]
     }
 
-    equals(o) {
+    equals = o => {
         return _.isEqual(o && o.type, this.type)
     }
 
-    addToMap() {
+    addToMap = () => {
         this.markerCluster.clearMarkers()
         this.markerCluster.addMarkers(Object.values(this.mapMarkers))
         this.markerCluster.setMap(this.googleMap)
     }
 
-    removeFromMap() {
+    addToMap$ = () =>
+        of(true).pipe(
+            tap(() => this.addToMap())
+        )
+
+    removeFromMap = () => {
         this.markerCluster.clearMarkers()
         this.markerCluster.setMap(null)
     }
 
-    hide(hidden) {
+    hide = hidden => {
         hidden
             ? this.removeFromMap()
             : this.addToMap()
     }
 
-    toMapMarker(marker) {
+    toMapMarker = marker => {
         const {x, y, color = DEFAULT_COLOR, onClick} = marker
         const mapMarker = new this.google.maps.Marker({
             position: new this.google.maps.LatLng(y, x),
@@ -174,7 +180,7 @@ export default class MarkerClustererLayer extends Layer {
         return mapMarker
     }
 
-    setClickable(flag) {
+    setClickable = flag => {
         this.clickable = flag
         Object.values(this.mapMarkers || {}).forEach(marker => marker.setClickable(flag))
     }
