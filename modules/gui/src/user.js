@@ -154,7 +154,8 @@ export const updateGoogleProject$ = projectId =>
             actionBuilder('UPDATE_GOOGLE_PROJECT')
                 .set('user.currentUser.googleTokens.projectId', projectId)
                 .dispatch()
-        )
+        ),
+        switchMap(() => loadUser$())
     )
 
 export const projects$ = () =>
