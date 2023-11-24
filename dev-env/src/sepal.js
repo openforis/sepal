@@ -92,9 +92,9 @@ const main = async () => {
     
     program.command('logs')
         .description('Show module log')
-        .option('-f, --follow', 'Follow')
-        .option('-r, --recent', 'Recent (shortcut for --follow --since 5m)')
-        .option('-t, --tail', 'Tail (shortcut for --follow --since 0)')
+        .option('-f, -lf, --follow', 'Follow')
+        .option('-r, -lr, --recent', 'Recent (shortcut for --follow --since 5m)')
+        .option('-t, -lt, --tail', 'Tail (shortcut for --follow --since 0)')
         .option('-s, --since <time>', 'Since relative or absolute time')
         .option('-u, --until <time>', 'Until relative or absolute time')
         .argument('[module...]', 'Modules')
