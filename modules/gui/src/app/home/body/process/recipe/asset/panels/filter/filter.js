@@ -153,13 +153,13 @@ const FiltersPanel = ({id, properties, constraintsId, constraints, booleanOperat
     />
 
 Filter.propTypes = {}
-const additionalPolicy = () => ({_: 'allow'})
+// const additionalPolicy = () => ({_: 'allow'})
 // [HACK] This actually isn't a form, and we don't want to update the model. This prevents the selected images from
 // being overridden.
 const valuesToModel = null
 
 export default compose(
     Filter,
-    recipeFormPanel({id: 'filter', mapRecipeToProps, valuesToModel, additionalPolicy}),
+    recipeFormPanel({id: 'filter', mapRecipeToProps, valuesToModel}),
     withActivators(['filters'])
 )

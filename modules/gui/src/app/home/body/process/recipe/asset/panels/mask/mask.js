@@ -168,13 +168,13 @@ const ConstraintsPanel = ({id, bands, visualizations, constraintsId, constraints
     />
 
 Mask.propTypes = {}
-const additionalPolicy = () => ({_: 'allow'})
+
 // [HACK] This actually isn't a form, and we don't want to update the model. This prevents the selected images from
 // being overridden.
 const valuesToModel = null
 
 export default compose(
     Mask,
-    recipeFormPanel({id: 'mask', mapRecipeToProps, valuesToModel, additionalPolicy}),
+    recipeFormPanel({id: 'mask', mapRecipeToProps, valuesToModel}),
     withActivators(['constraints'])
 )
