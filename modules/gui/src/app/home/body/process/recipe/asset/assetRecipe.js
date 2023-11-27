@@ -37,8 +37,23 @@ export const RecipeActions = id => {
                 'ui.bands.selection': bands
             }, {bands})
         },
+        createConstraintsEntry(constraintsEntry) {
+            return actionBuilder('CREATE_CONSTRAINTS_ENTRY', {constraintsEntry})
+                .push('model.mask.constraintsEntries', constraintsEntry)
+                .dispatch()
+        },
+        updateConstraintsEntry(constraintsEntry) {
+            return actionBuilder('UPDATE_CONSTRAINTS_ENTRY', {constraintsEntry})
+                .set(['model.mask.constraintsEntries', {id: constraintsEntry.id}], constraintsEntry)
+                .dispatch()
+        },
+        removeConstraintsEntry(constraintsEntryId) {
+            return actionBuilder('UPDATE_CONSTRAINTS_ENTRY', {constraintsEntryId})
+                .del(['model.mask.constraintsEntries', {id: constraintsEntryId}])
+                .dispatch()
+        },
         retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_RADAR_MOSAIC_RETRIEVAL', {retrieveOptions})
+            return actionBuilder('REQUEST_ASSET_RECIPE_RETRIEVAL', {retrieveOptions})
                 .setAll({
                     'ui.retrieveState': 'SUBMITTED',
                     'ui.retrieveOptions': retrieveOptions,

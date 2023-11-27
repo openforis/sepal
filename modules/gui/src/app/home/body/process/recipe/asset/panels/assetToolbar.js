@@ -10,6 +10,7 @@ import Aoi from 'app/home/body/process/recipe/mosaic/panels/aoi/aoi'
 import AssetDetails from './assetDetails/assetDetails'
 import Composite from './composite/composite'
 import Dates from './dates/dates'
+import Mask from './mask/mask'
 import PanelWizard from 'widget/panelWizard'
 import React from 'react'
 import styles from './assetToolbar.module.css'
@@ -34,6 +35,7 @@ class AssetToolbar extends React.Component {
                 <AssetDetails/>
                 <Aoi assetBounds/>
                 {collection ? <Dates/> : null}
+                <Mask/>
                 {collection ? <Composite/> : null}
 
                 <Toolbar

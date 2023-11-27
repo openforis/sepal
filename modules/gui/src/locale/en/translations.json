@@ -2383,8 +2383,13 @@
           },
           "mask": {
             "button": "MSK",
-            "form": {
-
+            "constraints": {
+                "title": "Image mask constraints"
+            },
+            "noConstraints": "No constraints added.",
+            "emptyConstraints": "Empty",
+            "remove": {
+                "tooltip": "Remove masking constraints."
             },
             "title": "Mask imagery",
             "tooltip": "Mask out unwanted areas of imagery"
@@ -4665,7 +4670,11 @@
       "imageConstraints": {
         "band": {
           "label": "Band",
-          "notSelected": "[No band selected]"
+          "notSelected": "[No band selected]",
+          "bit": {
+            "label": "bit",
+            "tooltip": "Apply a bitmask to the band. This is typically used for QA bands"
+          }
         },
         "image": {
           "label": "Image",
@@ -4698,6 +4707,14 @@
             "label": "Range"
           }
         },
+        "bitRange": {
+          "from": {
+            "label": "From bit"
+          },
+          "to": {
+            "label": "To bit"
+          }
+        },
         "range": {
           "from": {
             "label": "From value"
@@ -4708,6 +4725,10 @@
         },
         "value": {
           "label": "Value"
+        },
+        "inclusive": {
+          "label": "incl",
+          "tooltip": "Determine if value is inclusive or not"
         }
       },
       "legend": {
