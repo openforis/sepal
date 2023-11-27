@@ -14,19 +14,30 @@ const fields = {
         .notBlank(),
     band: new Form.Field()
         .notBlank(),
+    bit: new Form.Field(),
+    fromBit: new Form.Field()
+        .skip((_value, {bit}) => !bit || !bit.length)
+        .number()
+        .notBlank(),
+    toBit: new Form.Field()
+        .skip((_value, {bit, fromBit}) => !bit || !bit.length || _.isNil(fromBit))
+        .number()
+        .notBlank(),
+    fromBitInclusive: new Form.Field(),
+    toBitInclusive: new Form.Field(),
     operator: new Form.Field()
         .notBlank(),
     value: new Form.Field()
-        .skip((value, {operator}) => !['<', '≤', '>', '≥', '='].includes(operator))
+        .skip((_value, {operator}) => !['<', '≤', '>', '≥', '='].includes(operator))
         .number()
         .notBlank(),
     from: new Form.Field()
-        .skip((value, {operator}) => operator !== 'range')
+        .skip((_value, {operator}) => operator !== 'range')
         .number()
         .notBlank(),
     to: new Form.Field()
+        .skip((_value, {operator, from}) => operator !== 'range' || _.isNil(from))
         .number()
-        .skip((value, {operator}) => operator !== 'range')
         .notBlank(),
     fromInclusive: new Form.Field(),
     toInclusive: new Form.Field(),
@@ -50,7 +61,7 @@ class _Constraint extends React.Component {
     ]
 
     render() {
-        const {selected, images, inputs: {operator}, onClick, onRemove} = this.props
+        const {selected, images, inputs: {bit, operator}, onClick, onRemove} = this.props
         const {imageSpec} = this.state
         return (
             <ListItem
@@ -61,6 +72,7 @@ class _Constraint extends React.Component {
                         <Layout type='horizontal'>
                             {this.renderBand()}
                             {operator.value !== 'class' ? this.renderOperator() : null}
+                            {isSelected(bit) ? this.renderBitRange() : null}
                         </Layout>
                         {this.renderValue()}
                     </Layout>
@@ -104,18 +116,37 @@ class _Constraint extends React.Component {
     }
 
     renderBand() {
-        const {images, inputs: {image, band, operator}} = this.props
+        const {images, inputs: {image, band, bit, operator}} = this.props
+        const bitButton = (
+            <Form.Buttons
+                key={'bit'}
+                input={bit}
+                look="transparent"
+                shape="pill"
+                air="less"
+                size="x-small"
+                options={[{
+                    value: true,
+                    label: msg('widget.imageConstraints.band.bit.label'),
+                    tooltip: msg('widget.imageConstraints.band.bit.tooltip')
+                }]}
+                multiple
+                tabIndex={-1}
+            />
+        )
         const bandOptions = image.value
             ? images
                 .find(({id}) => id === image.value).bands
                 .map(({name, type}) => ({value: name, label: name, type}))
             : []
+
         return (
             <Form.Combo
                 label={msg('widget.imageConstraints.band.label')}
                 input={band}
                 options={bandOptions}
                 className={styles.band}
+                buttons={[bitButton]}
                 onChange={({type}) => {
                     if (type === 'categorical') {
                         operator.set('class')
@@ -136,6 +167,31 @@ class _Constraint extends React.Component {
                 options={this.operatorOptions}
                 className={styles.operator}
             />
+        )
+    }
+
+    renderBitRange() {
+        const {inputs: {fromBit, toBit, fromBitInclusive, toBitInclusive}} = this.props
+        const fromInclusiveButton = inclButton(fromBitInclusive)
+        const toInclusiveButton = inclButton(toBitInclusive)
+        return (
+            <Layout type='horizontal' className={styles.range}>
+                <Form.Input
+                    label={msg('widget.imageConstraints.bitRange.from.label')}
+                    input={fromBit}
+                    autoFocus
+                    errorMessage
+                    className={styles.rangeInput}
+                    buttons={[fromInclusiveButton]}
+                />
+                <Form.Input
+                    label={msg('widget.imageConstraints.bitRange.to.label')}
+                    input={toBit}
+                    errorMessage
+                    className={styles.rangeInput}
+                    buttons={[toInclusiveButton]}
+                />
+            </Layout>
         )
     }
 
@@ -166,19 +222,6 @@ class _Constraint extends React.Component {
 
     renderRangeSelector() {
         const {inputs: {from, to, fromInclusive, toInclusive}} = this.props
-        const inclButton = input =>
-            <Form.Buttons
-                key={'incl'}
-                input={input}
-                look="transparent"
-                shape="pill"
-                air="less"
-                size="x-small"
-                options={[{value: true, label: 'incl', tooltip: msg('map.visParams.form.band.reverse.tooltip')}]}
-                multiple
-                tabIndex={-1}
-            />
-
         const fromInclusiveButton = inclButton(fromInclusive)
         const toInclusiveButton = inclButton(toInclusive)
         return (
@@ -216,15 +259,29 @@ class _Constraint extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {image, band, operator, from, fromInclusive, to, toInclusive, value, selectedClasses}} = this.props
+        const {inputs: {
+            image, band, bit, operator,
+            fromBit, fromBitInclusive, toBit, toBitInclusive,
+            from, fromInclusive, to, toInclusive,
+            value, selectedClasses}
+        } = this.props
+        const toBooleanButton = (field, defaultValue) => _.isNil(constraint[field])
+            ? defaultValue ? [true] : []
+            : constraint[field] ? [constraint[field]] : []
+            
         const {constraint} = this.props
         image.set(constraint.image)
-        band.set(constraint.band && constraint.band)
+        band.set(constraint.band)
+        bit.set(toBooleanButton('bit', false))
         operator.set(constraint.operator || this.operatorOptions[0].value)
+        fromBit.set(constraint.fromBit)
+        fromBitInclusive.set(toBooleanButton('fromBitInclusive', true))
+        toBit.set(constraint.toBit)
+        toBitInclusive.set(toBooleanButton('toBitInclusive', true))
         from.set(constraint.from)
-        fromInclusive.set(constraint.fromInclusive ? [constraint.fromInclusive] : [])
+        fromInclusive.set(toBooleanButton('fromInclusive', true))
         to.set(constraint.to)
-        toInclusive.set(constraint.toInclusive ? [constraint.toInclusive] : [])
+        toInclusive.set(toBooleanButton('toInclusive', false))
         value.set(constraint.value)
         selectedClasses.set(constraint.selectedClasses || [])
         this.updateConstraint()
@@ -257,16 +314,18 @@ class _Constraint extends React.Component {
     }
 
     toDescription() {
-        const {inputs: {band, operator, from, fromInclusive, to, toInclusive, value}} = this.props
+        const {inputs: {band, bit, fromBit, fromBitInclusive, toBit, toBitInclusive, operator, from, fromInclusive, to, toInclusive, value}} = this.props
         if (!band.value) {
             return msg('widget.imageConstraints.band.notSelected')
         }
         const format = input => _.isFinite(parseFloat(input.value)) ? input.value : '?'
-        const isInclusive = input => input.value && input.value.length && input.value[0]
+        const bandValue = isSelected(bit)
+            ? `${band.value}${isSelected(fromBitInclusive) ? '[' : '('}${fromBit.value}, ${toBit.value}${isSelected(toBitInclusive) ? ']' : ')'}`
+            : band.value
         switch (operator.value) {
         case 'class': return this.toSelectedClassesDescription()
-        case 'range': return `${format(from)} ${isInclusive(fromInclusive) ? '≤' : '<'} ${band.value} ${isInclusive(toInclusive) ? '≤' : '<'} ${format(to)}`
-        default: return `${band.value} ${operator.value} ${format(value)}`
+        case 'range': return `${format(from)} ${isSelected(fromInclusive) ? '≤' : '<'} ${bandValue} ${isSelected(toInclusive) ? '≤' : '<'} ${format(to)}`
+        default: return `${bandValue} ${operator.value} ${format(value)}`
         }
     }
 
@@ -283,15 +342,30 @@ class _Constraint extends React.Component {
     }
 
     toConstraint() {
-        const {constraint: {id}, inputs: {image, band, operator, from, fromInclusive, to, toInclusive, value, selectedClasses}} = this.props
+        const {
+            constraint: {id},
+            inputs: {
+                image, band,
+                bit, fromBit, toBit, fromBitInclusive, toBitInclusive,
+                operator, from, fromInclusive, to, toInclusive, value, selectedClasses
+            }
+        } = this.props
+        
+        const toBoolean = input => !!(input.value && input.value.length && input.value[0])
+
         const constraint = {
             id,
             description: this.toDescription(),
             image: image.value,
             band: band.value,
+            bit: toBoolean(bit),
+            fromBit: toInt(fromBit.value),
+            toBit: toInt(toBit.value),
+            fromBitInclusive: toBoolean(fromBitInclusive),
+            toBitInclusive: toBoolean(toBitInclusive),
             operator: operator.value
         }
-
+        
         switch(operator.value) {
         case 'class': return {
             ...constraint,
@@ -300,9 +374,9 @@ class _Constraint extends React.Component {
         case 'range': return {
             ...constraint,
             from: parseFloat(from.value),
-            fromInclusive: !!(fromInclusive.value && fromInclusive.value.length && fromInclusive.value[0]),
+            fromInclusive: toBoolean(fromInclusive),
             to: parseFloat(to.value),
-            toInclusive: !!(toInclusive.value && toInclusive.value.length && toInclusive.value[0]),
+            toInclusive: toBoolean(toInclusive)
         }
         default: return {
             ...constraint,
@@ -326,6 +400,31 @@ class _Constraint extends React.Component {
         })
     }
 }
+
+const inclButton = input =>
+    <Form.Buttons
+        key={'incl'}
+        input={input}
+        look="transparent"
+        shape="pill"
+        air="less"
+        size="x-small"
+        options={[{
+            value: true,
+            label: msg('widget.imageConstraints.inclusive.label'),
+            tooltip: msg('widget.imageConstraints.inclusive.tooltip')
+        }]}
+        multiple
+        tabIndex={-1}
+    />
+    
+const toInt = input => {
+    input = _.isString(input) ? input : _.toString(input)
+    const parsed = parseInt(input)
+    return _.isFinite(parsed) ? parsed : null
+}
+
+const isSelected = input => input.value && input.value.length && input.value[0]
 
 export const Constraint = compose(
     _Constraint,
