@@ -13,6 +13,10 @@ const fields = {
     image: new Form.Field()
         .notBlank(),
     band: new Form.Field()
+        .skip((_value, {property}) => property)
+        .notBlank(),
+    property: new Form.Field()
+        .skip((_value, {band}) => band)
         .notBlank(),
     bit: new Form.Field(),
     fromBit: new Form.Field()
@@ -70,7 +74,7 @@ class _Constraint extends React.Component {
                     <Layout>
                         {images.length !== 1 ? this.renderImage() : null}
                         <Layout type='horizontal'>
-                            {this.renderBand()}
+                            {this.applyOnBand() ? this.renderBand() : this.renderProperty()}
                             {operator.value !== 'class' ? this.renderOperator() : null}
                             {isSelected(bit) ? this.renderBitRange() : null}
                         </Layout>
@@ -97,7 +101,7 @@ class _Constraint extends React.Component {
                 label={msg('widget.imageConstraints.image.label')}
                 input={image}
                 options={imageOptions}
-                onChange={({bands}) => {
+                onChange={({bands = [], properties = []}) => {
                     const selectDefaultBand = bands.length === 1
                     band.set(selectDefaultBand
                         ? bands[0].name
@@ -110,6 +114,10 @@ class _Constraint extends React.Component {
                         }
                     }
 
+                    const selectDefaultProperty = properties.length === 1
+                    band.set(selectDefaultProperty
+                        ? properties[0].name
+                        : null)
                 }}
             />
         )
@@ -127,8 +135,8 @@ class _Constraint extends React.Component {
                 size="x-small"
                 options={[{
                     value: true,
-                    label: msg('widget.imageConstraints.band.bit.label'),
-                    tooltip: msg('widget.imageConstraints.band.bit.tooltip')
+                    label: msg('widget.imageConstraints.bit.label'),
+                    tooltip: msg('widget.imageConstraints.bit.tooltip')
                 }]}
                 multiple
                 tabIndex={-1}
@@ -154,6 +162,24 @@ class _Constraint extends React.Component {
                         (!operator.value || operator.value === 'class') && operator.set('<')
                     }
                 }}
+            />
+        )
+    }
+
+    renderProperty() {
+        const {images, inputs: {image, property, bit}} = this.props
+        const propertyOptions = image.value
+            ? images
+                .find(({id}) => id === image.value).properties
+                .map(({name, type}) => ({value: name, label: name, type}))
+            : []
+
+        return (
+            <Form.Combo
+                label={msg('widget.imageConstraints.property.label')}
+                input={property}
+                options={propertyOptions}
+                className={styles.band}
             />
         )
     }
@@ -260,7 +286,7 @@ class _Constraint extends React.Component {
 
     componentDidMount() {
         const {inputs: {
-            image, band, bit, operator,
+            image, band, property, bit, operator,
             fromBit, fromBitInclusive, toBit, toBitInclusive,
             from, fromInclusive, to, toInclusive,
             value, selectedClasses}
@@ -272,6 +298,7 @@ class _Constraint extends React.Component {
         const {constraint} = this.props
         image.set(constraint.image)
         band.set(constraint.band)
+        property.set(constraint.property)
         bit.set(toBooleanButton('bit', false))
         operator.set(constraint.operator || this.operatorOptions[0].value)
         fromBit.set(constraint.fromBit)
@@ -294,6 +321,11 @@ class _Constraint extends React.Component {
         this.putImageSpecInState()
     }
 
+    applyOnBand() {
+        const {applyOn} = this.props
+        return applyOn === 'bands'
+    }
+
     putImageSpecInState() {
         const {images, inputs: {image}} = this.props
         const imageSpec = images.find(({id}) => id === image.value)
@@ -314,18 +346,22 @@ class _Constraint extends React.Component {
     }
 
     toDescription() {
-        const {inputs: {band, bit, fromBit, fromBitInclusive, toBit, toBitInclusive, operator, from, fromInclusive, to, toInclusive, value}} = this.props
-        if (!band.value) {
+        const {applyOn, inputs: {band, property, bit, fromBit, fromBitInclusive, toBit, toBitInclusive, operator, from, fromInclusive, to, toInclusive, value}} = this.props
+        const applyOnBand = applyOn === 'bands'
+        if (applyOnBand && !band.value) {
             return msg('widget.imageConstraints.band.notSelected')
+        } else if (!applyOnBand && !property.value) {
+            return msg('widget.imageConstraints.property.notSelected')
         }
         const format = input => _.isFinite(parseFloat(input.value)) ? input.value : '?'
-        const bandValue = isSelected(bit)
-            ? `${band.value}${isSelected(fromBitInclusive) ? '[' : '('}${fromBit.value}, ${toBit.value}${isSelected(toBitInclusive) ? ']' : ')'}`
-            : band.value
+        const source = applyOnBand ? band.value : property.value
+        const formattedSource = isSelected(bit)
+            ? `${source}${isSelected(fromBitInclusive) ? '[' : '('}${fromBit.value}, ${toBit.value}${isSelected(toBitInclusive) ? ']' : ')'}`
+            : source
         switch (operator.value) {
         case 'class': return this.toSelectedClassesDescription()
-        case 'range': return `${format(from)} ${isSelected(fromInclusive) ? '≤' : '<'} ${bandValue} ${isSelected(toInclusive) ? '≤' : '<'} ${format(to)}`
-        default: return `${bandValue} ${operator.value} ${format(value)}`
+        case 'range': return `${format(from)} ${isSelected(fromInclusive) ? '≤' : '<'} ${formattedSource} ${isSelected(toInclusive) ? '≤' : '<'} ${format(to)}`
+        default: return `${formattedSource} ${operator.value} ${format(value)}`
         }
     }
 
@@ -345,7 +381,7 @@ class _Constraint extends React.Component {
         const {
             constraint: {id},
             inputs: {
-                image, band,
+                image, band, property,
                 bit, fromBit, toBit, fromBitInclusive, toBitInclusive,
                 operator, from, fromInclusive, to, toInclusive, value, selectedClasses
             }
@@ -358,6 +394,7 @@ class _Constraint extends React.Component {
             description: this.toDescription(),
             image: image.value,
             band: band.value,
+            property: property.value,
             bit: toBoolean(bit),
             fromBit: toInt(fromBit.value),
             toBit: toInt(toBit.value),

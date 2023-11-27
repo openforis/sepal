@@ -37,6 +37,21 @@ export const RecipeActions = id => {
                 'ui.bands.selection': bands
             }, {bands})
         },
+        createFiltersEntry(filtersEntry) {
+            return actionBuilder('CREATE_CONSTRAINTS_ENTRY', {filtersEntry})
+                .push('model.filter.filtersEntries', filtersEntry)
+                .dispatch()
+        },
+        updateFiltersEntry(filtersEntry) {
+            return actionBuilder('UPDATE_CONSTRAINTS_ENTRY', {filtersEntry})
+                .set(['model.filter.filtersEntries', {id: filtersEntry.id}], filtersEntry)
+                .dispatch()
+        },
+        removeFiltersEntry(filtersEntryId) {
+            return actionBuilder('UPDATE_CONSTRAINTS_ENTRY', {filtersEntryId})
+                .del(['model.filter.filtersEntries', {id: filtersEntryId}])
+                .dispatch()
+        },
         createConstraintsEntry(constraintsEntry) {
             return actionBuilder('CREATE_CONSTRAINTS_ENTRY', {constraintsEntry})
                 .push('model.mask.constraintsEntries', constraintsEntry)

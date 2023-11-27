@@ -106,17 +106,18 @@ class _ImageConstraints extends React.Component {
         const {images = []} = this.props
         const id = guid()
         const image = images.length === 1 ? images[0].id : null
-        const band = image && images[0].bands.length === 1 ? images[0].bands[0].name : null
+        const band = image && images[0].bands?.length === 1 ? images[0].bands[0].name : null
+        const property = image && images[0].properties?.length === 1 ? images[0].properties[0].name : null
         const fromBitInclusive = true
         const toBitInclusive = true
         const operator = band && images[0].bands[0].type === 'categorical'
             ? 'class'
-            : '<'
+            : '='
         const fromInclusive = true
         this.setState(({constraints}) => ({
             constraints: [
                 ...constraints, {
-                    id, image, band, fromBitInclusive, toBitInclusive, operator, fromInclusive
+                    id, image, band, property, fromBitInclusive, toBitInclusive, operator, fromInclusive
                 }],
             selected: id
         }))
@@ -132,7 +133,7 @@ class _ImageConstraints extends React.Component {
     }
 
     renderConstraint(constraint) {
-        const {images} = this.props
+        const {images, applyOn} = this.props
         const {selected} = this.state
         return (
             <Constraint
@@ -140,6 +141,7 @@ class _ImageConstraints extends React.Component {
                 constraint={constraint}
                 images={images}
                 selected={selected === constraint.id}
+                applyOn={applyOn}
                 onClick={() => this.select(constraint.id)}
                 onRemove={() => this.remove(constraint.id)}
                 onValidate={invalid => this.setState(({invalidById}) => ({
@@ -222,6 +224,7 @@ ImageConstraints.propTypes = {
     images: PropTypes.array.isRequired,
     title: PropTypes.any.isRequired,
     onChange: PropTypes.func.isRequired,
+    applyOn: PropTypes.string,
     booleanOperator: PropTypes.any,
     constraints: PropTypes.array,
     constraintsId: PropTypes.string,

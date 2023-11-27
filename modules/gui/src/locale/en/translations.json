@@ -2375,8 +2375,13 @@
           },
           "filter": {
             "button": "FLT",
-            "form": {
-
+            "filters": {
+                "title": "Image filters"
+            },
+            "noFilters": "No filters added.",
+            "emptyFilters": "Empty",
+            "remove": {
+                "tooltip": "Remove filters."
             },
             "title": "Collection Filter",
             "tooltip": "Filter down collection to images of interest"
@@ -4668,13 +4673,17 @@
         }
       },
       "imageConstraints": {
+        "bit": {
+          "label": "bit",
+          "tooltip": "Apply a bitmask to the band. This is typically used for QA bands"
+        },
         "band": {
           "label": "Band",
-          "notSelected": "[No band selected]",
-          "bit": {
-            "label": "bit",
-            "tooltip": "Apply a bitmask to the band. This is typically used for QA bands"
-          }
+          "notSelected": "[No band selected]"
+        },
+        "property": {
+          "label": "Property",
+          "notSelected": "[No property selected]"
         },
         "image": {
           "label": "Image",

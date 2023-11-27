@@ -107,10 +107,7 @@ class Mask extends React.Component {
 
     editConstraintsEntry(constraintsEntry) {
         const {activator: {activatables: {constraints}}} = this.props
-        this.setState(
-            {selectedConstraintsEntry: constraintsEntry},
-            () => constraintsEntry
-        )
+        this.setState({selectedConstraintsEntry: constraintsEntry})
         constraints.activate()
     }
 
@@ -166,6 +163,7 @@ const ConstraintsPanel = ({id, bands, visualizations, constraintsId, constraints
         constraintsId={constraintsId}
         constraints={constraints}
         booleanOperator={booleanOperator}
+        applyOn={'bands'}
         onChange={onChange}
     />
 
@@ -178,5 +176,5 @@ const valuesToModel = null
 export default compose(
     Mask,
     recipeFormPanel({id: 'mask', mapRecipeToProps, valuesToModel, additionalPolicy}),
-    withActivators(['inputImage', 'constraints'])
+    withActivators(['constraints'])
 )
