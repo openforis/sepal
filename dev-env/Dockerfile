@@ -5,7 +5,7 @@ SHELL ["/bin/bash", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 ENV DOCKER_BUILDKIT=0
 ENV PROJECT_DIR /usr/local/src/sepal
-ENV NODE_MAJOR=18
+ENV NODE_MAJOR=20
 
 # Update and install base packages
 

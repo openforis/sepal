@@ -1,26 +1,16 @@
 import {Mutator} from './stateUtils'
+import {getHash} from 'hash'
 import _ from 'lodash'
 
 /* eslint-disable no-undef */
 
-// it('foo', () => {
-//     const a = ['foo']
-//     // Object.defineProperty(a, '___hash', {
-//     //     value: '123',
-//     //     enumerable: false,
-//     //     // writable: false
-//     // })
-//     const b = ['foo']
-//     Object.defineProperty(b, '___hash', {
-//         value: '456',
-//         enumerable: true,
-//         writable: true
-//     })
-//     // expect(b.___hash).toEqual('456')
-//     // expect(a).toEqual(b)
-//     console.log({...b})
-//     expect({...b}.___hash).toEqual('456')
-// })
+it('hash propagates upwards', () => {
+    const state = {a: {b: {c: 'foo'}}}
+    const nextState = new Mutator(state, 'a.b.c').set('bar')
+    expect(nextState).toEqual({a: {b: {c: 'bar'}}})
+    expect(getHash(nextState)).toEqual(getHash(nextState.a))
+    expect(getHash(nextState)).toEqual(getHash(nextState.a.b))
+})
 
 it('create', () => {
     const state = {}
@@ -173,19 +163,19 @@ it('push unique does not push existing object by nested key', () => {
     expect(nextState).toEqual({a: [{foo: {id: 1}}, {foo: {id: 2}}]})
 })
 
-it('delete from object (non-existing path)', () => {
+it('delete key from object (non-existing path)', () => {
     const state = {}
     const nextState = new Mutator(state, 'a').del()
     expect(nextState).toEqual({})
 })
 
-it('delete from object nested (non-existing path)', () => {
+it('delete nested key from object (non-existing path)', () => {
     const state = {}
     const nextState = new Mutator(state, 'a.b').del()
     expect(nextState).toEqual({a: {}})
 })
 
-it('delete from object', () => {
+it('delete key from object (existing path)', () => {
     const state = {a: {b: 1, c: 2}}
     const nextState = new Mutator(state, 'a.b').del()
     expect(nextState).toEqual({a: {c: 2}})
@@ -198,32 +188,37 @@ it('delete from array (non-existing array)', () => {
     expect(nextState).toEqual({a: []})
 })
 
+it('delete from array (existing empty array)', () => {
+    const state = {a: []}
+    const nextState = new Mutator(state, 'a.foo').del()
+    expect(nextState).toEqual({a: []})
+})
+
 it('delete from array (non-existing element)', () => {
-    const state = {a: [2]}
-    const nextState = new Mutator(state, 'a.1').del()
-    expect(nextState).toEqual({a: [2]})
+    const state = {a: ['foo']}
+    const nextState = new Mutator(state, 'a.bar').del()
+    expect(nextState).toEqual({a: ['foo']})
 })
 
-it('delete from array by index', () => {
-    const state = {a: ['b', 'c', 'd']}
-    const nextState = new Mutator(state, 'a.1').del()
-    expect(nextState).toEqual({a: ['b', 'd']})
-    expect(state.a === nextState.a).toEqual(false)
+it('delete value from array (existing element)', () => {
+    const state = {a: ['foo', 'bar', 'baz']}
+    const nextState = new Mutator(state, 'a.bar').del()
+    expect(nextState).toEqual({a: ['foo', 'baz']})
 })
 
-it('delete from array by template', () => {
+it('delete object from array by template', () => {
     const state = {a: [{id: 1}, {id: 2}]}
     const nextState = new Mutator(state, ['a', {id: 1}]).del()
     expect(nextState).toEqual({a: [{id: 2}]})
 })
 
-it('delete from array by template (non-existing array)', () => {
+it('delete object from array by template (non-existing array)', () => {
     const state = {}
     const nextState = new Mutator(state, ['a', {id: 1}]).del()
     expect(nextState).toEqual({a: []})
 })
 
-it('delete from array by template (non-existing element)', () => {
+it('delete object from array by template (non-existing element)', () => {
     const state = {a: [{id: 1}]}
     const nextState = new Mutator(state, ['a', {id: 2}]).del()
     expect(nextState).toEqual({a: [{id: 1}]})

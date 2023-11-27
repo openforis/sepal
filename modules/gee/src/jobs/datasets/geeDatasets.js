@@ -48,11 +48,27 @@ const mapType = type =>
 const getUrl = providers =>
     providers.find(({roles}) => roles.includes('host'))?.url
 
+const sortByDeprecationAndTitle = (a, b) => {
+    const aTitle = a.title
+    const aDeprecated = a.title.includes('[deprecated]')
+    const bTitle = b.title
+    const bDeprecated = b.title.includes('[deprecated]')
+    return aTitle === bTitle
+        ? 0
+        : aDeprecated === bDeprecated
+            ? aTitle > bTitle
+                ? 1
+                : -1
+            : aDeprecated > bDeprecated
+                ? 1
+                : -1
+}
 const getDatasets = (text, allowedTypes) =>
     datasets
         .filter(({type}) => isMatchingAllowedTypes(type, allowedTypes))
         .filter(dataset => isMatchingText(dataset, getSearchElements(text)))
         .map(({title, id, type, url}) => ({title, id, type, url}))
+        .toSorted(sortByDeprecationAndTitle)
 
 const getSearchElements = text =>
     splitString(escapeRegExp(text))

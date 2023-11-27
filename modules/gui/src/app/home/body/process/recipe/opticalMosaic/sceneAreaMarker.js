@@ -65,10 +65,6 @@ class _SceneAreaMarker extends React.Component {
         )
     }
 
-    // shouldComponentUpdate(nextProps) {
-    //     return !isEqualIgnoreFunctions(nextProps, this.props)
-    // }
-
     selectScenes() {
         const {sceneAreaId, sceneSelection} = this.props
         this.recipeActions.setSceneSelection(sceneAreaId).dispatch()

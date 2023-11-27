@@ -2,10 +2,13 @@ import {EMPTY, Subject, catchError, exhaustMap, interval, last, map, merge, merg
 import {Tree} from 'tree'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {getLogger} from 'log'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
+
+const log = getLogger('assets')
 
 const MAX_RECENT_ASSETS = 20
 const REFRESH_INTERVAL_HOURS = 2
@@ -47,7 +50,7 @@ export const withAssetRoots = () =>
 const loadNode$ = (path = [], node = {}) =>
     api.gee.listAssets$(node).pipe(
         catchError(() => {
-            console.log('Cannot retrieve user assets')
+            log.debug('Cannot retrieve user assets')
             return []
         }),
         switchMap(nodes =>
@@ -85,7 +88,7 @@ export const loadAssets$ = () =>
         )
     ).pipe(
         exhaustMap(({incremental}) => {
-            console.log(`Loading assets tree in ${incremental ? 'incremental' : 'one-shot'} mode`)
+            log.debug(`Loading assets tree in ${incremental ? 'incremental' : 'one-shot'} mode`)
             actionBuilder('LOAD_ASSETS')
                 .set('assets.loading', incremental)
                 .dispatch()
@@ -96,7 +99,7 @@ export const loadAssets$ = () =>
                     : last(),
                 tap({
                     next: assetTree => {
-                        console.log('Updating assets tree')
+                        log.debug('Updating assets tree')
                         const assetList = Tree.flatten(assetTree).map(
                             ({path, props, depth}) => ({id: _.last(path), ...props, depth})
                         )
@@ -106,14 +109,14 @@ export const loadAssets$ = () =>
                             .dispatch()
                     },
                     error: error => {
-                        console.log('Asset tree loading failed', error)
+                        log.debug('Asset tree loading failed', error)
                         actionBuilder('LOAD_ASSETS')
                             .set('assets.error', true)
                             .del('assets.loading')
                             .dispatch()
                     },
                     complete: () => {
-                        console.log('Asset tree loaded')
+                        log.debug('Asset tree loaded')
                         actionBuilder('LOAD_ASSETS')
                             .del('assets.error')
                             .del('assets.loading')

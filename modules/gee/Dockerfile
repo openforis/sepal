@@ -1,4 +1,5 @@
-FROM node:18-bullseye
+FROM node:20-bookworm
+
 EXPOSE 5001
 
 ENV MODULE_NAME gee

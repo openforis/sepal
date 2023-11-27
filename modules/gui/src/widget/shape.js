@@ -22,7 +22,7 @@ class _Shape extends React.Component {
             lookStyles[look],
             chromeless ? lookStyles.chromeless : null,
             disableTransitions ? lookStyles.noTransitions : null,
-            disabled ? lookStyles.nonInteractive : null,
+            disabled ? lookStyles.disabled : null,
             disableHover ? lookStyles.hoverDisabled : null,
             additionalClassName
         ].join(' ')

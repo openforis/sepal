@@ -53,7 +53,7 @@ export class BalancingTileProvider extends TileProvider {
     }
 
     hide(hidden) {
-        this.tileManager.hide(hidden)
+        this.tileManager.setHidden(hidden)
     }
 
     close() {

@@ -1,34 +1,26 @@
-import ShapeLayer from './shapeLayer'
+import {Layer} from './layer'
+import {of, tap} from 'rxjs'
 
-export class GooglePolygonLayer extends ShapeLayer {
+export class GooglePolygonLayer extends Layer {
     constructor({map, path, fill}) {
-        super({map})
+        super()
+        this.map = map
         this.type = 'PolygonLayer'
         this.path = path
         this.fill = fill
     }
 
-    equals(o) {
-        return o === this || (
-            o instanceof GooglePolygonLayer &&
-            o.path.toString() === this.path.toString() &&
-            o.fill === this.fill
-        )
-    }
+    getPolygonOptions = (fill, paths) => ({
+        fillColor: '#FBFAF2',
+        fillOpacity: fill ? 0.07 : 1e-30,
+        strokeColor: '#FBFAF2',
+        strokeOpacity: 0.5,
+        strokeWeight: 1,
+        clickable: false,
+        paths
+    })
 
-    getPolygonOptions(fill, paths) {
-        return {
-            fillColor: '#FBFAF2',
-            fillOpacity: fill ? 0.07 : 1e-30,
-            strokeColor: '#FBFAF2',
-            strokeOpacity: 0.5,
-            strokeWeight: 1,
-            clickable: false,
-            paths
-        }
-    }
-
-    createShape() {
+    createShape = () => {
         const {map, path, fill} = this
         const {google} = map.getGoogle()
         const paths = path.map(
@@ -37,4 +29,36 @@ export class GooglePolygonLayer extends ShapeLayer {
         const polygonOptions = this.getPolygonOptions(fill, paths)
         return new google.maps.Polygon(polygonOptions)
     }
+
+    addToMap = () => {
+        this.layer = this.createShape()
+        const {map, layer} = this
+        const {googleMap} = map.getGoogle()
+        if (layer) {
+            layer.setMap(googleMap)
+        }
+    }
+
+    addToMap$ = () =>
+        of(true).pipe(
+            tap(() => this.addToMap())
+        )
+
+    removeFromMap = () => {
+        const {layer} = this
+        if (layer) {
+            layer.setMap(null)
+        }
+    }
+
+    hide = hidden =>
+        hidden
+            ? this.removeFromMap()
+            : this.addToMap()
+
+    equals = other =>
+        other === this
+            || other instanceof GooglePolygonLayer
+                && other.path.toString() === this.path.toString()
+                && other.fill === this.fill
 }

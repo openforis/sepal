@@ -30,9 +30,15 @@ const setHash = (object, hash) =>
         writable: true
     })
 
-export const addHash = (object, hash = createHash()) =>
-    (_.isPlainObject(object) || _.isArray(object)) && setHash(object, hash)
-    
+export const getHash = object =>
+    object && object[HASH_KEY]
+
+export const addHash = (object, hash = createHash()) => {
+    if (_.isPlainObject(object) || _.isArray(object)) {
+        setHash(object, hash)
+    }
+}
+
 export const cloneDeep = entity =>
     _.cloneDeepWith(entity, entity => {
         const isPlainObject = _.isPlainObject(entity)
@@ -42,7 +48,7 @@ export const cloneDeep = entity =>
             for (const prop in entity) {
                 cloned[prop] = cloneDeep(entity[prop])
             }
-            const hash = entity[HASH_KEY]
+            const hash = getHash(entity)
             hash && setHash(cloned, hash)
             return cloned
         }
@@ -54,13 +60,16 @@ export const isEqual = (a, b) =>
             return true
         }
         if (_.isPlainObject(a) && _.isPlainObject(b) || _.isArray(a) && _.isArray(b)) {
-            const aHash = a[HASH_KEY]
+            const aHash = getHash(a)
             if (!_.isEmpty(aHash)) {
                 // stats.hashComparisons++
-                const bHash = b[HASH_KEY]
+                const bHash = getHash(b)
                 return aHash === bHash
             } else {
                 // stats.valueComparisons++
             }
         }
     })
+
+export const isPartiallyEqual = (a, b, props) =>
+    _.isEqual(_.pick(a, props), _.pick(b, props))
