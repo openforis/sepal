@@ -2,9 +2,10 @@ import {compose} from './compose.js'
 import {isModule, isRunnable, showModuleStatus, MESSAGE, getModules} from './utils.js'
 import _ from 'lodash'
 
-const logsModule = async (module, {follow, tail, recent, since, until} = {}) => {
+const logsModule = async (module, options) => {
     if (isModule(module)) {
         if (isRunnable(module)) {
+            const {logFollow, logTail, logRecent, follow = logFollow, tail = logTail, recent = logRecent, since, until} = options
             await compose({
                 module,
                 command: 'logs',
