@@ -50,6 +50,7 @@
 .title {
     font-size: .8rem;
     font-weight: 800;
+    line-height: 1.5rem;
     text-transform: uppercase;
     color: #808080;
     white-space: nowrap;
@@ -57,6 +58,7 @@
 
 .description {
     font-size: .9rem;
+    line-height: 1.5rem;
     white-space: normal;
     word-wrap: break-word;
     text-align: left;
