@@ -33,7 +33,6 @@ const fields = {
         .notBlank(),
     value: new Form.Field()
         .skip((_value, {operator}) => !['<', '≤', '>', '≥', '='].includes(operator))
-        .number()
         .notBlank(),
     from: new Form.Field()
         .skip((_value, {operator}) => operator !== 'range')
@@ -361,7 +360,7 @@ class _Constraint extends React.Component {
         switch (operator.value) {
         case 'class': return this.toSelectedClassesDescription()
         case 'range': return `${format(from)} ${isSelected(fromInclusive) ? '≤' : '<'} ${formattedSource} ${isSelected(toInclusive) ? '≤' : '<'} ${format(to)}`
-        default: return `${formattedSource} ${operator.value} ${format(value)}`
+        default: return `${formattedSource} ${operator.value} ${this.extractValue()}`
         }
     }
 
@@ -379,6 +378,7 @@ class _Constraint extends React.Component {
 
     toConstraint() {
         const {
+            applyOn,
             constraint: {id},
             inputs: {
                 image, band, property,
@@ -417,9 +417,16 @@ class _Constraint extends React.Component {
         }
         default: return {
             ...constraint,
-            value: parseFloat(value.value)
+            value: this.extractValue()
         }
         }
+    }
+
+    extractValue() {
+        const {applyOn, inputs: {operator, value}} = this.props
+        return applyOn === 'properties' && operator.value === '='
+            ? value.value
+            : parseFloat(value.value)
     }
 
     updateConstraint() {
