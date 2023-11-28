@@ -1,5 +1,4 @@
 import {Button} from 'widget/button'
-import {CrudItem} from 'widget/crudItem'
 import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
