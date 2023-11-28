@@ -1,8 +1,10 @@
-import {EMPTY, Subject, catchError, exhaustMap, interval, last, map, merge, mergeWith, of, scan, switchMap, tap, throttleTime} from 'rxjs'
+import {EMPTY, Subject, catchError, exhaustMap, finalize, interval, last, map, merge, mergeWith, of, scan, switchMap, takeUntil, tap, throttleTime} from 'rxjs'
 import {Tree} from 'tree'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {getLogger} from 'log'
+import {googleProjectId} from 'user'
+import {withSubscriptions} from 'subscription'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
@@ -67,7 +69,7 @@ const loadNodes$ = (path, nodes) =>
 
 const reloadAssets$ = new Subject()
 
-export const loadAssets$ = () =>
+const loadAssets$ = () =>
     merge(
         of({incremental: true}),
         interval(REFRESH_INTERVAL_HOURS * 3600 * 1000).pipe(
@@ -124,6 +126,12 @@ export const loadAssets$ = () =>
                     }
                 })
             )
+        }),
+        finalize(() => {
+            log.debug('Remove assets')
+            actionBuilder('REMOVE_ASSETS')
+                .del('assets')
+                .dispatch()
         })
     )
 
@@ -180,3 +188,38 @@ export const withAssets = () =>
                 }
             }))
         )
+
+class _Assets extends React.Component {
+    cancel$ = new Subject()
+
+    render() {
+        return null
+    }
+
+    componentDidMount() {
+        this.update()
+    }
+
+    componentDidUpdate() {
+        this.update()
+    }
+
+    update() {
+        const {projectId} = this.props
+        this.cancel$.next()
+        if (projectId) {
+            const {addSubscription} = this.props
+            addSubscription(
+                loadAssets$().pipe(
+                    takeUntil(this.cancel$)
+                ).subscribe()
+            )
+        }
+    }
+}
+
+export const Assets = compose(
+    _Assets,
+    connect(() => ({projectId: googleProjectId()})),
+    withSubscriptions()
+)

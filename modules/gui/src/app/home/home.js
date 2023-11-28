@@ -1,11 +1,10 @@
 import {ActivationContext} from 'widget/activation/activationContext'
+import {Assets} from 'widget/assets'
 import {PortalContainer} from 'widget/portal'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {exhaustMap, map, mergeMap, pipe, retryWhen, timer, zip} from 'rxjs'
 import {isFloating} from './menu/menuMode'
-import {isGoogleAccount} from 'user'
-import {loadAssets$} from 'widget/assets'
 import {msg} from 'translate'
 import Body from './body/body'
 import Footer from './footer/footer'
@@ -102,10 +101,6 @@ class Home extends React.Component {
         stream('SCHEDULE_UPDATE_USER_REPORT', updateUserReport$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_USER_MESSAGES', updateUserMessages$(), null, errorHandler)
         stream('SCHEDULE_UPDATE_TASKS', updateTasks$(), null, errorHandler)
-        
-        if (isGoogleAccount()) {
-            stream('SCHEDULE_UPDATE_ASSETS', loadAssets$(), null, errorHandler)
-        }
     }
 
     render() {
@@ -123,6 +118,7 @@ class Home extends React.Component {
                         <Footer className={styles.footer}/>
                     </div>
                     <PortalContainer/>
+                    <Assets/>
                 </div>
             </ActivationContext>
         )
