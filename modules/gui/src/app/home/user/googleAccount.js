@@ -1,12 +1,13 @@
 import {Button} from 'widget/button'
+import {CrudItem} from 'widget/crudItem'
 import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
 import {Panel} from 'widget/panel/panel'
+import {catchError, map, of, tap} from 'rxjs'
 import {compose} from 'compose'
 import {googleProjectId, isGoogleAccount, projects$, requestUserAccess$, revokeGoogleAccess$, updateGoogleProject$} from 'user'
 import {msg} from 'translate'
-import {tap} from 'rxjs'
 import {withActivatable} from 'widget/activation/activatable'
 import {withActivators} from 'widget/activation/activator'
 import Icon from 'widget/icon'
@@ -28,6 +29,8 @@ const mapStateToProps = () => {
         }
     }
 }
+
+const EARTH_ENGINE_CODE_EDITOR_URL = 'https://code.earthengine.google.com/'
 
 class _GoogleAccount extends React.Component {
     state = {
@@ -52,6 +55,19 @@ class _GoogleAccount extends React.Component {
             () => {
                 Notifications.success({message: msg('user.googleAccount.disconnected.success')})
                 this.close()
+            }
+        )
+    }
+
+    disconnectGoogleAccount() {
+        this.props.stream('DISCONNECT_GOOGLE_ACCOUNT',
+            revokeGoogleAccess$(),
+            () => {
+                Notifications.warning({
+                    message: msg('user.googleAccount.disconnected.projectNeeded'),
+                    link: EARTH_ENGINE_CODE_EDITOR_URL,
+                    timeout: 0
+                })
             }
         )
     }
@@ -130,7 +146,8 @@ class _GoogleAccount extends React.Component {
         return projects
             ? projects.map(({projectId, name}) => ({
                 label: name,
-                value: projectId
+                value: projectId,
+                render: () => this.renderProject({projectId, name})
             }))
             : []
     }
@@ -146,6 +163,16 @@ class _GoogleAccount extends React.Component {
                 className={styles.durationUnit}
                 busyMessage={projects === null}
                 errorMessage
+            />
+        )
+    }
+
+    renderProject({projectId, name}) {
+        return (
+            <CrudItem
+                key={projectId}
+                title={name}
+                description={projectId}
             />
         )
     }
@@ -173,8 +200,7 @@ class _GoogleAccount extends React.Component {
     }
 
     render() {
-        const {form, activatable: {mandatory}} = this.props
-        const {projects} = this.state
+        const {form, inputs: {projectId}, activatable: {mandatory}} = this.props
         return (
             <Form.Panel
                 className={styles.panel}
@@ -190,7 +216,7 @@ class _GoogleAccount extends React.Component {
                     {this.renderContent()}
                 </Panel.Content>
                 <Form.PanelButtons
-                    disabled={isGoogleAccount() && !projects}
+                    disabled={isGoogleAccount() && !projectId.value}
                     disabledCancel={mandatory}>
                     {this.renderExtraButtons()}
                 </Form.PanelButtons>
@@ -217,28 +243,38 @@ class _GoogleAccount extends React.Component {
         this.loadUserProjects()
     }
 
-    componentDidUpdate() {
-        this.loadUserProjects()
-    }
-
     loadUserProjects() {
         const {inputs: {projectId}, stream} = this.props
-        const {projects} = this.state
-        if (isGoogleAccount() && !projects && !stream('LOAD_GOOGLE_PROJECTS').active) {
-            stream('LOAD_GOOGLE_PROJECTS',
-                projects$(),
-                rawProjects => {
-                    const activeProjects = rawProjects.filter(({lifecycleState}) => lifecycleState === 'ACTIVE')
-                    const projects = activeProjects.length
-                        ? activeProjects
-                        : [{projectId: '', name: msg('user.googleAccount.form.projectId.legacy')}]
-                    this.setState({projects})
-                    if (!projects.find(project => project.projectId === projectId.value)) {
-                        projectId.set(projects[0].projectId)
-                    }
-                },
-                error => isGoogleAccount() && Notifications.error({message: 'Cannot load Google Projects', error})
+        if (isGoogleAccount()) {
+            stream('LOAD_CLOUD_PROJECTS',
+                projects$().pipe(
+                    map(projects => projects.filter(({lifecycleState}) => lifecycleState === 'ACTIVE')),
+                    catchError(error => {
+                        if (projectId.value) {
+                            // swallow error for users not having a projectId
+                            Notifications.error({message: 'Cannot load Google Projects', error})
+                        }
+                        return of([])
+                    }),
+                    tap(projects => this.setUserProjects(projects)),
+                    tap(projects => this.disconnectIfNeeded(projects))
+                )
             )
+        }
+    }
+
+    setUserProjects(projects = []) {
+        const {inputs: {projectId}} = this.props
+        this.setState({projects})
+        if (projects.length && !projects.find(project => project.projectId === projectId.value)) {
+            projectId.set(projects[0].projectId)
+        }
+    }
+
+    disconnectIfNeeded(projects) {
+        const {stream} = this.props
+        if (!googleProjectId() && !projects.length && !stream('DISCONNECT_GOOGLE_ACCOUNT').active) {
+            this.disconnectGoogleAccount()
         }
     }
 }
