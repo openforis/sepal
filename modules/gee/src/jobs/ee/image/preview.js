@@ -9,7 +9,7 @@ const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
     const log = require('#sepal/log').getLogger('ee')
     const _ = require('lodash')
     if (visParams) {
-        const {getImage$} = ImageFactory(recipe, {selection: visParams.bands, baseBands: visParams.baseBands, ...otherArgs})
+        const {getImage$} = ImageFactory(recipe, {selection: distinct(visParams.bands), baseBands: distinct(visParams.baseBands), ...otherArgs})
         const getMap$ = (image, visualization) => {
             const {type, bands, min, max, inverted, gamma, palette} = visualization
             const range = () => ({
@@ -115,6 +115,8 @@ const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
         )
     }
 }
+
+const distinct = array => [...new Set(array)]
 
 module.exports = job({
     jobName: 'Preview',
