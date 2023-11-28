@@ -46,7 +46,7 @@ export default class EarthEngineTableLayer extends Layer {
 
     addToMap$ = () => {
         this.busy$?.next(true)
-        return this.getMapId$().pipe(
+        return this.mapId$.pipe(
             tap(({urlTemplate}) => this.addToMap(urlTemplate)),
             finalize(() => this.busy$?.next(false))
         )
