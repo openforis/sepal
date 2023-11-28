@@ -71,12 +71,13 @@ export default class EarthEngineImageLayer extends Layer {
         }
     }
 
-    addToMap$ = () =>
-        this.getMapId$().pipe(
-            tap(() => this.busy$?.next(true)),
+    addToMap$ = () => {
+        this.busy$?.next(true)
+        return this.getMapId$().pipe(
             tap(({urlTemplate}) => this.addToMap(urlTemplate)),
             finalize(() => this.busy$?.next(false))
         )
+    }
 
     removeFromMap = () => {
         const {map, layerIndex, layer} = this
