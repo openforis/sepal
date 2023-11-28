@@ -90,11 +90,19 @@ class _Notifications extends React.Component {
     renderMessage(message) {
         return (
             <div className={styles.message}>
-                {message}
+                {message.split('|').map(this.renderMessageLine)}
             </div>
         )
     }
 
+    renderMessageLine(messageLine, index) {
+        return (
+            <div key={index} className={styles.messageLine}>
+                {messageLine}
+            </div>
+        )
+    }
+    
     renderError(error) {
         const errorMessage = typeof error === 'string' ? error : error.message
         return (
