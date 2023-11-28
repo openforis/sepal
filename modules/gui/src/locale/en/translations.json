@@ -4351,8 +4351,7 @@
         "form": {
             "projectId": {
                 "label": "Google Cloud project",
-                "updated": "Google Cloud project has been updated",
-                "legacy": "Legacy EE account"
+                "updated": "Google Cloud project has been updated"
             }
         },
         "connect": {
@@ -4374,6 +4373,7 @@
           "info": "You have limited access to SEPAL. If you connect your Google account to SEPAL, all features (including exporting to Earth Engine assets) will be available.",
           "label": "Disconnected",
           "success": "SEPAL is now disconnected from your Google account.",
+          "projectNeeded": "SEPAL has been disconnected from your Google account, as Google Earth Engine users are now required to use a Cloud Project.|Please reconnect and select a Cloud Project.|If you need to create one, please login to the Earth Engine Code Editor, and click on \"Register a new Cloud Project\" from the user settings.",
           "title": "Your SEPAL account is not connected to your Google account"
         },
         "label": "Google account",

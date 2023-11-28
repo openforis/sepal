@@ -44,12 +44,13 @@ export default class EarthEngineTableLayer extends Layer {
         }
     }
 
-    addToMap$ = () =>
-        this.mapId$.pipe(
-            tap(() => this.busy$?.next(true)),
+    addToMap$ = () => {
+        this.busy$?.next(true)
+        return this.mapId$.pipe(
             tap(({urlTemplate}) => this.addToMap(urlTemplate)),
             finalize(() => this.busy$?.next(false))
         )
+    }
 
     removeFromMap = () => {
         const {map, layerIndex, layer} = this

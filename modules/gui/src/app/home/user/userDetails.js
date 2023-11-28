@@ -178,9 +178,7 @@ class _UserDetailsButton extends React.Component {
 
     isGoogleProjectSelectionRequired() {
         const {user} = this.props
-        return isGoogleAccount()
-            && !user.googleTokens.projectId
-            && !user.googleTokens.legacyProject
+        return isGoogleAccount() && !user.googleTokens.projectId
     }
 
     render() {
@@ -230,8 +228,8 @@ class _UserDetailsButton extends React.Component {
 
     checkGoogleProjectId() {
         const {activator: {activatables: {googleAccount}}} = this.props
-        if (this.isGoogleProjectSelectionRequired()) {
-            googleAccount?.activate && googleAccount.activate({mandatory: true})
+        if (googleAccount.activate && this.isGoogleProjectSelectionRequired()) {
+            googleAccount.activate({mandatory: true})
         }
     }
 

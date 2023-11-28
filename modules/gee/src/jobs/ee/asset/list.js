@@ -34,24 +34,26 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
     const legacyRoots$ = () =>
         http.get$('https://earthengine.googleapis.com/v1beta/projects/earthengine-legacy:listAssets', {headers}).pipe(
             map(({body}) => JSON.parse(body)),
-            map(({assets}) =>
-                assets.map(({id}) => ({
-                    id,
-                    type: 'Folder'
-                }))
-            )
+            map(mapLegacyRoots)
         )
+
+    const mapLegacyRoots = results =>
+        results?.assets?.map(({id}) => ({
+            id,
+            type: 'Folder'
+        })) || []
     
     const cloudProjectRoots$ = () =>
         http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {headers}).pipe(
             map(({body}) => JSON.parse(body)),
-            map(({projects}) =>
-                projects.map(({projectId}) => ({
-                    id: `projects/${projectId}/assets`,
-                    type: 'Folder'
-                }))
-            )
+            map(mapCloudProjectRoots)
         )
+
+    const mapCloudProjectRoots = results =>
+        results?.projects?.map(({projectId}) => ({
+            id: `projects/${projectId}/assets`,
+            type: 'Folder'
+        })) || []
 
     return id
         ? assets$(id)
