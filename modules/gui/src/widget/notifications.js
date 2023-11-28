@@ -120,6 +120,14 @@ class _Notifications extends React.Component {
         )
     }
 
+    renderLink(link) {
+        return (
+            <div className={styles.link}>
+                <a href={link} target="_blank" rel="noreferrer">{link}</a>
+            </div>
+        )
+    }
+
     renderDismissMessage(id) {
         const {timeouts} = this.state
         const timeout = timeouts[id] || 0
@@ -141,7 +149,7 @@ class _Notifications extends React.Component {
             : null
     }
 
-    renderNotification({id, level, title, message, error, content, timeout, dismissable, adding, removing}) {
+    renderNotification({id, level, title, message, error, content, link, timeout, dismissable, adding, removing}) {
         const dismiss = () => manualDismiss$.next(id)
         return id
             ? (
@@ -167,6 +175,7 @@ class _Notifications extends React.Component {
                         {message ? this.renderMessage(message) : null}
                         {error ? this.renderError(error) : null}
                         {content ? this.renderContent(content, dismiss) : null}
+                        {link ? this.renderLink(link) : null}
                         {timeout > 3 ? this.renderDismissMessage(id) : null}
                         {this.renderAutoDismissIndicator(timeout)}
                     </div>
@@ -298,6 +307,7 @@ Notifications.propTypes = {
     group: PropTypes.oneOf([true, false, PropTypes.string]),
     id: PropTypes.string,
     level: PropTypes.string,
+    link: PropTypes.string,
     message: PropTypes.string,
     timeout: PropTypes.number,
     title: PropTypes.string,
