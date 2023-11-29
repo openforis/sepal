@@ -86,8 +86,8 @@ class _MapLayoutPanel extends React.Component {
             <Buttons
                 selected={mode}
                 options={[
-                    {value: 'grid', label: msg('map.layout.mode.grid.label')},
-                    {value: 'stack', label: msg('map.layout.mode.stack.label')}
+                    {value: 'grid', icon: 'table-cells-large', label: msg('map.layout.mode.grid.label')},
+                    {value: 'stack', icon: 'layer-group', label: msg('map.layout.mode.stack.label')}
                 ]}
                 onChange={this.setMode}
             />

@@ -1,5 +1,4 @@
 import {Button} from 'widget/button'
-import {CrudItem} from 'widget/crudItem'
 import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
@@ -145,9 +144,9 @@ class _GoogleAccount extends React.Component {
         const {projects} = this.state
         return projects
             ? projects.map(({projectId, name}) => ({
-                label: name,
+                label: projectId,
                 value: projectId,
-                render: () => this.renderProject({projectId, name})
+                tooltip: name
             }))
             : []
     }
@@ -163,16 +162,6 @@ class _GoogleAccount extends React.Component {
                 className={styles.durationUnit}
                 busyMessage={projects === null}
                 errorMessage
-            />
-        )
-    }
-
-    renderProject({projectId, name}) {
-        return (
-            <CrudItem
-                key={projectId}
-                title={name}
-                description={projectId}
             />
         )
     }
