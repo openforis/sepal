@@ -12,28 +12,13 @@ apt-get install -y libzmq3-dev
 /usr/bin/python3 /usr/local/bin/jupyter-notebook --generate-config
 /usr/bin/python3 -m pip install ipykernel
 /usr/bin/python3 -m ipykernel install
-# R -e "install.packages(c('IRdisplay', 'IRkernel'), repos='http://r-proxy:8180/')"
-# R -e "IRkernel::installspec(user = FALSE)"
 
 /usr/bin/python3 -m pip install 'jupyterlab'
 /usr/bin/python3 -m pip install ipywidgets
 /usr/bin/python3 -m pip install jupyterlab-language-pack-fr-FR
 /usr/bin/python3 -m pip install jupyterlab-language-pack-es-ES
 /usr/bin/python3 -m pip install folium
-# /usr/bin/python3 -m pip install ipyleaflet
-
-cd /usr/local/src
-# git clone https://github.com/jupyter-widgets/ipyleaflet.git
-git clone https://github.com/cdanielw/ipyleaflet
-
-cd ipyleaflet
-pip install https://github.com/cdanielw/ipyleaflet/releases/download/0.17.4/ipyleaflet-0.17.4-py3-none-any.whl
-
-# To build ipyleaflet
-# python -m build
-# pip install file://$(pwd)/dist/ipyleaflet-0.17.4-py3-none-any.whl
-
-cd /
+/usr/bin/python3 -m pip install ipyleaflet
 
 /usr/bin/python3 -m pip install ipyvuetify
 /usr/bin/python3 -m pip install geemap
@@ -51,10 +36,6 @@ git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
 /usr/bin/python3 /usr/local/bin/jupyter nbextension install voila --sys-prefix --py
 /usr/bin/python3 /usr/local/bin/jupyter nbextension enable voila --sys-prefix --py
 /usr/bin/python3 /usr/local/bin/jupyter serverextension enable voila --sys-prefix
-
-# npm install -g --unsafe-perm ijavascript
-# npm install -g js-beautify
-# /usr/bin/ijsinstall --install=global
 
 # [HACK] Manually installing de-indent, otherwise jupyter lab build fails.
 /usr/bin/python3 /usr/local/bin/jupyter lab build || npm install --prefix /usr/local/share/jupyter/lab/staging de-indent
