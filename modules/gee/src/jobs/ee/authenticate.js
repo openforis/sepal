@@ -72,7 +72,10 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
         switchMap(() => ee.$({
             operation: 'initialize',
             ee: (resolve, reject) => {
+                const projectId = sepalUser?.googleTokens?.projectId
                 ee.setMaxRetries(DEFAULT_MAX_RETRIES)
+                // [HACK] Force ee to change projectId after first initialization (ee.initialize() doesn't do that).
+                ee.data.initialize(null, null, null, projectId)
                 ee.initialize(null, null, resolve, reject, null, sepalUser?.googleTokens?.projectId)
             }
         })),
