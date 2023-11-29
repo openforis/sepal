@@ -27,14 +27,14 @@ class AssetToolbar extends React.Component {
         const {recipeId, initialized, collection} = this.props
         return (
             <PanelWizard
-                panels={['assetDetails']}
+                panels={['aoi', 'assetDetails']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
 
                 <Retrieve/>
 
-                <AssetDetails/>
                 <Aoi assetBounds/>
+                <AssetDetails/>
                 {collection ? <Dates/> : null}
                 {collection ? <Filter/> : null}
                 <Mask/>
@@ -53,14 +53,14 @@ class AssetToolbar extends React.Component {
                     panel
                     className={styles.bottom}>
                     <Toolbar.ActivationButton
-                        id='assetDetails'
-                        label={msg('process.asset.panel.assetDetails.button')}
-                        tooltip={msg('process.asset.panel.assetDetails.tooltip')}
-                        disabled={!initialized}/>
-                    <Toolbar.ActivationButton
                         id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}
+                        disabled={!initialized}/>
+                    <Toolbar.ActivationButton
+                        id='assetDetails'
+                        label={msg('process.asset.panel.assetDetails.button')}
+                        tooltip={msg('process.asset.panel.assetDetails.tooltip')}
                         disabled={!initialized}/>
                     <Toolbar.ActivationButton
                         id='dates'
