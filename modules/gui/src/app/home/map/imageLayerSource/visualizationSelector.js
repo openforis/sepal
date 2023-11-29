@@ -116,6 +116,7 @@ class _VisualizationSelector extends React.Component {
             .del(['layers.userDefinedVisualizations', source.id, {id: visParams.id}])
             .dispatch()
         const options = this.flattenOptions(this.getOptions())
+            .filter(({value}) => value !== visParams.id)
         this.selectVisParams(options.length
             ? options[0].visParams
             : null
