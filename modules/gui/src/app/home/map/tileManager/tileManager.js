@@ -55,9 +55,9 @@ const createTileManager = (type, concurrency) => {
         requestExecutor.cancelByRequestId(requestId)
     }
 
-    const setHidden = (tileProviderId, hidden) => {
-        log.debug(() => `Set ${tileProviderTag(tileProviderId)} ${hidden ? 'hidden' : 'visible'}`)
-        requestExecutor.setHidden(tileProviderId, hidden)
+    const setVisibility = (tileProviderId, visible) => {
+        log.debug(() => `Set ${tileProviderTag(tileProviderId)} ${visible ? 'visible' : 'hidden'}`)
+        requestExecutor.setHidden(tileProviderId, !visible)
         requestQueue.scan(
             ({tileProviderId, requestId}) => requestExecutor.notify({tileProviderId, requestId})
         )
@@ -113,7 +113,7 @@ const createTileManager = (type, concurrency) => {
         }
     )
 
-    return {addTileProvider, removeTileProvider, loadTile, releaseTile, setHidden, setEnabled, getStats}
+    return {addTileProvider, removeTileProvider, loadTile, releaseTile, setVisibility, setEnabled, getStats}
 }
 
 export const getTileManager = ({tileProviderId = uuid(), tileProvider}) => {
@@ -154,8 +154,8 @@ export const getTileManager = ({tileProviderId = uuid(), tileProvider}) => {
         tileManager.releaseTile(tileProviderId, requestId)
     }
 
-    const setHidden = hidden => {
-        tileManager.setHidden(tileProviderId, hidden)
+    const setVisibility = visible => {
+        tileManager.setVisibility(tileProviderId, visible)
     }
 
     const setEnabled = enabled => {
@@ -171,7 +171,7 @@ export const getTileManager = ({tileProviderId = uuid(), tileProvider}) => {
     return {
         loadTile$,
         releaseTile,
-        setHidden,
+        setVisibility,
         setEnabled,
         pending$,
         close

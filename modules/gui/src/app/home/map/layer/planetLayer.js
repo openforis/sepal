@@ -1,9 +1,9 @@
 import {GoogleMapsOverlay} from './googleMapsOverlay'
-import {Layer} from './layer'
 import {PlanetTileProvider} from '../tileProvider/planetTileProvider'
 import {ReplaySubject, of, tap} from 'rxjs'
+import {TileLayer} from './tileLayer'
 
-export default class PlanetLayer extends Layer {
+export default class PlanetLayer extends TileLayer {
     constructor({map, layerIndex = 0, busy$, urlTemplate, concurrency, minZoom, maxZoom}) {
         super()
         this.map = map
@@ -28,39 +28,10 @@ export default class PlanetLayer extends Layer {
         return new GoogleMapsOverlay({tileProvider, google, minZoom, maxZoom, busy$})
     }
 
-    addToMap = () => {
-        this.layer = this.createOverlay()
-        const {map, layerIndex, layer} = this
-        const {googleMap} = map.getGoogle()
-        if (layer) {
-            googleMap.overlayMapTypes.setAt(layerIndex, layer)
-        }
-    }
-
     addToMap$ = () =>
         of(true).pipe(
             tap(() => this.addToMap())
         )
-
-    removeFromMap = () => {
-        const {map, layerIndex, layer} = this
-        const {googleMap} = map.getGoogle()
-        if (layer) {
-            // googleMap.overlayMapTypes.removeAt(layerIndex)
-            // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null.
-            // [HACK] Prevent removal of already removed tileManager.
-            googleMap.overlayMapTypes.insertAt(layerIndex, null)
-            googleMap.overlayMapTypes.removeAt(layerIndex + 1)
-            layer.close()
-        }
-    }
-
-    hide = hidden => {
-        const {layer} = this
-        if (layer) {
-            layer.setOpacity(hidden ? 0 : 1)
-        }
-    }
 
     equals = other =>
         other === this

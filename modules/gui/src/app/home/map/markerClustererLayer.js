@@ -158,12 +158,6 @@ export default class MarkerClustererLayer extends Layer {
         this.markerCluster.setMap(null)
     }
 
-    hide = hidden => {
-        hidden
-            ? this.removeFromMap()
-            : this.addToMap()
-    }
-
     toMapMarker = marker => {
         const {x, y, color = DEFAULT_COLOR, onClick} = marker
         const mapMarker = new this.google.maps.Marker({

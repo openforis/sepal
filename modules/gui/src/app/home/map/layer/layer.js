@@ -15,8 +15,10 @@ export class Layer {
     removeFromMap = () => {
         throw new Error('Layer.removeFromMap needs to be implemented by subclass')
     }
+
+    setVisibility = () => undefined
     
-    add() {
+    add = () => {
         log.debug('Add layer')
         this.addToMap$().pipe(
             takeUntil(this.cancel$)

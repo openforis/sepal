@@ -31,11 +31,11 @@ export class GooglePolygonLayer extends Layer {
     }
 
     addToMap = () => {
-        this.layer = this.createShape()
-        const {map, layer} = this
+        this.overlay = this.createShape()
+        const {map, overlay} = this
         const {googleMap} = map.getGoogle()
-        if (layer) {
-            layer.setMap(googleMap)
+        if (overlay) {
+            overlay.setMap(googleMap)
         }
     }
 
@@ -45,16 +45,11 @@ export class GooglePolygonLayer extends Layer {
         )
 
     removeFromMap = () => {
-        const {layer} = this
-        if (layer) {
-            layer.setMap(null)
+        const {overlay} = this
+        if (overlay) {
+            overlay.setMap(null)
         }
     }
-
-    hide = hidden =>
-        hidden
-            ? this.removeFromMap()
-            : this.addToMap()
 
     equals = other =>
         other === this

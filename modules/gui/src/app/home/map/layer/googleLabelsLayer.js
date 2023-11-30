@@ -21,11 +21,11 @@ export class GoogleLabelsLayer extends Layer {
     }
 
     addToMap = () => {
-        this.layer = this.createOverlay()
-        const {map, layerIndex, layer} = this
+        this.overlay = this.createOverlay()
+        const {map, layerIndex, overlay} = this
         const {googleMap} = map.getGoogle()
-        if (layer) {
-            googleMap.overlayMapTypes.setAt(layerIndex, layer)
+        if (overlay) {
+            googleMap.overlayMapTypes.setAt(layerIndex, overlay)
         }
     }
 
@@ -35,19 +35,15 @@ export class GoogleLabelsLayer extends Layer {
         )
 
     removeFromMap = () => {
-        const {map, layerIndex, layer} = this
+        const {map, layerIndex, overlay} = this
         const {googleMap} = map.getGoogle()
-        if (layer) {
+        if (overlay) {
             // googleMap.overlayMapTypes.removeAt(layerIndex)
-            // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null.
+            // [HACK] Prevent flashing of removed layers, which happens when just setting overlay to null.
             // [HACK] Prevent removal of already removed tileManager.
             googleMap.overlayMapTypes.insertAt(layerIndex, null)
             googleMap.overlayMapTypes.removeAt(layerIndex + 1)
         }
-    }
-
-    hide = _hidden => {
-        // no-op
     }
 
     equals = other =>

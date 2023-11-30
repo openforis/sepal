@@ -64,7 +64,6 @@ export class SepalMap {
     }
 
     layerById = {}
-    hiddenLayerById = {}
     removeLayer$ = new Subject()
 
     drawingOptions = {
@@ -395,26 +394,14 @@ export class SepalMap {
         _.forEach(this.layerById, layer => this.removeLayer(layer))
     }
 
-    hideLayer(id, hidden) {
-        const layer = this.getLayer(id)
-        this.hiddenLayerById[id] = hidden
-        if (layer) {
-            layer.hide(hidden)
-        }
-    }
-
-    isHiddenLayer(id) {
-        return this.hiddenLayerById[id]
-    }
-
     toggleableLayers() {
         return _.orderBy(Object.values(this.layerById).filter(layer => layer.toggleable), ['layerIndex'])
     }
 
     setVisibility(visible) {
         log.debug(`Visibility ${visible ? 'on' : 'off'}`)
-        _.forEach(this.layerById, (layer, id) =>
-            layer.hide && layer.hide(visible ? this.isHiddenLayer(id) : true)
+        _.forEach(this.layerById, layer =>
+            layer.setVisibility(visible)
         )
     }
 

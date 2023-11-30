@@ -1,11 +1,12 @@
+import {BalancingTileProvider} from '../tileProvider/balancingTileProvider'
 import {EarthEngineTableTileProvider} from '../tileProvider/earthEngineTableTileProvider'
 import {GoogleMapsOverlay} from './googleMapsOverlay'
-import {Layer} from './layer'
+import {TileLayer} from './tileLayer'
 import {finalize, tap} from 'rxjs'
 import {isEqual} from 'hash'
 import _ from 'lodash'
 
-export default class EarthEngineTableLayer extends Layer {
+export default class EarthEngineTableLayer extends TileLayer {
     constructor({
         map,
         layerIndex = 0,
@@ -25,23 +26,16 @@ export default class EarthEngineTableLayer extends Layer {
         this.maxZoom = maxZoom
     }
 
-    createTileProvider = urlTemplate =>
-        new EarthEngineTableTileProvider({urlTemplate})
-
-    createOverlay = urlTemplate => {
-        const {map, busy$, minZoom, maxZoom} = this
-        const tileProvider = this.createTileProvider(urlTemplate)
-        const {google} = map.getGoogle()
-        return new GoogleMapsOverlay({tileProvider, google, minZoom, maxZoom, busy$})
+    createTileProvider = urlTemplate => {
+        const {busy$} = this
+        const tileProvider = new EarthEngineTableTileProvider({urlTemplate})
+        return new BalancingTileProvider({tileProvider, retries: 3, busy$})
     }
 
-    addToMap = urlTemplate => {
-        this.layer = this.createOverlay(urlTemplate)
-        const {map, layerIndex, layer} = this
-        const {googleMap} = map.getGoogle()
-        if (layer) {
-            googleMap.overlayMapTypes.setAt(layerIndex, layer)
-        }
+    createOverlay = tileProvider => {
+        const {map, busy$, minZoom, maxZoom} = this
+        const {google} = map.getGoogle()
+        return new GoogleMapsOverlay({tileProvider, google, minZoom, maxZoom, busy$})
     }
 
     addToMap$ = () => {
@@ -50,26 +44,6 @@ export default class EarthEngineTableLayer extends Layer {
             tap(({urlTemplate}) => this.addToMap(urlTemplate)),
             finalize(() => this.busy$?.next(false))
         )
-    }
-
-    removeFromMap = () => {
-        const {map, layerIndex, layer} = this
-        const {googleMap} = map.getGoogle()
-        if (layer) {
-            // googleMap.overlayMapTypes.removeAt(layerIndex)
-            // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null.
-            // [HACK] Prevent removal of already removed tileManager.
-            googleMap.overlayMapTypes.insertAt(layerIndex, null)
-            googleMap.overlayMapTypes.removeAt(layerIndex + 1)
-            layer.close()
-        }
-    }
-
-    hide = hidden => {
-        const {layer} = this
-        if (layer) {
-            layer.setOpacity(hidden ? 0 : 1)
-        }
     }
 
     equals = other =>
