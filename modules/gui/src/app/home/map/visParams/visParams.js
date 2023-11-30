@@ -117,7 +117,7 @@ export const normalize = visParams => {
     }
 
     Object.keys(normalized).forEach(key => {
-        if (_.isNil(normalized[key])) {
+        if (_.isNil(normalized[key]) || (_.isArray(normalized[key]) && !normalized[key].length)) {
             delete normalized[key]
         }
     })
