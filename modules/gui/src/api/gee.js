@@ -17,9 +17,6 @@ export default {
             body: {recipe, band, aoi, mapBounds, ...params}
         }),
 
-    assetRoots$: () =>
-        get$('/api/gee/assetRoots'),
-
     listAssets$: ({id}) =>
         get$('/api/gee/asset/list', {
             query: {id},

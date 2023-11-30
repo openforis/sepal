@@ -19,36 +19,6 @@ const TASK_CHECK_INTERVAL_MINUTES = 5
 const assetTree = Tree.createNode()
 let previousCompletedTasks = []
 
-const updateAssetRoots$ = () =>
-    api.gee.assetRoots$().pipe(
-        map(assetRoots =>
-            actionBuilder('UPDATE_ASSET_ROOTS')
-                .set('gee.assetRoots', assetRoots)
-                .dispatch()
-        )
-    )
-
-export const withAssetRoots = () =>
-    WrappedComponent =>
-        compose(
-            class WithAssetRootsHOC extends React.Component {
-                render() {
-                    const {assetRoots} = this.props
-                    return React.createElement(WrappedComponent, {...this.props, assetRoots})
-                }
-
-                componentDidMount() {
-                    const {assetRoots, stream} = this.props
-                    if (!assetRoots) {
-                        stream('UPDATE_ASSET_ROOTS', updateAssetRoots$())
-                    }
-                }
-            },
-            connect(() => ({
-                assetRoots: select('gee.assetRoots')
-            }))
-        )
-
 const loadNode$ = (path = [], node = {}) =>
     api.gee.listAssets$(node).pipe(
         catchError(() => {
@@ -105,7 +75,12 @@ const loadAssets$ = () =>
                         const assetList = Tree.flatten(assetTree).map(
                             ({path, props, depth}) => ({id: _.last(path), ...props, depth})
                         )
+                        const assetRoots = assetList
+                            .filter(({depth}) => depth === 1)
+                            .map(({id}) => id)
+                        console.log({assetRoots})
                         actionBuilder('LOAD_ASSETS')
+                            .setIfChanged('assets.roots', assetRoots)
                             .setIfChanged('assets.tree', assetTree)
                             .setIfChanged('assets.user', assetList)
                             .dispatch()

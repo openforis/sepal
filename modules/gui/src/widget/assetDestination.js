@@ -9,12 +9,10 @@ import {toSafeString} from 'string'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
-import api from 'api'
 
 const mapStateToProps = state => ({
     projects: selectFrom(state, 'process.projects'),
-    assetRoots: selectFrom(state, 'gee.assetRoots')
+    assetRoots: selectFrom(state, 'assets.roots')
 })
 
 const mapRecipeToProps = recipe => ({
@@ -35,14 +33,14 @@ class _AssetDestination extends React.Component {
     }
 
     render() {
-        const {stream, assetInput, type, label, placeholder, autoFocus} = this.props
+        const {assetRoots, assetInput, type, label, placeholder, autoFocus} = this.props
         return (
             <Form.AssetCombo
                 input={assetInput}
                 label={label}
                 placeholder={placeholder}
                 autoFocus={autoFocus}
-                busyMessage={stream('UPDATE_ASSET_ROOTS').active}
+                busyMessage={!assetRoots}
                 preferredTypes={[type]}
                 labelButtons={[this.renderStrategy()]}
                 destination
@@ -83,12 +81,10 @@ class _AssetDestination extends React.Component {
     }
 
     componentDidMount() {
-        const {assetRoots, assetInput, stream} = this.props
+        const {assetRoots, assetInput} = this.props
         if (!assetInput.value) {
             if (assetRoots) {
                 assetInput.set(this.defaultAssetId() || null)
-            } else {
-                stream('UPDATE_ASSET_ROOTS', updateAssetRoots$())
             }
         }
     }
@@ -161,15 +157,6 @@ class _AssetDestination extends React.Component {
         }
     }
 }
-
-const updateAssetRoots$ = () =>
-    api.gee.assetRoots$().pipe(
-        map(assetRoots =>
-            actionBuilder('UPDATE_ASSET_ROOTS')
-                .set('gee.assetRoots', assetRoots)
-                .dispatch()
-        )
-    )
 
 export const AssetDestination = compose(
     _AssetDestination,
