@@ -6,7 +6,6 @@ import Notifications from 'widget/notifications'
 const log = getLogger('layer')
 
 export class Layer {
-    layer = null
     cancel$ = new ReplaySubject(1)
 
     addToMap$ = () => {
@@ -40,9 +39,6 @@ export class Layer {
     remove = () => {
         log.debug('Remove layer')
         this.cancel$.next()
-        if (this.layer) {
-            this.removeFromMap()
-            this.layer = null
-        }
+        this.removeFromMap()
     }
 }
