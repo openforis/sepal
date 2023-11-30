@@ -71,8 +71,14 @@
       "reload": "Reload assets",
       "settings": "Asset settings",
       "datasets": {
-        "community": "Awesome GEE Community Datasets ({matchingResults} matches)",
-        "gee": "GEE Catalog ({matchingResults} matches)",
+        "community": {
+            "label": "Awesome GEE Community Datasets ({matchingResults} matches)",
+            "tooltip": "The awesome-gee-community-datasets are community-sourced geospatial datasets made available for use by the larger Google Earth Engine community and shared publicly as Earth Engine assets."
+        },
+        "gee": {
+            "label": "GEE Catalog ({matchingResults} matches)",
+            "tooltip": "Earth Engine's public data archive includes more than forty years of historical imagery and scientific datasets, updated and expanded daily."
+        },
         "failedToLoad": "Failed to load Awesome GEE Community Datasets"
       },
       "copyId": {

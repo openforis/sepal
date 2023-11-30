@@ -25,16 +25,7 @@ const ASSET_PATTERN = new RegExp('^[a-zA-Z0-9-_]+(/[a-zA-Z0-9-_]+){1,}$')
 const MAX_RECENT = 5
 
 const AWESOME_GEE_COMMUNITY_DATASETS_URL = 'https://github.com/samapriya/awesome-gee-community-datasets'
-const AWESOME_GEE_COMMUNITY_DATASETS_TOOLTIP = `
-    The awesome-gee-community-datasets are community-sourced geospatial datasets made available for use 
-    by the larger Google Earth Engine community and shared publicly as Earth Engine assets.
-`
-
 const GOOGLE_EARTH_ENGINE_CATALOG_URL = 'https://developers.google.com/earth-engine/datasets/'
-const GOOGLE_EARTH_ENGINE_CATALOG_TOOLTIP = `
-    Earth Engine's public data archive includes more than forty years of historical imagery and 
-    scientific datasets, updated and expanded daily.
-`
 
 const getHighlightMatcher = memoizeOne(
     filter => filter
@@ -356,9 +347,9 @@ class _FormAssetCombo extends React.Component {
             searchableText: [title, id, type].join('|')
         }))
         return {
-            label: msg('asset.datasets.community', {matchingResults}),
+            label: msg('asset.datasets.community.label', {matchingResults}),
             options: this.getAssetOptions(assets, {moreResults}),
-            tooltip: AWESOME_GEE_COMMUNITY_DATASETS_TOOLTIP,
+            tooltip: msg('asset.datasets.community.tooltip'),
             tooltipLinkUrl: AWESOME_GEE_COMMUNITY_DATASETS_URL
         }
     }
@@ -373,9 +364,9 @@ class _FormAssetCombo extends React.Component {
             searchableText: [title, id, type].join('|')
         }))
         return {
-            label: msg('asset.datasets.gee', {matchingResults}),
+            label: msg('asset.datasets.gee.label', {matchingResults}),
             options: this.getAssetOptions(assets, {moreResults}),
-            tooltip: GOOGLE_EARTH_ENGINE_CATALOG_TOOLTIP,
+            tooltip: msg('asset.datasets.gee.tooltip'),
             tooltipLinkUrl: GOOGLE_EARTH_ENGINE_CATALOG_URL
         }
     }
