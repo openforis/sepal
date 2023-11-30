@@ -10,9 +10,6 @@ import moment from 'moment'
 const DATE_FORMAT = 'YYYY-MM-DD'
 
 export const defaultModel = {
-    aoi: {
-        type: 'ASSET_BOUNDS'
-    },
     dates: {
         type: 'ALL_DATES',
         fromDate: moment().startOf('year').format(DATE_FORMAT),
