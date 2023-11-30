@@ -78,7 +78,6 @@ const loadAssets$ = () =>
                         const assetRoots = assetList
                             .filter(({depth}) => depth === 1)
                             .map(({id}) => id)
-                        console.log({assetRoots})
                         actionBuilder('LOAD_ASSETS')
                             .setIfChanged('assets.roots', assetRoots)
                             .setIfChanged('assets.tree', assetTree)
