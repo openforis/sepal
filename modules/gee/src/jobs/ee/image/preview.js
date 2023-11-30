@@ -27,8 +27,7 @@ const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
                     throw Error('A categorical visualization must contain either values or min and max')
                 }
                 if (!palette || palette.length !== values.length) {
-                    log.fatal(palette, values, visualization.values)
-                    throw Error('Visualization must contain a palette with the same number of colors as categorical values')
+                    throw Error(`Visualization must contain a palette with the same number of colors as categorical values: ${JSON.stringify({palette, values})}`)
                 }
 
                 const minValue = values[0]

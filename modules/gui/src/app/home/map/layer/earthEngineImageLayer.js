@@ -38,8 +38,6 @@ export default class EarthEngineImageLayer extends Layer {
         this.watchedProps = watchedProps || previewRequest
         this.minZoom = minZoom
         this.maxZoom = maxZoom
-        console.log(map)
-
     }
 
     createTileProvider = urlTemplate => {
