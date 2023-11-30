@@ -11,7 +11,7 @@ services:
       - "${SEPAL_DATA_DIR}/ldap/database:/var/lib/ldap"
       - "${SEPAL_DATA_DIR}/ldap/config:/etc/ldap/slapd.d"
       - "${SEPAL_DATA_DIR}/ldap-backup:/module"
-      - "${SEPAL_BACKUP_DIR}/ldap:/backup"
+      - "${SEPAL_BACKUP_DIR}/ldap:/data/backup"
     environment:
       LDAP_BACKUP_DATA_CRON_EXP: '0 0 * * *'
       LDAP_BACKUP_CONFIG_CRON_EXP: '0 0 * * *'
