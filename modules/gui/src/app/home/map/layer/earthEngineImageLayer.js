@@ -38,6 +38,8 @@ export default class EarthEngineImageLayer extends Layer {
         this.watchedProps = watchedProps || previewRequest
         this.minZoom = minZoom
         this.maxZoom = maxZoom
+        console.log(map)
+
     }
 
     createTileProvider = urlTemplate => {
@@ -83,10 +85,11 @@ export default class EarthEngineImageLayer extends Layer {
         const {map, layerIndex, layer} = this
         const {googleMap} = map.getGoogle()
         if (layer) {
-            googleMap.overlayMapTypes.removeAt(layerIndex)
-            // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
-            // googleMap.overlayMapTypes.insertAt(layerIndex, null)
-            // googleMap.overlayMapTypes.removeAt(layerIndex + 1)
+            // googleMap.overlayMapTypes.removeAt(layerIndex)
+            // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null.
+            // [HACK] Prevent removal of already removed tileManager.
+            googleMap.overlayMapTypes.insertAt(layerIndex, null)
+            googleMap.overlayMapTypes.removeAt(layerIndex + 1)
             layer.close()
         }
     }
