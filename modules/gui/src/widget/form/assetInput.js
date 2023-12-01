@@ -23,11 +23,12 @@ class _FormAssetInput extends React.Component {
     }
 
     render() {
-        const {className, input, label, placeholder, tooltip, autoFocus, busyMessage, disabled} = this.props
+        const {className, input, label, labelButtons, placeholder, tooltip, autoFocus, busyMessage, disabled} = this.props
         return (
             <FormInput
                 className={className}
                 label={label}
+                labelButtons={labelButtons}
                 placeholder={placeholder}
                 tooltip={tooltip}
                 input={input}
@@ -115,6 +116,7 @@ FormAssetInput.propTypes = {
     disabled: PropTypes.any,
     expectedType: PropTypes.any,
     label: PropTypes.any,
+    labelButtons: PropTypes.any,
     placeholder: PropTypes.string,
     tooltip: PropTypes.any,
     onError: PropTypes.func,

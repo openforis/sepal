@@ -56,7 +56,7 @@ class _Input extends React.Component {
     }
 
     render() {
-        const {className, disabled, label, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border} = this.props
+        const {className, disabled, label, labelButtons, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border} = this.props
         return (
             <Widget
                 className={[
@@ -65,6 +65,7 @@ class _Input extends React.Component {
                 ].join(' ')}
                 disabled={disabled}
                 label={label}
+                labelButtons={labelButtons}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 tooltipTrigger={tooltipTrigger}
@@ -275,6 +276,7 @@ Input.propTypes = {
     inputTooltip: PropTypes.any,
     inputTooltipPlacement: PropTypes.string,
     label: PropTypes.string,
+    labelButtons: PropTypes.any,
     maxLength: PropTypes.number,
     name: PropTypes.string,
     placeholder: PropTypes.any,
@@ -336,7 +338,7 @@ class _Textarea extends React.Component {
     }
 
     render() {
-        const {className, disabled, label, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border} = this.props
+        const {className, disabled, label, labelButtons, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border} = this.props
         return (
             <Widget
                 className={[
@@ -345,6 +347,7 @@ class _Textarea extends React.Component {
                 ].join(' ')}
                 disabled={disabled}
                 label={label}
+                labelButtons={labelButtons}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 tooltipTrigger={tooltipTrigger}
@@ -437,6 +440,7 @@ Textarea.propTypes = {
     inputTooltip: PropTypes.any,
     inputTooltipPlacement: PropTypes.string,
     label: PropTypes.any,
+    labelButtons: PropTypes.any,
     maxRows: PropTypes.number,
     minRows: PropTypes.number,
     name: PropTypes.string,
