@@ -239,10 +239,9 @@ class _Button extends React.Component {
     }
 
     renderTooltip(contents) {
-        const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipVisible, tooltipClickTrigger, tooltipAllowedWhenDisabled} = this.props
+        const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipClickTrigger, tooltipAllowedWhenDisabled} = this.props
         const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
         const message = tooltipPanel || tooltip
-        const visibility = _.isNil(tooltipVisible) ? {} : {visible: tooltipVisible}
         return (tooltipAllowedWhenDisabled || this.isActive()) && message ? (
             <Tooltip
                 msg={message}
@@ -252,8 +251,6 @@ class _Button extends React.Component {
                 clickTrigger={tooltipClickTrigger || !this.isLinked()}
                 overlayInnerStyle={overlayInnerStyle}
                 overlayStyle={{visibility: tooltipDisabled ? 'hidden' : 'visible'}}
-                onVisibleChange={tooltipOnVisible}
-                {...visibility}
             >
                 {contents}
             </Tooltip>
@@ -461,10 +458,8 @@ Button.propTypes = {
     tooltipClickTrigger: PropTypes.any,
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
-    tooltipOnVisible: PropTypes.func,
     tooltipPanel: PropTypes.any,
     tooltipPlacement: PropTypes.any,
-    tooltipVisible: PropTypes.any,
     type: PropTypes.oneOf(['button', 'submit', 'reset']),
     width: PropTypes.oneOf(['fit', 'fill', 'max']),
     onClick: PropTypes.func,

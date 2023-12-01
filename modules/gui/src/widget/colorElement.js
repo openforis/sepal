@@ -39,7 +39,7 @@ export class ColorElement extends React.Component {
     }
 
     renderButton() {
-        const {className, tooltip, tooltipPlacement, onTooltipVisibleChange} = this.props
+        const {className, tooltip, tooltipPlacement} = this.props
         const {color} = this.state
         return (
             <Button
@@ -55,7 +55,6 @@ export class ColorElement extends React.Component {
                 tooltipClickTrigger={isMobile()}
                 tooltipDelay={0}
                 tooltipPlacement={tooltipPlacement}
-                tooltipVisible={onTooltipVisibleChange}
                 onClick={this.onClick}
             />
         )
@@ -164,8 +163,7 @@ ColorElement.propTypes = {
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any,
     onChange: PropTypes.func,
-    onClick: PropTypes.func,
-    onTooltipVisibleChange: PropTypes.func
+    onClick: PropTypes.func
 }
 
 ColorElement.defaultProps = {
