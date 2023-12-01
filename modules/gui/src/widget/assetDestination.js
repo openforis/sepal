@@ -35,7 +35,7 @@ class _AssetDestination extends React.Component {
     render() {
         const {assetRoots, assetInput, type, label, placeholder, autoFocus} = this.props
         return (
-            <Form.AssetCombo
+            <Form.AssetInput
                 input={assetInput}
                 label={label}
                 placeholder={placeholder}
