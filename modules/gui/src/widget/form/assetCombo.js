@@ -1,5 +1,4 @@
 import {Button} from 'widget/button'
-import {ButtonGroup} from 'widget/buttonGroup'
 import {CrudItem} from 'widget/crudItem'
 import {Form} from 'widget/form/form'
 import {Subject, debounceTime, first, map, switchMap, takeUntil} from 'rxjs'
@@ -72,14 +71,6 @@ class _FormAssetCombo extends React.Component {
                 {...otherProps}
             />
         ) : null
-    }
-
-    renderLabelButtons() {
-        return (
-            <ButtonGroup spacing='none'>
-                {this.renderReloadButton()}
-            </ButtonGroup>
-        )
     }
 
     renderReloadButton() {
