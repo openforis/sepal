@@ -54,9 +54,9 @@ class _LegendLayer extends React.Component {
                     paletteWidth={paletteWidth}
                 />
             )
-        const colors = palette.map(color =>
+        const colors = palette.map((color, i) =>
             <div
-                key={color}
+                key={values[i]}
                 style={{'--color': color}}
                 className={styles.color}
             />
