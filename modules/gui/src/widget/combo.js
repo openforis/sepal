@@ -432,6 +432,7 @@ Combo.propTypes = {
             disabled: PropTypes.any,
             filter: PropTypes.any,
             filterOptions: PropTypes.any,
+            indent: PropTypes.any,
             key: PropTypes.string,
             label: PropTypes.any,
             options: PropTypes.arrayOf(
@@ -440,6 +441,7 @@ Combo.propTypes = {
                     disabled: PropTypes.any,
                     filter: PropTypes.any,
                     filterOption: PropTypes.any,
+                    indent: PropTypes.any,
                     key: PropTypes.string,
                     label: PropTypes.any,
                     render: PropTypes.func,

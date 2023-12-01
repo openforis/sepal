@@ -26,3 +26,8 @@
 .options .separator {
     border-bottom: 1px solid #333;
 }
+
+li {
+    --indent: 0;
+    margin-left: calc(var(--indent) * 1rem);
+}
