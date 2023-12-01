@@ -325,7 +325,7 @@ class _FormAssetCombo extends React.Component {
         return userAssets?.length ? {
             label: msg('asset.userAssets'),
             options: this.getAssetOptions(userAssets, {
-                filter: (id, type) => type === 'Folder' && `${id}/`
+                updateFfilter: (id, type) => type === 'Folder' && `${id}/`
             })
         } : null
     }
@@ -371,7 +371,7 @@ class _FormAssetCombo extends React.Component {
         }
     }
 
-    getAssetOptions(assets, {alias, filter} = {}) {
+    getAssetOptions(assets, {alias, updateFilter} = {}) {
         return assets
             .filter(({type}) => this.isAllowedType(type))
             .map(({title, id, type, url, searchableText}) => ({
@@ -379,7 +379,7 @@ class _FormAssetCombo extends React.Component {
                 value: id,
                 alias,
                 searchableText,
-                filter: filter && filter(id, type),
+                updateFilter: updateFilter && updateFilter(id, type),
                 dimmed: !this.isPreferredType(type),
                 render: () => this.renderAsset({title, id, type, url})
             }))

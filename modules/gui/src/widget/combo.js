@@ -291,8 +291,8 @@ class _Combo extends React.Component {
 
     selectOption(option) {
         const {onChange, stayOpenOnSelect} = this.props
-        if (option?.filter) {
-            this.setFilter(option.filter)
+        if (option?.updateFilter) {
+            this.setFilter(option.updateFilter)
         } else {
             this.setState({
                 selectedOption: option,
@@ -430,7 +430,6 @@ Combo.propTypes = {
         PropTypes.shape({
             alias: PropTypes.any,
             disabled: PropTypes.any,
-            filter: PropTypes.any,
             filterOptions: PropTypes.any,
             indent: PropTypes.any,
             key: PropTypes.string,
@@ -439,19 +438,20 @@ Combo.propTypes = {
                 PropTypes.shape({
                     alias: PropTypes.any,
                     disabled: PropTypes.any,
-                    filter: PropTypes.any,
                     filterOption: PropTypes.any,
                     indent: PropTypes.any,
                     key: PropTypes.string,
                     label: PropTypes.any,
                     render: PropTypes.func,
                     searchableText: PropTypes.string,
+                    updateFilter: PropTypes.any,
                     value: PropTypes.any,
                 })
             ),
             render: PropTypes.func,
             searchableText: PropTypes.string,
             showEmptyGroup: PropTypes.any,
+            updateFilter: PropTypes.any,
             value: PropTypes.any,
         })
     ).isRequired,
