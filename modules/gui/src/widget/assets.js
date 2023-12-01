@@ -73,10 +73,10 @@ const loadAssets$ = () =>
                     next: assetTree => {
                         log.debug('Updating assets tree')
                         const assetList = Tree.flatten(assetTree).map(
-                            ({path, props, depth}) => ({id: _.last(path), ...props, depth})
+                            ({path, props, depth}) => ({id: _.last(path), ...props, depth: depth - 1})
                         )
                         const assetRoots = assetList
-                            .filter(({depth}) => depth === 1)
+                            .filter(({depth}) => depth === 0)
                             .map(({id}) => id)
                         actionBuilder('LOAD_ASSETS')
                             .setIfChanged('assets.roots', assetRoots)
