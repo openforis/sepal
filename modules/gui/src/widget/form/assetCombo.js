@@ -14,9 +14,9 @@ class _FormAssetCombo extends React.Component {
     }
 
     render() {
-        const {input, alignment, allowClear, allowedTypes, autoFocus, autoOpen, busyMessage, className, destination, disabled, errorMessage,
-            inputClassName, keyboard, label, labelButtons, optionsClassName, optionTooltipPlacement, placeholder, placement, preferredTypes,
-            readOnly, showFolders, stayOpenOnSelect, tooltip, tooltipPlacement, onCancel, onLoaded, onLoading} = this.props
+        const {input, alignment, allowClear, allowedTypes, autoFocus, autoOpen, busyMessage, className, disabled,
+            inputClassName, keyboard, label, labelButtons, mode, optionsClassName, optionTooltipPlacement, placeholder, placement,
+            preferredTypes, readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, onCancel, onLoaded, onLoading} = this.props
         return (
             <AssetCombo
                 value={input.value}
@@ -28,20 +28,19 @@ class _FormAssetCombo extends React.Component {
                 autoOpen={autoOpen}
                 busyMessage={busyMessage}
                 className={className}
-                destination={destination}
                 disabled={disabled}
                 errorMessage={this.getErrorMessage()}
                 inputClassName={inputClassName}
                 keyboard={keyboard}
                 label={label}
                 labelButtons={labelButtons}
+                mode={mode}
                 optionsClassName={optionsClassName}
                 optionTooltipPlacement={optionTooltipPlacement}
                 placeholder={placeholder}
                 placement={placement}
                 preferredTypes={preferredTypes}
                 readOnly={readOnly}
-                showFolders={showFolders}
                 stayOpenOnSelect={stayOpenOnSelect}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
@@ -59,10 +58,10 @@ class _FormAssetCombo extends React.Component {
         return form.getErrorMessage(errorMessage || [input])
     }
 
-    onChange(value) {
+    onChange(value, option) {
         const {input, onChange} = this.props
         input.set(value)
-        onChange && onChange(value)
+        onChange && onChange(value, option)
     }
 
     onError(error) {
@@ -94,20 +93,19 @@ FormAssetCombo.propTypes = {
     autoOpen: PropTypes.any,
     busyMessage: PropTypes.any,
     className: PropTypes.string,
-    destination: PropTypes.any,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,
     inputClassName: PropTypes.string,
     keyboard: PropTypes.any,
     label: PropTypes.string,
     labelButtons: PropTypes.any,
+    mode: PropTypes.any,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,
     placement: PropTypes.any,
     preferredTypes: PropTypes.array,
     readOnly: PropTypes.any,
-    showFolders: PropTypes.any,
     stayOpenOnSelect: PropTypes.any,
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,

@@ -32,6 +32,9 @@ const getHighlightMatcher = memoizeOne(
         : ''
 )
 
+const ASSET = 'asset'
+const FOLDER = 'folder'
+
 class _AssetCombo extends React.Component {
     constructor(props) {
         super(props)
@@ -93,8 +96,8 @@ class _AssetCombo extends React.Component {
     }
 
     renderCopyIdButton() {
-        const {value} = this.props
-        return (
+        const {value, mode} = this.props
+        return mode === ASSET ? (
             <Button
                 key='copyId'
                 chromeless
@@ -106,7 +109,7 @@ class _AssetCombo extends React.Component {
                 disabled={!value}
                 onClick={this.copyIdToClipboard}
             />
-        )
+        ) : null
     }
 
     renderAsset({title, id, type, url}) {
@@ -184,7 +187,7 @@ class _AssetCombo extends React.Component {
     }
 
     initializeSearch() {
-        const {addSubscription, destination} = this.props
+        const {addSubscription, mode} = this.props
         addSubscription(
             this.filter$.pipe(
                 debounceTime(100)
@@ -192,15 +195,15 @@ class _AssetCombo extends React.Component {
                 filter => this.setState({
                     filter,
                     highlightMatcher: getHighlightMatcher(filter),
-                    searchingDatasets: !!filter && !destination
+                    searchingDatasets: !!filter && mode === ASSET
                 })
             )
         )
     }
 
     initializeDatasetsSearch() {
-        const {addSubscription, allowedTypes, destination} = this.props
-        if (!destination) {
+        const {addSubscription, allowedTypes, mode} = this.props
+        if (mode === ASSET) {
             addSubscription(
                 this.filter$.pipe(
                     debounceTime(500),
@@ -245,8 +248,8 @@ class _AssetCombo extends React.Component {
     }
 
     isAllowedType(type) {
-        const {allowedTypes, showFolders} = this.props
-        return _.isEmpty(allowedTypes) || (showFolders && type === 'Folder') || allowedTypes.includes(type)
+        const {allowedTypes, mode} = this.props
+        return _.isEmpty(allowedTypes) || (mode === 'FOLDER' && type === 'Folder') || allowedTypes.includes(type)
     }
 
     isPreferredType(type) {
@@ -274,8 +277,8 @@ class _AssetCombo extends React.Component {
     }
 
     getExternalOptions() {
-        const {destination} = this.props
-        return !destination
+        const {mode} = this.props
+        return mode === ASSET
             ? [
                 this.getOtherAssetsOptions(),
                 this.getAwesomeGeeCommunityDatasetsOptions(),
@@ -292,15 +295,15 @@ class _AssetCombo extends React.Component {
                 value: filter,
                 disabled: !this.isAssetLike(filter),
                 alias: true,
-                filterOption: false
+                forceFilter: true
             }]
         } : null
     }
 
     getRecentAssetsOptions() {
-        const {assets: {recentAssets, userAssets}, destination} = this.props
-        const filteredRecentAssets = destination
-            ? recentAssets.filter(({id: recentAssetId, type}) => !type || userAssets.find(({id}) => id === recentAssetId))
+        const {assets: {recentAssets, userAssets}, mode} = this.props
+        const filteredRecentAssets = mode === FOLDER
+            ? recentAssets.filter(({id: recentAssetId, type}) => type === 'Folder' && userAssets.find(({id}) => id === recentAssetId))
             : recentAssets
 
         return filteredRecentAssets?.length ? {
@@ -315,53 +318,16 @@ class _AssetCombo extends React.Component {
         assetId.startsWith(folderId) && assetId.indexOf('/', folderId.length) === -1
 
     getUserAssetsOptions() {
-        const {showFolders} = this.props
-        return showFolders
-            ? this.getUserAssetsWithFolders()
-            : this.getUserAssetsOnly()
-    }
-
-    getUserAssetsOnly() {
+        const {mode} = this.props
         const {assets: {userAssets}} = this.props
-        return userAssets?.length ? {
-            label: msg('asset.userAssets'),
-            options: this.getAssetOptions(userAssets, {
-                updateFilter: (id, type) => type === 'Folder' && `${id}/`, // set Combo filter to folder path.
-                filterOption: (id, type) => {
-                    // if (type === 'Folder' && filter.startsWith(id)) {
-                    if (type === 'Folder') {
-                        return false
-                    }
-                }
-            })
-        } : null
-    }
 
-    getUserAssetsWithFolders() {
-        const {assets: {userAssets}} = this.props
-        const {filter} = this.state
-        const filteredUserAssets = userAssets
-            .filter(({id, type}) => type === 'Folder' || type !== 'Folder' && this.isChild(id, filter))
-            .toSorted(({id: idA, type: typeA}, {id: idB, type: typeB}) =>
-                typeA === typeB
-                    ? idA > idB ? 1 : -1
-                    : typeA === 'Folder'
-                        ? -1
-                        : typeB === 'Folder'
-                            ? 1
-                            : idA > idB ? -1 : 1
-            )
-        return filteredUserAssets?.length ? {
+        const assets = mode === FOLDER
+            ? userAssets.filter(({type}) => type === 'Folder')
+            : userAssets
+
+        return assets?.length ? {
             label: msg('asset.userAssets'),
-            options: this.getAssetOptions(filteredUserAssets, {
-                updateFilter: (id, type) => type === 'Folder' && `${id}/`, // set Combo filter to folder path.
-                filterOption: (id, type) => {
-                    // if (type === 'Folder' && filter.startsWith(id)) {
-                    if (type === 'Folder') {
-                        return false
-                    }
-                }
-            })
+            options: this.getAssetOptions(assets)
         } : null
     }
 
@@ -406,19 +372,20 @@ class _AssetCombo extends React.Component {
         }
     }
 
-    getAssetOptions(assets, {alias, updateFilter, filterOption} = {}) {
-        const {showFolders} = this.props
+    getAssetOptions(assets, {alias, updateFilter, forceFilter} = {}) {
+        // const {mode} = this.props
         return assets
             .filter(({type}) => this.isAllowedType(type))
-            .map(({title, id, type, url, searchableText, depth}) => ({
+            .map(({title, id, type, url, searchableText, _depth}) => ({
                 label: title || id,
                 value: id,
+                type,
                 alias,
                 searchableText,
                 updateFilter: updateFilter && updateFilter(id, type),
-                filterOption: filterOption && filterOption(id, type),
+                forceFilter: forceFilter && forceFilter(id, type),
                 dimmed: !this.isPreferredType(type),
-                indent: showFolders ? depth : null,
+                // indent: mode === FOLDER ? depth : null,
                 render: () => this.renderAsset({title, id, type, url})
             }))
     }
@@ -428,10 +395,10 @@ class _AssetCombo extends React.Component {
     }
 
     onChange(option) {
-        const {value: assetId} = option
+        const {label, value, type} = option
         const {onChange} = this.props
-        onChange && onChange(assetId)
-        this.loadMetadata(assetId)
+        onChange && onChange(value, {label, value, type})
+        this.loadMetadata(value)
     }
 
     onError(assetId, error) {
@@ -495,19 +462,21 @@ class _AssetCombo extends React.Component {
     }
 
     loadMetadata(assetId) {
-        const {stream} = this.props
+        const {mode, stream} = this.props
         const {loadingMetadata} = this.state
-        if (this.isAssetLike(assetId) && assetId !== loadingMetadata) {
-            this.onLoading(assetId)
-            stream({
-                name: 'LOAD_ASSET_METADATA',
-                stream$: this.getMetadata$(assetId).pipe(
-                    takeUntil(this.assetChanged$.pipe()),
-                    first()
-                ),
-                onNext: metadata => this.onLoaded(assetId, metadata),
-                onError: error => this.onError(assetId, error)
-            })
+        if (mode === ASSET) {
+            if (this.isAssetLike(assetId) && assetId !== loadingMetadata) {
+                this.onLoading(assetId)
+                stream({
+                    name: 'LOAD_ASSET_METADATA',
+                    stream$: this.getMetadata$(assetId).pipe(
+                        takeUntil(this.assetChanged$.pipe()),
+                        first()
+                    ),
+                    onNext: metadata => this.onLoaded(assetId, metadata),
+                    onError: error => this.onError(assetId, error)
+                })
+            }
         }
     }
 }
@@ -527,20 +496,19 @@ AssetCombo.propTypes = {
     autoOpen: PropTypes.any,
     busyMessage: PropTypes.any,
     className: PropTypes.string,
-    destination: PropTypes.any,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,
     inputClassName: PropTypes.string,
     keyboard: PropTypes.any,
     label: PropTypes.string,
     labelButtons: PropTypes.any,
+    mode: PropTypes.oneOf([ASSET, FOLDER]),
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,
     placement: PropTypes.any,
     preferredTypes: PropTypes.array,
     readOnly: PropTypes.any,
-    showFolders: PropTypes.any,
     stayOpenOnSelect: PropTypes.any,
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
@@ -550,4 +518,8 @@ AssetCombo.propTypes = {
     onError: PropTypes.func,
     onLoaded: PropTypes.func,
     onLoading: PropTypes.func
+}
+
+AssetCombo.defaultProps = {
+    mode: ASSET
 }
