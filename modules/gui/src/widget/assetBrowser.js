@@ -64,7 +64,7 @@ class _AssetBrowser extends React.Component {
     }
 
     componentDidUpdate({activatable: {activatables: {assetBrowser: {activationProps: {assetId: prevAssetId}}}}}) {
-        const {activatable: {activatables: {assetBrowser: {activationProps: {assetId}}}}, inputs: {assetName, assetLocation}} = this.props
+        const {activatable: {activatables: {assetBrowser: {activationProps: {assetId}}}}} = this.props
         if (assetId !== prevAssetId) {
             this.update()
         }
