@@ -84,6 +84,12 @@
       "copyId": {
         "tooltip": "Copy asset id to clipboard",
         "success": "Asset id copied to clipboard"
+      },
+      "browser": {
+        "tooltip": "Open asset browser",
+        "title": "Asset browser",
+        "assetName": "Name",
+        "assetLocation": "Location"
       }
     },
     "bands": {

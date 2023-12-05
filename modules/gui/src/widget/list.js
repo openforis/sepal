@@ -60,6 +60,7 @@ ScrollableList.propTypes = {
             alias: PropTypes.any,
             disabled: PropTypes.any,
             group: PropTypes.any,
+            indent: PropTypes.any,
             key: PropTypes.any,
             label: PropTypes.any,
             render: PropTypes.func,
@@ -161,7 +162,7 @@ class _List extends React.Component {
     renderGroup(option, index) {
         const {alignment, air} = this.props
         return (
-            <li key={option.key || index} className={styles.sticky}>
+            <li key={option.key || index} className={styles.sticky} style={this.getOptionStyle(option)}>
                 <Button
                     innerButton
                     chromeless
@@ -196,7 +197,7 @@ class _List extends React.Component {
     renderNonSelectableOption(option, index) {
         const {alignment, air} = this.props
         return (
-            <li key={option.key || option.value || index}>
+            <li key={option.key || option.value || index} style={this.getOptionStyle(option)}>
                 <Button
                     innerButton
                     chromeless
@@ -213,7 +214,7 @@ class _List extends React.Component {
 
     renderSeparator(option, index) {
         return (
-            <li key={option.key || index} className={styles.separator}/>
+            <li key={option.key || index} className={styles.separator} style={this.getOptionStyle(option)}/>
         )
     }
 
@@ -228,7 +229,7 @@ class _List extends React.Component {
             : null // three-state: null = auto
         const ref = (selected && this.selected) || (highlighted && this.highlighted) || null
         return (
-            <li key={key || index} ref={ref}>
+            <li key={key || index} ref={ref} style={this.getOptionStyle(option)}>
                 <Button
                     innerButton
                     chromeless={!selected}
@@ -248,6 +249,12 @@ class _List extends React.Component {
                 </Button>
             </li>
         )
+    }
+
+    getOptionStyle(option) {
+        return {
+            '--indent': option.indent
+        }
     }
 
     onMouseLeave() {

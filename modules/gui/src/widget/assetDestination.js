@@ -1,11 +1,14 @@
+import {AssetBrowser} from './assetBrowser'
+import {Button} from './button'
 import {Form} from 'widget/form/form'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {copyToClipboard} from 'clipboard'
 import {currentUser} from 'user'
-import {map} from 'rxjs'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {toSafeString} from 'string'
+import {withActivators} from './activation/activator'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -30,18 +33,34 @@ class _AssetDestination extends React.Component {
         super(props)
         this.onLoading = this.onLoading.bind(this)
         this.onError = this.onError.bind(this)
+        this.onChange = this.onChange.bind(this)
+        this.copyIdToClipboard = this.copyIdToClipboard.bind(this)
+        this.openAssetBrowser = this.openAssetBrowser.bind(this)
     }
 
     render() {
+        return (
+            <React.Fragment>
+                {this.renderAssetInput()}
+                {this.renderAssetBrowser()}
+            </React.Fragment>
+        )
+    }
+
+    renderAssetInput() {
         const {assetRoots, assetInput, type, label, placeholder, autoFocus} = this.props
         return (
-            <Form.AssetCombo
+            <Form.AssetInput
                 input={assetInput}
                 label={label}
                 placeholder={placeholder}
                 autoFocus={autoFocus}
                 busyMessage={!assetRoots}
                 preferredTypes={[type]}
+                buttons={[
+                    this.renderCopyIdButton(),
+                    this.renderExpandButton()
+                ]}
                 labelButtons={[this.renderStrategy()]}
                 destination
                 onLoading={this.onLoading}
@@ -49,6 +68,56 @@ class _AssetDestination extends React.Component {
                 onError={this.onError}
             />
         )
+    }
+
+    renderAssetBrowser() {
+        return (
+            <AssetBrowser
+                onChange={this.onChange}
+            />
+        )
+    }
+
+    renderExpandButton() {
+        return (
+            <Button
+                key='expand'
+                chromeless
+                shape='none'
+                air='none'
+                icon='folder-open'
+                tooltip={msg('asset.browser.tooltip')}
+                tabIndex={-1}
+                onClick={this.openAssetBrowser}
+            />
+        )
+    }
+
+    openAssetBrowser() {
+        const {assetInput, activator: {activatables: {assetBrowser}}} = this.props
+        assetBrowser.activate({assetId: assetInput.value})
+    }
+
+    renderCopyIdButton() {
+        const {assetInput: {value}} = this.props
+        return (
+            <Button
+                key='copyId'
+                chromeless
+                shape='none'
+                air='none'
+                icon='copy'
+                tooltip={msg('asset.copyId.tooltip')}
+                tabIndex={-1}
+                disabled={!value}
+                onClick={this.copyIdToClipboard}
+            />
+        )
+    }
+
+    copyIdToClipboard() {
+        const {assetInput: {value}} = this.props
+        copyToClipboard(value, msg('asset.copyId.success'))
     }
 
     renderStrategy() {
@@ -78,6 +147,11 @@ class _AssetDestination extends React.Component {
                 air='less'
             />
         ) : null
+    }
+
+    onChange(assetId) {
+        const {assetInput} = this.props
+        assetInput.set(assetId)
     }
 
     componentDidMount() {
@@ -161,7 +235,8 @@ class _AssetDestination extends React.Component {
 export const AssetDestination = compose(
     _AssetDestination,
     connect(mapStateToProps),
-    withRecipe(mapRecipeToProps)
+    withRecipe(mapRecipeToProps),
+    withActivators('assetBrowser')
 )
 
 AssetDestination.propTypes = {
