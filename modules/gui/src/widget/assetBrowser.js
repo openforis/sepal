@@ -1,14 +1,14 @@
 import {Form, withForm} from 'widget/form/form'
-import {Layout} from './layout'
 import {Panel} from './panel/panel'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {withActivatable} from './activation/activatable'
+import {withAssets} from './assets'
+import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './assetBrowser.module.css'
 
 const fields = {
-    assetName: new Form.Field().notBlank(),
     assetLocation: new Form.Field().notBlank()
 }
 
@@ -17,6 +17,7 @@ class _AssetBrowser extends React.Component {
         super(props)
         this.onApply = this.onApply.bind(this)
     }
+
     render() {
         const {form, activatable: {deactivate}} = this.props
         return (
@@ -27,7 +28,7 @@ class _AssetBrowser extends React.Component {
                 onCancel={deactivate}
                 modal>
                 <Panel.Header title={msg('asset.browser.title')}/>
-                <Panel.Content>
+                <Panel.Content scrollable={false}>
                     {this.renderForm()}
                 </Panel.Content>
                 <Form.PanelButtons/>
@@ -36,25 +37,18 @@ class _AssetBrowser extends React.Component {
     }
 
     renderForm() {
-        const {inputs: {assetName, assetLocation}} = this.props
+        const {inputs: {assetLocation}} = this.props
         return (
-            <Layout>
-                <Form.AssetCombo
-                    label={msg('asset.browser.assetLocation')}
-                    mode='folder'
-                    input={assetLocation}
-                />
-                <Form.Input
-                    label={msg('asset.browser.assetName')}
-                    input={assetName}
-                />
-            </Layout>
+            <Form.AssetLocation
+                label={msg('asset.browser.assetLocation')}
+                input={assetLocation}
+            />
         )
     }
 
     onApply() {
-        const {inputs: {assetName, assetLocation}, onChange, activatable: {deactivate}} = this.props
-        const assetId = [assetLocation.value, assetName.value].join('/')
+        const {inputs: {assetLocation}, onChange, activatable: {deactivate}} = this.props
+        const assetId = assetLocation.value
         onChange && onChange(assetId)
         deactivate()
     }
@@ -71,14 +65,8 @@ class _AssetBrowser extends React.Component {
     }
 
     update() {
-        const {activatable: {activatables: {assetBrowser: {activationProps: {assetId}}}}, inputs: {assetName, assetLocation}} = this.props
-        const index = assetId.lastIndexOf('/')
-        if (index !== -1) {
-            assetLocation.set(assetId.substr(0, index))
-            assetName.set(assetId.substr(index + 1))
-        } else {
-            assetName.set(assetId)
-        }
+        const {activatable: {activatables: {assetBrowser: {activationProps: {assetId}}}}, inputs: {assetLocation}} = this.props
+        assetLocation.set(assetId)
     }
 }
 
@@ -89,5 +77,11 @@ const policy = () => ({
 export const AssetBrowser = compose(
     _AssetBrowser,
     withForm({fields}),
+    withAssets(),
     withActivatable({id: 'assetBrowser', policy, alwaysAllow: true})
 )
+
+AssetBrowser.propTypes = {
+    onChange: PropTypes.func.isRequired,
+    assetLocation: PropTypes.string
+}

@@ -1,0 +1,17 @@
+.tree {
+    /* width: 50%; */
+    /* height: 50%; */
+}
+
+.assets {
+    /* width: 50%; */
+    /* height: 50%; */
+}
+
+.filler {
+    /* display: flex; */
+    /* flex-grow: 100; */
+    background-color: red;
+    /* width: 100%; */
+    /* height: 100%; */
+}
