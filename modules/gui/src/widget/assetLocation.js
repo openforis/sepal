@@ -7,7 +7,6 @@ import {withAssets} from './assets'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import styles from './assetLocation.module.css'
 
 class _AssetLocation extends React.Component {
     constructor(props) {
@@ -58,7 +57,6 @@ class _AssetLocation extends React.Component {
         const {selectedId} = this.state
         return (
             <ScrollableList
-                className={styles.tree}
                 options={options}
                 selectedValue={selectedId}
                 onSelect={this.onTreeSelect}
@@ -74,7 +72,7 @@ class _AssetLocation extends React.Component {
                 key={id}
                 id={id}
                 type={type}
-                short={depth > 0}
+                tail={depth > 0}
             />
         )
     }
@@ -173,6 +171,7 @@ export const AssetLocation = compose(
 )
 
 AssetLocation.propTypes = {
+    onChange: PropTypes.func.isRequired,
     className: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,
@@ -180,6 +179,5 @@ AssetLocation.propTypes = {
     labelButtons: PropTypes.any,
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,
-    value: PropTypes.any,
-    onChange: PropTypes.func
+    value: PropTypes.any
 }

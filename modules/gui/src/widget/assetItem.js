@@ -20,8 +20,8 @@ export class AssetItem extends React.Component {
     }
 
     getId() {
-        const {id, short} = this.props
-        return short
+        const {id, tail} = this.props
+        return tail
             ? this.getLastPathSection(id)
             : id
     }
@@ -57,7 +57,7 @@ AssetItem.propTypes = {
     highlightMatcher: PropTypes.string,
     id: PropTypes.string,
     inlineComponents: PropTypes.array,
-    short: PropTypes.any,
+    tail: PropTypes.any,
     title: PropTypes.string,
     type: PropTypes.string,
     url: PropTypes.string
