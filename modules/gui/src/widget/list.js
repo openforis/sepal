@@ -78,7 +78,7 @@ ScrollableList.propTypes = {
     overScroll: PropTypes.any,
     selectedValue: PropTypes.any,
     tooltip: PropTypes.any,
-    tooltipPlacement: PropTypes.oneOf(['left', 'right']),
+    tooltipPlacement: PropTypes.any,
     onCancel: PropTypes.func
 }
 
