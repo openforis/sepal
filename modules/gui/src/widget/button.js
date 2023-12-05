@@ -460,7 +460,6 @@ Button.propTypes = {
     tooltipDisabled: PropTypes.any,
     tooltipOnVisible: PropTypes.func,
     tooltipPlacement: PropTypes.any,
-    tooltipVisible: PropTypes.any,
     type: PropTypes.oneOf(['button', 'submit', 'reset']),
     width: PropTypes.oneOf(['fit', 'fill', 'max']),
     onClick: PropTypes.func,

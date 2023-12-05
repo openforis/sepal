@@ -341,14 +341,12 @@ class ColorInput extends React.Component {
 
     render() {
         const {input, invalid, onChange} = this.props
-        const {swap} = this.state
         return (
             <ColorElement
                 color={input.value}
                 invalid={invalid}
                 tooltip={this.renderTooltip()}
                 tooltipPlacement='left'
-                onTooltipVisibleChange={visible => swap && !visible && this.setState({swap: false})}
                 onChange={value => {
                     input.set(value)
                     onChange(value)
