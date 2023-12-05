@@ -39,7 +39,6 @@ class _AssetLocation extends React.Component {
                 {this.renderInput()}
                 {this.renderTree(folderOptions)}
             </Widget>
-
         )
     }
 
@@ -133,20 +132,20 @@ class _AssetLocation extends React.Component {
         this.input?.current.focus()
     }
 
-    getClosestParent(assetId) {
+    getClosestFolderId(assetId) {
         const {assets: {userAssets}} = this.props
-        const asset = userAssets.find(({id, type}) => type === 'Folder' && assetId === id)
-        if (asset) {
-            return asset.id
+        const folder = userAssets.find(({id, type}) => type === 'Folder' && assetId === id)
+        if (folder) {
+            return folder.id
         } else {
-            const parentId = this.getParentId(assetId)
+            const parentId = this.getParentFolderId(assetId)
             return parentId.length
-                ? this.getClosestParent(parentId)
+                ? this.getClosestFolderId(parentId)
                 : ''
         }
     }
 
-    getParentId(assetId) {
+    getParentFolderId(assetId) {
         const index = assetId.lastIndexOf('/')
         return assetId.substr(0, index)
     }
@@ -164,7 +163,7 @@ class _AssetLocation extends React.Component {
     }
 
     update(value) {
-        this.setState({selectedId: this.getClosestParent(value)})
+        this.setState({selectedId: this.getClosestFolderId(value)})
     }
 }
 
