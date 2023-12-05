@@ -67,12 +67,13 @@ class _AssetLocation extends React.Component {
     }
 
     renderItem({id, type, depth}) {
+        const showTailOnly = depth > 0 || type !== 'Folder'
         return (
             <AssetItem
                 key={id}
                 id={id}
                 type={type}
-                tail={depth > 0}
+                tail={showTailOnly}
             />
         )
     }
