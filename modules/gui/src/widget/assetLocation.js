@@ -1,4 +1,5 @@
 import {AssetItem} from './assetItem'
+import {Button} from './button'
 import {Input} from './input'
 import {ScrollableList} from './list'
 import {Widget} from './widget'
@@ -23,7 +24,7 @@ class _AssetLocation extends React.Component {
 
     render() {
         const {assets: {tree}, className, label, labelButtons, tooltip, tooltipPlacement, disabled, errorMessage} = this.props
-        const folderOptions = _.flattenDeep(this.getFolderOptions(tree))
+        const folderOptions = this.getFolderOptions(tree)
         return (
             <Widget
                 className={className}
@@ -66,7 +67,7 @@ class _AssetLocation extends React.Component {
         )
     }
 
-    renderItem({id, type, depth}) {
+    renderItem({id, type, depth, tooltip}) {
         const showTailOnly = depth > 0 || type !== 'Folder'
         return (
             <AssetItem
@@ -74,44 +75,57 @@ class _AssetLocation extends React.Component {
                 id={id}
                 type={type}
                 tail={showTailOnly}
+                inlineComponents={[
+                    this.renderButton(tooltip)
+                ]}
             />
         )
     }
 
+    renderButton(tooltip) {
+        return tooltip ? (
+            <Button
+                key='link'
+                chromeless
+                air='none'
+                size='small'
+                icon='bars'
+                dimmed
+                tooltip={tooltip}
+                tooltipPlacement='bottomLeft'
+            />
+        ) : null
+    }
+
     getFolderOptions({items} = {}, depth = 0) {
         return _(items)
-            .map((node, id) =>
-                node.props.type === 'Folder'
-                    ? [
-                        this.getItemOption({id, type: node.props.type, depth, node}),
-                        this.getFolderOptions(node, depth + 1)
-                    ]
-                    : []
-            )
+            .pickBy(node => node.props.type === 'Folder')
+            .map((node, id) => [
+                this.getItemOption({id, type: node.props.type, depth, node}),
+                this.getFolderOptions(node, depth + 1)
+            ])
+            .flattenDeep()
             .value()
     }
 
     getAssetOptions({items} = {}) {
         return _(items)
-            .map((node, id) =>
-                node.props.type !== 'Folder'
-                    ? this.getItemOption({id, type: node.props.type})
-                    : []
-            )
+            .pickBy(node => node.props.type !== 'Folder')
+            .map((node, id) => this.getItemOption({id, type: node.props.type}))
             .value()
     }
 
     getItemOption({id, type, depth, node}) {
-        const render = () => this.renderItem({id, type, depth})
-        const tooltip = node
-            ? () => this.renderTree(_.flattenDeep(this.getAssetOptions(node)), true)
+        const assetOptions = this.getAssetOptions(node)
+        const tooltip = assetOptions.length
+            ? () => this.renderTree(assetOptions, true)
             : null
+        const render = () => this.renderItem({id, type, depth, tooltip})
         return {
             label: id,
             value: id,
             indent: depth,
-            render,
-            tooltip
+            render
         }
     }
 
