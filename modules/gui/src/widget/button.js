@@ -61,8 +61,8 @@ class _Button extends React.Component {
     }
 
     isHoverRequired() {
-        const {tooltip, tooltipPanel} = this.props
-        return this.isLinked() || tooltip || tooltipPanel
+        const {tooltip} = this.props
+        return this.isLinked() || tooltip
     }
 
     isHoverForcedOff() {
@@ -239,18 +239,15 @@ class _Button extends React.Component {
     }
 
     renderTooltip(contents) {
-        const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipVisible, tooltipClickTrigger, tooltipAllowedWhenDisabled} = this.props
-        const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
-        const message = tooltipPanel || tooltip
+        const {tooltip, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipVisible, tooltipClickTrigger, tooltipAllowedWhenDisabled} = this.props
         const visibility = _.isNil(tooltipVisible) ? {} : {visible: tooltipVisible}
-        return (tooltipAllowedWhenDisabled || this.isActive()) && message ? (
+        return (tooltipAllowedWhenDisabled || this.isActive()) && tooltip ? (
             <Tooltip
-                msg={message}
+                msg={tooltip}
                 placement={tooltipPlacement}
                 delay={tooltipDelay}
-                hoverTrigger={!tooltipPanel}
+                hoverTrigger={true}
                 clickTrigger={tooltipClickTrigger || !this.isLinked()}
-                overlayInnerStyle={overlayInnerStyle}
                 overlayStyle={{visibility: tooltipDisabled ? 'hidden' : 'visible'}}
                 onVisibleChange={tooltipOnVisible}
                 {...visibility}
@@ -462,7 +459,6 @@ Button.propTypes = {
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
     tooltipOnVisible: PropTypes.func,
-    tooltipPanel: PropTypes.any,
     tooltipPlacement: PropTypes.any,
     tooltipVisible: PropTypes.any,
     type: PropTypes.oneOf(['button', 'submit', 'reset']),
