@@ -40,7 +40,7 @@ RUN add-apt-repository -y "deb https://cloud.r-project.org/bin/linux/ubuntu $(ls
 RUN add-apt-repository -y ppa:c2d4u.team/c2d4u4.0+
 
 # Removing this to prevent dependency errors further down the line
-RUN apt-get remove -y python3-blinken
+RUN apt-get remove -y python3-blinker
 
 # Install general purpose utilities
 RUN apt-get -y update && apt-get install -y \
