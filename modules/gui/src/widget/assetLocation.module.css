@@ -1,0 +1,4 @@
+.fileList {
+    overflow: auto;
+    max-height: 50vh;
+}

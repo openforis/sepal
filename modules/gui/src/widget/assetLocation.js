@@ -8,6 +8,7 @@ import {withAssets} from './assets'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
+import styles from './assetLocation.module.css'
 
 class _AssetLocation extends React.Component {
     constructor(props) {
@@ -115,11 +116,25 @@ class _AssetLocation extends React.Component {
             .value()
     }
 
-    getItemOption({id, type, depth, node}) {
-        const assetOptions = this.getAssetOptions(node)
-        const tooltip = assetOptions.length
-            ? () => this.renderTree(assetOptions, true)
+    renderFileList(folder) {
+        const {selectedId} = this.state
+        const options = this.getAssetOptions(folder)
+        return options.length
+            ? (
+                <ScrollableList
+                    className={styles.fileList}
+                    options={options}
+                    selectedValue={selectedId}
+                    onSelect={this.onTreeSelect}
+                    tooltipPlacement='bottomRight'
+                    keyboard={false}
+                />
+            )
             : null
+    }
+
+    getItemOption({id, type, depth, node}) {
+        const tooltip = this.renderFileList(node)
         const render = () => this.renderItem({id, type, depth, tooltip})
         return {
             label: id,
