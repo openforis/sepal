@@ -16,7 +16,8 @@ class _AssetLocation extends React.Component {
     constructor(props) {
         super(props)
         this.onInputChange = this.onInputChange.bind(this)
-        this.onSelect = this.onSelect.bind(this)
+        this.onSelectFolder = this.onSelectFolder.bind(this)
+        this.onSelectAsset = this.onSelectAsset.bind(this)
     }
 
     input = React.createRef()
@@ -63,7 +64,7 @@ class _AssetLocation extends React.Component {
             <ScrollableList
                 options={options}
                 selectedValue={selectedId}
-                onSelect={this.onSelect}
+                onSelect={this.onSelectFolder}
                 tooltipPlacement='bottomRight'
                 keyboard={false}
             />
@@ -76,7 +77,7 @@ class _AssetLocation extends React.Component {
             <ScrollableList
                 className={styles.folderAssets}
                 options={options}
-                onSelect={this.onSelect}
+                onSelect={this.onSelectAsset}
                 keyboard={false}
             />
         ) : null
@@ -147,7 +148,14 @@ class _AssetLocation extends React.Component {
         onChange && onChange(value)
     }
     
-    onSelect({value}) {
+    onSelectFolder({value}) {
+        const {value: prevValue, onChange} = this.props
+        const name = this.getAssetName(prevValue)
+        onChange && onChange(`${value}/${name}`)
+        this.focusInput()
+    }
+    
+    onSelectAsset({value}) {
         const {onChange} = this.props
         onChange && onChange(value)
         this.focusInput()
@@ -173,6 +181,11 @@ class _AssetLocation extends React.Component {
     getParentFolderId(assetId) {
         const index = assetId.lastIndexOf('/')
         return assetId.substr(0, index)
+    }
+
+    getAssetName(assetId) {
+        const index = assetId.lastIndexOf('/')
+        return assetId.substr(index + 1)
     }
 
     componentDidMount() {
