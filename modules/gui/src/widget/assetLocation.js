@@ -10,11 +10,13 @@ import React from 'react'
 import _ from 'lodash'
 import styles from './assetLocation.module.css'
 
+const isFolder = type => type === 'Folder'
+
 class _AssetLocation extends React.Component {
     constructor(props) {
         super(props)
         this.onInputChange = this.onInputChange.bind(this)
-        this.onTreeSelect = this.onTreeSelect.bind(this)
+        this.onSelect = this.onSelect.bind(this)
     }
 
     input = React.createRef()
@@ -25,7 +27,6 @@ class _AssetLocation extends React.Component {
 
     render() {
         const {assets: {tree}, className, label, labelButtons, tooltip, tooltipPlacement, disabled, errorMessage} = this.props
-        const folderOptions = this.getFolderOptions(tree)
         return (
             <Widget
                 className={className}
@@ -38,7 +39,7 @@ class _AssetLocation extends React.Component {
                 layout='vertical-fill'
                 spacing='compact'>
                 {this.renderInput()}
-                {this.renderTree(folderOptions)}
+                {this.renderFolderTree(tree)}
             </Widget>
         )
     }
@@ -55,21 +56,34 @@ class _AssetLocation extends React.Component {
         )
     }
 
-    renderTree(options) {
+    renderFolderTree(node) {
         const {selectedId} = this.state
-        return (
+        const options = this.getFolderTreeOptions(node)
+        return options.length ? (
             <ScrollableList
                 options={options}
                 selectedValue={selectedId}
-                onSelect={this.onTreeSelect}
+                onSelect={this.onSelect}
                 tooltipPlacement='bottomRight'
                 keyboard={false}
             />
-        )
+        ) : null
+    }
+
+    renderFolderAssets(node) {
+        const options = this.getFolderAssetsOptions(node)
+        return options.length ? (
+            <ScrollableList
+                className={styles.folderAssets}
+                options={options}
+                onSelect={this.onSelect}
+                keyboard={false}
+            />
+        ) : null
     }
 
     renderItem({id, type, depth, tooltip}) {
-        const showTailOnly = depth > 0 || type !== 'Folder'
+        const showTailOnly = depth > 0 || !isFolder(type)
         return (
             <AssetItem
                 key={id}
@@ -77,13 +91,13 @@ class _AssetLocation extends React.Component {
                 type={type}
                 tail={showTailOnly}
                 inlineComponents={[
-                    this.renderButton(tooltip)
+                    this.renderFolderAssetsButton(tooltip)
                 ]}
             />
         )
     }
 
-    renderButton(tooltip) {
+    renderFolderAssetsButton(tooltip) {
         return tooltip ? (
             <Button
                 key='link'
@@ -98,43 +112,26 @@ class _AssetLocation extends React.Component {
         ) : null
     }
 
-    getFolderOptions({items} = {}, depth = 0) {
+    getFolderTreeOptions({items} = {}, depth = 0) {
         return _(items)
-            .pickBy(node => node.props.type === 'Folder')
+            .pickBy(node => isFolder(node.props.type))
             .map((node, id) => [
                 this.getItemOption({id, type: node.props.type, depth, node}),
-                this.getFolderOptions(node, depth + 1)
+                ...this.getFolderTreeOptions(node, depth + 1)
             ])
-            .flattenDeep()
+            .flatten()
             .value()
     }
 
-    getAssetOptions({items} = {}) {
+    getFolderAssetsOptions({items} = {}) {
         return _(items)
-            .pickBy(node => node.props.type !== 'Folder')
+            .pickBy(node => !isFolder(node.props.type))
             .map((node, id) => this.getItemOption({id, type: node.props.type}))
             .value()
     }
 
-    renderFileList(folder) {
-        const {selectedId} = this.state
-        const options = this.getAssetOptions(folder)
-        return options.length
-            ? (
-                <ScrollableList
-                    className={styles.fileList}
-                    options={options}
-                    selectedValue={selectedId}
-                    onSelect={this.onTreeSelect}
-                    tooltipPlacement='bottomRight'
-                    keyboard={false}
-                />
-            )
-            : null
-    }
-
     getItemOption({id, type, depth, node}) {
-        const tooltip = this.renderFileList(node)
+        const tooltip = this.renderFolderAssets(node)
         const render = () => this.renderItem({id, type, depth, tooltip})
         return {
             label: id,
@@ -150,7 +147,7 @@ class _AssetLocation extends React.Component {
         onChange && onChange(value)
     }
     
-    onTreeSelect({value}) {
+    onSelect({value}) {
         const {onChange} = this.props
         onChange && onChange(value)
         this.focusInput()
@@ -162,7 +159,7 @@ class _AssetLocation extends React.Component {
 
     getClosestFolderId(assetId) {
         const {assets: {userAssets}} = this.props
-        const folder = userAssets.find(({id, type}) => type === 'Folder' && assetId === id)
+        const folder = userAssets.find(({id, type}) => isFolder(type) && assetId === id)
         if (folder) {
             return folder.id
         } else {
