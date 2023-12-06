@@ -448,10 +448,13 @@ class _List extends React.Component {
         this.initializeMouseHandler()
     }
 
-    componentDidUpdate({options: prevOptions}) {
-        const {options} = this.props
+    componentDidUpdate({options: prevOptions, selectedValue: prevSelectedValue}) {
+        const {options, selectedValue} = this.props
         if (!isEqual(options, prevOptions)) {
             this.highlightFirstOption()
+        }
+        if (selectedValue !== prevSelectedValue) {
+            this.highlightSelectedOption()
         }
     }
 }
