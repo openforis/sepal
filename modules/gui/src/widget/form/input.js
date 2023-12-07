@@ -67,7 +67,7 @@ class _FormInput extends React.Component {
     onChange(e) {
         const {input, validate, onChange} = this.props
         input.handleChange(e)
-        onChange && onChange(e)
+        onChange && onChange(e?.target?.value)
         validate === 'onChange' && input.validate()
     }
 

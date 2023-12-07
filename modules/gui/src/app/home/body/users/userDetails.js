@@ -66,6 +66,13 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class UserDetails extends React.Component {
+    constructor(props) {
+        super(props)
+        this.onChangeInstanceSpending = this.onChangeInstanceSpending.bind(this)
+        this.onChangeStorageSpending = this.onChangeStorageSpending.bind(this)
+        this.onChangeStorageQuota = this.onChangeStorageQuota.bind(this)
+    }
+
     save(userDetails) {
         const {onSave, onCancel} = this.props
         onSave({...userDetails})
@@ -156,7 +163,7 @@ class UserDetails extends React.Component {
                                 input={instanceSpending}
                                 spellCheck={false}
                                 prefix='US$/mo.'
-                                onChange={e => this.onChangeInstanceSpending(e.target.value)}
+                                onChange={this.onChangeInstanceSpending}
                             />
                             <Form.Input
                                 label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
@@ -164,7 +171,7 @@ class UserDetails extends React.Component {
                                 input={storageSpending}
                                 spellCheck={false}
                                 prefix='US$/mo.'
-                                onChange={e => this.onChangeStorageSpending(e.target.value)}
+                                onChange={this.onChangeStorageSpending}
                             />
                             <Form.Input
                                 label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
@@ -172,7 +179,7 @@ class UserDetails extends React.Component {
                                 input={storageQuota}
                                 spellCheck={false}
                                 prefix='GB'
-                                onChange={e => this.onChangeStorageQuota(e.target.value)}
+                                onChange={this.onChangeStorageQuota}
                             />
                         </Form.FieldSet>
                         {this.isUserRequest() ? this.renderUserRequest() : null}
