@@ -74,12 +74,16 @@ class _AssetLocation extends React.Component {
     renderFolderAssets(node) {
         const options = this.getFolderAssetsOptions(node)
         return options.length ? (
-            <ScrollableList
-                className={styles.folderAssets}
-                options={options}
-                onSelect={this.onSelectAsset}
-                keyboard={false}
-            />
+            ({close}) =>
+                <ScrollableList
+                    className={styles.folderAssets}
+                    options={options}
+                    onSelect={asset => {
+                        this.onSelectAsset(asset)
+                        close()
+                    }}
+                    keyboard={false}
+                />
         ) : null
     }
 
