@@ -1,22 +1,19 @@
+import {EMPTY, Subject, catchError, debounceTime, map, switchMap, tap} from 'rxjs'
 import {FormInput} from './input'
-import {Subject, takeUntil, tap} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualizationParser'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import api from 'api'
 import guid from 'guid'
 
-class _FormAssetInput extends React.Component {
-    constructor(props) {
-        super(props)
-        this.loadMetadata = this.loadMetadata.bind(this)
-        this.onError = this.onError.bind(this)
-    }
+const DEBOUNCE_TIME_MS = 750
 
-    assetChanged$ = new Subject()
+class _FormAssetInput extends React.Component {
+    asset$ = new Subject()
     
     state = {
         loading: null
@@ -24,6 +21,7 @@ class _FormAssetInput extends React.Component {
 
     render() {
         const {className, input, label, labelButtons, buttons, placeholder, tooltip, autoFocus, busyMessage, disabled} = this.props
+        const {loading} = this.state
         return (
             <FormInput
                 className={className}
@@ -35,8 +33,7 @@ class _FormAssetInput extends React.Component {
                 input={input}
                 autoFocus={autoFocus}
                 spellCheck={false}
-                onChangeDebounced={this.loadMetadata}
-                busyMessage={(busyMessage || this.props.stream('LOAD_ASSET_METADATA').active) && msg('widget.loading')}
+                busyMessage={(busyMessage || loading) && msg('widget.loading')}
                 disabled={disabled}
                 errorMessage
             />
@@ -45,18 +42,65 @@ class _FormAssetInput extends React.Component {
 
     componentDidMount() {
         const {input} = this.props
+        this.loadAssetMetadata()
         if (input.value) {
-            this.loadMetadata(input.value)
+            this.asset$.next(input.value)
         }
-
     }
     
     componentDidUpdate(prevProps) {
         const {input: prevInput} = prevProps
         const {input} = this.props
-        if (!prevInput?.value && input.value) {
-            this.loadMetadata(input.value)
+        if (input?.value !== prevInput?.value) {
+            this.asset$.next(input.value)
         }
+    }
+
+    loadAssetMetadata() {
+        const {addSubscription, onLoading} = this.props
+        addSubscription(
+            this.asset$.pipe(
+                debounceTime(DEBOUNCE_TIME_MS),
+                tap(asset => {
+                    this.setState({loading: asset})
+                    onLoading && onLoading(asset)
+                }),
+                switchMap(asset =>
+                    this.getMetadata$(asset).pipe(
+                        tap(() => {
+                            this.setState({loading: null})
+                        }),
+                        catchError(error => {
+                            this.setState({loading: null})
+                            this.onError(error)
+                            return EMPTY
+                        }),
+                        map(metadata => ({asset, metadata}))
+                    )
+                )
+            ).subscribe(
+                ({asset, metadata}) => this.onMetadata({asset, metadata})
+            )
+        )
+    }
+
+    getMetadata$(asset) {
+        const {expectedType} = this.props
+        return expectedType === 'Image'
+            ? api.gee.imageMetadata$({asset})
+            : api.gee.assetMetadata$({asset, allowedTypes: expectedType})
+    }
+
+    onMetadata({asset, metadata}) {
+        const {onLoaded} = this.props
+        return onLoaded && onLoaded(metadata ? {
+            asset,
+            metadata,
+            visualizations: metadata.bands
+                ? toVisualizations(metadata.properties, metadata.bands)
+                    .map(visualization => ({...visualization, id: guid()}))
+                : undefined
+        } : null)
     }
 
     onError(error) {
@@ -71,41 +115,11 @@ class _FormAssetInput extends React.Component {
             )
         }
     }
-
-    loadMetadata(asset) {
-        const {expectedType, onLoading, onLoaded, stream} = this.props
-        const {loading} = this.state
-        if (asset.length === 0 || loading === asset) {
-            return
-        }
-        this.setState({loading: asset})
-        onLoading && onLoading(asset)
-        this.assetChanged$.next()
-        stream('LOAD_ASSET_METADATA',
-            (expectedType === 'Image'
-                ? api.gee.imageMetadata$({asset})
-                : api.gee.assetMetadata$({asset, allowedTypes: expectedType})
-            ).pipe(
-                takeUntil(this.assetChanged$.pipe()),
-                tap(() => this.setState({loading: null}))
-            ),
-            metadata => {
-                return onLoaded && onLoaded(metadata ? {
-                    asset,
-                    metadata,
-                    visualizations: metadata.bands
-                        ? toVisualizations(metadata.properties, metadata.bands)
-                            .map(visualization => ({...visualization, id: guid()}))
-                        : undefined
-                } : null)
-            },
-            this.onError
-        )
-    }
 }
 
 export const FormAssetInput = compose(
     _FormAssetInput,
+    withSubscriptions(),
     connect()
 )
 
