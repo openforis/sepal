@@ -59,6 +59,14 @@ export default class Tooltip extends React.Component {
         }
         return msg
     }
+
+    componentDidUpdate() {
+        const {visible} = this.state
+        if (!visible) {
+            // visible should be false for one cycle only
+            this.setState({visible: true})
+        }
+    }
 }
 
 Tooltip.propTypes = {
