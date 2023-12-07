@@ -7,11 +7,15 @@ import React from 'react'
 import _ from 'lodash'
 import styles from './tooltip.module.css'
 
+const CLOSE_DELAY_MS = 2500
+
 export default class Tooltip extends React.Component {
     constructor(props) {
         super(props)
         this.close = this.close.bind(this)
     }
+
+    closeTimeout = null
 
     state = {
         visible: true
@@ -44,7 +48,7 @@ export default class Tooltip extends React.Component {
     }
 
     close() {
-        this.setState({visible: false})
+        this.closeTimeout = setTimeout(() => this.setState({visible: false}), CLOSE_DELAY_MS)
     }
 
     getMsg() {
@@ -65,6 +69,12 @@ export default class Tooltip extends React.Component {
         if (!visible) {
             // visible should be false for one cycle only
             this.setState({visible: true})
+        }
+    }
+
+    componentWillUnmount() {
+        if (this.closeTimeout) {
+            clearTimeout(this.closeTimeout)
         }
     }
 }
