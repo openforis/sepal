@@ -59,7 +59,7 @@ class _AssetDestination extends React.Component {
                 preferredTypes={[type]}
                 buttons={[
                     this.renderCopyIdButton(),
-                    this.renderExpandButton()
+                    this.renderAssetBrowserButton()
                 ]}
                 labelButtons={[this.renderStrategy()]}
                 destination
@@ -78,7 +78,7 @@ class _AssetDestination extends React.Component {
         )
     }
 
-    renderExpandButton() {
+    renderAssetBrowserButton() {
         return (
             <Button
                 key='expand'
