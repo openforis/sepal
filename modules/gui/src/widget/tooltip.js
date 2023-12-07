@@ -7,7 +7,7 @@ import React from 'react'
 import _ from 'lodash'
 import styles from './tooltip.module.css'
 
-const CLOSE_DELAY_MS = 2500
+const CLOSE_DELAY_MS = 250
 
 export default class Tooltip extends React.Component {
     constructor(props) {
