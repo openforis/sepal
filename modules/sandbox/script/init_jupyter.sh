@@ -10,7 +10,7 @@ export DISPLAY=:0.0
 apt-get install -y libzmq3-dev
 /usr/bin/python3 -m pip install jupyter
 /usr/bin/python3 /usr/local/bin/jupyter-notebook --generate-config
-/usr/bin/python3 -m pip install ipykernel==6.24.0
+/usr/bin/python3 -m pip install ipykernel
 /usr/bin/python3 -m ipykernel install
 
 /usr/bin/python3 -m pip install 'jupyterlab'
