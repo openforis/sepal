@@ -122,7 +122,7 @@ export const initializeLayers = ({recipeId, savedLayers, additionalFeatureLayerS
                     ]
                 }
             },
-            mode: 'stack'
+            mode: 'grid'
         }
     const actionBuilder = recipeActionBuilder(recipeId)
     actionBuilder('INITIALIZE_LAYER_SOURCES')

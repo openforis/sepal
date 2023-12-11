@@ -26,7 +26,7 @@ module.exports = {
         minIdleCount,
         maxIdleMilliseconds,
         ctx,
-        before = [require('#gee/jobs/ee/initialize')],
+        before = [require('#gee/jobs/ee/authenticate')],
         services,
         args = ctx => [{...ctx.request.query, ...ctx.request.body}, getCredentials(ctx)],
         worker$
@@ -34,6 +34,7 @@ module.exports = {
         Job()({
             jobName,
             jobPath,
+            schedulerName: 'GoogleEarthEngine',
             initArgs,
             maxConcurrency,
             minIdleCount,

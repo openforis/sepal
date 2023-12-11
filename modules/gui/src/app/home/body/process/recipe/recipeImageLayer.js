@@ -1,3 +1,4 @@
+import {AssetImageLayer} from './asset/assetImageLayer'
 import {BaytsAlertsImageLayer} from './baytsAlerts/baytsAlertsImageLayer'
 import {BaytsHistoricalImageLayer} from './baytsHistorical/baytsHistoricalImageLayer'
 import {CCDCSliceImageLayer} from './ccdcSlice/ccdcSliceImageLayer'
@@ -112,6 +113,10 @@ class _RecipeImageLayer extends React.Component {
             return (
                 <BaytsAlertsImageLayer {...props}/>
             )
+        case 'ASSET_MOSAIC':
+            return (
+                <AssetImageLayer {...props}/>
+            )
         default:
             return null
         }
@@ -135,13 +140,15 @@ class _RecipeImageLayer extends React.Component {
         const {recipe} = this.props
         if (!recipe) return
         const allVisualizations = this.toAllVis()
-        if (!allVisualizations.length) return
+        if (!allVisualizations.length) {
+            this.layer && this.layer.removeFromMap()
+            return
+        }
         if (prevVisParams) {
             const visParams = allVisualizations
-                .find(({
-                    id,
-                    bands
-                }) => id === prevVisParams.id && (prevVisParams.id || _.isEqual(bands, prevVisParams.bands)))
+                .find(({id, bands}) =>
+                    id === prevVisParams.id && (prevVisParams.id || _.isEqual(bands, prevVisParams.bands))
+                )
             if (!visParams) {
                 this.selectVisualization(allVisualizations[0])
             } else if (!_.isEqual(visParams, prevVisParams)) {

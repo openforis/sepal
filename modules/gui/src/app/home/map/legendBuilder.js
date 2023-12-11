@@ -252,7 +252,7 @@ class _Entry extends React.Component {
                 input={color}
                 errorMessage={[color, 'colorUnique']}
                 autoComplete={false}
-                onChange={e => this.notifyChange({color: e.target.value})}
+                onChange={value => this.notifyChange({color: value})}
             />
         )
     }
@@ -267,7 +267,7 @@ class _Entry extends React.Component {
                 errorMessage={[value, 'valueUnique']}
                 autoComplete={false}
                 disabled={locked}
-                onChange={e => this.notifyChange({value: e.target.value})}
+                onChange={value => this.notifyChange({value})}
             />
         )
     }
@@ -282,9 +282,7 @@ class _Entry extends React.Component {
                 autoFocus={!entry.label}
                 errorMessage={[label, 'labelUnique']}
                 autoComplete={false}
-                onChange={e => {
-                    this.notifyChange({label: e.target.value})
-                }}
+                onChange={value => this.notifyChange({label: value})}
             />
         )
     }
@@ -341,14 +339,12 @@ class ColorInput extends React.Component {
 
     render() {
         const {input, invalid, onChange} = this.props
-        const {swap} = this.state
         return (
             <ColorElement
                 color={input.value}
                 invalid={invalid}
                 tooltip={this.renderTooltip()}
                 tooltipPlacement='left'
-                onTooltipVisibleChange={visible => swap && !visible && this.setState({swap: false})}
                 onChange={value => {
                     input.set(value)
                     onChange(value)

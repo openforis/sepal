@@ -146,7 +146,7 @@ class _ListItem extends React.Component {
                 ? lookStyles.interactive
                 : null,
             this.isDisabled() ? lookStyles.disabled : null,
-            hovered ? lookStyles.hoverForced : null
+            hovered ? lookStyles.hoverForcedOn : null
         ]
     }
 

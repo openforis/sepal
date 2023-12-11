@@ -1,9 +1,9 @@
 import {ActivationContext} from 'widget/activation/activationContext'
+import {Assets} from 'widget/assets'
 import {PortalContainer} from 'widget/portal'
-import {catchError, exhaustMap, map, mergeMap, of, pipe, range, retryWhen, throwError, timer, zip} from 'rxjs'
 import {compose} from 'compose'
-import {connect, select} from 'store'
-import {getLogger} from 'log'
+import {connect} from 'store'
+import {exhaustMap, map, mergeMap, pipe, retryWhen, timer, zip} from 'rxjs'
 import {isFloating} from './menu/menuMode'
 import {msg} from 'translate'
 import Body from './body/body'
@@ -17,16 +17,14 @@ import api from 'api'
 import moment from 'moment'
 import styles from './home.module.css'
 
-const log = getLogger('schedule')
-
 const mapStateToProps = () => ({
     floatingMenu: isFloating(),
     floatingFooter: false
 })
 
-const timedRefresh$ = (api$, refreshSeconds = 60, name) =>
+const timedRefresh$ = (task$, refreshSeconds = 60, name) =>
     timer(0, refreshSeconds * 1000).pipe(
-        exhaustMap(() => api$()),
+        exhaustMap(count => task$(count)),
         retry({description: `Failed to refresh ${name}`})
     )
 
@@ -120,6 +118,7 @@ class Home extends React.Component {
                         <Footer className={styles.footer}/>
                     </div>
                     <PortalContainer/>
+                    <Assets/>
                 </div>
             </ActivationContext>
         )

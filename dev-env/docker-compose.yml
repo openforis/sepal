@@ -16,7 +16,6 @@ services:
     networks:
       - sepal
 
-
 networks:
   sepal:
     external: true

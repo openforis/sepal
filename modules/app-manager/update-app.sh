@@ -65,10 +65,8 @@ function update_venv {
         python3 -m venv $venv_path
         "$venv_path"/bin/python3 -m pip install --no-cache-dir ipykernel wheel >> "$venv_log_file"
         "$venv_path"/bin/python3 -m pip install --no-cache-dir numpy >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install --no-cache-dir gdal==3.4.3 >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install --no-cache-dir pyproj==3.4.1 >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install --no-cache-dir ipywidgets==7.7.2 >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install --no-cache-dir "git+https://github.com/openforis/earthengine-api.git@v0.1.343#egg=earthengine-api&subdirectory=python" >> "$venv_log_file"
+        "$venv_path"/bin/python3 -m pip install --no-cache-dir gdal==3.6.4 >> "$venv_log_file"
+        "$venv_path"/bin/python3 -m pip install --no-cache-dir "git+https://github.com/openforis/earthengine-api.git@v0.1.374#egg=earthengine-api&subdirectory=python" >> "$venv_log_file"
         "$venv_path"/bin/python3 -m pip install --no-cache-dir -r "$app_path"/requirements.txt >> "$venv_log_file"
         if [[ -d $current_venv_path ]] 
         then

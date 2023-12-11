@@ -59,7 +59,38 @@
     "asset": {
       "failedToLoad": "Failed to load EE asset",
       "notFound": "Asset not found",
-      "unauthorized": "You don't have access to this asset"
+      "unauthorized": "You don't have access to this asset",
+      "folder": "Folder",
+      "image": "Image",
+      "imageCollection": "Image collection",
+      "table": "Table",
+      "new": "New asset",
+      "recentAssets": "Recent assets",
+      "userAssets": "User assets",
+      "otherAssets": "Other assets",
+      "reload": "Reload assets",
+      "settings": "Asset settings",
+      "datasets": {
+        "community": {
+            "label": "Awesome GEE Community Datasets ({matchingResults} matches)",
+            "tooltip": "The awesome-gee-community-datasets are community-sourced geospatial datasets made available for use by the larger Google Earth Engine community and shared publicly as Earth Engine assets."
+        },
+        "gee": {
+            "label": "GEE Catalog ({matchingResults} matches)",
+            "tooltip": "Earth Engine's public data archive includes more than forty years of historical imagery and scientific datasets, updated and expanded daily."
+        },
+        "failedToLoad": "Failed to load Awesome GEE Community Datasets"
+      },
+      "copyId": {
+        "tooltip": "Copy asset id to clipboard",
+        "success": "Asset id copied to clipboard"
+      },
+      "browser": {
+        "tooltip": "Open asset browser",
+        "title": "Asset browser",
+        "assetName": "Name",
+        "assetLocation": "Location"
+      }
     },
     "bands": {
       "aerosol": "Aerosol",
@@ -181,6 +212,12 @@
       "select": "Select",
       "stop": "Stop"
     },
+    "clipboard": {
+        "copy": {
+            "success": "Copied to clipboard",
+            "failure": "Could not copy to clipboard"
+        }
+    },
     "eeTable": {
       "failedToLoad": "Failed to load EE Table",
       "notFound": "EE Table not found",
@@ -223,7 +260,7 @@
     "gee": {
       "asset": {
         "error": {
-          "wrongType": "Asset is of type '{actualType}' while '{expectedType}' is expected."
+          "wrongType": "Asset is of type {actualType} while the only allowed types are: {allowedTypes}."
         }
       },
       "classification": {
@@ -2295,6 +2332,127 @@
         },
         "tabPlaceholder": "Index_change"
       },
+      "asset": {
+        "create": "EE Asset",
+        "description": "Create and configure an image from an EE image or image collection asset.",
+        "panel": {
+          "assetDetails": {
+            "button": "SRC",
+            "form": {
+                "assetId": {
+                    "label": "EE Asset",
+                    "placeholder": "Select EE Asset..."
+                }
+            },
+            "title": "EE Asset",
+            "tooltip": "Select EE asset"
+          },
+          "dates": {
+            "button": "DAT",
+            "form": {
+              "fromDate": {
+                "label": "From date",
+                "malformed": "Invalid date"
+              },
+              "targetDate": {
+                "label": "Target date",
+                "malformed": "Invalid date"
+              },
+              "toDate": {
+                "label": "To date",
+                "malformed": "Invalid date"
+              },
+              "type": {
+                "label": "Type",
+                "ALL_DATES": {
+                  "label": "All dates",
+                  "tooltip": "Include images from all dates."
+                },
+                "CUSTOM_DATE_RANGE": {
+                  "label": "Date range",
+                  "tooltip": "Include images from a custom date range."
+                },
+                "YEAR": {
+                  "label": "Year",
+                  "tooltip": "Include images from a specified calendar year."
+                }
+              },
+              "year": {
+                "label": "Year",
+                "malformed": "Not a year"
+              }
+            },
+            "title": "Dates",
+            "tooltip": "Specify dates"
+          },
+          "filter": {
+            "button": "FLT",
+            "filters": {
+                "title": "Image filters"
+            },
+            "noFilters": "No filters added.",
+            "emptyFilters": "Empty",
+            "remove": {
+                "tooltip": "Remove filters."
+            },
+            "title": "Collection Filter",
+            "tooltip": "Filter down collection to images of interest"
+          },
+          "mask": {
+            "button": "MSK",
+            "constraints": {
+                "title": "Image mask constraints"
+            },
+            "noConstraints": "No constraints added.",
+            "emptyConstraints": "Empty",
+            "remove": {
+                "tooltip": "Remove masking constraints."
+            },
+            "title": "Mask imagery",
+            "tooltip": "Mask out unwanted areas of imagery"
+          },
+          "composite": {
+            "button": "CMP",
+            "form": {
+                "type": {
+                    "label": "Type",
+                    "MOSAIC": {
+                        "label": "Mosaic",
+                        "tooltip": "Simple spatial composition"
+                    },
+                    "MEDIAN": {
+                        "label": "Median",
+                        "tooltip": "Take the median of each band for the images in the collection"
+                    },
+                    "MEAN": {
+                        "label": "Mean",
+                        "tooltip": "Take the mean of each band for the images in the collection"
+                    },
+                    "MIN": {
+                        "label": "Min",
+                        "tooltip": "Use the minimum value of each band for the images in the collection"
+                    },
+                    "MAX": {
+                        "label": "Max",
+                        "tooltip": "Use the maximum value of each band for the images in the collection"
+                    },
+                    "MODE": {
+                        "label": "Mode",
+                        "tooltip": "Use the most common value of each band for the images in the collection. This only make sense for categorical bands"
+                    }
+                }
+            },
+            "title": "Composite",
+            "tooltip": "Combine images in image collection into a single image"
+          }
+        },
+        "layers": {
+          "imageLayer": {
+            "preSets": "Pre-sets"
+          }
+        },
+        "tabPlaceholder": "EE_Asset"
+      },
       "masking": {
         "create": "Masking",
         "description": "Apply a mask to an image.",
@@ -2381,6 +2539,10 @@
                 "info": "{buffer} km buffer",
                 "label": "Buffer",
                 "tooltip": "Area of interest and preview will take longer to show up when buffering is enabled."
+              },
+              "assetBounds": {
+                "description": "Use bounds of selected EE asset.",
+                "title": "EE asset bounds"
               },
               "country": {
                 "area": {
@@ -3097,7 +3259,6 @@
         },
         "tabPlaceholder": "Radar_mosaic"
       },
-
       "baytsAlerts": {
         "create": "BAYTS Alerts",
         "description": "Generate forest change alerts using Sentinel-1 time-series and probabilistic change detection (based on the RADD processing pipeline).",
@@ -3491,7 +3652,6 @@
         },
         "tabPlaceholder": "BAYTS_historical"
       },
-
       "phenology": {
         "create": "Land surface phenology",
         "description": "Create land surface phenology.",
@@ -4200,8 +4360,14 @@
         "updating": "Updating..."
       },
       "googleAccount": {
+        "form": {
+            "projectId": {
+                "label": "Google Cloud project",
+                "updated": "Google Cloud project has been updated"
+            }
+        },
         "connect": {
-          "label": "Connect your Google account"
+          "label": "Connect"
         },
         "connected": {
           "info": "You have full access to SEPAL. If you disconnect your Google account from SEPAL, some features (like exporting to Earth Engine assets) will not be available.",
@@ -4209,7 +4375,7 @@
           "title": "Your SEPAL account is connected to your Google account"
         },
         "disconnect": {
-          "label": "Disconnect your Google account",
+          "label": "Disconnect",
           "warning": {
             "message": "Disconnecting your Google account would cause termination of any task started while connected. Tasks currently running: {taskCount}.",
             "title": "Warning"
@@ -4219,6 +4385,7 @@
           "info": "You have limited access to SEPAL. If you connect your Google account to SEPAL, all features (including exporting to Earth Engine assets) will be available.",
           "label": "Disconnected",
           "success": "SEPAL is now disconnected from your Google account.",
+          "projectNeeded": "SEPAL has been disconnected from your Google account, as Google Earth Engine users are now required to use a Cloud Project.|Please reconnect and select a Cloud Project.|If you need to create one, please login to the Earth Engine Code Editor, and click on \"Register a new Cloud Project\" from the user settings.",
           "title": "Your SEPAL account is not connected to your Google account"
         },
         "label": "Google account",
@@ -4478,8 +4645,8 @@
     "widget": {
       "assetDestination": {
         "exists": {
-          "notReplacable": "This asset already exists, but isn't an image or image collection, so you cannot overwrite it",
-          "replacable": "This asset already exists, you have to confirm if you want to overwrite it or not"
+          "notReplaceable": "This asset already exists, but isn't an image or image collection, so you cannot overwrite it",
+          "replaceable": "This asset already exists, you have to confirm if you want to overwrite it or not"
         },
         "loadError": "Unable to load asset",
         "replace": {
@@ -4518,9 +4685,17 @@
         }
       },
       "imageConstraints": {
+        "bit": {
+          "label": "bit",
+          "tooltip": "Apply a bitmask to the band. This is typically used for QA bands"
+        },
         "band": {
           "label": "Band",
           "notSelected": "[No band selected]"
+        },
+        "property": {
+          "label": "Property",
+          "notSelected": "[No property selected]"
         },
         "image": {
           "label": "Image",
@@ -4553,6 +4728,14 @@
             "label": "Range"
           }
         },
+        "bitRange": {
+          "from": {
+            "label": "From bit"
+          },
+          "to": {
+            "label": "To bit"
+          }
+        },
         "range": {
           "from": {
             "label": "From value"
@@ -4563,6 +4746,10 @@
         },
         "value": {
           "label": "Value"
+        },
+        "inclusive": {
+          "label": "incl",
+          "tooltip": "Determine if value is inclusive or not"
         }
       },
       "legend": {

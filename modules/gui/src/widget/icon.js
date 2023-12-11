@@ -61,8 +61,9 @@ export default class Icon extends React.Component {
 
     renderIcon() {
         const {name, type, size, attributes} = this.props
-        const filteredAttributes = _.omit({spin: this.isSpinner(name), ...attributes}, OMITTED_ATTRIBUTES)
-        const icon = [fontAwesomeCollection(type || 'solid'), name]
+        const spin = this.isSpinner(name)
+        const filteredAttributes = _.omit({spin, ...attributes}, OMITTED_ATTRIBUTES)
+        const icon = [fontAwesomeCollection(type && !spin ? type : 'solid'), name]
         return (
             <span className={this.classNames()}>
                 <FontAwesomeIcon

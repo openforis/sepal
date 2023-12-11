@@ -5,6 +5,7 @@ import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
+import {copyToClipboard} from 'clipboard'
 import {debounceTime, throttleTime} from 'rxjs'
 import {formatCoordinates} from 'coords'
 import {msg} from 'translate'
@@ -15,7 +16,6 @@ import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import clipboard from 'clipboard'
 import format from 'format'
 import styles from './mapInfo.module.css'
 
@@ -123,23 +123,25 @@ class _MapInfoPanel extends React.Component {
         )
     }
 
-    copyPlainCenterCoordinates(center) {
-        clipboard.copy(this.formatCenter(center))
-        this.notify()
+    copyPlainCenterCoordinates({lat, lng}) {
+        copyToClipboard(
+            `[${lng}, ${lat}]`,
+            msg('map.info.coordinatesCopied')
+        )
     }
 
-    copyEECenterCoordinates(center) {
-        clipboard.copy(`ee.Geometry.Point(${this.formatCenter(center)})`)
-        this.notify()
+    copyEECenterCoordinates({lat, lng}) {
+        copyToClipboard(
+            `ee.Geometry.Point([${lng}, ${lat}])`,
+            msg('map.info.coordinatesCopied')
+        )
     }
-
+    
     copyEESetCenter({lat, lng}, zoom) {
-        clipboard.copy(`Map.setCenter(${lng}, ${lat}, ${zoom})`)
-        this.notify()
-    }
-
-    formatCenter({lat, lng}) {
-        return `[${lng}, ${lat}]`
+        copyToClipboard(
+            `Map.setCenter(${lng}, ${lat}, ${zoom})`,
+            msg('map.info.coordinatesCopied')
+        )
     }
 
     notify() {

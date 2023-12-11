@@ -25,6 +25,8 @@ class _Button extends React.Component {
         const {onClickHold} = props
         this.button = onClickHold && React.createRef()
         this.handleClick = this.handleClick.bind(this)
+        this.handleMouseEnter = this.handleMouseEnter.bind(this)
+        this.handleMouseLeave = this.handleMouseLeave.bind(this)
         this.handleMouseOver = this.handleMouseOver.bind(this)
         this.handleMouseOut = this.handleMouseOut.bind(this)
         this.handleMouseDown = this.handleMouseDown.bind(this)
@@ -59,26 +61,22 @@ class _Button extends React.Component {
     }
 
     isHoverRequired() {
-        const {tooltip, tooltipPanel} = this.props
-        return this.isLinked() || tooltip || tooltipPanel
+        const {tooltip} = this.props
+        return this.isLinked() || tooltip
     }
 
-    isHoverDisabled() {
+    isHoverForcedOff() {
         const {hover} = this.props
-        return _.isNil(hover)
-            ? !this.isHoverRequired()
-            : hover === false
+        return hover === false || !this.isHoverRequired()
     }
 
-    isHoverForced() {
+    isHoverForcedOn() {
         const {hover} = this.props
-        return _.isNil(hover)
-            ? false
-            : hover === true
+        return hover === true
     }
 
     classNames() {
-        const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle, hint,
+        const {chromeless, className, additionalClassName, look, size, shape, air, labelStyle, hint, dimmed,
             alignment, width, onClickHold, disableTransitions, buttonGroup: {joinLeft, joinRight} = {}} = this.props
         return className ? className : [
             styles.button,
@@ -93,9 +91,11 @@ class _Button extends React.Component {
             lookStyles.look,
             lookStyles[look],
             chromeless ? lookStyles.chromeless : null,
-            this.isHoverForced() ? lookStyles.hoverForced : null,
-            this.isHoverDisabled() ? lookStyles.hoverDisabled : null,
-            this.isNonInteractive() ? lookStyles.nonInteractive : null,
+            this.isHoverForcedOn() ? lookStyles.hoverForcedOn : null,
+            this.isHoverForcedOff() ? lookStyles.hoverForcedOff : null,
+            this.isNonInteractive() ? lookStyles.disabled : null,
+            this.isHoverRequired() ? null : lookStyles.passive,
+            dimmed ? lookStyles.dimmed : null,
             disableTransitions ? lookStyles.noTransitions : null,
             onClickHold ? styles.hold : null,
             hint ? styles.hint : null,
@@ -105,6 +105,16 @@ class _Button extends React.Component {
 
     preventDefault(e) {
         e.preventDefault()
+    }
+
+    handleMouseEnter(e) {
+        const {onMouseEnter} = this.props
+        onMouseEnter && onMouseEnter(e)
+    }
+
+    handleMouseLeave(e) {
+        const {onMouseLeave} = this.props
+        onMouseLeave && onMouseLeave(e)
     }
 
     handleMouseOver(e) {
@@ -158,26 +168,26 @@ class _Button extends React.Component {
             : {[keybinding]: this.handleClick}
     }
 
-    renderKeybinding([current, ...next]) {
+    renderKeybinding(contents) {
         const {keybinding, hidden} = this.props
         return keybinding
             ? (
                 <Keybinding
                     keymap={this.getKeymap(keybinding)}
                     disabled={hidden || !this.isActive()}>
-                    {current(next)}
+                    {contents}
                 </Keybinding>
             )
-            : current(next)
+            : contents
     }
 
-    renderVisible([current, ...next]) {
+    renderVisible(contents) {
         const {hidden} = this.props
-        return hidden ? null : current(next)
+        return hidden ? null : contents
     }
 
     // The Tooltip component stops propagation of events, thus the ref has to be on a wrapping element.
-    renderWrapper([current, ...next]) {
+    renderWrapper(contents) {
         const {onClickHold} = this.props
         const style = {
             '--click-hold-delay-ms': `${CLICK_CANCEL_DELAY_MS}ms`,
@@ -185,24 +195,24 @@ class _Button extends React.Component {
         }
         return onClickHold ? (
             <span ref={this.button} className={styles.wrapper} style={style}>
-                {current(next)}
+                {contents}
             </span>
-        ) : current(next)
+        ) : contents
     }
 
-    renderLink([current, ...next]) {
+    renderLink(contents) {
         const {route, linkUrl} = this.props
         if (!route && !linkUrl) {
-            return current(next)
+            return contents
         }
         if (route && linkUrl) {
             throw Error('Cannot specify route and linkUrl at the same time.')
         }
         if (route) {
-            return this.renderRouteLink(current(next))
+            return this.renderRouteLink(contents)
         }
         if (linkUrl) {
-            return this.renderPlainLink(current(next))
+            return this.renderPlainLink(contents)
         }
     }
 
@@ -228,59 +238,57 @@ class _Button extends React.Component {
             : contents
     }
 
-    renderTooltip([current, ...next]) {
-        const {tooltip, tooltipPanel, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipVisible, tooltipClickTrigger, tooltipAllowedWhenDisabled} = this.props
-        const overlayInnerStyle = tooltipPanel ? {padding: 0} : null
-        const message = tooltipPanel || tooltip
+    renderTooltip(contents) {
+        const {tooltip, tooltipPlacement, tooltipDisabled, tooltipDelay, tooltipOnVisible, tooltipVisible, tooltipClickTrigger, tooltipAllowedWhenDisabled} = this.props
         const visibility = _.isNil(tooltipVisible) ? {} : {visible: tooltipVisible}
-        return (tooltipAllowedWhenDisabled || this.isActive()) && message ? (
+        return (tooltipAllowedWhenDisabled || this.isActive()) && tooltip ? (
             <Tooltip
-                msg={message}
+                msg={tooltip}
                 placement={tooltipPlacement}
                 delay={tooltipDelay}
-                hoverTrigger={!tooltipPanel}
+                hoverTrigger={true}
                 clickTrigger={tooltipClickTrigger || !this.isLinked()}
-                overlayInnerStyle={overlayInnerStyle}
                 overlayStyle={{visibility: tooltipDisabled ? 'hidden' : 'visible'}}
                 onVisibleChange={tooltipOnVisible}
                 {...visibility}
             >
-                {current(next)}
+                {contents}
             </Tooltip>
-        ) : current(next)
+        ) : contents
     }
 
-    renderDisabled([current, ...next]) {
+    renderDisabled(contents) {
         const {tooltipAllowedWhenDisabled} = this.props
         return tooltipAllowedWhenDisabled && !this.isActive()
             ? (
                 <div style={{pointerEvents: 'all'}}>
-                    {current(next)}
+                    {contents}
                 </div>
-            ) : current(next)
+            ) : contents
     }
 
-    renderButton([current, ...next]) {
-        const {type, style, tabIndex, forwardedRef} = this.props
-        return (
-            <button
-                ref={forwardedRef}
-                type={type}
-                className={this.classNames()}
-                style={this.isActive() ? style : {...style, pointerEvents: 'none'}}
-                tabIndex={tabIndex}
-                disabled={!this.isActive()}
-                onMouseOver={this.handleMouseOver}
-                onMouseOut={this.handleMouseOut}
-                onMouseDown={this.handleMouseDown}
-                onClick={this.handleClick}>
-                {current(next)}
-            </button>
-        )
+    renderButton(contents) {
+        const {type, style, tabIndex, innerButton, forwardedRef} = this.props
+        const elementType = innerButton ? 'div' : 'button'
+        const props = {
+            ref: forwardedRef,
+            type: innerButton ? null : type,
+            className: this.classNames(),
+            style: this.isActive() ? style : {...style, pointerEvents: 'none'},
+            tabIndex,
+            disabled: !this.isActive(),
+            onMouseEnter: this.handleMouseEnter,
+            onMouseLeave: this.handleMouseLeave,
+            onMouseOver: this.handleMouseOver,
+            onMouseOut: this.handleMouseOut,
+            onMouseDown: this.handleMouseDown,
+            onClick: this.handleClick
+        }
+        return React.createElement(elementType, props, contents)
     }
 
     renderIcon() {
-        const {busy, icon, iconType, iconVariant, iconDimmed, iconClassName, iconAttributes} = this.props
+        const {busy, icon, iconType, iconVariant, iconDimmed, iconClassName, iconAttributes, buttonGroup: {dimmed: buttonGroupDimmed} = {}} = this.props
         return React.isValidElement(icon)
             ? icon
             : (
@@ -288,7 +296,7 @@ class _Button extends React.Component {
                     name={busy ? 'spinner' : icon}
                     type={iconType}
                     variant={iconVariant}
-                    dimmed={iconDimmed}
+                    dimmed={iconDimmed || buttonGroupDimmed}
                     className={iconClassName}
                     attributes={iconAttributes}
                 />
@@ -308,7 +316,7 @@ class _Button extends React.Component {
         return content ? content : (
             <div className={styles.contents}>
                 {icon && iconPlacement === 'left' ? this.renderIcon() : null}
-                {label ? this.renderLabel() : null}
+                {_.isNil(label) ? null : this.renderLabel()}
                 {icon && iconPlacement === 'right' ? this.renderIcon() : null}
                 {tail}
             </div>
@@ -316,7 +324,7 @@ class _Button extends React.Component {
     }
 
     render() {
-        const [current, ...next] = [
+        const renderSteps = [
             this.renderKeybinding,
             this.renderVisible,
             this.renderWrapper,
@@ -326,7 +334,8 @@ class _Button extends React.Component {
             this.renderButton,
             this.renderContents
         ]
-        return current(next)
+        
+        return renderSteps.reduceRight((content, renderStep) => renderStep(content), null)
     }
 
     getContent() {
@@ -415,6 +424,7 @@ Button.propTypes = {
     chromeless: PropTypes.any,
     className: PropTypes.string,
     content: PropTypes.any,
+    dimmed: PropTypes.any,
     disabled: PropTypes.any,
     disableTransitions: PropTypes.any,
     downloadFilename: PropTypes.any,
@@ -429,6 +439,7 @@ Button.propTypes = {
     iconPlacement: PropTypes.oneOf(['left', 'right']),
     iconType: PropTypes.string,
     iconVariant: PropTypes.string,
+    innerButton: PropTypes.any,
     keybinding: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
     label: PropTypes.any,
     labelStyle: PropTypes.oneOf(['default', 'smallcaps', 'smallcaps-highlight']),
@@ -448,14 +459,14 @@ Button.propTypes = {
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
     tooltipOnVisible: PropTypes.func,
-    tooltipPanel: PropTypes.any,
     tooltipPlacement: PropTypes.any,
-    tooltipVisible: PropTypes.any,
     type: PropTypes.oneOf(['button', 'submit', 'reset']),
     width: PropTypes.oneOf(['fit', 'fill', 'max']),
     onClick: PropTypes.func,
     onClickHold: PropTypes.func,
     onMouseDown: PropTypes.func,
+    onMouseEnter: PropTypes.func,
+    onMouseLeave: PropTypes.func,
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func
 }
@@ -463,6 +474,7 @@ Button.propTypes = {
 Button.defaultProps = {
     air: 'normal',
     alignment: 'center',
+    elementType: 'button',
     iconPlacement: 'left',
     iconVariant: 'normal',
     labelStyle: 'default',

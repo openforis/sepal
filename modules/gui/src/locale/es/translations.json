@@ -3683,7 +3683,7 @@
         },
         "googleAccount": {
             "connect": {
-                "label": "Conecta tu cuenta de Google"
+                "label": "Conectar"
             },
             "connected": {
                 "info": "Tienes acceso completo a SEPAL. Si desconectas tu cuenta de Google de SEPAL, algunas funciones (como la exportación a assets de Earth Engine) no estarán disponibles.",
@@ -3691,7 +3691,7 @@
                 "title": "Tu cuenta SEPAL está conectada a tu cuenta de Google"
             },
             "disconnect": {
-                "label": "Desconecta tu cuenta de Google",
+                "label": "Desconectar",
                 "warning": {
                     "message": "La desconexión de tu cuenta de Google provocará la interrupción de cualquier tarea iniciada mientras estas conectado. Tareas actualmente en ejecución: {taskCount}.",
                     "title": "Advertencia"
@@ -3959,8 +3959,8 @@
     "widget": {
         "assetDestination": {
             "exists": {
-                "notReplacable": "",
-                "replacable": ""
+                "notReplaceable": "",
+                "replaceable": ""
             },
             "loadError": "",
             "replace": {

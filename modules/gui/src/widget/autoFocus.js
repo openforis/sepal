@@ -1,5 +1,6 @@
 import {compose} from 'compose'
 import {connect} from 'store'
+import {isMobile} from 'widget/userAgent'
 import {withEnableDetector} from 'enabled'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -23,7 +24,7 @@ class AutoFocus extends React.Component {
 
     componentDidMount() {
         const {focusEnabled} = this.props
-        if (focusEnabled) {
+        if (!isMobile() && focusEnabled) {
             this.update()
         } else {
             this.completed()

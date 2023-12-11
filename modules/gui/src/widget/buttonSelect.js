@@ -146,7 +146,7 @@ class ButtonSelect extends React.Component {
                     ref={this.list}
                     className={optionsClassName || styles.options}
                     options={flattenedOptions}
-                    selectedOption={selectedOption}
+                    selectedValue={selectedOption?.value}
                     onSelect={this.onSelect}
                     onCancel={this.hideOptions}
                     autoCenter={!selected}

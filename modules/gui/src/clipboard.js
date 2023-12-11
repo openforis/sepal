@@ -1,10 +1,17 @@
-export default {
-    copy: text => {
-        const element = document.createElement('textarea')
-        element.value = text
-        document.body.appendChild(element)
-        element.select()
-        document.execCommand('copy')
-        document.body.removeChild(element)
-    }
-}
+import {msg} from 'translate'
+import Notifications from 'widget/notifications'
+
+export const copyToClipboard = (value, successMessage, failureMessage) =>
+    navigator.clipboard.writeText(value)
+        .then(() => {
+            Notifications.success({
+                message: successMessage || msg('clipboard.copy.success'),
+                timeout: 3
+            })
+        })
+        .catch(() => {
+            Notifications.error({
+                message: failureMessage || msg('clipboard.copy.failure'),
+                timeout: 3
+            })
+        })

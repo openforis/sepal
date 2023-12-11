@@ -1,29 +1,41 @@
-import {SEPAL_SRC, ENV_FILE} from './config.js'
+import {compose} from './compose.js'
 import {start} from './start.js'
 import {exec} from './exec.js'
-import {exit, getModules, isModule, showModuleStatus, MESSAGE} from './utils.js'
+import {getModules, isModule, showModuleStatus, MESSAGE, firstLine} from './utils.js'
 import {getBuildDeps, getBuildRunDeps} from './deps.js'
 import {log} from './log.js'
 import _ from 'lodash'
 
 const buildModule = async (module, options = {}, pull) => {
-    try {
-        if (isModule(module)) {
-            showModuleStatus(module, MESSAGE.BUILDING)
-            const buildOptions = _.compact([
-                !options.cache ? '--no-cache' : null,
-                !options.cache && pull ? '--pull' : null,
-            ]).join(' ')
+    if (isModule(module)) {
+        showModuleStatus(module, MESSAGE.BUILDING)
+        const gitCommit = firstLine(
             await exec({
-                command: './script/docker-compose-build.sh',
-                args: [module, SEPAL_SRC, ENV_FILE, buildOptions],
+                command: 'git',
+                args: [
+                    'rev-parse',
+                    'HEAD'
+                ],
                 showStdOut: !options.quiet
             })
-            showModuleStatus(module, MESSAGE.BUILT)
-        }
-    } catch (error) {
-        showModuleStatus(module, MESSAGE.ERROR)
-        exit({error})
+        )
+
+        await compose({
+            module,
+            command: 'build',
+            args: [
+                !options.cache ? '--no-cache' : null,
+                !options.cache && pull ? '--pull' : null,
+            ],
+            env: {
+                ...process.env,
+                BUILD_NUMBER: 'latest',
+                GIT_COMMIT: gitCommit
+            },
+            showStdOut: !options.quiet
+        })
+            
+        showModuleStatus(module, MESSAGE.BUILT)
     }
 }
 

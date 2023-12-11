@@ -54,7 +54,7 @@ const makePackage = async (name, srcPath, binPath, tmpPath) => {
     const success = await bundlePackage(name, srcPath, binPath, tmpPath)
         && await verifyPackage(name, tmpPath)
         && await deployPackage(name, srcPath, binPath, tmpPath)
-    success && log.info(`Packaged ${name} (${srcPath})`)
+    success && log.info(`Packaged ${name} (${binPath})`)
     return success
 }
 

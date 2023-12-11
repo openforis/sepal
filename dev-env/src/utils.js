@@ -43,8 +43,11 @@ export const MESSAGE = {
     CLEANING_PACKAGES: chalk.magenta('CLEANING PACKAGES...'),
     INSTALLING_PACKAGES: chalk.magenta('INSTALLING PACKAGES...'),
     INSTALLED_PACKAGES: chalk.magentaBright('INSTALLED PACKAGES'),
+    TESTING_PACKAGES: chalk.magenta('TESTING PACKAGES...'),
+    TESTED_PACKAGES: chalk.magentaBright('TESTED PACKAGES'),
     SKIPPED: chalk.grey('SKIPPED'),
     RUNNING: chalk.greenBright('RUNNING'),
+    WATCHING: chalk.greenBright('WATCHING'),
     EXITED: chalk.redBright('EXITED'),
     RESTARTING: chalk.yellowBright('RESTARTING'),
     HEALTH: {
@@ -53,6 +56,7 @@ export const MESSAGE = {
         STARTING: chalk.yellowBright('STARTING')
     }
 }
+
 const formatModule = (module, {pad = true} = {}) =>
     chalk.cyanBright(pad ? module : module)
 
@@ -122,12 +126,30 @@ export const getModules = modules => {
     }
 }
 
+export const modulePath = module =>
+    `${SEPAL_SRC}/modules/${module}`
+
 export const getServices = async module => {
     try {
-        return JSON.parse(await exec({command: './script/docker-compose-ps.sh', args: [module, SEPAL_SRC, ENV_FILE]}))
-            .map(
-                ({Name: name, State: state, Health: health}) => ({name, state: state.toUpperCase(), health: health.toUpperCase()})
-            )
+        const ps = await exec({
+            command: 'docker',
+            args: [
+                'compose',
+                `--env-file=${ENV_FILE}`,
+                'ps',
+                '--format',
+                'json'
+            ],
+            cwd: `${SEPAL_SRC}/modules/${module}`
+        })
+
+        return ps
+            .split('\n')
+            .filter(line => line.length)
+            .map(line => {
+                const {Name: name, State: state, Health: health} = JSON.parse(line)
+                return {name, state: state.toUpperCase(), health: health.toUpperCase()}
+            })
     } catch (error) {
         log.error('Could not get health', error)
         return null
@@ -137,7 +159,18 @@ export const getServices = async module => {
 const getBaseStatus = async modules => {
     const STATUS_MATCHER = /(\w+)\((\d+)\)/
     try {
-        return JSON.parse(await exec({command: './script/docker-compose-ls.sh'}))
+        const ls = await exec({
+            command: 'docker',
+            args: [
+                'compose',
+                'ls',
+                '--all',
+                '--format',
+                'json'
+            ]
+        })
+
+        return JSON.parse(ls)
             .map(
                 ({Name: module, Status: status}) => ({
                     module,
@@ -268,7 +301,8 @@ export const exit = reason => {
         process.exit(0)
     } else if (reason.error) {
         const error = reason.error
-        log.error(chalk.bgRed('Error'), error.stderr || error)
+        log.error(chalk.bgRed('Error\n'))
+        log.error(error.stderr || error)
         process.exit(1)
     } else if (reason.interrupted) {
         log.info(chalk.yellow('Interrupted (SIGINT)'))
@@ -278,3 +312,6 @@ export const exit = reason => {
         process.exit(3)
     }
 }
+
+export const firstLine = text =>
+    text.split('\n')[0]

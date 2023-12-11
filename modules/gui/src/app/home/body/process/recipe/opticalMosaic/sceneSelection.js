@@ -6,8 +6,8 @@ import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalM
 import {Scene} from './scene'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {compose} from 'compose'
+import {isPartiallyEqual} from 'hash'
 import {msg} from 'translate'
-import {objectEquals} from 'collections'
 import {selectFrom} from 'stateUtils'
 import {withActivatable} from 'widget/activation/activatable'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -162,7 +162,7 @@ class SceneSelection extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (!objectEquals(this.props, prevProps, ['sceneAreaId', 'dates', 'sources', 'sceneSelectionOptions']))
+        if (!isPartiallyEqual(this.props, prevProps, ['sceneAreaId', 'dates', 'sources', 'sceneSelectionOptions']))
             this.loadScenes()
     }
 

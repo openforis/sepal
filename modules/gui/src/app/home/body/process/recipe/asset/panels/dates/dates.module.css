@@ -1,0 +1,11 @@
+.panel {
+    max-width: 20rem;
+}
+
+.description {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: gray;
+    font-size: .9rem;
+}

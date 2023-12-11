@@ -19,7 +19,7 @@ const serveFile = async ({res, path, type}) => {
     try {
         const requestStat = await stat(path)
         if (requestStat.isFile()) {
-            log.debug(`Serving ${type}:`, path)
+            log.info(`Serving ${type}:`, path)
             res.setHeader('Content-Disposition', `attachment; filename="${path}"`)
             fs.createReadStream(path).pipe(res)
             return true

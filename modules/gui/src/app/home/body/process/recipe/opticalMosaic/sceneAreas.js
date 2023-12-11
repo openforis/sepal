@@ -5,8 +5,8 @@ import {
 } from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'
+import {isPartiallyEqual} from 'hash'
 import {msg} from 'translate'
-import {objectEquals} from 'collections'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {withTab} from 'widget/tabs/tabContext'
@@ -41,7 +41,7 @@ class _SceneAreas extends React.Component {
 
     componentDidUpdate(prevProps) {
         const {stream, sceneAreas, aoi, source, manualSelection} = this.props
-        const sceneAreasChanged = !objectEquals(this.props, prevProps, ['aoi', 'source'])
+        const sceneAreasChanged = !isPartiallyEqual(this.props, prevProps, ['aoi', 'source'])
         if (manualSelection && (sceneAreasChanged || (!sceneAreas.length && !stream('LOAD_SCENE_AREAS').active))) {
             this.loadSceneAreas(aoi, source)
         }

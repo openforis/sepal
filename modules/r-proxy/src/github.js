@@ -69,7 +69,7 @@ const ensureGitHubPackageInstalled = async (name, path) =>
         ? await installLocalPackage(name, getGitHubRepoPath(SRC, path))
         : await installRemotePackage(name, getGitHubTarget(path))
         
-const makeGitHubPackage = async (name, path) => {
+const makeGitHubPackage = async ({name, path}) => {
     const srcPath = Path.join(GITHUB_ROOT, SRC, path)
     const binPath = Path.join(GITHUB_ROOT, BIN, path)
     const tmpPath = Path.join(GITHUB_ROOT, TMP, path)
@@ -80,7 +80,7 @@ const makeGitHubPackage = async (name, path) => {
     
 const updateGitHubPackage = async ({name, path}) => {
     log.info(`Updating: ${name} (${path})`)
-    const success = await makeGitHubPackage(name, path, {force: true})
+    const success = await makeGitHubPackage({name, path})
     return {success}
 }
     

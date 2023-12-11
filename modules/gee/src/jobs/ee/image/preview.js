@@ -9,7 +9,7 @@ const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
     const log = require('#sepal/log').getLogger('ee')
     const _ = require('lodash')
     if (visParams) {
-        const {getImage$} = ImageFactory(recipe, {selection: visParams.bands, baseBands: visParams.baseBands, ...otherArgs})
+        const {getImage$} = ImageFactory(recipe, {selection: distinct(visParams.bands), baseBands: distinct(visParams.baseBands), ...otherArgs})
         const getMap$ = (image, visualization) => {
             const {type, bands, min, max, inverted, gamma, palette} = visualization
             const range = () => ({
@@ -27,8 +27,7 @@ const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
                     throw Error('A categorical visualization must contain either values or min and max')
                 }
                 if (!palette || palette.length !== values.length) {
-                    log.fatal(palette, values, visualization.values)
-                    throw Error('Visualization must contain a palette with the same number of colors as categorical values')
+                    throw Error(`Visualization must contain a palette with the same number of colors as categorical values: ${JSON.stringify({palette, values})}`)
                 }
 
                 const minValue = values[0]
@@ -115,6 +114,8 @@ const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
         )
     }
 }
+
+const distinct = array => [...new Set(array)]
 
 module.exports = job({
     jobName: 'Preview',

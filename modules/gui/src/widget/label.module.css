@@ -43,15 +43,10 @@
     text-align: right;
 }
 
-.label .info {
-    margin-left: .5rem;
-}
-
 .label .info:hover {
     color: #e0e0e0;
 }
 
 .error {
     color: var(--error-color);
-    margin-right: .25rem;
 }

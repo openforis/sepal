@@ -12,10 +12,6 @@ export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
 
 R CMD javareconf
 
-# Install CRAN packages via r-proxy
-
-R -e "install.packages('rgdal', version = '1.3-9', dependencies = TRUE, repos = 'http://r-proxy:8180/', upgrade = 'never')"
-
 R -e "install.packages(c(\
         'abind',\
         'askpass',\
@@ -201,7 +197,6 @@ R -e "install.packages(c(\
         'reshape2',\
         'reticulate',\
         'rgbif',\
-        'rgeos',\
         'rgexf',\
         'RgoogleMaps',\
         'rhandsontable',\
@@ -295,11 +290,13 @@ R -e "install.packages(c(\
         'yaml',\
         'zeallot',\
         'zoo'
-    ), repos='http://r-proxy:8180/', upgrade = 'never')"
+    ), repos='http://r-proxy:8180/')"
 
-# Install GitHub packages via r-proxy
+# Install archived packages - this doesn't work through r-proxy
+R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/rgdal/rgdal_1.6-7.tar.gz')"
+R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/rgeos/rgeos_0.6-4.tar.gz')"
 
-R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/', upgrade = 'never')"
+R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/')"
 
 R -e "remotes::install_url(c(\
         'http://r-proxy:8180/github/r-barnes/dggridR/archive/refs/heads/master.tar.gz',\
@@ -307,5 +304,5 @@ R -e "remotes::install_url(c(\
         'http://r-proxy:8180/github/azvoleff/gfcanalysis/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/loicdtx/bfastSpatial/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/jreiche/bayts/archive/refs/heads/master.tar.gz',\
-        'http://r-proxy:8180/github/cran/gdalUtils/archive/refs/heads/master.tar.gz'
-    ), repos='http://r-proxy:8180/', build = FALSE, upgrade = 'never')"
+        'http://r-proxy:8180/github/cran/gdalUtils/archive/refs/heads/master.tar.gz'\
+    ), repos='http://r-proxy:8180/', build = FALSE)"

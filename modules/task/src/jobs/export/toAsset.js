@@ -61,7 +61,7 @@ const imageToAssetCollection$ = (taskId, {
                 : throwError(() => 'Asset ID already exists, but isn\'t an image or image collection')
         return concat(
             delete$(),
-            ee.createImageCollection$(assetId, {}, 1)
+            ee.createImageCollection$(assetId, image.toDictionary(['system:footprint']), 1)
         )
     }
 

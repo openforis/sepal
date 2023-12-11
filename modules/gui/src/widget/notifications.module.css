@@ -148,6 +148,10 @@
     color: #ccc;
 }
 
+.notification .messageLine:not(:first-child) {
+    margin-top: .5rem;
+}
+
 .notification .error {
     color: #ccc;
     font-size: .9rem;

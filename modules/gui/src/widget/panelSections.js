@@ -39,7 +39,7 @@ export default class PanelSections extends React.Component {
             <ButtonSelect
                 chromeless
                 shape='none'
-                placement='below'
+                // placement='below'G
                 input={selected}
                 tooltipPlacement='bottom'
                 options={options}

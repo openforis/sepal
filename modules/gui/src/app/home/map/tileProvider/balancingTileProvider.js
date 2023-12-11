@@ -52,8 +52,8 @@ export class BalancingTileProvider extends TileProvider {
         this.tileProvider.releaseTile(element)
     }
 
-    hide(hidden) {
-        this.tileManager.hide(hidden)
+    setVisibility(visible) {
+        this.tileManager.setVisibility(visible)
     }
 
     close() {

@@ -40,5 +40,5 @@ Message.propTypes = {
     icon: PropTypes.string,
     iconSize: PropTypes.string,
     text: PropTypes.string,
-    type: PropTypes.oneOf(['normal', 'info'])
+    type: PropTypes.oneOf(['normal', 'info', 'warning'])
 }

@@ -5,8 +5,12 @@ import React from 'react'
 
 export class SectionSelection extends React.Component {
     render() {
-        const {inputs: {section}} = this.props
+        const {assetBounds, inputs: {section}} = this.props
         const options = [
+            assetBounds ? {
+                value: 'ASSET_BOUNDS',
+                label: msg('process.mosaic.panel.areaOfInterest.form.assetBounds.title')
+            } : null,
             {
                 value: 'COUNTRY',
                 label: msg('process.mosaic.panel.areaOfInterest.form.country.title')
@@ -19,7 +23,7 @@ export class SectionSelection extends React.Component {
                 value: 'POLYGON',
                 label: msg('process.mosaic.panel.areaOfInterest.form.polygon.title')
             }
-        ]
+        ].filter(option => option)
         return (
             <Form.Buttons
                 look='transparent'
@@ -40,5 +44,6 @@ export class SectionSelection extends React.Component {
 
 SectionSelection.propTypes = {
     inputs: PropTypes.object.isRequired,
-    recipeId: PropTypes.string.isRequired
+    recipeId: PropTypes.string.isRequired,
+    assetBounds: PropTypes.any
 }

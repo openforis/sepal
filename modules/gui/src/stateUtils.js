@@ -1,6 +1,6 @@
-import {addHash, cloneDeep, createHash} from 'hash'
+import {addHash, cloneDeep, createHash, isEqual} from 'hash'
+import {flatten} from 'flat'
 import _ from 'lodash'
-import flatten from 'flat'
 
 const DOT_SAFE = '__dotSafe__'
 const dotSafeWrap = unsafePath => ({[DOT_SAFE]: unsafePath})
@@ -168,6 +168,15 @@ export class Mutator {
         })
     }
 
+    setIfChanged(value) {
+        this.assertValueType(value)
+        return this.mutate((pathState, pathKey) => {
+            if (!isEqual(pathState[pathKey], value)) {
+                pathState[pathKey] = cloneDeep(value)
+            }
+        })
+    }
+
     sort(key) {
         return this.mutate((pathState, pathKey) => {
             pathState[pathKey] = _.orderBy(pathState[pathKey], key)
@@ -232,7 +241,6 @@ export class Mutator {
                     const index = pathState.indexOf(pathKey)
                     index >= 0 && (pathState.splice(index, 1))
                 }
-                
             } else {
                 console.error('Unsupported type to delete from', {pathState, pathKey})
                 throw Error('Unsupported type to delete from')

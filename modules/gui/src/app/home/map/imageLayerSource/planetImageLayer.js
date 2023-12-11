@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import {Combo} from 'widget/combo'
-import {Item} from 'widget/item'
+import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {MapAreaLayout} from '../mapAreaLayout'
 import {compose} from 'compose'
@@ -70,6 +70,7 @@ class _PlanetImageLayer extends React.Component {
     renderBands() {
         const {layerConfig: {bands}} = this.props
         const link = <Button
+            key='link'
             tooltip={msg('imageLayerSources.Planet.bands.tooltip')}
             chromeless
             shape='circle'
@@ -123,7 +124,7 @@ class _PlanetImageLayer extends React.Component {
                 searchableText: `${date} ${duration}`,
                 render: () =>
                     <div className={styles.imageLayerSourceOption}>
-                        <Item title={duration} description={date}/>
+                        <CrudItem title={duration} description={date}/>
                     </div>
             })
         })

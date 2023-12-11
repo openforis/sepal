@@ -1,40 +1,39 @@
-import {GoogleMapsOverlay} from './googleMapsOverlay'
-import OverlayLayer from './overlayLayer'
+import {Layer} from './layer'
 
-export default class TileLayer extends OverlayLayer {
-    constructor({map, layerIndex, busy$, minZoom, maxZoom}) {
-        super({map, layerIndex, busy$})
-        this.minZoom = minZoom
-        this.maxZoom = maxZoom
+export class TileLayer extends Layer {
+    createTileProvider = () => {
+        throw new Error('TileLayer.createTileProvider needs to be implemented by subclass')
     }
 
-    equals(_o) {
-        throw new Error('Subclass should implement equals')
+    createOverlay = _tileProvider => {
+        throw new Error('TileLayer.createOverlay needs to be implemented by subclass')
     }
 
-    createTileProvider() {
-        throw new Error('Subclass should implement createTileProvider')
+    addToMap = urlTemplate => {
+        this.tileProvider = this.createTileProvider(urlTemplate)
+        this.overlay = this.createOverlay(this.tileProvider)
+        const {map, layerIndex, overlay} = this
+        const {googleMap} = map.getGoogle()
+        googleMap.overlayMapTypes.setAt(layerIndex, overlay)
     }
 
-    createOverlay() {
-        const {map, busy$, minZoom, maxZoom} = this
-        const tileProvider = this.createTileProvider()
-        const {google} = map.getGoogle()
-        return new GoogleMapsOverlay(tileProvider, {google, minZoom, maxZoom}, busy$)
-    }
-
-    removeFromMap() {
-        super.removeFromMap()
-        const {overlay} = this
+    removeFromMap = () => {
+        const {map, layerIndex, overlay} = this
+        const {googleMap} = map.getGoogle()
         if (overlay) {
+            // googleMap.overlayMapTypes.removeAt(layerIndex)
+            // [HACK] Prevent flashing of removed layers, which happens when just setting overlay to null.
+            // [HACK] Prevent removal of already removed tileManager.
+            googleMap.overlayMapTypes.insertAt(layerIndex, null)
+            googleMap.overlayMapTypes.removeAt(layerIndex + 1)
             overlay.close()
         }
     }
 
-    hide(hidden) {
-        const {overlay} = this
-        if (overlay) {
-            overlay.setOpacity(hidden ? 0 : 1)
+    setVisibility = visible => {
+        const {tileProvider} = this
+        if (tileProvider) {
+            tileProvider.setVisibility(visible)
         }
     }
 }
