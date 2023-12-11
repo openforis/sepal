@@ -40,7 +40,7 @@ class _AssetBrowser extends React.Component {
         const {inputs: {assetLocation}} = this.props
         return (
             <Form.AssetLocation
-                label={msg('asset.browser.assetLocation')}
+                label={msg('asset.browser.asset')}
                 input={assetLocation}
             />
         )

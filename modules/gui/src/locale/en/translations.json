@@ -89,7 +89,7 @@
         "tooltip": "Open asset browser",
         "title": "Asset browser",
         "assetName": "Name",
-        "assetLocation": "Location"
+        "asset": "Asset"
       }
     },
     "bands": {
