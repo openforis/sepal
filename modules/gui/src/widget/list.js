@@ -450,10 +450,7 @@ class _List extends React.Component {
 
     componentDidUpdate({options: prevOptions, selectedValue: prevSelectedValue}) {
         const {options, selectedValue} = this.props
-        if (!isEqual(options, prevOptions)) {
-            this.highlightFirstOption()
-        }
-        if (selectedValue !== prevSelectedValue) {
+        if (selectedValue !== prevSelectedValue || !isEqual(options, prevOptions)) {
             this.highlightSelectedOption()
         }
     }
