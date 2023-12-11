@@ -59,7 +59,38 @@
     "asset": {
         "failedToLoad": "Fallo en la carga de la tabla de EE",
         "notFound": "Tabla de EE no encontrada",
-        "unauthorized": "No tienes acceso a esta tabla de EE."
+        "unauthorized": "No tienes acceso a esta tabla de EE.",
+        "folder": "",
+        "image": "",
+        "imageCollection": "",
+        "table": "",
+        "new": "",
+        "recentAssets": "",
+        "userAssets": "",
+        "otherAssets": "",
+        "reload": "",
+        "settings": "",
+        "datasets": {
+            "community": {
+                "label": "",
+                "tooltip": ""
+            },
+            "gee": {
+                "label": "",
+                "tooltip": ""
+            },
+            "failedToLoad": ""
+        },
+        "copyId": {
+            "tooltip": "",
+            "success": ""
+        },
+        "browser": {
+            "tooltip": "",
+            "title": "",
+            "assetName": "",
+            "assetLocation": ""
+        }
     },
     "bands": {
         "aerosol": "",
@@ -180,6 +211,12 @@
         "save": "Guardar",
         "select": "Seleccionar",
         "stop": "Detener"
+    },
+    "clipboard": {
+        "copy": {
+            "success": "",
+            "failure": ""
+        }
     },
     "eeTable": {
         "failedToLoad": "Fallo en la carga de la tabla de EE",
@@ -2293,6 +2330,127 @@
             },
             "tabPlaceholder": ""
         },
+        "asset": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "assetDetails": {
+                    "button": "",
+                    "form": {
+                        "assetId": {
+                            "label": "",
+                            "placeholder": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "dates": {
+                    "button": "FEC",
+                    "form": {
+                        "fromDate": {
+                            "label": "",
+                            "malformed": "Fecha no válida"
+                        },
+                        "targetDate": {
+                            "label": "Fecha objetivo",
+                            "malformed": "Fecha no válida"
+                        },
+                        "toDate": {
+                            "label": "",
+                            "malformed": "Fecha no válida"
+                        },
+                        "type": {
+                            "label": "",
+                            "ALL_DATES": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "CUSTOM_DATE_RANGE": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "YEAR": {
+                                "label": "Año",
+                                "tooltip": ""
+                            }
+                        },
+                        "year": {
+                            "label": "Año",
+                            "malformed": "No un año"
+                        }
+                    },
+                    "title": "Fechas",
+                    "tooltip": "Especifique las fechas"
+                },
+                "filter": {
+                    "button": "",
+                    "filters": {
+                        "title": ""
+                    },
+                    "noFilters": "",
+                    "emptyFilters": "",
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "mask": {
+                    "button": "",
+                    "constraints": {
+                        "title": ""
+                    },
+                    "noConstraints": "",
+                    "emptyConstraints": "",
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "composite": {
+                    "button": "",
+                    "form": {
+                        "type": {
+                            "label": "",
+                            "MOSAIC": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MEDIAN": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MEAN": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MIN": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MAX": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MODE": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "Compuesto",
+                    "tooltip": ""
+                }
+            },
+            "layers": {
+                "imageLayer": {
+                    "preSets": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
         "masking": {
             "create": "",
             "description": "",
@@ -2379,6 +2537,10 @@
                             "info": "",
                             "label": "",
                             "tooltip": "El área de interés y la vista previa tomarán más tiempo para mostrarse cuando el buffering está activado."
+                        },
+                        "assetBounds": {
+                            "description": "",
+                            "title": ""
                         },
                         "country": {
                             "area": {
@@ -4195,8 +4357,14 @@
             "updating": "Actualizando..."
         },
         "googleAccount": {
+            "form": {
+                "projectId": {
+                    "label": "",
+                    "updated": ""
+                }
+            },
             "connect": {
-                "label": "Conecta tu cuenta de Google"
+                "label": ""
             },
             "connected": {
                 "info": "Tienes acceso completo a SEPAL. Si desconectas tu cuenta de Google de SEPAL, algunas funciones (como la exportación a assets de Earth Engine) no estarán disponibles.",
@@ -4204,7 +4372,7 @@
                 "title": "Tu cuenta SEPAL está conectada a tu cuenta de Google"
             },
             "disconnect": {
-                "label": "Desconecta tu cuenta de Google",
+                "label": "",
                 "warning": {
                     "message": "La desconexión de tu cuenta de Google provocará la interrupción de cualquier tarea iniciada mientras estas conectado. Tareas actualmente en ejecución: {taskCount}.",
                     "title": "Advertencia"
@@ -4214,6 +4382,7 @@
                 "info": "Tienes acceso limitado a SEPAL. Si conectas tu cuenta de Google a SEPAL, todas las funciones (incluida la exportación de assets de Earth Engine) estarán disponibles.",
                 "label": "Desconectado",
                 "success": "SEPAL está ahora desconectado de tu cuenta de Google.",
+                "projectNeeded": "",
                 "title": "Tu cuenta SEPAL no está vinculada a tu cuenta de Google"
             },
             "label": "Cuenta de Google",
@@ -4473,8 +4642,8 @@
     "widget": {
         "assetDestination": {
             "exists": {
-                "notReplacable": "",
-                "replacable": ""
+                "notReplaceable": "",
+                "replaceable": ""
             },
             "loadError": "",
             "replace": {
@@ -4513,7 +4682,15 @@
             }
         },
         "imageConstraints": {
+            "bit": {
+                "label": "",
+                "tooltip": ""
+            },
             "band": {
+                "label": "",
+                "notSelected": ""
+            },
+            "property": {
                 "label": "",
                 "notSelected": ""
             },
@@ -4548,6 +4725,14 @@
                     "label": ""
                 }
             },
+            "bitRange": {
+                "from": {
+                    "label": ""
+                },
+                "to": {
+                    "label": ""
+                }
+            },
             "range": {
                 "from": {
                     "label": ""
@@ -4558,6 +4743,10 @@
             },
             "value": {
                 "label": ""
+            },
+            "inclusive": {
+                "label": "",
+                "tooltip": ""
             }
         },
         "legend": {
