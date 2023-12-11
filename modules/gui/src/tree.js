@@ -1,6 +1,7 @@
 import {assertValue} from 'assertValue'
 import _ from 'lodash'
 
+const ID = 'id'
 const PROPS = 'props'
 const ITEMS = 'items'
 
@@ -37,8 +38,10 @@ const getItemsPath = path =>
 const getItemPath = (path, property) =>
     [getItemsPath(path), property].join('.')
 
-const createNode = props => ({
-    [PROPS]: props
+const createNode = (id, props, items) => ({
+    [ID]: id,
+    [PROPS]: props,
+    [ITEMS]: items
 })
 
 const getNode = (tree, path) => {
@@ -52,7 +55,7 @@ const setNode = (tree, path, id, props) => {
     assertPath(path)
     assertId(id)
     assertProps(props)
-    _.set(tree, getItemPath(path, id), createNode(props))
+    _.set(tree, getItemPath(path, id), createNode(id, props))
     return tree
 }
 
@@ -64,8 +67,9 @@ const setItems = (tree, path, items) => {
         (acc, {id, ...props}) => ({
             ...acc,
             [id]: {
-                props,
-                items: _.get(tree, getItemsPath([...path, id]))
+                [ID]: id,
+                [PROPS]: props,
+                [ITEMS]: _.get(tree, getItemsPath([...path, id]))
             }
         }),
         {}
@@ -114,6 +118,15 @@ const flatten = (node = {}, path = [], depth = 0) => {
     ]).flat()
 }
 
+const filter = (node = {}, matcher) => {
+    assertNode(node)
+    const filteredItems = _(node[ITEMS])
+        .mapValues(item => filter(item, matcher))
+        .pickBy(item => !_.isEmpty(item[ITEMS]) || matcher(item[ID], item[PROPS]))
+        .value()
+    return createNode(node[ID], node[PROPS], filteredItems)
+}
+
 export const Tree = {
-    createNode, getNode, setNode, setItems, getProperties, setProperties, getProperty, setProperty, flatten
+    createNode, getNode, setNode, setItems, getProperties, setProperties, getProperty, setProperty, flatten, filter
 }
