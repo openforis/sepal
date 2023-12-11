@@ -89,7 +89,8 @@
         "tooltip": "Open asset browser",
         "title": "Asset browser",
         "assetName": "Name",
-        "asset": "Asset"
+        "asset": "Asset",
+        "filter.placeholder": "Filter by id"
       }
     },
     "bands": {

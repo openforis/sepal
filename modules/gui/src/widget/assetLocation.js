@@ -2,8 +2,12 @@ import {AssetItem} from './assetItem'
 import {Button} from './button'
 import {Input} from './input'
 import {ScrollableList} from './list'
+import {SearchBox} from './searchBox'
+import {Tree} from 'tree'
 import {Widget} from './widget'
 import {compose} from 'compose'
+import {isEqual} from 'hash'
+import {msg} from 'translate'
 import {withAssets} from './assets'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -16,6 +20,7 @@ class _AssetLocation extends React.Component {
     constructor(props) {
         super(props)
         this.onInputChange = this.onInputChange.bind(this)
+        this.onFilterChange = this.onFilterChange.bind(this)
         this.onSelectFolder = this.onSelectFolder.bind(this)
         this.onSelectAsset = this.onSelectAsset.bind(this)
     }
@@ -23,11 +28,14 @@ class _AssetLocation extends React.Component {
     input = React.createRef()
 
     state = {
+        filter: '',
+        filteredTree: Tree.createNode(),
         selectedId: null
     }
 
     render() {
-        const {assets: {tree}, className, label, labelButtons, tooltip, tooltipPlacement, disabled, errorMessage} = this.props
+        const {className, label, labelButtons, tooltip, tooltipPlacement, disabled, errorMessage} = this.props
+        const {filteredTree} = this.state
         return (
             <Widget
                 className={className}
@@ -40,7 +48,8 @@ class _AssetLocation extends React.Component {
                 layout='vertical-fill'
                 spacing='compact'>
                 {this.renderInput()}
-                {this.renderFolderTree(tree)}
+                {this.renderFolderTree(filteredTree)}
+                {this.renderFilter()}
             </Widget>
         )
     }
@@ -51,8 +60,17 @@ class _AssetLocation extends React.Component {
             <Input
                 ref={this.input}
                 value={value}
-                autoFocus
                 onChange={this.onInputChange}
+            />
+        )
+    }
+
+    renderFilter() {
+        return (
+            <SearchBox
+                placeholder={msg('asset.browser.filter.placeholder')}
+                width='fill'
+                onSearchValue={this.onFilterChange}
             />
         )
     }
@@ -60,7 +78,7 @@ class _AssetLocation extends React.Component {
     renderFolderTree(node) {
         const {selectedId} = this.state
         const options = this.getFolderTreeOptions(node)
-        return options.length ? (
+        return (
             <ScrollableList
                 options={options}
                 selectedValue={selectedId}
@@ -68,7 +86,7 @@ class _AssetLocation extends React.Component {
                 tooltipPlacement='bottomRight'
                 keyboard={false}
             />
-        ) : null
+        )
     }
 
     renderFolderAssets(node) {
@@ -152,6 +170,15 @@ class _AssetLocation extends React.Component {
         onChange && onChange(value)
     }
     
+    onFilterChange(filter) {
+        this.setState({filter})
+    }
+
+    getFilter() {
+        const {filter} = this.state
+        return id => id ? id.toLowerCase().includes(filter.toLowerCase()) : true
+    }
+    
     onSelectFolder({value}) {
         const {value: prevValue, onChange} = this.props
         const name = this.getAssetName(prevValue)
@@ -193,19 +220,32 @@ class _AssetLocation extends React.Component {
     }
 
     componentDidMount() {
-        const {value} = this.props
-        this.update(value)
+        const {value, assets: {tree}} = this.props
+        this.updateValue(value)
+        this.updateTree(tree)
     }
 
-    componentDidUpdate({value: prevValue}) {
-        const {value} = this.props
+    componentDidUpdate({value: prevValue, assets: {tree: prevTree}}, {filter: prevFilter}) {
+        const {value, assets: {tree}} = this.props
+        const {filter} = this.state
         if (value !== prevValue) {
-            this.update(value)
+            this.updateValue(value)
+        }
+        if (filter !== prevFilter || !isEqual(prevTree, tree)) {
+            this.updateTree(tree)
         }
     }
 
-    update(value) {
-        this.setState({selectedId: this.getClosestFolderId(value)})
+    updateValue(value) {
+        this.setState({
+            selectedId: this.getClosestFolderId(value)
+        })
+    }
+
+    updateTree(tree) {
+        this.setState({
+            filteredTree: Tree.filter(tree, this.getFilter())
+        })
     }
 }
 
