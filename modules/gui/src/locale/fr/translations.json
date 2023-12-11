@@ -89,7 +89,8 @@
             "tooltip": "",
             "title": "",
             "assetName": "Nom",
-            "assetLocation": ""
+            "asset": "",
+            "filter.placeholder": ""
         }
     },
     "bands": {
