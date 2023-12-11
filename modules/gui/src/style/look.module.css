@@ -193,15 +193,15 @@
 
 .look.default:not(:disabled):not(.hoverForcedOff).hoverForcedOn,
 .look.default:not(.disabled):not(.hoverForcedOff).hoverForcedOn,
-.look.default:not(:disabled):not(.hoverForcedOff):not(.hoverDisabled):hover,
-.look.default:not(.disabled):not(.hoverForcedOff):not(.hoverDisabled):hover {
+.look.default:not(:disabled):not(:active):not(.hoverForcedOff):not(.hoverDisabled):hover,
+.look.default:not(.disabled):not(:active):not(.hoverForcedOff):not(.hoverDisabled):hover {
     color: var(--look-default-hover-color);
     background-color: var(--look-default-hover-background-color);
     border-color: var(--look-default-hover-border-color);
 }
 
-.look.default:not(:disabled):not(.chromeless):not(.hoverDisabled):active,
-.look.default:not(.disabled):not(.chromeless):not(.hoverDisabled):active {
+.look.default:not(:disabled):not(.hoverDisabled):active,
+.look.default:not(.disabled):not(.hoverDisabled):active {
     color: var(--look-default-active-color);
     background-color: var(--look-default-active-background-color);
     border-color: var(--look-default-active-border-color);
@@ -217,15 +217,15 @@
 
 .look.transparent:not(:disabled):not(.hoverForcedOff).hoverForcedOn,
 .look.transparent:not(.disabled):not(.hoverForcedOff).hoverForcedOn,
-.look.transparent:not(:disabled):not(.hoverForcedOff):not(.hoverDisabled):hover,
-.look.transparent:not(.disabled):not(.hoverForcedOff):not(.hoverDisabled):hover {
+.look.transparent:not(:disabled):not(:active):not(.hoverForcedOff):not(.hoverDisabled):hover,
+.look.transparent:not(.disabled):not(:active):not(.hoverForcedOff):not(.hoverDisabled):hover {
     color: var(--look-transparent-hover-color);
     background-color: var(--look-transparent-hover-background-color);
     border-color: var(--look-transparent-hover-border-color);
 }
 
-.look.transparent:not(:disabled):not(.chromeless):not(.hoverDisabled):active,
-.look.transparent:not(.disabled):not(.chromeless):not(.hoverDisabled):active {
+.look.transparent:not(:disabled):not(.hoverDisabled):active,
+.look.transparent:not(.disabled):not(.hoverDisabled):active {
     color: var(--look-transparent-active-color);
     background-color: var(--look-transparent-active-background-color);
     border-color: var(--look-transparent-active-border-color);
@@ -241,15 +241,15 @@
 
 .look.highlight:not(:disabled):not(.hoverForcedOff).hoverForcedOn,
 .look.highlight:not(.disabled):not(.hoverForcedOff).hoverForcedOn,
-.look.highlight:not(:disabled):not(.hoverForcedOff):not(.hoverDisabled):hover,
-.look.highlight:not(.disabled):not(.hoverForcedOff):not(.hoverDisabled):hover {
+.look.highlight:not(:disabled):not(:active):not(.hoverForcedOff):not(.hoverDisabled):hover,
+.look.highlight:not(.disabled):not(:active):not(.hoverForcedOff):not(.hoverDisabled):hover {
     color: var(--look-highlight-hover-color);
     background-color: var(--look-highlight-hover-background-color);
     border-color: var(--look-highlight-hover-border-color);
 }
 
-.look.highlight:not(:disabled):not(.chromeless):not(.hoverDisabled):active,
-.look.highlight:not(.disabled):not(.chromeless):not(.hoverDisabled):active {
+.look.highlight:not(:disabled):not(.hoverDisabled):active,
+.look.highlight:not(.disabled):not(.hoverDisabled):active {
     color: var(--look-highlight-active-color);
     background-color: var(--look-highlight-active-background-color);
     border-color: var(--look-highlight-active-border-color);
@@ -265,15 +265,15 @@
 
 .look.selected:not(:disabled):not(.hoverForcedOff).hoverForcedOn,
 .look.selected:not(.disabled):not(.hoverForcedOff).hoverForcedOn,
-.look.selected:not(:disabled):not(.hoverForcedOff):not(.hoverDisabled):hover,
-.look.selected:not(.disabled):not(.hoverForcedOff):not(.hoverDisabled):hover {
+.look.selected:not(:disabled):not(:active):not(.hoverForcedOff):not(.hoverDisabled):hover,
+.look.selected:not(.disabled):not(:active):not(.hoverForcedOff):not(.hoverDisabled):hover {
     color: var(--look-selected-hover-color);
     background-color: var(--look-selected-hover-background-color);
     border-color: var(--look-selected-hover-border-color);
 }
 
-.look.selected:not(:disabled):not(.chromeless):not(.hoverDisabled):active,
-.look.selected:not(.disabled):not(.chromeless):not(.hoverDisabled):active {
+.look.selected:not(:disabled):not(.hoverDisabled):active,
+.look.selected:not(.disabled):not(.hoverDisabled):active {
     color: var(--look-selected-active-color);
     background-color: var(--look-selected-active-background-color);
     border-color: var(--look-selected-active-border-color);
@@ -289,15 +289,15 @@
 
 .look.add:not(:disabled):not(.hoverForcedOff).hoverForcedOn,
 .look.add:not(.disabled):not(.hoverForcedOff).hoverForcedOn,
-.look.add:not(:disabled):not(.hoverForcedOff):not(.hoverDisabled):hover,
-.look.add:not(.disabled):not(.hoverForcedOff):not(.hoverDisabled):hover {
+.look.add:not(:disabled):not(:active):not(.hoverForcedOff):not(.hoverDisabled):hover,
+.look.add:not(.disabled):not(:active):not(.hoverForcedOff):not(.hoverDisabled):hover {
     color: var(--look-add-hover-color);
     background-color: var(--look-add-hover-background-color);
     border-color: var(--look-add-hover-border-color);
 }
 
-.look.add:not(:disabled):not(.chromeless):not(.hoverDisabled):active,
-.look.add:not(.disabled):not(.chromeless):not(.hoverDisabled):active {
+.look.add:not(:disabled):not(.hoverDisabled):active,
+.look.add:not(.disabled):not(.hoverDisabled):active {
     color: var(--look-add-active-color);
     background-color: var(--look-add-active-background-color);
     border-color: var(--look-add-active-border-color);
@@ -313,15 +313,15 @@
 
 .look.apply:not(:disabled):not(.hoverForcedOff).hoverForcedOn,
 .look.apply:not(.disabled):not(.hoverForcedOff).hoverForcedOn,
-.look.apply:not(:disabled):not(.hoverForcedOff):not(.hoverDisabled):hover,
-.look.apply:not(.disabled):not(.hoverForcedOff):not(.hoverDisabled):hover {
+.look.apply:not(:disabled):not(:active):not(.hoverForcedOff):not(.hoverDisabled):hover,
+.look.apply:not(.disabled):not(:active):not(.hoverForcedOff):not(.hoverDisabled):hover {
     color: var(--look-apply-hover-color);
     background-color: var(--look-apply-hover-background-color);
     border-color: var(--look-apply-hover-border-color);
 }
 
-.look.apply:not(:disabled):not(.chromeless):not(.hoverDisabled):active,
-.look.apply:not(.disabled):not(.chromeless):not(.hoverDisabled):active {
+.look.apply:not(:disabled):not(.hoverDisabled):active,
+.look.apply:not(.disabled):not(.hoverDisabled):active {
     color: var(--look-apply-active-color);
     background-color: var(--look-apply-active-background-color);
     border-color: var(--look-apply-active-border-color);
@@ -337,15 +337,15 @@
 
 .look.cancel:not(:disabled):not(.hoverForcedOff).hoverForcedOn,
 .look.cancel:not(.disabled):not(.hoverForcedOff).hoverForcedOn,
-.look.cancel:not(:disabled):not(.hoverForcedOff):not(.hoverDisabled):hover,
-.look.cancel:not(.disabled):not(.hoverForcedOff):not(.hoverDisabled):hover {
+.look.cancel:not(:disabled):not(:active):not(.hoverForcedOff):not(.hoverDisabled):hover,
+.look.cancel:not(.disabled):not(:active):not(.hoverForcedOff):not(.hoverDisabled):hover {
     color: var(--look-cancel-hover-color);
     background-color: var(--look-cancel-hover-background-color);
     border-color: var(--look-cancel-hover-border-color);
 }
 
-.look.cancel:not(:disabled):not(.chromeless):not(.hoverDisabled):active,
-.look.cancel:not(.disabled):not(.chromeless):not(.hoverDisabled):active {
+.look.cancel:not(:disabled):not(.hoverDisabled):active,
+.look.cancel:not(.disabled):not(.hoverDisabled):active {
     color: var(--look-cancel-active-color);
     background-color: var(--look-cancel-active-background-color);
     border-color: var(--look-cancel-active-border-color);
