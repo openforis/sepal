@@ -59,7 +59,38 @@
     "asset": {
         "failedToLoad": "Échec du chargement de l'asset EE",
         "notFound": "Asset EE introuvable",
-        "unauthorized": "Vous n'avez pas accès à cette Asset EE"
+        "unauthorized": "Vous n'avez pas accès à cette Asset EE",
+        "folder": "",
+        "image": "",
+        "imageCollection": "",
+        "table": "",
+        "new": "",
+        "recentAssets": "",
+        "userAssets": "",
+        "otherAssets": "",
+        "reload": "",
+        "settings": "",
+        "datasets": {
+            "community": {
+                "label": "",
+                "tooltip": ""
+            },
+            "gee": {
+                "label": "",
+                "tooltip": ""
+            },
+            "failedToLoad": ""
+        },
+        "copyId": {
+            "tooltip": "",
+            "success": ""
+        },
+        "browser": {
+            "tooltip": "",
+            "title": "",
+            "assetName": "Nom",
+            "assetLocation": ""
+        }
     },
     "bands": {
         "aerosol": "",
@@ -181,6 +212,12 @@
         "select": "Sélectionner",
         "stop": "Arrêter"
     },
+    "clipboard": {
+        "copy": {
+            "success": "",
+            "failure": ""
+        }
+    },
     "eeTable": {
         "failedToLoad": "Echec du chargement de la table EE",
         "notFound": "Table EE introuvable",
@@ -223,7 +260,7 @@
     "gee": {
         "asset": {
             "error": {
-                "wrongType": "L' Asset est de type '{actualType}' alors que '{expectedType}' est attendu."
+                "wrongType": ""
             }
         },
         "classification": {
@@ -2293,6 +2330,127 @@
             },
             "tabPlaceholder": ""
         },
+        "asset": {
+            "create": "Asset EE",
+            "description": "",
+            "panel": {
+                "assetDetails": {
+                    "button": "SRC",
+                    "form": {
+                        "assetId": {
+                            "label": "Asset EE",
+                            "placeholder": ""
+                        }
+                    },
+                    "title": "Asset EE",
+                    "tooltip": ""
+                },
+                "dates": {
+                    "button": "DAT",
+                    "form": {
+                        "fromDate": {
+                            "label": "",
+                            "malformed": "Date invalide"
+                        },
+                        "targetDate": {
+                            "label": "Date cible",
+                            "malformed": "Date invalide"
+                        },
+                        "toDate": {
+                            "label": "",
+                            "malformed": "Date invalide"
+                        },
+                        "type": {
+                            "label": "Type",
+                            "ALL_DATES": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "CUSTOM_DATE_RANGE": {
+                                "label": "Intervalle temporel",
+                                "tooltip": ""
+                            },
+                            "YEAR": {
+                                "label": "Année",
+                                "tooltip": ""
+                            }
+                        },
+                        "year": {
+                            "label": "Année",
+                            "malformed": "Pas une année"
+                        }
+                    },
+                    "title": "Dates",
+                    "tooltip": "Spécifier les dates"
+                },
+                "filter": {
+                    "button": "",
+                    "filters": {
+                        "title": ""
+                    },
+                    "noFilters": "",
+                    "emptyFilters": "",
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "mask": {
+                    "button": "",
+                    "constraints": {
+                        "title": ""
+                    },
+                    "noConstraints": "",
+                    "emptyConstraints": "",
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "composite": {
+                    "button": "",
+                    "form": {
+                        "type": {
+                            "label": "Type",
+                            "MOSAIC": {
+                                "label": "Mosaïque",
+                                "tooltip": ""
+                            },
+                            "MEDIAN": {
+                                "label": "Médiane",
+                                "tooltip": ""
+                            },
+                            "MEAN": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MIN": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MAX": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MODE": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "Composite",
+                    "tooltip": ""
+                }
+            },
+            "layers": {
+                "imageLayer": {
+                    "preSets": "Pré-réglages"
+                }
+            },
+            "tabPlaceholder": ""
+        },
         "masking": {
             "create": "",
             "description": "",
@@ -2379,6 +2537,10 @@
                             "info": "buffer de {buffer} km",
                             "label": "Buffer",
                             "tooltip": "La zone d'intérêt et l'aperçu mettent plus de temps à s'afficher lorsque le buffer est activée."
+                        },
+                        "assetBounds": {
+                            "description": "",
+                            "title": ""
                         },
                         "country": {
                             "area": {
@@ -4195,8 +4357,14 @@
             "updating": "Mise à jour..."
         },
         "googleAccount": {
+            "form": {
+                "projectId": {
+                    "label": "",
+                    "updated": ""
+                }
+            },
             "connect": {
-                "label": "Connecter votre compte Google"
+                "label": ""
             },
             "connected": {
                 "info": "Vous avez un accès complet à SEPAL. Si vous déconnectez votre compte Google de SEPAL, certaines fonctionnalités (comme l'exportation en tant qu'asset Google Earth Enginee) ne seront pas disponibles.",
@@ -4204,7 +4372,7 @@
                 "title": "Votre compte SEPAL est connecté à votre compte Google"
             },
             "disconnect": {
-                "label": "Déconnecter votre compte Google",
+                "label": "",
                 "warning": {
                     "message": "La déconnexion de votre compte Google entraînerait l'arrêt de toute tâche commencée alors que vous êtes connecté. Tâches en cours d'exécution : {taskCount}",
                     "title": "Attention"
@@ -4214,6 +4382,7 @@
                 "info": "Vous avez un accès limité à SEPAL. Si vous connectez votre compte Google à SEPAL, toutes les fonctionnalités (y compris l'exportation en tant qu'asset Google Earth Engine) seront disponibles.",
                 "label": "Déconnecté",
                 "success": "SEPAL est maintenant déconnecté de votre compte Google.",
+                "projectNeeded": "",
                 "title": "Votre compte SEPAL n'est pas connecté à votre compte Google"
             },
             "label": "Compte Google",
@@ -4473,8 +4642,8 @@
     "widget": {
         "assetDestination": {
             "exists": {
-                "notReplacable": "",
-                "replacable": ""
+                "notReplaceable": "",
+                "replaceable": ""
             },
             "loadError": "Impossible de charger l'Asset",
             "replace": {
@@ -4513,9 +4682,17 @@
             }
         },
         "imageConstraints": {
+            "bit": {
+                "label": "",
+                "tooltip": ""
+            },
             "band": {
                 "label": "Bande",
                 "notSelected": "[Aucune bande sélectionnée]"
+            },
+            "property": {
+                "label": "",
+                "notSelected": ""
             },
             "image": {
                 "label": "Image",
@@ -4548,6 +4725,14 @@
                     "label": ""
                 }
             },
+            "bitRange": {
+                "from": {
+                    "label": ""
+                },
+                "to": {
+                    "label": ""
+                }
+            },
             "range": {
                 "from": {
                     "label": ""
@@ -4558,6 +4743,10 @@
             },
             "value": {
                 "label": "Valeur"
+            },
+            "inclusive": {
+                "label": "",
+                "tooltip": ""
             }
         },
         "legend": {
