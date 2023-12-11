@@ -59,7 +59,38 @@
     "asset": {
         "failedToLoad": "",
         "notFound": "",
-        "unauthorized": ""
+        "unauthorized": "",
+        "folder": "",
+        "image": "",
+        "imageCollection": "",
+        "table": "",
+        "new": "",
+        "recentAssets": "",
+        "userAssets": "",
+        "otherAssets": "",
+        "reload": "",
+        "settings": "",
+        "datasets": {
+            "community": {
+                "label": "",
+                "tooltip": ""
+            },
+            "gee": {
+                "label": "",
+                "tooltip": ""
+            },
+            "failedToLoad": ""
+        },
+        "copyId": {
+            "tooltip": "",
+            "success": ""
+        },
+        "browser": {
+            "tooltip": "",
+            "title": "",
+            "assetName": "",
+            "assetLocation": ""
+        }
     },
     "bands": {
         "aerosol": "",
@@ -180,6 +211,12 @@
         "save": "",
         "select": "",
         "stop": ""
+    },
+    "clipboard": {
+        "copy": {
+            "success": "",
+            "failure": ""
+        }
     },
     "eeTable": {
         "failedToLoad": "",
@@ -2293,6 +2330,127 @@
             },
             "tabPlaceholder": ""
         },
+        "asset": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "assetDetails": {
+                    "button": "",
+                    "form": {
+                        "assetId": {
+                            "label": "",
+                            "placeholder": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "dates": {
+                    "button": "",
+                    "form": {
+                        "fromDate": {
+                            "label": "",
+                            "malformed": ""
+                        },
+                        "targetDate": {
+                            "label": "",
+                            "malformed": ""
+                        },
+                        "toDate": {
+                            "label": "",
+                            "malformed": ""
+                        },
+                        "type": {
+                            "label": "",
+                            "ALL_DATES": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "CUSTOM_DATE_RANGE": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "YEAR": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "year": {
+                            "label": "",
+                            "malformed": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "filter": {
+                    "button": "",
+                    "filters": {
+                        "title": ""
+                    },
+                    "noFilters": "",
+                    "emptyFilters": "",
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "mask": {
+                    "button": "",
+                    "constraints": {
+                        "title": ""
+                    },
+                    "noConstraints": "",
+                    "emptyConstraints": "",
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "composite": {
+                    "button": "",
+                    "form": {
+                        "type": {
+                            "label": "",
+                            "MOSAIC": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MEDIAN": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MEAN": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MIN": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MAX": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MODE": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "layers": {
+                "imageLayer": {
+                    "preSets": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
         "masking": {
             "create": "",
             "description": "",
@@ -2379,6 +2537,10 @@
                             "info": "",
                             "label": "",
                             "tooltip": ""
+                        },
+                        "assetBounds": {
+                            "description": "",
+                            "title": ""
                         },
                         "country": {
                             "area": {
@@ -4195,6 +4357,12 @@
             "updating": ""
         },
         "googleAccount": {
+            "form": {
+                "projectId": {
+                    "label": "",
+                    "updated": ""
+                }
+            },
             "connect": {
                 "label": ""
             },
@@ -4214,6 +4382,7 @@
                 "info": "",
                 "label": "",
                 "success": "",
+                "projectNeeded": "",
                 "title": ""
             },
             "label": "",
@@ -4473,8 +4642,8 @@
     "widget": {
         "assetDestination": {
             "exists": {
-                "notReplacable": "",
-                "replacable": ""
+                "notReplaceable": "",
+                "replaceable": ""
             },
             "loadError": "",
             "replace": {
@@ -4513,7 +4682,15 @@
             }
         },
         "imageConstraints": {
+            "bit": {
+                "label": "",
+                "tooltip": ""
+            },
             "band": {
+                "label": "",
+                "notSelected": ""
+            },
+            "property": {
                 "label": "",
                 "notSelected": ""
             },
@@ -4548,6 +4725,14 @@
                     "label": ""
                 }
             },
+            "bitRange": {
+                "from": {
+                    "label": ""
+                },
+                "to": {
+                    "label": ""
+                }
+            },
             "range": {
                 "from": {
                     "label": ""
@@ -4558,6 +4743,10 @@
             },
             "value": {
                 "label": ""
+            },
+            "inclusive": {
+                "label": "",
+                "tooltip": ""
             }
         },
         "legend": {
