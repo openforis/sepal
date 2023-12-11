@@ -126,8 +126,11 @@
     position: relative;
 }
 
+.shape > .contents {
+    flex-grow: 1;
+}
+
 /* spacing between icon and label */
 .shape > .contents > * + * {
     margin-left: .5rem;
 }
-
