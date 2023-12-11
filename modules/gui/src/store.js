@@ -50,9 +50,10 @@ const withConnectedComponent = () =>
             }
 
             render() {
+                const {componentId} = this
                 return React.createElement(WrappedComponent, {
                     ...this.props,
-                    componentId: this.componentId,
+                    componentId,
                     action: this.action,
                     stream: this.stream,
                     componentWillUnmount$: this.componentWillUnmount$
@@ -144,8 +145,17 @@ const withConnectedComponent = () =>
             }
         }
 
+// Include component streams to trigger rerender on stream updates.
+const addComponentStreams = mapStateToProps =>
+    (state, ownProps) => {
+        const componentStreams = select(['stream', ownProps.componentId])
+        return mapStateToProps
+            ? {...mapStateToProps(state, ownProps), componentStreams}
+            : {componentStreams}
+    }
+
 const withReduxState = mapStateToProps =>
-    connectToRedux(mapStateToProps, null, null, {
+    connectToRedux(addComponentStreams(mapStateToProps), null, null, {
         areStatePropsEqual: isEqual
     })
 
