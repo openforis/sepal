@@ -24,6 +24,12 @@ const fields = {
 
 const isFolder = type => type === 'Folder'
 
+const mapStateToProps = (state, ownProps) => ({
+    values: {
+        assetId: ownProps?.assetId || ownProps?.activatable?.activatables?.assetBrowser?.activationProps?.assetId
+    }
+})
+
 class _AssetBrowser extends React.Component {
     constructor(props) {
         super(props)
@@ -268,7 +274,7 @@ const policy = () => ({
 
 export const AssetBrowser = compose(
     _AssetBrowser,
-    withForm({fields}),
+    withForm({fields, mapStateToProps}),
     withAssets(),
     withActivatable({id: 'assetBrowser', policy, alwaysAllow: true})
 )
