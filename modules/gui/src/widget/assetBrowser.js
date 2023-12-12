@@ -19,14 +19,14 @@ import _ from 'lodash'
 import styles from './assetBrowser.module.css'
 
 const fields = {
-    assetId: new Form.Field().notBlank()
+    asset: new Form.Field().notBlank()
 }
 
 const isFolder = type => type === 'Folder'
 
-const mapStateToProps = (state, ownProps) => ({
+const mapStateToProps = (_state, ownProps) => ({
     values: {
-        assetId: ownProps?.assetId || ownProps?.activatable?.activatables?.assetBrowser?.activationProps?.assetId
+        asset: ownProps?.assetId || ownProps?.activatable?.activatables?.assetBrowser?.activationProps?.assetId
     }
 })
 
@@ -74,12 +74,12 @@ class _AssetBrowser extends React.Component {
     }
 
     renderInput() {
-        const {form, inputs: {assetId}} = this.props
+        const {form, inputs: {asset}} = this.props
         return (
             <Input
                 ref={this.input}
-                errorMessage={form.getErrorMessage(assetId)}
-                value={assetId.value}
+                errorMessage={form.getErrorMessage(asset)}
+                value={asset.value}
                 onChange={this.onInputChange}
             />
 
@@ -94,18 +94,7 @@ class _AssetBrowser extends React.Component {
                 options={options}
                 selectedValue={selectedFolderId}
                 onSelect={this.onFolderSelect}
-                tooltipPlacement='bottomRight'
                 keyboard={false}
-            />
-        )
-    }
-
-    renderFilter() {
-        return (
-            <SearchBox
-                placeholder={msg('asset.browser.filter.placeholder')}
-                width='fill'
-                onSearchValue={this.onFilterChange}
             />
         )
     }
@@ -154,6 +143,16 @@ class _AssetBrowser extends React.Component {
                 tooltipPlacement={isMobile() ? 'bottomRight' : 'bottomLeft'}
             />
         ) : null
+    }
+
+    renderFilter() {
+        return (
+            <SearchBox
+                placeholder={msg('asset.browser.filter.placeholder')}
+                width='fill'
+                onSearchValue={this.onFilterChange}
+            />
+        )
     }
 
     getFolderTreeOptions({items} = {}, depth = 0) {
@@ -209,14 +208,13 @@ class _AssetBrowser extends React.Component {
     }
 
     getCurrentAssetName() {
-        const {inputs: {assetId}} = this.props
-        const index = assetId.value.lastIndexOf('/')
-        return assetId.value.substr(index + 1)
+        const {inputs: {asset: {value: assetId}}} = this.props
+        const index = assetId.lastIndexOf('/')
+        return assetId.substr(index + 1)
     }
 
-    onInputChange(e) {
-        const value = e.target.value
-        this.updateAsset(value)
+    onInputChange({target: {value: assetId}}) {
+        this.updateAsset(assetId)
     }
 
     onFolderSelect({value: folderAssetId}) {
@@ -234,8 +232,8 @@ class _AssetBrowser extends React.Component {
     }
 
     onApply() {
-        const {inputs: {assetId}, onChange, activatable: {deactivate}} = this.props
-        onChange && onChange(assetId.value)
+        const {inputs: {asset: {value: assetId}}, onChange, activatable: {deactivate}} = this.props
+        onChange && onChange(assetId)
         deactivate()
     }
 
@@ -247,10 +245,10 @@ class _AssetBrowser extends React.Component {
         this.setState({filteredTree: Tree.filter(tree, this.getFilter())})
     }
 
-    updateAsset(value) {
-        const {inputs: {assetId}} = this.props
-        assetId.set(value)
-        this.setState({selectedFolderId: this.getClosestFolderId(value)})
+    updateAsset(assetId) {
+        const {inputs: {asset}} = this.props
+        asset.set(assetId)
+        this.setState({selectedFolderId: this.getClosestFolderId(assetId)})
     }
 
     componentDidMount() {
