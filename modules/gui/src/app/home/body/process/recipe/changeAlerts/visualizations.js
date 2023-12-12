@@ -13,12 +13,12 @@ export const getPreSetVisualizations = recipe => getChangeVisualizations(recipe)
     .flat()
 
 const toFractionalYear = date => {
+    const year = moment(date).get('year')
     const startOfYear = moment(date, DATE_FORMAT).startOf(year)
     const startOfNextYear = moment(startOfYear).add(1, 'years')
     const dayOfYear = moment(date).dayOfYear()
     const daysInYear = moment(startOfNextYear).diff(moment(startOfYear), 'days')
     const fraction = dayOfYear / daysInYear
-    const year = moment(date).get('year')
     return year + fraction
 }
 
