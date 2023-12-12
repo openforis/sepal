@@ -136,7 +136,6 @@ class _AssetBrowser extends React.Component {
                 key='link'
                 chromeless
                 air='none'
-                size='small'
                 icon='bars'
                 dimmed
                 tooltip={tooltip}
