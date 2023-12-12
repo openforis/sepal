@@ -9,6 +9,7 @@ import {Tree} from 'tree'
 import {Widget} from './widget'
 import {compose} from 'compose'
 import {isEqual} from 'hash'
+import {isMobile} from './userAgent'
 import {msg} from 'translate'
 import {withActivatable} from './activation/activatable'
 import {withAssets} from './assets'
@@ -144,7 +145,7 @@ class _AssetBrowser extends React.Component {
                 icon='bars'
                 dimmed
                 tooltip={tooltip}
-                tooltipPlacement='bottomLeft'
+                tooltipPlacement={isMobile() ? 'bottomRight' : 'bottomLeft'}
             />
         ) : null
     }
