@@ -12,6 +12,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 import Tooltip from 'widget/tooltip'
+import _ from 'lodash'
 import styles from './input.module.css'
 import withForwardedRef from 'ref'
 
@@ -33,6 +34,8 @@ class _Input extends React.Component {
         this.onChange = this.onChange.bind(this)
         this.onClear = this.onClear.bind(this)
         this.onWheel = this.onWheel.bind(this)
+        this.onAccept = this.onAccept.bind(this)
+        this.onCancel = this.onCancel.bind(this)
         this.captureEvents = this.captureEvents.bind(this)
     }
 
@@ -102,11 +105,16 @@ class _Input extends React.Component {
             type, name, placeholder, maxLength, tabIndex,
             autoFocus, autoComplete, autoCorrect, autoCapitalize,
             spellCheck, disabled, readOnly, value,
-            inputTooltip, inputTooltipPlacement
+            inputTooltip, inputTooltipPlacement, onAccept, onCancel
         } = this.props
         const {focused} = this.state
+        const keymap = {
+            ' ': null,
+            'Enter': onAccept ? this.onAccept : undefined,
+            'Escape': onCancel ? this.onCancel : undefined
+        }
         return (
-            <Keybinding keymap={{' ': null}} disabled={!focused} priority>
+            <Keybinding keymap={keymap} disabled={!focused} priority>
                 {/* [HACK] input is wrapped in a div for fixing Firefox input width in flex */}
                 {/* <div className={styles.inputWrapper}> */}
                 <Tooltip
@@ -163,6 +171,20 @@ class _Input extends React.Component {
         onChange && onChange(e)
     }
 
+    onAccept() {
+        const {onAccept} = this.props
+        onAccept && onAccept(this.getCurrentValue())
+    }
+
+    onCancel() {
+        const {onCancel} = this.props
+        onCancel && onCancel()
+    }
+
+    getCurrentValue() {
+        return this.ref?.current?.value
+    }
+
     renderSearch() {
         return this.isSearchInput()
             ? (
@@ -194,14 +216,16 @@ class _Input extends React.Component {
     }
 
     renderButtons() {
-        const {value, buttons} = this.props
+        const {value, buttons, onAccept, onCancel} = this.props
         return value && this.isSearchInput()
             ? this.renderClearButton()
-            : buttons
+            : buttons || onAccept || onCancel
                 ? (
                     <ButtonGroup
                         layout='horizontal-nowrap'
                         dimmed>
+                        {this.renderCancelButton()}
+                        {this.renderAcceptButton()}
                         {buttons}
                     </ButtonGroup>
                 )
@@ -226,6 +250,34 @@ class _Input extends React.Component {
                 />
             </ButtonGroup>
         )
+    }
+
+    renderCancelButton() {
+        const {onCancel} = this.props
+        return onCancel ? (
+            <Button
+                key='cancel'
+                chromeless
+                shape='none'
+                air='none'
+                icon='undo'
+                onClick={this.onCancel}
+            />
+        ) : null
+    }
+
+    renderAcceptButton() {
+        const {onAccept} = this.props
+        return onAccept ? (
+            <Button
+                key='confirm'
+                chromeless
+                shape='none'
+                air='none'
+                icon='check'
+                onClick={this.onAccept}
+            />
+        ) : null
     }
 
     onClear() {
@@ -290,7 +342,9 @@ Input.propTypes = {
     tooltipTrigger: PropTypes.string,
     type: PropTypes.string,
     value: PropTypes.any,
+    onAccept: PropTypes.func,
     onBlur: PropTypes.func,
+    onCancel: PropTypes.func,
     onChange: PropTypes.func,
     onChangeDebounced: PropTypes.func,
     onClick: PropTypes.func,
@@ -453,7 +507,7 @@ Textarea.propTypes = {
     onBlur: PropTypes.func,
     onChange: PropTypes.func,
     onChangeDebounced: PropTypes.func,
-    onFocuse: PropTypes.func
+    onFocus: PropTypes.func
 }
 
 Textarea.defaultProps = {
