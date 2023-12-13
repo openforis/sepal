@@ -41,7 +41,7 @@ const exportImageToAsset$ = (taskId, {
     return assetDestination$(description, assetId).pipe(
         switchMap(({description, assetId}) =>
             concat(
-                createAssetFolders$(assetId),
+                createParentFolder$(assetId),
                 export$({description, assetId})
             )
         )
@@ -236,8 +236,8 @@ const assetDestination$ = (description, assetId) => {
         )
 }
 
-const createAssetFolders$ = assetId => {
-    return ee.createAssetFolders$(assetId, 1).pipe(
+const createParentFolder$ = assetId => {
+    return ee.createParentFolder$(assetId, 1).pipe(
         progress({
             defaultMessage: `Create asset folder '${assetId}'`,
             messageKey: 'tasks.ee.export.asset.createFolder',
