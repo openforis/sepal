@@ -23,4 +23,6 @@ apt-get install -y --no-install-recommends \
 
 pip3 install pyopencl
 pip3 install testresources
-pip3 install tensorflow
+
+# Versions: https://www.tensorflow.org/install/source#gpu
+pip3 install tensorflow==2.14.1
