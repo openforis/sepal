@@ -32,7 +32,7 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
         )
         
     const legacyRoots$ = () =>
-        http.get$('https://earthengine.googleapis.com/v1beta/projects/earthengine-legacy:listAssets', {headers}).pipe(
+        http.get$('https://earthengine.googleapis.com/v1/projects/earthengine-legacy:listAssets', {headers}).pipe(
             map(({body}) => JSON.parse(body)),
             map(mapLegacyRoots)
         )
