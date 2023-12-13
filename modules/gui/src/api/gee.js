@@ -23,6 +23,12 @@ export default {
             retries: 0
         }),
 
+    createFolder$: ({id}) =>
+        postJson$('/api/gee/asset/createFolder', {
+            body: {id},
+            retries: 0
+        }),
+
     assetMetadata$: ({asset, allowedTypes}) =>
         postJson$('/api/gee/assetMetadata', {
             body: {asset, allowedTypes},

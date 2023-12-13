@@ -10,9 +10,11 @@ import {Widget} from './widget'
 import {compose} from 'compose'
 import {isEqual} from 'hash'
 import {isMobile} from './userAgent'
+import {isServiceAccount} from 'user'
 import {msg} from 'translate'
 import {withActivatable} from './activation/activatable'
 import {withAssets} from './assets'
+import ButtonPopup from './buttonPopup'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -33,6 +35,7 @@ const mapStateToProps = (_state, ownProps) => ({
 class _AssetBrowser extends React.Component {
     constructor(props) {
         super(props)
+        this.reloadAssets = this.reloadAssets.bind(this)
         this.onInputChange = this.onInputChange.bind(this)
         this.onFolderSelect = this.onFolderSelect.bind(this)
         this.onAssetSelect = this.onAssetSelect.bind(this)
@@ -45,7 +48,8 @@ class _AssetBrowser extends React.Component {
     state = {
         filter: '',
         filteredTree: Tree.createNode(),
-        selectedFolderId: null
+        selectedFolderId: null,
+        selectedParentPath: null
     }
 
     render() {
@@ -57,7 +61,10 @@ class _AssetBrowser extends React.Component {
                 onApply={this.onApply}
                 onCancel={deactivate}
                 modal>
-                <Panel.Header title={msg('asset.browser.title')}/>
+                <Panel.Header
+                    title={msg('asset.browser.title')}
+                    label={ this.renderReloadButton() }
+                />
                 <Panel.Content scrollable={false}>
                     <Widget
                         label={msg('asset.browser.asset')}
@@ -68,9 +75,62 @@ class _AssetBrowser extends React.Component {
                         {this.renderFilter()}
                     </Widget>
                 </Panel.Content>
-                <Form.PanelButtons/>
+                <Form.PanelButtons>
+                    {this.renderCreateFolderButton()}
+                </Form.PanelButtons>
             </Form.Panel>
         )
+    }
+
+    renderReloadButton() {
+        const {assets: {loading, updating}} = this.props
+        const busy = loading || updating
+        return (
+            <Button
+                key='reload'
+                chromeless
+                shape='none'
+                air='none'
+                icon='rotate'
+                iconAttributes={{spin: busy}}
+                tooltip={msg('asset.reload')}
+                tabIndex={-1}
+                disabled={isServiceAccount() || busy}
+                onClick={this.reloadAssets}
+            />
+        )
+    }
+
+    renderCreateFolderButton() {
+        const {selectedParentPath} = this.state
+        return (
+            <ButtonPopup
+                look='add'
+                icon='plus'
+                label={msg('Create folder')}
+                vPlacement='below'
+                hPlacement='over-right'
+                disabled={!selectedParentPath}
+            >
+                {close => (
+                    <Input
+                        autoFocus
+                        placeholder={msg('Enter folder name')}
+                        onAccept={folder => {
+                            this.onCreateFolder(folder)
+                            close()
+                        }}
+                        onCancel={close}
+                    />
+                )}
+            </ButtonPopup>
+        )
+    }
+
+    onCreateFolder(folder) {
+        const {assets: {createFolder}} = this.props
+        const {selectedParentPath} = this.state
+        createFolder(selectedParentPath, folder)
     }
 
     renderInput() {
@@ -154,11 +214,16 @@ class _AssetBrowser extends React.Component {
         )
     }
 
+    reloadAssets() {
+        const {assets: {reloadAssets}} = this.props
+        reloadAssets()
+    }
+
     getFolderTreeOptions({items} = {}, depth = 0) {
         return _(items)
             .pickBy(node => isFolder(node.props.type))
             .map((node, id) => [
-                this.getItemOption({id, type: node.props.type, depth, node}),
+                this.getItemOption({path: node.path, id, type: node.props.type, depth, node}),
                 ...this.getFolderTreeOptions(node, depth + 1)
             ])
             .flatten()
@@ -168,16 +233,17 @@ class _AssetBrowser extends React.Component {
     getFolderAssetsOptions({items} = {}) {
         return _(items)
             .pickBy(node => !isFolder(node.props.type))
-            .map((node, id) => this.getItemOption({id, type: node.props.type}))
+            .map((node, id) => this.getItemOption({path: node.path, id, type: node.props.type}))
             .value()
     }
 
-    getItemOption({id, type, depth, node}) {
+    getItemOption({path, id, type, depth, node}) {
         const tooltip = this.renderFolderAssets(node)
         const render = () => this.renderItem({id, type, depth, tooltip})
         return {
             label: id,
             value: id,
+            path,
             indent: depth,
             render
         }
@@ -216,13 +282,13 @@ class _AssetBrowser extends React.Component {
         this.updateAsset(assetId)
     }
 
-    onFolderSelect({value: folderAssetId}) {
-        this.updateAsset(`${folderAssetId}/${this.getCurrentAssetName()}`)
+    onFolderSelect({value: folderAssetId, path}) {
+        this.updateAsset(`${folderAssetId}/${this.getCurrentAssetName()}`, path)
         this.focusInput()
     }
     
-    onAssetSelect({value: assetId}) {
-        this.updateAsset(assetId)
+    onAssetSelect({value: assetId, path}) {
+        this.updateAsset(assetId, path)
         this.focusInput()
     }
 
@@ -244,10 +310,13 @@ class _AssetBrowser extends React.Component {
         this.setState({filteredTree: Tree.filter(tree, this.getFilter())})
     }
 
-    updateAsset(assetId) {
+    updateAsset(assetId, parent) {
         const {inputs: {asset}} = this.props
         asset.set(assetId)
-        this.setState({selectedFolderId: this.getClosestFolderId(assetId)})
+        this.setState({
+            selectedFolderId: this.getClosestFolderId(assetId),
+            selectedParentPath: parent
+        })
     }
 
     componentDidMount() {

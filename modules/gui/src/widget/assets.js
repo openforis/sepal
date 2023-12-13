@@ -1,4 +1,4 @@
-import {EMPTY, Subject, catchError, exhaustMap, finalize, interval, last, map, merge, mergeWith, of, scan, switchMap, takeUntil, tap, throttleTime} from 'rxjs'
+import {EMPTY, Subject, catchError, exhaustMap, filter, finalize, interval, last, map, merge, mergeWith, of, scan, switchMap, takeUntil, tap, throttleTime} from 'rxjs'
 import {Tree} from 'tree'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -37,7 +37,8 @@ const loadNodes$ = (path, nodes) =>
         .filter(({type}) => type === 'Folder')
         .map(node => loadNode$([...path, node.id], node))
 
-const reloadAssets$ = new Subject()
+const startReloadAssets$ = new Subject()
+const cancelReloadAssets$ = new Subject()
 
 const loadAssets$ = () =>
     merge(
@@ -55,7 +56,7 @@ const loadAssets$ = () =>
                 return of({incremental: false})
             })
         ),
-        reloadAssets$.pipe(
+        startReloadAssets$.pipe(
             map(() => ({incremental: true}))
         )
     ).pipe(
@@ -69,6 +70,7 @@ const loadAssets$ = () =>
                 incremental
                     ? throttleTime(1000, null, {leading: true, trailing: true})
                     : last(),
+                takeUntil(cancelReloadAssets$),
                 tap({
                     next: assetTree => {
                         log.debug('Updating assets tree')
@@ -137,6 +139,39 @@ const removeAsset = id => {
         .dispatch()
 }
 
+const reloadAssets = () =>
+    startReloadAssets$.next()
+
+const cancelReload = () =>
+    cancelReloadAssets$.next()
+
+const createFolder = (parentPath, folder) => {
+    const parentFolderId = _.last(parentPath)
+    const id = [parentFolderId, folder].join('/')
+
+    cancelReload()
+
+    actionBuilder('CREATE_FOLDER')
+        .set('assets.updating', true)
+        .dispatch()
+
+    api.gee.createFolder$({id}).pipe(
+        tap({
+            complete: () => {
+                actionBuilder('CREATE_FOLDER')
+                    .del('assets.updating')
+                    .dispatch()
+                reloadAssets()
+            },
+            error: () => {
+                actionBuilder('CREATE_FOLDER')
+                    .del('assets.updating')
+                    .dispatch()
+            }
+        })
+    ).subscribe()
+}
+
 export const withAssets = () =>
     WrappedComponent =>
         compose(
@@ -156,9 +191,11 @@ export const withAssets = () =>
                     otherAssets: select('assets.other') || [],
                     recentAssets: select('assets.recent') || [],
                     loading: select('assets.loading') || false,
+                    updating: select('assets.updating') || false,
                     updateAsset,
                     removeAsset,
-                    reloadAssets: () => reloadAssets$.next()
+                    reloadAssets,
+                    createFolder
                 }
             }))
         )
