@@ -36,6 +36,9 @@ const fields = {
     assetType: new Form.Field()
         .skip((v, {destination}) => destination !== 'GEE')
         .notBlank(),
+    sharing: new Form.Field()
+        .skip((v, {destination}) => destination !== 'GEE')
+        .notBlank(),
     strategy: new Form.Field()
         .skip((v, {destination}) => destination !== 'GEE')
         .notBlank(),
@@ -130,6 +133,7 @@ class _Retrieve extends React.Component {
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
                 {destination.value === 'GEE' ? this.renderAssetType() : null}
                 {destination.value === 'GEE' ? this.renderAssetDestination() : null}
+                {destination.value === 'GEE' ? this.renderSharing() : null}
                 {more && destination.value === 'GEE' && assetType.value === 'ImageCollection' ? this.renderTileSize() : null}
                 {more && destination.value === 'GEE' ? this.renderShardSize() : null}
                 {more && destination.value === 'SEPAL' ? this.renderFileDimensionsMultiple() : null}
@@ -278,6 +282,29 @@ class _Retrieve extends React.Component {
             <Form.Buttons
                 label={msg('process.retrieve.form.assetType.label')}
                 input={assetType}
+                multiple={false}
+                options={options}/>
+        )
+    }
+    
+    renderSharing() {
+        const {inputs: {sharing}} = this.props
+        const options = [
+            {
+                value: 'PRIVATE',
+                label: msg('process.retrieve.form.sharing.PRIVATE.label'),
+                tooltip: msg('process.retrieve.form.sharing.PRIVATE.tooltip')
+            },
+            {
+                value: 'PUBLIC',
+                label: msg('process.retrieve.form.sharing.PUBLIC.label'),
+                tooltip: msg('process.retrieve.form.sharing.PUBLIC.tooltip')
+            }
+        ]
+        return (
+            <Form.Buttons
+                label={msg('process.retrieve.form.sharing.label')}
+                input={sharing}
                 multiple={false}
                 options={options}/>
         )
