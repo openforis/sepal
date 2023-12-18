@@ -4029,6 +4029,17 @@
                     "suffix": "",
                     "tooltip": ""
                 },
+                "sharing": {
+                    "label": "",
+                    "PRIVATE": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "PUBLIC": {
+                        "label": "",
+                        "tooltip": ""
+                    }
+                },
                 "task": {
                     "GEE": "Exportar {name} como asset de Google Earth Engine",
                     "SEPAL": "Importar {name} al espacio de trabajo de SEPAL"
@@ -4281,6 +4292,7 @@
                     "delete": "",
                     "prepareImageCollection": "",
                     "startExport": "",
+                    "sharing": "",
                     "tilingImage": ""
                 },
                 "pending": "Envío de la tarea de exportación a Google Earth Engine",
