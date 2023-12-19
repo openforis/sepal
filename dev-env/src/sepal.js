@@ -12,6 +12,7 @@ import {shell} from './shell.js'
 import {log} from './log.js'
 import {npmUpdate} from './npm-update.js'
 import {npmInstall} from './npm-install.js'
+import {npmTest} from './npm-test.js'
 
 const main = async () => {
     process.on('SIGINT', () => exit({interrupted: true}))
@@ -37,7 +38,6 @@ const main = async () => {
         .description('Build modules')
         .option('-nc, --no-cache', 'No cache')
         .option('-r, --recursive', 'Recursive')
-        .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .argument('[module...]', 'Modules to build')
         .action(build)
@@ -47,8 +47,11 @@ const main = async () => {
         .option('-nc, --no-cache', 'No cache')
         .option('-r, --recursive', 'Recursive')
         .option('-d, --dependencies', 'Restart dependencies')
-        .option('-l, --log-tail', 'Show log tail')
-        .option('-t, --log-tail', 'Show log tail')
+        .option('-l, --log', 'Show full log')
+        .option('-lf, --log-follow', 'Show full log and follow')
+        .option('-lr, --log-recent', 'Show recent log and follow')
+        .option('-lt, --log-tail', 'Show log tail')
+        .option('-s, --sequential', 'Sequential start')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
         .argument('[module...]', 'Modules to build')
@@ -66,25 +69,35 @@ const main = async () => {
         .description('Start modules')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
-        .option('-l, --log-tail', 'Show log tail')
-        .option('-t, --log-tail', 'Show log tail')
+        .option('-l, --log', 'Show full log')
+        .option('-lf, --log-follow', 'Show full log and follow')
+        .option('-lr, --log-recent', 'Show recent log and follow')
+        .option('-lt, --log-tail', 'Show log tail')
+        .option('-s, --sequential', 'Sequential start')
         .argument('[module...]', 'Modules to start')
         .action(start)
-    
+
     program.command('restart')
         .description('Restart modules')
         .option('-d, --dependencies', 'Restart dependencies')
         .option('-v, --verbose', 'Verbose')
         .option('-q, --quiet', 'Quiet')
-        .option('-l, --log-tail', 'Show log tail')
-        .option('-t, --log-tail', 'Show log tail')
+        .option('-l, --log', 'Show full log')
+        .option('-lf, --log-follow', 'Show full log and follow')
+        .option('-lr, --log-recent', 'Show recent log and follow')
+        .option('-lt, --log-tail', 'Show log tail')
+        .option('-s, --sequential', 'Sequential start')
         .argument('[module...]', 'Modules to start')
         .action(restart)
     
     program.command('logs')
         .description('Show module log')
         .option('-f, --follow', 'Follow')
-        .option('-t, --tail', 'Tail (shortcut for --since 0 --follow)')
+        .option('-r, --recent', 'Recent (shortcut for --follow --since 5m)')
+        .option('-t, --tail', 'Tail (shortcut for --follow --since 0)')
+        .option('-lf, --log-follow', 'Same as --follow, for compatibility with other commands')
+        .option('-lr, --log-recent', 'Same as --recent, for compatibility with other commands')
+        .option('-lt, --log-tail', 'Same as --tail, for compatibility with other commands')
         .option('-s, --since <time>', 'Since relative or absolute time')
         .option('-u, --until <time>', 'Until relative or absolute time')
         .argument('[module...]', 'Modules')
@@ -111,11 +124,16 @@ const main = async () => {
         .argument('[module...]', 'Modules to install')
         .action(npmInstall)
 
+    program.command('npm-test')
+        .description('Run npm interactive tests')
+        .argument('module', 'Module to test')
+        .action(npmTest)
+
     try {
         await program.parseAsync(process.argv)
         exit({normal: true})
     } catch (error) {
-        if (!['commander.helpDisplayed', 'commander.help', 'commander.version', 'commander.unknownOption', 'commander.unknownCommand', 'commander.invalidArgument'].includes(error.code)) {
+        if (!['commander.helpDisplayed', 'commander.help', 'commander.version', 'commander.unknownOption', 'commander.unknownCommand', 'commander.invalidArgument', 'commander.missingArgument'].includes(error.code)) {
             exit({error})
         }
     }

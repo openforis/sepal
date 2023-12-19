@@ -1,18 +1,19 @@
 import {EMPTY, Subject, animationFrames, debounceTime, distinctUntilChanged, fromEvent, map, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs'
 import {compose} from 'compose'
 import {v4 as uuid} from 'uuid'
+import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
 import flexy from './flexy.module.css'
 import styles from './scrollable.module.css'
-import withSubscriptions from 'subscription'
 
 const ScrollableContainerContext = React.createContext()
 
 export class ScrollableContainer extends React.Component {
     ref = React.createRef()
+    
     state = {
         height: 0
     }
@@ -73,19 +74,24 @@ class _Scrollable extends Component {
         key: null
     }
 
+    constructor() {
+        super()
+        this.renderScrollable = this.renderScrollable.bind(this)
+    }
+
     render() {
         return (
             <ScrollableContainerContext.Consumer>
-                {({height}) => this.renderScrollable(height)}
+                {this.renderScrollable}
             </ScrollableContainerContext.Consumer>
         )
     }
 
-    renderScrollable(containerHeight) {
-        const {className, direction, children} = this.props
+    renderScrollable({height}) {
+        const {className, direction, hideScrollbar, children} = this.props
         const {key} = this.state
         const scrollable = {
-            containerHeight,
+            containerHeight: height,
             getOffset: (direction = 'y') => this.getOffset(direction),
             getContainerHeight: this.getContainerHeight.bind(this),
             getClientHeight: this.getClientHeight.bind(this),
@@ -98,19 +104,26 @@ class _Scrollable extends Component {
             scrollLine: this.scrollLine.bind(this),
             reset: this.reset.bind(this),
             centerElement: this.centerElement.bind(this),
+            scrollElement: this.scrollElement.bind(this),
             getElement: this.getScrollableElement.bind(this)
         }
-        const keymap = {
+        const keymap = ['y', 'xy'].includes(direction) ? {
             ArrowUp: () => scrollable.scrollLine(-1),
             ArrowDown: () => scrollable.scrollLine(1),
             'Shift+ ': () => scrollable.scrollPage(-1),
             ' ': () => scrollable.scrollPage(1)
-        }
+        } : null
         return (
             <div
                 key={key}
                 ref={this.ref}
-                className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
+                className={[
+                    flexy.elastic,
+                    styles.scrollable,
+                    styles[direction],
+                    hideScrollbar ? styles.hideScrollbar : null,
+                    className
+                ].join(' ')}>
                 <ScrollableContext.Provider value={scrollable}>
                     <Keybinding keymap={keymap}>
                         {_.isFunction(children) ? children(scrollable) : children}
@@ -190,6 +203,13 @@ class _Scrollable extends Component {
         }
     }
 
+    scrollElement(element) {
+        element?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        })
+    }
+
     reset(callback) {
         const verticalOffset = this.getOffset('y')
         const horizontalOffset = this.getOffset('x')
@@ -248,7 +268,7 @@ class _Scrollable extends Component {
             ),
             scroll$(this.horizontalScroll$, 'x').subscribe(
                 offset => this.setOffset(offset, 'x')
-            ),
+            )
         )
     }
 
@@ -271,19 +291,29 @@ Scrollable.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     direction: PropTypes.oneOf(['x', 'y', 'xy']),
+    hideScrollbar: PropTypes.any,
     onScroll: PropTypes.func
 }
 
 export const withScrollable = () =>
     WrappedComponent =>
-        class HigherOrderComponent extends React.Component {
+        class WithScrollableHOC extends React.Component {
+            constructor() {
+                super()
+                this.renderScrollable = this.renderScrollable.bind(this)
+            }
+
             render() {
                 return (
                     <ScrollableContext.Consumer>
-                        {scrollable =>
-                            <WrappedComponent {...this.props} scrollable={scrollable}/>
-                        }
+                        {this.renderScrollable}
                     </ScrollableContext.Consumer>
+                )
+            }
+
+            renderScrollable(scrollable) {
+                return (
+                    <WrappedComponent {...this.props} scrollable={scrollable}/>
                 )
             }
         }

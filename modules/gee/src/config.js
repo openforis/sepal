@@ -6,24 +6,26 @@ const _ = require('lodash')
 const DEFAULT_PORT = 5001
 
 program
-    .requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
     .option('--gee-email <value>')
     .option('--gee-key-path <value>')
     .option('--gee-key <value>')
+    .option('--google-project-id <value>')
     .option('--sepal-endpoint <value>')
     .option('--sepal-username <value>')
     .option('--sepal-password <value>')
     .option('--port <number>', 'Port', DEFAULT_PORT)
+    .option('--instances <number>', 'Instances', parseInt)
     .parse(process.argv)
     
 const {geeEmail,
-    amqpUri,
     geeKey,
     geeKeyPath,
+    googleProjectId,
     sepalEndpoint,
     sepalUsername,
     sepalPassword,
-    port
+    port,
+    instances
 } = program.opts()
 
 const readFile = path => {
@@ -45,10 +47,11 @@ const serviceAccountCredentials = {
 log.info('Configuration loaded')
 
 module.exports = {
-    amqpUri,
+    googleProjectId,
     serviceAccountCredentials,
     sepalEndpoint,
     sepalUsername,
     sepalPassword,
-    port
+    port,
+    instances
 }

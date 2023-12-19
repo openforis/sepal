@@ -8,14 +8,14 @@ import withForwardedRef from 'ref'
 
 const Context = React.createContext()
 
-export const withButtonGroupContext = withContext(Context, 'buttonGroupContext')
+export const withButtonGroup = withContext(Context, 'buttonGroup')
 
-const _ButtonGroup = ({className, contentClassName, layout, alignment, spacing, framed, label, disabled, onMouseOver, onMouseOut, forwardedRef, children}) => {
+const _ButtonGroup = ({className, contentClassName, layout, alignment, spacing, framed, label, dimmed, disabled, onMouseOver, onMouseOut, forwardedRef, children, buttonGroup: {dimmed: parentDimmed} = {}}) => {
     const mapChild = (child, index, childrenCount) => {
-        const joinLeft = childrenCount > 1 && index !== 0
-        const joinRight = childrenCount > 1 && index !== childrenCount - 1
+        const joinLeft = spacing === 'none' && childrenCount > 1 && index !== 0
+        const joinRight = spacing === 'none' && childrenCount > 1 && index !== childrenCount - 1
         return (
-            <Context.Provider value={{joinLeft, joinRight}}>
+            <Context.Provider value={{joinLeft, joinRight, dimmed: dimmed || parentDimmed}}>
                 {child}
             </Context.Provider>
         )
@@ -26,26 +26,30 @@ const _ButtonGroup = ({className, contentClassName, layout, alignment, spacing, 
             mapChild(child, index, children.length)
         )
 
-    return (
-        <Widget
-            ref={forwardedRef}
-            className={className}
-            contentClassName={contentClassName}
-            label={label}
-            layout={layout}
-            alignment={alignment}
-            spacing={spacing}
-            framed={framed}
-            disabled={disabled}
-            onMouseOver={onMouseOver}
-            onMouseOut={onMouseOut}>
-            {spacing === 'none' ? mapChildren(_.compact(children)) : children}
-        </Widget>
-    )
+    return children
+        ? (
+            <Widget
+                ref={forwardedRef}
+                className={className}
+                contentClassName={contentClassName}
+                label={label}
+                layout={layout}
+                alignment={alignment}
+                spacing={spacing}
+                framed={framed}
+                disabled={disabled}
+                onMouseOver={onMouseOver}
+                onMouseOut={onMouseOut}>
+                {mapChildren(React.Children.toArray(children))}
+            </Widget>
+        
+        )
+        : null
 }
 
 export const ButtonGroup = compose(
     _ButtonGroup,
+    withButtonGroup(),
     withForwardedRef()
 )
 
@@ -54,6 +58,7 @@ ButtonGroup.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     contentClassName: PropTypes.string,
+    dimmed: PropTypes.any,
     disabled: PropTypes.any,
     framed: PropTypes.any,
     label: PropTypes.any,

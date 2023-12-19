@@ -9,11 +9,11 @@ import {getImageLayerSource} from 'app/home/map/imageLayerSource/imageLayerSourc
 import {msg} from 'translate'
 import {withLayers} from '../withLayers'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './areas.module.css'
-import withSubscription from 'subscription'
 
 const AREA = Symbol('area')
 const SOURCE = Symbol('source')
@@ -146,12 +146,10 @@ class _Areas extends React.Component {
                 <div className={styles.areaContent}>
                     <ListItem
                         drag$={this.areaDrag$}
-                        dragValue={area}
-                    >
+                        dragValue={area}>
                         <CrudItem
                             title={msg(`imageLayerSources.${source.type}.label`)}
                             description={description}
-                            removeTooltip={msg('map.layout.area.remove.tooltip')}
                         />
                     </ListItem>
                 </div>
@@ -334,7 +332,7 @@ export const Areas = compose(
     _Areas,
     withLayers(),
     withRecipe(recipe => ({recipe})),
-    withSubscription()
+    withSubscriptions()
 )
 
 Areas.propTypes = {

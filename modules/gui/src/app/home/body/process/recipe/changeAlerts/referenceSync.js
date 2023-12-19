@@ -48,12 +48,12 @@ class _ReferenceSync extends React.Component {
         this.fetchRecipe(reference)
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
         const {reference} = this.props
-        this.fetchRecipe(reference)
+        this.fetchRecipe(reference, prevProps.reference)
     }
 
-    fetchRecipe(recipe) {
+    fetchRecipe(recipe, prevReference) {
         const {stream, loadSourceRecipe$, recipeActionBuilder} = this.props
         const type = recipe.type
         if (!type) {
@@ -72,7 +72,7 @@ class _ReferenceSync extends React.Component {
                 error => Notifications.error({message: msg('process.changeAlerts.reference.recipe.loadError'), error})
             )
         } else if (type === 'ASSET') {
-            this.initAsset() // What about prevReference?
+            this.initAsset(prevReference)
         } else {
             this.updateRecipeReference({ccdcRecipe: recipe})
         }
@@ -80,29 +80,50 @@ class _ReferenceSync extends React.Component {
 
     initAsset(prevReference = {}) {
         const {stream, reference = {}} = this.props
-        if (reference.id && reference.id === prevReference.id || stream('LOAD').active) {
+        if ((reference.id && reference.id === prevReference.id) || stream('LOAD').active) {
             return
         }
         stream('LOAD',
-            api.gee.imageMetadata$({asset: reference.id}).pipe(
+            api.gee.assetMetadata$({asset: reference.id}).pipe(
                 takeUntil(this.cancel$)
             ),
-            metadata => this.updateAssetReference(reference.id, metadata, reference),
+            metadata => this.updateAssetReference(metadata, reference),
             error => Notifications.error({message: msg('process.changeAlerts.reference.asset.loadError'), error})
         )
     }
 
-    updateAssetReference(id, metadata, reference) {
+    updateAssetReference(metadata, reference) {
         const {recipeActionBuilder} = this.props
         const assetDateFormat = metadata.properties.dateFormat
         const dateFormat = assetDateFormat === undefined ? reference.dateFormat : assetDateFormat
         const referenceDetails = {
-            ...toAssetReference(metadata.bands, metadata.properties),
+            ...toAssetReference(metadata.bandNames, metadata.properties),
             dateFormat
         }
-        recipeActionBuilder('UPDATE_REFERENCE', {referenceDetails})
+        const builder = recipeActionBuilder('UPDATE_REFERENCE', {referenceDetails})
             .assign('model.reference', referenceDetails)
-            .dispatch()
+        
+        const assignOptions = builder => {
+            const assetOptionsString = metadata?.properties?.recipe_options
+            if (assetOptionsString) {
+                const assetOptions = JSON.parse(assetOptionsString)
+                return builder
+                    .assign('model.options', assetOptions)
+            } else {
+                return builder
+            }
+        }
+        const assignSources = builder => {
+            const assetSourcesString = metadata?.properties?.recipe_sources
+            if (assetSourcesString) {
+                return builder
+                    .assign('model.sources', JSON.parse(assetSourcesString))
+            } else {
+                return builder
+            }
+        }
+
+        assignSources(assignOptions(builder)).dispatch()
     }
 
     updateRecipeReference({ccdcRecipe}) {
@@ -110,6 +131,8 @@ class _ReferenceSync extends React.Component {
         const nextReference = this.recipeReference({ccdcRecipe})
         if (!_.isEqual(reference, nextReference)) {
             recipeActionBuilder('UPDATE_REFERENCE', {reference})
+                .assign('model.sources', ccdcRecipe.model.sources)
+                .assign('model.options', ccdcRecipe.model.options)
                 .set('model.reference', nextReference)
                 .dispatch()
         }

@@ -16,8 +16,6 @@ services:
       - "${SEPAL_DATA_DIR}/app-manager/images:/var/lib/sepal/app-manager/images"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-      RABBITMQ_HOST: "rabbitmq"
-      RABBITMQ_PORT: "5672"
     networks:
       - sepal
     restart: always

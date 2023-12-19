@@ -1,9 +1,11 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from './buttonGroup'
 import {Layout} from 'widget/layout'
+import {Subject, debounceTime, distinctUntilChanged} from 'rxjs'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
+import {withSubscriptions} from 'subscription'
 import Icon from './icon'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -13,33 +15,48 @@ import Tooltip from 'widget/tooltip'
 import styles from './input.module.css'
 import withForwardedRef from 'ref'
 
-const checkProtectedKey = (e, protectedKeyCodes) => {
-    if (protectedKeyCodes.includes(e.code)) {
+const DEBOUNCE_TIME_MS = 750
+
+const captureKeypress = (e, keyCodes) => {
+    if (keyCodes.includes(e.code)) {
         e.stopPropagation()
     }
 }
 
 class _Input extends React.Component {
+    constructor(props) {
+        super(props)
+        this.ref = props.forwardedRef || React.createRef()
+        this.onClick = this.onClick.bind(this)
+        this.onFocus = this.onFocus.bind(this)
+        this.onBlur = this.onBlur.bind(this)
+        this.onChange = this.onChange.bind(this)
+        this.onClear = this.onClear.bind(this)
+        this.onWheel = this.onWheel.bind(this)
+        this.captureEvents = this.captureEvents.bind(this)
+    }
+
+    change$ = new Subject()
+
     state = {
         value: '',
         focused: false
     }
 
-    constructor(props) {
-        super(props)
-        this.ref = props.forwardedRef || React.createRef()
-        this.onFocus = this.onFocus.bind(this)
-        this.onBlur = this.onBlur.bind(this)
-        this.onChange = this.onChange.bind(this)
-        this.onClear = this.onClear.bind(this)
-    }
-
-    checkProtectedKey(e) {
-        return checkProtectedKey(e, ['ArrowLeft', 'ArrowRight', 'Home', 'End'])
+    captureEvents(e) {
+        const {value} = this.state
+        if (value.length) {
+            captureKeypress(e, [
+                'ArrowLeft',
+                'ArrowRight',
+                'Home',
+                'End'
+            ])
+        }
     }
 
     render() {
-        const {className, disabled, label, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border, onClick} = this.props
+        const {className, disabled, label, labelButtons, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border} = this.props
         return (
             <Widget
                 className={[
@@ -48,25 +65,29 @@ class _Input extends React.Component {
                 ].join(' ')}
                 disabled={disabled}
                 label={label}
+                labelButtons={labelButtons}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 tooltipTrigger={tooltipTrigger}
                 errorMessage={errorMessage}
                 busyMessage={busyMessage}
                 border={border}
-                onClick={e => {
-                    this.ref.current && this.ref.current.focus()
-                    onClick && onClick(e)
-                }}
+                onClick={this.onClick}
             >
                 {this.renderContent()}
             </Widget>
         )
     }
 
+    onClick(e) {
+        const {onClick} = this.props
+        this.ref.current && this.ref.current.focus()
+        onClick && onClick(e)
+    }
+
     renderContent() {
         return (
-            <Layout type='horizontal-nowrap' spacing='none'>
+            <Layout type='horizontal-nowrap' spacing='compact'>
                 {this.renderSearch()}
                 {this.renderPrefix()}
                 {this.renderInput()}
@@ -110,13 +131,18 @@ class _Input extends React.Component {
                         onFocus={this.onFocus}
                         onBlur={this.onBlur}
                         onChange={this.onChange}
-                        onWheel={e => type === 'number' && e.target.blur()} // disable mouse wheel on input type=number
-                        onKeyDown={e => this.checkProtectedKey(e)}
+                        onWheel={this.onWheel} // disable mouse wheel on input type=number
+                        onKeyDown={this.captureEvents}
                     />
                 </Tooltip>
                 {/* </div> */}
             </Keybinding>
         )
+    }
+
+    onWheel(e) {
+        const {type} = this.props
+        type === 'number' && e.target.blur()
     }
 
     onFocus(e) {
@@ -133,15 +159,14 @@ class _Input extends React.Component {
 
     onChange(e) {
         const {onChange} = this.props
+        this.change$.next(e.target.value)
         onChange && onChange(e)
     }
 
     renderSearch() {
         return this.isSearchInput()
             ? (
-                <div className={[styles.search, styles.dim].join(' ')}>
-                    <Icon name='search'/>
-                </div>
+                <Icon name='search' dimmed/>
             )
             : null
     }
@@ -150,7 +175,7 @@ class _Input extends React.Component {
         const {prefix} = this.props
         return prefix
             ? (
-                <div className={[styles.prefix, styles.dim].join(' ')}>
+                <div className={styles.prefix}>
                     {prefix}
                 </div>
             )
@@ -161,7 +186,7 @@ class _Input extends React.Component {
         const {suffix} = this.props
         return suffix
             ? (
-                <div className={[styles.suffix, styles.dim].join(' ')}>
+                <div className={styles.suffix}>
                     {suffix}
                 </div>
             )
@@ -169,18 +194,15 @@ class _Input extends React.Component {
     }
 
     renderButtons() {
-        const {value, additionalButtons, buttons} = this.props
+        const {value, buttons} = this.props
         return value && this.isSearchInput()
             ? this.renderClearButton()
-            : additionalButtons || buttons
+            : buttons
                 ? (
-                    <ButtonGroup layout='horizontal-nowrap'>
-                        <ButtonGroup layout='horizontal-nowrap'>
-                            {additionalButtons}
-                        </ButtonGroup>
-                        <ButtonGroup layout='horizontal-nowrap' contentClassName={styles.dim}>
-                            {buttons}
-                        </ButtonGroup>
+                    <ButtonGroup
+                        layout='horizontal-nowrap'
+                        dimmed>
+                        {buttons}
                     </ButtonGroup>
                 )
                 : null
@@ -188,7 +210,9 @@ class _Input extends React.Component {
 
     renderClearButton() {
         return (
-            <ButtonGroup layout='horizontal-nowrap'>
+            <ButtonGroup
+                layout='horizontal-nowrap'
+                dimmed>
                 <Button
                     chromeless
                     shape='none'
@@ -215,15 +239,29 @@ class _Input extends React.Component {
         const {type} = this.props
         return type === 'search'
     }
+
+    componentDidMount() {
+        const {addSubscription, onChangeDebounced} = this.props
+        if (onChangeDebounced) {
+            addSubscription(
+                this.change$.pipe(
+                    debounceTime(DEBOUNCE_TIME_MS),
+                    distinctUntilChanged()
+                ).subscribe(
+                    value => onChangeDebounced(value)
+                )
+            )
+        }
+    }
 }
 
 export const Input = compose(
     _Input,
+    withSubscriptions(),
     withForwardedRef()
 )
 
 Input.propTypes = {
-    additionalButtons: PropTypes.arrayOf(PropTypes.node),
     autoCapitalize: PropTypes.any,
     autoComplete: PropTypes.any,
     autoCorrect: PropTypes.any,
@@ -238,6 +276,7 @@ Input.propTypes = {
     inputTooltip: PropTypes.any,
     inputTooltipPlacement: PropTypes.string,
     label: PropTypes.string,
+    labelButtons: PropTypes.any,
     maxLength: PropTypes.number,
     name: PropTypes.string,
     placeholder: PropTypes.any,
@@ -253,6 +292,7 @@ Input.propTypes = {
     value: PropTypes.any,
     onBlur: PropTypes.func,
     onChange: PropTypes.func,
+    onChangeDebounced: PropTypes.func,
     onClick: PropTypes.func,
     onFocus: PropTypes.func
 }
@@ -269,21 +309,36 @@ Input.defaultProps = {
 }
 
 class _Textarea extends React.Component {
+    constructor(props) {
+        super(props)
+        this.onFocus = this.onFocus.bind(this)
+        this.onBlur = this.onBlur.bind(this)
+        this.onChange = this.onChange.bind(this)
+        this.captureEvents = this.captureEvents.bind(this)
+        this.ref = props.forwardedRef || React.createRef()
+    }
+
+    change$ = new Subject()
+
     state = {
         focused: false
     }
 
-    constructor(props) {
-        super(props)
-        this.ref = props.forwardedRef || React.createRef()
-    }
-
-    checkProtectedKey(e) {
-        return checkProtectedKey(e, ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'])
+    captureEvents(e) {
+        captureKeypress(e, [
+            'ArrowLeft',
+            'ArrowRight',
+            'ArrowUp',
+            'ArrowDown',
+            'Home',
+            'End',
+            'PageUp',
+            'PageDown'
+        ])
     }
 
     render() {
-        const {className, disabled, label, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border} = this.props
+        const {className, disabled, label, labelButtons, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border} = this.props
         return (
             <Widget
                 className={[
@@ -292,6 +347,7 @@ class _Textarea extends React.Component {
                 ].join(' ')}
                 disabled={disabled}
                 label={label}
+                labelButtons={labelButtons}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 tooltipTrigger={tooltipTrigger}
@@ -305,7 +361,7 @@ class _Textarea extends React.Component {
     }
 
     renderTextArea() {
-        const {className, name, value, placeholder, autoFocus, inputTooltip, inputTooltipPlacement, tabIndex, disabled, minRows, maxRows, onChange, onBlur, onFocus} = this.props
+        const {className, name, value, placeholder, autoFocus, inputTooltip, inputTooltipPlacement, tabIndex, disabled, minRows, maxRows} = this.props
         const {focused} = this.state
         return (
             <Keybinding keymap={{Enter: null, ' ': null}} disabled={!focused} priority>
@@ -326,25 +382,52 @@ class _Textarea extends React.Component {
                         autoFocus={autoFocus && !isMobile()}
                         minRows={minRows}
                         maxRows={maxRows}
-                        onFocus={e => {
-                            this.setState({focused: true})
-                            onFocus && onFocus(e)
-                        }}
-                        onBlur={e => {
-                            this.setState({focused: false})
-                            onBlur && onBlur(e)
-                        }}
-                        onChange={e => onChange && onChange(e)}
-                        onKeyDown={e => this.checkProtectedKey(e)}
+                        onFocus={this.onFocus}
+                        onBlur={this.onBlur}
+                        onChange={this.onChange}
+                        onKeyDown={this.captureEvents}
                     />
                 </Tooltip>
             </Keybinding>
         )
     }
+
+    onFocus(e) {
+        const {onFocus} = this.props
+        this.setState({focused: true})
+        onFocus && onFocus(e)
+    }
+
+    onBlur(e) {
+        const {onBlur} = this.props
+        this.setState({focused: false})
+        onBlur && onBlur(e)
+    }
+
+    onChange(e) {
+        const {onChange} = this.props
+        this.change$.next(e.target.value)
+        onChange && onChange(e)
+    }
+
+    componentDidMount() {
+        const {addSubscription, onChangeDebounced} = this.props
+        if (onChangeDebounced) {
+            addSubscription(
+                this.change$.pipe(
+                    debounceTime(DEBOUNCE_TIME_MS),
+                    distinctUntilChanged()
+                ).subscribe(
+                    value => onChangeDebounced(value)
+                )
+            )
+        }
+    }
 }
 
 export const Textarea = compose(
     _Textarea,
+    withSubscriptions(),
     withForwardedRef()
 )
 
@@ -357,6 +440,7 @@ Textarea.propTypes = {
     inputTooltip: PropTypes.any,
     inputTooltipPlacement: PropTypes.string,
     label: PropTypes.any,
+    labelButtons: PropTypes.any,
     maxRows: PropTypes.number,
     minRows: PropTypes.number,
     name: PropTypes.string,
@@ -368,6 +452,7 @@ Textarea.propTypes = {
     value: PropTypes.any,
     onBlur: PropTypes.func,
     onChange: PropTypes.func,
+    onChangeDebounced: PropTypes.func,
     onFocuse: PropTypes.func
 }
 

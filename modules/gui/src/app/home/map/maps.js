@@ -7,24 +7,24 @@ import {getLogger} from 'log'
 import {mapTag, mapViewTag} from 'tag'
 import {v4 as uuid} from 'uuid'
 import {withContext} from 'context'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
-import withSubscriptions from 'subscription'
 
 const log = getLogger('maps')
 
-const GOOGLE_MAPS_VERSION = '3.51'
+const GOOGLE_MAPS_VERSION = '3.52'
 const GOOGLE_MAPS_LIBRARIES = ['drawing', 'places']
 
 const DEFAULT_ZOOM = 3
 export const MIN_ZOOM = 3
 export const MAX_ZOOM = 23
 
-const MapsContext = React.createContext()
+const Context = React.createContext()
 
-export const withMapsContext = withContext(MapsContext, 'mapsContext')
+export const withMapsContext = withContext(Context, 'mapsContext')
 
 class _Maps extends React.Component {
     state = {
@@ -179,17 +179,19 @@ class _Maps extends React.Component {
         const linked$ = new Subject()
         const scrollWheelEnabled$ = this.scrollWheelEnabled$
 
-        const setLinked = linked => {
-            const currentView = this.getCurrentView()
+        const setLinked = (linked, view) => {
             if (linked) {
+                const currentView = this.getCurrentView()
                 this.linkedMaps.add(mapId)
+                if (this.linkedMaps.size === 1) {
+                    this.view$.next({mapId, view})
+                } else if (currentView) {
+                    requestedView$.next(currentView)
+                }
             } else {
                 this.linkedMaps.delete(mapId)
             }
             log.debug(() => `${mapTag(mapId)} ${linked ? 'linked' : 'unlinked'}, now ${this.linkedMaps.size} linked.`)
-            if (linked && this.linkedMaps.size > 1 && currentView) {
-                requestedView$.next(currentView)
-            }
         }
 
         const updateView = view => {
@@ -213,10 +215,10 @@ class _Maps extends React.Component {
             linked$.pipe(
                 distinctUntilChanged()
             ).subscribe(
-                linked => setLinked(linked)
+                ({linked, view}) => setLinked(linked, view)
             ),
             updateView$.pipe(
-                debounceTime(100),
+                debounceTime(500),
                 distinctUntilChanged()
             ).subscribe(
                 view => updateView(view)
@@ -230,13 +232,13 @@ class _Maps extends React.Component {
         const {children} = this.props
         const {error, initialized} = this.state
         return (
-            <MapsContext.Provider value={{
+            <Context.Provider value={{
                 createGoogleMap: this.createGoogleMap,
                 createSepalMap: this.createSepalMap,
                 createMapContext: this.createMapContext
             }}>
                 {children(initialized, error)}
-            </MapsContext.Provider>
+            </Context.Provider>
         )
     }
 

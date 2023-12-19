@@ -1,7 +1,7 @@
-import * as PropTypes from 'prop-types'
 import {Form} from './form/form'
 import {Panel} from 'widget/panel/panel'
 import ButtonSelect from 'widget/buttonSelect'
+import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 
@@ -39,7 +39,7 @@ export default class PanelSections extends React.Component {
             <ButtonSelect
                 chromeless
                 shape='none'
-                placement='below'
+                // placement='below'G
                 input={selected}
                 tooltipPlacement='bottom'
                 options={options}

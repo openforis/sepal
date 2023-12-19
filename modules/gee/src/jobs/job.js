@@ -1,5 +1,4 @@
 const Job = require('#sepal/worker/job')
-const logConfig = require('#gee/log.json')
 
 const getSepalUser = ctx => {
     const sepalUser = ctx.request.headers['sepal-user']
@@ -27,14 +26,25 @@ module.exports = {
         minIdleCount,
         maxIdleMilliseconds,
         ctx,
-        before = [require('#gee/jobs/ee/initialize')],
+        before = [require('#gee/jobs/ee/authenticate')],
         services,
         args = ctx => [{...ctx.request.query, ...ctx.request.body}, getCredentials(ctx)],
-        worker$,
-    }) =>
-        Job(logConfig)({
+        worker$
+    }) => {
+        const workerWithWorloadTag$ = (...args) => {
+            const ee = require('#sepal/ee')
+            const [_ignore, {googleTokens}] = args
+            const tag = `${googleTokens ? 'user' : 'serviceAccount'}-${jobName}`
+                .toLowerCase()
+                .replace(/[^a-z0-9_-]/g, '_')
+                .substring(0, 63)
+            ee.data.setDefaultWorkloadTag(tag)
+            return worker$(...args)
+        }
+        return Job()({
             jobName,
             jobPath,
+            schedulerName: 'GoogleEarthEngine',
             initArgs,
             maxConcurrency,
             minIdleCount,
@@ -43,6 +53,7 @@ module.exports = {
             before,
             services,
             args,
-            worker$,
+            worker$: workerWithWorloadTag$
         })
+    }
 }

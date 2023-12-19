@@ -1,5 +1,5 @@
 import {Aoi} from '../aoi'
-import {DataCollectionContext, DataCollectionManager} from './dataCollectionManager'
+import {DataCollectionManager, DataCollectionManagerContext} from './dataCollectionManager'
 import {Map} from 'app/home/map/map'
 import {RecipeActions, getDefaultModel} from './classificationRecipe'
 import {compose} from 'compose'
@@ -42,7 +42,7 @@ class _Classification extends React.Component {
     render() {
         const {initialized, images} = this.props
         return (
-            <DataCollectionContext.Provider value={{dataCollectionManager: this.dataCollectionManager}}>
+            <DataCollectionManagerContext dataCollectionManager={this.dataCollectionManager}>
                 <Map>
                     <ClassificationToolbar dataCollectionManager={this.dataCollectionManager}/>
                     <Aoi value={images && images.length && images[0]}/>
@@ -52,7 +52,7 @@ class _Classification extends React.Component {
                         )
                         : null}
                 </Map>
-            </DataCollectionContext.Provider>
+            </DataCollectionManagerContext>
         )
     }
 

@@ -69,6 +69,7 @@ export const additionalVisualizations = recipe => {
     const endDate = selectFrom(recipe, 'model.date.endDate')
     const segmentsEndDate = selectFrom(recipe, 'model.source.endDate')
     const dateFormat = selectFrom(recipe, 'model.source.dateFormat')
+    const dataTypesByDateFormat = ['number', 'fractionalYears', 'number']
 
     const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -95,6 +96,7 @@ export const additionalVisualizations = recipe => {
         normalize({
             type: 'continuous',
             bands: ['tBreak'],
+            dataType: dataTypesByDateFormat[dateFormat],
             ...getBreakMinMax(),
             palette: ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
         }),
@@ -141,6 +143,16 @@ const submitRetrieveRecipeTask = recipe => {
     const visualizations = getAllVisualizations(recipe)
         .filter(({bands: visBands}) => visBands.every(band => bands.includes(band)))
     const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
+    const recipeProperties = {
+        recipe_id: recipe.id,
+        recipe_projectId: recipe.projectId,
+        recipe_type: recipe.type,
+        recipe_title: recipe.title || recipe.placeholder,
+        ..._(recipe.model)
+            .mapValues(value => JSON.stringify(value))
+            .mapKeys((_value, key) => `recipe_${key}`)
+            .value()
+    }
     const task = {
         operation,
         params: {
@@ -151,7 +163,7 @@ const submitRetrieveRecipeTask = recipe => {
                 ...recipe.ui.retrieveOptions,
                 bands: {selection: bands, baseBands},
                 visualizations,
-                properties: {'system:time_start': timeStart, 'system:time_end': timeEnd}
+                properties: {...recipeProperties, 'system:time_start': timeStart, 'system:time_end': timeEnd}
             }
         }
     }

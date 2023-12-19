@@ -4,7 +4,7 @@ import {SplitOverlay} from 'widget/split/splitOverlay'
 import {compose} from 'compose'
 import {selectFrom} from 'stateUtils'
 import {withLayers} from '../body/process/withLayers'
-import {withMapAreaContext} from './mapAreaContext'
+import {withMapArea} from './mapAreaContext'
 import {withRecipe} from '../body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -18,7 +18,8 @@ const LAYER_ID = 'imageLayer'
 
 class _MapAreaLayout extends React.Component {
     render() {
-        const {mapAreaContext: {area}, form, map, areas} = this.props
+        const {mapArea: {area}, form, map, areas} = this.props
+        
         return (
             <SplitOverlay area={area}>
                 <MapAreaMenu area={area} form={form}/>
@@ -51,7 +52,7 @@ class _MapAreaLayout extends React.Component {
     }
 
     updateFeatureLayers() {
-        const {recipeActionBuilder, featureLayerSources, mapAreaContext: {area}, areas} = this.props
+        const {recipeActionBuilder, featureLayerSources, mapArea: {area}, areas} = this.props
         const featureLayers = areas[area].featureLayers
         const nextFeatureLayers = featureLayerSources.map(({id, defaultEnabled}) =>
             featureLayers.find(({sourceId}) => sourceId === id)
@@ -68,7 +69,7 @@ class _MapAreaLayout extends React.Component {
 export const MapAreaLayout = compose(
     _MapAreaLayout,
     withRecipe(mapRecipeToProps),
-    withMapAreaContext(),
+    withMapArea(),
     withLayers()
 )
 

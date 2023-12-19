@@ -2,6 +2,7 @@ import {Subject, debounceTime, groupBy, map, mergeMap, switchMap} from 'rxjs'
 import {addTab, closeTab} from 'widget/tabs/tabs'
 import {compose} from 'compose'
 import {connect, select, subscribe} from 'store'
+import {deserialize, serialize} from 'serialize'
 import {downloadObjectZip$} from 'widget/download'
 import {gzip$, ungzip$} from 'gzip'
 import {msg} from 'translate'
@@ -170,7 +171,7 @@ export const closeRecipe = id =>
 export const exportRecipe$ = recipe =>
     downloadObjectZip$({
         filename: `${recipe.title || recipe.placeholder}.json`,
-        data: JSON.stringify(_.omit(recipe, ['ui']), null, 2)
+        data: serialize(_.omit(recipe, ['ui']))
     })
 
 export const loadProjects$ = () =>
@@ -220,9 +221,9 @@ export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
 export const removeRecipes$ = recipeIds =>
     api.recipe.remove$(recipeIds).pipe(
         map(() =>
-            _.transform(recipeIds, (actions, recipeId) => {
+            _.transform(recipeIds, (actionBuilder, recipeId) => {
                 removeAllRevisions(recipeId)
-                actions
+                actionBuilder
                     .del(['process.recipes', {id: recipeId}])
                     .del(['process.loadedRecipes', recipeId])
             }, actionBuilder('REMOVE_RECIPES', {recipeIds})).dispatch()
@@ -272,16 +273,19 @@ const isToBeSaved = (prevRecipe, recipe) =>
         && !_.isEqual(persistentProps(prevRecipe), persistentProps(recipe))
         && select(['process.tabs', {id: recipe.id}])
 
+// whenever already saved recipes change, save them again
 subscribe('process.loadedRecipes', loadedRecipes => {
     const recipes = loadedRecipes && Object.values(loadedRecipes)
+    const savedRecipes = select('process.recipes') || []
+    // console.log('loaded recipes listener called', loadedRecipes, recipes)
     if (recipes && (prevRecipes.length === 0 || prevRecipes !== recipes)) {
         const recipesToSave = recipes
             .filter(recipe =>
-                (select('process.recipes') || []).find(saved =>
-                    saved.id === recipe.id
-                )
+                savedRecipes.find(({id}) => id === recipe.id)
             )
-            .filter(recipe => isToBeSaved(findPrevRecipe(recipe), recipe))
+            .filter(recipe =>
+                isToBeSaved(findPrevRecipe(recipe), recipe)
+            )
         if (recipesToSave.length > 0) {
             recipesToSave.forEach(recipe => {
                 saveToBackend$.next(recipe)
@@ -292,7 +296,7 @@ subscribe('process.loadedRecipes', loadedRecipes => {
     }
 })
 
-const uncompressRecipe$ = compressedRecipe => JSON.parse(ungzip$(compressedRecipe))
+const uncompressRecipe$ = compressedRecipe => deserialize(ungzip$(compressedRecipe))
 
 export const getRevisions = recipeId =>
     _(localStorage)

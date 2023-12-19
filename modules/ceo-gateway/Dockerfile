@@ -1,4 +1,4 @@
-FROM node:10.15.2-stretch
+FROM node:20-bookworm
 EXPOSE 8001
 
 ENV MODULE_NAME ceo-gateway

@@ -1,16 +1,15 @@
-import * as PropTypes from 'prop-types'
-import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Input} from 'widget/input'
 import {Panel} from 'widget/panel/panel'
 import {ScrollableList} from 'widget/list'
 import {Widget} from 'widget/widget'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
+import {withActivatable} from 'widget/activation/activatable'
+import {withActivators} from 'widget/activation/activator'
 import Label from 'widget/label'
+import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
-import guid from 'guid'
 import moment from 'moment'
 import styles from './datePicker.module.css'
 
@@ -36,63 +35,109 @@ export const maxDate = (date1, date2) => pickDate(date1, date2, moment.max)
 export const minDate = (date1, date2) => pickDate(date1, date2, moment.min)
 export const constrainDate = (date, min, max) => maxDate(minDate(date, max), min)
 
-export class FormDatePicker extends React.Component {
-    id = `DatePicker-${guid()}`
+class _FormDatePicker extends React.Component {
     inputElement = React.createRef()
     state = {value: ''}
 
+    constructor() {
+        super()
+        this.onSelect = this.onSelect.bind(this)
+        this.onChange = this.onChange.bind(this)
+        this.onBlur = this.onBlur.bind(this)
+    }
+
     render() {
-        const {input, startDate, endDate, label, autoFocus, tooltip, tooltipPlacement} = this.props
+        return (
+            <React.Fragment>
+                {this.renderDatePicker()}
+                {this.renderWidget()}
+            </React.Fragment>
+        )
+    }
+
+    renderDatePicker() {
+        const {startDate, endDate, label, activator: {activatables: {datePicker: {id}}}} = this.props
         const {value} = this.state
         const date = moment(value, DATE_FORMAT)
         return (
-            <Activator id={this.id}>
-                {panel =>
-                    <Widget
-                        label={label}
-                        tooltip={tooltip}
-                        tooltipPlacement={tooltipPlacement}>
-                        <DatePickerPanel
-                            id={this.id}
-                            title={label}
-                            date={date.isValid() ? date : moment(startDate, DATE_FORMAT)}
-                            startDate={momentDate(startDate)}
-                            endDate={momentDate(endDate)}
-                            onSelect={date => {
-                                const value = date.format(DATE_FORMAT)
-                                this.setState({value})
-                                input.set(value)
-                            }}/>
-                        <div className={styles.input}>
-                            <Input
-                                ref={this.inputElement}
-                                value={value || input.value}
-                                type='text'
-                                maxLength={10}
-                                autoFocus={autoFocus}
-                                className={styles.input}
-                                onChange={e => this.updateValue(e.target.value)}
-                                onBlur={() => {
-                                    const date = momentDate(value)
-                                    const formattedDate = date.isValid()
-                                        ? constrainDate(date, startDate, endDate).format(DATE_FORMAT)
-                                        : this.state.lastValidValue
-                                    this.updateValue(formattedDate)
-                                }}
-                            />
-                            <Button
-                                additionalClassName={styles.panelTrigger}
-                                chromeless
-                                shape='none'
-                                icon='calendar-alt'
-                                size='small'
-                                onClick={() => panel.activate()}
-                            />
-                        </div>
-                    </Widget>
-                }
-            </Activator>
+            <DatePickerPanel
+                id={id}
+                title={label}
+                date={date.isValid() ? date : moment(startDate, DATE_FORMAT)}
+                startDate={momentDate(startDate)}
+                endDate={momentDate(endDate)}
+                onSelect={this.onSelect}
+            />
         )
+    }
+
+    renderWidget() {
+        const {label, tooltip, tooltipPlacement} = this.props
+        return (
+            <Widget
+                label={label}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}>
+                {this.renderInput()}
+            </Widget>
+        )
+    }
+
+    renderInput() {
+        const {input, autoFocus} = this.props
+        const {value} = this.state
+        return (
+            <Input
+                ref={this.inputElement}
+                value={value || input.value}
+                type='text'
+                maxLength={10}
+                autoFocus={autoFocus}
+                className={styles.input}
+                onChange={this.onChange}
+                onBlur={this.onBlur}
+                buttons={[
+                    this.renderButton()
+                ]}
+            />
+        )
+    }
+
+    renderButton() {
+        const {activator: {activatables: {datePicker: {activate, active, canActivate}}}} = this.props
+        return (
+            <Button
+                key='button'
+                chromeless
+                shape='none'
+                icon='calendar-alt'
+                size='small'
+                disabled={active || !canActivate}
+                onClick={activate}
+            />
+        )
+    }
+
+    onSelect(date) {
+        const {input} = this.props
+        const value = date.format(DATE_FORMAT)
+        this.setState({value})
+        input.set(value)
+
+    }
+
+    onChange(e) {
+        this.updateValue(e.target.value)
+    }
+
+    onBlur() {
+        const {startDate, endDate} = this.props
+        const {value} = this.state
+        const date = momentDate(value)
+        const formattedDate = date.isValid()
+            ? constrainDate(date, startDate, endDate).format(DATE_FORMAT)
+            : this.state.lastValidValue
+        this.updateValue(formattedDate)
     }
 
     componentDidMount() {
@@ -113,6 +158,13 @@ export class FormDatePicker extends React.Component {
         }
     }
 }
+
+export const FormDatePicker = compose(
+    _FormDatePicker,
+    withActivators({
+        datePicker: (_props, activatorId) => `datePicker-${activatorId}`
+    })
+)
 
 FormDatePicker.propTypes = {
     endDate: PropTypes.any.isRequired,
@@ -147,12 +199,10 @@ class _DatePickerPanel extends React.Component {
                     icon='calendar-alt'
                     title={title}/>
                 <Panel.Content noVerticalPadding>
-                    <div>
-                        <div className={styles.panelContent}>
-                            {this.renderYears()}
-                            {this.renderMonths()}
-                            {this.renderDays()}
-                        </div>
+                    <div className={styles.panelContent}>
+                        {this.renderYears()}
+                        {this.renderMonths()}
+                        {this.renderDays()}
                     </div>
                 </Panel.Content>
                 <Panel.Buttons>
@@ -175,15 +225,13 @@ class _DatePickerPanel extends React.Component {
             _.range(startYear, endYear + 1).map(year => ({label: year, value: year})),
             _.range(endYear + 1, endYear + 6).map(year => ({label: year}))
         )
-        const selectedOption = _.find(options, ({value}) => value === selectedYear)
         return (
             <div className={styles.years}>
                 <ScrollableList
                     options={options}
-                    selectedOption={selectedOption}
+                    selectedValue={selectedYear}
                     onSelect={option => this.updateDate('year', option.value)}
                     alignment='center'
-                    keyboard={false}
                     autoCenter
                 />
             </div>
@@ -332,7 +380,7 @@ class _DatePickerPanel extends React.Component {
 
 const DatePickerPanel = compose(
     _DatePickerPanel,
-    activatable({
+    withActivatable({
         id: ({id}) => id,
         policy: () => ({_: 'allow'}),
         alwaysAllow: true

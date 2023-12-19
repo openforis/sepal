@@ -4,9 +4,14 @@ import React from 'react'
 import _ from 'lodash'
 
 export class FormButtons extends React.Component {
+    constructor() {
+        super()
+        this.onChange = this.onChange.bind(this)
+    }
+
     render() {
         const {chromeless, look, shape, size, air, className, input, label, labelButtons, multiple, options, tooltip, tooltipPlacement,
-            layout, alignment, spacing, groupSpacing, framed, disabled, tabIndex, width, onChange
+            layout, alignment, spacing, groupSpacing, framed, disabled, tabIndex, width
         } = this.props
         return (
             <Buttons
@@ -17,10 +22,7 @@ export class FormButtons extends React.Component {
                 air={air}
                 className={className}
                 selected={input.value}
-                onChange={value => {
-                    input.set(value)
-                    onChange && onChange(value)
-                }}
+                onChange={this.onChange}
                 label={label}
                 labelButtons={labelButtons}
                 multiple={multiple}
@@ -37,6 +39,12 @@ export class FormButtons extends React.Component {
                 width={width}
             />
         )
+    }
+
+    onChange(value) {
+        const {input, onChange} = this.props
+        input.set(value)
+        onChange && onChange(value)
     }
 
     componentDidUpdate() {

@@ -1,49 +1,78 @@
+import {BalancingTileProvider} from '../tileProvider/balancingTileProvider'
 import {EarthEngineTileProvider} from '../tileProvider/earthEngineTileProvider'
-import {Subject, tap} from 'rxjs'
+import {GoogleMapsOverlay} from './googleMapsOverlay'
+import {Subject, finalize, tap} from 'rxjs'
+import {TileLayer} from './tileLayer'
+import {isEqual} from 'hash'
 import {publishEvent} from 'eventPublisher'
 import {selectFrom} from 'stateUtils'
-import EarthEngineLayer from './earthEngineLayer'
+import _ from 'lodash'
 import api from 'api'
 
-export default class EarthEngineImageLayer extends EarthEngineLayer {
+export default class EarthEngineImageLayer extends TileLayer {
     constructor({
         map,
-        previewRequest,
-        layerIndex,
+        layerIndex = 0,
         busy$,
+        previewRequest,
         watchedProps,
         dataTypes,
         visParams,
         cursorValue$,
         boundsChanged$,
         dragging$,
-        cursor$
+        cursor$,
+        minZoom,
+        maxZoom,
     }) {
-        super({
-            map,
-            busy$,
-            layerIndex,
-            mapId$: api.gee.preview$(previewRequest).pipe(
-                tap(() => publishEvent('ee_image_preview', {
-                    recipe_type: previewRequest.recipe.type,
-                    bands: (selectFrom(previewRequest, 'visParams.bands') || []).join(', ')
-                }))
-            ),
-            watchedProps: watchedProps || previewRequest
-        })
-
+        super()
+        this.map = map
+        this.layerIndex = layerIndex
+        this.busy$ = busy$
+        this.previewRequest = previewRequest
         this.dataTypes = dataTypes
         this.visParams = visParams
         this.cursorValue$ = cursorValue$
         this.boundsChanged$ = boundsChanged$
         this.dragging$ = dragging$
         this.cursor$ = cursor$ || new Subject()
+        this.watchedProps = watchedProps || previewRequest
+        this.minZoom = minZoom
+        this.maxZoom = maxZoom
     }
 
-    createTileProvider() {
-        const {urlTemplate, dataTypes, visParams, cursorValue$, boundsChanged$, dragging$, cursor$} = this
-        return new EarthEngineTileProvider({
+    createTileProvider = urlTemplate => {
+        const {busy$, dataTypes, visParams, cursorValue$, boundsChanged$, dragging$, cursor$} = this
+        const tileProvider = new EarthEngineTileProvider({
             urlTemplate, dataTypes, visParams, cursorValue$, boundsChanged$, dragging$, cursor$
         })
+        return new BalancingTileProvider({tileProvider, retries: 3, busy$})
     }
+
+    createOverlay = tileProvider => {
+        const {map, busy$, minZoom, maxZoom} = this
+        const {google} = map.getGoogle()
+        return new GoogleMapsOverlay({tileProvider, google, minZoom, maxZoom, busy$})
+    }
+
+    getMapId$ = () =>
+        api.gee.preview$(this.previewRequest).pipe(
+            tap(() => publishEvent('ee_image_preview', {
+                recipe_type: this.previewRequest.recipe.type,
+                bands: (selectFrom(this.previewRequest, 'visParams.bands') || []).join(', ')
+            }))
+        )
+
+    addToMap$ = () => {
+        this.busy$?.next(true)
+        return this.getMapId$().pipe(
+            tap(({urlTemplate}) => this.addToMap(urlTemplate)),
+            finalize(() => this.busy$?.next(false))
+        )
+    }
+
+    equals = other =>
+        other === this
+            || other instanceof EarthEngineImageLayer
+                && isEqual(other.watchedProps, this.watchedProps)
 }

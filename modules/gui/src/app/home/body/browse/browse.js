@@ -11,6 +11,8 @@ import {connect, select} from 'store'
 import {dotSafe} from 'stateUtils'
 import {msg} from 'translate'
 import {orderBy} from 'natural-orderby'
+import {withEnableDetector} from 'enabled'
+import {withSubscriptions} from 'subscription'
 import Icon from 'widget/icon'
 import Path from 'path'
 import PropTypes from 'prop-types'
@@ -22,7 +24,6 @@ import api from 'api'
 import format from 'format'
 import lookStyles from 'style/look.module.css'
 import styles from './browse.module.css'
-import withSubscriptions from 'subscription'
 const moment = require('moment')
 
 const ANIMATION_DURATION_MS = 1000
@@ -66,9 +67,8 @@ class _FileBrowser extends React.Component {
     }
 
     componentDidMount() {
-        const {addSubscription, onEnable, onDisable} = this.props
-        onEnable(() => this.enabled(true))
-        onDisable(() => this.enabled(false))
+        const {addSubscription, enableDetector: {onChange}} = this.props
+        onChange(enabled => this.enabled(enabled))
         addSubscription(
             this.userFiles.downstream$.subscribe(
                 updates => this.processUpdates(updates)
@@ -422,13 +422,27 @@ class _FileBrowser extends React.Component {
             e.stopPropagation()
             this.toggleDirectory(path, directory)
         }
-        return expanded && !directory.items
-            ? this.renderSpinner()
-            : (
-                <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}>
-                    <Icon name={'chevron-right'} className={expanded ? styles.expanded : styles.collapsed}/>
-                </span>
-            )
+        const busy = expanded && !directory.items
+        return (
+            <span
+                className={[styles.icon, styles.directory].join(' ')}
+                onClick={toggleDirectory}>
+                <Icon
+                    name={'chevron-right'}
+                    className={expanded ? styles.expanded : styles.collapsed}
+                    attributes={{
+                        fade: busy
+                    }}
+                />
+            </span>
+        )
+        // return busy
+        //     ? this.renderSpinner()
+        //     : (
+        //         <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}>
+        //             <Icon name={'chevron-right'} className={expanded ? styles.expanded : styles.collapsed}/>
+        //         </span>
+        //     )
     }
 
     renderFileIcon(fileName) {
@@ -583,6 +597,7 @@ class _FileBrowser extends React.Component {
 const FileBrowser = compose(
     _FileBrowser,
     connect(mapStateToProps),
+    withEnableDetector(),
     withSubscriptions()
 )
 

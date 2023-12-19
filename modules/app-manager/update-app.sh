@@ -63,13 +63,11 @@ function update_venv {
         rm -rf "$venv_path"
         echo "Creating venv: $venv_path" >> "$venv_log_file"
         python3 -m venv $venv_path
-        "$venv_path"/bin/python3 -m pip install --cache-dir /root/.cache/pip ipykernel wheel >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install --cache-dir /root/.cache/pip --upgrade pip >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install numpy -U --no-cache-dir >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install gdal==3.4.3 -U --no-cache-dir >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install pyproj==3.4.1 -U --no-cache-dir >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install "git+https://github.com/openforis/earthengine-api.git@v0.1.343#egg=earthengine-api&subdirectory=python" -U --no-cache-dir >> "$venv_log_file"
-        "$venv_path"/bin/python3 -m pip install -r "$app_path"/requirements.txt -U --no-cache-dir >> "$venv_log_file"
+        "$venv_path"/bin/python3 -m pip install --no-cache-dir ipykernel wheel >> "$venv_log_file"
+        "$venv_path"/bin/python3 -m pip install --no-cache-dir numpy >> "$venv_log_file"
+        "$venv_path"/bin/python3 -m pip install --no-cache-dir gdal==3.6.4 >> "$venv_log_file"
+        "$venv_path"/bin/python3 -m pip install --no-cache-dir "git+https://github.com/openforis/earthengine-api.git@v0.1.374#egg=earthengine-api&subdirectory=python" >> "$venv_log_file"
+        "$venv_path"/bin/python3 -m pip install --no-cache-dir -r "$app_path"/requirements.txt >> "$venv_log_file"
         if [[ -d $current_venv_path ]] 
         then
             echo "Moving away current venv: $current_venv_path" >> "$venv_log_file"

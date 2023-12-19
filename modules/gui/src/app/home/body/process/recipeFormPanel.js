@@ -1,9 +1,9 @@
-import {Form, form} from 'widget/form/form'
-import {activatable} from 'widget/activation/activatable'
+import {Form, withForm} from 'widget/form/form'
 import {compose} from 'compose'
 import {initValues} from 'app/home/body/process/recipe'
 import {selectFrom} from 'stateUtils'
-import {withPanelWizardContext} from 'widget/panelWizard'
+import {withActivatable} from 'widget/activation/activatable'
+import {withPanelWizard} from 'widget/panelWizard'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -11,7 +11,7 @@ import actionBuilder from 'action-builder'
 
 const Context = React.createContext()
 
-const defaultPolicy = ({values, wizardContext: {wizard}}) =>
+const defaultPolicy = ({values, panelWizard: {wizard}}) =>
     wizard || selectFrom(values, 'dirty')
         ? {_: 'disallow'}
         : {_: 'allow-then-deactivate'}
@@ -47,52 +47,50 @@ export const recipeFormPanel = (
         getValues: props => props.values,
         modelToValues,
         onInitialized: ({model, values, props}) => {
-            const {recipeContext: {statePath}} = props
+            const {recipeStatePath: statePath} = props
             const evaluatedPath = path(props)
             setModelAndValues({evaluatedPath, statePath, model, values})
         }
     }
 
     return WrappedComponent => {
-        class HigherOrderComponent extends React.Component {
-            constructor(props) {
-                super(props)
-                const {values, recipeContext: {statePath}, form} = props
-                this.prevValues = values
-
-                form.onDirtyChanged(dirty => setDirty({evaluatedPath: path(props), statePath, dirty}))
-            }
-
-            render() {
-                const {form, recipeContext: {statePath}, activatable: {deactivate}} = this.props
-                return (
-                    <Context.Provider value={{
-                        id,
-                        evaluatedPath: path(this.props),
-                        form,
-                        statePath,
-                        valuesToModel,
-                        deactivate,
-                        prevValues: this.prevValues
-                    }}>
-                        {React.createElement(WrappedComponent, {...this.props, form})}
-                    </Context.Provider>
-                )
-            }
-        }
-
         const policyToApply = props => ({...policy(props), ...additionalPolicy(props)})
         // [HACK] Using withRecipe() twice.
-        // activatable() is dependent on recipe for its policy -> withRecipe() before activatable()
-        // withRecipe() is dependent on activatable props -> activatable() before withRecipe()
+        // withActivatable() is dependent on recipe for its policy -> withRecipe() before withActivatable()
+        // withRecipe() is dependent on activatable props -> withActivatable() before withRecipe()
         return compose(
-            HigherOrderComponent,
-            form({fields, constraints}),
+            class RecipeFormPanelHOC extends React.Component {
+                constructor(props) {
+                    super(props)
+                    const {values, recipeStatePath: statePath, form} = props
+                    this.prevValues = values
+    
+                    form.onDirtyChanged(dirty => setDirty({evaluatedPath: path(props), statePath, dirty}))
+                }
+    
+                render() {
+                    const {form, recipeStatePath: statePath, activatable: {deactivate}} = this.props
+                    return (
+                        <Context.Provider value={{
+                            id,
+                            evaluatedPath: path(this.props),
+                            form,
+                            statePath,
+                            valuesToModel,
+                            deactivate,
+                            prevValues: this.prevValues
+                        }}>
+                            {React.createElement(WrappedComponent, {...this.props, form})}
+                        </Context.Provider>
+                    )
+                }
+            },
+            withForm({fields, constraints}),
             initValues(valuesSpec),
             withRecipe(createMapRecipeToProps(mapRecipeToProps)),
-            activatable({id, policy: policyToApply}),
+            withActivatable({id, policy: policyToApply}),
             withRecipe(createMapRecipeToProps(mapRecipeToProps)),
-            withPanelWizardContext()
+            withPanelWizard()
         )
     }
 }

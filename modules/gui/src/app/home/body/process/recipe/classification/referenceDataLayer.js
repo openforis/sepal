@@ -1,9 +1,9 @@
 import {RecipeActions} from './classificationRecipe'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withDataCollectionContext} from './dataCollectionManager'
+import {withActivators} from 'widget/activation/activator'
+import {withDataCollectionManager} from './dataCollectionManager'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import MarkerClustererLayer from 'app/home/map/markerClustererLayer'
 import PropTypes from 'prop-types'
@@ -195,6 +195,6 @@ ReferenceDataLayer.propTypes = {
 export default compose(
     ReferenceDataLayer,
     withRecipe(mapRecipeToProps),
-    withDataCollectionContext(),
-    activator('collect')
+    withDataCollectionManager(),
+    withActivators('collect')
 )

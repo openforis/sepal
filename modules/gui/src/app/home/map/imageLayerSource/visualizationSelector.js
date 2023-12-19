@@ -1,10 +1,10 @@
 import {Button} from 'widget/button'
 import {Combo} from 'widget/combo'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {withMapAreaContext} from '../mapAreaContext'
+import {withActivators} from 'widget/activation/activator'
+import {withMapArea} from '../mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -93,23 +93,21 @@ class _VisualizationSelector extends React.Component {
     }
 
     selectVisParams(visParams) {
-        const {mapAreaContext: {updateLayerConfig}} = this.props
+        const {mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({visParams})
     }
 
     addVisParams() {
-        const {recipe, source, activator: {activatables}, mapAreaContext: {area}} = this.props
-        const visParamsPanel = activatables[`visParams-${area}`]
-        visParamsPanel.activate({recipe, imageLayerSourceId: source.id})
+        const {recipe, source, activator: {activatables: {visParams: {activate}}}} = this.props
+        activate({recipe, imageLayerSourceId: source.id})
     }
 
     editVisParams(visParamsToEdit, editMode) {
-        const {recipe, source, activator: {activatables}, mapAreaContext: {area}} = this.props
-        const visParamsPanel = activatables[`visParams-${area}`]
+        const {recipe, source, activator: {activatables: {visParams: {activate}}}} = this.props
         const visParams = editMode === 'clone'
             ? {...visParamsToEdit, id: guid()}
             : visParamsToEdit
-        visParamsPanel.activate({recipe, imageLayerSourceId: source.id, visParams})
+        activate({recipe, imageLayerSourceId: source.id, visParams})
     }
 
     removeVisParams(visParams) {
@@ -118,6 +116,7 @@ class _VisualizationSelector extends React.Component {
             .del(['layers.userDefinedVisualizations', source.id, {id: visParams.id}])
             .dispatch()
         const options = this.flattenOptions(this.getOptions())
+            .filter(({value}) => value !== visParams.id)
         this.selectVisParams(options.length
             ? options[0].visParams
             : null
@@ -128,8 +127,10 @@ class _VisualizationSelector extends React.Component {
 export const VisualizationSelector = compose(
     _VisualizationSelector,
     withRecipe(mapRecipeToProps),
-    activator(),
-    withMapAreaContext()
+    withActivators({
+        visParams: ({mapArea: {area}}) => `visParams-${area}`
+    }),
+    withMapArea()
 )
 
 VisualizationSelector.defaultProps = {

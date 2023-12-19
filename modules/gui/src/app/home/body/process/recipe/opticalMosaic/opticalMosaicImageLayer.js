@@ -6,7 +6,7 @@ import {VisualizationSelector} from 'app/home/map/imageLayerSource/visualization
 import {compose} from 'compose'
 import {selectFrom} from 'stateUtils'
 import {visualizationOptions} from './visualizations'
-import {withMapAreaContext} from 'app/home/map/mapAreaContext'
+import {withMapArea} from 'app/home/map/mapAreaContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -66,7 +66,7 @@ class _OpticalMosaicImageLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {layerConfig, mapAreaContext: {updateLayerConfig}} = this.props
+        const {layerConfig, mapArea: {updateLayerConfig}} = this.props
         if (_.isUndefined(layerConfig.panSharpen)) {
             updateLayerConfig(defaultLayerConfig)
         }
@@ -96,14 +96,14 @@ class _OpticalMosaicImageLayer extends React.Component {
     }
 
     togglePanSharpen(enabled) {
-        const {layerConfig: {visParams}, mapAreaContext: {updateLayerConfig}} = this.props
+        const {layerConfig: {visParams}, mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({visParams, panSharpen: enabled && this.canPanSharpen()})
     }
 }
 
 export const OpticalMosaicImageLayer = compose(
     _OpticalMosaicImageLayer,
-    withMapAreaContext()
+    withMapArea()
 )
 
 OpticalMosaicImageLayer.defaultProps = {

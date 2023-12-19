@@ -1,13 +1,13 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
 import {switchMap} from 'rxjs'
-import {withRecaptchaContext} from 'widget/recaptcha'
+import {withRecaptcha} from 'widget/recaptcha'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -90,7 +90,7 @@ class _ForgotPassword extends React.Component {
     }
 
     requestPasswordReset(email) {
-        const {recaptchaContext: {recaptcha$}, stream} = this.props
+        const {recaptcha: {recaptcha$}, stream} = this.props
         const {onCancel} = this.props
         stream('REQUEST_PASSWORD_RESET',
             recaptcha$('REQUEST_PASSWORD_RESET').pipe(
@@ -112,8 +112,8 @@ class _ForgotPassword extends React.Component {
 
 export const ForgotPassword = compose(
     _ForgotPassword,
-    form({fields}),
-    withRecaptchaContext()
+    withForm({fields}),
+    withRecaptcha()
 )
 
 ForgotPassword.propTypes = {

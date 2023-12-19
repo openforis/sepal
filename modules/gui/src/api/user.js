@@ -93,6 +93,11 @@ export default {
     revokeGoogleAccess$: () =>
         post$('/api/user/google/revoke-access'),
 
+    updateGoogleProject$: (projectId, legacyProject) =>
+        post$('/api/user/google/project', {
+            query: {projectId, legacyProject}
+        }),
+
     updateCurrentUserSession$: session =>
         post$(`/api/sessions/session/${session.id}/earliestTimeoutTime`, {
             body: {

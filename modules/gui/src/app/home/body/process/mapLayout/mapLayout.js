@@ -10,12 +10,12 @@ import {SelectAsset} from './selectAsset'
 import {SelectPlanet} from './selectPlanet'
 import {SelectRecipe} from './selectRecipe'
 import {Subject} from 'rxjs'
-import {activatable} from 'widget/activation/activatable'
-import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {isChromiumBasedBrowser, isHighDensityDisplay} from 'widget/userAgent'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {withActivatable} from 'widget/activation/activatable'
+import {withActivators} from 'widget/activation/activator'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 import styles from './mapLayout.module.css'
@@ -86,8 +86,8 @@ class _MapLayoutPanel extends React.Component {
             <Buttons
                 selected={mode}
                 options={[
-                    {value: 'grid', label: msg('map.layout.mode.grid.label')},
-                    {value: 'stack', label: msg('map.layout.mode.stack.label')}
+                    {value: 'grid', icon: 'table-cells-large', label: msg('map.layout.mode.grid.label')},
+                    {value: 'stack', icon: 'layer-group', label: msg('map.layout.mode.stack.label')}
                 ]}
                 onChange={this.setMode}
             />
@@ -139,12 +139,12 @@ const policy = () => ({
 export const MapLayoutPanel = compose(
     _MapLayoutPanel,
     withRecipe(mapRecipeToProps),
-    activatable({
+    withActivatable({
         id: 'mapLayout',
         policy,
         alwaysAllow: true
     }),
-    activator('addImageLayerSource')
+    withActivators('addImageLayerSource')
 )
 
 MapLayout.propTypes = {}

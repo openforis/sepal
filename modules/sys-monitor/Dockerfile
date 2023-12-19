@@ -1,4 +1,4 @@
-FROM node:18-bullseye
+FROM node:20-bookworm
 
 ENV MODULE_NAME sys-monitor
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
@@ -26,6 +26,7 @@ USER node
 RUN npm install
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/config ${MODULE}/config
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 
 USER root

@@ -1,9 +1,9 @@
-import * as PropTypes from 'prop-types'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {withScrollable} from 'widget/scrollable'
+import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import styles from './inputImage.module.css'
 
@@ -65,7 +65,7 @@ class ImageForm extends Component {
         const {errorBandCleared} = this.state
 
         if (!band.value && fromBand && bands.value) {
-            bands.value.includes(fromBand) && band.set(fromBand)
+            bands.value?.includes(fromBand) && band.set(fromBand)
         }
 
         if (!errorBandCleared && !errorBand.value && band.value && bands.value) {
@@ -76,7 +76,7 @@ class ImageForm extends Component {
     setDefaultErrorBand(band) {
         const {inputs: {bands, errorBand}} = this.props
         const defaultErrorBand = `${band}_rmse`
-        bands.value.includes(defaultErrorBand) && errorBand.set(defaultErrorBand)
+        bands.value?.includes(defaultErrorBand) && errorBand.set(defaultErrorBand)
     }
 
     onLoaded(id, loadedBands, loadedMetadata, loadedVisualizations) {

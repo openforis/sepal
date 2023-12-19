@@ -17,14 +17,14 @@ const worker$ = ({recipe, band, aoi, mapBounds}) => {
             image.select(band).geometry().isUnbounded(),
             aoi
                 ? ee.Algorithms.If(
-                    toGeometry(aoi).intersects(imageGeometry),
+                    aoi.type === 'ASSET_BOUNDS' ? false : toGeometry(aoi).intersects(imageGeometry),
                     toGeometry(aoi),
                     mapGeometry
                 )
-                : mapGeometry
-            ,
+                : mapGeometry,
             imageGeometry
         )
+
         const minMax = image.reduceRegion({
             reducer: ee.Reducer.minMax(),
             geometry,

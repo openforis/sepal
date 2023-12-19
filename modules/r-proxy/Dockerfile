@@ -5,6 +5,7 @@ EXPOSE 8180
 ENV MODULE_NAME r-proxy
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
 ENV SHARED /usr/local/src/sepal/lib/js/shared
+ENV NODE_MAJOR=20
 
 # Install R packages
 RUN R -e 'install.packages("remotes", lib = "/usr/lib/R/site-library")'
@@ -13,8 +14,12 @@ RUN R -e 'install.packages("remotes", lib = "/usr/lib/R/site-library")'
 RUN adduser node && adduser node sudo && echo 'node      ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
 
 # Install node.js
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash
-RUN apt-get update && apt-get -y install nodejs
+
+RUN mkdir -p /etc/apt/keyrings
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+RUN apt-get update
+RUN apt-get install nodejs -y
 
 # Install node global packages
 RUN npm install -g nodemon
@@ -42,6 +47,7 @@ RUN npm install
 
 USER node
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/config ${MODULE}/config
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 
 USER node

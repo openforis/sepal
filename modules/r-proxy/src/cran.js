@@ -7,7 +7,7 @@ const readline = require('readline')
 const https = require('https')
 const log = require('#sepal/log').getLogger('cran')
 const {compare} = require('compare-versions')
-const {makePackage, cleanupPackage} = require('./bundle')
+const {makePackage, cleanupPackage} = require('./package')
 
 const SRC = 'src/contrib'
 const BIN = 'bin/contrib'
@@ -70,11 +70,24 @@ const toBinaryPackagePath = requestPath =>
 const isCranPackageCached = async (name, version) =>
     isFile(getCranRepoPath(Path.join(BIN, getCranPackageFilename(name, version))))
         
-const installCranPackage = async (name, version, repo) => {
+const installCranPackage = async (name, path, version, repo) => {
     try {
-        log.debug(`Installing ${name}/${version}`)
-        await runScript('install_cran_package.r', [name, version, libPath, repo])
-        log.info(`Installed ${name}/${version}`)
+        try {
+            log.debug(`Checking ${name}/${version}`)
+            await runScript('check_cran_package.r', [name, version, libPath])
+            log.info(`Already installed ${name}/${version}`)
+        } catch (error) {
+            if (path) {
+                const url = `${cranRepo}/${path}`
+                log.info(`Installing ${name}/${version} from ${url}`)
+                await runScript('install_remote_package.r', [name, url, libPath, repo])
+                log.info(`Installed ${name}/${version}`)
+            } else {
+                log.info(`Installing ${name}/${version}`)
+                await runScript('install_cran_package.r', [name, version, libPath, repo])
+                log.info(`Installed ${name}/${version}`)
+            }
+        }
         return true
     } catch (error) {
         log.warn(`Could not install ${name}/${version}`, error)
@@ -82,13 +95,15 @@ const installCranPackage = async (name, version, repo) => {
     }
 }
     
-const makeCranPackage = async (name, version, repo) => {
-    const packageFilename = `${name}_${version}.tar.gz`
+const makeCranPackage = async ({name, path, version, repo}) => {
+    const packageFilename = path
+        ? path.replace('/src/contrib/', '')
+        : `${name}_${version}.tar.gz`
     const srcPath = Path.join(CRAN_ROOT, SRC, packageFilename)
     const binPath = Path.join(CRAN_ROOT, BIN, packageFilename)
     const tmpPath = Path.join(CRAN_ROOT, TMP, packageFilename)
     const success = await isCranPackageCached(name, version) || (
-        await installCranPackage(name, version, repo) && await makePackage(name, srcPath, binPath, tmpPath)
+        await installCranPackage(name, path, version, repo) && await makePackage(name, srcPath, binPath, tmpPath)
     )
     await cleanupPackage(name, srcPath, binPath, tmpPath)
     return success
@@ -97,7 +112,7 @@ const makeCranPackage = async (name, version, repo) => {
 const updateCranPackage = async ({name, version}) => {
     if (await isUpdatable(name, version)) {
         log.info(`Updating: ${name}/${version}`)
-        const success = await makeCranPackage(name, version, cranRepo)
+        const success = await makeCranPackage({name, version, repo: cranRepo})
         return {success}
     } else {
         log.debug(`Skipping: ${name}/${version}`)

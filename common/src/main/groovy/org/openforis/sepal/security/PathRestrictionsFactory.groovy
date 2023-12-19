@@ -55,7 +55,9 @@ class PathRestrictionsFactory {
                         googleTokens: u.googleTokens ? new GoogleTokens(
                                 refreshToken: u.googleTokens.refreshToken,
                                 accessToken: u.googleTokens.accessToken,
-                                accessTokenExpiryDate: u.googleTokens.accessTokenExpiryDate
+                                accessTokenExpiryDate: u.googleTokens.accessTokenExpiryDate,
+                                projectId: u.googleTokens.projectId,
+                                legacyProject: u.googleTokens.legacyProject
                         ) : null,
                         status: u.status as User.Status,
                         roles: u.roles?.toSet() ?: new HashSet<>()

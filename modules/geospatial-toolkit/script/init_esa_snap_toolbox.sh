@@ -20,6 +20,9 @@ cd /usr/local/lib
 ./$sen2cor.run
 rm $sen2cor.run
 chmod -R +r /usr/local/lib/$sen2cor
+cd /usr/local/lib/$sen2cor/lib/python*/site-packages/sen2cor
+mkdir log
+chmod o+xw log
 ln -sf /usr/local/lib/$sen2cor/bin/L2A_Process /usr/local/bin/L2A_Process
 mv /root/sen2cor /etc/sen2cor
 chmod 755 $(find /etc/sen2cor -type d)

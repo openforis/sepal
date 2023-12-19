@@ -8,11 +8,10 @@ import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Shape} from 'widget/shape'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {copyToClipboard} from 'clipboard'
 import {msg} from 'translate'
-import Notifications from 'widget/notifications'
 import React from 'react'
 import api from 'api'
-import clipboard from 'clipboard'
 import styles from './tasks.module.css'
 
 const mapStateToProps = state => ({
@@ -22,6 +21,7 @@ const mapStateToProps = state => ({
 class Tasks extends React.Component {
     constructor(props) {
         super(props)
+        this.renderTask = this.renderTask.bind(this)
         this.state = {tasks: props.tasks || []}
     }
 
@@ -67,6 +67,7 @@ class Tasks extends React.Component {
             ACTIVE: 'spinner',
             COMPLETED: 'circle-check',
             FAILED: 'circle-xmark',
+            CANCELING: 'spinner',
             CANCELED: 'circle-xmark'
         }
         const iconVariantMap = {
@@ -74,6 +75,7 @@ class Tasks extends React.Component {
             ACTIVE: 'info',
             COMPLETED: 'success',
             FAILED: 'error',
+            CANCELING: 'normal',
             CANCELED: 'normal'
         }
         return {
@@ -90,7 +92,7 @@ class Tasks extends React.Component {
                     title={task.name}
                     description={this.getDescription(task)}
                     icon={icon}
-                    iconSize='lg'
+                    iconSize='xl'
                     iconVariant={iconVariant}
                     // timestamp={recipe.updateTime}
                     inlineComponents={[
@@ -108,26 +110,35 @@ class Tasks extends React.Component {
     renderTasks() {
         const {tasks} = this.state
         return tasks.length
-            ? (
-                <FastList
-                    items={tasks}
-                    itemKey={task => `${task.id}`}
-                    spacing='tight'
-                    overflow={50}>
-                    {task => this.renderTask(task)}
-                </FastList>
-            )
-            : (
-                <div className={styles.noTasks}>
-                    <Shape
-                        look='transparent'
-                        shape='pill'
-                        size='normal'
-                        air='more'>
-                        {msg('tasks.none')}
-                    </Shape>
-                </div>
-            )
+            ? this.renderTaskList(tasks)
+            : this.renderNoTasks()
+    }
+
+    renderTaskList(tasks) {
+        const itemKey = task => `${task.id}`
+        return (
+            <FastList
+                items={tasks}
+                itemKey={itemKey}
+                itemRenderer={this.renderTask}
+                spacing='tight'
+                overflow={50}
+            />
+        )
+    }
+
+    renderNoTasks() {
+        return (
+            <div className={styles.noTasks}>
+                <Shape
+                    look='transparent'
+                    shape='pill'
+                    size='normal'
+                    air='more'>
+                    {msg('tasks.none')}
+                </Shape>
+            </div>
+        )
     }
 
     renderToolbar() {
@@ -188,8 +199,10 @@ class Tasks extends React.Component {
     }
 
     copyToClipboard(task) {
-        clipboard.copy(JSON.stringify(task, null, '  '))
-        Notifications.success({message: msg('tasks.copyToClipboard.success')})
+        copyToClipboard(
+            JSON.stringify(task, null, '  '),
+            msg('tasks.copyToClipboard.success')
+        )
     }
 
     removeTask(task) {

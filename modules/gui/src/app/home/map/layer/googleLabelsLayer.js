@@ -1,16 +1,18 @@
+import {Layer} from './layer'
 import {MAX_ZOOM} from '../maps'
-import OverlayLayer from './overlayLayer'
+import {of, tap} from 'rxjs'
 
-export class GoogleLabelsLayer extends OverlayLayer {
-    constructor({map, layerIndex}) {
-        super({map, layerIndex})
+export class GoogleLabelsLayer extends Layer {
+    constructor({
+        map,
+        layerIndex = 0
+    }) {
+        super()
+        this.map = map
+        this.layerIndex = layerIndex
     }
 
-    equals(o) {
-        return o === this || o instanceof GoogleLabelsLayer
-    }
-
-    createOverlay() {
+    createOverlay = () => {
         const {map} = this
         const {google} = map.getGoogle()
         const styledMapType = new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
@@ -18,9 +20,35 @@ export class GoogleLabelsLayer extends OverlayLayer {
         return styledMapType
     }
 
-    hide(_hidden) {
-        // no-op
+    addToMap = () => {
+        this.overlay = this.createOverlay()
+        const {map, layerIndex, overlay} = this
+        const {googleMap} = map.getGoogle()
+        if (overlay) {
+            googleMap.overlayMapTypes.setAt(layerIndex, overlay)
+        }
     }
+
+    addToMap$ = () =>
+        of(true).pipe(
+            tap(() => this.addToMap())
+        )
+
+    removeFromMap = () => {
+        const {map, layerIndex, overlay} = this
+        const {googleMap} = map.getGoogle()
+        if (overlay) {
+            // googleMap.overlayMapTypes.removeAt(layerIndex)
+            // [HACK] Prevent flashing of removed layers, which happens when just setting overlay to null.
+            // [HACK] Prevent removal of already removed tileManager.
+            googleMap.overlayMapTypes.insertAt(layerIndex, null)
+            googleMap.overlayMapTypes.removeAt(layerIndex + 1)
+        }
+    }
+
+    equals = other =>
+        other === this
+            || other instanceof GoogleLabelsLayer
 }
 
 const labelsLayerStyle = [

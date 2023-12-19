@@ -4,6 +4,7 @@ import {Button} from 'widget/button'
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {LegendImport} from './legendImport'
+import {MapApiKeyContext} from './mapApiKeyContext'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
 import {MapInfo} from './mapInfo'
@@ -19,16 +20,19 @@ import {msg} from 'translate'
 import {recipePath} from '../body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import {v4 as uuid} from 'uuid'
+import {withEnableDetector} from 'enabled'
 import {withLayers} from '../body/process/withLayers'
 import {withMapsContext} from './maps'
 import {withRecipe} from '../body/process/recipeContext'
+import {withSubscriptions} from 'subscription'
 import MapToolbar from './mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import styles from './map.module.css'
-import withSubscriptions from 'subscription'
+
+// _.memoize.Cache = WeakMap
 
 const log = getLogger('map')
 
@@ -38,7 +42,7 @@ const mapRecipeToProps = recipe => ({
 })
 
 const OVERLAY_ID = 'overlay-layer-id'
-const OVERLAY_AREA = OVERLAY_AREA
+const OVERLAY_AREA = 'overlay-area'
 
 class _Map extends React.Component {
     viewUpdates$ = new BehaviorSubject({})
@@ -79,6 +83,37 @@ class _Map extends React.Component {
         this.setAreaMarker = this.setAreaMarker.bind(this)
         this.addOneShotClickListener = this.addOneShotClickListener.bind(this)
         this.removeMap = this.removeMap.bind(this)
+        this.fit = this.fit.bind(this)
+        this.canFit = this.canFit.bind(this)
+        this.removeMarker = this.removeMarker.bind(this)
+        this.memoizedMapDelegate = _.memoize(this.getMapDelegate)
+    }
+
+    getMapDelegate(map) {
+        return map && ({
+            view$: this.filteredViewUpdates$,
+            linked$: this.linked$,
+            scrollWheelEnabled$: this.scrollWheelEnabled$,
+            zoomIn: map.zoomIn,
+            zoomOut: map.zoomOut,
+            setZoom: map.setZoom,
+            getZoom: map.getZoom,
+            setView: map.setView,
+            fitBounds: map.fitBounds,
+            getBounds: map.getBounds,
+            getGoogle: map.getGoogle,
+            toggleLinked: this.toggleLinked,
+            enableZoomArea: this.enableZoomArea,
+            disableZoomArea: this.disableZoomArea,
+            isZoomArea: this.isZoomArea,
+            canFit: this.canFit,
+            fit: this.fit,
+            addOneShotClickListener: this.addOneShotClickListener,
+            enablePolygonDrawing: this.enablePolygonDrawing,
+            disablePolygonDrawing: this.disablePolygonDrawing,
+            setLocationMarker: this.setLocationMarker,
+            setAreaMarker: this.setAreaMarker
+        })
     }
 
     isInitialized() {
@@ -125,13 +160,18 @@ class _Map extends React.Component {
     }
 
     withAllMaps(func) {
+        this.withAreaMaps(func)
+        this.withOverlayMap(func)
+    }
+
+    withAreaMaps(func) {
         const {maps} = this.state
         return _.map(maps, ({map, listeners, subscriptions}, id) =>
             func({id, map, listeners, subscriptions})
         )
     }
 
-    withFirstMap(func) {
+    withFirstAreaMap(func) {
         const {maps} = this.state
         const id = _.head(_.keys(maps))
         const {map = null} = maps[id] || {}
@@ -144,8 +184,9 @@ class _Map extends React.Component {
         const {overlay} = this.state
         if (overlay) {
             const {map, listeners, subscriptions} = overlay
-            func({id: OVERLAY_ID, map, listeners, subscriptions})
+            return func({id: OVERLAY_ID, map, listeners, subscriptions})
         }
+        return null
     }
 
     createMap(id, element, isOverlay, callback) {
@@ -160,7 +201,7 @@ class _Map extends React.Component {
         const style = isOverlay ? 'overlayStyle' : 'sepalStyle'
         const map = createSepalMap({element, options, style})
 
-        this.withFirstMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
+        this.withFirstAreaMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
 
         if (isOverlay) {
             this.viewUpdates$.next(map.getView())
@@ -169,6 +210,9 @@ class _Map extends React.Component {
         const {googleMap} = map.getGoogle()
 
         const listeners = [
+            googleMap.addListener('idle',
+                () => this.viewChanged$.next()
+            ),
             googleMap.addListener('mouseout',
                 () => this.synchronizeCursor(id, null)
             ),
@@ -221,23 +265,17 @@ class _Map extends React.Component {
     }
 
     synchronizeOut(id, map) {
-        const {overlay} = this.state
         const view = map.getView()
-        this.withAllMaps(({map, id: currentId}) => {
-            if (currentId !== id) {
-                map.setView(view)
-            }
-        })
-        this.viewUpdates$.next(view)
-        if (!this.isOverlayLayer(id)) {
-            overlay && overlay.map.setView(view)
+        if (!_.isEqual(view, this.viewUpdates$.getValue())) {
+            this.viewUpdates$.next(view)
+            this.withAllMaps(({map, id: mapId}) =>
+                mapId !== id && map.setView(view)
+            )
         }
     }
 
     synchronizeIn(view) {
-        const {overlay} = this.state
         this.withAllMaps(({map}) => map.setView(view))
-        overlay && overlay.map.setView(view)
     }
 
     synchronizeCursor(cursorId, latLng, event) {
@@ -250,7 +288,7 @@ class _Map extends React.Component {
                 latLng
             })
         }
-        this.withAllMaps(({id, map}) => {
+        this.withAreaMaps(({id, map}) => {
             const otherArea = this.getArea(id)
             if (this.isGridMode() && otherArea !== cursorArea) {
                 map.setCursor(latLng)
@@ -261,20 +299,34 @@ class _Map extends React.Component {
     }
 
     setVisibility(visible) {
-        this.withAllMaps(({map}) => map.setVisibility(visible))
+        this.withAreaMaps(({map}) => map.setVisibility(visible))
     }
 
     addOneShotClickListener(listener) {
-        const listeners = this.withAllMaps(({map}) =>
-            map.addClickListener(e => {
-                listener(e)
-                removableListener.remove()
-            })
-        )
-        const removableListener = {
-            remove: () => listeners.map(listener => listener.remove())
+        const {overlayActive} = this.state
+        if (overlayActive) {
+            const listeners = this.withOverlayMap(({map}) =>
+                map.addClickListener(e => {
+                    listener(e)
+                    removableListener.remove()
+                })
+            )
+            const removableListener = {
+                remove: () => listeners.remove()
+            }
+            return removableListener
+        } else {
+            const listeners = this.withAreaMaps(({map}) =>
+                map.addClickListener(e => {
+                    listener(e)
+                    removableListener.remove()
+                })
+            )
+            const removableListener = {
+                remove: () => listeners.map(listener => listener.remove())
+            }
+            return removableListener
         }
-        return removableListener
     }
 
     // Drawing mode
@@ -311,15 +363,15 @@ class _Map extends React.Component {
         const activeInstance = _.last(this.drawingInstances)
         if (activeInstance) {
             const {drawingMode, callback} = activeInstance
-            this.withOverlayMap(({map}) => map.disableDrawingMode())
             this.withAllMaps(({map}) => map.disableDrawingMode())
             if (this.isStackMode()) {
+                // this.setState({drawingMode}, () => {
                 this.setState({drawingMode, overlayActive: true}, () => {
                     this.withOverlayMap(callback)
                 })
             } else {
                 this.setState({drawingMode, overlayActive: false}, () => {
-                    this.withAllMaps(callback)
+                    this.withAreaMaps(callback)
                 })
             }
         }
@@ -328,12 +380,13 @@ class _Map extends React.Component {
     enableDrawingMode({drawingMode, callback}) {
         log.debug('enableDrawingMode:', drawingMode)
         if (this.isStackMode()) {
+            // this.setState({drawingMode}, () => {
             this.setState({drawingMode, overlayActive: true}, () => {
                 this.withOverlayMap(callback)
             })
         } else {
             this.setState({drawingMode, overlayActive: false}, () => {
-                this.withAllMaps(callback)
+                this.withAreaMaps(callback)
             })
         }
     }
@@ -341,12 +394,14 @@ class _Map extends React.Component {
     disableDrawingMode() {
         log.debug('disableDrawingMode')
         if (this.isStackMode()) {
+            // this.setState({drawingMode: null}, () => {
             this.setState({drawingMode: null, overlayActive: false}, () => {
                 this.withOverlayMap(({map}) => map.disableDrawingMode())
             })
         } else {
+            // this.setState({drawingMode: null, overlayActive: true}, () => {
             this.setState({drawingMode: null, overlayActive: false}, () => {
-                this.withAllMaps(({map}) => map.disableDrawingMode())
+                this.withAreaMaps(({map}) => map.disableDrawingMode())
             })
         }
     }
@@ -396,7 +451,7 @@ class _Map extends React.Component {
     setLocationMarker(options) {
         const id = uuid()
         const remove = () => this.removeMarker(id)
-        this.markers[id] = this.withAllMaps(
+        this.markers[id] = this.withAreaMaps(
             ({map}) => map.setLocationMarker(options, remove)
         )
         return remove
@@ -405,7 +460,7 @@ class _Map extends React.Component {
     setAreaMarker(options) {
         const id = uuid()
         const remove = () => this.removeMarker(id)
-        this.markers[id] = this.withAllMaps(
+        this.markers[id] = this.withAreaMaps(
             ({map}) => map.setAreaMarker(options, remove)
         )
         return remove
@@ -422,7 +477,7 @@ class _Map extends React.Component {
     areaCursor$(id) {
         return this.cursor$.pipe(
             share(),
-            lastInWindow(100),
+            lastInWindow(50),
             switchMap(({screenPixel, mapPixel, cursorArea, latLng}) => {
                 const map = this.getMap(id)
                 const area = this.getArea(id)
@@ -526,24 +581,25 @@ class _Map extends React.Component {
             .filter(mapComponent => mapComponent)
         return (
             <ElementResizeDetector onResize={size => this.setState({size})}>
-                <MapContext.Provider value={{
-                    map: this.mapDelegate(),
-                    googleMapsApiKey,
-                    nicfiPlanetApiKey
-                }}>
-                    {imageLayerSourceComponents}
-                    <SplitView
-                        areas={this.renderAreas()}
-                        overlay={this.renderOverlay()}
-                        mode={layers.mode}
-                        position$={this.splitPosition$}
-                        dragging$={this.draggingSplit$}>
-                        <div className={styles.content}>
-                            {this.isInitialized() ? this.renderRecipe() : null}
-                            {this.renderDrawingModeIndicator()}
-                        </div>
-                    </SplitView>
-                </MapContext.Provider>
+                <MapApiKeyContext
+                    googleMapsApiKey={googleMapsApiKey}
+                    nicfiPlanetApiKey={nicfiPlanetApiKey}>
+                    <MapContext map={this.mapDelegate()}>
+                        {imageLayerSourceComponents}
+                        <SplitView
+                            className={styles.view}
+                            areas={this.renderAreas()}
+                            overlay={this.renderOverlay()}
+                            mode={layers.mode}
+                            position$={this.splitPosition$}
+                            dragging$={this.draggingSplit$}>
+                            <div className={styles.content}>
+                                {this.isInitialized() ? this.renderRecipe() : null}
+                                {this.renderDrawingModeIndicator()}
+                            </div>
+                        </SplitView>
+                    </MapContext>
+                </MapApiKeyContext>
             </ElementResizeDetector>
         )
     }
@@ -593,11 +649,11 @@ class _Map extends React.Component {
     }
 
     renderRecipe() {
-        const {recipeContext: {statePath}, children} = this.props
+        const {recipeStatePath, children} = this.props
         return (
             <SectionLayout>
                 <Content className={styles.recipe}>
-                    <MapToolbar statePath={[statePath, 'ui']}/>
+                    <MapToolbar statePath={[recipeStatePath, 'ui']}/>
                     <MapInfo/>
                     <LegendImport/>
                     {children}
@@ -618,7 +674,8 @@ class _Map extends React.Component {
             source,
             layerConfig,
             map,
-            boundsChanged$: this.viewChanged$.pipe(share()),
+            boundsChanged$: this.viewChanged$,
+            // boundsChanged$: this.viewChanged$.pipe(share()),
             dragging$: combineLatest([this.draggingMap$, this.draggingSplit$]).pipe(
                 share(),
                 rxMap(([draggingMap, draggingSplit]) => draggingMap || draggingSplit)
@@ -636,7 +693,7 @@ class _Map extends React.Component {
             }
         }
         return (
-            <MapAreaContext.Provider value={{
+            <MapAreaContext mapArea={{
                 area,
                 updateLayerConfig,
                 includeAreaFeatureLayerSource,
@@ -648,7 +705,7 @@ class _Map extends React.Component {
                 />
                 <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
                 {layerComponent}
-            </MapAreaContext.Provider>
+            </MapAreaContext>
         )
     }
 
@@ -665,7 +722,7 @@ class _Map extends React.Component {
     }
 
     componentDidMount() {
-        const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
+        const {mapsContext: {createMapContext}, enableDetector: {onEnable, onDisable}} = this.props
         const {mapId, googleMapsApiKey, nicfiPlanetApiKey, view$, updateView$, linked$, scrollWheelEnabled$} = createMapContext()
         this.setLinked(getProcessTabsInfo().single)
         this.scrollWheelEnabled$ = scrollWheelEnabled$
@@ -699,7 +756,7 @@ class _Map extends React.Component {
     }
 
     componentWillUnmount() {
-        this.withAllMaps(({id}) => {
+        this.withAreaMaps(({id}) => {
             this.removeMap(id)
         })
     }
@@ -714,46 +771,31 @@ class _Map extends React.Component {
                 view => updateView$.next(view)
             ),
             this.linked$.pipe(
-                finalize(() => linked$.next(false))
+                finalize(() => linked$.next({linked: false}))
             ).subscribe(
-                linked => linked$.next(linked)
+                linked => linked$.next({linked, view: this.viewUpdates$.getValue()})
             )
         )
     }
 
-    mapDelegate() {
+    fit() {
         const {bounds} = this.props
         const {maps: mapById} = this.state
         const maps = Object.values(mapById).map(({map}) => map)
         const map = maps[0]
+        map.fitBounds(bounds)
+    }
 
-        const isInitialized = () => bounds
+    canFit() {
+        const {bounds} = this.props
+        return !!bounds
+    }
 
-        return {
-            view$: this.filteredViewUpdates$,
-            linked$: this.linked$,
-            scrollWheelEnabled$: this.scrollWheelEnabled$,
-            toggleLinked: this.toggleLinked,
-            zoomIn: () => map.zoomIn(),
-            zoomOut: () => map.zoomOut(),
-            enableZoomArea: this.enableZoomArea,
-            disableZoomArea: this.disableZoomArea,
-            isZoomArea: this.isZoomArea,
-            canFit: () => isInitialized(),
-            fit: () => map.fitBounds(bounds),
-            setZoom: zoom => map.setZoom(zoom),
-            getZoom: () => map.getZoom(),
-            setView: view => map.setView(view),
-            fitBounds: bounds => map.fitBounds(bounds),
-            getBounds: () => map.getBounds(),
-            addOneShotClickListener: this.addOneShotClickListener,
-            enablePolygonDrawing: this.enablePolygonDrawing,
-            disablePolygonDrawing: this.disablePolygonDrawing,
-            setLocationMarker: this.setLocationMarker,
-            setAreaMarker: this.setAreaMarker,
-            removeMarker: this.removeMarker,
-            getGoogle: () => map.getGoogle()
-        }
+    mapDelegate() {
+        const {maps: mapById} = this.state
+        const maps = Object.values(mapById).map(({map}) => map)
+        const map = maps[0]
+        return this.memoizedMapDelegate(map)
     }
 }
 
@@ -763,7 +805,8 @@ export const Map = compose(
     withMapsContext(),
     withLayers(),
     withRecipe(mapRecipeToProps),
-    withSubscriptions()
+    withSubscriptions(),
+    withEnableDetector()
 )
 
 Map.propTypes = {

@@ -1,4 +1,4 @@
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
@@ -21,13 +21,13 @@ const fields = {
     username: new Form.Field()
         .notBlank('user.userDetails.form.username.required')
         .match(/^[a-zA-Z_][a-zA-Z0-9]{0,29}$/, 'user.userDetails.form.username.format')
-        .predicate((username, {id}) => isUniqueUser(id, user => user.username === username), 'user.userDetails.form.username.unique'),
+        .predicate((username, {id}) => isUniqueUser(id, user => user.username?.toLowerCase() === username?.toLowerCase()), 'user.userDetails.form.username.unique'),
     name: new Form.Field()
         .notBlank('user.userDetails.form.name.required'),
     email: new Form.Field()
         .notBlank('user.userDetails.form.email.required')
         .email('user.userDetails.form.email.required')
-        .predicate((email, {id}) => isUniqueUser(id, user => user.email === email), 'user.userDetails.form.email.unique'),
+        .predicate((email, {id}) => isUniqueUser(id, user => user.email?.toLowerCase() === email?.toLowerCase()), 'user.userDetails.form.email.unique'),
     organization: new Form.Field()
         .notBlank('user.userDetails.form.organization.required'),
     intendedUse: new Form.Field(),
@@ -66,6 +66,13 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class UserDetails extends React.Component {
+    constructor(props) {
+        super(props)
+        this.onChangeInstanceSpending = this.onChangeInstanceSpending.bind(this)
+        this.onChangeStorageSpending = this.onChangeStorageSpending.bind(this)
+        this.onChangeStorageQuota = this.onChangeStorageQuota.bind(this)
+    }
+
     save(userDetails) {
         const {onSave, onCancel} = this.props
         onSave({...userDetails})
@@ -156,7 +163,7 @@ class UserDetails extends React.Component {
                                 input={instanceSpending}
                                 spellCheck={false}
                                 prefix='US$/mo.'
-                                onChange={e => this.onChangeInstanceSpending(e.target.value)}
+                                onChange={this.onChangeInstanceSpending}
                             />
                             <Form.Input
                                 label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
@@ -164,7 +171,7 @@ class UserDetails extends React.Component {
                                 input={storageSpending}
                                 spellCheck={false}
                                 prefix='US$/mo.'
-                                onChange={e => this.onChangeStorageSpending(e.target.value)}
+                                onChange={this.onChangeStorageSpending}
                             />
                             <Form.Input
                                 label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
@@ -172,7 +179,7 @@ class UserDetails extends React.Component {
                                 input={storageQuota}
                                 spellCheck={false}
                                 prefix='GB'
-                                onChange={e => this.onChangeStorageQuota(e.target.value)}
+                                onChange={this.onChangeStorageQuota}
                             />
                         </Form.FieldSet>
                         {this.isUserRequest() ? this.renderUserRequest() : null}
@@ -396,5 +403,5 @@ UserDetails.propTypes = {
 
 export default compose(
     UserDetails,
-    form({fields, mapStateToProps})
+    withForm({fields, mapStateToProps})
 )

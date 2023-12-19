@@ -1,34 +1,32 @@
+import {Scrollable, ScrollableContainer} from './scrollable'
 import {Subject, delay, filter, map, merge, mergeMap, scan, takeWhile, timer} from 'rxjs'
 import {compose} from 'compose'
-import {connect, select} from 'store'
-import {simplehash as hash} from 'hash'
 import {msg} from 'translate'
 import {publishError} from 'eventPublisher'
 import {v4 as uuid} from 'uuid'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
+import _ from 'lodash'
+import hash from 'object-hash'
 import styles from './notifications.module.css'
-import withSubscriptions from 'subscription'
 
-const PATH = 'Notifications'
-const PUBLISH_ANIMATION_DURATION_MS = 250
-const DISMISS_ANIMATION_DURATION_MS = 250
+const PUBLISH_ANIMATION_DURATION_MS = 1000
+const DISMISS_ANIMATION_DURATION_MS = 1000
 
 const publish$ = new Subject()
 const manualDismiss$ = new Subject()
 
-const autoDismiss$ = publish$
-    .pipe(
-        filter(({timeout}) => timeout),
-        mergeMap(({id, timeout}) =>
-            timer(0, 1000).pipe(
-                scan(timeout => timeout - 1, timeout + 1),
-                takeWhile(timeout => timeout >= 0),
-                map(timeout => ({id, timeout}))
-            )
+const autoDismiss$ = publish$.pipe(
+    filter(({timeout}) => timeout),
+    mergeMap(({id, timeout}) =>
+        timer(0, 1000).pipe(
+            scan(timeout => timeout - 1, Math.round(timeout) + 1),
+            takeWhile(timeout => timeout >= 0),
+            map(timeout => ({id, timeout}))
         )
     )
+)
 
 const dismiss$ = merge(
     manualDismiss$,
@@ -38,13 +36,14 @@ const dismiss$ = merge(
     )
 )
 
-const remove$ = dismiss$.pipe(delay(DISMISS_ANIMATION_DURATION_MS))
+const added$ = publish$.pipe(delay(PUBLISH_ANIMATION_DURATION_MS))
+const removed$ = dismiss$.pipe(delay(DISMISS_ANIMATION_DURATION_MS))
 
 const group = ({group = false, id, ...notification}) =>
     group === false
         ? id
         : group === true
-            ? hash(notification) // id is excluded
+            ? hash(_.omit(notification, ['id', 'error'])) // id and error are excluded
             : group
 
 const publish = notification => {
@@ -66,20 +65,18 @@ const publish = notification => {
         timeout = 8,
         dismissable = true,
         ...notification
-    }) => ({id, level, title, timeout, dismissable, ...notification})
+    }) => ({id, level, title, timeout, dismissable, ...notification, adding: true})
 
     publish(applyDefaults(notification))
 }
+
 const dismiss = notificationId =>
     manualDismiss$.next(notificationId)
 
-const mapStateToProps = () => ({
-    notifications: select(PATH) || []
-})
-
 class _Notifications extends React.Component {
     state = {
-        timeoutById: {}
+        notifications: {},
+        timeouts: {}
     }
 
     renderTitle(title) {
@@ -93,11 +90,19 @@ class _Notifications extends React.Component {
     renderMessage(message) {
         return (
             <div className={styles.message}>
-                {message}
+                {message.split('|').map(this.renderMessageLine)}
             </div>
         )
     }
 
+    renderMessageLine(messageLine, index) {
+        return (
+            <div key={index} className={styles.messageLine}>
+                {messageLine}
+            </div>
+        )
+    }
+    
     renderError(error) {
         const errorMessage = typeof error === 'string' ? error : error.message
         return (
@@ -115,9 +120,17 @@ class _Notifications extends React.Component {
         )
     }
 
+    renderLink(link) {
+        return (
+            <div className={styles.link}>
+                <a href={link} target="_blank" rel="noreferrer">{link}</a>
+            </div>
+        )
+    }
+
     renderDismissMessage(id) {
-        const {timeoutById} = this.state
-        const timeout = timeoutById[id] || 0
+        const {timeouts} = this.state
+        const timeout = timeouts[id] || 0
         const message = timeout
             ? msg('widget.notification.dismissOrWait', {timeout})
             : msg('widget.notification.dismiss')
@@ -136,88 +149,133 @@ class _Notifications extends React.Component {
             : null
     }
 
-    renderNotification({id, level, title, message, error, content, timeout, dismissable, dismissing}) {
+    renderNotification({id, level, title, message, error, content, link, timeout, dismissable, adding, removing}) {
         const dismiss = () => manualDismiss$.next(id)
         return id
             ? (
                 <div
                     key={id}
-                    className={[
-                        styles.notification,
-                        styles[level],
-                        dismissable ? styles.dismissable : null,
-                        dismissing ? styles.dismissing : null
-                    ].join(' ')}
-                    style={{
-                        '--publish-animation-duration-ms': `${PUBLISH_ANIMATION_DURATION_MS}ms`,
-                        '--dismiss-animation-duration-ms': `${DISMISS_ANIMATION_DURATION_MS}ms`
-                    }}
-                    onClick={() => dismissable && dismiss()}
+                    className={styles.wrapper}
                 >
-                    {title ? this.renderTitle(title) : null}
-                    {message ? this.renderMessage(message) : null}
-                    {error ? this.renderError(error) : null}
-                    {content ? this.renderContent(content, dismiss) : null}
-                    {this.renderDismissMessage(id)}
-                    {this.renderAutoDismissIndicator(timeout)}
+                    <div
+                        className={[
+                            styles.notification,
+                            styles[level],
+                            dismissable ? styles.dismissable : null,
+                            adding ? styles.adding : null,
+                            removing ? styles.removing : null
+                        ].join(' ')}
+                        style={{
+                            '--publish-animation-duration-ms': `${PUBLISH_ANIMATION_DURATION_MS}ms`,
+                            '--dismiss-animation-duration-ms': `${DISMISS_ANIMATION_DURATION_MS}ms`
+                        }}
+                        onClick={() => dismissable && dismiss()}
+                    >
+                        {title ? this.renderTitle(title) : null}
+                        {message ? this.renderMessage(message) : null}
+                        {error ? this.renderError(error) : null}
+                        {content ? this.renderContent(content, dismiss) : null}
+                        {link ? this.renderLink(link) : null}
+                        {timeout > 3 ? this.renderDismissMessage(id) : null}
+                        {this.renderAutoDismissIndicator(timeout)}
+                    </div>
                 </div>
             )
             : null
     }
 
     renderNotifications() {
-        const {notifications} = this.props
-        return notifications.map(notification => this.renderNotification(notification))
+        const {notifications} = this.state
+        return Object.values(notifications).map(notification => this.renderNotification(notification))
     }
 
     render() {
         return (
-            <div className={styles.container}>
-                {this.renderNotifications()}
-            </div>
+            <ScrollableContainer className={styles.container}>
+                <Scrollable className={styles.scrollable} hideScrollbar>
+                    {this.renderNotifications()}
+                </Scrollable>
+            </ScrollableContainer>
         )
+    }
+
+    isUniqueGroup(notifications, notification) {
+        const noGroup = !notification.group
+        const uniqueGroup = !Object.values(notifications).find(({group}) => group === notification.group)
+        return noGroup || uniqueGroup
     }
 
     componentDidMount() {
         const {addSubscription} = this.props
         addSubscription(
-            publish$.subscribe(notification =>
-                actionBuilder('PUBLISH_NOTIFICATION')
-                    .pushUnique(PATH, notification, 'group')
-                    .dispatch()
-            ),
+            publish$.subscribe(notification => {
+                this.setState(({notifications}) => {
+                    if (this.isUniqueGroup(notifications, notification)) {
+                        return {
+                            notifications: {
+                                ...notifications,
+                                [notification.id]: notification
+                            }
+                        }
+                    }
+                })
+            }),
             dismiss$.subscribe(id => {
-                actionBuilder('DISMISS_NOTIFICATION')
-                    .assign([PATH, {id}], {dismissing: true})
-                    .dispatch()
-                this.setState(({timeoutById}) => {
-                    delete timeoutById[id]
-                    return {timeoutById}
+                this.setState(({notifications, timeouts}) => {
+                    delete timeouts[id]
+                    const notification = notifications[id]
+                    if (notification) {
+                        const onDismiss = notification.onDismiss
+                        onDismiss && onDismiss()
+                        notification.removing = true
+                    }
+                    return {notifications, timeouts}
                 })
             }),
             autoDismiss$.subscribe(({id, timeout}) => {
-                this.setState(({timeoutById}) => {
+                this.setState(({timeouts}) => {
                     if (timeout > 0) {
-                        timeoutById[id] = timeout
+                        timeouts[id] = timeout
                     } else {
-                        delete timeoutById[id]
+                        delete timeouts[id]
                     }
-                    return {timeoutById}
+                    return {timeouts}
                 })
             }),
-            remove$.subscribe(id =>
-                actionBuilder('REMOVE_NOTIFICATION')
-                    .del([PATH, {id}])
-                    .dispatch()
+            added$.subscribe(({id}) => {
+                this.setState(({notifications}) => {
+                    const notification = notifications[id]
+                    if (notification) {
+                        delete notification.adding
+                    }
+                    return {notifications}
+                })
+            }),
+            removed$.subscribe(id =>
+                this.setState(({notifications}) => {
+                    delete notifications[id]
+                    return {notifications}
+                })
             )
         )
     }
+
 }
+
+// const publishRandomNotification = () => {
+//     const levels = ['info', 'success', 'warning', 'error']
+//     const level = levels[Math.floor(Math.random() * levels.length)]
+//     publish({
+//         level,
+//         message: 'Hello there',
+//         timeout: 0,
+//         onDismiss: createRandomNotification
+//     })
+// }
 
 const Notifications = compose(
     _Notifications,
-    withSubscriptions(),
-    connect(mapStateToProps)
+    withSubscriptions()
 )
 
 Notifications.success = notification =>
@@ -249,7 +307,9 @@ Notifications.propTypes = {
     group: PropTypes.oneOf([true, false, PropTypes.string]),
     id: PropTypes.string,
     level: PropTypes.string,
+    link: PropTypes.string,
     message: PropTypes.string,
     timeout: PropTypes.number,
     title: PropTypes.string,
+    onDismiss: PropTypes.func
 }

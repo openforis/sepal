@@ -44,7 +44,7 @@ queue.on('stalled', job => {
 
 queue.on('drained', async () => await logStats())
 
-const enqueue = async (message, {id = uid(), priority = 1} = {}) => {
+const enqueue = async (message, {id = uid.rnd(), priority = 1} = {}) => {
     log.debug(() => `<${id}> Enqueuing email ${tag(message)} with priority ${priority}`)
     return await queue.add(message, {
         jobId: id,

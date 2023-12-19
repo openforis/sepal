@@ -1,13 +1,13 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {animationFrames, distinctUntilChanged, filter, fromEvent, map, scan, switchMap, takeUntil} from 'rxjs'
 import {compose} from 'compose'
-import {intersect} from 'collections'
+import {withSubscriptions} from 'subscription'
 import Hammer from 'hammerjs'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import moment from 'moment'
 import styles from './seasonSelect.module.css'
-import withSubscriptions from '../subscription'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -53,7 +53,7 @@ export default class SeasonSelect extends React.Component {
             return diff1 === diff2 ? 0 : diff1 < diff2 ? -1 : 1
         }
 
-        const [updatedStartDate, updatedEndDate] = intersect([startDate, endDate]
+        const [updatedStartDate, updatedEndDate] = _.uniq([startDate, endDate]
             .map(date => date.year())
             .map(year => centerDate.year() - year))
             .map(yearDiff => [

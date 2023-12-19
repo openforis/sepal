@@ -15,20 +15,25 @@ export const normalize = visParams => {
 
     const toArray = key => {
         const value = normalized[key]
+        if (_.isNil(value)) {
+            return []
+        }
         const list = _.isString(value)
-            ? value.match(/(\\.|[^,])+/g).map(s => s.trim())
+            ? value.match(/(\\.|[^,])+/g)?.map(s => s.trim())
             : !_.isArray(value) && !_.isNil(value)
                 ? [value]
                 : value
         return decodeList(key, list)
     }
 
-    const toNumbers = key => normalized[key]
-        ? normalized[key].map(value => _.isString(value)
-            ? parseFloat(value)
-            : value
-        )
-        : null
+    const toNumbers = key => {
+        return normalized[key]
+            ? normalized[key].map(value => _.isString(value)
+                ? parseFloat(value)
+                : value
+            )
+            : null
+    }
 
     const toBooleans = key => normalized[key]
         ? normalized[key].map(value => _.isString(value)
@@ -40,7 +45,7 @@ export const normalize = visParams => {
     const size = key => {
         const targetSize = normalized.bands.length
         const array = normalized[key]
-        if (!array || targetSize === array.lenngth) {
+        if (!array || !array.length || targetSize === array.lenngth) {
             return normalized[key]
         }
         if (array.length < targetSize) {
@@ -53,14 +58,13 @@ export const normalize = visParams => {
             return array.slice(0, targetSize)
         }
     }
-
     ['bands', 'min', 'max', 'palette', 'labels', 'values', 'gamma', 'inverted']
         .map(key => normalized[key] = toArray(key))
 
     if (!normalized.type) {
         normalized.type = normalized.bands.length > 1
             ? 'rgb'
-            : normalized.values
+            : normalized.values.length
                 ? 'categorical'
                 : 'continuous'
     }
@@ -87,7 +91,7 @@ export const normalize = visParams => {
         normalized.max = [_.max(normalized.values)]
     }
 
-    if (normalized.type === 'continuous' && !normalized.palette) {
+    if (normalized.type === 'continuous' && !normalized.palette.length) {
         normalized.palette = ['#000000', '#FFFFFF']
     }
 
@@ -113,9 +117,10 @@ export const normalize = visParams => {
     }
 
     Object.keys(normalized).forEach(key => {
-        if (_.isNil(normalized[key])) {
+        if (_.isNil(normalized[key]) || (_.isArray(normalized[key]) && !normalized[key].length)) {
             delete normalized[key]
         }
     })
-    return normalized
+    const result = normalized.bands.length ? normalized : null
+    return result
 }

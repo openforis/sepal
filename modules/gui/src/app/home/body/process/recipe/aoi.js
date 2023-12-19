@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {withMapContext} from '../../../map/mapContext'
+import {withMap} from '../../../map/mapContext'
 import {withRecipe} from '../recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -24,7 +24,7 @@ class _Aoi extends React.Component {
     }
 
     loadBounds() {
-        const {stream, recipe, value, mapContext: {map}, recipeActionBuilder} = this.props
+        const {aoi, stream, recipe, value, map, recipeActionBuilder} = this.props
         if (value) {
             stream('LOAD_BOUNDS',
                 api.gee.recipeBounds$(recipe),
@@ -42,7 +42,7 @@ class _Aoi extends React.Component {
 export const Aoi = compose(
     _Aoi,
     withRecipe(recipe => ({recipe})),
-    withMapContext()
+    withMap()
 )
 
 Aoi.propTypes = {

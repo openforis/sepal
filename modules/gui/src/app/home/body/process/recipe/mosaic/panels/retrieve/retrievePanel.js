@@ -8,7 +8,7 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {WorkspaceDestination} from 'widget/workspaceDestination'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {currentUser} from 'user'
+import {isGoogleAccount} from 'user'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {updateProject} from 'app/home/body/process/recipeList/projects'
@@ -19,7 +19,9 @@ import _ from 'lodash'
 import styles from './retrievePanel.module.css'
 
 const fields = {
+    useAllBands: new Form.Field(),
     bands: new Form.Field()
+        .skip((v, {useAllBands}) => useAllBands)
         .predicate(bands => bands && bands.length, 'process.retrieve.form.bands.atLeastOne'),
     scale: new Form.Field()
         .int()
@@ -33,6 +35,9 @@ const fields = {
         .skip((v, {destination}) => destination !== 'GEE')
         .notBlank(),
     assetType: new Form.Field()
+        .skip((v, {destination}) => destination !== 'GEE')
+        .notBlank(),
+    sharing: new Form.Field()
         .skip((v, {destination}) => destination !== 'GEE')
         .notBlank(),
     strategy: new Form.Field()
@@ -67,7 +72,6 @@ const mapStateToProps = state => ({
 })
 
 const mapRecipeToProps = recipe => ({
-    user: currentUser(),
     projectId: recipe.projectId
 })
 
@@ -104,16 +108,17 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     renderContent() {
-        const {allowTiling, toSepal, toEE, inputs: {destination, assetType}} = this.props
+        const {allBands, allowTiling, toSepal, toEE, inputs: {destination, assetType}} = this.props
         const {more} = this.state
         return (
             <Layout>
-                {this.renderBandOptions()}
+                {allBands ? null : this.renderBandOptions()}
                 {this.renderScale()}
                 {toEE && toSepal && this.renderDestination()}
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
                 {destination.value === 'GEE' ? this.renderAssetType() : null}
                 {destination.value === 'GEE' ? this.renderAssetDestination() : null}
+                {destination.value === 'GEE' ? this.renderSharing() : null}
                 {more && (allowTiling || (destination.value === 'GEE' && assetType.value === 'ImageCollection')) ? this.renderTileSize() : null}
                 {more ? this.renderShardSize() : null}
                 {more && destination.value === 'SEPAL' ? this.renderFileDimensionsMultiple() : null}
@@ -197,7 +202,7 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     renderDestination() {
-        const {toSepal, toEE, user, inputs: {destination}} = this.props
+        const {toSepal, toEE, inputs: {destination}} = this.props
         const destinationOptions = [
             {
                 value: 'SEPAL',
@@ -208,7 +213,7 @@ class _MosaicRetrievePanel extends React.Component {
                 label: msg('process.retrieve.form.destination.GEE')
             }
         ]
-            .filter(({value}) => user.googleTokens || value !== 'GEE')
+            .filter(({value}) => isGoogleAccount() || value !== 'GEE')
             .filter(({value}) => toSepal || value !== 'SEPAL')
             .filter(({value}) => toEE || value !== 'GEE')
         return (
@@ -243,6 +248,29 @@ class _MosaicRetrievePanel extends React.Component {
                 assetInput={assetId}
                 strategyInput={strategy}
             />
+        )
+    }
+
+    renderSharing() {
+        const {inputs: {sharing}} = this.props
+        const options = [
+            {
+                value: 'PRIVATE',
+                label: msg('process.retrieve.form.sharing.PRIVATE.label'),
+                tooltip: msg('process.retrieve.form.sharing.PRIVATE.tooltip')
+            },
+            {
+                value: 'PUBLIC',
+                label: msg('process.retrieve.form.sharing.PUBLIC.label'),
+                tooltip: msg('process.retrieve.form.sharing.PUBLIC.tooltip')
+            }
+        ]
+        return (
+            <Form.Buttons
+                label={msg('process.retrieve.form.sharing.label')}
+                input={sharing}
+                multiple={false}
+                options={options}/>
         )
     }
 
@@ -300,7 +328,9 @@ class _MosaicRetrievePanel extends React.Component {
     }
     
     componentDidMount() {
-        const {defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize, inputs: {assetType, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize}} = this.props
+        const {allBands, defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize,
+            inputs: {assetType, sharing, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize, useAllBands}
+        } = this.props
         const more = (crs.value && crs.value !== defaultCrs)
             || (crsTransform.value)
             || (shardSize.value && shardSize.value !== defaultShardSize)
@@ -325,6 +355,12 @@ class _MosaicRetrievePanel extends React.Component {
         if (defaultAssetType && !assetType.value) {
             assetType.set(defaultAssetType)
         }
+        if (!sharing.value) {
+            sharing.set('PRIVATE')
+        }
+        if (allBands) {
+            useAllBands.set(true)
+        }
         this.update()
     }
 
@@ -333,10 +369,10 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     update() {
-        const {toEE, toSepal, user, inputs: {destination, assetType}} = this.props
+        const {toEE, toSepal, inputs: {destination, assetType}} = this.props
         if (toSepal && !destination.value) {
             destination.set('SEPAL')
-        } else if (user.googleTokens && toEE && !destination.value) {
+        } else if (isGoogleAccount() && toEE && !destination.value) {
             destination.set('GEE')
         }
         if (!assetType.value && destination.value === 'GEE') {
@@ -380,14 +416,15 @@ MosaicRetrievePanel.defaultProps = {
 }
 
 MosaicRetrievePanel.propTypes = {
-    bandOptions: PropTypes.array.isRequired,
     defaultCrs: PropTypes.string.isRequired,
     defaultFileDimensionsMultiple: PropTypes.number.isRequired,
     defaultScale: PropTypes.number.isRequired,
     defaultShardSize: PropTypes.number.isRequired,
     defaultTileSize: PropTypes.number.isRequired,
     onRetrieve: PropTypes.func.isRequired,
+    allBands: PropTypes.any,
     allowTiling: PropTypes.any,
+    bandOptions: PropTypes.array,
     className: PropTypes.any,
     defaultAssetType: PropTypes.any,
     scaleTicks: PropTypes.array,

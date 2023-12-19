@@ -1,13 +1,13 @@
 import {Subject, takeUntil} from 'rxjs'
+import {composeHoC} from 'compose'
 import {connect as connectToRedux} from 'react-redux'
-import {isMobile} from 'widget/userAgent'
+import {isEqual} from 'hash'
 import {selectFrom} from 'stateUtils'
-import PropTypes from 'prop-types'
-import React, {Component} from 'react'
+import {v4 as uuid} from 'uuid'
+import {withPreventUpdateWhenDisabled} from 'enabled'
+import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
-import asyncActionBuilder from 'async-action-builder'
-import guid from 'guid'
 
 let storeInstance = null
 const storeInitListeners = []
@@ -17,119 +17,58 @@ export const initStore = store => {
     storeInitListeners.forEach(listener => listener(store))
 }
 
+// only used by recipe.js
 export const subscribe = (path, listener) => {
     const subscribe = () => storeInstance.subscribe(() => listener(select(path)))
-    if (storeInstance)
+    if (storeInstance) {
         subscribe()
-    else
+    } else {
         storeInitListeners.push(subscribe)
+    }
 }
 
+// only used by route.js
 export const state = () =>
     storeInstance.getState() || {}
 
+// only used by action-builder.js
 export const dispatch = action =>
     storeInstance.dispatch(action)
 
 export const select = (...path) =>
     selectFrom(state(), path)
-    // _.cloneDeep(selectFrom(state(), path))
 
-const includeDispatchingProp = mapStateToProps =>
-    (state, ownProps) => {
-        if (ownProps.enabled === false)
-            return {}
-        return {
-            ...mapStateToProps(state, ownProps),
-            actions: state.actions || {},
-            streams: state.stream && state.stream[ownProps.componentId]
-        }
-    }
-
-export const connect = mapStateToProps => {
-    mapStateToProps = mapStateToProps ? mapStateToProps : () => ({})
-
-    // Component hierarchy:
-    //
-    // ComponentIdAssignment
-    // AddEnabledProp
-    // ConnectedComponent
-    // ReduxConnectedComponent
-    // PreventUpdateWhenDisabled
-    // WrappedComponent
-
-    return WrappedComponent => {
-        const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
-
-        class ComponentIdAssignment extends Component {
-            id = `${displayName}:${guid()}`
-            render() {
-                return (
-                    <AddEnabledProp {...this.props} componentId={this.id}>
-                        {this.props.children}
-                    </AddEnabledProp>
-                )
-            }
-        }
-
-        class PreventUpdateWhenDisabled extends Component {
-            shouldComponentUpdate(nextProps) {
-                return nextProps.enabled !== false
-            }
-
-            render() {
-                return (
-                    <WrappedComponent {...this.props}>
-                        {this.props.children}
-                    </WrappedComponent>
-                )
-            }
-        }
-
-        class AddEnabledProp extends Component {
-            render() {
-                return (
-                    <EnabledContext.Consumer>
-                        {enabled =>
-                            <ConnectedComponent {...this.props} enabled={enabled}>
-                                {this.props.children}
-                            </ConnectedComponent>
-                        }
-                    </EnabledContext.Consumer>
-                )
-            }
-        }
-
-        const ReduxConnectedComponent = connectToRedux(
-            includeDispatchingProp(mapStateToProps), null, null, {
-                areStatePropsEqual: _.isEqual
-            }
-        )(PreventUpdateWhenDisabled)
-
+const withConnectedComponent = () =>
+    WrappedComponent =>
         class ConnectedComponent extends React.PureComponent {
             constructor(props) {
                 super(props)
-                this.id = props.componentId
+                this.componentId = uuid()
                 this.componentWillUnmount$ = new Subject()
-                this.asyncActionBuilder = this.asyncActionBuilder.bind(this)
                 this.action = this.action.bind(this)
-                this.setDisableListener = this.setDisableListener.bind(this)
-                this.setEnableListener = this.setEnableListener.bind(this)
-                this.stream = stream(this)
+                this.stream = this.stream.bind(this)
+            }
+
+            render() {
+                const {componentId} = this
+                return React.createElement(WrappedComponent, {
+                    ...this.props,
+                    componentId,
+                    action: this.action,
+                    stream: this.stream,
+                    componentWillUnmount$: this.componentWillUnmount$
+                })
             }
 
             componentWillUnmount() {
                 this.componentWillUnmount$.next()
                 this.componentWillUnmount$.complete()
-            }
-
-            asyncActionBuilder(type, action$) {
-                return asyncActionBuilder(type, action$, this)
+                this.removeStreamStatus()
             }
 
             action(type) {
                 const actions = select('actions') || {}
-                const componentActions = actions[this.props.componentId] || {}
+                const componentActions = actions[this.componentId] || {}
                 const undispatched = !componentActions[type]
                 const dispatching = componentActions[type] === 'DISPATCHING'
                 const completed = componentActions[type] === 'COMPLETED'
@@ -138,159 +77,91 @@ export const connect = mapStateToProps => {
                 return {undispatched, dispatching, completed, failed, dispatched}
             }
 
-            setDisableListener(listener) {
-                this.onDisable = listener
+            setStreamStatus(name, status) {
+                const {componentId} = this
+                actionBuilder('SET_STREAM_STATUS', {componentId, name, status})
+                    .set(['stream', componentId, name], status)
+                    .dispatch()
+            }
+            
+            getStreamStatus(name) {
+                const {componentId} = this
+                const status = select(['stream', componentId, name])
+                return {
+                    active: status === 'ACTIVE',
+                    failed: status === 'FAILED',
+                    completed: status === 'COMPLETED'
+                }
             }
 
-            setEnableListener(listener) {
-                this.onEnable = listener
+            removeStreamStatus() {
+                const {componentId} = this
+                actionBuilder('REMOVE_STREAM_STATUS', {componentId})
+                    .del(['stream', componentId])
+                    .dispatch()
             }
 
-            render() {
-                return React.createElement(ReduxConnectedComponent, {
-                    ...this.props,
-                    asyncActionBuilder: this.asyncActionBuilder,
-                    action: this.action,
-                    stream: this.stream,
-                    onEnable: this.setEnableListener,
-                    onDisable: this.setDisableListener,
-                    // componentId: this.id,
-                    componentWillUnmount$: this.componentWillUnmount$
-                })
+            getStream({name, stream$, onNext, onError, onComplete}) {
+                if (stream$) {
+                    this.setStreamStatus(name, 'ACTIVE')
+                    stream$.pipe(
+                        takeUntil(this.componentWillUnmount$)
+                    ).subscribe({
+                        next: value => {
+                            onNext && onNext(value)
+                        },
+                        error: error => {
+                            this.setStreamStatus(name, 'FAILED')
+                            if (onError) {
+                                onError(error)
+                            } else {
+                                throw error
+                            }
+                        },
+                        complete: () => {
+                            this.setStreamStatus(name, 'COMPLETED')
+                            onComplete && onComplete()
+                        }
+                    })
+                }
+                return this.getStreamStatus(name)
             }
 
-            componentDidUpdate(prevProps) {
-                const wasEnabled = prevProps.enabled
-                const isEnabled = this.props.enabled
-                if (this.onEnable && wasEnabled !== true && isEnabled === true) {
-                    this.onEnable()
-                } else if (this.onDisable && wasEnabled !== false && isEnabled === false) {
-                    this.onDisable()
+            stream(...args) {
+                if (args.length === 1 && _.isObject(args[0])) {
+                    // object arguments
+                    const objectArgs = args[0]
+                    const unsupportedArgs = _.difference(Object.keys(objectArgs), ['name', 'stream$', 'onNext', 'onError', 'onComplete'])
+                    if (unsupportedArgs.length) {
+                        throw new Error(`Unsupported stream arguments: ${unsupportedArgs.join(', ')}`)
+                    }
+                    const {name, stream$, onNext, onError, onComplete} = objectArgs
+                    return this.getStream({name, stream$, onNext, onError, onComplete})
+                } else {
+                    // positional arguments
+                    const [name, stream$, onNext, onError, onComplete] = args
+                    return this.getStream({name, stream$, onNext, onError, onComplete})
                 }
             }
         }
 
-        ConnectedComponent.displayName
-            = AddEnabledProp.displayName
-            = PreventUpdateWhenDisabled.displayName
-            = `Store(${WrappedComponent.displayName})`
-
-        return ComponentIdAssignment
-    }
-}
-
-export const dispatchable = action => ({
-    ...action,
-    dispatch: () => dispatch(action)
-})
-
-const EnabledContext = React.createContext()
-
-export class Enabled extends React.PureComponent {
-    ref = React.createRef()
-    render() {
-        const {value} = this.props
-        return (
-            <EnabledContext.Consumer>
-                {parentValue => this.renderChildren(value !== false && parentValue !== false)}
-            </EnabledContext.Consumer>
-        )
+// Include component streams to trigger rerender on stream updates.
+const addComponentStreams = mapStateToProps =>
+    (state, ownProps) => {
+        const componentStreams = select(['stream', ownProps.componentId])
+        return mapStateToProps
+            ? {...mapStateToProps(state, ownProps), componentStreams}
+            : {componentStreams}
     }
 
-    renderChildren(enabled) {
-        const {className, enabledClassName, disabledClassName, children} = this.props
-        return (
-            <EnabledContext.Provider value={enabled}>
-                <div
-                    style={{
-                        height: '100%',
-                        width: '100%'
-                    }}
-                    className={[
-                        className,
-                        enabled ? enabledClassName : disabledClassName,
-                    ].join(' ')}>
-                    {children}
-                </div>
-            </EnabledContext.Provider>
-        )
-    }
-
-    componentDidUpdate(prevProps) {
-        const prevValue = prevProps.value
-        const value = this.props.value
-        if (!value && value !== prevValue && document.activeElement && isMobile()) {
-            document.activeElement && document.activeElement.blur()
-        }
-    }
-}
-
-Enabled.propTypes = {
-    children: PropTypes.any.isRequired,
-    value: PropTypes.any.isRequired,
-    className: PropTypes.string,
-    disabledClassName: PropTypes.string,
-    enabledClassName: PropTypes.string
-}
-
-const stream = component => {
-    const streamStatus = status => ({
-        active: status === 'ACTIVE',
-        failed: status === 'FAILED',
-        completed: status === 'COMPLETED'
+const withReduxState = mapStateToProps =>
+    connectToRedux(addComponentStreams(mapStateToProps), null, null, {
+        areStatePropsEqual: isEqual
     })
 
-    const f = ({name, stream$, onNext, onError, onComplete}) => {
-        const componentPath = `stream.${component.id}`
-        const statePath = `${componentPath}.${name}`
-
-        if (!stream$) {
-            return streamStatus(select(statePath))
-        }
-
-        const setStatus = status =>
-            actionBuilder('SET_STREAM_STATUS', {statePath, status})
-                .set(statePath, status)
-                .dispatch()
-
-        setStatus('ACTIVE')
-
-        let unmounted = false
-        component.componentWillUnmount$.subscribe(() => {
-            unmounted = true
-            select(componentPath) && actionBuilder('REMOVE_STREAM_STATUS', {componentPath, name})
-                .del(componentPath)
-                .dispatch()
-        })
-
-        stream$
-            .pipe(
-                takeUntil(component.componentWillUnmount$)
-            ).subscribe(
-                next => {
-                    onNext && onNext(next)
-                },
-                error => {
-                    unmounted || setStatus('FAILED')
-                    if (onError) {
-                        onError(error)
-                    } else {
-                        throw error
-                    }
-                },
-                () => {
-                    unmounted || setStatus('COMPLETED')
-                    onComplete && onComplete()
-                }
-            )
-    }
-
-    return (...args) => {
-        if (args.length === 1 && _.isObject(args[0])) {
-            return f(args[0])
-        } else {
-            const [name, stream$, onNext, onError, onComplete] = args
-            return f({name, stream$, onNext, onError, onComplete})
-        }
-    }
-}
+export const connect = mapStateToProps =>
+    composeHoC(
+        withPreventUpdateWhenDisabled(),
+        withReduxState(mapStateToProps),
+        withConnectedComponent()
+    )

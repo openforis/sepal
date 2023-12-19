@@ -43,8 +43,8 @@ export class BalancingTileProvider extends TileProvider {
         return this.tileProvider.createElement(id, doc)
     }
 
-    renderTile({doc, element, blob}) {
-        this.tileProvider.renderTile({doc, element, blob})
+    renderTile({element, blob}) {
+        this.tileProvider.renderTile({element, blob})
     }
 
     releaseTile(element) {
@@ -52,8 +52,8 @@ export class BalancingTileProvider extends TileProvider {
         this.tileProvider.releaseTile(element)
     }
 
-    hide(hidden) {
-        this.tileManager.hide(hidden)
+    setVisibility(visible) {
+        this.tileManager.setVisibility(visible)
     }
 
     close() {

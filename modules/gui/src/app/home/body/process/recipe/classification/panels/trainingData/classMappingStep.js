@@ -1,4 +1,3 @@
-import * as PropTypes from 'prop-types'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Combo} from 'widget/combo'
@@ -15,6 +14,7 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import ButtonPopup from 'widget/buttonPopup'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
+import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
 import styles from './classStep.module.css'
@@ -115,7 +115,6 @@ class ClassMappingStep extends Component {
                 tooltip={msg('process.classification.panel.trainingData.classMapping.addColumns.tooltip')}>
                 {onBlur => (
                     <Combo
-                        placement='below'
                         alignment='left'
                         placeholder={msg('process.classification.panel.trainingData.classMapping.addColumns.placeholder')}
                         options={valueOptions}

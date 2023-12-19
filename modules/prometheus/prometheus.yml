@@ -1,0 +1,96 @@
+# my global config
+global:
+  scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  external_labels:
+      monitor: 'codelab-monitor'
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first.rules"
+  # - "second.rules"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'docker'
+    metrics_path: '/api/docker/metrics'
+    basic_auth:
+      username: '${TARGET_USERNAME}'
+      password: '${TARGET_PASSWORD}'
+    scheme: https
+    static_configs:
+      - targets: ['${SEPAL_HOST}']
+
+  - job_name: cadvisor
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # SEPAL modules
+
+  - job_name: app-manager
+    scrape_interval: 5s
+    metrics_path: '/api/app-manager/metrics'
+    basic_auth:
+      username: '${TARGET_USERNAME}'
+      password: '${TARGET_PASSWORD}'
+    scheme: https
+    static_configs:
+      - targets: ['${SEPAL_HOST}']
+
+  - job_name: email
+    scrape_interval: 5s
+    metrics_path: '/api/email/metrics'
+    basic_auth:
+      username: '${TARGET_USERNAME}'
+      password: '${TARGET_PASSWORD}'
+    scheme: https
+    static_configs:
+      - targets: ['${SEPAL_HOST}']
+
+  - job_name: gateway
+    scrape_interval: 5s
+    metrics_path: '/api/gateway/metrics'
+    basic_auth:
+      username: '${TARGET_USERNAME}'
+      password: '${TARGET_PASSWORD}'
+    scheme: https
+    static_configs:
+      - targets: ['${SEPAL_HOST}']
+
+  - job_name: gee
+    scrape_interval: 5s
+    metrics_path: '/api/gee/metrics'
+    basic_auth:
+      username: '${TARGET_USERNAME}'
+      password: '${TARGET_PASSWORD}'
+    scheme: https
+    static_configs:
+      - targets: ['${SEPAL_HOST}']
+
+  - job_name: sys-monitor
+    scrape_interval: 5s
+    metrics_path: '/api/sys-monitor/metrics'
+    basic_auth:
+      username: '${TARGET_USERNAME}'
+      password: '${TARGET_PASSWORD}'
+    scheme: https
+    static_configs:
+      - targets: ['${SEPAL_HOST}']
+
+  - job_name: user-files
+    scrape_interval: 5s
+    metrics_path: '/api/user-files/metrics'
+    basic_auth:
+      username: '${TARGET_USERNAME}'
+      password: '${TARGET_PASSWORD}'
+    scheme: https
+    static_configs:
+      - targets: ['${SEPAL_HOST}']

@@ -26,13 +26,16 @@ const fontAwesomeCollection = type => {
     }
 }
 
+const OMITTED_ATTRIBUTES = ['icon', 'name', 'type', 'className', 'variant']
+
 export default class Icon extends React.Component {
     render() {
-        const {tooltip, tooltipPlacement, tooltipDelay, tooltipDisabled} = this.props
+        const {tooltip, tooltipPlacement, tooltipClickTrigger, tooltipDelay, tooltipDisabled} = this.props
         return (
             <Tooltip
                 msg={tooltip}
                 placement={tooltipPlacement}
+                clickTrigger={tooltipClickTrigger}
                 delay={tooltipDelay}
                 disabled={tooltipDisabled}>
                 {this.renderIcon()}
@@ -58,16 +61,14 @@ export default class Icon extends React.Component {
 
     renderIcon() {
         const {name, type, size, attributes} = this.props
-        const filteredAttributes = _.omit({spin: this.isSpinner(name), ...attributes}, [
-            'icon', 'name', 'type', 'className', 'variant'
-        ])
-        const icon = [fontAwesomeCollection(type || 'solid'), name]
+        const spin = this.isSpinner(name)
+        const filteredAttributes = _.omit({spin, ...attributes}, OMITTED_ATTRIBUTES)
+        const icon = [fontAwesomeCollection(type && !spin ? type : 'solid'), name]
         return (
-            <span>
+            <span className={this.classNames()}>
                 <FontAwesomeIcon
                     icon={icon}
                     size={size}
-                    className={this.classNames()}
                     {...filteredAttributes}
                 />
             </span>
@@ -82,9 +83,10 @@ Icon.propTypes = {
     dimmed: PropTypes.any,
     size: PropTypes.string,
     tooltip: PropTypes.any,
+    tooltipClickTrigger: PropTypes.any,
     tooltipDelay: PropTypes.number,
     tooltipDisabled: PropTypes.any,
-    tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
+    tooltipPlacement: PropTypes.any,
     type: PropTypes.oneOf(['solid', 'regular', 'brands']),
     variant: PropTypes.oneOf(['normal', 'error', 'info', 'success', 'warning'])
 }

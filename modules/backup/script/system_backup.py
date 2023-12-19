@@ -40,12 +40,12 @@ def find_tail_in_group(dates, from_delta, to_delta, group_fun):
 def list_backup_dates(bucket):
     try:
         response = execute('aws s3 ls s3://%s/system/' % bucket)
+        return [
+                to_date(day)
+                for day in re.findall('\d\d\d\d-\d\d-\d\d', response)
+            ]        
     except:
         return []
-    return [
-        to_date(day)
-        for day in re.findall('\d\d\d\d-\d\d-\d\d', response)
-    ]
 
 
 def to_date(date_str):
@@ -59,7 +59,7 @@ def backup(bucket, backup_date, dates, dirs):
         bucket, dates[-1], bucket, (backup_date_str))))
     for dir in dirs:
         parts = dir.split(':')
-        execute(('aws s3 sync %s s3://%s/system/%s/%s --delete' % (parts[0], bucket, backup_date_str, parts[1])))
+        execute('aws s3 sync %s s3://%s/system/%s/%s --delete --no-follow-symlinks' % (parts[0], bucket, backup_date_str, parts[1]))
     return dates + [backup_date]
 
 

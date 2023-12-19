@@ -21,9 +21,14 @@
     cursor: pointer;
     font-size: var(--font-size);
     line-height: var(--font-size);
+    letter-spacing: 0;
     min-height: calc(var(--size) * var(--min-size-factor));
     min-width: calc(var(--size) * var(--min-size-factor));
     padding: 0; /* Needed for alignment of button contents */
+}
+
+.button span {
+    user-select: none;
 }
 
 .button.width-fill span {
@@ -170,6 +175,8 @@
 }
 
 .button .contents {
+    display: flex;
+    align-items: baseline;
     user-select: none;
 }
 
@@ -177,6 +184,10 @@
 
 .button > .contents > * + * {
     margin-left: .5rem;
+}
+
+.button > .contents > span {
+    flex-grow: 1;
 }
 
 /* labelStyle: smallcaps */

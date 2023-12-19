@@ -12,10 +12,10 @@ services:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       SEPAL_ENDPOINT: "${SEPAL_ENDPOINT}"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
+      GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
       EE_ACCOUNT: "${EE_ACCOUNT}"
       EE_PRIVATE_KEY: "${EE_PRIVATE_KEY}"
-      RABBITMQ_HOST: "rabbitmq"
-      RABBITMQ_PORT: "5672"
+      INSTANCES: "40"
     networks:
       - sepal
     restart: always

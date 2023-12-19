@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import {Combo} from 'widget/combo'
-import {Item} from 'widget/item'
+import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {MapAreaLayout} from '../mapAreaLayout'
 import {compose} from 'compose'
@@ -9,10 +9,11 @@ import {connect} from 'store'
 import {getRecipeType} from '../../body/process/recipeTypes'
 import {map} from 'rxjs'
 import {msg} from 'translate'
-import {withMapAreaContext} from '../mapAreaContext'
-import {withMapContext} from '../mapContext'
+import {withMapApiKey} from '../mapApiKeyContext'
+import {withMapArea} from '../mapAreaContext'
 import {withRecipe} from '../../body/process/recipeContext'
-import {withTabContext} from 'widget/tabs/tabContext'
+import {withSubscriptions} from 'subscription'
+import {withTab} from 'widget/tabs/tabContext'
 import PlanetLayer from '../layer/planetLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -20,7 +21,6 @@ import _ from 'lodash'
 import api from 'api'
 import moment from 'moment'
 import styles from './planetImageLayer.module.css'
-import withSubscriptions from 'subscription'
 
 const defaultLayerConfig = {
     bands: 'rgb'
@@ -47,7 +47,7 @@ class _PlanetImageLayer extends React.Component {
     }
 
     createLayer() {
-        const {layerConfig: {bands, urlTemplate} = defaultLayerConfig, map, busy$} = this.props
+        const {layerConfig: {bands, urlTemplate} = defaultLayerConfig, map, tab: {busy$}} = this.props
         const concurrency = CONCURRENCY
         const layer = urlTemplate
             ? this.selectedHasCir()
@@ -70,6 +70,7 @@ class _PlanetImageLayer extends React.Component {
     renderBands() {
         const {layerConfig: {bands}} = this.props
         const link = <Button
+            key='link'
             tooltip={msg('imageLayerSources.Planet.bands.tooltip')}
             chromeless
             shape='circle'
@@ -123,7 +124,7 @@ class _PlanetImageLayer extends React.Component {
                 searchableText: `${date} ${duration}`,
                 render: () =>
                     <div className={styles.imageLayerSourceOption}>
-                        <Item title={duration} description={date}/>
+                        <CrudItem title={duration} description={date}/>
                     </div>
             })
         })
@@ -195,12 +196,12 @@ class _PlanetImageLayer extends React.Component {
     }
 
     setBands(bands) {
-        const {layerConfig: {urlTemplate}, mapAreaContext: {updateLayerConfig}} = this.props
+        const {layerConfig: {urlTemplate}, mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({bands, urlTemplate})
     }
 
     selectUrlTemplate(urlTemplate) {
-        const {layerConfig: {bands}, mapAreaContext: {updateLayerConfig}} = this.props
+        const {layerConfig: {bands}, mapArea: {updateLayerConfig}} = this.props
         updateLayerConfig({bands, urlTemplate})
     }
 
@@ -222,7 +223,7 @@ class _PlanetImageLayer extends React.Component {
     }
 
     getApiKey(props) {
-        const {planetApiKey, mapContext: {nicfiPlanetApiKey}} = props || this.props
+        const {planetApiKey, mapApiKey: {nicfiPlanetApiKey}} = props || this.props
         return planetApiKey || nicfiPlanetApiKey
     }
 }
@@ -230,10 +231,10 @@ class _PlanetImageLayer extends React.Component {
 export const PlanetImageLayer = compose(
     _PlanetImageLayer,
     connect(),
-    withMapContext(),
-    withMapAreaContext(),
+    withMapArea(),
     withRecipe(mapRecipeToProps),
-    withTabContext(),
+    withTab(),
+    withMapApiKey(),
     withSubscriptions()
 )
 

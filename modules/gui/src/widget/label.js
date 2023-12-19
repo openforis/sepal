@@ -1,9 +1,9 @@
 import {ButtonGroup} from './buttonGroup'
-import {isMobile} from './userAgent'
+import {Layout} from './layout'
 import Icon from './icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Tooltip from './tooltip'
+import _ from 'lodash'
 import styles from './label.module.css'
 
 export default class Label extends React.Component {
@@ -25,72 +25,79 @@ export default class Label extends React.Component {
 
     renderContents() {
         const {msg, children} = this.props
-        return children ? children : msg
+        const content = children ? children : msg
+        return React.isValidElement(content)
+            ? content
+            : <div>{content}</div>
     }
 
     renderLeft() {
-        const {tooltip, tooltipPlacement} = this.props
         return (
-            <Tooltip
-                msg={tooltip}
-                placement={tooltipPlacement}
-                clickTrigger={isMobile()}>
-                <div>
-                    {this.renderContents()}
-                    {this.renderTooltipIcon()}
-                </div>
-            </Tooltip>
+            <Layout type='horizontal-nowrap' spacing='compact'>
+                {this.renderContents()}
+                {this.renderTooltipIcon()}
+                {this.renderError()}
+            </Layout>
         )
-    }
-
-    renderTooltipIcon() {
-        const {tooltip} = this.props
-        return tooltip
-            ? (
-                <Icon className={styles.info} name='question-circle'/>
-            )
-            : null
     }
 
     renderRight() {
         const {error, buttons} = this.props
         return error || buttons
             ? (
-                <ButtonGroup spacing='tight'>
+                <ButtonGroup>
+                    {/* {this.renderError()} */}
                     {buttons ? buttons : null}
-                    {error ? this.renderError() : null}
                 </ButtonGroup>
+            )
+            : null
+    }
+
+    renderTooltipIcon() {
+        const {tooltip, tooltipPlacement} = this.props
+        return tooltip
+            ? (
+                <Icon
+                    className={styles.info}
+                    name='question-circle'
+                    tooltip={tooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    tooltipClickTrigger={true}
+                />
             )
             : null
     }
 
     renderError() {
         const {error} = this.props
-        return (
+        return error ? (
             <Icon
                 className={styles.error}
                 name='exclamation-triangle'
                 variant='error'
                 tooltip={error}
-                tooltipPlacement='left'
+                tooltipPlacement='right'
                 tooltipDelay={0}
                 attributes={{
                     fade: true
                 }}
             />
-        )
+        ) : null
     }
 }
 
 Label.propTypes = {
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
-    buttons: PropTypes.arrayOf(PropTypes.node),
+    buttons: PropTypes.oneOfType([
+        PropTypes.node,
+        PropTypes.arrayOf(PropTypes.node)
+    ]),
     children: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     error: PropTypes.any,
     msg: PropTypes.any,
-    size: PropTypes.oneOf(['normal', 'large']),
+    size: PropTypes.oneOf(['small', 'normal', 'large']),
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.any
 }

@@ -5,15 +5,15 @@ import {Panel} from 'widget/panel/panel'
 import {SearchBox} from 'widget/searchBox'
 import {Slider} from 'widget/slider'
 import {ToggleButton} from 'widget/toggleButton'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {formatCoordinates, parseCoordinates} from 'coords'
 import {msg} from 'translate'
+import {withActivatable} from 'widget/activation/activatable'
 import {withMap} from './mapContext'
+import {withSubscriptions} from 'subscription'
 import Keybinding from 'widget/keybinding'
 import React from 'react'
 import styles from './mapZoom.module.css'
-import withSubscriptions from 'subscription'
 
 class _MapZoomPanel extends React.Component {
     state = {
@@ -331,7 +331,7 @@ export const MapZoomPanel = compose(
     _MapZoomPanel,
     withMap(),
     withSubscriptions(),
-    activatable({
+    withActivatable({
         id: 'mapZoom',
         policy,
         alwaysAllow: true

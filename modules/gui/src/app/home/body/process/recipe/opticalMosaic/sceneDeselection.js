@@ -1,6 +1,6 @@
 import {RecipeActions, SceneSelectionType, inDateRange} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {compose} from 'compose'
-import {objectEquals} from 'collections'
+import {isPartiallyEqual} from 'hash'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
@@ -27,7 +27,7 @@ class SceneDeselection extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (!objectEquals(prevProps, this.props, ['sceneAreas', 'dates', 'sources', 'sceneSelectionOptions']))
+        if (!isPartiallyEqual(prevProps, this.props, ['sceneAreas', 'dates', 'sources', 'sceneSelectionOptions']))
             this.updateSelectedScenes()
     }
 

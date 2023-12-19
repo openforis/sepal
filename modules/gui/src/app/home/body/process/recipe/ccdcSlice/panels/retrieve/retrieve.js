@@ -9,7 +9,7 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {WorkspaceDestination} from 'widget/workspaceDestination'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {currentUser} from 'user'
+import {isGoogleAccount} from 'user'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {updateProject} from 'app/home/body/process/recipeList/projects'
@@ -34,6 +34,9 @@ const fields = {
         .skip((v, {destination}) => destination !== 'GEE')
         .notBlank(),
     assetType: new Form.Field()
+        .skip((v, {destination}) => destination !== 'GEE')
+        .notBlank(),
+    sharing: new Form.Field()
         .skip((v, {destination}) => destination !== 'GEE')
         .notBlank(),
     strategy: new Form.Field()
@@ -74,7 +77,6 @@ const mapStateToProps = state => ({
 const mapRecipeToProps = recipe => ({
     baseBands: selectFrom(recipe, 'model.source.baseBands'),
     segmentBands: selectFrom(recipe, 'model.source.segmentBands'),
-    user: currentUser(),
     projectId: recipe.projectId
 })
 
@@ -131,6 +133,7 @@ class _Retrieve extends React.Component {
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
                 {destination.value === 'GEE' ? this.renderAssetType() : null}
                 {destination.value === 'GEE' ? this.renderAssetDestination() : null}
+                {destination.value === 'GEE' ? this.renderSharing() : null}
                 {more && destination.value === 'GEE' && assetType.value === 'ImageCollection' ? this.renderTileSize() : null}
                 {more && destination.value === 'GEE' ? this.renderShardSize() : null}
                 {more && destination.value === 'SEPAL' ? this.renderFileDimensionsMultiple() : null}
@@ -214,7 +217,7 @@ class _Retrieve extends React.Component {
     }
 
     renderDestination() {
-        const {user, inputs: {destination}} = this.props
+        const {inputs: {destination}} = this.props
         const destinationOptions = [
             {
                 value: 'SEPAL',
@@ -225,7 +228,7 @@ class _Retrieve extends React.Component {
                 label: msg('process.retrieve.form.destination.GEE')
             }
         ]
-            .filter(({value}) => user.googleTokens || value !== 'GEE')
+            .filter(({value}) => isGoogleAccount() || value !== 'GEE')
         return (
             <Form.Buttons
                 label={msg('process.retrieve.form.destination.label')}
@@ -279,6 +282,29 @@ class _Retrieve extends React.Component {
             <Form.Buttons
                 label={msg('process.retrieve.form.assetType.label')}
                 input={assetType}
+                multiple={false}
+                options={options}/>
+        )
+    }
+    
+    renderSharing() {
+        const {inputs: {sharing}} = this.props
+        const options = [
+            {
+                value: 'PRIVATE',
+                label: msg('process.retrieve.form.sharing.PRIVATE.label'),
+                tooltip: msg('process.retrieve.form.sharing.PRIVATE.tooltip')
+            },
+            {
+                value: 'PUBLIC',
+                label: msg('process.retrieve.form.sharing.PUBLIC.label'),
+                tooltip: msg('process.retrieve.form.sharing.PUBLIC.tooltip')
+            }
+        ]
+        return (
+            <Form.Buttons
+                label={msg('process.retrieve.form.sharing.label')}
+                input={sharing}
                 multiple={false}
                 options={options}/>
         )
@@ -493,9 +519,9 @@ class _Retrieve extends React.Component {
     }
 
     update() {
-        const {user, inputs: {destination, assetType}} = this.props
+        const {inputs: {destination, assetType}} = this.props
         if (!destination.value) {
-            destination.set(user.googleTokens ? 'GEE' : 'SEPAL')
+            destination.set(isGoogleAccount() ? 'GEE' : 'SEPAL')
         }
         if (!assetType.value && destination.value === 'GEE') {
             assetType.set('Image')

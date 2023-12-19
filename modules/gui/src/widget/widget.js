@@ -3,6 +3,7 @@ import {compose} from 'compose'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import styles from './widget.module.css'
 import withForwardedRef from 'ref'
 
@@ -57,8 +58,9 @@ export class _Widget extends React.Component {
 
     renderLabel() {
         const {label, labelButtons, alignment, tooltip, tooltipPlacement, tooltipTrigger, disabled, errorMessage} = this.props
-        return label
-            ? (
+        return _.isNil(label)
+            ? null
+            : (
                 <Label
                     className={styles.label}
                     msg={label}
@@ -71,7 +73,6 @@ export class _Widget extends React.Component {
                     error={!disabled && errorMessage}
                 />
             )
-            : null
     }
 
     getBusyMessage() {

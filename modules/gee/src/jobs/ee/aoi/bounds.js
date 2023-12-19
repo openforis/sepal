@@ -1,5 +1,5 @@
 const {job} = require('#gee/jobs/job')
-
+ 
 const worker$ = ({aoi}) => {
     const ee = require('#sepal/ee')
     const {toGeometry} = require('#sepal/ee/aoi')
@@ -8,7 +8,12 @@ const worker$ = ({aoi}) => {
     const geometry = toGeometry(aoi)
     if (geometry) {
         const boundsPolygon = ee.List(geometry.bounds().coordinates().get(0))
-        return ee.getInfo$(ee.List([boundsPolygon.get(0), boundsPolygon.get(2)]), 'get bounds')
+        const bounds = ee.Algorithms.If(
+            geometry.isUnbounded(),
+            [[-180, -90], [180, 90]],
+            [boundsPolygon.get(0), boundsPolygon.get(2)]
+        )
+        return ee.getInfo$(bounds, 'get bounds')
     } else {
         return of(null)
     }

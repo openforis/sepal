@@ -6,6 +6,12 @@
   gather_facts: true
 
   tasks:
+    - name: "Disable automatic yum upgrades"
+      replace:
+        path: /etc/cloud/cloud.cfg
+        regexp: ' - package-update-upgrade-install'
+        replace: ' #- package-update-upgrade-install'
+
     - name: Create /data/sepal
       file:
         path: "/data/sepal"

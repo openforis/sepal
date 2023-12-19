@@ -67,7 +67,6 @@ body, input, textarea, select, button, a, label {
 
 :focus, :active, :focus:active {
     outline: 0 !important;
-    box-shadow: none !important;
 }
 
 a, a:not([href]):not([tabindex]) {

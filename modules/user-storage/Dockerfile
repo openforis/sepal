@@ -1,4 +1,4 @@
-FROM node:18-bullseye
+FROM node:20-bookworm
 
 ENV MODULE_NAME user-storage
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
@@ -46,4 +46,5 @@ USER node
 RUN npm install
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/config ${MODULE}/config
 CMD /usr/local/bin/start.sh

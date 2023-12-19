@@ -2,9 +2,9 @@ const {job} = require('#task/jobs/job')
 const {eeLimiterService} = require('#sepal/ee/eeLimiterService')
 
 const worker$ = () => {
-    const {ReplaySubject, switchMap} = require('rxjs')
+    const {ReplaySubject, map, switchMap} = require('rxjs')
     const ee = require('#sepal/ee')
-    const {getContext$} = require('#task/jobs/service/context')
+    const {getContext$, getCurrentContext$} = require('#task/jobs/service/context')
     
     const DEFAULT_MAX_RETRIES = 10
 
@@ -23,7 +23,10 @@ const worker$ = () => {
                 ee.sepal.setAuthType('SERVICE_ACCOUNT')
                 ee.data.authenticateViaPrivateKey(serviceAccountCredentials, resolve, reject)
             }
-        })
+        }).pipe(
+            switchMap(() => getCurrentContext$()),
+            map(({config}) => config.googleProjectId)
+        )
 
     const authenticateUserAccount$ = userCredentials =>
         ee.$({
@@ -35,26 +38,26 @@ const worker$ = () => {
                     'Bearer',
                     userCredentials['access_token'],
                     secondsToExpiration(userCredentials['access_token_expiry_date']),
-                    // userCredentials.accessToken,
-                    // secondsToExpiration(userCredentials.accessTokenExpiryDate),
                     null,
                     error => error ? reject(error) : resolve(),
                     false
                 )
             }
-        })
+        }).pipe(
+            map(() => userCredentials.project_id)
+        )
 
     const authenticate$ = context =>
         context.isUserAccount
             ? authenticateUserAccount$(context.userCredentials)
             : authenticateServiceAccount$(context.serviceAccountCredentials)
 
-    const initialize$ = () =>
+    const initialize$ = projectId =>
         ee.$({
             operation: 'initialize',
             ee: (resolve, reject) => {
                 ee.setMaxRetries(DEFAULT_MAX_RETRIES)
-                ee.initialize(null, null, resolve, reject)
+                ee.initialize(null, null, resolve, reject, null, projectId)
             }
         })
 
@@ -62,7 +65,7 @@ const worker$ = () => {
 
     getContext$().pipe(
         switchMap(context => authenticate$(context)),
-        switchMap(() => initialize$())
+        switchMap(projectId => initialize$(projectId))
     ).subscribe(
         () => ready$.complete()
     )

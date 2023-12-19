@@ -8,13 +8,17 @@ import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
+export const getPreSetVisualizations = recipe => getChangeVisualizations(recipe)
+    .map(({options}) => options.map(({visParams}) => visParams))
+    .flat()
+
 const toFractionalYear = date => {
+    const year = moment(date).get('year')
     const startOfYear = moment(date, DATE_FORMAT).startOf(year)
     const startOfNextYear = moment(startOfYear).add(1, 'years')
     const dayOfYear = moment(date).dayOfYear()
     const daysInYear = moment(startOfNextYear).diff(moment(startOfYear), 'days')
     const fraction = dayOfYear / daysInYear
-    const year = moment(date).get('year')
     return year + fraction
 }
 
@@ -136,6 +140,7 @@ const getChangeVisualizations = recipe => {
             normalize({
                 type: 'continuous',
                 bands: ['last_stable_date'],
+                dataType: 'fractionalYears',
                 min: [fractionalCalibrationStart],
                 max: [fractionalMonitoringEnd],
                 palette: ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
@@ -143,6 +148,7 @@ const getChangeVisualizations = recipe => {
             normalize({
                 type: 'continuous',
                 bands: ['first_detection_date'],
+                dataType: 'fractionalYears',
                 min: [fractionalCalibrationStart],
                 max: [fractionalMonitoringEnd],
                 palette: ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
@@ -150,6 +156,7 @@ const getChangeVisualizations = recipe => {
             normalize({
                 type: 'continuous',
                 bands: ['confirmation_date'],
+                dataType: 'fractionalYears',
                 min: [fractionalCalibrationStart],
                 max: [fractionalMonitoringEnd],
                 palette: ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
@@ -157,6 +164,7 @@ const getChangeVisualizations = recipe => {
             normalize({
                 type: 'continuous',
                 bands: ['last_detection_date'],
+                dataType: 'fractionalYears',
                 min: [fractionalCalibrationStart],
                 max: [fractionalMonitoringEnd],
                 palette: ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']

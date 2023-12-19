@@ -1,5 +1,4 @@
 import {Form} from 'widget/form/form'
-import {Layout} from 'widget/layout'
 import {LegendBuilder, defaultColor} from 'app/home/map/legendBuilder'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -82,9 +81,7 @@ class _LegendPanel extends React.Component {
                     title={msg('process.classification.panel.legend.title')}
                 />
                 <Panel.Content scrollable={false}>
-                    <Layout spacing='compact'>
-                        {this.renderContent()}
-                    </Layout>
+                    {this.renderContent()}
                 </Panel.Content>
                 <Form.PanelButtons/>
             </RecipeFormPanel>

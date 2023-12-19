@@ -1,28 +1,15 @@
 import {Input, Textarea} from 'widget/input'
-import {Subject, debounceTime, distinctUntilChanged} from 'rxjs'
 import {compose} from 'compose'
-import {getErrorMessage} from 'widget/form/error'
 import {withFormContext} from 'widget/form/context'
 import PropTypes from 'prop-types'
 import React from 'react'
 import withForwardedRef from 'ref'
-import withSubscriptions from 'subscription'
-
-const DEBOUNCE_TIME_MS = 750
 
 class _FormInput extends React.Component {
     constructor(props) {
         super(props)
-        const {addSubscription, onChangeDebounced} = props
-        this.change$ = new Subject()
-        addSubscription(
-            this.change$.pipe(
-                debounceTime(DEBOUNCE_TIME_MS),
-                distinctUntilChanged()
-            ).subscribe(
-                value => onChangeDebounced && onChangeDebounced(value)
-            )
-        )
+        this.onChange = this.onChange.bind(this)
+        this.onBlur = this.onBlur.bind(this)
     }
 
     render() {
@@ -31,7 +18,7 @@ class _FormInput extends React.Component {
     }
 
     renderInput() {
-        const {form, forwardedRef, className, input, errorMessage, busyMessage, type, validate, tabIndex, onChange, onBlur, additionalButtons, ...props} = this.props
+        const {form, forwardedRef, className, input, errorMessage, busyMessage, type, tabIndex, buttons, ...props} = this.props
         return (
             <Input
                 {...props}
@@ -39,30 +26,26 @@ class _FormInput extends React.Component {
                 className={className}
                 type={type}
                 name={input && input.name}
-                value={typeof input.value === 'number' || typeof input.value === 'boolean' || input.value
-                    ? input.value
-                    : ''
-                }
-                errorMessage={getErrorMessage(form, errorMessage === true ? input : errorMessage)}
+                value={this.getValue()}
+                errorMessage={form.getErrorMessage(errorMessage === true ? input : errorMessage)}
                 busyMessage={busyMessage}
                 tabIndex={tabIndex}
-                additionalButtons={additionalButtons}
-                onChange={e => {
-                    input.handleChange(e)
-                    this.change$.next(e.target.value)
-                    onChange && onChange(e)
-                    validate === 'onChange' && input.validate()
-                }}
-                onBlur={e => {
-                    onBlur && onBlur(e)
-                    validate === 'onBlur' && input.validate()
-                }}
+                buttons={buttons}
+                onChange={this.onChange}
+                onBlur={this.onblur}
             />
         )
     }
 
+    getValue() {
+        const {input} = this.props
+        return typeof input.value === 'number' || typeof input.value === 'boolean' || input.value
+            ? input.value
+            : ''
+    }
+
     renderTextArea() {
-        const {form, forwardedRef, className, input, errorMessage, busyMessage, minRows, maxRows, validate, tabIndex, onChange, onBlur, ...props} = this.props
+        const {form, forwardedRef, className, input, errorMessage, busyMessage, minRows, maxRows, tabIndex, ...props} = this.props
         return (
             <Textarea
                 {...props}
@@ -70,39 +53,45 @@ class _FormInput extends React.Component {
                 className={className}
                 name={input.name}
                 value={input.value || ''}
-                errorMessage={getErrorMessage(form, errorMessage === true ? input : errorMessage)}
+                errorMessage={form.getErrorMessage(errorMessage === true ? input : errorMessage)}
                 busyMessage={busyMessage}
                 tabIndex={tabIndex}
                 minRows={minRows}
                 maxRows={maxRows}
-                onChange={e => {
-                    input && input.handleChange(e)
-                    onChange && onChange(e)
-                    input && validate === 'onChange' && input.validate()
-                }}
-                onBlur={e => {
-                    onBlur && onBlur(e)
-                    input && validate === 'onBlur' && input.validate()
-                }}
+                onChange={this.onChange}
+                onBlur={this.onBlur}
             />
         )
     }
+
+    onChange(e) {
+        const {input, validate, onChange} = this.props
+        input.handleChange(e)
+        onChange && onChange(e?.target?.value)
+        validate === 'onChange' && input.validate()
+    }
+
+    onBlur(e) {
+        const {input, validate, onBlur} = this.props
+        onBlur && onBlur(e)
+        validate === 'onBlur' && input.validate()
+    }
+
 }
 export const FormInput = compose(
     _FormInput,
     withFormContext(),
-    withSubscriptions(),
     withForwardedRef()
 )
 
 FormInput.propTypes = {
     input: PropTypes.object.isRequired,
-    additionalButtons: PropTypes.arrayOf(PropTypes.node),
     autoCapitalize: PropTypes.any,
     autoComplete: PropTypes.any,
     autoCorrect: PropTypes.any,
     autoFocus: PropTypes.any,
     busyMessage: PropTypes.any,
+    buttons: PropTypes.arrayOf(PropTypes.node),
     className: PropTypes.string,
     errorMessage: PropTypes.any,
     inputTooltip: PropTypes.any,

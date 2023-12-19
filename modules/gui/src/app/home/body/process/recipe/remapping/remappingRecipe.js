@@ -40,6 +40,16 @@ const submitRetrieveRecipeTask = recipe => {
     const pyramidingPolicy = {}
     bands.forEach(band => pyramidingPolicy[band] = band === 'class' ? 'mode' : 'mean')
     const operation = `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`
+    const recipeProperties = {
+        recipe_id: recipe.id,
+        recipe_projectId: recipe.projectId,
+        recipe_type: recipe.type,
+        recipe_title: recipe.title || recipe.placeholder,
+        ..._(recipe.model)
+            .mapValues(value => JSON.stringify(value))
+            .mapKeys((_value, key) => `recipe_${key}`)
+            .value()
+    }
     const task = {
         operation,
         params: {
@@ -50,7 +60,8 @@ const submitRetrieveRecipeTask = recipe => {
                 ...recipe.ui.retrieveOptions,
                 bands: {selection: bands},
                 visualizations: getAllVisualizations(recipe),
-                pyramidingPolicy
+                pyramidingPolicy,
+                properties: recipeProperties
             }
         }
     }

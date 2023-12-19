@@ -1,4 +1,4 @@
-FROM node:18-bullseye
+FROM node:20-bookworm
 EXPOSE 5999
 
 ENV MODULE_NAME user-files
@@ -27,6 +27,7 @@ USER node
 RUN npm install
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/config ${MODULE}/config
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 
 USER root

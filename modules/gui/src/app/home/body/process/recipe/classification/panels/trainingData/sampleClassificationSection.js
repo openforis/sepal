@@ -1,5 +1,4 @@
-import * as PropTypes from 'prop-types'
-import {AssetSelect} from 'widget/assetSelect'
+import {Form} from 'widget/form/form'
 import {FormCombo} from 'widget/form/combo'
 import {Layout} from 'widget/layout'
 import {NumberButtons} from 'widget/numberButtons'
@@ -7,6 +6,7 @@ import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import api from 'api'
 
@@ -82,20 +82,22 @@ class SampleClassificationSection extends Component {
 
     renderAssetToSample() {
         const {inputs: {assetToSample}} = this.props
-        return <AssetSelect
-            label={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.label')}
-            autoFocus
-            input={assetToSample}
-            placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.placeholder')}
-            expectedType={['Image', 'ImageCollection']}
-            errorMessage
-            onLoading={() => this.setState({bands: []})}
-            onLoaded={({metadata}) => {
-                const bands = metadata.bands.map(({id}) => id) || []
-                this.setState({bands})
-            }}
-            busyMessage={this.props.stream('SAMPLE_IMAGE').active && msg('widget.loading')}
-        />
+        return (
+            <Form.AssetCombo
+                label={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.label')}
+                autoFocus
+                input={assetToSample}
+                placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.placeholder')}
+                allowedTypes={['Image', 'ImageCollection']}
+                errorMessage
+                onLoading={() => this.setState({bands: []})}
+                onLoaded={({metadata}) => {
+                    const bands = metadata.bands.map(({id}) => id) || []
+                    this.setState({bands})
+                }}
+                busyMessage={this.props.stream('SAMPLE_IMAGE').active && msg('widget.loading')}
+            />
+        )
     }
 
     renderValueColumnInput() {

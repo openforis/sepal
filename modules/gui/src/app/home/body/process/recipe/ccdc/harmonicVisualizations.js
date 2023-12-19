@@ -28,6 +28,7 @@ const bandDefs = {
     nbi: {amplitude: [0, 5000], rmse: [0, 2000]},
     ebbi: {amplitude: [0, 5000], rmse: [0, 2000]},
     bui: {amplitude: [0, 5000], rmse: [0, 2000]},
+    kndvi: {amplitude: [0, 3000], rmse: [0, 2500]},
 
     wetness: {amplitude: [0, 1500], rmse: [0, 1500]},
     greenness: {amplitude: [0, 3000], rmse: [0, 1500]},

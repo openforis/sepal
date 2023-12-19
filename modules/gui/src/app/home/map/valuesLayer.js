@@ -1,16 +1,16 @@
-import {Item} from 'widget/item'
+import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {Shape} from 'widget/shape'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
 import {withCursorValue} from './cursorValue'
-import {withMapAreaContext} from './mapAreaContext'
+import {withMapArea} from './mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import {withSubscriptions} from 'subscription'
 import React from 'react'
 import format from 'format'
 import styles from './valuesLayer.module.css'
-import withSubscriptions from 'subscription'
 
 const mapRecipeToProps = recipe => ({
     areas: selectFrom(recipe, 'layers.areas') || {}
@@ -32,7 +32,7 @@ class _ValuesLayer extends React.Component {
     }
 
     render() {
-        const {cursorValue$, mapAreaContext: {area}, areas} = this.props
+        const {cursorValue$, mapArea: {area}, areas} = this.props
         if (!cursorValue$) {
             return null
         }
@@ -69,9 +69,9 @@ class _ValuesLayer extends React.Component {
     clampingIndicator(clamping) {
         switch(clamping) {
         case -1:
-            return '\u2265'
-        case 1:
             return '\u2264'
+        case 1:
+            return '\u2265'
         default:
             return ' '
         }
@@ -93,11 +93,11 @@ class _ValuesLayer extends React.Component {
         const description = `${clampingIndicator} ${formatted}`.padStart(padding)
         return (
             <Shape key={key} shape='pill' size='small'>
-                <Item title={band}>
+                <CrudItem title={band}>
                     <pre className={[styles.value, clamping ? styles.clamping : null].join(' ')}>
                         {description}
                     </pre>
-                </Item>
+                </CrudItem>
             </Shape>
         )
     }
@@ -106,7 +106,7 @@ class _ValuesLayer extends React.Component {
 export const ValuesLayer = compose(
     _ValuesLayer,
     connect(),
-    withMapAreaContext(),
+    withMapArea(),
     withRecipe(mapRecipeToProps),
     withCursorValue(),
     withSubscriptions()

@@ -15,17 +15,19 @@
     list-style: none;
 }
 
-.options .group {
-    border: 0;
-    padding: .35rem .75rem;
-    height: 30px;
-    font-size: .8rem;
-    font-weight: 800;
-    color: gray;
-    text-transform: uppercase;
-    border-bottom: 1px solid #333;
+.sticky {
+    position: sticky;
+    top: 0;
+    background-color: #181818;
+    border-bottom: 1px solid hsl(0, 0%, 10%);
+    z-index: 1;
 }
 
 .options .separator {
     border-bottom: 1px solid #333;
+}
+
+li {
+    --indent: 0;
+    margin-left: calc(var(--indent) * 1rem);
 }

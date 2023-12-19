@@ -3,13 +3,13 @@ import {ViewportResizeDetector} from 'widget/viewportResizeDetector'
 import {Widget} from 'widget/widget'
 import {animationFrames, combineLatest, distinctUntilChanged, fromEvent, map, merge, of, scan, switchMap, throttleTime, withLatestFrom} from 'rxjs'
 import {compose} from 'compose'
+import {withSubscriptions} from 'subscription'
 import Hammer from 'hammerjs'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './slider.module.css'
-import withSubscriptions from 'subscription'
 
 const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
 
@@ -48,6 +48,12 @@ const denormalize = (value, min, max, scale, invert) =>
 
 class SliderContainer extends React.Component {
     clickTarget = React.createRef()
+
+    constructor() {
+        super()
+        this.normalize = this.normalize.bind(this)
+        this.denormalize = this.denormalize.bind(this)
+    }
 
     renderTick({position, value, label}) {
         const left = `${Math.trunc(position)}px`
@@ -88,18 +94,22 @@ class SliderContainer extends React.Component {
                 range={range}
                 invert={invert}
                 clickTarget={this.clickTarget}
-                normalize={value => {
-                    const {scale, minValue, maxValue} = this.props
-                    return normalize(value, minValue, maxValue, scale, invert)
-                }}
-                denormalize={value => {
-                    const {scale, minValue, maxValue} = this.props
-                    return denormalize(value, minValue, maxValue, scale, invert)
-                }}
+                normalize={this.normalize}
+                denormalize={this.denormalize}
                 onChange={onChange}
                 onPreview={onPreview}
             />
         )
+    }
+
+    normalize(value) {
+        const {scale, minValue, maxValue, invert} = this.props
+        return normalize(value, minValue, maxValue, scale, invert)
+    }
+
+    denormalize(value) {
+        const {scale, minValue, maxValue, invert} = this.props
+        return denormalize(value, minValue, maxValue, scale, invert)
     }
 
     render() {
@@ -467,6 +477,7 @@ export class Slider extends React.Component {
     constructor() {
         super()
         this.onPreview = this.onPreview.bind(this)
+        this.onResize = this.onResize.bind(this)
     }
 
     static getDerivedStateFromProps(props, state) {
@@ -522,11 +533,15 @@ export class Slider extends React.Component {
         return (
             <div className={styles.container}>
                 <div className={styles.slider}>
-                    <ElementResizeDetector onResize={({width}) => this.setState({width})}/>
+                    <ElementResizeDetector onResize={this.onResize}/>
                     {width ? this.renderContainer() : null}
                 </div>
             </div>
         )
+    }
+
+    onResize({width}) {
+        this.setState({width})
     }
 
     renderContainer() {

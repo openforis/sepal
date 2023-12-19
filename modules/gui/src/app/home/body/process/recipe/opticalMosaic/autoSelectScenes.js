@@ -1,5 +1,5 @@
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {Subject, map, takeUntil} from 'rxjs'
+import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -12,17 +12,9 @@ const mapRecipeToProps = recipe => ({recipe})
 class AutoSelectScenes extends React.Component {
     constructor(props) {
         super(props)
-        const {recipe, asyncActionBuilder} = props
+        const {recipe} = props
         this.recipeActions = RecipeActions(recipe.id)
         this.request$ = new Subject()
-        this.request$.subscribe(() => {
-            this.recipeActions.setAutoSelectScenesState('RUNNING').dispatch()
-            asyncActionBuilder('AUTO_SELECT_SCENES',
-                this.autoSelectScenes$())
-                .onComplete(() => this.recipeActions.setAutoSelectScenesState(null))
-                .dispatch()
-        }
-        )
     }
 
     autoSelectScenes$() {
@@ -35,9 +27,6 @@ class AutoSelectScenes extends React.Component {
             sceneCount: recipe.ui.autoSelectScenes,
             cloudCoverTarget: 0.001
         }).pipe(
-            map(scenes =>
-                this.recipeActions.setSelectedScenes(scenes)
-            ),
             takeUntil(this.request$)
         )
     }
@@ -53,13 +42,24 @@ class AutoSelectScenes extends React.Component {
         )
     }
 
-    componentDidUpdate() {
-        if (this.props.recipe.ui.autoSelectScenesState === 'SUBMITTED')
-            this.request$.next()
+    componentDidMount() {
+        const {stream} = this.props
+        this.request$.subscribe(() => {
+            this.recipeActions.setAutoSelectScenesState('RUNNING').dispatch()
+            stream('AUTO_SELECT_SCENES',
+                this.autoSelectScenes$(),
+                scenes => {
+                    this.recipeActions.setSelectedScenes(scenes).dispatch()
+                    this.recipeActions.setAutoSelectScenesState(null).dispatch()
+                }
+            )
+        })
     }
 
-    componentWillUnmount() {
-        this.request$.unsubscribe()
+    componentDidUpdate() {
+        if (this.props.recipe.ui.autoSelectScenesState === 'SUBMITTED') {
+            this.request$.next()
+        }
     }
 }
 

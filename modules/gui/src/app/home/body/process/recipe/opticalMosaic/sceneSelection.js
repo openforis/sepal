@@ -1,16 +1,15 @@
 import {CenteredProgress} from 'widget/progress'
-import {Form, form} from 'widget/form/form'
+import {Form, withForm} from 'widget/form/form'
 import {Padding} from 'widget/padding'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {Scene} from './scene'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
-import {map} from 'rxjs'
+import {isPartiallyEqual} from 'hash'
 import {msg} from 'translate'
-import {objectEquals} from 'collections'
 import {selectFrom} from 'stateUtils'
+import {withActivatable} from 'widget/activation/activatable'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import Label from 'widget/label'
 import React from 'react'
@@ -62,8 +61,8 @@ class SceneSelection extends React.Component {
     }
 
     render() {
-        const {action, recipeId, dates: {targetDate}, form, activatable: {deactivate}} = this.props
-        const loading = !action('LOAD_SCENES').dispatched
+        const {recipeId, dates: {targetDate}, form, activatable: {deactivate}, stream} = this.props
+        const loading = stream('LOAD_SCENES').dispatching
         return (
             <React.Fragment>
                 <ScenePreview recipeId={recipeId} targetDate={targetDate}/>
@@ -163,18 +162,17 @@ class SceneSelection extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (!objectEquals(this.props, prevProps, ['sceneAreaId', 'dates', 'sources', 'sceneSelectionOptions']))
+        if (!isPartiallyEqual(this.props, prevProps, ['sceneAreaId', 'dates', 'sources', 'sceneSelectionOptions']))
             this.loadScenes()
     }
 
     loadScenes() {
-        const {sceneAreaId, dates, sources, sceneSelectionOptions, asyncActionBuilder} = this.props
+        const {sceneAreaId, dates, sources, sceneSelectionOptions, stream} = this.props
         this.setScenes([])
-        asyncActionBuilder('LOAD_SCENES',
-            api.gee.scenesInSceneArea$({sceneAreaId, dates, sources, sceneSelectionOptions}).pipe(
-                map(scenes => this.setScenes(scenes))
-            )
-        ).dispatch()
+        stream('LOAD_SCENES',
+            api.gee.scenesInSceneArea$({sceneAreaId, dates, sources, sceneSelectionOptions}),
+            scenes => this.setScenes(scenes)
+        )
     }
 
     onApply(selectedScenes) {
@@ -213,7 +211,7 @@ class SceneSelection extends React.Component {
             const scenesById = {}
             scenes.forEach(scene => scenesById[scene.id] = scene)
             return {...prevState, scenes, scenesById}
-        })
+        }, () => console.log(scenes))
     }
 
 }
@@ -230,7 +228,7 @@ const policy = () => ({
 
 export default compose(
     SceneSelection,
-    form({fields}),
+    withForm({fields}),
     withRecipe(mapRecipeToProps),
-    activatable({id: 'sceneSelection', policy})
+    withActivatable({id: 'sceneSelection', policy})
 )

@@ -1,10 +1,11 @@
+import {FormAssetCombo} from './assetCombo'
+import {FormAssetInput} from 'widget/form/assetInput'
 import {FormButtons} from 'widget/form/buttons'
 import {FormCheckbox} from 'widget/form/checkbox'
 import {FormCombo} from 'widget/form/combo'
 import {FormConstraint, FormField} from 'widget/form/property'
 import {FormContext} from 'widget/form/context'
 import {FormDatePicker} from 'widget/form/datePicker'
-import {FormError} from 'widget/form/error'
 import {FormFieldSet} from 'widget/form/fieldset'
 import {FormInput} from 'widget/form/input'
 import {FormPanel} from 'widget/form/panel'
@@ -17,7 +18,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 
-export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
+export const withForm = ({fields = {}, constraints = {}, mapStateToProps}) =>
     WrappedComponent => {
         class Form extends React.Component {
             dirtyListeners = []
@@ -257,6 +258,19 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                 Object.keys(fields).forEach(name => this.setInitialValue(name))
             }
 
+            getErrorMessage(input, errors) {
+                return _.chain([input])
+                    .flatten()
+                    .compact()
+                    .map(source =>
+                        _.isString(source)
+                            ? errors[source]
+                            : source.error
+                    )
+                    .find(error => error)
+                    .value() || ''
+            }
+
             render() {
                 const inputs = {}
                 Object.keys(fields).forEach(name => {
@@ -284,8 +298,10 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                         }
                     }
                 })
+                const errors = this.filterErrors(this.state.errors)
+
                 const form = {
-                    errors: this.filterErrors(this.state.errors),
+                    errors,
                     isInvalid: this.isInvalid,
                     isDirty: () => this.isDirty(),
                     setInitialValues: values => this.setInitialValues(values),
@@ -297,15 +313,16 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                         this.dirtyListeners.push(() => listener(true))
                         this.cleanListeners.push(() => listener(false))
                     },
-                    reset: () => this.reset()
+                    reset: () => this.reset(),
+                    getErrorMessage: input => this.getErrorMessage(input, errors)
                 }
                 const element = React.createElement(WrappedComponent, {
                     ...this.props, form, inputs
                 })
                 return (
-                    <FormContext.Provider value={form}>
+                    <FormContext form={form}>
                         {element}
-                    </FormContext.Provider>
+                    </FormContext>
                 )
             }
         }
@@ -321,18 +338,26 @@ const getDisplayName = Component =>
     Component.displayName || Component.name || 'Component'
 
 export class Form extends React.Component {
+    constructor() {
+        super()
+        this.onSubmit = this.onSubmit.bind(this)
+    }
+
     render() {
-        const {className, onSubmit, children} = this.props
+        const {className, children} = this.props
         return (
             <form
                 className={className}
-                onSubmit={e => {
-                    e.preventDefault()
-                    onSubmit && onSubmit(e)
-                }}>
+                onSubmit={this.onSubmit}>
                 {children}
             </form>
         )
+    }
+
+    onSubmit(e) {
+        const {onSubmit} = this.props
+        e.preventDefault()
+        onSubmit && onSubmit(e)
     }
 }
 
@@ -342,12 +367,13 @@ Form.propTypes = {
     onSubmit: PropTypes.func
 }
 
+Form.AssetInput = FormAssetInput
+Form.AssetCombo = FormAssetCombo
 Form.Buttons = FormButtons
 Form.Checkbox = FormCheckbox
 Form.Combo = FormCombo
 Form.Constraint = FormConstraint
 Form.DatePicker = FormDatePicker
-Form.Error = FormError
 Form.Field = FormField
 Form.FieldSet = FormFieldSet
 Form.Input = FormInput

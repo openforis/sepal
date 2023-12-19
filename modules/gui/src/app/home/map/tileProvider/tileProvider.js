@@ -29,8 +29,8 @@ export class TileProvider {
         // this.abstractMethodError('releaseTile')
     }
 
-    hide(_hidden) {
-        // this.abstractMethodError('hide')
+    setVisibility(_visible) {
+        // this.abstractMethodError('setVisibility')
     }
 
     close() {

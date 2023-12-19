@@ -4,14 +4,14 @@ import Color from 'color'
 import React from 'react'
 import _ from 'lodash'
 
-const CursorValueContext = React.createContext()
+const Context = React.createContext()
 
-export const CursorValue = ({value$, children}) =>
-    <CursorValueContext.Provider value={{cursorValue$: value$}}>
+export const CursorValueContext = ({cursorValue$, children}) =>
+    <Context.Provider value={cursorValue$}>
         {children}
-    </CursorValueContext.Provider>
+    </Context.Provider>
 
-export const withCursorValue = withContext(CursorValueContext)
+export const withCursorValue = withContext(Context, 'cursorValue$')
 
 export const toBandValues = (rgb, visParams, dataTypes) => {
     const inverted = visParams.inverted || visParams.bands.map(() => false)
@@ -30,7 +30,7 @@ export const toBandValues = (rgb, visParams, dataTypes) => {
 }
 
 const toRgb = (rgb, visParams, dataTypes) => {
-    const {min, max, gamma} = visParams
+    const {min, max, gamma = 1} = visParams
     return rgb
         .map((c, i) => 255 * Math.pow(c / 255, gamma[i]))
         .map((c, i) => min[i] + c * (max[i] - min[i]) / 255)
@@ -42,7 +42,7 @@ const toRgb = (rgb, visParams, dataTypes) => {
         )
 }
 
-const toHsv = (rgb, {bands, min, max, gamma}, dataTypes) => {
+const toHsv = (rgb, {bands, min, max, gamma = 1}, dataTypes) => {
     const correctedRgb = rgb.map((c, i) => 255 * Math.pow(c / 255, gamma[i]))
     const hsv = Color.rgb(correctedRgb).hsv().color
     const normalizedHsv = [hsv[0] / 360, hsv[1] / 100, hsv[2] / 100]
@@ -71,48 +71,30 @@ const toCategorical = (rgb, visParams, dataTypes) => {
 }
 
 const toContinuous = (rgb, visParams, dataTypes) => {
+    if (visParams.palette?.length < 2) {
+        return []
+    }
+
     const toSegment = (fromRgbValue, toRgbValue) => {
-        const buffer = 5 // Sampled color can be off a bit
-        const inRange = rgb.every((c, i) =>
-            (fromRgbValue.rgb[i] - buffer <= c && toRgbValue.rgb[i] + buffer >= c) || (fromRgbValue.rgb[i] + buffer >= c && toRgbValue.rgb[i] - buffer <= c)
-        )
-
         const channels = fromRgbValue.rgb.map((from, i) => {
-            const c = rgb[i]
+            const value = rgb[i]
             const to = toRgbValue.rgb[i]
-            const factor = from === to
-                ? 1
-                : (c - from) / (to - from)
-            return ({
-                c,
-                from,
-                to,
-                diff: Math.abs(toRgbValue.rgb[i] - c),
-                factor
-            })
+            const range = to - from
+            const factor = range
+                ? _.clamp((value - from) / range, 0, 1)
+                : 0
+            return ({value, from, range, factor})
         })
-
-        // Picking factor from channel with largest color diff - most accurate
-        const referenceChannel = _.maxBy(channels, 'diff')
-        const factor = referenceChannel.factor
-
-        // An error in color
-        // What color would we get if we used the reference factor?
-        // Error is the difference in color
-        const error = _.sum(
-            channels.map(({c, from, to}) => {
-                const calculatedC = Math.round(from + factor * (to - from))
-                return Math.abs(calculatedC - c)
-            })
-        )
-
+        
         const fromValue = fromRgbValue.value
         const toValue = toRgbValue.value
-        const preciseValue = fromValue + factor * (toValue - fromValue)
-        const value = selectFrom(dataTypes, [visParams.bands[0], 'precision']) === 'int'
-            ? Math.round(parseFloat(preciseValue))
-            : parseFloat(preciseValue)
-        return {value, inRange, error}
+        const error = getError(channels)
+        const weightedMeanFactor = getWeightedMeanFactor(channels)
+        // const preciseValue = fromValue + weightedMeanFactor * (toValue - fromValue)
+        // const value = selectFrom(dataTypes, [visParams.bands[0], 'precision']) === 'int'
+        //     ? Math.round(parseFloat(preciseValue))
+        //     : parseFloat(preciseValue)
+        return {error, fromValue, toValue, weightedMeanFactor}
     }
 
     const {palette, min: minList, max: maxList} = visParams
@@ -122,19 +104,39 @@ const toContinuous = (rgb, visParams, dataTypes) => {
     const paletteRgbValueArray = palette.map((color, i) =>
         ({rgb: Color(color).rgb().array(), value: paletteValues[i]})
     )
-    const segments = _.uniqBy(
-        _.tail(palette)
-            .map((_color, i) => toSegment(paletteRgbValueArray[i], paletteRgbValueArray[i + 1]))
-            .filter(({inRange}) => inRange)
-            .filter(({value}) => _.isFinite(value)),
-        'value'
-    )
 
-    return segments.length
-        ? [_.minBy(segments, 'error').value]
-        : []
+    const segments = _.tail(palette).map((_color, i) => toSegment(paletteRgbValueArray[i], paletteRgbValueArray[i + 1]))
+
+    if (segments.length) {
+        const closestSegment = _.minBy(segments, 'error')
+        const {fromValue, toValue, weightedMeanFactor} = closestSegment
+        const preciseValue = fromValue + weightedMeanFactor * (toValue - fromValue)
+        const value = selectFrom(dataTypes, [visParams.bands[0], 'precision']) === 'int'
+            ? Math.round(parseFloat(preciseValue))
+            : parseFloat(preciseValue)
+        return [value]
+    }
+
+    return []
 }
 
+// Calculate the error as the multidimensional color distance (1 to 3 bands)
+const getError = channels =>
+    Math.sqrt(
+        _.sum(
+            channels.map(({value, from, range, factor}) => {
+                const calculatedC = Math.round(from + factor * range)
+                return Math.pow(calculatedC - value, 2)
+            })
+        )
+    )
+
+const getWeightedMeanFactor = channels => {
+    const numerator = _.sum(channels.map(({range, factor}) => Math.abs(range) * factor))
+    const denominator = _.sum(channels.map(({range}) => Math.abs(range)))
+    return numerator / denominator
+}
+    
 const sequence = (start, end, step = 1) =>
     end >= start
         ? Array.apply(null, {length: Math.floor((end - start) / step) + 1})

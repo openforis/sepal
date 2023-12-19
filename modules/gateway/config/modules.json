@@ -7,5 +7,7 @@
   "sandbox": "sepal:9191",
   "sepal": "sepal:1025",
   "terminal": "terminal:8000",
-  "user": "user"
+  "user": "user",
+  "email": "email:6001",
+  "sysMonitor": "sys-monitor:7001"
 }

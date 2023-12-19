@@ -1,20 +1,20 @@
-require('#sepal/log').configureServer(require('./log.json'))
+require('#sepal/log').configureServer(require('#config/log.json'))
+
 const log = require('#sepal/log').getLogger('main')
 
 const _ = require('lodash')
 
 const {initMessageQueue} = require('#sepal/messageQueue')
-const {amqpUri} = require('./config')
+const {amqpUri, port} = require('./config')
 const {scheduleFullScan} = require('./scan')
 const {scanComplete$, logStats} = require('./jobQueue')
 const {messageHandler} = require('./messageHandler')
-const {metrics$, startMetrics} = require('#sepal/metrics')
+const server = require('#sepal/httpServer')
 
 const main = async () => {
     await initMessageQueue(amqpUri, {
         publishers: [
-            {key: 'userStorage.size', publish$: scanComplete$},
-            {key: 'metrics', publish$: metrics$}
+            {key: 'userStorage.size', publish$: scanComplete$}
         ],
         subscribers: [
             {queue: 'userStorage.workerSession', topic: 'workerSession.#', handler: messageHandler},
@@ -22,10 +22,10 @@ const main = async () => {
         ]
     })
 
+    await server.start({port})
+
     await scheduleFullScan()
     await logStats()
- 
-    startMetrics()
 
     log.info('Initialized')
 }

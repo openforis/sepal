@@ -1,4 +1,5 @@
-FROM node:18-bullseye
+FROM node:20-bookworm
+
 EXPOSE 5001
 
 ENV MODULE_NAME gee
@@ -27,6 +28,7 @@ USER node
 RUN npm install
 
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
+ADD modules/${MODULE_NAME}/config ${MODULE}/config
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 
 CMD start.sh

@@ -27,16 +27,21 @@ const mapRecipeToProps = recipe => {
 
 class _RecipeInput extends React.Component {
     state = {
-        all: false
+        all: false,
+        result: undefined
     }
     cancel$ = new Subject()
+
+    shouldComponentUpdate() {
+        return true
+    }
 
     render() {
         const {stream, input, label, placeholder, autoFocus} = this.props
         const {all} = this.state
         const options = this.getOptions()
 
-        const additionalButtons = [
+        const buttons = [
             <Buttons
                 key={'inverted'}
                 selected={[all]}
@@ -62,9 +67,8 @@ class _RecipeInput extends React.Component {
                 placeholder={placeholder || msg('widget.recipeInput.placeholder')}
                 options={options}
                 autoFocus={autoFocus}
-                additionalButtons={additionalButtons}
+                buttons={buttons}
                 errorMessage
-                matchGroups
                 busyMessage={stream('LOAD_RECIPE').active}
                 onChange={({value}) => this.loadRecipe(value)}
             />
@@ -98,6 +102,7 @@ class _RecipeInput extends React.Component {
                     : msg('process.project.noProjectOption')
                 return {
                     label: group,
+                    filterOptions: isMatchingGroup => !isMatchingGroup,
                     options: groups[projectId]
                         .map(recipe => ({
                             value: recipe.id,
@@ -115,19 +120,23 @@ class _RecipeInput extends React.Component {
             onLoading && onLoading(recipeId)
             stream('LOAD_RECIPE',
                 loadRecipe$(recipeId).pipe(
-                    switchMap(recipe =>
-                        api.gee.bands$({recipe}).pipe(
+                    switchMap(recipe => {
+                        return api.gee.bands$({recipe}).pipe(
                             map(bandNames => ({
                                 recipe,
                                 bandNames,
                                 type: getRecipeType(recipe.type)
                             }))
                         )
+                    }
                     )
                 ).pipe(
                     takeUntil(this.cancel$)
                 ),
-                result => onLoaded && onLoaded(result),
+                result => {
+                    this.setState({result})
+                    return onLoaded && onLoaded(result)
+                },
                 error => onError && onError(error)
             )
         }

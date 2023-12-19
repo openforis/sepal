@@ -1,5 +1,7 @@
 import {compose} from 'compose'
 import {connect} from 'store'
+import {isMobile} from 'widget/userAgent'
+import {withEnableDetector} from 'enabled'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -10,7 +12,9 @@ class AutoFocus extends React.Component {
 
     constructor(props) {
         super(props)
-        props.onEnable(() => this.reset())
+        this.reset = this.reset.bind(this)
+        const {enableDetector: {onEnable}} = props
+        onEnable(this.reset)
     }
 
     render() {
@@ -20,7 +24,7 @@ class AutoFocus extends React.Component {
 
     componentDidMount() {
         const {focusEnabled} = this.props
-        if (focusEnabled) {
+        if (!isMobile() && focusEnabled) {
             this.update()
         } else {
             this.completed()
@@ -59,5 +63,6 @@ AutoFocus.propTypes = {
 
 export default compose(
     AutoFocus,
-    connect()
+    connect(),
+    withEnableDetector()
 )

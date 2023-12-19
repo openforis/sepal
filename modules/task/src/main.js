@@ -1,25 +1,20 @@
-require('#sepal/log').configureServer(require('./log.json'))
+require('#sepal/log').configureServer(require('#config/log.json'))
+
 const log = require('#sepal/log').getLogger('main')
 
 const server = require('#sepal/httpServer')
 const routes = require('./routes')
-const {amqpUri, port} = require('./config')
-const {initMessageQueue} = require('#sepal/messageQueue')
-const {metrics$, startMetrics} = require('#sepal/metrics')
+const {port} = require('./config')
+const {initScheduler} = require('#sepal/worker/scheduler')
+const {STICKY} = require('#sepal/worker/staticPool')
 
 const main = async () => {
-    // await initMessageQueue(amqpUri, {
-    //     publishers: [
-    //         {key: 'metrics', publish$: metrics$},
-    //     ]
-    // })
-
     await server.start({
         port,
         routes
     })
-
-    // startMetrics()
+    
+    initScheduler({name: 'GoogleEarthEngine', strategy: STICKY, instances: 1})
 
     log.info('Initialized')
 }

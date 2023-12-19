@@ -1,14 +1,16 @@
 import {Form} from 'widget/form/form'
-import {compose} from 'compose'
 import {msg} from 'translate'
-import {withMap} from 'app/home/map/mapContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-class _SectionSelection extends React.Component {
+export class SectionSelection extends React.Component {
     render() {
-        const {inputs: {section}} = this.props
+        const {assetBounds, inputs: {section}} = this.props
         const options = [
+            assetBounds ? {
+                value: 'ASSET_BOUNDS',
+                label: msg('process.mosaic.panel.areaOfInterest.form.assetBounds.title')
+            } : null,
             {
                 value: 'COUNTRY',
                 label: msg('process.mosaic.panel.areaOfInterest.form.country.title')
@@ -21,7 +23,7 @@ class _SectionSelection extends React.Component {
                 value: 'POLYGON',
                 label: msg('process.mosaic.panel.areaOfInterest.form.polygon.title')
             }
-        ]
+        ].filter(option => option)
         return (
             <Form.Buttons
                 look='transparent'
@@ -40,12 +42,8 @@ class _SectionSelection extends React.Component {
     }
 }
 
-export const SectionSelection = compose(
-    _SectionSelection,
-    withMap()
-)
-
 SectionSelection.propTypes = {
     inputs: PropTypes.object.isRequired,
-    recipeId: PropTypes.string.isRequired
+    recipeId: PropTypes.string.isRequired,
+    assetBounds: PropTypes.any
 }
