@@ -4,7 +4,7 @@ const {eeLimiterService} = require('#sepal/ee/eeLimiterService')
 const worker$ = () => {
     const {ReplaySubject, map, switchMap} = require('rxjs')
     const ee = require('#sepal/ee')
-    const {getContext$} = require('#task/jobs/service/context')
+    const {getContext$, getCurrentContext$} = require('#task/jobs/service/context')
     
     const DEFAULT_MAX_RETRIES = 10
 
@@ -24,7 +24,8 @@ const worker$ = () => {
                 ee.data.authenticateViaPrivateKey(serviceAccountCredentials, resolve, reject)
             }
         }).pipe(
-            map(() => null)
+            switchMap(() => getCurrentContext$()),
+            map(({config}) => config.googleProjectId)
         )
 
     const authenticateUserAccount$ = userCredentials =>
