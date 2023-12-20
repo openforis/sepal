@@ -90,7 +90,8 @@
             "title": "",
             "assetName": "",
             "asset": "",
-            "filter.placeholder": ""
+            "filter.placeholder": "",
+            "quota": ""
         }
     },
     "bands": {
@@ -4385,7 +4386,7 @@
                 "title": "Tu cuenta SEPAL está conectada a tu cuenta de Google"
             },
             "disconnect": {
-                "label": "Desconectar",
+                "label": "",
                 "warning": {
                     "message": "La desconexión de tu cuenta de Google provocará la interrupción de cualquier tarea iniciada mientras estas conectado. Tareas actualmente en ejecución: {taskCount}.",
                     "title": "Advertencia"
