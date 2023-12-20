@@ -157,6 +157,7 @@ class _GoogleAccount extends React.Component {
         return (
             <Form.Combo
                 input={projectId}
+                placeholder={projectId.value}
                 label={msg('user.googleAccount.form.projectId.label')}
                 options={this.getProjectOptions()}
                 className={styles.durationUnit}
