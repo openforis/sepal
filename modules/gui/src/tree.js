@@ -1,132 +1,108 @@
 import {assertValue} from 'assertValue'
 import _ from 'lodash'
 
-const ID = 'id'
-const PROPS = 'props'
-const ITEMS = 'items'
+export const NODE_KEY = '_node_'
 
 const assertNode = node =>
-    assertValue(node, _.isObject, 'node must be provided', true)
-
-const assertItems = items =>
-    assertValue(items, _.isArray, 'items must be provided', true)
-
-const assertId = id =>
-    assertValue(id, _.isString, 'id must be provided', true)
+    assertValue(node, ({[NODE_KEY]: node}) => !!node, `Tree: not a valid node: ${node}`, true)
 
 const assertPath = path =>
-    assertValue(path, _.isArray, 'path must be provided', true)
+    assertValue(path, _.isArray, 'Tree: not a valid path', true)
 
-const assertProps = props =>
-    assertValue(props, _.isObject, 'props must be provided', true)
+const assertNodeMapper = nodeMapper =>
+    assertValue(nodeMapper, _.isFunction, 'Tree: not a valid nodeMapper', true)
 
-const assertProp = prop =>
-    assertValue(prop, _.isString, 'prop must be provided', true)
+const assertNodeMatcher = nodeMatcher =>
+    assertValue(nodeMatcher, _.isFunction, 'Tree: not a valid nodeMatcher', true)
 
-const getNodePath = path =>
-    _.compact([...path.map(item => [ITEMS, item]).flat()]).join('.')
-
-const getPropertiesPath = path =>
-    _.compact([getNodePath(path), PROPS]).join('.')
-
-const getPropertyPath = (path, property) =>
-    [getPropertiesPath(path), property].join('.')
-
-const getItemsPath = path =>
-    _.compact([getNodePath(path), ITEMS]).join('.')
-
-const getItemPath = (path, property) =>
-    [getItemsPath(path), property].join('.')
-
-const createNode = (id, props, items) => ({
-    [ID]: id,
-    [PROPS]: props,
-    [ITEMS]: items
+const createNode = (path = [], value, children) => ({
+    [NODE_KEY]: {path, value},
+    ...children
 })
 
-const getNode = (tree, path) => {
-    assertNode(tree)
-    assertPath(path)
-    return _.get(tree, getNodePath(path))
-}
-
-const setNode = (tree, path, id, props) => {
-    assertNode(tree)
-    assertPath(path)
-    assertId(id)
-    assertProps(props)
-    _.set(tree, getItemPath(path, id), createNode(id, props))
-    return tree
-}
-
-const setItems = (tree, path, items) => {
-    assertNode(tree)
-    assertPath(path)
-    assertItems(items)
-    const nodes = items.reduce(
-        (acc, {id, ...props}) => ({
-            ...acc,
-            [id]: {
-                [ID]: id,
-                [PROPS]: props,
-                [ITEMS]: _.get(tree, getItemsPath([...path, id]))
-            }
-        }),
-        {}
-    )
-    _.set(tree, getItemsPath(path), nodes)
-    return tree
-}
-
-const getProperties = (tree, path) => {
-    assertNode(tree)
-    assertPath(path)
-    return _.get(tree, getPropertiesPath(path))
-}
-
-const setProperties = (tree, path, props) => {
-    assertNode(tree)
-    assertPath(path)
-    assertProps(props)
-    _.set(tree, getPropertiesPath(path), props)
-}
-
-const getProperty = (tree, path, prop) => {
-    assertNode(tree)
-    assertPath(path)
-    assertProp(prop)
-    return _.get(tree, getPropertyPath(path, prop))
-}
-
-const setProperty = (tree, path, prop, value) => {
-    assertNode(tree)
-    assertPath(path)
-    assertProp(prop)
-    _.set(tree, getPropertyPath(path, prop), value)
-}
-
-const flatten = (node = {}, path = [], depth = 0) => {
+const createPath = (node, path, currentPath = node[NODE_KEY].path) => {
     assertNode(node)
     assertPath(path)
-    const {[PROPS]: props, [ITEMS]: items} = node
-    const childItems = _.map(items,
-        (node, id) => flatten(node, [...path, id], depth + 1)
-    )
-    return _.compact([
-        path.length ? {path, props, depth} : null,
-        ...childItems
-    ]).flat()
+    const [pathHead, ...pathTail] = path
+    if (pathHead) {
+        if (!node[pathHead]) {
+            node[pathHead] = createNode([...currentPath, pathHead])
+        }
+        return pathTail.length
+            ? createPath(node[pathHead], pathTail, [...currentPath, pathHead])
+            : node[pathHead]
+    } else {
+        return node
+    }
 }
 
-const filter = (node = {}, matcher) => {
+const traversePath = (node, path) => {
     assertNode(node)
-    const filteredItems = _(node[ITEMS])
-        .mapValues(item => filter(item, matcher))
-        .pickBy(item => !_.isEmpty(item[ITEMS]) || matcher(item[ID], item[PROPS]))
+    assertPath(path)
+    const [pathHead, ...pathTail] = path
+    if (pathHead) {
+        return pathTail.length
+            ? traversePath(node[pathHead], pathTail)
+            : node[pathHead]
+    } else {
+        return node
+    }
+}
+
+const setValue = (node, path, value) => {
+    assertNode(node)
+    assertPath(path)
+    const targetNode = createPath(node, path)
+    targetNode[NODE_KEY].value = value
+    return node
+}
+
+const getValue = (node, path = []) => {
+    assertNode(node)
+    assertPath(path)
+    const targetNode = traversePath(node, path)
+    return targetNode && targetNode[NODE_KEY].value
+}
+
+const getChildNodes = node => {
+    assertNode(node)
+    return _(node)
+        .omit([NODE_KEY])
+        .values()
         .value()
-    return createNode(node[ID], node[PROPS], filteredItems)
+}
+
+const unwrap = node => {
+    assertNode(node)
+    return {
+        props: node[NODE_KEY],
+        nodes: getChildNodes(node)
+    }
+}
+
+const flatten = (node, nodeMapper = obj => obj, depth = 0) => {
+    assertNode(node)
+    assertNodeMapper(nodeMapper)
+    const {path, value} = node[NODE_KEY] || {}
+    return [
+        nodeMapper({path, value, depth}),
+        ...getChildNodes(node).map(child => flatten(child, nodeMapper, depth + 1)).flat()
+    ]
+}
+
+const filter = (node, nodeMatcher, maxDepth = Number.POSITIVE_INFINITY) => {
+    assertNode(node)
+    assertNodeMatcher(nodeMatcher)
+    const matchingChildren = maxDepth > 0
+        ? _(node)
+            .omit([NODE_KEY])
+            .mapValues(item => filter(item, nodeMatcher, maxDepth - 1))
+            .pickBy(item => !_.isEmpty(getChildNodes(item)) || nodeMatcher({path: item[NODE_KEY].path, value: item[NODE_KEY].value}))
+            .value()
+        : {}
+    return createNode(node[NODE_KEY].path, node[NODE_KEY].value, matchingChildren)
 }
 
 export const Tree = {
-    createNode, getNode, setNode, setItems, getProperties, setProperties, getProperty, setProperty, flatten, filter
+    createNode, createPath, setValue, getValue, getChildNodes, unwrap, flatten, filter
 }

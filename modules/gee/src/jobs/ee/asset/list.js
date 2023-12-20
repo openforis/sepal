@@ -1,7 +1,7 @@
 const {job} = require('#gee/jobs/job')
 
 const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
-    const {map, merge, toArray} = require('rxjs')
+    const {map, merge, toArray, of, switchMap, mergeMap} = require('rxjs')
     const http = require('#sepal/httpClient')
     const ee = require('#sepal/ee')
     const _ = require('lodash')
@@ -27,10 +27,17 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
             legacyRoots$(),
             cloudProjectRoots$()
         ).pipe(
-            toArray(),
-            map(roots => _.sortBy(roots.flat(), 'id'))
+            switchMap(roots => of(...roots)),
+            mergeMap(root => getRootInfo$(root)),
+            map(({id, name, quota}) => ({id, type: 'Folder', name, quota})),
+            toArray()
         )
-        
+
+    const getRootInfo$ = ({id, name}) =>
+        http.get$(`https://earthengine.googleapis.com/v1/${name || id}`, {headers}).pipe(
+            map(({body}) => JSON.parse(body))
+        )
+
     const legacyRoots$ = () =>
         http.get$('https://earthengine.googleapis.com/v1/projects/earthengine-legacy:listAssets', {headers}).pipe(
             map(({body}) => JSON.parse(body)),
@@ -38,9 +45,9 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
         )
 
     const mapLegacyRoots = results =>
-        results?.assets?.map(({id}) => ({
+        results?.assets?.map(({id, name}) => ({
             id,
-            type: 'Folder'
+            name
         })) || []
     
     const cloudProjectRoots$ = () =>
@@ -51,8 +58,7 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
 
     const mapCloudProjectRoots = results =>
         results?.projects?.map(({projectId}) => ({
-            id: `projects/${projectId}/assets`,
-            type: 'Folder'
+            id: `projects/${projectId}/assets`
         })) || []
 
     return id

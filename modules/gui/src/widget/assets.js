@@ -1,4 +1,4 @@
-import {EMPTY, Subject, catchError, exhaustMap, filter, finalize, interval, last, map, merge, mergeWith, of, scan, switchMap, takeUntil, tap, throttleTime} from 'rxjs'
+import {EMPTY, Subject, catchError, exhaustMap, finalize, interval, last, map, merge, mergeWith, of, scan, switchMap, takeUntil, tap, throttleTime} from 'rxjs'
 import {Tree} from 'tree'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -66,26 +66,21 @@ const loadAssets$ = () =>
                 .set('assets.loading', incremental)
                 .dispatch()
             return loadNode$().pipe(
-                scan((assetTree, {path, nodes}) => Tree.setItems(assetTree, path, nodes), assetTree),
+                // scan((assetTree, {path, nodes}) => Tree.setItems(assetTree, path, nodes), assetTree),
+                scan(
+                    (assetTree, {path, nodes}) =>
+                        nodes.reduce(
+                            (assetTree, node) => Tree.setValue(assetTree, [...path, node.id], {type: node.type, quota: node.quota}),
+                            assetTree
+                        ),
+                    assetTree
+                ),
                 incremental
                     ? throttleTime(1000, null, {leading: true, trailing: true})
                     : last(),
                 takeUntil(cancelReloadAssets$),
                 tap({
-                    next: assetTree => {
-                        log.debug('Updating assets tree')
-                        const assetList = Tree.flatten(assetTree).map(
-                            ({path, props, depth}) => ({id: _.last(path), ...props, depth: depth - 1})
-                        )
-                        const assetRoots = assetList
-                            .filter(({depth}) => depth === 0)
-                            .map(({id}) => id)
-                        actionBuilder('LOAD_ASSETS')
-                            .setIfChanged('assets.roots', assetRoots)
-                            .setIfChanged('assets.tree', assetTree)
-                            .setIfChanged('assets.user', assetList)
-                            .dispatch()
-                    },
+                    next: assetTree => updateAssetTree(assetTree),
                     error: error => {
                         log.debug('Asset tree loading failed', error)
                         actionBuilder('LOAD_ASSETS')
@@ -110,6 +105,19 @@ const loadAssets$ = () =>
                 .dispatch()
         })
     )
+
+const updateAssetTree = assetTree => {
+    const assetList = Tree.flatten(assetTree, ({path, value, depth}) => ({id: _.last(path), ...value, depth}))
+        .filter(({depth}) => depth > 0)
+    const assetRoots = assetList
+        .filter(({depth}) => depth === 1)
+        .map(({id}) => id)
+    actionBuilder('LOAD_ASSETS')
+        .setIfChanged('assets.roots', assetRoots)
+        .setIfChanged('assets.tree', assetTree)
+        .setIfChanged('assets.user', assetList)
+        .dispatch()
+}
 
 const updateAsset = asset => {
     const roots = Object.keys(select('assets.tree.items') || {})
@@ -149,27 +157,37 @@ const createFolder = (parentPath, folder) => {
     const parentFolderId = _.last(parentPath)
     const id = [parentFolderId, folder].join('/')
 
-    cancelReload()
+    // cancelReload()
 
-    actionBuilder('CREATE_FOLDER')
-        .set('assets.updating', true)
-        .dispatch()
+    // actionBuilder('CREATE_FOLDER')
+    //     .set('assets.updating', true)
+    //     .dispatch()
 
-    api.gee.createFolder$({id}).pipe(
-        tap({
-            complete: () => {
-                actionBuilder('CREATE_FOLDER')
-                    .del('assets.updating')
-                    .dispatch()
-                reloadAssets()
-            },
-            error: () => {
-                actionBuilder('CREATE_FOLDER')
-                    .del('assets.updating')
-                    .dispatch()
-            }
-        })
-    ).subscribe()
+    const path = folder
+        .split('/')
+        .reduce(
+            (acc, pathElement) => [...acc, `${_.last(acc)}/${pathElement}`],
+            parentPath
+        )
+
+    Tree.setItem(assetTree, path, 'foo')
+    updateAssetTree(assetTree)
+
+    // api.gee.createFolder$({id}).pipe(
+    //     tap({
+    //         complete: () => {
+    //             actionBuilder('CREATE_FOLDER')
+    //                 .del('assets.updating')
+    //                 .dispatch()
+    //             reloadAssets()
+    //         },
+    //         error: () => {
+    //             actionBuilder('CREATE_FOLDER')
+    //                 .del('assets.updating')
+    //                 .dispatch()
+    //         }
+    //     })
+    // ).subscribe()
 }
 
 export const withAssets = () =>

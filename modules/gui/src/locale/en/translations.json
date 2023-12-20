@@ -90,7 +90,8 @@
         "title": "Asset browser",
         "assetName": "Name",
         "asset": "Asset",
-        "filter.placeholder": "Filter by id"
+        "filter.placeholder": "Filter by id",
+        "quota": "Quota: {quota}"
       }
     },
     "bands": {

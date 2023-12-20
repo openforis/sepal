@@ -18,6 +18,7 @@ import ButtonPopup from './buttonPopup'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
+import format from 'format'
 import styles from './assetBrowser.module.css'
 
 const fields = {
@@ -148,7 +149,7 @@ class _AssetBrowser extends React.Component {
 
     renderFolderTree() {
         const {filteredTree, selectedFolderId} = this.state
-        const options = this.getFolderTreeOptions(filteredTree)
+        const options = this.getFolderTreeOptions(Tree.getChildNodes(filteredTree))
         return (
             <ScrollableList
                 options={options}
@@ -159,8 +160,8 @@ class _AssetBrowser extends React.Component {
         )
     }
 
-    renderFolderAssets(node) {
-        const options = this.getFolderAssetsOptions(node)
+    renderFolderAssets(nodes) {
+        const options = this.getFolderAssetsOptions(nodes)
         return options.length ? (
             ({close}) =>
                 <ScrollableList
@@ -175,8 +176,18 @@ class _AssetBrowser extends React.Component {
         ) : null
     }
 
-    renderItem({id, type, depth, tooltip}) {
+    renderQuota(quota) {
+        return quota ? (
+            <div>
+                {msg('asset.browser.quota', {quota: format.fileSize(parseInt(quota.maxSizeBytes), {unit: 'iB'})})}
+            </div>
+        ) : null
+    }
+
+    renderItem({id, type, depth, nodes, quota}) {
         const showTailOnly = depth > 0 || !isFolder(type)
+        const quotaTooltip = this.renderQuota(quota)
+        const assetsTooltip = this.renderFolderAssets(nodes)
         return (
             <AssetItem
                 key={id}
@@ -184,10 +195,25 @@ class _AssetBrowser extends React.Component {
                 type={type}
                 tail={showTailOnly}
                 inlineComponents={[
-                    this.renderFolderAssetsButton(tooltip)
+                    this.renderFolderInfoButton(quotaTooltip),
+                    this.renderFolderAssetsButton(assetsTooltip)
                 ]}
             />
         )
+    }
+
+    renderFolderInfoButton(tooltip) {
+        return tooltip ? (
+            <Button
+                key='info'
+                chromeless
+                air='none'
+                icon='database'
+                dimmed
+                tooltip={tooltip}
+                tooltipPlacement={isMobile() ? 'bottomRight' : 'bottomLeft'}
+            />
+        ) : null
     }
 
     renderFolderAssetsButton(tooltip) {
@@ -219,27 +245,29 @@ class _AssetBrowser extends React.Component {
         reloadAssets()
     }
 
-    getFolderTreeOptions({items} = {}, depth = 0) {
-        return _(items)
-            .pickBy(node => isFolder(node.props.type))
-            .map((node, id) => [
-                this.getItemOption({path: node.path, id, type: node.props.type, depth, node}),
-                ...this.getFolderTreeOptions(node, depth + 1)
-            ])
+    getFolderTreeOptions(nodes, depth = 0) {
+        return _(nodes)
+            .filter(node => isFolder(Tree.getValue(node)?.type))
+            .map(node => Tree.unwrap(node))
+            .map(({props: {path, value}, nodes}) => ([
+                this.getItemOption({path, type: value?.type, quota: value?.quota, depth, nodes}),
+                ...this.getFolderTreeOptions(nodes, depth + 1)
+            ]))
             .flatten()
             .value()
     }
 
-    getFolderAssetsOptions({items} = {}) {
-        return _(items)
-            .pickBy(node => !isFolder(node.props.type))
-            .map((node, id) => this.getItemOption({path: node.path, id, type: node.props.type}))
+    getFolderAssetsOptions(nodes) {
+        return _(nodes)
+            .filter(node => !isFolder(Tree.getValue(node)?.type))
+            .map(node => Tree.unwrap(node))
+            .map(({props: {path, value: {type}}}) => this.getItemOption({path, type}))
             .value()
     }
 
-    getItemOption({path, id, type, depth, node}) {
-        const tooltip = this.renderFolderAssets(node)
-        const render = () => this.renderItem({id, type, depth, tooltip})
+    getItemOption({path, type, quota, depth, nodes}) {
+        const id = _.last(path)
+        const render = () => this.renderItem({id, type, depth, nodes, quota})
         return {
             label: id,
             value: id,
@@ -251,7 +279,7 @@ class _AssetBrowser extends React.Component {
 
     getFilter() {
         const {filter} = this.state
-        return id => id ? id.toLowerCase().includes(filter.toLowerCase()) : true
+        return ({path}) => path.length ? _.last(path).toLowerCase().includes(filter.toLowerCase()) : true
     }
     
     getClosestFolderId(assetId) {
