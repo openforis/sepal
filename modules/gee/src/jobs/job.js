@@ -33,11 +33,11 @@ module.exports = {
     }) => {
         const workerWithWorloadTag$ = (...args) => {
             const ee = require('#sepal/ee')
-            const [_ignore, {googleTokens}] = args
-            const tag = `${googleTokens ? 'user' : 'serviceAccount'}-${jobName}`
+            // const [_ignore, {googleTokens}] = args
+            const tag = `sepal-work-${jobName
                 .toLowerCase()
                 .replace(/[^a-z0-9_-]/g, '_')
-                .substring(0, 63)
+                .substring(0, 63)}`
             ee.data.setDefaultWorkloadTag(tag)
             return worker$(...args)
         }
