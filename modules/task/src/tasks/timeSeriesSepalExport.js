@@ -16,24 +16,26 @@ const {getCurrentContext$} = require('#task/jobs/service/context')
 const {getCollection$} = require('#sepal/ee/timeSeries/collection')
 const _ = require('lodash')
 const log = require('#sepal/log').getLogger('task')
+const {setWorkloadTag} = require('./workloadTag')
 
 const DATE_DELTA = 3
 const DATE_DELTA_UNIT = 'months'
 
 module.exports = {
-    submit$: (taskId, {workspacePath, description, ...retrieveOptions}) =>
-        getCurrentContext$().pipe(
+    submit$: (taskId, {workspacePath, description, ...retrieveOptions}) => {
+        setWorkloadTag(retrieveOptions.recipe)
+        return getCurrentContext$().pipe(
             switchMap(({config}) => {
                 const preferredDownloadDir = workspacePath
                     ? `${config.homeDir}/${workspacePath}/`
                     : `${config.homeDir}/downloads/${description}/`
                 return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
-                    switchMap(downloadDir =>
-                        export$(taskId, {description, downloadDir, ...retrieveOptions})
+                    switchMap(downloadDir => export$(taskId, {description, downloadDir, ...retrieveOptions})
                     )
                 )
             })
         )
+    }
 }
 
 const export$ = (taskId, {

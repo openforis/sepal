@@ -1,11 +1,14 @@
 const {exportImageToAsset$} = require('../jobs/export/toAsset')
 const {forkJoin, switchMap} = require('rxjs')
+
 const ccdc = require('#sepal/ee/timeSeries/ccdc')
 const {toVisualizationProperties} = require('../ee/visualizations')
 const {formatProperties} = require('./formatProperties')
+const {setWorkloadTag} = require('./workloadTag')
 
 module.exports = {
     submit$: (taskId, {recipe, bands, scale, visualizations, properties, ...other}) => {
+        setWorkloadTag(recipe)
         const segments = ccdc(recipe, {selection: bands})
         return forkJoin({
             segments: segments.getImage$(),

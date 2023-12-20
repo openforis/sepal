@@ -5,25 +5,27 @@ const {createVrt$, setBandNames$} = require('#sepal/gdal')
 const {exportImageToSepal$} = require('../jobs/export/toSepal')
 const ImageFactory = require('#sepal/ee/imageFactory')
 const {getCurrentContext$} = require('#task/jobs/service/context')
+const {setWorkloadTag} = require('./workloadTag')
 
 module.exports = {
-    submit$: (taskId, {image: {recipe, workspacePath, bands, ...retrieveOptions}}) =>
-        getCurrentContext$().pipe(
+    submit$: (taskId, {image: {recipe, workspacePath, bands, ...retrieveOptions}}) => {
+        setWorkloadTag(recipe)
+        return getCurrentContext$().pipe(
             switchMap(({config}) => {
                 const description = recipe.title || recipe.placeholder
                 const preferredDownloadDir = workspacePath
                     ? `${config.homeDir}/${workspacePath}/`
                     : `${config.homeDir}/downloads/${description}/`
                 return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
-                    switchMap(downloadDir =>
-                        concat(
-                            export$(taskId, {description, recipe, downloadDir, bands, ...retrieveOptions}),
-                            postProcess$({description, downloadDir, bands})
-                        )
+                    switchMap(downloadDir => concat(
+                        export$(taskId, {description, recipe, downloadDir, bands, ...retrieveOptions}),
+                        postProcess$({description, downloadDir, bands})
+                    )
                     )
                 )
             })
         )
+    }
 }
 
 const export$ = (taskId, {description, recipe, bands, scale, ...retrieveOptions}) => {
