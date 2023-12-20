@@ -6,7 +6,6 @@ const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
     const ee = require('#sepal/ee')
     const {switchMap} = require('rxjs')
     const {sequence} = require('#sepal/utils/array')
-    const log = require('#sepal/log').getLogger('ee')
     const _ = require('lodash')
     if (visParams) {
         const {getImage$} = ImageFactory(recipe, {selection: distinct(visParams.bands), baseBands: distinct(visParams.baseBands), ...otherArgs})

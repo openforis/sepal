@@ -30,8 +30,18 @@ module.exports = {
         services,
         args = ctx => [{...ctx.request.query, ...ctx.request.body}, getCredentials(ctx)],
         worker$
-    }) =>
-        Job()({
+    }) => {
+        const workerWithWorloadTag$ = (...args) => {
+            const ee = require('#sepal/ee')
+            // const [_ignore, {googleTokens}] = args
+            const tag = `sepal-work-${jobName
+                .toLowerCase()
+                .replace(/[^a-z0-9_-]/g, '_')
+                .substring(0, 63)}`
+            ee.data.setDefaultWorkloadTag(tag)
+            return worker$(...args)
+        }
+        return Job()({
             jobName,
             jobPath,
             schedulerName: 'GoogleEarthEngine',
@@ -43,6 +53,7 @@ module.exports = {
             before,
             services,
             args,
-            worker$
+            worker$: workerWithWorloadTag$
         })
+    }
 }

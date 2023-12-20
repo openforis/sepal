@@ -1,5 +1,5 @@
 const ee = require('#sepal/ee')
-const {EMPTY, concat, from, catchError, last, map, mergeMap, of, scan, switchMap, tap, throwError} = require('rxjs')
+const {EMPTY, concat, defer, from, catchError, last, map, mergeMap, of, scan, switchMap, tap, throwError} = require('rxjs')
 const {swallow} = require('#sepal/rxjs')
 const tile = require('#sepal/ee/tile')
 const Path = require('path')
@@ -7,6 +7,7 @@ const {exportLimiter$} = require('#task/jobs/service/exportLimiter')
 const {task$} = require('#task/ee/task')
 const {progress} = require('#task/rxjs/operators')
 const log = require('#sepal/log').getLogger('task')
+const http = require('#sepal/httpClient')
 const _ = require('lodash')
 
 const exportImageToAsset$ = (taskId, {
@@ -14,6 +15,7 @@ const exportImageToAsset$ = (taskId, {
     description,
     assetId,
     assetType,
+    sharing,
     strategy,
     pyramidingPolicy,
     dimensions,
@@ -42,7 +44,8 @@ const exportImageToAsset$ = (taskId, {
         switchMap(({description, assetId}) =>
             concat(
                 createParentFolder$(assetId),
-                export$({description, assetId})
+                export$({description, assetId}),
+                share$({sharing, assetId})
             )
         )
     )
@@ -61,7 +64,7 @@ const imageToAssetCollection$ = (taskId, {
                 : throwError(() => 'Asset ID already exists, but isn\'t an image or image collection')
         return concat(
             delete$(),
-            ee.createImageCollection$(assetId, image.toDictionary(['system:footprint']), 1)
+            ee.createImageCollection$(assetId, {}, 1)
         )
     }
 
@@ -78,8 +81,9 @@ const imageToAssetCollection$ = (taskId, {
                 }
             }),
             last(),
-            switchMap(() =>
-                ee.replaceAssetProperties$(assetId, properties, 1)
+            switchMap(() => ee.getInfo$(image.toDictionary(), 'Extract image properties')),
+            switchMap((imageProperties = {}) =>
+                ee.replaceAssetProperties$(assetId, {...imageProperties, ...properties}, 1)
             ),
             swallow()
         )
@@ -262,4 +266,22 @@ const formatRegion$ = region =>
         map(geometry => ee.Geometry(geometry))
     )
 
+const share$ = ({sharing, assetId}) =>
+    defer(() => sharing === 'PUBLIC'
+        ? concat(
+            of(true).pipe(
+                progress({
+                    defaultMessage: `Sharing asset '${assetId}'`,
+                    messageKey: 'tasks.ee.export.asset.createFolder',
+                    messageArgs: {assetId}
+                })
+            ),
+            http.postJson$(`https://earthengine.googleapis.com/v1/${assetId}:setIamPolicy`, {
+                headers: {Authorization: ee.data.getAuthToken()},
+                body: {policy: {bindings: [{role: 'roles/viewer', members: ['allUsers']}]}}
+            }).pipe(
+                swallow()
+            )
+        )
+        : EMPTY)
 module.exports = {exportImageToAsset$}

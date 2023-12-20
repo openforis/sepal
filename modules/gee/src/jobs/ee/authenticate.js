@@ -16,11 +16,12 @@ const getCredentials = ctx => {
     const serviceAccountCredentials = config.serviceAccountCredentials
     return {
         sepalUser,
-        serviceAccountCredentials
+        serviceAccountCredentials,
+        googleProjectId: config.googleProjectId
     }
 }
 
-const worker$ = ({sepalUser, serviceAccountCredentials}) => {
+const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}) => {
     const {switchMap} = require('rxjs')
     const {swallow} = require('#sepal/rxjs')
     const ee = require('#sepal/ee')
@@ -72,7 +73,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
         switchMap(() => ee.$({
             operation: 'initialize',
             ee: (resolve, reject) => {
-                const projectId = sepalUser?.googleTokens?.projectId
+                const projectId = sepalUser?.googleTokens?.projectId || googleProjectId
                 ee.setMaxRetries(DEFAULT_MAX_RETRIES)
                 // [HACK] Force ee to change projectId after first initialization (ee.initialize() doesn't do that).
                 ee.data.initialize(null, null, null, projectId)

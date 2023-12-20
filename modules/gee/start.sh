@@ -16,6 +16,7 @@ then
     src/main.js \
     --gee-email "$EE_ACCOUNT" \
     --gee-key "$EE_PRIVATE_KEY" \
+    --google-project-id "$GOOGLE_PROJECT_ID" \
     --sepal-endpoint "$SEPAL_ENDPOINT" \
     --sepal-username "sepalAdmin" \
     --sepal-password "$SEPAL_ADMIN_PASSWORD" \
@@ -26,6 +27,7 @@ else
     src/main.js \
     --gee-email "$EE_ACCOUNT" \
     --gee-key "$EE_PRIVATE_KEY" \
+    --google-project-id "$GOOGLE_PROJECT_ID" \
     --sepal-endpoint "$SEPAL_ENDPOINT" \
     --sepal-username "sepalAdmin" \
     --sepal-password "$SEPAL_ADMIN_PASSWORD" \

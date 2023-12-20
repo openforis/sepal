@@ -9,6 +9,7 @@ program
     .option('--gee-email <value>')
     .option('--gee-key-path <value>')
     .option('--gee-key <value>')
+    .option('--google-project-id <value>')
     .option('--sepal-endpoint <value>')
     .option('--sepal-username <value>')
     .option('--sepal-password <value>')
@@ -19,6 +20,7 @@ program
 const {geeEmail,
     geeKey,
     geeKeyPath,
+    googleProjectId,
     sepalEndpoint,
     sepalUsername,
     sepalPassword,
@@ -45,6 +47,7 @@ const serviceAccountCredentials = {
 log.info('Configuration loaded')
 
 module.exports = {
+    googleProjectId,
     serviceAccountCredentials,
     sepalEndpoint,
     sepalUsername,

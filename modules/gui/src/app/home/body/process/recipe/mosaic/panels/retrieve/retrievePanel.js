@@ -37,6 +37,9 @@ const fields = {
     assetType: new Form.Field()
         .skip((v, {destination}) => destination !== 'GEE')
         .notBlank(),
+    sharing: new Form.Field()
+        .skip((v, {destination}) => destination !== 'GEE')
+        .notBlank(),
     strategy: new Form.Field()
         .skip((v, {destination}) => destination !== 'GEE')
         .notBlank(),
@@ -115,6 +118,7 @@ class _MosaicRetrievePanel extends React.Component {
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
                 {destination.value === 'GEE' ? this.renderAssetType() : null}
                 {destination.value === 'GEE' ? this.renderAssetDestination() : null}
+                {destination.value === 'GEE' ? this.renderSharing() : null}
                 {more && (allowTiling || (destination.value === 'GEE' && assetType.value === 'ImageCollection')) ? this.renderTileSize() : null}
                 {more ? this.renderShardSize() : null}
                 {more && destination.value === 'SEPAL' ? this.renderFileDimensionsMultiple() : null}
@@ -247,6 +251,29 @@ class _MosaicRetrievePanel extends React.Component {
         )
     }
 
+    renderSharing() {
+        const {inputs: {sharing}} = this.props
+        const options = [
+            {
+                value: 'PRIVATE',
+                label: msg('process.retrieve.form.sharing.PRIVATE.label'),
+                tooltip: msg('process.retrieve.form.sharing.PRIVATE.tooltip')
+            },
+            {
+                value: 'PUBLIC',
+                label: msg('process.retrieve.form.sharing.PUBLIC.label'),
+                tooltip: msg('process.retrieve.form.sharing.PUBLIC.tooltip')
+            }
+        ]
+        return (
+            <Form.Buttons
+                label={msg('process.retrieve.form.sharing.label')}
+                input={sharing}
+                multiple={false}
+                options={options}/>
+        )
+    }
+
     renderAssetType() {
         const {inputs: {assetType}} = this.props
         const options = [
@@ -301,7 +328,9 @@ class _MosaicRetrievePanel extends React.Component {
     }
     
     componentDidMount() {
-        const {allBands, defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize, inputs: {assetType, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize, useAllBands}} = this.props
+        const {allBands, defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize,
+            inputs: {assetType, sharing, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize, useAllBands}
+        } = this.props
         const more = (crs.value && crs.value !== defaultCrs)
             || (crsTransform.value)
             || (shardSize.value && shardSize.value !== defaultShardSize)
@@ -325,6 +354,9 @@ class _MosaicRetrievePanel extends React.Component {
         }
         if (defaultAssetType && !assetType.value) {
             assetType.set(defaultAssetType)
+        }
+        if (!sharing.value) {
+            sharing.set('PRIVATE')
         }
         if (allBands) {
             useAllBands.set(true)

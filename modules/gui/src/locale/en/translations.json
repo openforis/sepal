@@ -4032,6 +4032,17 @@
             "suffix": "pixels",
             "tooltip": "The size Earth Engine should break down the image into for processing. If you're running out of memory, try with a smaller value."
           },
+          "sharing": {
+              "label": "Sharing",
+              "PRIVATE": {
+                  "label": "Private",
+                  "tooltip": "Only you can access this asset"
+              },
+              "PUBLIC": {
+                  "label": "Public",
+                  "tooltip": "Anyone can access this asset"
+              }
+          },
           "task": {
             "GEE": "Export {name} as a Google Earth Engine asset",
             "SEPAL": "Retrieve {name} to SEPAL workspace"
@@ -4284,6 +4295,7 @@
             "delete": "Delete asset {assetId}",
             "prepareImageCollection": "Prepare image collection {assetId}",
             "startExport": "Start export of {tileCount} tiles",
+            "sharing": "Sharing asset {assetId}",
             "tilingImage": "Tiling image"
   
           },
