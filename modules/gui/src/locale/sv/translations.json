@@ -90,7 +90,8 @@
             "title": "",
             "assetName": "",
             "asset": "",
-            "filter.placeholder": ""
+            "filter.placeholder": "",
+            "quota": ""
         }
     },
     "bands": {
