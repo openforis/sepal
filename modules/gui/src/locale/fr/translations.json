@@ -90,7 +90,8 @@
             "title": "",
             "assetName": "Nom",
             "asset": "",
-            "filter.placeholder": ""
+            "filter.placeholder": "",
+            "quota": ""
         }
     },
     "bands": {
@@ -135,7 +136,7 @@
         "nbi": "NBI",
         "ebbi": "EBBI",
         "bui": "BUI",
-        "kndvi": "kNDVI",
+        "kndvi": "",
         "red, green, blue": "Couleur naturelle : rouge, vert, bleu",
         "nir, red, green": "Fausse couleur: nir, rouge, vert",
         "nir, swir1, red": "Fausse couleur: nir, swir1, rouge",
