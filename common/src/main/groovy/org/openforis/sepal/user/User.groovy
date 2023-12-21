@@ -16,6 +16,7 @@ class User implements groovymvc.security.User {
     String intendedUse
     GoogleTokens googleTokens
     boolean emailNotificationsEnabled
+    boolean manualMapRenderingEnabled
     Status status
     Set<String> roles
     boolean systemUser
@@ -47,13 +48,14 @@ class User implements groovymvc.security.User {
                 organization: organization,
                 intendedUse: intendedUse,
                 emailNotificationsEnabled: emailNotificationsEnabled,
+                manualMapRenderingEnabled: manualMapRenderingEnabled,
                 status: status,
                 roles: roles,
                 creationTime: creationTime,
                 updateTime: updateTime)
     }
 
-    User withDetails(String name, String email, String organization, String intendedUse, boolean emailNotificationsEnabled, boolean admin) {
+    User withDetails(String name, String email, String organization, String intendedUse, boolean emailNotificationsEnabled, boolean manualMapRenderingEnabled, boolean admin) {
         new User(
                 id: id,
                 name: name,
@@ -62,6 +64,7 @@ class User implements groovymvc.security.User {
                 organization: organization,
                 intendedUse: intendedUse,
                 emailNotificationsEnabled: emailNotificationsEnabled,
+                manualMapRenderingEnabled: manualMapRenderingEnabled,
                 status: status,
                 roles: admin ? [Roles.ADMIN] : [],
                 creationTime: creationTime,
@@ -77,6 +80,7 @@ class User implements groovymvc.security.User {
                 organization: organization,
                 intendedUse: intendedUse,
                 emailNotificationsEnabled: true,
+                manualMapRenderingEnabled: manualMapRenderingEnabled,
                 status: status,
                 roles: admin ? [Roles.ADMIN] : [],
                 creationTime: creationTime,
@@ -92,6 +96,7 @@ class User implements groovymvc.security.User {
                 organization: organization,
                 intendedUse: intendedUse,
                 emailNotificationsEnabled: false,
+                manualMapRenderingEnabled: manualMapRenderingEnabled,
                 status: status,
                 roles: admin ? [Roles.ADMIN] : [],
                 creationTime: creationTime,
@@ -107,6 +112,7 @@ class User implements groovymvc.security.User {
                 organization: organization,
                 intendedUse: intendedUse,
                 emailNotificationsEnabled: emailNotificationsEnabled,
+                manualMapRenderingEnabled: manualMapRenderingEnabled,
                 status: status,
                 roles: roles,
                 creationTime: creationTime,
@@ -122,6 +128,7 @@ class User implements groovymvc.security.User {
                 organization: organization,
                 intendedUse: intendedUse,
                 emailNotificationsEnabled: emailNotificationsEnabled,
+                manualMapRenderingEnabled: manualMapRenderingEnabled,
                 status: status,
                 roles: roles,
                 creationTime: creationTime,
@@ -137,6 +144,7 @@ class User implements groovymvc.security.User {
                 organization: organization,
                 intendedUse: intendedUse,
                 emailNotificationsEnabled: emailNotificationsEnabled,
+                manualMapRenderingEnabled: manualMapRenderingEnabled,
                 status: ACTIVE,
                 roles: roles,
                 creationTime: creationTime,
@@ -158,6 +166,7 @@ class User implements groovymvc.security.User {
                         projectId: googleTokens.projectId
                 ] : null,
                 emailNotificationsEnabled: emailNotificationsEnabled,
+                manualMapRenderingEnabled: manualMapRenderingEnabled,
                 status: status.name(),
                 roles: roles,
                 systemUser: systemUser,

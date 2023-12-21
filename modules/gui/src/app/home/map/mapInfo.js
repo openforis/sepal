@@ -170,54 +170,78 @@ const MapInfoPanel = compose(
 class _MapInfo extends React.PureComponent {
     state = {
         view: {},
-        width: null
+        width: null,
+        pendingTiles: null
     }
 
     componentDidMount() {
-        const {map: {view$}, addSubscription} = this.props
+        const {map: {view$, renderingProgress$}, addSubscription} = this.props
         addSubscription(
             view$.pipe(
                 throttleTime(THROTTLE_TIME_MS, null, {leading: true, trailing: true})
             ).subscribe(
                 view => view && this.setState({view})
+            ),
+            renderingProgress$.subscribe(
+                pendingTiles => this.setState({pendingTiles})
             )
         )
     }
 
     render() {
-        const {view: {scale}} = this.state
-        return scale
-            ? (
-                <div className={styles.container}>
-                    <MapInfoPanel/>
-                    {this.renderButton()}
-                </div>
-            )
-            : null
+        return (
+            <div className={styles.container}>
+                <MapInfoPanel/>
+                {this.renderContent()}
+            </div>
+        )
     }
 
-    renderButton() {
-        const {activator: {activatables: {mapInfo: {active, toggle}}}} = this.props
-        const {view: {scale}, width} = this.state
+    renderContent() {
+        const {pendingTiles} = this.state
+        return pendingTiles
+            ? this.renderProgress()
+            : this.renderScale()
+    }
+
+    renderProgress() {
+        const {pendingTiles} = this.state
         return (
             <Button
                 look='default'
                 shape='rectangle'
                 size='x-small'
                 additionalClassName={styles.button}
-                air='less'
-                tooltip={active ? null : msg('map.info.tooltip')}
-                tooltipPlacement='bottomLeft'
-                onClick={toggle}>
-                <ElementResizeDetector onResize={({width}) => this.setState({width})}>
-                    <div className={styles.content}>
-                        <div>{format.number({value: scale, unit: 'm/px'})}</div>
-                        <div className={styles.scale}></div>
-                        <div>{format.number({value: width * scale, unit: 'm'})}</div>
-                    </div>
-                </ElementResizeDetector>
+                air='less'>
+                {pendingTiles} TILES REMAINING
             </Button>
         )
+    }
+
+    renderScale() {
+        const {activator: {activatables: {mapInfo: {active, toggle}}}} = this.props
+        const {view: {scale}, width} = this.state
+        return scale
+            ? (
+                <Button
+                    look='default'
+                    shape='rectangle'
+                    size='x-small'
+                    additionalClassName={styles.button}
+                    air='less'
+                    tooltip={active ? null : msg('map.info.tooltip')}
+                    tooltipPlacement='bottomLeft'
+                    onClick={toggle}>
+                    <ElementResizeDetector onResize={({width}) => this.setState({width})}>
+                        <div className={styles.content}>
+                            <div>{format.number({value: scale, unit: 'm/px'})}</div>
+                            <div className={styles.scale}></div>
+                            <div>{format.number({value: width * scale, unit: 'm'})}</div>
+                        </div>
+                    </ElementResizeDetector>
+                </Button>
+            )
+            : null
     }
 }
 

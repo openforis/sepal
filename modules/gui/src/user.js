@@ -105,8 +105,8 @@ export const validateEmail$ = ({email, recaptchaToken}) =>
         map(({valid}) => valid)
     )
 
-export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled}) =>
-    api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled}).pipe(
+export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) =>
+    api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}).pipe(
         tap(({name, email, organization}) =>
             actionBuilder('UPDATE_USER_DETAILS', {name, email, organization, intendedUse})
                 .set('user.currentUser.name', name)
@@ -114,6 +114,7 @@ export const updateCurrentUserDetails$ = ({name, email, organization, intendedUs
                 .set('user.currentUser.organization', organization)
                 .set('user.currentUser.intendedUse', intendedUse)
                 .set('user.currentUser.emailNotificationsEnabled', emailNotificationsEnabled)
+                .set('user.currentUser.manualMapRenderingEnabled', manualMapRenderingEnabled)
                 .dispatch()
         )
     )

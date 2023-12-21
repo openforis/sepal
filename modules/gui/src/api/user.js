@@ -75,9 +75,9 @@ export default {
             body: {token, password, recaptchaToken}
         }),
 
-    updateCurrentUserDetails$: ({name, email, organization, intendedUse, emailNotificationsEnabled}) =>
+    updateCurrentUserDetails$: ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) =>
         post$('/api/user/current/details', {
-            body: {name, email, organization, intendedUse, emailNotificationsEnabled}
+            body: {name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}
         }),
 
     changePassword$: ({oldPassword, newPassword}) =>

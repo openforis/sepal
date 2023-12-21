@@ -1,5 +1,5 @@
 import {BehaviorSubject, Subject, combineLatest, concat, distinctUntilChanged, filter, finalize,
-    first, last, of, pipe, map as rxMap, share, switchMap, takeUntil, windowTime} from 'rxjs'
+    first, last, map, of, pipe, map as rxMap, scan, share, switchMap, takeUntil, windowTime} from 'rxjs'
 import {Button} from 'widget/button'
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
@@ -8,11 +8,13 @@ import {MapApiKeyContext} from './mapApiKeyContext'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
 import {MapInfo} from './mapInfo'
+import {MapToolbar} from './mapToolbar'
 import {SplitView} from 'widget/split/splitView'
 import {VisParamsPanel} from './visParams/visParamsPanel'
 import {areaTag, mapTag} from 'tag'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {currentUser} from 'user'
 import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
@@ -25,7 +27,6 @@ import {withLayers} from '../body/process/withLayers'
 import {withMapsContext} from './maps'
 import {withRecipe} from '../body/process/recipeContext'
 import {withSubscriptions} from 'subscription'
-import MapToolbar from './mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -37,6 +38,7 @@ import styles from './map.module.css'
 const log = getLogger('map')
 
 const mapRecipeToProps = recipe => ({
+    user: currentUser(),
     bounds: selectFrom(recipe, 'ui.bounds'),
     recipe
 })
@@ -47,6 +49,8 @@ const OVERLAY_AREA = 'overlay-area'
 class _Map extends React.Component {
     viewUpdates$ = new BehaviorSubject({})
     linked$ = new BehaviorSubject(false)
+    renderingEnabled$ = new BehaviorSubject(false)
+    renderingStatus$ = new Subject()
     draggingMap$ = new BehaviorSubject(false)
     viewChanged$ = new Subject()
     splitPosition$ = new BehaviorSubject()
@@ -56,6 +60,15 @@ class _Map extends React.Component {
 
     filteredViewUpdates$ = this.viewUpdates$.pipe(
         distinctUntilChanged(_.isEqual)
+    )
+
+    renderingProgress$ = this.renderingStatus$.pipe(
+        scan((acc, {tileProviderId, pending}) => ({
+            ...acc, [tileProviderId]: pending
+        }), {}),
+        map(pending =>
+            Object.values(pending).reduce((totalPending, pending) => totalPending + pending, 0)
+        )
     )
 
     state = {
@@ -74,6 +87,8 @@ class _Map extends React.Component {
         super()
         this.mapDelegate = this.mapDelegate.bind(this)
         this.toggleLinked = this.toggleLinked.bind(this)
+        this.setRendering = this.setRendering.bind(this)
+        this.toggleRendering = this.toggleRendering.bind(this)
         this.enableZoomArea = this.enableZoomArea.bind(this)
         this.disableZoomArea = this.disableZoomArea.bind(this)
         this.isZoomArea = this.isZoomArea.bind(this)
@@ -93,6 +108,8 @@ class _Map extends React.Component {
         return map && ({
             view$: this.filteredViewUpdates$,
             linked$: this.linked$,
+            renderingEnabled$: this.renderingEnabled$,
+            renderingProgress$: this.renderingProgress$,
             scrollWheelEnabled$: this.scrollWheelEnabled$,
             zoomIn: map.zoomIn,
             zoomOut: map.zoomOut,
@@ -103,6 +120,8 @@ class _Map extends React.Component {
             getBounds: map.getBounds,
             getGoogle: map.getGoogle,
             toggleLinked: this.toggleLinked,
+            setRendering: this.setRendering,
+            toggleRendering: this.toggleRendering,
             enableZoomArea: this.enableZoomArea,
             disableZoomArea: this.disableZoomArea,
             isZoomArea: this.isZoomArea,
@@ -199,7 +218,7 @@ class _Map extends React.Component {
             gestureHandling: 'auto'
         } : null
         const style = isOverlay ? 'overlayStyle' : 'sepalStyle'
-        const map = createSepalMap({element, options, style})
+        const map = createSepalMap({element, options, style, renderingEnabled$: this.renderingEnabled$, renderingStatus$: this.renderingStatus$})
 
         this.withFirstAreaMap(firstMap => map.setView(firstMap.getView())) // Make sure a new map is synchronized
 
@@ -571,6 +590,18 @@ class _Map extends React.Component {
         this.setLinked(!linked)
     }
 
+    setRendering(rendering) {
+        const {user: {manualMapRenderingEnabled}} = this.props
+        if (manualMapRenderingEnabled) {
+            this.renderingEnabled$.next(rendering)
+        }
+    }
+
+    toggleRendering() {
+        const rendering = this.renderingEnabled$.getValue()
+        this.setRendering(!rendering)
+    }
+
     render() {
         const {recipe, layers, imageLayerSources} = this.props
         const {googleMapsApiKey, nicfiPlanetApiKey} = this.state
@@ -721,6 +752,13 @@ class _Map extends React.Component {
         ) : null
     }
 
+    updateManualMapRendering(prevManualMapRenderingEnabled) {
+        const {user: {manualMapRenderingEnabled}} = this.props
+        if (manualMapRenderingEnabled !== prevManualMapRenderingEnabled) {
+            this.renderingEnabled$.next(!manualMapRenderingEnabled)
+        }
+    }
+
     componentDidMount() {
         const {mapsContext: {createMapContext}, enableDetector: {onEnable, onDisable}} = this.props
         const {mapId, googleMapsApiKey, nicfiPlanetApiKey, view$, updateView$, linked$, scrollWheelEnabled$} = createMapContext()
@@ -736,10 +774,11 @@ class _Map extends React.Component {
             onEnable(() => this.setVisibility(true))
             onDisable(() => this.setVisibility(false))
         })
+
+        this.updateManualMapRendering()
     }
 
-    componentDidUpdate(prevProps) {
-        const {areas: prevAreas, mode: prevMode} = selectFrom(prevProps, 'layers') || {}
+    componentDidUpdate({layers: {areas: prevAreas, mode: prevMode} = {}, user: {manualMapRenderingEnabled: prevManualMapRenderingEnabled}}) {
         const {layers: {areas, mode}} = this.props
         const previousAreaIds = Object.values(prevAreas).map(({id}) => id)
         const currentAreaIds = Object.values(areas).map(({id}) => id)
@@ -753,6 +792,8 @@ class _Map extends React.Component {
         if (addedAreaIds.length || modeChanged) {
             this.reassignDrawingMode()
         }
+
+        this.updateManualMapRendering(prevManualMapRenderingEnabled)
     }
 
     componentWillUnmount() {

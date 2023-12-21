@@ -148,10 +148,10 @@ class _Maps extends React.Component {
         return googleMap
     }
 
-    createSepalMap({element, options, style}) {
+    createSepalMap({element, options, style, renderingEnabled$, renderingStatus$}) {
         const {google: {google}} = this.state
         const googleMap = this.createGoogleMap(element, options, style)
-        return new SepalMap({google, googleMap})
+        return new SepalMap({google, googleMap, renderingEnabled$, renderingStatus$})
     }
 
     getCurrentView() {

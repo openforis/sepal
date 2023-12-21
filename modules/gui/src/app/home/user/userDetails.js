@@ -27,6 +27,7 @@ const fields = {
     intendedUse: new Form.Field(),
     // .notBlank('user.userDetails.form.intendedUse.required'),
     emailNotificationsEnabled: new Form.Field(),
+    manualMapRenderingEnabled: new Form.Field(),
 }
 
 const mapStateToProps = state => {
@@ -38,7 +39,8 @@ const mapStateToProps = state => {
             email: user.email,
             organization: user.organization,
             intendedUse: user.intendedUse,
-            emailNotificationsEnabled: user.emailNotificationsEnabled
+            emailNotificationsEnabled: user.emailNotificationsEnabled,
+            manualMapRenderingEnabled: user.manualMapRenderingEnabled
         },
         tasks: state.tasks
     }
@@ -56,7 +58,7 @@ class _UserDetails extends React.Component {
     }
 
     renderPanel() {
-        const {inputs: {name, email, organization, intendedUse, emailNotificationsEnabled}} = this.props
+        const {inputs: {name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}} = this.props
         return (
             <React.Fragment>
                 <Panel.Header
@@ -105,6 +107,22 @@ class _UserDetails extends React.Component {
                                 value: false,
                                 label: msg('user.userDetails.form.emailNotifications.disabled.label'),
                                 tooltip: msg('user.userDetails.form.emailNotifications.disabled.tooltip')
+                            }]}
+                            type='horizontal-nowrap'
+                        />
+                        <Form.Buttons
+                            label={msg('user.userDetails.form.manualMapRendering.label')}
+                            tooltip={msg('user.userDetails.form.manualMapRendering.tooltip')}
+                            input={manualMapRenderingEnabled}
+                            multiple={false}
+                            options={[{
+                                value: true,
+                                label: msg('user.userDetails.form.manualMapRendering.enabled.label'),
+                                tooltip: msg('user.userDetails.form.manualMapRendering.enabled.tooltip')
+                            }, {
+                                value: false,
+                                label: msg('user.userDetails.form.manualMapRendering.disabled.label'),
+                                tooltip: msg('user.userDetails.form.manualMapRendering.disabled.tooltip')
                             }]}
                             type='horizontal-nowrap'
                         />

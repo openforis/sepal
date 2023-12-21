@@ -7,32 +7,16 @@ const log = getLogger('tileManager/queue')
 
 export const getRequestQueue = () => {
     const pendingRequests = []
-    const pendingRequestCount = {} // by tileProviderId
     const tileProvidersStatus = {} // by tileProviderId
 
-    const getCount = tileProviderId =>
-        tileProviderId
-            ? pendingRequestCount[tileProviderId] || 0
-            : pendingRequests.length
+    const getEnabledRequests = () =>
+        pendingRequests.filter(({tileProviderId}) => isEnabled(tileProviderId))
 
-    const increaseCount = tileProviderId => {
-        const count = getCount(tileProviderId) + 1
-        pendingRequestCount[tileProviderId] = count
-        return count
-    }
-    
-    const decreaseCount = tileProviderId => {
-        const count = getCount(tileProviderId) - 1
-        pendingRequestCount[tileProviderId] = count
-        return count
-    }
-    
-    const isEmpty = () => {
-        const count = Object.keys(tileProvidersStatus)
-            .filter(tileProviderId => isEnabled(tileProviderId))
-            .reduce((acc, tileProviderId) => acc + getCount(tileProviderId), 0)
-        return count === 0
-    }
+    const getPendingRequestCount = ({tileProviderId, enabled} = {}) =>
+        pendingRequests
+            .filter(request => tileProviderId === undefined || tileProviderId === request.tileProviderId)
+            .filter(request => enabled === undefined || enabled === isEnabled(request.tileProviderId))
+            .length
 
     const isEnabled = tileProviderId =>
         tileProviderId && tileProvidersStatus[tileProviderId]
@@ -42,8 +26,7 @@ export const getRequestQueue = () => {
         assertValue(requestId, _.isString, 'requestId must be provided', true)
         assertValue(request, _.isObject, 'request must be provided', true)
         pendingRequests.push({tileProviderId, requestId, request, response$, cancel$})
-        increaseCount(tileProviderId)
-        log.debug(() => `Enqueued ${requestTag({tileProviderId, requestId})}, enqueued: ${getCount()}`)
+        log.debug(() => `Enqueued ${requestTag({tileProviderId, requestId})}, enqueued: ${getPendingRequestCount()}`)
     }
 
     const dequeueByIndex = (index, dequeueMode = '') => {
@@ -51,8 +34,7 @@ export const getRequestQueue = () => {
             const [pendingRequest] = pendingRequests.splice(index, 1)
             const tileProviderId = pendingRequest.tileProviderId
             if (isEnabled(tileProviderId)) {
-                decreaseCount(tileProviderId)
-                log.debug(() => `Dequeued by ${dequeueMode} ${requestTag(pendingRequest)}, enqueued: ${getCount()}`)
+                log.debug(() => `Dequeued by ${dequeueMode} ${requestTag(pendingRequest)}, enqueued: ${getPendingRequestCount()}`)
                 return pendingRequest
             }
         }
@@ -97,18 +79,14 @@ export const getRequestQueue = () => {
             const removed = _(pendingRequests)
                 .filter(request => request.tileProviderId === tileProviderId)
                 .reduce((count, request) => count + (discardByRequestId(request.requestId) ? 1 : 0), 0)
-            log.debug(() => `Removed ${removed} for ${tileProviderTag(tileProviderId)}, enqueued: ${getCount()}`)
+            log.debug(() => `Removed ${removed} for ${tileProviderTag(tileProviderId)}, enqueued: ${getPendingRequestCount()}`)
         } else {
             log.warn('Cannot remove as no tileProvider id was provided')
         }
     }
 
-    const scan = callback =>
-        pendingRequests.forEach(callback)
-
     const removeTileProvider = tileProviderId => {
         discardByTileProviderId(tileProviderId)
-        delete pendingRequestCount[tileProviderId]
         delete tileProvidersStatus[tileProviderId]
     }
 
@@ -116,5 +94,5 @@ export const getRequestQueue = () => {
         tileProvidersStatus[tileProviderId] = enabled
     }
 
-    return {isEmpty, enqueue, dequeueByTileProviderIds, discardByRequestId, removeTileProvider, scan, getCount, setEnabled}
+    return {enqueue, dequeueByTileProviderIds, discardByRequestId, removeTileProvider, getEnabledRequests, getPendingRequestCount, setEnabled}
 }

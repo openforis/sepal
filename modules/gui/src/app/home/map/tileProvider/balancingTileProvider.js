@@ -3,22 +3,25 @@ import {debounceTime, mergeMap, of, pipe, range, retryWhen, switchMap, throwErro
 import {getTileManager} from '../tileManager/tileManager'
 
 export class BalancingTileProvider extends TileProvider {
-    constructor({tileProvider, retries, busy$}) {
+    constructor({tileProvider, retries, busy$, renderingEnabled$, renderingStatus$}) {
         super()
         this.subscriptions = []
         this.retries = retries
         this.tileProvider = tileProvider
-        this.tileManager = getTileManager({tileProvider})
-        this.initProgress(busy$)
+        this.tileManager = getTileManager({tileProvider, renderingEnabled$})
+        this.initProgress(busy$, renderingStatus$)
     }
 
-    initProgress(busy$) {
-        if (busy$) {
+    initProgress(busy$, renderingStatus$) {
+        if (busy$ || renderingStatus$) {
             this.subscriptions.push(
-                this.tileManager.pending$.pipe(
+                this.tileManager.status$.pipe(
                     debounceTime(200)
                 ).subscribe({
-                    next: busy => busy$.next(busy)
+                    next: ({tileProviderId, pending, pendingEnabled}) => {
+                        busy$?.next(pendingEnabled)
+                        renderingStatus$?.next({tileProviderId, pending})
+                    }
                 })
             )
         }

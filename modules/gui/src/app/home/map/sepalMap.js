@@ -5,10 +5,12 @@ import _ from 'lodash'
 const log = getLogger('sepalMap')
 
 export class SepalMap {
-    constructor({google, googleMap}) {
+    constructor({google, googleMap, renderingEnabled$, renderingStatus$}) {
         log.debug('creating new SepalMap')
         this.google = google
         this.googleMap = googleMap
+        this.renderingEnabled$ = renderingEnabled$
+        this.renderingStatus$ = renderingStatus$
         this.toGoogleBounds = this.toGoogleBounds.bind(this)
         this.zoomIn = this.zoomIn.bind(this)
         this.zoomOut = this.zoomOut.bind(this)

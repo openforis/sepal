@@ -72,6 +72,7 @@ class SignUpUserHandler implements CommandHandler<Boolean, SignUpUser> {
                     email: command.email,
                     organization: command.organization,
                     emailNotificationsEnabled: true,
+                    manualMapRenderingEnabled: false,
                     status: PENDING,
                     roles: [].toSet(),
                     creationTime: now,

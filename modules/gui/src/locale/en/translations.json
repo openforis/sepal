@@ -2517,6 +2517,9 @@
         "create": "Optical mosaic",
         "description": "Create a mosaic using Landsat or Sentinel 2.",
         "mapToolbar": {
+          "mapRendering": {
+            "tooltip": "Start/stop map rendering"
+          },
           "zoom": {
             "tooltip": "Zoom"
           },
@@ -4471,6 +4474,12 @@
             "enabled.label": "Enabled",
             "label": "Email notifications",
             "tooltip": "Enable or disable optional email notifications (e.g. task completed, task failed, etc.)"
+          },
+          "manualMapRendering": {
+            "disabled.label": "Disabled",
+            "enabled.label": "Enabled",
+            "label": "Manual map rendering",
+            "tooltip": "Enable or disable manual map rendering"
           },
           "lastUpdate": {
             "label": "Last update"

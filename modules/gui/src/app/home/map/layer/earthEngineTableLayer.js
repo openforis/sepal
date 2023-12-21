@@ -29,7 +29,13 @@ export default class EarthEngineTableLayer extends TileLayer {
     createTileProvider = urlTemplate => {
         const {busy$} = this
         const tileProvider = new EarthEngineTableTileProvider({urlTemplate})
-        return new BalancingTileProvider({tileProvider, retries: 3, busy$})
+        return new BalancingTileProvider({
+            tileProvider,
+            retries: 3,
+            busy$,
+            renderingEnabled$: this.map.renderingEnabled$,
+            renderingStatus$: this.map.renderingStatus$
+        })
     }
 
     createOverlay = tileProvider => {
