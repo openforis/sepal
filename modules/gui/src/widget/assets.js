@@ -154,40 +154,45 @@ const cancelReload = () =>
     cancelReloadAssets$.next()
 
 const createFolder = (parentPath, folder) => {
-    const parentFolderId = _.last(parentPath)
-    const id = [parentFolderId, folder].join('/')
+    cancelReload()
 
-    // cancelReload()
-
-    // actionBuilder('CREATE_FOLDER')
-    //     .set('assets.updating', true)
-    //     .dispatch()
+    actionBuilder('CREATE_FOLDER')
+        .set('assets.updating', true)
+        .dispatch()
 
     const path = folder
         .split('/')
         .reduce(
-            (acc, pathElement) => [...acc, `${_.last(acc)}/${pathElement}`],
+            (parentPath, pathSection) => {
+                const newPath = [
+                    ...parentPath,
+                    `${_.last(parentPath)}/${pathSection}`
+                ]
+                Tree.setValue(assetTree, newPath, {type: 'NewFolder'})
+                return newPath
+            },
             parentPath
         )
 
-    Tree.setItem(assetTree, path, 'foo')
+    const id = _.last(path)
+
     updateAssetTree(assetTree)
 
-    // api.gee.createFolder$({id}).pipe(
-    //     tap({
-    //         complete: () => {
-    //             actionBuilder('CREATE_FOLDER')
-    //                 .del('assets.updating')
-    //                 .dispatch()
-    //             reloadAssets()
-    //         },
-    //         error: () => {
-    //             actionBuilder('CREATE_FOLDER')
-    //                 .del('assets.updating')
-    //                 .dispatch()
-    //         }
-    //     })
-    // ).subscribe()
+    api.gee.createFolder$({id}).pipe(
+        tap({
+            complete: () => {
+                actionBuilder('CREATE_FOLDER')
+                    .del('assets.updating')
+                    .dispatch()
+                reloadAssets()
+            },
+            error: () => {
+                actionBuilder('CREATE_FOLDER')
+                    .del('assets.updating')
+                    .dispatch()
+            }
+        })
+    ).subscribe()
 }
 
 export const withAssets = () =>

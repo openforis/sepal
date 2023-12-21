@@ -25,7 +25,7 @@ const fields = {
     asset: new Form.Field().notBlank()
 }
 
-const isFolder = type => type === 'Folder'
+const isFolder = type => type === 'Folder' || type === 'NewFolder'
 
 const mapStateToProps = (_state, ownProps) => ({
     values: {
@@ -261,7 +261,7 @@ class _AssetBrowser extends React.Component {
         return _(nodes)
             .filter(node => !isFolder(Tree.getValue(node)?.type))
             .map(node => Tree.unwrap(node))
-            .map(({props: {path, value: {type}}}) => this.getItemOption({path, type}))
+            .map(({props: {path, value: {type} = {}}}) => this.getItemOption({path, type}))
             .value()
     }
 

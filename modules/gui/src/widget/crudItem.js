@@ -45,7 +45,7 @@ export class CrudItem extends React.Component {
     }
 
     renderIcon() {
-        const {icon, iconSize, iconType, iconVariant, iconTooltip, tooltipPlacement} = this.props
+        const {icon, iconSize, iconType, iconVariant, iconDimmed, iconTooltip, tooltipPlacement} = this.props
         return icon
             ? (
                 <div className={styles.icon}>
@@ -54,6 +54,7 @@ export class CrudItem extends React.Component {
                         size={iconSize}
                         type={iconType}
                         variant={iconVariant}
+                        dimmed={iconDimmed}
                         tooltip={iconTooltip}
                         tooltipPlacement={tooltipPlacement}
                     />
@@ -265,6 +266,7 @@ CrudItem.propTypes = {
     highlightDescription: PropTypes.any,
     highlightTitle: PropTypes.any,
     icon: PropTypes.any,
+    iconDimmed: PropTypes.any,
     iconSize: PropTypes.any,
     iconTooltip: PropTypes.any,
     iconType: PropTypes.any,

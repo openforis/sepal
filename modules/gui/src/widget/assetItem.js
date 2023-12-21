@@ -13,7 +13,8 @@ export class AssetItem extends React.Component {
                 highlight={highlightMatcher}
                 icon={this.getItemTypeIcon(type)}
                 iconTooltip={this.getItemTooltip(type)}
-                iconVariant={type === 'Folder' ? 'info' : null}
+                iconVariant={['Folder', 'NewFolder'].includes(type) ? 'info' : null}
+                iconDimmed={type === 'NewFolder'}
                 inlineComponents={inlineComponents}
             />
         )
@@ -33,12 +34,21 @@ export class AssetItem extends React.Component {
 
     getItemTypeIcon(type) {
         const ASSET_ICON = {
+            NewFolder: 'folder-open',
             Folder: 'folder-open',
             Image: 'image',
             ImageCollection: 'images',
             Table: 'table'
         }
         return ASSET_ICON[type] || 'asterisk'
+    }
+    
+    getItemTypeIconVariant(type) {
+        const ASSET_ICON_VARIANT = {
+            NewFolder: 'success',
+            Folder: 'info'
+        }
+        return ASSET_ICON_VARIANT[type]
     }
     
     getItemTooltip(type) {
