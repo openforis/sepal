@@ -59,7 +59,40 @@
     "asset": {
         "failedToLoad": "",
         "notFound": "",
-        "unauthorized": ""
+        "unauthorized": "",
+        "folder": "",
+        "image": "",
+        "imageCollection": "",
+        "table": "",
+        "new": "",
+        "recentAssets": "",
+        "userAssets": "",
+        "otherAssets": "",
+        "reload": "",
+        "settings": "",
+        "datasets": {
+            "community": {
+                "label": "",
+                "tooltip": ""
+            },
+            "gee": {
+                "label": "",
+                "tooltip": ""
+            },
+            "failedToLoad": ""
+        },
+        "copyId": {
+            "tooltip": "",
+            "success": ""
+        },
+        "browser": {
+            "tooltip": "",
+            "title": "",
+            "assetName": "",
+            "asset": "",
+            "filter.placeholder": "",
+            "quota": ""
+        }
     },
     "bands": {
         "aerosol": "",
@@ -180,6 +213,12 @@
         "save": "",
         "select": "",
         "stop": ""
+    },
+    "clipboard": {
+        "copy": {
+            "success": "",
+            "failure": ""
+        }
     },
     "eeTable": {
         "failedToLoad": "",
@@ -2293,6 +2332,127 @@
             },
             "tabPlaceholder": ""
         },
+        "asset": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "assetDetails": {
+                    "button": "",
+                    "form": {
+                        "assetId": {
+                            "label": "",
+                            "placeholder": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "dates": {
+                    "button": "",
+                    "form": {
+                        "fromDate": {
+                            "label": "",
+                            "malformed": ""
+                        },
+                        "targetDate": {
+                            "label": "",
+                            "malformed": ""
+                        },
+                        "toDate": {
+                            "label": "",
+                            "malformed": ""
+                        },
+                        "type": {
+                            "label": "",
+                            "ALL_DATES": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "CUSTOM_DATE_RANGE": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "YEAR": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "year": {
+                            "label": "",
+                            "malformed": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "filter": {
+                    "button": "",
+                    "filters": {
+                        "title": ""
+                    },
+                    "noFilters": "",
+                    "emptyFilters": "",
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "mask": {
+                    "button": "",
+                    "constraints": {
+                        "title": ""
+                    },
+                    "noConstraints": "",
+                    "emptyConstraints": "",
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "composite": {
+                    "button": "",
+                    "form": {
+                        "type": {
+                            "label": "",
+                            "MOSAIC": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MEDIAN": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MEAN": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MIN": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MAX": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MODE": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "layers": {
+                "imageLayer": {
+                    "preSets": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
         "masking": {
             "create": "",
             "description": "",
@@ -2379,6 +2539,10 @@
                             "info": "",
                             "label": "",
                             "tooltip": ""
+                        },
+                        "assetBounds": {
+                            "description": "",
+                            "title": ""
                         },
                         "country": {
                             "area": {
@@ -2940,6 +3104,21 @@
                             },
                             "label": ""
                         },
+                        "orbitNumbers": {
+                            "all": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "dominant": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "adjacent": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": ""
+                        },
                         "outlierRemoval": {
                             "aggressive": {
                                 "label": "",
@@ -2955,7 +3134,102 @@
                                 "tooltip": ""
                             }
                         },
-                        "speckleFilter": {
+                        "mask": {
+                            "label": "",
+                            "sides": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "firstLast": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "maskOptions": {
+                            "title": "",
+                            "minAngle": {
+                                "label": ""
+                            },
+                            "maxAngle": {
+                                "label": ""
+                            }
+                        },
+                        "spatialSpeckleFilter": {
+                            "label": "",
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "boxcar": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "gammaMap": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "lee": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "refinedLee": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "leeSigma": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snic": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "spatialSpeckleFilterOptions": {
+                            "kernelSize": {
+                                "label": ""
+                            },
+                            "sigma": {
+                                "label": ""
+                            },
+                            "strongScatterers": {
+                                "retain": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "filter": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "label": ""
+                            },
+                            "strongScattererValue1": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "strongScattererValue2": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicSize": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicCompactness": {
+                                "label": "",
+                                "tooltip": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilterOptions": {
+                            "numberOfImages": {
+                                "label": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilter": {
                             "label": "",
                             "none": {
                                 "label": "",
@@ -2965,7 +3239,337 @@
                                 "label": "",
                                 "tooltip": ""
                             },
+                            "rabasar": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "minObservations": {
+                            "label": "",
+                            "value": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "label": ""
+            },
+            "tabPlaceholder": ""
+        },
+        "baytsAlerts": {
+            "create": "",
+            "description": "",
+            "imageLayerForm": {
+                "mosaicType": {
+                    "label": "",
+                    "latest": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "median": {
+                        "label": "",
+                        "tooltip": ""
+                    }
+                },
+                "visualizationType": {
+                    "alerts": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "first": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "label": "",
+                    "last": {
+                        "label": "",
+                        "tooltip": ""
+                    }
+                },
+                "previouslyConfirmed": {
+                    "include": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "exclude": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "label": ""
+                },
+                "minConfidence": {
+                    "all": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "low": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "high": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "label": ""
+                }
+            },
+            "layers": {
+                "imageLayer": {
+                    "changes": "",
+                    "dates": "",
+                    "observations": ""
+                }
+            },
+            "panel": {
+                "date": {
+                    "button": "",
+                    "form": {
+                        "durationUnit": {
+                            "placeholder": "",
+                            "DAYS": "",
+                            "MONTHS": "",
+                            "WEEKS": ""
+                        },
+                        "monitoring": {
+                            "duration": {
+                                "label": "",
+                                "placeholder": ""
+                            }
+                        },
+                        "monitoringEnd": {
+                            "label": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "options": {
+                    "button": "",
+                    "form": {
+                        "highConfidenceThreshold": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "lowConfidenceThreshold": {
+                            "label": "",
+                            "tooltip": "",
+                            "tooLarge": ""
+                        },
+                        "minChangeProbability": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "minNonForestProbability": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "maxDays": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "normalization": {
+                            "label": "",
+                            "tooltip": "",
+                            "disabled": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "enabled": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "previousAlertsAsset": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": "",
+                            "missingBands": ""
+                        },
+                        "sensitivityButton": {
+                            "tooltip": "",
+                            "low": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "medium": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "high": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "sensitivity": {
+                            "label": "",
+                            "tooltip": "",
+                            "value": ""
+                        },
+                        "wetlandMaskAsset": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "preprocess": {
+                    "button": "",
+                    "title": "",
+                    "tooltip": ""
+                },
+                "reference": {
+                    "asset": {
+                        "label": "",
+                        "title": "",
+                        "notBayTSHistorical": ""
+                    },
+                    "button": "",
+                    "form": {
+                        "asset": {
+                            "invalid": "",
+                            "label": "",
+                            "placeholder": "",
+                            "required": ""
+                        }
+                    },
+                    "recipe": {
+                        "label": "",
+                        "title": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "error": "",
+                "initializing": "",
+                "label": "",
+                "loading": "",
+                "tilesFailed": ""
+            },
+            "reference": {
+                "asset": {
+                    "loadError": ""
+                },
+                "recipe": {
+                    "loadError": ""
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "baytsHistorical": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "dates": {
+                    "button": "",
+                    "form": {
+                        "fromDate": {
+                            "label": "",
+                            "malformed": ""
+                        },
+                        "toDate": {
+                            "label": "",
+                            "malformed": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "options": {
+                    "button": "",
+                    "form": {
+                        "geometricCorrection": {
+                            "ellipsoid": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "terrain": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "orbits": {
+                            "ascending": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "descending": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": ""
+                        },
+                        "outlierRemoval": {
+                            "aggressive": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": "",
+                            "moderate": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "mask": {
+                            "label": "",
+                            "sides": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "firstLast": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "maskOptions": {
+                            "title": "",
+                            "minAngle": {
+                                "label": ""
+                            },
+                            "maxAngle": {
+                                "label": ""
+                            }
+                        },
+                        "spatialSpeckleFilter": {
+                            "label": "",
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "boxcar": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "gammaMap": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "lee": {
+                                "label": "",
+                                "tooltip": ""
+                            },
                             "refinedLee": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "leeSigma": {
                                 "label": "",
                                 "tooltip": ""
                             },
@@ -2973,6 +3577,69 @@
                                 "label": "",
                                 "tooltip": ""
                             }
+                        },
+                        "spatialSpeckleFilterOptions": {
+                            "kernelSize": {
+                                "label": ""
+                            },
+                            "sigma": {
+                                "label": ""
+                            },
+                            "strongScatterers": {
+                                "retain": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "filter": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "label": ""
+                            },
+                            "strongScattererValue1": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "strongScattererValue2": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicSize": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicCompactness": {
+                                "label": "",
+                                "tooltip": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilterOptions": {
+                            "numberOfImages": {
+                                "label": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilter": {
+                            "label": "",
+                            "none": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "quegan": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "rabasar": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "minObservations": {
+                            "label": "",
+                            "value": ""
                         }
                     },
                     "title": "",
@@ -3198,7 +3865,17 @@
             "name": "",
             "newRecipe": {
                 "title": "",
-                "tooltip": ""
+                "tooltip": "",
+                "search.placeholder": "",
+                "tags": {
+                    "ALL": "",
+                    "OPTICAL": "",
+                    "RADAR": "",
+                    "MOSAIC": "",
+                    "CHANGE": "",
+                    "TIME_SERIES": "",
+                    "ALERTS": ""
+                }
             },
             "edit": {
                 "label": ""
@@ -3352,6 +4029,17 @@
                     "placeholder": "",
                     "suffix": "",
                     "tooltip": ""
+                },
+                "sharing": {
+                    "label": "",
+                    "PRIVATE": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "PUBLIC": {
+                        "label": "",
+                        "tooltip": ""
+                    }
                 },
                 "task": {
                     "GEE": "",
@@ -3605,6 +4293,7 @@
                     "delete": "",
                     "prepareImageCollection": "",
                     "startExport": "",
+                    "sharing": "",
                     "tilingImage": ""
                 },
                 "pending": "",
@@ -3682,6 +4371,12 @@
             "updating": ""
         },
         "googleAccount": {
+            "form": {
+                "projectId": {
+                    "label": "",
+                    "updated": ""
+                }
+            },
             "connect": {
                 "label": ""
             },
@@ -3701,6 +4396,7 @@
                 "info": "",
                 "label": "",
                 "success": "",
+                "projectNeeded": "",
                 "title": ""
             },
             "label": "",
@@ -3746,7 +4442,8 @@
             "update": {
                 "success": "",
                 "error": ""
-            }
+            },
+            "info": ""
         },
         "status": {
             "label": "",
@@ -3999,7 +4696,15 @@
             }
         },
         "imageConstraints": {
+            "bit": {
+                "label": "",
+                "tooltip": ""
+            },
             "band": {
+                "label": "",
+                "notSelected": ""
+            },
+            "property": {
                 "label": "",
                 "notSelected": ""
             },
@@ -4034,6 +4739,14 @@
                     "label": ""
                 }
             },
+            "bitRange": {
+                "from": {
+                    "label": ""
+                },
+                "to": {
+                    "label": ""
+                }
+            },
             "range": {
                 "from": {
                     "label": ""
@@ -4044,6 +4757,10 @@
             },
             "value": {
                 "label": ""
+            },
+            "inclusive": {
+                "label": "",
+                "tooltip": ""
             }
         },
         "legend": {
