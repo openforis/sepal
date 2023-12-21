@@ -86,7 +86,9 @@ const flatten = (node, nodeMapper = obj => obj, depth = 0) => {
     const {path, value} = node[NODE_KEY] || {}
     return [
         nodeMapper({path, value, depth}),
-        ...getChildNodes(node).map(child => flatten(child, nodeMapper, depth + 1)).flat()
+        ...getChildNodes(node)
+            .map(child => flatten(child, nodeMapper, depth + 1))
+            .flat()
     ]
 }
 
@@ -97,7 +99,10 @@ const filter = (node, nodeMatcher, maxDepth = Number.POSITIVE_INFINITY) => {
         ? _(node)
             .omit([NODE_KEY])
             .mapValues(item => filter(item, nodeMatcher, maxDepth - 1))
-            .pickBy(item => !_.isEmpty(getChildNodes(item)) || nodeMatcher({path: item[NODE_KEY].path, value: item[NODE_KEY].value}))
+            .pickBy(
+                item => !_.isEmpty(getChildNodes(item))
+                || nodeMatcher({path: item[NODE_KEY].path, value: item[NODE_KEY].value})
+            )
             .value()
         : {}
     return createNode(node[NODE_KEY].path, node[NODE_KEY].value, matchingChildren)
