@@ -59,13 +59,46 @@
     "asset": {
         "failedToLoad": "Échec du chargement de l'asset EE",
         "notFound": "Asset EE introuvable",
-        "unauthorized": "Vous n'avez pas accès à cette Asset EE"
+        "unauthorized": "Vous n'avez pas accès à cette Asset EE",
+        "folder": "",
+        "image": "",
+        "imageCollection": "",
+        "table": "",
+        "new": "",
+        "recentAssets": "",
+        "userAssets": "",
+        "otherAssets": "",
+        "reload": "",
+        "settings": "",
+        "datasets": {
+            "community": {
+                "label": "",
+                "tooltip": ""
+            },
+            "gee": {
+                "label": "",
+                "tooltip": ""
+            },
+            "failedToLoad": ""
+        },
+        "copyId": {
+            "tooltip": "",
+            "success": ""
+        },
+        "browser": {
+            "tooltip": "",
+            "title": "",
+            "assetName": "Nom",
+            "asset": "",
+            "filter.placeholder": "",
+            "quota": ""
+        }
     },
     "bands": {
         "aerosol": "",
         "blue": "Bleu",
         "brightness": "Luminosité",
-        "cirrus": "",
+        "cirrus": "Cirrus",
         "dayOfYear": "Jour Julien",
         "daysFromTarget": "Jours de la date-cible",
         "fifth": "cinquième",
@@ -103,7 +136,7 @@
         "nbi": "NBI",
         "ebbi": "EBBI",
         "bui": "BUI",
-        "kndvi": "kNDVI",
+        "kndvi": "",
         "red, green, blue": "Couleur naturelle : rouge, vert, bleu",
         "nir, red, green": "Fausse couleur: nir, rouge, vert",
         "nir, swir1, red": "Fausse couleur: nir, swir1, rouge",
@@ -181,6 +214,12 @@
         "select": "Sélectionner",
         "stop": "Arrêter"
     },
+    "clipboard": {
+        "copy": {
+            "success": "",
+            "failure": ""
+        }
+    },
     "eeTable": {
         "failedToLoad": "Echec du chargement de la table EE",
         "notFound": "Table EE introuvable",
@@ -223,7 +262,7 @@
     "gee": {
         "asset": {
             "error": {
-                "wrongType": "L' Asset est de type '{actualType}' alors que '{expectedType}' est attendu."
+                "wrongType": ""
             }
         },
         "classification": {
@@ -2293,6 +2332,127 @@
             },
             "tabPlaceholder": ""
         },
+        "asset": {
+            "create": "Asset EE",
+            "description": "",
+            "panel": {
+                "assetDetails": {
+                    "button": "SRC",
+                    "form": {
+                        "assetId": {
+                            "label": "Asset EE",
+                            "placeholder": ""
+                        }
+                    },
+                    "title": "Asset EE",
+                    "tooltip": ""
+                },
+                "dates": {
+                    "button": "DAT",
+                    "form": {
+                        "fromDate": {
+                            "label": "",
+                            "malformed": "Date invalide"
+                        },
+                        "targetDate": {
+                            "label": "Date cible",
+                            "malformed": "Date invalide"
+                        },
+                        "toDate": {
+                            "label": "",
+                            "malformed": "Date invalide"
+                        },
+                        "type": {
+                            "label": "Type",
+                            "ALL_DATES": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "CUSTOM_DATE_RANGE": {
+                                "label": "Intervalle temporel",
+                                "tooltip": ""
+                            },
+                            "YEAR": {
+                                "label": "Année",
+                                "tooltip": ""
+                            }
+                        },
+                        "year": {
+                            "label": "Année",
+                            "malformed": "Pas une année"
+                        }
+                    },
+                    "title": "Dates",
+                    "tooltip": "Spécifier les dates"
+                },
+                "filter": {
+                    "button": "",
+                    "filters": {
+                        "title": ""
+                    },
+                    "noFilters": "",
+                    "emptyFilters": "",
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "mask": {
+                    "button": "",
+                    "constraints": {
+                        "title": ""
+                    },
+                    "noConstraints": "",
+                    "emptyConstraints": "",
+                    "remove": {
+                        "tooltip": ""
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "composite": {
+                    "button": "",
+                    "form": {
+                        "type": {
+                            "label": "Type",
+                            "MOSAIC": {
+                                "label": "Mosaïque",
+                                "tooltip": ""
+                            },
+                            "MEDIAN": {
+                                "label": "Médiane",
+                                "tooltip": ""
+                            },
+                            "MEAN": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MIN": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MAX": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "MODE": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "title": "Composite",
+                    "tooltip": ""
+                }
+            },
+            "layers": {
+                "imageLayer": {
+                    "preSets": "Pré-réglages"
+                }
+            },
+            "tabPlaceholder": ""
+        },
         "masking": {
             "create": "",
             "description": "",
@@ -2379,6 +2539,10 @@
                             "info": "buffer de {buffer} km",
                             "label": "Buffer",
                             "tooltip": "La zone d'intérêt et l'aperçu mettent plus de temps à s'afficher lorsque le buffer est activée."
+                        },
+                        "assetBounds": {
+                            "description": "",
+                            "title": ""
                         },
                         "country": {
                             "area": {
@@ -2940,6 +3104,21 @@
                             },
                             "label": "Orbites"
                         },
+                        "orbitNumbers": {
+                            "all": {
+                                "label": "Tout",
+                                "tooltip": ""
+                            },
+                            "dominant": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "adjacent": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "label": ""
+                        },
                         "outlierRemoval": {
                             "aggressive": {
                                 "label": "Aggressif",
@@ -2955,24 +3134,119 @@
                                 "tooltip": "Ne pas supprimer les outliers"
                             }
                         },
-                        "speckleFilter": {
-                            "label": "Filtre speckle",
+                        "mask": {
+                            "label": "",
+                            "sides": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "firstLast": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "maskOptions": {
+                            "title": "",
+                            "minAngle": {
+                                "label": ""
+                            },
+                            "maxAngle": {
+                                "label": ""
+                            }
+                        },
+                        "spatialSpeckleFilter": {
+                            "label": "",
                             "none": {
                                 "label": "Aucun",
-                                "tooltip": "Ne pas appliquer de filtre speckle"
+                                "tooltip": ""
                             },
-                            "quegan": {
+                            "boxcar": {
                                 "label": "",
-                                "tooltip": "Le filtre Quegan MT est appliqué."
+                                "tooltip": ""
+                            },
+                            "gammaMap": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "lee": {
+                                "label": "",
+                                "tooltip": ""
                             },
                             "refinedLee": {
                                 "label": "",
-                                "tooltip": "Refine Lee appliqué (Cela peut être très lent, mais donne souvent de bons résultats)."
+                                "tooltip": ""
+                            },
+                            "leeSigma": {
+                                "label": "",
+                                "tooltip": ""
                             },
                             "snic": {
                                 "label": "",
-                                "tooltip": "Groupement simple non-iteratif (SNIC)"
+                                "tooltip": ""
                             }
+                        },
+                        "spatialSpeckleFilterOptions": {
+                            "kernelSize": {
+                                "label": ""
+                            },
+                            "sigma": {
+                                "label": ""
+                            },
+                            "strongScatterers": {
+                                "retain": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "filter": {
+                                    "label": "Filtre",
+                                    "tooltip": ""
+                                },
+                                "label": ""
+                            },
+                            "strongScattererValue1": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "strongScattererValue2": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicSize": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicCompactness": {
+                                "label": "",
+                                "tooltip": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilterOptions": {
+                            "numberOfImages": {
+                                "label": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilter": {
+                            "label": "",
+                            "none": {
+                                "label": "Aucun",
+                                "tooltip": ""
+                            },
+                            "quegan": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "rabasar": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "minObservations": {
+                            "label": "Nombre min d'observation",
+                            "value": ""
                         }
                     },
                     "title": "Options",
@@ -2984,6 +3258,399 @@
                 "label": "Mosaïque Radars"
             },
             "tabPlaceholder": "Radar_mosaique"
+        },
+        "baytsAlerts": {
+            "create": "",
+            "description": "",
+            "imageLayerForm": {
+                "mosaicType": {
+                    "label": "Mosaïque",
+                    "latest": {
+                        "label": "Dernières",
+                        "tooltip": "Afficher un composite des dernières images disponibles sur la période"
+                    },
+                    "median": {
+                        "label": "Médiane",
+                        "tooltip": "Afficher un composite médian de la période"
+                    }
+                },
+                "visualizationType": {
+                    "alerts": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "first": {
+                        "label": "Premier",
+                        "tooltip": ""
+                    },
+                    "label": "Type",
+                    "last": {
+                        "label": "Dernier",
+                        "tooltip": ""
+                    }
+                },
+                "previouslyConfirmed": {
+                    "include": {
+                        "label": "Inclure",
+                        "tooltip": ""
+                    },
+                    "exclude": {
+                        "label": "Exclure",
+                        "tooltip": ""
+                    },
+                    "label": ""
+                },
+                "minConfidence": {
+                    "all": {
+                        "label": "Tout",
+                        "tooltip": ""
+                    },
+                    "low": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "high": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "label": "Confiance minimale"
+                }
+            },
+            "layers": {
+                "imageLayer": {
+                    "changes": "Changements",
+                    "dates": "Dates",
+                    "observations": "Observations"
+                }
+            },
+            "panel": {
+                "date": {
+                    "button": "DAT",
+                    "form": {
+                        "durationUnit": {
+                            "placeholder": "Unité...",
+                            "DAYS": "Jours",
+                            "MONTHS": "Mois",
+                            "WEEKS": "Semaines"
+                        },
+                        "monitoring": {
+                            "duration": {
+                                "label": "Durée du suivi",
+                                "placeholder": "Durée..."
+                            }
+                        },
+                        "monitoringEnd": {
+                            "label": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "Intervalle temporel",
+                    "tooltip": ""
+                },
+                "options": {
+                    "button": "OPT",
+                    "form": {
+                        "highConfidenceThreshold": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "lowConfidenceThreshold": {
+                            "label": "",
+                            "tooltip": "",
+                            "tooLarge": ""
+                        },
+                        "minChangeProbability": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "minNonForestProbability": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "maxDays": {
+                            "label": "",
+                            "tooltip": ""
+                        },
+                        "normalization": {
+                            "label": "",
+                            "tooltip": "",
+                            "disabled": {
+                                "label": "Désactivé",
+                                "tooltip": ""
+                            },
+                            "enabled": {
+                                "label": "Activé",
+                                "tooltip": ""
+                            }
+                        },
+                        "previousAlertsAsset": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": "",
+                            "missingBands": ""
+                        },
+                        "sensitivityButton": {
+                            "tooltip": "",
+                            "low": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "medium": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "high": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "sensitivity": {
+                            "label": "",
+                            "tooltip": "",
+                            "value": ""
+                        },
+                        "wetlandMaskAsset": {
+                            "label": "",
+                            "placeholder": "",
+                            "tooltip": ""
+                        }
+                    },
+                    "title": "",
+                    "tooltip": ""
+                },
+                "preprocess": {
+                    "button": "",
+                    "title": "Prétraitement",
+                    "tooltip": "Configurer le prétraitement des images"
+                },
+                "reference": {
+                    "asset": {
+                        "label": "Asset Earth Engine",
+                        "title": "Asset Earth Engine",
+                        "notBayTSHistorical": ""
+                    },
+                    "button": "",
+                    "form": {
+                        "asset": {
+                            "invalid": "",
+                            "label": "",
+                            "placeholder": "",
+                            "required": "Un ID d'asset doit être précisé"
+                        }
+                    },
+                    "recipe": {
+                        "label": "Sauvegarde de la formule SEPAL",
+                        "title": "Sauvegarde de la formule SEPAL"
+                    },
+                    "title": "Source",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "error": "Échec de la génération de l'aperçu",
+                "initializing": "Chargement de l'aperçu...",
+                "label": "",
+                "loading": "Chargement {loaded} de {count} tuiles",
+                "tilesFailed": "Echec de {failed}"
+            },
+            "reference": {
+                "asset": {
+                    "loadError": "Échec du chargement de l'asset"
+                },
+                "recipe": {
+                    "loadError": "Echec du chargement de la formule"
+                }
+            },
+            "tabPlaceholder": ""
+        },
+        "baytsHistorical": {
+            "create": "",
+            "description": "",
+            "panel": {
+                "dates": {
+                    "button": "DAT",
+                    "form": {
+                        "fromDate": {
+                            "label": "",
+                            "malformed": "Date invalide"
+                        },
+                        "toDate": {
+                            "label": "",
+                            "malformed": "Date invalide"
+                        }
+                    },
+                    "title": "Intervalle temporel",
+                    "tooltip": "Préciser l'intervalle de dates"
+                },
+                "options": {
+                    "button": "OPT",
+                    "form": {
+                        "geometricCorrection": {
+                            "ellipsoid": {
+                                "label": "Ellipsoide",
+                                "tooltip": "La correction ellipsoide (gamma0) est appliquée"
+                            },
+                            "label": "Correction géométrique",
+                            "none": {
+                                "label": "Aucun",
+                                "tooltip": "Aucune correction géométrique appliquée"
+                            },
+                            "terrain": {
+                                "label": "Relief",
+                                "tooltip": "Correction de relief appliquée"
+                            }
+                        },
+                        "orbits": {
+                            "ascending": {
+                                "label": "Ascendante",
+                                "tooltip": "Inclure les scènes des orbites ascendantes"
+                            },
+                            "descending": {
+                                "label": "Descendante",
+                                "tooltip": "Inclure les scènes des orbites descendantes"
+                            },
+                            "label": "Orbites"
+                        },
+                        "outlierRemoval": {
+                            "aggressive": {
+                                "label": "Agressif",
+                                "tooltip": "Enlever plus d'outliers"
+                            },
+                            "label": "Supprimer les outliers",
+                            "moderate": {
+                                "label": "Modéré",
+                                "tooltip": "Enlever les outliers"
+                            },
+                            "none": {
+                                "label": "Aucun",
+                                "tooltip": "Ne pas supprimer les outliers"
+                            }
+                        },
+                        "mask": {
+                            "label": "",
+                            "sides": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "firstLast": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "maskOptions": {
+                            "title": "",
+                            "minAngle": {
+                                "label": ""
+                            },
+                            "maxAngle": {
+                                "label": ""
+                            }
+                        },
+                        "spatialSpeckleFilter": {
+                            "label": "",
+                            "none": {
+                                "label": "Aucun",
+                                "tooltip": ""
+                            },
+                            "boxcar": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "gammaMap": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "lee": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "refinedLee": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "leeSigma": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snic": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "spatialSpeckleFilterOptions": {
+                            "kernelSize": {
+                                "label": ""
+                            },
+                            "sigma": {
+                                "label": ""
+                            },
+                            "strongScatterers": {
+                                "retain": {
+                                    "label": "",
+                                    "tooltip": ""
+                                },
+                                "filter": {
+                                    "label": "Filtre",
+                                    "tooltip": ""
+                                },
+                                "label": ""
+                            },
+                            "strongScattererValue1": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "strongScattererValue2": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicSize": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "snicCompactness": {
+                                "label": "",
+                                "tooltip": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilterOptions": {
+                            "numberOfImages": {
+                                "label": "",
+                                "value": ""
+                            },
+                            "title": ""
+                        },
+                        "multitemporalSpeckleFilter": {
+                            "label": "",
+                            "none": {
+                                "label": "Aucun",
+                                "tooltip": ""
+                            },
+                            "quegan": {
+                                "label": "",
+                                "tooltip": ""
+                            },
+                            "rabasar": {
+                                "label": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "minObservations": {
+                            "label": "Nombre min d'observation",
+                            "value": ""
+                        }
+                    },
+                    "title": "Options",
+                    "tooltip": ""
+                }
+            },
+            "preview": {
+                "description": "",
+                "label": ""
+            },
+            "tabPlaceholder": ""
         },
         "phenology": {
             "create": "",
@@ -3198,7 +3865,17 @@
             "name": "Nom",
             "newRecipe": {
                 "title": "Créer une formule",
-                "tooltip": "Créer une nouvelle formule SEPAL"
+                "tooltip": "Créer une nouvelle formule SEPAL",
+                "search.placeholder": "",
+                "tags": {
+                    "ALL": "Tout",
+                    "OPTICAL": "Optique",
+                    "RADAR": "Radar",
+                    "MOSAIC": "Mosaïque",
+                    "CHANGE": "",
+                    "TIME_SERIES": "Séries temporelles",
+                    "ALERTS": ""
+                }
             },
             "edit": {
                 "label": "Éditer"
@@ -3352,6 +4029,17 @@
                     "placeholder": "",
                     "suffix": "",
                     "tooltip": ""
+                },
+                "sharing": {
+                    "label": "",
+                    "PRIVATE": {
+                        "label": "",
+                        "tooltip": ""
+                    },
+                    "PUBLIC": {
+                        "label": "",
+                        "tooltip": ""
+                    }
                 },
                 "task": {
                     "GEE": "Exporter {name} en tant qu'asset Google Earth Engine",
@@ -3605,6 +4293,7 @@
                     "delete": "",
                     "prepareImageCollection": "",
                     "startExport": "",
+                    "sharing": "",
                     "tilingImage": ""
                 },
                 "pending": "Soumettre une tâche d'exportation à Google Earth Engine",
@@ -3682,8 +4371,14 @@
             "updating": "Mise à jour..."
         },
         "googleAccount": {
+            "form": {
+                "projectId": {
+                    "label": "",
+                    "updated": ""
+                }
+            },
             "connect": {
-                "label": "Connecter"
+                "label": ""
             },
             "connected": {
                 "info": "Vous avez un accès complet à SEPAL. Si vous déconnectez votre compte Google de SEPAL, certaines fonctionnalités (comme l'exportation en tant qu'asset Google Earth Enginee) ne seront pas disponibles.",
@@ -3691,7 +4386,7 @@
                 "title": "Votre compte SEPAL est connecté à votre compte Google"
             },
             "disconnect": {
-                "label": "Déconnecter",
+                "label": "",
                 "warning": {
                     "message": "La déconnexion de votre compte Google entraînerait l'arrêt de toute tâche commencée alors que vous êtes connecté. Tâches en cours d'exécution : {taskCount}",
                     "title": "Attention"
@@ -3701,6 +4396,7 @@
                 "info": "Vous avez un accès limité à SEPAL. Si vous connectez votre compte Google à SEPAL, toutes les fonctionnalités (y compris l'exportation en tant qu'asset Google Earth Engine) seront disponibles.",
                 "label": "Déconnecté",
                 "success": "SEPAL est maintenant déconnecté de votre compte Google.",
+                "projectNeeded": "",
                 "title": "Votre compte SEPAL n'est pas connecté à votre compte Google"
             },
             "label": "Compte Google",
@@ -3746,7 +4442,8 @@
             "update": {
                 "success": "",
                 "error": ""
-            }
+            },
+            "info": ""
         },
         "status": {
             "label": "",
@@ -3999,9 +4696,17 @@
             }
         },
         "imageConstraints": {
+            "bit": {
+                "label": "",
+                "tooltip": ""
+            },
             "band": {
                 "label": "Bande",
                 "notSelected": "[Aucune bande sélectionnée]"
+            },
+            "property": {
+                "label": "",
+                "notSelected": ""
             },
             "image": {
                 "label": "Image",
@@ -4034,6 +4739,14 @@
                     "label": ""
                 }
             },
+            "bitRange": {
+                "from": {
+                    "label": ""
+                },
+                "to": {
+                    "label": ""
+                }
+            },
             "range": {
                 "from": {
                     "label": ""
@@ -4044,6 +4757,10 @@
             },
             "value": {
                 "label": "Valeur"
+            },
+            "inclusive": {
+                "label": "",
+                "tooltip": ""
             }
         },
         "legend": {
