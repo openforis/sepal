@@ -114,7 +114,7 @@ class _Input extends React.Component {
             'Escape': onCancel ? this.onCancel : undefined
         }
         return (
-            <Keybinding keymap={keymap} disabled={!focused} priority>
+            <Keybinding keymap={keymap} disabled={!focused}>
                 {/* [HACK] input is wrapped in a div for fixing Firefox input width in flex */}
                 {/* <div className={styles.inputWrapper}> */}
                 <Tooltip
@@ -418,7 +418,7 @@ class _Textarea extends React.Component {
         const {className, name, value, placeholder, autoFocus, inputTooltip, inputTooltipPlacement, tabIndex, disabled, minRows, maxRows} = this.props
         const {focused} = this.state
         return (
-            <Keybinding keymap={{Enter: null, ' ': null}} disabled={!focused} priority>
+            <Keybinding keymap={{Enter: null, ' ': null}} disabled={!focused}>
                 <Tooltip
                     msg={inputTooltip}
                     placement={inputTooltipPlacement}

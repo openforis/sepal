@@ -86,7 +86,7 @@ class _TerminalSession extends React.Component {
         return (
             <ElementResizeDetector resize$={this.fit$}>
                 <ContentPadding menuPadding horizontalPadding verticalPadding>
-                    <Keybinding keymap={{' ': null}} priority>
+                    <Keybinding keymap={{' ': undefined}}>
                         <div className={styles.terminal} ref={this.terminalContainer}></div>
                     </Keybinding>
                 </ContentPadding>

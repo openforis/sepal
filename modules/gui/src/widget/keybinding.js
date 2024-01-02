@@ -13,17 +13,11 @@ const getCandidateKeybindings = key =>
         keybinding => !keybinding.disabled && keybinding.enabled && keybinding.handles(key)
     )
 
-const getPriorityKeybinding = keybindings =>
-    _.find(keybindings, keybinding => keybinding.priority)
-    
-const getDefaultKeybinding = keybindings =>
+const getClosestKeybinding = keybindings =>
     _.first(keybindings)
 
-const getKeybinding = keybindings =>
-    getPriorityKeybinding(keybindings) || getDefaultKeybinding(keybindings)
-
 const handle = (keybindings, event, key) => {
-    const keybinding = getKeybinding(keybindings)
+    const keybinding = getClosestKeybinding(keybindings)
     const handler = keybinding && keybinding.handler
     if (handler) {
         const handover = handler(event, key) === false
@@ -37,7 +31,7 @@ const handle = (keybindings, event, key) => {
 }
 
 const handleEvent = event => {
-    const key = [
+    const eventKey = [
         {key: 'Ctrl', value: event.ctrlKey},
         {key: 'Alt', value: event.altKey},
         {key: 'Shift', value: event.shiftKey},
@@ -46,7 +40,7 @@ const handleEvent = event => {
         .map(({key}) => key)
         .concat([event.key])
         .join('+')
-    handle(getCandidateKeybindings(key), event, key)
+    handle(getCandidateKeybindings(eventKey), event, eventKey)
 }
 
 fromEvent(document, 'keydown').subscribe(
@@ -70,10 +64,9 @@ class Keybinding extends React.Component {
     }
 
     createKeybinding() {
-        const {disabled, priority} = this.props
+        const {disabled} = this.props
         this.keybinding = {
             disabled,
-            priority,
             enabled: true,
             handler: this.handle.bind(this),
             handles: this.handlesKey
@@ -114,9 +107,8 @@ class Keybinding extends React.Component {
     }
 
     componentDidUpdate() {
-        const {disabled, priority} = this.props
+        const {disabled} = this.props
         this.keybinding.disabled = disabled
-        this.keybinding.priority = priority
 
     }
 
@@ -133,6 +125,5 @@ export default compose(
 
 Keybinding.propTypes = {
     disabled: PropTypes.any,
-    keymap: PropTypes.object,
-    priority: PropTypes.any
+    keymap: PropTypes.object
 }
