@@ -2515,6 +2515,9 @@
             "create": "Mosaico óptico",
             "description": "Crear mosaico de Landsat o Sentinel 2.",
             "mapToolbar": {
+                "mapRendering": {
+                    "tooltip": ""
+                },
                 "zoom": {
                     "tooltip": "Acercar"
                 },
@@ -4468,6 +4471,12 @@
                     "enabled.label": "Activado",
                     "label": "Notificaciones por email",
                     "tooltip": "Activar o desactivar notificaciones opcionales por email (por ejemplo, tareas completadas, tareas fallidas, etc.)"
+                },
+                "manualMapRendering": {
+                    "disabled.label": "",
+                    "enabled.label": "",
+                    "label": "",
+                    "tooltip": ""
                 },
                 "lastUpdate": {
                     "label": "Última actualización"
