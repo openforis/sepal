@@ -2515,6 +2515,9 @@
             "create": "Mosaique",
             "description": "Créer une mosaique avec Landsat ou Sentinel 2",
             "mapToolbar": {
+                "mapRendering": {
+                    "tooltip": ""
+                },
                 "zoom": {
                     "tooltip": "Zoomer"
                 },
@@ -4468,6 +4471,12 @@
                     "enabled.label": "Activé",
                     "label": "Notifications par courriel",
                     "tooltip": "Activer ou désactiver les notifications facultatives par courriel (par exemple, tâche terminée, tâche échouée, etc.)"
+                },
+                "manualMapRendering": {
+                    "disabled.label": "Désactivé",
+                    "enabled.label": "Activé",
+                    "label": "",
+                    "tooltip": ""
                 },
                 "lastUpdate": {
                     "label": "Dernière mise à jour"
