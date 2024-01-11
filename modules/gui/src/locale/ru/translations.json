@@ -2515,6 +2515,9 @@
             "create": "",
             "description": "",
             "mapToolbar": {
+                "mapRendering": {
+                    "tooltip": ""
+                },
                 "zoom": {
                     "tooltip": ""
                 },
@@ -4464,6 +4467,12 @@
                     "unique": ""
                 },
                 "emailNotifications": {
+                    "disabled.label": "",
+                    "enabled.label": "",
+                    "label": "",
+                    "tooltip": ""
+                },
+                "manualMapRendering": {
                     "disabled.label": "",
                     "enabled.label": "",
                     "label": "",
