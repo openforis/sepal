@@ -1,6 +1,6 @@
 import {TileProvider} from './tileProvider'
-import {debounceTime, mergeMap, of, pipe, range, retryWhen, switchMap, throwError, timer, zip} from 'rxjs'
 import {getTileManager} from '../tileManager/tileManager'
+import {mergeMap, of, pipe, range, retryWhen, switchMap, throwError, timer, zip} from 'rxjs'
 
 export class BalancingTileProvider extends TileProvider {
     constructor({tileProvider, retries, busy$, renderingEnabled$, renderingStatus$}) {
@@ -15,9 +15,7 @@ export class BalancingTileProvider extends TileProvider {
     initProgress(busy$, renderingStatus$) {
         if (busy$ || renderingStatus$) {
             this.subscriptions.push(
-                this.tileManager.status$.pipe(
-                    debounceTime(200)
-                ).subscribe({
+                this.tileManager.status$.subscribe({
                     next: ({tileProviderId, pending, pendingEnabled}) => {
                         busy$?.next(pendingEnabled)
                         renderingStatus$?.next({tileProviderId, pending})

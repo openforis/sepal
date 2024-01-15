@@ -8,6 +8,7 @@ import {MapApiKeyContext} from './mapApiKeyContext'
 import {MapAreaContext} from './mapAreaContext'
 import {MapContext} from './mapContext'
 import {MapInfo} from './mapInfo'
+import {MapRendering} from './mapRendering'
 import {MapToolbar} from './mapToolbar'
 import {SplitView} from 'widget/split/splitView'
 import {VisParamsPanel} from './visParams/visParamsPanel'
@@ -87,7 +88,6 @@ class _Map extends React.Component {
         super()
         this.mapDelegate = this.mapDelegate.bind(this)
         this.toggleLinked = this.toggleLinked.bind(this)
-        this.setRendering = this.setRendering.bind(this)
         this.toggleRendering = this.toggleRendering.bind(this)
         this.enableZoomArea = this.enableZoomArea.bind(this)
         this.disableZoomArea = this.disableZoomArea.bind(this)
@@ -120,7 +120,6 @@ class _Map extends React.Component {
             getBounds: map.getBounds,
             getGoogle: map.getGoogle,
             toggleLinked: this.toggleLinked,
-            setRendering: this.setRendering,
             toggleRendering: this.toggleRendering,
             enableZoomArea: this.enableZoomArea,
             disableZoomArea: this.disableZoomArea,
@@ -602,6 +601,13 @@ class _Map extends React.Component {
         this.setRendering(!rendering)
     }
 
+    updateRendering(pendingTiles) {
+        const {user: {manualMapRenderingEnabled}} = this.props
+        if (manualMapRenderingEnabled && this.renderingEnabled$.getValue() && !pendingTiles) {
+            this.setRendering(false)
+        }
+    }
+
     render() {
         const {recipe, layers, imageLayerSources} = this.props
         const {googleMapsApiKey, nicfiPlanetApiKey} = this.state
@@ -684,6 +690,7 @@ class _Map extends React.Component {
         return (
             <SectionLayout>
                 <Content className={styles.recipe}>
+                    <MapRendering/>
                     <MapToolbar statePath={[recipeStatePath, 'ui']}/>
                     <MapInfo/>
                     <LegendImport/>
@@ -815,6 +822,9 @@ class _Map extends React.Component {
                 finalize(() => linked$.next({linked: false}))
             ).subscribe(
                 linked => linked$.next({linked, view: this.viewUpdates$.getValue()})
+            ),
+            this.renderingProgress$.subscribe(
+                pendingTiles => this.updateRendering(pendingTiles)
             )
         )
     }

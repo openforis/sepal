@@ -1,0 +1,7 @@
+.container {
+    position: absolute;
+    top: .5rem;
+    left: .5rem;
+    pointer-events: all;
+    border: 1px solid transparent; /* HACK: compensate for border in look.module.css, not used here */
+}

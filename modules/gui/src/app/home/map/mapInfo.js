@@ -170,20 +170,16 @@ const MapInfoPanel = compose(
 class _MapInfo extends React.PureComponent {
     state = {
         view: {},
-        width: null,
-        pendingTiles: null
+        width: null
     }
 
     componentDidMount() {
-        const {map: {view$, renderingProgress$}, addSubscription} = this.props
+        const {map: {view$}, addSubscription} = this.props
         addSubscription(
             view$.pipe(
                 throttleTime(THROTTLE_TIME_MS, null, {leading: true, trailing: true})
             ).subscribe(
                 view => view && this.setState({view})
-            ),
-            renderingProgress$.subscribe(
-                pendingTiles => this.setState({pendingTiles})
             )
         )
     }
@@ -192,29 +188,8 @@ class _MapInfo extends React.PureComponent {
         return (
             <div className={styles.container}>
                 <MapInfoPanel/>
-                {this.renderContent()}
+                {this.renderScale()}
             </div>
-        )
-    }
-
-    renderContent() {
-        const {pendingTiles} = this.state
-        return pendingTiles
-            ? this.renderProgress()
-            : this.renderScale()
-    }
-
-    renderProgress() {
-        const {pendingTiles} = this.state
-        return (
-            <Button
-                look='default'
-                shape='rectangle'
-                size='x-small'
-                additionalClassName={styles.button}
-                air='less'>
-                {pendingTiles} TILES REMAINING
-            </Button>
         )
     }
 
