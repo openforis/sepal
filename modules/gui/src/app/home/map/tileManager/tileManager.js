@@ -138,8 +138,7 @@ export const getTileManager = ({tileProviderId = uuid(), tileProvider, rendering
     }
 
     const tileManager = tileManagers[type]
-
-    tileManager.addTileProvider(tileProviderId, tileProvider)
+    const subscriptions = []
 
     const updateStatus = () => {
         status$.next(tileManager.getStats(tileProviderId))
@@ -177,15 +176,21 @@ export const getTileManager = ({tileProviderId = uuid(), tileProvider, rendering
 
     const close = () => {
         tileManager.removeTileProvider(tileProviderId)
+        subscriptions.forEach(
+            subscription => subscription.unsubscribe()
+        )
     }
 
+    tileManager.addTileProvider(tileProviderId, tileProvider)
+
     setEnabled(renderingEnabled$.getValue())
-    // setEnabled(false)
 
-    renderingEnabled$.subscribe(
-        enabled => setEnabled(enabled)
+    subscriptions.push(
+        renderingEnabled$.subscribe(
+            enabled => setEnabled(enabled)
+        )
     )
-
+    
     return {
         loadTile$,
         releaseTile,
