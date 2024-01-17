@@ -43,7 +43,8 @@ class _Combo extends React.Component {
         this.onInputBlur = this.onInputBlur.bind(this)
         this.onOptionsBlur = this.onOptionsBlur.bind(this)
         this.showOptions = this.showOptions.bind(this)
-        this.editFilter = this.editFilter.bind(this)
+        this.editFilterFromStart = this.editFilterFromStart.bind(this)
+        this.editFilterFromEnd = this.editFilterFromEnd.bind(this)
         this.setFilter = this.setFilter.bind(this)
         this.resetFilterOrClose = this.resetFilterOrClose.bind(this)
         this.resetFilterOrClearSelection = this.resetFilterOrClearSelection.bind(this)
@@ -118,8 +119,8 @@ class _Combo extends React.Component {
                 keymap={{
                     ArrowUp: this.showOptions,
                     ArrowDown: this.showOptions,
-                    ArrowLeft: _.isEmpty(filter) ? this.editFilter : null,
-                    ArrowRight: _.isEmpty(filter) ? this.editFilter : null,
+                    ArrowLeft: _.isEmpty(filter) ? this.editFilterFromStart : null,
+                    ArrowRight: _.isEmpty(filter) ? this.editFilterFromEnd : null,
                     Home: this.showOptions,
                     End: this.showOptions,
                     // Enter: null
@@ -156,8 +157,27 @@ class _Combo extends React.Component {
         return selectedOption && !_.isNil(value) ? selectedOption.label : null
     }
 
-    editFilter() {
-        this.setFilter(this.getSelectedOptionValue() || '')
+    editFilter(callback) {
+        this.setFilter(this.getSelectedOptionValue() || '', callback)
+    }
+
+    editFilterFromStart() {
+        this.editFilter(() => {
+            const input = this.input.current
+            input.focus()
+            input.setSelectionRange(0, 0)
+            input.scrollTo({left: 0})
+        })
+    }
+
+    editFilterFromEnd() {
+        this.editFilter(() => {
+            const input = this.input.current
+            const end = input.value.length
+            input.focus()
+            input.setSelectionRange(end, end)
+            input.scrollTo({left: input.scrollWidth - input.clientWidth})
+        })
     }
 
     onChange(e) {
@@ -264,17 +284,17 @@ class _Combo extends React.Component {
         )
     }
 
-    setFilter(filter = '') {
+    setFilter(filter = '', callback) {
         const {onFilterChange} = this.props
         const {showOptions} = this.state
         onFilterChange && onFilterChange(filter)
-        this.setState({
-            filter,
-            matcher: this.matcher(filter)
-        })
         if (showOptions) {
             this.focusInput()
         }
+        this.setState({
+            filter,
+            matcher: this.matcher(filter)
+        }, callback)
     }
 
     resetFilterOrClearSelection() {
