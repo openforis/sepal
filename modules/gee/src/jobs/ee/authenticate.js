@@ -3,6 +3,17 @@ const {eeLimiterService} = require('#sepal/ee/eeLimiterService')
 
 const DEFAULT_MAX_RETRIES = 3
 
+/*
+To use highvolume endpoint, configure initArgs in worker:
+
+    module.exports = job({
+        jobName: 'Some job name',
+        jobPath: __filename,
+        initArgs: () => ({eeEndpoint: 'https://earthengine-highvolume.googleapis.com'}),
+        worker$
+    })
+*/
+
 const getSepalUser = ctx => {
     const sepalUser = ctx.request.headers['sepal-user']
     return sepalUser
@@ -21,7 +32,7 @@ const getCredentials = ctx => {
     }
 }
 
-const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}) => {
+const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initArgs: {eeEndpoint} = {}}) => {
     const {switchMap} = require('rxjs')
     const {swallow} = require('#sepal/rxjs')
     const ee = require('#sepal/ee')
@@ -76,8 +87,8 @@ const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}) => {
                 const projectId = sepalUser?.googleTokens?.projectId || googleProjectId
                 ee.setMaxRetries(DEFAULT_MAX_RETRIES)
                 // [HACK] Force ee to change projectId after first initialization (ee.initialize() doesn't do that).
-                ee.data.initialize(null, null, null, projectId)
-                ee.initialize(null, null, resolve, reject, null, sepalUser?.googleTokens?.projectId)
+                ee.data.initialize(eeEndpoint, null, null, projectId)
+                ee.initialize(eeEndpoint, null, resolve, reject, null, sepalUser?.googleTokens?.projectId)
             }
         })),
         swallow()
