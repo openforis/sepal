@@ -284,16 +284,18 @@ class _Combo extends React.Component {
         )
     }
 
-    setFilter(filter = '', callback) {
+    setFilter(filter, callback) {
         const {onFilterChange} = this.props
         const {showOptions} = this.state
-        onFilterChange && onFilterChange(filter)
+        const nullSafeFilter = filter || ''
+        const filterReset = filter === undefined
+        onFilterChange && onFilterChange(nullSafeFilter, filterReset)
         if (showOptions) {
             this.focusInput()
         }
         this.setState({
-            filter,
-            matcher: this.matcher(filter)
+            filter: nullSafeFilter,
+            matcher: this.matcher(nullSafeFilter)
         }, callback)
     }
 
@@ -505,7 +507,7 @@ Combo.propTypes = {
     onBlur: PropTypes.func,
     onCancel: PropTypes.func,
     onChange: PropTypes.func,
-    onFilterChange: PropTypes.func
+    onFilterChange: PropTypes.func // arguments: filter, filterReset
 }
 
 Combo.defaultProps = {
