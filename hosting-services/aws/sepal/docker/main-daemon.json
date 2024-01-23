@@ -6,6 +6,7 @@
     ],
     "log-driver": "syslog",
     "log-opts": {
+        "cache-disabled": "true",
         "syslog-address": "{{ SYSLOG_ADDRESS }}",
         "tag": "docker/{{ '{{.Name}}' }}",
         "labels": "dev",
