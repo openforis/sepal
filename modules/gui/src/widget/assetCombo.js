@@ -192,11 +192,11 @@ class _AssetCombo extends React.Component {
             this.filter$.pipe(
                 debounceTime(100)
             ).subscribe(
-                filter => this.setState({
-                    filter,
+                ({filter, filterReset}) => this.setState(({filter: prevFilter}) => ({
+                    filter: filterReset ? prevFilter : filter,
                     highlightMatcher: getHighlightMatcher(filter),
                     searchingDatasets: !!filter && mode === ASSET
-                })
+                }))
             )
         )
     }
@@ -207,7 +207,7 @@ class _AssetCombo extends React.Component {
             addSubscription(
                 this.filter$.pipe(
                     debounceTime(500),
-                    map(filter => filter.length ? filter : this.getCurrentValue()),
+                    map(({filter}) => filter ? filter : this.getCurrentValue()),
                     switchMap(search =>
                         api.gee.datasets$(search, allowedTypes).pipe(
                             takeUntil(this.filter$)
@@ -390,10 +390,10 @@ class _AssetCombo extends React.Component {
             }))
     }
 
-    onFilterChange(filter) {
-        this.filter$.next(filter)
+    onFilterChange(filter, filterReset) {
+        this.filter$.next({filter, filterReset})
     }
-
+    
     onChange(option) {
         const {label, value, type} = option
         const {onChange} = this.props
@@ -411,15 +411,15 @@ class _AssetCombo extends React.Component {
         }
     }
 
-    defaultOnError(assetId, error) {
-        const {input, assets: {removeAsset}} = this.props
-        input.setInvalid(
-            error.response && error.response.messageKey
-                ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                : msg('widget.assetInput.loadError')
-        )
-        removeAsset(assetId)
-    }
+    // defaultOnError(assetId, error) {
+    //     const {input, assets: {removeAsset}} = this.props
+    //     input.setInvalid(
+    //         error.response && error.response.messageKey
+    //             ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
+    //             : msg('widget.assetInput.loadError')
+    //     )
+    //     removeAsset(assetId)
+    // }
 
     onLoaded(assetId, metadata) {
         const {onLoaded, assets: {updateAsset}} = this.props
@@ -470,7 +470,7 @@ class _AssetCombo extends React.Component {
                 stream({
                     name: 'LOAD_ASSET_METADATA',
                     stream$: this.getMetadata$(assetId).pipe(
-                        takeUntil(this.assetChanged$.pipe()),
+                        takeUntil(this.assetChanged$),
                         first()
                     ),
                     onNext: metadata => this.onLoaded(assetId, metadata),
