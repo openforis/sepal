@@ -67,7 +67,6 @@ class Dates extends React.Component {
     }
 
     renderAllDates() {
-        const {inputs: {year}} = this.props
         return (
             <p className={styles.description}>Include imagery for all dates</p>
         )

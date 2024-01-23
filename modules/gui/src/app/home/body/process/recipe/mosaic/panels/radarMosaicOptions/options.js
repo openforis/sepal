@@ -59,7 +59,7 @@ class Options extends React.Component {
     }
 
     renderAdvanced() {
-        const {inputs: {mask, spatialSpeckleFilter, strongScatterers}} = this.props
+        const {inputs: {mask}} = this.props
         return (
             <Layout>
                 {this.renderOrbits()}

@@ -9,8 +9,6 @@ import React from 'react'
 import moment from 'moment'
 import styles from './dates.module.css'
 
-const DATE_FORMAT = 'YYYY-MM-DD'
-
 const fields = {
     fromDate: new Form.Field(),
     toDate: new Form.Field()

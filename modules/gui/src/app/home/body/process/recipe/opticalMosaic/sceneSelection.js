@@ -211,7 +211,7 @@ class SceneSelection extends React.Component {
             const scenesById = {}
             scenes.forEach(scene => scenesById[scene.id] = scene)
             return {...prevState, scenes, scenesById}
-        }, () => console.log(scenes))
+        })
     }
 
 }

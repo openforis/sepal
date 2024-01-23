@@ -134,7 +134,6 @@ class _SceneAreas extends React.Component {
 
 export const SceneAreas = compose(
     _SceneAreas,
-    // withDiff(),
     withRecipe(mapRecipeToProps),
     withTab()
 )
