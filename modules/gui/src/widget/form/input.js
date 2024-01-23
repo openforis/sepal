@@ -18,7 +18,7 @@ class _FormInput extends React.Component {
     }
 
     renderInput() {
-        const {form, forwardedRef, className, input, errorMessage, busyMessage, type, tabIndex, buttons, ...props} = this.props
+        const {forwardedRef, className, input, busyMessage, type, tabIndex, buttons, ...props} = this.props
         return (
             <Input
                 {...props}
@@ -27,7 +27,7 @@ class _FormInput extends React.Component {
                 type={type}
                 name={input && input.name}
                 value={this.getValue()}
-                errorMessage={form.getErrorMessage(errorMessage === true ? input : errorMessage)}
+                errorMessage={this.getErrorMessage()}
                 busyMessage={busyMessage}
                 tabIndex={tabIndex}
                 buttons={buttons}
@@ -35,6 +35,11 @@ class _FormInput extends React.Component {
                 onBlur={this.onblur}
             />
         )
+    }
+    
+    getErrorMessage() {
+        const {form, input, errorMessage} = this.props
+        return form.getErrorMessage(errorMessage === true ? input : errorMessage)
     }
 
     getValue() {
@@ -114,5 +119,6 @@ FormInput.propTypes = {
 }
 
 FormInput.defaultProps = {
-    validate: 'onBlur'
+    validate: 'onBlur',
+    errorMessage: true
 }

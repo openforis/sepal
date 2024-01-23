@@ -20,7 +20,6 @@ class RecipeSection extends React.Component {
                 }}
                 input={recipe}
                 autoFocus
-                errorMessage
             />
         )
     }

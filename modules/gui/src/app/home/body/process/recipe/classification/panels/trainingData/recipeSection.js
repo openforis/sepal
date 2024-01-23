@@ -12,7 +12,6 @@ export default class RecipeSection extends React.Component {
                 autoFocus
                 onLoading={onLoading}
                 onLoaded={({recipe}) => name.set(recipe.title || recipe.placeholder)}
-                errorMessage
             />
         )
     }

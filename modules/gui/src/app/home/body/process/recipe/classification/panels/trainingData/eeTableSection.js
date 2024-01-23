@@ -18,7 +18,6 @@ class EETableSection extends Component {
                 input={eeTable}
                 placeholder={msg('process.classification.panel.trainingData.form.eeTable.placeholder')}
                 allowedTypes={['Table']}
-                errorMessage
                 onChange={tableId => this.loadInputData(tableId)}
                 busyMessage={this.props.stream('LOAD_EE_TABLE_ROWS').active && msg('widget.loading')}
             />

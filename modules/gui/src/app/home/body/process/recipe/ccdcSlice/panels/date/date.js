@@ -99,7 +99,6 @@ class Date extends React.Component {
                     input={startDate}
                     startDate={fromStart}
                     endDate={fromEnd}
-                    errorMessage
                 />
                 <Form.DatePicker
                     label={msg('process.ccdcSlice.panel.date.form.endDate.label')}
@@ -108,7 +107,6 @@ class Date extends React.Component {
                     input={endDate}
                     startDate={toStart}
                     endDate={toEnd}
-                    errorMessage
                 />
             </Layout>
         )
@@ -124,7 +122,6 @@ class Date extends React.Component {
                 input={date}
                 startDate={segmentsStartDate || '1982-08-22'}
                 endDate={moment().add(1, 'year')}
-                errorMessage
             />
         )
     }

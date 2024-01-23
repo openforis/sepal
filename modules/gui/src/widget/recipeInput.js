@@ -68,7 +68,6 @@ class _RecipeInput extends React.Component {
                 options={options}
                 autoFocus={autoFocus}
                 buttons={buttons}
-                errorMessage
                 busyMessage={stream('LOAD_RECIPE').active}
                 onChange={({value}) => this.loadRecipe(value)}
             />

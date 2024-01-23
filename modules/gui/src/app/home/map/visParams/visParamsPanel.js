@@ -675,14 +675,12 @@ class BandForm extends React.Component {
                     label={msg('map.visParams.form.min.label')}
                     className={styles.minMax}
                     type='number'
-                    errorMessage
                 />
                 <Form.Input
                     input={max}
                     label={msg('map.visParams.form.max.label')}
                     className={styles.minMax}
                     type='number'
-                    errorMessage
                 />
             </Layout>
         )
@@ -696,7 +694,6 @@ class BandForm extends React.Component {
                 className={styles.gamma}>
                 <Form.Input
                     input={gamma}
-                    errorMessage
                 />
             </Widget>
         )

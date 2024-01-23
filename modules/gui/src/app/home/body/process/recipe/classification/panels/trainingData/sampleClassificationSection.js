@@ -48,7 +48,6 @@ class SampleClassificationSection extends Component {
                 input={samplesPerClass}
                 options={options}
                 suffix={msg('process.classification.panel.trainingData.form.sampleClassification.samplesPerClass.suffix')}
-                errorMessage
                 onChange={count => this.loadInputData({
                     asset: this.props.inputs.assetToSample.value,
                     count,
@@ -69,7 +68,6 @@ class SampleClassificationSection extends Component {
                 input={sampleScale}
                 options={[3, 5, 10, 15, 20, 30, 60, 100, 200, 500]}
                 suffix={msg('process.classification.panel.trainingData.form.sampleClassification.sampleScale.suffix')}
-                errorMessage
                 onChange={scale => this.loadInputData({
                     asset: this.props.inputs.assetToSample.value,
                     count: this.props.inputs.samplesPerClass.value,
@@ -89,7 +87,6 @@ class SampleClassificationSection extends Component {
                 input={assetToSample}
                 placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.placeholder')}
                 allowedTypes={['Image', 'ImageCollection']}
-                errorMessage
                 onLoading={() => this.setState({bands: []})}
                 onLoaded={({metadata}) => {
                     const bands = metadata.bands.map(({id}) => id) || []

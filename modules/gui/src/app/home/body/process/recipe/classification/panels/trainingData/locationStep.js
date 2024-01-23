@@ -53,7 +53,6 @@ class ReferenceDataStep extends Component {
                 disabled={locationType.value !== 'GEO_JSON'}
                 placeholder={msg('process.classification.panel.trainingData.form.location.geoJson.placeholder')}
                 options={columnOptions}
-                errorMessage
             />
             : null
     }
@@ -68,7 +67,6 @@ class ReferenceDataStep extends Component {
                     disabled={locationType.value !== 'XY_COLUMNS'}
                     placeholder={msg('process.classification.panel.trainingData.form.location.xColumn.placeholder')}
                     options={columnOptions}
-                    errorMessage
                 />
                 <Form.Combo
                     label={msg('process.classification.panel.trainingData.form.location.yColumn.label')}
@@ -76,7 +74,6 @@ class ReferenceDataStep extends Component {
                     disabled={locationType.value !== 'XY_COLUMNS'}
                     placeholder={msg('process.classification.panel.trainingData.form.location.yColumn.placeholder')}
                     options={columnOptions}
-                    errorMessage
                 />
             </React.Fragment>
             : null

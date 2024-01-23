@@ -35,7 +35,6 @@ class _FormAssetInput extends React.Component {
                 spellCheck={false}
                 busyMessage={(busyMessage || loading) && msg('widget.loading')}
                 disabled={disabled}
-                errorMessage
             />
         )
     }

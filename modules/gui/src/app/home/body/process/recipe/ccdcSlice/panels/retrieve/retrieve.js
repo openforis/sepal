@@ -153,7 +153,6 @@ class _Retrieve extends React.Component {
                 placeholder={msg('process.retrieve.form.crs.placeholder')}
                 tooltip={msg('process.retrieve.form.crs.tooltip')}
                 input={crs}
-                errorMessage
             />
         )
     }
@@ -166,7 +165,6 @@ class _Retrieve extends React.Component {
                 placeholder={msg('process.retrieve.form.crsTransform.placeholder')}
                 tooltip={msg('process.retrieve.form.crsTransform.tooltip')}
                 input={crsTransform}
-                errorMessage
             />
         )
     }
@@ -181,7 +179,6 @@ class _Retrieve extends React.Component {
                 input={shardSize}
                 options={[4, 16, 32, 64, 128, 256, 512, {value: 1024, label: '1k'}]}
                 suffix={msg('process.retrieve.form.shardSize.suffix')}
-                errorMessage
             />
         )
     }
@@ -211,7 +208,6 @@ class _Retrieve extends React.Component {
                 input={tileSize}
                 options={[0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10]}
                 suffix={msg('process.retrieve.form.tileSize.suffix')}
-                errorMessage
             />
         )
     }
@@ -454,7 +450,6 @@ class _Retrieve extends React.Component {
                 input={scale}
                 options={[1, 5, 10, 15, 20, 30, 60, 100]}
                 suffix={msg('process.retrieve.form.scale.suffix')}
-                errorMessage
             />
         )
     }

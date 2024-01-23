@@ -102,7 +102,6 @@ class Options extends React.Component {
                     disabled={tmaskBandsOptions.length < 2}
                     options={tmaskBandsOptions}
                     framed
-                    errorMessage
                 />
                 <Form.Input
                     label={msg('process.ccdc.panel.options.form.minObservations')}

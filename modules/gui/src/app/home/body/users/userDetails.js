@@ -119,7 +119,6 @@ class UserDetails extends React.Component {
                             autoComplete={false}
                             spellCheck={false}
                             autoFocus={newUser}
-                            errorMessage
                         />
                         <Form.Input
                             label={msg('user.userDetails.form.name.label')}
@@ -127,21 +126,18 @@ class UserDetails extends React.Component {
                             autoComplete={false}
                             spellCheck={false}
                             autoFocus={!newUser}
-                            errorMessage
                         />
                         <Form.Input
                             label={msg('user.userDetails.form.email.label')}
                             input={email}
                             autoComplete={false}
                             spellCheck={false}
-                            errorMessage
                         />
                         <Form.Input
                             label={msg('user.userDetails.form.organization.label')}
                             input={organization}
                             autoComplete={false}
                             spellCheck={false}
-                            errorMessage
                         />
                         <Form.Input
                             label={msg('user.userDetails.form.intendedUse.label')}
@@ -163,6 +159,7 @@ class UserDetails extends React.Component {
                                 input={instanceSpending}
                                 spellCheck={false}
                                 prefix='US$/mo.'
+                                errorMessage={false}
                                 onChange={this.onChangeInstanceSpending}
                             />
                             <Form.Input
@@ -171,6 +168,7 @@ class UserDetails extends React.Component {
                                 input={storageSpending}
                                 spellCheck={false}
                                 prefix='US$/mo.'
+                                errorMessage={false}
                                 onChange={this.onChangeStorageSpending}
                             />
                             <Form.Input
@@ -179,6 +177,7 @@ class UserDetails extends React.Component {
                                 input={storageQuota}
                                 spellCheck={false}
                                 prefix='GB'
+                                errorMessage={false}
                                 onChange={this.onChangeStorageQuota}
                             />
                         </Form.FieldSet>

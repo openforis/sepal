@@ -48,7 +48,6 @@ class SaveRecipe extends React.Component {
                         label={msg('process.saveRecipe.form.name.label')}
                         autoFocus
                         input={name}
-                        errorMessage
                     />
                 </Layout>
             </Panel.Content>

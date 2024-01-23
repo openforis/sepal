@@ -66,7 +66,6 @@ class _SelectPlanet extends React.Component {
                     label={msg('map.layout.addImageLayerSource.types.Planet.form.description.label')}
                     input={description}
                     autoFocus
-                    errorMessage
                 />
                 <Form.Input
                     label={msg('map.layout.addImageLayerSource.types.Planet.form.apiKey.label')}
@@ -74,7 +73,6 @@ class _SelectPlanet extends React.Component {
                     spellCheck={false}
                     onChangeDebounced={apiKey => this.validateApiKey(apiKey)}
                     busyMessage={this.props.stream('VALIDATE_API_KEY').active && msg('widget.loading')}
-                    errorMessage
                 />
             </Layout>
         )

@@ -54,7 +54,6 @@ class _Login extends React.Component {
                     placeholder={msg('landing.login.username.placeholder')}
                     autoFocus
                     tabIndex={1}
-                    errorMessage
                 />
                 <Form.Input
                     label={msg('user.userDetails.form.password.label')}
@@ -62,7 +61,6 @@ class _Login extends React.Component {
                     type='password'
                     placeholder={msg('landing.login.password.placeholder')}
                     tabIndex={2}
-                    errorMessage
                 />
                 <Layout>
                     <ButtonGroup layout='horizontal' alignment='distribute'>

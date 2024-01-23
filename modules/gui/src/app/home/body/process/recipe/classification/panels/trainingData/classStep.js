@@ -37,7 +37,6 @@ class ClassStep extends Component {
                 placeholder={msg('Enter expression')}
                 tooltip={msg('Enter expression determining which rows to include, or leave empty')}
                 input={filterExpression}
-                errorMessage
                 onBlur={() => {
                     try {
                         validateExpression({expression: filterExpression.value, rows: inputData.value})

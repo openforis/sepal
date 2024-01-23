@@ -51,7 +51,6 @@ class _WorkspaceDestination extends React.Component {
                 label={label}
                 placeholder={placeholder}
                 autoFocus={autoFocus}
-                errorMessage
                 // onLoading={this.onLoading}
                 // onLoaded={({metadata} = {}) => this.onLoaded(metadata?.type)}
                 // onError={this.onError}

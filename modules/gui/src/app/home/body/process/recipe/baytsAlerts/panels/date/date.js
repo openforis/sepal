@@ -61,7 +61,6 @@ class Date extends React.Component {
                 input={monitoringEnd}
                 startDate={dateRange.start}
                 endDate={dateRange.end}
-                errorMessage
             />
         )
     }
@@ -87,7 +86,6 @@ class Date extends React.Component {
                     type='number'
                     input={duration}
                     className={styles.unit}
-                    errorMessage
                 />
                 <Form.Combo
                     input={durationUnit}
@@ -98,7 +96,6 @@ class Date extends React.Component {
                         {value: 'months', label: msg('process.baytsAlerts.panel.date.form.durationUnit.MONTHS')}
                     ]}
                     className={styles.durationUnit}
-                    errorMessage
                 />
             </Widget>
         )

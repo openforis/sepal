@@ -23,15 +23,15 @@ class _FormCombo extends React.Component {
     }
 
     getErrorMessage() {
-        const {form, errorMessage, input} = this.props
-        return form.getErrorMessage(errorMessage || [input])
+        const {form, input, errorMessage} = this.props
+        return form.getErrorMessage(errorMessage === true ? input : errorMessage)
     }
 
     render() {
         const {
             input, options, buttons, alignment, allowClear, autoFocus, autoOpen, border, busyMessage, className, disabled,
-            inputClassName, keyboard, label, labelButtons, optionsClassName,
-            optionTooltipPlacement, placeholder, placement, readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, onCancel, onFilterChange
+            inputClassName, keyboard, label, labelButtons, optionsClassName, optionTooltipPlacement, placeholder, placement,
+            readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, onCancel, onFilterChange
         } = this.props
         return (
             <Combo
@@ -101,4 +101,8 @@ FormCombo.propTypes = {
     onCancel: PropTypes.func,
     onChange: PropTypes.func,
     onFilterChange: PropTypes.func
+}
+
+FormCombo.defaultProps = {
+    errorMessage: true
 }

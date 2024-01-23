@@ -16,7 +16,6 @@ export default class RecipeSection extends React.Component {
                 input={recipe}
                 filter={type => ['CCDC', 'ASSET_MOSAIC'].includes(type.id)}
                 autoFocus
-                errorMessage
             />
         )
     }

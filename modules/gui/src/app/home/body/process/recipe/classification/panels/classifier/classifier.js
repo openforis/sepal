@@ -326,7 +326,6 @@ class Classifier extends React.Component {
                 tooltip={msg('process.classification.panel.classifier.form.randomForest.config.numberOfTrees.tooltip')}
                 placeholder={msg('process.classification.panel.classifier.form.randomForest.config.numberOfTrees.placeholder')}
                 input={numberOfTrees}
-                errorMessage
             />
         )
     }
@@ -342,7 +341,6 @@ class Classifier extends React.Component {
                 tooltip={msg('process.classification.panel.classifier.form.randomForest.config.variablesPerSplit.tooltip')}
                 placeholder={msg('process.classification.panel.classifier.form.randomForest.config.variablesPerSplit.placeholder')}
                 input={variablesPerSplit}
-                errorMessage
             />
         )
     }
@@ -358,7 +356,6 @@ class Classifier extends React.Component {
                 tooltip={msg('process.classification.panel.classifier.form.randomForest.config.minLeafPopulation.tooltip')}
                 placeholder={msg('process.classification.panel.classifier.form.randomForest.config.minLeafPopulation.placeholder')}
                 input={minLeafPopulation}
-                errorMessage
             />
         )
     }
@@ -374,7 +371,6 @@ class Classifier extends React.Component {
                 tooltip={msg('process.classification.panel.classifier.form.randomForest.config.bagFraction.tooltip')}
                 placeholder={msg('process.classification.panel.classifier.form.randomForest.config.bagFraction.placeholder')}
                 input={bagFraction}
-                errorMessage
             />
         )
     }
@@ -390,7 +386,6 @@ class Classifier extends React.Component {
                 tooltip={msg('process.classification.panel.classifier.form.randomForest.config.maxNodes.tooltip')}
                 placeholder={msg('process.classification.panel.classifier.form.randomForest.config.maxNodes.placeholder')}
                 input={maxNodes}
-                errorMessage
             />
         )
     }
@@ -406,7 +401,6 @@ class Classifier extends React.Component {
                 tooltip={msg('process.classification.panel.classifier.form.randomForest.config.seed.tooltip')}
                 placeholder={msg('process.classification.panel.classifier.form.randomForest.config.seed.placeholder')}
                 input={seed}
-                errorMessage
             />
         )
     }
@@ -422,7 +416,6 @@ class Classifier extends React.Component {
                 tooltip={msg('process.classification.panel.classifier.form.gradientTreeBoost.config.shrinkage.tooltip')}
                 placeholder={msg('process.classification.panel.classifier.form.gradientTreeBoost.config.shrinkage.placeholder')}
                 input={shrinkage}
-                errorMessage
             />
         )
     }
@@ -438,7 +431,6 @@ class Classifier extends React.Component {
                 tooltip={msg('process.classification.panel.classifier.form.gradientTreeBoost.config.samplingRate.tooltip')}
                 placeholder={msg('process.classification.panel.classifier.form.gradientTreeBoost.config.samplingRate.placeholder')}
                 input={samplingRate}
-                errorMessage
             />
         )
     }
@@ -482,7 +474,6 @@ class Classifier extends React.Component {
                 tooltip={msg('process.classification.panel.classifier.form.naiveBayes.config.lambda.tooltip')}
                 placeholder={msg('process.classification.panel.classifier.form.naiveBayes.config.lambda.placeholder')}
                 input={lambda}
-                errorMessage
             />
         )
     }
@@ -613,7 +604,6 @@ class Classifier extends React.Component {
                 tooltip={msg('process.classification.panel.classifier.form.svm.config.degree.tooltip')}
                 placeholder={msg('process.classification.panel.classifier.form.svm.config.degree.placeholder')}
                 input={degree}
-                errorMessage
             />
         )
     }
@@ -629,7 +619,6 @@ class Classifier extends React.Component {
                 tooltip={msg('process.classification.panel.classifier.form.svm.config.gamma.tooltip')}
                 placeholder={msg('process.classification.panel.classifier.form.svm.config.gamma.placeholder')}
                 input={gamma}
-                errorMessage
             />
         )
     }
@@ -645,7 +634,6 @@ class Classifier extends React.Component {
                 tooltip={msg('process.classification.panel.classifier.form.svm.config.coef0.tooltip')}
                 placeholder={msg('process.classification.panel.classifier.form.svm.config.coef0.placeholder')}
                 input={coef0}
-                errorMessage
             />
         )
     }
@@ -661,7 +649,6 @@ class Classifier extends React.Component {
                 tooltip={msg('process.classification.panel.classifier.form.svm.config.cost.tooltip')}
                 placeholder={msg('process.classification.panel.classifier.form.svm.config.cost.placeholder')}
                 input={cost}
-                errorMessage
             />
         )
     }
@@ -677,7 +664,6 @@ class Classifier extends React.Component {
                 tooltip={msg('process.classification.panel.classifier.form.svm.config.nu.tooltip')}
                 placeholder={msg('process.classification.panel.classifier.form.svm.config.nu.placeholder')}
                 input={nu}
-                errorMessage
             />
         )
     }
@@ -746,7 +732,6 @@ class Classifier extends React.Component {
                     placeholder={msg('process.classification.panel.classifier.form.decisionTree.placeholder')}
                     input={decisionTree}
                     textArea
-                    errorMessage
                 />
                 <FileSelect
                     single

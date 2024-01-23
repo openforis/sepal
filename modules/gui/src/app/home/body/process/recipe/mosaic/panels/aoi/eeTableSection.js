@@ -51,7 +51,6 @@ class _EETableSection extends React.Component {
                     placeholder={msg('process.mosaic.panel.areaOfInterest.form.eeTable.eeTable.placeholder')}
                     allowedTypes={['Table']}
                     onChange={tableId => tableId && this.loadColumns(tableId)}
-                    errorMessage
                     busyMessage={this.props.stream('LOAD_EE_TABLE_COLUMNS').active && msg('widget.loading')}
                 />
                 {this.renderFilterOptions()}
@@ -122,7 +121,6 @@ class _EETableSection extends React.Component {
                         this.eeTableColumnChanged$.next()
                         this.loadDistinctColumnValues(column.value)
                     }}
-                    errorMessage
                 />
                 <Form.Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.eeTable.row.label')}
@@ -130,7 +128,6 @@ class _EETableSection extends React.Component {
                     disabled={eeTableRowDisabled}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.eeTable.row.placeholder.${rowState}`)}
                     options={(rows || []).map(value => ({value, label: value}))}
-                    errorMessage
                 />
                 <Form.Slider
                     label={msg('process.mosaic.panel.areaOfInterest.form.buffer.label')}

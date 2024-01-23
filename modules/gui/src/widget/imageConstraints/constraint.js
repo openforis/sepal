@@ -205,14 +205,12 @@ class _Constraint extends React.Component {
                     label={msg('widget.imageConstraints.bitRange.from.label')}
                     input={fromBit}
                     autoFocus
-                    errorMessage
                     className={styles.rangeInput}
                     buttons={[fromInclusiveButton]}
                 />
                 <Form.Input
                     label={msg('widget.imageConstraints.bitRange.to.label')}
                     input={toBit}
-                    errorMessage
                     className={styles.rangeInput}
                     buttons={[toInclusiveButton]}
                 />
@@ -255,14 +253,12 @@ class _Constraint extends React.Component {
                     label={msg('widget.imageConstraints.range.from.label')}
                     input={from}
                     autoFocus
-                    errorMessage
                     className={styles.rangeInput}
                     buttons={[fromInclusiveButton]}
                 />
                 <Form.Input
                     label={msg('widget.imageConstraints.range.to.label')}
                     input={to}
-                    errorMessage
                     className={styles.rangeInput}
                     buttons={[toInclusiveButton]}
                 />
@@ -277,7 +273,6 @@ class _Constraint extends React.Component {
                 label={msg('widget.imageConstraints.value.label')}
                 input={value}
                 autoFocus
-                errorMessage
                 className={styles.singleValueInput}
             />
         )
