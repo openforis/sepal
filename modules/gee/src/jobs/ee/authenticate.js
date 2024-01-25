@@ -88,7 +88,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials, googleProjectId}, {initA
                 ee.setMaxRetries(DEFAULT_MAX_RETRIES)
                 // [HACK] Force ee to change projectId after first initialization (ee.initialize() doesn't do that).
                 ee.data.initialize(eeEndpoint, null, null, projectId)
-                ee.initialize(eeEndpoint, null, resolve, reject, null, sepalUser?.googleTokens?.projectId)
+                ee.initialize(eeEndpoint, null, resolve, reject, null, projectId)
             }
         })),
         swallow()
