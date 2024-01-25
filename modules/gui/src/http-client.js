@@ -1,7 +1,7 @@
 import {ajax} from 'rxjs/ajax'
 import {catchError, map, mergeMap, of, range, retryWhen, tap, throwError, timer, zip} from 'rxjs'
+import {currentUser, logout$, updateUser} from 'user'
 import {getLogger} from 'log'
-import {logout$, updateUser} from 'user'
 import {msg} from 'translate'
 import {webSocket} from 'rxjs/webSocket'
 import Notifications from 'widget/notifications'
@@ -156,7 +156,9 @@ const execute$ = (url, method, {retries, query, username, password, headers, val
     return ajax({url: urlWithQuery, method, headers, ...args}).pipe(
         tap(({responseHeaders}) => {
             if (responseHeaders['sepal-user']) { // Make sure the user is up-to-date. Google Tokens might have changed
-                const user = JSON.parse(responseHeaders['sepal-user'])
+                const previousUser = _.omit(currentUser(), ['googleTokens']) // make sure googleTokens are always updated
+                const updatedUser = JSON.parse(responseHeaders['sepal-user'])
+                const user = {...previousUser, ...updatedUser}
                 updateUser(user)
             }
         }),
