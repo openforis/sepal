@@ -47,8 +47,7 @@ const exportImageToAsset$ = (taskId, {
                 export$({description, assetId}),
                 share$({sharing, assetId})
             )
-        )
-    )
+        ))
 }
 
 const imageToAssetCollection$ = (taskId, {
