@@ -146,7 +146,6 @@ class Sources extends React.Component {
                     ? this.loadClassification(selected.value)
                     : this.deselectClassification()}
                 allowClear
-                errorMessage
             />
         )
     }

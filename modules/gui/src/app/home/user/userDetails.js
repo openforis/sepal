@@ -73,13 +73,11 @@ class _UserDetails extends React.Component {
                             autoFocus
                             input={name}
                             spellCheck={false}
-                            errorMessage
                         />
                         <Form.Input
                             label={msg('user.userDetails.form.email.label')}
                             input={email}
                             spellCheck={false}
-                            errorMessage
                         />
                         <Form.Input
                             label={msg('user.userDetails.form.organization.label')}
@@ -90,7 +88,6 @@ class _UserDetails extends React.Component {
                             label={msg('user.userDetails.form.intendedUse.label')}
                             input={intendedUse}
                             spellCheck={false}
-                            errorMessage
                             textArea
                             minRows={4}
                         />

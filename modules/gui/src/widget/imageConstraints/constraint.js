@@ -166,7 +166,7 @@ class _Constraint extends React.Component {
     }
 
     renderProperty() {
-        const {images, inputs: {image, property, bit}} = this.props
+        const {images, inputs: {image, property}} = this.props
         const propertyOptions = image.value
             ? images
                 .find(({id}) => id === image.value).properties
@@ -205,14 +205,12 @@ class _Constraint extends React.Component {
                     label={msg('widget.imageConstraints.bitRange.from.label')}
                     input={fromBit}
                     autoFocus
-                    errorMessage
                     className={styles.rangeInput}
                     buttons={[fromInclusiveButton]}
                 />
                 <Form.Input
                     label={msg('widget.imageConstraints.bitRange.to.label')}
                     input={toBit}
-                    errorMessage
                     className={styles.rangeInput}
                     buttons={[toInclusiveButton]}
                 />
@@ -255,14 +253,12 @@ class _Constraint extends React.Component {
                     label={msg('widget.imageConstraints.range.from.label')}
                     input={from}
                     autoFocus
-                    errorMessage
                     className={styles.rangeInput}
                     buttons={[fromInclusiveButton]}
                 />
                 <Form.Input
                     label={msg('widget.imageConstraints.range.to.label')}
                     input={to}
-                    errorMessage
                     className={styles.rangeInput}
                     buttons={[toInclusiveButton]}
                 />
@@ -277,7 +273,6 @@ class _Constraint extends React.Component {
                 label={msg('widget.imageConstraints.value.label')}
                 input={value}
                 autoFocus
-                errorMessage
                 className={styles.singleValueInput}
             />
         )
@@ -345,7 +340,7 @@ class _Constraint extends React.Component {
     }
 
     toDescription() {
-        const {applyOn, inputs: {band, property, bit, fromBit, fromBitInclusive, toBit, toBitInclusive, operator, from, fromInclusive, to, toInclusive, value}} = this.props
+        const {applyOn, inputs: {band, property, bit, fromBit, fromBitInclusive, toBit, toBitInclusive, operator, from, fromInclusive, to, toInclusive}} = this.props
         const applyOnBand = applyOn === 'bands'
         if (applyOnBand && !band.value) {
             return msg('widget.imageConstraints.band.notSelected')
@@ -378,12 +373,11 @@ class _Constraint extends React.Component {
 
     toConstraint() {
         const {
-            applyOn,
             constraint: {id},
             inputs: {
                 image, band, property,
                 bit, fromBit, toBit, fromBitInclusive, toBitInclusive,
-                operator, from, fromInclusive, to, toInclusive, value, selectedClasses
+                operator, from, fromInclusive, to, toInclusive, selectedClasses
             }
         } = this.props
         

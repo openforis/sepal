@@ -63,13 +63,11 @@ class _ChangePassword extends React.Component {
                     type='password'
                     autoFocus
                     input={oldPassword}
-                    errorMessage
                 />
                 <Form.Input
                     label={msg('user.changePassword.form.newPassword.label')}
                     type='password'
                     input={newPassword}
-                    errorMessage
                 />
                 <Form.Input
                     label={msg('user.changePassword.form.confirmPassword.label')}

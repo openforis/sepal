@@ -162,7 +162,6 @@ class _GoogleAccount extends React.Component {
                 options={this.getProjectOptions()}
                 className={styles.durationUnit}
                 busyMessage={projects === null}
-                errorMessage
             />
         )
     }

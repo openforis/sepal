@@ -121,7 +121,6 @@ class _SetPassword extends React.Component {
                         label={msg('landing.reset-password.username.label')}
                         input={username}
                         disabled={true}
-                        errorMessage
                     />
                     <Form.Input
                         label={msg('landing.reset-password.password.label')}
@@ -130,7 +129,6 @@ class _SetPassword extends React.Component {
                         placeholder={msg('landing.reset-password.password.placeholder')}
                         autoFocus
                         tabIndex={1}
-                        errorMessage
                     />
                     <Form.Input
                         label={msg('landing.reset-password.password2.label')}

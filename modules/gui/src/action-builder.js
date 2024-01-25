@@ -1,6 +1,5 @@
 import {Mutator, resolve} from 'stateUtils'
 import {dispatch} from 'store'
-import {isEqual} from 'hash'
 import _ from 'lodash'
 
 const actionBuilder = (type, props, prefix) => {

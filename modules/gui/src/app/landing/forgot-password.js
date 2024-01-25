@@ -53,7 +53,6 @@ class _ForgotPassword extends React.Component {
                         autoComplete='off'
                         tabIndex={1}
                         validate='onBlur'
-                        errorMessage
                     />
                     <ButtonGroup layout='horizontal-nowrap' alignment='spaced'>
                         <Button

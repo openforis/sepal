@@ -14,13 +14,14 @@ class _FormAssetCombo extends React.Component {
     }
 
     render() {
-        const {input, alignment, allowClear, allowedTypes, autoFocus, autoOpen, busyMessage, className, disabled,
+        const {
+            input, alignment, allowClear, allowedTypes, autoFocus, autoOpen, busyMessage, className, disabled,
             inputClassName, keyboard, label, labelButtons, mode, optionsClassName, optionTooltipPlacement, placeholder, placement,
-            preferredTypes, readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, onCancel, onLoaded, onLoading} = this.props
+            preferredTypes, readOnly, stayOpenOnSelect, tooltip, tooltipPlacement, onCancel, onLoaded, onLoading
+        } = this.props
         return (
             <AssetCombo
                 value={input.value}
-                onChange={this.onChange}
                 alignment={alignment}
                 allowClear={allowClear}
                 allowedTypes={allowedTypes}
@@ -45,17 +46,17 @@ class _FormAssetCombo extends React.Component {
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 onCancel={onCancel}
+                onChange={this.onChange}
                 onError={this.onError}
                 onLoaded={onLoaded}
                 onLoading={onLoading}
-            
             />
         )
     }
 
     getErrorMessage() {
-        const {form, errorMessage, input} = this.props
-        return form.getErrorMessage(errorMessage || [input])
+        const {form, input, errorMessage} = this.props
+        return form.getErrorMessage(errorMessage === true ? input : errorMessage)
     }
 
     onChange(value, option) {
@@ -114,4 +115,8 @@ FormAssetCombo.propTypes = {
     onError: PropTypes.func,
     onLoaded: PropTypes.func,
     onLoading: PropTypes.func
+}
+
+FormAssetCombo.defaultProps = {
+    errorMessage: true
 }

@@ -38,7 +38,7 @@ export const MultitemporalSpeckleFilterOptions = compose(
     withActivators('multitemporalSpeckleFilterOptions')
 )
 
-const filterFields = ({spatialSpeckleFilter, multitemporalSpeckleFilter, inputs}) => [
+const filterFields = ({spatialSpeckleFilter, multitemporalSpeckleFilter}) => [
     (spatialSpeckleFilter && spatialSpeckleFilter !== 'NONE'
         && multitemporalSpeckleFilter && multitemporalSpeckleFilter !== 'NONE'
         ? ['numberOfImages'] : []),

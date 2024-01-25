@@ -233,7 +233,6 @@ class Options extends React.Component {
                 label={msg('process.baytsAlerts.panel.options.form.maxDays.label')}
                 tooltip={msg('process.baytsAlerts.panel.options.form.maxDays.tooltip')}
                 input={maxDays}
-                errorMessage
             />
         )
     }
@@ -261,7 +260,6 @@ class Options extends React.Component {
                 label={msg('process.baytsAlerts.panel.options.form.highConfidenceThreshold.label')}
                 tooltip={msg('process.baytsAlerts.panel.options.form.highConfidenceThreshold.tooltip')}
                 input={highConfidenceThreshold}
-                errorMessage
             />
         )
     }
@@ -275,7 +273,6 @@ class Options extends React.Component {
                 label={msg('process.baytsAlerts.panel.options.form.minNonForestProbability.label')}
                 tooltip={msg('process.baytsAlerts.panel.options.form.minNonForestProbability.tooltip')}
                 input={minNonForestProbability}
-                errorMessage
             />
         )
     }
@@ -289,7 +286,6 @@ class Options extends React.Component {
                 label={msg('process.baytsAlerts.panel.options.form.minChangeProbability.label')}
                 tooltip={msg('process.baytsAlerts.panel.options.form.minChangeProbability.tooltip')}
                 input={minChangeProbability}
-                errorMessage
             />
         )
     }

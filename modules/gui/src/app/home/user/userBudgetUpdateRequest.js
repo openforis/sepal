@@ -141,6 +141,7 @@ export class _BudgetUpdateRequest extends React.Component {
                     input={instanceSpending}
                     spellCheck={false}
                     prefix='US$/mo.'
+                    errorMessage={false}
                 />
                 <Form.Input
                     label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
@@ -148,6 +149,7 @@ export class _BudgetUpdateRequest extends React.Component {
                     input={storageSpending}
                     spellCheck={false}
                     prefix='US$/mo.'
+                    errorMessage={false}
                 />
                 <Form.Input
                     label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
@@ -155,6 +157,7 @@ export class _BudgetUpdateRequest extends React.Component {
                     input={storageQuota}
                     spellCheck={false}
                     prefix='GB'
+                    errorMessage={false}
                 />
             </Form.FieldSet>
         )
@@ -170,7 +173,6 @@ export class _BudgetUpdateRequest extends React.Component {
                 spellCheck={false}
                 minRows={3}
                 maxRows={10}
-                errorMessage={message}
             />
         )
 
