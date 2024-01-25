@@ -47,7 +47,7 @@ export const getRequestExecutor = concurrency => {
         return tileProviderIds
     }
 
-    const logRequest = (action, {tileProviderId, requestId}) =>
+    const logRequest = ({action, tileProviderId, requestId}) =>
         log.debug(() => [
             action,
             `${requestTag({tileProviderId, requestId})},`,
@@ -58,7 +58,7 @@ export const getRequestExecutor = concurrency => {
         if (!activeRequests[requestId]) {
             activeRequests[requestId] = {tileProviderId, requestId, request, response$, cancel$, timestamp: Date.now()}
             increaseCount(tileProviderId)
-            logRequest({tileProviderId, requestId}, 'Started')
+            logRequest({tileProviderId, requestId, action: 'Started'})
         } else {
             log.warn(() => `Cannot start already started ${requestTag({tileProviderId, requestId})}`)
         }
@@ -69,7 +69,7 @@ export const getRequestExecutor = concurrency => {
         if (activeRequests[requestId]) {
             delete activeRequests[requestId]
             decreaseCount(tileProviderId)
-            logRequest({tileProviderId, requestId}, complete ? 'Completed' : 'Aborted')
+            logRequest({tileProviderId, requestId, action: complete ? 'Completed' : 'Aborted'})
             if (replacementTileProviderId) {
                 ready$.next({tileProviderIds: [replacementTileProviderId], cancelledRequest: currentRequest})
             } else {
