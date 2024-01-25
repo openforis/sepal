@@ -103,7 +103,7 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'thermal', 'thermal2',
+                'aerosol', 'thermal',
                 'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
@@ -124,7 +124,7 @@ const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'thermal', 'thermal2',
+                'aerosol', 'thermal',
                 'brightness', 'greenness', 'wetness', 'fourth', 'fifth', 'sixth'
             ]
         },
