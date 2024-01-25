@@ -183,13 +183,17 @@ export const getTileManager = ({tileProviderId = uuid(), tileProvider, rendering
 
     tileManager.addTileProvider(tileProviderId, tileProvider)
 
-    setEnabled(renderingEnabled$.getValue())
+    if (renderingEnabled$) {
+        setEnabled(renderingEnabled$.getValue())
 
-    subscriptions.push(
-        renderingEnabled$.subscribe(
-            enabled => setEnabled(enabled)
+        subscriptions.push(
+            renderingEnabled$.subscribe(
+                enabled => setEnabled(enabled)
+            )
         )
-    )
+    } else {
+        setEnabled(true)
+    }
     
     return {
         loadTile$,
