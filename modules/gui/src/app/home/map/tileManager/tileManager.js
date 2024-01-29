@@ -1,4 +1,4 @@
-import {BehaviorSubject, ReplaySubject, Subject, finalize, first} from 'rxjs'
+import {ReplaySubject, Subject, filter, finalize, first, map, mergeMap, timer} from 'rxjs'
 import {getLogger} from 'log'
 import {getRequestExecutor} from './requestExecutor'
 import {getRequestQueue} from './requestQueue'
@@ -9,12 +9,14 @@ const log = getLogger('tileManager')
 
 const tileManagers = {}
 
-const createTileManager = (type, concurrency) => {
+const createTileManager = ({type, concurrency}) => {
     const tileProviders = {}
-    const request$ = new Subject()
+    const tileRequest$ = new Subject()
+    const tileResult$ = new Subject()
+    const status$ = new Subject()
 
     const requestQueue = getRequestQueue()
-    const requestExecutor = getRequestExecutor(concurrency)
+    const requestExecutor = getRequestExecutor({tileResult$, concurrency})
 
     const getTileProvider = id => {
         const tileProvider = tileProviders[id]
@@ -46,13 +48,15 @@ const createTileManager = (type, concurrency) => {
 
     const loadTile = ({tileProviderId, requestId, request, response$, cancel$}) => {
         log.debug(() => `Load tile ${requestTag({tileProviderId, requestId})}`)
-        request$.next({tileProviderId, requestId, request, response$, cancel$})
+        tileRequest$.next({tileProviderId, requestId, request, response$, cancel$})
+        updateStatus(tileProviderId)
     }
 
     const releaseTile = (tileProviderId, requestId) => {
         log.debug(() => `Release tile ${requestTag({tileProviderId, requestId})}`)
         requestQueue.discardByRequestId(requestId)
         requestExecutor.cancelByRequestId(requestId)
+        updateStatus(tileProviderId)
     }
 
     const notifyEnabled = () =>
@@ -69,6 +73,7 @@ const createTileManager = (type, concurrency) => {
         log.debug(() => `Set ${tileProviderTag(tileProviderId)} ${visible ? 'visible' : 'hidden'}`)
         requestExecutor.setHidden(tileProviderId, !visible)
         notifyEnabled()
+        updateStatus(tileProviderId)
     }
 
     const setEnabled = (tileProviderId, enabled) => {
@@ -80,6 +85,7 @@ const createTileManager = (type, concurrency) => {
         } else {
             reenqueueDisabled(tileProviderId)
         }
+        updateStatus(tileProviderId)
     }
 
     const getStats = tileProviderId => {
@@ -103,75 +109,76 @@ const createTileManager = (type, concurrency) => {
         return {tileProviderId, type, enqueued, totalEnqueued, active, totalActive, maxActive, pending, pendingEnabled, pendingDisabled, totalPending, msg}
     }
 
-    request$.subscribe(
-        ({tileProviderId, requestId = uuid(), request, response$, cancel$}) => {
-            requestQueue.enqueue({tileProviderId, requestId, request, response$, cancel$})
+    const updateStatus = tileProviderId =>
+        status$.next(getStats(tileProviderId))
+
+    const getStatus$ = tileProviderId =>
+        status$.pipe(
+            filter(status => status.tileProviderId === tileProviderId)
+        )
+
+    tileRequest$.subscribe(
+        ({tileProviderId, requestId = uuid(), request, response$, cancel$, retries}) => {
+            requestQueue.enqueue({tileProviderId, requestId, request, response$, cancel$, retries})
             requestExecutor.notify({tileProviderId, requestId})
         }
     )
 
-    requestExecutor.ready$.subscribe(
-        ({cancelledRequest, tileProviderIds}) => {
-            const request = requestQueue.dequeueByTileProviderIds(tileProviderIds)
+    tileResult$.subscribe(
+        ({tileProviderId, nextTileProviderIds, cancelledRequest}) => {
+            const request = requestQueue.dequeueByTileProviderIds(nextTileProviderIds)
             if (request) {
                 const tileProvider = getTileProvider(request.tileProviderId)
                 requestExecutor.execute(tileProvider, request)
-                if (cancelledRequest) {
-                    loadTile(cancelledRequest)
-                }
             } else {
-                log.trace(() => 'No request pending for the enabled tileProviders')
+                log.trace(() => 'No request pending for any enabled tileProviders')
             }
+            if (cancelledRequest) {
+                log.debug(`Re-enqueuing ${requestTag(cancelledRequest)}`)
+                loadTile(cancelledRequest)
+            }
+            updateStatus(tileProviderId)
         }
     )
 
-    return {addTileProvider, removeTileProvider, loadTile, releaseTile, setVisibility, setEnabled, getStats}
+    return {addTileProvider, removeTileProvider, loadTile, releaseTile, setVisibility, setEnabled, getStatus$}
 }
 
 export const getTileManager = ({tileProviderId = uuid(), tileProvider, renderingEnabled$}) => {
-    const status$ = new BehaviorSubject(0)
     const type = tileProvider.getType()
     const concurrency = tileProvider.getConcurrency()
 
     if (!tileManagers[type]) {
-        tileManagers[type] = createTileManager(type, concurrency)
+        tileManagers[type] = createTileManager({type, concurrency})
     }
 
     const tileManager = tileManagers[type]
     const subscriptions = []
 
-    const updateStatus = () => {
-        status$.next(tileManager.getStats(tileProviderId))
-    }
+    const getStatus$ = () =>
+        tileManager.getStatus$(tileProviderId)
 
     const loadTile$ = request => {
         const response$ = new ReplaySubject(1)
         const cancel$ = new Subject()
         const requestId = request.id
         tileManager.loadTile({tileProviderId, requestId, request, response$, cancel$})
-        updateStatus()
         return response$.pipe(
             first(),
-            finalize(() => {
-                cancel$.next()
-                updateStatus()
-            })
+            finalize(() => cancel$.next())
         )
     }
 
     const releaseTile = requestId => {
         tileManager.releaseTile(tileProviderId, requestId)
-        updateStatus()
     }
 
     const setVisibility = visible => {
         tileManager.setVisibility(tileProviderId, visible)
-        updateStatus()
     }
 
     const setEnabled = enabled => {
         tileManager.setEnabled(tileProviderId, enabled)
-        updateStatus()
     }
 
     const close = () => {
@@ -200,7 +207,7 @@ export const getTileManager = ({tileProviderId = uuid(), tileProvider, rendering
         releaseTile,
         setVisibility,
         setEnabled,
-        status$,
+        getStatus$,
         close
     }
 }
