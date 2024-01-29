@@ -21,6 +21,10 @@ apt-get install -y --no-install-recommends \
   nvidia-driver-515=515.105.01-0ubuntu1 \
   cuda-toolkit-11-7
 
+apt-get install -y \
+  libcudnn8=8.5.0.96-1+cuda11.7 \
+  libcudnn8-dev=8.5.0.96-1+cuda11.7
+
 pip3 install pyopencl
 pip3 install testresources
 
