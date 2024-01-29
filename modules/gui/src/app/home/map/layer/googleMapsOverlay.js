@@ -18,25 +18,29 @@ export class GoogleMapsOverlay {
             tileProvider.tileSize || 256,
             tileProvider.tileSize || 256
         )
-        this.tileElementById = {}
+        this.tileSubscriptionById = {}
     }
 
     getTile({x, y}, zoom, doc) {
         const request = this._toTileRequest({x, y, zoom, minZoom: this.minZoom, doc})
         const element = request.element
-        this.tileElementById[element.id] = element
         if (request.outOfBounds) {
             return element
         }
 
         const tile$ = this.tileProvider.loadTile$(request)
-        tile$.subscribe(blob => this.tileProvider.renderTile({element, blob}))
+        const subscription = tile$.subscribe({
+            next: blob => this.tileProvider.renderTile({element, blob}),
+            error: error => this.tileProvider.renderErrorTile({element, error})
+        })
+        this.tileSubscriptionById[element.id] = subscription
         return element
     }
 
-    releaseTile(tileElement) {
-        delete this.tileElementById[tileElement.id]
-        this.tileProvider.releaseTile(tileElement)
+    releaseTile(element) {
+        this.tileSubscriptionById[element.id].unsubscribe()
+        delete this.tileSubscriptionById[element.id]
+        this.tileProvider.releaseTile(element)
     }
 
     close() {
