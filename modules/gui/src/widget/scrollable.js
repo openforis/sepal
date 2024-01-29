@@ -113,6 +113,7 @@ class _Scrollable extends Component {
             // 'Shift+ ': () => scrollable.scrollPage(-1),
             // ' ': () => scrollable.scrollPage(1)
         } : null
+        // "Space" keybinding disabled because it interferes with Input's keybinding in Combo
         return (
             <div
                 key={key}
