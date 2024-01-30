@@ -590,10 +590,7 @@ class _Map extends React.Component {
     }
 
     setRendering(rendering) {
-        const {user: {manualMapRenderingEnabled}} = this.props
-        if (manualMapRenderingEnabled) {
-            this.renderingEnabled$.next(rendering)
-        }
+        this.renderingEnabled$.next(rendering)
     }
 
     toggleRendering() {

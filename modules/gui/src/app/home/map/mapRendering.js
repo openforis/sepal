@@ -1,7 +1,5 @@
 import {Button} from 'widget/button'
 import {compose} from 'compose'
-import {connect} from 'store'
-import {currentUser} from 'user'
 import {msg} from 'translate'
 import {withMap} from './mapContext'
 import {withSubscriptions} from 'subscription'
@@ -23,9 +21,9 @@ class _MapRendering extends React.PureComponent {
     }
 
     renderManualMapRenderingButton() {
-        const {map, user} = this.props
+        const {map} = this.props
         const {renderingEnabled, pendingTiles} = this.state
-        return user?.manualMapRenderingEnabled && pendingTiles ? (
+        return pendingTiles ? (
             <Button
                 look={renderingEnabled ? 'cancel' : 'add'}
                 size='small'
@@ -54,9 +52,6 @@ class _MapRendering extends React.PureComponent {
 
 export const MapRendering = compose(
     _MapRendering,
-    connect(() => ({
-        user: currentUser()
-    })),
     withMap(),
     withSubscriptions()
 )
