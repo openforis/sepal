@@ -1,4 +1,4 @@
-import {ReplaySubject, Subject, filter, finalize, first, map, mergeMap, timer} from 'rxjs'
+import {ReplaySubject, Subject, filter, finalize, first} from 'rxjs'
 import {getLogger} from 'log'
 import {getRequestExecutor} from './requestExecutor'
 import {getRequestQueue} from './requestQueue'
@@ -144,7 +144,7 @@ const createTileManager = ({type, concurrency}) => {
     return {addTileProvider, removeTileProvider, loadTile, releaseTile, setVisibility, setEnabled, getStatus$}
 }
 
-export const getTileManager = ({tileProviderId = uuid(), tileProvider, renderingEnabled$}) => {
+export const getTileManager = ({tileProviderId = uuid(), tileProvider}) => {
     const type = tileProvider.getType()
     const concurrency = tileProvider.getConcurrency()
 
@@ -153,7 +153,6 @@ export const getTileManager = ({tileProviderId = uuid(), tileProvider, rendering
     }
 
     const tileManager = tileManagers[type]
-    const subscriptions = []
 
     const getStatus$ = () =>
         tileManager.getStatus$(tileProviderId)
@@ -183,24 +182,9 @@ export const getTileManager = ({tileProviderId = uuid(), tileProvider, rendering
 
     const close = () => {
         tileManager.removeTileProvider(tileProviderId)
-        subscriptions.forEach(
-            subscription => subscription.unsubscribe()
-        )
     }
 
     tileManager.addTileProvider(tileProviderId, tileProvider)
-
-    if (renderingEnabled$) {
-        setEnabled(renderingEnabled$.getValue())
-
-        subscriptions.push(
-            renderingEnabled$.subscribe(
-                enabled => setEnabled(enabled)
-            )
-        )
-    } else {
-        setEnabled(true)
-    }
     
     return {
         loadTile$,

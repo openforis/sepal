@@ -7,20 +7,33 @@ export class BalancingTileProvider extends TileProvider {
         this.subscriptions = []
         this.retryCutOffTime = retryCutOffTime
         this.tileProvider = tileProvider
-        this.tileManager = getTileManager({tileProvider, renderingEnabled$})
+        this.tileManager = getTileManager({tileProvider})
         this.initProgress(busy$, renderingStatus$)
+        this.initRenderingEnabled(renderingEnabled$)
     }
 
     initProgress(busy$, renderingStatus$) {
         if (busy$ || renderingStatus$) {
             this.subscriptions.push(
-                this.tileManager.getStatus$().subscribe({
-                    next: ({tileProviderId, pending, pendingEnabled}) => {
+                this.tileManager.getStatus$().subscribe(
+                    ({tileProviderId, pending, pendingEnabled}) => {
                         busy$?.next(pendingEnabled)
                         renderingStatus$?.next({tileProviderId, pending})
                     }
-                })
+                )
             )
+        }
+    }
+
+    initRenderingEnabled(renderingEnabled$) {
+        if (renderingEnabled$) {
+            this.subscriptions.push(
+                renderingEnabled$.subscribe(
+                    enabled => this.tileManager.setEnabled(enabled)
+                )
+            )
+        } else {
+            this.tileManager.setEnabled(true)
         }
     }
 
