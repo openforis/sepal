@@ -53,8 +53,7 @@ class _HoverDetector extends React.Component {
             )
         ).pipe(
             distinctUntilChanged(),
-            // [HACK] Prevent click-through on touch screens
-            switchMap(hover => of(hover).pipe(delay(10)))
+            delay(100) // [HACK] Prevent click-through on touch screens
         )
 
         addSubscription(
