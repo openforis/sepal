@@ -19,6 +19,11 @@ const AREA = Symbol('area')
 const SOURCE = Symbol('source')
 
 class _Areas extends React.Component {
+    constructor(props) {
+        super(props)
+        this.onHover = this.onHover.bind(this)
+    }
+
     state = {
         dragging: null,
         dropArea: null,
@@ -43,6 +48,10 @@ class _Areas extends React.Component {
 
     areaDrag$ = new Subject()
 
+    onHover(hovering) {
+        this.setState({hovering})
+    }
+
     render() {
         const {dragging, hovering} = this.state
         return (
@@ -53,7 +62,7 @@ class _Areas extends React.Component {
                         dragging ? [styles.dragging, styles[dragging.description]] : null,
                         hovering ? styles.hovering : null
                     ]).join(' ')}
-                    onHover={hovering => this.setState({hovering})}>
+                    onHover={this.onHover}>
                     {this.renderCurrentAreas()}
                     {this.renderNextAreas()}
                 </HoverDetector>
