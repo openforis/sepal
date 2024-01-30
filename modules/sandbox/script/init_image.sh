@@ -2,10 +2,6 @@
 set -e
 
 apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
-    sssd \
-    libpam-sss \
-    libnss-sss \
-    libnss-ldap \
     gdebi-core \
     mapnik-utils \
     net-tools \
