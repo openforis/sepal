@@ -25,6 +25,10 @@ export class TileProvider {
         element.innerHTML = `<img src="${(window.URL || window.webkitURL).createObjectURL(blob)}"/>`
     }
 
+    renderErrorTile({_element, _error}) {
+        // this.abstractMethodError('renderErrorTile')
+    }
+
     releaseTile(_tileElement) {
         // this.abstractMethodError('releaseTile')
     }

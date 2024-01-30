@@ -48,7 +48,6 @@ export default class EarthEngineImageLayer extends TileLayer {
         })
         return new BalancingTileProvider({
             tileProvider,
-            retries: 3,
             busy$,
             renderingEnabled$: this.map.renderingEnabled$,
             renderingStatus$: this.map.renderingStatus$

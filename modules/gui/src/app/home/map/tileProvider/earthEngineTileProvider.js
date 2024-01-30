@@ -64,6 +64,21 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
         }
     }
 
+    renderErrorTile({element, _error}) {
+        const ctx = this.getElementContext(element)
+        ctx.fillStyle = 'red'
+        ctx.globalAlpha = .3
+        const C = 6
+        const STEP = TILE_SIZE / C
+        for (let x = 0; x < C; x++) {
+            for (let y = 0; y < C; y++) {
+                if ((x + y) % 2 == 0) {
+                    ctx.fillRect(x * STEP, y * STEP, STEP, STEP)
+                }
+            }
+        }
+    }
+
     releaseTile(element) {
         delete this.elements[element.id]
         delete this.offsets[element.id]

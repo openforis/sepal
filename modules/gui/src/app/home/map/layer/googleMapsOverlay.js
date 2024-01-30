@@ -28,8 +28,7 @@ export class GoogleMapsOverlay {
             return element
         }
 
-        const tile$ = this.tileProvider.loadTile$(request)
-        const subscription = tile$.subscribe({
+        const subscription = this.tileProvider.loadTile$(request).subscribe({
             next: blob => this.tileProvider.renderTile({element, blob}),
             error: error => this.tileProvider.renderErrorTile({element, error})
         })
