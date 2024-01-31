@@ -1,12 +1,12 @@
 import {finalize, first, takeUntil, tap} from 'rxjs'
 import {getLogger} from 'log'
-import {requestTag, tileProviderTag} from 'tag'
+import {tileProviderTag, tileTag} from 'tag'
 import _ from 'lodash'
 
 const log = getLogger('tileManager/executor')
 
 export const getRequestExecutor = ({tileResult$, concurrency}) => {
-    const activeRequests = {} // by requestId
+    const activeRequests = {} // by tileId
     const activeRequestCount = {} // by tileProviderId
     const hiddenTileProviders = {} // by tileProviderId
     const enabledTileProviders = {} // by tileProviderId
@@ -45,62 +45,62 @@ export const getRequestExecutor = ({tileResult$, concurrency}) => {
         return tileProviderIds
     }
 
-    const logRequest = ({action, tileProviderId, requestId}) =>
+    const logRequest = ({action, tileProviderId, tileId}) =>
         log.debug(() => [
             action,
-            `${requestTag({tileProviderId, requestId})},`,
+            `${tileTag({tileProviderId, tileId})},`,
             `active: ${getActiveRequestCount(tileProviderId)}/${getActiveRequestCount()}`
         ].join(' '))
 
-    const start = ({tileProviderId, requestId, request, response$, cancel$}) => {
-        if (!activeRequests[requestId]) {
-            activeRequests[requestId] = {tileProviderId, requestId, request, response$, cancel$, timestamp: Date.now()}
+    const start = ({tileProviderId, tileId, request, response$, cancel$}) => {
+        if (!activeRequests[tileId]) {
+            const tile = {tileProviderId, tileId, request, response$, cancel$, timestamp: Date.now()}
+            activeRequests[tileId] = tile
             increaseCount(tileProviderId)
-            logRequest({tileProviderId, requestId, action: 'Started'})
+            logRequest({tileProviderId, tileId, action: 'Started'})
+            return tile
         } else {
-            log.warn(() => `Cannot start already started ${requestTag({tileProviderId, requestId})}`)
+            log.error(() => `Unexpected: cannot start already started ${tileTag({tileProviderId, tileId})}`)
         }
     }
     
-    const finish = ({currentRequest, nextTileProviderId}) => {
-        const {tileProviderId, requestId, complete} = currentRequest
-        if (activeRequests[requestId]) {
-            delete activeRequests[requestId]
+    const finish = (tile, {nextTileProviderId}) => {
+        const {tileProviderId, tileId} = tile
+        if (activeRequests[tileId]) {
+            delete activeRequests[tileId]
             decreaseCount(tileProviderId)
-            logRequest({tileProviderId, requestId, action: complete ? 'Completed' : 'Aborted'})
             if (nextTileProviderId) {
-                tileResult$.next({tileProviderId, nextTileProviderIds: [nextTileProviderId], cancelledRequest: currentRequest})
+                tileResult$.next({tileProviderId, nextTileProviderIds: [nextTileProviderId], cancelledRequest: tile})
             } else {
                 tileResult$.next({tileProviderId, nextTileProviderIds: getPriorityTileProviderIds(tileProviderId)})
             }
         } else {
-            log.warn(() => `Cannot finish already finished ${requestTag({tileProviderId, requestId})}`)
+            log.error(() => `Unexpected: cannot finish already finished ${tileTag({tileProviderId, tileId})}`)
         }
     }
 
-    const execute = (tileProvider, currentRequest) => {
-        start(currentRequest)
-        const {tileProviderId, requestId, request, response$, cancel$} = currentRequest
-        const finishInfo = {currentRequest}
+    const execute = (tileProvider, tile) => {
+        const {tileProviderId, tileId, request, response$, cancel$} = start(tile)
+        const tileOptions = {}
         tileProvider.loadTile$(request).pipe(
             first(),
             takeUntil(
                 cancel$.pipe(
                     tap(nextTileProviderId =>
-                        finishInfo.nextTileProviderId = nextTileProviderId
+                        tileOptions.nextTileProviderId = nextTileProviderId
                     )
                 )
             ),
             finalize(() =>
-                finish(finishInfo)
+                finish(tile, tileOptions)
             )
         ).subscribe({
             next: response => {
-                currentRequest.complete = true
+                log.debug(() => `Loaded ${tileTag({tileProviderId, tileId})}`, response)
                 response$.next(response)
             },
             error: error => {
-                log.error(() => `Failed ${requestTag({tileProviderId, requestId})}`, error)
+                log.error(() => `Failed ${tileTag({tileProviderId, tileId})}`, error)
                 response$.error(error)
             }
         })
@@ -165,8 +165,8 @@ export const getRequestExecutor = ({tileResult$, concurrency}) => {
         return false
     }
 
-    const notify = ({tileProviderId, requestId}) => {
-        log.debug(() => `Notified ${requestTag({tileProviderId, requestId})}`)
+    const notify = ({tileProviderId, tileId}) => {
+        log.debug(() => `Notified ${tileTag({tileProviderId, tileId})}`)
         if (isEnabled(tileProviderId)) {
             if (isAvailable()) {
                 log.debug(() => `Accepted ${tileProviderTag(tileProviderId)}`)
@@ -187,17 +187,17 @@ export const getRequestExecutor = ({tileResult$, concurrency}) => {
     }
 
     const cancelRequest = request => {
-        if (request && !request.complete) {
-            log.debug(() => `Cancelling ${requestTag(request)}`)
+        if (request && !request.response$.getValue()) {
+            log.debug(() => `Cancelling ${tileTag(request)}`)
             request.cancel$.next()
             return true
         }
         return false
     }
 
-    const cancelByRequestId = requestId => {
-        if (requestId) {
-            const request = activeRequests[requestId]
+    const cancelByTileId = tileId => {
+        if (tileId) {
+            const request = activeRequests[tileId]
             return cancelRequest(request)
         } else {
             log.warn('Cannot cancel as no request id was provided')
@@ -242,5 +242,5 @@ export const getRequestExecutor = ({tileResult$, concurrency}) => {
         delete hiddenTileProviders[tileProviderId]
     }
     
-    return {execute, notify, cancelByRequestId, cancelByTileProviderId, removeTileProvider, setHidden, setEnabled, getActiveRequestCount}
+    return {execute, notify, cancelByTileId, cancelByTileProviderId, removeTileProvider, setHidden, setEnabled, getActiveRequestCount}
 }
