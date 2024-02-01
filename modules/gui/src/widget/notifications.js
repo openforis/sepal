@@ -39,7 +39,7 @@ const dismiss$ = merge(
 const added$ = publish$.pipe(delay(PUBLISH_ANIMATION_DURATION_MS))
 const removed$ = dismiss$.pipe(delay(DISMISS_ANIMATION_DURATION_MS))
 
-const group = ({group = false, id, ...notification}) =>
+const getGroup = ({group = false, id, ...notification}) =>
     group === false
         ? id
         : group === true
@@ -50,7 +50,7 @@ const publish = notification => {
     const publish = notification =>
         publish$.next({
             ...notification,
-            group: group(notification)
+            group: getGroup(notification)
         })
 
     const defaultTitle = {
