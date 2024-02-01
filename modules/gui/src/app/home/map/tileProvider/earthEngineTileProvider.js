@@ -1,5 +1,6 @@
 import {WMTSTileProvider} from './wmtsTileProvider'
 import {combineLatest, filter, map} from 'rxjs'
+import {handleError$} from './earthEngineError'
 import {toBandValues} from '../cursorValue'
 import ee from '@google/earthengine'
 
@@ -62,6 +63,10 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
             this.updateOffset(element)
             this.getElementContext(element).drawImage(image, 0, 0, TILE_SIZE, TILE_SIZE, 0, 0, TILE_SIZE, TILE_SIZE)
         }
+    }
+
+    handleError$(error, retryError) {
+        return handleError$(error, retryError)
     }
 
     renderErrorTile({element, _error}) {
