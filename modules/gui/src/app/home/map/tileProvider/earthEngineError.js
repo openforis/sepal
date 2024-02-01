@@ -12,9 +12,12 @@ const parseErrorMessage = text => {
     }
 }
 
+const showNotification = error =>
+    Notifications.error({message: 'Earth Engine tile rendering failed', error, group: true, timeout: 0})
+
 export const handleError$ = (error, retryError) =>
     from(error.response.text()).pipe(
         map(parseErrorMessage),
-        tap(error => Notifications.error({message: 'Tile failed', error, group: 'tileError', timeout: 0})),
-        switchMap(error => throwError(() => `${error} ${retryError}`))
+        tap(eeError => showNotification(eeError)),
+        switchMap(eeError => throwError(() => `${eeError} ${retryError}`))
     )
