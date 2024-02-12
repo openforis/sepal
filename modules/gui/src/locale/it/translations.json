@@ -2524,10 +2524,24 @@
                 "layers": {
                     "tooltip": ""
                 },
-                "link": {
+                "options": {
                     "tooltip": ""
                 },
                 "unlink": {
+                    "tooltip": ""
+                }
+            },
+            "mapOptions": {
+                "location": {
+                    "label": "",
+                    "tooltip": "",
+                    "independent": "",
+                    "synchronized": "",
+                    "getOther": "",
+                    "useCurrent": ""
+                },
+                "retile": {
+                    "label": "",
                     "tooltip": ""
                 }
             },
