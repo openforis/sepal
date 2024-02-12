@@ -2524,11 +2524,25 @@
                 "layers": {
                     "tooltip": "Seleccionar capas para mostrar"
                 },
-                "link": {
-                    "tooltip": "Enlaza este mapa con todos los demás mapas enlazados"
+                "options": {
+                    "tooltip": ""
                 },
                 "unlink": {
                     "tooltip": "Desenlazar este mapa"
+                }
+            },
+            "mapOptions": {
+                "location": {
+                    "label": "",
+                    "tooltip": "",
+                    "independent": "",
+                    "synchronized": "",
+                    "getOther": "",
+                    "useCurrent": ""
+                },
+                "retile": {
+                    "label": "",
+                    "tooltip": ""
                 }
             },
             "panel": {
