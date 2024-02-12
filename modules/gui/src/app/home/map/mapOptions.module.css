@@ -14,3 +14,7 @@
     background-size: calc(100% / var(--subdivisions)) calc(100% / var(--subdivisions));
     border: 1px solid var(--outline-color);
 }
+
+.retile-1 {
+    --outline-color: green;
+}

@@ -92,10 +92,13 @@ class _MapOptionsPanel extends React.Component {
             <Widget
                 label={msg('process.mosaic.mapOptions.retile.label')}
                 tooltip={msg('process.mosaic.mapOptions.retile.tooltip')}
-                tooltipSeverity='warning'
+                tooltipSeverity={subdivisions === 1 ? 'info' : 'warning'}
                 spacing='compact'
             >
-                <div className={styles.retile} style={{'--subdivisions': subdivisions}}/>
+                <div className={[
+                    styles.retile, 
+                    styles[`retile-${subdivisions}`]
+                ].join(' ')} style={{'--subdivisions': subdivisions}}/>
                 <Slider
                     value={subdivisions}
                     minValue={1}
