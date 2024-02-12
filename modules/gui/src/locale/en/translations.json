@@ -2544,7 +2544,7 @@
             },
             "retile": {
                 "label": "Re-tile",
-                "tooltip": "Split Earth Engine processing of each tile into smaller sub-tiles. Please use this control sparingly, and only if really necessary, as it would cause a much higher Earth Engine resource utilization, and in most cases it would just slow down tile rendering. It should only be used when one or more tiles fail with \"Out of user memory\" errors, possibly increasing the re-tile level one step at a time."
+                "tooltip": "Split Earth Engine processing of each tile into smaller sub-tiles. Please use this control sparingly, and only if really necessary, as it would cause a much higher Earth Engine resource utilization, and in most cases it would just slow down tile rendering. It should only be used when one or more tiles fail with \"User memory limit exceeded\" errors, possibly increasing the re-tile level one step at a time."
             }
         },
         "panel": {
