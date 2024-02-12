@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Widget} from 'widget/widget'
+import ButtonSelect from './buttonSelect'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -30,7 +31,7 @@ export class Buttons extends React.Component {
         return nextSelected
     }
 
-    select(value, deselect) {
+    select(value, deselect, optionValue) {
         const {selected, multiple, onChange, onSelect} = this.props
         const prevSelected = selected
 
@@ -39,17 +40,40 @@ export class Buttons extends React.Component {
             : value
 
         if (prevSelected !== nextSelected) {
-            onChange && onChange(nextSelected)
+            onChange && onChange(nextSelected, optionValue)
         }
-        onSelect && onSelect(nextSelected)
+        onSelect && onSelect(nextSelected, optionValue)
     }
 
-    renderButton({value, look: customLook, icon, label, content, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected, deselect}, index) {
+    renderButton({value, look: customLook, icon, label, content, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected, deselect, options}, index) {
         const {chromeless, air, disabled: allDisabled, look, shape, size, tabIndex, width, selected} = this.props
         const optionSelected = !allDisabled && (alwaysSelected || (!neverSelected && this.isSelected(value)))
         const highlighted = optionSelected
             || deselect === true && Array.isArray(selected) && selected.length === 0
         const key = value || label || index
+
+        if (options) {
+            return (
+                <ButtonSelect
+                    key={key}
+                    look={highlighted ? (customLook || 'highlight') : look || 'default'}
+                    shape={shape}
+                    size={size}
+                    air={air}
+                    disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
+                    icon={icon}
+                    label={label}
+                    labelStyle='smallcaps'
+                    content={content}
+                    options={options}
+                    tooltip={tooltip}
+                    tooltipPlacement='bottom'
+                    tabIndex={tabIndex}
+                    width={width}
+                    onSelect={optionValue => this.select(value, deselect, optionValue.value)}/>
+            )
+        }
+
         return chromeless
             ? (
                 <Button
@@ -170,6 +194,7 @@ Buttons.propTypes = {
                 label: PropTypes.any,
                 look: PropTypes.any,
                 neverSelected: PropTypes.any,
+                options: PropTypes.any,
                 tooltip: PropTypes.any,
                 value: PropTypes.any
             })
