@@ -2524,11 +2524,25 @@
                 "layers": {
                     "tooltip": "Sélectionnez les couches à afficher"
                 },
-                "link": {
-                    "tooltip": "Lier cette carte à toutes les autres cartes liées"
+                "options": {
+                    "tooltip": ""
                 },
                 "unlink": {
                     "tooltip": "Déconnecter cette carte"
+                }
+            },
+            "mapOptions": {
+                "location": {
+                    "label": "",
+                    "tooltip": "",
+                    "independent": "",
+                    "synchronized": "",
+                    "getOther": "",
+                    "useCurrent": ""
+                },
+                "retile": {
+                    "label": "",
+                    "tooltip": ""
                 }
             },
             "panel": {
