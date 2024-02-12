@@ -54,12 +54,21 @@ export default class Label extends React.Component {
     }
 
     renderTooltipIcon() {
-        const {tooltip, tooltipPlacement} = this.props
+        const {tooltip, tooltipPlacement, tooltipSeverity} = this.props
+        const ICON_NAME = {
+            info: 'question-circle',
+            warning: 'triangle-exclamation'
+        }
+        const ICON_VARIANT = {
+            info: 'normal',
+            warning: 'warning'
+        }
         return tooltip
             ? (
                 <Icon
                     className={styles.info}
-                    name='question-circle'
+                    name={ICON_NAME[tooltipSeverity]}
+                    variant={ICON_VARIANT[tooltipSeverity]}
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
                     tooltipClickTrigger={true}
@@ -73,7 +82,7 @@ export default class Label extends React.Component {
         return error ? (
             <Icon
                 className={styles.error}
-                name='exclamation-triangle'
+                name='triangle-exclamation'
                 variant='error'
                 tooltip={error}
                 tooltipPlacement='right'
@@ -99,10 +108,12 @@ Label.propTypes = {
     msg: PropTypes.any,
     size: PropTypes.oneOf(['small', 'normal', 'large']),
     tooltip: PropTypes.any,
-    tooltipPlacement: PropTypes.any
+    tooltipPlacement: PropTypes.any,
+    tooltipSeverity: PropTypes.oneOf(['info', 'warning'])
 }
 
 Label.defaultProps = {
     alignment: 'left',
-    size: 'normal'
+    size: 'normal',
+    tooltipSeverity: 'info'
 }
