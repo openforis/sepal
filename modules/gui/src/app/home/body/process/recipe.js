@@ -266,7 +266,7 @@ const findPrevRecipe = recipe =>
     prevRecipes.find(prevRecipe => prevRecipe.id === recipe.id) || {}
 
 const persistentProps = recipe =>
-    _.pick(recipe, ['model', 'layers'])
+    _.pick(recipe, ['model', 'layers', 'retile'])
 
 const isToBeSaved = (prevRecipe, recipe) =>
     persistentProps(prevRecipe)

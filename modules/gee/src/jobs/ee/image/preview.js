@@ -2,11 +2,17 @@ const {job} = require('#gee/jobs/job')
 
 const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
     const ImageFactory = require('#sepal/ee/imageFactory')
+
+    const TILE_SIZE = 256
     
     const ee = require('#sepal/ee')
     const {switchMap} = require('rxjs')
     const {sequence} = require('#sepal/utils/array')
     const _ = require('lodash')
+
+    const getRetiledMap$ = (image, retile = TILE_SIZE, ...args) =>
+        ee.getMap$(retile === TILE_SIZE ? image : image.retile(retile), ...args)
+
     if (visParams) {
         const {getImage$} = ImageFactory(recipe, {selection: distinct(visParams.bands), baseBands: distinct(visParams.baseBands), ...otherArgs})
         const getMap$ = (image, visualization) => {
@@ -63,11 +69,11 @@ const worker$ = ({recipe, visParams, bands, ...otherArgs}) => {
 
             switch (type) {
             case 'categorical':
-                return ee.getMap$(image.select(_.uniq(bands)), toCategoricalVisParams())
+                return getRetiledMap$(image.select(_.uniq(bands)), recipe.retile, toCategoricalVisParams())
             case 'hsv':
-                return ee.getMap$(toHsv(image.select(_.uniq(bands))))
+                return getRetiledMap$(toHsv(image.select(_.uniq(bands))), recipe.retile)
             default:
-                return ee.getMap$(image.select(_.uniq(bands)), {bands, ...range(), gamma, palette})
+                return getRetiledMap$(image.select(_.uniq(bands)), recipe.retile, {bands, ...range(), gamma, palette})
             }
         }
 

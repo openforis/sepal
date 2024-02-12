@@ -179,13 +179,13 @@ class _Maps extends React.Component {
         const linked$ = new Subject()
         const scrollWheelEnabled$ = this.scrollWheelEnabled$
 
-        const setLinked = (linked, view) => {
+        const setLinked = (linked, {synchronizeIn, synchronizeOut} = {}, view) => {
             if (linked) {
                 const currentView = this.getCurrentView()
                 this.linkedMaps.add(mapId)
-                if (this.linkedMaps.size === 1) {
+                if (this.linkedMaps.size === 1 || synchronizeOut) {
                     this.view$.next({mapId, view})
-                } else if (currentView) {
+                } else if (currentView && synchronizeIn) {
                     requestedView$.next(currentView)
                 }
             } else {
@@ -215,7 +215,7 @@ class _Maps extends React.Component {
             linked$.pipe(
                 distinctUntilChanged()
             ).subscribe(
-                ({linked, view}) => setLinked(linked, view)
+                ({linked, synchronize, view}) => setLinked(linked, synchronize, view)
             ),
             updateView$.pipe(
                 debounceTime(500),

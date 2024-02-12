@@ -5,6 +5,7 @@ import {Panel} from 'widget/panel/panel'
 import {SearchBox} from 'widget/searchBox'
 import {Slider} from 'widget/slider'
 import {ToggleButton} from 'widget/toggleButton'
+import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {formatCoordinates, parseCoordinates} from 'coords'
 import {msg} from 'translate'
@@ -324,7 +325,7 @@ class _MapZoomPanel extends React.Component {
 }
 
 const policy = () => ({
-    _: 'allow'
+    _: 'allow-then-deactivate'
 })
 
 export const MapZoomPanel = compose(
@@ -337,3 +338,9 @@ export const MapZoomPanel = compose(
         alwaysAllow: true
     })
 )
+
+export const MapZoomButton = () =>
+    <Toolbar.ActivationButton
+        id='mapZoom'
+        icon='search'
+        tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>

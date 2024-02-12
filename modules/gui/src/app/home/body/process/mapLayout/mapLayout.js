@@ -10,6 +10,7 @@ import {SelectAsset} from './selectAsset'
 import {SelectPlanet} from './selectPlanet'
 import {SelectRecipe} from './selectRecipe'
 import {Subject} from 'rxjs'
+import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {isChromiumBasedBrowser, isHighDensityDisplay} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -147,4 +148,8 @@ export const MapLayoutPanel = compose(
     withActivators('addImageLayerSource')
 )
 
-MapLayout.propTypes = {}
+export const MapLayoutButton = () =>
+    <Toolbar.ActivationButton
+        id='mapLayout'
+        icon='layer-group'
+        tooltip={msg('process.mosaic.mapToolbar.layers.tooltip')}/>

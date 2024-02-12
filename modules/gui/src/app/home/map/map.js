@@ -87,7 +87,7 @@ class _Map extends React.Component {
     constructor() {
         super()
         this.mapDelegate = this.mapDelegate.bind(this)
-        this.toggleLinked = this.toggleLinked.bind(this)
+        this.setLinked = this.setLinked.bind(this)
         this.toggleRendering = this.toggleRendering.bind(this)
         this.enableZoomArea = this.enableZoomArea.bind(this)
         this.disableZoomArea = this.disableZoomArea.bind(this)
@@ -119,7 +119,7 @@ class _Map extends React.Component {
             fitBounds: map.fitBounds,
             getBounds: map.getBounds,
             getGoogle: map.getGoogle,
-            toggleLinked: this.toggleLinked,
+            setLinked: this.setLinked,
             toggleRendering: this.toggleRendering,
             enableZoomArea: this.enableZoomArea,
             disableZoomArea: this.disableZoomArea,
@@ -580,13 +580,8 @@ class _Map extends React.Component {
             .dispatch()
     }
 
-    setLinked(linked) {
-        this.linked$.next(linked)
-    }
-
-    toggleLinked() {
-        const linked = this.linked$.getValue()
-        this.setLinked(!linked)
+    setLinked(linked, synchronize) {
+        this.linked$.next({linked, synchronize})
     }
 
     setRendering(rendering) {
@@ -818,7 +813,7 @@ class _Map extends React.Component {
             this.linked$.pipe(
                 finalize(() => linked$.next({linked: false}))
             ).subscribe(
-                linked => linked$.next({linked, view: this.viewUpdates$.getValue()})
+                ({linked, synchronize}) => linked$.next({linked, synchronize, view: this.viewUpdates$.getValue()})
             ),
             this.renderingProgress$.subscribe(
                 pendingTiles => this.updateRendering(pendingTiles)
