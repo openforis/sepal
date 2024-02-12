@@ -10,7 +10,8 @@ const Context = React.createContext()
 
 export const withButtonGroup = withContext(Context, 'buttonGroup')
 
-const _ButtonGroup = ({className, contentClassName, layout, alignment, spacing, framed, label, dimmed, disabled, onMouseOver, onMouseOut, forwardedRef, children, buttonGroup: {dimmed: parentDimmed} = {}}) => {
+const _ButtonGroup = ({className, contentClassName, layout, alignment, spacing, framed, label, dimmed, disabled,
+    tooltip, tooltipPlacement, tooltipTrigger, onMouseOver, onMouseOut, forwardedRef, children, buttonGroup: {dimmed: parentDimmed} = {}}) => {
     const mapChild = (child, index, childrenCount) => {
         const joinLeft = spacing === 'none' && childrenCount > 1 && index !== 0
         const joinRight = spacing === 'none' && childrenCount > 1 && index !== childrenCount - 1
@@ -36,6 +37,9 @@ const _ButtonGroup = ({className, contentClassName, layout, alignment, spacing, 
                 layout={layout}
                 alignment={alignment}
                 spacing={spacing}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+                tooltipTrigger={tooltipTrigger}
                 framed={framed}
                 disabled={disabled}
                 onMouseOver={onMouseOver}
@@ -64,6 +68,9 @@ ButtonGroup.propTypes = {
     label: PropTypes.any,
     layout: PropTypes.any,
     spacing: PropTypes.any,
+    tooltip: PropTypes.any,
+    tooltipPlacement: PropTypes.any,
+    tooltipTrigger: PropTypes.any,
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func
 }
