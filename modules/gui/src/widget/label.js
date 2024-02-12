@@ -46,7 +46,6 @@ export default class Label extends React.Component {
         return error || buttons
             ? (
                 <ButtonGroup>
-                    {/* {this.renderError()} */}
                     {buttons ? buttons : null}
                 </ButtonGroup>
             )
@@ -69,6 +68,9 @@ export default class Label extends React.Component {
                     className={styles.info}
                     name={ICON_NAME[tooltipSeverity]}
                     variant={ICON_VARIANT[tooltipSeverity]}
+                    attributes={{
+                        fade: tooltipSeverity === 'warning'
+                    }}
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
                     tooltipClickTrigger={true}
