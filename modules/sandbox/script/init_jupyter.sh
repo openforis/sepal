@@ -13,10 +13,10 @@ apt-get install -y libzmq3-dev
 /usr/bin/python3 -m pip install ipykernel
 /usr/bin/python3 -m ipykernel install
 
-/usr/bin/python3 -m pip install 'jupyterlab'
-/usr/bin/python3 -m pip install ipywidgets
+/usr/bin/python3 -m pip install jupyterlab
 /usr/bin/python3 -m pip install jupyterlab-language-pack-fr-FR
 /usr/bin/python3 -m pip install jupyterlab-language-pack-es-ES
+/usr/bin/python3 -m pip install ipywidgets
 /usr/bin/python3 -m pip install folium
 /usr/bin/python3 -m pip install ipyleaflet
 
@@ -39,4 +39,5 @@ git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
 
 # [HACK] Manually installing de-indent, otherwise jupyter lab build fails.
 /usr/bin/python3 /usr/local/bin/jupyter lab build || npm install --prefix /usr/local/share/jupyter/lab/staging de-indent
+rm -f /usr/local/share/jupyter/lab/staging/package-lock.json /usr/local/share/jupyter/lab/staging/yarn.lock
 /usr/bin/python3 /usr/local/bin/jupyter lab build
