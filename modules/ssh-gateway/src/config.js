@@ -1,4 +1,4 @@
-const program = require('commander')
+const {program} = require('commander')
 const _ = require('lodash')
 
 program

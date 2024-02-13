@@ -1,5 +1,7 @@
 {
     "reject": [
-        "react-router-dom"
+        "prom-client",
+        "react-router-dom",
+        "react-resize-detector"
     ]
 }

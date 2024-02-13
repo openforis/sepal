@@ -1,4 +1,4 @@
-const program = require('commander')
+const {program} = require('commander')
 const Path = require('path')
 const log = require('#sepal/log').getLogger('config')
 const _ = require('lodash')

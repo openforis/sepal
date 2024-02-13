@@ -1,4 +1,4 @@
-const program = require('commander')
+const {program} = require('commander')
 const log = require('#sepal/log').getLogger('config')
 
 const fatalError = error => {

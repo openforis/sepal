@@ -1,5 +1,5 @@
 const Path = require('path')
-const minimatch = require('minimatch')
+const {minimatch} = require('minimatch')
 const {isChildOf, isFile, getFiles} = require('./filesystem')
 const {cranRepo, CRAN_ROOT, libPath} = require('./config')
 const {runScript} = require('./script')
