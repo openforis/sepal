@@ -1,5 +1,6 @@
 import {ajax} from 'rxjs/ajax'
-import {catchError, map, mergeMap, of, range, retryWhen, tap, throwError, timer, zip} from 'rxjs'
+import {autoRetry} from 'rxjsutils'
+import {catchError, map, of, tap, throwError} from 'rxjs'
 import {currentUser, logout$, updateUser} from 'user'
 import {getLogger} from 'log'
 import {msg} from 'translate'
@@ -10,13 +11,19 @@ import base64 from 'base-64'
 
 const log = getLogger('http')
 
-const DEFAULT_RETRIES = 4
+const DEFAULT_MAX_RETRIES = 4
+const DEFAULT_MIN_RETRY_DELAY_MS = 500
+const DEFAULT_MAX_RETRY_DELAY_MS = 30000
+const DEFAULT_RETRY_DELAY_FACTOR = 2
 
 const toResponse = map(e => e.response)
 
-export const get$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
+export const get$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryDelayFactor, query, body, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'GET', {
-        retries,
+        maxRetries,
+        minRetryDelay,
+        maxRetryDelay,
+        retryDelayFactor,
         query,
         body,
         headers,
@@ -24,9 +31,12 @@ export const get$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, vali
         ...args
     }).pipe(toResponse)
 
-export const post$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
+export const post$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryDelayFactor, query, body, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'POST', {
-        retries,
+        maxRetries,
+        minRetryDelay,
+        maxRetryDelay,
+        retryDelayFactor,
         query,
         body: toQueryString(body),
         headers: {
@@ -37,9 +47,12 @@ export const post$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, val
         ...args
     }).pipe(toResponse)
 
-export const postJson$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
+export const postJson$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryDelayFactor, query, body, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'POST', {
-        retries,
+        maxRetries,
+        minRetryDelay,
+        maxRetryDelay,
+        retryDelayFactor,
         query,
         body: body && JSON.stringify(body),
         headers: {
@@ -50,9 +63,12 @@ export const postJson$ = (url, {retries = DEFAULT_RETRIES, query, body, headers,
         ...args
     }).pipe(toResponse)
 
-export const postBinary$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
+export const postBinary$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryDelayFactor, query, body, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'POST', {
-        retries,
+        maxRetries,
+        minRetryDelay,
+        maxRetryDelay,
+        retryDelayFactor,
         query,
         body,
         headers: {
@@ -63,9 +79,12 @@ export const postBinary$ = (url, {retries = DEFAULT_RETRIES, query, body, header
         ...args
     }).pipe(toResponse)
 
-export const delete$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
+export const delete$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryDelayFactor, query, body, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'DELETE', {
-        retries,
+        maxRetries,
+        minRetryDelay,
+        maxRetryDelay,
+        retryDelayFactor,
         query,
         body,
         headers: {
@@ -76,9 +95,12 @@ export const delete$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, v
         ...args
     }).pipe(toResponse)
 
-export const deleteJson$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
+export const deleteJson$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retryDelayFactor, query, body, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'DELETE', {
-        retries,
+        maxRetries,
+        minRetryDelay,
+        maxRetryDelay,
+        retryDelayFactor,
         query,
         body: body && JSON.stringify(body),
         headers: {
@@ -89,22 +111,29 @@ export const deleteJson$ = (url, {retries = DEFAULT_RETRIES, query, body, header
         ...args
     }).pipe(toResponse)
 
-export const WebSocket = (url, {maxRetries} = {}) => {
+export const WebSocket = (url, {
+    maxRetries = DEFAULT_MAX_RETRIES,
+    minRetryDelay = DEFAULT_MIN_RETRY_DELAY_MS,
+    maxRetryDelay = DEFAULT_MAX_RETRIES,
+    retryDelayFactor = DEFAULT_RETRY_DELAY_FACTOR
+} = {}) => {
     const upstream$ = webSocket(webSocketUrl(url))
-    let retry = 0
     const downstream$ = upstream$.pipe(
-        retryWhen(error$ =>
-            error$.pipe(
-                tap(() => retry++),
-                mergeMap(
-                    error => (error.status < 500 || retry > maxRetries)
-                        ? throwError(() => error)
-                        : timer(Math.pow(2, Math.min((retry - 1), 4)) * 500)
-                ),
-                tap(() => log.debug(() => `Retrying websocket connection to ${url}: ${retry}${maxRetries ? `/${maxRetries}` : ''}`))
-            )
-        ),
-        tap(() => retry = 0)
+        autoRetry({
+            maxRetries,
+            minRetryDelay,
+            maxRetryDelay,
+            retryDelayFactor,
+            abort: error => error.status < 500})
+        // retry({
+        //     delay: (error, retryCount) => {
+        //         if (error.status < 500 || retryCount > maxRetries) {
+        //             return throwError(() => error)
+        //         }
+        //         log.debug(() => `Retrying websocket connection to ${url}: ${retryCount}${maxRetries ? `/${maxRetries}` : ''}`)
+        //         return timer(Math.min(maxRetryDelay, minRetryDelay * Math.pow(retryDelayFactor, retryCount - 1)))
+        //     }
+        // })
     )
     return {upstream$, downstream$}
 }
@@ -142,7 +171,18 @@ const validateResponse = (response, validStatuses) =>
         ? response
         : throwError(() => response)
 
-const execute$ = (url, method, {retries, query, username, password, headers, validStatuses, ...args}) => {
+const execute$ = (url, method, {
+    maxRetries = DEFAULT_MAX_RETRIES,
+    minRetryDelay = DEFAULT_MIN_RETRY_DELAY_MS,
+    maxRetryDelay = DEFAULT_MAX_RETRY_DELAY_MS,
+    retryDelayFactor = DEFAULT_RETRY_DELAY_FACTOR,
+    query,
+    username,
+    password,
+    headers,
+    validStatuses,
+    ...args
+}) => {
     const queryString = toQueryString(query)
     let urlWithQuery = queryString ? `${url}?${queryString}` : url
     if (!url.startsWith('http://') && !url.startsWith('https://'))
@@ -173,21 +213,22 @@ const execute$ = (url, method, {retries, query, username, password, headers, val
                 return throwError(() => e)
             }
         }),
-        retryWhen(function (error$) {
-            return zip(
-                error$,
-                range(1, retries + 1)
-            ).pipe(
-                mergeMap(
-                    ([error, retry]) => {
-                        if (error.status < 500 || retry > retries)
-                            return throwError(() => error)
-                        else
-                            return timer(Math.pow(2, retry) * 500)
-                    }
-                )
-            )
+        autoRetry({
+            maxRetries,
+            minRetryDelay,
+            maxRetryDelay,
+            retryDelayFactor,
+            abort: error => error.status < 500
         })
+        // retry({
+        //     delay: (error, retryCount) => {
+        //         if (error.status < 500 || retryCount > maxRetries) {
+        //             return throwError(() => error)
+        //         }
+        //         log.debug(() => `Retrying websocket connection to ${url}: ${retryCount}${maxRetries ? `/${maxRetries}` : ''}`)
+        //         return timer(Math.min(maxRetryDelay, minRetryDelay * Math.pow(retryDelayFactor, retryCount - 1)))
+        //     }
+        // })
     )
 }
 

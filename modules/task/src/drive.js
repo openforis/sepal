@@ -5,13 +5,17 @@ const log = require('#sepal/log').getLogger('drive')
 const {getCurrentContext$} = require('#task/jobs/service/context')
 const fs = require('fs')
 const Path = require('path')
-const {retry, swallow} = require('#sepal/rxjs')
+const {autoRetry, swallow} = require('#sepal/rxjs')
 const {mkdir$} = require('./rxjs/fileSystem')
 const {driveLimiter$} = require('./jobs/service/driveLimiter')
 const format = require('./format')
 const moment = require('moment')
 
-const RETRIES = 5
+const RETRY_CONFIG = {
+    maxRetries: 5,
+    minRetryDelay: 500,
+    retryDelayFactor: 2
+}
 
 const IS_FILE = 'mimeType != "application/vnd.google-apps.folder"'
 const IS_FOLDER = 'mimeType = "application/vnd.google-apps.folder"'
@@ -67,7 +71,7 @@ const drive$ = (message, op) => {
                 )
             )
         ),
-        retry(RETRIES)
+        autoRetry(RETRY_CONFIG)
     )
 }
 

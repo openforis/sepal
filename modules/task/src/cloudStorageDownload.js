@@ -1,6 +1,6 @@
 const fs = require('fs')
 const {Subject, EMPTY, concat, defer, of, catchError, expand, map, mergeMap, scan, switchMap} = require('rxjs')
-const {fromPromise, finalizeObservable, retry, swallow} = require('#sepal/rxjs')
+const {fromPromise, finalizeObservable, autoRetry, swallow} = require('#sepal/rxjs')
 const {cloudStorage$} = require('./cloudStorage')
 const path = require('path')
 const format = require('./format')
@@ -9,13 +9,17 @@ const log = require('#sepal/log').getLogger('cloudStorage')
 const CHUNK_SIZE = 10 * 1024 * 1024
 const CONCURRENT_FILE_DOWNLOAD = 1
 
-const RETRIES = 5
+const RETRY_CONFIG = {
+    maxRetries: 5,
+    minRetryDelay: 500,
+    retryDelayFactor: 2
+}
 
 const do$ = (description, promise) => defer(() => {
     log.debug(description)
     return of(true).pipe(
         switchMap(() => fromPromise(promise)),
-        retry(RETRIES)
+        autoRetry(RETRY_CONFIG)
     )
 })
 const download$ = (taskId, {bucketPath, prefix, downloadDir, deleteAfterDownload}) =>
@@ -93,7 +97,9 @@ const downloadFile$ = (taskId, {file, prefix, downloadDir, deleteAfterDownload})
     const downloadChunk$ = start => {
         const end = start + CHUNK_SIZE
         const chunkSubject$ = new Subject()
-        const chunk$ = chunkSubject$.pipe(retry(RETRIES))
+        const chunk$ = chunkSubject$.pipe(
+            autoRetry(RETRY_CONFIG)
+        )
         const startTime = new Date().getTime()
         let next
         file.createReadStream({start, end})

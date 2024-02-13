@@ -1,9 +1,10 @@
 import {ActivationContext} from 'widget/activation/activationContext'
 import {Assets} from 'widget/assets'
 import {PortalContainer} from 'widget/portal'
+import {autoRetry} from 'rxjsutils'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {exhaustMap, map, mergeMap, pipe, retryWhen, timer, zip} from 'rxjs'
+import {exhaustMap, map, timer} from 'rxjs'
 import {isFloating} from './menu/menuMode'
 import {msg} from 'translate'
 import Body from './body/body'
@@ -25,7 +26,11 @@ const mapStateToProps = () => ({
 const timedRefresh$ = (task$, refreshSeconds = 60, name) =>
     timer(0, refreshSeconds * 1000).pipe(
         exhaustMap(count => task$(count)),
-        retry({description: `Failed to refresh ${name}`})
+        autoRetry({
+            minRetryDelay: 500,
+            maxRetryDelay: 30000,
+            retryDelayFactor: 2
+        })
     )
 
 const updateUserReport$ = () =>
@@ -124,24 +129,6 @@ class Home extends React.Component {
         )
     }
 }
-
-const retry = ({minDelay = 500, maxDelay = 30000, exponentiality = 2, description} = {}) => pipe(
-    retryWhen(error$ =>
-        zip(
-            error$,
-            timer(0, 0)
-        ).pipe(
-            mergeMap(
-                ([error, retry]) => {
-                    const exponentialBackoff = Math.pow(exponentiality, retry) * minDelay
-                    const cappedExponentialBackoff = Math.min(exponentialBackoff, maxDelay)
-                    console.error(`Retrying ${description ? `${description} ` : ''}(${retry}) in ${cappedExponentialBackoff}ms`, error)
-                    return timer(cappedExponentialBackoff)
-                }
-            )
-        )
-    )
-)
 
 Home.propTypes = {
     floatingFooter: PropTypes.bool.isRequired,

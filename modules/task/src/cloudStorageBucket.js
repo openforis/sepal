@@ -1,5 +1,5 @@
 const {defer, of, first, map, switchMap} = require('rxjs')
-const {retry} = require('#sepal/rxjs')
+const {autoRetry} = require('#sepal/rxjs')
 const {fromPromise} = require('#sepal/rxjs')
 const crypto = require('crypto')
 const http = require('#sepal/httpClient')
@@ -7,7 +7,11 @@ const {getCurrentContext$} = require('#task/jobs/service/context')
 const {cloudStorage$} = require('./cloudStorage')
 const log = require('#sepal/log').getLogger('cloudStorage')
 
-const RETRIES = 5
+const RETRY_CONFIG = {
+    maxRetries: 5,
+    minRetryDelay: 500,
+    retryDelayFactor: 2
+}
 
 const initUserBucket$ = () =>
     getCurrentContext$().pipe(
@@ -129,7 +133,7 @@ const bucketExists$ = user =>
 
 const getEmail$ = accessToken =>
     http.get$('https://www.googleapis.com/drive/v3/about?fields=user', {
-        retries: 0,
+        maxRetries: 0,
         headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
@@ -142,7 +146,7 @@ const do$ = (description, promise) => defer(() => {
     log.debug(() => description)
     return of(true).pipe(
         switchMap(() => fromPromise(promise)),
-        retry(RETRIES, {description})
+        autoRetry(RETRY_CONFIG)
     )
 })
 

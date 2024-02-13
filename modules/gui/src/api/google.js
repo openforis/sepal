@@ -7,7 +7,7 @@ const formatTileUrl = ({x, y, zoom}) => `https://${SUBDOMAIN}.google.com/vt/lyrs
 export default {
     loadTile$: ({x, y, zoom}) =>
         get$(formatTileUrl({x, y, zoom}), {
-            retries: 0,
+            maxRetries: 0,
             responseType: 'blob',
             crossDomain: true
         })
