@@ -15,6 +15,7 @@ import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './mapOptions.module.css'
+import BlurDetector from 'widget/blurDetector'
 
 const FULL_TILE_SIZE = 256
 
@@ -29,20 +30,22 @@ class _MapOptionsPanel extends React.Component {
 
     constructor(props) {
         super(props)
-        this.onEscape = this.onEscape.bind(this)
+        this.close = this.close.bind(this)
         this.setRetile = this.setRetile.bind(this)
     }
 
     render() {
         return (
             <Panel className={styles.panel} type='top-right'>
-                <Panel.Content>
-                    <Layout>
-                        {this.renderMapLinkControl()}
-                        {this.renderMapRetileControl()}
-                    </Layout>
-                </Panel.Content>
-                <Keybinding keymap={{'Escape': this.onEscape}}/>
+                <BlurDetector onBlur={this.close}>
+                    <Panel.Content>
+                        <Layout>
+                            {this.renderMapLinkControl()}
+                            {this.renderMapRetileControl()}
+                        </Layout>
+                    </Panel.Content>
+                </BlurDetector>
+                <Keybinding keymap={{'Escape': this.close}}/>
             </Panel>
         )
     }
@@ -119,7 +122,7 @@ class _MapOptionsPanel extends React.Component {
             .dispatch()
     }
 
-    onEscape() {
+    close() {
         const {activatable: {deactivate}} = this.props
         deactivate()
     }
