@@ -23,7 +23,8 @@ then
     --repo-path /R \
     --lib-path /usr/local/lib/R/site-library \
     --redis-uri redis://r-proxy-redis \
-    --auto-update-interval-hours 24
+    --auto-update-interval-hours 24 \
+    --update-now
 else
   echo "Starting node"
   exec node \

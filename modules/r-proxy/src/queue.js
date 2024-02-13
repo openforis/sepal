@@ -1,4 +1,4 @@
-const {platformVersion, redisUri, autoUpdateIntervalHours, LOCAL_CRAN_REPO} = require('./config')
+const {platformVersion, redisUri, autoUpdateIntervalHours, updateNow, LOCAL_CRAN_REPO} = require('./config')
 const Bull = require('bull')
 const log = require('#sepal/log').getLogger('queue')
 const {makeCranPackage, checkCranUpdates, updateCranPackage} = require('./cran')
@@ -130,13 +130,13 @@ const enqueueUpdateGitHubPackage = (name, path) => {
     })
 }
 
-const enqueueUpdateBinaryPackages = () => {
+const enqueueUpdateBinaryPackages = updateNow => {
     const jobId = 'update-packages'
     log.debug(`Enqueuing job ${jobId}`)
     return queue.add({updatePackages: {}}, {
         jobId,
         priority: 3,
-        repeat: {
+        repeat: updateNow ? null : {
             every: autoUpdateIntervalHours * 3600e3
         },
         removeOnComplete: true
@@ -148,6 +148,9 @@ const initQueue = async () => {
     log.debug('Queue obliterated')
     log.info(`Scheduling automatic package update every ${autoUpdateIntervalHours} hours`)
     enqueueUpdateBinaryPackages()
+    if (updateNow) {
+        enqueueUpdateBinaryPackages(true)
+    }
 }
 
 module.exports = {enqueueBuildCranPackage, enqueueBuildGitHubPackage, logStats, initQueue}

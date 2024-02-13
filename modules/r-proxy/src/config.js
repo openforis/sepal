@@ -24,6 +24,7 @@ try {
         .requiredOption('--redis-uri <value>', 'Redis URI')
         .option('--http-port <number>', 'HTTP port', DEFAULT_HTTP_PORT)
         .option('--auto-update-interval-hours <number>', 'Auto-update interval (hours)', DEFAULT_AUTO_UPDATE_INTERVAL_HOURS)
+        .option('--update-now', 'Update now')
         .parse(process.argv)
 } catch (error) {
     fatalError(error)
@@ -38,7 +39,8 @@ const {
     libPath,
     redisUri,
     httpPort,
-    autoUpdateIntervalHours
+    autoUpdateIntervalHours,
+    updateNow
 } = config
 
 log.info('Configuration loaded')
@@ -61,6 +63,7 @@ module.exports = {
     redisUri,
     httpPort,
     autoUpdateIntervalHours,
+    updateNow,
     LOCAL_CRAN_REPO: `http://localhost:${httpPort}`,
     CRAN_ROOT: Path.join(platformReleaseRepoPath, 'cranroot'),
     GITHUB_ROOT: Path.join(platformReleaseRepoPath, 'github')
