@@ -19,6 +19,8 @@ const updatePackageList = async (module, path, {upgrade, target}) => {
             '--target',
             target,
             '--color',
+            '--format', 'group',
+            '--install', 'never',
         ],
         cwd: modulePath,
         enableStdIn: true,
