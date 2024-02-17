@@ -1,4 +1,5 @@
 import {ajax} from 'rxjs/ajax'
+import {applyDefaults} from 'utils'
 import {autoRetry} from 'rxjsutils'
 import {catchError, map, of, tap, throwError} from 'rxjs'
 import {currentUser, logout$, updateUser} from 'user'
@@ -123,7 +124,7 @@ export const WebSocket = (url, {
 
     const downstream$ = upstream$.pipe(
         autoRetry(
-            _.merge({}, DEFAULT_RETRY_CONFIG, {
+            applyDefaults(DEFAULT_RETRY_CONFIG, {
                 maxRetries,
                 minRetryDelay,
                 maxRetryDelay,
@@ -219,7 +220,7 @@ const execute$ = (url, method, {
             }
         }),
         autoRetry(
-            _.merge({}, DEFAULT_RETRY_CONFIG, {
+            applyDefaults(DEFAULT_RETRY_CONFIG, {
                 maxRetries,
                 minRetryDelay,
                 maxRetryDelay,
