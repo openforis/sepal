@@ -11,10 +11,12 @@ import base64 from 'base-64'
 
 const log = getLogger('http')
 
-const DEFAULT_MAX_RETRIES = 4
-const DEFAULT_MIN_RETRY_DELAY_MS = 500
-const DEFAULT_MAX_RETRY_DELAY_MS = 30000
-const DEFAULT_RETRY_DELAY_FACTOR = 2
+const DEFAULT_RETRY_CONFIG = {
+    maxRetries: 5,
+    minRetryDelay: 500,
+    retryDelayFactor: 2,
+    abort: error => error.statusCode < 500
+}
 
 const toResponse = map(e => e.response)
 
@@ -112,19 +114,22 @@ export const deleteJson$ = (url, {maxRetries, minRetryDelay, maxRetryDelay, retr
     }).pipe(toResponse)
 
 export const WebSocket = (url, {
-    maxRetries = DEFAULT_MAX_RETRIES,
-    minRetryDelay = DEFAULT_MIN_RETRY_DELAY_MS,
-    maxRetryDelay = DEFAULT_MAX_RETRIES,
-    retryDelayFactor = DEFAULT_RETRY_DELAY_FACTOR
+    maxRetries,
+    minRetryDelay,
+    maxRetryDelay,
+    retryDelayFactor
 } = {}) => {
     const upstream$ = webSocket(webSocketUrl(url))
+
     const downstream$ = upstream$.pipe(
-        autoRetry({
-            maxRetries,
-            minRetryDelay,
-            maxRetryDelay,
-            retryDelayFactor,
-            abort: error => error.status < 500})
+        autoRetry(
+            _.merge({}, DEFAULT_RETRY_CONFIG, {
+                maxRetries,
+                minRetryDelay,
+                maxRetryDelay,
+                retryDelayFactor
+            })
+        )
         // retry({
         //     delay: (error, retryCount) => {
         //         if (error.status < 500 || retryCount > maxRetries) {
@@ -172,10 +177,10 @@ const validateResponse = (response, validStatuses) =>
         : throwError(() => response)
 
 const execute$ = (url, method, {
-    maxRetries = DEFAULT_MAX_RETRIES,
-    minRetryDelay = DEFAULT_MIN_RETRY_DELAY_MS,
-    maxRetryDelay = DEFAULT_MAX_RETRY_DELAY_MS,
-    retryDelayFactor = DEFAULT_RETRY_DELAY_FACTOR,
+    maxRetries,
+    minRetryDelay,
+    maxRetryDelay,
+    retryDelayFactor,
     query,
     username,
     password,
@@ -213,13 +218,14 @@ const execute$ = (url, method, {
                 return throwError(() => e)
             }
         }),
-        autoRetry({
-            maxRetries,
-            minRetryDelay,
-            maxRetryDelay,
-            retryDelayFactor,
-            abort: error => error.status < 500
-        })
+        autoRetry(
+            _.merge({}, DEFAULT_RETRY_CONFIG, {
+                maxRetries,
+                minRetryDelay,
+                maxRetryDelay,
+                retryDelayFactor
+            })
+        )
         // retry({
         //     delay: (error, retryCount) => {
         //         if (error.status < 500 || retryCount > maxRetries) {

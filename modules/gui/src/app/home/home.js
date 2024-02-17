@@ -23,14 +23,16 @@ const mapStateToProps = () => ({
     floatingFooter: false
 })
 
+const RETRY_CONFIG = {
+    minRetryDelay: 500,
+    maxRetryDelay: 30000,
+    retryDelayFactor: 2
+}
+
 const timedRefresh$ = (task$, refreshSeconds = 60, name) =>
     timer(0, refreshSeconds * 1000).pipe(
         exhaustMap(count => task$(count)),
-        autoRetry({
-            minRetryDelay: 500,
-            maxRetryDelay: 30000,
-            retryDelayFactor: 2
-        })
+        autoRetry(RETRY_CONFIG)
     )
 
 const updateUserReport$ = () =>
