@@ -209,7 +209,7 @@ export const withAssets = () =>
             },
             connect(() => ({
                 assets: {
-                    tree: select('assets.tree') || {},
+                    tree: select('assets.tree') || Tree.createNode(),
                     userAssets: select('assets.user') || [],
                     otherAssets: select('assets.other') || [],
                     recentAssets: select('assets.recent') || [],
