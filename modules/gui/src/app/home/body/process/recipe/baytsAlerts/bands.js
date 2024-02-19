@@ -17,6 +17,9 @@ export const alertsBands = () => {
         flag_orbit: {dataType: typeInt},
         first_detection_date: {dataType: typeFloat},
         confirmation_date: {dataType: typeFloat},
+        VV: {dataType: typeFloat},
+        VH: {dataType: typeFloat},
+        ratio_VV_VH: {dataType: typeFloat},
     }
 }
         
