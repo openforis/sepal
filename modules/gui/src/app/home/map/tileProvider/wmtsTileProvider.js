@@ -1,8 +1,10 @@
 import {TileProvider} from './tileProvider'
+import {applyDefaults} from 'utils'
 import {autoRetry} from 'rxjsutils'
+import _ from 'lodash'
 import api from 'api'
 
-const RETRY_CONFIG = {
+const DEFAULT_RETRY_CONFIG = {
     maxRetries: 5,
     minRetryDelay: 500,
     retryDelayFactor: 2,
@@ -31,11 +33,12 @@ export class WMTSTileProvider extends TileProvider {
         const urlTemplate = this.urlTemplate
         const initialTimestamp = Date.now()
         return api.wmts.loadTile$({urlTemplate, x, y, zoom}).pipe(
-            autoRetry({
-                ...RETRY_CONFIG,
-                initialTimestamp,
-                onError$: (error, retryError) => this.handleError$(error, retryError)
-            })
+            autoRetry(
+                applyDefaults(DEFAULT_RETRY_CONFIG, {
+                    initialTimestamp,
+                    onError$: (error, retryError) => this.handleError$(error, retryError)
+                })
+            )
         )
     }
 

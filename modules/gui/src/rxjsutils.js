@@ -1,7 +1,7 @@
 import {pipe, retry, throwError, timer} from 'rxjs'
 
 export const autoRetry = ({
-    maxRetries,
+    maxRetries = 0,
     minRetryDelay = 500,
     maxRetryDelay = minRetryDelay,
     retryDelayFactor = 1,

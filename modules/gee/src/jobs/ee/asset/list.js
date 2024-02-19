@@ -1,9 +1,10 @@
 const {job} = require('#gee/jobs/job')
 
 const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
-    const {map, merge, toArray, of, switchMap, mergeMap} = require('rxjs')
+    const {map, merge, toArray, of, switchMap, mergeMap, catchError} = require('rxjs')
     const http = require('#sepal/httpClient')
     const ee = require('#sepal/ee')
+    const log = require('#sepal/log').getLogger('ee')
     const _ = require('lodash')
 
     if (!googleTokens) {
@@ -35,7 +36,11 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
 
     const getRootInfo$ = ({id, name}) =>
         http.get$(`https://earthengine.googleapis.com/v1/${name || id}`, {headers}).pipe(
-            map(({body}) => JSON.parse(body))
+            map(({body}) => JSON.parse(body)),
+            catchError(() => {
+                log.debug(`Unable to determine quota for ${id || name}`)
+                return of({id, name, type: 'FOLDER'})
+            })
         )
 
     const legacyRoots$ = () =>
