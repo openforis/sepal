@@ -18,13 +18,7 @@ const createTileManager = ({type, concurrency}) => {
     const requestQueue = getRequestQueue()
     const requestExecutor = getRequestExecutor({tileResult$, concurrency})
 
-    const getTileProvider = id => {
-        const tileProvider = tileProviders[id]
-        if (tileProvider) {
-            return tileProvider
-        }
-        throw new Error(`Unknown ${tileProviderTag(id)}`)
-    }
+    const getTileProvider = id => tileProviders[id]
 
     const addTileProvider = (tileProviderId, tileProvider) => {
         if (!tileProviders[tileProviderId]) {
@@ -94,7 +88,7 @@ const createTileManager = ({type, concurrency}) => {
         const totalEnqueued = requestQueue.getPendingRequestCount()
         const active = requestExecutor.getActiveRequestCount(tileProviderId)
         const totalActive = requestExecutor.getActiveRequestCount()
-        const maxActive = getTileProvider(tileProviderId).getConcurrency()
+        const maxActive = getTileProvider(tileProviderId)?.getConcurrency() || 0
         const pending = enqueued + active
         const pendingEnabled = enqueuedEnabled + active
         const pendingDisabled = enqueued - enqueuedEnabled
@@ -129,7 +123,11 @@ const createTileManager = ({type, concurrency}) => {
             const request = requestQueue.dequeueByTileProviderIds(nextTileProviderIds)
             if (request) {
                 const tileProvider = getTileProvider(request.tileProviderId)
-                requestExecutor.execute(tileProvider, request)
+                if (tileProvider) {
+                    requestExecutor.execute(tileProvider, request)
+                } else {
+                    throw new Error(`Unknown ${tileProviderTag(request.tileProviderId)}`)
+                }
             } else {
                 log.trace(() => 'No request pending for any enabled tileProviders')
             }
