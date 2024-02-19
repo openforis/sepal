@@ -88,7 +88,7 @@ const createTileManager = ({type, concurrency}) => {
         const totalEnqueued = requestQueue.getPendingRequestCount()
         const active = requestExecutor.getActiveRequestCount(tileProviderId)
         const totalActive = requestExecutor.getActiveRequestCount()
-        const maxActive = getTileProvider(tileProviderId)?.getConcurrency() || 0
+        const maxActive = getTileProvider(tileProviderId).getConcurrency()
         const pending = enqueued + active
         const pendingEnabled = enqueuedEnabled + active
         const pendingDisabled = enqueued - enqueuedEnabled
@@ -103,8 +103,13 @@ const createTileManager = ({type, concurrency}) => {
         return {tileProviderId, type, enqueued, totalEnqueued, active, totalActive, maxActive, pending, pendingEnabled, pendingDisabled, totalPending, msg}
     }
 
-    const updateStatus = tileProviderId =>
-        status$.next(getStats(tileProviderId))
+    const updateStatus = tileProviderId => {
+        if (getTileProvider(tileProviderId)) {
+            status$.next(getStats(tileProviderId))
+        } else {
+            log.debug(() => `Skipped stats for non-existing ${tileProviderTag(tileProviderId)}`)
+        }
+    }
 
     const getStatus$ = tileProviderId =>
         status$.pipe(
