@@ -29,6 +29,7 @@ const exportImageToAsset$ = (taskId, {
     properties,
     retries = 0,
 }) => {
+    assetId = getProjectAssetId(assetId) // Get rid of legacy assetId format
     crsTransform = crsTransform || undefined
     region = region || image.geometry()
     if (ee.sepal.getAuthType() === 'SERVICE_ACCOUNT')
@@ -49,6 +50,13 @@ const exportImageToAsset$ = (taskId, {
             )
         ))
 }
+
+
+const getProjectAssetId = id =>
+    id.startsWith('users/')
+        ? `projects/earthengine-legacy/assets/${id}`
+        : id
+
 
 const imageToAssetCollection$ = (taskId, {
     image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, tileSize, properties, retries
