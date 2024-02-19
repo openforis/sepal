@@ -138,7 +138,8 @@ class _MapOptionsPanel extends React.Component {
 }
 
 const policy = () => ({
-    _: 'allow-then-deactivate'
+    mapZoom: 'allow-then-deactivate',
+    _: 'allow'
 })
 
 export const MapOptionsPanel = compose(
