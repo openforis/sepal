@@ -13,7 +13,7 @@ library(remotes)
 
 .libPaths(lib)
 
-install_url(url, repos = repo, lib = lib, upgrade = 'never')
+install_url(url, repos = repo, lib = lib, upgrade = 'always')
 
 # check if library can be loaded, otherwise uninstall it and fail
 
