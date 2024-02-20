@@ -8,6 +8,9 @@ ENV SHARED /usr/local/src/sepal/lib/js/shared
 ENV NODE_MAJOR=20
 
 # Install R packages
+RUN apt-get install -y \
+    libglpk-dev
+
 RUN R -e 'install.packages("remotes", lib = "/usr/lib/R/site-library")'
 
 # Create node user

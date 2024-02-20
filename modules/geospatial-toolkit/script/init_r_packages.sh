@@ -10,6 +10,9 @@ export JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current
 export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
 export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
 
+apt-get update && apt-get install -y \
+	 libglpk-dev # required by igraph
+
 R CMD javareconf
 
 R -e "install.packages(c(\
