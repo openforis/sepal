@@ -17,7 +17,7 @@ export class BalancingTileProvider extends TileProvider {
             this.subscriptions.push(
                 this.tileManager.getStatus$().subscribe(
                     ({tileProviderId, pending, pendingEnabled}) => {
-                        busy$?.next(pendingEnabled)
+                        busy$?.next(!!pendingEnabled)
                         renderingStatus$?.next({tileProviderId, pending})
                     }
                 )
