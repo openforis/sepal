@@ -47,12 +47,12 @@ class _PlanetImageLayer extends React.Component {
     }
 
     createLayer() {
-        const {layerConfig: {bands, urlTemplate} = defaultLayerConfig, map, tab: {busy$}} = this.props
+        const {layerConfig: {bands, urlTemplate} = defaultLayerConfig, map} = this.props
         const concurrency = CONCURRENCY
         const layer = urlTemplate
             ? this.selectedHasCir()
-                ? new PlanetLayer({map, urlTemplate: `${urlTemplate}&proc=${bands}`, concurrency, busy$})
-                : new PlanetLayer({map, urlTemplate: `${urlTemplate}`, concurrency, busy$})
+                ? new PlanetLayer({map, urlTemplate: `${urlTemplate}&proc=${bands}`, concurrency})
+                : new PlanetLayer({map, urlTemplate: `${urlTemplate}`, concurrency})
             : null
         this.layer = layer
         return layer
@@ -233,7 +233,6 @@ export const PlanetImageLayer = compose(
     connect(),
     withMapArea(),
     withRecipe(mapRecipeToProps),
-    withTab(),
     withMapApiKey(),
     withSubscriptions()
 )

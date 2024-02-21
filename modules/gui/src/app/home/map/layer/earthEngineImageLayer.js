@@ -55,9 +55,9 @@ export default class EarthEngineImageLayer extends TileLayer {
     }
 
     createOverlay = tileProvider => {
-        const {map, busy$, minZoom, maxZoom} = this
+        const {map, minZoom, maxZoom} = this
         const {google} = map.getGoogle()
-        return new GoogleMapsOverlay({tileProvider, google, minZoom, maxZoom, busy$})
+        return new GoogleMapsOverlay({name: 'EarthEngineImageLayer', tileProvider, google, minZoom, maxZoom})
     }
 
     getMapId$ = () =>

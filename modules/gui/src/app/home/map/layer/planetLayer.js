@@ -4,11 +4,10 @@ import {ReplaySubject, of, tap} from 'rxjs'
 import {TileLayer} from './tileLayer'
 
 export default class PlanetLayer extends TileLayer {
-    constructor({map, layerIndex = 0, busy$, urlTemplate, concurrency, minZoom, maxZoom}) {
+    constructor({map, layerIndex = 0, urlTemplate, concurrency, minZoom, maxZoom}) {
         super()
         this.map = map
         this.layerIndex = layerIndex
-        this.busy$ = busy$
         this.urlTemplate = urlTemplate
         this.concurrency = concurrency
         this.minZoom = minZoom
@@ -22,10 +21,10 @@ export default class PlanetLayer extends TileLayer {
     }
 
     createOverlay = () => {
-        const {map, busy$, minZoom, maxZoom} = this
+        const {map, minZoom, maxZoom} = this
         const tileProvider = this.createTileProvider()
         const {google} = map.getGoogle()
-        return new GoogleMapsOverlay({tileProvider, google, minZoom, maxZoom, busy$})
+        return new GoogleMapsOverlay({name: 'PlanetLayer', tileProvider, google, minZoom, maxZoom})
     }
 
     addToMap$ = () =>

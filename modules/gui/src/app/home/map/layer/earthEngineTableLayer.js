@@ -38,9 +38,9 @@ export default class EarthEngineTableLayer extends TileLayer {
     }
 
     createOverlay = tileProvider => {
-        const {map, busy$, minZoom, maxZoom} = this
+        const {map, minZoom, maxZoom} = this
         const {google} = map.getGoogle()
-        return new GoogleMapsOverlay({tileProvider, google, minZoom, maxZoom, busy$})
+        return new GoogleMapsOverlay({name: 'EarthEngineTableLayer', tileProvider, google, minZoom, maxZoom})
     }
 
     addToMap$ = () => {

@@ -4,11 +4,10 @@ import {TileLayer} from './tileLayer'
 import {of, tap} from 'rxjs'
 
 export default class GoogleSatelliteLayer extends TileLayer {
-    constructor({map, layerIndex = 0, busy$, minZoom, maxZoom}) {
+    constructor({map, layerIndex = 0, minZoom, maxZoom}) {
         super()
         this.map = map
         this.layerIndex = layerIndex
-        this.busy$ = busy$
         this.minZoom = minZoom
         this.maxZoom = maxZoom
     }
@@ -17,10 +16,10 @@ export default class GoogleSatelliteLayer extends TileLayer {
         new GoogleSatelliteTileProvider()
 
     createOverlay = () => {
-        const {map, busy$, minZoom, maxZoom} = this
+        const {map, minZoom, maxZoom} = this
         const tileProvider = this.createTileProvider()
         const {google} = map.getGoogle()
-        return new GoogleMapsOverlay({tileProvider, google, minZoom, maxZoom, busy$})
+        return new GoogleMapsOverlay({name: 'GoogleSatelliteLayer', tileProvider, google, minZoom, maxZoom})
     }
 
     addToMap$ = () =>
