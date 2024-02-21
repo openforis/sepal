@@ -210,7 +210,7 @@ class _TabHandle extends React.Component {
             busy$.pipe(
                 filter(({id: currentId}) => id === currentId)
             ).subscribe(
-                ({label, busy}) => this.setBusy(label, busy)
+                ({label, busy}) => setImmediate(() => this.setBusy(label, busy))
             )
         )
         this.scrollSelectedTabIntoView()

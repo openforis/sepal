@@ -2518,7 +2518,9 @@
         "description": "Create a mosaic using Landsat or Sentinel 2.",
         "mapToolbar": {
           "mapRendering": {
-            "tooltip": "Start/stop map rendering"
+            "tooltip": "Start/stop map rendering",
+            "processing": "Processing",
+            "tiles": "{tiles} {tiles, plural, one {tile} other {tiles}}"
           },
           "zoom": {
             "tooltip": "Zoom"

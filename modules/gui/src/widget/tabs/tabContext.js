@@ -1,4 +1,4 @@
-import {Subject, finalize} from 'rxjs'
+import {BehaviorSubject, distinctUntilChanged, filter, finalize, tap} from 'rxjs'
 import {compose} from 'compose'
 import {v4 as uuid} from 'uuid'
 import {withContext} from 'context'
@@ -33,14 +33,25 @@ export const withTab = () =>
             createBusy$() {
                 const {tab: {id, busy$}, addSubscription} = this.props
                 const label = uuid()
-                const busyTab$ = new Subject()
-                const setBusy = busy => busy$.next({id, label, busy})
-        
+                const busyTab$ = new BehaviorSubject(false)
+
                 addSubscription(
                     busyTab$.pipe(
-                        finalize(() => setBusy(false))
+                        finalize(
+                            () => busy$.next({id, label, busy: false})
+                        ),
+                        distinctUntilChanged()
                     ).subscribe({
-                        next: busy => setBusy(busy)
+                        next: busy => busy$.next({id, label, busy})
+                    }),
+                    busy$.pipe(
+                        filter((
+                            // {id: currentId, label: currentLabel}) => currentId === id && currentLabel !== label
+                            {id: currentId}) => currentId === id
+                        ),
+                        distinctUntilChanged()
+                    ).subscribe({
+                        next: ({busy}) => busyTab$.next(busy)
                     })
                 )
         
