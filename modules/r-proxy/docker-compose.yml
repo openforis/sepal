@@ -26,6 +26,11 @@ services:
     volumes:
       - ${SEPAL_DATA_DIR}/r-proxy/site-library:/usr/local/lib/R/site-library
       - ${SEPAL_DATA_DIR}/r-proxy/repo:/R
+    healthcheck:
+      test: bash -c "exec 6<> /dev/tcp/localhost/8180"
+      timeout: 60s
+      interval: 1s
+      retries: 60
     restart: always
     ulimits:
       core: 0

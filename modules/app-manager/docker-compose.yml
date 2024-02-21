@@ -18,6 +18,11 @@ services:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
     networks:
       - sepal
+    healthcheck:
+      test: bash -c "exec 6<> /dev/tcp/localhost/5011"
+      timeout: 60s
+      interval: 1s
+      retries: 60
     restart: always
     ulimits:
       core: 0

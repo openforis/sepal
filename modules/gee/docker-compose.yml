@@ -18,6 +18,11 @@ services:
       INSTANCES: "40"
     networks:
       - sepal
+    healthcheck:
+      test: bash -c "exec 6<> /dev/tcp/localhost/5001"
+      timeout: 60s
+      interval: 1s
+      retries: 60
     restart: always
     ulimits:
       core: 0

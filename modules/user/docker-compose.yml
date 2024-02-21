@@ -32,7 +32,7 @@ services:
     networks:
       - sepal
     healthcheck:
-      # test: test -f /data/module_initialized
+      test: bash -c "exec 6<> /dev/tcp/localhost/80"
       timeout: 60s
       interval: 1s
       retries: 60

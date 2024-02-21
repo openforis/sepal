@@ -37,7 +37,7 @@ services:
       net.ipv4.tcp_keepalive_intvl: 60
       net.ipv4.tcp_keepalive_probes: 6
     healthcheck:
-      test: netstat -nl | grep -e ':8001\s'
+      test: bash -c "exec 6<> /dev/tcp/localhost/8001"
       timeout: 60s
       interval: 1s
       retries: 60

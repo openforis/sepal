@@ -32,6 +32,11 @@ services:
       NICFI_PLANET_API_KEY: "${NICFI_PLANET_API_KEY}"
     networks:
       - sepal
+    healthcheck:
+      test: bash -c "exec 6<> /dev/tcp/localhost/1025"
+      timeout: 60s
+      interval: 1s
+      retries: 60
     restart: always
 
 networks:

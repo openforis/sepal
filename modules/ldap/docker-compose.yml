@@ -29,7 +29,7 @@ services:
     networks:
       - sepal
     healthcheck:
-      test: [ "CMD", "test", "-f", "/data/module_initialized" ]
+      test: bash -c "test -f /data/module_initialized"
       timeout: 60s
       interval: 1s
       retries: 60

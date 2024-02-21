@@ -10,8 +10,7 @@ RUN npm install -g nodemon
 
 RUN apt-get update && \
     apt-get install -y \
-        sudo \
-        net-tools
+        sudo
 
 RUN adduser node sudo
 
