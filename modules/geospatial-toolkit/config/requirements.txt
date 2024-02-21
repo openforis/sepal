@@ -44,7 +44,6 @@ pre-commit
 ########  web api  ########
 falcon
 gunicorn
-pyCrypto
 awscli==1.11.18 # Pinned to prevent backtracking
 
 ########  other deps  ########
