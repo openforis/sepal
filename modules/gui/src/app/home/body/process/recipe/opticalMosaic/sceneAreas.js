@@ -65,25 +65,14 @@ class _SceneAreas extends React.Component {
                 RecipeActions(recipeId).setSceneAreas(sceneAreas).dispatch()
                 busy$.next(false)
             },
-            e => {
+            error => {
                 busy$.next(false)
                 Notifications.error({
                     title: msg('gee.error.title'),
                     message: msg('process.mosaic.sceneAreas.error'),
-                    error: e.response ? msg(e.response.messageKey, e.response.messageArgs, e.response.defaultMessage) : null,
+                    error: error.response ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage) : null,
                     group: true,
                     timeout: 0
-                    // content: dismiss =>
-                    //     <Button
-                    //         look='transparent'
-                    //         shape='pill'
-                    //         icon='sync'
-                    //         label={msg('button.retry')}
-                    //         onClick={() => {
-                    //             dismiss()
-                    //             this.reload()
-                    //         }}
-                    //     />
                 })
             }
         )
