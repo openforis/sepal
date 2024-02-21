@@ -120,7 +120,8 @@
         },
         "run": [
             "mysql",
-            "user"
+            "user",
+            "rabbitmq"
         ],
         "gradle": true
     },
@@ -139,7 +140,8 @@
         ],
         "build": {},
         "run": [
-            "email"
+            "email",
+            "rabbitmq"
         ]
     },
     "task": {
@@ -174,7 +176,9 @@
             "shared"
         ],
         "build": {},
-        "run": []
+        "run": [
+            "rabbitmq"
+        ]
     },
     "user-storage": {
         "lib": [
@@ -182,7 +186,8 @@
         ],
         "build": {},
         "run": [
-            "email"
+            "email",
+            "rabbitmq"
         ]
     },
     "user-storage-backup": {
