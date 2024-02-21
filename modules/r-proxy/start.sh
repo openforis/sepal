@@ -11,6 +11,10 @@ find /R -maxdepth 4 -type d -path */github/src/* -print0 | xargs -0 rm -r
 
 source /etc/os-release
 
+# Java
+export SDKMAN_DIR=/usr/local/lib/sdkman
+source /usr/local/lib/sdkman/bin/sdkman-init.sh
+
 if [[ "${DEPLOY_ENVIRONMENT}" == "DEV" ]]
 then
   echo "Starting nodemon"

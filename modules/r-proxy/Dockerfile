@@ -35,7 +35,6 @@ ADD lib/js/shared ${SHARED}
 WORKDIR ${SHARED}
 USER root
 RUN chown -R node: ${SHARED}
-USER node
 RUN npm install
 
 # Install node.js module
@@ -44,13 +43,10 @@ ADD modules/${MODULE_NAME}/package-lock.json ${MODULE}/
 WORKDIR ${MODULE}
 USER root
 RUN mkdir src && chown -R node: ${MODULE}
-USER node
 RUN npm install
 
-USER node
 ADD modules/${MODULE_NAME}/src ${MODULE}/src
 ADD modules/${MODULE_NAME}/config ${MODULE}/config
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 
-USER node
 CMD start.sh
