@@ -69,10 +69,10 @@ export default class EarthEngineImageLayer extends TileLayer {
         )
 
     addToMap$ = () => {
-        this.busy$?.next(true)
+        this.busy$.next(true)
         return this.getMapId$().pipe(
             tap(({urlTemplate}) => this.addToMap(urlTemplate)),
-            finalize(() => this.busy$?.next(false))
+            finalize(() => this.busy$.next(false))
         )
     }
 
