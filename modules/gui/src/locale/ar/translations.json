@@ -2516,7 +2516,9 @@
             "description": "",
             "mapToolbar": {
                 "mapRendering": {
-                    "tooltip": ""
+                    "tooltip": "",
+                    "processing": "",
+                    "tiles": ""
                 },
                 "zoom": {
                     "tooltip": ""
