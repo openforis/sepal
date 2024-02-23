@@ -2516,7 +2516,9 @@
             "description": "Créer une mosaique avec Landsat ou Sentinel 2",
             "mapToolbar": {
                 "mapRendering": {
-                    "tooltip": ""
+                    "tooltip": "",
+                    "processing": "",
+                    "tiles": ""
                 },
                 "zoom": {
                     "tooltip": "Zoomer"
