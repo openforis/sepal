@@ -71,7 +71,7 @@ class _MapRendering extends React.PureComponent {
                 pendingTiles => setImmediate(() => this.setState({pendingTiles}))
             ),
             busy$.subscribe(
-                busy => setImmediate(() => this.setState({busy}))
+                ({busy}) => setImmediate(() => this.setState({busy}))
             )
         )
     }

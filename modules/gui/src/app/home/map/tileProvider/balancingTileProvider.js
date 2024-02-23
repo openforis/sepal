@@ -2,22 +2,23 @@ import {TileProvider} from './tileProvider'
 import {getTileManager} from '../tileManager/tileManager'
 
 export class BalancingTileProvider extends TileProvider {
-    constructor({tileProvider, retryCutOffTime, busy$, renderingEnabled$, renderingStatus$}) {
+    // constructor({tileProvider, retryCutOffTime, busy$, renderingEnabled$, renderingStatus$}) {
+    constructor({tileProvider, retryCutOffTime, busy, renderingEnabled$, renderingStatus$}) {
         super()
         this.subscriptions = []
         this.retryCutOffTime = retryCutOffTime
         this.tileProvider = tileProvider
         this.tileManager = getTileManager({tileProvider})
-        this.initProgress(busy$, renderingStatus$)
+        this.initProgress(busy, renderingStatus$)
         this.initRenderingEnabled(renderingEnabled$)
     }
 
-    initProgress(busy$, renderingStatus$) {
-        if (busy$ || renderingStatus$) {
+    initProgress(busy, renderingStatus$) {
+        if (busy || renderingStatus$) {
             this.subscriptions.push(
                 this.tileManager.getStatus$().subscribe(
                     ({tileProviderId, pending, pendingEnabled}) => {
-                        busy$?.next(!!pendingEnabled)
+                        busy?.set(`tileProvider-${tileProviderId}`, !!pendingEnabled)
                         renderingStatus$?.next({tileProviderId, pending})
                     }
                 )

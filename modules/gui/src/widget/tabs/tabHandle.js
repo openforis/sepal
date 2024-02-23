@@ -36,7 +36,7 @@ class _TabHandle extends React.Component {
             editing: false,
             title,
             prevTitle: title,
-            busy: {}
+            busy: false
         }
     }
 
@@ -55,7 +55,6 @@ class _TabHandle extends React.Component {
     render() {
         const {selected, closing} = this.props
         const {busy, editing} = this.state
-        const isBusy = Object.keys(busy).length > 0
         return (
             <Layout
                 type='horizontal-nowrap'
@@ -64,7 +63,7 @@ class _TabHandle extends React.Component {
                     styles.tab,
                     styles.regular,
                     selected ? styles.selected : null,
-                    isBusy ? styles.busy : null,
+                    busy ? styles.busy : null,
                     closing ? styles.closing : null,
                     editing ? styles.editing : null
                 ].join(' ')}
@@ -198,19 +197,13 @@ class _TabHandle extends React.Component {
         }
     }
 
-    setBusy(label, isBusy) {
-        this.setState(
-            ({busy}) => ({busy: isBusy ? {...busy, [label]: true} : _.omit(busy, label)})
-        )
-    }
-
     componentDidMount() {
-        const {id, busy$, addSubscription} = this.props
+        const {id: tabId, busyOut$, addSubscription} = this.props
         addSubscription(
-            busy$.pipe(
-                filter(({id: currentId}) => id === currentId)
+            busyOut$.pipe(
+                filter(({tabId: currentTabId}) => currentTabId === tabId)
             ).subscribe(
-                ({label, busy}) => setImmediate(() => this.setBusy(label, busy))
+                ({busy, _count}) => setImmediate(() => this.setState({busy}))
             )
         )
         this.scrollSelectedTabIntoView()
@@ -231,7 +224,7 @@ export const TabHandle = compose(
 )
 
 TabHandle.propTypes = {
-    busy$: PropTypes.any,
+    busyOut$: PropTypes.any,
     closing: PropTypes.any,
     id: PropTypes.string,
     placeholder: PropTypes.string,

@@ -33,7 +33,7 @@ class _EETableLayer extends React.Component {
     }
 
     createLayer() {
-        const {tableId, columnName, columnValue, buffer, color, fillColor, layerIndex, map, tab: {busy$}} = this.props
+        const {tableId, columnName, columnValue, buffer, color, fillColor, layerIndex, map, tab: {busy}} = this.props
         return tableId
             ? new EarthEngineTableLayer({
                 map,
@@ -42,7 +42,7 @@ class _EETableLayer extends React.Component {
                 }),
                 layerIndex,
                 watchedProps: {tableId, columnName, columnValue, buffer},
-                busy$
+                busy
             })
             : null
     }

@@ -1,63 +1,46 @@
-import {BehaviorSubject, distinctUntilChanged, filter, finalize, tap} from 'rxjs'
 import {compose} from 'compose'
-import {v4 as uuid} from 'uuid'
+import {filter, map} from 'rxjs'
 import {withContext} from 'context'
-import {withSubscriptions} from 'subscription'
 import React from 'react'
+import _ from 'lodash'
 
 const Context = React.createContext()
 
 const withTabContext = withContext(Context, 'tab')
 
-export const TabContext = ({id, busy$, children}) =>
-    <Context.Provider value={{id, busy$}}>
+export const TabContext = ({id, busyIn$, busyOut$, children}) =>
+    <Context.Provider value={{id, busyIn$, busyOut$}}>
         {children}
     </Context.Provider>
 
 export const withTab = () =>
     WrappedComponent => compose(
         class WithTabContextHOC extends React.Component {
-            constructor(props) {
-                super(props)
-                this.busy$ = this.createBusy$()
-            }
-
             render() {
                 const props = {
                     ...this.props,
-                    tab: {busy$: this.busy$}
+                    tab: {
+                        busy: this.busy(),
+                        busy$: this.busy$()
+                    }
                 }
                 return React.createElement(WrappedComponent, props)
             }
 
-            createBusy$() {
-                const {tab: {id, busy$}, addSubscription} = this.props
-                const label = uuid()
-                const busyTab$ = new BehaviorSubject(false)
-
-                addSubscription(
-                    busyTab$.pipe(
-                        finalize(
-                            () => busy$.next({id, label, busy: false})
-                        ),
-                        distinctUntilChanged()
-                    ).subscribe({
-                        next: busy => busy$.next({id, label, busy})
-                    }),
-                    busy$.pipe(
-                        filter((
-                            // {id: currentId, label: currentLabel}) => currentId === id && currentLabel !== label
-                            {id: currentId}) => currentId === id
-                        ),
-                        distinctUntilChanged()
-                    ).subscribe({
-                        next: ({busy}) => busyTab$.next(busy)
-                    })
+            busy$() {
+                const {tab: {id: tabId, busyOut$}} = this.props
+                return busyOut$.pipe(
+                    filter(({tabId: currentTabId}) => currentTabId === tabId),
+                    map(({busy, count}) => ({busy, count}))
                 )
-        
-                return busyTab$
+            }
+
+            busy() {
+                const {tab: {id: tabId, busyIn$}} = this.props
+                return {
+                    set: (busyId, busy) => busyIn$.next({tabId, busyId, busy})
+                }
             }
         },
-        withTabContext(),
-        withSubscriptions()
+        withTabContext()
     )

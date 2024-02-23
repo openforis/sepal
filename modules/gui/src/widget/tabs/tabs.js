@@ -1,8 +1,8 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import {EMPTY, Subject, groupBy, map, mergeMap, mergeScan, of, shareReplay} from 'rxjs'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {Subject} from 'rxjs'
 import {TabContent} from './tabContent'
 import {TabHandle} from './tabHandle'
 import {compose} from 'compose'
@@ -99,7 +99,7 @@ const mapStateToProps = (state, ownProps) => ({
 class _Tabs extends React.Component {
     constructor(props) {
         super(props)
-        this.renderTab = this.renderTab.bind(this)
+        this.renderTabHandle = this.renderTabHandle.bind(this)
         this.addTab = this.addTab.bind(this)
         this.closeSelectedTab = this.closeSelectedTab.bind(this)
         this.selectPreviousTab = this.selectPreviousTab.bind(this)
@@ -109,11 +109,36 @@ class _Tabs extends React.Component {
         if (tabs.length === 0) {
             addTab(statePath)
         }
+
+        this.busyIn$ = new Subject()
+
+        this.busyOut$ = this.busyIn$.pipe(
+            groupBy(({busyId}) => busyId),
+            mergeMap(group$ =>
+                group$.pipe(
+                    mergeScan(
+                        ({busy: wasBusy}, {tabId, busyId, busy}) =>
+                            busy === wasBusy ? EMPTY : of({tabId, busyId, busy}),
+                        {busy: false}
+                    )
+                )
+            ),
+            groupBy(({tabId}) => tabId),
+            mergeMap(group$ =>
+                group$.pipe(
+                    mergeScan(
+                        ({count}, {tabId, busy}) =>
+                            of({tabId, count: count + (busy ? 1 : -1)}),
+                        {count: 0}
+                    )
+                )
+            ),
+            map(({tabId, count}) => ({tabId, count, busy: count > 0})),
+            shareReplay(1)
+        )
     }
 
-    busy$ = new Subject()
-
-    renderTab(tab) {
+    renderTabHandle(tab) {
         const {selectedTabId, statePath, onTitleChanged} = this.props
         return (
             <TabHandle
@@ -122,7 +147,7 @@ class _Tabs extends React.Component {
                 title={tab.title}
                 placeholder={tab.placeholder}
                 selected={tab.id === selectedTabId}
-                busy$={this.busy$}
+                busyOut$={this.busyOut$}
                 closing={tab.ui && tab.ui.closing}
                 statePath={statePath}
                 onTitleChanged={onTitleChanged}
@@ -139,7 +164,8 @@ class _Tabs extends React.Component {
                 id={tab.id}
                 type={tab.type}
                 selected={tab.id === selectedTabId}
-                busy$={this.busy$}
+                busyIn$={this.busyIn$}
+                busyOut$={this.busyOut$}
             >
                 {children}
             </TabContent>
@@ -152,7 +178,7 @@ class _Tabs extends React.Component {
             <React.Fragment>
                 <ScrollableContainer>
                     <Scrollable direction='x' className={styles.tabs}>
-                        {maxTabs > 1 ? tabs.map(this.renderTab) : null}
+                        {maxTabs > 1 ? tabs.map(this.renderTabHandle) : null}
                     </Scrollable>
                 </ScrollableContainer>
                 {this.renderTabControls()}

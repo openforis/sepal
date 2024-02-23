@@ -53,20 +53,21 @@ class _SceneAreas extends React.Component {
     }
 
     loadSceneAreas(aoi, source) {
-        const {recipeId, stream, tab: {busy$}} = this.props
+        const {recipeId, stream, tab: {busy}} = this.props
         RecipeActions(recipeId).setSceneAreas(null).dispatch()
         this.loadSceneArea$.next()
-        busy$.next(true)
+        const busyId = `SceneAreas-${recipeId}`
+        busy.set(busyId, true)
         stream('LOAD_SCENE_AREAS',
             api.gee.sceneAreas$({aoi, source}).pipe(
                 takeUntil(this.loadSceneArea$)
             ),
             sceneAreas => {
                 RecipeActions(recipeId).setSceneAreas(sceneAreas).dispatch()
-                busy$.next(false)
+                busy.set(busyId, false)
             },
             error => {
-                busy$.next(false)
+                busy.set(busyId, false)
                 Notifications.error({
                     title: msg('gee.error.title'),
                     message: msg('process.mosaic.sceneAreas.error'),

@@ -180,7 +180,7 @@ class _RecipeImageLayer extends React.Component {
     }
 
     createLayer() {
-        const {recipe, layerConfig, map, boundsChanged$, dragging$, cursor$, tab: {busy$}} = this.props
+        const {recipe, layerConfig, map, boundsChanged$, dragging$, cursor$, tab: {busy}} = this.props
         const recipes = [recipe, ...getDependentRecipes(recipe)]
         const availableBands = getRecipeType(recipe.type).getAvailableBands(recipe)
         const dataTypes = _.mapValues(availableBands, 'dataType')
@@ -198,7 +198,7 @@ class _RecipeImageLayer extends React.Component {
                 dataTypes,
                 visParams: layerConfig.visParams,
                 map,
-                busy$,
+                busy,
                 cursorValue$: this.cursorValue$,
                 boundsChanged$,
                 dragging$,

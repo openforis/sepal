@@ -78,19 +78,19 @@ class AppInstance extends React.Component {
     }
 
     componentDidMount() {
-        const {app: {endpoint, path}, tab: {busy$}, stream} = this.props
+        const {app: {id, endpoint, path}, tab: {busy}, stream} = this.props
         if (!endpoint) {
             this.setState({appState: 'INITIALIZED', src: path}, () =>
                 stream('RUN_APP', of())
             )
         } else {
-            busy$.next(true)
+            busy.set(id, true)
             this.runApp()
         }
     }
 
     componentDidUpdate(_prevProps, prevState) {
-        const {tab: {busy$}} = this.props
+        const {app: {id}, tab: {busy}} = this.props
         const {srcDoc} = this.state
         const iFrame = this.iFrameRef.current
         if (!this.useIFrameSrc() && srcDoc && !prevState.srcDoc && iFrame) {
@@ -98,7 +98,7 @@ class AppInstance extends React.Component {
             doc.open()
             doc.write(srcDoc)
             doc.close()
-            busy$.next(false)
+            busy.set(id, false)
         }
     }
 
@@ -108,10 +108,10 @@ class AppInstance extends React.Component {
     }
 
     iFrameLoaded() {
-        const {tab: {busy$}} = this.props
+        const {app: {id}, tab: {busy}} = this.props
         const {src} = this.state
         if (this.useIFrameSrc() && src) {
-            busy$.next(false)
+            busy.set(id, false)
             this.setState({appState: 'READY'})
         }
     }
@@ -142,11 +142,11 @@ class AppInstance extends React.Component {
     }
 
     onError(error) {
-        const {app, tab: {busy$}} = this.props
+        const {app: {id, label, alt}, tab: {busy}} = this.props
         log.error('Failed to load app', error)
         this.setState({appState: 'FAILED'})
-        Notifications.error({message: msg('apps.run.error', {label: app.label || app.alt})})
-        busy$.next(false)
+        Notifications.error({message: msg('apps.run.error', {label: label || alt})})
+        busy.set(id, false)
     }
 }
 

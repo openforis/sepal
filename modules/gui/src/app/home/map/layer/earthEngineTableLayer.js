@@ -4,13 +4,14 @@ import {GoogleMapsOverlay} from './googleMapsOverlay'
 import {TileLayer} from './tileLayer'
 import {finalize, tap} from 'rxjs'
 import {isEqual} from 'hash'
+import {v4 as uuid} from 'uuid'
 import _ from 'lodash'
 
 export default class EarthEngineTableLayer extends TileLayer {
     constructor({
         map,
         layerIndex = 0,
-        busy$,
+        busy,
         mapId$,
         watchedProps,
         minZoom,
@@ -19,7 +20,7 @@ export default class EarthEngineTableLayer extends TileLayer {
         super()
         this.map = map
         this.layerIndex = layerIndex
-        this.busy$ = busy$
+        this.busy = busy
         this.mapId$ = mapId$
         this.watchedProps = watchedProps
         this.minZoom = minZoom
@@ -27,11 +28,11 @@ export default class EarthEngineTableLayer extends TileLayer {
     }
 
     createTileProvider = urlTemplate => {
-        const {busy$} = this
+        const {busy} = this
         const tileProvider = new EarthEngineTableTileProvider({urlTemplate})
         return new BalancingTileProvider({
             tileProvider,
-            busy$,
+            busy,
             renderingEnabled$: this.map.renderingEnabled$,
             renderingStatus$: this.map.renderingStatus$
         })
@@ -44,10 +45,11 @@ export default class EarthEngineTableLayer extends TileLayer {
     }
 
     addToMap$ = () => {
-        this.busy$.next(true)
+        const id = `EarthEngineTableLayer-${uuid()}`
+        this.busy.set(id, true)
         return this.mapId$.pipe(
             tap(({urlTemplate}) => this.addToMap(urlTemplate)),
-            finalize(() => this.busy$.next(false))
+            finalize(() => this.busy.set(id, false))
         )
     }
 

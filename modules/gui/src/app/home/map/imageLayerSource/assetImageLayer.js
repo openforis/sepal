@@ -87,7 +87,7 @@ class _AssetImageLayer extends React.Component {
     }
 
     createLayer() {
-        const {layerConfig, map, source, boundsChanged$, dragging$, cursor$, tab: {busy$}} = this.props
+        const {layerConfig, map, source, boundsChanged$, dragging$, cursor$, tab: {busy}} = this.props
         const asset = selectFrom(source, 'sourceConfig.asset')
         const dataTypes = selectFrom(source, 'sourceConfig.metadata.dataTypes') || {}
         const {watchedProps: prevPreviewRequest} = this.layer || {}
@@ -106,7 +106,7 @@ class _AssetImageLayer extends React.Component {
                 dataTypes,
                 map,
                 cursorValue$: this.cursorValue$,
-                busy$,
+                busy,
                 boundsChanged$,
                 dragging$,
                 cursor$

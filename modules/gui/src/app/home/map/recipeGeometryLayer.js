@@ -33,7 +33,7 @@ class _RecipeGeometryLayer extends React.Component {
     }
 
     createLayer() {
-        const {recipe, color, fillColor, layerIndex, map, tab: {busy$}} = this.props
+        const {recipe, color, fillColor, layerIndex, map, tab: {busy}} = this.props
         return recipe.ui.initialized
             ? new EarthEngineTableLayer({
                 map,
@@ -42,7 +42,7 @@ class _RecipeGeometryLayer extends React.Component {
                 }),
                 layerIndex,
                 watchedProps: recipe.model,
-                busy$
+                busy
             })
             : null
     }

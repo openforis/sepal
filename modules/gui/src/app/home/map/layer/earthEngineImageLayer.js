@@ -6,6 +6,7 @@ import {TileLayer} from './tileLayer'
 import {isEqual} from 'hash'
 import {publishEvent} from 'eventPublisher'
 import {selectFrom} from 'stateUtils'
+import {v4 as uuid} from 'uuid'
 import _ from 'lodash'
 import api from 'api'
 
@@ -13,7 +14,7 @@ export default class EarthEngineImageLayer extends TileLayer {
     constructor({
         map,
         layerIndex = 0,
-        busy$,
+        busy,
         previewRequest,
         watchedProps,
         dataTypes,
@@ -28,7 +29,7 @@ export default class EarthEngineImageLayer extends TileLayer {
         super()
         this.map = map
         this.layerIndex = layerIndex
-        this.busy$ = busy$
+        this.busy = busy
         this.previewRequest = previewRequest
         this.dataTypes = dataTypes
         this.visParams = visParams
@@ -42,13 +43,13 @@ export default class EarthEngineImageLayer extends TileLayer {
     }
 
     createTileProvider = urlTemplate => {
-        const {busy$, dataTypes, visParams, cursorValue$, boundsChanged$, dragging$, cursor$} = this
+        const {busy, dataTypes, visParams, cursorValue$, boundsChanged$, dragging$, cursor$} = this
         const tileProvider = new EarthEngineTileProvider({
             urlTemplate, dataTypes, visParams, cursorValue$, boundsChanged$, dragging$, cursor$
         })
         return new BalancingTileProvider({
             tileProvider,
-            busy$,
+            busy,
             renderingEnabled$: this.map.renderingEnabled$,
             renderingStatus$: this.map.renderingStatus$
         })
@@ -69,10 +70,11 @@ export default class EarthEngineImageLayer extends TileLayer {
         )
 
     addToMap$ = () => {
-        this.busy$.next(true)
+        const id = `EarthEngineImageLayer-${uuid()}`
+        this.busy.set(id, true)
         return this.getMapId$().pipe(
             tap(({urlTemplate}) => this.addToMap(urlTemplate)),
-            finalize(() => this.busy$.next(false))
+            finalize(() => this.busy.set(id, false))
         )
     }
 
