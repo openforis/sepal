@@ -108,11 +108,11 @@ class _Input extends React.Component {
             inputTooltip, inputTooltipPlacement, onAccept, onCancel
         } = this.props
         const {focused} = this.state
-        const keymap = {
-            ' ': null,
-            'Enter': onAccept ? this.onAccept : undefined,
-            'Escape': onCancel ? this.onCancel : undefined
-        }
+        const keymap = _.assign(
+            {' ': null},
+            onAccept ? {'Enter': this.onAccept} : undefined,
+            onCancel ? {'Escape': this.onCancel} : undefined
+        )
         return (
             <Keybinding keymap={keymap} disabled={!focused}>
                 {/* [HACK] input is wrapped in a div for fixing Firefox input width in flex */}
