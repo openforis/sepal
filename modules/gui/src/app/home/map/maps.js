@@ -1,5 +1,5 @@
-import {BehaviorSubject, Subject, debounceTime, distinctUntilChanged, filter, from, map, merge, of, switchMap, zip} from 'rxjs'
-import {Loader} from 'google-maps'
+import {BehaviorSubject, Subject, debounceTime, distinctUntilChanged, filter, forkJoin, from, map, merge, of, switchMap, zip} from 'rxjs'
+import {Loader} from '@googlemaps/js-api-loader'
 import {SepalMap} from './sepalMap'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -15,8 +15,9 @@ import api from 'api'
 
 const log = getLogger('maps')
 
-const GOOGLE_MAPS_VERSION = '3.56'
-const GOOGLE_MAPS_LIBRARIES = ['drawing', 'places']
+// Note: Google Maps API v.3.5+ deprecates Marker for AdvancedMarkerElement, which requires creating a MapId
+const GOOGLE_MAPS_VERSION = '3.55'
+const GOOGLE_MAPS_LIBRARIES = ['core', 'drawing', 'geocoding', 'marker', 'places']
 
 const DEFAULT_ZOOM = 3
 export const MIN_ZOOM = 3
@@ -65,18 +66,20 @@ class _Maps extends React.Component {
         )
     }
 
-    getGoogleMapsLoader(googleMapsApiKey) {
-        return new Loader(googleMapsApiKey, {
-            version: GOOGLE_MAPS_VERSION,
-            libraries: GOOGLE_MAPS_LIBRARIES
-        })
-    }
-
     initGoogleMaps$(googleMapsApiKey) {
-        const loader = this.getGoogleMapsLoader(googleMapsApiKey)
-        return from(loader.load()).pipe(
-            switchMap(google =>
-                of({google, googleMapsApiKey})
+        const loader = new Loader({
+            apiKey: googleMapsApiKey,
+            version: GOOGLE_MAPS_VERSION
+        })
+        
+        const libraries = ['maps', ...GOOGLE_MAPS_LIBRARIES].reduce(
+            (libraries, library) => ({...libraries, [library]: from(loader.importLibrary(library))}),
+            {}
+        )
+
+        return forkJoin(libraries).pipe(
+            map(({core, maps, marker, drawing, places, geocoding}) =>
+                ({google: {maps: {...maps, core, marker, drawing, places, geocoding}, googleMapsApiKey}})
             )
         )
     }
@@ -119,7 +122,7 @@ class _Maps extends React.Component {
             minZoom: MIN_ZOOM,
             maxZoom: MAX_ZOOM,
             scrollwheel: false,
-            center: new google.maps.LatLng(16.7794913, 9.6771556),
+            center: new google.maps.core.LatLng(16.7794913, 9.6771556),
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             zoomControl: false,
             mapTypeControl: false,

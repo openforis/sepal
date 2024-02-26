@@ -14,7 +14,7 @@ export class GoogleMapsOverlay {
         this.name = name
         this.minZoom = minZoom
         this.maxZoom = maxZoom
-        this.tileSize = new google.maps.Size(
+        this.tileSize = new google.maps.core.Size(
             tileProvider.tileSize || 256,
             tileProvider.tileSize || 256
         )

@@ -224,7 +224,7 @@ class _MapZoomPanel extends React.Component {
         const {map, addSubscription} = this.props
         const {google} = map.getGoogle()
         this.autoComplete = new google.maps.places.AutocompleteService()
-        this.geoCoder = new google.maps.Geocoder()
+        this.geoCoder = new google.maps.geocoding.Geocoder()
         addSubscription(
             map.view$.subscribe(
                 view => this.setState({view})
@@ -253,7 +253,7 @@ class _MapZoomPanel extends React.Component {
                     </div>
                 ),
                 value: {
-                    coords: new google.maps.LatLng(candidate.lat, candidate.lng)
+                    coords: new google.maps.core.LatLng(candidate.lat, candidate.lng)
                 },
                 key: formatCoordinates(candidate)
             }))

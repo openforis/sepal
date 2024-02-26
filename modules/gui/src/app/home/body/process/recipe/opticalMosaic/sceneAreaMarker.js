@@ -13,14 +13,14 @@ class _SceneAreaMarker extends React.Component {
         this.recipeActions = RecipeActions(recipeId)
         const gPolygon = new google.maps.Polygon({
             paths: polygon.map(([lat, lng]) =>
-                new google.maps.LatLng(lat, lng)),
+                new google.maps.core.LatLng(lat, lng)),
             fillColor: '#000000',
             fillOpacity: 0.4,
             strokeColor: '#636363',
             strokeOpacity: 0.6,
             strokeWeight: 1
         })
-        const bounds = new google.maps.LatLngBounds()
+        const bounds = new google.maps.core.LatLngBounds()
         gPolygon.getPaths().getArray().forEach(path =>
             path.getArray().forEach(latLng =>
                 bounds.extend(latLng)

@@ -30,7 +30,7 @@ export default class MarkerClustererLayer extends Layer {
         this.icon = {
             path: 'M25.015 2.4c-7.8 0-14.121 6.204-14.121 13.854 0 7.652 14.121 32.746 14.121 32.746s14.122-25.094 14.122-32.746c0-7.65-6.325-13.854-14.122-13.854z',
             fillOpacity: 1,
-            anchor: new this.google.maps.Point(25, 50),
+            anchor: new this.google.maps.core.Point(25, 50),
             strokeWeight: DEFAULT_STROKE_WIDTH,
             strokeColor: DEFAULT_STROKE_COLOR,
             scale: DEFAULT_SCALE
@@ -44,11 +44,11 @@ export default class MarkerClustererLayer extends Layer {
     <circle cx="120" cy="120" opacity=".2" r="110" stroke="hsla(0, 0%, 49%, 0.8)" stroke-width="10" />
   </svg>`)
 
-            return new google.maps.Marker({
+            return new google.maps.marker.Marker({
                 position,
                 icon: {
                     url: `data:image/svg+xml;base64,${svg}`,
-                    scaledSize: new google.maps.Size(45, 45),
+                    scaledSize: new google.maps.core.Size(45, 45),
                 },
                 label: {
                     text: String(count),
@@ -56,7 +56,7 @@ export default class MarkerClustererLayer extends Layer {
                     fontSize: '12px',
                 },
                 title: `Cluster of ${count} markers`,
-                zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
+                zIndex: Number(google.maps.marker.Marker.MAX_ZINDEX) + count,
             })
         }}
 
@@ -160,8 +160,8 @@ export default class MarkerClustererLayer extends Layer {
 
     toMapMarker = marker => {
         const {x, y, color = DEFAULT_COLOR, onClick} = marker
-        const mapMarker = new this.google.maps.Marker({
-            position: new this.google.maps.LatLng(y, x),
+        const mapMarker = new this.google.maps.marker.Marker({
+            position: new this.google.maps.core.LatLng(y, x),
             draggable: false,
             icon: {...this.icon, fillColor: color},
             clickable: this.clickable

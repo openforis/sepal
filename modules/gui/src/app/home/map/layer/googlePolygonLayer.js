@@ -24,7 +24,7 @@ export class GooglePolygonLayer extends Layer {
         const {map, path, fill} = this
         const {google} = map.getGoogle()
         const paths = path.map(
-            ([lng, lat]) => new google.maps.LatLng(lat, lng)
+            ([lng, lat]) => new google.maps.core.LatLng(lat, lng)
         )
         const polygonOptions = this.getPolygonOptions(fill, paths)
         return new google.maps.Polygon(polygonOptions)

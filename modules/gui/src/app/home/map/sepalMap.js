@@ -21,18 +21,34 @@ export class SepalMap {
         this.getBounds = this.getBounds.bind(this)
         this.getGoogle = this.getGoogle.bind(this)
 
-        this.cursor = new google.maps.Marker({
+        // const cursorSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+        // cursorSvg.setAttribute('path', `
+        //     M 1 -3 L 0 -2 L -1 -3 H -1 V -15 H 1 V -3 Z
+        //     M 3 -1 L 2 0 L 3 1 V 1 H 15 V -1 H 15 Z
+        //     M 1 3 L 0 2 L -1 3 H -1 V 15 H 1 Z
+        //     M -3 1 L -2 0 L -3 -1 V -1 H -15 V 1 Z
+        //     M -15 -15 H -7 V -13 H -13 V -7 H -15 V -7 Z
+        //     M 15 -15 H 7 V -13 H 13 V -7 H 15 V -12 Z
+        //     M 15 15 V 7 H 13 V 13 H 7 V 15 H 7 Z
+        //     M -15 15 H -7 V 13 H -13 V 7 H -15 V 7 Z
+        // `)
+        // cursorSvg.setAttribute('fillColor', 'white')
+        // cursorSvg.setAttribute('fillOpacity', 1)
+        // cursorSvg.setAttribute('strokeColor', 'black')
+        // cursorSvg.setAttribute('strokeOpacity', 1)
+
+        this.cursor = new google.maps.marker.Marker({
             clickable: false,
             draggable: false,
             icon: {
                 path: `
-                    M 1 -3 L 0 -2 L -1 -3 H -1 V -15 H 1 V -3 Z 
-                    M 3 -1 L 2 0 L 3 1 V 1 H 15 V -1 H 15 Z 
-                    M 1 3 L 0 2 L -1 3 H -1 V 15 H 1 Z 
-                    M -3 1 L -2 0 L -3 -1 V -1 H -15 V 1 Z 
-                    M -15 -15 H -7 V -13 H -13 V -7 H -15 V -7 Z 
-                    M 15 -15 H 7 V -13 H 13 V -7 H 15 V -12 Z 
-                    M 15 15 V 7 H 13 V 13 H 7 V 15 H 7 Z 
+                    M 1 -3 L 0 -2 L -1 -3 H -1 V -15 H 1 V -3 Z
+                    M 3 -1 L 2 0 L 3 1 V 1 H 15 V -1 H 15 Z
+                    M 1 3 L 0 2 L -1 3 H -1 V 15 H 1 Z
+                    M -3 1 L -2 0 L -3 -1 V -1 H -15 V 1 Z
+                    M -15 -15 H -7 V -13 H -13 V -7 H -15 V -7 Z
+                    M 15 -15 H 7 V -13 H 13 V -7 H 15 V -12 Z
+                    M 15 15 V 7 H 13 V 13 H 7 V 15 H 7 Z
                     M -15 15 H -7 V 13 H -13 V 7 H -15 V 7 Z
                 `,
                 fillColor: 'white',
@@ -43,7 +59,17 @@ export class SepalMap {
         })
         this.cursor.setMap(googleMap)
 
-        this.crosshair = new google.maps.Marker({
+        // const crosshairSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+        // crosshairSvg.setAttribute('path', `
+        //     M 0 0 L 100 0
+        //     M 0 0 L 0 -100
+        //     M 0 0 L -100 0
+        //     M 0 0 L 0 100
+        // `)
+        // crosshairSvg.setAttribute('strokeColor', 'white')
+        // crosshairSvg.setAttribute('strokeOpacity', 1)
+
+        this.crosshair = new google.maps.marker.Marker({
             icon: {
                 path: `
                     M 0 0 L 100 0
@@ -92,7 +118,7 @@ export class SepalMap {
         const {google, googleMap} = this
         const listenerId = googleMap.addListener(event, listener)
         return {
-            remove: () => google.maps.event.removeListener(listenerId)
+            remove: () => google.maps.core.event.removeListener(listenerId)
         }
     }
 
@@ -103,7 +129,7 @@ export class SepalMap {
         return {
             remove: () => {
                 googleMap.setOptions({draggableCursor: 'pointer'})
-                return google.maps.event.removeListener(listenerId)
+                return google.maps.core.event.removeListener(listenerId)
             }
         }
     }
@@ -114,7 +140,7 @@ export class SepalMap {
         const {google, googleMap} = this
         this.disableDrawingMode()
         this.drawingManager = new google.maps.drawing.DrawingManager(options)
-        google.maps.event.addListener(this.drawingManager, 'overlaycomplete', callback)
+        google.maps.core.event.addListener(this.drawingManager, 'overlaycomplete', callback)
         this.drawingManager.setMap(googleMap)
     }
 
@@ -122,7 +148,7 @@ export class SepalMap {
         const {google} = this
         if (this.drawingManager) {
             this.drawingManager.setMap(null)
-            google.maps.event.clearListeners(this.drawingManager, 'overlaycomplete')
+            google.maps.core.event.clearListeners(this.drawingManager, 'overlaycomplete')
         }
     }
 
@@ -168,9 +194,9 @@ export class SepalMap {
 
     toGoogleLocation(latLng) {
         const {google} = this
-        return latLng instanceof google.maps.LatLng
+        return latLng instanceof google.maps.core.LatLng
             ? latLng
-            : new google.maps.LatLng(latLng)
+            : new google.maps.core.LatLng(latLng)
     }
 
     getCenter() {
@@ -252,7 +278,7 @@ export class SepalMap {
             drawingMode: google.maps.drawing.OverlayType.POLYGON,
             drawingControl: false,
             drawingControlOptions: {
-                position: google.maps.ControlPosition.TOP_CENTER,
+                position: google.maps.core.ControlPosition.TOP_CENTER,
                 drawingModes: ['polygon']
             },
             polygonOptions: this.drawingOptions,
@@ -278,7 +304,7 @@ export class SepalMap {
 
     fromGoogleBounds(bounds) {
         const {google} = this
-        if (bounds && bounds instanceof google.maps.LatLngBounds) {
+        if (bounds && bounds instanceof google.maps.core.LatLngBounds) {
             const sw = bounds.getSouthWest()
             const ne = bounds.getNorthEast()
             return [
@@ -292,10 +318,10 @@ export class SepalMap {
 
     toGoogleBounds(bounds) {
         const {google} = this
-        if (bounds && bounds instanceof google.maps.LatLngBounds) {
+        if (bounds && bounds instanceof google.maps.core.LatLngBounds) {
             return bounds
         } else {
-            return new google.maps.LatLngBounds(
+            return new google.maps.core.LatLngBounds(
                 {lng: bounds[0][0], lat: bounds[0][1]},
                 {lng: bounds[1][0], lat: bounds[1][1]}
             )
@@ -321,7 +347,7 @@ export class SepalMap {
 
     setLocationMarker(options, onRemove) {
         const {google, googleMap} = this
-        const marker = new google.maps.Marker({
+        const marker = new google.maps.marker.Marker({
             label: 'X',
             ...options
         })
@@ -341,13 +367,13 @@ export class SepalMap {
             strokeOpacity: .5,
             ...options
         })
-        const closeMarker = new google.maps.Marker({
+        const closeMarker = new google.maps.marker.Marker({
             position: options.bounds.getNorthEast(),
             icon: {
                 path: 'M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z',
                 fillColor: '#c5b397',
                 fillOpacity: 1,
-                anchor: new google.maps.Point(12, 12),
+                anchor: new google.maps.core.Point(12, 12),
                 scale: 1
             },
             title: options.title

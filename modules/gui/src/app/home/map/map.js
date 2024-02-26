@@ -271,7 +271,7 @@ class _Map extends React.Component {
             const area = this.getArea(id)
             log.debug(() => `Removing ${mapTag(this.state.mapId, id)} from ${areaTag(area)}`)
             listeners.forEach(listener =>
-                google.maps.event.removeListener(listener)
+                google.maps.core.event.removeListener(listener)
             )
             subscriptions.forEach(subscription =>
                 subscription.unsubscribe()

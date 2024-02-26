@@ -55,7 +55,7 @@ class _MapLayer extends React.Component {
 
             draw() {
                 const projection = this.getProjection() // TODO: Zooming changes the projection...
-                const point = projection.fromLatLngToDivPixel(new google.maps.LatLng(0, 0))
+                const point = projection.fromLatLngToDivPixel(new google.maps.core.LatLng(0, 0))
                 const xyz = [point.x, point.y, map.getZoom()]
                 if (!_.isEqual(this.xyz, xyz)) {
                     this.xyz = xyz
@@ -112,7 +112,7 @@ class _MapObject extends React.Component {
                     if (!projection) {
                         return null
                     }
-                    const point = projection.fromLatLngToDivPixel(new google.maps.LatLng(lat, lng))
+                    const point = projection.fromLatLngToDivPixel(new google.maps.core.LatLng(lat, lng))
                     const style = {
                         position: 'absolute',
                         top: `calc(${point.y}px - ${height} / 2)`,

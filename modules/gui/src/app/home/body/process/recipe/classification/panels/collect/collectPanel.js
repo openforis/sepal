@@ -226,7 +226,7 @@ class CollectPanel extends React.Component {
     // moveMap(point) {
     //     const {map} = this.props
     //     const {google} = map.getGoogle()
-    //     const center = new google.maps.LatLng(point.y, point.x)
+    //     const center = new google.maps.core.LatLng(point.y, point.x)
     //     map.setView({center, zoom: 16})
     // }
 
