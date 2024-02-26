@@ -42,10 +42,10 @@
     ],
     "node": [
         "app-manager",
-        "ceo-gateway",
         "email",
         "gateway",
         "gee",
+        "gui",
         "r-proxy",
         "ssh-gateway",
         "sys-monitor",
