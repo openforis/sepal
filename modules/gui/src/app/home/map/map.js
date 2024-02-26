@@ -740,8 +740,9 @@ class _Map extends React.Component {
         return drawingMode ? (
             <div className={styles.drawingMode}>
                 <Button
-                    air='less'
+                    size='small'
                     label={msg(`map.drawingMode.${drawingMode}`)}
+                    icon='pencil'
                 />
             </div>
         ) : null
