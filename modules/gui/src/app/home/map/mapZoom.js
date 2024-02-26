@@ -340,8 +340,24 @@ export const MapZoomPanel = compose(
     })
 )
 
-export const MapZoomButton = () =>
-    <Toolbar.ActivationButton
-        id='mapZoom'
-        icon='search'
-        tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
+class _MapZoomButton extends React.Component {
+    render() {
+        const {map} = this.props
+        return (
+            <Keybinding keymap={{
+                'Ctrl+Shift+=': map.zoomIn,
+                'Ctrl+Shift+_': map.zoomOut
+            }}>
+                <Toolbar.ActivationButton
+                    id='mapZoom'
+                    icon='search'
+                    tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
+            </Keybinding>
+        )
+    }
+}
+
+export const MapZoomButton = compose(
+    _MapZoomButton,
+    withMap()
+)
