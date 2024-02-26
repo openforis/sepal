@@ -383,7 +383,6 @@ class _Map extends React.Component {
             const {drawingMode, callback} = activeInstance
             this.withAllMaps(({map}) => map.disableDrawingMode())
             if (this.isStackMode()) {
-                // this.setState({drawingMode}, () => {
                 this.setState({drawingMode, overlayActive: true}, () => {
                     this.withOverlayMap(callback)
                 })
@@ -398,7 +397,6 @@ class _Map extends React.Component {
     enableDrawingMode({drawingMode, callback}) {
         log.debug('enableDrawingMode:', drawingMode)
         if (this.isStackMode()) {
-            // this.setState({drawingMode}, () => {
             this.setState({drawingMode, overlayActive: true}, () => {
                 this.withOverlayMap(callback)
             })
@@ -412,12 +410,10 @@ class _Map extends React.Component {
     disableDrawingMode() {
         log.debug('disableDrawingMode')
         if (this.isStackMode()) {
-            // this.setState({drawingMode: null}, () => {
             this.setState({drawingMode: null, overlayActive: false}, () => {
                 this.withOverlayMap(({map}) => map.disableDrawingMode())
             })
         } else {
-            // this.setState({drawingMode: null, overlayActive: true}, () => {
             this.setState({drawingMode: null, overlayActive: false}, () => {
                 this.withAreaMaps(({map}) => map.disableDrawingMode())
             })
