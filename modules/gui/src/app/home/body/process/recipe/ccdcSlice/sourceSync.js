@@ -119,9 +119,7 @@ class _SourceSync extends React.Component {
         }
     }
 
-    updateAssetSource(id, metadata, source) {
-        const {recipeActionBuilder} = this.props
-        // const bands = metadata.bands
+    toAssetSource(id, metadata) {
         const bands = metadata.bandNames
         const bandAndType = _.chain(bands)
             .map(sourceBand => sourceBand.match(baseBandPattern))
@@ -142,9 +140,8 @@ class _SourceSync extends React.Component {
         const segmentBands = bands
             .filter(name => ['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb'].includes(name))
             .map(name => ({name}))
-        const assetDateFormat = metadata.properties.dateFormat
-        const dateFormat = assetDateFormat === undefined ? source.dateFormat : assetDateFormat
-        const sourceDetails = {
+        const dateFormat = metadata.properties.dateFormat
+        return {
             type: 'ASSET',
             id,
             bands,
@@ -156,6 +153,11 @@ class _SourceSync extends React.Component {
             visualizations: toVisualizations(metadata.properties, bands)
                 .map(visualization => ({...visualization, id: guid()}))
         }
+    }
+    
+    updateAssetSource(id, metadata) {
+        const {recipeActionBuilder} = this.props
+        const sourceDetails = this.toAssetSource(id, metadata)
         recipeActionBuilder('UPDATE_SOURCE', {sourceDetails})
             .set('model.source', sourceDetails)
             .dispatch()
@@ -174,8 +176,11 @@ class _SourceSync extends React.Component {
     }
 
     assetRecipeSource(recipe) {
+        const metadata = recipe.model.assetDetails.metadata
         return {
-            ...recipe.model.assetDetails.metadata.properties,
+            ...this.toAssetSource(metadata.assetId, metadata),
+            ...metadata.properties,
+            targetType: 'ASSET_MOSAIC',
             type: 'RECIPE_REF',
             id: recipe.id,
         }
