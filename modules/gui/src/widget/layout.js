@@ -2,7 +2,8 @@ import {compose} from 'compose'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './layout.module.css'
-import withForwardedRef from 'ref'
+import {withForwardedRef}
+ from 'ref'
 
 const typeClassNames = type =>
     type.split('-').map(className => styles[className])

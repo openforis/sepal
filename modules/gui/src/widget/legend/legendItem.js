@@ -1,6 +1,6 @@
 import {ColorElement} from 'widget/colorElement'
+import {Icon} from 'widget/icon'
 import {Layout} from 'widget/layout'
-import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './legendItem.module.css'

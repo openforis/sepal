@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from './buttonGroup'
+import {Icon} from 'widget/icon'
 import {ScrollableList} from 'widget/list'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
@@ -7,7 +8,6 @@ import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
 import {withSubscriptions} from 'subscription'
 import FloatingBox from 'widget/floatingBox'
-import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -17,7 +17,7 @@ const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
 })
 
-class ButtonSelect extends React.Component {
+class _ButtonSelect extends React.Component {
     input = React.createRef()
     list = React.createRef()
     select$ = new Subject()
@@ -250,8 +250,8 @@ class ButtonSelect extends React.Component {
     }
 }
 
-export default compose(
-    ButtonSelect,
+export const ButtonSelect = compose(
+    _ButtonSelect,
     withSubscriptions(),
     connect(mapStateToProps)
 )

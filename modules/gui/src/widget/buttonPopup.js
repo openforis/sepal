@@ -1,10 +1,10 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from './buttonGroup'
+import {Icon} from 'widget/icon'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
 import FloatingBox from 'widget/floatingBox'
-import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -14,7 +14,7 @@ const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
 })
 
-class ButtonPopup extends React.Component {
+class _ButtonPopup extends React.Component {
     buttonRef = React.createRef()
     popupRef = React.createRef()
     state = {
@@ -191,8 +191,8 @@ class ButtonPopup extends React.Component {
     }
 }
 
-export default compose(
-    ButtonPopup,
+export const ButtonPopup = compose(
+    _ButtonPopup,
     connect(mapStateToProps)
 )
 

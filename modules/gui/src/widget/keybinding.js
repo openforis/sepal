@@ -53,7 +53,7 @@ const add = keybinding =>
 const remove = keybinding =>
     _.pull(keybindings, keybinding)
 
-class Keybinding extends React.Component {
+class _Keybinding extends React.Component {
     constructor(props) {
         super(props)
         this.handlesKey = this.handlesKey.bind(this)
@@ -117,8 +117,8 @@ class Keybinding extends React.Component {
     }
 }
 
-export default compose(
-    Keybinding,
+export const Keybinding = compose(
+    _Keybinding,
     connect(),
     withEnableDetector()
 )

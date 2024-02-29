@@ -1,3 +1,4 @@
+import {Notifications} from 'widget/notifications'
 import {ajax} from 'rxjs/ajax'
 import {applyDefaults} from 'utils'
 import {autoRetry} from 'rxjsutils'
@@ -6,7 +7,6 @@ import {currentUser, logout$, updateUser} from 'user'
 import {getLogger} from 'log'
 import {msg} from 'translate'
 import {webSocket} from 'rxjs/webSocket'
-import Notifications from 'widget/notifications'
 import _ from 'lodash'
 import base64 from 'base-64'
 

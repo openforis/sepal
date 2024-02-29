@@ -1,5 +1,5 @@
+import {Label} from 'widget/label'
 import {Layout} from 'widget/layout'
-import Label from 'widget/label'
 import React from 'react'
 import styles from './subformDetails.module.css'
 

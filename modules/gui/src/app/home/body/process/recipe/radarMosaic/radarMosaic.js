@@ -1,5 +1,6 @@
 import {Aoi} from 'app/home/body/process/recipe/aoi'
 import {Map} from 'app/home/map/map'
+import {RadarMosaicToolbar} from './panels/radarMosaicToolbar'
 import {compose} from 'compose'
 import {defaultModel} from './radarMosaicRecipe'
 import {getAvailableBands} from './bands'
@@ -8,7 +9,6 @@ import {initializeLayers} from 'app/home/body/process/recipe/recipeImageLayerSou
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import RadarMosaicToolbar from './panels/radarMosaicToolbar'
 import React from 'react'
 import moment from 'moment'
 

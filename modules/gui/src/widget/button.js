@@ -1,18 +1,19 @@
 import {EMPTY, combineLatest, distinctUntilChanged, fromEvent, switchMap, take, takeUntil, timer} from 'rxjs'
+import {Icon} from 'widget/icon'
+import {Keybinding} from './keybinding'
 import {Link} from 'route'
+import {Tooltip} from 'widget/tooltip'
 import {compose} from 'compose'
 import {download} from 'widget/download'
 import {withButtonGroup} from './buttonGroup'
 import {withSubscriptions} from 'subscription'
-import Icon from 'widget/icon'
-import Keybinding from './keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Tooltip from 'widget/tooltip'
 import _ from 'lodash'
 import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
-import withForwardedRef from 'ref'
+import {withForwardedRef}
+ from 'ref'
 
 const CLICK_HOLD_DURATION_MS = 600
 const CLICK_CANCEL_DELAY_MS = 250

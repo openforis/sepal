@@ -2,6 +2,8 @@ import 'xterm/css/xterm.css'
 import {ContentPadding} from 'widget/sectionLayout'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {FitAddon} from 'xterm-addon-fit'
+import {Keybinding} from 'widget/keybinding'
+import {Notifications} from 'widget/notifications'
 import {Subject, distinctUntilChanged, filter, map, withLatestFrom} from 'rxjs'
 import {Tabs} from 'widget/tabs/tabs'
 import {TerminalWebSocket} from './terminalWebsocket'
@@ -12,12 +14,10 @@ import {msg} from 'translate'
 import {post$} from 'http-client'
 import {v4 as uuid} from 'uuid'
 import {withEnableDetector} from 'enabled'
-import Keybinding from 'widget/keybinding'
-import Notifications from 'widget/notifications'
 import React from 'react'
 import styles from './terminal.module.css'
 
-export default class Terminal extends React.Component {
+export class Terminal extends React.Component {
     render() {
         return (
             <Tabs

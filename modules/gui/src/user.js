@@ -1,8 +1,8 @@
+import {Notifications} from 'widget/notifications'
 import {catchError, map, of, switchMap, tap} from 'rxjs'
 import {msg} from 'translate'
 import {publishCurrentUserEvent, publishEvent} from 'eventPublisher'
 import {select} from 'store'
-import Notifications from 'widget/notifications'
 import actionBuilder from 'action-builder'
 import api from 'api'
 

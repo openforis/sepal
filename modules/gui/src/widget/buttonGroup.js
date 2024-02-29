@@ -4,7 +4,8 @@ import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import withForwardedRef from 'ref'
+import {withForwardedRef}
+ from 'ref'
 
 const Context = React.createContext()
 

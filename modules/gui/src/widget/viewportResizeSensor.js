@@ -2,7 +2,7 @@ import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import React from 'react'
 import actionBuilder from 'action-builder'
 
-export default class ViewportResizeSensor extends React.Component {
+export class ViewportResizeSensor extends React.Component {
     constructor() {
         super()
         this.updateDimensions = this.updateDimensions.bind(this)

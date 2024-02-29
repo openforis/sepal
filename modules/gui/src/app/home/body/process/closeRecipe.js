@@ -7,7 +7,7 @@ import {withActivators} from 'widget/activation/activator'
 import React from 'react'
 import styles from './closeRecipe.module.css'
 
-class CloseRecipe extends React.Component {
+class _CloseRecipe extends React.Component {
     render() {
         const {activator: {activatables: {saveRecipeDialog}}, activatable} = this.props
         const recipe = activatable.recipe
@@ -54,14 +54,14 @@ class CloseRecipe extends React.Component {
     }
 }
 
-CloseRecipe.propTypes = {}
-
 const policy = () => ({
     _: 'allow'
 })
 
-export default compose(
-    CloseRecipe,
+export const CloseRecipe = compose(
+    _CloseRecipe,
     withActivators('saveRecipeDialog'),
     withActivatable({id: 'closeRecipeDialog', policy})
 )
+
+CloseRecipe.propTypes = {}

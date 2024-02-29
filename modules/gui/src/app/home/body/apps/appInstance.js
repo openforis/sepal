@@ -1,4 +1,5 @@
 import {ContentPadding} from 'widget/sectionLayout'
+import {Notifications} from 'widget/notifications'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {forkJoin, map, of, switchMap, tap, timer} from 'rxjs'
@@ -8,14 +9,13 @@ import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
 import {runApp$} from 'apps'
 import {withTab} from 'widget/tabs/tabContext'
-import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './appInstance.module.css'
 
 const log = getLogger('apps')
 
-class AppInstance extends React.Component {
+class _AppInstance extends React.Component {
     iFrameRef = React.createRef()
 
     state = {
@@ -150,6 +150,12 @@ class AppInstance extends React.Component {
     }
 }
 
+export const AppInstance = compose(
+    _AppInstance,
+    connect(),
+    withTab()
+)
+
 AppInstance.propTypes = {
     app: PropTypes.shape({
         alt: PropTypes.string,
@@ -163,9 +169,3 @@ AppInstance.contextTypes = {
     active: PropTypes.bool,
     focus: PropTypes.func
 }
-
-export default compose(
-    AppInstance,
-    connect(),
-    withTab()
-)

@@ -8,7 +8,7 @@ import {SectionSelection} from './sectionSelection'
 import {compose} from 'compose'
 import {countryEETable} from 'app/home/map/aoiLayer'
 import {msg} from 'translate'
-import PanelSections from 'widget/panelSections'
+import {PanelSections} from 'widget/panelSections'
 import React from 'react'
 import styles from './aoi.module.css'
 

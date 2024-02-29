@@ -18,7 +18,7 @@ const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized')
 })
 
-class RadarMosaicToolbar extends React.Component {
+class _RadarMosaicToolbar extends React.Component {
     render() {
         const {recipeId, initialized} = this.props
         return (
@@ -65,7 +65,7 @@ class RadarMosaicToolbar extends React.Component {
     }
 }
 
-export default compose(
-    RadarMosaicToolbar,
+export const RadarMosaicToolbar = compose(
+    _RadarMosaicToolbar,
     withRecipe(mapRecipeToProps)
 )

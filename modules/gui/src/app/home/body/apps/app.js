@@ -1,9 +1,9 @@
+import {AppInstance} from './appInstance'
 import {AppList} from './appList/appList'
 import {closeTab} from 'widget/tabs/tabs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
-import AppInstance from './appInstance'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -13,7 +13,7 @@ const mapStateToProps = state => ({
     runningApps: selectFrom(state, 'apps.tabs')
 })
 
-class App extends React.Component {
+class _App extends React.Component {
     state = {
         app: null
     }
@@ -48,8 +48,8 @@ class App extends React.Component {
     }
 }
 
-export default compose(
-    App,
+export const App = compose(
+    _App,
     connect(mapStateToProps)
 )
 

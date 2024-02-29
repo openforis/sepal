@@ -1,5 +1,6 @@
 import {Aoi} from 'app/home/body/process/recipe/aoi'
 import {Map} from 'app/home/map/map'
+import {Notifications} from 'widget/notifications'
 import {RecipeActions, dateRange, defaultModel} from './ccdcRecipe'
 import {compose} from 'compose'
 import {initializeLayers} from 'app/home/body/process/recipe/recipeImageLayerSource'
@@ -8,7 +9,6 @@ import {recipe} from 'app/home/body/process/recipeContext'
 import {recipeAccess} from 'app/home/body/process/recipeAccess'
 import {selectFrom} from 'stateUtils'
 import CCDCToolbar from './panels/ccdcToolbar'
-import Notifications from 'widget/notifications'
 import React from 'react'
 
 const mapRecipeToProps = recipe => ({

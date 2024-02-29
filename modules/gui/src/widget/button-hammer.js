@@ -1,9 +1,9 @@
+import {Icon} from 'widget/icon'
 import {Link} from 'route'
+import {Tooltip} from 'widget/tooltip'
 import Hammer from 'react-hammerjs'
-import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Tooltip from 'widget/tooltip'
 import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
 

@@ -1,5 +1,7 @@
 import {ActivationContext} from 'widget/activation/activationContext'
 import {Assets} from 'widget/assets'
+import {Body} from './body/body'
+import {Notifications} from 'widget/notifications'
 import {PortalContainer} from 'widget/portal'
 import {autoRetry} from 'rxjsutils'
 import {compose} from 'compose'
@@ -7,10 +9,8 @@ import {connect} from 'store'
 import {exhaustMap, map, timer} from 'rxjs'
 import {isFloating} from './menu/menuMode'
 import {msg} from 'translate'
-import Body from './body/body'
 import Footer from './footer/footer'
 import Menu from './menu/menu'
-import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -100,7 +100,7 @@ const updateTasks$ = () =>
         )
     )
 
-class Home extends React.Component {
+class _Home extends React.Component {
     constructor(props) {
         super(props)
         const {stream} = props
@@ -132,12 +132,12 @@ class Home extends React.Component {
     }
 }
 
-Home.propTypes = {
-    floatingFooter: PropTypes.bool.isRequired,
-    floatingMenu: PropTypes.bool.isRequired
-}
-
-export default compose(
-    Home,
+export const Home = compose(
+    _Home,
     connect(mapStateToProps)
 )
+
+Home.propTypes = {
+    floatingFooter: PropTypes.bool,
+    floatingMenu: PropTypes.bool
+}

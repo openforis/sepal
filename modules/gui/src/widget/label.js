@@ -1,12 +1,12 @@
 import {ButtonGroup} from './buttonGroup'
+import {Icon} from './icon'
 import {Layout} from './layout'
-import Icon from './icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './label.module.css'
 
-export default class Label extends React.Component {
+export class Label extends React.Component {
     render() {
         const {className, size, alignment, disabled} = this.props
         return (

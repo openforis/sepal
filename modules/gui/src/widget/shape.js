@@ -1,11 +1,12 @@
+import {Icon} from 'widget/icon'
+import {Tooltip} from 'widget/tooltip'
 import {compose} from 'compose'
-import Icon from 'widget/icon'
+import {withForwardedRef}
+    from 'ref'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Tooltip from 'widget/tooltip'
 import lookStyles from 'style/look.module.css'
 import styles from './shape.module.css'
-import withForwardedRef from 'ref'
 
 class _Shape extends React.Component {
     classNames() {

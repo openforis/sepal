@@ -63,7 +63,7 @@ const toAlertVisualiaztions = recipe => {
             values: [0, 1, 2, 3],
             labels: ['Unflagged', 'Initial detection', 'Low-conf detection', 'High-conf detection'],
             palette: ['#000000', '#042333', '#b15f82', '#e8fa5b']
-        }),                
+        }),
         'first_detection_date': normalize({
             type: 'continuous',
             bands: ['first_detection_date'],

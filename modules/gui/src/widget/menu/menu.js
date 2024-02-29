@@ -1,4 +1,4 @@
-import Icon from '../icon'
+import {Icon} from '../icon'
 import React from 'react'
 import _ from 'lodash'
 import styles from './menu.module.css'

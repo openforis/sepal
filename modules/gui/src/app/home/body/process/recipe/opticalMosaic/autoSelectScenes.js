@@ -1,9 +1,9 @@
+import {MapStatus} from 'widget/mapStatus'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import MapStatus from 'widget/mapStatus'
 import React from 'react'
 import api from 'api'
 

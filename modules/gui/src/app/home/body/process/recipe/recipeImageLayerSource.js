@@ -1,3 +1,4 @@
+import {Notifications} from 'widget/notifications'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {createAoiFeatureLayerSource} from 'app/home/map/aoiFeatureLayerSource'
@@ -9,7 +10,6 @@ import {recipeAccess} from '../recipeAccess'
 import {recipeActionBuilder} from '../recipe'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from '../recipeContext'
-import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 

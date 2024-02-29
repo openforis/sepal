@@ -1,10 +1,10 @@
 import {Menu} from 'widget/menu'
+import {Notifications} from 'widget/notifications'
 import {RecipeState, duplicateRecipe, exportRecipe$} from './recipe'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import {withActivators} from 'widget/activation/activator'
-import Notifications from 'widget/notifications'
 import React from 'react'
 
 const mapStateToProps = (state, ownProps) => {
@@ -15,7 +15,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-class ProcessMenu extends React.Component {
+class _ProcessMenu extends React.Component {
     constructor() {
         super()
         this.duplicateRecipe = this.duplicateRecipe.bind(this)
@@ -87,8 +87,8 @@ class ProcessMenu extends React.Component {
     }
 }
 
-export default compose(
-    ProcessMenu,
+export const ProcessMenu = compose(
+    _ProcessMenu,
     connect(mapStateToProps),
     withActivators('saveRecipeDialog', 'revisions')
 )

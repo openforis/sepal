@@ -11,7 +11,7 @@ import styles from './seasonSelect.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
-export default class SeasonSelect extends React.Component {
+export class SeasonSelect extends React.Component {
     element = React.createRef()
     state = {
         centerDate: null,

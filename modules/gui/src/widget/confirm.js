@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './confirm.module.css'
 
-export default class Confirm extends React.Component {
+export class Confirm extends React.Component {
     constructor(props) {
         super(props)
         this.renderMessageLine = this.renderMessageLine.bind(this)

@@ -1,14 +1,15 @@
+import {BlurDetector} from 'widget/blurDetector'
+import {Portal} from 'widget/portal'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
 import {withContext} from 'context'
-import BlurDetector from 'widget/blurDetector'
-import Portal from 'widget/portal'
+import {withForwardedRef}
+    from 'ref'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './floatingBox.module.css'
-import withForwardedRef from 'ref'
 
 const MARGIN = 5
 const VERTICAL_PRIORITY_MIN_PX = 150

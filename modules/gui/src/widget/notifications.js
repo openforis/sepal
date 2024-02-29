@@ -273,7 +273,7 @@ class _Notifications extends React.Component {
 //     })
 // }
 
-const Notifications = compose(
+export const Notifications = compose(
     _Notifications,
     withSubscriptions()
 )
@@ -297,8 +297,6 @@ Notifications.error = notification => {
 
 Notifications.dismiss = notificationId =>
     dismiss(notificationId)
-
-export default Notifications
 
 Notifications.propTypes = {
     content: PropTypes.func,

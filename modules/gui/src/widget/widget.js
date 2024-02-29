@@ -1,11 +1,12 @@
+import {Label} from 'widget/label'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
-import Label from 'widget/label'
+import {withForwardedRef}
+    from 'ref'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './widget.module.css'
-import withForwardedRef from 'ref'
 
 export class _Widget extends React.Component {
     render() {

@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {msg} from 'translate'
-import Confirm from 'widget/confirm'
+import {Confirm} from 'widget/confirm'
 import PropTypes from 'prop-types'
 import React from 'react'
 

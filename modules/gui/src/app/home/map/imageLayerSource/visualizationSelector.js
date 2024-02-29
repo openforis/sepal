@@ -8,7 +8,7 @@ import {withMapArea} from '../mapAreaContext'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import RemoveButton from 'widget/removeButton'
+import {RemoveButton} from 'widget/removeButton'
 import _ from 'lodash'
 import guid from 'guid'
 

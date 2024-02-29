@@ -82,8 +82,6 @@ class SaveRecipe extends React.Component {
     }
 }
 
-SaveRecipe.propTypes = {}
-
 const policy = () => ({
     _: 'allow'
 })
@@ -93,3 +91,5 @@ export default compose(
     withForm({fields, mapStateToProps}),
     withActivatable({id: 'saveRecipeDialog', policy})
 )
+
+SaveRecipe.propTypes = {}

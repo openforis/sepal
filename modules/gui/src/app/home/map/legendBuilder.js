@@ -9,7 +9,7 @@ import {compose} from 'compose'
 import {msg} from 'translate'
 import Color from 'color'
 import React from 'react'
-import RemoveButton from 'widget/removeButton'
+import {RemoveButton} from 'widget/removeButton'
 import _ from 'lodash'
 import styles from './legendBuilder.module.css'
 
