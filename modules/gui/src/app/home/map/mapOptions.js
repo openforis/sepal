@@ -11,11 +11,11 @@ import {withActivatable} from 'widget/activation/activatable'
 import {withMap} from './mapContext'
 import {withRecipe} from '../body/process/recipeContext'
 import {withSubscriptions} from 'subscription'
+import BlurDetector from 'widget/blurDetector'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './mapOptions.module.css'
-import BlurDetector from 'widget/blurDetector'
 
 const FULL_TILE_SIZE = 256
 
@@ -99,7 +99,7 @@ class _MapOptionsPanel extends React.Component {
                 spacing='compact'
             >
                 <div className={[
-                    styles.retile, 
+                    styles.retile,
                     styles[`retile-${subdivisions}`]
                 ].join(' ')} style={{'--subdivisions': subdivisions}}/>
                 <Slider
@@ -158,8 +158,14 @@ MapOptionsPanel.propTypes = {
     statePath: PropTypes.any.isRequired
 }
 
-export const MapOptionsButton = () =>
+const _MapOptionsButton = ({retile}) =>
     <Toolbar.ActivationButton
         id='mapOptions'
         icon='gear'
+        iconVariant={retile === FULL_TILE_SIZE ? 'normal' : 'warning'}
         tooltip={msg('process.mosaic.mapToolbar.options.tooltip')}/>
+
+export const MapOptionsButton = compose(
+    _MapOptionsButton,
+    withRecipe(mapRecipeToProps)
+)

@@ -7,12 +7,13 @@ import styles from './toolbar.module.css'
 
 class _ActivationButton extends React.Component {
     render() {
-        const {icon, label, tooltip, tooltipAllowedWhenDisabled, tooltipOnVisible, disabled, onClick, activator: {activatables: {button: {active, canActivate, toggle}}}} = this.props
+        const {icon, iconVariant, label, tooltip, tooltipAllowedWhenDisabled, tooltipOnVisible, disabled, onClick, activator: {activatables: {button: {active, canActivate, toggle}}}} = this.props
         return (
             <ToolbarButton
                 disabled={disabled || (!active && !canActivate)}
                 selected={active}
                 icon={icon}
+                iconVariant={iconVariant}
                 label={label}
                 tooltip={active ? null : tooltip}
                 tooltipAllowedWhenDisabled={tooltipAllowedWhenDisabled}
@@ -37,6 +38,7 @@ ActivationButton.propTypes = {
     id: PropTypes.string.isRequired,
     disabled: PropTypes.any,
     icon: PropTypes.string,
+    iconVariant: PropTypes.any,
     label: PropTypes.string,
     tooltip: PropTypes.any,
     tooltipAllowedWhenDisabled: PropTypes.any,
