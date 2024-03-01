@@ -1,7 +1,7 @@
 import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
-import {NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeList'
+import {NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeListConstants'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {getRecipeType} from '../recipeTypes'

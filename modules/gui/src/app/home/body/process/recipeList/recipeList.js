@@ -25,13 +25,7 @@ import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import memoizeOne from 'memoize-one'
-
-export const PROJECT_RECIPE_SEPARATOR = ' / '
-export const NO_PROJECT_SYMBOL = '<no project>'
-export const NO_PROJECT_OPTION = () => ({
-    value: NO_PROJECT_SYMBOL,
-    label: msg('process.project.noProjectOption')
-})
+import {NO_PROJECT_OPTION, NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeListConstants'
 
 const mapStateToProps = () => ({
     projects: select('process.projects'),

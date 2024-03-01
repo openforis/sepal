@@ -1,5 +1,5 @@
 import {Combo} from 'widget/combo'
-import {NO_PROJECT_OPTION} from './recipeList'
+import {NO_PROJECT_OPTION} from './recipeListConstants'
 import {Shape} from 'widget/shape'
 import {compose} from 'compose'
 import {connect, select} from 'store'
