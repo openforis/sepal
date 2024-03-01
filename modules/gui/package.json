@@ -9,7 +9,7 @@
         "@fortawesome/free-regular-svg-icons": "6.5.1",
         "@fortawesome/free-solid-svg-icons": "6.5.1",
         "@fortawesome/react-fontawesome": "0.2.0",
-        "@google/earthengine": "0.1.391",
+        "@google/earthengine": "0.1.392",
         "@googlemaps/js-api-loader": "^1.16.6",
         "@googlemaps/markerclusterer": "^2.5.3",
         "@turf/turf": "6.5.0",
