@@ -42,8 +42,8 @@ export class Label extends React.Component {
     }
 
     renderRight() {
-        const {error, buttons} = this.props
-        return error || buttons
+        const {buttons} = this.props
+        return buttons
             ? (
                 <ButtonGroup>
                     {buttons ? buttons : null}
