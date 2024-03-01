@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y \
     gdal-bin \
     git \
     gnupg \
+    graphviz \
     inetutils-ping \
     lsb-release \
     nano \
@@ -58,7 +59,7 @@ RUN apt-get install nodejs -y
 
 # Install global npm packages
 
-RUN npm install -g npm-check-updates wscat
+RUN npm install -g madge npm-check-updates wscat
 
 # Set bash prompt
 
