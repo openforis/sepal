@@ -135,15 +135,6 @@
     - file: path="/data/docker/storage/devicemapper/metadata" state=directory
     - file: path="/data/docker/storage/tmp" state=directory
 
-    - name: Create Docker LVM Volume Group
-      lvg: vg=vg-docker pvs=/dev/sdb
-
-    - name: Create Docker LVM Data Volume
-      lvol: vg=vg-docker lv=data size=30g
-
-    - name: Create Docker LVM Metadata Volume
-      lvol: vg=vg-docker lv=metadata size=19g
-
     - name: Create docker-registry certificate dir
       file:
         path: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
@@ -160,10 +151,6 @@
     - name: Install Development Tools
       yum:
         name: "@Development Tools"
-
-    - name: Install pip
-      yum:
-        name: "python-pip"
 
     - name: Create /etc/docker
       file:
@@ -185,9 +172,14 @@
         enabled: yes
         masked: no
 
-    - name: pip install docker
+    - name: pip install urllib3
       pip:
-        name: "docker"
+        name: urllib3==1.26.18
+        executable: pip3
+
+    - name: pip install requests
+      pip:
+        name: requests
         executable: pip3
 
     - docker_network: name=sepal
