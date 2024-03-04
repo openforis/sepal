@@ -50,6 +50,9 @@
   #      dest: "{{ letsencrypt_aws_keys_file }}"
   #    when: letsencrypt_user['created_keys']
 
+
+
+
     - name: Create Sepal-Storage security group
       ec2_group:
         name: "Sepal-Storage"
@@ -82,11 +85,13 @@
         image_id: "{{ lookup('env', 'AWS_AMI') }}"
         region: "{{ lookup('env', 'AWS_REGION') }}"
         availability_zone: "{{ lookup('env', 'AWS_AVAILABILITY_ZONE') }}"
+        state: started
         wait: true
         filters:
           tag:Name: "Sepal-Storage - {{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
           tag:Type: "SepalStorage"
           tag:Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+          instance-state-name: running
         exact_count: 1
         purge_tags: false
         tags:
@@ -106,8 +111,9 @@
     - ec2_instance_info:
         region: "{{ lookup('env', 'AWS_REGION') }}"
         filters:
-          "tag:Type": "SepalStorage"
-          "tag:Environment": "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+          tag:Type: "SepalStorage"
+          tag:Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+          instance-state-name: running
       register: ec2_sepal_storage
 
     - set_fact:
@@ -160,44 +166,99 @@
             to_port: 65535
             cidr_ip: 0.0.0.0/0
 
+    - amazon.aws.ec2_eni:
+        name: "Sepal {{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        subnet_id: "{{ lookup('env', 'AWS_SUBNET_ID') }}"
+        security_groups: 
+          - "Sepal"
+        allow_reassignment: true
+        secondary_private_ip_address_count: 1
+        delete_on_termination: true
+      register: sepal_eni
+
     - name: Provision Sepal instance
       ec2_instance:
         key_name: "{{ lookup('env', 'AWS_REGION') }}"
-        security_groups: 
-          - "Sepal"
+        # security_groups: 
+        #   - "Sepal"
         instance_type: "{{ lookup('env', 'AWS_INSTANCE_TYPE') }}"
         image_id: "{{ lookup('env', 'AWS_AMI') }}"
         region: "{{ lookup('env', 'AWS_REGION') }}"
         availability_zone: "{{ lookup('env', 'AWS_AVAILABILITY_ZONE') }}"
+        state: running
         wait: true
         exact_count: 1
         filters:
           tag:Type: Sepal
           tag:Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+          instance-state-name: running
         purge_tags: false
         tags:
           Name: "Sepal - {{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
           Type: Sepal
           Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+        network:
+          interfaces:
+            - id: "{{ sepal_eni.interface.id }}" 
         ebs_optimized: true
         volumes:
           - device_name: /dev/xvda
-            delete_on_termination: false
-            volume_type: gp2
-            volume_size: 100
-          - device_name: /dev/sdb
-            delete_on_termination: false
-            volume_type: gp2
-            volume_size: 100
-      register: started_ec2_sepal
+            ebs:
+              delete_on_termination: false
+              volume_type: gp3
+              volume_size: 10
+          - device_name: /dev/sdf # /data
+            ebs:
+              delete_on_termination: false
+              volume_type: gp3
+              volume_size: 200
+          - device_name: /dev/sdg # /var/lib/docker
+            ebs:
+              delete_on_termination: false
+              volume_type: gp3
+              volume_size: 50
+          - device_name: /dev/sdh # /var/log
+            ebs:
+              delete_on_termination: false
+              volume_type: gp3
+              volume_size: 10
 
     - ec2_instance_info:
         region: "{{ lookup('env', 'AWS_REGION') }}"
         filters:
-          "tag:Type": "Sepal"
-          "tag:Environment": "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+          tag:Type: "Sepal"
+          tag:Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+          instance-state-name: running
       register: ec2_sepal
 
+
+    # Assign Sepal Instance Volume tags
+    - amazon.aws.ec2_tag:
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        resource: "{{ ec2_sepal.instances[0].block_device_mappings[0].ebs.volume_id }}"
+        tags:
+          Name: "Sepal {{ lookup('env', 'DEPLOY_ENVIRONMENT') }} Root"
+
+    - amazon.aws.ec2_tag:
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        resource: "{{ ec2_sepal.instances[0].block_device_mappings[1].ebs.volume_id }}"
+        tags:
+          Name: "Sepal {{ lookup('env', 'DEPLOY_ENVIRONMENT') }} Data"
+
+    - amazon.aws.ec2_tag:
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        resource: "{{ ec2_sepal.instances[0].block_device_mappings[2].ebs.volume_id }}"
+        tags:
+          Name: "Sepal {{ lookup('env', 'DEPLOY_ENVIRONMENT') }} Docker"
+
+    - amazon.aws.ec2_tag:
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        resource: "{{ ec2_sepal.instances[0].block_device_mappings[3].ebs.volume_id }}"
+        tags:
+          Name: "Sepal {{ lookup('env', 'DEPLOY_ENVIRONMENT') }} Log"
+
+    # Wait for SSH to be available on instances
     - name: Wait for SSH to be available on Sepal
       local_action: wait_for host="{{ item.public_ip_address }}"
                     port=22
