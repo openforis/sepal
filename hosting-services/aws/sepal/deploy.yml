@@ -106,7 +106,7 @@
         mode: "0644"
 
     - name: Start rsyslog
-      service: name=rsyslog state=started
+      service: name=rsyslog state=restarted
 
     # logrotate
     - name: Copy worker-instances logrotate configuration
