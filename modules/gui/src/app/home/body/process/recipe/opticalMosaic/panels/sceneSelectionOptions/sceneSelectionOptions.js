@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -21,7 +21,7 @@ const mapRecipeToProps = recipe => ({
     alwaysAll: Object.keys(selectFrom(recipe, 'model.sources.dataSets') || {}).length > 1
 })
 
-class SceneSelectionOptions extends React.Component {
+class _SceneSelectionOptions extends React.Component {
     render() {
         return (
             <RecipeFormPanel
@@ -82,13 +82,13 @@ class SceneSelectionOptions extends React.Component {
     }
 }
 
+const additionalPolicy = () => ({sceneSelection: 'allow'})
+
+export const SceneSelectionOptions = compose(
+    _SceneSelectionOptions,
+    recipeFormPanel({id: 'sceneSelectionOptions', fields, additionalPolicy, mapRecipeToProps})
+)
+
 SceneSelectionOptions.propTypes = {
     recipeId: PropTypes.string
 }
-
-const additionalPolicy = () => ({sceneSelection: 'allow'})
-
-export default compose(
-    SceneSelectionOptions,
-    recipeFormPanel({id: 'sceneSelectionOptions', fields, additionalPolicy, mapRecipeToProps})
-)

@@ -1,11 +1,10 @@
 import {BlurDetector} from 'widget/blurDetector'
 import {Portal} from 'widget/portal'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {selectFrom} from 'stateUtils'
 import {withContext} from 'context'
-import {withForwardedRef}
-    from 'ref'
+import {withForwardedRef} from 'ref'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -22,7 +21,7 @@ const mapStateToProps = state => ({
     viewportDimensions: selectFrom(state, 'dimensions') || []
 })
 
-class FloatingBox extends React.Component {
+class _FloatingBox extends React.Component {
     state = {
         elementDimensions: {},
         contentDimensions: {},
@@ -383,8 +382,8 @@ class FloatingBox extends React.Component {
     }
 }
 
-export default compose(
-    FloatingBox,
+export const FloatingBox = compose(
+    _FloatingBox,
     connect(mapStateToProps),
     withFloatingBox(),
     withForwardedRef()

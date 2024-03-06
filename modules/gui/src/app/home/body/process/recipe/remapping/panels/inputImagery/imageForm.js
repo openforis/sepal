@@ -1,13 +1,11 @@
 import {BandSpec} from './bandSpec'
 import {Layout} from 'widget/layout'
 import {bandsAvailableToAdd, defaultBand} from 'app/home/body/process/recipe/remapping/remappingRecipe'
-import {compose} from 'compose'
-import {withScrollable} from 'widget/scrollable'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
 
-class ImageForm extends Component {
+export class ImageForm extends Component {
     state = {
         loadedRecipe: null,
         selected: undefined,
@@ -124,7 +122,7 @@ ImageForm.propTypes = {
     inputs: PropTypes.any
 }
 
-export default compose(
-    ImageForm,
-    withScrollable()
-)
+// export default compose(
+//     ImageForm,
+//     withScrollable()
+// )

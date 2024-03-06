@@ -1,13 +1,15 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {EMPTY, catchError, forkJoin, switchMap, tap} from 'rxjs'
-import {Form, withForm} from 'widget/form/form'
+import {Form} from 'widget/form'
+import {FormContainer} from 'widget/form/container'
 import {Layout} from 'widget/layout'
 import {Notifications} from 'widget/notifications'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
 import {signUp$, validateEmail$, validateUsername$} from 'user'
+import {withForm} from 'widget/form/form'
 import {withRecaptcha} from 'widget/recaptcha'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -42,11 +44,11 @@ class _SignUp extends React.Component {
     
     render() {
         return (
-            <Form
+            <FormContainer
                 className={styles.form}
                 onSubmit={this.submit}>
                 {this.renderForm()}
-            </Form>
+            </FormContainer>
         )
     }
 

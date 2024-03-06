@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Icon} from 'widget/icon'
 import {Layout} from 'widget/layout'
 import {MaskOptions} from './maskOptions'
@@ -36,7 +36,7 @@ const fields = {
     minObservations: new Form.Field(),
 }
 
-class Options extends React.Component {
+class _Options extends React.Component {
     render() {
         const {inputs: {advanced}} = this.props
         return (
@@ -400,13 +400,13 @@ const valuesToModel = values => ({
     minObservations: values.minObservations,
 })
 
+export const Options = compose(
+    _Options,
+    recipeFormPanel({id: 'options', fields, valuesToModel, modelToValues})
+)
+
 Options.propTypes = {
     disabled: PropTypes.any,
     recipeId: PropTypes.string,
     sources: PropTypes.any
 }
-
-export default compose(
-    Options,
-    recipeFormPanel({id: 'options', fields, valuesToModel, modelToValues})
-)

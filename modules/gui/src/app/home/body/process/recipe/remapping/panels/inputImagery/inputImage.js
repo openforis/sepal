@@ -1,16 +1,16 @@
-import {Form} from 'widget/form/form'
+import {AssetSection} from './assetSection'
+import {Form} from 'widget/form'
+import {ImageForm} from './imageForm'
 import {Panel} from 'widget/panel/panel'
+import {PanelSections} from 'widget/panelSections'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {RecipeSection} from './recipeSection'
 import {SectionSelection} from './sectionSelection'
 import {bandsAvailableToAdd, defaultBand} from 'app/home/body/process/recipe/remapping/remappingRecipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import AssetSection from './assetSection'
-import ImageForm from './imageForm'
-import {PanelSections} from 'widget/panelSections'
 import React from 'react'
-import RecipeSection from './recipeSection'
 import styles from './inputImage.module.css'
 
 const fields = {
@@ -34,7 +34,7 @@ const mapRecipeToProps = recipe => ({
     recipeId: recipe.id
 })
 
-class InputImage extends React.Component {
+class _InputImage extends React.Component {
     constructor(props) {
         super(props)
         this.updateImageLayerSources = this.updateImageLayerSources.bind(this)
@@ -215,8 +215,8 @@ const panelOptions = {
     policy
 }
 
-export default compose(
-    InputImage,
+export const InputImage = compose(
+    _InputImage,
     recipeFormPanel(panelOptions)
 )
 

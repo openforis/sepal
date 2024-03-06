@@ -1,5 +1,6 @@
 import {Aoi} from '../aoi'
 import {Map} from 'app/home/map/map'
+import {MaskingToolbar} from './panels/maskingToolbar'
 import {compose} from 'compose'
 import {defaultModel} from './maskingRecipe'
 import {getAvailableBands} from './bands'
@@ -8,7 +9,6 @@ import {initializeLayers} from 'app/home/body/process/recipe/recipeImageLayerSou
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import MaskingToolbar from './panels/maskingToolbar'
 import React from 'react'
 
 const mapRecipeToProps = recipe => ({

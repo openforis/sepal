@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -16,7 +16,7 @@ const fields = {
         .predicate((toYear, {fromYear}) => toYear >= fromYear, 'process.radarMosaic.panel.dates.form.toYear.beforeFromYear')
 }
 
-class Dates extends React.Component {
+class _Dates extends React.Component {
     renderYears() {
         const {inputs: {fromYear, toYear}} = this.props
         return (
@@ -56,9 +56,9 @@ class Dates extends React.Component {
     }
 }
 
-Dates.propTypes = {}
-
-export default compose(
-    Dates,
+export const Dates = compose(
+    _Dates,
     recipeFormPanel({id: 'dates', fields})
 )
+
+Dates.propTypes = {}

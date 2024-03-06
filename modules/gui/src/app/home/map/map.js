@@ -14,11 +14,11 @@ import {SplitView} from 'widget/split/splitView'
 import {VisParamsPanel} from './visParams/visParamsPanel'
 import {areaTag, mapTag} from 'tag'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {currentUser} from 'user'
-import {getImageLayerSource} from './imageLayerSource/imageLayerSource'
+import {getImageLayerSource} from '../body/process/imageLayerSourceRegistry'
 import {getLogger} from 'log'
-import {getProcessTabsInfo} from '../body/process/process'
+import {getTabsInfo} from 'widget/tabs/tabs'
 import {msg} from 'translate'
 import {recipePath} from '../body/process/recipe'
 import {selectFrom} from 'stateUtils'
@@ -758,7 +758,7 @@ class _Map extends React.Component {
     componentDidMount() {
         const {mapsContext: {createMapContext}, enableDetector: {onEnable, onDisable}} = this.props
         const {mapId, googleMapsApiKey, nicfiPlanetApiKey, view$, updateView$, linked$, scrollWheelEnabled$} = createMapContext()
-        this.setLinked(getProcessTabsInfo().single)
+        this.setLinked(getTabsInfo('process').single)
         this.scrollWheelEnabled$ = scrollWheelEnabled$
 
         this.setState({

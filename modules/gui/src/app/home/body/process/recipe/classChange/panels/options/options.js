@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -14,7 +14,7 @@ const fields = {
 
 const mapRecipeToProps = recipe => ({recipe})
 
-class Options extends React.Component {
+class _Options extends React.Component {
     constructor(props) {
         super(props)
     }
@@ -54,7 +54,7 @@ class Options extends React.Component {
     }
 }
 
-export default compose(
-    Options,
+export const Options = compose(
+    _Options,
     recipeFormPanel({id: 'options', fields, mapRecipeToProps})
 )

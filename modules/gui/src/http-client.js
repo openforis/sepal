@@ -10,7 +10,7 @@ import {webSocket} from 'rxjs/webSocket'
 import _ from 'lodash'
 import base64 from 'base-64'
 
-const log = getLogger('http')
+const _log = getLogger('http')
 
 const DEFAULT_RETRY_CONFIG = {
     maxRetries: 5,

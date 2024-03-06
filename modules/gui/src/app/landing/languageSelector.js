@@ -3,7 +3,7 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {getLanguage, setLanguage} from 'translate'
 import React from 'react'
 
-const LanguageSelector = () => {
+export const LanguageSelector = () => {
     const languages = [
         {code: 'en', name: 'English'},
         {code: 'es', name: 'Español'},
@@ -17,8 +17,6 @@ const LanguageSelector = () => {
         </ButtonGroup>
     )
 }
-
-export default LanguageSelector
 
 const Language = ({code, name, selected}) =>
     <Button

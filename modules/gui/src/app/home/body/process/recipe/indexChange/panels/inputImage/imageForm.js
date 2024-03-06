@@ -1,13 +1,11 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
-import {compose} from 'compose'
 import {msg} from 'translate'
-import {withScrollable} from 'widget/scrollable'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import styles from './inputImage.module.css'
 
-class ImageForm extends Component {
+export class ImageForm extends Component {
     state = {errorBandCleared: true}
 
     render() {
@@ -123,7 +121,7 @@ ImageForm.propTypes = {
     inputs: PropTypes.any
 }
 
-export default compose(
-    ImageForm,
-    withScrollable()
-)
+// export default compose(
+//     ImageForm,
+//     withScrollable()
+// )

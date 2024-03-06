@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -22,7 +22,7 @@ const mapRecipeToProps = recipe => ({
     dataSetType: selectFrom(recipe, 'model.sources.dataSetType')
 })
 
-class PreProcessingOptions extends React.Component {
+class _PreProcessingOptions extends React.Component {
     render() {
         return (
             <RecipeFormPanel
@@ -174,8 +174,6 @@ class PreProcessingOptions extends React.Component {
     }
 }
 
-PreProcessingOptions.propTypes = {}
-
 const valuesToModel = values => ({
     corrections: values.corrections,
     histogramMatching: values.histogramMatching,
@@ -195,7 +193,9 @@ const modelToValues = model => {
     })
 }
 
-export default compose(
-    PreProcessingOptions,
+export const PreProcessingOptions = compose(
+    _PreProcessingOptions,
     recipeFormPanel({id: 'options', fields, modelToValues, valuesToModel, mapRecipeToProps})
 )
+
+PreProcessingOptions.propTypes = {}

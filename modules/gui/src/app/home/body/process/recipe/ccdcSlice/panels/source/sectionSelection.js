@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'

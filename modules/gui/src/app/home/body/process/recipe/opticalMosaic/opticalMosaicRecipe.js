@@ -1,11 +1,11 @@
 import {getAllVisualizations} from 'app/home/body/process/recipe/visualizations'
-import {getRecipeType} from 'app/home/body/process/recipeTypes'
+import {getRecipeType} from 'app/home/body/process/recipeTypeRegistry'
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
 import {recipeActionBuilder} from 'app/home/body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import _ from 'lodash'
-import api from 'api'
+import api from 'apiRegistry'
 import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'

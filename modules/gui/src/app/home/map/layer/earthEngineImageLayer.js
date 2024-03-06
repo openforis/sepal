@@ -8,9 +8,9 @@ import {publishEvent} from 'eventPublisher'
 import {selectFrom} from 'stateUtils'
 import {v4 as uuid} from 'uuid'
 import _ from 'lodash'
-import api from 'api'
+import api from 'apiRegistry'
 
-export default class EarthEngineImageLayer extends TileLayer {
+export class EarthEngineImageLayer extends TileLayer {
     constructor({
         map,
         layerIndex = 0,

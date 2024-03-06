@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -28,7 +28,7 @@ const mapRecipeToProps = recipe => ({
     baseBands: selectFrom(recipe, 'model.source.baseBands')
 })
 
-class Options extends React.Component {
+class _Options extends React.Component {
     render() {
         return (
             <RecipeFormPanel
@@ -245,8 +245,6 @@ class Options extends React.Component {
     }
 }
 
-Options.propTypes = {}
-
 const valuesToModel = values => ({
     ...values,
     extrapolateMaxDays: values.extrapolateMaxDays > 365 ? Number.MAX_SAFE_INTEGER : values.extrapolateMaxDays
@@ -263,7 +261,9 @@ const modelToValues = model => {
     })
 }
 
-export default compose(
-    Options,
+export const Options = compose(
+    _Options,
     recipeFormPanel({id: 'options', fields, mapRecipeToProps, valuesToModel, modelToValues})
 )
+
+Options.propTypes = {}

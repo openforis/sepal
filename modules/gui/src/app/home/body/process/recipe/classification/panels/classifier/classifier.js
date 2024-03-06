@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {FileSelect} from 'widget/fileSelect'
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {LegendItem} from 'widget/legend/legendItem'
 import {Panel} from 'widget/panel/panel'
@@ -116,7 +116,7 @@ const fields = {
         .notBlank()
 }
 
-class Classifier extends React.Component {
+class _Classifier extends React.Component {
     render() {
         const {inputs: {advanced}} = this.props
         return (
@@ -747,10 +747,6 @@ class Classifier extends React.Component {
     }
 }
 
-Classifier.propTypes = {
-    recipeId: PropTypes.string
-}
-
 const valuesToModel = values => ({
     type: values.type,
     numberOfTrees: toInt(values.numberOfTrees),
@@ -815,8 +811,11 @@ const toFloat = input => {
     return _.isFinite(parsed) ? parsed : null
 }
 
-export default compose(
-    Classifier,
+export const Classifier = compose(
+    _Classifier,
     recipeFormPanel({id: 'classifier', fields, valuesToModel, modelToValues, mapRecipeToProps})
 )
 
+Classifier.propTypes = {
+    recipeId: PropTypes.string
+}

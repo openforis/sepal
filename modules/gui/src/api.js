@@ -1,3 +1,4 @@
+import {setApi} from 'apiRegistry'
 import apps from './api/apps'
 import gee from './api/gee'
 import google from './api/google'
@@ -10,16 +11,17 @@ import user from './api/user'
 import userFiles from './api/userFiles'
 import wmts from './api/wmts'
 
-export default {
-    apps,
-    gee,
-    google,
-    map,
-    planet,
-    project,
-    recipe,
-    tasks,
-    user,
-    userFiles,
-    wmts
-}
+export const initApi = () =>
+    setApi({
+        apps,
+        gee,
+        google,
+        map,
+        planet,
+        project,
+        recipe,
+        tasks,
+        user,
+        userFiles,
+        wmts
+    })

@@ -11,7 +11,7 @@ const SELECTED_STROKE_WIDTH = 3
 const DEFAULT_SCALE = 0.5
 const SELECTED_SCALE = 0.6
 
-export default class MarkerClustererLayer extends Layer {
+export class MarkerClustererLayer extends Layer {
 
     constructor({map, id, label, description}) {
         super({map})

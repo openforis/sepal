@@ -1,8 +1,7 @@
 import {Label} from 'widget/label'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
-import {withForwardedRef}
-    from 'ref'
+import {withForwardedRef} from 'ref'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'

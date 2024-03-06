@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {FormCombo} from 'widget/form/combo'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
@@ -13,7 +13,7 @@ const mapRecipeToProps = recipe => ({
     legend: selectFrom(recipe, 'model.legend')
 })
 
-class ClassStep extends Component {
+class _ClassStep extends Component {
     state = {}
 
     render() {
@@ -129,12 +129,12 @@ class ClassStep extends Component {
 
 }
 
+export const ClassStep = compose(
+    _ClassStep,
+    withRecipe(mapRecipeToProps)
+)
+
 ClassStep.propTypes = {
     children: PropTypes.any,
     inputs: PropTypes.any
 }
-
-export default compose(
-    ClassStep,
-    withRecipe(mapRecipeToProps)
-)

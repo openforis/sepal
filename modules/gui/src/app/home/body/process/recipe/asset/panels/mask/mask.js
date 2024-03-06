@@ -1,5 +1,5 @@
 import {CrudItem} from 'widget/crudItem'
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {ImageConstraints, renderConstraintsDescription} from 'widget/imageConstraints/imageConstraints'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
@@ -20,7 +20,7 @@ const mapRecipeToProps = recipe => ({
     assetDetails: selectFrom(recipe, 'model.assetDetails')
 })
 
-class Mask extends React.Component {
+class _Mask extends React.Component {
     state = {
         selectedConstraintsEntry: {id: undefined, booleanOperator: undefined, constraints: undefined}
     }
@@ -167,14 +167,14 @@ const ConstraintsPanel = ({id, bands, visualizations, constraintsId, constraints
         onChange={onChange}
     />
 
-Mask.propTypes = {}
-
 // [HACK] This actually isn't a form, and we don't want to update the model. This prevents the selected images from
 // being overridden.
 const valuesToModel = null
 
-export default compose(
-    Mask,
+export const Mask = compose(
+    _Mask,
     recipeFormPanel({id: 'mask', mapRecipeToProps, valuesToModel}),
     withActivators(['constraints'])
 )
+
+Mask.propTypes = {}

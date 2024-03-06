@@ -1,4 +1,3 @@
-import {ButtonGroup} from './buttonGroup'
 import {Icon} from './icon'
 import {Layout} from './layout'
 import PropTypes from 'prop-types'
@@ -45,9 +44,9 @@ export class Label extends React.Component {
         const {buttons} = this.props
         return buttons
             ? (
-                <ButtonGroup>
+                <Layout type='horizontal-nowrap' spacing='compact'>
                     {buttons ? buttons : null}
-                </ButtonGroup>
+                </Layout>
             )
             : null
     }

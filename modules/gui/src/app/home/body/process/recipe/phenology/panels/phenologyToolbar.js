@@ -1,18 +1,18 @@
+import {Aoi} from 'app/home/body/process/recipe/mosaic/panels/aoi/aoi'
+import {Dates} from './dates/dates'
+import {PreProcessingOptions as OpticalPreprocess} from './preProcessingOptions/preProcessingOptions'
+import {PanelWizard} from 'widget/panelWizard'
+import {Options as RadarPreprocess} from 'app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
 import {Retrieve} from './retrieve/retrieve'
 import {RetrieveButton} from '../../retrieveButton'
+import {Sources} from './sources/sources'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from '../../../recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import Aoi from 'app/home/body/process/recipe/mosaic/panels/aoi/aoi'
-import Dates from './dates/dates'
-import OpticalPreprocess from './preProcessingOptions/preProcessingOptions'
-import PanelWizard from 'widget/panelWizard'
-import RadarPreprocess from 'app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
 import React from 'react'
-import Sources from './sources/sources'
 import _ from 'lodash'
 import styles from './phenologyToolbar.module.css'
 
@@ -22,7 +22,7 @@ const mapRecipeToProps = recipe => ({
     sources: selectFrom(recipe, 'model.sources'),
 })
 
-class PhenologyToolbar extends React.Component {
+class _PhenologyToolbar extends React.Component {
     render() {
         const {recipeId, initialized, sources} = this.props
         return (
@@ -78,7 +78,7 @@ class PhenologyToolbar extends React.Component {
     }
 }
 
-export default compose(
-    PhenologyToolbar,
+export const PhenologyToolbar = compose(
+    _PhenologyToolbar,
     withRecipe(mapRecipeToProps)
 )

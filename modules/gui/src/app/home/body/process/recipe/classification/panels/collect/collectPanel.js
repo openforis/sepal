@@ -16,7 +16,7 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import api from 'api'
+import api from 'apiRegistry'
 import styles from './collectPanel.module.css'
 
 const mapRecipeToProps = recipe => {
@@ -32,7 +32,7 @@ const mapRecipeToProps = recipe => {
     })
 }
 
-class CollectPanel extends React.Component {
+class _CollectPanel extends React.Component {
     state = {}
     close$ = new Subject()
 
@@ -306,13 +306,13 @@ class CollectPanel extends React.Component {
     }
 }
 
+export const CollectPanel = compose(
+    _CollectPanel,
+    withRecipe(mapRecipeToProps),
+    withMap()
+)
+
 CollectPanel.propTypes = {
     dataCollectionManager: PropTypes.object.isRequired,
     recipeId: PropTypes.string,
 }
-
-export default compose(
-    CollectPanel,
-    withRecipe(mapRecipeToProps),
-    withMap()
-)

@@ -1,22 +1,11 @@
-import {FormAssetCombo} from './assetCombo'
-import {FormAssetInput} from 'widget/form/assetInput'
-import {FormButtons} from 'widget/form/buttons'
-import {FormCheckbox} from 'widget/form/checkbox'
-import {FormCombo} from 'widget/form/combo'
-import {FormConstraint, FormField} from 'widget/form/property'
 import {FormContext} from 'widget/form/context'
-import {FormDatePicker} from 'widget/form/datePicker'
-import {FormFieldSet} from 'widget/form/fieldset'
-import {FormInput} from 'widget/form/input'
-import {FormPanel} from 'widget/form/panel'
-import {FormPanelButtons} from 'widget/form/panelButtons'
-import {FormSlider} from 'widget/form/slider'
-import {FormYearPicker} from 'widget/form/yearPicker'
 import {compose} from 'compose'
-import {connect} from 'store'
-import PropTypes from 'prop-types'
+import {connect} from 'connect'
 import React from 'react'
 import _ from 'lodash'
+
+const getDisplayName = Component =>
+    Component.displayName || Component.name || 'Component'
 
 export const withForm = ({fields = {}, constraints = {}, mapStateToProps}) =>
     WrappedComponent => {
@@ -333,51 +322,3 @@ export const withForm = ({fields = {}, constraints = {}, mapStateToProps}) =>
             connect(mapStateToProps ? mapStateToProps : null)
         )
     }
-
-const getDisplayName = Component =>
-    Component.displayName || Component.name || 'Component'
-
-export class Form extends React.Component {
-    constructor() {
-        super()
-        this.onSubmit = this.onSubmit.bind(this)
-    }
-
-    render() {
-        const {className, children} = this.props
-        return (
-            <form
-                className={className}
-                onSubmit={this.onSubmit}>
-                {children}
-            </form>
-        )
-    }
-
-    onSubmit(e) {
-        const {onSubmit} = this.props
-        e.preventDefault()
-        onSubmit && onSubmit(e)
-    }
-}
-
-Form.propTypes = {
-    children: PropTypes.any.isRequired,
-    className: PropTypes.string,
-    onSubmit: PropTypes.func
-}
-
-Form.AssetInput = FormAssetInput
-Form.AssetCombo = FormAssetCombo
-Form.Buttons = FormButtons
-Form.Checkbox = FormCheckbox
-Form.Combo = FormCombo
-Form.Constraint = FormConstraint
-Form.DatePicker = FormDatePicker
-Form.Field = FormField
-Form.FieldSet = FormFieldSet
-Form.Input = FormInput
-Form.Panel = FormPanel
-Form.PanelButtons = FormPanelButtons
-Form.Slider = FormSlider
-Form.YearPicker = FormYearPicker

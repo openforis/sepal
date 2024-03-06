@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {PreviewMap} from './previewMap'
 import {RecipeActions} from '../../mosaicRecipe'
@@ -10,7 +10,7 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import api from 'api'
+import api from 'apiRegistry'
 
 const mapRecipeToProps = recipe => {
     return {

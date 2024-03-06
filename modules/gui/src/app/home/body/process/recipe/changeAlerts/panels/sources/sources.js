@@ -1,16 +1,17 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/changeAlerts/changeAlertsRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
-import {connect, select} from 'store'
+import {connect} from 'connect'
 import {groupedBandOptions, toSources} from 'sources'
 import {isOpticalDataSet, getDataSetOptions as opticalDataSetOptions} from 'app/home/body/process/recipe/opticalMosaic/sources'
 import {isRadarDataSet, getDataSetOptions as radarDataSetOptions} from 'app/home/body/process/recipe/radarMosaic/sources'
 import {msg} from 'translate'
 import {getDataSetOptions as planetDataSetOptions} from 'app/home/body/process/recipe/planetMosaic/sources'
 import {recipeAccess} from 'app/home/body/process/recipeAccess'
+import {select} from 'store'
 import {selectFrom} from 'stateUtils'
 import React from 'react'
 import _ from 'lodash'
@@ -45,7 +46,7 @@ const mapRecipeToProps = recipe => ({
     corrections: selectFrom(recipe, 'model.options.corrections')
 })
 
-class Sources extends React.Component {
+class _Sources extends React.Component {
     state = {}
 
     constructor(props) {
@@ -215,8 +216,6 @@ class Sources extends React.Component {
 
 }
 
-Sources.propTypes = {}
-
 const valuesToModel = ({dataSetType, asset, dataSets, cloudPercentageThreshold, band}) => {
     return ({
         dataSetType,
@@ -246,9 +245,11 @@ const modelToValues = ({dataSetType, assets, dataSets, cloudPercentageThreshold,
     })
 }
 
-export default compose(
-    Sources,
+export const Sources = compose(
+    _Sources,
     connect(mapStateToProps),
     recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel}),
     recipeAccess()
 )
+
+Sources.propTypes = {}

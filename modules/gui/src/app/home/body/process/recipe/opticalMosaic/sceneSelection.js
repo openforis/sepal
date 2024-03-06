@@ -1,20 +1,21 @@
 import {CenteredProgress} from 'widget/progress'
-import {Form, withForm} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Label} from 'widget/label'
 import {Padding} from 'widget/padding'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {Scene} from './scene'
+import {ScenePreview} from 'app/home/body/process/recipe/opticalMosaic/scenePreview'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {compose} from 'compose'
 import {isPartiallyEqual} from 'hash'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withActivatable} from 'widget/activation/activatable'
+import {withForm} from 'widget/form/form'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
-import ScenePreview from 'app/home/body/process/recipe/opticalMosaic/scenePreview'
-import api from 'api'
+import api from 'apiRegistry'
 import styles from './sceneSelection.module.css'
 
 const fields = {
@@ -34,7 +35,7 @@ const mapRecipeToProps = recipe => {
     }
 }
 
-class SceneSelection extends React.Component {
+class _SceneSelection extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId} = props
@@ -216,8 +217,6 @@ class SceneSelection extends React.Component {
 
 }
 
-SceneSelection.propTypes = {}
-
 const policy = () => ({
     _: 'disallow',
     dates: 'allow',
@@ -226,9 +225,11 @@ const policy = () => ({
     compositeOptions: 'allow'
 })
 
-export default compose(
-    SceneSelection,
+export const SceneSelection = compose(
+    _SceneSelection,
     withForm({fields}),
     withRecipe(mapRecipeToProps),
     withActivatable({id: 'sceneSelection', policy})
 )
+
+SceneSelection.propTypes = {}

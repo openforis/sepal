@@ -1,4 +1,6 @@
 import {Aoi} from '../aoi'
+import {ClassificationToolbar} from './panels/classificationToolbar'
+import {CollectPanel} from './panels/collect/collectPanel'
 import {DataCollectionManager, DataCollectionManagerContext} from './dataCollectionManager'
 import {Map} from 'app/home/map/map'
 import {RecipeActions, getDefaultModel} from './classificationRecipe'
@@ -9,8 +11,6 @@ import {initializeLayers} from '../recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import ClassificationToolbar from './panels/classificationToolbar'
-import CollectPanel from './panels/collect/collectPanel'
 import React from 'react'
 
 const mapRecipeToProps = recipe => ({

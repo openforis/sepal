@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {Form, withForm} from 'widget/form/form'
+import {Form} from 'widget/form'
+import {FormContainer} from 'widget/form/container'
 import {Layout} from 'widget/layout'
 import {Notifications} from 'widget/notifications'
 import {Widget} from 'widget/widget'
@@ -8,6 +9,7 @@ import {compose} from 'compose'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
 import {switchMap} from 'rxjs'
+import {withForm} from 'widget/form/form'
 import {withRecaptcha} from 'widget/recaptcha'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -27,11 +29,11 @@ class _ForgotPassword extends React.Component {
 
     render() {
         return (
-            <Form
+            <FormContainer
                 className={styles.form}
                 onSubmit={this.submit}>
                 {this.renderForm()}
-            </Form>
+            </FormContainer>
         )
     }
 

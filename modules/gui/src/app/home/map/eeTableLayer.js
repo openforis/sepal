@@ -1,10 +1,10 @@
+import {EarthEngineTableLayer} from './layer/earthEngineTableLayer'
 import {compose} from 'compose'
 import {withSubscriptions} from 'subscription'
 import {withTab} from 'widget/tabs/tabContext'
-import EarthEngineTableLayer from './layer/earthEngineTableLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
-import api from 'api'
+import api from 'apiRegistry'
 
 class _EETableLayer extends React.Component {
     render() {

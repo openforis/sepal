@@ -3,7 +3,7 @@ import {concat, exhaustMap, filter, first, interval, map} from 'rxjs'
 import {select} from 'store'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
-import api from 'api'
+import api from 'apiRegistry'
 
 export const appList = () =>
     select('apps.list') || []

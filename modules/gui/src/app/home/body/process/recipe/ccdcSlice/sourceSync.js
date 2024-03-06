@@ -10,7 +10,7 @@ import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualization
 import {withRecipe} from '../../recipeContext'
 import React from 'react'
 import _ from 'lodash'
-import api from 'api'
+import api from 'apiRegistry'
 import guid from 'guid'
 
 const baseBandPattern = /(.*)_(coefs|intercept|slope|phase_\d|amplitude_\d|rmse|magnitude)$/

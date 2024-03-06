@@ -1,19 +1,19 @@
+import {ChartPixel} from './chartPixel'
+import {ChartPixelButton} from '../../ccdc/panels/chartPixelButton'
+import {Date} from './date/date'
+import {Options} from './options/options'
+import {PanelWizard} from 'widget/panelWizard'
 import {RecipeActions} from '../ccdcSliceRecipe'
 import {Retrieve} from './retrieve/retrieve'
 import {RetrieveButton} from '../../retrieveButton'
+import {Source} from './source/source'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import ChartPixel from './chartPixel'
-import ChartPixelButton from '../../ccdc/panels/chartPixelButton'
-import Date from './date/date'
-import Options from './options/options'
-import PanelWizard from 'widget/panelWizard'
 import React from 'react'
-import Source from './source/source'
 import styles from './ccdcSliceToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -21,7 +21,7 @@ const mapRecipeToProps = recipe => ({
     hasBaseBands: selectFrom(recipe, 'model.source.baseBands')?.length > 0
 })
 
-class CcdcSliceToolbar extends React.Component {
+class _CcdcSliceToolbar extends React.Component {
     constructor(props) {
         super(props)
         this.recipeActions = RecipeActions(props.recipeId)
@@ -75,9 +75,9 @@ class CcdcSliceToolbar extends React.Component {
     }
 }
 
-CcdcSliceToolbar.propTypes = {}
-
-export default compose(
-    CcdcSliceToolbar,
+export const CcdcSliceToolbar = compose(
+    _CcdcSliceToolbar,
     withRecipe(mapRecipeToProps)
 )
+
+CcdcSliceToolbar.propTypes = {}

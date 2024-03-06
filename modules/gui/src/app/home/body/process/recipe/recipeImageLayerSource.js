@@ -1,6 +1,6 @@
 import {Notifications} from 'widget/notifications'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {createAoiFeatureLayerSource} from 'app/home/map/aoiFeatureLayerSource'
 import {createGoogleSatelliteImageLayerSource} from 'app/home/map/imageLayerSource/googleSatelliteImageLayerSource'
 import {createLabelsFeatureLayerSource} from 'app/home/map/labelsFeatureLayerSource'

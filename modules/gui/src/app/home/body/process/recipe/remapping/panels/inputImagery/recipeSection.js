@@ -3,7 +3,7 @@ import {getAllVisualizations} from 'app/home/body/process/recipe/visualizations'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-export default class RecipeSection extends React.Component {
+export class RecipeSection extends React.Component {
     render() {
         const {input, onLoading} = this.props
         return (

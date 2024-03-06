@@ -4,7 +4,7 @@ import {msg} from 'translate'
 import {publishCurrentUserEvent, publishEvent} from 'eventPublisher'
 import {select} from 'store'
 import actionBuilder from 'action-builder'
-import api from 'api'
+import api from 'apiRegistry'
 
 export const currentUser = () => select('user.currentUser')
 export const invalidCredentials = () => select('user.login.invalidCredentials')

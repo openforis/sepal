@@ -12,7 +12,7 @@ import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {withTab} from 'widget/tabs/tabContext'
 import React from 'react'
-import api from 'api'
+import api from 'apiRegistry'
 import guid from 'guid'
 
 const mapRecipeToProps = recipe => ({

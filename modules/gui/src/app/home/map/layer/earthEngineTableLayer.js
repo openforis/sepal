@@ -7,7 +7,7 @@ import {isEqual} from 'hash'
 import {v4 as uuid} from 'uuid'
 import _ from 'lodash'
 
-export default class EarthEngineTableLayer extends TileLayer {
+export class EarthEngineTableLayer extends TileLayer {
     constructor({
         map,
         layerIndex = 0,

@@ -1,14 +1,15 @@
 import {EMPTY, Subject, catchError, exhaustMap, finalize, interval, last, map, merge, mergeWith, of, scan, switchMap, takeUntil, tap, throttleTime} from 'rxjs'
 import {Tree} from 'tree'
 import {compose} from 'compose'
-import {connect, select} from 'store'
+import {connect} from 'connect'
 import {getLogger} from 'log'
 import {googleProjectId} from 'user'
+import {select} from 'store'
 import {withSubscriptions} from 'subscription'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
-import api from 'api'
+import api from 'apiRegistry'
 
 const log = getLogger('assets')
 

@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {getImageLayerSource} from '../../map/imageLayerSource/imageLayerSource'
+import {getImageLayerSource} from './imageLayerSourceRegistry'
 import {selectFrom} from 'stateUtils'
 import {withMapArea} from 'app/home/map/mapAreaContext'
 import {withRecipe} from './recipeContext'

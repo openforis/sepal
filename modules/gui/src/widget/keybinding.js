@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {fromEvent} from 'rxjs'
 import {withEnableDetector} from 'enabled'
 import PropTypes from 'prop-types'

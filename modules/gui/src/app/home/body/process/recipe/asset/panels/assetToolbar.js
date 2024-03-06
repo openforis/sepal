@@ -1,3 +1,10 @@
+import {Aoi} from 'app/home/body/process/recipe/mosaic/panels/aoi/aoi'
+import {AssetDetails} from './assetDetails/assetDetails'
+import {Composite} from './composite/composite'
+import {Dates} from './dates/dates'
+import {Filter} from './filter/filter'
+import {Mask} from './mask/mask'
+import {PanelWizard} from 'widget/panelWizard'
 import {Retrieve} from './retrieve/retrieve'
 import {RetrieveButton} from '../../retrieveButton'
 import {Toolbar} from 'widget/toolbar/toolbar'
@@ -6,13 +13,6 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from '../../../recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import Aoi from 'app/home/body/process/recipe/mosaic/panels/aoi/aoi'
-import AssetDetails from './assetDetails/assetDetails'
-import Composite from './composite/composite'
-import Dates from './dates/dates'
-import Filter from './filter/filter'
-import Mask from './mask/mask'
-import PanelWizard from 'widget/panelWizard'
 import React from 'react'
 import styles from './assetToolbar.module.css'
 
@@ -22,7 +22,7 @@ const mapRecipeToProps = recipe => ({
     collection: selectFrom(recipe, 'model.assetDetails.type') === 'ImageCollection'
 })
 
-class AssetToolbar extends React.Component {
+class _AssetToolbar extends React.Component {
     render() {
         const {recipeId, initialized, collection} = this.props
         return (
@@ -88,7 +88,7 @@ class AssetToolbar extends React.Component {
     }
 }
 
-export default compose(
-    AssetToolbar,
+export const AssetToolbar = compose(
+    _AssetToolbar,
     withRecipe(mapRecipeToProps)
 )

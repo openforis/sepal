@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions, breakDetectionOptions} from 'app/home/body/process/recipe/ccdc/ccdcRecipe'
@@ -37,7 +37,7 @@ const mapRecipeToProps = recipe => ({
     classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
 })
 
-class Options extends React.Component {
+class _Options extends React.Component {
     constructor(props) {
         super(props)
         this.recipeActions = RecipeActions(props.recipeId)
@@ -167,8 +167,6 @@ class Options extends React.Component {
     }
 }
 
-Options.propTypes = {}
-
 const valuesToModel = values => {
     if (values.advanced) {
         return {
@@ -200,7 +198,9 @@ const modelToBreakDetection = model =>
             _.isEqual(breakDetectionOptions[breakDetection], _.omit(model, 'tmaskBands'))
         )
 
-export default compose(
-    Options,
+export const Options = compose(
+    _Options,
     recipeFormPanel({id: 'ccdcOptions', fields, mapRecipeToProps, modelToValues, valuesToModel})
 )
+
+Options.propTypes = {}

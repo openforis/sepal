@@ -1,5 +1,5 @@
 import {CrudItem} from 'widget/crudItem'
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {ImageConstraints} from 'widget/imageConstraints/imageConstraints'
 import {LegendItem} from 'widget/legend/legendItem'
 import {ListItem} from 'widget/listItem'

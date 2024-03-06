@@ -5,7 +5,7 @@ import {recipeAccess} from 'app/home/body/process/recipeAccess'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-class RecipeSection extends React.Component {
+class _RecipeSection extends React.Component {
     constructor(props) {
         super(props)
         this.recipeChanged$ = new Subject()
@@ -26,11 +26,11 @@ class RecipeSection extends React.Component {
     }
 }
 
+export const RecipeSection = compose(
+    _RecipeSection,
+    recipeAccess()
+)
+
 RecipeSection.propTypes = {
     inputs: PropTypes.object.isRequired
 }
-
-export default compose(
-    RecipeSection,
-    recipeAccess()
-)

@@ -1,5 +1,6 @@
 import {CrudItem} from 'widget/crudItem'
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
+import {InputImage} from './inputImage'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
 import {NoData} from 'widget/noData'
@@ -7,11 +8,10 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withActivators} from 'widget/activation/activator'
-import InputImage from './inputImage'
 import React from 'react'
 import guid from 'guid'
 import styles from './inputImagery.module.css'
@@ -31,7 +31,7 @@ const mapStateToProps = (state, ownProps) => {
     return {recipeNameById}
 }
 
-class InputImagery extends React.Component {
+class _InputImagery extends React.Component {
     render() {
         const {images} = this.props
         return (
@@ -113,16 +113,16 @@ class InputImagery extends React.Component {
         RecipeActions(recipeId).removeInputImage(imageToRemove)
     }
 }
-
-InputImagery.propTypes = {}
 const additionalPolicy = () => ({_: 'allow'})
 // [HACK] This actually isn't a form, and we don't want to update the model. This prevents the selected images from
 // being overridden.
 const valuesToModel = null
 
-export default compose(
-    InputImagery,
+export const InputImagery = compose(
+    _InputImagery,
     connect(mapStateToProps),
     recipeFormPanel({id: 'inputImagery', mapRecipeToProps, valuesToModel, additionalPolicy}),
     withActivators('inputImage')
 )
+
+InputImagery.propTypes = {}

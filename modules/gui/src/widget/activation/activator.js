@@ -1,7 +1,7 @@
 import {activationAllowed} from './activationPolicy'
 import {collectActivatables} from './activation'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {v4 as uuid} from 'uuid'
 import {withActivationContext} from './activationContext'
 import PropTypes from 'prop-types'

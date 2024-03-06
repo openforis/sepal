@@ -1,8 +1,7 @@
 import {Icon} from 'widget/icon'
 import {Tooltip} from 'widget/tooltip'
 import {compose} from 'compose'
-import {withForwardedRef}
-    from 'ref'
+import {withForwardedRef} from 'ref'
 import PropTypes from 'prop-types'
 import React from 'react'
 import lookStyles from 'style/look.module.css'

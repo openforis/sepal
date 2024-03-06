@@ -1,8 +1,8 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {msg} from 'translate'
 import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualizationParser'
 import PropTypes from 'prop-types'
@@ -14,7 +14,7 @@ const J_DAYS = 0
 const FRACTIONAL_YEARS = 1
 const UNIX_TIME_MILLIS = 2
 
-class AssetSection extends React.Component {
+class _AssetSection extends React.Component {
     constructor(props) {
         super(props)
         this.assetChanged$ = new Subject()
@@ -108,11 +108,11 @@ export const toAssetReference = (bands, properties) => {
     }
 }
 
+export const AssetSection = compose(
+    _AssetSection,
+    connect()
+)
+
 AssetSection.propTypes = {
     inputs: PropTypes.object.isRequired
 }
-
-export default compose(
-    AssetSection,
-    connect()
-)

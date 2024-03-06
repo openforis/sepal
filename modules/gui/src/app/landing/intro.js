@@ -2,10 +2,10 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Keybinding} from 'widget/keybinding'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {Tagline} from './tagline'
+import {Title} from './title'
 import {msg} from 'translate'
 import React from 'react'
-import Tagline from './tagline'
-import Title from './title'
 import image_01 from './intro/bhutan.jpg'
 import image_02 from './intro/senegal.jpg'
 import image_03 from './intro/namibia.jpg'
@@ -33,7 +33,7 @@ import partner_sig from './intro/partners/sig.png'
 import partner_wageningen from './intro/partners/wageningen.png'
 import styles from './intro.module.css'
 
-const Intro = ({onLaunch}) =>
+export const Intro = ({onLaunch}) =>
     <ScrollableContainer>
         <Scrollable className={styles.intro}>
             <Main onLaunch={onLaunch}/>
@@ -226,5 +226,3 @@ const scrollToInfo = () =>
     document.getElementById('info').scrollIntoView({
         behavior: 'smooth'
     })
-
-export default Intro

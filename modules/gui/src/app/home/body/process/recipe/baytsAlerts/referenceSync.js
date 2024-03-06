@@ -1,7 +1,7 @@
 import {Notifications} from 'widget/notifications'
 import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {getAllVisualizations} from 'app/home/body/process/recipe/visualizations'
 import {msg} from 'translate'
 import {recipeAccess} from '../../recipeAccess'
@@ -10,7 +10,7 @@ import {toAssetReference} from './panels/reference/assetSection'
 import {withRecipe} from '../../recipeContext'
 import React from 'react'
 import _ from 'lodash'
-import api from 'api'
+import api from 'apiRegistry'
 
 const mapRecipeToProps = (recipe, ownProps) => ({
     ...ownProps,

@@ -1,5 +1,5 @@
 import {ButtonSelect} from 'widget/buttonSelect'
-import {Form} from './form/form'
+import {Form} from './form'
 import {Panel} from 'widget/panel/panel'
 import PropTypes from 'prop-types'
 import React from 'react'

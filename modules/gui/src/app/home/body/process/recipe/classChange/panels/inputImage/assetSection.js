@@ -1,10 +1,10 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 import style from './inputImage.module.css'
 
-export default class AssetSection extends React.Component {
+export class AssetSection extends React.Component {
     render() {
         const {input, onLoading} = this.props
         return (

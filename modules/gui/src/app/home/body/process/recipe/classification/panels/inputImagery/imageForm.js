@@ -6,14 +6,13 @@ import {Combo} from 'widget/combo'
 import {CrudItem} from 'widget/crudItem'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
-import {compose} from 'compose'
 import {msg} from 'translate'
 import {mutate} from 'stateUtils'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
 
-class ImageForm extends Component {
+export class ImageForm extends Component {
     state = {loading: false}
     render() {
         const {inputs: {bands, bandSetSpecs}} = this.props
@@ -163,7 +162,3 @@ ImageForm.propTypes = {
     inputComponent: PropTypes.any,
     inputs: PropTypes.any
 }
-
-export default compose(
-    ImageForm
-)

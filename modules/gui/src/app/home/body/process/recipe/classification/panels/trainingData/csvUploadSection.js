@@ -8,7 +8,7 @@ import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import styles from './csvUploadSection.module.css'
 
-export default class CsvUploadSection extends Component {
+export class CsvUploadSection extends Component {
     render() {
         const {stream, inputs: {name}} = this.props
         return (

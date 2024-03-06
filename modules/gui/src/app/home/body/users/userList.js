@@ -29,7 +29,7 @@ const getHighlightMatcher = memoizeOne(
         : ''
 )
 
-export default class UserList extends React.Component {
+export class UserList extends React.Component {
     state = {
         sortingOrder: 'updateTime',
         sortingDirection: -1,

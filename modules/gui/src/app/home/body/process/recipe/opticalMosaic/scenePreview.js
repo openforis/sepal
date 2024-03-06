@@ -15,7 +15,7 @@ const mapRecipeToProps = recipe => ({
     scene: selectFrom(recipe, 'ui.sceneToPreview')
 })
 
-class ScenePreview extends React.Component {
+class _ScenePreview extends React.Component {
     constructor(props) {
         super(props)
         this.recipeActions = RecipeActions(props.recipeId)
@@ -72,8 +72,8 @@ class ScenePreview extends React.Component {
     }
 }
 
-export default compose(
-    ScenePreview,
+export const ScenePreview = compose(
+    _ScenePreview,
     withRecipe(mapRecipeToProps)
 )
 

@@ -1,11 +1,12 @@
 import {Button} from 'widget/button'
+import {MenuMode, isFloating} from './menuMode'
 import {compose} from 'compose'
-import {connect, select} from 'store'
+import {connect} from 'connect'
 import {currentUser} from 'user'
 import {isPathInLocation} from 'route'
 import {msg} from 'translate'
+import {select} from 'store'
 import {usageHint} from '../user/usage'
-import MenuMode, {isFloating} from './menuMode'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './menu.module.css'
@@ -17,7 +18,7 @@ const mapStateToProps = (state = {}) => ({
     user: currentUser()
 })
 
-class Menu extends React.Component {
+class _Menu extends React.Component {
     render() {
         const {className, floating, user, hasActiveTasks, budgetExceeded} = this.props
         return (
@@ -41,16 +42,14 @@ class Menu extends React.Component {
     }
 }
 
-Menu.propTypes = {
-    floating: PropTypes.bool.isRequired,
-    className: PropTypes.string,
-    user: PropTypes.object
-}
-
-export default compose(
-    Menu,
+export const Menu = compose(
+    _Menu,
     connect(mapStateToProps)
 )
+
+Menu.propTypes = {
+    className: PropTypes.string
+}
 
 const Link = ({name, icon, href}) =>
     <Button

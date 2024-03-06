@@ -1,7 +1,7 @@
 import {ContentPadding} from 'widget/sectionLayout'
 import {Notifications} from 'widget/notifications'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {forkJoin, map, of, switchMap, tap, timer} from 'rxjs'
 import {get$} from 'http-client'
 import {getLogger} from 'log'

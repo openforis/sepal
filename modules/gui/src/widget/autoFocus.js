@@ -1,11 +1,11 @@
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {isMobile} from 'widget/userAgent'
 import {withEnableDetector} from 'enabled'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-class AutoFocus extends React.Component {
+class _AutoFocus extends React.Component {
     state = {
         completed: false
     }
@@ -55,14 +55,14 @@ class AutoFocus extends React.Component {
     }
 }
 
+export const AutoFocus = compose(
+    _AutoFocus,
+    connect(),
+    withEnableDetector()
+)
+
 AutoFocus.propTypes = {
     children: PropTypes.any,
     element: PropTypes.object,
     focusEnabled: PropTypes.any
 }
-
-export default compose(
-    AutoFocus,
-    connect(),
-    withEnableDetector()
-)

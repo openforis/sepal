@@ -3,7 +3,7 @@ import {PlanetTileProvider} from '../tileProvider/planetTileProvider'
 import {ReplaySubject, of, tap} from 'rxjs'
 import {TileLayer} from './tileLayer'
 
-export default class PlanetLayer extends TileLayer {
+export class PlanetLayer extends TileLayer {
     constructor({map, layerIndex = 0, urlTemplate, concurrency, minZoom, maxZoom}) {
         super()
         this.map = map

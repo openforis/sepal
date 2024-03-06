@@ -4,7 +4,7 @@ import {msg} from 'translate'
 import {recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import React from 'react'
 
-const ImageMask = ({form, inputs, recipeActionBuilder, fromBand}) =>
+const _ImageMask = ({form, inputs, recipeActionBuilder, fromBand}) =>
     <InputImage
         form={form}
         inputs={inputs}
@@ -13,7 +13,7 @@ const ImageMask = ({form, inputs, recipeActionBuilder, fromBand}) =>
         fromBand={fromBand}
     />
 
-export default compose(
-    ImageMask,
+export const ImageMask = compose(
+    _ImageMask,
     recipeFormPanel({id: 'imageMask', fields, modelToValues, valuesToModel})
 )

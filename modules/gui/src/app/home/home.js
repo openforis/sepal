@@ -1,20 +1,20 @@
 import {ActivationContext} from 'widget/activation/activationContext'
 import {Assets} from 'widget/assets'
 import {Body} from './body/body'
+import {Footer} from './footer/footer'
+import {Menu} from './menu/menu'
 import {Notifications} from 'widget/notifications'
 import {PortalContainer} from 'widget/portal'
 import {autoRetry} from 'rxjsutils'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {exhaustMap, map, timer} from 'rxjs'
 import {isFloating} from './menu/menuMode'
 import {msg} from 'translate'
-import Footer from './footer/footer'
-import Menu from './menu/menu'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
-import api from 'api'
+import api from 'apiRegistry'
 import moment from 'moment'
 import styles from './home.module.css'
 
@@ -29,7 +29,7 @@ const RETRY_CONFIG = {
     retryDelayFactor: 2
 }
 
-const timedRefresh$ = (task$, refreshSeconds = 60, name) =>
+const timedRefresh$ = (task$, refreshSeconds = 60, _name) =>
     timer(0, refreshSeconds * 1000).pipe(
         exhaustMap(count => task$(count)),
         autoRetry(RETRY_CONFIG)

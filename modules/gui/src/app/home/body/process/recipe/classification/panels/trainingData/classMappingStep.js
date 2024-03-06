@@ -24,7 +24,7 @@ const mapRecipeToProps = recipe => ({
     recipe
 })
 
-class ClassMappingStep extends Component {
+class _ClassMappingStep extends Component {
     state = {
         columnValues: [],
         customMapping: {},
@@ -386,13 +386,12 @@ class ClassMappingStep extends Component {
     }
 }
 
+export const ClassMappingStep = compose(
+    _ClassMappingStep,
+    withRecipe(mapRecipeToProps)
+)
+
 ClassMappingStep.propTypes = {
     children: PropTypes.any,
     inputs: PropTypes.any
 }
-
-export default compose(
-    ClassMappingStep,
-    withRecipe(mapRecipeToProps)
-)
-
