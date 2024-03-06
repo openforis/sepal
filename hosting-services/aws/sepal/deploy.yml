@@ -140,6 +140,11 @@
         path: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
         state: directory
 
+    - name: Create docker log dir
+      file:
+        path: "/var/log/docker/containers"
+        state: directory
+
     - name: Copy docker-registry certificate
       copy:
         src: "{{ CONFIG_HOME }}/certificates/docker-registry.crt"
@@ -160,10 +165,10 @@
     - name: Copy /etc/docker/daemon.json
       template: src=docker/main-daemon.json dest=/etc/docker/daemon.json
 #
-#    - name: Add ec2-user to docker group
-#      user:
-#        name: ec2-user
-#        groups: docker
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
 #
     - name: Enable docker
       systemd:
