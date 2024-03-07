@@ -102,7 +102,7 @@ export class CCDCGraph extends React.Component {
                     className={styles.model}
                     label={msg('process.ccdc.mapToolbar.ccdcGraph.model.label')}>
                     {hasModel
-                        ? format.number({value: point.model, precisionDigits: 3})
+                        ? format.number({value: point.model, precisionDigits: 3, minScale: 'p'})
                         : <React.Fragment>&ndash;</React.Fragment>
                     }
                 </Widget>
@@ -139,7 +139,7 @@ export class CCDCGraph extends React.Component {
                     className={styles.rmse}
                     label={msg('process.ccdc.mapToolbar.ccdcGraph.rmse.label')}>
                     {hasModel
-                        ? format.number({value: point.rmse, precisionDigits: 3})
+                        ? format.number({value: point.rmse, precisionDigits: 3, minScale: 'p'})
                         : <React.Fragment>&ndash;</React.Fragment>
                     }
                 </Widget>
@@ -147,7 +147,7 @@ export class CCDCGraph extends React.Component {
                     className={styles.magnitude}
                     label={msg('process.ccdc.mapToolbar.ccdcGraph.magnitude.label')}>
                     {hasModel
-                        ? format.number({value: point.magnitude, precisionDigits: 3})
+                        ? format.number({value: point.magnitude, precisionDigits: 3, minScale: 'p'})
                         : <React.Fragment>&ndash;</React.Fragment>
                     }
                 </Widget>
