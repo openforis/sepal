@@ -120,8 +120,3 @@ ImageForm.propTypes = {
     inputComponent: PropTypes.any,
     inputs: PropTypes.any
 }
-
-// export default compose(
-//     ImageForm,
-//     withScrollable()
-// )
