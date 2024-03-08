@@ -1,4 +1,5 @@
 import {Form} from 'widget/form'
+import {actionBuilder} from 'action-builder'
 import {compose} from 'compose'
 import {initValues} from 'app/home/body/process/recipe'
 import {selectFrom} from 'stateUtils'
@@ -8,7 +9,6 @@ import {withPanelWizard} from 'widget/panelWizard'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
 
 const Context = React.createContext()
 

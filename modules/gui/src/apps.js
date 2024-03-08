@@ -1,8 +1,8 @@
 import {concat, exhaustMap, filter, first, interval, map} from 'rxjs'
 
+import {actionBuilder} from 'action-builder'
 import {select} from 'store'
 import _ from 'lodash'
-import actionBuilder from 'action-builder'
 import api from 'apiRegistry'
 
 export const appList = () =>

@@ -1,4 +1,5 @@
 import {Subject, takeUntil} from 'rxjs'
+import {actionBuilder} from 'action-builder'
 import {composeHoC} from 'compose'
 import {connect as connectToRedux} from 'react-redux'
 import {isEqual} from 'hash'
@@ -7,7 +8,6 @@ import {v4 as uuid} from 'uuid'
 import {withPreventUpdateWhenDisabled} from 'enabled'
 import React from 'react'
 import _ from 'lodash'
-import actionBuilder from 'action-builder'
 
 const withConnectedComponent = () =>
     WrappedComponent =>

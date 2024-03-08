@@ -1,4 +1,5 @@
 import {ActivationContext} from 'widget/activation/activationContext'
+import {actionBuilder} from 'action-builder'
 import {compose} from 'compose'
 import {connect} from 'connect'
 import {recipeAccess} from './recipeAccess'
@@ -8,7 +9,6 @@ import {toPathList} from 'stateUtils'
 import {withContext} from 'context'
 import React from 'react'
 import _ from 'lodash'
-import actionBuilder from 'action-builder'
 
 const Context = React.createContext()
 

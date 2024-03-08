@@ -2,7 +2,7 @@ import {Mutator, resolve} from 'stateUtils'
 import {dispatch} from 'store'
 import _ from 'lodash'
 
-const actionBuilder = (type, props, prefix) => {
+export const actionBuilder = (type, props, prefix) => {
     const operations = []
     const sideEffects = []
 
@@ -106,8 +106,6 @@ const actionBuilder = (type, props, prefix) => {
         }
     }
 }
-
-export default actionBuilder
 
 export const scopedActionBuilder = prefix =>
     (type, props) => actionBuilder(type, props, prefix)
