@@ -18,11 +18,6 @@ const mapStateToProps = (state, ownProps) => {
 class _Activator extends React.Component {
     activatorId = uuid()
 
-    // shouldComponentUpdate({activatables: prevActivatables}) {
-    //     const {activatables} = this.props
-    //     return !isEqual(activatables, prevActivatables)
-    // }
-
     render() {
         const {children} = this.props
         return children(this.getActivatorProps())
