@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-import _ from 'lodash'
 import config from './log.json'
 
 const levels = {
@@ -23,12 +22,12 @@ const log = (func, levelName, loggerName, args = []) =>
     func(`[${new Date().toISOString()}]`, `[${levelName}]`, `${loggerName} -`, ...args)
 
 const getArg = (arg, level) =>
-    _.isFunction(arg)
+    typeof arg === 'function'
         ? getArg(arg(level))
         : arg
 
 const getArgs = (args, level) =>
-    _.map(args, (arg, index) => getArg(arg, level, index === 0))
+    args.map((arg, index) => getArg(arg, level, index === 0))
 
 export const getLogger = name => {
     const levelName = config[name]

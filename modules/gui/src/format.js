@@ -1,6 +1,5 @@
 import {NumericFormat} from 'react-number-format'
 import React from 'react'
-import _ from 'lodash'
 import moment from 'moment'
 
 const integer = value => decimal(value, 0)
@@ -101,7 +100,7 @@ const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, pref
         ((n % 3) + 3) % 3 // safe for negative numbers too
 
     // handle undefined/null value
-    if (!_.isFinite(value)) {
+    if (!Number.isFinite(value)) {
         return pad(defaultValue)
     }
 
@@ -142,7 +141,7 @@ const significantDigits = ({value, min, max, minSteps}) => {
 }
 
 const numberToMagnitude = ({value, magnitude, minScale = '', maxScale = 'Y', defaultValue = ''}) => {
-    if (!_.isFinite(value)) {
+    if (!Number.isFinite(value)) {
         return defaultValue
     }
     const scales = ['p', 'n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']

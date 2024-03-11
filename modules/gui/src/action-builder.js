@@ -1,6 +1,5 @@
 import {Mutator, resolve} from 'stateUtils'
 import {dispatch} from 'store'
-import _ from 'lodash'
 
 export const actionBuilder = (type, props, prefix) => {
     const operations = []
@@ -74,7 +73,7 @@ export const actionBuilder = (type, props, prefix) => {
         },
 
         forEach(paths, callback) {
-            _.forEach(paths, (path, key) => callback(this, path, key))
+            paths.forEach((path, key) => callback(this, path, key))
             return this
         },
 
