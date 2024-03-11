@@ -26,7 +26,7 @@ test('validAreas(${JSON.stringify(areas)}) => ${result}')
     .where(
         {
             areas: {top, bottom},
-            result: ['center', 'top', 'topRight', 'right', 'bottomRight', 'bottom', 'bottomLeft', 'left', 'topLeft']
+            result: ['center', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-left', 'left', 'top-left']
         },
         // {areas: {left, bottom}, result: []},
     )
@@ -41,12 +41,12 @@ test('assignArea(${JSON.stringify(areas)}, area, value) => ${result}')
             areas: {left, right},
             value: 'value',
             area: 'top',
-            result: {top: 'value', bottomRight: right, bottomLeft: left}
+            result: {top: 'value', 'bottom-right': right, 'bottom-left': left}
         },
         {
             areas: {left, right},
             value: 'value',
-            area: 'bottomRight',
-            result: {bottomRight: 'value', left, topRight: right}
+            area: 'bottom-right',
+            result: {'bottom-right': 'value', left, 'top-right': right}
         },
     )
