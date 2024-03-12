@@ -393,9 +393,9 @@ class _Combo extends React.Component {
 
     matcher(filter) {
         // match beginning of multiple words in any order (e.g. both "u k" and "k u" match "United Kingdom")
-        const parts = splitString(simplifyString(escapeRegExp(filter), {removeNonAlphanumeric: false}))
-            .map(part => part ? `(?=.*${(part)})` : '')
-        return RegExp(`^${parts.join('')}.*$`, 'i')
+        const matchers = splitString(simplifyString(escapeRegExp(filter), {removeNonAlphanumeric: false}))
+            .map(part => part ? `(?=.*${(part)})` : '') // regexp positive lookahead ("?=")
+        return RegExp(`^${matchers.join('')}.*$`, 'i')
     }
 
     filterOptions(group) {
@@ -424,7 +424,7 @@ class _Combo extends React.Component {
                         ? null
                         : options.forceFilter === true
                             ? option
-                            : matcher.test(option.searchableText || option.label)
+                            : matcher.test(simplifyString(option.searchableText || option.label))
                                 ? option
                                 : null
             )
