@@ -37,10 +37,7 @@
 }
 
 .tab.busy::before {
-    /* animation: flip-flop 1000ms ease-in-out infinite alternate; */
     animation: flip-flop 1000ms cubic-bezier(1, 0, 0, 1) infinite alternate;
-    /* animation: pulse 500ms cubic-bezier(1, 0, 0, 1) infinite alternate; */
-    /* animation: pulse 500ms linear infinite alternate; */
 }
 
 @keyframes flip-flop {
@@ -51,15 +48,6 @@
     100% {
         left: 50%;
         right: 0%;
-    }
-}
-
-@keyframes pulse {
-    0% {
-        opacity: 1;
-    }
-    100% {
-        opacity: .1;
     }
 }
 
