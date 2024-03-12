@@ -189,9 +189,7 @@ class _AssetCombo extends React.Component {
     initializeSearch() {
         const {addSubscription, mode} = this.props
         addSubscription(
-            this.filter$.pipe(
-                debounceTime(100)
-            ).subscribe(
+            this.filter$.subscribe(
                 ({filter, filterReset}) => this.setState(({filter: prevFilter}) => ({
                     filter: filterReset ? prevFilter : filter,
                     highlightMatcher: getHighlightMatcher(filter),

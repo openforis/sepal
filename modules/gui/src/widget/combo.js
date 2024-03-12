@@ -15,6 +15,8 @@ import React from 'react'
 import _ from 'lodash'
 import styles from './combo.module.css'
 
+const SIMPLIFY_STRING_CONFIG = {trim: true, removeAccents: true, removePunctuation: false, removeNonAlphanumeric: false, removeRepeatedSpaces: true}
+
 const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
 })
@@ -393,14 +395,14 @@ class _Combo extends React.Component {
 
     matcher(filter) {
         // match beginning of multiple words in any order (e.g. both "u k" and "k u" match "United Kingdom")
-        const matchers = splitString(simplifyString(escapeRegExp(filter), {removeNonAlphanumeric: false}))
+        const matchers = splitString(simplifyString(escapeRegExp(filter), SIMPLIFY_STRING_CONFIG))
             .map(part => part ? `(?=.*${(part)})` : '') // regexp positive lookahead ("?=")
         return RegExp(`^${matchers.join('')}.*$`, 'i')
     }
 
     filterOptions(group) {
         const {matcher} = this.state
-        const isMatchingGroup = matcher.test(simplifyString(group.searchableText || group.label))
+        const isMatchingGroup = matcher.test(simplifyString(group.searchableText || group.label, SIMPLIFY_STRING_CONFIG))
         const filterOptions = _.isFunction(group.filterOptions)
             ? group.filterOptions(isMatchingGroup)
             : group.filterOptions !== false
@@ -424,7 +426,7 @@ class _Combo extends React.Component {
                         ? null
                         : options.forceFilter === true
                             ? option
-                            : matcher.test(simplifyString(option.searchableText || option.label))
+                            : matcher.test(simplifyString(option.searchableText || option.label, SIMPLIFY_STRING_CONFIG))
                                 ? option
                                 : null
             )
