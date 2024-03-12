@@ -7,7 +7,6 @@ import {select} from 'store'
 import {v4 as uuid} from 'uuid'
 import {withPreventUpdateWhenDisabled} from 'enabled'
 import React from 'react'
-import _ from 'lodash'
 
 const withConnectedComponent = () =>
     WrappedComponent =>
@@ -99,14 +98,9 @@ const withConnectedComponent = () =>
             }
 
             stream(...args) {
-                if (args.length === 1 && _.isObject(args[0])) {
+                if (args.length === 1 && args[0].constructor === Object) {
                     // object arguments
-                    const objectArgs = args[0]
-                    const unsupportedArgs = _.difference(Object.keys(objectArgs), ['name', 'stream$', 'onNext', 'onError', 'onComplete'])
-                    if (unsupportedArgs.length) {
-                        throw new Error(`Unsupported stream arguments: ${unsupportedArgs.join(', ')}`)
-                    }
-                    const {name, stream$, onNext, onError, onComplete} = objectArgs
+                    const {name, stream$, onNext, onError, onComplete} = args[0]
                     return this.getStream({name, stream$, onNext, onError, onComplete})
                 } else {
                     // positional arguments
