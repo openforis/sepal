@@ -28,10 +28,11 @@ const mapDataset = datasets =>
             ({license}) => !EXCLUDED_LICENSES.includes(license)
         )
         .map(
-            ({title, id, type}) => ({
+            ({title, id, type, docs}) => ({
                 title: simplifyString(title),
                 id,
-                type: mapType(type)
+                type: mapType(type),
+                url: docs
             })
         )
 
@@ -48,7 +49,7 @@ const getDatasets = (text, allowedTypes) =>
     datasets
         .filter(({type}) => isMatchingAllowedTypes(type, allowedTypes))
         .filter(dataset => isMatchingText(dataset, getSearchElements(text)))
-        .map(({title, id, type}) => ({title, id, type}))
+        .map(({title, id, type, url}) => ({title, id, type, url}))
 
 const getSearchElements = text =>
     splitString(escapeRegExp(text))

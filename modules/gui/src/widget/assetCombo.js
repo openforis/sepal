@@ -341,10 +341,11 @@ class _AssetCombo extends React.Component {
 
     getAwesomeGeeCommunityDatasetsOptions() {
         const {datasets: {community: {datasets: communityDatasets = [], matchingResults, moreResults} = {}}} = this.state
-        const assets = communityDatasets.map(({title, id, type}) => ({
+        const assets = communityDatasets.map(({title, id, type, url}) => ({
             title,
             id,
             type,
+            url,
             searchableText: [title, id, type].join('|')
         }))
         return {
