@@ -1,7 +1,5 @@
-import fp from 'lodash/fp'
+export const composeHoC = (...wrappers) =>
+    component => wrappers.reduce((acc, wrapper) => wrapper(acc), component)
 
 export const compose = (component, ...wrappers) =>
-    fp.flow(wrappers)(component)
-
-export const composeHoC = (...wrappers) =>
-    fp.flow(wrappers)
+    wrappers.reduce((acc, wrapper) => wrapper(acc), component)

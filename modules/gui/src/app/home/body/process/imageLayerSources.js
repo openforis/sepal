@@ -1,4 +1,4 @@
-import {AssetImageLayer} from './recipe/asset/assetImageLayer'
+import {AssetImageLayer} from 'app/home/map/imageLayerSource/assetImageLayer'
 import {GoogleSatelliteImageLayer} from 'app/home/map/imageLayerSource/googleSatelliteImageLayer'
 import {PlanetImageLayer} from 'app/home/map/imageLayerSource/planetImageLayer'
 import {RecipeImageLayer} from './recipe/recipeImageLayer'

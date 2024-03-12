@@ -1,9 +1,9 @@
 import {Notifications} from 'widget/notifications'
+import {actionBuilder} from 'action-builder'
 import {catchError, map, of, switchMap, tap} from 'rxjs'
 import {msg} from 'translate'
 import {publishCurrentUserEvent, publishEvent} from 'eventPublisher'
 import {select} from 'store'
-import actionBuilder from 'action-builder'
 import api from 'apiRegistry'
 
 export const currentUser = () => select('user.currentUser')

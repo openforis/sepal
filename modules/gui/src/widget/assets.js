@@ -1,5 +1,6 @@
 import {EMPTY, Subject, catchError, exhaustMap, finalize, interval, last, map, merge, mergeWith, of, scan, switchMap, takeUntil, tap, throttleTime} from 'rxjs'
 import {Tree} from 'tree'
+import {actionBuilder} from 'action-builder'
 import {compose} from 'compose'
 import {connect} from 'connect'
 import {getLogger} from 'log'
@@ -8,7 +9,6 @@ import {select} from 'store'
 import {withSubscriptions} from 'subscription'
 import React from 'react'
 import _ from 'lodash'
-import actionBuilder from 'action-builder'
 import api from 'apiRegistry'
 
 const log = getLogger('assets')
