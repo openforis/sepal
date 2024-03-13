@@ -1,16 +1,16 @@
-import {Form} from 'widget/form'
-import {Layout} from 'widget/layout'
+import {Form} from '~/widget/form'
+import {Layout} from '~/widget/layout'
 import {PreviewMap} from './previewMap'
 import {RecipeActions} from '../../mosaicRecipe'
 import {Subject, map, takeUntil} from 'rxjs'
-import {compose} from 'compose'
-import {msg} from 'translate'
-import {selectFrom} from 'stateUtils'
-import {withRecipe} from 'app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {msg} from '~/translate'
+import {selectFrom} from '~/stateUtils'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import api from 'apiRegistry'
+import api from '~/apiRegistry'
 
 const mapRecipeToProps = recipe => {
     return {

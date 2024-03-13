@@ -1,7 +1,7 @@
 import * as turf from '@turf/turf'
 import {Subject, of} from 'rxjs'
 import {evaluateRow} from './expression'
-import {selectFrom} from 'stateUtils'
+import {selectFrom} from '~/stateUtils'
 import _ from 'lodash'
 
 const filter = (row, {filterExpression}) =>

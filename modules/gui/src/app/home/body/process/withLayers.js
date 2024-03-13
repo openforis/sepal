@@ -1,7 +1,7 @@
-import {compose} from 'compose'
+import {compose} from '~/compose'
 import {getImageLayerSource} from './imageLayerSourceRegistry'
-import {selectFrom} from 'stateUtils'
-import {withMapArea} from 'app/home/map/mapAreaContext'
+import {selectFrom} from '~/stateUtils'
+import {withMapArea} from '~/app/home/map/mapAreaContext'
 import {withRecipe} from './recipeContext'
 import React from 'react'
 

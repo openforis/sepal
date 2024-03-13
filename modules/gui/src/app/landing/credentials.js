@@ -1,10 +1,10 @@
-import {AnimateReplacement} from 'widget/animate'
+import {AnimateReplacement} from '~/widget/animate'
 import {ForgotPassword} from './forgot-password'
 import {Login} from './login'
-import {Recaptcha} from 'widget/recaptcha'
+import {Recaptcha} from '~/widget/recaptcha'
 import {SetPassword} from './setPassword'
 import {SignUp} from './signup'
-import {isPathInLocation} from 'route'
+import {isPathInLocation} from '~/route'
 import React from 'react'
 import styles from './credentials.module.css'
 

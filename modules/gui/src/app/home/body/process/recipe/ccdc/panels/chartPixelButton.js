@@ -1,7 +1,7 @@
-import {Toolbar} from 'widget/toolbar/toolbar'
-import {compose} from 'compose'
-import {msg} from 'translate'
-import {withMap} from 'app/home/map/mapContext'
+import {Toolbar} from '~/widget/toolbar/toolbar'
+import {compose} from '~/compose'
+import {msg} from '~/translate'
+import {withMap} from '~/app/home/map/mapContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 

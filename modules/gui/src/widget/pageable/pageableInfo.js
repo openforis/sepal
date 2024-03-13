@@ -1,5 +1,5 @@
 import {Consumer} from './pageableContext'
-import {msg} from 'translate'
+import {msg} from '~/translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 

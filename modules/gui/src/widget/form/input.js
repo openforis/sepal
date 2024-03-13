@@ -1,7 +1,7 @@
-import {Input, Textarea} from 'widget/input'
-import {compose} from 'compose'
-import {withFormContext} from 'widget/form/context'
-import {withForwardedRef} from 'ref'
+import {Input, Textarea} from '~/widget/input'
+import {compose} from '~/compose'
+import {withFormContext} from '~/widget/form/context'
+import {withForwardedRef} from '~/ref'
 import PropTypes from 'prop-types'
 import React from 'react'
 

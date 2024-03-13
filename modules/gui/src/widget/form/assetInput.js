@@ -1,14 +1,14 @@
 import {EMPTY, Subject, catchError, debounceTime, map, switchMap, tap} from 'rxjs'
 import {FormInput} from './input'
-import {compose} from 'compose'
-import {connect} from 'connect'
-import {msg} from 'translate'
-import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualizationParser'
-import {withSubscriptions} from 'subscription'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {msg} from '~/translate'
+import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
+import {withSubscriptions} from '~/subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
-import api from 'apiRegistry'
-import guid from 'guid'
+import api from '~/apiRegistry'
+import guid from '~/guid'
 
 const DEBOUNCE_TIME_MS = 750
 

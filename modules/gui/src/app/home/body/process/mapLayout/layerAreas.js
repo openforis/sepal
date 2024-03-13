@@ -1,6 +1,6 @@
-import {selectFrom} from 'stateUtils'
+import {selectFrom} from '~/stateUtils'
 import _ from 'lodash'
-import guid from 'guid'
+import guid from '~/guid'
 
 export const validAreas = areas => {
     assertValidState(areas)

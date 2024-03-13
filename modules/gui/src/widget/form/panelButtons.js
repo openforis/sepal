@@ -1,5 +1,5 @@
 import {FormPanelContext} from './panel'
-import {Panel} from 'widget/panel/panel'
+import {Panel} from '~/widget/panel/panel'
 import PropTypes from 'prop-types'
 import React from 'react'
 

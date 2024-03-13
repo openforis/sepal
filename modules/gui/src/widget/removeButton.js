@@ -1,6 +1,6 @@
 import {InlineConfirmationButton} from './inlineConfirmationButton'
 import {ModalConfirmationButton} from './modalConfirmationButton'
-import {msg} from 'translate'
+import {msg} from '~/translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 

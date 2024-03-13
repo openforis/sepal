@@ -1,9 +1,9 @@
-import {Form} from 'widget/form'
+import {Form} from '~/widget/form'
 import {Subject, takeUntil} from 'rxjs'
-import {msg} from 'translate'
+import {msg} from '~/translate'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
-import api from 'apiRegistry'
+import api from '~/apiRegistry'
 
 export class EETableSection extends Component {
     eeTableChanged$ = new Subject()

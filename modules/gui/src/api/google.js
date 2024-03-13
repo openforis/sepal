@@ -1,4 +1,4 @@
-import {get$} from 'http-client'
+import {get$} from '~/http-client'
 
 const SUBDOMAIN = 'mt0'
 

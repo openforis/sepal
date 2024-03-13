@@ -1,4 +1,4 @@
-import {msg} from 'translate'
+import {msg} from '~/translate'
 import _ from 'lodash'
 import moment from 'moment'
 

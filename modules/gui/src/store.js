@@ -1,4 +1,4 @@
-import {selectFrom} from 'stateUtils'
+import {selectFrom} from '~/stateUtils'
 
 let storeInstance = null
 const storeInitListeners = []

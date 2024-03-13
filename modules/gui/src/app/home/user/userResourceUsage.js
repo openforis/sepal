@@ -1,6 +1,6 @@
-import {Gauge} from 'widget/gauge'
-import {Tooltip} from 'widget/tooltip'
-import {msg} from 'translate'
+import {Gauge} from '~/widget/gauge'
+import {Tooltip} from '~/widget/tooltip'
+import {msg} from '~/translate'
 import React from 'react'
 import styles from './userResourceUsage.module.css'
 

@@ -1,4 +1,4 @@
-import {Button} from 'widget/button'
+import {Button} from '~/widget/button'
 import {Context} from './context'
 import PropTypes from 'prop-types'
 import React from 'react'

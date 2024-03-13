@@ -1,5 +1,5 @@
-import {msg} from 'translate'
-import {selectFrom} from 'stateUtils'
+import {msg} from '~/translate'
+import {selectFrom} from '~/stateUtils'
 import _ from 'lodash'
 
 export const getAvailableBands = recipe => {

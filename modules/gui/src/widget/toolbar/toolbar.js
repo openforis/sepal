@@ -1,10 +1,10 @@
 import {ActivationButton} from './activationButton'
 import {Context} from './context'
-import {Portal} from 'widget/portal'
+import {Portal} from '~/widget/portal'
 import {ToolbarButton} from './toolbarButton'
 import PropTypes from 'prop-types'
 import React from 'react'
-import lookStyles from 'style/look.module.css'
+import lookStyles from '~/style/look.module.css'
 import styles from './toolbar.module.css'
 
 export class Toolbar extends React.Component {

@@ -1,4 +1,4 @@
-import {addHash, cloneDeep, createHash, isEqual} from 'hash'
+import {addHash, cloneDeep, createHash, isEqual} from '~/hash'
 import {flatten} from 'flat'
 import _ from 'lodash'
 

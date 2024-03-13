@@ -1,4 +1,4 @@
-import {msg} from 'translate'
+import {msg} from '~/translate'
 import {useDropzone} from 'react-dropzone'
 import PropTypes from 'prop-types'
 import React from 'react'

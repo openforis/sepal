@@ -1,5 +1,5 @@
 import {selectFrom} from '../../../stateUtils'
-import {withContext} from 'context'
+import {withContext} from '~/context'
 import Color from 'color'
 import React from 'react'
 import _ from 'lodash'

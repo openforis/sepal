@@ -1,5 +1,5 @@
-import {Button} from 'widget/button'
-import {ButtonGroup} from 'widget/buttonGroup'
+import {Button} from '~/widget/button'
+import {ButtonGroup} from '~/widget/buttonGroup'
 import {Consumer} from './pageableContext'
 import PropTypes from 'prop-types'
 import React from 'react'

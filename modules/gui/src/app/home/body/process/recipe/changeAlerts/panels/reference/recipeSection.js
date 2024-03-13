@@ -1,7 +1,7 @@
-import {RecipeInput} from 'widget/recipeInput'
+import {RecipeInput} from '~/widget/recipeInput'
 import {Subject} from 'rxjs'
-import {compose} from 'compose'
-import {recipeAccess} from 'app/home/body/process/recipeAccess'
+import {compose} from '~/compose'
+import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import PropTypes from 'prop-types'
 import React from 'react'
 

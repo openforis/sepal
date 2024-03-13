@@ -1,4 +1,4 @@
-import {Layout} from 'widget/layout'
+import {Layout} from '~/widget/layout'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import styles from './inputImage.module.css'

@@ -1,14 +1,14 @@
-import {Form} from 'widget/form'
-import {FormCombo} from 'widget/form/combo'
-import {Layout} from 'widget/layout'
-import {NumberButtons} from 'widget/numberButtons'
+import {Form} from '~/widget/form'
+import {FormCombo} from '~/widget/form/combo'
+import {Layout} from '~/widget/layout'
+import {NumberButtons} from '~/widget/numberButtons'
 import {Subject, takeUntil} from 'rxjs'
-import {compose} from 'compose'
-import {msg} from 'translate'
-import {withRecipe} from 'app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {msg} from '~/translate'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
-import api from 'apiRegistry'
+import api from '~/apiRegistry'
 
 const mapRecipeToProps = recipe => ({recipe})
 

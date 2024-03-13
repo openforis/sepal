@@ -1,4 +1,4 @@
-import {getAvailableBands as radarBands} from 'app/home/body/process/recipe/radarMosaic/bands'
+import {getAvailableBands as radarBands} from '~/app/home/body/process/recipe/radarMosaic/bands'
 
 const typeFloat = {precision: 'float'}
 const typeInt = {precision: 'int'}

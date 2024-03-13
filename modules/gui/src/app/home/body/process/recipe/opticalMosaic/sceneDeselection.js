@@ -1,8 +1,8 @@
-import {RecipeActions, SceneSelectionType, inDateRange} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {compose} from 'compose'
-import {isPartiallyEqual} from 'hash'
-import {selectFrom} from 'stateUtils'
-import {withRecipe} from 'app/home/body/process/recipeContext'
+import {RecipeActions, SceneSelectionType, inDateRange} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {compose} from '~/compose'
+import {isPartiallyEqual} from '~/hash'
+import {selectFrom} from '~/stateUtils'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
 import React from 'react'
 
 const mapRecipeToProps = recipe => {

@@ -1,4 +1,4 @@
-import {FormCombo} from 'widget/form/combo'
+import {FormCombo} from '~/widget/form/combo'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'

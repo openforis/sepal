@@ -1,5 +1,5 @@
-import {Enabled} from 'enabled'
-import {PortalContainer, PortalContext} from 'widget/portal'
+import {Enabled} from '~/enabled'
+import {PortalContainer, PortalContext} from '~/widget/portal'
 import {TabContext} from './tabContext'
 import PropTypes from 'prop-types'
 import React from 'react'

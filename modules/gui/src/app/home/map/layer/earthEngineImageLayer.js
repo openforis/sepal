@@ -3,12 +3,12 @@ import {EarthEngineTileProvider} from '../tileProvider/earthEngineTileProvider'
 import {GoogleMapsOverlay} from './googleMapsOverlay'
 import {Subject, finalize, tap} from 'rxjs'
 import {TileLayer} from './tileLayer'
-import {isEqual} from 'hash'
-import {publishEvent} from 'eventPublisher'
-import {selectFrom} from 'stateUtils'
+import {isEqual} from '~/hash'
+import {publishEvent} from '~/eventPublisher'
+import {selectFrom} from '~/stateUtils'
 import {v4 as uuid} from 'uuid'
 import _ from 'lodash'
-import api from 'apiRegistry'
+import api from '~/apiRegistry'
 
 export class EarthEngineImageLayer extends TileLayer {
     constructor({

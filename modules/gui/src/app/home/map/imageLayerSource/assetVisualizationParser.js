@@ -1,4 +1,4 @@
-import {normalize} from 'app/home/map/visParams/visParams'
+import {normalize} from '~/app/home/map/visParams/visParams'
 import _ from 'lodash'
 
 const parseVisualization = properties => _.chain(properties)

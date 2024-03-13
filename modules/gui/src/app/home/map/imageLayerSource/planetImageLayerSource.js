@@ -1,4 +1,4 @@
-import {msg} from 'translate'
+import {msg} from '~/translate'
 
 export const createNicfiPlanetImageLayerSource = () => ({
     id: 'planet-nicfi',

@@ -1,6 +1,6 @@
-import {compose} from 'compose'
-import {connect} from 'connect'
-import {select} from 'store'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {select} from '~/store'
 import PropTypes from 'prop-types'
 import React from 'react'
 

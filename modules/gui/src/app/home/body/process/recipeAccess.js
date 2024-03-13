@@ -1,13 +1,13 @@
-import {actionBuilder} from 'action-builder'
-import {compose} from 'compose'
-import {connect} from 'connect'
+import {actionBuilder} from '~/action-builder'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
 import {initializeRecipe} from './recipe'
 import {map, of, switchMap, tap} from 'rxjs'
-import {selectFrom} from 'stateUtils'
+import {selectFrom} from '~/stateUtils'
 import {v4 as uuid} from 'uuid'
 import React from 'react'
 import _ from 'lodash'
-import api from 'apiRegistry'
+import api from '~/apiRegistry'
 
 let componentIdsByRecipeId = {}
 

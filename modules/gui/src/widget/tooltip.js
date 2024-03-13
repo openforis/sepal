@@ -1,6 +1,6 @@
 import './tooltip.css'
 import 'rc-tooltip/assets/bootstrap.css'
-import {isMobile} from 'widget/userAgent'
+import {isMobile} from '~/widget/userAgent'
 import PropTypes from 'prop-types'
 import RcTooltip from 'rc-tooltip'
 import React from 'react'

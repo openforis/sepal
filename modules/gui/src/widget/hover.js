@@ -1,6 +1,6 @@
-import {compose} from 'compose'
+import {compose} from '~/compose'
 import {delay, distinctUntilChanged, fromEvent, map, merge, of, switchMap, takeUntil, zipWith} from 'rxjs'
-import {withSubscriptions} from 'subscription'
+import {withSubscriptions} from '~/subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'

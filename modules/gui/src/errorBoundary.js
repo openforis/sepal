@@ -1,4 +1,4 @@
-import {isDevelopment} from 'environment'
+import {isDevelopment} from '~/environment'
 import {publishFatalError} from './eventPublisher'
 import React from 'react'
 import styles from './errorBoundary.module.css'

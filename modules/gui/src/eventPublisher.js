@@ -1,5 +1,5 @@
-import {getLanguage} from 'translate'
-import {getLogger} from 'log'
+import {getLanguage} from '~/translate'
+import {getLogger} from '~/log'
 
 const log = getLogger('eventPublisher')
 

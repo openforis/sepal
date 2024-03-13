@@ -1,10 +1,10 @@
 import {EarthEngineTableLayer} from './layer/earthEngineTableLayer'
-import {compose} from 'compose'
-import {withSubscriptions} from 'subscription'
-import {withTab} from 'widget/tabs/tabContext'
+import {compose} from '~/compose'
+import {withSubscriptions} from '~/subscription'
+import {withTab} from '~/widget/tabs/tabContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import api from 'apiRegistry'
+import api from '~/apiRegistry'
 
 class _RecipeGeometryLayer extends React.Component {
     render() {

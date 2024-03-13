@@ -1,5 +1,5 @@
-import {composeHoC} from 'compose'
-import {isMobile} from 'widget/userAgent'
+import {composeHoC} from '~/compose'
+import {isMobile} from '~/widget/userAgent'
 import PropTypes from 'prop-types'
 import React from 'react'
 

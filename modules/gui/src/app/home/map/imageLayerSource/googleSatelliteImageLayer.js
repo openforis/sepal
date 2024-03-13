@@ -1,8 +1,8 @@
 import {GoogleSatelliteLayer} from '../layer/googleSatelliteLayer'
 import {MapAreaLayout} from '../mapAreaLayout'
-import {compose} from 'compose'
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import {withSubscriptions} from 'subscription'
+import {compose} from '~/compose'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {withSubscriptions} from '~/subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 

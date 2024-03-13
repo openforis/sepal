@@ -3,7 +3,7 @@ import {EarthEngineTableTileProvider} from '../tileProvider/earthEngineTableTile
 import {GoogleMapsOverlay} from './googleMapsOverlay'
 import {TileLayer} from './tileLayer'
 import {finalize, tap} from 'rxjs'
-import {isEqual} from 'hash'
+import {isEqual} from '~/hash'
 import {v4 as uuid} from 'uuid'
 import _ from 'lodash'
 

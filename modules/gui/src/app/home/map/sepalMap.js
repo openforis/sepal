@@ -1,5 +1,5 @@
 import {Subject} from 'rxjs'
-import {getLogger} from 'log'
+import {getLogger} from '~/log'
 import _ from 'lodash'
 
 const log = getLogger('sepalMap')

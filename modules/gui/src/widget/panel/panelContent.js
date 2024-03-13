@@ -1,5 +1,5 @@
-import {Padding} from 'widget/padding'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {Padding} from '~/widget/padding'
+import {Scrollable, ScrollableContainer} from '~/widget/scrollable'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './panelContent.module.css'

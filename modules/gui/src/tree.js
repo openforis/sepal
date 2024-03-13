@@ -1,4 +1,4 @@
-import {assertValue} from 'assertValue'
+import {assertValue} from '~/assertValue'
 import _ from 'lodash'
 
 export const NODE_KEY = '_node_'

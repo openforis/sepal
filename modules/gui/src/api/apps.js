@@ -1,4 +1,4 @@
-import {get$, post$} from 'http-client'
+import {get$, post$} from '~/http-client'
 
 export default {
     loadAll$: () => get$('/api/apps/list'),

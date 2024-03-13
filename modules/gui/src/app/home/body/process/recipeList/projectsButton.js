@@ -1,8 +1,8 @@
-import {Button} from 'widget/button'
+import {Button} from '~/widget/button'
 import {Projects} from './projects'
-import {compose} from 'compose'
-import {msg} from 'translate'
-import {withActivators} from 'widget/activation/activator'
+import {compose} from '~/compose'
+import {msg} from '~/translate'
+import {withActivators} from '~/widget/activation/activator'
 import React from 'react'
 import _ from 'lodash'
 

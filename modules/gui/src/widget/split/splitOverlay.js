@@ -1,4 +1,4 @@
-import {Portal} from 'widget/portal'
+import {Portal} from '~/widget/portal'
 import {SplitContext} from './splitContext'
 import PropTypes from 'prop-types'
 import React from 'react'

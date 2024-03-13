@@ -1,5 +1,5 @@
-import {Icon} from 'widget/icon'
-import {msg} from 'translate'
+import {Icon} from '~/widget/icon'
+import {msg} from '~/translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './feature.module.css'

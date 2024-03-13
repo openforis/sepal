@@ -1,5 +1,5 @@
-import {CrudItem} from 'widget/crudItem'
-import {msg} from 'translate'
+import {CrudItem} from '~/widget/crudItem'
+import {msg} from '~/translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 

@@ -1,4 +1,4 @@
-import {msg} from 'translate'
+import {msg} from '~/translate'
 import React from 'react'
 import styles from './title.module.css'
 

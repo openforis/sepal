@@ -1,8 +1,8 @@
-import {Form} from 'widget/form'
-import {Panel} from 'widget/panel/panel'
-import {compose} from 'compose'
-import {withActivatable} from 'widget/activation/activatable'
-import {withForm} from 'widget/form/form'
+import {Form} from '~/widget/form'
+import {Panel} from '~/widget/panel/panel'
+import {compose} from '~/compose'
+import {withActivatable} from '~/widget/activation/activatable'
+import {withForm} from '~/widget/form/form'
 import React from 'react'
 
 export const modalSubformPanel = ({id, toTitle, toClassName, fields}) =>

@@ -1,5 +1,5 @@
-import {Portal} from 'widget/portal'
-import {compose} from 'compose'
+import {Portal} from '~/widget/portal'
+import {compose} from '~/compose'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'

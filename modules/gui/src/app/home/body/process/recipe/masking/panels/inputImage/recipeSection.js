@@ -1,5 +1,5 @@
-import {RecipeInput} from 'widget/recipeInput'
-import {getRecipeType} from 'app/home/body/process/recipeTypeRegistry'
+import {RecipeInput} from '~/widget/recipeInput'
+import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import PropTypes from 'prop-types'
 import React from 'react'
 

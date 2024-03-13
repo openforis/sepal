@@ -1,4 +1,4 @@
-import {Notifications} from 'widget/notifications'
+import {Notifications} from '~/widget/notifications'
 import {from, map, switchMap, tap, throwError} from 'rxjs'
 
 const FALLBACK_ERROR_MESSAGE = 'Malformed error response'

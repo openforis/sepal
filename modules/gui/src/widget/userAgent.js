@@ -1,4 +1,4 @@
-import {select} from 'store'
+import {select} from '~/store'
 
 export const isMobile = () => {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera

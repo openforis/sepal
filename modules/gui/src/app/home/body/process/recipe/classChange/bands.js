@@ -1,5 +1,5 @@
 import {hasConfidence} from './classChangeRecipe'
-import {selectFrom} from 'stateUtils'
+import {selectFrom} from '~/stateUtils'
 import _ from 'lodash'
 
 export const getAvailableBands = recipe => {

@@ -1,4 +1,4 @@
-import {delete$, get$, post$} from 'http-client'
+import {delete$, get$, post$} from '~/http-client'
 
 export default {
     loadAll$: () =>

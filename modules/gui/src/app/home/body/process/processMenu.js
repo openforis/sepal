@@ -1,11 +1,11 @@
-import {Menu} from 'widget/menu'
-import {Notifications} from 'widget/notifications'
+import {Menu} from '~/widget/menu'
+import {Notifications} from '~/widget/notifications'
 import {RecipeState, duplicateRecipe, exportRecipe$} from './recipe'
-import {compose} from 'compose'
-import {connect} from 'connect'
-import {msg} from 'translate'
-import {select} from 'store'
-import {withActivators} from 'widget/activation/activator'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {msg} from '~/translate'
+import {select} from '~/store'
+import {withActivators} from '~/widget/activation/activator'
 import React from 'react'
 
 const mapStateToProps = (state, ownProps) => {

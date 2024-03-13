@@ -1,8 +1,8 @@
-import {MosaicRetrievePanel} from 'app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
-import {RecipeActions} from 'app/home/body/process/recipe/phenology/phenologyRecipe'
-import {compose} from 'compose'
-import {getGroupedBandOptions} from 'app/home/body/process/recipe/phenology/bands'
-import {withRecipe} from 'app/home/body/process/recipeContext'
+import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
+import {RecipeActions} from '~/app/home/body/process/recipe/phenology/phenologyRecipe'
+import {compose} from '~/compose'
+import {getGroupedBandOptions} from '~/app/home/body/process/recipe/phenology/bands'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
 import React from 'react'
 import styles from './retrieve.module.css'
 

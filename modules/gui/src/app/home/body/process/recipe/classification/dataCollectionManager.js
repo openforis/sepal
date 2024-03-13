@@ -1,5 +1,5 @@
 import {RecipeActions} from './classificationRecipe'
-import {withContext} from 'context'
+import {withContext} from '~/context'
 import React from 'react'
 import _ from 'lodash'
 

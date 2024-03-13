@@ -1,6 +1,6 @@
-import {Widget} from 'widget/widget'
-import {compose} from 'compose'
-import {withFormContext} from 'widget/form/context'
+import {Widget} from '~/widget/widget'
+import {compose} from '~/compose'
+import {withFormContext} from '~/widget/form/context'
 import PropTypes from 'prop-types'
 import React from 'react'
 

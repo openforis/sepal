@@ -1,4 +1,4 @@
-import {RecipeInput} from 'widget/recipeInput'
+import {RecipeInput} from '~/widget/recipeInput'
 import {Subject} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'

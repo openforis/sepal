@@ -1,4 +1,4 @@
-import {get$, post$, postJson$} from 'http-client'
+import {get$, post$, postJson$} from '~/http-client'
 
 export default {
     loadAll$: () =>

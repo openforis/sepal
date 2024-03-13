@@ -1,5 +1,5 @@
-import {normalize} from 'app/home/map/visParams/visParams'
-import {selectFrom} from 'stateUtils'
+import {normalize} from '~/app/home/map/visParams/visParams'
+import {selectFrom} from '~/stateUtils'
 import {supportProbability, supportRegression} from './classificationRecipe'
 import _ from 'lodash'
 

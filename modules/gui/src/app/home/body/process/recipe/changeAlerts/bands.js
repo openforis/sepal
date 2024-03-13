@@ -1,6 +1,6 @@
-import {getAvailableBands as opticalBands} from 'app/home/body/process/recipe/opticalMosaic/bands'
-import {getAvailableBands as planetBands} from 'app/home/body/process/recipe/planetMosaic/bands'
-import {getAvailableBands as radarBands} from 'app/home/body/process/recipe/radarMosaic/bands'
+import {getAvailableBands as opticalBands} from '~/app/home/body/process/recipe/opticalMosaic/bands'
+import {getAvailableBands as planetBands} from '~/app/home/body/process/recipe/planetMosaic/bands'
+import {getAvailableBands as radarBands} from '~/app/home/body/process/recipe/radarMosaic/bands'
 
 const typeFloat = {precision: 'float'}
 

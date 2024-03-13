@@ -1,8 +1,8 @@
 import {InputImage, fields, modelToValues, valuesToModel} from './inputImage'
-import {compose} from 'compose'
-import {msg} from 'translate'
-import {recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {selectFrom} from 'stateUtils'
+import {compose} from '~/compose'
+import {msg} from '~/translate'
+import {recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {selectFrom} from '~/stateUtils'
 import React from 'react'
 
 const mapRecipeToProps = recipe => ({

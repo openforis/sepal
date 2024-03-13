@@ -1,4 +1,4 @@
-import {Buttons} from 'widget/buttons'
+import {Buttons} from '~/widget/buttons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'

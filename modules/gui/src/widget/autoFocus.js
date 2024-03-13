@@ -1,7 +1,7 @@
-import {compose} from 'compose'
-import {connect} from 'connect'
-import {isMobile} from 'widget/userAgent'
-import {withEnableDetector} from 'enabled'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {isMobile} from '~/widget/userAgent'
+import {withEnableDetector} from '~/enabled'
 import PropTypes from 'prop-types'
 import React from 'react'
 

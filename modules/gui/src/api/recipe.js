@@ -1,4 +1,4 @@
-import {deleteJson$, get$, postBinary$, postJson$} from 'http-client'
+import {deleteJson$, get$, postBinary$, postJson$} from '~/http-client'
 
 export default {
     loadAll$: () =>

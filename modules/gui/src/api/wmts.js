@@ -1,4 +1,4 @@
-import {get$} from 'http-client'
+import {get$} from '~/http-client'
 
 const formatTileUrl = ({urlTemplate, x, y, zoom}) => {
     const width = Math.pow(2, zoom)

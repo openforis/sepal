@@ -1,5 +1,5 @@
-import {Mutator, resolve} from 'stateUtils'
-import {dispatch} from 'store'
+import {Mutator, resolve} from '~/stateUtils'
+import {dispatch} from '~/store'
 
 export const actionBuilder = (type, props, prefix) => {
     const operations = []

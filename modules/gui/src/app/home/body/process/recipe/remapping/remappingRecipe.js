@@ -1,10 +1,10 @@
-import {getAllVisualizations} from 'app/home/body/process/recipe/visualizations'
-import {msg} from 'translate'
-import {recipeActionBuilder} from 'app/home/body/process/recipe'
-import {removeImageLayerSource} from 'app/home/body/process/mapLayout/imageLayerSources'
+import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {msg} from '~/translate'
+import {recipeActionBuilder} from '~/app/home/body/process/recipe'
+import {removeImageLayerSource} from '~/app/home/body/process/mapLayout/imageLayerSources'
 import _ from 'lodash'
-import api from 'apiRegistry'
-import guid from 'guid'
+import api from '~/apiRegistry'
+import guid from '~/guid'
 
 export const getDefaultModel = () => ({
 })

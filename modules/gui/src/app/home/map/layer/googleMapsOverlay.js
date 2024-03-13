@@ -1,5 +1,5 @@
 import {MAX_ZOOM} from '../maps'
-import guid from 'guid'
+import guid from '~/guid'
 
 // implements google.maps.MapType
 export class GoogleMapsOverlay {

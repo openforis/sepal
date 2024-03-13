@@ -1,4 +1,4 @@
-import {msg} from 'translate'
+import {msg} from '~/translate'
 import moment from 'moment'
 
 export const isRadarDataSet = dataSetId => !!dataSetById[dataSetId]

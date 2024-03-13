@@ -1,6 +1,6 @@
 import {Subject, distinctUntilChanged, throttleTime} from 'rxjs'
-import {compose} from 'compose'
-import {withSubscriptions} from 'subscription'
+import {compose} from '~/compose'
+import {withSubscriptions} from '~/subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'

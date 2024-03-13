@@ -1,4 +1,4 @@
-import {CrudItem} from 'widget/crudItem'
+import {CrudItem} from '~/widget/crudItem'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './appItem.module.css'

@@ -1,8 +1,8 @@
-import {Keybinding} from 'widget/keybinding'
+import {Keybinding} from '~/widget/keybinding'
 import {Subject, merge, timer} from 'rxjs'
-import {compose} from 'compose'
+import {compose} from '~/compose'
 import {withMapsContext} from './maps'
-import {withSubscriptions} from 'subscription'
+import {withSubscriptions} from '~/subscription'
 import React from 'react'
 import styles from './staticMap.module.css'
 

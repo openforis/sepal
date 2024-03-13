@@ -1,4 +1,4 @@
-import {Slider} from 'widget/slider'
+import {Slider} from '~/widget/slider'
 import PropTypes from 'prop-types'
 import React from 'react'
 

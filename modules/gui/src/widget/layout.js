@@ -1,5 +1,5 @@
-import {compose} from 'compose'
-import {withForwardedRef} from 'ref'
+import {compose} from '~/compose'
+import {withForwardedRef} from '~/ref'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './layout.module.css'

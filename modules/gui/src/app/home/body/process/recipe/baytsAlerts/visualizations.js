@@ -1,7 +1,7 @@
-import {getPreSetVisualizations as getPreSetRadarMosaicVisualizations, visualizationOptions as radarVisualizationOptions} from 'app/home/body/process/recipe/radarMosaic/visualizations'
-import {msg} from 'translate'
-import {normalize} from 'app/home/map/visParams/visParams'
-import {selectFrom} from 'stateUtils'
+import {getPreSetVisualizations as getPreSetRadarMosaicVisualizations, visualizationOptions as radarVisualizationOptions} from '~/app/home/body/process/recipe/radarMosaic/visualizations'
+import {msg} from '~/translate'
+import {normalize} from '~/app/home/map/visParams/visParams'
+import {selectFrom} from '~/stateUtils'
 import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
