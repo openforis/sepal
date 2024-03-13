@@ -16,6 +16,7 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
     private final File workingDir
     private final CsvReader reader
     private final RESTClient aws = new RESTClient('http://sentinel-s2-l1c.s3.amazonaws.com/tiles/')
+    private boolean warnLogged
 
     CsvBackedSentinel2Gateway(File workingDir, CsvReader reader) {
         this.workingDir = workingDir
@@ -57,7 +58,7 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
                 def id = id(data)
                 def awsPath = awsPath(id)
                 def size = data.TOTAL_SIZE ? data.TOTAL_SIZE as long : 0
-                def cloudCover = data.CLOUD_COVER.toDouble()
+                def cloudCover = data.CLOUD_COVER ? data.CLOUD_COVER.toDouble() : 0
                 def coverage = size ? size / (size - size * cloudCover / 100d) : cloudCover
                 return new SceneMetaData(
                         id: id,
@@ -74,7 +75,10 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
                 )
             }
         } catch (Exception e) {
-            LOG.warn("Failed to parse scene data $data: $e.message")
+            if (!warnLogged) {
+                LOG.warn("Failed to parse scene data: $data. Further failures will not be logged", e)
+                warnLogged = true
+            }
         }
         return null
     }
@@ -96,7 +100,7 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
     }
 
     private boolean isSceneIncluded(data) {
-        return true
+        return !!data.SENSING_TIME
     }
 
     private String awsPath(id) {
