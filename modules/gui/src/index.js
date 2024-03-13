@@ -14,8 +14,6 @@ import React from 'react'
 
 initApi()
 
-initApi()
-
 const rootReducer = (state = [], action) => {
     if ('reduce' in action)
         return action.reduce(state)
