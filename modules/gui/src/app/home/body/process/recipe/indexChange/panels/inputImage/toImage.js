@@ -8,7 +8,7 @@ import React from 'react'
 const mapRecipeToProps = recipe => ({
     fromBand: selectFrom(recipe, 'model.fromImage.band')
 })
-const ToImage = ({form, inputs, recipeActionBuilder, fromBand}) =>
+const _ToImage = ({form, inputs, recipeActionBuilder, fromBand}) =>
     <InputImage
         form={form}
         inputs={inputs}
@@ -17,7 +17,7 @@ const ToImage = ({form, inputs, recipeActionBuilder, fromBand}) =>
         fromBand={fromBand}
     />
 
-export default compose(
-    ToImage,
+export const ToImage = compose(
+    _ToImage,
     recipeFormPanel({id: 'toImage', fields, mapRecipeToProps, modelToValues, valuesToModel})
 )

@@ -1,21 +1,22 @@
 import {CrudItem} from 'widget/crudItem'
 import {ListItem} from 'widget/listItem'
 import {NoData} from 'widget/noData'
+import {Notifications} from 'widget/notifications'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {actionBuilder} from 'action-builder'
 import {compose} from 'compose'
-import {connect, select} from 'store'
+import {connect} from 'connect'
 import {msg} from 'translate'
+import {select} from 'store'
 import {stopCurrentUserSession$} from 'user'
-import Notifications from 'widget/notifications'
 import React from 'react'
-import actionBuilder from 'action-builder'
 import format from 'format'
 
 const mapStateToProps = () => ({
     sessions: select('user.currentUserReport.sessions')
 })
 
-class UserSessions extends React.Component {
+class _UserSessions extends React.Component {
     stopSession(session) {
         const {stream, onClose} = this.props
         stream('STOP_USER_SESSION',
@@ -85,9 +86,9 @@ class UserSessions extends React.Component {
     }
 }
 
-UserSessions.propTypes = {}
-
-export default compose(
-    UserSessions,
+export const UserSessions = compose(
+    _UserSessions,
     connect(mapStateToProps)
 )
+
+UserSessions.propTypes = {}

@@ -1,3 +1,6 @@
+import {ImageMask} from './inputImage/imageMask'
+import {ImageToMask} from './inputImage/imageToMask'
+import {PanelWizard} from 'widget/panelWizard'
 import {Retrieve} from './retrieve/retrieve'
 import {RetrieveButton} from '../../retrieveButton'
 import {Toolbar} from 'widget/toolbar/toolbar'
@@ -6,9 +9,6 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import ImageMask from './inputImage/imageMask'
-import ImageToMask from './inputImage/imageToMask'
-import PanelWizard from 'widget/panelWizard'
 import React from 'react'
 import styles from './maskingToolbar.module.css'
 
@@ -17,7 +17,7 @@ const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized')
 })
 
-class MaskingToolbar extends React.Component {
+class _MaskingToolbar extends React.Component {
     render() {
         const {recipeId, initialized} = this.props
         return (
@@ -59,7 +59,7 @@ class MaskingToolbar extends React.Component {
     }
 }
 
-export default compose(
-    MaskingToolbar,
+export const MaskingToolbar = compose(
+    _MaskingToolbar,
     withRecipe(mapRecipeToProps)
 )

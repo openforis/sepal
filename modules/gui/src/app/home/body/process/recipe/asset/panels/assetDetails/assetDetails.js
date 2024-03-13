@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -18,7 +18,7 @@ const fields = {
     metadata: new Form.Field(),
 }
 
-class AssetDetails extends React.Component {
+class _AssetDetails extends React.Component {
     constructor(props) {
         super(props)
         this.onLoading = this.onLoading.bind(this)
@@ -76,9 +76,9 @@ class AssetDetails extends React.Component {
     }
 }
 
-AssetDetails.propTypes = {}
-
-export default compose(
-    AssetDetails,
+export const AssetDetails = compose(
+    _AssetDetails,
     recipeFormPanel({id: 'assetDetails', fields})
 )
+
+AssetDetails.propTypes = {}

@@ -8,7 +8,7 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import api from 'api'
+import api from 'apiRegistry'
 import styles from './aoi.module.css'
 
 const mapRecipeToProps = recipe => ({

@@ -2,6 +2,7 @@ import {AoiLayer} from 'app/home/map/aoiLayer'
 import {LabelsLayer} from 'app/home/map/labelsLayer'
 import {LegendLayer} from './legendLayer'
 import {PaletteLayer} from './paletteLayer'
+import {ReferenceDataLayer} from '../body/process/recipe/classification/referenceDataLayer'
 import {SceneAreasLayer} from 'app/home/body/process/recipe/opticalMosaic/sceneAreasLayer'
 import {ValuesLayer} from './valuesLayer'
 import {compose} from 'compose'
@@ -9,7 +10,6 @@ import {withLayers} from 'app/home/body/process/withLayers'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import ReferenceDataLayer from '../body/process/recipe/classification/referenceDataLayer'
 
 const _FeatureLayers = ({featureLayerSources, featureLayers, map}) =>
     map

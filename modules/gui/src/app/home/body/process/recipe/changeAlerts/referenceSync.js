@@ -1,6 +1,7 @@
+import {Notifications} from 'widget/notifications'
 import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {getAllVisualizations} from '../ccdc/ccdcRecipe'
 import {getAvailableBands} from 'sources'
 import {msg} from 'translate'
@@ -8,10 +9,9 @@ import {recipeAccess} from '../../recipeAccess'
 import {selectFrom} from 'stateUtils'
 import {toAssetReference} from './panels/reference/assetSection'
 import {withRecipe} from '../../recipeContext'
-import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
-import api from 'api'
+import api from 'apiRegistry'
 
 const mapRecipeToProps = (recipe, ownProps) => ({
     ...ownProps,

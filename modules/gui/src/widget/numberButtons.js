@@ -1,5 +1,5 @@
 import {Buttons} from './buttons'
-import {Form} from './form/form'
+import {Form} from './form'
 import {Widget} from './widget'
 import PropTypes from 'prop-types'
 import React from 'react'

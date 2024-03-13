@@ -1,4 +1,5 @@
 import {Aoi} from 'app/home/body/process/recipe/aoi'
+import {BaytsHistoricalToolbar} from './panels/baytsHistoricalToolbar'
 import {Map} from 'app/home/map/map'
 import {compose} from 'compose'
 import {defaultModel} from './baytsHistoricalRecipe'
@@ -8,7 +9,6 @@ import {initializeLayers} from 'app/home/body/process/recipe/recipeImageLayerSou
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import BaytsHistoricalToolbar from './panels/baytsHistoricalToolbar'
 import React from 'react'
 import moment from 'moment'
 

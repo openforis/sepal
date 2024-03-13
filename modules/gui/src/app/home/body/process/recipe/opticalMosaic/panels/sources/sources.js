@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions, dateRange} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
@@ -23,7 +23,7 @@ const mapRecipeToProps = recipe => ({
     dates: selectFrom(recipe, 'model.dates')
 })
 
-class Sources extends React.Component {
+class _Sources extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId} = props
@@ -87,10 +87,6 @@ class Sources extends React.Component {
     }
 }
 
-Sources.propTypes = {
-    recipeId: PropTypes.string
-}
-
 const valuesToModel = ({dataSets, cloudPercentageThreshold}) => {
     return ({
         dataSets: toSources(_.isArray(dataSets) ? dataSets : [dataSets]),
@@ -108,7 +104,11 @@ const modelToValues = ({dataSets, cloudPercentageThreshold}) => {
 
 const additionalPolicy = () => ({sceneSelection: 'allow'})
 
-export default compose(
-    Sources,
+export const Sources = compose(
+    _Sources,
     recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel, additionalPolicy})
 )
+
+Sources.propTypes = {
+    recipeId: PropTypes.string
+}

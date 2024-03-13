@@ -1,17 +1,17 @@
+import {FromImage} from './inputImage/fromImage'
 import {Legend} from './legend/legend'
+import {Options} from './options/options'
+import {PanelWizard} from 'widget/panelWizard'
 import {Retrieve} from './retrieve/retrieve'
 import {RetrieveButton} from '../../retrieveButton'
+import {ToImage} from './inputImage/toImage'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import FromImage from './inputImage/fromImage'
-import Options from './options/options'
-import PanelWizard from 'widget/panelWizard'
 import React from 'react'
-import ToImage from './inputImage/toImage'
 import styles from './classChangeToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -19,7 +19,7 @@ const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized')
 })
 
-class ClassChangeToolbar extends React.Component {
+class _ClassChangeToolbar extends React.Component {
     render() {
         const {recipeId, initialized} = this.props
         return (
@@ -71,7 +71,7 @@ class ClassChangeToolbar extends React.Component {
     }
 }
 
-export default compose(
-    ClassChangeToolbar,
+export const ClassChangeToolbar = compose(
+    _ClassChangeToolbar,
     withRecipe(mapRecipeToProps)
 )

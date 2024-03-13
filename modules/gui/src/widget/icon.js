@@ -1,11 +1,11 @@
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
+import {Tooltip} from 'widget/tooltip'
 import {fab} from '@fortawesome/free-brands-svg-icons'
 import {far} from '@fortawesome/free-regular-svg-icons'
 import {fas} from '@fortawesome/free-solid-svg-icons'
 import {library} from '@fortawesome/fontawesome-svg-core'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Tooltip from 'widget/tooltip'
 import _ from 'lodash'
 import styles from './icon.module.css'
 
@@ -28,7 +28,7 @@ const fontAwesomeCollection = type => {
 
 const OMITTED_ATTRIBUTES = ['icon', 'name', 'type', 'className', 'variant']
 
-export default class Icon extends React.Component {
+export class Icon extends React.Component {
     render() {
         const {tooltip, tooltipPlacement, tooltipClickTrigger, tooltipDelay, tooltipDisabled} = this.props
         return (

@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import React from 'react'
 import _ from 'lodash'
 

@@ -69,11 +69,11 @@ export const normalize = visParams => {
                 : 'continuous'
     }
 
-    if (['rgb', 'hsv'].includes(normalized.type) && _.isNil(normalized.gamma)) {
+    if (['rgb', 'hsv'].includes(normalized.type) && normalized.gamma.length == 0) {
         normalized.gamma = [1]
     }
 
-    if (['rgb', 'hsv', 'continuous'].includes(normalized.type) && _.isNil(normalized.inverted)) {
+    if (['rgb', 'hsv', 'continuous'].includes(normalized.type) && normalized.inverted.length == 0) {
         normalized.inverted = [false]
     }
 
@@ -109,10 +109,10 @@ export const normalize = visParams => {
         })
     }
 
-    if (visParams.gamma) {
+    if (visParams.gamma?.length) {
         normalized.palette = undefined // Cannot have gamma and palette
     }
-    if (normalized.palette) {
+    if (normalized.palette?.length) {
         normalized.gamma = undefined // Cannot have gamma and palette
     }
 

@@ -59,7 +59,7 @@ export const setLanguage = language => {
     return language
 }
 
-export default class TranslationProvider extends React.Component {
+export class TranslationProvider extends React.Component {
     state = {}
 
     shouldComponentUpdate(nextProps, nextState) {

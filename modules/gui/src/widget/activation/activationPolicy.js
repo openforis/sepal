@@ -17,28 +17,6 @@ const isAlwaysAllowed = activatable =>
 
 const getPolicy = activatable => activatable.policy || DEFAULT_POLICY
 
-const isPolicyCompatible = (thisActivatable, otherActivatable) => {
-    const thisPolicy = getPolicy(thisActivatable)
-    const otherPolicy = getPolicy(otherActivatable)
-    if (isAlwaysAllowed(thisActivatable) || isAlwaysAllowed(otherActivatable)) {
-        return true
-    }
-    const thisCompatibleWithOther = isAllowed(thisActivatable.id, otherPolicy)
-    const otherCompatibleWithThis = isAllowed(otherActivatable.id, thisPolicy)
-    const otherShouldDeactivate = isRequiringDeactivation(thisActivatable.id, otherPolicy)
-    const thisShouldDeactivate = isRequiringDeactivation(otherActivatable.id, thisPolicy)
-    return thisCompatibleWithOther
-        && (otherShouldDeactivate || (otherCompatibleWithThis && !thisShouldDeactivate))
-}
-
-const getOtherActiveActivatables = (activatables, activatable) =>
-    Object.values(activatables)
-        .filter(otherActivatable => otherActivatable !== activatable && otherActivatable.active)
-
-const arePoliciesCompatible = (activatables, activatable) =>
-    getOtherActiveActivatables(activatables, activatable)
-        .every(otherActivatable => isPolicyCompatible(activatable, otherActivatable))
-
 const validateBehavior = behavior => {
     if (!VALID_BEHAVIORS.includes(behavior)) {
         throw Error(`Invalid policy behavior: ${behavior}`)
@@ -49,28 +27,45 @@ const validateBehavior = behavior => {
 const behavior = (id, policy) =>
     validateBehavior(policy[id] || policy._)
 
-const isAllowed = (id, policy) =>
+const isCompatibleWith = (id, policy) =>
     behavior(id, policy) !== 'disallow'
 
 const isRequiringDeactivation = (id, policy) =>
     behavior(id, policy) === 'allow-then-deactivate'
 
-const isDeactivatable = (activatable, otherActivatable) =>
-    isActive(activatable) && (!isAlwaysAllowed(activatable) || isAlwaysAllowed(otherActivatable))
+const isPolicyCompatible = (thisActivatable, otherActivatable) => {
+    if ((isAlwaysAllowed(thisActivatable) || isAlwaysAllowed(otherActivatable))) {
+        return true
+    }
+    const thisPolicy = getPolicy(thisActivatable)
+    const otherPolicy = getPolicy(otherActivatable)
+    const thisCompatibleWithOther = isCompatibleWith(thisActivatable.id, otherPolicy)
+    const otherCompatibleWithThis = isCompatibleWith(otherActivatable.id, thisPolicy)
+    const otherShouldDeactivate = isRequiringDeactivation(thisActivatable.id, otherPolicy)
+    const thisShouldDeactivate = isRequiringDeactivation(otherActivatable.id, thisPolicy)
+    return thisCompatibleWithOther && (otherShouldDeactivate || (otherCompatibleWithThis && !thisShouldDeactivate))
+}
 
 export const activationAllowed = (id, activatables = {}) => {
     assertFallbackPolicy(activatables)
-    const activatable = activatables[id]
-    if (isActive(activatable)) {
+    const thisActivatable = activatables[id]
+    if (!thisActivatable || isActive(thisActivatable)) {
         return false
     }
-    if (isAlwaysAllowed(activatable)) {
+    if (isAlwaysAllowed(thisActivatable)) {
         return true
     }
-    return arePoliciesCompatible(activatables, activatable)
+    return Object.values(activatables)
+        .filter(({id: otherActivatableId, active}) => otherActivatableId !== id && active)
+        .every(otherActivatable => isPolicyCompatible(thisActivatable, otherActivatable))
 }
-    
+
+const isDeactivatable = (activatables, id, otherActivatableId) =>
+    isActive(activatables[otherActivatableId])
+        && (!isAlwaysAllowed(activatables[otherActivatableId]) || isAlwaysAllowed(activatables[id]))
+
 export const shouldDeactivate = (id, activatables = {}, nextPolicy) =>
-    Object.values(activatables)
-        .filter(activatable => activatable.id !== id && isDeactivatable(activatable, activatables[id]))
-        .some(activatable => isRequiringDeactivation(activatable.id, nextPolicy))
+    Object.keys(activatables)
+        .filter(activeId => activeId !== id)
+        .filter(activatableId => isDeactivatable(activatables, id, activatableId))
+        .some(activeId => isRequiringDeactivation(activeId, nextPolicy))

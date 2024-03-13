@@ -1,11 +1,12 @@
-import {Form, withForm} from 'widget/form/form'
+import {Form} from 'widget/form'
+import {Label} from 'widget/label'
 import {Layout} from 'widget/layout'
 import {Markdown} from 'widget/markdown'
 import {Panel} from 'widget/panel/panel'
 import {Widget} from 'widget/widget'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import Label from 'widget/label'
+import {withForm} from 'widget/form/form'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './userMessage.module.css'
@@ -31,7 +32,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-class UserMessage extends React.Component {
+class _UserMessage extends React.Component {
     renderPreview() {
         const {inputs: {contents}} = this.props
         return (
@@ -90,13 +91,13 @@ class UserMessage extends React.Component {
     }
 }
 
+export const UserMessage = compose(
+    _UserMessage,
+    withForm({fields, mapStateToProps})
+)
+
 UserMessage.propTypes = {
     message: PropTypes.object.isRequired,
     onApply: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired
 }
-
-export default compose(
-    UserMessage,
-    withForm({fields, mapStateToProps})
-)

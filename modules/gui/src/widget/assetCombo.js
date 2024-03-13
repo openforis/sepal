@@ -1,9 +1,10 @@
 import {Button} from 'widget/button'
 import {Combo} from './combo'
 import {CrudItem} from 'widget/crudItem'
+import {Notifications} from 'widget/notifications'
 import {Subject, debounceTime, first, map, switchMap, takeUntil} from 'rxjs'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {copyToClipboard} from 'clipboard'
 import {escapeRegExp, splitString} from 'string'
 import {isServiceAccount} from 'user'
@@ -12,11 +13,10 @@ import {toVisualizations} from 'app/home/map/imageLayerSource/assetVisualization
 import {v4 as uuid} from 'uuid'
 import {withAssets} from 'widget/assets'
 import {withSubscriptions} from 'subscription'
-import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import api from 'api'
+import api from 'apiRegistry'
 import memoizeOne from 'memoize-one'
 
 // check for allowed characters and minimum path depth (2)
@@ -189,9 +189,7 @@ class _AssetCombo extends React.Component {
     initializeSearch() {
         const {addSubscription, mode} = this.props
         addSubscription(
-            this.filter$.pipe(
-                debounceTime(100)
-            ).subscribe(
+            this.filter$.subscribe(
                 ({filter, filterReset}) => this.setState(({filter: prevFilter}) => ({
                     filter: filterReset ? prevFilter : filter,
                     highlightMatcher: getHighlightMatcher(filter),
@@ -341,10 +339,11 @@ class _AssetCombo extends React.Component {
 
     getAwesomeGeeCommunityDatasetsOptions() {
         const {datasets: {community: {datasets: communityDatasets = [], matchingResults, moreResults} = {}}} = this.state
-        const assets = communityDatasets.map(({title, id, type}) => ({
+        const assets = communityDatasets.map(({title, id, type, url}) => ({
             title,
             id,
             type,
+            url,
             searchableText: [title, id, type].join('|')
         }))
         return {

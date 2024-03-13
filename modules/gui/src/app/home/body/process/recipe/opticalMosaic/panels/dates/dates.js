@@ -1,12 +1,12 @@
 import {Button} from 'widget/button'
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {SeasonSelect} from 'widget/seasonSelect'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import SeasonSelect from 'widget/seasonSelect'
 import moment from 'moment'
 import styles from './dates.module.css'
 
@@ -65,7 +65,7 @@ const fields = {
     yearsAfter: new Form.Field()
 }
 
-class Dates extends React.Component {
+class _Dates extends React.Component {
     constructor(props) {
         super(props)
         const {inputs: {targetYear, targetDate}} = props
@@ -194,10 +194,6 @@ const parseDate = dateString =>
 const parseYear = dateString =>
     moment(dateString, 'YYYY', true)
 
-Dates.propTypes = {
-    recipeId: PropTypes.string
-}
-
 const valuesToModel = values => {
     const DATE_FORMAT = 'YYYY-MM-DD'
     if (values.advanced)
@@ -237,7 +233,11 @@ const modelToValues = (model = {}) => {
 
 const additionalPolicy = () => ({sceneSelection: 'allow'})
 
-export default compose(
-    Dates,
+export const Dates = compose(
+    _Dates,
     recipeFormPanel({id: 'dates', fields, modelToValues, valuesToModel, additionalPolicy})
 )
+
+Dates.propTypes = {
+    recipeId: PropTypes.string
+}

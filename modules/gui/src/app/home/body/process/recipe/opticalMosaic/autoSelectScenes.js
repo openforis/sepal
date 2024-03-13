@@ -1,15 +1,15 @@
+import {MapStatus} from 'widget/mapStatus'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {Subject, takeUntil} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import MapStatus from 'widget/mapStatus'
 import React from 'react'
-import api from 'api'
+import api from 'apiRegistry'
 
 const mapRecipeToProps = recipe => ({recipe})
 
-class AutoSelectScenes extends React.Component {
+class _AutoSelectScenes extends React.Component {
     constructor(props) {
         super(props)
         const {recipe} = props
@@ -63,7 +63,7 @@ class AutoSelectScenes extends React.Component {
     }
 }
 
-export default compose(
-    AutoSelectScenes,
+export const AutoSelectScenes = compose(
+    _AutoSelectScenes,
     withRecipe(mapRecipeToProps)
 )

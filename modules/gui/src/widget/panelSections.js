@@ -1,11 +1,11 @@
-import {Form} from './form/form'
+import {ButtonSelect} from 'widget/buttonSelect'
+import {Form} from './form'
 import {Panel} from 'widget/panel/panel'
-import ButtonSelect from 'widget/buttonSelect'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 
-export default class PanelSections extends React.Component {
+export class PanelSections extends React.Component {
     render() {
         const {icon, step} = this.props
         const section = this.findSection()

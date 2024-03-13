@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -11,6 +11,41 @@ import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
+const fromDateRange = toDate => {
+    const dayBeforeToDate = momentDate(toDate).subtract(1, 'day')
+    return [
+        '1970-01-01',
+        minDate(moment(), dayBeforeToDate)
+    ]
+}
+
+const toDateRange = fromDate => {
+    const dayAfterFromDate = momentDate(fromDate).add(1, 'day')
+    return [
+        maxDate('1970-01-01', dayAfterFromDate),
+        moment()
+    ]
+}
+
+const valuesToModel = values => {
+    const yearlyDateRange = values.type === 'YEAR'
+    return {
+        type: values.type,
+        fromDate: yearlyDateRange ? `${values.year}-01-01` : values.fromDate,
+        toDate: yearlyDateRange ? `${Number(values.year) + 1}-01-01` : values.toDate
+    }
+}
+
+const modelToValues = (model = {}) => {
+    const fromDate = moment(model.fromDate, DATE_FORMAT)
+    return {
+        type: model.type,
+        year: fromDate.year() || new Date().getFullYear(),
+        fromDate: model.fromDate,
+        toDate: model.toDate
+    }
+}
+
 const fields = {
     type: new Form.Field(),
     year: new Form.Field()
@@ -20,7 +55,7 @@ const fields = {
     toDate: new Form.Field()
 }
 
-class Dates extends React.Component {
+class _Dates extends React.Component {
     render() {
         return (
             <RecipeFormPanel
@@ -107,44 +142,9 @@ class Dates extends React.Component {
     }
 }
 
-Dates.propTypes = {}
-
-const fromDateRange = toDate => {
-    const dayBeforeToDate = momentDate(toDate).subtract(1, 'day')
-    return [
-        '1970-01-01',
-        minDate(moment(), dayBeforeToDate)
-    ]
-}
-
-const toDateRange = fromDate => {
-    const dayAfterFromDate = momentDate(fromDate).add(1, 'day')
-    return [
-        maxDate('1970-01-01', dayAfterFromDate),
-        moment()
-    ]
-}
-
-const valuesToModel = values => {
-    const yearlyDateRange = values.type === 'YEAR'
-    return {
-        type: values.type,
-        fromDate: yearlyDateRange ? `${values.year}-01-01` : values.fromDate,
-        toDate: yearlyDateRange ? `${Number(values.year) + 1}-01-01` : values.toDate
-    }
-}
-
-const modelToValues = (model = {}) => {
-    const fromDate = moment(model.fromDate, DATE_FORMAT)
-    return {
-        type: model.type,
-        year: fromDate.year() || new Date().getFullYear(),
-        fromDate: model.fromDate,
-        toDate: model.toDate
-    }
-}
-
-export default compose(
-    Dates,
+export const Dates = compose(
+    _Dates,
     recipeFormPanel({id: 'dates', fields, modelToValues, valuesToModel})
 )
+
+Dates.propTypes = {}

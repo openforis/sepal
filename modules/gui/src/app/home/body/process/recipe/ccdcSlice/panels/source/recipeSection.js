@@ -3,7 +3,7 @@ import {Subject} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-export default class RecipeSection extends React.Component {
+export class RecipeSection extends React.Component {
     constructor(props) {
         super(props)
         this.recipeChanged$ = new Subject()

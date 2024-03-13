@@ -1,6 +1,6 @@
 import {FeatureLayers} from 'app/home/map/featureLayers'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {selectFrom} from 'stateUtils'
 import {withMapsContext} from 'app/home/map/maps'
 import {withRecipe} from 'app/home/body/process/recipeContext'

@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -23,7 +23,7 @@ const mapRecipeToProps = recipe => ({
     dataSetType: selectFrom(recipe, 'model.sources.dataSetType'),
 })
 
-class OpticalPreprocess extends React.Component {
+class _OpticalPreprocess extends React.Component {
     render() {
         return (
             <RecipeFormPanel
@@ -197,8 +197,6 @@ class OpticalPreprocess extends React.Component {
     }
 }
 
-OpticalPreprocess.propTypes = {}
-
 const valuesToModel = values => ({
     corrections: values.corrections,
     histogramMatching: values.histogramMatching,
@@ -219,7 +217,9 @@ const modelToValues = model => {
     })
 }
 
-export default compose(
-    OpticalPreprocess,
+export const OpticalPreprocess = compose(
+    _OpticalPreprocess,
     recipeFormPanel({id: 'options', fields, modelToValues, valuesToModel, mapRecipeToProps})
 )
+
+OpticalPreprocess.propTypes = {}

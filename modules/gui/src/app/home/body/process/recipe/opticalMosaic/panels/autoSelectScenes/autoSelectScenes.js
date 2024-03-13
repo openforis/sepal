@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
@@ -13,7 +13,7 @@ const fields = {
     max: new Form.Field()
 }
 
-class AutoSelectScenes extends React.Component {
+class _AutoSelectScenes extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId} = props
@@ -68,9 +68,9 @@ class AutoSelectScenes extends React.Component {
     }
 }
 
-AutoSelectScenes.propTypes = {}
-
-export default compose(
-    AutoSelectScenes,
+export const AutoSelectScenes = compose(
+    _AutoSelectScenes,
     recipeFormPanel({id: 'autoSelectScenes', fields})
 )
+
+AutoSelectScenes.propTypes = {}

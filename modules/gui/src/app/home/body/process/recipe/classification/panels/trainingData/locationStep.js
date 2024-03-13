@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -11,7 +11,7 @@ const mapRecipeToProps = recipe => ({
     legend: selectFrom(recipe, 'model.legend')
 })
 
-class ReferenceDataStep extends Component {
+class _LocationStep extends Component {
     render() {
         const {inputs: {columns}} = this.props
         const columnOptions = columns.value.map(column => ({value: column, label: column}))
@@ -109,12 +109,12 @@ class ReferenceDataStep extends Component {
     }
 }
 
-ReferenceDataStep.propTypes = {
+export const LocationStep = compose(
+    _LocationStep,
+    withRecipe(mapRecipeToProps)
+)
+
+LocationStep.propTypes = {
     children: PropTypes.any,
     inputs: PropTypes.any
 }
-
-export default compose(
-    ReferenceDataStep,
-    withRecipe(mapRecipeToProps)
-)

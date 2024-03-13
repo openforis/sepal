@@ -2,7 +2,7 @@ import {TileProvider} from './tileProvider'
 import {applyDefaults} from 'utils'
 import {autoRetry} from 'rxjsutils'
 import _ from 'lodash'
-import api from 'api'
+import api from 'apiRegistry'
 
 const DEFAULT_RETRY_CONFIG = {
     maxRetries: 5,

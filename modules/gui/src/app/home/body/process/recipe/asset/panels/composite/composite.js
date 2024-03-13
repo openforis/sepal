@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -12,7 +12,7 @@ const fields = {
         .notEmpty(),
 }
 
-class AssetDetails extends React.Component {
+class _Composite extends React.Component {
     render() {
         return (
             <RecipeFormPanel
@@ -50,9 +50,9 @@ class AssetDetails extends React.Component {
 
 }
 
-AssetDetails.propTypes = {}
-
-export default compose(
-    AssetDetails,
+export const Composite = compose(
+    _Composite,
     recipeFormPanel({id: 'composite', fields})
 )
+
+Composite.propTypes = {}

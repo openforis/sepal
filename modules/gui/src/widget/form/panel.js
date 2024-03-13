@@ -1,11 +1,11 @@
-import {Form} from 'widget/form/form'
+import {FormContainer} from 'widget/form/container'
+import {Icon} from 'widget/icon'
 import {Panel} from 'widget/panel/panel'
 import {PanelButtonContext} from 'widget/toolbar/panelButtonContext'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {isObservable} from 'rxjs'
 import {withPanelWizard} from '../panelWizard'
-import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './panel.module.css'
@@ -155,9 +155,9 @@ class _FormPanel extends React.Component {
                             id={this.props.id}
                             className={className}
                             type={placement || placementFromContext || type}>
-                            <Form onSubmit={this.onSubmit}>
+                            <FormContainer onSubmit={this.onSubmit}>
                                 {children}
-                            </Form>
+                            </FormContainer>
                             {this.renderSpinner()}
                         </Panel>
                     </FormPanelContext.Provider>

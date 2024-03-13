@@ -1,3 +1,4 @@
+import {Notifications} from 'widget/notifications'
 import {
     RecipeActions,
     SceneSelectionType,
@@ -10,9 +11,8 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {withTab} from 'widget/tabs/tabContext'
-import Notifications from 'widget/notifications'
 import React from 'react'
-import api from 'api'
+import api from 'apiRegistry'
 import guid from 'guid'
 
 const mapRecipeToProps = recipe => ({

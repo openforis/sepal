@@ -1,6 +1,8 @@
 import {Buttons} from 'widget/buttons'
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {FastList} from 'widget/fastList'
+import {Icon} from 'widget/icon'
+import {Label} from 'widget/label'
 import {Layout} from 'widget/layout'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
@@ -10,8 +12,6 @@ import {UserStatus} from './userStatus'
 import {msg} from 'translate'
 import {simplifyString, splitString} from 'string'
 import Highlight from 'react-highlighter'
-import Icon from 'widget/icon'
-import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -29,7 +29,7 @@ const getHighlightMatcher = memoizeOne(
         : ''
 )
 
-export default class UserList extends React.Component {
+export class UserList extends React.Component {
     state = {
         sortingOrder: 'updateTime',
         sortingDirection: -1,

@@ -1,4 +1,9 @@
+import {Date} from './date/date'
+import {Options} from './options/options'
+import {PanelWizard} from 'widget/panelWizard'
+import {Options as Preprocess} from 'app/home/body/process/recipe/baytsHistorical/panels/options/options'
 import {RecipeActions} from '../baytsAlertsRecipe'
+import {Reference} from './reference/reference'
 import {Retrieve} from './retrieve/retrieve'
 import {RetrieveButton} from '../../retrieveButton'
 import {Toolbar} from 'widget/toolbar/toolbar'
@@ -7,12 +12,7 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import Date from './date/date'
-import Options from './options/options'
-import PanelWizard from 'widget/panelWizard'
-import Preprocess from 'app/home/body/process/recipe/baytsHistorical/panels/options/options'
 import React from 'react'
-import Reference from './reference/reference'
 import _ from 'lodash'
 import styles from './baytsAlertsToolbar.module.css'
 
@@ -20,7 +20,7 @@ const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized')
 })
 
-class BaytsAlertsToolbar extends React.Component {
+class _BaytsAlertsToolbar extends React.Component {
     constructor(props) {
         super(props)
         this.recipeActions = RecipeActions(props.recipeId)
@@ -75,9 +75,9 @@ class BaytsAlertsToolbar extends React.Component {
     }
 }
 
-BaytsAlertsToolbar.propTypes = {}
-
-export default compose(
-    BaytsAlertsToolbar,
+export const BaytsAlertsToolbar = compose(
+    _BaytsAlertsToolbar,
     withRecipe(mapRecipeToProps)
 )
+
+BaytsAlertsToolbar.propTypes = {}

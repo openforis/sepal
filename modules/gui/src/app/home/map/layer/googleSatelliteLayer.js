@@ -3,7 +3,7 @@ import {GoogleSatelliteTileProvider} from '../tileProvider/googleSatelliteTilePr
 import {TileLayer} from './tileLayer'
 import {of, tap} from 'rxjs'
 
-export default class GoogleSatelliteLayer extends TileLayer {
+export class GoogleSatelliteLayer extends TileLayer {
     constructor({map, layerIndex = 0, minZoom, maxZoom}) {
         super()
         this.map = map

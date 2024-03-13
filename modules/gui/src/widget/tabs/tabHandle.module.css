@@ -37,10 +37,7 @@
 }
 
 .tab.busy::before {
-    /* animation: flip-flop 1000ms ease-in-out infinite alternate; */
     animation: flip-flop 1000ms cubic-bezier(1, 0, 0, 1) infinite alternate;
-    /* animation: pulse 500ms cubic-bezier(1, 0, 0, 1) infinite alternate; */
-    /* animation: pulse 500ms linear infinite alternate; */
 }
 
 @keyframes flip-flop {
@@ -54,14 +51,48 @@
     }
 }
 
-@keyframes pulse {
+/* Alternate implementation with animation transitions.
+Not supported by Firefox yet. */
+
+/* @property --margin {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 0;
+}
+
+.tab::before {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--tab-default-border-color);
+    animation: flip-flop 1000ms cubic-bezier(0.9, 0, 0.1, 1) infinite alternate;
+    transition: --margin 150ms ease-in-out;
+}
+
+.tab.busy::before {
+    --margin: .5;
+    animation-play-state: running;
+}
+
+.tab:not(.busy)::before {
+    --margin: 0;
+    animation-play-state: paused;
+}
+
+@keyframes flip-flop {
     0% {
-        opacity: 1;
+        left: 0%;
+        right: calc(var(--margin) * 100%);
     }
     100% {
-        opacity: .1;
+        left: calc(var(--margin) * 100%);
+        right: 0%;
     }
-}
+} */
 
 .tab.closing {
     animation: remove var(--close-animation-duration) ease-in forwards;

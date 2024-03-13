@@ -1,5 +1,5 @@
 import {CrudItem} from 'widget/crudItem'
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {ImageConstraints, renderConstraintsDescription} from 'widget/imageConstraints/imageConstraints'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
@@ -20,7 +20,7 @@ const mapRecipeToProps = recipe => ({
     firstImageProperties: selectFrom(recipe, 'model.assetDetails.metadata.properties')
 })
 
-class Filter extends React.Component {
+class _Filter extends React.Component {
     state = {
         selectedFiltersEntry: {id: undefined, booleanOperator: undefined, constraints: undefined}
     }
@@ -151,15 +151,15 @@ const FiltersPanel = ({id, properties, constraintsId, constraints, booleanOperat
         applyOn={'properties'}
         onChange={onChange}
     />
-
-Filter.propTypes = {}
 // const additionalPolicy = () => ({_: 'allow'})
 // [HACK] This actually isn't a form, and we don't want to update the model. This prevents the selected images from
 // being overridden.
 const valuesToModel = null
 
-export default compose(
-    Filter,
+export const Filter = compose(
+    _Filter,
     recipeFormPanel({id: 'filter', mapRecipeToProps, valuesToModel}),
     withActivators(['filters'])
 )
+
+Filter.propTypes = {}

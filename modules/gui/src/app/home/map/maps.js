@@ -2,7 +2,7 @@ import {BehaviorSubject, Subject, debounceTime, distinctUntilChanged, filter, fo
 import {Loader} from '@googlemaps/js-api-loader'
 import {SepalMap} from './sepalMap'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {getLogger} from 'log'
 import {mapTag, mapViewTag} from 'tag'
 import {v4 as uuid} from 'uuid'
@@ -11,7 +11,7 @@ import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import api from 'api'
+import api from 'apiRegistry'
 
 const log = getLogger('maps')
 

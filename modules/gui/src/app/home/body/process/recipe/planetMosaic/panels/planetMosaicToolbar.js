@@ -1,17 +1,17 @@
+import {Aoi} from 'app/home/body/process/recipe/mosaic/panels/aoi/aoi'
+import {Dates} from './dates/dates'
+import {Options} from './options/options'
+import {PanelWizard} from 'widget/panelWizard'
 import {Retrieve} from './retrieve/retrieve'
 import {RetrieveButton} from '../../retrieveButton'
+import {Sources} from './sources/sources'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import Aoi from 'app/home/body/process/recipe/mosaic/panels/aoi/aoi'
-import Dates from './dates/dates'
-import Options from './options/options'
-import PanelWizard from 'widget/panelWizard'
 import React from 'react'
-import Sources from './sources/sources'
 import styles from './planetMosaicToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -19,7 +19,7 @@ const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized')
 })
 
-class PlanetMosaicToolbar extends React.Component {
+class _PlanetMosaicToolbar extends React.Component {
     render() {
         const {recipeId, initialized} = this.props
         return (
@@ -72,7 +72,7 @@ class PlanetMosaicToolbar extends React.Component {
     }
 }
 
-export default compose(
-    PlanetMosaicToolbar,
+export const PlanetMosaicToolbar = compose(
+    _PlanetMosaicToolbar,
     withRecipe(mapRecipeToProps)
 )

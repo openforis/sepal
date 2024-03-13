@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -54,7 +54,7 @@ const constraints = {
         )
 }
 
-class Options extends React.Component {
+class _Options extends React.Component {
     constructor(props) {
         super(props)
         this.onPreviousAlertsAssetLoaded = this.onPreviousAlertsAssetLoaded.bind(this)
@@ -347,9 +347,9 @@ const toFloat = input => {
     return _.isFinite(parsed) ? parsed : null
 }
 
-Options.propTypes = {}
-
-export default compose(
-    Options,
+export const Options = compose(
+    _Options,
     recipeFormPanel({id: 'baytsAlertsOptions', fields, constraints, modelToValues, valuesToModel})
 )
+
+Options.propTypes = {}

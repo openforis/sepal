@@ -1,28 +1,16 @@
-import {AssetImageLayer} from './asset/assetImageLayer'
-import {BaytsAlertsImageLayer} from './baytsAlerts/baytsAlertsImageLayer'
-import {BaytsHistoricalImageLayer} from './baytsHistorical/baytsHistoricalImageLayer'
-import {CCDCSliceImageLayer} from './ccdcSlice/ccdcSliceImageLayer'
-import {ChangeAlertsImageLayer} from './changeAlerts/changeAlertsImageLayer'
-import {ClassChangeImageLayer} from './classChange/classChangeImageLayer'
-import {ClassificationImageLayer} from './classification/classificationImageLayer'
 import {CursorValueContext} from 'app/home/map/cursorValue'
-import {IndexChangeImageLayer} from './indexChange/indexChangeImageLayer'
-import {MaskingImageLayer} from './masking/maskingImageLayer'
-import {OpticalMosaicImageLayer} from './opticalMosaic/opticalMosaicImageLayer'
-import {PhenologyImageLayer} from './phenology/phenologyImageLayer'
-import {PlanetMosaicImageLayer} from './planetMosaic/planetMosaicImageLayer'
-import {RadarMosaicImageLayer} from './radarMosaic/radarMosaicImageLayer'
-import {RemappingImageLayer} from './remapping/remappingImageLayer'
+import {EarthEngineImageLayer} from 'app/home/map/layer/earthEngineImageLayer'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {connect, select} from 'store'
+import {connect} from 'connect'
 import {getAllVisualizations, getUserDefinedVisualizations} from './visualizations'
-import {getRecipeType} from '../recipeTypes'
+import {getRecipeImageLayer} from '../recipeImageLayerRegistry'
+import {getRecipeType} from '../recipeTypeRegistry'
+import {select} from 'store'
 import {selectFrom} from 'stateUtils'
 import {withMapArea} from 'app/home/map/mapAreaContext'
 import {withSubscriptions} from 'subscription'
 import {withTab} from 'widget/tabs/tabContext'
-import EarthEngineImageLayer from 'app/home/map/layer/earthEngineImageLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -60,66 +48,7 @@ class _RecipeImageLayer extends React.Component {
             dragging$,
             cursor$
         }
-        switch (recipe.type) {
-        case 'MOSAIC':
-            return (
-                <OpticalMosaicImageLayer {...props}/>
-            )
-        case 'RADAR_MOSAIC':
-            return (
-                <RadarMosaicImageLayer {...props}/>
-            )
-        case 'PLANET_MOSAIC':
-            return (
-                <PlanetMosaicImageLayer {...props}/>
-            )
-        case 'CLASSIFICATION':
-            return (
-                <ClassificationImageLayer {...props}/>
-            )
-        case 'CLASS_CHANGE':
-            return (
-                <ClassChangeImageLayer {...props}/>
-            )
-        case 'INDEX_CHANGE':
-            return (
-                <IndexChangeImageLayer {...props}/>
-            )
-        case 'REMAPPING':
-            return (
-                <RemappingImageLayer {...props}/>
-            )
-        case 'CHANGE_ALERTS':
-            return (
-                <ChangeAlertsImageLayer {...props}/>
-            )
-        case 'CCDC_SLICE':
-            return (
-                <CCDCSliceImageLayer {...props}/>
-            )
-        case 'PHENOLOGY':
-            return (
-                <PhenologyImageLayer {...props}/>
-            )
-        case 'MASKING':
-            return (
-                <MaskingImageLayer {...props}/>
-            )
-        case 'BAYTS_HISTORICAL':
-            return (
-                <BaytsHistoricalImageLayer {...props}/>
-            )
-        case 'BAYTS_ALERTS':
-            return (
-                <BaytsAlertsImageLayer {...props}/>
-            )
-        case 'ASSET_MOSAIC':
-            return (
-                <AssetImageLayer {...props}/>
-            )
-        default:
-            return null
-        }
+        return React.createElement(getRecipeImageLayer(recipe.type), props)
     }
 
     componentDidMount() {

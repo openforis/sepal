@@ -1,24 +1,24 @@
 import {Button} from 'widget/button'
+import {Credentials} from './credentials'
+import {Feature} from './feature'
+import {Intro} from './intro'
+import {LanguageSelector} from 'app/landing/languageSelector'
+import {Slideshow} from './slideshow/slideshow'
+import {Tagline} from './tagline'
+import {Title} from './title'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {location} from 'route'
 import {msg} from 'translate'
-import Credentials from './credentials'
-import Feature from './feature'
-import Intro from './intro'
-import LanguageSelector from 'app/landing/languageSelector'
 import PropTypes from 'prop-types'
 import React from 'react'
-import SlideShow from './slideshow/slideshow'
-import Tagline from './tagline'
-import Title from './title'
 import styles from './landing.module.css'
 
 const mapStateToProps = () => ({
     location: location()
 })
 
-class Landing extends React.Component {
+class _Landing extends React.Component {
     state = {
         launched: false
     }
@@ -26,7 +26,7 @@ class Landing extends React.Component {
     render() {
         return (
             <div className={styles.container}>
-                <SlideShow/>
+                <Slideshow/>
                 {this.renderContent()}
             </div>
         )
@@ -80,8 +80,8 @@ class Landing extends React.Component {
     }
 }
 
-export default compose(
-    Landing,
+export const Landing = compose(
+    _Landing,
     connect(mapStateToProps)
 )
 

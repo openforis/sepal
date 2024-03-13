@@ -1,18 +1,20 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {CenteredProgress} from 'widget/progress'
-import {Form, withForm} from 'widget/form/form'
+import {Form} from 'widget/form'
+import {FormContainer} from 'widget/form/container'
 import {Layout} from 'widget/layout'
+import {Notifications} from 'widget/notifications'
+import {actionBuilder} from 'action-builder'
 import {compose} from 'compose'
 import {credentialsPosted, resetPassword$, tokenUser, validateToken$} from 'user'
 import {history, query} from 'route'
 import {msg} from 'translate'
 import {switchMap} from 'rxjs'
+import {withForm} from 'widget/form/form'
 import {withRecaptcha} from 'widget/recaptcha'
-import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
 import styles from './setPassword.module.css'
 
 const fields = {
@@ -113,7 +115,7 @@ class _SetPassword extends React.Component {
         const {form, inputs: {username, password, password2}, stream} = this.props
         const resettingPassword = stream('RESET_PASSWORD').active
         return (
-            <Form
+            <FormContainer
                 className={styles.form}
                 onSubmit={this.submit}>
                 <Layout spacing='loose'>
@@ -151,7 +153,7 @@ class _SetPassword extends React.Component {
                         />
                     </ButtonGroup>
                 </Layout>
-            </Form>
+            </FormContainer>
         )
     }
 }

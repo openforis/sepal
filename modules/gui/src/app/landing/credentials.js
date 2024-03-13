@@ -8,7 +8,7 @@ import {isPathInLocation} from 'route'
 import React from 'react'
 import styles from './credentials.module.css'
 
-export default class Credentials extends React.Component {
+export class Credentials extends React.Component {
     state = {
         mode: 'login'
     }

@@ -1,4 +1,5 @@
 import {Aoi} from '../aoi'
+import {ChangeAlertsToolbar} from './panels/changeAlertsToolbar'
 import {Map} from 'app/home/map/map'
 import {RecipeActions, defaultModel} from './changeAlertsRecipe'
 import {ReferenceSync} from './referenceSync'
@@ -9,7 +10,6 @@ import {initializeLayers} from '../recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import ChangeAlertsToolbar from './panels/changeAlertsToolbar'
 import React from 'react'
 import moment from 'moment'
 

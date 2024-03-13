@@ -3,7 +3,7 @@ import {defaultModel as defaultRadarModel} from 'app/home/body/process/recipe/ra
 import {msg} from 'translate'
 import {publishEvent} from 'eventPublisher'
 import {recipeActionBuilder} from 'app/home/body/process/recipe'
-import api from 'api'
+import api from 'apiRegistry'
 import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'

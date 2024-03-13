@@ -9,7 +9,7 @@ import styles from './tooltip.module.css'
 
 const CLOSE_DELAY_MS = 250
 
-export default class Tooltip extends React.Component {
+export class Tooltip extends React.Component {
     constructor(props) {
         super(props)
         this.close = this.close.bind(this)

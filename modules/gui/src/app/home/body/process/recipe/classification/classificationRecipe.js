@@ -4,7 +4,7 @@ import {publishEvent} from 'eventPublisher'
 import {recipeActionBuilder} from 'app/home/body/process/recipe'
 import {removeImageLayerSource} from 'app/home/body/process/mapLayout/imageLayerSources'
 import _ from 'lodash'
-import api from 'api'
+import api from 'apiRegistry'
 import guid from 'guid'
 
 export const getDefaultModel = () => ({

@@ -2,14 +2,19 @@ import {App} from 'app/app'
 import {ErrorBoundary} from './errorBoundary'
 import {Provider} from 'react-redux'
 import {Router} from 'react-router-dom'
+import {TranslationProvider} from 'translate'
 import {applyMiddleware, legacy_createStore as createStore} from 'redux'
 import {createBrowserHistory} from 'history'
 import {createRoot} from 'react-dom/client'
+import {initApi} from 'api'
 import {initStore} from 'store'
 import {isDevelopment} from 'environment'
 import {syncHistoryAndStore} from 'route'
 import React from 'react'
-import TranslationProvider from 'translate'
+
+initApi()
+
+initApi()
 
 const rootReducer = (state = [], action) => {
     if ('reduce' in action)

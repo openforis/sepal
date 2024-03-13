@@ -1,4 +1,5 @@
 import {Aoi} from '../aoi'
+import {CcdcSliceToolbar} from './panels/ccdcSliceToolbar'
 import {Map} from 'app/home/map/map'
 import {RecipeActions, defaultModel} from './ccdcSliceRecipe'
 import {SourceSync} from './sourceSync'
@@ -7,7 +8,6 @@ import {initializeLayers} from '../recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import CCDCSliceToolbar from './panels/ccdcSliceToolbar'
 import React from 'react'
 import moment from 'moment'
 
@@ -28,7 +28,7 @@ class _CcdcSlice extends React.Component {
         const {source} = this.props
         return (
             <Map>
-                <CCDCSliceToolbar/>
+                <CcdcSliceToolbar/>
                 <Aoi value={source.type && source}/>
                 <SourceSync/>
             </Map>

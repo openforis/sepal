@@ -9,7 +9,7 @@ import React, {Component} from 'react'
 import guid from 'guid'
 import styles from './inputImage.module.css'
 
-class ImageForm extends Component {
+class _ImageForm extends Component {
     state = {entries: [], loadedRecipe: null}
 
     render() {
@@ -97,13 +97,13 @@ class ImageForm extends Component {
     }
 }
 
+export const ImageForm = compose(
+    _ImageForm,
+    withScrollable()
+)
+
 ImageForm.propTypes = {
     children: PropTypes.any,
     inputComponent: PropTypes.any,
     inputs: PropTypes.any
 }
-
-export default compose(
-    ImageForm,
-    withScrollable()
-)

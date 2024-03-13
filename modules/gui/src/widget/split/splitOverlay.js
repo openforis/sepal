@@ -1,5 +1,5 @@
+import {Portal} from 'widget/portal'
 import {SplitContext} from './splitContext'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'

@@ -16,7 +16,7 @@ const mapRecipeToProps = recipe => {
     }
 }
 
-class SceneDeselection extends React.Component {
+class _SceneDeselection extends React.Component {
     constructor(props) {
         super(props)
         this.recipeActions = RecipeActions(props.recipeId)
@@ -58,7 +58,7 @@ class SceneDeselection extends React.Component {
     }
 }
 
-export default compose(
-    SceneDeselection,
+export const SceneDeselection = compose(
+    _SceneDeselection,
     withRecipe(mapRecipeToProps)
 )

@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -28,8 +28,7 @@ const constraints = {
         }, 'process.ccdc.panel.dates.form.startDate.beforeEnd')
 }
 
-class Dates extends React.Component {
-
+class _Dates extends React.Component {
     render() {
         return (
             <RecipeFormPanel
@@ -77,9 +76,9 @@ class Dates extends React.Component {
     }
 }
 
-Dates.propTypes = {}
-
-export default compose(
-    Dates,
+export const Dates = compose(
+    _Dates,
     recipeFormPanel({id: 'dates', fields, constraints})
 )
+
+Dates.propTypes = {}

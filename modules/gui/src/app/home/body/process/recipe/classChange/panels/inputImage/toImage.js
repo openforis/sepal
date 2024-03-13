@@ -4,7 +4,7 @@ import {msg} from 'translate'
 import {recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import React from 'react'
 
-const ToImage = ({form, inputs, recipeActionBuilder}) =>
+const _ToImage = ({form, inputs, recipeActionBuilder}) =>
     <InputImage
         form={form}
         inputs={inputs}
@@ -12,7 +12,7 @@ const ToImage = ({form, inputs, recipeActionBuilder}) =>
         recipeActionBuilder={recipeActionBuilder}
     />
 
-export default compose(
-    ToImage,
+export const ToImage = compose(
+    _ToImage,
     recipeFormPanel({id: 'toImage', fields, modelToValues, valuesToModel})
 )

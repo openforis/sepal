@@ -1,4 +1,4 @@
-import Icon from './icon'
+import {Icon} from './icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './message.module.css'

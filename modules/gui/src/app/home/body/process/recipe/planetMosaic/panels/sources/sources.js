@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {NICFI_ASSETS} from 'app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
 import {Panel} from 'widget/panel/panel'
@@ -26,7 +26,7 @@ const mapRecipeToProps = recipe => ({
     dates: selectFrom(recipe, 'model.dates')
 })
 
-class Sources extends React.Component {
+class _Sources extends React.Component {
     render() {
         return (
             <RecipeFormPanel
@@ -108,11 +108,11 @@ const modelToValues = model => {
     }
 }
 
+export const Sources = compose(
+    _Sources,
+    recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel})
+)
+
 Sources.propTypes = {
     recipeId: PropTypes.string
 }
-
-export default compose(
-    Sources,
-    recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel})
-)

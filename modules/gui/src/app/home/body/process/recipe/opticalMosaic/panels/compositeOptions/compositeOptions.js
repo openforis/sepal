@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -28,7 +28,7 @@ const mapRecipeToProps = recipe => ({
     sources: selectFrom(recipe, 'model.sources')
 })
 
-class CompositeOptions extends React.Component {
+class _CompositeOptions extends React.Component {
     render() {
         return (
             <RecipeFormPanel
@@ -227,12 +227,6 @@ class CompositeOptions extends React.Component {
     }
 }
 
-CompositeOptions.propTypes = {
-    disabled: PropTypes.any,
-    recipeId: PropTypes.string,
-    sources: PropTypes.any
-}
-
 const PercentileField = ({input, disabled = false}) => {
     return (
         <Form.Slider
@@ -300,7 +294,13 @@ const panelOptions = {
     additionalPolicy
 }
 
-export default compose(
-    CompositeOptions,
+export const CompositeOptions = compose(
+    _CompositeOptions,
     recipeFormPanel(panelOptions)
 )
+
+CompositeOptions.propTypes = {
+    disabled: PropTypes.any,
+    recipeId: PropTypes.string,
+    sources: PropTypes.any
+}

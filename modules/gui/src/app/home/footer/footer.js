@@ -4,15 +4,15 @@ import {Layout} from 'widget/layout'
 import {UsageButton} from '../user/usage'
 import {UserDetailsButton} from '../user/userDetails'
 import {UserMessagesButton} from '../user/userMessages'
-import {compose} from '../../../compose'
-import {connect} from '../../../store'
+import {compose} from 'compose'
+import {connect} from 'connect'
 import {copyToClipboard} from 'clipboard'
 import {logout$} from 'user'
 import {msg} from 'translate'
 import React from 'react'
 import styles from './footer.module.css'
 
-const Footer = ({className}) => {
+export const Footer = ({className}) => {
     return (
         <div className={className}>
             <div className={styles.footer}>
@@ -130,4 +130,3 @@ const Copyright = () => {
     return <span className={styles.copyright}>&copy;{thisYear}</span>
 }
 
-export default Footer

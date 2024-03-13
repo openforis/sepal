@@ -1,20 +1,21 @@
+import {Apps} from './apps/apps'
 import {Browse} from './browse/browse'
 import {CenteredProgress} from 'widget/progress'
 import {Maps} from 'app/home/map/maps'
+import {Notifications} from 'widget/notifications'
+import {Process} from './process/process'
 import {Section} from './section'
 import {StaticMap} from '../map/staticMap'
+import {Tasks} from './tasks/tasks'
+import {Terminal} from './terminal/terminal'
 import {Users} from './users/users'
 import {compose} from 'compose'
-import {connect, select} from 'store'
+import {connect} from 'connect'
 import {history, location} from 'route'
 import {msg} from 'translate'
-import Apps from './apps/apps'
-import Notifications from 'widget/notifications'
-import Process from './process/process'
+import {select} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Tasks from './tasks/tasks'
-import Terminal from './terminal/terminal'
 import styles from './body.module.css'
 
 const mapStateToProps = () => ({
@@ -22,7 +23,7 @@ const mapStateToProps = () => ({
     budgetExceeded: select('user.budgetExceeded'),
 })
 
-class Body extends React.Component {
+class _Body extends React.Component {
     componentDidUpdate() {
         const {budgetExceeded, location} = this.props
         if (this.props.location.pathname === '/' || budgetExceeded && !['/process', '/browse', '/users'].includes(location.pathname)) {
@@ -78,12 +79,12 @@ class Body extends React.Component {
     }
 }
 
+export const Body = compose(
+    _Body,
+    connect(mapStateToProps)
+)
+
 Body.propTypes = {
     className: PropTypes.string,
     location: PropTypes.object
 }
-
-export default compose(
-    Body,
-    connect(mapStateToProps)
-)

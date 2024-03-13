@@ -1,6 +1,6 @@
 import React, {forwardRef} from 'react'
 
-const withForwardedRef = () =>
+export const withForwardedRef = () =>
     Component => {
         const handle = (props, ref) =>
             <Component {...props} forwardedRef={ref}/>
@@ -10,5 +10,3 @@ const withForwardedRef = () =>
 
         return forwardRef(handle)
     }
-
-export default withForwardedRef

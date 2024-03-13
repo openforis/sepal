@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -34,7 +34,7 @@ const mapRecipeToProps = recipe => ({
     segmentsEndDate: selectFrom(recipe, 'model.reference.endDate')
 })
 
-class Date extends React.Component {
+class _Date extends React.Component {
     render() {
         return (
             <RecipeFormPanel
@@ -155,9 +155,9 @@ class Date extends React.Component {
     }
 }
 
-Date.propTypes = {}
-
-export default compose(
-    Date,
+export const Date = compose(
+    _Date,
     recipeFormPanel({id: 'date', fields, mapRecipeToProps})
 )
+
+Date.propTypes = {}

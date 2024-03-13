@@ -4,7 +4,7 @@ import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-export default class RemoveButton extends React.Component {
+export class RemoveButton extends React.Component {
     render() {
         const {message} = this.props
         return message

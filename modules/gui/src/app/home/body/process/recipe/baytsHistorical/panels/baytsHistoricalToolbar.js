@@ -1,3 +1,7 @@
+import {Aoi} from 'app/home/body/process/recipe/mosaic/panels/aoi/aoi'
+import {Dates} from './dates/dates'
+import {Options} from './options/options'
+import {PanelWizard} from 'widget/panelWizard'
 import {Retrieve} from './retrieve/retrieve'
 import {RetrieveButton} from '../../retrieveButton'
 import {Toolbar} from 'widget/toolbar/toolbar'
@@ -6,10 +10,6 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from '../../../recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import Aoi from 'app/home/body/process/recipe/mosaic/panels/aoi/aoi'
-import Dates from './dates/dates'
-import Options from './options/options'
-import PanelWizard from 'widget/panelWizard'
 import React from 'react'
 import styles from './baytsHistoricalToolbar.module.css'
 
@@ -18,7 +18,7 @@ const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized')
 })
 
-class BaytsHistoricalToolbar extends React.Component {
+class _BaytsHistoricalToolbar extends React.Component {
     render() {
         const {recipeId, initialized} = this.props
         return (
@@ -65,7 +65,7 @@ class BaytsHistoricalToolbar extends React.Component {
     }
 }
 
-export default compose(
-    BaytsHistoricalToolbar,
+export const BaytsHistoricalToolbar = compose(
+    _BaytsHistoricalToolbar,
     withRecipe(mapRecipeToProps)
 )

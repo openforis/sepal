@@ -1,37 +1,32 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
+import {ButtonPopup} from 'widget/buttonPopup'
 import {CenteredProgress} from 'widget/progress'
 import {CheckButton} from 'widget/checkButton'
 import {Combo} from 'widget/combo'
+import {Confirm} from 'widget/confirm'
 import {CreateRecipe} from '../createRecipe'
 import {CrudItem} from 'widget/crudItem'
 import {FastList} from 'widget/fastList'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
+import {NO_PROJECT_OPTION, NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeListConstants'
 import {ProjectsButton} from './projectsButton'
 import {RecipeListConfirm} from './recipeListConfirm'
 import {SearchBox} from 'widget/searchBox'
 import {SelectProject} from './selectProject'
 import {SortButtons} from 'widget/sortButtons'
+import {actionBuilder} from 'action-builder'
 import {compose} from 'compose'
-import {connect, select} from 'store'
-import {getRecipeType, listRecipeTypes} from '../recipeTypes'
+import {connect} from 'connect'
+import {getRecipeType, listRecipeTypes} from '../recipeTypeRegistry'
 import {msg} from 'translate'
+import {select} from 'store'
 import {simplifyString, splitString} from 'string'
-import ButtonPopup from 'widget/buttonPopup'
-import Confirm from 'widget/confirm'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import actionBuilder from 'action-builder'
 import memoizeOne from 'memoize-one'
-
-export const PROJECT_RECIPE_SEPARATOR = ' / '
-export const NO_PROJECT_SYMBOL = '<no project>'
-export const NO_PROJECT_OPTION = () => ({
-    value: NO_PROJECT_SYMBOL,
-    label: msg('process.project.noProjectOption')
-})
 
 const mapStateToProps = () => ({
     projects: select('process.projects'),

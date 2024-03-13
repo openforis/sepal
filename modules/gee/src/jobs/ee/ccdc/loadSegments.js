@@ -33,7 +33,7 @@ const worker$ = ({recipe, latLng, bands}) => {
             id: recipe.id
         }).getImage$()
 
-    const recipeRef$ = () => imageFactory(recipe, {selection: bands}).getRecipe$()
+    const recipeRef$ = () => imageFactory(recipe, {selection: recipe.targetType === 'ASSET_MOSAIC' ? [] : bands}).getRecipe$()
 
     const recipeSegments$ = () =>
         of(ccdc(

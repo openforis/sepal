@@ -1,14 +1,14 @@
 import {AssetBoundsSection} from './assetBoundsSection'
 import {CountrySection} from './countrySection'
 import {EETableSection} from './eeTableSection'
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
+import {PanelSections} from 'widget/panelSections'
 import {PolygonSection} from './polygonSection'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {SectionSelection} from './sectionSelection'
 import {compose} from 'compose'
 import {countryEETable} from 'app/home/map/aoiLayer'
 import {msg} from 'translate'
-import PanelSections from 'widget/panelSections'
 import React from 'react'
 import styles from './aoi.module.css'
 
@@ -42,7 +42,7 @@ const fields = {
         .notBlank('process.mosaic.panel.areaOfInterest.form.country.required')
 }
 
-class Aoi extends React.Component {
+class _Aoi extends React.Component {
     constructor(props) {
         super(props)
         this.state = {canceled: false}
@@ -160,7 +160,7 @@ const modelToValues = (model = {}) => {
         return {}
 }
 
-export default compose(
-    Aoi,
+export const Aoi = compose(
+    _Aoi,
     recipeFormPanel({id: 'aoi', fields, modelToValues, valuesToModel})
 )

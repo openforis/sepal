@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -21,7 +21,7 @@ const fields = {
     targetDate: new Form.Field()
 }
 
-class Dates extends React.Component {
+class _Dates extends React.Component {
     renderYearlyTimeScan() {
         const {inputs: {year}} = this.props
         return (
@@ -115,8 +115,6 @@ class Dates extends React.Component {
     }
 }
 
-Dates.propTypes = {}
-
 const valuesToModel = values => {
     const pointInTimeMosaic = values.type === 'POINT_IN_TIME_MOSAIC'
     const yearlyTimeScan = values.type === 'YEARLY_TIME_SCAN'
@@ -178,7 +176,9 @@ const toDateRange = fromDate => {
     ]
 }
 
-export default compose(
-    Dates,
+export const Dates = compose(
+    _Dates,
     recipeFormPanel({id: 'dates', fields, modelToValues, valuesToModel})
 )
+
+Dates.propTypes = {}

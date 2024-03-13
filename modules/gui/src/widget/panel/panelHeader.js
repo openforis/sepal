@@ -1,4 +1,4 @@
-import Icon from 'widget/icon'
+import {Icon} from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './panelHeader.module.css'

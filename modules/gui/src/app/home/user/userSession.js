@@ -1,13 +1,14 @@
-import {Form, withForm} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
+import {Notifications} from 'widget/notifications'
 import {Panel} from 'widget/panel/panel'
+import {actionBuilder} from 'action-builder'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {select} from 'store'
 import {updateCurrentUserSession$} from 'user'
-import Notifications from 'widget/notifications'
+import {withForm} from 'widget/form/form'
 import React from 'react'
-import actionBuilder from 'action-builder'
 import format from 'format'
 import moment from 'moment'
 import styles from './userSession.module.css'
@@ -29,7 +30,7 @@ const mapStateToProps = () => {
     }
 }
 
-class UserSession extends React.Component {
+class _UserSession extends React.Component {
     suspendSession(session) {
         const {stream} = this.props
         stream('SUSPEND_USER_SESSION',
@@ -92,9 +93,9 @@ class UserSession extends React.Component {
     }
 }
 
-UserSession.propTypes = {}
-
-export default compose(
-    UserSession,
+export const UserSession = compose(
+    _UserSession,
     withForm({fields, mapStateToProps})
 )
+
+UserSession.propTypes = {}

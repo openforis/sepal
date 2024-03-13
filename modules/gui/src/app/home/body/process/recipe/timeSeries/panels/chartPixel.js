@@ -1,6 +1,8 @@
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
-import {Form, withForm} from 'widget/form/form'
+import {Form} from 'widget/form'
+import {Icon} from 'widget/icon'
 import {NoData} from '../../../../../../../widget/noData'
+import {Notifications} from 'widget/notifications'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions, loadObservations$} from '../timeSeriesRecipe'
 import {Subject, takeUntil} from 'rxjs'
@@ -8,9 +10,8 @@ import {compose} from 'compose'
 import {flatBandOptions, getAvailableBands, toDataSetIds} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {withForm} from 'widget/form/form'
 import {withRecipe} from '../../../recipeContext'
-import Icon from 'widget/icon'
-import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import moment from 'moment'
@@ -33,7 +34,7 @@ const mapRecipeToProps = recipe => ({
     recipe
 })
 
-class ChartPixel extends React.Component {
+class _ChartPixel extends React.Component {
     constructor(props) {
         super(props)
         this.cancel$ = new Subject()
@@ -64,10 +65,10 @@ class ChartPixel extends React.Component {
                 <Panel.Content className={loading ? styles.loading : null}
                     scrollable={false}
                     noVerticalPadding>
-                    <Form className={styles.form}>
+                    <form className={styles.form}>
                         {this.renderBandOptions()}
                         {this.renderChart()}
-                    </Form>
+                    </form>
                 </Panel.Content>
 
                 <Panel.Buttons>
@@ -174,10 +175,10 @@ class ChartPixel extends React.Component {
     }
 }
 
-ChartPixel.propTypes = {}
-
-export default compose(
-    ChartPixel,
+export const ChartPixel = compose(
+    _ChartPixel,
     withRecipe(mapRecipeToProps),
     withForm({fields})
 )
+
+ChartPixel.propTypes = {}

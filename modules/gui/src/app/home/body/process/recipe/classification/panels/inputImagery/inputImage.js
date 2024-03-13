@@ -1,18 +1,18 @@
+import {AssetSection} from './assetSection'
 import {BandSetSpec} from './bandSetSpec'
-import {Form} from 'widget/form/form'
+import {ButtonSelect} from 'widget/buttonSelect'
+import {Form} from 'widget/form'
+import {ImageForm} from './imageForm'
+import {PanelSections} from 'widget/panelSections'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {RecipeSection} from './recipeSection'
 import {SectionSelection} from './sectionSelection'
 import {compose} from 'compose'
 import {getAvailableIndexes} from './opticalIndexes'
 import {getProfileBandSetSpecs, isProfileDisabled} from './profiles'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import AssetSection from './assetSection'
-import ButtonSelect from 'widget/buttonSelect'
-import ImageForm from './imageForm'
-import PanelSections from 'widget/panelSections'
 import React from 'react'
-import RecipeSection from './recipeSection'
 import guid from 'guid'
 import styles from './inputImage.module.css'
 
@@ -40,7 +40,7 @@ const mapRecipeToProps = recipe => ({
     recipeId: recipe.id
 })
 
-class InputImage extends React.Component {
+class _InputImage extends React.Component {
     constructor(props) {
         super(props)
         this.updateImageLayerSources = this.updateImageLayerSources.bind(this)
@@ -287,8 +287,8 @@ const panelOptions = {
     policy
 }
 
-export default compose(
-    InputImage,
+export const InputImage = compose(
+    _InputImage,
     recipeFormPanel(panelOptions)
 )
 

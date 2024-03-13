@@ -1,15 +1,15 @@
 import {Aoi} from '../aoi'
 import {Map} from '../../../../map/map'
+import {Notifications} from 'widget/notifications'
 import {RecipeActions, defaultModel} from './timeSeriesRecipe'
+import {TimeSeriesToolbar} from './panels/timeSeriesToolbar'
 import {compose} from 'compose'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {recipeAccess} from '../../recipeAccess'
 import {selectFrom} from 'stateUtils'
-import Notifications from 'widget/notifications'
 import React from 'react'
-import TimeSeriesToolbar from './panels/timeSeriesToolbar'
 import moment from 'moment'
 
 const mapRecipeToProps = recipe => ({

@@ -1,8 +1,11 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
+import {ButtonPopup} from 'widget/buttonPopup'
 import {Combo} from 'widget/combo'
 import {CrudItem} from 'widget/crudItem'
+import {Icon} from 'widget/icon'
 import {Input} from 'widget/input'
+import {Label} from 'widget/label'
 import {Layout} from 'widget/layout'
 import {LegendItem} from 'widget/legend/legendItem'
 import {ListItem} from 'widget/listItem'
@@ -11,9 +14,6 @@ import {filterReferenceData$, remapReferenceData$} from './inputData'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import ButtonPopup from 'widget/buttonPopup'
-import Icon from 'widget/icon'
-import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
@@ -24,7 +24,7 @@ const mapRecipeToProps = recipe => ({
     recipe
 })
 
-class ClassMappingStep extends Component {
+class _ClassMappingStep extends Component {
     state = {
         columnValues: [],
         customMapping: {},
@@ -386,13 +386,12 @@ class ClassMappingStep extends Component {
     }
 }
 
+export const ClassMappingStep = compose(
+    _ClassMappingStep,
+    withRecipe(mapRecipeToProps)
+)
+
 ClassMappingStep.propTypes = {
     children: PropTypes.any,
     inputs: PropTypes.any
 }
-
-export default compose(
-    ClassMappingStep,
-    withRecipe(mapRecipeToProps)
-)
-

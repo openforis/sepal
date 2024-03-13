@@ -1,19 +1,21 @@
+import {AutoFocus} from 'widget/autoFocus'
 import {Button} from 'widget/button'
+import {FloatingBox} from 'widget/floatingBox'
 import {Input} from 'widget/input'
+import {Keybinding} from 'widget/keybinding'
 import {ScrollableList} from 'widget/list'
 import {Widget} from './widget'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {escapeRegExp, simplifyString, splitString} from 'string'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
-import AutoFocus from 'widget/autoFocus'
-import FloatingBox from 'widget/floatingBox'
-import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './combo.module.css'
+
+const SIMPLIFY_STRING_CONFIG = {trim: true, removeAccents: true, removePunctuation: false, removeNonAlphanumeric: false, removeRepeatedSpaces: true}
 
 const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
@@ -393,14 +395,14 @@ class _Combo extends React.Component {
 
     matcher(filter) {
         // match beginning of multiple words in any order (e.g. both "u k" and "k u" match "United Kingdom")
-        const parts = splitString(simplifyString(escapeRegExp(filter), {removeNonAlphanumeric: false}))
-            .map(part => part ? `(?=.*${(part)})` : '')
-        return RegExp(`^${parts.join('')}.*$`, 'i')
+        const matchers = splitString(simplifyString(escapeRegExp(filter), SIMPLIFY_STRING_CONFIG))
+            .map(part => part ? `(?=.*${(part)})` : '') // regexp positive lookahead ("?=")
+        return RegExp(`^${matchers.join('')}.*$`, 'i')
     }
 
     filterOptions(group) {
         const {matcher} = this.state
-        const isMatchingGroup = matcher.test(simplifyString(group.searchableText || group.label))
+        const isMatchingGroup = matcher.test(simplifyString(group.searchableText || group.label, SIMPLIFY_STRING_CONFIG))
         const filterOptions = _.isFunction(group.filterOptions)
             ? group.filterOptions(isMatchingGroup)
             : group.filterOptions !== false
@@ -424,7 +426,7 @@ class _Combo extends React.Component {
                         ? null
                         : options.forceFilter === true
                             ? option
-                            : matcher.test(option.searchableText || option.label)
+                            : matcher.test(simplifyString(option.searchableText || option.label, SIMPLIFY_STRING_CONFIG))
                                 ? option
                                 : null
             )

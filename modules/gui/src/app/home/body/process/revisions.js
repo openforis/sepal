@@ -1,4 +1,4 @@
-import {Form, withForm} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
@@ -7,7 +7,8 @@ import {getRevisions, revertToRevision$} from 'app/home/body/process/recipe'
 import {map} from 'rxjs'
 import {msg} from 'translate'
 import {withActivatable} from 'widget/activation/activatable'
-import PropTypes from 'prop-types'
+import {withForm} from 'widget/form/form'
+// import PropTypes from 'prop-types'
 import React from 'react'
 import moment from 'moment'
 import styles from './revisions.module.css'
@@ -16,7 +17,7 @@ const fields = {
     revision: new Form.Field().notBlank('process.revisions.required')
 }
 
-class Revisions extends React.Component {
+class _Revisions extends React.Component {
     renderContent() {
         const {recipeId} = this.props
         const revisions = getRevisions(recipeId)
@@ -103,14 +104,14 @@ class Revisions extends React.Component {
     }
 }
 
-Revisions.propTypes = {
-    recipeId: PropTypes.string.isRequired
-}
-
 const policy = () => ({_: 'allow'})
 
-export default compose(
-    Revisions,
+export const Revisions = compose(
+    _Revisions,
     withForm({fields}),
     withActivatable({id: 'revisions', policy})
 )
+
+Revisions.propTypes = {
+    // recipeId: PropTypes.string.isRequired
+}

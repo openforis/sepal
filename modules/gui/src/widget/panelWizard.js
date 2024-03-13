@@ -9,7 +9,7 @@ const Context = React.createContext()
 
 export const withPanelWizard = withContext(Context, 'panelWizard')
 
-class PanelWizard extends React.Component {
+class _PanelWizard extends React.Component {
     constructor(props) {
         super(props)
         this.state = {initialized: props.initialized}
@@ -89,8 +89,8 @@ class PanelWizard extends React.Component {
     }
 }
 
-export default compose(
-    PanelWizard,
+export const PanelWizard = compose(
+    _PanelWizard,
     withActivators()
 )
 

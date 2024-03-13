@@ -7,18 +7,18 @@ import {ListItem} from 'widget/listItem'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Shape} from 'widget/shape'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {copyToClipboard} from 'clipboard'
 import {msg} from 'translate'
 import React from 'react'
-import api from 'api'
+import api from 'apiRegistry'
 import styles from './tasks.module.css'
 
 const mapStateToProps = state => ({
     tasks: state.tasks
 })
 
-class Tasks extends React.Component {
+class _Tasks extends React.Component {
     constructor(props) {
         super(props)
         this.renderTask = this.renderTask.bind(this)
@@ -256,7 +256,7 @@ class Tasks extends React.Component {
     }
 }
 
-export default compose(
-    Tasks,
+export const Tasks = compose(
+    _Tasks,
     connect(mapStateToProps)
 )

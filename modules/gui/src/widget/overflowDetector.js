@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './overflowDetector.module.css'
 
-export default class OverflowDetector extends React.Component {
+export class OverflowDetector extends React.Component {
     ref = React.createRef()
 
     render() {

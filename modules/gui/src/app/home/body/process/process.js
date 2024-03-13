@@ -1,30 +1,34 @@
+import {CloseRecipe} from './closeRecipe'
+import {Notifications} from 'widget/notifications'
+import {ProcessMenu} from './processMenu'
 import {Recipe} from 'app/home/body/process/recipeContext'
 import {RecipeHome} from './recipeHome'
-import {Tabs, getTabsInfo} from 'widget/tabs/tabs'
+import {Revisions} from 'app/home/body/process/revisions'
+import {SaveRecipe} from './saveRecipe'
+import {Tabs} from 'widget/tabs/tabs'
 import {compose} from 'compose'
-import {getRecipeType} from './recipeTypes'
+import {getRecipeType} from './recipeTypeRegistry'
 import {loadProjects$, loadRecipes$, recipePath, saveRecipe} from './recipe'
 import {msg} from 'translate'
+import {registerImageLayerSources} from './imageLayerSources'
+import {registerRecipeImageLayers} from './recipeImageLayers'
+import {registerRecipeTypes} from './recipeTypes'
 import {select} from 'store'
 import {withActivators} from 'widget/activation/activator'
 import {withLeaveAlert} from 'widget/leaveAlert'
-import CloseRecipe from './closeRecipe'
-import Notifications from 'widget/notifications'
-import ProcessMenu from './processMenu'
 import React from 'react'
-import Revisions from 'app/home/body/process/revisions'
-import SaveRecipe from './saveRecipe'
 import _ from 'lodash'
 
-export const getProcessTabsInfo = () => getTabsInfo('process')
-
-class Process extends React.Component {
+class _Process extends React.Component {
     constructor(props) {
         super(props)
         this.isLandingTab = this.isLandingTab.bind(this)
         this.renderMenu = this.renderMenu.bind(this)
         this.renderTab = this.renderTab.bind(this)
         this.onCloseTab = this.onCloseTab.bind(this)
+        registerRecipeTypes()
+        registerRecipeImageLayers()
+        registerImageLayerSources()
     }
 
     render() {
@@ -127,8 +131,8 @@ const mapStateToLeaveAlert = () => {
     return unsavedRecipeCount > 0
 }
 
-export default compose(
-    Process,
+export const Process = compose(
+    _Process,
     withActivators('closeRecipeDialog'),
     withLeaveAlert(mapStateToLeaveAlert)
 )

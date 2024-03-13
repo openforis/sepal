@@ -1,18 +1,18 @@
+import {FromImage} from './inputImage/fromImage'
 import {Legend} from './legend/legend'
 import {Mapping} from './mapping/mapping'
+import {Options} from './options/options'
+import {PanelWizard} from 'widget/panelWizard'
 import {Retrieve} from './retrieve/retrieve'
 import {RetrieveButton} from '../../retrieveButton'
+import {ToImage} from './inputImage/toImage'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import FromImage from './inputImage/fromImage'
-import Options from './options/options'
-import PanelWizard from 'widget/panelWizard'
 import React from 'react'
-import ToImage from './inputImage/toImage'
 import styles from './indexChangeToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -20,7 +20,7 @@ const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized')
 })
 
-class IndexChangeToolbar extends React.Component {
+class _IndexChangeToolbar extends React.Component {
     render() {
         const {recipeId, initialized} = this.props
         return (
@@ -77,7 +77,7 @@ class IndexChangeToolbar extends React.Component {
     }
 }
 
-export default compose(
-    IndexChangeToolbar,
+export const IndexChangeToolbar = compose(
+    _IndexChangeToolbar,
     withRecipe(mapRecipeToProps)
 )

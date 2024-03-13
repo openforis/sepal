@@ -1,15 +1,16 @@
-import {Form, withForm} from 'widget/form/form'
+import {Confirm} from 'widget/confirm'
+import {Form} from 'widget/form'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {ModalConfirmationButton} from 'widget/modalConfirmationButton'
+import {Notifications} from 'widget/notifications'
 import {Panel} from 'widget/panel/panel'
 import {UserStatus} from './userStatus'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
 import {select} from 'store'
-import Confirm from 'widget/confirm'
-import Notifications from 'widget/notifications'
+import {withForm} from 'widget/form/form'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './userDetails.module.css'
@@ -65,7 +66,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-class UserDetails extends React.Component {
+class _UserDetails extends React.Component {
     constructor(props) {
         super(props)
         this.onChangeInstanceSpending = this.onChangeInstanceSpending.bind(this)
@@ -392,6 +393,11 @@ class UserDetails extends React.Component {
     }
 }
 
+export const UserDetails = compose(
+    _UserDetails,
+    withForm({fields, mapStateToProps})
+)
+
 UserDetails.propTypes = {
     userDetails: PropTypes.object.isRequired,
     onCancel: PropTypes.func.isRequired,
@@ -399,8 +405,3 @@ UserDetails.propTypes = {
     onSave: PropTypes.func.isRequired,
     onUnlock: PropTypes.func.isRequired,
 }
-
-export default compose(
-    UserDetails,
-    withForm({fields, mapStateToProps})
-)

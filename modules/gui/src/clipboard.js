@@ -1,5 +1,5 @@
+import {Notifications} from 'widget/notifications'
 import {msg} from 'translate'
-import Notifications from 'widget/notifications'
 
 export const copyToClipboard = (value, successMessage, failureMessage) =>
     navigator.clipboard.writeText(value)

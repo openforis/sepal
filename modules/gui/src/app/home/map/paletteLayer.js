@@ -1,7 +1,7 @@
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Subject, animationFrames, distinctUntilChanged, map, of, scan, switchMap} from 'rxjs'
 import {compose} from 'compose'
-import {connect} from 'store'
+import {connect} from 'connect'
 import {selectFrom} from 'stateUtils'
 import {withCursorValue} from './cursorValue'
 import {withMapArea} from './mapAreaContext'

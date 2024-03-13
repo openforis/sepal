@@ -1,5 +1,6 @@
 import {Aoi} from '../aoi'
 import {Map} from 'app/home/map/map'
+import {RemappingToolbar} from './panels/remappingToolbar'
 import {compose} from 'compose'
 import {getAvailableBands} from './bands'
 import {getDefaultModel} from './remappingRecipe'
@@ -9,7 +10,6 @@ import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
 import React from 'react'
-import RemappingToolbar from './panels/remappingToolbar'
 
 const mapRecipeToProps = recipe => ({
     images: selectFrom(recipe, 'model.inputImagery.images'),

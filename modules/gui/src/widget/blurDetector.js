@@ -1,12 +1,12 @@
 import {compose} from 'compose'
 import {delay, distinctUntilChanged, filter, fromEvent, map, merge, switchMap} from 'rxjs'
 import {withContext} from 'context'
+import {withForwardedRef} from 'ref'
 import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './blurDetector.module.css'
-import withForwardedRef from 'ref'
 
 const ANIMATION_DURATION_MS = 500
 
@@ -18,7 +18,7 @@ const isOver = (e, element) => {
     return element.contains(e.target)
 }
 
-class BlurDetector extends React.Component {
+class _BlurDetector extends React.Component {
     enabled = true
 
     state = {
@@ -152,8 +152,8 @@ class BlurDetector extends React.Component {
     }
 }
 
-export default compose(
-    BlurDetector,
+export const BlurDetector = compose(
+    _BlurDetector,
     withBlurDetector(),
     withSubscriptions(),
     withForwardedRef(),

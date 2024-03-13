@@ -1,12 +1,11 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Subject, takeUntil} from 'rxjs'
-import {compose} from 'compose'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
-import api from 'api'
+import api from 'apiRegistry'
 
-class EETableSection extends Component {
+export class EETableSection extends Component {
     eeTableChanged$ = new Subject()
 
     render() {
@@ -75,7 +74,3 @@ EETableSection.propTypes = {
     children: PropTypes.any,
     inputs: PropTypes.any
 }
-
-export default compose(
-    EETableSection
-)

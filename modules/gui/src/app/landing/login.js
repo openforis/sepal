@@ -1,12 +1,14 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {Form, withForm} from 'widget/form/form'
+import {Form} from 'widget/form'
+import {FormContainer} from 'widget/form/container'
+import {Keybinding} from 'widget/keybinding'
 import {Layout} from 'widget/layout'
+import {Notifications} from 'widget/notifications'
 import {compose} from 'compose'
 import {credentialsPosted, invalidCredentials, login$} from 'user'
 import {msg} from 'translate'
-import Keybinding from 'widget/keybinding'
-import Notifications from 'widget/notifications'
+import {withForm} from 'widget/form/form'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -34,11 +36,11 @@ class _Login extends React.Component {
 
     render() {
         return (
-            <Form
+            <FormContainer
                 className={styles.form}
                 onSubmit={this.submit}>
                 {this.renderForm()}
-            </Form>
+            </FormContainer>
         )
     }
 

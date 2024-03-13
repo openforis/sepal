@@ -1,4 +1,4 @@
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {FormCombo} from 'widget/form/combo'
 import {Layout} from 'widget/layout'
 import {NumberButtons} from 'widget/numberButtons'
@@ -8,11 +8,11 @@ import {msg} from 'translate'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
-import api from 'api'
+import api from 'apiRegistry'
 
 const mapRecipeToProps = recipe => ({recipe})
 
-class SampleClassificationSection extends Component {
+class _SampleClassificationSection extends Component {
     cancel$ = new Subject()
     state = {bands: []}
 
@@ -171,12 +171,12 @@ class SampleClassificationSection extends Component {
     }
 }
 
+export const SampleClassificationSection = compose(
+    _SampleClassificationSection,
+    withRecipe(mapRecipeToProps),
+)
+
 SampleClassificationSection.propTypes = {
     children: PropTypes.any,
     inputs: PropTypes.any
 }
-
-export default compose(
-    SampleClassificationSection,
-    withRecipe(mapRecipeToProps),
-)

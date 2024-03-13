@@ -1,3 +1,4 @@
+import {Icon} from 'widget/icon'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {compose} from 'compose'
@@ -5,7 +6,6 @@ import {getDataSet} from './sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import Icon from 'widget/icon'
 import React from 'react'
 import daysBetween from './daysBetween'
 import styles from './scenePreview.module.css'
@@ -15,7 +15,7 @@ const mapRecipeToProps = recipe => ({
     scene: selectFrom(recipe, 'ui.sceneToPreview')
 })
 
-class ScenePreview extends React.Component {
+class _ScenePreview extends React.Component {
     constructor(props) {
         super(props)
         this.recipeActions = RecipeActions(props.recipeId)
@@ -72,8 +72,8 @@ class ScenePreview extends React.Component {
     }
 }
 
-export default compose(
-    ScenePreview,
+export const ScenePreview = compose(
+    _ScenePreview,
     withRecipe(mapRecipeToProps)
 )
 

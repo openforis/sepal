@@ -1,5 +1,7 @@
+import {ButtonSelect} from 'widget/buttonSelect'
+import {Confirm} from 'widget/confirm'
 import {CrudItem} from 'widget/crudItem'
-import {Form} from 'widget/form/form'
+import {Form} from 'widget/form'
 import {Layout} from 'widget/layout'
 import {ListItem} from 'widget/listItem'
 import {NoData} from 'widget/noData'
@@ -7,16 +9,14 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/classification/classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Subject} from 'rxjs'
+import {TrainingDataSet} from './trainingDataSet'
 import {compose} from 'compose'
 import {downloadCsv} from 'widget/download'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withActivators} from 'widget/activation/activator'
-import ButtonSelect from 'widget/buttonSelect'
-import Confirm from 'widget/confirm'
 import PropTypes from 'prop-types'
 import React from 'react'
-import TrainingDataSet from './trainingDataSet'
 import guid from 'guid'
 import styles from './trainingData.module.css'
 
@@ -25,7 +25,7 @@ const mapRecipeToProps = recipe => ({
     title: recipe.title || recipe.placeholder
 })
 
-class TrainingData extends React.Component {
+class _TrainingData extends React.Component {
     state = {
         askConfirmation: false
     }
@@ -198,17 +198,17 @@ class TrainingData extends React.Component {
     }
 }
 
-TrainingData.propTypes = {
-    dataCollectionManager: PropTypes.object.isRequired
-}
-
 const additionalPolicy = () => ({'trainingDataSet': 'allow'})
 // [HACK] This actually isn't a form, and we don't want to update the model. This prevents the selected data sets from
 // being overridden.
 const valuesToModel = null
 
-export default compose(
-    TrainingData,
+export const TrainingData = compose(
+    _TrainingData,
     recipeFormPanel({id: 'trainingData', mapRecipeToProps, valuesToModel, additionalPolicy}),
     withActivators('trainingDataSet')
 )
+
+TrainingData.propTypes = {
+    dataCollectionManager: PropTypes.object.isRequired
+}
