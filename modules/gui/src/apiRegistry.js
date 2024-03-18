@@ -1,8 +1,6 @@
-import _ from 'lodash'
-
 const registry = {}
 
 export const setApi = api =>
-    _.assign(registry, api)
+    Object.assign(registry, api)
 
 export default registry
