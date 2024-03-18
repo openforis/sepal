@@ -11,10 +11,10 @@ import {msg} from '~/translate'
 import {publishEvent} from '~/eventPublisher'
 import {select, subscribe} from '~/store'
 import {selectFrom} from '~/stateUtils'
+import {uuid} from '~/uuid'
 import React from 'react'
 import _ from 'lodash'
 import api from '~/apiRegistry'
-import guid from '~/guid'
 
 const saveToBackend$ = (() => {
     const save$ = new Subject()
@@ -207,7 +207,7 @@ export const duplicateRecipe = sourceRecipe => {
     publishEvent('duplicate_recipe', {recipe_type: sourceRecipe.type})
     return addRecipe({
         ...sourceRecipe,
-        id: guid(),
+        id: uuid(),
         placeholder: `${sourceRecipe.title || sourceRecipe.placeholder}_copy`,
         title: null,
         ui: {...sourceRecipe.ui, unsaved: true, initialized: true}

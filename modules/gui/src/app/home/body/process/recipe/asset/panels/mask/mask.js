@@ -10,9 +10,9 @@ import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFo
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {selectFrom} from '~/stateUtils'
+import {uuid} from '~/uuid'
 import {withActivators} from '~/widget/activation/activator'
 import React from 'react'
-import guid from '~/guid'
 import styles from './mask.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -100,7 +100,7 @@ class _Mask extends React.Component {
     addConstraints() {
         const {activator: {activatables: {constraints}}} = this.props
         this.setState(
-            {selectedConstraintsEntry: {id: guid(), booleanOperator: 'or', constraints: undefined}},
+            {selectedConstraintsEntry: {id: uuid(), booleanOperator: 'or', constraints: undefined}},
             () => constraints.activate()
         )
     }

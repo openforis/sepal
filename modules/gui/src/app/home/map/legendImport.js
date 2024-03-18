@@ -8,13 +8,13 @@ import {Widget} from '~/widget/widget'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {parseCsvFile$} from '~/csv'
+import {uuid} from '~/uuid'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withForm} from '~/widget/form/form'
 import {withRecipe} from '../body/process/recipeContext'
 import Color from 'color'
 import React from 'react'
 import _ from 'lodash'
-import guid from '~/guid'
 import styles from './legendImport.module.css'
 
 const fields = {
@@ -221,7 +221,7 @@ class _LegendImport extends React.Component {
             blueColumn
         } = inputs
         const entries = rows.value.map(row => ({
-            id: guid(),
+            id: uuid(),
             color: colorColumnType.value === 'single'
                 ? Color(trim(row[colorColumn.value])).hex()
                 : Color.rgb([

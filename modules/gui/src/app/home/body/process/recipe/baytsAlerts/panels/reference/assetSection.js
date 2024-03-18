@@ -4,10 +4,10 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {msg} from '~/translate'
 import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
+import {uuid} from '~/uuid'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import guid from '~/guid'
 
 class _AssetSection extends React.Component {
     constructor(props) {
@@ -51,7 +51,7 @@ export const toAssetReference = (bands, properties) => {
         startDate: properties.startDate,
         endDate: properties.endDate,
         visualizations: toVisualizations(properties, bands)
-            .map(visualization => ({...visualization, id: guid()}))
+            .map(visualization => ({...visualization, id: uuid()}))
     }
 }
 

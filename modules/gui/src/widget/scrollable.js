@@ -1,7 +1,7 @@
 import {EMPTY, Subject, animationFrames, debounceTime, distinctUntilChanged, fromEvent, map, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs'
 import {Keybinding} from '~/widget/keybinding'
 import {compose} from '~/compose'
-import {v4 as uuid} from 'uuid'
+import {uuid} from '~/uuid'
 import {withSubscriptions} from '~/subscription'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'

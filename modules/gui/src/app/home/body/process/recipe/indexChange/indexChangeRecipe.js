@@ -3,9 +3,9 @@ import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {msg} from '~/translate'
 import {publishEvent} from '~/eventPublisher'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
+import {uuid} from '~/uuid'
 import _ from 'lodash'
 import api from '~/apiRegistry'
-import guid from '~/guid'
 import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -18,13 +18,13 @@ export const defaultModel = {
     legend: {
         entries: [
             {
-                id: guid(),
+                id: uuid(),
                 color: '#d73027',
                 value: 1,
                 label: 'Decrease',
                 booleanOperator: 'and',
                 constraints: [{
-                    id: guid(),
+                    id: uuid(),
                     description: 'difference < 0',
                     image: 'this-recipe',
                     band: 'difference',
@@ -33,13 +33,13 @@ export const defaultModel = {
                 }]
             },
             {
-                id: guid(),
+                id: uuid(),
                 color: '#ffffff',
                 value: 2,
                 label: 'Stable',
                 booleanOperator: 'and',
                 constraints: [{
-                    id: guid(),
+                    id: uuid(),
                     description: 'difference = 0',
                     image: 'this-recipe',
                     band: 'difference',
@@ -48,13 +48,13 @@ export const defaultModel = {
                 }]
             },
             {
-                id: guid(),
+                id: uuid(),
                 color: '#1a9850',
                 value: 3,
                 label: 'Increase',
                 booleanOperator: 'and',
                 constraints: [{
-                    id: guid(),
+                    id: uuid(),
                     description: 'difference > 0',
                     image: 'this-recipe',
                     band: 'difference',

@@ -1,5 +1,5 @@
 import {MAX_ZOOM} from '../maps'
-import guid from '~/guid'
+import {uuid} from '~/uuid'
 
 // implements google.maps.MapType
 export class GoogleMapsOverlay {
@@ -52,7 +52,7 @@ export class GoogleMapsOverlay {
         if (x < 0) {
             x += maxCoord
         }
-        const id = [this.tileProvider.id, zoom, x, y, guid()].join('/')
+        const id = [this.tileProvider.id, zoom, x, y, uuid()].join('/')
         const element = this.tileProvider.createElement(id, doc)
         const outOfBounds = zoom < minZoom || y < 0 || y >= maxCoord
         return {id, x, y, zoom, element, outOfBounds}

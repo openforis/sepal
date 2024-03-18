@@ -170,7 +170,7 @@ class _TrainingDataSet extends React.Component {
     componentDidMount() {
         // const {inputs: {bandSetSpecs}} = this.props
         // if (!bandSetSpecs.value)
-        //     bandSetSpecs.set([{id: guid(), type: 'IMAGE_BANDS', class: 'IMAGE_BANDS'}])
+        //     bandSetSpecs.set([{id: uuid(), type: 'IMAGE_BANDS', class: 'IMAGE_BANDS'}])
     }
 
     componentDidUpdate() {

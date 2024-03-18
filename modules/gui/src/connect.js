@@ -4,7 +4,7 @@ import {composeHoC} from '~/compose'
 import {connect as connectToRedux} from 'react-redux'
 import {isEqual} from '~/hash'
 import {select} from '~/store'
-import {v4 as uuid} from 'uuid'
+import {uuid} from '~/uuid'
 import {withPreventUpdateWhenDisabled} from '~/enabled'
 import React from 'react'
 

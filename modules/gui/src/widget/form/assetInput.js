@@ -4,11 +4,11 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {msg} from '~/translate'
 import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
+import {uuid} from '~/uuid'
 import {withSubscriptions} from '~/subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import api from '~/apiRegistry'
-import guid from '~/guid'
 
 const DEBOUNCE_TIME_MS = 750
 
@@ -97,7 +97,7 @@ class _FormAssetInput extends React.Component {
             metadata,
             visualizations: metadata.bands
                 ? toVisualizations(metadata.properties, metadata.bands)
-                    .map(visualization => ({...visualization, id: guid()}))
+                    .map(visualization => ({...visualization, id: uuid()}))
                 : undefined
         } : null)
     }

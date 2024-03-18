@@ -15,6 +15,7 @@ import {downloadCsv} from '~/widget/download'
 import {msg} from '~/translate'
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
+import {uuid} from '~/uuid'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
 import {withForm} from '~/widget/form/form'
@@ -23,7 +24,6 @@ import {withRecipe} from '~/app/home/body/process/recipeContext'
 import React from 'react'
 import _ from 'lodash'
 import api from '~/apiRegistry'
-import guid from '~/guid'
 import styles from './visParamsPanel.module.css'
 
 const fields = {
@@ -396,7 +396,7 @@ class _VisParamsPanel extends React.Component {
         )
         if (visParams) {
             inputs.type.set(visParams.type)
-            visParams.palette && inputs.palette.set(visParams.palette.map(color => ({id: guid(), color})))
+            visParams.palette && inputs.palette.set(visParams.palette.map(color => ({id: uuid(), color})))
             inputs['gamma1'].set(visParams.gamma ? visParams.gamma[0] : 1)
             inputs['gamma2'].set(visParams.gamma ? visParams.gamma[1] : 1)
             inputs['gamma3'].set(visParams.gamma ? visParams.gamma[2] : 1)
@@ -411,7 +411,7 @@ class _VisParamsPanel extends React.Component {
             if (visParams.type === 'categorical') {
                 const legendEntries = visParams.values
                     ? visParams.values.map((value, i) => ({
-                        id: guid(),
+                        id: uuid(),
                         value,
                         color: visParams.palette && visParams.palette.length > i
                             ? visParams.palette[i]
@@ -446,7 +446,7 @@ class _VisParamsPanel extends React.Component {
             const max = _.maxBy(legendEntries, 'value')
             return {
                 legendEntries: [...legendEntries, {
-                    id: guid(),
+                    id: uuid(),
                     value: max ? max.value + 1 : 1,
                     color: defaultColor(legendEntries.length),
                     label: ''
@@ -557,7 +557,7 @@ class _VisParamsPanel extends React.Component {
     loadDistinctBandValues() {
         const {activatable: {recipe}, aoi, stream, inputs: {name1}, map: {getBounds}} = this.props
         const toEntries = values => values.map(value => ({
-            id: guid(),
+            id: uuid(),
             value,
             label: `${value}`,
             color: '#000000'
@@ -584,7 +584,7 @@ class _VisParamsPanel extends React.Component {
         const palette = inputs.palette.value
             ? inputs.palette.value.map(({color}) => color)
             : ['#000000', '#FFFFFF']
-        const id = prevVisParams && prevVisParams.id ? prevVisParams.id : guid()
+        const id = prevVisParams && prevVisParams.id ? prevVisParams.id : uuid()
         const dataType = prevVisParams?.dataType
         const visParams = normalize(
             type === 'continuous'

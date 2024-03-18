@@ -14,10 +14,10 @@ import {compose} from '~/compose'
 import {downloadCsv} from '~/widget/download'
 import {msg} from '~/translate'
 import {selectFrom} from '~/stateUtils'
+import {uuid} from '~/uuid'
 import {withActivators} from '~/widget/activation/activator'
 import PropTypes from 'prop-types'
 import React from 'react'
-import guid from '~/guid'
 import styles from './trainingData.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -157,7 +157,7 @@ class _TrainingData extends React.Component {
 
     addDataSet() {
         const {activator: {activatables: {trainingDataSet}}} = this.props
-        trainingDataSet.activate({dataSetId: guid()})
+        trainingDataSet.activate({dataSetId: uuid()})
     }
 
     editDataSet(dataSet) {

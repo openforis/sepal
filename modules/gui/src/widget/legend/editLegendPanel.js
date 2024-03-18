@@ -7,6 +7,7 @@ import {compose} from '~/compose'
 import {downloadCsv} from '../download'
 import {msg} from '~/translate'
 import {selectFrom} from '~/stateUtils'
+import {uuid} from '~/uuid'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
 import {withForm} from '~/widget/form/form'
@@ -15,7 +16,6 @@ import {withRecipe} from '~/app/home/body/process/recipeContext'
 import React from 'react'
 import _ from 'lodash'
 import api from '~/apiRegistry'
-import guid from '~/guid'
 import styles from './editLegendPanel.module.css'
 
 const fields = {
@@ -139,7 +139,7 @@ class _EditLegendPanel extends React.Component {
             const max = _.maxBy(legendEntries, 'value')
             return {
                 legendEntries: [...legendEntries, {
-                    id: guid(),
+                    id: uuid(),
                     value: max ? max.value + 1 : 1,
                     color: defaultColor(legendEntries.length),
                     label: ''
@@ -170,7 +170,7 @@ class _EditLegendPanel extends React.Component {
     loadDistinctBandValues() {
         const {activatable: {band, recipe}, aoi, stream, map: {getBounds}} = this.props
         const toEntries = values => values.map(value => ({
-            id: guid(),
+            id: uuid(),
             value,
             label: `${value}`,
             color: '#000000'

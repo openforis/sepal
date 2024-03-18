@@ -7,10 +7,10 @@ import {PalettePreSets} from './palettePreSets'
 import {Textarea} from '~/widget/input'
 import {Widget} from '~/widget/widget'
 import {msg} from '~/translate'
+import {uuid} from '~/uuid'
 import Color from 'color'
 import PropTypes from 'prop-types'
 import React from 'react'
-import guid from '~/guid'
 import styles from './palette.module.css'
 
 export class Palette extends React.Component {
@@ -166,7 +166,7 @@ export class Palette extends React.Component {
 
     createColor(color = '#000000', edit) {
         return {
-            id: guid(),
+            id: uuid(),
             color,
             edit,
         }

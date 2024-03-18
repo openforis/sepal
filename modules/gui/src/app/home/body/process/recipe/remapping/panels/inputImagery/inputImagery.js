@@ -11,9 +11,9 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {msg} from '~/translate'
 import {selectFrom} from '~/stateUtils'
+import {uuid} from '~/uuid'
 import {withActivators} from '~/widget/activation/activator'
 import React from 'react'
-import guid from '~/guid'
 import styles from './inputImagery.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -98,7 +98,7 @@ class _InputImagery extends React.Component {
 
     addImage() {
         const {activator: {activatables: {inputImage}}} = this.props
-        inputImage.activate({imageId: guid()})
+        inputImage.activate({imageId: uuid()})
     }
 
     editImage(image) {

@@ -3,10 +3,10 @@ import {Layout} from '~/widget/layout'
 import {Legend} from '~/widget/legend/legend'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
+import {uuid} from '~/uuid'
 import {withScrollable} from '~/widget/scrollable'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
-import guid from '~/guid'
 import styles from './inputImage.module.css'
 
 class _ImageForm extends Component {
@@ -64,7 +64,7 @@ class _ImageForm extends Component {
         const entries = ((visualization && visualization.values) || [])
             .map((value, i) => {
                 return {
-                    id: guid(),
+                    id: uuid(),
                     color: (visualization.palette && visualization.palette[i]) || '#000000',
                     value,
                     label: (visualization.labels && visualization.labels[i]) || `${value}`,

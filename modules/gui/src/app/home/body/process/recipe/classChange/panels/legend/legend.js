@@ -6,11 +6,11 @@ import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {selectFrom} from '~/stateUtils'
+import {uuid} from '~/uuid'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import guid from '~/guid'
 import styles from './legend.module.css'
 
 const fields = {
@@ -58,7 +58,7 @@ class _Legend extends React.Component {
             )
             .flat()
             .map((label, i) => ({
-                id: guid(),
+                id: uuid(),
                 value: i + 1,
                 color: defaultColor(i + 1),
                 label

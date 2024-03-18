@@ -4,13 +4,13 @@ import {RemoveButton} from '~/widget/removeButton'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {selectFrom} from '~/stateUtils'
+import {uuid} from '~/uuid'
 import {withActivators} from '~/widget/activation/activator'
 import {withMapArea} from '../mapAreaContext'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import guid from '~/guid'
 
 const mapRecipeToProps = (recipe, {source}) => ({
     userDefinedVisualizations: selectFrom(recipe, ['layers.userDefinedVisualizations', source.id]) || []
@@ -105,7 +105,7 @@ class _VisualizationSelector extends React.Component {
     editVisParams(visParamsToEdit, editMode) {
         const {recipe, source, activator: {activatables: {visParams: {activate}}}} = this.props
         const visParams = editMode === 'clone'
-            ? {...visParamsToEdit, id: guid()}
+            ? {...visParamsToEdit, id: uuid()}
             : visParamsToEdit
         activate({recipe, imageLayerSourceId: source.id, visParams})
     }

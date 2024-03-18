@@ -4,11 +4,11 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 import {compose} from '~/compose'
 import {msg} from '../../translate'
+import {uuid} from '~/uuid'
 import {withActivatable} from '~/widget/activation/activatable'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import guid from '~/guid'
 import styles from './imageConstraints.module.css'
 
 class _ImageConstraints extends React.Component {
@@ -104,7 +104,7 @@ class _ImageConstraints extends React.Component {
 
     addConstraint() {
         const {images = []} = this.props
-        const id = guid()
+        const id = uuid()
         const image = images.length === 1 ? images[0].id : null
         const band = image && images[0].bands?.length === 1 ? images[0].bands[0].name : null
         const property = image && images[0].properties?.length === 1 ? images[0].properties[0].name : null

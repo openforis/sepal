@@ -9,12 +9,12 @@ import {msg} from '~/translate'
 import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'
 import {removeArea} from './layerAreas'
 import {select} from '~/store'
+import {uuid} from '~/uuid'
 import {withLayers} from '../withLayers'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import guid from '~/guid'
 
 export class _ImageLayerSources extends React.Component {
     render() {
@@ -42,7 +42,7 @@ export class _ImageLayerSources extends React.Component {
                     key={source.id}
                     drag$={drag$}
                     dragValue={{
-                        id: guid(),
+                        id: uuid(),
                         imageLayer: {sourceId: source.id},
                         featureLayers: []
                     }}>

@@ -1,6 +1,6 @@
 import {selectFrom} from '~/stateUtils'
+import {uuid} from '~/uuid'
 import _ from 'lodash'
-import guid from '~/guid'
 
 export const validAreas = areas => {
     assertValidState(areas)
@@ -70,7 +70,7 @@ export const removeArea = ({areas, area}) => {
     if (area === 'center') {
         return {
             center: {
-                id: guid(),
+                id: uuid(),
                 imageLayer: {},
                 featureLayers: []
             }

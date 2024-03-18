@@ -3,15 +3,15 @@ import {msg} from '~/translate'
 import {publishEvent} from '~/eventPublisher'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {removeImageLayerSource} from '~/app/home/body/process/mapLayout/imageLayerSources'
+import {uuid} from '~/uuid'
 import _ from 'lodash'
 import api from '~/apiRegistry'
-import guid from '~/guid'
 
 export const getDefaultModel = () => ({
     trainingData: {
         dataSets: [
             {
-                dataSetId: guid(),
+                dataSetId: uuid(),
                 name: msg('process.classification.panel.trainingData.type.COLLECTED.label'),
                 type: 'COLLECTED',
                 referenceData: []

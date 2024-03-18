@@ -2,9 +2,9 @@ import {getAllVisualizations} from '~/app/home/body/process/recipe/visualization
 import {msg} from '~/translate'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {removeImageLayerSource} from '~/app/home/body/process/mapLayout/imageLayerSources'
+import {uuid} from '~/uuid'
 import _ from 'lodash'
 import api from '~/apiRegistry'
-import guid from '~/guid'
 
 export const getDefaultModel = () => ({
 })
@@ -73,7 +73,7 @@ export const bandsAvailableToAdd = (bands, includedBands) =>
         .filter(band => !(includedBands || []).find(({band: b}) => band === b))
 
 export const defaultBand = (bandName, bands) => {
-    const id = guid()
+    const id = uuid()
     const values = bands[bandName].values
     const type = values && values.length ? 'categorical' : 'continuous'
     const legendEntries = type === 'categorical'
@@ -86,7 +86,7 @@ export const defaultLegendEntries = (bandName, bands) => {
     const visualization = bands[bandName]
     return ((visualization && visualization.values) || [])
         .map((value, i) => ({
-            id: guid(),
+            id: uuid(),
             color: (visualization.palette && visualization.palette[i]) || '#000000',
             value,
             label: (visualization.labels && visualization.labels[i]) || `${value}`

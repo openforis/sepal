@@ -4,7 +4,7 @@ import {GoogleMapsOverlay} from './googleMapsOverlay'
 import {TileLayer} from './tileLayer'
 import {finalize, tap} from 'rxjs'
 import {isEqual} from '~/hash'
-import {v4 as uuid} from 'uuid'
+import {uuid} from '~/uuid'
 import _ from 'lodash'
 
 export class EarthEngineTableLayer extends TileLayer {

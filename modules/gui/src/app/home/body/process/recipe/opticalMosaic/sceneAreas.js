@@ -9,11 +9,11 @@ import {compose} from '~/compose'
 import {isPartiallyEqual} from '~/hash'
 import {msg} from '~/translate'
 import {selectFrom} from '~/stateUtils'
+import {uuid} from '~/uuid'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {withTab} from '~/widget/tabs/tabContext'
 import React from 'react'
 import api from '~/apiRegistry'
-import guid from '~/guid'
 
 const mapRecipeToProps = recipe => ({
     manualSelection: selectFrom(recipe, 'model.sceneSelectionOptions.type') === SceneSelectionType.SELECT,
@@ -106,7 +106,7 @@ class _SceneAreas extends React.Component {
     includeLayer() {
         const {areas, recipeActionBuilder} = this.props
         const source = {
-            id: guid(),
+            id: uuid(),
             type: 'SceneAreas',
             description: msg('featureLayerSources.SceneAreas.description')
         }

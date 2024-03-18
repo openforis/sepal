@@ -7,11 +7,11 @@ import {compose} from '~/compose'
 import {downloadCsv} from '~/widget/download'
 import {msg} from '~/translate'
 import {selectFrom} from '~/stateUtils'
+import {uuid} from '~/uuid'
 import {withActivators} from '~/widget/activation/activator'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import guid from '~/guid'
 import styles from './legend.module.css'
 
 const fields = {
@@ -104,7 +104,7 @@ class _Legend extends React.Component {
 
     addEntry() {
         const {inputs: {entries}} = this.props
-        const id = guid()
+        const id = uuid()
         const max = _.maxBy(entries.value, 'value')
         const value = max ? max.value + 1 : 1
         const color = defaultColor(entries.value.length)

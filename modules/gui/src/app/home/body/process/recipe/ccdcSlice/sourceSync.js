@@ -7,11 +7,11 @@ import {msg} from '~/translate'
 import {recipeAccess} from '../../recipeAccess'
 import {selectFrom} from '~/stateUtils'
 import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
+import {uuid} from '~/uuid'
 import {withRecipe} from '../../recipeContext'
 import React from 'react'
 import _ from 'lodash'
 import api from '~/apiRegistry'
-import guid from '~/guid'
 
 const baseBandPattern = /(.*)_(coefs|intercept|slope|phase_\d|amplitude_\d|rmse|magnitude)$/
 
@@ -151,7 +151,7 @@ class _SourceSync extends React.Component {
             startDate: metadata.properties.startDate,
             endDate: metadata.properties.endDate,
             visualizations: toVisualizations(metadata.properties, bands)
-                .map(visualization => ({...visualization, id: guid()}))
+                .map(visualization => ({...visualization, id: uuid()}))
         }
     }
     

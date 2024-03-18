@@ -3,7 +3,7 @@ import {getLogger} from '~/log'
 import {getRequestExecutor} from './requestExecutor'
 import {getRequestQueue} from './requestQueue'
 import {tileProviderTag, tileTag} from '~/tag'
-import {v4 as uuid} from 'uuid'
+import {uuid} from '~/uuid'
 
 const log = getLogger('tileManager')
 

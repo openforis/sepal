@@ -3,7 +3,7 @@ import {Subject, delay, filter, map, merge, mergeMap, scan, takeWhile, timer} fr
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {publishError} from '~/eventPublisher'
-import {v4 as uuid} from 'uuid'
+import {uuid} from '~/uuid'
 import {withSubscriptions} from '~/subscription'
 import PropTypes from 'prop-types'
 import React from 'react'

@@ -1,4 +1,4 @@
-import {v4 as uuid} from 'uuid'
+import {uuid} from '~/uuid'
 import _ from 'lodash'
 
 const HASH_KEY = '___hash___'
