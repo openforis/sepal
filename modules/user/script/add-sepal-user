@@ -51,7 +51,6 @@ if ! user_exists "$USERNAME"; then
         echo "add-sepal-user | Setting password"
         passwordFile=$(mktemp /tmp/$USERNAME.XXXXXX)
         echo $PASSWORD > $passwordFile
-        # sss_seed --domain sepal.org --username $USERNAME --password-file $passwordFile --uid $userId --gid $groupId
         rm $passwordFile
         ldappasswd -p 389 -h ldap -x -D cn=admin,dc=sepal,dc=org -w "$(cat /etc/ldap.secret)" \
             -s "$PASSWORD" uid=$USERNAME,ou=People,dc=sepal,dc=org -ZZ
