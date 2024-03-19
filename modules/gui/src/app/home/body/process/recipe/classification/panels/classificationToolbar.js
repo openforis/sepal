@@ -95,6 +95,5 @@ export const ClassificationToolbar = compose(
 )
 
 ClassificationToolbar.propTypes = {
-    dataCollectionManager: PropTypes.object.isRequired,
-    recipeId: PropTypes.string.isRequired,
+    dataCollectionManager: PropTypes.object.isRequired
 }

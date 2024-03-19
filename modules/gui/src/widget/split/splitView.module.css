@@ -8,7 +8,7 @@
         <div style="pointer-events: none; width: 100%; height: 100%; box-sizing: border-box; position: absolute; z-index: 1000002; opacity: 0; border: 2px solid rgb(26, 115, 232);"></div>
     */
     /* It looks like the blue border is gone... */
-    --attribution-mask-size: 0px;
+    --attribution-mask-size: 2px;
 
     --half-margin-size: 1px;
     --top: var(--y);

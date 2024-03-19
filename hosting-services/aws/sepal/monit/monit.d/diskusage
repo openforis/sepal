@@ -1,3 +1,15 @@
-check filesystem rootfs with path /
-    if space usage > 80% for 5 times within 15 cycles then alert
+check filesystem root_fs with path /
+    if space usage > 70% for 5 times within 15 cycles then alert
+    if space usage > 90% then alert
+
+check filesystem data_fs with path /data
+    if space usage > 70% for 5 times within 15 cycles then alert
+    if space usage > 90% then alert
+
+check filesystem docker_fs with path /var/lib/docker
+    if space usage > 70% for 5 times within 15 cycles then alert
+    if space usage > 90% then alert
+
+check filesystem log_fs with path /var/log
+    if space usage > 70% for 5 times within 15 cycles then alert
     if space usage > 90% then alert
