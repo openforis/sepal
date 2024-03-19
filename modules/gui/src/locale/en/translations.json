@@ -2438,6 +2438,10 @@
                         "label": "Max",
                         "tooltip": "Use the maximum value of each band for the images in the collection"
                     },
+                    "SD": {
+                        "label": "SD",
+                        "tooltip": "Use the standard deviation of each band for the images in the collection"
+                    },
                     "MODE": {
                         "label": "Mode",
                         "tooltip": "Use the most common value of each band for the images in the collection. This only make sense for categorical bands"
