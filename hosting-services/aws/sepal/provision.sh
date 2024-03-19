@@ -36,10 +36,16 @@ ansible-playbook provision-security-groups.yml \
     --private-key="${PRIVATE_KEY}" \
     --extra-vars "env_file=$CONFIG_HOME/env local_ip_address=$LOCAL_IP_ADDRESS"
 
+ansible-playbook mount-ebs.yml \
+    -i "$inventory" \
+    --private-key="${PRIVATE_KEY}" \
+    --extra-vars "env_file=$CONFIG_HOME/env"
+    
 ansible-playbook configure-efs.yml \
     -i "$inventory" \
     --private-key="${PRIVATE_KEY}" \
     --extra-vars "env_file=$CONFIG_HOME/env"
+
 
 packer build \
   --var AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \

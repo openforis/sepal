@@ -106,7 +106,7 @@
         mode: "0644"
 
     - name: Start rsyslog
-      service: name=rsyslog state=started
+      service: name=rsyslog state=restarted
 
     # logrotate
     - name: Copy worker-instances logrotate configuration
@@ -135,18 +135,14 @@
     - file: path="/data/docker/storage/devicemapper/metadata" state=directory
     - file: path="/data/docker/storage/tmp" state=directory
 
-    - name: Create Docker LVM Volume Group
-      lvg: vg=vg-docker pvs=/dev/sdb
-
-    - name: Create Docker LVM Data Volume
-      lvol: vg=vg-docker lv=data size=30g
-
-    - name: Create Docker LVM Metadata Volume
-      lvol: vg=vg-docker lv=metadata size=19g
-
     - name: Create docker-registry certificate dir
       file:
         path: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
+        state: directory
+
+    - name: Create docker log dir
+      file:
+        path: "/var/log/docker/containers"
         state: directory
 
     - name: Copy docker-registry certificate
@@ -161,10 +157,6 @@
       yum:
         name: "@Development Tools"
 
-    - name: Install pip
-      yum:
-        name: "python-pip"
-
     - name: Create /etc/docker
       file:
         path: "/etc/docker"
@@ -173,10 +165,10 @@
     - name: Copy /etc/docker/daemon.json
       template: src=docker/main-daemon.json dest=/etc/docker/daemon.json
 #
-#    - name: Add ec2-user to docker group
-#      user:
-#        name: ec2-user
-#        groups: docker
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
 #
     - name: Enable docker
       systemd:
@@ -185,9 +177,14 @@
         enabled: yes
         masked: no
 
-    - name: pip install docker
+    - name: pip install urllib3
       pip:
-        name: "docker"
+        name: urllib3==1.26.18
+        executable: pip3
+
+    - name: pip install requests
+      pip:
+        name: requests
         executable: pip3
 
     - docker_network: name=sepal

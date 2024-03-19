@@ -9,6 +9,16 @@
     dump: 0
     passno: 0
 
+- name: Mount EFS Worker Instance Logs
+  mount:
+    name: "/var/log/worker-instance"
+    fstype: "efs"
+    state: "mounted"
+    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/worker-instance-log"
+    opts: "defaults,_netdev"
+    dump: 0
+    passno: 0
+
 - name: Mount /data/sepal/jupyter
   mount:
     name: "/data/sepal/jupyter"

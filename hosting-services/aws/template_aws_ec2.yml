@@ -4,6 +4,7 @@ regions:
 filters:
   tag:Type: ${TYPE}
   tag:Environment: ${DEPLOY_ENVIRONMENT}
+  instance-state-name: running
 hostnames:
   - dns-name
 compose:
