@@ -1,0 +1,49 @@
+- name: Mount EBS volumes
+  hosts: all
+  user: ec2-user
+  become: yes
+  gather_facts: true
+
+  tasks:
+    - name: Create filesystem on /data volume
+      filesystem:
+        fstype: xfs
+        dev: /dev/sdf
+
+    - name: Mount /data volume
+      mount:
+        path: /data
+        src: /dev/sdf
+        fstype: xfs
+        state: present
+
+    - name: Create filesystem on /var/lib/docker volume
+      filesystem:
+        fstype: xfs
+        dev: /dev/sdg
+
+    - name: Mount /var/lib/docker volume
+      mount:
+        path: /var/lib/docker
+        src: /dev/sdg
+        fstype: xfs
+        state: present
+
+    - name: Create filesystem on /var/log volume
+      filesystem:
+        fstype: xfs
+        dev: /dev/sdh
+
+    - name: Mount /var/log volume
+      mount:
+        path: /var/log
+        src: /dev/sdh
+        fstype: xfs
+        state: present
+
+    - shell: lsblk | grep " /data$" | wc -l
+      register: mounted
+
+    - name: Reboot Sepal Instance
+      ansible.builtin.reboot:
+      when: not mounted.stdout|bool
