@@ -47,11 +47,11 @@ ansible-playbook configure-efs.yml \
     --extra-vars "env_file=$CONFIG_HOME/env"
 
 
-# packer build \
-#   --var AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-#   --var AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-#   --var AWS_REGION="$AWS_REGION" \
-#   --var AWS_WORKER_AMI="$AWS_WORKER_AMI" \
-#   --var VERSION="$VERSION" \
-#   --var CONFIG_HOME="$CONFIG_HOME" \
-#   packer.json
+packer build \
+  --var AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+  --var AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+  --var AWS_REGION="$AWS_REGION" \
+  --var AWS_WORKER_AMI="$AWS_WORKER_AMI" \
+  --var VERSION="$VERSION" \
+  --var CONFIG_HOME="$CONFIG_HOME" \
+  packer.json
