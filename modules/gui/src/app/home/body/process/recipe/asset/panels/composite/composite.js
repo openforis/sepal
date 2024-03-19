@@ -38,7 +38,7 @@ class _Composite extends React.Component {
             label: msg(`process.asset.panel.composite.form.type.${value}.label`),
             tooltip: msg(`process.asset.panel.composite.form.type.${value}.tooltip`)
         })
-        const options = ['MOSAIC', 'MEDIAN', 'MEAN', 'MIN', 'MAX', 'MODE'].map(toOption)
+        const options = ['MOSAIC', 'MEDIAN', 'MEAN', 'MIN', 'MAX', 'SD', 'MODE'].map(toOption)
         return (
             <Form.Buttons
                 label={msg('process.asset.panel.composite.form.type.label')}
