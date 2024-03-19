@@ -72,6 +72,4 @@ export const RemappingToolbar = compose(
     withRecipe(mapRecipeToProps)
 )
 
-RemappingToolbar.propTypes = {
-    recipeId: PropTypes.string.isRequired
-}
+RemappingToolbar.propTypes = {}

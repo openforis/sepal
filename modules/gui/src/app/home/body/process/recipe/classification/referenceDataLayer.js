@@ -195,6 +195,5 @@ export const ReferenceDataLayer = compose(
 )
 
 ReferenceDataLayer.propTypes = {
-    dataCollectionManager: PropTypes.object.isRequired,
-    recipeId: PropTypes.string,
+    recipeId: PropTypes.string
 }
