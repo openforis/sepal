@@ -114,7 +114,7 @@ class _Dates extends React.Component {
                 label={msg('process.asset.panel.dates.form.year.label')}
                 placement='above'
                 input={year}
-                startYear='2014'
+                startYear='1972'
                 endYear={moment().year()}/>
         )
     }
