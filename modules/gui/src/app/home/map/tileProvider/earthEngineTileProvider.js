@@ -36,10 +36,7 @@ export class EarthEngineTileProvider extends WMTSTileProvider {
 
     getElementContext(element) {
         const ctx = element.getContext('2d', {willReadFrequently: true})
-        // ctx.imageSmoothingEnabled = false
-        // ctx.mozImageSmoothingEnabled = false
-        // ctx.webkitImageSmoothingEnabled = false
-        // ctx.msImageSmoothingEnabled = false
+        ctx.imageSmoothingEnabled = false
         return ctx
     }
 
