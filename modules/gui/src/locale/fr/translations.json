@@ -2436,6 +2436,10 @@
                                 "label": "",
                                 "tooltip": ""
                             },
+                            "SD": {
+                                "label": "",
+                                "tooltip": ""
+                            },
                             "MODE": {
                                 "label": "",
                                 "tooltip": ""
@@ -2515,17 +2519,36 @@
             "create": "Mosaique",
             "description": "Créer une mosaique avec Landsat ou Sentinel 2",
             "mapToolbar": {
+                "mapRendering": {
+                    "tooltip": "",
+                    "processing": "",
+                    "tiles": ""
+                },
                 "zoom": {
                     "tooltip": "Zoomer"
                 },
                 "layers": {
                     "tooltip": "Sélectionnez les couches à afficher"
                 },
-                "link": {
-                    "tooltip": "Lier cette carte à toutes les autres cartes liées"
+                "options": {
+                    "tooltip": ""
                 },
                 "unlink": {
                     "tooltip": "Déconnecter cette carte"
+                }
+            },
+            "mapOptions": {
+                "location": {
+                    "label": "",
+                    "tooltip": "",
+                    "independent": "",
+                    "synchronized": "",
+                    "getOther": "",
+                    "useCurrent": ""
+                },
+                "retile": {
+                    "label": "",
+                    "tooltip": ""
                 }
             },
             "panel": {
@@ -4468,6 +4491,12 @@
                     "enabled.label": "Activé",
                     "label": "Notifications par courriel",
                     "tooltip": "Activer ou désactiver les notifications facultatives par courriel (par exemple, tâche terminée, tâche échouée, etc.)"
+                },
+                "manualMapRendering": {
+                    "disabled.label": "Désactivé",
+                    "enabled.label": "Activé",
+                    "label": "",
+                    "tooltip": ""
                 },
                 "lastUpdate": {
                     "label": "Dernière mise à jour"

@@ -2436,6 +2436,10 @@
                                 "label": "",
                                 "tooltip": ""
                             },
+                            "SD": {
+                                "label": "",
+                                "tooltip": ""
+                            },
                             "MODE": {
                                 "label": "",
                                 "tooltip": ""
@@ -2515,17 +2519,36 @@
             "create": "Mosaico óptico",
             "description": "Crear mosaico de Landsat o Sentinel 2.",
             "mapToolbar": {
+                "mapRendering": {
+                    "tooltip": "",
+                    "processing": "",
+                    "tiles": ""
+                },
                 "zoom": {
                     "tooltip": "Acercar"
                 },
                 "layers": {
                     "tooltip": "Seleccionar capas para mostrar"
                 },
-                "link": {
-                    "tooltip": "Enlaza este mapa con todos los demás mapas enlazados"
+                "options": {
+                    "tooltip": ""
                 },
                 "unlink": {
                     "tooltip": "Desenlazar este mapa"
+                }
+            },
+            "mapOptions": {
+                "location": {
+                    "label": "",
+                    "tooltip": "",
+                    "independent": "",
+                    "synchronized": "",
+                    "getOther": "",
+                    "useCurrent": ""
+                },
+                "retile": {
+                    "label": "",
+                    "tooltip": ""
                 }
             },
             "panel": {
@@ -4468,6 +4491,12 @@
                     "enabled.label": "Activado",
                     "label": "Notificaciones por email",
                     "tooltip": "Activar o desactivar notificaciones opcionales por email (por ejemplo, tareas completadas, tareas fallidas, etc.)"
+                },
+                "manualMapRendering": {
+                    "disabled.label": "",
+                    "enabled.label": "",
+                    "label": "",
+                    "tooltip": ""
                 },
                 "lastUpdate": {
                     "label": "Última actualización"
