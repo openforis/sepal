@@ -1,5 +1,5 @@
 import {ElementResizeDetector} from '~/widget/elementResizeDetector'
-import {Subject, animationFrames, distinctUntilChanged, map, of, scan, switchMap} from 'rxjs'
+import {Subject, animationFrames, distinctUntilChanged, map, of, scan, switchMap, throttleTime} from 'rxjs'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
@@ -172,13 +172,14 @@ class _CursorValue extends React.Component {
         const {addSubscription} = this.props
         addSubscription(
             this.targetPosition$.pipe(
+                throttleTime(200, null, {leading: true, trailing: true}),
                 switchMap(targetPosition => {
                     const {position} = this.state
                     return position === null
                         ? of(targetPosition)
                         : animationFrames().pipe(
                             map(() => targetPosition),
-                            scan(lerp(.1), position),
+                            scan(lerp(.3), position),
                             map(position => Math.round(position)),
                             distinctUntilChanged()
                         )
