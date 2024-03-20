@@ -1,6 +1,6 @@
 import {ElementResizeDetector} from '~/widget/elementResizeDetector'
 import {Scrollable, ScrollableContainer} from '~/widget/scrollable'
-import {Subject, animationFrames, distinctUntilChanged, map, of, scan, switchMap} from 'rxjs'
+import {Subject, animationFrames, debounceTime, distinctUntilChanged, map, of, scan, switchMap} from 'rxjs'
 import {Tooltip} from '~/widget/tooltip'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -124,13 +124,14 @@ class _CursorValue extends React.Component {
 
         addSubscription(
             this.targetPosition$.pipe(
+                debounceTime(50),
                 switchMap(targetPosition => {
                     const {position} = this.state
                     return position === null
                         ? of(targetPosition)
                         : animationFrames().pipe(
                             map(() => targetPosition),
-                            scan(lerp(.1), position),
+                            scan(lerp(.2), position),
                             map(position => Math.round(position)),
                             distinctUntilChanged()
                         )
