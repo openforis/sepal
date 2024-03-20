@@ -60,14 +60,14 @@
         "failedToLoad": "Échec du chargement de l'asset EE",
         "notFound": "Asset EE introuvable",
         "unauthorized": "Vous n'avez pas accès à cette Asset EE",
-        "folder": "",
-        "image": "",
-        "imageCollection": "",
-        "table": "",
-        "new": "",
-        "recentAssets": "",
-        "userAssets": "",
-        "otherAssets": "",
+        "folder": "Dossier",
+        "image": "Image",
+        "imageCollection": "Collection d'image",
+        "table": "Table",
+        "new": "Nouvel asset",
+        "recentAssets": "Asset récent",
+        "userAssets": "Assets utilisateur",
+        "otherAssets": "Autre assets",
         "reload": "",
         "settings": "",
         "datasets": {
@@ -90,8 +90,8 @@
             "title": "",
             "assetName": "Nom",
             "asset": "",
-            "filter.placeholder": "",
-            "quota": ""
+            "filter.placeholder": "Filtrer par id",
+            "quota": "Quota : {quota}"
         }
     },
     "bands": {
@@ -216,8 +216,8 @@
     },
     "clipboard": {
         "copy": {
-            "success": "",
-            "failure": ""
+            "success": "Copié dans le presse-papiers",
+            "failure": "Impossible de copier dans le presse-papiers"
         }
     },
     "eeTable": {
@@ -337,10 +337,10 @@
             "instructions": "Indiquez le courriel associé à votre compte SEPAL et nous vous enverrons les instructions pour réinitialiser le mot de passe.",
             "invalid": "Cette adresse email n'est pas valide",
             "label": "Mot de passe oublié ?",
-            "email.placeholder": "",
+            "email.placeholder": "Indiquer votre email",
             "required": "Email requis",
             "success": "Un courriel de réinitialisation de mdp a été envoyé à {email}.",
-            "error": ""
+            "error": "Impossible de réinitialiser le mot de passe."
         },
         "intro": {
             "about": {
@@ -384,7 +384,7 @@
             }
         },
         "launch": "Démarrer",
-        "documentation": "",
+        "documentation": "Documentation",
         "loadCurrentUser": {
             "error": "Impossible de se connecter à SEPAL"
         },
@@ -392,39 +392,39 @@
             "button": "S'inscrire",
             "username": {
                 "label": "Identifiant",
-                "placeholder": "",
+                "placeholder": "Choisissez votre nom d'utilisateur",
                 "required": "Identifiant requis",
-                "format": "",
-                "duplicate": "",
-                "cannotValidate": ""
+                "format": "Le nom d'utilisateur doit commencer par une lettre et ne peut contenir que des lettres et des chiffres",
+                "duplicate": "Ce nom d'utilisateur n'est pas disponible. Veuillez en choisir un autre.",
+                "cannotValidate": "Impossible de valider le nom d'utilisateur"
             },
             "name": {
                 "label": "Nom",
-                "placeholder": "",
+                "placeholder": "Entrez votre nom complet",
                 "required": "Le nom est requis",
                 "invalid": ""
             },
             "email": {
-                "label": "",
-                "placeholder": "",
+                "label": "Email",
+                "placeholder": "Entrez votre adresse email",
                 "required": "Email requis",
-                "format": "",
-                "duplicate": "",
-                "cannotValidate": ""
+                "format": "Merci de saisir une adresse e-mail valide",
+                "duplicate": "Cet e-mail n'est pas disponible, veuillez en choisir un autre",
+                "cannotValidate": "Impossible de valider l'email"
             },
             "organization": {
                 "label": "Organisation",
-                "placeholder": "",
+                "placeholder": "Entrez votre organisation",
                 "required": "L'organisation est requise",
                 "invalid": ""
             },
             "intendedUse": {
                 "label": "",
-                "placeholder": "",
+                "placeholder": "Que comptez-vous faire avec SEPAL?",
                 "required": "",
                 "invalid": ""
             },
-            "success": ""
+            "success": "Vous vous êtes inscrit avec succès sur SEPAL. Un e-mail d'activation a été envoyé à {email}."
         },
         "login": {
             "button": "S'identifier",
@@ -459,7 +459,7 @@
                 "required": "Confirmer le mot de passe"
             },
             "success": "Mot de passe réinitialisé",
-            "error": "",
+            "error": "Le mot de passe n'a pas pu être réinitialisé",
             "username": {
                 "label": "Nom d'utilisateur"
             },
@@ -701,8 +701,8 @@
             "remove.tooltip": "Supprimer la visualisation sélectionnée"
         },
         "drawingMode": {
-            "zoomarea": "",
-            "polygon": ""
+            "zoomarea": "Mode de dessin: rectangle",
+            "polygon": "Mode de dessin : polygone"
         }
     },
     "featureLayerSources": {
@@ -887,7 +887,7 @@
                     "button": "",
                     "form": {
                         "cloudDetection": {
-                            "label": "",
+                            "label": "Détection des nuages",
                             "cloudScore": {
                                 "label": "",
                                 "tooltip": ""
@@ -1381,7 +1381,7 @@
                     "button": "",
                     "form": {
                         "cloudDetection": {
-                            "label": "",
+                            "label": "Détection des nuages",
                             "cloudScore": {
                                 "label": "",
                                 "tooltip": ""
@@ -1698,7 +1698,7 @@
                         "options": {
                             "label": "Sources",
                             "latitude": {
-                                "label": "",
+                                "label": "Latitude",
                                 "tooltip": "Inclure la latitude de chaque pixel"
                             },
                             "terrain": {
@@ -2044,20 +2044,20 @@
                             "tooltip": ""
                         },
                         "columnValues": "",
-                        "enterExpression": "",
+                        "enterExpression": "Entrer une expression",
                         "noColumValuesSelected": "",
-                        "removeColumnValue": ""
+                        "removeColumnValue": "Supprimer la valeur de la colonne"
                     },
                     "clearCollected": {
                         "confirmation": {
-                            "label": "",
-                            "message": "",
-                            "title": ""
+                            "label": "Dégager",
+                            "message": "Êtes-vous sûr de vouloir effacer toutes les données de référence collectées ?",
+                            "title": "Effacer les données de référence"
                         },
-                        "label": ""
+                        "label": "Effacer les données de référence collectées"
                     },
                     "export": {
-                        "label": ""
+                        "label": "Exporter les données de référence en CSV"
                     },
                     "form": {
                         "class": {
@@ -2138,7 +2138,7 @@
                                 "label": "Échantillons par classe",
                                 "placeholder": "",
                                 "required": "Vous devez spécifier le nombre d'échantillons à collecter pour chaque classe.",
-                                "suffix": "",
+                                "suffix": "échantillons",
                                 "tooltip": ""
                             },
                             "valueColumn": {
@@ -2705,7 +2705,7 @@
                             }
                         },
                         "cloudDetection": {
-                            "label": "",
+                            "label": "Détection des nuages",
                             "cloudScore": {
                                 "label": "",
                                 "tooltip": ""
@@ -3699,7 +3699,7 @@
                     "button": "",
                     "form": {
                         "cloudDetection": {
-                            "label": "",
+                            "label": "Détection des nuages",
                             "cloudScore": {
                                 "label": "",
                                 "tooltip": ""
@@ -4132,7 +4132,7 @@
                     "button": "",
                     "form": {
                         "cloudDetection": {
-                            "label": "",
+                            "label": "Détection des nuages",
                             "cloudScore": {
                                 "label": "",
                                 "tooltip": ""
@@ -4538,7 +4538,7 @@
                     "required": ""
                 },
                 "username": {
-                    "format": "",
+                    "format": "Le nom d'utilisateur doit commencer par une lettre et ne peut contenir que des lettres et des chiffres",
                     "label": "Nom utilisateur",
                     "required": "Nom utilisateur requis",
                     "unique": "Ce nom d'utilisateur existe déjà"
