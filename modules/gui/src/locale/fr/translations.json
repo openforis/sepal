@@ -83,13 +83,13 @@
         },
         "copyId": {
             "tooltip": "",
-            "success": ""
+            "success": "Id de l'asset copié dans le presse-papiers"
         },
         "browser": {
-            "tooltip": "",
-            "title": "",
+            "tooltip": "Ouvrir le navigateur d'asset",
+            "title": "Navigateur d'Asset",
             "assetName": "Nom",
-            "asset": "",
+            "asset": "Asset",
             "filter.placeholder": "Filtrer par id",
             "quota": "Quota : {quota}"
         }
