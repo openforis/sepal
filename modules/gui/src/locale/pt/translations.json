@@ -2436,6 +2436,10 @@
                                 "label": "",
                                 "tooltip": ""
                             },
+                            "SD": {
+                                "label": "",
+                                "tooltip": ""
+                            },
                             "MODE": {
                                 "label": "",
                                 "tooltip": ""
@@ -2515,16 +2519,35 @@
             "create": "",
             "description": "",
             "mapToolbar": {
+                "mapRendering": {
+                    "tooltip": "",
+                    "processing": "",
+                    "tiles": ""
+                },
                 "zoom": {
                     "tooltip": ""
                 },
                 "layers": {
                     "tooltip": ""
                 },
-                "link": {
+                "options": {
                     "tooltip": ""
                 },
                 "unlink": {
+                    "tooltip": ""
+                }
+            },
+            "mapOptions": {
+                "location": {
+                    "label": "",
+                    "tooltip": "",
+                    "independent": "",
+                    "synchronized": "",
+                    "getOther": "",
+                    "useCurrent": ""
+                },
+                "retile": {
+                    "label": "",
                     "tooltip": ""
                 }
             },
@@ -4464,6 +4487,12 @@
                     "unique": ""
                 },
                 "emailNotifications": {
+                    "disabled.label": "",
+                    "enabled.label": "",
+                    "label": "",
+                    "tooltip": ""
+                },
+                "manualMapRendering": {
                     "disabled.label": "",
                     "enabled.label": "",
                     "label": "",
