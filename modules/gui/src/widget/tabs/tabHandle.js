@@ -147,7 +147,6 @@ class _TabHandle extends React.Component {
         const prevTitle = tab.title || ''
         if (editing) {
             if (!_.isEqual(prevTitle, normalizedTitle)) {
-                console.log({prevTitle, normalizedTitle})
                 renameTab(normalizedTitle, tabPath, onTitleChanged)
             }
             this.setState({
