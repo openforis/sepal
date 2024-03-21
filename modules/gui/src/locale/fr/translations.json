@@ -510,6 +510,9 @@
                 "file": {
                     "label": "fichier CSV"
                 },
+                "clipboard": {
+                    "tooltip": ""
+                },
                 "colorColumnType": {
                     "label": "Format des colonnes de couleur",
                     "tooltip": "Spécifiez si la couleur est dans une seule colonne, ou si le rouge, le vert, le bleu sont dans des colonnes séparées.",
