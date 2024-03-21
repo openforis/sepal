@@ -205,16 +205,20 @@ class _AssetCombo extends React.Component {
         const {addSubscription} = this.props
         addSubscription(
             this.load$.pipe(
-                switchMap(id => api.gee.datasets$(id)),
-                map(({community: {datasets: community}, gee: {datasets: gee}}) => [...community, ...gee])
-            ).subscribe(
-                assets => {
-                    if (assets.length === 1) {
-                        const [asset] = assets
+                switchMap(id => api.gee.datasets$(id))
+            ).subscribe({
+                next: ({community, gee}) => {
+                    if (community.matchingResults + gee.matchingResults === 1) {
+                        const [asset] = [...community.datasets, ...gee.datasets]
                         this.loadMetadata(asset)
+                        this.setDatasets({community, gee})
                     }
+                },
+                error: error => {
+                    this.clearDatasets()
+                    Notifications.error({message: msg('asset.datasets.failedToLoad', {error}), error})
                 }
-            )
+            })
         )
     }
 
@@ -232,24 +236,26 @@ class _AssetCombo extends React.Component {
                     )
                 ).subscribe({
                     next: ({community, gee}) => {
-                        this.setState({
-                            datasets: {
-                                community,
-                                gee
-                            },
-                            searchingDatasets: false
-                        })
+                        this.setDatasets({community, gee})
                     },
                     error: error => {
-                        this.setState({
-                            datasets: {},
-                            searchingDatasets: false
-                        })
+                        this.clearDatasets()
                         Notifications.error({message: msg('asset.datasets.failedToLoad', {error}), error})
                     }
                 })
             )
         }
+    }
+
+    clearDatasets() {
+        this.setDatasets({})
+    }
+
+    setDatasets(datasets = {}) {
+        this.setState({
+            datasets,
+            searchingDatasets: false
+        })
     }
 
     componentDidUpdate({value: prevValue}) {
@@ -450,7 +456,7 @@ class _AssetCombo extends React.Component {
                     .map(visualization => ({...visualization, id: uuid()}))
                 : undefined
         } : null)
-        updateAsset(asset)
+        updateAsset({...asset, type: metadata.type})
     }
 
     onLoading(assetId) {

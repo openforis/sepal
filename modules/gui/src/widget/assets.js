@@ -121,7 +121,7 @@ const updateAssetTree = assetTree => {
 }
 
 const updateAsset = asset => {
-    const roots = Object.keys(select('assets.tree.items') || {})
+    const roots = select('assets.roots') || []
     const recentAssets = select('assets.recent') || []
     const otherAssets = select('assets.other') || []
     const isUserAsset = _.find(roots, root => asset.id.startsWith(root))
