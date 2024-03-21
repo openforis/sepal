@@ -19,7 +19,7 @@ export const normalize = visParams => {
             return []
         }
         const list = _.isString(value)
-            ? value.match(/(\\.|[^,])+/g)?.map(s => s.trim())
+            ? value.match(/(\\.|[^,])+/g)?.map(s => s.trim()) || []
             : !_.isArray(value) && !_.isNil(value)
                 ? [value]
                 : value
