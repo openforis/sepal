@@ -45,6 +45,7 @@ class _AssetCombo extends React.Component {
     }
 
     assetChanged$ = new Subject()
+    load$ = new Subject()
     filter$ = new Subject()
 
     state = {
@@ -179,11 +180,12 @@ class _AssetCombo extends React.Component {
 
     componentDidMount() {
         const {value} = this.props
-        if (value) {
-            this.loadMetadata(value)
-        }
         this.initializeDatasetsSearch()
         this.initializeSearch()
+        this.initializeLoad()
+        if (value) {
+            this.load$.next(value)
+        }
     }
 
     initializeSearch() {
@@ -195,6 +197,23 @@ class _AssetCombo extends React.Component {
                     highlightMatcher: getHighlightMatcher(filter),
                     searchingDatasets: !!filter && mode === ASSET
                 }))
+            )
+        )
+    }
+
+    initializeLoad() {
+        const {addSubscription} = this.props
+        addSubscription(
+            this.load$.pipe(
+                switchMap(id => api.gee.datasets$(id)),
+                map(({community: {datasets: community}, gee: {datasets: gee}}) => [...community, ...gee])
+            ).subscribe(
+                assets => {
+                    if (assets.length === 1) {
+                        const [asset] = assets
+                        this.loadMetadata(asset)
+                    }
+                }
             )
         )
     }
@@ -236,7 +255,7 @@ class _AssetCombo extends React.Component {
     componentDidUpdate({value: prevValue}) {
         const {value} = this.props
         if (value && !prevValue) {
-            this.loadMetadata(value)
+            this.load$.next(value)
         }
     }
 
@@ -379,6 +398,7 @@ class _AssetCombo extends React.Component {
                 label: title || id,
                 value: id,
                 type,
+                url,
                 alias,
                 searchableText,
                 updateFilter: updateFilter && updateFilter(id, type),
@@ -394,10 +414,11 @@ class _AssetCombo extends React.Component {
     }
     
     onChange(option) {
-        const {label, value, type} = option
         const {onChange} = this.props
-        onChange && onChange(value, {label, value, type})
-        this.loadMetadata(value)
+        const {label, value, type, url} = option
+        const asset = {id: value, title: label, type, url}
+        onChange && onChange(value, asset)
+        this.loadMetadata(asset)
     }
 
     onError(assetId, error) {
@@ -410,18 +431,9 @@ class _AssetCombo extends React.Component {
         }
     }
 
-    // defaultOnError(assetId, error) {
-    //     const {input, assets: {removeAsset}} = this.props
-    //     input.setInvalid(
-    //         error.response && error.response.messageKey
-    //             ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-    //             : msg('widget.assetInput.loadError')
-    //     )
-    //     removeAsset(assetId)
-    // }
-
-    onLoaded(assetId, metadata) {
+    onLoaded(asset, metadata) {
         const {onLoaded, assets: {updateAsset}} = this.props
+        const assetId = asset.id
 
         this.setState(
             ({filter}) => ({
@@ -438,15 +450,14 @@ class _AssetCombo extends React.Component {
                     .map(visualization => ({...visualization, id: uuid()}))
                 : undefined
         } : null)
-
-        updateAsset({id: assetId, type: metadata.type})
+        updateAsset(asset)
     }
 
-    onLoading(asset) {
+    onLoading(assetId) {
         const {onLoading} = this.props
-        this.setState({loadingMetadata: asset})
+        this.setState({loadingMetadata: assetId})
         this.assetChanged$.next()
-        onLoading && onLoading(asset)
+        onLoading && onLoading(assetId)
     }
 
     getAssetType(asset) {
@@ -460,9 +471,10 @@ class _AssetCombo extends React.Component {
         return api.gee.assetMetadata$({asset, allowedTypes})
     }
 
-    loadMetadata(assetId) {
+    loadMetadata(asset) {
         const {mode, stream} = this.props
         const {loadingMetadata} = this.state
+        const assetId = asset.id
         if (mode === ASSET) {
             if (this.isAssetLike(assetId) && assetId !== loadingMetadata) {
                 this.onLoading(assetId)
@@ -472,7 +484,7 @@ class _AssetCombo extends React.Component {
                         takeUntil(this.assetChanged$),
                         first()
                     ),
-                    onNext: metadata => this.onLoaded(assetId, metadata),
+                    onNext: metadata => this.onLoaded(asset, metadata),
                     onError: error => this.onError(assetId, error)
                 })
             }
