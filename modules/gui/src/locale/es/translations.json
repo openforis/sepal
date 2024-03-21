@@ -511,7 +511,8 @@
                     "label": ""
                 },
                 "clipboard": {
-                    "tooltip": ""
+                    "tooltip": "",
+                    "disabledTooltip": ""
                 },
                 "colorColumnType": {
                     "label": "",
