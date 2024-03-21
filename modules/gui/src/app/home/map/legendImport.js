@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {FileSelect} from '~/widget/fileSelect'
 import {Form} from '~/widget/form'
 import {FormCombo} from '~/widget/form/combo'
@@ -8,6 +9,7 @@ import {Widget} from '~/widget/widget'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {parseCsvFile$} from '~/csv'
+import {readClipboard} from 'clipboard'
 import {uuid} from '~/uuid'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withForm} from '~/widget/form/form'
@@ -52,6 +54,7 @@ class _LegendImport extends React.Component {
     constructor(props) {
         super(props)
         this.save = this.save.bind(this)
+        this.onPaste = this.onPaste.bind(this)
     }
 
     render() {
@@ -150,7 +153,11 @@ class _LegendImport extends React.Component {
     renderFileSelect() {
         const {stream, inputs: {name}} = this.props
         return (
-            <Widget label={msg('map.legendBuilder.import.file.label')}>
+            <Widget label={msg('map.legendBuilder.import.file.label')}
+                labelButtons={[
+                    this.renderPasteButton()
+                ]}
+            >
                 <FileSelect
                     single
                     onSelect={file => this.onSelectFile(file)}>
@@ -165,6 +172,25 @@ class _LegendImport extends React.Component {
                     }
                 </FileSelect>
             </Widget>
+        )
+    }
+
+    renderPasteButton() {
+        return (
+            <Button
+                key='paste'
+                chromeless
+                shape='none'
+                icon='paste'
+                tooltip={msg('map.legendBuilder.import.clipboard.tooltip')}
+                onClick={this.onPaste}
+            />
+        )
+    }
+
+    onPaste() {
+        readClipboard().then(
+            clipboard => this.parse('clipboard', clipboard)
         )
     }
 
@@ -197,10 +223,14 @@ class _LegendImport extends React.Component {
     }
 
     onSelectFile(file) {
+        this.parse(file.name, file)
+    }
+
+    parse(source, data) {
         const {stream, inputs: {name, rows: rowsInput}} = this.props
-        name.set(file.name)
+        name.set(source)
         stream('LOAD_CSV_ROWS',
-            parseCsvFile$(file),
+            parseCsvFile$(data),
             ({columns, rows}) => {
                 rowsInput.set(rows)
                 this.setState({columns, rows})

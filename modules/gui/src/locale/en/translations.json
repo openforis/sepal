@@ -510,6 +510,9 @@
           "file": {
             "label": "CSV file"
           },
+          "clipboard": {
+            "tooltip": "Read legend from the clipboard"
+          },
           "colorColumnType": {
             "label": "Color column format",
             "tooltip": "Specify if the color is in a single column, or if red, green, blue are in separate column.",

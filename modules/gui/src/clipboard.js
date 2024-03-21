@@ -15,3 +15,6 @@ export const copyToClipboard = (value, successMessage, failureMessage) =>
                 timeout: 3
             })
         })
+
+export const readClipboard = () =>
+    navigator.clipboard.readText()
