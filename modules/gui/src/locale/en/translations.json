@@ -511,7 +511,8 @@
             "label": "CSV file"
           },
           "clipboard": {
-            "tooltip": "Read legend from the clipboard"
+            "tooltip": "Read legend from the clipboard",
+            "disabledTooltip": "This browser doesn't allow reading from the clipboard"
           },
           "colorColumnType": {
             "label": "Color column format",

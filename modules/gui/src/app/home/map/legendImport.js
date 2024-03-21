@@ -7,9 +7,9 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 import {compose} from '~/compose'
+import {isReadClipboardSupported, readClipboard} from 'clipboard'
 import {msg} from '~/translate'
 import {parseCsvFile$} from '~/csv'
-import {readClipboard} from 'clipboard'
 import {uuid} from '~/uuid'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withForm} from '~/widget/form/form'
@@ -182,10 +182,22 @@ class _LegendImport extends React.Component {
                 chromeless
                 shape='none'
                 icon='paste'
-                tooltip={msg('map.legendBuilder.import.clipboard.tooltip')}
+                disabled={!isReadClipboardSupported()}
+                tooltip={msg(isReadClipboardSupported() ? 'map.legendBuilder.import.clipboard.tooltip' : 'map.legendBuilder.import.clipboard.disabledTooltip')}
+                tooltipAllowedWhenDisabled
                 onClick={this.onPaste}
             />
         )
+        // return isReadClipboardSupported() ? (
+        //     <Button
+        //         key='paste'
+        //         chromeless
+        //         shape='none'
+        //         icon='paste'
+        //         tooltip={msg('map.legendBuilder.import.clipboard.tooltip')}
+        //         onClick={this.onPaste}
+        //     />
+        // ) : null
     }
 
     onPaste() {

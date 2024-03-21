@@ -16,5 +16,10 @@ export const copyToClipboard = (value, successMessage, failureMessage) =>
             })
         })
 
+export const isReadClipboardSupported = () =>
+    navigator.clipboard.readText
+
 export const readClipboard = () =>
     navigator.clipboard.readText()
+        ? navigator.clipboard.readText()
+        : Promise.reject(new Error('Reading from clipboard is not supported'))
