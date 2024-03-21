@@ -144,7 +144,7 @@ class _TabHandle extends React.Component {
         this.titleInput.current.value = normalizedTitle
         const tabPath = toTabPath(id, statePath)
         const tab = select(tabPath)
-        const prevTitle = tab.title
+        const prevTitle = tab.title || ''
         if (editing) {
             if (!_.isEqual(prevTitle, normalizedTitle)) {
                 renameTab(normalizedTitle, tabPath, onTitleChanged)
