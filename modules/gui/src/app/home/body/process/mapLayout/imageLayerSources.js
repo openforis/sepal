@@ -2,7 +2,7 @@ import {CrudItem} from '~/widget/crudItem'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {Padding} from '~/widget/padding'
-import {Scrollable, ScrollableContainer} from '~/widget/scrollable'
+import {Scrollable} from '~/widget/scrollable'
 import {compose} from '~/compose'
 import {getImageLayerSource} from '../imageLayerSourceRegistry'
 import {msg} from '~/translate'
@@ -20,16 +20,14 @@ export class _ImageLayerSources extends React.Component {
     render() {
         const {standardImageLayerSources, additionalImageLayerSources} = this.props
         return (
-            <ScrollableContainer>
-                <Scrollable>
-                    <Padding noHorizontal>
-                        <Layout type='vertical' spacing='tight'>
-                            {standardImageLayerSources.map(source => this.renderSource({source, removable: false}))}
-                            {additionalImageLayerSources.map(source => this.renderSource({source, removable: true}))}
-                        </Layout>
-                    </Padding>
-                </Scrollable>
-            </ScrollableContainer>
+            <Scrollable direction='y'>
+                <Padding noHorizontal>
+                    <Layout type='vertical' spacing='tight'>
+                        {standardImageLayerSources.map(source => this.renderSource({source, removable: false}))}
+                        {additionalImageLayerSources.map(source => this.renderSource({source, removable: true}))}
+                    </Layout>
+                </Padding>
+            </Scrollable>
         )
     }
 

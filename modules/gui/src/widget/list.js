@@ -1,7 +1,7 @@
 import {Button} from '~/widget/button'
 import {ElementResizeDetector} from '~/widget/elementResizeDetector'
 import {Keybinding} from '~/widget/keybinding'
-import {Scrollable, ScrollableContainer} from '~/widget/scrollable'
+import {Scrollable} from '~/widget/scrollable'
 import {Subject, debounceTime, distinctUntilChanged, exhaustMap, first, fromEvent, merge, switchMap, takeUntil, timer} from 'rxjs'
 import {compose} from '~/compose'
 import {isEqual} from '~/hash'
@@ -25,13 +25,12 @@ class _ScrollableList extends React.Component {
         const {className} = this.props
         return (
             <ElementResizeDetector resize$={this.autoCenter$}>
-                <ScrollableContainer className={className}>
-                    <Scrollable
-                        className={styles.options}
-                        direction='y'>
-                        {this.renderScrollable}
-                    </Scrollable>
-                </ScrollableContainer>
+                <Scrollable
+                    direction='y'
+                    containerClassName={className}
+                    className={styles.options}>
+                    {this.renderScrollable}
+                </Scrollable>
             </ElementResizeDetector>
         )
     }

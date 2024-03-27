@@ -1,4 +1,5 @@
 import {EMPTY, Subject, animationFrames, debounceTime, distinctUntilChanged, fromEvent, map, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs'
+import {ElementResizeDetector} from './elementResizeDetector'
 import {Keybinding} from '~/widget/keybinding'
 import {compose} from '~/compose'
 import {uuid} from '~/uuid'
@@ -8,54 +9,6 @@ import React, {Component} from 'react'
 import _ from 'lodash'
 import flexy from './flexy.module.css'
 import styles from './scrollable.module.css'
-
-const ScrollableContainerContext = React.createContext()
-
-export class ScrollableContainer extends React.Component {
-    ref = React.createRef()
-    
-    state = {
-        height: 0
-    }
-
-    render() {
-        const {className, children} = this.props
-        const {height} = this.state
-        return (
-            <div ref={this.ref} className={[flexy.container, className].join(' ')}>
-                <ScrollableContainerContext.Provider value={{height}}>
-                    {children}
-                </ScrollableContainerContext.Provider>
-            </div>
-        )
-    }
-
-    updateHeight(height) {
-        this.setState(prevState => prevState.height !== height ? {height} : null)
-    }
-
-    componentDidUpdate() {
-        this.updateHeight(this.ref.current.clientHeight)
-    }
-}
-
-ScrollableContainer.propTypes = {
-    children: PropTypes.any.isRequired,
-    className: PropTypes.string
-}
-
-export const Unscrollable = ({className, children}) => {
-    return (
-        <div className={[flexy.rigid, styles.unscrollable, className].join(' ')}>
-            {children}
-        </div>
-    )
-}
-
-Unscrollable.propTypes = {
-    children: PropTypes.any,
-    className: PropTypes.string
-}
 
 const ScrollableContext = React.createContext()
 
@@ -71,25 +24,34 @@ class _Scrollable extends Component {
     horizontalScroll$ = new Subject()
 
     state = {
+        height: 0,
         key: null
     }
 
     constructor() {
         super()
         this.renderScrollable = this.renderScrollable.bind(this)
+        this.updateSize = this.updateSize.bind(this)
+    }
+
+    updateSize(size) {
+        this.setState({size})
     }
 
     render() {
+        const {containerClassName} = this.props
         return (
-            <ScrollableContainerContext.Consumer>
-                {this.renderScrollable}
-            </ScrollableContainerContext.Consumer>
+            <ElementResizeDetector onResize={this.updateSize}>
+                <div className={[flexy.container, containerClassName].join(' ')}>
+                    {this.renderScrollable()}
+                </div>
+            </ElementResizeDetector>
         )
     }
 
-    renderScrollable({height}) {
+    renderScrollable() {
         const {className, direction, hideScrollbar, children} = this.props
-        const {key} = this.state
+        const {height, key} = this.state
         const scrollable = {
             containerHeight: height,
             getOffset: (direction = 'y') => this.getOffset(direction),
@@ -284,14 +246,11 @@ export const Scrollable = compose(
     withSubscriptions()
 )
 
-Scrollable.defaultProps = {
-    direction: 'y'
-}
-
 Scrollable.propTypes = {
+    direction: PropTypes.oneOf(['x', 'y', 'xy']).isRequired,
     children: PropTypes.any,
     className: PropTypes.string,
-    direction: PropTypes.oneOf(['x', 'y', 'xy']),
+    containerClassName: PropTypes.string,
     hideScrollbar: PropTypes.any,
     onScroll: PropTypes.func
 }

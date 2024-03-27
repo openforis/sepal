@@ -1,4 +1,4 @@
-import {Scrollable, ScrollableContainer} from './scrollable'
+import {Scrollable} from './scrollable'
 import {Subject, delay, filter, map, merge, mergeMap, scan, takeWhile, timer} from 'rxjs'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
@@ -191,11 +191,13 @@ class _Notifications extends React.Component {
 
     render() {
         return (
-            <ScrollableContainer className={styles.container}>
-                <Scrollable className={styles.scrollable} hideScrollbar>
-                    {this.renderNotifications()}
-                </Scrollable>
-            </ScrollableContainer>
+            <Scrollable
+                direction='y'
+                containerClassName={styles.container}
+                className={styles.scrollable}
+                hideScrollbar>
+                {this.renderNotifications()}
+            </Scrollable>
         )
     }
 

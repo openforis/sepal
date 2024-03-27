@@ -1,12 +1,13 @@
 import {CenteredProgress} from '~/widget/progress'
 import {Form} from '~/widget/form'
 import {Label} from '~/widget/label'
+import {Layout} from 'widget/layout'
 import {Padding} from '~/widget/padding'
 import {Panel} from '~/widget/panel/panel'
 import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {Scene} from './scene'
 import {ScenePreview} from '~/app/home/body/process/recipe/opticalMosaic/scenePreview'
-import {Scrollable, ScrollableContainer, Unscrollable} from '~/widget/scrollable'
+import {Scrollable} from '~/widget/scrollable'
 import {compose} from '~/compose'
 import {isPartiallyEqual} from '~/hash'
 import {msg} from '~/translate'
@@ -130,16 +131,14 @@ class _SceneSelection extends React.Component {
 
     renderScenesSection({scenes, title, selected}) {
         return (
-            <ScrollableContainer>
-                <Unscrollable className={styles.title}>
-                    <Label msg={title}/>
-                </Unscrollable>
-                <Scrollable>
+            <Layout type='vertical' spacing='none'>
+                <Label className={styles.title} msg={title}/>
+                <Scrollable direction='y'>
                     <Padding noHorizontal className={styles.grid}>
                         {scenes.map(scene => this.renderScene(scene, selected))}
                     </Padding>
                 </Scrollable>
-            </ScrollableContainer>
+            </Layout>
         )
     }
 

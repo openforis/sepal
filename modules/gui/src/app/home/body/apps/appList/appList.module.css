@@ -4,7 +4,11 @@
 }
 
 .header {
-    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 
 .apps {
