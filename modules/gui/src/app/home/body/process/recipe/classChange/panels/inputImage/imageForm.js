@@ -1,15 +1,13 @@
 import {FormCombo} from '~/widget/form/combo'
 import {Layout} from '~/widget/layout'
 import {Legend} from '~/widget/legend/legend'
-import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
-import {withScrollable} from '~/widget/scrollable'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import styles from './inputImage.module.css'
 
-class _ImageForm extends Component {
+export class ImageForm extends Component {
     state = {entries: [], loadedRecipe: null}
 
     render() {
@@ -96,11 +94,6 @@ class _ImageForm extends Component {
         this.setState({loadedRecipe})
     }
 }
-
-export const ImageForm = compose(
-    _ImageForm,
-    withScrollable()
-)
 
 ImageForm.propTypes = {
     children: PropTypes.any,
