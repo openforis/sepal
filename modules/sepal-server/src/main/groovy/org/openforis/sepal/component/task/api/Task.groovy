@@ -86,6 +86,10 @@ class Task {
         }
     }
 
+    String toString() {
+        return "Task(id: ${id}, state: ${state}, recipeId: ${recipeId}, username: ${username}, operation: ${operation}, sessionId: ${sessionId}), creationTime: ${creationTime}, updateTime: ${updateTime}"
+    }    
+
     enum State {
         PENDING([defaultMessage: 'Initializing...', messageKey: 'tasks.status.initializing', messageArgs: [:]]),
         ACTIVE([defaultMessage: 'Executing...', messageKey: 'tasks.status.executing', messageArgs: [:]]),
