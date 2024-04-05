@@ -9,7 +9,6 @@ class TerminalBackedExternalUserDataGateway implements ExternalUserDataGateway {
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     void createUser(String username) {
-        println("**** ADDING SEPAL USER: username: ${username}, password: ${UUID.randomUUID().toString()}, dir: ${new File('.').absolutePath}")
         def output = Terminal.execute(new File('.'),
                 'add-sepal-user',
                 username,
