@@ -510,6 +510,10 @@
                 "file": {
                     "label": ""
                 },
+                "clipboard": {
+                    "tooltip": "",
+                    "disabledTooltip": ""
+                },
                 "colorColumnType": {
                     "label": "",
                     "tooltip": "",
