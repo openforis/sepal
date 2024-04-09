@@ -32,7 +32,7 @@ class _FormInput extends React.Component {
                 tabIndex={tabIndex}
                 buttons={buttons}
                 onChange={this.onChange}
-                onBlur={this.onblur}
+                onBlur={this.onBlur}
             />
         )
     }
