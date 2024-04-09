@@ -7,11 +7,11 @@ import Hammer from 'hammerjs'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import styles from './draggable.module.css'
+import styles from './draggableListItem.module.css'
 
 const CLICKABLE_PAN_THRESHOLD_PX = 10
 
-class _Draggable extends React.Component {
+class _DraggableListItem extends React.Component {
     draggable = React.createRef()
     
     state = {
@@ -321,12 +321,12 @@ class _Draggable extends React.Component {
     }
 }
 
-export const Draggable = compose(
-    _Draggable,
+export const DraggableListItem = compose(
+    _DraggableListItem,
     withSubscriptions()
 )
 
-Draggable.propTypes = {
+DraggableListItem.propTypes = {
     drag$: PropTypes.object.isRequired,
     className: PropTypes.string,
     disabled: PropTypes.any,
