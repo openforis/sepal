@@ -34,7 +34,7 @@ class _FormPanel extends React.Component {
     }
 
     apply(onSuccess) {
-        const {form, confirmation, onApply} = this.props
+        const {form, confirmation, onApply, onError} = this.props
         const {confirmed} = this.state
 
         if (confirmation && !confirmed) {
@@ -43,15 +43,17 @@ class _FormPanel extends React.Component {
             const result = onApply(form && form.values())
             this.autoCancel = false
             if (isObservable(result)) {
-                const result$ = result
-                this.props.stream('FORM_PANEL_APPLY', result$,
-                    () => null,
-                    _error => null,
-                    () => {
+                this.props.stream({
+                    name: 'FORM_PANEL_APPLY',
+                    stream$: result,
+                    onComplete: () => {
                         onSuccess && onSuccess()
                         this.close()
+                    },
+                    onError: error => {
+                        onError && onError(error)
                     }
-                )
+                })
             } else {
                 onSuccess && onSuccess()
                 this.close()
@@ -199,5 +201,6 @@ FormPanel.propTypes = {
     type: PropTypes.string,
     onApply: PropTypes.func,
     onCancel: PropTypes.func,
-    onClose: PropTypes.func
+    onClose: PropTypes.func,
+    onError: PropTypes.func,
 }
