@@ -1,9 +1,9 @@
-import {ElementResizeDetector} from '~/widget/elementResizeDetector'
 import {Keybinding} from './keybinding'
 import {Layout} from './layout'
-import {Subject, animationFrames, distinctUntilChanged, fromEvent, map, mergeWith, switchMap, takeUntil, timer} from 'rxjs'
+import {Scrollable, withScrollable} from './scrollable'
+import {Subject, debounceTime} from 'rxjs'
 import {compose} from '~/compose'
-import {withSubscriptions} from '~/subscription'
+import {withSubscriptions} from 'subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -11,15 +11,57 @@ import styles from './fastList.module.css'
 
 const NOT_HOVERED = -1
 
-class _FastList extends React.PureComponent {
-    resize$ = new Subject()
-    reset$ = new Subject()
+export class FastList extends React.Component {
+    constructor(props) {
+        super(props)
+        this.renderContent = this.renderContent.bind(this)
+    }
+
+    render() {
+        return (
+            <Scrollable
+                direction='y'
+                noKeyboard
+            >
+                {this.renderContent()}
+            </Scrollable>
+        )
+    }
+
+    renderContent() {
+        const {...props} = this.props
+        return (
+            <FastListContent
+                {...props}
+            />
+        )
+    }
+}
+
+FastList.propTypes = {
+    itemKey: PropTypes.func.isRequired,
+    items: PropTypes.array.isRequired,
+    children: PropTypes.func,
+    itemRenderer: PropTypes.func,
+    overflow: PropTypes.number,
+    spacing: PropTypes.any
+}
+
+FastList.defaultProps = {
+    overflow: 10,
+    spacing: 'none'
+}
+
+class _FastListContent extends React.PureComponent {
+    update$ = new Subject()
 
     state = {
         singleItemHeight: null,
         spacedItemHeight: null,
         firstVisibleItem: 0,
         lastVisibleItem: 0,
+        firstRenderedItem: 0,
+        lastRenderedItem: 0,
         marginTop: 0,
         marginBottom: 0,
         keyboardHover: NOT_HOVERED,
@@ -92,20 +134,14 @@ class _FastList extends React.PureComponent {
     }
 
     renderList() {
-        const {firstVisibleItem, lastVisibleItem, marginTop, marginBottom} = this.state
+        const {firstRenderedItem, lastRenderedItem, marginTop, marginBottom} = this.state
         return (
             <Keybinding keymap={this.getKeymap()}>
-                <ElementResizeDetector resize$={this.resize$}>
-                    <div
-                        ref={this.initScrollable}
-                        className={styles.container}>
-                        <div className={styles.scrollable}>
-                            {this.renderFiller(marginTop)}
-                            {this.renderItems(firstVisibleItem, lastVisibleItem)}
-                            {this.renderFiller(marginBottom)}
-                        </div>
-                    </div>
-                </ElementResizeDetector>
+                <div ref={this.initScrollable}>
+                    {this.renderFiller(marginTop)}
+                    {this.renderItems(firstRenderedItem, lastRenderedItem)}
+                    {this.renderFiller(marginBottom)}
+                </div>
             </Keybinding>
         )
     }
@@ -123,23 +159,25 @@ class _FastList extends React.PureComponent {
         )
     }
 
-    renderItems(firstVisibleItem, lastVisibleItem) {
+    renderItems(firstRenderedItem, lastRenderedItem) {
         const {items, spacing} = this.props
         return (
-            <Layout type='vertical' spacing={spacing}>
-                {items.slice(firstVisibleItem, lastVisibleItem).map(this.renderItem)}
+            <Layout
+                type='vertical'
+                spacing={spacing}>
+                {items.slice(firstRenderedItem, lastRenderedItem).map((item, index) => this.renderItem(item, index, firstRenderedItem))}
             </Layout>
         )
     }
 
-    renderItem(item, index) {
+    renderItem(item, index, firstRenderedItem) {
         const {itemKey, itemRenderer, children} = this.props
         const {keyboardHover, mouseHover} = this.state
         return (
             <FastListItem
                 item={item}
                 key={itemKey(item)}
-                hovered={!mouseHover && keyboardHover === index}>
+                hovered={!mouseHover && (keyboardHover - firstRenderedItem) === index}>
                 {itemRenderer || children}
             </FastListItem>
         )
@@ -147,34 +185,15 @@ class _FastList extends React.PureComponent {
 
     initScrollable(element) {
         if (element) {
-            const scroll$ = fromEvent(element, 'scroll')
-            const {addSubscription} = this.props
-            const update$ = scroll$.pipe(
-                mergeWith(this.resize$),
-                switchMap(() => animationFrames().pipe(
-                    map(() => element.scrollTop),
-                    distinctUntilChanged(),
-                    takeUntil(timer(100))
-                ))
-            )
-            addSubscription(
-                update$.subscribe(
-                    scrollTop => this.update(scrollTop, element.clientHeight)
-                ),
-                this.reset$.subscribe(
-                    () => this.reset(element)
-                )
-            )
-            this.reset(element)
+            this.reset()
         }
     }
 
-    reset(element) {
-        if (element) {
-            element.scrollTop = 0
-            this.update(0, element.clientHeight)
-            this.setState({keyboardHover: NOT_HOVERED})
-        }
+    reset() {
+        const {scrollable} = this.props
+        scrollable.setScrollTop(0)
+        this.update$.next()
+        this.setState({keyboardHover: NOT_HOVERED})
     }
 
     getItemHeight() {
@@ -185,13 +204,28 @@ class _FastList extends React.PureComponent {
         }
     }
 
+    isVisible(item) {
+        const {firstVisibleItem, lastVisibleItem} = this.state
+        return item >= firstVisibleItem && item <= lastVisibleItem
+    }
+
     handleArrowDown() {
         const {items} = this.props
-        this.setState(({keyboardHover}) => ({keyboardHover: Math.min(keyboardHover + 1, items.length - 1)}))
+        const {firstVisibleItem} = this.state
+        this.setState(({keyboardHover}) => ({
+            keyboardHover: this.isVisible(keyboardHover)
+                ? Math.min(keyboardHover + 1, items.length - 1)
+                : firstVisibleItem
+        }))
     }
 
     handleArrowUp() {
-        this.setState(({keyboardHover}) => ({keyboardHover: Math.max(keyboardHover - 1, NOT_HOVERED)}))
+        const {lastVisibleItem} = this.state
+        this.setState(({keyboardHover}) => ({
+            keyboardHover: this.isVisible(keyboardHover)
+                ? Math.max(keyboardHover - 1, NOT_HOVERED)
+                : lastVisibleItem - 1
+        }))
     }
 
     handleEnter() {
@@ -204,47 +238,53 @@ class _FastList extends React.PureComponent {
         this.setState({keyboardHover: NOT_HOVERED})
     }
 
-    update(scrollTop, clientHeight) {
-        const {items, overflow} = this.props
+    update() {
+        const {items, overflow, scrollable: {scrollTop, clientHeight}} = this.props
         const {itemHeight, itemSpacing} = this.getItemHeight()
-        const firstVisibleItem = Math.max(0, Math.ceil(scrollTop / itemHeight) - overflow)
-        const lastVisibleItem = Math.min(items.length, Math.floor((scrollTop + clientHeight + itemSpacing) / itemHeight) + overflow)
-        const marginTop = firstVisibleItem * itemHeight
-        const marginBottom = (items.length - lastVisibleItem) * itemHeight
-        this.setState({firstVisibleItem, lastVisibleItem, marginTop, marginBottom})
+        const firstVisibleItem = Math.max(0, Math.ceil(scrollTop / itemHeight))
+        const lastVisibleItem = Math.min(items.length, Math.floor((scrollTop + clientHeight + itemSpacing) / itemHeight))
+        const firstRenderedItem = Math.max(0, firstVisibleItem - overflow)
+        const lastRenderedItem = Math.min(items.length, lastVisibleItem + overflow)
+        const marginTop = firstRenderedItem * itemHeight
+        const marginBottom = (items.length - lastRenderedItem) * itemHeight
+        this.setState({firstVisibleItem, lastVisibleItem, firstRenderedItem, lastRenderedItem, marginTop, marginBottom})
     }
 
-    componentDidUpdate({items: prevItems}) {
-        const {items} = this.props
+    componentDidMount() {
+        const {addSubscription} = this.props
+        addSubscription(
+            this.update$.pipe(
+                debounceTime(10)
+            ).subscribe(
+                () => {
+                    const {scrollable: {dragging}} = this.props
+                    if (!dragging) {
+                        this.update()
+                    }
+                }
+            )
+        )
+    }
+
+    componentDidUpdate({items: prevItems, scrollable: {scrollTop: prevScrollTop, clientHeight: prevClientHeight, dragging: prevDragging}}) {
+        const {items, scrollable: {scrollTop, clientHeight, dragging}} = this.props
         if (!_.isEqual(prevItems, items)) {
-            this.reset$.next()
+            this.reset()
+        } else if (scrollTop !== prevScrollTop || clientHeight !== prevClientHeight || dragging !== prevDragging) {
+            this.update$.next()
         }
     }
 }
 
-export const FastList = compose(
-    _FastList,
+const FastListContent = compose(
+    _FastListContent,
+    withScrollable(),
     withSubscriptions()
 )
-
-FastList.propTypes = {
-    itemKey: PropTypes.func.isRequired,
-    items: PropTypes.array.isRequired,
-    children: PropTypes.func,
-    itemRenderer: PropTypes.func,
-    overflow: PropTypes.number,
-    spacing: PropTypes.any
-}
-
-FastList.defaultProps = {
-    overflow: 10,
-    spacing: 'none'
-}
 
 class FastListItem extends React.PureComponent {
     render() {
         const {item, hovered, children} = this.props
-        // return children(item, hovered)
         return (
             <div ref={hovered ? this.hovered : null}>
                 {children(item, hovered)}
@@ -255,7 +295,7 @@ class FastListItem extends React.PureComponent {
     hovered(element) {
         if (element) {
             element.scrollIntoViewIfNeeded
-                ? element.scrollIntoViewIfNeeded()
+                ? element.scrollIntoViewIfNeeded(false)
                 : element.scrollIntoView()
         }
     }

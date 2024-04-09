@@ -1,7 +1,5 @@
-.unscrollable {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+.container {
+    position: relative;
 }
 
 .scrollable {
@@ -24,12 +22,91 @@
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
-.hideScrollbar::-webkit-scrollbar {
+.scrollable::-webkit-scrollbar {
     display: none;
 }
   
 /* Hide scrollbar for IE, Edge and Firefox */
-.hideScrollbar {
+scrollable.hideScrollbar {
     -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    width: none;  /* Firefox */
+}
+
+.scrollbar {
+    --size: .5rem;
+    --margin: .2rem;
+    position: absolute;
+    opacity: 0;
+    transition: opacity 250ms ease-in-out;
+    z-index: 2;
+}
+
+.scrollbar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.scrollbar.vertical::before {
+    content: '';
+    position: absolute;
+    left: var(--margin);
+}
+
+.scrollbar.horizontal::before {
+    content: '';
+    position: absolute;
+    top: var(--margin);
+}
+
+.scrollbar.handle::before {
+    background-color: var(--look-highlight-hover-background-color);
+}
+
+.scrollbar.filler::before {
+    background-color: rgba(0, 0, 0, .5);
+}
+
+.container:hover .scrollbar,
+.container .scrollbar.scrolling {
+    opacity: .5;
+}
+
+.scrollbar.vertical {
+    --top: 0;
+    --bottom: 0;
+    top: calc(var(--top) * 1px);
+    bottom: calc(var(--bottom) * 1px);
+    right: 0rem;
+    width: var(--size);
+}
+
+.scrollbar.horizontal {
+    --left: 0;
+    --right: 0;
+    left: calc(var(--left) * 1px);
+    right: calc(var(--right) * 1px);
+    bottom: 0;
+    height: var(--size);
+}
+
+.container:hover .scrollbar:hover,
+.container .scrollbar.dragging {
+    cursor: pointer;
+    opacity: 1;
+    transition: opacity 50ms ease-in-out;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    pointer-events: all;
+    cursor: pointer;
+    z-index: 2;
 }

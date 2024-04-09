@@ -27,8 +27,7 @@ class _ScrollableList extends React.Component {
             <ElementResizeDetector resize$={this.autoCenter$}>
                 <Scrollable
                     direction='y'
-                    containerClassName={className}
-                    className={styles.options}>
+                    containerClassName={[className, styles.options].join(' ')}>
                     {this.renderScrollable}
                 </Scrollable>
             </ElementResizeDetector>
@@ -111,7 +110,7 @@ class _List extends React.Component {
     }
 
     render() {
-        const {scrollable: {containerHeight}, onCancel, keyboard} = this.props
+        const {scrollable: {clientHeight}, onCancel, keyboard} = this.props
         const keymap = {
             Escape: onCancel ? onCancel : null,
             Enter: this.selectHighlighted,
@@ -122,19 +121,19 @@ class _List extends React.Component {
         }
         return (
             <Keybinding keymap={keymap} disabled={keyboard === false}>
-                {this.renderList(containerHeight)}
+                {this.renderList(clientHeight)}
             </Keybinding>
         )
     }
 
-    renderList(containerHeight = 0) {
+    renderList(clientHeight = 0) {
         const {overScroll} = this.props
         return (
             <ul
                 onMouseLeave={this.onMouseLeave}
                 ref={this.list}
                 style={{
-                    '--scrollable-container-height': overScroll ? containerHeight : 0
+                    '--scrollable-container-height': overScroll ? clientHeight : 0
                 }}>
                 {this.renderOptions()}
             </ul>
