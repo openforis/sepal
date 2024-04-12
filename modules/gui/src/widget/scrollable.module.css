@@ -9,15 +9,15 @@
     pointer-events: all;
 }
 
-.scrollable.x {
+.direction-x {
     overflow-x: auto;
 }
 
-.scrollable.y {
+.direction-y {
     overflow-y: auto;
 }
 
-.scrollable.xy {
+.direction-xy {
     overflow: auto;
 }
 
@@ -34,11 +34,12 @@ scrollable.hideScrollbar {
 
 .scrollbar {
     --size: .5rem;
-    --margin: .2rem;
+    --margin: .1rem;
     position: absolute;
     opacity: 0;
     transition: opacity 250ms ease-in-out;
     z-index: 2;
+    pointer-events: all;
 }
 
 .scrollbar::before {
@@ -98,15 +99,4 @@ scrollable.hideScrollbar {
     cursor: pointer;
     opacity: 1;
     transition: opacity 50ms ease-in-out;
-}
-
-.overlay {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    pointer-events: all;
-    cursor: pointer;
-    z-index: 2;
 }

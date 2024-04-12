@@ -3,6 +3,7 @@ import {EMPTY, Subject, animationFrames, concatWith, debounceTime, delay, distin
 import {ElementResizeDetector} from './elementResizeDetector'
 import {Keybinding} from '~/widget/keybinding'
 import {compose} from '~/compose'
+import {withEventShield} from './eventShield'
 import {withSubscriptions} from '~/subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -78,18 +79,72 @@ class _Scrollable extends React.PureComponent {
                     containerClassName
                 ].join(' ')}>
                     {this.renderScrollable()}
-                    {this.renderOverlay()}
-                    {this.renderVerticalScrollbar()}
                     {this.renderHorizontalScrollbar()}
+                    {this.renderVerticalScrollbar()}
                 </div>
             </ElementResizeDetector>
         )
     }
 
-    renderOverlay() {
-        const {verticalDragging, horizontalDragging} = this.state
-        return verticalDragging || horizontalDragging ? (
-            <div className={styles.overlay}/>
+    renderScrollable() {
+        const {key, className, direction, noKeyboard} = this.props
+        const {dragging, scrolling, clientHeight, clientWidth, scrollHeight, scrollWidth, scrollTop, scrollLeft} = this.state
+        const scrollable = {
+            dragging,
+            scrolling,
+            clientHeight,
+            clientWidth,
+            scrollHeight,
+            scrollWidth,
+            scrollTop,
+            scrollLeft,
+            setScrollTop: this.setScrollTop,
+            setScrollLeft: this.setScrollLeft,
+            centerElement: this.centerElement,
+            scrollElement: this.scrollElement,
+            getElement: this.getElement
+        }
+        const keymap = !noKeyboard && ['y', 'xy'].includes(direction) ? {
+            ArrowUp: () => this.scrollLine(-1),
+            ArrowDown: () => this.scrollLine(1),
+            // 'Shift+ ': () => scrollable.scrollPage(-1),
+            // ' ': () => scrollable.scrollPage(1)
+        } : null
+        // "Space" keybinding disabled because it interferes with Input's keybinding in Combo
+        return (
+            <div
+                key={key}
+                ref={this.ref}
+                className={[
+                    flexy.elastic,
+                    styles.scrollable,
+                    styles[`direction-${direction}`],
+                    className
+                ].join(' ')}>
+                <ScrollableContext.Provider value={scrollable}>
+                    <Keybinding keymap={keymap}>
+                        {this.renderContent(scrollable)}
+                    </Keybinding>
+                </ScrollableContext.Provider>
+            </div>
+        )
+    }
+
+    renderContent(scrollable) {
+        const {children} = this.props
+        return _.isFunction(children)
+            ? children(scrollable)
+            : children
+    }
+
+    renderVerticalScrollbar() {
+        const {scrollbarTop, scrollbarBottom, clientHeight} = this.state
+        return scrollbarTop || scrollbarBottom ? (
+            <div>
+                {this.renderVerticalScrollbarFiller(0, clientHeight - scrollbarTop, this.scrollPageUp)}
+                {this.renderVerticalScrollbarHandle()}
+                {this.renderVerticalScrollbarFiller(clientHeight - scrollbarBottom, 0, this.scrollPageDown)}
+            </div>
         ) : null
     }
 
@@ -132,35 +187,15 @@ class _Scrollable extends React.PureComponent {
         )
     }
 
-    renderVerticalScrollbar() {
-        const {scrollbarTop, scrollbarBottom, clientHeight} = this.state
-        return scrollbarTop || scrollbarBottom ? (
-            <React.Fragment>
-                {this.renderVerticalScrollbarFiller(0, clientHeight - scrollbarTop, this.scrollPageUp)}
-                {this.renderVerticalScrollbarHandle()}
-                {this.renderVerticalScrollbarFiller(clientHeight - scrollbarBottom, 0, this.scrollPageDown)}
-            </React.Fragment>
+    renderHorizontalScrollbar() {
+        const {scrollbarLeft, scrollbarRight, clientWidth} = this.state
+        return scrollbarLeft || scrollbarRight ? (
+            <div>
+                {this.renderHorizontalFiller(0, clientWidth - scrollbarLeft, this.scrollPageLeft)}
+                {this.renderHorizontalScrollbarHandle()}
+                {this.renderHorizontalFiller(clientWidth - scrollbarRight, 0, this.scrollPageRight)}
+            </div>
         ) : null
-    }
-
-    onVerticalDragStart() {
-        this.setState(({scrollTop}) => ({
-            verticalDragging: true,
-            verticalOffset: scrollTop
-        }))
-    }
-
-    onVerticalDrag({delta: {y}}) {
-        const {verticalOffset, verticalFactor} = this.state
-        this.setScrollTop(verticalOffset + y / verticalFactor)
-        this.dragging$.next()
-    }
-
-    onVerticalDragEnd() {
-        this.setState({
-            verticalDragging: false,
-            verticalOffset: null
-        })
     }
 
     renderHorizontalFiller(left, right, onClick) {
@@ -202,15 +237,24 @@ class _Scrollable extends React.PureComponent {
         )
     }
 
-    renderHorizontalScrollbar() {
-        const {scrollbarLeft, scrollbarRight, clientWidth} = this.state
-        return scrollbarLeft || scrollbarRight ? (
-            <React.Fragment>
-                {this.renderHorizontalFiller(0, clientWidth - scrollbarLeft, this.scrollPageLeft)}
-                {this.renderHorizontalScrollbarHandle()}
-                {this.renderHorizontalFiller(clientWidth - scrollbarRight, 0, this.scrollPageRight)}
-            </React.Fragment>
-        ) : null
+    onVerticalDragStart() {
+        this.setState(({scrollTop}) => ({
+            verticalDragging: true,
+            verticalOffset: scrollTop
+        }))
+    }
+
+    onVerticalDrag({delta: {y}}) {
+        const {verticalOffset, verticalFactor} = this.state
+        this.setScrollTop(verticalOffset + y / verticalFactor)
+        this.dragging$.next()
+    }
+
+    onVerticalDragEnd() {
+        this.setState({
+            verticalDragging: false,
+            verticalOffset: null
+        })
     }
 
     onHorizontalDragStart() {
@@ -220,9 +264,9 @@ class _Scrollable extends React.PureComponent {
         }))
     }
 
-    onHorizontalDrag({delta: {y}}) {
+    onHorizontalDrag({delta: {x}}) {
         const {horizontalOffset, horizontalFactor} = this.state
-        this.setScrollLeft(horizontalOffset + y / horizontalFactor)
+        this.setScrollLeft(horizontalOffset + x / horizontalFactor)
         this.dragging$.next()
     }
 
@@ -231,57 +275,6 @@ class _Scrollable extends React.PureComponent {
             horizontalDragging: false,
             horizontalOffset: null
         })
-    }
-
-    renderScrollable() {
-        const {key, className, direction, noKeyboard} = this.props
-        const {dragging, scrolling, clientHeight, clientWidth, scrollHeight, scrollWidth, scrollTop, scrollLeft} = this.state
-        const scrollable = {
-            dragging,
-            scrolling,
-            clientHeight,
-            clientWidth,
-            scrollHeight,
-            scrollWidth,
-            scrollTop,
-            scrollLeft,
-            setScrollTop: this.setScrollTop,
-            setScrollLeft: this.setScrollLeft,
-            centerElement: this.centerElement,
-            scrollElement: this.scrollElement,
-            getElement: this.getElement
-        }
-        const keymap = !noKeyboard && ['y', 'xy'].includes(direction) ? {
-            ArrowUp: () => this.scrollLine(-1),
-            ArrowDown: () => this.scrollLine(1),
-            // 'Shift+ ': () => scrollable.scrollPage(-1),
-            // ' ': () => scrollable.scrollPage(1)
-        } : null
-        // "Space" keybinding disabled because it interferes with Input's keybinding in Combo
-        return (
-            <div
-                key={key}
-                ref={this.ref}
-                className={[
-                    flexy.elastic,
-                    styles.scrollable,
-                    styles[direction],
-                    className
-                ].join(' ')}>
-                <ScrollableContext.Provider value={scrollable}>
-                    <Keybinding keymap={keymap}>
-                        {this.renderContent(scrollable)}
-                    </Keybinding>
-                </ScrollableContext.Provider>
-            </div>
-        )
-    }
-
-    renderContent(scrollable) {
-        const {children} = this.props
-        return _.isFunction(children)
-            ? children(scrollable)
-            : children
     }
 
     getElement() {
@@ -348,6 +341,17 @@ class _Scrollable extends React.PureComponent {
             behavior: 'smooth',
             block: 'nearest'
         })
+    }
+
+    handleContentSize() {
+        const {addSubscription} = this.props
+        const content = this.ref.current
+        const config = {characterData: true, childList: true, subtree: true}
+        const observer = new MutationObserver(() => this.resize$.next())
+        observer.observe(content, config)
+        addSubscription(
+            () => observer.disconnect()
+        )
     }
 
     handleHover() {
@@ -482,16 +486,28 @@ class _Scrollable extends React.PureComponent {
 
     componentDidMount() {
         const {hideScrollbar} = this.props
+        this.handleContentSize()
         this.handleHover()
         this.handleScroll()
         if (!hideScrollbar) {
             this.handleScrollbar()
         }
     }
+
+    componentDidUpdate(_prevProps, prevState) {
+        const {eventShield} = this.props
+        const {verticalDragging, horizontalDragging} = this.state
+        const dragging = verticalDragging || horizontalDragging
+        const wasDragging = prevState.verticalDragging || prevState.horizontalDragging
+        if (eventShield && dragging !== wasDragging) {
+            eventShield.setEnabled(dragging)
+        }
+    }
 }
 
 export const Scrollable = compose(
     _Scrollable,
+    withEventShield(),
     withSubscriptions()
 )
 
