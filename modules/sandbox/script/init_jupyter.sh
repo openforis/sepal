@@ -32,7 +32,7 @@ git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
 /usr/bin/python3 /usr/local/bin/jupyter nbextensions_configurator enable
 /usr/bin/python3 /usr/local/bin/jupyter nbextension enable --py --sys-prefix widgetsnbextension
 
-/usr/bin/python3 -m pip install voila
+/usr/bin/python3 -m pip install "voila<0.5"
 /usr/bin/python3 /usr/local/bin/jupyter nbextension install voila --sys-prefix --py
 /usr/bin/python3 /usr/local/bin/jupyter nbextension enable voila --sys-prefix --py
 /usr/bin/python3 /usr/local/bin/jupyter serverextension enable voila --sys-prefix
