@@ -1,32 +1,56 @@
 const {job} = require('#gee/jobs/job')
 
+const CHUNK_SIZE = 100
+
 const worker$ = ({recipe, bands, latLng}) => {
     const {getCollection$} = require('#sepal/ee/timeSeries/collection')
     const {toGeometry} = require('#sepal/ee/aoi')
-    const {getRows$} = require('#sepal/ee/table')
-    const {switchMap} = require('rxjs')
+    const {map, mergeMap, of, switchMap, toArray} = require('rxjs')
     const ee = require('#sepal/ee')
+    const _ = require('lodash')
+
     const aoi = {type: 'POINT', ...latLng}
     const geometry = toGeometry(aoi)
 
-    const timeSeriesForPixel$ = collection => {
-        const band = bands[0] // We only support one band at the moment
-        return collection
+    const band = bands[0]
+
+    const timeSeriesForPixel$ = collection =>
+        ee.getInfo$(collection
             .select(band)
-            .map(image => {
-                const value = image.reduceRegion({
-                    reducer: ee.Reducer.first(),
-                    geometry,
-                    scale: 10,
-                    tileScale: 16
-                }).getNumber(band) // Expect a single band in the recipe
-                return ee.Feature(null, {date: image.date(), value})
+            .map(image =>
+                image.addBands(
+                    ee.Image(image.date().millis()).int64()
+                )
+            )
+            .toArray()
+            .reduceRegion({
+                reducer: ee.Reducer.first(),
+                geometry,
+                scale: 10,
+                tileScale: 16
             })
-            .filter(ee.Filter.notNull(['value']))
-    }
+            .get('array'), 'Extract chunk'
+        )
+    
     return getCollection$({recipe, bands, geometry}).pipe(
-        switchMap(collection => getRows$(
-            timeSeriesForPixel$(collection)
+        switchMap(collection => ee.getInfo$(collection.aggregate_array('system:index')).pipe(
+            switchMap(indexes => of(..._.chunk(indexes, CHUNK_SIZE))),
+            mergeMap(indexChunk =>
+                timeSeriesForPixel$(
+                    collection.filter(ee.Filter.inList('system:index', indexChunk))
+                )
+            , 4),
+            toArray(),
+            map(observations => {
+                return ({
+                    features: observations.filter(chunk => chunk).flat(1).map(([value, date]) => ({
+                        properties: {
+                            date: {value: date},
+                            value
+                        }
+                    }))
+                })
+            })
         ))
     )
 }
