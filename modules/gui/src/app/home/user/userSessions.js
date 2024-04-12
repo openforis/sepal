@@ -2,7 +2,7 @@ import {CrudItem} from '~/widget/crudItem'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
-import {Scrollable, ScrollableContainer} from '~/widget/scrollable'
+import {Scrollable} from '~/widget/scrollable'
 import {actionBuilder} from '~/action-builder'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -70,11 +70,9 @@ class _UserSessions extends React.Component {
 
     renderSessions(sessions) {
         return (
-            <ScrollableContainer>
-                <Scrollable>
-                    {sessions.map(session => this.renderSession(session))}
-                </Scrollable>
-            </ScrollableContainer>
+            <Scrollable direction='y'>
+                {sessions.map(session => this.renderSession(session))}
+            </Scrollable>
         )
     }
 

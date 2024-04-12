@@ -3,7 +3,7 @@ import {ButtonGroup} from '~/widget/buttonGroup'
 import {Content, SectionLayout, TopBar} from '~/widget/sectionLayout'
 import {EMPTY, Subject, groupBy, map, mergeMap, mergeScan, of, shareReplay} from 'rxjs'
 import {Keybinding} from '~/widget/keybinding'
-import {Scrollable, ScrollableContainer} from '~/widget/scrollable'
+import {Scrollable} from '~/widget/scrollable'
 import {TabContent} from './tabContent'
 import {TabHandle} from './tabHandle'
 import {addTab, closeTab, selectTab} from './tabActions'
@@ -127,11 +127,11 @@ class _Tabs extends React.Component {
         const {tabs, maxTabs} = this.props
         return (
             <React.Fragment>
-                <ScrollableContainer>
-                    <Scrollable direction='x' className={styles.tabs}>
-                        {maxTabs > 1 ? tabs.map(this.renderTabHandle) : null}
-                    </Scrollable>
-                </ScrollableContainer>
+                <Scrollable
+                    direction='x'
+                    className={styles.tabs}>
+                    {maxTabs > 1 ? tabs.map(this.renderTabHandle) : null}
+                </Scrollable>
                 {this.renderTabControls()}
             </React.Fragment>
         )

@@ -1,7 +1,7 @@
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {Keybinding} from '~/widget/keybinding'
-import {Scrollable, ScrollableContainer} from '~/widget/scrollable'
+import {Scrollable} from '~/widget/scrollable'
 import {Tagline} from './tagline'
 import {Title} from './title'
 import {msg} from '~/translate'
@@ -34,13 +34,11 @@ import partner_wageningen from './intro/partners/wageningen.png'
 import styles from './intro.module.css'
 
 export const Intro = ({onLaunch}) =>
-    <ScrollableContainer>
-        <Scrollable className={styles.intro}>
-            <Main onLaunch={onLaunch}/>
-            <Info/>
-            <Footer/>
-        </Scrollable>
-    </ScrollableContainer>
+    <Scrollable className={styles.intro} direction='y'>
+        <Main onLaunch={onLaunch}/>
+        <Info/>
+        <Footer/>
+    </Scrollable>
 
 const Main = ({onLaunch}) =>
     <Keybinding keymap={{'Enter': onLaunch, 'Escape': onLaunch}}>

@@ -10,7 +10,6 @@ import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {Notifications} from '~/widget/notifications'
-import {Scrollable, ScrollableContainer, Unscrollable} from '~/widget/scrollable'
 import {SearchBox} from '~/widget/searchBox'
 import {actionBuilder} from '~/action-builder'
 import {compose} from '~/compose'
@@ -99,21 +98,19 @@ class _AppList extends React.Component {
         const itemKey = app => `${app.path}|${this.getHighlightMatcher()}`
         return this.hasData()
             ? (
-                <ScrollableContainer>
-                    <Unscrollable>
+                <Layout type='vertical' spacing='compact'>
+                    <div className={styles.header}>
                         {this.renderHeader(apps)}
-                    </Unscrollable>
-                    <Scrollable direction='x'>
-                        <FastList
-                            items={apps}
-                            itemKey={itemKey}
-                            itemRenderer={this.renderApp}
-                            spacing='tight'
-                            overflow={50}
-                            onEnter={this.handleSelect}
-                        />
-                    </Scrollable>
-                </ScrollableContainer>
+                    </div>
+                    <FastList
+                        items={apps}
+                        itemKey={itemKey}
+                        itemRenderer={this.renderApp}
+                        spacing='tight'
+                        overflow={50}
+                        onEnter={this.handleSelect}
+                    />
+                </Layout>
             )
             : null
     }
@@ -126,7 +123,9 @@ class _AppList extends React.Component {
     renderHeader(apps) {
         const {tags} = this.props
         return (
-            <Layout className={styles.header} type='vertical' spacing='compact'>
+            <Layout
+                type='vertical'
+                spacing='compact'>
                 <Layout type='horizontal' spacing='compact'>
                     {this.renderSearch()}
                     {this.renderGoogleAccountFilter()}

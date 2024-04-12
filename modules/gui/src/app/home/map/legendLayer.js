@@ -1,5 +1,5 @@
 import {ElementResizeDetector} from '~/widget/elementResizeDetector'
-import {Scrollable, ScrollableContainer} from '~/widget/scrollable'
+import {Scrollable} from '~/widget/scrollable'
 import {Subject, animationFrames, debounceTime, distinctUntilChanged, map, of, scan, switchMap} from 'rxjs'
 import {Tooltip} from '~/widget/tooltip'
 import {compose} from '~/compose'
@@ -81,19 +81,17 @@ class _LegendLayer extends React.Component {
         const {mapArea: {area}, areas} = this.props
         const {labels, values, palette} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
         return (
-            <ScrollableContainer>
-                <Scrollable direction='y'>
-                    <div className={styles.fullLegend}>
-                        {_.range(0, values.length).map(i =>
-                            <React.Fragment key={values[i]}>
-                                <div className={styles.fullLegendColor} style={{'--color': palette[i]}}/>
-                                <div className={styles.fullLegendValue}>{values[i]}</div>
-                                <div className={styles.fullLegendLabel}>{labels[i]}</div>
-                            </React.Fragment>
-                        )}
-                    </div>
-                </Scrollable>
-            </ScrollableContainer>
+            <Scrollable direction='y'>
+                <div className={styles.fullLegend}>
+                    {_.range(0, values.length).map(i =>
+                        <React.Fragment key={values[i]}>
+                            <div className={styles.fullLegendColor} style={{'--color': palette[i]}}/>
+                            <div className={styles.fullLegendValue}>{values[i]}</div>
+                            <div className={styles.fullLegendLabel}>{labels[i]}</div>
+                        </React.Fragment>
+                    )}
+                </div>
+            </Scrollable>
         )
     }
 }

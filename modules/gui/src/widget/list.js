@@ -1,7 +1,7 @@
 import {Button} from '~/widget/button'
 import {ElementResizeDetector} from '~/widget/elementResizeDetector'
 import {Keybinding} from '~/widget/keybinding'
-import {Scrollable, ScrollableContainer} from '~/widget/scrollable'
+import {Scrollable} from '~/widget/scrollable'
 import {Subject, debounceTime, distinctUntilChanged, exhaustMap, first, fromEvent, merge, switchMap, takeUntil, timer} from 'rxjs'
 import {compose} from '~/compose'
 import {isEqual} from '~/hash'
@@ -25,13 +25,11 @@ class _ScrollableList extends React.Component {
         const {className} = this.props
         return (
             <ElementResizeDetector resize$={this.autoCenter$}>
-                <ScrollableContainer className={className}>
-                    <Scrollable
-                        className={styles.options}
-                        direction='y'>
-                        {this.renderScrollable}
-                    </Scrollable>
-                </ScrollableContainer>
+                <Scrollable
+                    direction='y'
+                    containerClassName={[className, styles.options].join(' ')}>
+                    {this.renderScrollable}
+                </Scrollable>
             </ElementResizeDetector>
         )
     }
@@ -112,7 +110,7 @@ class _List extends React.Component {
     }
 
     render() {
-        const {scrollable: {containerHeight}, onCancel, keyboard} = this.props
+        const {scrollable: {clientHeight}, onCancel, keyboard} = this.props
         const keymap = {
             Escape: onCancel ? onCancel : null,
             Enter: this.selectHighlighted,
@@ -123,19 +121,19 @@ class _List extends React.Component {
         }
         return (
             <Keybinding keymap={keymap} disabled={keyboard === false}>
-                {this.renderList(containerHeight)}
+                {this.renderList(clientHeight)}
             </Keybinding>
         )
     }
 
-    renderList(containerHeight = 0) {
+    renderList(clientHeight = 0) {
         const {overScroll} = this.props
         return (
             <ul
                 onMouseLeave={this.onMouseLeave}
                 ref={this.list}
                 style={{
-                    '--scrollable-container-height': overScroll ? containerHeight : 0
+                    '--scrollable-container-height': overScroll ? clientHeight : 0
                 }}>
                 {this.renderOptions()}
             </ul>

@@ -4,7 +4,7 @@ import {CrudItem} from '~/widget/crudItem'
 import {FastList} from '~/widget/fastList'
 import {InlineConfirmationButton} from '~/widget/inlineConfirmationButton'
 import {ListItem} from '~/widget/listItem'
-import {Scrollable, ScrollableContainer} from '~/widget/scrollable'
+import {Scrollable} from '~/widget/scrollable'
 import {Shape} from '~/widget/shape'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -162,11 +162,9 @@ class _Tasks extends React.Component {
                     {this.renderToolbar()}
                 </TopBar>
                 <Content horizontalPadding verticalPadding menuPadding>
-                    <ScrollableContainer>
-                        <Scrollable direction='x'>
-                            {this.renderTasks()}
-                        </Scrollable>
-                    </ScrollableContainer>
+                    <Scrollable direction='x'>
+                        {this.renderTasks()}
+                    </Scrollable>
                 </Content>
             </SectionLayout>
         )

@@ -4,7 +4,7 @@ import {FastList} from '~/widget/fastList'
 import {Icon} from '~/widget/icon'
 import {Label} from '~/widget/label'
 import {Layout} from '~/widget/layout'
-import {Scrollable, ScrollableContainer, Unscrollable} from '~/widget/scrollable'
+import {Scrollable} from '~/widget/scrollable'
 import {SearchBox} from '~/widget/searchBox'
 import {SortButton} from '~/widget/sortButton'
 import {UserResourceUsage} from '~/app/home/user/userResourceUsage'
@@ -313,22 +313,16 @@ export class UserList extends React.Component {
         return (
             <SectionLayout>
                 <Content horizontalPadding verticalPadding menuPadding>
-                    <ScrollableContainer>
-                        <Unscrollable>
-                            <Layout type='horizontal' spacing='compact'>
-                                {this.renderTextFilter()}
-                                {this.renderStatusFilter()}
-                            </Layout>
-                        </Unscrollable>
-                        <Scrollable direction='x'>
-                            <ScrollableContainer className={styles.content}>
-                                <Scrollable direction='x' className={styles.users}>
-                                    {this.renderHeader(users)}
-                                    {this.renderUsers(users)}
-                                </Scrollable>
-                            </ScrollableContainer>
-                        </Scrollable>
-                    </ScrollableContainer>
+                    <Layout type='horizontal' spacing='compact'>
+                        {this.renderTextFilter()}
+                        {this.renderStatusFilter()}
+                    </Layout>
+                    <Scrollable
+                        direction='x'
+                        className={styles.users}>
+                        {this.renderHeader(users)}
+                        {this.renderUsers(users)}
+                    </Scrollable>
                 </Content>
             </SectionLayout>
         )

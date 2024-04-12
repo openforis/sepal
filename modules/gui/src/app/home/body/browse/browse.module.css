@@ -15,7 +15,6 @@
 }
 
 .fileList {
-    overflow-x: auto;
     line-height: 2rem;
     margin-top: 1rem;
 }

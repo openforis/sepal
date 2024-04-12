@@ -22,7 +22,19 @@ export const withSubscriptions = () =>
                     subscription && this.subscriptions.push(subscription))
             }
 
+            unsubscribe(subscription) {
+                if (typeof subscription === 'function') {
+                    return subscription()
+                }
+                if (subscription.unsubscribe) {
+                    return subscription.unsubscribe()
+                }
+                console.error('Cannot unsubscribe unsupported subscription', subscription)
+            }
+
             componentWillUnmount() {
-                this.subscriptions.forEach(subscription => subscription.unsubscribe())
+                this.subscriptions.forEach(
+                    subscription => this.unsubscribe(subscription)
+                )
             }
         }

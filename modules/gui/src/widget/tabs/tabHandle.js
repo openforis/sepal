@@ -189,11 +189,11 @@ class _TabHandle extends React.Component {
         const scrollableWidth = scrollableElement.clientWidth
         const min = Math.max(tabRight + tabWidth / 2 - scrollableWidth, 0)
         const max = Math.max(tabLeft - tabWidth / 2, 0)
-        const offset = scrollable.getOffset('x')
+        const offset = scrollable.scrollLeft
         if (offset < min) {
-            scrollable.scrollTo(min, 'x')
+            scrollable.horizontalScrollTo(min)
         } else if (offset > max) {
-            scrollable.scrollTo(max, 'x')
+            scrollable.horizontalScrollTo(max)
         }
     }
 

@@ -1,15 +1,3 @@
-.container {
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-    will-change: transform;
-}
-
-.scrollable {
-    width: 100%;
-    height: 100%;
-}
-
 .filler {
     --height: 0;
     --itemHeight: 0;

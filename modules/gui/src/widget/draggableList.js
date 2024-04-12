@@ -1,4 +1,4 @@
-import {Draggable} from './draggable'
+import {DraggableListItem} from './draggableListItem'
 import {Subject} from 'rxjs'
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
@@ -43,7 +43,7 @@ class _DraggableList extends React.Component {
         const {itemRenderer, itemId, showHandle} = this.props
         const id = itemId(item)
         return (
-            <Draggable
+            <DraggableListItem
                 key={id}
                 drag$={drag$}
                 dragValue={id}

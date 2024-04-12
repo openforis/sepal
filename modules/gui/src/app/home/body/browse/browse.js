@@ -4,7 +4,7 @@ import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
 import {RemoveButton} from '~/widget/removeButton'
-import {Scrollable, ScrollableContainer} from '~/widget/scrollable'
+import {Scrollable} from '~/widget/scrollable'
 import {SortButtons} from '~/widget/sortButtons'
 import {Tabs} from '~/widget/tabs/tabs'
 import {ToggleButton} from '~/widget/toggleButton'
@@ -576,19 +576,17 @@ class _FileBrowser extends React.Component {
         return (
             <SectionLayout>
                 <Content className={styles.browse} menuPadding horizontalPadding verticalPadding>
-                    <ScrollableContainer>
-                        <Scrollable direction='xy'>
-                            <Layout type='horizontal'>
-                                {this.renderInfo()}
-                                <Layout type='horizontal' spacing='none'>
-                                    {this.renderToolbar()}
-                                </Layout>
+                    <Scrollable direction='xy'>
+                        <Layout type='horizontal'>
+                            {this.renderInfo()}
+                            <Layout type='horizontal' spacing='none'>
+                                {this.renderToolbar()}
                             </Layout>
-                            <div className={styles.fileList}>
-                                {this.renderList('/', tree)}
-                            </div>
-                        </Scrollable>
-                    </ScrollableContainer>
+                        </Layout>
+                        <div className={styles.fileList}>
+                            {this.renderList('/', tree)}
+                        </div>
+                    </Scrollable>
                 </Content>
             </SectionLayout>
         )

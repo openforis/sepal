@@ -1,5 +1,5 @@
 import {Padding} from '~/widget/padding'
-import {Scrollable, ScrollableContainer} from '~/widget/scrollable'
+import {Scrollable} from '~/widget/scrollable'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './panelContent.module.css'
@@ -9,17 +9,17 @@ export class PanelContent extends React.Component {
         const {className, scrollable, noHorizontalPadding, noVerticalPadding, children} = this.props
         return scrollable
             ? (
-                <ScrollableContainer className={styles.scrollable}>
-                    <Scrollable>
-                        <Padding
-                            className={className}
-                            noHorizontal={noHorizontalPadding}
-                            noVertical={noVerticalPadding}
-                        >
-                            {children}
-                        </Padding>
-                    </Scrollable>
-                </ScrollableContainer>
+                <Scrollable
+                    direction='y'
+                    containerClassName={styles.scrollable}>
+                    <Padding
+                        className={className}
+                        noHorizontal={noHorizontalPadding}
+                        noVertical={noVerticalPadding}
+                    >
+                        {children}
+                    </Padding>
+                </Scrollable>
             )
             : (
                 <Padding
