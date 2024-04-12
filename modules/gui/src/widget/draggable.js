@@ -1,4 +1,4 @@
-import {animationFrames, debounceTime, delay, distinctUntilChanged, filter, fromEvent, map, switchMap, takeUntil, timer} from 'rxjs'
+import {animationFrames, debounceTime, delay, distinctUntilChanged, filter, fromEvent, map, switchMap} from 'rxjs'
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
 import Hammer from 'hammerjs'
