@@ -10,7 +10,6 @@ import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {Notifications} from '~/widget/notifications'
-import {Scrollable} from '~/widget/scrollable'
 import {SearchBox} from '~/widget/searchBox'
 import {actionBuilder} from '~/action-builder'
 import {compose} from '~/compose'
@@ -103,16 +102,14 @@ class _AppList extends React.Component {
                     <div className={styles.header}>
                         {this.renderHeader(apps)}
                     </div>
-                    <Scrollable direction='x'>
-                        <FastList
-                            items={apps}
-                            itemKey={itemKey}
-                            itemRenderer={this.renderApp}
-                            spacing='tight'
-                            overflow={50}
-                            onEnter={this.handleSelect}
-                        />
-                    </Scrollable>
+                    <FastList
+                        items={apps}
+                        itemKey={itemKey}
+                        itemRenderer={this.renderApp}
+                        spacing='tight'
+                        overflow={50}
+                        onEnter={this.handleSelect}
+                    />
                 </Layout>
             )
             : null
