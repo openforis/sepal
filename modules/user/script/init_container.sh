@@ -35,4 +35,6 @@ template /config/database.properties /etc/sepal/database.properties root: 0600
 template /config/smtp.properties /etc/sepal/smtp.properties root: 0600
 template /config/user-server.properties /etc/sepal/user-server.properties root: 0600
 
+gradle --no-daemon :sepal-user:createLaunchCommand -DDEPLOY_ENVIRONMENT=${DEPLOY_ENVIRONMENT}
+chmod +x /tmp/sepal-server-launch.sh
 exec /usr/bin/supervisord -c /config/supervisord.conf

@@ -15,13 +15,12 @@ dependencies {
     testCompile project(':sepal-common-test')
 }
 
-task runModule(type: Exec) {
+task createLaunchCommand() {
     group = "Execution"
-    description = "Run main class"
+    description = "Generate launch command script"
     def jvmArgs = []
     if (System.getenv('DEPLOY_ENVIRONMENT') == 'DEV')
-        jvmArgs = ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006']
+        jvmArgs = ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005']
     def commandLineArgs = ["java", "-classpath", sourceSets.main.runtimeClasspath.getAsPath()] + jvmArgs + [javaMainClass]
-    commandLine(*commandLineArgs)
+    file("/tmp/sepal-server-launch.sh").text = '#!/bin/bash\n' + commandLineArgs.join(' ')
 }
-

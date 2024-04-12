@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e 
 function template {
     local template=$1
     local destination=$2
@@ -29,4 +29,7 @@ chown -R sepal: /data/workDir
 mkdir -p /data/home -m 770
 chown sepal: /data/home
 
-exec gradle :sepal-server:runModule -DDEPLOY_ENVIRONMENT=${DEPLOY_ENVIRONMENT}
+gradle --no-daemon :sepal-server:createLaunchCommand -DDEPLOY_ENVIRONMENT=${DEPLOY_ENVIRONMENT}
+chmod +x /tmp/sepal-server-launch.sh
+exec /tmp/sepal-server-launch.sh
+
