@@ -1,7 +1,3 @@
-.content {
-    min-width: fit-content;
-}
-
 .number {
     display: flex;
     justify-content: flex-end;
@@ -127,6 +123,9 @@
 .users {
     background-color: var(--look-transparent-background-color);
     color: var(--look-transparent-color);
+}
+
+.users > * {
     min-width: 60rem;
 }
 

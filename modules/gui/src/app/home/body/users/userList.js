@@ -317,14 +317,11 @@ export class UserList extends React.Component {
                         {this.renderTextFilter()}
                         {this.renderStatusFilter()}
                     </Layout>
-                    <Scrollable direction='x'>
-                        <Scrollable
-                            direction='x'
-                            containerClassName={styles.content}
-                            className={styles.users}>
-                            {this.renderHeader(users)}
-                            {this.renderUsers(users)}
-                        </Scrollable>
+                    <Scrollable
+                        direction='x'
+                        className={styles.users}>
+                        {this.renderHeader(users)}
+                        {this.renderUsers(users)}
                     </Scrollable>
                 </Content>
             </SectionLayout>
