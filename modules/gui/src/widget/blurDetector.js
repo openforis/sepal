@@ -1,6 +1,7 @@
 import {compose} from '~/compose'
 import {delay, distinctUntilChanged, filter, fromEvent, map, merge, switchMap} from 'rxjs'
 import {withContext} from '~/context'
+import {withEventShield} from './eventShield'
 import {withForwardedRef} from '~/ref'
 import {withSubscriptions} from '~/subscription'
 import PropTypes from 'prop-types'
@@ -28,7 +29,7 @@ class _BlurDetector extends React.Component {
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
-        this.checkEnabled = this.checkEnabled.bind(this)
+        this.setEnabled = this.setEnabled.bind(this)
         this.isEnabled = this.isEnabled.bind(this)
         this.onBlur = this.onBlur.bind(this)
         this.blurStart = this.blurStart.bind(this)
@@ -47,14 +48,14 @@ class _BlurDetector extends React.Component {
                 ].join(' ')}
                 style={{...style, '--animation-duration-ms': ANIMATION_DURATION_MS}}
                 onClick={onClick}>
-                <Context.Provider value={{enabled: this.checkEnabled}}>
+                <Context.Provider value={{setEnabled: this.setEnabled}}>
                     {children}
                 </Context.Provider>
             </div>
         )
     }
 
-    checkEnabled(enabled) {
+    setEnabled(enabled) {
         return this.enabled = enabled
     }
     
@@ -68,7 +69,7 @@ class _BlurDetector extends React.Component {
 
     componentDidMount() {
         const {autoBlurTimeout, fadeOut, onBlur, addSubscription} = this.props
-        this.setEnabled(false)
+        this.setParentEnabled(false)
         if (onBlur) {
             addSubscription(
                 merge(
@@ -95,7 +96,8 @@ class _BlurDetector extends React.Component {
                     enter$.pipe(
                         switchMap(() => leave$.pipe(
                             delay(autoBlurTimeout)
-                        ))
+                        )),
+                        filter(this.isEnabled)
                     ).subscribe(this.onBlur)
                 )
                 if (fadeOut) {
@@ -113,7 +115,7 @@ class _BlurDetector extends React.Component {
     }
 
     componentWillUnmount() {
-        this.setEnabled(true)
+        this.setParentEnabled(true)
     }
 
     onBlur(e) {
@@ -123,16 +125,17 @@ class _BlurDetector extends React.Component {
         }
     }
 
-    setEnabled(enabled) {
+    setParentEnabled(enabled) {
         const {blurDetector} = this.props
         if (blurDetector) {
-            blurDetector.enabled(enabled)
+            blurDetector.setEnabled(enabled)
         }
     }
 
     isEnabled() {
         const {enabled} = this
-        return enabled
+        const {eventShield} = this.props
+        return enabled && !eventShield.enabled
     }
     
     isOver(e) {
@@ -155,6 +158,7 @@ class _BlurDetector extends React.Component {
 export const BlurDetector = compose(
     _BlurDetector,
     withBlurDetector(),
+    withEventShield(),
     withSubscriptions(),
     withForwardedRef(),
 )
@@ -163,11 +167,6 @@ BlurDetector.propTypes = {
     children: PropTypes.any.isRequired,
     autoBlurTimeout: PropTypes.number,
     className: PropTypes.string,
-    // exclude: PropTypes.oneOfType([
-    //     PropTypes.arrayOf(PropTypes.elementType),
-    //     PropTypes.elementType,
-    //     // null
-    // ]),
     exclude: PropTypes.any,
     fadeOut: PropTypes.any,
     style: PropTypes.object,
