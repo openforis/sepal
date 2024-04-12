@@ -1,3 +1,4 @@
+import {EventShield} from 'widget/eventShield'
 import {Home} from '~/app/home/home'
 import {Landing} from '~/app/landing/landing'
 import {Notifications} from '~/widget/notifications'
@@ -26,9 +27,11 @@ class _App extends React.Component {
         const {hasDimensions} = this.props
         return (
             <div className='app'>
-                <ViewportResizeSensor/>
-                {hasDimensions ? this.renderBody() : null}
-                <Notifications/>
+                <EventShield>
+                    <ViewportResizeSensor/>
+                    {hasDimensions ? this.renderBody() : null}
+                    <Notifications/>
+                </EventShield>
             </div>
         )
     }
