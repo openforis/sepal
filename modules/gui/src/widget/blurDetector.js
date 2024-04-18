@@ -1,5 +1,5 @@
 import {compose} from '~/compose'
-import {delay, distinctUntilChanged, filter, fromEvent, map, merge, switchMap} from 'rxjs'
+import {delay, distinctUntilChanged, filter, fromEvent, map, merge, sample, shareReplay, switchMap} from 'rxjs'
 import {withContext} from '~/context'
 import {withEventShield} from './eventShield'
 import {withForwardedRef} from '~/ref'
@@ -9,15 +9,16 @@ import React from 'react'
 import _ from 'lodash'
 import styles from './blurDetector.module.css'
 
-const ANIMATION_DURATION_MS = 500
+const ANIMATION_DURATION_MS = 250
 
 const Context = React.createContext()
 
 const withBlurDetector = withContext(Context, 'blurDetector')
 
-const isOver = (e, element) => {
-    return element.contains(e.target)
-}
+const isOver = (e, element) =>
+    typeof e === MouseEvent
+        ? document.elementsFromPoint(e.clientX, e.clientY).includes(element)
+        : element.contains(e.target)
 
 class _BlurDetector extends React.Component {
     enabled = true
@@ -68,7 +69,7 @@ class _BlurDetector extends React.Component {
     }
 
     componentDidMount() {
-        const {autoBlurTimeout, fadeOut, onBlur, addSubscription} = this.props
+        const {autoBlurTimeout, fadeOut, onBlur, addSubscription, eventShield} = this.props
         this.setParentEnabled(false)
         if (onBlur) {
             addSubscription(
@@ -84,21 +85,30 @@ class _BlurDetector extends React.Component {
             if (autoBlurTimeout) {
                 const over$ = fromEvent(document, 'mousemove').pipe(
                     map(e => this.isOver(e)),
-                    distinctUntilChanged()
+                    distinctUntilChanged(),
+                    shareReplay(1)
                 )
                 const enter$ = over$.pipe(
                     filter(over => over)
                 )
-                const leave$ = over$.pipe(
-                    filter(over => !over)
+                const leave$ = eventShield.enabled$.pipe(
+                    switchMap(enabled => enabled
+                        ? over$.pipe(
+                            sample(eventShield.enabled$.pipe(
+                                filter(enabled => !enabled)
+                            ))
+                        )
+                        : over$
+                    ),
+                    filter(over => !over),
+                )
+                const away$ = enter$.pipe(
+                    switchMap(() => leave$.pipe(
+                        delay(autoBlurTimeout)
+                    ))
                 )
                 addSubscription(
-                    enter$.pipe(
-                        switchMap(() => leave$.pipe(
-                            delay(autoBlurTimeout)
-                        )),
-                        filter(this.isEnabled)
-                    ).subscribe(this.onBlur)
+                    away$.subscribe(this.onBlur)
                 )
                 if (fadeOut) {
                     addSubscription(
@@ -133,9 +143,7 @@ class _BlurDetector extends React.Component {
     }
 
     isEnabled() {
-        const {enabled} = this
-        const {eventShield} = this.props
-        return enabled && !eventShield.enabled
+        return this.enabled
     }
     
     isOver(e) {

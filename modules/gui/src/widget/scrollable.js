@@ -1,9 +1,10 @@
 import {Draggable} from './draggable'
-import {EMPTY, Subject, animationFrames, concatWith, debounceTime, delay, distinctUntilChanged, fromEvent, map, mergeWith, of, scan, switchMap, takeUntil, takeWhile, timer, withLatestFrom} from 'rxjs'
+import {EMPTY, Subject, animationFrames, concatWith, delay, distinctUntilChanged, filter, fromEvent, map, merge, mergeWith, of, sample, scan, switchMap, takeUntil, takeWhile, timer} from 'rxjs'
 import {ElementResizeDetector} from './elementResizeDetector'
 import {Keybinding} from '~/widget/keybinding'
 import {compose} from '~/compose'
 import {withEventShield} from './eventShield'
+import {withForwardedRef} from 'ref'
 import {withSubscriptions} from '~/subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -21,11 +22,37 @@ const lerp = rate =>
     (value, targetValue) => value + (targetValue - value) * rate
 
 class _Scrollable extends React.PureComponent {
-    ref = React.createRef()
+    constructor(props) {
+        super(props)
+        this.containerRef = props.forwardedRef || React.createRef()
+        this.scrollableRef = React.createRef()
+        this.getContainerElement = this.getContainerElement.bind(this)
+        this.getScrollableElement = this.getScrollableElement.bind(this)
+        this.getScrollTop = this.getScrollTop.bind(this)
+        this.getScrollLeft = this.getScrollLeft.bind(this)
+        this.setScrollTop = this.setScrollTop.bind(this)
+        this.setScrollLeft = this.setScrollLeft.bind(this)
+        this.centerElement = this.centerElement.bind(this)
+        this.scrollElement = this.scrollElement.bind(this)
+        this.onVerticalDragStart = this.onVerticalDragStart.bind(this)
+        this.onVerticalDrag = this.onVerticalDrag.bind(this)
+        this.onVerticalDragEnd = this.onVerticalDragEnd.bind(this)
+        this.onHorizontalDragStart = this.onHorizontalDragStart.bind(this)
+        this.onHorizontalDrag = this.onHorizontalDrag.bind(this)
+        this.onHorizontalDragEnd = this.onHorizontalDragEnd.bind(this)
+        this.scrollLineUp = this.scrollLineUp.bind(this)
+        this.scrollLineDown = this.scrollLineDown.bind(this)
+        this.scrollPageUp = this.scrollPageUp.bind(this)
+        this.scrollPageDown = this.scrollPageDown.bind(this)
+        this.scrollPageLeft = this.scrollPageLeft.bind(this)
+        this.scrollPageRight = this.scrollPageRight.bind(this)
+    }
+
     verticalScroll$ = new Subject()
     horizontalScroll$ = new Subject()
     resize$ = new Subject()
     dragging$ = new Subject()
+    mouseAway$ = new Subject()
 
     state = {
         size: {},
@@ -48,36 +75,17 @@ class _Scrollable extends React.PureComponent {
         scrollLeft: 0
     }
 
-    constructor() {
-        super()
-        this.getElement = this.getElement.bind(this)
-        this.getScrollTop = this.getScrollTop.bind(this)
-        this.getScrollLeft = this.getScrollLeft.bind(this)
-        this.setScrollTop = this.setScrollTop.bind(this)
-        this.setScrollLeft = this.setScrollLeft.bind(this)
-        this.centerElement = this.centerElement.bind(this)
-        this.scrollElement = this.scrollElement.bind(this)
-        this.onVerticalDragStart = this.onVerticalDragStart.bind(this)
-        this.onVerticalDrag = this.onVerticalDrag.bind(this)
-        this.onVerticalDragEnd = this.onVerticalDragEnd.bind(this)
-        this.onHorizontalDragStart = this.onHorizontalDragStart.bind(this)
-        this.onHorizontalDrag = this.onHorizontalDrag.bind(this)
-        this.onHorizontalDragEnd = this.onHorizontalDragEnd.bind(this)
-        this.scrollPageUp = this.scrollPageUp.bind(this)
-        this.scrollPageDown = this.scrollPageDown.bind(this)
-        this.scrollPageLeft = this.scrollPageLeft.bind(this)
-        this.scrollPageRight = this.scrollPageRight.bind(this)
-    }
-
     render() {
         const {containerClassName} = this.props
         return (
             <ElementResizeDetector resize$={this.resize$}>
-                <div className={[
-                    flexy.container,
-                    styles.container,
-                    containerClassName
-                ].join(' ')}>
+                <div
+                    className={[
+                        flexy.container,
+                        styles.container,
+                        containerClassName
+                    ].join(' ')}
+                    ref={this.containerRef}>
                     {this.renderScrollable()}
                     {this.renderHorizontalScrollbar()}
                     {this.renderVerticalScrollbar()}
@@ -102,19 +110,20 @@ class _Scrollable extends React.PureComponent {
             setScrollLeft: this.setScrollLeft,
             centerElement: this.centerElement,
             scrollElement: this.scrollElement,
-            getElement: this.getElement
+            getElement: this.getScrollableElement,
+            mouseAway$: this.mouseAway$
         }
         const keymap = !noKeyboard && ['y', 'xy'].includes(direction) ? {
-            ArrowUp: () => this.scrollLine(-1),
-            ArrowDown: () => this.scrollLine(1),
-            // 'Shift+ ': () => scrollable.scrollPage(-1),
-            // ' ': () => scrollable.scrollPage(1)
+            ArrowUp: this.scrollLineUp,
+            ArrowDown: this.scrollLineDown,
+            PageUp: this.scrollPageUp,
+            PageDown: this.scrollPageDown
         } : null
         // "Space" keybinding disabled because it interferes with Input's keybinding in Combo
         return (
             <div
                 key={key}
-                ref={this.ref}
+                ref={this.scrollableRef}
                 className={[
                     flexy.elastic,
                     styles.scrollable,
@@ -247,7 +256,7 @@ class _Scrollable extends React.PureComponent {
     onVerticalDrag({delta: {y}}) {
         const {verticalOffset, verticalFactor} = this.state
         this.setScrollTop(verticalOffset + y / verticalFactor)
-        this.dragging$.next()
+        this.dragging$.next(true)
     }
 
     onVerticalDragEnd() {
@@ -255,6 +264,7 @@ class _Scrollable extends React.PureComponent {
             verticalDragging: false,
             verticalOffset: null
         })
+        this.dragging$.next(false)
     }
 
     onHorizontalDragStart() {
@@ -267,7 +277,7 @@ class _Scrollable extends React.PureComponent {
     onHorizontalDrag({delta: {x}}) {
         const {horizontalOffset, horizontalFactor} = this.state
         this.setScrollLeft(horizontalOffset + x / horizontalFactor)
-        this.dragging$.next()
+        this.dragging$.next(true)
     }
 
     onHorizontalDragEnd() {
@@ -275,26 +285,31 @@ class _Scrollable extends React.PureComponent {
             horizontalDragging: false,
             horizontalOffset: null
         })
+        this.dragging$.next(false)
     }
 
-    getElement() {
-        return this.ref.current
+    getContainerElement() {
+        return this.containerRef.current
+    }
+
+    getScrollableElement() {
+        return this.scrollableRef.current
     }
 
     getScrollTop() {
-        return this.getElement().scrollTop
+        return this.getScrollableElement().scrollTop
     }
 
     getScrollLeft() {
-        return this.getElement().scrollLeft
+        return this.getScrollableElement().scrollLeft
     }
 
     setScrollTop(offset) {
-        this.getElement().scrollTop = offset
+        this.getScrollableElement().scrollTop = offset
     }
 
     setScrollLeft(offset) {
-        this.getElement().scrollLeft = offset
+        this.getScrollableElement().scrollLeft = offset
     }
 
     scrollTo(offset, direction = 'y') {
@@ -307,7 +322,7 @@ class _Scrollable extends React.PureComponent {
 
     scrollPage(pages, direction) {
         const {clientHeight} = this.state
-        this.scrollTo(this.getElement().scrollTop + pages * clientHeight, direction)
+        this.scrollTo(this.getScrollableElement().scrollTop + pages * clientHeight, direction)
     }
 
     scrollPageUp() {
@@ -326,13 +341,21 @@ class _Scrollable extends React.PureComponent {
         this.scrollPage(1, 'x')
     }
 
+    scrollLineUp() {
+        this.scrollLine(-1)
+    }
+
+    scrollLineDown() {
+        this.scrollLine(1)
+    }
+
     scrollLine(lines) {
-        this.scrollTo(this.getElement().scrollTop + lines * PIXEL_PER_LINE)
+        this.scrollTo(this.getScrollableElement().scrollTop + lines * PIXEL_PER_LINE)
     }
 
     centerElement(element) {
         if (element) {
-            this.scrollTo(element.offsetTop - (this.getElement().clientHeight - element.clientHeight) / 2)
+            this.scrollTo(element.offsetTop - (this.getScrollableElement().clientHeight - element.clientHeight) / 2)
         }
     }
 
@@ -345,40 +368,25 @@ class _Scrollable extends React.PureComponent {
 
     handleContentSize() {
         const {addSubscription} = this.props
-        const content = this.ref.current
         const config = {characterData: true, childList: true, subtree: true}
         const observer = new MutationObserver(() => this.resize$.next())
-        observer.observe(content, config)
+        observer.observe(this.getScrollableElement(), config)
         addSubscription(
             () => observer.disconnect()
         )
     }
 
-    handleHover() {
-        const {onHover, addSubscription} = this.props
-        if (onHover) {
-            const mouseCoords$ = fromEvent(document, 'mousemove').pipe(
-                map(e => ([e.clientX, e.clientY]))
-            )
-            const debouncedScroll$ = fromEvent(this.getElement(), 'scroll').pipe(
-                debounceTime(50)
-            )
-            const highlight$ = debouncedScroll$.pipe(
-                withLatestFrom(mouseCoords$),
-                map(([, [x, y]]) => document.elementFromPoint(x, y)),
-                distinctUntilChanged()
-            )
-            addSubscription(
-                highlight$.subscribe(
-                    element => onHover(element)
-                )
-            )
-        }
+    isOver(element) {
+        return this.getContainerElement().contains(element)
     }
 
-    handleScroll() {
-        const {addSubscription} = this.props
-        const smoothScroll$ = (scroll$, getOffset) => scroll$.pipe(
+    isDragging() {
+        const {verticalDragging, horizontalDragging} = this.state
+        return verticalDragging || horizontalDragging
+    }
+
+    smoothScroll$(scroll$, getOffset) {
+        return scroll$.pipe(
             map(targetOffset => Math.round(targetOffset)),
             switchMap(targetOffset =>
                 Math.round(getOffset()) === targetOffset
@@ -392,8 +400,12 @@ class _Scrollable extends React.PureComponent {
                     )
             )
         )
-        const verticalScroll$ = smoothScroll$(this.verticalScroll$, this.getScrollTop)
-        const horizontalScroll$ = smoothScroll$(this.horizontalScroll$, this.getScrollLeft)
+    }
+
+    handleScroll() {
+        const {addSubscription} = this.props
+        const verticalScroll$ = this.smoothScroll$(this.verticalScroll$, this.getScrollTop)
+        const horizontalScroll$ = this.smoothScroll$(this.horizontalScroll$, this.getScrollLeft)
         addSubscription(
             verticalScroll$.subscribe(
                 offset => this.setScrollTop(offset)
@@ -404,25 +416,10 @@ class _Scrollable extends React.PureComponent {
         )
     }
 
-    handleScrollbar() {
+    handleScrolling() {
         const {addSubscription} = this.props
-        const element = this.getElement()
-        const scroll$ = fromEvent(element, 'scroll')
-        const update$ = scroll$.pipe(
-            mergeWith(this.resize$),
-            switchMap(() => animationFrames().pipe(
-                map(() => ({
-                    scrollTop: element.scrollTop,
-                    scrollLeft: element.scrollLeft,
-                    clientHeight: element.clientHeight,
-                    clientWidth: element.clientWidth,
-                    scrollHeight: element.scrollHeight,
-                    scrollWidth: element.scrollWidth
-                })),
-                distinctUntilChanged(_.isEqual),
-                takeUntil(timer(100))
-            ))
-        )
+        const scroll$ = fromEvent(this.getScrollableElement(), 'scroll')
+        const update$ = merge(scroll$, this.resize$)
         const scrolling$ = scroll$.pipe(
             switchMap(() => of(true).pipe(
                 concatWith(
@@ -433,40 +430,47 @@ class _Scrollable extends React.PureComponent {
             )),
             distinctUntilChanged()
         )
+        addSubscription(
+            update$.subscribe(
+                () => this.update()
+            ),
+            scrolling$.subscribe(
+                scrolling => this.setState({scrolling})
+            )
+        )
+    }
+
+    handleDragging() {
+        const {addSubscription} = this.props
         const dragging$ = this.dragging$.pipe(
-            switchMap(() => of(true).pipe(
+            switchMap(drag => of(drag).pipe(
                 concatWith(
                     of(false).pipe(
                         delay(50)
                     )
                 )
             )),
-            distinctUntilChanged(),
+            distinctUntilChanged()
         )
         addSubscription(
-            update$.subscribe(
-                scroll => this.update(scroll)
-            ),
-            scrolling$.subscribe(
-                scrolling => this.setState({scrolling})
-            ),
             dragging$.subscribe(
                 dragging => this.setState({dragging})
             )
         )
     }
 
-    update(scroll) {
+    update() {
         const {direction} = this.props
         if (['y', 'xy'].includes(direction)) {
-            this.updateVertical(scroll)
+            this.updateVertical()
         }
         if (['x', 'xy'].includes(direction)) {
-            this.updateHorizontal(scroll)
+            this.updateHorizontal()
         }
     }
 
-    updateVertical({scrollTop, clientHeight, scrollHeight}) {
+    updateVertical() {
+        const {scrollTop, clientHeight, scrollHeight} = this.getScrollableElement()
         const overflowTop = scrollTop
         const overflowBottom = scrollHeight - clientHeight - scrollTop
         const verticalFactor = (clientHeight - MIN_HANDLE_SIZE) / scrollHeight
@@ -475,7 +479,8 @@ class _Scrollable extends React.PureComponent {
         this.setState({scrollbarTop, scrollbarBottom, verticalFactor, clientHeight, scrollHeight, scrollTop})
     }
 
-    updateHorizontal({scrollLeft, clientWidth, scrollWidth}) {
+    updateHorizontal() {
+        const {scrollLeft, clientWidth, scrollWidth} = this.getScrollableElement()
         const overflowLeft = scrollLeft
         const overflowRight = scrollWidth - clientWidth - scrollLeft
         const horizontalFactor = (clientWidth - MIN_HANDLE_SIZE) / scrollWidth
@@ -484,14 +489,46 @@ class _Scrollable extends React.PureComponent {
         this.setState({scrollbarLeft, scrollbarRight, horizontalFactor, clientWidth, scrollWidth, scrollLeft})
     }
 
+    handleMouseAway() {
+        const {addSubscription} = this.props
+        const over$ = fromEvent(document, 'mousemove').pipe(
+            map(e => ({x: e.clientX, y: e.clientY})),
+            map(({x, y}) => document.elementsFromPoint(x, y)),
+            map(elements => elements.some(element => this.isOver(element)))
+        )
+        const draggingAwareOver$ = over$.pipe(
+            filter(() => !this.isDragging()),
+            mergeWith(over$.pipe(
+                sample(this.dragging$.pipe(
+                    filter(drag => !drag)
+                ))
+            )),
+            distinctUntilChanged()
+        )
+        const enter$ = draggingAwareOver$.pipe(
+            filter(enter => enter)
+        )
+        const leave$ = draggingAwareOver$.pipe(
+            filter(enter => !enter)
+        )
+        const away$ = enter$.pipe(
+            switchMap(() => leave$.pipe(
+                delay(500)
+            ))
+        )
+        addSubscription(
+            away$.subscribe(
+                away => this.mouseAway$.next(away)
+            )
+        )
+    }
+
     componentDidMount() {
-        const {hideScrollbar} = this.props
         this.handleContentSize()
-        this.handleHover()
         this.handleScroll()
-        if (!hideScrollbar) {
-            this.handleScrollbar()
-        }
+        this.handleScrolling()
+        this.handleDragging()
+        this.handleMouseAway()
     }
 
     componentDidUpdate(_prevProps, prevState) {
@@ -508,7 +545,8 @@ class _Scrollable extends React.PureComponent {
 export const Scrollable = compose(
     _Scrollable,
     withEventShield(),
-    withSubscriptions()
+    withSubscriptions(),
+    withForwardedRef()
 )
 
 Scrollable.propTypes = {

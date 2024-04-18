@@ -1,3 +1,4 @@
+import {BehaviorSubject} from 'rxjs'
 import {Portal} from './portal'
 import {composeHoC} from 'compose'
 import {uuid} from 'uuid'
@@ -19,17 +20,17 @@ export const withEventShield = () =>
                     this.setEnabled = this.setEnabled.bind(this)
                 }
 
+                render() {
+                    const {eventShield: {enabled$}} = this.props
+                    return React.createElement(WrappedComponent, {
+                        ...this.props,
+                        eventShield: {enabled$, setEnabled: this.setEnabled}
+                    })
+                }
+
                 setEnabled(enabled) {
                     const {eventShield: {setEnabled}} = this.props
                     setEnabled(this.componentId, enabled)
-                }
-
-                render() {
-                    const {eventShield: {enabled}} = this.props
-                    return React.createElement(WrappedComponent, {
-                        ...this.props,
-                        eventShield: {enabled, setEnabled: this.setEnabled}
-                    })
                 }
 
                 componentWillUnmount() {
@@ -45,36 +46,40 @@ export class EventShield extends React.Component {
         this.setEnabled = this.setEnabled.bind(this)
     }
 
+    enabled$ = new BehaviorSubject(false)
+
     state = {
         enabledIds: []
     }
     
     setEnabled(id, enabled) {
-        if (enabled) {
-            this.setState(({enabledIds}) => {
-                const index = enabledIds.indexOf(id)
-                if (index === -1) {
-                    return {enabledIds: [...enabledIds, id]}
-                }
-            })
-        } else {
-            this.setState(({enabledIds}) => {
-                const index = enabledIds.indexOf(id)
-                if (index !== -1) {
-                    return {enabledIds: enabledIds.toSpliced(index, 1)}
-                }
-            })
-        }
+        this.setState(({enabledIds}) => {
+            const index = enabledIds.indexOf(id)
+            if (enabled && index === -1) {
+                return {enabledIds: [...enabledIds, id]}
+            }
+            if (!enabled && index !== -1) {
+                return {enabledIds: enabledIds.toSpliced(index, 1)}
+            }
+        }, () => this.update())
+    }
+
+    update() {
+        this.enabled$.next(this.isEnabled())
+    }
+
+    isEnabled() {
+        const {enabledIds} = this.state
+        return enabledIds.length > 0
     }
     
     render() {
         const {children} = this.props
-        const {enabledIds} = this.state
-        const enabled = enabledIds.length
+        const {enabled$, setEnabled} = this
         return (
-            <Context.Provider value={{enabled, setEnabled: this.setEnabled}}>
+            <Context.Provider value={{enabled$, setEnabled}}>
                 {children}
-                {enabled ? this.renderEventShield() : null}
+                {this.isEnabled() ? this.renderEventShield() : null}
             </Context.Provider>
         )
     }
