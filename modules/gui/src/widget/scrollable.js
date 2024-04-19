@@ -1,5 +1,5 @@
 import {Draggable} from './draggable'
-import {EMPTY, Subject, animationFrames, concatWith, delay, distinctUntilChanged, filter, fromEvent, map, merge, mergeWith, of, sample, scan, shareReplay, switchMap, takeWhile} from 'rxjs'
+import {EMPTY, Subject, animationFrames, concatWith, delay, distinctUntilChanged, filter, fromEvent, map, merge, of, sample, scan, shareReplay, switchMap, takeUntil, takeWhile} from 'rxjs'
 import {ElementResizeDetector} from './elementResizeDetector'
 import {Keybinding} from '~/widget/keybinding'
 import {compose} from '~/compose'
@@ -54,6 +54,7 @@ class _Scrollable extends React.PureComponent {
     horizontalScroll$ = new Subject()
     resize$ = new Subject()
     dragging$ = new Subject()
+    mouseWheel$ = new Subject()
     mouseAway$ = new Subject()
 
     state = {
@@ -394,7 +395,8 @@ class _Scrollable extends React.PureComponent {
                         scan(lerp(ANIMATION_SPEED), getOffset()),
                         map(offset => Math.round(offset)),
                         distinctUntilChanged(),
-                        takeWhile(offset => offset !== targetOffset)
+                        takeWhile(offset => offset !== targetOffset),
+                        takeUntil(this.mouseWheel$)
                     )
             )
         )
@@ -428,12 +430,16 @@ class _Scrollable extends React.PureComponent {
             )),
             distinctUntilChanged()
         )
+        const mouseWheel$ = fromEvent(this.getScrollableElement(), 'mousewheel')
         addSubscription(
             update$.subscribe(
                 () => this.update()
             ),
             scrolling$.subscribe(
                 scrolling => this.setState({scrolling})
+            ),
+            mouseWheel$.subscribe(
+                () => this.mouseWheel$.next()
             )
         )
     }
