@@ -1,8 +1,9 @@
 import {Draggable} from './draggable'
-import {EMPTY, Subject, animationFrames, concatWith, delay, distinctUntilChanged, filter, fromEvent, map, merge, mergeWith, of, sample, scan, switchMap, takeUntil, takeWhile, timer} from 'rxjs'
+import {EMPTY, Subject, animationFrames, concatWith, delay, distinctUntilChanged, filter, fromEvent, map, merge, mergeWith, of, sample, scan, shareReplay, switchMap, takeWhile} from 'rxjs'
 import {ElementResizeDetector} from './elementResizeDetector'
 import {Keybinding} from '~/widget/keybinding'
 import {compose} from '~/compose'
+import {isOverElement} from './dom'
 import {withEventShield} from './eventShield'
 import {withForwardedRef} from 'ref'
 import {withSubscriptions} from '~/subscription'
@@ -17,6 +18,7 @@ const ScrollableContext = React.createContext()
 const ANIMATION_SPEED = .2
 const PIXEL_PER_LINE = 45
 const MIN_HANDLE_SIZE = 30
+const MOUSE_AWAY_TIMEOUT_MS = 500
 
 const lerp = rate =>
     (value, targetValue) => value + (targetValue - value) * rate
@@ -80,12 +82,12 @@ class _Scrollable extends React.PureComponent {
         return (
             <ElementResizeDetector resize$={this.resize$}>
                 <div
+                    ref={this.containerRef}
                     className={[
                         flexy.container,
                         styles.container,
                         containerClassName
-                    ].join(' ')}
-                    ref={this.containerRef}>
+                    ].join(' ')}>
                     {this.renderScrollable()}
                     {this.renderHorizontalScrollbar()}
                     {this.renderVerticalScrollbar()}
@@ -376,10 +378,6 @@ class _Scrollable extends React.PureComponent {
         )
     }
 
-    isOver(element) {
-        return this.getContainerElement().contains(element)
-    }
-
     isDragging() {
         const {verticalDragging, horizontalDragging} = this.state
         return verticalDragging || horizontalDragging
@@ -489,31 +487,34 @@ class _Scrollable extends React.PureComponent {
         this.setState({scrollbarLeft, scrollbarRight, horizontalFactor, clientWidth, scrollWidth, scrollLeft})
     }
 
+    isOver(e) {
+        return isOverElement(e, this.getContainerElement())
+    }
+
     handleMouseAway() {
-        const {addSubscription} = this.props
+        const {addSubscription, eventShield} = this.props
         const over$ = fromEvent(document, 'mousemove').pipe(
-            map(e => ({x: e.clientX, y: e.clientY})),
-            map(({x, y}) => document.elementsFromPoint(x, y)),
-            map(elements => elements.some(element => this.isOver(element)))
+            map(e => this.isOver(e)),
+            distinctUntilChanged(),
+            shareReplay(1)
         )
-        const draggingAwareOver$ = over$.pipe(
-            filter(() => !this.isDragging()),
-            mergeWith(over$.pipe(
-                sample(this.dragging$.pipe(
-                    filter(drag => !drag)
-                ))
-            )),
-            distinctUntilChanged()
+        const enter$ = over$.pipe(
+            filter(over => over)
         )
-        const enter$ = draggingAwareOver$.pipe(
-            filter(enter => enter)
-        )
-        const leave$ = draggingAwareOver$.pipe(
-            filter(enter => !enter)
+        const leave$ = eventShield.enabled$.pipe(
+            switchMap(enabled => enabled
+                ? over$.pipe(
+                    sample(eventShield.enabled$.pipe(
+                        filter(enabled => !enabled)
+                    ))
+                )
+                : over$
+            ),
+            filter(over => !over),
         )
         const away$ = enter$.pipe(
             switchMap(() => leave$.pipe(
-                delay(500)
+                delay(MOUSE_AWAY_TIMEOUT_MS)
             ))
         )
         addSubscription(

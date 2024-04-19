@@ -1,5 +1,6 @@
 import {compose} from '~/compose'
 import {delay, distinctUntilChanged, filter, fromEvent, map, merge, sample, shareReplay, switchMap} from 'rxjs'
+import {isOverElement} from './dom'
 import {withContext} from '~/context'
 import {withEventShield} from './eventShield'
 import {withForwardedRef} from '~/ref'
@@ -14,11 +15,6 @@ const ANIMATION_DURATION_MS = 250
 const Context = React.createContext()
 
 const withBlurDetector = withContext(Context, 'blurDetector')
-
-const isOver = (e, element) =>
-    typeof e === MouseEvent
-        ? document.elementsFromPoint(e.clientX, e.clientY).includes(element)
-        : element.contains(e.target)
 
 class _BlurDetector extends React.Component {
     enabled = true
@@ -79,11 +75,13 @@ class _BlurDetector extends React.Component {
                     fromEvent(document, 'focus', {capture: true}),
                 ).pipe(
                     filter(this.isEnabled),
-                    filter(e => !this.isOver(e))
+                    map(e => this.isOver(e)),
+                    filter(over => !over)
                 ).subscribe(this.onBlur)
             )
             if (autoBlurTimeout) {
                 const over$ = fromEvent(document, 'mousemove').pipe(
+                    filter(this.isEnabled),
                     map(e => this.isOver(e)),
                     distinctUntilChanged(),
                     shareReplay(1)
@@ -151,14 +149,14 @@ class _BlurDetector extends React.Component {
     }
 
     isRefEvent(e) {
-        return isOver(e, this.ref.current)
+        return isOverElement(e, this.ref.current)
     }
 
     isExcludedEvent(e) {
         const {exclude} = this.props
         return _.some(
             _.castArray(exclude),
-            element => element && isOver(e, element)
+            element => element && isOverElement(e, element)
         )
     }
 }
