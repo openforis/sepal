@@ -14,7 +14,7 @@
         "connect-redis": "^7.1.1",
         "express": "^4.19.2",
         "express-session": "^1.18.0",
-        "http-proxy-middleware": "^2.0.6",
+        "http-proxy-middleware": "^3.0.0",
         "ioredis": "^5.4.1",
         "lodash": "^4.17.21",
         "log4js": "^6.9.1",

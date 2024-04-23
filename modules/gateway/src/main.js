@@ -80,6 +80,7 @@ const main = async () => {
     // avoid MaxListenersExceededWarning
     server.setMaxListeners(30)
     
+    // HACK: User has to be injected here as the session is not available in proxyRes and proxyResWsz
     server.on('upgrade', (req, socket, head) => {
         sessionParser(req, {}, () => { // Make sure we have access to session for the websocket
             const username = getSessionUsername(req)
