@@ -3,7 +3,7 @@ import {EMPTY, Subject, animationFrames, concatWith, delay, distinctUntilChanged
 import {ElementResizeDetector} from './elementResizeDetector'
 import {Keybinding} from '~/widget/keybinding'
 import {compose} from '~/compose'
-import {isOverElement} from './dom'
+import {isOverElementDeep} from './dom'
 import {withEventShield} from './eventShield'
 import {withForwardedRef} from 'ref'
 import {withSubscriptions} from '~/subscription'
@@ -494,7 +494,7 @@ class _Scrollable extends React.PureComponent {
     }
 
     isOver(e) {
-        return isOverElement(e, this.getContainerElement())
+        return isOverElementDeep(e, this.getContainerElement())
     }
 
     handleMouseAway() {

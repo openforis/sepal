@@ -1,4 +1,5 @@
 export const isOverElement = (e, element) =>
-    e.type === 'mousemove'
-        ? document.elementsFromPoint(e.clientX, e.clientY).includes(element)
-        : element.contains(e.target)
+    element.contains(e.target)
+
+export const isOverElementDeep = (e, element) =>
+    document.elementsFromPoint(e.clientX, e.clientY).includes(element)

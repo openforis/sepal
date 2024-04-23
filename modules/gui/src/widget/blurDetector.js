@@ -81,7 +81,6 @@ class _BlurDetector extends React.Component {
             )
             if (autoBlurTimeout) {
                 const over$ = fromEvent(document, 'mousemove').pipe(
-                    filter(this.isEnabled),
                     map(e => this.isOver(e)),
                     distinctUntilChanged(),
                     shareReplay(1)
@@ -98,7 +97,7 @@ class _BlurDetector extends React.Component {
                         )
                         : over$
                     ),
-                    filter(over => !over),
+                    filter(over => !over)
                 )
                 const away$ = enter$.pipe(
                     switchMap(() => leave$.pipe(
