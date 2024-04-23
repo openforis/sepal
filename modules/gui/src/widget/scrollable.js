@@ -18,7 +18,7 @@ const ScrollableContext = React.createContext()
 const ANIMATION_SPEED = .2
 const PIXEL_PER_LINE = 45
 const MIN_HANDLE_SIZE = 30
-const MOUSE_AWAY_TIMEOUT_MS = 500
+const MOUSE_AWAY_TIMEOUT_MS = 750
 
 const lerp = rate =>
     (value, targetValue) => value + (targetValue - value) * rate
