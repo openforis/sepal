@@ -1,5 +1,5 @@
 import {Draggable} from './draggable'
-import {EMPTY, Subject, animationFrames, concatWith, delay, distinctUntilChanged, filter, first, fromEvent, map, merge, of, sample, scan, shareReplay, switchMap, takeUntil, takeWhile, tap} from 'rxjs'
+import {EMPTY, Subject, animationFrames, concatWith, delay, distinctUntilChanged, filter, first, fromEvent, map, merge, of, sample, scan, shareReplay, switchMap, takeUntil, takeWhile} from 'rxjs'
 import {ElementResizeDetector} from './elementResizeDetector'
 import {Keybinding} from '~/widget/keybinding'
 import {compose} from '~/compose'
@@ -516,7 +516,7 @@ class _Scrollable extends React.PureComponent {
                 )
                 : over$
             ),
-            filter(over => !over),
+            filter(over => !over)
         )
         const away$ = enter$.pipe(
             switchMap(() => leave$.pipe(
