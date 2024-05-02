@@ -18,7 +18,7 @@ apt-get install -y libzmq3-dev
 /usr/bin/python3 -m pip install jupyterlab-language-pack-es-ES
 /usr/bin/python3 -m pip install ipywidgets
 /usr/bin/python3 -m pip install folium
-/usr/bin/python3 -m pip install ipyleaflet
+/usr/bin/python3 -m pip install "ipyleaflet==0.18.2"
 
 /usr/bin/python3 -m pip install ipyvuetify
 /usr/bin/python3 -m pip install geemap
