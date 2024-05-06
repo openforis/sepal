@@ -21,7 +21,7 @@
         "nodemailer": "^6.9.13",
         "rxjs": "^7.8.1",
         "sepal": "../../lib/js/shared",
-        "short-unique-id": "^5.0.3"
+        "short-unique-id": "^5.2.0"
     },
     "devDependencies": {
         "eslint": "^8.57.0",
