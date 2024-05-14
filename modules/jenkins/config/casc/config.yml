@@ -1,0 +1,14 @@
+jenkins:
+  numExecutors: 1
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "jenkins"
+          password: "${JENKINS_PASSWORD}"
+  authorizationStrategy: loggedInUsersCanDoAnything
+  mode: NORMAL
+
+unclassified:
+  location:
+    url: http://daniel.sepal.io:8080/

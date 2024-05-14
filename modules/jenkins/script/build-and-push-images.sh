@@ -12,10 +12,8 @@ function build {
   echo
   echo "******* Building ${MODULE} *******"
   cd ${MODULE_DIR}
-  set -o pipefail && BUILD_NUMBER=${SEPAL_VERSION} GIT_COMMIT=${GIT_COMMIT} docker compose \
-    --file ${MODULE_DIR}/docker-compose.yml \
-    build \
-    | tee /var/log/sepal-build/${MODULE}.log
+  set -o pipefail
+  BUILD_NUMBER=${SEPAL_VERSION} GIT_COMMIT=${GIT_COMMIT} docker compose --file ${MODULE_DIR}/docker-compose.yml build | tee /var/log/sepal-build/${MODULE}.log
 }
 
 function push {
