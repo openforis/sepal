@@ -1,0 +1,16 @@
+services:
+  haproxy-acme:
+    build:
+      context: ../..
+      dockerfile: ./modules/haproxy-acme/Dockerfile
+    image: "openforis/haproxy-acme:latest"
+    container_name: haproxy-acme
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "${SEPAL_PROJECT_DIR}/modules/haproxy-acme/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg"
+      - data:/var/lib/acme
+
+volumes:
+  data:

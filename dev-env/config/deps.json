@@ -61,6 +61,11 @@
             "gateway"
         ]
     },
+    "haproxy-acme": {
+        "build": {},
+        "run": [
+        ]
+    },
     "java": {
         "build": {},
         "run": false
@@ -191,6 +196,10 @@
         ]
     },
     "user-storage-backup": {
+        "build": {},
+        "run": []
+    },
+    "jenkins": {
         "build": {},
         "run": []
     }
