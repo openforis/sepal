@@ -83,7 +83,7 @@ class _BlurDetector extends React.Component {
                 const over$ = fromEvent(document, 'mousemove').pipe(
                     map(e => this.isOver(e)),
                     distinctUntilChanged(),
-                    shareReplay(1)
+                    shareReplay({bufferSize: 1, refCount: true})
                 )
                 const enter$ = over$.pipe(
                     filter(over => over)
