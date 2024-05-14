@@ -1,7 +1,7 @@
 import {GoogleMapsOverlay} from './googleMapsOverlay'
 import {PlanetTileProvider} from '../tileProvider/planetTileProvider'
-import {ReplaySubject, of, tap} from 'rxjs'
 import {TileLayer} from './tileLayer'
+import {of, tap} from 'rxjs'
 
 export class PlanetLayer extends TileLayer {
     constructor({map, layerIndex = 0, urlTemplate, concurrency, minZoom, maxZoom}) {
@@ -12,7 +12,6 @@ export class PlanetLayer extends TileLayer {
         this.concurrency = concurrency
         this.minZoom = minZoom
         this.maxZoom = maxZoom
-        this.cancel$ = new ReplaySubject()
     }
 
     createTileProvider = () => {

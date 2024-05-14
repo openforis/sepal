@@ -85,7 +85,7 @@ class _Tabs extends React.Component {
                 )
             ),
             map(({tabId, count}) => ({tabId, count, busy: count > 0})),
-            shareReplay(1)
+            shareReplay({bufferSize: 1, refCount: true})
         )
     }
 

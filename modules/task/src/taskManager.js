@@ -100,7 +100,7 @@ task$.pipe(
                 tap(() => log.debug(msg(task.id, 'cancelled by switching to service account'))),
             )
         ).pipe(
-            shareReplay()
+            shareReplay({bufferSize: 1, refCount: true})
         )
         return executeTask$({task, cmd$: taskCancellation$}).pipe(
             switchMap(progress =>
