@@ -10,13 +10,13 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bull": "^4.12.2",
-        "commander": "^12.0.0",
+        "bull": "^4.12.6",
+        "commander": "^12.1.0",
         "compare-versions": "^6.1.0",
         "http-proxy": "^1.18.1",
         "lodash": "^4.17.21",
         "log4js": "^6.9.1",
-        "minimatch": "^9.0.3",
+        "minimatch": "^9.0.4",
         "sepal": "../../lib/js/shared"
     },
     "devDependencies": {
