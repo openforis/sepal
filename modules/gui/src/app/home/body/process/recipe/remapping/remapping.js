@@ -1,15 +1,17 @@
-import {Aoi} from '../aoi'
+import React from 'react'
+
+import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
-import {RemappingToolbar} from './panels/remappingToolbar'
 import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+
+import {Aoi} from '../aoi'
+import {initializeLayers} from '../recipeImageLayerSource'
 import {getAvailableBands} from './bands'
+import {RemappingToolbar} from './panels/remappingToolbar'
 import {getDefaultModel} from './remappingRecipe'
 import {getPreSetVisualizations} from './visualizations'
-import {initializeLayers} from '../recipeImageLayerSource'
-import {msg} from '~/translate'
-import {recipe} from '~/app/home/body/process/recipeContext'
-import {selectFrom} from '~/stateUtils'
-import React from 'react'
 
 const mapRecipeToProps = recipe => ({
     images: selectFrom(recipe, 'model.inputImagery.images'),

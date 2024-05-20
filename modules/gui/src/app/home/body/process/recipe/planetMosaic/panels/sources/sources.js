@@ -1,15 +1,17 @@
-import {Form} from '~/widget/form'
-import {Layout} from '~/widget/layout'
-import {NICFI_ASSETS} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
-import {Panel} from '~/widget/panel/panel'
-import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {getDataSetOptions as planetDataSetOptions} from '~/app/home/body/process/recipe/planetMosaic/sources'
-import {selectFrom} from '~/stateUtils'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {NICFI_ASSETS} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
+import {getDataSetOptions as planetDataSetOptions} from '~/app/home/body/process/recipe/planetMosaic/sources'
+import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {Form} from '~/widget/form'
+import {Layout} from '~/widget/layout'
+import {Panel} from '~/widget/panel/panel'
+
 import styles from './sources.module.css'
 
 const fields = {

@@ -1,3 +1,11 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React, {Component} from 'react'
+
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {ButtonPopup} from '~/widget/buttonPopup'
@@ -9,15 +17,9 @@ import {Label} from '~/widget/label'
 import {Layout} from '~/widget/layout'
 import {LegendItem} from '~/widget/legend/legendItem'
 import {ListItem} from '~/widget/listItem'
-import {compose} from '~/compose'
-import {filterReferenceData$, remapReferenceData$} from './inputData'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import PropTypes from 'prop-types'
-import React, {Component} from 'react'
-import _ from 'lodash'
+
 import styles from './classStep.module.css'
+import {filterReferenceData$, remapReferenceData$} from './inputData'
 
 const mapRecipeToProps = recipe => ({
     legend: selectFrom(recipe, 'model.legend'),

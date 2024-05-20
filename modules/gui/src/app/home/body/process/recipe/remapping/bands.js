@@ -1,6 +1,7 @@
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
 import _ from 'lodash'
+
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
 
 export const getAvailableBands = recipe => {
     const entries = selectFrom(recipe, 'model.legend.entries')

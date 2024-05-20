@@ -1,7 +1,8 @@
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
 import _ from 'lodash'
 import moment from 'moment'
+
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
 
 export const sources = ['LANDSAT', 'SENTINEL_2']
 

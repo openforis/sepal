@@ -1,17 +1,19 @@
-import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
-import {Dates} from './dates/dates'
-import {Options} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
-import {PanelWizard} from '~/widget/panelWizard'
-import {Retrieve} from './retrieve/retrieve'
-import {RetrieveButton} from '../../retrieveButton'
-import {Toolbar} from '~/widget/toolbar/toolbar'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {setInitialized} from '../../../recipe'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
 import React from 'react'
+
+import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
+import {Options} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {PanelWizard} from '~/widget/panelWizard'
+import {Toolbar} from '~/widget/toolbar/toolbar'
+
+import {setInitialized} from '../../../recipe'
+import {RetrieveButton} from '../../retrieveButton'
+import {Dates} from './dates/dates'
 import styles from './radarMosaicToolbar.module.css'
+import {Retrieve} from './retrieve/retrieve'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,

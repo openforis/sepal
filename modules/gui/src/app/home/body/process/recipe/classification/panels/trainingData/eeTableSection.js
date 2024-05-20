@@ -1,11 +1,12 @@
-import {Form} from '~/widget/form'
-import {Subject, takeUntil} from 'rxjs'
-import {msg} from '~/translate'
 import PropTypes from 'prop-types'
-import React, {Component} from 'react'
-import api from '~/apiRegistry'
+import React from 'react'
+import {Subject, takeUntil} from 'rxjs'
 
-export class EETableSection extends Component {
+import api from '~/apiRegistry'
+import {msg} from '~/translate'
+import {Form} from '~/widget/form'
+
+export class EETableSection extends React.Component {
     eeTableChanged$ = new Subject()
 
     render() {

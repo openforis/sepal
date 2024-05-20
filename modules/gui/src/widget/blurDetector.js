@@ -1,14 +1,16 @@
-import {compose} from '~/compose'
-import {delay, distinctUntilChanged, filter, fromEvent, map, merge, sample, shareReplay, switchMap} from 'rxjs'
-import {isOverElement} from './dom'
-import {withContext} from '~/context'
-import {withEventShield} from './eventShield'
-import {withForwardedRef} from '~/ref'
-import {withSubscriptions} from '~/subscription'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {delay, distinctUntilChanged, filter, fromEvent, map, merge, sample, shareReplay, switchMap} from 'rxjs'
+
+import {compose} from '~/compose'
+import {withContext} from '~/context'
+import {withForwardedRef} from '~/ref'
+import {withSubscriptions} from '~/subscription'
+
 import styles from './blurDetector.module.css'
+import {isOverElement} from './dom'
+import {withEventShield} from './eventShield'
 
 const ANIMATION_DURATION_MS = 250
 

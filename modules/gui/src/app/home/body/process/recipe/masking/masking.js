@@ -1,15 +1,17 @@
-import {Aoi} from '../aoi'
-import {Map} from '~/app/home/map/map'
-import {MaskingToolbar} from './panels/maskingToolbar'
-import {compose} from '~/compose'
-import {defaultModel} from './maskingRecipe'
-import {getAvailableBands} from './bands'
-import {getPreSetVisualizations} from './visualizations'
-import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
-import {msg} from '~/translate'
-import {recipe} from '~/app/home/body/process/recipeContext'
-import {selectFrom} from '~/stateUtils'
 import React from 'react'
+
+import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
+import {recipe} from '~/app/home/body/process/recipeContext'
+import {Map} from '~/app/home/map/map'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+
+import {Aoi} from '../aoi'
+import {getAvailableBands} from './bands'
+import {defaultModel} from './maskingRecipe'
+import {MaskingToolbar} from './panels/maskingToolbar'
+import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
     imageToMask: selectFrom(recipe, 'model.imageToMask'),

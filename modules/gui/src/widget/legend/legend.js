@@ -1,17 +1,19 @@
+import PropTypes from 'prop-types'
+import React from 'react'
+
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {withActivators} from '~/widget/activation/activator'
 import {Button} from '~/widget/button'
-import {EditLegendPanel} from './editLegendPanel'
 import {Layout} from '~/widget/layout'
-import {LegendItem} from './legendItem'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Widget} from '~/widget/widget'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {withActivators} from '~/widget/activation/activator'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import PropTypes from 'prop-types'
-import React from 'react'
+
+import {EditLegendPanel} from './editLegendPanel'
+import {LegendItem} from './legendItem'
 
 const mapRecipeToProps = (recipe, {componentId}) => ({
     updatedEntries: selectFrom(recipe, toUpdatedEntryPath(componentId))

@@ -1,10 +1,12 @@
-import {Form} from '~/widget/form'
-import {Layout} from '~/widget/layout'
-import {Panel} from '~/widget/panel/panel'
+import React from 'react'
+
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
-import React from 'react'
+import {Form} from '~/widget/form'
+import {Layout} from '~/widget/layout'
+import {Panel} from '~/widget/panel/panel'
+
 import styles from './composite.module.css'
 
 const fields = {

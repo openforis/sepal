@@ -1,8 +1,9 @@
-import {Portal} from '~/widget/portal'
-import {compose} from '~/compose'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {compose} from '~/compose'
+import {Portal} from '~/widget/portal'
 
 class _MapLayer extends React.Component {
     state = {

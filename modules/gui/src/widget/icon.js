@@ -1,12 +1,14 @@
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
-import {Tooltip} from '~/widget/tooltip'
+import {library} from '@fortawesome/fontawesome-svg-core'
 import {fab} from '@fortawesome/free-brands-svg-icons'
 import {far} from '@fortawesome/free-regular-svg-icons'
 import {fas} from '@fortawesome/free-solid-svg-icons'
-import {library} from '@fortawesome/fontawesome-svg-core'
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {Tooltip} from '~/widget/tooltip'
+
 import styles from './icon.module.css'
 
 library.add(fab)

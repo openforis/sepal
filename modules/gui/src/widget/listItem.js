@@ -1,12 +1,14 @@
-import {Portal} from '~/widget/portal'
-import {Subject, animationFrames, debounceTime, delay, distinctUntilChanged, filter, fromEvent, map, switchMap, takeUntil, timer} from 'rxjs'
-import {compose} from '~/compose'
-import {withSubscriptions} from '~/subscription'
 import Hammer from 'hammerjs'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {animationFrames, debounceTime, delay, distinctUntilChanged, filter, fromEvent, map, Subject, switchMap, takeUntil, timer} from 'rxjs'
+
+import {compose} from '~/compose'
 import lookStyles from '~/style/look.module.css'
+import {withSubscriptions} from '~/subscription'
+import {Portal} from '~/widget/portal'
+
 import styles from './listItem.module.css'
 
 const EXPAND_DELAYED_TIMEOUT_MS = 1000

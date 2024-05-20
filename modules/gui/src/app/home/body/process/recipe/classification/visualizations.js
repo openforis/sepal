@@ -1,7 +1,9 @@
+import _ from 'lodash'
+
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
+
 import {supportProbability, supportRegression} from './classificationRecipe'
-import _ from 'lodash'
 
 export const getPreSetVisualizations = recipe => {
     const legend = selectFrom(recipe, 'model.legend') || {}

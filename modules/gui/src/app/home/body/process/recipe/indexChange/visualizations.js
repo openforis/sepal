@@ -1,6 +1,7 @@
+import _ from 'lodash'
+
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
-import _ from 'lodash'
 
 export const getPreSetVisualizations = recipe => {
     const fromImage = recipe.model.fromImage

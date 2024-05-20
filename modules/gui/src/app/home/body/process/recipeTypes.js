@@ -1,4 +1,3 @@
-import {addRecipeType} from './recipeTypeRegistry'
 import asset from './recipe/asset/asset'
 import baytsAlerts from './recipe/baytsAlerts/baytsAlerts'
 import baytsHistorical from './recipe/baytsHistorical/baytsHistorical'
@@ -15,6 +14,7 @@ import planetMosaic from './recipe/planetMosaic/planetMosaic'
 import radarMosaic from './recipe/radarMosaic/radarMosaic'
 import remapping from './recipe/remapping/remapping'
 import timeSeries from './recipe/timeSeries/timeSeries'
+import {addRecipeType} from './recipeTypeRegistry'
 
 export const registerRecipeTypes = () => {
     addRecipeType(opticalMosaic())

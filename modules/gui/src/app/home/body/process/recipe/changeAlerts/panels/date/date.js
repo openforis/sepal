@@ -1,14 +1,16 @@
+import moment from 'moment'
+import React from 'react'
+
+import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
 import {Form} from '~/widget/form'
+import {maxDate, minDate} from '~/widget/form/datePicker'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
-import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {Widget} from '~/widget/widget'
-import {compose} from '~/compose'
-import {maxDate, minDate} from '~/widget/form/datePicker'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import React from 'react'
-import moment from 'moment'
+
 import styles from './date.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'

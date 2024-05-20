@@ -1,13 +1,15 @@
-import {Form} from '~/widget/form'
-import {Layout} from '~/widget/layout'
-import {SubformDetails} from './subformDetails'
-import {compose} from '~/compose'
-import {modalSubformPanel} from './modalSubformPanel'
-import {msg} from '~/translate'
-import {withActivators} from '~/widget/activation/activator'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {compose} from '~/compose'
+import {msg} from '~/translate'
+import {withActivators} from '~/widget/activation/activator'
+import {Form} from '~/widget/form'
+import {Layout} from '~/widget/layout'
+
+import {modalSubformPanel} from './modalSubformPanel'
 import styles from './options.module.css'
+import {SubformDetails} from './subformDetails'
 
 const _MultitemporalSpeckleFilterOptions = ({
     spatialSpeckleFilter,

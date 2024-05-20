@@ -1,10 +1,12 @@
-import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
-import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
-import {compose} from '~/compose'
-import {getPreSetVisualizations} from './visualizations'
-import {msg} from '~/translate'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
+import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {compose} from '~/compose'
+import {msg} from '~/translate'
+
+import {getPreSetVisualizations} from './visualizations'
 
 class _MaskingImageLayer extends React.Component {
     render() {

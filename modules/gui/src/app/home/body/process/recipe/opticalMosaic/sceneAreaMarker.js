@@ -1,8 +1,10 @@
-import {MapObject} from '~/app/home/map/mapLayer'
-import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {compose} from '~/compose'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {MapObject} from '~/app/home/map/mapLayer'
+import {compose} from '~/compose'
+
 import styles from './sceneAreasLayer.module.css'
 
 class _SceneAreaMarker extends React.Component {

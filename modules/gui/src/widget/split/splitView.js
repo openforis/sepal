@@ -1,14 +1,16 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {Subject} from 'rxjs'
+
+import {compose} from '~/compose'
+import {withSubscriptions} from '~/subscription'
 import {ElementResizeDetector} from '~/widget/elementResizeDetector'
+
 import {SplitContext} from './splitContext'
 import {SplitHandleCenter} from './splitHandleCenter'
 import {SplitHandleHorizontal} from './splitHandleHorizontal'
 import {SplitHandleVertical} from './splitHandleVertical'
-import {Subject} from 'rxjs'
-import {compose} from '~/compose'
-import {withSubscriptions} from '~/subscription'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
 import styles from './splitView.module.css'
 
 class _SplitView extends React.PureComponent {

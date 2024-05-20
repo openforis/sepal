@@ -1,10 +1,11 @@
-import {AppItem} from './appItem'
+import PropTypes from 'prop-types'
+
+import {msg} from '~/translate'
 import {Markdown} from '~/widget/markdown'
 import {Panel} from '~/widget/panel/panel'
-import {msg} from '~/translate'
-import PropTypes from 'prop-types'
-import React from 'react'
+
 import styles from './appDetails.module.css'
+import {AppItem} from './appItem'
 
 export const AppDetails = props => {
     const {app, onClose} = props

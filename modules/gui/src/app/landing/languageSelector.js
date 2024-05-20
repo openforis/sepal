@@ -1,7 +1,6 @@
+import {getLanguage, setLanguage} from '~/translate'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
-import {getLanguage, setLanguage} from '~/translate'
-import React from 'react'
 
 export const LanguageSelector = () => {
     const languages = [

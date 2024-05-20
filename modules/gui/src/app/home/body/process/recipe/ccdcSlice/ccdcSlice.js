@@ -1,15 +1,17 @@
-import {Aoi} from '../aoi'
-import {CcdcSliceToolbar} from './panels/ccdcSliceToolbar'
-import {Map} from '~/app/home/map/map'
-import {RecipeActions, defaultModel} from './ccdcSliceRecipe'
-import {SourceSync} from './sourceSync'
-import {compose} from '~/compose'
-import {initializeLayers} from '../recipeImageLayerSource'
-import {msg} from '~/translate'
-import {recipe} from '~/app/home/body/process/recipeContext'
-import {selectFrom} from '~/stateUtils'
-import React from 'react'
 import moment from 'moment'
+import React from 'react'
+
+import {recipe} from '~/app/home/body/process/recipeContext'
+import {Map} from '~/app/home/map/map'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+
+import {Aoi} from '../aoi'
+import {initializeLayers} from '../recipeImageLayerSource'
+import {defaultModel, RecipeActions} from './ccdcSliceRecipe'
+import {CcdcSliceToolbar} from './panels/ccdcSliceToolbar'
+import {SourceSync} from './sourceSync'
 
 const mapRecipeToProps = recipe => ({
     source: selectFrom(recipe, 'model.source'),

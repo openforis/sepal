@@ -1,5 +1,5 @@
-import {from, map} from 'rxjs'
 import JSZip from 'jszip'
+import {from, map} from 'rxjs'
 
 export const download = (url, filename) => {
     // create hidden anchor, attach to DOM, click it and remove it from the DOM

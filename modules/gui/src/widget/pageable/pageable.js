@@ -1,14 +1,16 @@
-import {Keybinding} from '~/widget/keybinding'
-import {PageableControls} from './pageableControls'
-import {PageableData} from './pageableData'
-import {PageableInfo} from './pageableInfo'
-import {Provider} from './pageableContext'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+import {Keybinding} from '~/widget/keybinding'
+
+import {Provider} from './pageableContext'
+import {PageableControls} from './pageableControls'
+import {PageableData} from './pageableData'
+import {PageableInfo} from './pageableInfo'
 
 const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []

@@ -1,7 +1,8 @@
-import {composeHoC} from '~/compose'
-import {isMobile} from '~/widget/userAgent'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {composeHoC} from '~/compose'
+import {isMobile} from '~/widget/userAgent'
 
 export const EnabledContext = React.createContext()
 

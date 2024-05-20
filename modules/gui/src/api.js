@@ -1,4 +1,5 @@
 import {setApi} from '~/apiRegistry'
+
 import apps from './api/apps'
 import gee from './api/gee'
 import google from './api/google'

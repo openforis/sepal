@@ -1,8 +1,10 @@
-import {Form} from '~/widget/form'
-import {msg} from '~/translate'
-import {normalize} from '~/app/home/map/visParams/visParams'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {normalize} from '~/app/home/map/visParams/visParams'
+import {msg} from '~/translate'
+import {Form} from '~/widget/form'
+
 import style from './inputImage.module.css'
 
 export class AssetSection extends React.Component {

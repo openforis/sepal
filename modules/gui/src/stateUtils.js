@@ -1,6 +1,7 @@
-import {addHash, cloneDeep, createHash, isEqual} from '~/hash'
 import {flatten} from 'flat'
 import _ from 'lodash'
+
+import {addHash, cloneDeep, createHash, isEqual} from '~/hash'
 
 const DOT_SAFE = '__dotSafe__'
 const dotSafeWrap = unsafePath => ({[DOT_SAFE]: unsafePath})

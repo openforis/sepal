@@ -1,9 +1,11 @@
-import {Layout} from './layout'
-import {Panel} from '~/widget/panel/panel'
-import {msg} from '~/translate'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {msg} from '~/translate'
+import {Panel} from '~/widget/panel/panel'
+
 import styles from './confirm.module.css'
+import {Layout} from './layout'
 
 export class Confirm extends React.Component {
     constructor(props) {

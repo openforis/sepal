@@ -1,16 +1,18 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {distinctUntilChanged, fromEvent, merge, sample, Subject} from 'rxjs'
+
+import {compose} from '~/compose'
+import {isEqual} from '~/hash'
+import {withForwardedRef} from '~/ref'
+import {withSubscriptions} from '~/subscription'
+import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {ElementResizeDetector} from '~/widget/elementResizeDetector'
 import {Keybinding} from '~/widget/keybinding'
 import {Scrollable} from '~/widget/scrollable'
-import {Subject, distinctUntilChanged, fromEvent, merge, sample} from 'rxjs'
-import {compose} from '~/compose'
-import {isEqual} from '~/hash'
-import {msg} from '~/translate'
-import {withForwardedRef} from '~/ref'
-import {withSubscriptions} from '~/subscription'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+
 import styles from './list.module.css'
 
 class _ScrollableList extends React.Component {

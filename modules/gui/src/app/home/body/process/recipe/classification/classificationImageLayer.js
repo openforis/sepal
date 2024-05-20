@@ -1,14 +1,16 @@
-import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
-import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
-import {compose} from '~/compose'
-import {getAvailableBands} from './bands'
-import {getPreSetVisualizations} from './visualizations'
-import {hasTrainingData} from './classificationRecipe'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
+import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+
+import {getAvailableBands} from './bands'
+import {hasTrainingData} from './classificationRecipe'
+import {getPreSetVisualizations} from './visualizations'
 
 const defaultLayerConfig = {
     panSharpen: false

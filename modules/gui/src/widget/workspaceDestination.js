@@ -1,12 +1,13 @@
-import {Form} from '~/widget/form'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {currentUser} from '~/user'
-import {selectFrom} from '~/stateUtils'
-import {toSafeString} from '~/string'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {selectFrom} from '~/stateUtils'
+import {toSafeString} from '~/string'
+import {currentUser} from '~/user'
+import {Form} from '~/widget/form'
 
 const mapStateToProps = state => ({
     projects: selectFrom(state, 'process.projects')

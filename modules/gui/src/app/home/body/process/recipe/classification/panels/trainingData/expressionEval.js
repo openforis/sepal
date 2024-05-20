@@ -240,11 +240,10 @@ function assertInObject(name, object, options = {strict: false}) {
 }
 
 export {
-    jsep as parse,
-    evaluate as eval,
-    evalAsync,
+    addBinaryOp,
+    addUnaryOp,
     compile,
     compileAsync,
-    addUnaryOp,
-    addBinaryOp
-}
+    evaluate as eval,
+    evalAsync,
+    jsep as parse}

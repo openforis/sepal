@@ -1,15 +1,17 @@
-import {Buttons} from '~/widget/buttons'
-import {Layout} from '~/widget/layout'
-import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
-import {SceneSelectionType} from './opticalMosaicRecipe'
-import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
-import {compose} from '~/compose'
-import {selectFrom} from '~/stateUtils'
-import {visualizationOptions} from './visualizations'
-import {withMapArea} from '~/app/home/map/mapAreaContext'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
+import {withMapArea} from '~/app/home/map/mapAreaContext'
+import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {Buttons} from '~/widget/buttons'
+import {Layout} from '~/widget/layout'
+
+import {SceneSelectionType} from './opticalMosaicRecipe'
+import {visualizationOptions} from './visualizations'
 
 const defaultLayerConfig = {
     panSharpen: false

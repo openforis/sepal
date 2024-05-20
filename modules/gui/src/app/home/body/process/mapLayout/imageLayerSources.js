@@ -1,20 +1,22 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+
+import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {select} from '~/store'
+import {msg} from '~/translate'
+import {uuid} from '~/uuid'
 import {CrudItem} from '~/widget/crudItem'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {Padding} from '~/widget/padding'
 import {Scrollable} from '~/widget/scrollable'
-import {compose} from '~/compose'
+
 import {getImageLayerSource} from '../imageLayerSourceRegistry'
-import {msg} from '~/translate'
-import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'
-import {removeArea} from './layerAreas'
-import {select} from '~/store'
-import {uuid} from '~/uuid'
 import {withLayers} from '../withLayers'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+import {removeArea} from './layerAreas'
 
 export class _ImageLayerSources extends React.Component {
     render() {

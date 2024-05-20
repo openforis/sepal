@@ -1,18 +1,20 @@
-import {EMPTY, combineLatest, distinctUntilChanged, fromEvent, switchMap, take, takeUntil, timer} from 'rxjs'
-import {Icon} from '~/widget/icon'
-import {Keybinding} from './keybinding'
-import {Link} from '~/route'
-import {Tooltip} from '~/widget/tooltip'
-import {compose} from '~/compose'
-import {download} from '~/widget/download'
-import {withButtonGroup} from './buttonGroup'
-import {withForwardedRef} from '~/ref'
-import {withSubscriptions} from '~/subscription'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {combineLatest, distinctUntilChanged, EMPTY, fromEvent, switchMap, take, takeUntil, timer} from 'rxjs'
+
+import {compose} from '~/compose'
+import {withForwardedRef} from '~/ref'
+import {Link} from '~/route'
 import lookStyles from '~/style/look.module.css'
+import {withSubscriptions} from '~/subscription'
+import {download} from '~/widget/download'
+import {Icon} from '~/widget/icon'
+import {Tooltip} from '~/widget/tooltip'
+
 import styles from './button.module.css'
+import {withButtonGroup} from './buttonGroup'
+import {Keybinding} from './keybinding'
 
 const CLICK_HOLD_DURATION_MS = 600
 const CLICK_CANCEL_DELAY_MS = 250

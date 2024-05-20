@@ -1,14 +1,16 @@
-import {Graph} from '~/widget/graph'
-import {Widget} from '~/widget/widget'
-import {isMobile} from '~/widget/userAgent'
-import {msg} from '~/translate'
-import {toT} from './t'
+import _ from 'lodash'
+import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
 import format from '~/format'
-import moment from 'moment'
+import {msg} from '~/translate'
+import {Graph} from '~/widget/graph'
+import {isMobile} from '~/widget/userAgent'
+import {Widget} from '~/widget/widget'
+
 import styles from './ccdcGraph.module.css'
+import {toT} from './t'
 
 export class CCDCGraph extends React.Component {
     state = {}

@@ -1,16 +1,18 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+
+import {dateRange, RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {getDataSetOptions} from '~/app/home/body/process/recipe/opticalMosaic/sources'
+import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {compose} from '~/compose'
+import {toSources} from '~/sources'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
-import {RecipeActions, dateRange} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {compose} from '~/compose'
-import {getDataSetOptions} from '~/app/home/body/process/recipe/opticalMosaic/sources'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {toSources} from '~/sources'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+
 import styles from './sources.module.css'
 
 const fields = {

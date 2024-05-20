@@ -1,11 +1,13 @@
+import React from 'react'
+
+import {hasConfidence} from '~/app/home/body/process/recipe/classChange/classChangeRecipe'
+import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {compose} from '~/compose'
+import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
-import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {compose} from '~/compose'
-import {hasConfidence} from '~/app/home/body/process/recipe/classChange/classChangeRecipe'
-import {msg} from '~/translate'
-import React from 'react'
+
 import styles from './options.module.css'
 
 const fields = {

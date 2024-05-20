@@ -1,7 +1,9 @@
-import {Consumer} from './pageableContext'
-import {msg} from '~/translate'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {msg} from '~/translate'
+
+import {Consumer} from './pageableContext'
 
 export const PageableInfo = props => {
     const renderDefaultInfo = ({count, start, stop}) =>

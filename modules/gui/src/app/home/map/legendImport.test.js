@@ -1,5 +1,6 @@
-import {getDefaults, getValidMappings} from './legendImport'
 import _ from 'lodash'
+
+import {getDefaults, getValidMappings} from './legendImport'
 
 /* eslint-disable no-undef */
 

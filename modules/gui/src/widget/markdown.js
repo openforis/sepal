@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types'
-import React from 'react'
 import ReactMarkdown from 'react-markdown'
+
 import styles from './markdown.module.css'
 
 export const Markdown = ({source}) =>

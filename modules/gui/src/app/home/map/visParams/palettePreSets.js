@@ -1,10 +1,11 @@
+import Color from 'color'
+import _ from 'lodash'
+
+import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Combo} from '~/widget/combo'
 import {Label} from '~/widget/label'
-import {msg} from '~/translate'
-import Color from 'color'
-import React from 'react'
-import _ from 'lodash'
+
 import styles from './palettePreSets.module.css'
 
 export const pickColors = (count, colors) => {

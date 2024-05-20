@@ -1,17 +1,19 @@
-import {Form} from '~/widget/form'
-import {Layout} from '~/widget/layout'
-import {Panel} from '~/widget/panel/panel'
+import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
+
+import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import {msg} from '~/translate'
 import {select} from '~/store'
+import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 import {withActivatable} from '~/widget/activation/activatable'
+import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
+import {Layout} from '~/widget/layout'
+import {Panel} from '~/widget/panel/panel'
+
 import {withRecipe} from '../recipeContext'
-import React from 'react'
-import api from '~/apiRegistry'
 import styles from './selectPlanet.module.css'
 
 const mapStateToProps = () => {

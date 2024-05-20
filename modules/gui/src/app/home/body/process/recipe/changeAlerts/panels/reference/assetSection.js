@@ -1,14 +1,15 @@
-import {Form} from '~/widget/form'
-import {Layout} from '~/widget/layout'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
 import {Subject} from 'rxjs'
+
+import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {msg} from '~/translate'
-import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
 import {uuid} from '~/uuid'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+import {Form} from '~/widget/form'
+import {Layout} from '~/widget/layout'
 
 const J_DAYS = 0
 const FRACTIONAL_YEARS = 1

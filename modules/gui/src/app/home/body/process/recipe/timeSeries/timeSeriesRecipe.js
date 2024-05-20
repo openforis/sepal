@@ -1,10 +1,11 @@
+import moment from 'moment'
+
+import api from '~/apiRegistry'
+import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
-import {msg} from '~/translate'
 import {publishEvent} from '~/eventPublisher'
-import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import api from '~/apiRegistry'
-import moment from 'moment'
+import {msg} from '~/translate'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 

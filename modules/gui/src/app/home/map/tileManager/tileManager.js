@@ -1,9 +1,11 @@
-import {BehaviorSubject, Subject, filter, finalize, first} from 'rxjs'
+import {BehaviorSubject, filter, finalize, first, Subject} from 'rxjs'
+
 import {getLogger} from '~/log'
-import {getRequestExecutor} from './requestExecutor'
-import {getRequestQueue} from './requestQueue'
 import {tileProviderTag, tileTag} from '~/tag'
 import {uuid} from '~/uuid'
+
+import {getRequestExecutor} from './requestExecutor'
+import {getRequestQueue} from './requestQueue'
 
 const log = getLogger('tileManager')
 

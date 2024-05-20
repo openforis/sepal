@@ -1,6 +1,8 @@
-import {hasConfidence} from './classChangeRecipe'
-import {selectFrom} from '~/stateUtils'
 import _ from 'lodash'
+
+import {selectFrom} from '~/stateUtils'
+
+import {hasConfidence} from './classChangeRecipe'
 
 export const getAvailableBands = recipe => {
     const entries = selectFrom(recipe, 'model.legend.entries') || []

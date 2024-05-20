@@ -1,6 +1,8 @@
-import {Mutator} from './stateUtils'
-import {getHash} from '~/hash'
 import _ from 'lodash'
+
+import {getHash} from '~/hash'
+
+import {Mutator} from './stateUtils'
 
 /* eslint-disable no-undef */
 

@@ -1,14 +1,16 @@
+import React from 'react'
+
+import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
 import {Icon} from '~/widget/icon'
 import {Panel} from '~/widget/panel/panel'
-import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {compose} from '~/compose'
-import {getDataSet} from './sources'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import React from 'react'
+
 import daysBetween from './daysBetween'
 import styles from './scenePreview.module.css'
+import {getDataSet} from './sources'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,

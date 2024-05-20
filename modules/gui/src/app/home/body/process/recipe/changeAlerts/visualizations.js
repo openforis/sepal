@@ -1,10 +1,11 @@
-import {msg} from '~/translate'
-import {normalize} from '~/app/home/map/visParams/visParams'
+import moment from 'moment'
+
 import {visualizationOptions as opticalVisualizationOptions} from '~/app/home/body/process/recipe/opticalMosaic/visualizations'
 import {visualizationOptions as planetVisualizationOptions} from '~/app/home/body/process/recipe/planetMosaic/visualizations'
 import {visualizationOptions as radarVisualizationOptions} from '~/app/home/body/process/recipe/radarMosaic/visualizations'
+import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
-import moment from 'moment'
+import {msg} from '~/translate'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 

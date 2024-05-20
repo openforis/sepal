@@ -1,11 +1,13 @@
+import PropTypes from 'prop-types'
+import React from 'react'
+
 import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
-import {RecipeActions} from '../../timeSeriesRecipe'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {groupedBandOptions, toDataSetIds} from '~/sources'
 import {selectFrom} from '~/stateUtils'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import PropTypes from 'prop-types'
-import React from 'react'
+
+import {RecipeActions} from '../../timeSeriesRecipe'
 
 const mapRecipeToProps = recipe =>
     ({

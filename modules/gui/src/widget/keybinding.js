@@ -1,10 +1,11 @@
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {fromEvent} from 'rxjs'
-import {withEnableDetector} from '~/enabled'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {fromEvent} from 'rxjs'
+
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {withEnableDetector} from '~/enabled'
 
 const keybindings = []
 

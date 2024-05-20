@@ -1,8 +1,10 @@
-import {InlineConfirmationButton} from './inlineConfirmationButton'
-import {ModalConfirmationButton} from './modalConfirmationButton'
-import {msg} from '~/translate'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {msg} from '~/translate'
+
+import {InlineConfirmationButton} from './inlineConfirmationButton'
+import {ModalConfirmationButton} from './modalConfirmationButton'
 
 export class RemoveButton extends React.Component {
     render() {

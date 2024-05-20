@@ -1,10 +1,12 @@
-import {Widget} from './widget'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+
 import {compose} from '~/compose'
 import {withContext} from '~/context'
 import {withForwardedRef} from '~/ref'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+
+import {Widget} from './widget'
 
 const Context = React.createContext()
 

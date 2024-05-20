@@ -1,19 +1,19 @@
-import {Notifications} from '~/widget/notifications'
-import {
-    RecipeActions,
-    SceneSelectionType,
-    getSource
-} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
+
+import api from '~/apiRegistry'
+import {
+    getSource,
+    RecipeActions,
+    SceneSelectionType} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {isPartiallyEqual} from '~/hash'
-import {msg} from '~/translate'
 import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
 import {uuid} from '~/uuid'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {Notifications} from '~/widget/notifications'
 import {withTab} from '~/widget/tabs/tabContext'
-import React from 'react'
-import api from '~/apiRegistry'
 
 const mapRecipeToProps = recipe => ({
     manualSelection: selectFrom(recipe, 'model.sceneSelectionOptions.type') === SceneSelectionType.SELECT,

@@ -1,8 +1,9 @@
-import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
-import {RecipeActions} from '~/app/home/body/process/recipe/baytsHistorical/baytsHistoricalRecipe'
-import {compose} from '~/compose'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
 import React from 'react'
+
+import {RecipeActions} from '~/app/home/body/process/recipe/baytsHistorical/baytsHistoricalRecipe'
+import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
 
 const mapRecipeToProps = recipe => ({recipe})
 

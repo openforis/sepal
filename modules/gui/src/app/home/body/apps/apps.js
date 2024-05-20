@@ -1,7 +1,9 @@
-import {App} from './app'
-import {Tabs} from '~/widget/tabs/tabs'
-import {msg} from '~/translate'
 import React from 'react'
+
+import {msg} from '~/translate'
+import {Tabs} from '~/widget/tabs/tabs'
+
+import {App} from './app'
 
 export class Apps extends React.Component {
     constructor() {

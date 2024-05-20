@@ -1,5 +1,5 @@
 import {AsyncGunzip, AsyncGzip, DecodeUTF8, EncodeUTF8} from 'fflate'
-import {Subject, from, map, toArray} from 'rxjs'
+import {from, map, Subject, toArray} from 'rxjs'
 
 export const gzip$ = content => {
     const data$ = new Subject()

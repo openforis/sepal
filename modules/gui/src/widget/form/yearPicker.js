@@ -1,7 +1,9 @@
-import {FormCombo} from '~/widget/form/combo'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {FormCombo} from '~/widget/form/combo'
+
 import styles from './yearPicker.module.css'
 
 export class FormYearPicker extends React.Component {

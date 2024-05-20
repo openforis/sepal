@@ -1,7 +1,8 @@
-import {ButtonGroup} from './buttonGroup'
-import {SortButton} from './sortButton'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {ButtonGroup} from './buttonGroup'
+import {SortButton} from './sortButton'
 
 export class SortButtons extends React.Component {
     constructor() {

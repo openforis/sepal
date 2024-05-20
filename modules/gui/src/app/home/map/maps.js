@@ -1,17 +1,19 @@
-import {BehaviorSubject, Subject, debounceTime, distinctUntilChanged, filter, forkJoin, from, map, merge, of, switchMap, zip} from 'rxjs'
 import {Loader} from '@googlemaps/js-api-loader'
-import {SepalMap} from './sepalMap'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {getLogger} from '~/log'
-import {mapTag, mapViewTag} from '~/tag'
-import {uuid} from '~/uuid'
-import {withContext} from '~/context'
-import {withSubscriptions} from '~/subscription'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {BehaviorSubject, debounceTime, distinctUntilChanged, filter, forkJoin, from, map, merge, of, Subject, switchMap, zip} from 'rxjs'
+
 import api from '~/apiRegistry'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {withContext} from '~/context'
+import {getLogger} from '~/log'
+import {withSubscriptions} from '~/subscription'
+import {mapTag, mapViewTag} from '~/tag'
+import {uuid} from '~/uuid'
+
+import {SepalMap} from './sepalMap'
 
 const log = getLogger('maps')
 

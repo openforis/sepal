@@ -1,6 +1,7 @@
-import {CrudItem} from '~/widget/crudItem'
 import PropTypes from 'prop-types'
-import React from 'react'
+
+import {CrudItem} from '~/widget/crudItem'
+
 import styles from './appItem.module.css'
 
 const imageUrl = logoRef => logoRef

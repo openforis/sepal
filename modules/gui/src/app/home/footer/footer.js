@@ -1,15 +1,15 @@
+import {copyToClipboard} from '~/clipboard'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {msg} from '~/translate'
+import {logout$} from '~/user'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {Layout} from '~/widget/layout'
+
 import {UsageButton} from '../user/usage'
 import {UserDetailsButton} from '../user/userDetails'
 import {UserMessagesButton} from '../user/userMessages'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {copyToClipboard} from '~/clipboard'
-import {logout$} from '~/user'
-import {msg} from '~/translate'
-import React from 'react'
 import styles from './footer.module.css'
 
 export const Footer = ({className}) => {

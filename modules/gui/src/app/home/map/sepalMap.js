@@ -1,6 +1,7 @@
-import {Subject} from 'rxjs'
-import {getLogger} from '~/log'
 import _ from 'lodash'
+import {Subject} from 'rxjs'
+
+import {getLogger} from '~/log'
 
 const log = getLogger('sepalMap')
 

@@ -1,16 +1,18 @@
+import moment from 'moment'
+// import PropTypes from 'prop-types'
+import React from 'react'
+import {map} from 'rxjs'
+
+import {getRevisions, revertToRevision$} from '~/app/home/body/process/recipe'
+import {compose} from '~/compose'
+import {msg} from '~/translate'
+import {withActivatable} from '~/widget/activation/activatable'
 import {Form} from '~/widget/form'
+import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
-import {compose} from '~/compose'
-import {getRevisions, revertToRevision$} from '~/app/home/body/process/recipe'
-import {map} from 'rxjs'
-import {msg} from '~/translate'
-import {withActivatable} from '~/widget/activation/activatable'
-import {withForm} from '~/widget/form/form'
-// import PropTypes from 'prop-types'
-import React from 'react'
-import moment from 'moment'
+
 import styles from './revisions.module.css'
 
 const fields = {

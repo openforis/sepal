@@ -1,5 +1,5 @@
-import {msg} from '~/translate'
 import {normalize} from '~/app/home/map/visParams/visParams'
+import {msg} from '~/translate'
 
 export const getPreSetVisualizations = () => Object.values(visualizations).flat()
 

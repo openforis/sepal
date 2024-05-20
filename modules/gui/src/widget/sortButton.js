@@ -1,6 +1,7 @@
-import {Button} from '~/widget/button'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {Button} from '~/widget/button'
 
 const orderMap = {
     '-1': 'sort-up',

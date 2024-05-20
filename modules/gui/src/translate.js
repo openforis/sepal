@@ -1,10 +1,11 @@
-import {IntlProvider, injectIntl} from 'react-intl'
 import {flatten} from 'flat'
-import {getLogger} from '~/log'
-import PropTypes from 'prop-types'
-import React from 'react'
 import _ from 'lodash'
 import moment from 'moment'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {injectIntl, IntlProvider} from 'react-intl'
+
+import {getLogger} from '~/log'
 
 const log = getLogger('translate')
 

@@ -1,5 +1,6 @@
-import {formatCoordinates, parseCoordinates} from './coords'
 import _ from 'lodash'
+
+import {formatCoordinates, parseCoordinates} from './coords'
 
 /* eslint-disable no-undef */
 

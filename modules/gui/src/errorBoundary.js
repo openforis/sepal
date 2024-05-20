@@ -1,7 +1,9 @@
-import {isDevelopment} from '~/environment'
-import {publishFatalError} from './eventPublisher'
 import React from 'react'
+
+import {isDevelopment} from '~/environment'
+
 import styles from './errorBoundary.module.css'
+import {publishFatalError} from './eventPublisher'
 
 export class ErrorBoundary extends React.Component {
     state = {

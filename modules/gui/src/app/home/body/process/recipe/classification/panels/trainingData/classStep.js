@@ -1,19 +1,21 @@
+import PropTypes from 'prop-types'
+import React from 'react'
+
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {FormCombo} from '~/widget/form/combo'
 import {Layout} from '~/widget/layout'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
+
 import {validateExpression} from './expression'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import PropTypes from 'prop-types'
-import React, {Component} from 'react'
 
 const mapRecipeToProps = recipe => ({
     legend: selectFrom(recipe, 'model.legend')
 })
 
-class _ClassStep extends Component {
+class _ClassStep extends React.Component {
     state = {}
 
     render() {

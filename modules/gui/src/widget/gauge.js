@@ -1,8 +1,9 @@
-import {Layout} from './layout'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
 import styles from './gauge.module.css'
+import {Layout} from './layout'
 
 export class Gauge extends React.Component {
     render() {

@@ -1,14 +1,16 @@
+import PropTypes from 'prop-types'
+import React from 'react'
+
+import {compose} from '~/compose'
+import {msg} from '~/translate'
 import {Form} from '~/widget/form'
+import {withForm} from '~/widget/form/form'
 import {Label} from '~/widget/label'
 import {Layout} from '~/widget/layout'
 import {Markdown} from '~/widget/markdown'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {withForm} from '~/widget/form/form'
-import PropTypes from 'prop-types'
-import React from 'react'
+
 import styles from './userMessage.module.css'
 
 const fields = {

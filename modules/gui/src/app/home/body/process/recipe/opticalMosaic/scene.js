@@ -1,14 +1,16 @@
+import PropTypes from 'prop-types'
+import React from 'react'
+
+import format from '~/format'
+import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {HoverDetector, HoverOverlay} from '~/widget/hover'
 import {Icon} from '~/widget/icon'
-import {getDataSet} from './sources'
-import {msg} from '~/translate'
-import PropTypes from 'prop-types'
-import React from 'react'
+
 import daysBetween from './daysBetween'
-import format from '~/format'
 import styles from './sceneSelection.module.css'
+import {getDataSet} from './sources'
 
 export class Scene extends React.Component {
     render() {

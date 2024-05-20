@@ -1,3 +1,10 @@
+import React from 'react'
+
+import {compose} from '~/compose'
+import {formatCoordinates, parseCoordinates} from '~/coords'
+import {withSubscriptions} from '~/subscription'
+import {msg} from '~/translate'
+import {withActivatable} from '~/widget/activation/activatable'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {Keybinding} from '~/widget/keybinding'
@@ -7,13 +14,8 @@ import {SearchBox} from '~/widget/searchBox'
 import {Slider} from '~/widget/slider'
 import {ToggleButton} from '~/widget/toggleButton'
 import {Toolbar} from '~/widget/toolbar/toolbar'
-import {compose} from '~/compose'
-import {formatCoordinates, parseCoordinates} from '~/coords'
-import {msg} from '~/translate'
-import {withActivatable} from '~/widget/activation/activatable'
+
 import {withMap} from './mapContext'
-import {withSubscriptions} from '~/subscription'
-import React from 'react'
 import styles from './mapZoom.module.css'
 
 class _MapZoomPanel extends React.Component {

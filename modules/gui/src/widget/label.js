@@ -1,9 +1,10 @@
-import {Icon} from './icon'
-import {Layout} from './layout'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {Icon} from './icon'
 import styles from './label.module.css'
+import {Layout} from './layout'
 
 export class Label extends React.Component {
     render() {

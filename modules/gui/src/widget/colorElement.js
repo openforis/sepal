@@ -1,13 +1,15 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {HexColorPicker} from 'react-colorful'
+
+import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {FloatingBox} from '~/widget/floatingBox'
-import {HexColorPicker} from 'react-colorful'
 import {Icon} from '~/widget/icon'
 import {Keybinding} from '~/widget/keybinding'
 import {isMobile} from '~/widget/userAgent'
-import {msg} from '~/translate'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+
 import _css from './colorElement.css'
 import styles from './colorElement.module.css'
 

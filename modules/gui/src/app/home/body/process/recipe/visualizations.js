@@ -1,5 +1,6 @@
-import {getRecipeType} from '../recipeTypeRegistry'
 import {selectFrom} from '~/stateUtils'
+
+import {getRecipeType} from '../recipeTypeRegistry'
 
 export const getAllVisualizations = recipe => {
     const recipeType = getRecipeType(recipe.type)

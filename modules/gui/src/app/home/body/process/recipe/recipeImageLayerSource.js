@@ -1,17 +1,19 @@
-import {Notifications} from '~/widget/notifications'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {createAoiFeatureLayerSource} from '~/app/home/map/aoiFeatureLayerSource'
-import {createGoogleSatelliteImageLayerSource} from '~/app/home/map/imageLayerSource/googleSatelliteImageLayerSource'
-import {createLabelsFeatureLayerSource} from '~/app/home/map/labelsFeatureLayerSource'
-import {createNicfiPlanetImageLayerSource} from '~/app/home/map/imageLayerSource/planetImageLayerSource'
-import {msg} from '~/translate'
-import {recipeAccess} from '../recipeAccess'
-import {recipeActionBuilder} from '../recipe'
-import {selectFrom} from '~/stateUtils'
-import {withRecipe} from '../recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {createAoiFeatureLayerSource} from '~/app/home/map/aoiFeatureLayerSource'
+import {createGoogleSatelliteImageLayerSource} from '~/app/home/map/imageLayerSource/googleSatelliteImageLayerSource'
+import {createNicfiPlanetImageLayerSource} from '~/app/home/map/imageLayerSource/planetImageLayerSource'
+import {createLabelsFeatureLayerSource} from '~/app/home/map/labelsFeatureLayerSource'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {Notifications} from '~/widget/notifications'
+
+import {recipeActionBuilder} from '../recipe'
+import {recipeAccess} from '../recipeAccess'
+import {withRecipe} from '../recipeContext'
 
 const mapStateToProps = (state, {source: {sourceConfig: {recipeId}}}) => ({
     recipe: selectFrom(state, ['process.loadedRecipes', recipeId])

@@ -1,13 +1,15 @@
-import {ActivationButton} from '~/widget/toolbar/activationButton'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {select} from '~/store'
-import {selectFrom} from '~/stateUtils'
-import {usageHint} from '~/app/home/user/usage'
-import {withRecipe} from '../recipeContext'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {usageHint} from '~/app/home/user/usage'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {select} from '~/store'
+import {msg} from '~/translate'
+import {ActivationButton} from '~/widget/toolbar/activationButton'
+
+import {withRecipe} from '../recipeContext'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),

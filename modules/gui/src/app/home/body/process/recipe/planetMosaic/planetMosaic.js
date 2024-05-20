@@ -1,16 +1,18 @@
-import {Aoi} from '~/app/home/body/process/recipe/aoi'
-import {Map} from '~/app/home/map/map'
-import {PlanetMosaicToolbar} from './panels/planetMosaicToolbar'
-import {compose} from '~/compose'
-import {defaultModel} from './planetMosaicRecipe'
-import {getAvailableBands} from './bands'
-import {getPreSetVisualizations} from './visualizations'
-import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
-import {msg} from '~/translate'
-import {recipe} from '~/app/home/body/process/recipeContext'
-import {selectFrom} from '~/stateUtils'
-import React from 'react'
 import moment from 'moment'
+import React from 'react'
+
+import {Aoi} from '~/app/home/body/process/recipe/aoi'
+import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
+import {recipe} from '~/app/home/body/process/recipeContext'
+import {Map} from '~/app/home/map/map'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+
+import {getAvailableBands} from './bands'
+import {PlanetMosaicToolbar} from './panels/planetMosaicToolbar'
+import {defaultModel} from './planetMosaicRecipe'
+import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),

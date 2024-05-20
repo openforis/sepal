@@ -1,6 +1,7 @@
-import {Icon} from './icon'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {Icon} from './icon'
 import styles from './message.module.css'
 
 export class Message extends React.Component {

@@ -1,8 +1,10 @@
-import {Combo} from '~/widget/combo'
-import {compose} from '~/compose'
-import {withFormContext} from './context'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {compose} from '~/compose'
+import {Combo} from '~/widget/combo'
+
+import {withFormContext} from './context'
 
 class _FormCombo extends React.Component {
     constructor(props) {
