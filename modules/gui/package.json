@@ -93,8 +93,5 @@
     "overrides": {
         "react": "$react",
         "react-dom": "$react-dom"
-    },
-    "imports": {
-        "/*": "./src/*.js"
     }
 }
