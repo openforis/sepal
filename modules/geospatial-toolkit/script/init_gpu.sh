@@ -6,27 +6,34 @@ echo "***************************"
 echo "*** Installing GPU libs ***"
 echo "***************************"
 
-pip3 install --upgrade pip
-pip3 uninstall -y numpy
-pip3 install numpy
+# Tensorflow version compatibility: 
+#   https://www.tensorflow.org/install/source#gpu
+
+apt-get update
+
+# To get OpenCL to work
+mkdir -p /etc/OpenCL/vendors 
+echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
+
+apt-get install -y python3-pip wget curl sudo nano # TODO: Remove
+
+pip3 install --extra-index-url https://pypi.nvidia.com tensorrt-libs
+pip3 install \
+    pyopencl \
+    tensorflow==2.15.1 \
+    torch \
+    testresources
+
+# Add NVIDIA repo
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+dpkg -i cuda-keyring_1.1-1_all.deb
+apt-get update
+
+# apt-get -y install cudnn-cuda-12 # Still not found by tensorflow
+# pip3 install tensorrt # Still not found by tensorflow
 
 
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
-dpkg -i cuda-keyring_1.0-1_all.deb
-rm cuda-keyring_1.0-1_all.deb
-apt-get -y update
-# *** Ensure same nvidia driver version is used both here (in the container) and in install-gpu-drivers.sh (on the host) ***
-#   nvidia-driver-525=525.125.06-0ubuntu1 \
-apt-get install -y --no-install-recommends \
-  nvidia-driver-515=515.105.01-0ubuntu1 \
-  cuda-toolkit-11-7
-
-apt-get install -y \
-  libcudnn8=8.5.0.96-1+cuda11.7 \
-  libcudnn8-dev=8.5.0.96-1+cuda11.7
-
-pip3 install pyopencl
-pip3 install testresources
-
-# Versions: https://www.tensorflow.org/install/source#gpu
-pip3 install tensorflow==2.14.1
+# Verify that libraries find the GPU
+# python3 -c "import pyopencl as cl; print(cl.get_platforms())"
+# python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"
+# python3 -c "import torch; print(torch.cuda.is_available()); print(torch.cuda.device_count());"

@@ -7,4 +7,4 @@ if [ "$?" -eq 0 ]; then
 fi
 
 # Enable persistence mode
-nvidia-smi -pm 1
+/usr/bin/nvidia-persistenced --verbose
