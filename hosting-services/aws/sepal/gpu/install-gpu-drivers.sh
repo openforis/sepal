@@ -28,18 +28,11 @@ dnf install -y --allowerasing nvidia-gds
 curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
     tee /etc/yum.repos.d/nvidia-container-toolkit.repo
 dnf install -y nvidia-container-toolkit
-nvidia-ctk runtime configure --runtime=docker # TODO: Make this config part of config
 systemctl restart docker
-
-# # TODO: Remove this
-# # docker run --name nvidia -d --runtime=nvidia --gpus all ubuntu:jammy bash -c 'sleep 100d'
-# docker run --name nvidia -d --runtime=nvidia --gpus 'all,"capabilities=compute,compat32,graphics,utility,video,display"' ubuntu:jammy bash -c 'sleep 100d'
-# # docker run --name test -d ubuntu:jammy bash -c 'sleep 100d'
-# docker exec -it test bash
 
 # Set NUMA affinity
 # lspci | grep -i nvidia # Extract device id 
-#  sudo echo 0 | sudo tee -a /sys/bus/pci/devices/$DEVICE_ID/numa_node
+# echo 0 | tee -a /sys/bus/pci/devices/$DEVICE_ID/numa_node
 
 chmod +x /usr/local/bin/init-gpu-drivers.sh
 systemctl enable init-gpu-drivers.service
