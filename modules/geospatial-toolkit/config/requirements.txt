@@ -59,9 +59,6 @@ geeadd
 geeup
 cogee
 xee
-# compatibility with current cuda11.7 https://pytorch.org/get-started/previous-versions/#linux-and-windows-8
-torch==2.0.1
-torchvision==0.15.2
 
 ########  OSK requirements  ########
 descartes
