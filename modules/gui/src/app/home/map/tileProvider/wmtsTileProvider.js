@@ -1,5 +1,3 @@
-import _ from 'lodash'
-
 import api from '~/apiRegistry'
 import {autoRetry} from '~/rxjsutils'
 import {applyDefaults} from '~/utils'

@@ -1,5 +1,3 @@
-import _ from 'lodash'
-
 import {NODE_KEY, Tree} from './tree'
 
 /* eslint-disable no-undef */

@@ -1,5 +1,3 @@
-import _ from 'lodash'
-
 import {getHash} from '~/hash'
 
 import {Mutator} from './stateUtils'

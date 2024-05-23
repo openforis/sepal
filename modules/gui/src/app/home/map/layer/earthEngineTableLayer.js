@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import {finalize, tap} from 'rxjs'
 
 import {isEqual} from '~/hash'

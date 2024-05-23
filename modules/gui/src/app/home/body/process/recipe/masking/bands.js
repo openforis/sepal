@@ -1,5 +1,3 @@
-import _ from 'lodash'
-
 export const getAvailableBands = recipe => {
     const bands = recipe.model.imageToMask?.bands || []
     const availableBands = {}

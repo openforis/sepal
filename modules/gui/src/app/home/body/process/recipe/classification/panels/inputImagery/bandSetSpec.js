@@ -1,5 +1,3 @@
-import _ from 'lodash'
-
 import {msg} from '~/translate'
 
 import {getAvailableIndexes} from './opticalIndexes'

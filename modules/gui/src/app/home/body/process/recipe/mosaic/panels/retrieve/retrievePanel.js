@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'

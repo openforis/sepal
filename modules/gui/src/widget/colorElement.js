@@ -1,3 +1,5 @@
+import './colorElement.css'
+
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -10,7 +12,6 @@ import {Icon} from '~/widget/icon'
 import {Keybinding} from '~/widget/keybinding'
 import {isMobile} from '~/widget/userAgent'
 
-import _css from './colorElement.css'
 import styles from './colorElement.module.css'
 
 export class ColorElement extends React.Component {

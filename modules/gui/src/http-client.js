@@ -11,7 +11,8 @@ import {currentUser, logout$, updateUser} from '~/user'
 import {applyDefaults} from '~/utils'
 import {Notifications} from '~/widget/notifications'
 
-const _log = getLogger('http')
+// eslint-disable-next-line no-unused-vars
+const log = getLogger('http')
 
 const DEFAULT_RETRY_CONFIG = {
     maxRetries: 5,

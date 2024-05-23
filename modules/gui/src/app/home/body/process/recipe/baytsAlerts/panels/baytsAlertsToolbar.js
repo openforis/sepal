@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import React from 'react'
 
 import {setInitialized} from '~/app/home/body/process/recipe'
