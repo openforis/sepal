@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import React from 'react'
+
 import styles from './padding.module.css'
 
 export const Padding = ({noHorizontal, noVertical, className, children}) => {

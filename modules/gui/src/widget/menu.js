@@ -1,10 +1,12 @@
-import {Button} from '~/widget/button'
-import {FloatingBox} from './floatingBox'
-import {Keybinding} from './keybinding'
-import {compose} from '~/compose'
-import {withContext} from '~/context'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {compose} from '~/compose'
+import {withContext} from '~/context'
+import {Button} from '~/widget/button'
+
+import {FloatingBox} from './floatingBox'
+import {Keybinding} from './keybinding'
 import styles from './menu.module.css'
 
 const Context = React.createContext()

@@ -1,6 +1,7 @@
-import {GooglePolygonLayer} from './layer/googlePolygonLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {GooglePolygonLayer} from './layer/googlePolygonLayer'
 
 export class PolygonLayer extends React.Component {
     render() {

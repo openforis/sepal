@@ -1,5 +1,6 @@
-import {msg} from '~/translate'
 import _ from 'lodash'
+
+import {msg} from '~/translate'
 
 export const getDataSetOptions = () => {
     return [

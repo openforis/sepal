@@ -1,17 +1,19 @@
-import {Buttons} from '~/widget/buttons'
-import {Form} from './form'
-import {Subject, map, switchMap, takeUntil} from 'rxjs'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
-import {msg} from '~/translate'
-import {recipeAccess} from '~/app/home/body/process/recipeAccess'
-import {select} from '~/store'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {map, Subject, switchMap, takeUntil} from 'rxjs'
+
 import api from '~/apiRegistry'
+import {recipeAccess} from '~/app/home/body/process/recipeAccess'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {select} from '~/store'
+import {msg} from '~/translate'
+import {Buttons} from '~/widget/buttons'
+
+import {Form} from './form'
 
 const mapStateToProps = () => {
     return {

@@ -1,13 +1,15 @@
-import {Button} from '~/widget/button'
-import {ButtonGroup} from './buttonGroup'
-import {FloatingBox} from '~/widget/floatingBox'
-import {Icon} from '~/widget/icon'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+import {Button} from '~/widget/button'
+import {FloatingBox} from '~/widget/floatingBox'
+import {Icon} from '~/widget/icon'
+
+import {ButtonGroup} from './buttonGroup'
 import styles from './buttonPopup.module.css'
 
 const mapStateToProps = state => ({

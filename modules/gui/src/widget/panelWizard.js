@@ -1,9 +1,10 @@
-import {compose} from '~/compose'
-import {withActivators} from '~/widget/activation/activator'
-import {withContext} from '~/context'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {compose} from '~/compose'
+import {withContext} from '~/context'
+import {withActivators} from '~/widget/activation/activator'
 
 const Context = React.createContext()
 

@@ -1,6 +1,8 @@
-import {Layout} from '~/widget/layout'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
+
+import {Layout} from '~/widget/layout'
+
 import styles from './inputImage.module.css'
 
 export class ImageForm extends Component {

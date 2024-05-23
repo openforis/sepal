@@ -1,7 +1,8 @@
 import Dygraph from 'dygraphs'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
 import styles from './graph.module.css'
 
 export class Graph extends React.Component {

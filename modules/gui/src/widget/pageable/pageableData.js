@@ -1,9 +1,11 @@
-import {Consumer} from './pageableContext'
-import {Layout} from '~/widget/layout'
-import {OverflowDetector} from '~/widget/overflowDetector'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {Layout} from '~/widget/layout'
+import {OverflowDetector} from '~/widget/overflowDetector'
+
+import {Consumer} from './pageableContext'
 
 export class PageableData extends React.Component {
     render() {

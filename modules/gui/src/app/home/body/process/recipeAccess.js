@@ -1,13 +1,15 @@
+import _ from 'lodash'
+import React from 'react'
+import {map, of, switchMap, tap} from 'rxjs'
+
 import {actionBuilder} from '~/action-builder'
+import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import {initializeRecipe} from './recipe'
-import {map, of, switchMap, tap} from 'rxjs'
 import {selectFrom} from '~/stateUtils'
 import {uuid} from '~/uuid'
-import React from 'react'
-import _ from 'lodash'
-import api from '~/apiRegistry'
+
+import {initializeRecipe} from './recipe'
 
 let componentIdsByRecipeId = {}
 

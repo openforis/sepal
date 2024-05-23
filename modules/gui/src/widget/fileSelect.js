@@ -1,7 +1,8 @@
-import {msg} from '~/translate'
-import {useDropzone} from 'react-dropzone'
 import PropTypes from 'prop-types'
-import React from 'react'
+import {useDropzone} from 'react-dropzone'
+
+import {msg} from '~/translate'
+
 import styles from './fileSelect.module.css'
 
 export const FileSelect = ({multiple, single, accept, onSelect, children}) => {

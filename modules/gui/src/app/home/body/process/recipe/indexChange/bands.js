@@ -1,6 +1,8 @@
-import {hasError} from './indexChangeRecipe'
-import {selectFrom} from '~/stateUtils'
 import _ from 'lodash'
+
+import {selectFrom} from '~/stateUtils'
+
+import {hasError} from './indexChangeRecipe'
 
 export const getAvailableBands = recipe => {
     const entries = selectFrom(recipe, 'model.legend.entries') || []

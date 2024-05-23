@@ -1,17 +1,19 @@
+import React from 'react'
+
+import {recipe} from '~/app/home/body/process/recipeContext'
+import {Map} from '~/app/home/map/map'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+
 import {Aoi} from '../aoi'
+import {initializeLayers} from '../recipeImageLayerSource'
+import {getAvailableBands} from './bands'
+import {getDefaultModel, RecipeActions} from './classificationRecipe'
+import {DataCollectionManager, DataCollectionManagerContext} from './dataCollectionManager'
 import {ClassificationToolbar} from './panels/classificationToolbar'
 import {CollectPanel} from './panels/collect/collectPanel'
-import {DataCollectionManager, DataCollectionManagerContext} from './dataCollectionManager'
-import {Map} from '~/app/home/map/map'
-import {RecipeActions, getDefaultModel} from './classificationRecipe'
-import {compose} from '~/compose'
-import {getAvailableBands} from './bands'
 import {getPreSetVisualizations} from './visualizations'
-import {initializeLayers} from '../recipeImageLayerSource'
-import {msg} from '~/translate'
-import {recipe} from '~/app/home/body/process/recipeContext'
-import {selectFrom} from '~/stateUtils'
-import React from 'react'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),

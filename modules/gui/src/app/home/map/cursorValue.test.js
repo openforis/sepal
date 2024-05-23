@@ -1,5 +1,6 @@
-import {toBandValues} from './cursorValue'
 import _ from 'lodash'
+
+import {toBandValues} from './cursorValue'
 
 /* eslint-disable no-undef */
 

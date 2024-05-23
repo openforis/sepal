@@ -1,7 +1,9 @@
-import {FormPanelContext} from './panel'
-import {Panel} from '~/widget/panel/panel'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {Panel} from '~/widget/panel/panel'
+
+import {FormPanelContext} from './panel'
 
 export class FormPanelButtons extends React.Component {
     constructor() {

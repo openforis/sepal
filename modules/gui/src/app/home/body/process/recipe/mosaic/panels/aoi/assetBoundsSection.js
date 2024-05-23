@@ -1,5 +1,7 @@
-import {msg} from '~/translate'
 import React from 'react'
+
+import {msg} from '~/translate'
+
 import styles from './aoi.module.css'
 
 export class AssetBoundsSection extends React.Component {

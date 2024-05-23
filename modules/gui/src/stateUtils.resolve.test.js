@@ -1,5 +1,6 @@
-import {resolve} from './stateUtils'
 import _ from 'lodash'
+
+import {resolve} from './stateUtils'
 
 /* eslint-disable no-undef */
 

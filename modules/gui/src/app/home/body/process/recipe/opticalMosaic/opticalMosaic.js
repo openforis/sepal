@@ -1,19 +1,21 @@
-import {Aoi} from '../aoi'
-import {AutoSelectScenes} from './autoSelectScenes'
+import React from 'react'
+
+import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+
+import {Aoi} from '../aoi'
+import {initializeLayers} from '../recipeImageLayerSource'
+import {AutoSelectScenes} from './autoSelectScenes'
+import {getAvailableBands} from './bands'
+import {dateRange, defaultModel, RecipeActions} from './opticalMosaicRecipe'
 import {MosaicToolbar} from './panels/opticalMosaicToolbar'
-import {RecipeActions, dateRange, defaultModel} from './opticalMosaicRecipe'
 import {SceneAreas} from './sceneAreas'
 import {SceneDeselection} from './sceneDeselection'
 import {SceneSelection} from './sceneSelection'
-import {compose} from '~/compose'
-import {getAvailableBands} from './bands'
 import {getPreSetVisualizations} from './visualizations'
-import {initializeLayers} from '../recipeImageLayerSource'
-import {msg} from '~/translate'
-import {recipe} from '~/app/home/body/process/recipeContext'
-import {selectFrom} from '~/stateUtils'
-import React from 'react'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),

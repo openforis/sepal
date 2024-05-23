@@ -1,18 +1,20 @@
+import Color from 'color'
+import _ from 'lodash'
+import React from 'react'
+
+import {compose} from '~/compose'
+import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {ColorElement} from '~/widget/colorElement'
 import {Form} from '~/widget/form'
+import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
 import {NoData} from '~/widget/noData'
-import {PalettePreSets, pickColors} from './visParams/palettePreSets'
 import {RemoveButton} from '~/widget/removeButton'
 import {Widget} from '~/widget/widget'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {withForm} from '~/widget/form/form'
-import Color from 'color'
-import React from 'react'
-import _ from 'lodash'
+
 import styles from './legendBuilder.module.css'
+import {PalettePreSets, pickColors} from './visParams/palettePreSets'
 
 export class LegendBuilder extends React.Component {
     state = {

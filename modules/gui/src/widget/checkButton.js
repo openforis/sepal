@@ -1,6 +1,8 @@
-import {Button} from '~/widget/button'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {Button} from '~/widget/button'
+
 import styles from './checkButton.module.css'
 
 export class CheckButton extends React.Component {

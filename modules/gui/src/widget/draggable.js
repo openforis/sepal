@@ -1,10 +1,11 @@
-import {animationFrames, debounceTime, delay, distinctUntilChanged, filter, fromEvent, map, switchMap} from 'rxjs'
-import {compose} from '~/compose'
-import {withSubscriptions} from '~/subscription'
 import Hammer from 'hammerjs'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {animationFrames, debounceTime, delay, distinctUntilChanged, filter, fromEvent, map, switchMap} from 'rxjs'
+
+import {compose} from '~/compose'
+import {withSubscriptions} from '~/subscription'
 
 class _Draggable extends React.Component {
     constructor(props) {

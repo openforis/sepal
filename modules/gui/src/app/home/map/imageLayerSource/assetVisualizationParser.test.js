@@ -1,5 +1,6 @@
-import {toVisualizations} from './assetVisualizationParser'
 import _ from 'lodash'
+
+import {toVisualizations} from './assetVisualizationParser'
 
 /* eslint-disable no-undef */
 

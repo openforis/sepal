@@ -1,14 +1,15 @@
-import {Notifications} from '~/widget/notifications'
-import {ajax} from 'rxjs/ajax'
-import {applyDefaults} from '~/utils'
-import {autoRetry} from '~/rxjsutils'
-import {catchError, map, of, tap, throwError} from 'rxjs'
-import {currentUser, logout$, updateUser} from '~/user'
-import {getLogger} from '~/log'
-import {msg} from '~/translate'
-import {webSocket} from 'rxjs/webSocket'
-import _ from 'lodash'
 import base64 from 'base-64'
+import _ from 'lodash'
+import {catchError, map, of, tap, throwError} from 'rxjs'
+import {ajax} from 'rxjs/ajax'
+import {webSocket} from 'rxjs/webSocket'
+
+import {getLogger} from '~/log'
+import {autoRetry} from '~/rxjsutils'
+import {msg} from '~/translate'
+import {currentUser, logout$, updateUser} from '~/user'
+import {applyDefaults} from '~/utils'
+import {Notifications} from '~/widget/notifications'
 
 const _log = getLogger('http')
 

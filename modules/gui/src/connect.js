@@ -1,12 +1,13 @@
+import React from 'react'
+import {connect as connectToRedux} from 'react-redux'
 import {Subject, takeUntil} from 'rxjs'
+
 import {actionBuilder} from '~/action-builder'
 import {composeHoC} from '~/compose'
-import {connect as connectToRedux} from 'react-redux'
+import {withPreventUpdateWhenDisabled} from '~/enabled'
 import {isEqual} from '~/hash'
 import {select} from '~/store'
 import {uuid} from '~/uuid'
-import {withPreventUpdateWhenDisabled} from '~/enabled'
-import React from 'react'
 
 const withConnectedComponent = () =>
     WrappedComponent =>

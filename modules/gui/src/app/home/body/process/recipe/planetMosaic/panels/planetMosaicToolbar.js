@@ -1,18 +1,20 @@
+import React from 'react'
+
+import {setInitialized} from '~/app/home/body/process/recipe'
 import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {PanelWizard} from '~/widget/panelWizard'
+import {Toolbar} from '~/widget/toolbar/toolbar'
+
+import {RetrieveButton} from '../../retrieveButton'
 import {Dates} from './dates/dates'
 import {Options} from './options/options'
-import {PanelWizard} from '~/widget/panelWizard'
-import {Retrieve} from './retrieve/retrieve'
-import {RetrieveButton} from '../../retrieveButton'
-import {Sources} from './sources/sources'
-import {Toolbar} from '~/widget/toolbar/toolbar'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {setInitialized} from '~/app/home/body/process/recipe'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import React from 'react'
 import styles from './planetMosaicToolbar.module.css'
+import {Retrieve} from './retrieve/retrieve'
+import {Sources} from './sources/sources'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,

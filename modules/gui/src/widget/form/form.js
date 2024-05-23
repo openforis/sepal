@@ -1,8 +1,9 @@
-import {FormContext} from '~/widget/form/context'
+import _ from 'lodash'
+import React from 'react'
+
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import React from 'react'
-import _ from 'lodash'
+import {FormContext} from '~/widget/form/context'
 
 const getDisplayName = Component =>
     Component.displayName || Component.name || 'Component'
@@ -18,9 +19,9 @@ export const withForm = ({fields = {}, constraints = {}, mapStateToProps}) =>
             constructor(props) {
                 super(props)
                 const state = {
-                    initialValues: {...props.values} || {},
-                    values: {...props.values} || {},
-                    errors: {...props.errors} || {},
+                    initialValues: {...props.values},
+                    values: {...props.values},
+                    errors: {...props.errors},
                     invalid: {},
                     dirty: false,
                     gotDirty: {},

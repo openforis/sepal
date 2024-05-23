@@ -1,10 +1,12 @@
-import {compose} from '~/compose'
-import {withMap} from '../../../map/mapContext'
-import {withRecipe} from '../recipeContext'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
 import api from '~/apiRegistry'
+import {compose} from '~/compose'
+
+import {withMap} from '../../../map/mapContext'
+import {withRecipe} from '../recipeContext'
 
 class _Aoi extends React.Component {
     render() {

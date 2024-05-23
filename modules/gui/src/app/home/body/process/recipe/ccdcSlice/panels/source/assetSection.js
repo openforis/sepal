@@ -1,12 +1,13 @@
-import {Form} from '~/widget/form'
-import {Layout} from '~/widget/layout'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
 import {Subject} from 'rxjs'
+
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {msg} from '~/translate'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+import {Form} from '~/widget/form'
+import {Layout} from '~/widget/layout'
 
 const J_DAYS = 0
 const FRACTIONAL_YEARS = 1

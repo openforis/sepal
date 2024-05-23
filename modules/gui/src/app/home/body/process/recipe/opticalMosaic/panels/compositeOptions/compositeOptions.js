@@ -1,14 +1,16 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+
+import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
-import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {Widget} from '~/widget/widget'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+
 import styles from './compositeOptions.module.css'
 
 const fields = {

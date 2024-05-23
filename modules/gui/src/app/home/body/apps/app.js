@@ -1,13 +1,15 @@
-import {AppInstance} from './appInstance'
-import {AppList} from './appList/appList'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+
 import {actionBuilder} from '~/action-builder'
-import {closeTab} from '~/widget/tabs/tabActions'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+import {closeTab} from '~/widget/tabs/tabActions'
+
+import {AppInstance} from './appInstance'
+import {AppList} from './appList/appList'
 
 const mapStateToProps = state => ({
     runningApps: selectFrom(state, 'apps.tabs')

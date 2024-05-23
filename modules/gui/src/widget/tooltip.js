@@ -1,10 +1,13 @@
 import './tooltip.css'
 import 'rc-tooltip/assets/bootstrap.css'
-import {isMobile} from '~/widget/userAgent'
+
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import RcTooltip from 'rc-tooltip'
 import React from 'react'
-import _ from 'lodash'
+
+import {isMobile} from '~/widget/userAgent'
+
 import styles from './tooltip.module.css'
 
 const CLOSE_DELAY_MS = 250

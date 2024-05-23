@@ -1,7 +1,9 @@
-import {Button} from '~/widget/button'
-import {Context} from './context'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {Button} from '~/widget/button'
+
+import {Context} from './context'
 import styles from './toolbar.module.css'
 
 export class ToolbarButton extends React.Component {

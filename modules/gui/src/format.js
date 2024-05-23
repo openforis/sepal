@@ -1,6 +1,5 @@
-import {NumericFormat} from 'react-number-format'
-import React from 'react'
 import moment from 'moment'
+import {NumericFormat} from 'react-number-format'
 
 const integer = value => decimal(value, 0)
 

@@ -1,5 +1,6 @@
-import {normalize} from './visParams'
 import _ from 'lodash'
+
+import {normalize} from './visParams'
 
 /* eslint-disable no-undef */
 

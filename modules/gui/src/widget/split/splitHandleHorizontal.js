@@ -1,7 +1,8 @@
-import {SplitHandle} from './splitHandle'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {SplitHandle} from './splitHandle'
 import styles from './splitView.module.css'
 
 export class SplitHandleHorizontal extends React.Component {

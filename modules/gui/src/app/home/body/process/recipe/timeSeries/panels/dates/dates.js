@@ -1,11 +1,13 @@
-import {Form} from '~/widget/form'
-import {Layout} from '~/widget/layout'
-import {Panel} from '~/widget/panel/panel'
+import moment from 'moment'
+import React from 'react'
+
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
-import React from 'react'
-import moment from 'moment'
+import {Form} from '~/widget/form'
+import {Layout} from '~/widget/layout'
+import {Panel} from '~/widget/panel/panel'
+
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'

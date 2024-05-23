@@ -1,13 +1,15 @@
-import {Keybinding} from '~/widget/keybinding'
-import {MapLayout, MapLayoutButton} from '../body/process/mapLayout/mapLayout'
-import {MapOptionsButton, MapOptionsPanel} from './mapOptions'
-import {MapZoomButton, MapZoomPanel} from './mapZoom'
-import {Toolbar} from '~/widget/toolbar/toolbar'
-import {compose} from '~/compose'
-import {withMap} from './mapContext'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {compose} from '~/compose'
+import {Keybinding} from '~/widget/keybinding'
+import {Toolbar} from '~/widget/toolbar/toolbar'
+
+import {MapLayout, MapLayoutButton} from '../body/process/mapLayout/mapLayout'
+import {withMap} from './mapContext'
+import {MapOptionsButton, MapOptionsPanel} from './mapOptions'
 import styles from './mapToolbar.module.css'
+import {MapZoomButton, MapZoomPanel} from './mapZoom'
 
 class _MapToolbar extends React.Component {
     render() {

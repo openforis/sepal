@@ -1,14 +1,16 @@
-import {Buttons} from '../buttons'
-import {Constraint} from './constraint'
-import {Layout} from '~/widget/layout'
-import {Panel} from '~/widget/panel/panel'
-import {compose} from '~/compose'
-import {msg} from '../../translate'
-import {uuid} from '~/uuid'
-import {withActivatable} from '~/widget/activation/activatable'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {compose} from '~/compose'
+import {uuid} from '~/uuid'
+import {withActivatable} from '~/widget/activation/activatable'
+import {Layout} from '~/widget/layout'
+import {Panel} from '~/widget/panel/panel'
+
+import {msg} from '../../translate'
+import {Buttons} from '../buttons'
+import {Constraint} from './constraint'
 import styles from './imageConstraints.module.css'
 
 class _ImageConstraints extends React.Component {

@@ -1,7 +1,8 @@
-import {Icon} from './icon'
-import {Shape} from './shape'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {Icon} from './icon'
+import {Shape} from './shape'
 import styles from './tag.module.css'
 
 export class Tag extends React.Component {

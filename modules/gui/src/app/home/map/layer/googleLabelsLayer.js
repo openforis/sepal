@@ -1,6 +1,7 @@
-import {Layer} from './layer'
-import {MAX_ZOOM} from '../maps'
 import {of, tap} from 'rxjs'
+
+import {MAX_ZOOM} from '../maps'
+import {Layer} from './layer'
 
 export class GoogleLabelsLayer extends Layer {
     constructor({

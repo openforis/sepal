@@ -1,13 +1,15 @@
+import _ from 'lodash'
+import React from 'react'
+
+import {compose} from '~/compose'
+import {msg} from '~/translate'
 import {CrudItem} from '~/widget/crudItem'
 import {Form} from '~/widget/form'
+import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
 import {Legend} from '~/widget/legend/legend'
 import {ListItem} from '~/widget/listItem'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {withForm} from '~/widget/form/form'
-import React from 'react'
-import _ from 'lodash'
+
 import styles from './constraint.module.css'
 
 const fields = {

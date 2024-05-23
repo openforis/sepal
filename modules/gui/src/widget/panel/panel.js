@@ -1,13 +1,15 @@
-import {PanelButtons} from './panelButtons'
-import {PanelContent} from './panelContent'
-import {PanelHeader} from './panelHeader'
-import {Portal} from '~/widget/portal'
+import PropTypes from 'prop-types'
+import React from 'react'
+
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {withEnableDetector} from '~/enabled'
-import PropTypes from 'prop-types'
-import React from 'react'
+import {Portal} from '~/widget/portal'
+
 import styles from './panel.module.css'
+import {PanelButtons} from './panelButtons'
+import {PanelContent} from './panelContent'
+import {PanelHeader} from './panelHeader'
 
 // PANEL ----------------------------------------------------------------------
 

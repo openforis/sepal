@@ -1,10 +1,12 @@
-import {Button} from '~/widget/button'
-import {ButtonGroup} from './buttonGroup'
-import {FloatingBox} from './floatingBox'
-import {Keybinding} from '~/widget/keybinding'
-import {msg} from '~/translate'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {msg} from '~/translate'
+import {Button} from '~/widget/button'
+import {Keybinding} from '~/widget/keybinding'
+
+import {ButtonGroup} from './buttonGroup'
+import {FloatingBox} from './floatingBox'
 import styles from './inlineConfirmationButton.module.css'
 
 export class InlineConfirmationButton extends React.Component {

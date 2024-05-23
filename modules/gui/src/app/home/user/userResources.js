@@ -1,13 +1,15 @@
+import React from 'react'
+
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import format from '~/format'
+import {select} from '~/store'
+import {msg} from '~/translate'
 import {Gauge} from '~/widget/gauge'
 import {Label} from '~/widget/label'
 import {Layout} from '~/widget/layout'
 import {Message} from '~/widget/message'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {msg} from '~/translate'
-import {select} from '~/store'
-import React from 'react'
-import format from '~/format'
+
 import styles from './userResources.module.css'
 
 const mapStateToProps = () => ({

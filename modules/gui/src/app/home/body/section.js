@@ -1,8 +1,10 @@
-import {Enabled} from '~/enabled'
-import {PortalContainer, PortalContext} from '~/widget/portal'
-import {isPathInLocation} from '~/route'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {Enabled} from '~/enabled'
+import {isPathInLocation} from '~/route'
+import {PortalContainer, PortalContext} from '~/widget/portal'
+
 import styles from './section.module.css'
 
 export class Section extends React.Component {

@@ -1,8 +1,10 @@
-import {Button} from '~/widget/button'
-import {ButtonGroup} from '~/widget/buttonGroup'
-import {msg} from '~/translate'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {msg} from '~/translate'
+import {Button} from '~/widget/button'
+import {ButtonGroup} from '~/widget/buttonGroup'
+
 import styles from './panelButtons.module.css'
 
 export class PanelButtons extends React.Component {

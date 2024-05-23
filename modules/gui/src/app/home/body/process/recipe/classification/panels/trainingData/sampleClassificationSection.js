@@ -1,18 +1,19 @@
+import PropTypes from 'prop-types'
+import React from 'react'
+import {Subject, takeUntil} from 'rxjs'
+
+import api from '~/apiRegistry'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {FormCombo} from '~/widget/form/combo'
 import {Layout} from '~/widget/layout'
 import {NumberButtons} from '~/widget/numberButtons'
-import {Subject, takeUntil} from 'rxjs'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import PropTypes from 'prop-types'
-import React, {Component} from 'react'
-import api from '~/apiRegistry'
 
 const mapRecipeToProps = recipe => ({recipe})
 
-class _SampleClassificationSection extends Component {
+class _SampleClassificationSection extends React.Component {
     cancel$ = new Subject()
     state = {bands: []}
 

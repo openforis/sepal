@@ -1,16 +1,18 @@
-import {ContentPadding} from '~/widget/sectionLayout'
-import {Notifications} from '~/widget/notifications'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {forkJoin, map, of, switchMap, tap, timer} from 'rxjs'
+
+import {runApp$} from '~/apps'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import {forkJoin, map, of, switchMap, tap, timer} from 'rxjs'
+import {publishEvent} from '~/eventPublisher'
 import {get$} from '~/http-client'
 import {getLogger} from '~/log'
 import {msg} from '~/translate'
-import {publishEvent} from '~/eventPublisher'
-import {runApp$} from '~/apps'
+import {Notifications} from '~/widget/notifications'
+import {ContentPadding} from '~/widget/sectionLayout'
 import {withTab} from '~/widget/tabs/tabContext'
-import PropTypes from 'prop-types'
-import React from 'react'
+
 import styles from './appInstance.module.css'
 
 const log = getLogger('apps')

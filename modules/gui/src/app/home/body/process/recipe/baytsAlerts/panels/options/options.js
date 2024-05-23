@@ -1,13 +1,15 @@
+import _ from 'lodash'
+import React from 'react'
+
+import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {compose} from '~/compose'
+import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
-import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+
 import {alertsBands} from '../../bands'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import React from 'react'
-import _ from 'lodash'
 import styles from './options.module.css'
 
 const fields = {

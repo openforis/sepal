@@ -1,7 +1,8 @@
-import {getDataSetBands} from './sources'
-import {getIndexes} from './indexes'
-import {msg} from '~/translate'
 import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+
+import {getIndexes} from './indexes'
+import {getDataSetBands} from './sources'
 
 export const getAvailableBands = (recipe, select = ['dataSetBands', 'indexes', 'metadata']) => {
     const compose = selectFrom(recipe, 'model.compositeOptions.compose')

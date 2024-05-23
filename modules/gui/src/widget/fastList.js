@@ -1,13 +1,15 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {debounceTime, Subject} from 'rxjs'
+import {withSubscriptions} from 'subscription'
+
+import {compose} from '~/compose'
+
+import styles from './fastList.module.css'
 import {Keybinding} from './keybinding'
 import {Layout} from './layout'
 import {Scrollable, withScrollable} from './scrollable'
-import {Subject, debounceTime} from 'rxjs'
-import {compose} from '~/compose'
-import {withSubscriptions} from 'subscription'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
-import styles from './fastList.module.css'
 
 const NOT_HOVERED = -1
 

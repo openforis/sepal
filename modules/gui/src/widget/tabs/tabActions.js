@@ -1,6 +1,6 @@
 import {actionBuilder} from '~/action-builder'
-import {msg} from '~/translate'
 import {select} from '~/store'
+import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 
 const nextSelectedTabId = (id, statePath) => {

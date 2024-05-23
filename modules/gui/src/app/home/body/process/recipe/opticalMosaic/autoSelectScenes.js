@@ -1,11 +1,12 @@
-import {MapStatus} from '~/widget/mapStatus'
-import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
+
+import api from '~/apiRegistry'
+import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import React from 'react'
-import api from '~/apiRegistry'
+import {MapStatus} from '~/widget/mapStatus'
 
 const mapRecipeToProps = recipe => ({recipe})
 

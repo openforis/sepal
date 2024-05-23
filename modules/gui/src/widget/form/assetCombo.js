@@ -1,10 +1,12 @@
-import {AssetCombo} from '~/widget/assetCombo'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {withFormContext} from './context'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {compose} from '~/compose'
+import {msg} from '~/translate'
+import {AssetCombo} from '~/widget/assetCombo'
+
+import {withFormContext} from './context'
 
 class _FormAssetCombo extends React.Component {
     constructor() {

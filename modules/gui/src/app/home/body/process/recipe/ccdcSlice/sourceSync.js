@@ -1,17 +1,19 @@
-import {Notifications} from '~/widget/notifications'
-import {Subject, map, of, switchMap, takeUntil} from 'rxjs'
-import {compose} from '~/compose'
-import {getAllVisualizations} from '../ccdc/ccdcRecipe'
-import {getAvailableBands} from '~/sources'
-import {msg} from '~/translate'
-import {recipeAccess} from '../../recipeAccess'
-import {selectFrom} from '~/stateUtils'
-import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
-import {uuid} from '~/uuid'
-import {withRecipe} from '../../recipeContext'
-import React from 'react'
 import _ from 'lodash'
+import React from 'react'
+import {map, of, Subject, switchMap, takeUntil} from 'rxjs'
+
 import api from '~/apiRegistry'
+import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
+import {compose} from '~/compose'
+import {getAvailableBands} from '~/sources'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {uuid} from '~/uuid'
+import {Notifications} from '~/widget/notifications'
+
+import {recipeAccess} from '../../recipeAccess'
+import {withRecipe} from '../../recipeContext'
+import {getAllVisualizations} from '../ccdc/ccdcRecipe'
 
 const baseBandPattern = /(.*)_(coefs|intercept|slope|phase_\d|amplitude_\d|rmse|magnitude)$/
 

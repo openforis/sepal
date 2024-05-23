@@ -1,6 +1,7 @@
-import {ElementResizeDetector} from '~/widget/elementResizeDetector'
-import {actionBuilder} from '~/action-builder'
 import React from 'react'
+
+import {actionBuilder} from '~/action-builder'
+import {ElementResizeDetector} from '~/widget/elementResizeDetector'
 
 export class ViewportResizeSensor extends React.Component {
     constructor() {

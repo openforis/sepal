@@ -1,10 +1,12 @@
-import {Button} from '~/widget/button'
-import {Projects} from './projects'
+import _ from 'lodash'
+import React from 'react'
+
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {withActivators} from '~/widget/activation/activator'
-import React from 'react'
-import _ from 'lodash'
+import {Button} from '~/widget/button'
+
+import {Projects} from './projects'
 
 class _ProjectsButton extends React.Component {
     render() {

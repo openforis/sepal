@@ -1,10 +1,11 @@
+import React from 'react'
+
 import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
-import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {compose} from '~/compose'
 import {getGroupedBandOptions} from '~/app/home/body/process/recipe/opticalMosaic/bands'
+import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {minScale} from '~/app/home/body/process/recipe/opticalMosaic/sources'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
-import React from 'react'
+import {compose} from '~/compose'
 
 const mapRecipeToProps = recipe => ({
     recipe

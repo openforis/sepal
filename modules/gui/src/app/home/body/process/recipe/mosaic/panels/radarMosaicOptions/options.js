@@ -1,17 +1,19 @@
+import PropTypes from 'prop-types'
+import React from 'react'
+
+import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {compose} from '~/compose'
+import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
+import {Panel} from '~/widget/panel/panel'
+
 import {MaskOptions} from './maskOptions'
 import {MultitemporalSpeckleFilterOptions} from './multitemporalSpeckleFilterOptions'
-import {Panel} from '~/widget/panel/panel'
-import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {SpatialSpeckleFilterOptions} from './spatialSpeckleFilterOptions'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import PropTypes from 'prop-types'
-import React from 'react'
 import styles from './options.module.css'
+import {SpatialSpeckleFilterOptions} from './spatialSpeckleFilterOptions'
 
 const fields = {
     advanced: new Form.Field(),

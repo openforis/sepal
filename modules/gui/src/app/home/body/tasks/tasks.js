@@ -1,17 +1,19 @@
+import React from 'react'
+
+import api from '~/apiRegistry'
+import {copyToClipboard} from '~/clipboard'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {msg} from '~/translate'
 import {Button} from '~/widget/button'
-import {Content, SectionLayout, TopBar} from '~/widget/sectionLayout'
 import {CrudItem} from '~/widget/crudItem'
 import {FastList} from '~/widget/fastList'
 import {InlineConfirmationButton} from '~/widget/inlineConfirmationButton'
 import {ListItem} from '~/widget/listItem'
 import {Scrollable} from '~/widget/scrollable'
+import {Content, SectionLayout, TopBar} from '~/widget/sectionLayout'
 import {Shape} from '~/widget/shape'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {copyToClipboard} from '~/clipboard'
-import {msg} from '~/translate'
-import React from 'react'
-import api from '~/apiRegistry'
+
 import styles from './tasks.module.css'
 
 const mapStateToProps = state => ({

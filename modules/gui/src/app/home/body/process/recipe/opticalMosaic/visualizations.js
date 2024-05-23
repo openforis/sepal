@@ -1,7 +1,8 @@
-import {getAvailableBands} from './bands'
-import {msg} from '~/translate'
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+
+import {getAvailableBands} from './bands'
 
 export const getPreSetVisualizations = recipe => {
     const {model: {compositeOptions: {corrections}}} = recipe

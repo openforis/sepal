@@ -1,6 +1,8 @@
-import {Icon} from '~/widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {Icon} from '~/widget/icon'
+
 import styles from './mapStatus.module.css'
 
 export class MapStatus extends React.Component {

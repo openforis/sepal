@@ -1,17 +1,19 @@
+import _ from 'lodash'
+import React from 'react'
+import {forkJoin, map, tap, zip} from 'rxjs'
+
+import {actionBuilder} from '~/action-builder'
+import api from '~/apiRegistry'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {publishEvent} from '~/eventPublisher'
+import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
+
+import styles from './userBrowser.module.css'
 import {UserDetails} from './userDetails'
 import {UserList} from './userList'
 import {UserStatus} from './userStatus'
-import {actionBuilder} from '~/action-builder'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {forkJoin, map, tap, zip} from 'rxjs'
-import {msg} from '~/translate'
-import {publishEvent} from '~/eventPublisher'
-import React from 'react'
-import _ from 'lodash'
-import api from '~/apiRegistry'
-import styles from './userBrowser.module.css'
 
 const mapStateToProps = state => ({
     users: state?.users?.users || []

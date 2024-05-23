@@ -1,12 +1,14 @@
-import {Form} from '~/widget/form'
-import {Panel} from '~/widget/panel/panel'
+import React from 'react'
+
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 import {withActivatable} from '~/widget/activation/activatable'
+import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
+import {Panel} from '~/widget/panel/panel'
+
 import {withRecipe} from '../recipeContext'
-import React from 'react'
 import styles from './selectAsset.module.css'
 
 const fields = {

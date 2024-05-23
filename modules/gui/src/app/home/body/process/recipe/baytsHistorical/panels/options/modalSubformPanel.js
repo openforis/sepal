@@ -1,9 +1,10 @@
-import {Form} from '~/widget/form'
-import {Panel} from '~/widget/panel/panel'
+import React from 'react'
+
 import {compose} from '~/compose'
 import {withActivatable} from '~/widget/activation/activatable'
+import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
-import React from 'react'
+import {Panel} from '~/widget/panel/panel'
 
 export const modalSubformPanel = ({id, toTitle, toClassName, fields}) =>
     WrappedComponent => {

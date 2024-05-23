@@ -1,14 +1,16 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {select} from '~/store'
 import {CrudItem} from '~/widget/crudItem'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
-import {NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeListConstants'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
+
 import {getRecipeType} from '../recipeTypeRegistry'
-import {select} from '~/store'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+import {NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeListConstants'
 
 const mapStateToProps = () => ({
     projects: select('process.projects')

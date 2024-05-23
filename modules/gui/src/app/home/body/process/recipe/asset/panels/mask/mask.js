@@ -1,3 +1,11 @@
+import React from 'react'
+
+import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {uuid} from '~/uuid'
+import {withActivators} from '~/widget/activation/activator'
 import {CrudItem} from '~/widget/crudItem'
 import {Form} from '~/widget/form'
 import {ImageConstraints, renderConstraintsDescription} from '~/widget/imageConstraints/imageConstraints'
@@ -5,14 +13,8 @@ import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
+
 import {RecipeActions} from '../../assetRecipe'
-import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {uuid} from '~/uuid'
-import {withActivators} from '~/widget/activation/activator'
-import React from 'react'
 import styles from './mask.module.css'
 
 const mapRecipeToProps = recipe => ({

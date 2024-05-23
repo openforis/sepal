@@ -1,10 +1,11 @@
-import {Notifications} from '~/widget/notifications'
-import {actionBuilder} from '~/action-builder'
 import {catchError, map, of, switchMap, tap} from 'rxjs'
-import {msg} from '~/translate'
+
+import {actionBuilder} from '~/action-builder'
+import api from '~/apiRegistry'
 import {publishCurrentUserEvent, publishEvent} from '~/eventPublisher'
 import {select} from '~/store'
-import api from '~/apiRegistry'
+import {msg} from '~/translate'
+import {Notifications} from '~/widget/notifications'
 
 export const currentUser = () => select('user.currentUser')
 export const invalidCredentials = () => select('user.login.invalidCredentials')

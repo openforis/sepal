@@ -1,5 +1,5 @@
-import {Subject, forkJoin, toArray} from 'rxjs'
 import Papa from 'papaparse'
+import {forkJoin, Subject, toArray} from 'rxjs'
 
 export const parseCsvFile$ = file => {
     const row$ = new Subject()

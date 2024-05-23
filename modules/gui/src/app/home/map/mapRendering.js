@@ -1,10 +1,12 @@
-import {Button} from '~/widget/button'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {withMap} from './mapContext'
-import {withSubscriptions} from '~/subscription'
-import {withTab} from '~/widget/tabs/tabContext'
 import React from 'react'
+
+import {compose} from '~/compose'
+import {withSubscriptions} from '~/subscription'
+import {msg} from '~/translate'
+import {Button} from '~/widget/button'
+import {withTab} from '~/widget/tabs/tabContext'
+
+import {withMap} from './mapContext'
 import styles from './mapRendering.module.css'
 
 class _MapRendering extends React.PureComponent {

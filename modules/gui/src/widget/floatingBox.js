@@ -1,13 +1,15 @@
-import {BlurDetector} from '~/widget/blurDetector'
-import {Portal} from '~/widget/portal'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {selectFrom} from '~/stateUtils'
-import {withContext} from '~/context'
-import {withForwardedRef} from '~/ref'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {withContext} from '~/context'
+import {withForwardedRef} from '~/ref'
+import {selectFrom} from '~/stateUtils'
+import {BlurDetector} from '~/widget/blurDetector'
+import {Portal} from '~/widget/portal'
+
 import styles from './floatingBox.module.css'
 
 const MARGIN = 5

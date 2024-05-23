@@ -1,13 +1,15 @@
-import {AssetSection} from './assetSection'
-import {Form} from '~/widget/form'
-import {PanelSections} from '~/widget/panelSections'
+import React from 'react'
+
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {RecipeSection} from './recipeSection'
-import {SectionSelection} from './sectionSelection'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
-import React from 'react'
+import {Form} from '~/widget/form'
+import {PanelSections} from '~/widget/panelSections'
+
+import {AssetSection} from './assetSection'
+import {RecipeSection} from './recipeSection'
 import styles from './reference.module.css'
+import {SectionSelection} from './sectionSelection'
 
 const fields = {
     section: new Form.Field()

@@ -1,5 +1,6 @@
-import {withContext} from '~/context'
 import React from 'react'
+
+import {withContext} from '~/context'
 
 const Context = React.createContext()
 

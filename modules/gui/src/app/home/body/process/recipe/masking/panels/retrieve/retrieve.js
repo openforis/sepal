@@ -1,9 +1,10 @@
-import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
-import {RecipeActions} from '~/app/home/body/process/recipe/masking/maskingRecipe'
-import {compose} from '~/compose'
-import {getGroupedBandOptions} from '~/app/home/body/process/recipe/masking/bands'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
 import React from 'react'
+
+import {getGroupedBandOptions} from '~/app/home/body/process/recipe/masking/bands'
+import {RecipeActions} from '~/app/home/body/process/recipe/masking/maskingRecipe'
+import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
 
 const mapRecipeToProps = recipe => ({recipe})
 

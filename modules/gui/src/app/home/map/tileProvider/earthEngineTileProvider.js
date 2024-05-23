@@ -1,8 +1,9 @@
-import {WMTSTileProvider} from './wmtsTileProvider'
-import {combineLatest, filter, map} from 'rxjs'
-import {handleError$} from './earthEngineError'
-import {toBandValues} from '../cursorValue'
 import ee from '@google/earthengine'
+import {combineLatest, filter, map} from 'rxjs'
+
+import {toBandValues} from '../cursorValue'
+import {handleError$} from './earthEngineError'
+import {WMTSTileProvider} from './wmtsTileProvider'
 
 const CONCURRENCY = 8
 const TILE_SIZE = ee.layers.AbstractOverlay.DEFAULT_TILE_EDGE_LENGTH

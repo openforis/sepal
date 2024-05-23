@@ -1,8 +1,9 @@
-import {compose} from '~/compose'
-import {filter, map} from 'rxjs'
-import {withContext} from '~/context'
-import React from 'react'
 import _ from 'lodash'
+import React from 'react'
+import {filter, map} from 'rxjs'
+
+import {compose} from '~/compose'
+import {withContext} from '~/context'
 
 const Context = React.createContext()
 

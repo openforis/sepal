@@ -1,9 +1,11 @@
-import {compose} from '~/compose'
-import {getImageLayerSource} from './imageLayerSourceRegistry'
-import {selectFrom} from '~/stateUtils'
-import {withMapArea} from '~/app/home/map/mapAreaContext'
-import {withRecipe} from './recipeContext'
 import React from 'react'
+
+import {withMapArea} from '~/app/home/map/mapAreaContext'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+
+import {getImageLayerSource} from './imageLayerSourceRegistry'
+import {withRecipe} from './recipeContext'
 
 const mapRecipeToProps = recipe => ({
     layers: selectFrom(recipe, 'layers'),

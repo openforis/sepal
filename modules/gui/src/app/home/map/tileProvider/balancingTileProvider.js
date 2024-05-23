@@ -1,5 +1,5 @@
-import {TileProvider} from './tileProvider'
 import {getTileManager} from '../tileManager/tileManager'
+import {TileProvider} from './tileProvider'
 
 export class BalancingTileProvider extends TileProvider {
     // constructor({tileProvider, retryCutOffTime, busy$, renderingEnabled$, renderingStatus$}) {

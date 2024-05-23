@@ -1,9 +1,10 @@
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {isMobile} from '~/widget/userAgent'
-import {withEnableDetector} from '~/enabled'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {withEnableDetector} from '~/enabled'
+import {isMobile} from '~/widget/userAgent'
 
 class _AutoFocus extends React.Component {
     state = {

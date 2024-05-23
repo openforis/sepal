@@ -1,6 +1,7 @@
-import {GoogleLabelsLayer} from './layer/googleLabelsLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {GoogleLabelsLayer} from './layer/googleLabelsLayer'
 
 export class LabelsLayer extends React.Component {
     render() {

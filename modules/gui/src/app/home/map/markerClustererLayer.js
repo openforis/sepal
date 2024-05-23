@@ -1,7 +1,8 @@
-import {Layer} from './layer/layer'
 import {MarkerClusterer} from '@googlemaps/markerclusterer'
-import {of, tap} from 'rxjs'
 import _ from 'lodash'
+import {of, tap} from 'rxjs'
+
+import {Layer} from './layer/layer'
 
 const DEFAULT_COLOR = '#FFFFFF'
 const DEFAULT_STROKE_COLOR = '#000000'

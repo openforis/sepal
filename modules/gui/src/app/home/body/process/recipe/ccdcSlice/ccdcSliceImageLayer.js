@@ -1,14 +1,16 @@
-import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
-import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
-import {additionalVisualizations, getAllVisualizations} from './ccdcSliceRecipe'
-import {compose} from '~/compose'
-import {getUserDefinedVisualizations} from '~/app/home/body/process/recipe/visualizations'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {withMapArea} from '~/app/home/map/mapAreaContext'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {getUserDefinedVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
+import {withMapArea} from '~/app/home/map/mapAreaContext'
+import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+
+import {additionalVisualizations, getAllVisualizations} from './ccdcSliceRecipe'
 
 const defaultLayerConfig = {
     panSharpen: false

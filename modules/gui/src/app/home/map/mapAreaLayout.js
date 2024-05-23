@@ -1,14 +1,16 @@
-import {FeatureLayers} from './featureLayers'
-import {MapAreaMenu} from './mapAreaMenu'
-import {SplitOverlay} from '~/widget/split/splitOverlay'
-import {compose} from '~/compose'
-import {selectFrom} from '~/stateUtils'
-import {withLayers} from '../body/process/withLayers'
-import {withMapArea} from './mapAreaContext'
-import {withRecipe} from '../body/process/recipeContext'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {SplitOverlay} from '~/widget/split/splitOverlay'
+
+import {withRecipe} from '../body/process/recipeContext'
+import {withLayers} from '../body/process/withLayers'
+import {FeatureLayers} from './featureLayers'
+import {withMapArea} from './mapAreaContext'
+import {MapAreaMenu} from './mapAreaMenu'
 
 const mapRecipeToProps = recipe => ({
     areas: selectFrom(recipe, ['layers.areas'])

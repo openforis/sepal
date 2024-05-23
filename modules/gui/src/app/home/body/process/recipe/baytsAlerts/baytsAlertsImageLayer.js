@@ -1,17 +1,19 @@
-import {Buttons} from '~/widget/buttons'
-import {Layout} from '~/widget/layout'
-import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
-import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
-import {compose} from '~/compose'
-import {getAvailableBands} from './bands'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {visualizationOptions} from './visualizations'
-import {withMapArea} from '~/app/home/map/mapAreaContext'
-import {withRecipe} from '../../recipeContext'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
+import {withMapArea} from '~/app/home/map/mapAreaContext'
+import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {Buttons} from '~/widget/buttons'
+import {Layout} from '~/widget/layout'
+
+import {withRecipe} from '../../recipeContext'
+import {getAvailableBands} from './bands'
+import {visualizationOptions} from './visualizations'
 
 const defaultLayerConfig = {
     visualizationType: 'alerts',

@@ -1,12 +1,14 @@
-import {ElementResizeDetector} from '~/widget/elementResizeDetector'
-import {animationFrames, distinctUntilChanged, filter, fromEvent, map, scan, switchMap, takeUntil} from 'rxjs'
-import {compose} from '~/compose'
-import {withSubscriptions} from '~/subscription'
 import Hammer from 'hammerjs'
-import PropTypes from 'prop-types'
-import React from 'react'
 import _ from 'lodash'
 import moment from 'moment'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {animationFrames, distinctUntilChanged, filter, fromEvent, map, scan, switchMap, takeUntil} from 'rxjs'
+
+import {compose} from '~/compose'
+import {withSubscriptions} from '~/subscription'
+import {ElementResizeDetector} from '~/widget/elementResizeDetector'
+
 import styles from './seasonSelect.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'

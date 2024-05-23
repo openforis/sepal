@@ -1,11 +1,13 @@
-import {Panel} from '~/widget/panel/panel'
-import {closeRecipe} from './recipe'
+import React from 'react'
+
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
-import React from 'react'
+import {Panel} from '~/widget/panel/panel'
+
 import styles from './closeRecipe.module.css'
+import {closeRecipe} from './recipe'
 
 class _CloseRecipe extends React.Component {
     render() {

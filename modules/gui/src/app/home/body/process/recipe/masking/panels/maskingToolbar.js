@@ -1,16 +1,18 @@
-import {ImageMask} from './inputImage/imageMask'
-import {ImageToMask} from './inputImage/imageToMask'
-import {PanelWizard} from '~/widget/panelWizard'
-import {Retrieve} from './retrieve/retrieve'
-import {RetrieveButton} from '../../retrieveButton'
-import {Toolbar} from '~/widget/toolbar/toolbar'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
+import React from 'react'
+
 import {setInitialized} from '~/app/home/body/process/recipe'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
-import React from 'react'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {PanelWizard} from '~/widget/panelWizard'
+import {Toolbar} from '~/widget/toolbar/toolbar'
+
+import {RetrieveButton} from '../../retrieveButton'
+import {ImageMask} from './inputImage/imageMask'
+import {ImageToMask} from './inputImage/imageToMask'
 import styles from './maskingToolbar.module.css'
+import {Retrieve} from './retrieve/retrieve'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,

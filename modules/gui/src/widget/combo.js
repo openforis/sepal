@@ -1,19 +1,21 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {selectFrom} from '~/stateUtils'
+import {escapeRegExp, simplifyString, splitString} from '~/string'
 import {AutoFocus} from '~/widget/autoFocus'
 import {Button} from '~/widget/button'
 import {FloatingBox} from '~/widget/floatingBox'
 import {Input} from '~/widget/input'
 import {Keybinding} from '~/widget/keybinding'
 import {ScrollableList} from '~/widget/list'
-import {Widget} from './widget'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {escapeRegExp, simplifyString, splitString} from '~/string'
 import {isMobile} from '~/widget/userAgent'
-import {selectFrom} from '~/stateUtils'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+
 import styles from './combo.module.css'
+import {Widget} from './widget'
 
 const SIMPLIFY_STRING_CONFIG = {trim: true, removeAccents: true, removePunctuation: false, removeNonAlphanumeric: false, removeRepeatedSpaces: true}
 

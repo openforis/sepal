@@ -1,16 +1,17 @@
-import {App} from '~/app/app'
-import {ErrorBoundary} from './errorBoundary'
-import {Provider} from 'react-redux'
-import {Router} from 'react-router-dom'
-import {TranslationProvider} from '~/translate'
-import {applyMiddleware, legacy_createStore as createStore} from 'redux'
 import {createBrowserHistory} from 'history'
 import {createRoot} from 'react-dom/client'
+import {Provider} from 'react-redux'
+import {Router} from 'react-router-dom'
+import {applyMiddleware, legacy_createStore as createStore} from 'redux'
+
 import {initApi} from '~/api'
-import {initStore} from '~/store'
+import {App} from '~/app/app'
 import {isDevelopment} from '~/environment'
 import {syncHistoryAndStore} from '~/route'
-import React from 'react'
+import {initStore} from '~/store'
+import {TranslationProvider} from '~/translate'
+
+import {ErrorBoundary} from './errorBoundary'
 
 initApi()
 
@@ -37,14 +38,14 @@ const batchActions = () => next => action => {
     }
 }
 
-const useDevTools = middleware =>
+const devTools = middleware =>
     isDevelopment()
         ? require('@redux-devtools/extension').composeWithDevTools(middleware)
         : middleware
 
 const store = createStore(
     rootReducer,
-    useDevTools(applyMiddleware(batchActions))
+    devTools(applyMiddleware(batchActions))
 )
 
 initStore(store)

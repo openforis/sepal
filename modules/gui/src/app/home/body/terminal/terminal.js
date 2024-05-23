@@ -1,21 +1,24 @@
 import 'xterm/css/xterm.css'
-import {ContentPadding} from '~/widget/sectionLayout'
-import {ElementResizeDetector} from '~/widget/elementResizeDetector'
-import {FitAddon} from 'xterm-addon-fit'
-import {Keybinding} from '~/widget/keybinding'
-import {Notifications} from '~/widget/notifications'
-import {Subject, distinctUntilChanged, filter, map, withLatestFrom} from 'rxjs'
-import {Tabs} from '~/widget/tabs/tabs'
-import {TerminalWebSocket} from './terminalWebsocket'
+
+import React from 'react'
+import {distinctUntilChanged, filter, map, Subject, withLatestFrom} from 'rxjs'
 import {Terminal as Xterm} from 'xterm'
+import {FitAddon} from 'xterm-addon-fit'
+
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import {msg} from '~/translate'
-import {post$} from '~/http-client'
-import {uuid} from '~/uuid'
 import {withEnableDetector} from '~/enabled'
-import React from 'react'
+import {post$} from '~/http-client'
+import {msg} from '~/translate'
+import {uuid} from '~/uuid'
+import {ElementResizeDetector} from '~/widget/elementResizeDetector'
+import {Keybinding} from '~/widget/keybinding'
+import {Notifications} from '~/widget/notifications'
+import {ContentPadding} from '~/widget/sectionLayout'
+import {Tabs} from '~/widget/tabs/tabs'
+
 import styles from './terminal.module.css'
+import {TerminalWebSocket} from './terminalWebsocket'
 
 export class Terminal extends React.Component {
     render() {

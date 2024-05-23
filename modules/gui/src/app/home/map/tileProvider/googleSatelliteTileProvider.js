@@ -1,5 +1,6 @@
-import {TileProvider} from './tileProvider'
 import api from '~/apiRegistry'
+
+import {TileProvider} from './tileProvider'
 
 export class GoogleSatelliteTileProvider extends TileProvider {
     getType() {
