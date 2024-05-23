@@ -13,6 +13,7 @@ import {log} from './log.js'
 import {npmUpdate} from './npm-update.js'
 import {npmInstall} from './npm-install.js'
 import {npmTest} from './npm-test.js'
+import {eslint} from './eslint.js'
 
 const main = async () => {
     process.on('SIGINT', () => exit({interrupted: true}))
@@ -128,6 +129,12 @@ const main = async () => {
         .description('Run npm interactive tests')
         .argument('module', 'Module to test')
         .action(npmTest)
+
+    program.command('eslint')
+        .description('Run eslint')
+        .argument('module', 'Module to test')
+        .option('-f, --fix', 'Fix autofixable ESLint errors.')
+        .action(eslint)
 
     try {
         await program.parseAsync(process.argv)
