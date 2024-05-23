@@ -20,6 +20,7 @@ pip3 install \
     pyopencl \
     tensorflow==2.15.1 \
     torch \
+    torchvision \
     testresources
 
 # Add NVIDIA repo
