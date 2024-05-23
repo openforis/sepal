@@ -1,0 +1,15 @@
+{
+    "name": "sepal",
+    "version": "1.0.0",
+    "description": "",
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@eslint/js": "^9.3.0",
+        "eslint": "^8",
+        "eslint-plugin-jest": "^28.5.0",
+        "globals": "^15.3.0",
+        "jest": "^29.7.0",
+        "jest-expect-message": "^1.1.3"
+    }
+}
