@@ -34,15 +34,17 @@
 
     # EFS setup
     - name: Install nfs-utils
-      yum:
+      dnf:
         name: "nfs-utils"
 
     - name: Install amazon-efs-utils
-      yum:
+      dnf:
         name: 'amazon-efs-utils'
 
     - name: Install Lustre
-      command: amazon-linux-extras install lustre2.10 -y
+      dnf:
+        name: lustre-client
+        state: present
 
     - name: Create /data/sepal/home
       file:
@@ -84,23 +86,6 @@
         path: '/etc/fstab'
         line: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/jupyter /data/sepal/jupyter lustre noatime,flock 0 0"
 
-    # GPU setup
-    - name: Copy GPU drivers init script
-      copy:
-        src: "gpu/init-gpu-drivers.sh"
-        dest: "/usr/local/bin/init-gpu-drivers.sh"
-
-    - name: Copy GPU drivers init service
-      copy:
-        src: "gpu/init-gpu-drivers.service"
-        dest: "/etc/systemd/system/init-gpu-drivers.service"
-
-    - name: Install GPU drivers
-      script: "gpu/install-gpu-drivers.sh"
-      environment:
-        AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
-        AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
-
     # Docker setup
     - name: Create filesystem on Docker volume
       filesystem:
@@ -125,13 +110,18 @@
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
     - name: Install docker
-      command: "amazon-linux-extras install docker -y"
+      dnf:
+        name: docker
+        state: present
 
     - name: Create /etc/docker
       file:
         path: "/etc/docker"
         state: directory
 
+    - name: Copy /usr/local/bin/worker-runtime
+      copy: src=docker/worker-runtime.sh dest=/usr/local/bin/worker-runtime
+    
     - name: Copy /etc/docker/daemon.json
       copy: src=docker/worker-daemon.json dest=/etc/docker/daemon.json
 
@@ -154,10 +144,26 @@
         enabled: yes
         masked: no
         
-    - name: pip install docker
-      pip:
-        name: "docker"
-        executable: pip3
+    # - name: pip install docker
+    #   pip:
+    #     name: "docker"
+    #     executable: pip3
+
+
+    # GPU setup
+    - name: Copy GPU drivers init script
+      copy:
+        src: "gpu/init-gpu-drivers.sh"
+        dest: "/usr/local/bin/init-gpu-drivers.sh"
+
+    - name: Copy GPU drivers init service
+      copy:
+        src: "gpu/init-gpu-drivers.service"
+        dest: "/etc/systemd/system/init-gpu-drivers.service"
+
+    - name: Install GPU drivers
+      script: "gpu/install-gpu-drivers.sh"
+      
 
     - name: Login to docker registry
       command: "docker login -p '{{ lookup('env', 'DOCKER_REGISTRY_PASSWORD') }}' -u '{{ lookup('env', 'DOCKER_REGISTRY_USERNAME') }}' {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
