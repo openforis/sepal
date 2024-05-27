@@ -14,7 +14,7 @@ import java.util.concurrent.Executors
 
 class Aws implements HostingServiceAdapter {
     private final config = new AwsConfig()
-    private final double storageCostPerGbMonth = 0.33d + 2 * 0.023d // EFS + 2 * S3 backup (daily, weekly)
+    private final double storageCostPerGbMonth = 0.33d // EFS pricing
     // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/InstanceType.html
     final List<InstanceType> instanceTypes = [
             new InstanceType(id: 'T3aSmall', name: 't3a.small', tag: 't1', hourlyCost: 0.0204, cpuCount: 1, ramGiB: 2, idleCount: 1),
