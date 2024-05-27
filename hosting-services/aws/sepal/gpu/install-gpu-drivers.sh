@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-# yum install -y gcc kernel-devel-$(uname -r)
-
 # *** Ensure same NVIDIA driver version is used both here and in init_gpu.sh ***
 
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver
@@ -33,10 +31,3 @@ systemctl restart docker
 # Set NUMA affinity
 # lspci | grep -i nvidia # Extract device id 
 # echo 0 | tee -a /sys/bus/pci/devices/$DEVICE_ID/numa_node
-
-chmod +x /usr/local/bin/init-gpu-drivers.sh
-systemctl enable init-gpu-drivers.service
-
-# Enable persistence mode
-#   https://docs.nvidia.com/deploy/driver-persistence/index.html#usage
-/usr/bin/nvidia-persistenced --verbose

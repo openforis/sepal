@@ -1,9 +1,0 @@
-[Unit]
-Description=Init GPU drivers
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/init-gpu-drivers.sh
-
-[Install]
-WantedBy=multi-user.target
