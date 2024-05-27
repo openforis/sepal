@@ -120,7 +120,10 @@
         state: directory
 
     - name: Copy /usr/local/bin/worker-runtime
-      copy: src=docker/worker-runtime.sh dest=/usr/local/bin/worker-runtime
+      copy: 
+        src: docker/worker-runtime.sh
+        dest: /usr/local/bin/worker-runtime
+        mode: u=rwx,g=rx,o=rx
     
     - name: Copy /etc/docker/daemon.json
       copy: src=docker/worker-daemon.json dest=/etc/docker/daemon.json
