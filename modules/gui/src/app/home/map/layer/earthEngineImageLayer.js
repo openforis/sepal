@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import {finalize, Subject, tap} from 'rxjs'
 
 import api from '~/apiRegistry'

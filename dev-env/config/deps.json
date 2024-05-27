@@ -54,6 +54,10 @@
         "build": {},
         "run": []
     },
+    "gui2": {
+        "build": {},
+        "run": []
+    },
     "haproxy": {
         "build": {},
         "run": [

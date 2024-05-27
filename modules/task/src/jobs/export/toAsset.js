@@ -51,12 +51,10 @@ const exportImageToAsset$ = (taskId, {
         ))
 }
 
-
 const getProjectAssetId = id =>
     id.startsWith('users/')
         ? `projects/earthengine-legacy/assets/${id}`
         : id
-
 
 const imageToAssetCollection$ = (taskId, {
     image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, tileSize, properties, retries

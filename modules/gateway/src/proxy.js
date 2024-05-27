@@ -8,7 +8,7 @@ const log = require('#sepal/log').getLogger('proxy')
 
 const Proxy = (userStore, authMiddleware) => {
     const proxy = app =>
-        ({path, target, proxyTimeout = 60 * 1000, timeout = 61 * 1000, authenticate, cache, noCache, rewrite, ws = false}) => {
+        ({path, target, proxyTimeout = 60 * 1000, timeout = 61 * 1000, authenticate, cache, noCache, rewrite, _ws = false}) => {
             const proxyMiddleware = createProxyMiddleware({
                 target,
                 pathRewrite: {'/': ''},

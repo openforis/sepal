@@ -45,6 +45,8 @@ export const MESSAGE = {
     INSTALLED_PACKAGES: chalk.magentaBright('INSTALLED PACKAGES'),
     TESTING_PACKAGES: chalk.magenta('TESTING PACKAGES...'),
     TESTED_PACKAGES: chalk.magentaBright('TESTED PACKAGES'),
+    CHECKING_PACKAGES: chalk.magenta('CHECKING PACKAGES...'),
+    CHECKED_PACKAGES: chalk.magentaBright('CHECKED PACKAGES'),
     SKIPPED: chalk.grey('SKIPPED'),
     RUNNING: chalk.greenBright('RUNNING'),
     WATCHING: chalk.greenBright('WATCHING'),

@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {debounceTime, distinctUntilChanged, filter, merge, Subject} from 'rxjs'

@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {EMPTY, groupBy, map, mergeMap, mergeScan, of, shareReplay, Subject} from 'rxjs'

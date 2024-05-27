@@ -30,10 +30,6 @@
         "xmlhttprequest": "npm:@lpaolini/xmlhttprequest@^1.8.1"
     },
     "devDependencies": {
-        "@alex_neo/jest-expect-message": "^1.0.5",
-        "eslint": "^9.3.0",
-        "eslint-plugin-jest": "^28.5.0",
-        "jest": "^29.7.0"
     },
     "jest": {
         "setupFilesAfterEnv": [

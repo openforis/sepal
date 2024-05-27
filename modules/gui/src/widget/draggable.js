@@ -1,5 +1,4 @@
 import Hammer from 'hammerjs'
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {animationFrames, debounceTime, delay, distinctUntilChanged, filter, fromEvent, map, switchMap} from 'rxjs'
