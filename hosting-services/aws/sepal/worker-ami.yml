@@ -151,16 +151,6 @@
 
 
     # GPU setup
-    - name: Copy GPU drivers init script
-      copy:
-        src: "gpu/init-gpu-drivers.sh"
-        dest: "/usr/local/bin/init-gpu-drivers.sh"
-
-    - name: Copy GPU drivers init service
-      copy:
-        src: "gpu/init-gpu-drivers.service"
-        dest: "/etc/systemd/system/init-gpu-drivers.service"
-
     - name: Install GPU drivers
       script: "gpu/install-gpu-drivers.sh"
       
