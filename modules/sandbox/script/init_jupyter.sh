@@ -19,6 +19,7 @@ apt-get install -y libzmq3-dev
 /usr/bin/python3 -m pip install ipywidgets
 /usr/bin/python3 -m pip install folium
 /usr/bin/python3 -m pip install ipyleaflet
+/usr/bin/python3 -m pip install jupyter-resource-usage
 
 /usr/bin/python3 -m pip install ipyvuetify
 /usr/bin/python3 -m pip install geemap
