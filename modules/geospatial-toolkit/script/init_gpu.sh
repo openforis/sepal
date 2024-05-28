@@ -25,15 +25,11 @@ apt-get -y install cuda-toolkit
 pip3 install --extra-index-url https://pypi.nvidia.com tensorrt-libs
 pip3 install \
     pyopencl \
-    tensorflow==2.15.1 \
+    tensorflow \
+    tf-keras \
     torch \
     torchvision \
     testresources
-
-# Add NVIDIA repo
-# wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
-# dpkg -i cuda-keyring_1.1-1_all.deb
-# apt-get update
 
 # apt-get -y install cudnn-cuda-12 # Still not found by tensorflow
 # pip3 install tensorrt # Still not found by tensorflow
