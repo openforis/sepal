@@ -22,17 +22,19 @@ apt-get update
 
 apt-get -y install cuda-toolkit
 
+apt-get -y install cudnn-cuda-12 # Still not found by tensorflow
+
 pip3 install --extra-index-url https://pypi.nvidia.com tensorrt-libs
 pip3 install \
     pyopencl \
     tensorflow \
     tf-keras \
+    tensorrt \
     torch \
+    torch-tensorrt \
     torchvision \
     testresources
 
-# apt-get -y install cudnn-cuda-12 # Still not found by tensorflow
-# pip3 install tensorrt # Still not found by tensorflow
 
 
 # Verify that libraries find the GPU
