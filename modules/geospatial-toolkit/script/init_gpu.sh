@@ -21,21 +21,18 @@ dpkg -i cuda-keyring_1.1-1_all.deb
 apt-get update
 
 apt-get -y install cuda-toolkit
-
 apt-get -y install cudnn-cuda-12 # Still not found by tensorflow
 
-pip3 install --extra-index-url https://pypi.nvidia.com tensorrt-libs
+# pip3 install --extra-index-url https://pypi.nvidia.com tensorrt-libs
+# pip3 install tensorrt
+
 pip3 install \
     pyopencl \
-    tensorflow \
+    tensorflow==2.15.1 \
     tf-keras \
-    tensorrt \
-    torch \
-    torch-tensorrt \
+    torch==2.3.0 \
     torchvision \
     testresources
-
-
 
 # Verify that libraries find the GPU
 # python3 -c "import pyopencl as cl; print(cl.get_platforms())"
