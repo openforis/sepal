@@ -15,6 +15,13 @@ apt-get update
 mkdir -p /etc/OpenCL/vendors 
 echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
 
+# Add NVIDIA repo
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+dpkg -i cuda-keyring_1.1-1_all.deb
+apt-get update
+
+apt-get -y install cuda-toolkit
+
 pip3 install --extra-index-url https://pypi.nvidia.com tensorrt-libs
 pip3 install \
     pyopencl \
