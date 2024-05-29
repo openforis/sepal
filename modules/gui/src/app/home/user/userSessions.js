@@ -24,7 +24,6 @@ class _UserSessions extends React.Component {
             stopCurrentUserSession$(session),
             () => {
                 Notifications.success({message: msg('user.userSession.stop.success')})
-                onClose()
             },
             error => Notifications.error({message: msg('user.userSession.stop.error'), error})
         )
