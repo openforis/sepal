@@ -95,7 +95,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                             [PathOnHost: it, PathInContainer: it, CgroupPermissions: "mrw"]
                         },
                         // Memory: memoryBytes,
-                        MemorySwap: memoryBytes,
+                        // MemorySwap: memoryBytes,
                         // KernelMemory: memoryBytes,
                         ShmSize: (long) instanceType.ramBytes / 2,
                         // PidMode: 'host' // Exposes all host pids in container. Makes nvidia-smi pick up GPU processes
