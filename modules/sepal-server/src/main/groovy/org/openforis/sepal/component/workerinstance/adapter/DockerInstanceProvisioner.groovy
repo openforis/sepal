@@ -94,10 +94,11 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                         Devices: (instanceType.devices ?: []).collect {
                             [PathOnHost: it, PathInContainer: it, CgroupPermissions: "mrw"]
                         },
-                        Memory: memoryBytes,
+                        // Memory: memoryBytes,
                         MemorySwap: memoryBytes,
-                        KernelMemory: memoryBytes,
-                        ShmSize: (long) instanceType.ramBytes / 2
+                        // KernelMemory: memoryBytes,
+                        ShmSize: (long) instanceType.ramBytes / 2,
+                        // PidMode: 'host' // Exposes all host pids in container. Makes nvidia-smi pick up GPU processes
                 ],
                 ExposedPorts: image.exposedPorts.collectEntries {
                     ["$it/tcp", [:]]
