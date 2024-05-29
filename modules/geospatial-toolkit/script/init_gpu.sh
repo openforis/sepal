@@ -9,6 +9,7 @@ echo "***************************"
 # Tensorflow version compatibility: 
 #   https://www.tensorflow.org/install/source#gpu
 
+
 apt-get update
 
 # To get OpenCL to work
@@ -31,9 +32,7 @@ pip3 install \
     tensorflow==2.15.1 \
     tf-keras \
     torch==2.3.0 \
-    torchvision \
-    testresources
-
+    torchvision
 # Verify that libraries find the GPU
 # python3 -c "import pyopencl as cl; print(cl.get_platforms())"
 # python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"
