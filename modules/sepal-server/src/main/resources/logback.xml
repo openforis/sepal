@@ -5,6 +5,38 @@
         </encoder>
     </appender>
 
+    <logger name="org.openforis.sepal.component.workersession.command.CloseTimedOutSessions" additivity="false" level="DEBUG">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="org.openforis.sepal.component.workersession.command.CloseSessionsWithoutInstance" additivity="false" level="DEBUG">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="org.openforis.sepal.component.workersession.command.ReleaseUnusedInstances" additivity="false" level="DEBUG">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="org.openforis.sepal.component.workerinstance.command.SizeIdlePool" additivity="false" level="DEBUG">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="org.openforis.sepal.component.task.command.CancelTimedOutTasks" additivity="false" level="DEBUG">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="org.openforis.sepal.component.budget.command.UpdateUserSpendingReport" additivity="false" level="DEBUG">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="org.openforis.sepal.component.budget.command.UpdateUserStorageUsage" additivity="false" level="DEBUG">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="org.openforis.sepal.component.workerinstance.adapter.DockerInstanceProvisioner" additivity="false" level="DEBUG">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
     <!-- <logger name="org.openforis" additivity="false" level="INFO">
         <appender-ref ref="STDOUT"/>
     </logger>
