@@ -20,7 +20,8 @@ if [ ! -f "$ACCOUNT_THUMBPRINT_FILE" ]; then
         > $ACCOUNT_THUMBPRINT_FILE
 fi
 
-mkdir /etc/haproxy
+mkdir -p /etc/haproxy
+
 # Inject the account thumbprint into haproxy config
 ACCOUNT_THUMBPRINT=$(cat $ACCOUNT_THUMBPRINT_FILE) template /usr/local/etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg
 
@@ -30,5 +31,6 @@ if [ ! -f "/var/lib/acme/certs/$DOMAIN.pem" ]; then
     sudo --preserve-env --set-home -u acme issue-cert.sh $DOMAIN &
 fi
 
-exec sudo --preserve-env --set-home --user haproxy docker-entrypoint.sh \
-    haproxy -f /etc/haproxy/haproxy.cfg
+printf '59 13 * * * /usr/local/share/acme.sh/acme.sh --cron --home "/var/lib/acme/.acme.sh"\n' > /etc/crontabs/acme
+
+exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
