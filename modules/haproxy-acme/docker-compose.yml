@@ -11,6 +11,9 @@ services:
     volumes:
       - "${SEPAL_PROJECT_DIR}/modules/haproxy-acme/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg"
       - data:/var/lib/acme
+    environment:
+      LETSENCRYPT_DOMAIN: "${OPS_DOMAIN}"
+      LETSENCRYPT_EMAIL: "${LETSENCRYPT_EMAIL}"
 
 volumes:
   data:
