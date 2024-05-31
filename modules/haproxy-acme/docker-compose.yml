@@ -7,13 +7,18 @@ services:
     container_name: haproxy-acme
     ports:
       - "80:80"
-      - "443:443"
+      # - "443:443"
     volumes:
       - "${SEPAL_PROJECT_DIR}/modules/haproxy-acme/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg"
-      - data:/var/lib/acme
+      # - data:/var/lib/acme
     environment:
       LETSENCRYPT_DOMAIN: "${OPS_DOMAIN}"
       LETSENCRYPT_EMAIL: "${LETSENCRYPT_EMAIL}"
+    healthcheck:
+      test: bash -c "exec 6<> /dev/tcp/localhost/80"
+      timeout: 60s
+      interval: 1s
+      retries: 60
 
 volumes:
   data:
