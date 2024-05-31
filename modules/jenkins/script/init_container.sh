@@ -9,8 +9,8 @@ addgroup -g $DOCKER_GROUP docker
 adduser jenkins docker
 
 # Setup GitHub SSH identity file
+sudo -u jenkins rsync -a /var/lib/jenkins/.ssh/* /var/jenkins_home/.ssh/
 SSH_DIR=/var/jenkins_home/.ssh
-ln -s /var/lib/jenkins/.ssh $SSH_DIR
 IDENTITY_FILE=$SSH_DIR/id_rsa
 if ! test -f $IDENTITY_FILE; then
     sudo -u jenkins ssh-keygen -t rsa -b 4096 -C "GitHub key" -f $IDENTITY_FILE -N ""
