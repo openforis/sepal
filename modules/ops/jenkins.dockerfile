@@ -31,7 +31,7 @@ ADD --chown=jenkins:jenkins config /var/lib/jenkins
 RUN chmod 600 /var/lib/jenkins/.ssh/config
 
 USER root
-ADD /script/init_container.sh /usr/local/sbin/init_container.sh
-RUN chmod +x /usr/local/sbin/init_container.sh
+ADD /script/start-jenkins.sh /usr/local/sbin/start-jenkins
+RUN chmod +x /usr/local/sbin/start-jenkins
 ENTRYPOINT ["/bin/sh", "-c"]
-CMD ["/usr/local/sbin/init_container.sh"]
+CMD ["/usr/local/sbin/start-jenkins"]

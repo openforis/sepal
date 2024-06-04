@@ -61,11 +61,6 @@
             "gateway"
         ]
     },
-    "haproxy-acme": {
-        "build": {},
-        "run": [
-        ]
-    },
     "java": {
         "build": {},
         "run": false
@@ -199,7 +194,7 @@
         "build": {},
         "run": []
     },
-    "jenkins": {
+    "ops": {
         "build": {},
         "run": []
     }

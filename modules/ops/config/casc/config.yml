@@ -11,4 +11,4 @@ jenkins:
 
 unclassified:
   location:
-    url: http://daniel.sepal.io:8080/
+    url: https://${JENKINS_DOMAIN}:${JENKINS_PORT}/
