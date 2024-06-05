@@ -36,7 +36,7 @@
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>${WORKSPACE}/modules/jenkins/script/build-and-push-images.sh $BUILD_NUMBER</command>
+      <command>${WORKSPACE}/modules/ops/script/build-and-push-images.sh $BUILD_NUMBER</command>
       <configuredLocalRules/>
     </hudson.tasks.Shell>
   </builders>
