@@ -20,7 +20,8 @@ ADD modules/${MODULE_NAME}/script/init_esa_snap_toolbox.sh /script/
 RUN chmod u+x /script/init_esa_snap_toolbox.sh && sync && /script/init_esa_snap_toolbox.sh
 
 ADD modules/${MODULE_NAME}/script/init_orfeo.sh /script/
-RUN chmod u+x /script/init_orfeo.sh && sync && /script/init_orfeo.sh
+# [HACK] OTB installation fails when calling install scripts with absolute path
+RUN chmod u+x /script/init_orfeo.sh && sync && (cd /script; ./init_orfeo.sh)
 
 ADD modules/${MODULE_NAME}/script/init_gcloud.sh /script/
 RUN chmod u+x /script/init_gcloud.sh && sync && /script/init_gcloud.sh
