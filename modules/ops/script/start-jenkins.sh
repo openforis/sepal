@@ -5,8 +5,8 @@ set -e
 # we create a docker group with same gid as on the host
 # and assign jenkins to that group
 DOCKER_GROUP=$(stat -c %g /var/run/docker.sock)
-addgroup -g $DOCKER_GROUP docker
-adduser jenkins docker
+addgroup -g $DOCKER_GROUP docker || echo "User docker already associated with group"
+adduser jenkins docker || echo "User jenkins already associated with group"
 
 # Setup GitHub SSH identity file
 sudo -u jenkins rsync -a /var/lib/jenkins/.ssh/* /var/jenkins_home/.ssh/
