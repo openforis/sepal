@@ -17,6 +17,7 @@ printf '%s\n' \
     'SEPAL="true"' \
     'PROJ_LIB="/usr/share/proj"' \
     'LOCALTILESERVER_CLIENT_PREFIX="/api/sandbox/jupyter/proxy/{port}"' \
+    'OTB_APPLICATION_PATH=/usr/local/lib/orfeo/lib/otb/applications' \
     >> /etc/environment
 
 # Remove redundant files
