@@ -15,6 +15,7 @@ dask[complete]
 planet
 tensorflow-probability
 geeadd
+pyotb
 
 ########  Google Earthengine  ########
 oauth2client
