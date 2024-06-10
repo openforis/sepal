@@ -8,6 +8,8 @@ echo "******************************"
 mkdir /var/run/sshd
 
 # Setup /etc/environment
+# [HACK] PYTHONPATH and LD_LIBRARY_PATH is only set to get OTB to work.
+# [TODO] Try to avoid this.
 printf '%s\n' \
     'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/lib/orfeo/bin:/usr/local/snap/bin:/home/sepal-user/.local/bin:/usr/local/cuda/bin"' \
     'JAVA_HOME="/usr/local/lib/sdkman/candidates/java/current"' \
