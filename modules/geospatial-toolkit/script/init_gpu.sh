@@ -22,16 +22,27 @@ dpkg -i cuda-keyring_1.1-1_all.deb
 apt-get update
 
 apt-get -y install cuda-toolkit
-apt-get -y install cudnn-cuda-12 # Still not found by tensorflow
+apt-get -y install cudnn-cuda-12
 
+# Doesn't seem to be needed
 # pip3 install --extra-index-url https://pypi.nvidia.com tensorrt-libs
 # pip3 install tensorrt
 
+export CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))
+export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/:$CUDNN_PATH/lib:$LD_LIBRARY_PATH
+
+# https://github.com/tensorflow/tensorflow/issues/61468
+# Find out the expected tensorrt version
+# python3 -c "import tensorflow.compiler as tf_cc; print(tf_cc.tf2tensorrt._pywrap_py_utils.get_linked_tensorrt_version())"
+
+wget https://developer.nvidia.com/downloads/compute/machine-learning/tensorrt/secure/8.6.1/tars/TensorRT-8.6.1.6.Linux.x86_64-gnu.cuda-12.0.tar.gz
+tar -xvzf TensorRT-8.6.1.6.Linux.x86_64-gnu.cuda-12.0.tar.gz --one-top-level=/usr/local/lib/tensorrt
+
 pip3 install \
     pyopencl \
-    tensorflow==2.15.1 \
+    tensorflow \
     tf-keras \
-    torch==2.3.0 \
+    torch \
     torchvision \
     gpustat \
     nvitop
