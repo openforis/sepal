@@ -19,6 +19,8 @@ printf '%s\n' \
     'LOCALTILESERVER_CLIENT_PREFIX="/api/sandbox/jupyter/proxy/{port}"' \
     'OTB_INSTALL_DIR=/usr/local/lib/orfeo' \
     'OTB_APPLICATION_PATH=/usr/local/lib/orfeo/lib/otb/applications' \
+    'PYTHONPATH=/usr/local/lib/orfeo/lib/otb/python' \
+    'LD_LIBRARY_PATH=/lib/:/lib/x86_64-linux-gnu/:/lib32/:/usr/lib/x86_64-linux-gnu/libfakeroot/:/usr/local/cuda/targets/x86_64-linux/lib/:/usr/local/lib/orfeo/lib:' \
     >> /etc/environment
 
 # Remove redundant files
