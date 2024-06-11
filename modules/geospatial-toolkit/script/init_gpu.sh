@@ -24,19 +24,21 @@ apt-get update
 apt-get -y install cuda-toolkit
 apt-get -y install cudnn-cuda-12
 
-# Doesn't seem to be needed
-# pip3 install --extra-index-url https://pypi.nvidia.com tensorrt-libs
-# pip3 install tensorrt
-
 export CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/:$CUDNN_PATH/lib:$LD_LIBRARY_PATH
 
-# https://github.com/tensorflow/tensorflow/issues/61468
 # Find out the expected tensorrt version
 # python3 -c "import tensorflow.compiler as tf_cc; print(tf_cc.tf2tensorrt._pywrap_py_utils.get_linked_tensorrt_version())"
 
-wget https://developer.nvidia.com/downloads/compute/machine-learning/tensorrt/secure/8.6.1/tars/TensorRT-8.6.1.6.Linux.x86_64-gnu.cuda-12.0.tar.gz
-tar -xvzf TensorRT-8.6.1.6.Linux.x86_64-gnu.cuda-12.0.tar.gz --one-top-level=/usr/local/lib/tensorrt
+# Get TensorRT download URL from https://developer.nvidia.com/tensorrt
+# Requires logging into NVIDIA
+TENSOR_RT="TensorRT-8.6.1.6"
+TENSOR_RT_TAR="$TENSOR_RT.Linux.x86_64-gnu.cuda-12.0.tar.gz"
+wget https://developer.nvidia.com/downloads/compute/machine-learning/tensorrt/secure/8.6.1/tars/$TENSOR_RT_TAR
+tar -xvzf $TENSOR_RT_TAR
+rm $TENSOR_RT_TAR
+mv $TENSOR_RT /usr/local/lib/$TENSOR_RT
+ln -s /usr/local/lib/$TENSOR_RT /usr/local/lib/TensorRT
 
 pip3 install \
     pyopencl \

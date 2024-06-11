@@ -22,7 +22,7 @@ printf '%s\n' \
     'OTB_INSTALL_DIR=/usr/local/lib/orfeo' \
     'OTB_APPLICATION_PATH=/usr/local/lib/orfeo/lib/otb/applications' \
     'PYTHONPATH=/usr/local/lib/orfeo/lib/otb/python' \
-    'LD_LIBRARY_PATH=/lib/:/lib/x86_64-linux-gnu/:/lib32/:/usr/lib/x86_64-linux-gnu/libfakeroot/:/usr/local/cuda/targets/x86_64-linux/lib/:/usr/local/lib/python3.10/dist-packages/nvidia/cudnn/lib:/usr/local/lib/tensorrt/lib:/usr/local/lib/orfeo/lib:' \
+    'LD_LIBRARY_PATH=/lib/:/lib/x86_64-linux-gnu/:/lib32/:/usr/lib/x86_64-linux-gnu/libfakeroot/:/usr/local/cuda/targets/x86_64-linux/lib/:/usr/local/lib/python3.10/dist-packages/nvidia/cudnn/lib:/usr/local/lib/TensorRT/lib:/usr/local/lib/orfeo/lib:' \
     >> /etc/environment
 
 # Remove redundant files
