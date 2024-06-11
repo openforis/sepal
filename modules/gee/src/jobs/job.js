@@ -41,7 +41,7 @@ module.exports = {
             ee.data.setDefaultWorkloadTag(tag)
             return worker$(...args)
         }
-        return Job()({
+        return Job({
             jobName,
             jobPath,
             schedulerName: 'GoogleEarthEngine',
