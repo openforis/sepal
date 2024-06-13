@@ -41,6 +41,21 @@
       dnf:
         name: 'amazon-efs-utils'
 
+    - name: Set region in efs-utils.conf
+      lineinfile:
+        path: /etc/amazon/efs/efs-utils.conf
+        line: "region = {{ lookup('env', 'AWS_REGION') }}"
+        insertafter: "[mount]"
+      register: sshd_config
+
+
+    - name: Set disable_fetch_ec2_metadata_token in efs-utils.conf
+      lineinfile:
+        path: /etc/amazon/efs/efs-utils.conf
+        search_string: disable_fetch_ec2_metadata_token = false'
+        line: "disable_fetch_ec2_metadata_token = true"
+
+
     - name: Install Lustre
       dnf:
         name: lustre-client
@@ -147,17 +162,10 @@
         enabled: yes
         masked: no
         
-    # - name: pip install docker
-    #   pip:
-    #     name: "docker"
-    #     executable: pip3
-
-
     # GPU setup
     - name: Install GPU drivers
       script: "gpu/install-gpu-drivers.sh"
       
-
     - name: Login to docker registry
       command: "docker login -p '{{ lookup('env', 'DOCKER_REGISTRY_PASSWORD') }}' -u '{{ lookup('env', 'DOCKER_REGISTRY_USERNAME') }}' {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
 
