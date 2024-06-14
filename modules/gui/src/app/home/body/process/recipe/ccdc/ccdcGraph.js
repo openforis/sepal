@@ -378,11 +378,32 @@ const segmentsData = ({
     const mask = ({date}) => {
         return [date, observationByTimestamp[date.getTime()] || null, NaN]
     }
+    
+    const extrapolate = ({date, prevSegmentIndex, nextSegmentIndex, extrapolateSegment, extrapolateMaxDays}) => {
+        const t = toT(date, dateFormat)
+        const tStart = segments.tEnd[prevSegmentIndex]
+        const tEnd = segments.tStart[nextSegmentIndex]
+        const days = moment(fromT(tEnd, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
+        const day = moment(fromT(t, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
+        
+        const segmentIndex = extrapolateSegment === 'PREVIOUS'
+            ? prevSegmentIndex
+            : extrapolateSegment === 'NEXT'
+                ? nextSegmentIndex
+                : day < days / 2
+                    ? prevSegmentIndex
+                    : nextSegmentIndex
 
-    // TODO: Implement...
-    // eslint-disable-next-line no-unused-vars
-    const extrapolate = ({date, prevSegmentIndex, nextSegmentIndex}) => {
-        return [date, observationByTimestamp[date.getTime()] || null, NaN]
+        const tooManyDays = (segmentIndex === prevSegmentIndex && day > extrapolateMaxDays)
+            || (segmentIndex === nextSegmentIndex && days - day > extrapolateMaxDays)
+        if (tooManyDays) {
+            return [date, observationByTimestamp[date.getTime()] || null, NaN]
+        } else {
+            const coefs = bandCoefs[segmentIndex]
+            const extrapolated = slice({coefs, date, dateFormat, harmonics})
+            const rmse = bandRmse[segmentIndex]
+            return [date, observationByTimestamp[date.getTime()] || null, [extrapolated, rmse]]
+        }
     }
 
     const interpolate = ({date, prevSegmentIndex, nextSegmentIndex}) => {
