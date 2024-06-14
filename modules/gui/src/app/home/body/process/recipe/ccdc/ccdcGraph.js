@@ -10,7 +10,7 @@ import {isMobile} from '~/widget/userAgent'
 import {Widget} from '~/widget/widget'
 
 import styles from './ccdcGraph.module.css'
-import {toT} from './t'
+import {fromT, toT} from './t'
 
 export class CCDCGraph extends React.Component {
     state = {}
@@ -488,24 +488,6 @@ const getOmega = dateFormat => {
         return 2.0 * Math.PI
     case UNIX_TIME_MILLIS:
         return 2.0 * Math.PI / (1000 * 60 * 60 * 24 * 365.25)
-    default:
-        throw Error('Only dateFormat 0 (Julian days), 1 (Fractional years), and 2 (Unix time milliseconds) is supported')
-    }
-}
-
-const fromT = (t, dateFormat) => {
-    function fromJDays() {
-        const epochDay = 719529
-        return new Date((t - epochDay) * 1000 * 3600 * 24)
-    }
-
-    switch (dateFormat) {
-    case J_DAYS:
-        return fromJDays()
-    case FRACTIONAL_YEARS:
-        return format.fractionalYearsToDate(t)
-    case UNIX_TIME_MILLIS:
-        return new Date(t)
     default:
         throw Error('Only dateFormat 0 (Julian days), 1 (Fractional years), and 2 (Unix time milliseconds) is supported')
     }
