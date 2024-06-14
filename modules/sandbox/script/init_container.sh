@@ -1,10 +1,5 @@
 #!/bin/bash
 
-
-# [HACK] Ensure all volumes are mounted. Sometimes, they aren't. 
-# [TODO] Try to figure out the root cause and get rid of the hack
-mount -a 
-
 export sandbox_user=sepal-user
 
 function exportEnvironment {
