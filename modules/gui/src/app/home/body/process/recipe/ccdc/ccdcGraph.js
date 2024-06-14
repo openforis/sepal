@@ -493,7 +493,7 @@ const fromT = (t, dateFormat) => {
     case J_DAYS:
         return fromJDays()
     case FRACTIONAL_YEARS:
-        return fromFractionalYears()
+        return format.fractionalYearsToDate(t)
     case UNIX_TIME_MILLIS:
         return new Date(t)
     default:

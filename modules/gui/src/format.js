@@ -50,7 +50,7 @@ const fileSize = (size, {scale, precisionDigits, unit = 'B'} = {}) =>
 const fractionalYearsToDate = fractionalYear => {
     const year = Math.floor(fractionalYear)
     const fraction = fractionalYear - year
-    const startOfYear = moment({year, month: 0, day: 1})
+    const startOfYear = moment({year, month: 0, date: 1})
     const startOfNextYear = moment(startOfYear).add(1, 'years')
     const daysOfYear = startOfNextYear.diff(startOfYear, 'days')
 
