@@ -26,8 +26,7 @@ export const defaultModel = {
         ).format(DATE_FORMAT)
     },
     sources: {
-        source: 'BASEMAPS',
-        assets: NICFI_ASSETS,
+        source: 'NICFI',
         histogramMatching: 'DISABLED'
     },
     options: {

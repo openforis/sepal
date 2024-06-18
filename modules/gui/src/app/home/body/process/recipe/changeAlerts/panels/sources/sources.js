@@ -211,7 +211,7 @@ class _Sources extends React.Component {
         switch (dataSetType.value) {
         case 'OPTICAL': return opticalDataSetOptions({...dates})
         case 'RADAR': return radarDataSetOptions({...dates})
-        case 'PLANET': return planetDataSetOptions({...dates}).filter(({value}) => value !== 'NICFI')
+        case 'PLANET': return planetDataSetOptions({...dates})
         default: return []
         }
     }
