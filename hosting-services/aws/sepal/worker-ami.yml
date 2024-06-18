@@ -69,7 +69,7 @@
     - name: Mount /data/sepal/home from EFS
       lineinfile:
         path: '/etc/fstab'
-        line: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/home /data/sepal/home efs defaults,_netdev 0 2"
+        line: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/home /data/sepal/home efs defaults,_netdev 0 0"
 
     - name: Create /data/sepal/shiny
       file:
@@ -79,7 +79,7 @@
     - name: Mount /data/sepal/shiny from FSx
       lineinfile:
         path: '/etc/fstab'
-        line: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/shiny /data/sepal/shiny lustre noatime,flock 0 2"
+        line: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/shiny /data/sepal/shiny lustre noatime,flock 0 0"
 
     - name: Create /data/sepal/shared
       file:
@@ -89,7 +89,7 @@
     - name: Mount /data/sepal/shared from FSx
       lineinfile:
         path: '/etc/fstab'
-        line: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/shared /data/sepal/shared lustre noatime,flock 0 2"
+        line: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/shared /data/sepal/shared lustre noatime,flock 0 0"
 
     - name: Create /data/sepal/jupyter
       file:
@@ -99,7 +99,7 @@
     - name: Mount /data/sepal/jupyter from FSx
       lineinfile:
         path: '/etc/fstab'
-        line: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/jupyter /data/sepal/jupyter lustre noatime,flock 0 2"
+        line: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/jupyter /data/sepal/jupyter lustre noatime,flock 0 0"
 
     # Docker setup
     - name: Create filesystem on Docker volume
