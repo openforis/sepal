@@ -236,11 +236,11 @@ const assetDestination$ = (description, assetId) => {
     description = description || Path.dirname(assetId)
     return assetId
         ? of({description, assetId})
-        : ee.getAssetRoots$().pipe(
-            map(assetRoots => {
-                if (!assetRoots || !assetRoots.length)
+        : ee.listBuckets$('projects/earthengine-legacy').pipe(
+            map(({assets}) => {
+                if (!assets || !assets.length)
                     throw new Error('EE account has no asset roots')
-                return ({description, assetId: Path.join(assetRoots[0], description)})
+                return ({description, assetId: Path.join(assets[0].id, description)})
             })
         )
 }
