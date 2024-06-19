@@ -482,7 +482,8 @@ class _Retrieve extends React.Component {
         )
     }
     componentDidMount() {
-        const {defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize, inputs: {assetType, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize}} = this.props
+        const {defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize,
+            inputs: {assetType, sharing, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize}} = this.props
         const more = (crs.value && crs.value !== defaultCrs)
         || (crsTransform.value)
         || (shardSize.value && shardSize.value !== defaultShardSize)
@@ -506,6 +507,9 @@ class _Retrieve extends React.Component {
         }
         if (defaultAssetType && !assetType.value) {
             assetType.set(defaultAssetType)
+        }
+        if (!sharing.value) {
+            sharing.set('PRIVATE')
         }
         this.update()
 
