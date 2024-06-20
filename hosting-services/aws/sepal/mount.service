@@ -1,0 +1,10 @@
+[Unit]
+Description=A second mount
+Before=docker.service
+After=multi-user.target
+
+[Service]
+ExecStart=/usr/bin/mount -a
+
+[Install]
+WantedBy=default.target
