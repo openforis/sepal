@@ -14,6 +14,8 @@
       "region": "{{user `AWS_REGION`}}",
       "source_ami": "{{user `AWS_WORKER_AMI`}}",
       "instance_type": "g4dn.xlarge",
+      "force_deregister": "true",
+      "force_delete_snapshot": "true",
       "ssh_username": "ec2-user",
       "ami_name": "Sandbox({{user  `AWS_REGION`}}) - {{user `VERSION`}}",
       "tags": {
