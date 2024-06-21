@@ -11,7 +11,7 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
         throw Error('Requires a connected Google Account')
     }
 
-    const headers = {Authorization: `Bearer ${googleTokens.accessToken}`}
+    const headers = {'x-goog-user-project': ee.data.getProject(), Authorization: `Bearer ${googleTokens.accessToken}`}
 
     const assets$ = parentId =>
         ee.listAssets$(parentId).pipe(
@@ -50,7 +50,7 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
         )
     
     const cloudProjectRoots$ = () =>
-        http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {headers}).pipe(
+        http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {headers: {Authorization: `Bearer ${googleTokens.accessToken}`}}).pipe(
             map(({body}) => JSON.parse(body)),
             map(mapCloudProjectRoots)
         )

@@ -282,7 +282,7 @@ const share$ = ({sharing, assetId}) =>
                 })
             ),
             http.postJson$(`https://earthengine.googleapis.com/v1/${assetId}:setIamPolicy`, {
-                headers: {Authorization: ee.data.getAuthToken()},
+                headers: {'x-goog-user-project': ee.data.getProject(), Authorization: ee.data.getAuthToken()},
                 body: {policy: {bindings: [{role: 'roles/viewer', members: ['allUsers']}]}}
             }).pipe(
                 swallow()
