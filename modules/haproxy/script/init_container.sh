@@ -1,8 +1,15 @@
 #!/bin/bash
 
+
+function template {
+    local template=$1
+    local destination=$2
+    TYPE=$TYPE envsubst < $template > $destination
+}
+
 mkdir -p /etc/haproxy
 mkdir -p /etc/sepal
-cp /config/haproxy.cfg /etc/haproxy/haproxy.cfg
+template /config/haproxy.cfg /etc/haproxy/haproxy.cfg
 cat /etc/letsencrypt/live/$SEPAL_HOST/privkey.pem \
     /etc/letsencrypt/live/$SEPAL_HOST/fullchain.pem \
     > /etc/sepal/sepal.pem
