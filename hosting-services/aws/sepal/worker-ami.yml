@@ -102,15 +102,15 @@
         path: '/etc/fstab'
         line: "{{ lookup('env', 'AWS_FSX_ID') }}/data/sepal/jupyter /data/sepal/jupyter lustre defaults,noatime,flock,_netdev,x-systemd.requires=systemd-networkd-wait-online.service,x-systemd.mount-timeout=infinity,retry=10000 0 0"
 
-    - name: Copy /etc/systemd/system/mount.service
-      copy: src=mount.service dest=/etc/systemd/system/mount.service
+    # - name: Copy /etc/systemd/system/mount.service
+    #   copy: src=mount.service dest=/etc/systemd/system/mount.service
 
-    - name: Enable mount service
-      systemd:
-        name: mount
-        state: started
-        enabled: yes
-        masked: no
+    # - name: Enable mount service
+    #   systemd:
+    #     name: mount
+    #     state: started
+    #     enabled: yes
+    #     masked: no
         
 
     # Docker setup
