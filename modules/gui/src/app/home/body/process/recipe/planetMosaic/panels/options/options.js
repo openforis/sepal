@@ -64,7 +64,6 @@ class _Options extends React.Component {
                 maxValue={100}
                 ticks={[0, 10, 25, 50, 75, 90, 100]}
                 info={value => msg('process.planetMosaic.panel.options.shadowThreshold.value', {value})}
-                disabled={this.noProcessing()}
             />
         )
     }
@@ -80,7 +79,6 @@ class _Options extends React.Component {
                 maxValue={100}
                 ticks={[0, 10, 25, 50, 75, 90, 100]}
                 info={value => msg('process.planetMosaic.panel.options.cloudThreshold.value', {value})}
-                disabled={this.noProcessing()}
             />
         )
     }
@@ -105,7 +103,6 @@ class _Options extends React.Component {
                     tooltip: msg('process.mosaic.panel.composite.form.cloudBuffer.aggressive.tooltip')
                 }]}
                 type='horizontal'
-                disabled={this.noProcessing()}
             />
         )
     }
@@ -134,11 +131,6 @@ class _Options extends React.Component {
         if (!histogramMatching.value) {
             histogramMatching.set('DISABLED')
         }
-    }
-
-    noProcessing() {
-        const {source, inputs: {histogramMatching}} = this.props
-        return source === 'DAILY' && histogramMatching.value !== 'ENABLED'
     }
 }
 
