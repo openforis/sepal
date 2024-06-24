@@ -1,3 +1,8 @@
+import '@fontsource/merriweather'
+import '@fontsource/source-sans-pro'
+import '@fontsource/ubuntu'
+import '@fontsource/ubuntu-mono'
+
 import {createBrowserHistory} from 'history'
 import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
