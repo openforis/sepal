@@ -61,6 +61,9 @@ const Proxy = (userStore, authMiddleware) => {
                             userStore.updateUser(req)
                         }
                         proxyRes.headers['Content-Security-Policy'] = `connect-src 'self' https://${sepalHost} wss://${sepalHost} https://*.googleapis.com https://apis.google.com https://www.google-analytics.com https://*.google.com https://*.planet.com https://registry.npmjs.org; frame-ancestors 'self' https://${sepalHost} https://*.googleapis.com https://apis.google.com https://*.google-analytics.com https://registry.npmjs.org`
+                        proxyRes.headers['X-Content-Type-Options'] = 'nosniff'
+                        proxyRes.headers['Strict-Transport-Security'] = 'max-age=16000000; includeSubDomains; preload'
+                        proxyRes.headers['Referrer-Policy'] = 'no-referrer'
                     },
                     error: (err, req, res) => {
                         log.warn(`${urlTag(req.originalUrl)} Proxy error:`, err)
