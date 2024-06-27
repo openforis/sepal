@@ -20,7 +20,21 @@ export const loadUser$ = () =>
             Notifications.error({message: msg('landing.loadCurrentUser.error')})
             return of(null)
         }),
-        tap(user => updateUser(user))
+        tap(user => updateUser(user)),
+        switchMap(() =>
+            googleProjectId()
+                ? api.gee.healthcheck$()
+                : of(true)
+        ),
+        catchError(() => {
+            Notifications.error({
+                title: msg('user.googleAccount.unavailable.title'),
+                message: msg('user.googleAccount.unavailable.message'),
+                link: `http://code.earthengine.google.com/register?project=${googleProjectId()}`,
+                timeout: 0
+            })
+            return of(null)
+        })
     )
 
 export const login$ = ({username, password}) => {

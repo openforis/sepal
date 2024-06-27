@@ -1,6 +1,11 @@
 import {get$, post$, postJson$} from '~/http-client'
 
 export default {
+    healthcheck$: () =>
+        get$('/api/gee/healthcheck', {
+            maxRetries: 0
+        }),
+
     preview$: ({recipe, ...params}) =>
         postJson$('/api/gee/preview', {
             body: {recipe, ...params},
