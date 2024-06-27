@@ -1,9 +1,9 @@
-import 'xterm/css/xterm.css'
+import '@xterm/xterm/css/xterm.css'
 
+import {FitAddon} from '@xterm/addon-fit'
+import {Terminal as Xterm} from '@xterm/xterm'
 import React from 'react'
 import {distinctUntilChanged, filter, map, Subject, withLatestFrom} from 'rxjs'
-import {Terminal as Xterm} from 'xterm'
-import {FitAddon} from 'xterm-addon-fit'
 
 import {compose} from '~/compose'
 import {connect} from '~/connect'
