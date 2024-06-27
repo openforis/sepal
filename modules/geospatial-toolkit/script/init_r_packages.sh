@@ -299,7 +299,6 @@ R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/
 
 R -e "remotes::install_url(c(\
         'http://r-proxy:8180/github/cran/rgdal/archive/refs/heads/master.tar.gz',\
-        'http://r-proxy:8180/github/cran/rgeos/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/cran/gdalUtils/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/r-barnes/dggridR/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/bfast2/bfast/archive/refs/heads/master.tar.gz',\
@@ -307,3 +306,6 @@ R -e "remotes::install_url(c(\
         'http://r-proxy:8180/github/loicdtx/bfastSpatial/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/jreiche/bayts/archive/refs/heads/master.tar.gz'\
     ), repos='http://r-proxy:8180/', build = FALSE)"
+
+# Removed 'rgeos' R package as it fails to build
+# 'http://r-proxy:8180/github/cran/rgeos/archive/refs/heads/master.tar.gz',\
