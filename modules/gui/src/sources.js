@@ -1,11 +1,12 @@
 import {getAvailableBands as getAvailableOpticalBands, getGroupedBandOptions as getGroupedOpticalBandOptions} from '~/app/home/body/process/recipe/opticalMosaic/bands'
+import {getDataSetOptions as opticalDataSetOptions, isOpticalDataSet, toSources as toOpticalSources} from '~/app/home/body/process/recipe/opticalMosaic/sources'
 import {getAvailableBands as getAvailablePlanetBands, getGroupedBandOptions as getGroupedPlanetBandOptions} from '~/app/home/body/process/recipe/planetMosaic/bands'
-import {getAvailableBands as getAvailableRadarBands, getGroupedBandOptions as getGroupedRadarBandOptions} from '~/app/home/body/process/recipe/radarMosaic/bands'
-import {isOpticalDataSet, getDataSetOptions as opticalDataSetOptions, toSources as toOpticalSources} from '~/app/home/body/process/recipe/opticalMosaic/sources'
-import {isRadarDataSet, getDataSetOptions as radarDataSetOptions, toSources as toRadarSources} from '~/app/home/body/process/recipe/radarMosaic/sources'
-import {msg} from './translate'
-import {supportProbability, supportRegression} from './app/home/body/process/recipe/classification/classificationRecipe'
 import {toSources as toPlanetSources} from '~/app/home/body/process/recipe/planetMosaic/sources'
+import {getAvailableBands as getAvailableRadarBands, getGroupedBandOptions as getGroupedRadarBandOptions} from '~/app/home/body/process/recipe/radarMosaic/bands'
+import {getDataSetOptions as radarDataSetOptions, isRadarDataSet, toSources as toRadarSources} from '~/app/home/body/process/recipe/radarMosaic/sources'
+
+import {supportProbability, supportRegression} from './app/home/body/process/recipe/classification/classificationRecipe'
+import {msg} from './translate'
 
 export const groupedDataSetOptions = ({dataSetIds, startDate, endDate}) => {
     const opticalDisabled = dataSetIds && dataSetIds.find(dataSetId => !isOpticalDataSet(dataSetId))

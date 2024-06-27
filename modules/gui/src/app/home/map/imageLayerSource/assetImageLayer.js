@@ -1,18 +1,20 @@
-import {CursorValueContext} from '../cursorValue'
-import {EarthEngineImageLayer} from '../layer/earthEngineImageLayer'
-import {MapAreaLayout} from '../mapAreaLayout'
-import {Subject} from 'rxjs'
-import {VisualizationSelector} from './visualizationSelector'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {withMapArea} from '../mapAreaContext'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import {withSubscriptions} from '~/subscription'
-import {withTab} from '~/widget/tabs/tabContext'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {Subject} from 'rxjs'
+
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {withSubscriptions} from '~/subscription'
+import {msg} from '~/translate'
+import {withTab} from '~/widget/tabs/tabContext'
+
+import {CursorValueContext} from '../cursorValue'
+import {EarthEngineImageLayer} from '../layer/earthEngineImageLayer'
+import {withMapArea} from '../mapAreaContext'
+import {MapAreaLayout} from '../mapAreaLayout'
+import {VisualizationSelector} from './visualizationSelector'
 
 const mapRecipeToProps = (recipe, ownProps) => {
     const {source} = ownProps

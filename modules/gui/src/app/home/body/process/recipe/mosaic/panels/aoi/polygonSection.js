@@ -1,15 +1,17 @@
-import {Layout} from '~/widget/layout'
-import {PreviewMap} from './previewMap'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {withMap} from '~/app/home/map/mapContext'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
 import api from '~/apiRegistry'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {withMap} from '~/app/home/map/mapContext'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {Layout} from '~/widget/layout'
+
 import styles from './aoi.module.css'
+import {PreviewMap} from './previewMap'
 
 const mapRecipeToProps = recipe => ({
     overlay: selectFrom(recipe, 'layers.overlay'),

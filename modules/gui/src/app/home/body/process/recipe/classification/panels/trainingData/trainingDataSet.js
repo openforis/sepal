@@ -1,20 +1,22 @@
 /* eslint-disable react/jsx-key */
+import PropTypes from 'prop-types'
+import React from 'react'
+
+import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {Form} from '~/widget/form'
+import {PanelSections} from '~/widget/panelSections'
+
 import {ClassMappingStep} from './classMappingStep'
 import {ClassStep} from './classStep'
 import {CsvUploadSection} from './csvUploadSection'
 import {EETableSection} from './eeTableSection'
-import {Form} from '~/widget/form'
 import {LocationStep} from './locationStep'
-import {PanelSections} from '~/widget/panelSections'
-import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {RecipeSection} from './recipeSection'
 import {SampleClassificationSection} from './sampleClassificationSection'
 import {SectionSelection} from './sectionSelection'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import PropTypes from 'prop-types'
-import React from 'react'
 import styles from './trainingDataSet.module.css'
 
 const fields = {

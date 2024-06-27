@@ -1,9 +1,9 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+
 import {Buttons} from './buttons'
 import {Form} from './form'
 import {Widget} from './widget'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
 
 export const NumberButtons = ({input, options, label, placeholder, tooltip, suffix, errorMessage, onChange}) =>
     <Widget

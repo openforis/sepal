@@ -1,17 +1,19 @@
-import {Aoi} from '../aoi'
-import {ChangeAlertsToolbar} from './panels/changeAlertsToolbar'
-import {Map} from '~/app/home/map/map'
-import {RecipeActions, defaultModel} from './changeAlertsRecipe'
-import {ReferenceSync} from './referenceSync'
-import {compose} from '~/compose'
-import {getAvailableBands} from './bands'
-import {getPreSetVisualizations} from './visualizations'
-import {initializeLayers} from '../recipeImageLayerSource'
-import {msg} from '~/translate'
-import {recipe} from '~/app/home/body/process/recipeContext'
-import {selectFrom} from '~/stateUtils'
-import React from 'react'
 import moment from 'moment'
+import React from 'react'
+
+import {recipe} from '~/app/home/body/process/recipeContext'
+import {Map} from '~/app/home/map/map'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+
+import {Aoi} from '../aoi'
+import {initializeLayers} from '../recipeImageLayerSource'
+import {getAvailableBands} from './bands'
+import {defaultModel, RecipeActions} from './changeAlertsRecipe'
+import {ChangeAlertsToolbar} from './panels/changeAlertsToolbar'
+import {ReferenceSync} from './referenceSync'
+import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
     reference: selectFrom(recipe, 'model.reference'),

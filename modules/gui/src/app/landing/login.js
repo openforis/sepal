@@ -1,17 +1,18 @@
+import PropTypes from 'prop-types'
+import React from 'react'
+
+import {compose} from '~/compose'
+import {msg} from '~/translate'
+import {credentialsPosted, invalidCredentials, login$} from '~/user'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {Form} from '~/widget/form'
 import {FormContainer} from '~/widget/form/container'
+import {withForm} from '~/widget/form/form'
 import {Keybinding} from '~/widget/keybinding'
 import {Layout} from '~/widget/layout'
 import {Notifications} from '~/widget/notifications'
-import {compose} from '~/compose'
-import {credentialsPosted, invalidCredentials, login$} from '~/user'
-import {msg} from '~/translate'
-import {withForm} from '~/widget/form/form'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+
 import styles from './login.module.css'
 
 const fields = {

@@ -1,14 +1,16 @@
-import {MarkerClustererLayer} from '~/app/home/map/markerClustererLayer'
-import {RecipeActions} from './classificationRecipe'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {withActivators} from '~/widget/activation/activator'
-import {withDataCollectionManager} from './dataCollectionManager'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {MarkerClustererLayer} from '~/app/home/map/markerClustererLayer'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {withActivators} from '~/widget/activation/activator'
+
+import {RecipeActions} from './classificationRecipe'
+import {withDataCollectionManager} from './dataCollectionManager'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,

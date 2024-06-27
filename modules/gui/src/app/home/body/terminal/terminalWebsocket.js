@@ -1,4 +1,4 @@
-import {Subject, interval} from 'rxjs'
+import {interval, Subject} from 'rxjs'
 
 export class TerminalWebSocket {
     disposables = []

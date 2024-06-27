@@ -1,17 +1,19 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {filter} from 'rxjs'
+
+import {compose} from '~/compose'
+import {select} from '~/store'
+import {toSafeString} from '~/string'
+import {withSubscriptions} from '~/subscription'
 import {Button} from '~/widget/button'
 import {Input} from '~/widget/input'
 import {Keybinding} from '~/widget/keybinding'
 import {Layout} from '~/widget/layout'
-import {compose} from '~/compose'
-import {filter} from 'rxjs'
-import {renameTab, selectTab} from './tabActions'
-import {select} from '~/store'
-import {toSafeString} from '~/string'
 import {withScrollable} from '~/widget/scrollable'
-import {withSubscriptions} from '~/subscription'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+
+import {renameTab, selectTab} from './tabActions'
 import styles from './tabHandle.module.css'
 
 const CLOSE_ANIMATION_DURATION_MS = 250

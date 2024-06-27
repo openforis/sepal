@@ -1,5 +1,6 @@
-import {pickColors} from './palettePreSets'
 import _ from 'lodash'
+
+import {pickColors} from './palettePreSets'
 
 /* eslint-disable no-undef */
 

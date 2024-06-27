@@ -1,20 +1,20 @@
-import {EventShield} from 'widget/eventShield'
-import {Home} from '~/app/home/home'
-import {Landing} from '~/app/landing/landing'
-import {Notifications} from '~/widget/notifications'
-import {ViewportResizeSensor} from '~/widget/viewportResizeSensor'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {loadUser$} from '~/user'
-import {selectFrom} from '~/stateUtils'
+import './reset.css'
+import './app.css'
+import '../style/look.css'
+import '../style/look.module.css'
+
 import PropTypes from 'prop-types'
 import React from 'react'
-import css1 from './reset.css'
-import css2 from './app.css'
-import css3 from '../style/look.css'
-import css4 from '../style/look.module.css'
+import {EventShield} from 'widget/eventShield'
 
-const _css = [css1, css2, css3, css4] // eslint-disable-line
+import {Home} from '~/app/home/home'
+import {Landing} from '~/app/landing/landing'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {selectFrom} from '~/stateUtils'
+import {loadUser$} from '~/user'
+import {Notifications} from '~/widget/notifications'
+import {ViewportResizeSensor} from '~/widget/viewportResizeSensor'
 
 const mapStateToProps = state => ({
     initialized: selectFrom(state, 'user.initialized'),

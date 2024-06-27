@@ -1,17 +1,19 @@
-import {Button} from '~/widget/button'
+import PropTypes from 'prop-types'
+import React from 'react'
 import {EMPTY, switchMap, throwError} from 'rxjs'
+
+import {compose} from '~/compose'
+import {msg} from '~/translate'
+import {changeCurrentUserPassword$} from '~/user'
+import {withActivatable} from '~/widget/activation/activatable'
+import {withActivators} from '~/widget/activation/activator'
+import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
+import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
-import {changeCurrentUserPassword$} from '~/user'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {withActivatable} from '~/widget/activation/activatable'
-import {withActivators} from '~/widget/activation/activator'
-import {withForm} from '~/widget/form/form'
-import PropTypes from 'prop-types'
-import React from 'react'
+
 import styles from './changePassword.module.css'
 
 const fields = {

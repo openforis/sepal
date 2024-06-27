@@ -1,20 +1,22 @@
-import {Form} from '~/widget/form'
-import {Layout} from '~/widget/layout'
-import {Panel} from '~/widget/panel/panel'
+import _ from 'lodash'
+import React from 'react'
+
 import {RecipeActions} from '~/app/home/body/process/recipe/changeAlerts/changeAlertsRecipe'
+import {getDataSetOptions as opticalDataSetOptions, isOpticalDataSet} from '~/app/home/body/process/recipe/opticalMosaic/sources'
+import {getDataSetOptions as planetDataSetOptions} from '~/app/home/body/process/recipe/planetMosaic/sources'
+import {getDataSetOptions as radarDataSetOptions, isRadarDataSet} from '~/app/home/body/process/recipe/radarMosaic/sources'
+import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {groupedBandOptions, toSources} from '~/sources'
-import {isOpticalDataSet, getDataSetOptions as opticalDataSetOptions} from '~/app/home/body/process/recipe/opticalMosaic/sources'
-import {isRadarDataSet, getDataSetOptions as radarDataSetOptions} from '~/app/home/body/process/recipe/radarMosaic/sources'
-import {msg} from '~/translate'
-import {getDataSetOptions as planetDataSetOptions} from '~/app/home/body/process/recipe/planetMosaic/sources'
-import {recipeAccess} from '~/app/home/body/process/recipeAccess'
-import {select} from '~/store'
 import {selectFrom} from '~/stateUtils'
-import React from 'react'
-import _ from 'lodash'
+import {select} from '~/store'
+import {msg} from '~/translate'
+import {Form} from '~/widget/form'
+import {Layout} from '~/widget/layout'
+import {Panel} from '~/widget/panel/panel'
+
 import styles from './sources.module.css'
 
 const fields = {
@@ -209,7 +211,7 @@ class _Sources extends React.Component {
         switch (dataSetType.value) {
         case 'OPTICAL': return opticalDataSetOptions({...dates})
         case 'RADAR': return radarDataSetOptions({...dates})
-        case 'PLANET': return planetDataSetOptions({...dates}).filter(({value}) => value !== 'NICFI')
+        case 'PLANET': return planetDataSetOptions({...dates})
         default: return []
         }
     }

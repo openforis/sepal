@@ -1,11 +1,13 @@
+import _ from 'lodash'
+import React from 'react'
+
+import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {FeatureLayers} from '~/app/home/map/featureLayers'
+import {withMapsContext} from '~/app/home/map/maps'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
-import {withMapsContext} from '~/app/home/map/maps'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import React from 'react'
-import _ from 'lodash'
+
 import styles from './previewMap.module.css'
 
 const PREVIEW_MAP_OPTIONS = {

@@ -1,12 +1,14 @@
-import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
-import {getAvailableBands} from './bands'
-import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
-import {msg} from '~/translate'
-import {publishEvent} from '~/eventPublisher'
-import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import _ from 'lodash'
-import api from '~/apiRegistry'
 import moment from 'moment'
+
+import api from '~/apiRegistry'
+import {recipeActionBuilder} from '~/app/home/body/process/recipe'
+import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
+import {publishEvent} from '~/eventPublisher'
+import {msg} from '~/translate'
+
+import {getAvailableBands} from './bands'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 

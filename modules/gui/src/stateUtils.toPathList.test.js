@@ -1,5 +1,6 @@
-import {dotSafe, toPathList} from './stateUtils'
 import _ from 'lodash'
+
+import {dotSafe, toPathList} from './stateUtils'
 
 /* eslint-disable no-undef */
 

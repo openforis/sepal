@@ -1,16 +1,18 @@
-import {Notifications} from '~/widget/notifications'
+import _ from 'lodash'
+import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
+
+import api from '~/apiRegistry'
+import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
-import {msg} from '~/translate'
-import {recipeAccess} from '../../recipeAccess'
 import {selectFrom} from '~/stateUtils'
-import {toAssetReference} from './panels/reference/assetSection'
+import {msg} from '~/translate'
+import {Notifications} from '~/widget/notifications'
+
+import {recipeAccess} from '../../recipeAccess'
 import {withRecipe} from '../../recipeContext'
-import React from 'react'
-import _ from 'lodash'
-import api from '~/apiRegistry'
+import {toAssetReference} from './panels/reference/assetSection'
 
 const mapRecipeToProps = (recipe, ownProps) => ({
     ...ownProps,

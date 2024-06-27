@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y \
     inetutils-ping \
     lsb-release \
     nano \
+    ncdu \
     unzip \
     zip
 

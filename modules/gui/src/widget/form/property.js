@@ -1,6 +1,7 @@
-import {msg} from '~/translate'
 import _ from 'lodash'
 import moment from 'moment'
+
+import {msg} from '~/translate'
 
 class FormProperty {
     static _EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ // eslint-disable-line no-useless-escape

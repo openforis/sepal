@@ -1,12 +1,14 @@
-import {CrudItem} from '~/widget/crudItem'
-import {Layout} from '~/widget/layout'
-import {ListItem} from '~/widget/listItem'
-import {Panel} from '~/widget/panel/panel'
+import React from 'react'
+
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
-import React from 'react'
+import {CrudItem} from '~/widget/crudItem'
+import {Layout} from '~/widget/layout'
+import {ListItem} from '~/widget/listItem'
+import {Panel} from '~/widget/panel/panel'
+
 import styles from './addImageLayerSource.module.css'
 
 export class AddImageLayerSource extends React.Component {

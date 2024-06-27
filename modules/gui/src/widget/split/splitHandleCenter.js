@@ -1,7 +1,7 @@
-import {SplitHandle} from './splitHandle'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {SplitHandle} from './splitHandle'
 import styles from './splitView.module.css'
 
 export class SplitHandleCenter extends React.Component {

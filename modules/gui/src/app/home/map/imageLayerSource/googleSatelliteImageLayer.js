@@ -1,10 +1,12 @@
-import {GoogleSatelliteLayer} from '../layer/googleSatelliteLayer'
-import {MapAreaLayout} from '../mapAreaLayout'
-import {compose} from '~/compose'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import {withSubscriptions} from '~/subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {withSubscriptions} from '~/subscription'
+
+import {GoogleSatelliteLayer} from '../layer/googleSatelliteLayer'
+import {MapAreaLayout} from '../mapAreaLayout'
 
 export class _GoogleSatelliteImageLayer extends React.Component {
     render() {

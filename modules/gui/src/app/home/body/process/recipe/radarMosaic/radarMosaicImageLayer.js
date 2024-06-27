@@ -1,9 +1,11 @@
-import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
-import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
-import {compose} from '~/compose'
-import {visualizationOptions} from './visualizations'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizationSelector'
+import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
+import {compose} from '~/compose'
+
+import {visualizationOptions} from './visualizations'
 
 const defaultLayerConfig = {
     panSharpen: false

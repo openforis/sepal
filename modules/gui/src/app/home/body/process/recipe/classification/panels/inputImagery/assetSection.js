@@ -1,7 +1,9 @@
-import {Form} from '~/widget/form'
-import {msg} from '~/translate'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {msg} from '~/translate'
+import {Form} from '~/widget/form'
+
 import style from './inputImage.module.css'
 
 export class AssetSection extends React.Component {

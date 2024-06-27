@@ -1,15 +1,17 @@
+import _ from 'lodash'
+import React from 'react'
+
+import {breakDetectionOptions, RecipeActions} from '~/app/home/body/process/recipe/ccdc/ccdcRecipe'
+import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {compose} from '~/compose'
+import {groupedBandOptions, toDataSetIds} from '~/sources'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
-import {RecipeActions, breakDetectionOptions} from '~/app/home/body/process/recipe/ccdc/ccdcRecipe'
-import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {compose} from '~/compose'
-import {groupedBandOptions, toDataSetIds} from '~/sources'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import React from 'react'
-import _ from 'lodash'
+
 import styles from './options.module.css'
 
 const J_DAYS = 0

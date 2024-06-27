@@ -1,7 +1,8 @@
+import _ from 'lodash'
+
 import {assertValue} from '~/assertValue'
 import {getLogger} from '~/log'
 import {tileProviderTag, tileTag} from '~/tag'
-import _ from 'lodash'
 
 const log = getLogger('tileManager/queue')
 

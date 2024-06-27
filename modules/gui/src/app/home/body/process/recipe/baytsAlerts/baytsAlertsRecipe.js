@@ -1,13 +1,15 @@
+import _ from 'lodash'
+import moment from 'moment'
+
+import api from '~/apiRegistry'
+import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultHistoricalModel} from '~/app/home/body/process/recipe/baytsHistorical/baytsHistoricalRecipe'
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
-import {msg} from '~/translate'
 import {publishEvent} from '~/eventPublisher'
-import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+
 import {visualizationOptions} from './visualizations'
-import _ from 'lodash'
-import api from '~/apiRegistry'
-import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 

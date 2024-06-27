@@ -1,15 +1,17 @@
-import {Scrollable} from './scrollable'
-import {Subject, delay, filter, map, merge, mergeMap, scan, takeWhile, timer} from 'rxjs'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {publishError} from '~/eventPublisher'
-import {uuid} from '~/uuid'
-import {withSubscriptions} from '~/subscription'
-import PropTypes from 'prop-types'
-import React from 'react'
 import _ from 'lodash'
 import hash from 'object-hash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {delay, filter, map, merge, mergeMap, scan, Subject, takeWhile, timer} from 'rxjs'
+
+import {compose} from '~/compose'
+import {publishError} from '~/eventPublisher'
+import {withSubscriptions} from '~/subscription'
+import {msg} from '~/translate'
+import {uuid} from '~/uuid'
+
 import styles from './notifications.module.css'
+import {Scrollable} from './scrollable'
 
 const PUBLISH_ANIMATION_DURATION_MS = 1000
 const DISMISS_ANIMATION_DURATION_MS = 1000

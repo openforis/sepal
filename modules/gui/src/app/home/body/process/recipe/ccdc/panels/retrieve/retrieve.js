@@ -1,11 +1,13 @@
-import {MosaicRetrievePanel} from '../../../mosaic/panels/retrieve/retrievePanel'
-import {RecipeActions} from '../../ccdcRecipe'
+import PropTypes from 'prop-types'
+import React from 'react'
+
 import {compose} from '~/compose'
 import {groupedBandOptions, toDataSetIds} from '~/sources'
 import {selectFrom} from '~/stateUtils'
+
 import {withRecipe} from '../../../../recipeContext'
-import PropTypes from 'prop-types'
-import React from 'react'
+import {MosaicRetrievePanel} from '../../../mosaic/panels/retrieve/retrievePanel'
+import {RecipeActions} from '../../ccdcRecipe'
 
 const mapRecipeToProps = recipe =>
     ({

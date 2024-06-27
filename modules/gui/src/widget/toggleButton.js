@@ -1,7 +1,7 @@
-import {Button} from '~/widget/button'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {Button} from '~/widget/button'
 
 export class ToggleButton extends React.Component {
     constructor() {

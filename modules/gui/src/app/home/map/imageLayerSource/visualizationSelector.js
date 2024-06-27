@@ -1,16 +1,18 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {uuid} from '~/uuid'
+import {withActivators} from '~/widget/activation/activator'
 import {Button} from '~/widget/button'
 import {Combo} from '~/widget/combo'
 import {RemoveButton} from '~/widget/removeButton'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {uuid} from '~/uuid'
-import {withActivators} from '~/widget/activation/activator'
+
 import {withMapArea} from '../mapAreaContext'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
 
 const mapRecipeToProps = (recipe, {source}) => ({
     userDefinedVisualizations: selectFrom(recipe, ['layers.userDefinedVisualizations', source.id]) || []

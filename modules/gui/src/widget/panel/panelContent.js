@@ -1,7 +1,9 @@
-import {Padding} from '~/widget/padding'
-import {Scrollable} from '~/widget/scrollable'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {Padding} from '~/widget/padding'
+import {Scrollable} from '~/widget/scrollable'
+
 import styles from './panelContent.module.css'
 
 export class PanelContent extends React.Component {

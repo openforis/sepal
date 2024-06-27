@@ -1,10 +1,11 @@
-import {Subject, distinctUntilChanged, throttleTime} from 'rxjs'
-import {compose} from '~/compose'
-import {withSubscriptions} from '~/subscription'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
-import _ from 'lodash'
+import {distinctUntilChanged, Subject, throttleTime} from 'rxjs'
+
+import {compose} from '~/compose'
+import {withSubscriptions} from '~/subscription'
 
 const UPDATE_DEBOUNCE_MS = 250
 

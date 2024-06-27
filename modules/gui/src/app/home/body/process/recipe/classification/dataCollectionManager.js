@@ -1,7 +1,9 @@
-import {RecipeActions} from './classificationRecipe'
-import {withContext} from '~/context'
-import React from 'react'
 import _ from 'lodash'
+import React from 'react'
+
+import {withContext} from '~/context'
+
+import {RecipeActions} from './classificationRecipe'
 
 const Context = React.createContext()
 

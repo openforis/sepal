@@ -1,7 +1,8 @@
-import {GoogleMapsOverlay} from './googleMapsOverlay'
-import {PlanetTileProvider} from '../tileProvider/planetTileProvider'
-import {TileLayer} from './tileLayer'
 import {of, tap} from 'rxjs'
+
+import {PlanetTileProvider} from '../tileProvider/planetTileProvider'
+import {GoogleMapsOverlay} from './googleMapsOverlay'
+import {TileLayer} from './tileLayer'
 
 export class PlanetLayer extends TileLayer {
     constructor({map, layerIndex = 0, urlTemplate, concurrency, minZoom, maxZoom}) {

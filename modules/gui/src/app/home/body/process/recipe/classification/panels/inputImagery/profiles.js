@@ -1,5 +1,6 @@
-import {BandSetSpec} from './bandSetSpec'
 import {uuid} from '~/uuid'
+
+import {BandSetSpec} from './bandSetSpec'
 
 const profilesByName = {
     SIMPLE: bands => ({

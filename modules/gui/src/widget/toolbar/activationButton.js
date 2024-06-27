@@ -1,9 +1,11 @@
-import {ToolbarButton} from './toolbarButton'
-import {compose} from '~/compose'
-import {withActivators} from '~/widget/activation/activator'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {compose} from '~/compose'
+import {withActivators} from '~/widget/activation/activator'
+
 import styles from './toolbar.module.css'
+import {ToolbarButton} from './toolbarButton'
 
 class _ActivationButton extends React.Component {
     render() {

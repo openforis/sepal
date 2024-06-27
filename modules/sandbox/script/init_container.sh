@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 export sandbox_user=sepal-user
 
 function exportEnvironment {

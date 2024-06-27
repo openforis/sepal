@@ -1,13 +1,15 @@
+import PropTypes from 'prop-types'
+import React from 'react'
+import {isObservable} from 'rxjs'
+
+import {compose} from '~/compose'
+import {connect} from '~/connect'
 import {FormContainer} from '~/widget/form/container'
 import {Icon} from '~/widget/icon'
 import {Panel} from '~/widget/panel/panel'
 import {PanelButtonContext} from '~/widget/toolbar/panelButtonContext'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {isObservable} from 'rxjs'
+
 import {withPanelWizard} from '../panelWizard'
-import PropTypes from 'prop-types'
-import React from 'react'
 import styles from './panel.module.css'
 
 export const FormPanelContext = React.createContext()

@@ -1,9 +1,11 @@
-import {compose} from '~/compose'
-import {withContext} from '~/context'
-import {withSubscriptions} from '~/subscription'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactDOM from 'react-dom'
+
+import {compose} from '~/compose'
+import {withContext} from '~/context'
+import {withSubscriptions} from '~/subscription'
+
 import styles from './portal.module.css'
 
 const DEFAULT_PORTAL_CONTAINER_ID = 'defaultPortalContainer'

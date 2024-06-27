@@ -1,14 +1,16 @@
-import {Graph} from '~/widget/graph'
-import {Widget} from '~/widget/widget'
-import {isMobile} from '~/widget/userAgent'
-import {msg} from '~/translate'
-import {toT} from './t'
+import _ from 'lodash'
+import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
 import format from '~/format'
-import moment from 'moment'
+import {msg} from '~/translate'
+import {Graph} from '~/widget/graph'
+import {isMobile} from '~/widget/userAgent'
+import {Widget} from '~/widget/widget'
+
 import styles from './ccdcGraph.module.css'
+import {fromT, toT} from './t'
 
 export class CCDCGraph extends React.Component {
     state = {}
@@ -376,35 +378,53 @@ const segmentsData = ({
     const mask = ({date}) => {
         return [date, observationByTimestamp[date.getTime()] || null, NaN]
     }
+    
+    const extrapolate = ({date, prevSegmentIndex, nextSegmentIndex, extrapolateSegment, extrapolateMaxDays}) => {
+        const t = toT(date, dateFormat)
+        const tStart = segments.tEnd[prevSegmentIndex]
+        const tEnd = segments.tStart[nextSegmentIndex]
+        const days = moment(fromT(tEnd, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
+        const day = moment(fromT(t, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
+        
+        const segmentIndex = extrapolateSegment === 'PREVIOUS'
+            ? prevSegmentIndex
+            : extrapolateSegment === 'NEXT'
+                ? nextSegmentIndex
+                : day < days / 2
+                    ? prevSegmentIndex
+                    : nextSegmentIndex
 
-    // TODO: Implement...
-    // eslint-disable-next-line no-unused-vars
-    const extrapolate = ({date, prevSegmentIndex, nextSegmentIndex}) => {
-        return [date, observationByTimestamp[date.getTime()] || null, NaN]
+        const tooManyDays = (segmentIndex === prevSegmentIndex && day > extrapolateMaxDays)
+            || (segmentIndex === nextSegmentIndex && days - day > extrapolateMaxDays)
+        if (tooManyDays) {
+            return [date, observationByTimestamp[date.getTime()] || null, NaN]
+        } else {
+            const coefs = bandCoefs[segmentIndex]
+            const extrapolated = slice({coefs, date, dateFormat, harmonics})
+            const rmse = bandRmse[segmentIndex]
+            return [date, observationByTimestamp[date.getTime()] || null, [extrapolated, rmse]]
+        }
     }
 
-    // TODO: Temporarily disabled. We're getting offset errors
-    // eslint-disable-next-line no-unused-vars
     const interpolate = ({date, prevSegmentIndex, nextSegmentIndex}) => {
-        return [date, observationByTimestamp[date.getTime()] || null, NaN]
-        // const t = toT(date, dateFormat)
-        // const tStart = segments.tEnd[prevSegmentIndex]
-        // const tEnd = segments.tStart[nextSegmentIndex]
-        // const days = moment(fromT(tEnd, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
-        // const day = moment(fromT(t, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
-        // const endWeight = (day + 1) / (days + 1)
-        // const startWeight = 1 - endWeight
-        // const startCoefs = bandCoefs[prevSegmentIndex]
-        // const endCoefs = bandCoefs[nextSegmentIndex]
-        // const coefs = sequence(0, 7).map(coefIndex =>
-        //     startCoefs[coefIndex] * startWeight + endCoefs[coefIndex] * endWeight
-        // )
-        // const interpolated = slice({coefs, date, dateFormat, harmonics})
-        // const rmse = Math.sqrt(
-        //     Math.pow(bandRmse[prevSegmentIndex] * startWeight, 2)
-        //     + Math.pow(bandRmse[nextSegmentIndex] * endWeight, 2)
-        // )
-        // return [date, observationByTimestamp[date.getTime()] || null, [interpolated, rmse]]
+        const t = toT(date, dateFormat)
+        const tStart = segments.tEnd[prevSegmentIndex]
+        const tEnd = segments.tStart[nextSegmentIndex]
+        const days = moment(fromT(tEnd, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
+        const day = moment(fromT(t, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
+        const endWeight = (day + 1) / (days + 1)
+        const startWeight = 1 - endWeight
+        const startCoefs = bandCoefs[prevSegmentIndex]
+        const endCoefs = bandCoefs[nextSegmentIndex]
+        const coefs = sequence(0, 7).map(coefIndex =>
+            startCoefs[coefIndex] * startWeight + endCoefs[coefIndex] * endWeight
+        )
+        const interpolated = slice({coefs, date, dateFormat, harmonics})
+        const rmse = Math.sqrt(
+            Math.pow(bandRmse[prevSegmentIndex] * startWeight, 2)
+            + Math.pow(bandRmse[nextSegmentIndex] * endWeight, 2)
+        )
+        return [date, observationByTimestamp[date.getTime()] || null, [interpolated, rmse]]
     }
 
     const observationByTimestamp = {}
@@ -468,32 +488,6 @@ const getOmega = dateFormat => {
         return 2.0 * Math.PI
     case UNIX_TIME_MILLIS:
         return 2.0 * Math.PI / (1000 * 60 * 60 * 24 * 365.25)
-    default:
-        throw Error('Only dateFormat 0 (Julian days), 1 (Fractional years), and 2 (Unix time milliseconds) is supported')
-    }
-}
-
-const fromT = (t, dateFormat) => {
-    function fromJDays() {
-        const epochDay = 719529
-        return new Date((t - epochDay) * 1000 * 3600 * 24)
-    }
-
-    function fromFractionalYears() {
-        const firstOfYear = moment().year(Math.floor(t)).month(1).day(1)
-        const firstOfNextYear = moment(firstOfYear).add(1, 'years')
-        const daysInYear = firstOfNextYear.diff(firstOfYear, 'days')
-        const dayOfYear = Math.floor(daysInYear * (t % 1))
-        return moment(firstOfYear).add(dayOfYear, 'days').toDate()
-    }
-
-    switch (dateFormat) {
-    case J_DAYS:
-        return fromJDays()
-    case FRACTIONAL_YEARS:
-        return fromFractionalYears()
-    case UNIX_TIME_MILLIS:
-        return new Date(t)
     default:
         throw Error('Only dateFormat 0 (Julian days), 1 (Fractional years), and 2 (Unix time milliseconds) is supported')
     }

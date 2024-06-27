@@ -51,12 +51,10 @@ const exportImageToAsset$ = (taskId, {
         ))
 }
 
-
 const getProjectAssetId = id =>
     id.startsWith('users/')
         ? `projects/earthengine-legacy/assets/${id}`
         : id
-
 
 const imageToAssetCollection$ = (taskId, {
     image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels, shardSize, tileSize, properties, retries
@@ -238,11 +236,11 @@ const assetDestination$ = (description, assetId) => {
     description = description || Path.dirname(assetId)
     return assetId
         ? of({description, assetId})
-        : ee.getAssetRoots$().pipe(
-            map(assetRoots => {
-                if (!assetRoots || !assetRoots.length)
+        : ee.listBuckets$('projects/earthengine-legacy').pipe(
+            map(({assets}) => {
+                if (!assets || !assets.length)
                     throw new Error('EE account has no asset roots')
-                return ({description, assetId: Path.join(assetRoots[0], description)})
+                return ({description, assetId: Path.join(assets[0].id, description)})
             })
         )
 }
@@ -284,7 +282,7 @@ const share$ = ({sharing, assetId}) =>
                 })
             ),
             http.postJson$(`https://earthengine.googleapis.com/v1/${assetId}:setIamPolicy`, {
-                headers: {Authorization: ee.data.getAuthToken()},
+                headers: {'x-goog-user-project': ee.data.getProject(), Authorization: ee.data.getAuthToken()},
                 body: {policy: {bindings: [{role: 'roles/viewer', members: ['allUsers']}]}}
             }).pipe(
                 swallow()

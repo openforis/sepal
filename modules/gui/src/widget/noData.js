@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import React from 'react'
+
 import styles from './noData.module.css'
 
 export const NoData = ({message, className, children}) =>

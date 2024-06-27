@@ -1,5 +1,6 @@
-import {activationAllowed as originalActivationAllowed} from './activationPolicy'
 import _ from 'lodash'
+
+import {activationAllowed as originalActivationAllowed} from './activationPolicy'
 
 /* eslint-disable no-undef */
 

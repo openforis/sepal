@@ -1,18 +1,20 @@
-import {Content, SectionLayout} from '~/widget/sectionLayout'
-import {closeTab} from '~/widget/tabs/tabActions'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {duplicateRecipe$, initializeRecipe, isRecipeOpen, moveRecipes$, openRecipe, removeRecipes$, selectRecipe} from './recipe'
-import {map, of, tap} from 'rxjs'
-import {select} from '~/store'
-// import {publishEvent} from '~/eventPublisher'
-import {RecipeList} from './recipeList/recipeList'
-import {actionBuilder} from '~/action-builder'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {map, of, tap} from 'rxjs'
+
+import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {select} from '~/store'
+import {Content, SectionLayout} from '~/widget/sectionLayout'
+import {closeTab} from '~/widget/tabs/tabActions'
+
+import {duplicateRecipe$, initializeRecipe, isRecipeOpen, moveRecipes$, openRecipe, removeRecipes$, selectRecipe} from './recipe'
 import styles from './recipeHome.module.css'
+// import {publishEvent} from '~/eventPublisher'
+import {RecipeList} from './recipeList/recipeList'
 
 const mapStateToProps = () => ({
     recipes: select('process.recipes'),

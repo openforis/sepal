@@ -1,8 +1,10 @@
-import {Portal} from '~/widget/portal'
-import {SplitContext} from './splitContext'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {Portal} from '~/widget/portal'
+
+import {SplitContext} from './splitContext'
 import styles from './splitView.module.css'
 
 export class SplitOverlay extends React.Component {

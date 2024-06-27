@@ -1,15 +1,17 @@
+import React from 'react'
+
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import format from '~/format'
+import {selectFrom} from '~/stateUtils'
+import {withSubscriptions} from '~/subscription'
 import {CrudItem} from '~/widget/crudItem'
 import {Layout} from '~/widget/layout'
 import {Shape} from '~/widget/shape'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {selectFrom} from '~/stateUtils'
+
 import {withCursorValue} from './cursorValue'
 import {withMapArea} from './mapAreaContext'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import {withSubscriptions} from '~/subscription'
-import React from 'react'
-import format from '~/format'
 import styles from './valuesLayer.module.css'
 
 const mapRecipeToProps = recipe => ({

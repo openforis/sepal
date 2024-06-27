@@ -1,13 +1,15 @@
-import {actionBuilder} from '~/action-builder'
-import {collectActivatables} from '~/widget/activation/activation'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {shouldDeactivate} from '~/widget/activation/activationPolicy'
-import {withActivationContext} from '~/widget/activation/activationContext'
-import {withActivators} from './activator'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {actionBuilder} from '~/action-builder'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {collectActivatables} from '~/widget/activation/activation'
+import {withActivationContext} from '~/widget/activation/activationContext'
+import {shouldDeactivate} from '~/widget/activation/activationPolicy'
+
+import {withActivators} from './activator'
 
 const mapStateToProps = (state, ownProps) => {
     const {activationContext: {pathList}} = ownProps

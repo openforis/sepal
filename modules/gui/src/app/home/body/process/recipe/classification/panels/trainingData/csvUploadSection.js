@@ -1,14 +1,16 @@
-import {FileSelect} from '~/widget/fileSelect'
-import {Icon} from '~/widget/icon'
-import {Subject, toArray, zip} from 'rxjs'
-import {Widget} from '~/widget/widget'
-import {msg} from '~/translate'
 import Papa from 'papaparse'
 import PropTypes from 'prop-types'
-import React, {Component} from 'react'
+import React from 'react'
+import {Subject, toArray, zip} from 'rxjs'
+
+import {msg} from '~/translate'
+import {FileSelect} from '~/widget/fileSelect'
+import {Icon} from '~/widget/icon'
+import {Widget} from '~/widget/widget'
+
 import styles from './csvUploadSection.module.css'
 
-export class CsvUploadSection extends Component {
+export class CsvUploadSection extends React.Component {
     render() {
         const {stream, inputs: {name}} = this.props
         return (

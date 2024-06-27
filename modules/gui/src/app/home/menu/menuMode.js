@@ -1,11 +1,12 @@
-import {Button} from '~/widget/button'
+import PropTypes from 'prop-types'
+import React from 'react'
+
 import {actionBuilder} from '~/action-builder'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import {msg} from '~/translate'
 import {select} from '~/store'
-import PropTypes from 'prop-types'
-import React from 'react'
+import {msg} from '~/translate'
+import {Button} from '~/widget/button'
 
 export function isFloating() {
     return select('menu.floating') === null ? false : !!select('menu.floating')

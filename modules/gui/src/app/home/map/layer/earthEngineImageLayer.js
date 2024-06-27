@@ -1,14 +1,15 @@
+import {finalize, Subject, tap} from 'rxjs'
+
+import api from '~/apiRegistry'
+import {publishEvent} from '~/eventPublisher'
+import {isEqual} from '~/hash'
+import {selectFrom} from '~/stateUtils'
+import {uuid} from '~/uuid'
+
 import {BalancingTileProvider} from '../tileProvider/balancingTileProvider'
 import {EarthEngineTileProvider} from '../tileProvider/earthEngineTileProvider'
 import {GoogleMapsOverlay} from './googleMapsOverlay'
-import {Subject, finalize, tap} from 'rxjs'
 import {TileLayer} from './tileLayer'
-import {isEqual} from '~/hash'
-import {publishEvent} from '~/eventPublisher'
-import {selectFrom} from '~/stateUtils'
-import {uuid} from '~/uuid'
-import _ from 'lodash'
-import api from '~/apiRegistry'
 
 export class EarthEngineImageLayer extends TileLayer {
     constructor({

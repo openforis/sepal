@@ -1,22 +1,24 @@
-import {Apps} from './apps/apps'
-import {Browse} from './browse/browse'
-import {CenteredProgress} from '~/widget/progress'
+import PropTypes from 'prop-types'
+import React from 'react'
+
 import {Maps} from '~/app/home/map/maps'
-import {Notifications} from '~/widget/notifications'
-import {Process} from './process/process'
-import {Section} from './section'
-import {StaticMap} from '../map/staticMap'
-import {Tasks} from './tasks/tasks'
-import {Terminal} from './terminal/terminal'
-import {Users} from './users/users'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {history, location} from '~/route'
-import {msg} from '~/translate'
 import {select} from '~/store'
-import PropTypes from 'prop-types'
-import React from 'react'
+import {msg} from '~/translate'
+import {Notifications} from '~/widget/notifications'
+import {CenteredProgress} from '~/widget/progress'
+
+import {StaticMap} from '../map/staticMap'
+import {Apps} from './apps/apps'
 import styles from './body.module.css'
+import {Browse} from './browse/browse'
+import {Process} from './process/process'
+import {Section} from './section'
+import {Tasks} from './tasks/tasks'
+import {Terminal} from './terminal/terminal'
+import {Users} from './users/users'
 
 const mapStateToProps = () => ({
     location: location(),
@@ -26,8 +28,8 @@ const mapStateToProps = () => ({
 class _Body extends React.Component {
     componentDidUpdate() {
         const {budgetExceeded, location} = this.props
-        if (this.props.location.pathname === '/' || budgetExceeded && !['/process', '/browse', '/users'].includes(location.pathname)) {
-            history().replace('/process')
+        if (this.props.location.pathname === '/' || budgetExceeded && !['/-/process', '/-/browse', '/-/users'].includes(location.pathname)) {
+            history().replace('/-/process')
         }
     }
 
@@ -37,22 +39,22 @@ class _Body extends React.Component {
             <div className={className}>
                 <div className={styles.sections}>
                     <StaticMap/>
-                    <Section path='/process'>
+                    <Section path='/-/process'>
                         <Process/>
                     </Section>
-                    <Section path='/browse'>
+                    <Section path='/-/browse'>
                         <Browse/>
                     </Section>
-                    <Section path='/app-launch-pad'>
+                    <Section path='/-/app-launch-pad'>
                         <Apps/>
                     </Section>
-                    <Section path='/terminal'>
+                    <Section path='/-/terminal'>
                         <Terminal/>
                     </Section>
-                    <Section path='/tasks'>
+                    <Section path='/-/tasks'>
                         <Tasks/>
                     </Section>
-                    <Section path='/users'>
+                    <Section path='/-/users'>
                         <Users/>
                     </Section>
                 </div>

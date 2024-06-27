@@ -1,14 +1,15 @@
+import _ from 'lodash'
+
 import {AssetImageLayer} from '~/app/home/map/imageLayerSource/assetImageLayer'
 import {GoogleSatelliteImageLayer} from '~/app/home/map/imageLayerSource/googleSatelliteImageLayer'
 import {PlanetImageLayer} from '~/app/home/map/imageLayerSource/planetImageLayer'
-import {RecipeImageLayer} from './recipe/recipeImageLayer'
-import {RecipeImageLayerSource} from './recipe/recipeImageLayerSource'
-import {addImageLayerSource} from './imageLayerSourceRegistry'
 import {createLegendFeatureLayerSource} from '~/app/home/map/legendFeatureLayerSource'
 import {createPaletteFeatureLayerSource} from '~/app/home/map/paletteFeatureLayerSource'
 import {createValuesFeatureLayerSource} from '~/app/home/map/valuesFeatureLayerSource'
-import React from 'react'
-import _ from 'lodash'
+
+import {addImageLayerSource} from './imageLayerSourceRegistry'
+import {RecipeImageLayer} from './recipe/recipeImageLayer'
+import {RecipeImageLayerSource} from './recipe/recipeImageLayerSource'
 
 const ASSET_RECIPE_FEATURE_LAYER_SOURCES = {
     continuous: () => [createPaletteFeatureLayerSource()],

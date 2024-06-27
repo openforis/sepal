@@ -1,15 +1,17 @@
-import {Button} from '~/widget/button'
-import {MenuMode, isFloating} from './menuMode'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {currentUser} from '~/user'
-import {isPathInLocation} from '~/route'
-import {msg} from '~/translate'
-import {select} from '~/store'
-import {usageHint} from '../user/usage'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {isPathInLocation} from '~/route'
+import {select} from '~/store'
+import {msg} from '~/translate'
+import {currentUser} from '~/user'
+import {Button} from '~/widget/button'
+
+import {usageHint} from '../user/usage'
 import styles from './menu.module.css'
+import {isFloating, MenuMode} from './menuMode'
 
 const mapStateToProps = (state = {}) => ({
     floating: isFloating(),
@@ -62,7 +64,7 @@ const Link = ({name, icon, href}) =>
     />
 
 const _SectionLink = ({active, name, icon, disabled}) => {
-    const link = `/${name}`
+    const link = `/-/${name}`
     const activeClass = active ? styles.active : null
     return (
         <Button
@@ -85,7 +87,7 @@ const SectionLink = compose(
     _SectionLink,
     connect(
         (state, {name}) => ({
-            active: isPathInLocation(`/${name}`)
+            active: isPathInLocation(`/-/${name}`)
         })
     )
 )

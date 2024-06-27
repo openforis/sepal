@@ -1,16 +1,18 @@
-import {Aoi} from '../aoi'
-import {ClassChangeToolbar} from './panels/classChangeToolbar'
+import moment from 'moment'
+import React from 'react'
+
+import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
+import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
-import {defaultModel} from './classChangeRecipe'
-import {getAvailableBands} from './bands'
-import {getPreSetVisualizations} from './visualizations'
-import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
-import {msg} from '~/translate'
-import {recipe} from '~/app/home/body/process/recipeContext'
 import {selectFrom} from '~/stateUtils'
-import React from 'react'
-import moment from 'moment'
+import {msg} from '~/translate'
+
+import {Aoi} from '../aoi'
+import {getAvailableBands} from './bands'
+import {defaultModel} from './classChangeRecipe'
+import {ClassChangeToolbar} from './panels/classChangeToolbar'
+import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
     fromImage: selectFrom(recipe, 'model.fromImage'),

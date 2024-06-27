@@ -1,6 +1,7 @@
-import {CSSTransition, TransitionGroup} from 'react-transition-group'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {CSSTransition, TransitionGroup} from 'react-transition-group'
+
 import styles from './animate.module.css'
 
 export class AnimateEnter extends React.Component {

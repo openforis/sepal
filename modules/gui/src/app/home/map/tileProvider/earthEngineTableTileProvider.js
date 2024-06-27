@@ -1,6 +1,7 @@
-import {WMTSTileProvider} from './wmtsTileProvider'
-import {handleError$} from './earthEngineError'
 import ee from '@google/earthengine'
+
+import {handleError$} from './earthEngineError'
+import {WMTSTileProvider} from './wmtsTileProvider'
 
 const CONCURRENCY = 8
 

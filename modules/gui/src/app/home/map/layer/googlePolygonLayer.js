@@ -1,5 +1,6 @@
-import {Layer} from './layer'
 import {of, tap} from 'rxjs'
+
+import {Layer} from './layer'
 
 export class GooglePolygonLayer extends Layer {
     constructor({map, path, fill}) {

@@ -1,10 +1,12 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {ButtonSelect} from '~/widget/buttonSelect'
 import {Widget} from '~/widget/widget'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+
 import styles from './buttons.module.css'
 
 export class Buttons extends React.Component {

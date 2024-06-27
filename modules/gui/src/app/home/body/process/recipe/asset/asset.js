@@ -1,16 +1,18 @@
+import moment from 'moment'
+import React from 'react'
+
 import {Aoi} from '~/app/home/body/process/recipe/aoi'
-import {AssetToolbar} from './panels/assetToolbar'
+import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
+import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+
 import {defaultModel} from './assetRecipe'
 import {getAvailableBands} from './bands'
+import {AssetToolbar} from './panels/assetToolbar'
 import {getPreSetVisualizations} from './visualizations'
-import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
-import {msg} from '~/translate'
-import {recipe} from '~/app/home/body/process/recipeContext'
-import {selectFrom} from '~/stateUtils'
-import React from 'react'
-import moment from 'moment'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),

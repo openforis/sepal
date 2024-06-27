@@ -1,8 +1,8 @@
-import {InputImage, fields, modelToValues, valuesToModel} from './inputImage'
+import {recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
-import {recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import React from 'react'
+
+import {fields, InputImage, modelToValues, valuesToModel} from './inputImage'
 
 const _ImageToMask = ({form, inputs, recipeActionBuilder}) =>
     <InputImage

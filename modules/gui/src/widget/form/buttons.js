@@ -1,7 +1,8 @@
-import {Buttons} from '~/widget/buttons'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {Buttons} from '~/widget/buttons'
 
 export class FormButtons extends React.Component {
     constructor() {

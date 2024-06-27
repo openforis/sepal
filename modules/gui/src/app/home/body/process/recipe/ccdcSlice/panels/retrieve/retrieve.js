@@ -1,21 +1,23 @@
+import _ from 'lodash'
+import Path from 'path'
+import React from 'react'
+
+import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {updateProject} from '~/app/home/body/process/recipeList/projects'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {isGoogleAccount} from '~/user'
 import {AssetDestination} from '~/widget/assetDestination'
 import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {NumberButtons} from '~/widget/numberButtons'
 import {Panel} from '~/widget/panel/panel'
-import {RecipeActions} from '../../ccdcSliceRecipe'
-import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {WorkspaceDestination} from '~/widget/workspaceDestination'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {isGoogleAccount} from '~/user'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {updateProject} from '~/app/home/body/process/recipeList/projects'
-import Path from 'path'
-import React from 'react'
-import _ from 'lodash'
+
+import {RecipeActions} from '../../ccdcSliceRecipe'
 import styles from './retrieve.module.css'
 
 const fields = {
@@ -480,7 +482,8 @@ class _Retrieve extends React.Component {
         )
     }
     componentDidMount() {
-        const {defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize, inputs: {assetType, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize}} = this.props
+        const {defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize,
+            inputs: {assetType, sharing, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize}} = this.props
         const more = (crs.value && crs.value !== defaultCrs)
         || (crsTransform.value)
         || (shardSize.value && shardSize.value !== defaultShardSize)
@@ -504,6 +507,9 @@ class _Retrieve extends React.Component {
         }
         if (defaultAssetType && !assetType.value) {
             assetType.set(defaultAssetType)
+        }
+        if (!sharing.value) {
+            sharing.set('PRIVATE')
         }
         this.update()
 

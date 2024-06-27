@@ -1,5 +1,6 @@
-import {uuid} from '~/uuid'
 import _ from 'lodash'
+
+import {uuid} from '~/uuid'
 
 const HASH_KEY = '___hash___'
 

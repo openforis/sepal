@@ -1,15 +1,17 @@
+import _ from 'lodash'
+import moment from 'moment'
+
+import api from '~/apiRegistry'
+import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
-import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
-import {msg} from '~/translate'
-import {publishEvent} from '~/eventPublisher'
-import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {getAllVisualizations as recipeVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
+import {publishEvent} from '~/eventPublisher'
 import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+
 import {toHarmonicVisualization} from './harmonicVisualizations'
-import _ from 'lodash'
-import api from '~/apiRegistry'
-import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 

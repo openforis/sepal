@@ -295,14 +295,11 @@ R -e "install.packages(c(\
         'zoo'
     ), repos='http://r-proxy:8180/')"
 
-# Install archived packages - this doesn't work through r-proxy
-R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/rgdal/rgdal_1.6-7.tar.gz')"
-R -e "install.packages('https://cran.r-project.org/src/contrib/Archive/rgeos/rgeos_0.6-4.tar.gz')"
-
 R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/')"
 
 R -e "remotes::install_url(c(\
         'http://r-proxy:8180/github/cran/rgdal/archive/refs/heads/master.tar.gz',\
+        'http://r-proxy:8180/github/cran/rgeos/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/cran/gdalUtils/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/r-barnes/dggridR/archive/refs/heads/master.tar.gz',\
         'http://r-proxy:8180/github/bfast2/bfast/archive/refs/heads/master.tar.gz',\

@@ -1,12 +1,14 @@
+import _ from 'lodash'
+import React from 'react'
+
+import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
-import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import React from 'react'
-import _ from 'lodash'
+
 import styles from './opticalPreprocess.module.css'
 
 const fields = {
@@ -116,7 +118,6 @@ class _OpticalPreprocess extends React.Component {
                     }
                 ]}
                 type='horizontal'
-                disabled={this.noProcessing()}
             />
         )
     }
@@ -137,7 +138,6 @@ class _OpticalPreprocess extends React.Component {
                     tooltip: msg('process.ccdc.panel.preprocess.form.cloudMasking.aggressive.tooltip')
                 }]}
                 type='horizontal'
-                disabled={this.noProcessing()}
             />
         )
     }
@@ -158,7 +158,6 @@ class _OpticalPreprocess extends React.Component {
                     tooltip: msg('process.ccdc.panel.preprocess.form.shadowMasking.on.tooltip')
                 }]}
                 type='horizontal-nowrap'
-                disabled={this.noProcessing()}
             />
         )
     }
@@ -179,7 +178,6 @@ class _OpticalPreprocess extends React.Component {
                     tooltip: msg('process.ccdc.panel.preprocess.form.snowMasking.on.tooltip')
                 }]}
                 type='horizontal-nowrap'
-                disabled={this.noProcessing()}
             />
         )
     }
@@ -189,11 +187,6 @@ class _OpticalPreprocess extends React.Component {
         if (!histogramMatching.value) {
             histogramMatching.set('DISABLED')
         }
-    }
-
-    noProcessing() {
-        const {sources, inputs: {histogramMatching}} = this.props
-        return Object.values(sources).flat().includes('DAILY') && histogramMatching.value !== 'ENABLED'
     }
 }
 

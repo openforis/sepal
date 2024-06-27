@@ -1,4 +1,8 @@
-import {BandSetSpec} from './bandSetSpec'
+import PropTypes from 'prop-types'
+import React, {Component} from 'react'
+
+import {mutate} from '~/stateUtils'
+import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {ButtonPopup} from '~/widget/buttonPopup'
@@ -6,11 +10,8 @@ import {Combo} from '~/widget/combo'
 import {CrudItem} from '~/widget/crudItem'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
-import {msg} from '~/translate'
-import {mutate} from '~/stateUtils'
-import PropTypes from 'prop-types'
-import React, {Component} from 'react'
-import _ from 'lodash'
+
+import {BandSetSpec} from './bandSetSpec'
 
 export class ImageForm extends Component {
     state = {loading: false}

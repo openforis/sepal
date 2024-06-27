@@ -1,13 +1,13 @@
-import {Form} from '~/widget/form'
+import PropTypes from 'prop-types'
+import React from 'react'
 import {Subject} from 'rxjs'
+
+import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {msg} from '~/translate'
-import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
 import {uuid} from '~/uuid'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+import {Form} from '~/widget/form'
 
 class _AssetSection extends React.Component {
     constructor(props) {

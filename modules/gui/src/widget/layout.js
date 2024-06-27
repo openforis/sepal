@@ -1,7 +1,9 @@
-import {compose} from '~/compose'
-import {withForwardedRef} from '~/ref'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {compose} from '~/compose'
+import {withForwardedRef} from '~/ref'
+
 import styles from './layout.module.css'
 
 const typeClassNames = type =>

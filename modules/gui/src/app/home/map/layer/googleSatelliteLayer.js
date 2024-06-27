@@ -1,7 +1,8 @@
-import {GoogleMapsOverlay} from './googleMapsOverlay'
-import {GoogleSatelliteTileProvider} from '../tileProvider/googleSatelliteTileProvider'
-import {TileLayer} from './tileLayer'
 import {of, tap} from 'rxjs'
+
+import {GoogleSatelliteTileProvider} from '../tileProvider/googleSatelliteTileProvider'
+import {GoogleMapsOverlay} from './googleMapsOverlay'
+import {TileLayer} from './tileLayer'
 
 export class GoogleSatelliteLayer extends TileLayer {
     constructor({map, layerIndex = 0, minZoom, maxZoom}) {

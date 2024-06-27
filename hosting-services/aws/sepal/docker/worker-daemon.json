@@ -1,4 +1,11 @@
 {
     "hosts": ["tcp://0.0.0.0:2375", "unix:///var/run/docker.sock"],
-    "storage-driver": "overlay2"
+    "storage-driver": "overlay2",
+    "default-runtime": "worker",
+    "runtimes": {
+	    "worker": {
+            "args": [],
+            "path": "/usr/local/bin/worker-runtime"
+        }
+    }
 }

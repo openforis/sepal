@@ -1,14 +1,15 @@
-import {Button} from '~/widget/button'
-import {ButtonGroup} from '~/widget/buttonGroup'
-import {CheckButton} from './checkButton'
-import {Icon} from './icon'
-import {RemoveButton} from '~/widget/removeButton'
-import Highlight from 'react-highlighter'
+import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
-import moment from 'moment'
+import Highlight from 'react-highlighter'
+
+import {Button} from '~/widget/button'
+import {ButtonGroup} from '~/widget/buttonGroup'
+import {RemoveButton} from '~/widget/removeButton'
+
+import {CheckButton} from './checkButton'
 import styles from './crudItem.module.css'
+import {Icon} from './icon'
 
 export class CrudItem extends React.Component {
     render() {

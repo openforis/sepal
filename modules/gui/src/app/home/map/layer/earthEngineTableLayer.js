@@ -1,11 +1,12 @@
+import {finalize, tap} from 'rxjs'
+
+import {isEqual} from '~/hash'
+import {uuid} from '~/uuid'
+
 import {BalancingTileProvider} from '../tileProvider/balancingTileProvider'
 import {EarthEngineTableTileProvider} from '../tileProvider/earthEngineTableTileProvider'
 import {GoogleMapsOverlay} from './googleMapsOverlay'
 import {TileLayer} from './tileLayer'
-import {finalize, tap} from 'rxjs'
-import {isEqual} from '~/hash'
-import {uuid} from '~/uuid'
-import _ from 'lodash'
 
 export class EarthEngineTableLayer extends TileLayer {
     constructor({

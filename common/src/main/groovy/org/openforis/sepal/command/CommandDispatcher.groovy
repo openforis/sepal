@@ -10,7 +10,6 @@ interface CommandDispatcher {
 }
 
 class HandlerRegistryCommandDispatcher implements CommandDispatcher {
-    private static final Logger LOG = LoggerFactory.getLogger(this)
     private final TransactionManager transactionManager
     private final Map<Class<? extends Command>, CommandHandler> handlers = [:]
 
@@ -25,6 +24,7 @@ class HandlerRegistryCommandDispatcher implements CommandDispatcher {
 
     @SuppressWarnings("GroovyAssignabilityCheck")
     def <R> R submit(Command<R> command) {
+        def LOG = LoggerFactory.getLogger(command.class)
         Is.notNull(command, 'Command is null')
         def handler = handlers[command.class]
         if (handler == null)
@@ -55,6 +55,7 @@ class HandlerRegistryCommandDispatcher implements CommandDispatcher {
     }
 
     private <R> void registerAfterCommitCallback(Command<R> command, CommandHandler<R, Command<R>> handler) {
+        def LOG = LoggerFactory.getLogger(command.class)
         transactionManager.registerAfterCommitCallback { result ->
             LOG.debug("Executing after commit callback for command $command")
             def (ignore, duration) = time {

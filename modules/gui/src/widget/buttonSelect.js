@@ -1,16 +1,18 @@
-import {Button} from '~/widget/button'
-import {ButtonGroup} from './buttonGroup'
-import {FloatingBox} from '~/widget/floatingBox'
-import {Icon} from '~/widget/icon'
-import {ScrollableList} from '~/widget/list'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
 import {Subject} from 'rxjs'
+
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 import {withSubscriptions} from '~/subscription'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
+import {Button} from '~/widget/button'
+import {FloatingBox} from '~/widget/floatingBox'
+import {Icon} from '~/widget/icon'
+import {ScrollableList} from '~/widget/list'
+
+import {ButtonGroup} from './buttonGroup'
 import styles from './buttonSelect.module.css'
 
 const mapStateToProps = state => ({

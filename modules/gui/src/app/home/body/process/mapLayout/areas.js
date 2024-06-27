@@ -1,19 +1,21 @@
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {distinctUntilChanged, filter, map, Subject, switchMap, takeUntil} from 'rxjs'
+
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {withSubscriptions} from '~/subscription'
+import {msg} from '~/translate'
 import {CrudItem} from '~/widget/crudItem'
 import {HoverDetector} from '~/widget/hover'
 import {ListItem} from '~/widget/listItem'
 import {Padding} from '~/widget/padding'
-import {Subject, distinctUntilChanged, filter, map, switchMap, takeUntil} from 'rxjs'
-import {assignArea, removeArea, swapAreas, validAreas} from './layerAreas'
-import {compose} from '~/compose'
+
 import {getImageLayerSource} from '../imageLayerSourceRegistry'
-import {msg} from '~/translate'
 import {withLayers} from '../withLayers'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import {withSubscriptions} from '~/subscription'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
 import styles from './areas.module.css'
+import {assignArea, removeArea, swapAreas, validAreas} from './layerAreas'
 
 const AREA = Symbol('area')
 const SOURCE = Symbol('source')

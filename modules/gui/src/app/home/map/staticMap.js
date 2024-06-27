@@ -1,9 +1,11 @@
-import {Keybinding} from '~/widget/keybinding'
-import {Subject, merge, timer} from 'rxjs'
-import {compose} from '~/compose'
-import {withMapsContext} from './maps'
-import {withSubscriptions} from '~/subscription'
 import React from 'react'
+import {merge, Subject, timer} from 'rxjs'
+
+import {compose} from '~/compose'
+import {withSubscriptions} from '~/subscription'
+import {Keybinding} from '~/widget/keybinding'
+
+import {withMapsContext} from './maps'
 import styles from './staticMap.module.css'
 
 const MIN_ZOOM = 0

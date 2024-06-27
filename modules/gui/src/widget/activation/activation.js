@@ -1,5 +1,6 @@
-import {selectFrom} from '~/stateUtils'
 import _ from 'lodash'
+
+import {selectFrom} from '~/stateUtils'
 
 const parentPathList = pathList =>
     pathList.slice(0, -2)

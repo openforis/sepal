@@ -1,13 +1,15 @@
+import React from 'react'
+
+import {compose} from '~/compose'
+import {toSafeString} from '~/string'
+import {msg} from '~/translate'
+import {withActivatable} from '~/widget/activation/activatable'
 import {Form} from '~/widget/form'
+import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
+
 import {closeRecipe, saveRecipe} from './recipe'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {toSafeString} from '~/string'
-import {withActivatable} from '~/widget/activation/activatable'
-import {withForm} from '~/widget/form/form'
-import React from 'react'
 import styles from './saveRecipe.module.css'
 
 const fields = {

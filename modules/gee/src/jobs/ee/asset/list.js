@@ -11,7 +11,7 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
         throw Error('Requires a connected Google Account')
     }
 
-    const headers = {Authorization: `Bearer ${googleTokens.accessToken}`}
+    const headers = {'x-goog-user-project': ee.data.getProject(), Authorization: `Bearer ${googleTokens.accessToken}`}
 
     const assets$ = parentId =>
         ee.listAssets$(parentId).pipe(
@@ -31,7 +31,8 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
             switchMap(roots => of(...roots)),
             mergeMap(root => getRootInfo$(root)),
             map(({id, name, quota}) => ({id, type: 'Folder', name, quota})),
-            toArray()
+            toArray(),
+            map(array =>  _.orderBy(array, ['id']))
         )
 
     const getRootInfo$ = ({id, name}) =>
@@ -44,27 +45,20 @@ const worker$ = ({id}, {sepalUser: {googleTokens}}) => {
         )
 
     const legacyRoots$ = () =>
-        http.get$('https://earthengine.googleapis.com/v1/projects/earthengine-legacy:listAssets', {headers}).pipe(
-            map(({body}) => JSON.parse(body)),
-            map(mapLegacyRoots)
+        ee.listBuckets$('projects/earthengine-legacy').pipe(
+            map(({assets}) => assets)
         )
-
-    const mapLegacyRoots = results =>
-        results?.assets?.map(({id, name}) => ({
-            id,
-            name
-        })) || []
     
     const cloudProjectRoots$ = () =>
-        http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {headers}).pipe(
+        http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {headers: {Authorization: `Bearer ${googleTokens.accessToken}`}}).pipe(
             map(({body}) => JSON.parse(body)),
             map(mapCloudProjectRoots)
         )
 
     const mapCloudProjectRoots = results =>
-        results?.projects?.map(({projectId}) => ({
-            id: `projects/${projectId}/assets`
-        })) || []
+        results?.projects?.map(({ projectId }) => ({
+        id: `projects/${projectId}/assets`
+    })) || []
 
     return id
         ? assets$(id)

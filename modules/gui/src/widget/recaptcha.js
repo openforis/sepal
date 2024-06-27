@@ -1,9 +1,10 @@
-import {from, throwError} from 'rxjs'
-import {getLogger} from '~/log'
-import {withContext} from '~/context'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {from, throwError} from 'rxjs'
+
+import {withContext} from '~/context'
+import {getLogger} from '~/log'
 
 const log = getLogger('recaptcha')
 

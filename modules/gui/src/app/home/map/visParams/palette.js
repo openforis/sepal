@@ -1,17 +1,19 @@
-import {Button} from '~/widget/button'
-import {ColorElement} from '~/widget/colorElement'
-import {DraggableList} from '~/widget/draggableList'
-import {Layout} from '~/widget/layout'
-import {NoData} from '~/widget/noData'
-import {PalettePreSets} from './palettePreSets'
-import {Textarea} from '~/widget/input'
-import {Widget} from '~/widget/widget'
-import {msg} from '~/translate'
-import {uuid} from '~/uuid'
 import Color from 'color'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {msg} from '~/translate'
+import {uuid} from '~/uuid'
+import {Button} from '~/widget/button'
+import {ColorElement} from '~/widget/colorElement'
+import {DraggableList} from '~/widget/draggableList'
+import {Textarea} from '~/widget/input'
+import {Layout} from '~/widget/layout'
+import {NoData} from '~/widget/noData'
+import {Widget} from '~/widget/widget'
+
 import styles from './palette.module.css'
+import {PalettePreSets} from './palettePreSets'
 
 export class Palette extends React.Component {
     ref = React.createRef()

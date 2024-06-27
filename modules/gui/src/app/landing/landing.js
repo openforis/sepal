@@ -1,18 +1,20 @@
-import {Button} from '~/widget/button'
-import {Credentials} from './credentials'
-import {Feature} from './feature'
-import {Intro} from './intro'
+import PropTypes from 'prop-types'
+import React from 'react'
+
 import {LanguageSelector} from '~/app/landing/languageSelector'
-import {Slideshow} from './slideshow/slideshow'
-import {Tagline} from './tagline'
-import {Title} from './title'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {location} from '~/route'
 import {msg} from '~/translate'
-import PropTypes from 'prop-types'
-import React from 'react'
+import {Button} from '~/widget/button'
+
+import {Credentials} from './credentials'
+import {Feature} from './feature'
+import {Intro} from './intro'
 import styles from './landing.module.css'
+import {Slideshow} from './slideshow/slideshow'
+import {Tagline} from './tagline'
+import {Title} from './title'
 
 const mapStateToProps = () => ({
     location: location()

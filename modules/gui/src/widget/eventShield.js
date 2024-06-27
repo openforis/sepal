@@ -1,11 +1,13 @@
-import {BehaviorSubject} from 'rxjs'
-import {Portal} from './portal'
 import {composeHoC} from 'compose'
-import {uuid} from 'uuid'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {BehaviorSubject} from 'rxjs'
+
+import {uuid} from '~/uuid'
+
 import styles from './eventShield.module.css'
+import {Portal} from './portal'
 
 const Context = React.createContext()
 

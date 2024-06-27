@@ -1,8 +1,10 @@
 import * as turf from '@turf/turf'
-import {Subject, of} from 'rxjs'
-import {evaluateRow} from './expression'
-import {selectFrom} from '~/stateUtils'
 import _ from 'lodash'
+import {of, Subject} from 'rxjs'
+
+import {selectFrom} from '~/stateUtils'
+
+import {evaluateRow} from './expression'
 
 const filter = (row, {filterExpression}) =>
     filterExpression.value === undefined || !filterExpression.value.length

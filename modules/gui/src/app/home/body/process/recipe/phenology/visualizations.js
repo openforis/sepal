@@ -1,6 +1,7 @@
-import {getAvailableBands} from './bands'
-import {msg} from '~/translate'
 import {normalize} from '~/app/home/map/visParams/visParams'
+import {msg} from '~/translate'
+
+import {getAvailableBands} from './bands'
 
 export const getPreSetVisualizations = recipe => {
     const availableBands = getAvailableBands(recipe)

@@ -1,10 +1,12 @@
+import PropTypes from 'prop-types'
+import React, {Component} from 'react'
+
+import {msg} from '~/translate'
+import {uuid} from '~/uuid'
 import {FormCombo} from '~/widget/form/combo'
 import {Layout} from '~/widget/layout'
 import {Legend} from '~/widget/legend/legend'
-import {msg} from '~/translate'
-import {uuid} from '~/uuid'
-import PropTypes from 'prop-types'
-import React, {Component} from 'react'
+
 import styles from './inputImage.module.css'
 
 export class ImageForm extends Component {

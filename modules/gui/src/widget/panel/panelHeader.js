@@ -1,6 +1,8 @@
-import {Icon} from '~/widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {Icon} from '~/widget/icon'
+
 import styles from './panelHeader.module.css'
 
 export class PanelHeader extends React.Component {

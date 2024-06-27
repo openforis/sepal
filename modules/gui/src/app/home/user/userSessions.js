@@ -1,16 +1,17 @@
+import React from 'react'
+
+import {actionBuilder} from '~/action-builder'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import format from '~/format'
+import {select} from '~/store'
+import {msg} from '~/translate'
+import {stopCurrentUserSession$} from '~/user'
 import {CrudItem} from '~/widget/crudItem'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 import {Scrollable} from '~/widget/scrollable'
-import {actionBuilder} from '~/action-builder'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {msg} from '~/translate'
-import {select} from '~/store'
-import {stopCurrentUserSession$} from '~/user'
-import React from 'react'
-import format from '~/format'
 
 const mapStateToProps = () => ({
     sessions: select('user.currentUserReport.sessions')
@@ -23,7 +24,6 @@ class _UserSessions extends React.Component {
             stopCurrentUserSession$(session),
             () => {
                 Notifications.success({message: msg('user.userSession.stop.success')})
-                onClose()
             },
             error => Notifications.error({message: msg('user.userSession.stop.error'), error})
         )

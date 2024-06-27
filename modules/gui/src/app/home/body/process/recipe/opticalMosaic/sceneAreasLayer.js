@@ -1,13 +1,15 @@
-import {MapLayer} from '~/app/home/map/mapLayer'
-import {SceneAreaMarker} from './sceneAreaMarker'
-import {SceneSelectionType} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {compose} from '~/compose'
-import {enabled} from '~/widget/enableWhen'
-import {selectFrom} from '~/stateUtils'
-import {withActivators} from '~/widget/activation/activator'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {SceneSelectionType} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {MapLayer} from '~/app/home/map/mapLayer'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {withActivators} from '~/widget/activation/activator'
+import {enabled} from '~/widget/enableWhen'
+
+import {SceneAreaMarker} from './sceneAreaMarker'
 import styles from './sceneAreasLayer.module.css'
 
 const mapRecipeToProps = recipe => {

@@ -1,12 +1,14 @@
-import {Keybinding} from '~/widget/keybinding'
-import {Portal} from '~/widget/portal'
-import {animationFrames, debounceTime, distinctUntilChanged, filter, fromEvent, map, share, switchMap} from 'rxjs'
-import {compose} from '~/compose'
-import {withSubscriptions} from '~/subscription'
 import Hammer from 'hammerjs'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {animationFrames, debounceTime, distinctUntilChanged, filter, fromEvent, map, share, switchMap} from 'rxjs'
+
+import {compose} from '~/compose'
+import {withSubscriptions} from '~/subscription'
+import {Keybinding} from '~/widget/keybinding'
+import {Portal} from '~/widget/portal'
+
 import styles from './draggableListItem.module.css'
 
 const CLICKABLE_PAN_THRESHOLD_PX = 10

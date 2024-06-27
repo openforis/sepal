@@ -1,19 +1,21 @@
+import PropTypes from 'prop-types'
+import React from 'react'
+
+import {compose} from '~/compose'
+import {select} from '~/store'
+import {msg} from '~/translate'
+import {requestPasswordReset$} from '~/user'
 import {Confirm} from '~/widget/confirm'
 import {Form} from '~/widget/form'
+import {withForm} from '~/widget/form/form'
 import {Input} from '~/widget/input'
 import {Layout} from '~/widget/layout'
 import {ModalConfirmationButton} from '~/widget/modalConfirmationButton'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
-import {UserStatus} from './userStatus'
-import {compose} from '~/compose'
-import {msg} from '~/translate'
-import {requestPasswordReset$} from '~/user'
-import {select} from '~/store'
-import {withForm} from '~/widget/form/form'
-import PropTypes from 'prop-types'
-import React from 'react'
+
 import styles from './userDetails.module.css'
+import {UserStatus} from './userStatus'
 
 const isUniqueUser = (id, check) => !(select('users.users') || []).find(user => user.id !== id && check(user))
 

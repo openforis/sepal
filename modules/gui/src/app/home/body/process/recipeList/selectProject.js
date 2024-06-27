@@ -1,12 +1,14 @@
-import {Combo} from '~/widget/combo'
-import {NO_PROJECT_OPTION} from './recipeListConstants'
-import {Shape} from '~/widget/shape'
+import _ from 'lodash'
+import React from 'react'
+
 import {actionBuilder} from '~/action-builder'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
-import React from 'react'
-import _ from 'lodash'
+import {Combo} from '~/widget/combo'
+import {Shape} from '~/widget/shape'
+
+import {NO_PROJECT_OPTION} from './recipeListConstants'
 
 const mapStateToProps = () => ({
     projects: select('process.projects') ?? [],

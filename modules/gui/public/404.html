@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="%PUBLIC_URL%/resource/manifest.json">
+
+    <!-- Icon specific -->
+    <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/resource/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/resource/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/resource/favicon-16x16.png">
+    <link rel="mask-icon" href="%PUBLIC_URL%/resource/safari-pinned-tab.svg" color="#186691">
+    <meta name="msapplication-TileColor" content="#186691">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- Apple specific -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    
+    <script>
+    </script>
+    <script>
+        window.process = {} // HACK: temporary fix after switching to create-react-app 5
+        window.dataLayer = window.dataLayer || []
+        function gtag(){dataLayer.push(arguments)}
+        gtag('js', new Date())
+        gtag('config', window._sepal_global_.googleAnalyticsId)
+    </script>
+
+    <title>S E P A L - 404 Not Found</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        @-ms-viewport {
+            width: device-width;
+        }
+
+        html {
+            background-color: rgba(17, 18, 21, 0.9);
+            color: #fff
+        }
+
+        body {
+            background-color: transparent;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            font-size: 1rem;
+            line-height: 2;
+            font-weight: 300;
+            text-align: left;
+            overflow: hidden;
+            text-transform: none;
+            letter-spacing: .5px;
+            -webkit-font-smoothing: antialiased;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            -ms-overflow-style: scrollbar;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body, #app {
+            height: 100%;
+        }
+
+        body {
+            margin: 3rem;
+        }
+        
+        .title {
+            font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
+            font-size: 3.5rem;
+            font-weight: 300;
+            line-height: 3.5rem;
+            letter-spacing: .3rem;
+            text-transform: uppercase;
+            
+        }
+
+        hr {
+            width: 4rem;
+            height: 1px;
+            margin: 1rem 0 0 0;
+        }
+
+        .error {
+            color: red;
+            margin-top: 1rem;
+            font-size: 2rem;
+        }
+
+        a {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="title">
+    SEPAL
+    <hr/>
+</div>
+
+<div class="error">404 Not Found</div>
+<p>The resource you tried to access is not found. Go back to the <a href="/">start page</a>.</p>
+</body>
+</html>

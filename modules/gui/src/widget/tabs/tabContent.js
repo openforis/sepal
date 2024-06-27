@@ -1,10 +1,11 @@
-import {Enabled} from '~/enabled'
-import {PortalContainer, PortalContext} from '~/widget/portal'
-import {TabContext} from './tabContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+
+import {Enabled} from '~/enabled'
+import {PortalContainer, PortalContext} from '~/widget/portal'
+
 import styles from './tabContent.module.css'
+import {TabContext} from './tabContext'
 
 export class TabContent extends React.PureComponent {
     render() {

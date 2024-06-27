@@ -1,11 +1,13 @@
-import {Form} from '~/widget/form'
-import {Layout} from '~/widget/layout'
-import {Panel} from '~/widget/panel/panel'
+import React from 'react'
+
 import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
-import React from 'react'
+import {Form} from '~/widget/form'
+import {Layout} from '~/widget/layout'
+import {Panel} from '~/widget/panel/panel'
+
 import styles from './autoSelectScenes.module.css'
 
 const fields = {

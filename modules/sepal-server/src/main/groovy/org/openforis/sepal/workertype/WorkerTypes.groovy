@@ -52,7 +52,9 @@ final class WorkerTypes {
                             SEPAL_ADMIN_PASSWORD: config.sepalPassword,
                             USERNAME: USER_HOME_NAME,
                             NODE_TLS_REJECT_UNAUTHORIZED: config.deployEnvironment == 'DEV' ? 0 : 1,
-                            DEPLOY_ENVIRONMENT: config.deployEnvironment
+                            DEPLOY_ENVIRONMENT: config.deployEnvironment,
+                            NVIDIA_VISIBLE_DEVICES: 'all',
+                            NVIDIA_DRIVER_CAPABILITIES: 'all',
                     ],
                     waitCommand: ["wait_until_initialized.sh"]
             )
@@ -80,7 +82,9 @@ final class WorkerTypes {
                                     (userTmp): ["/tmp", "/home/${USER_HOME_NAME}/tmp"],
                             ],
                             environment: [
-                                    USER_PUBLIC_KEY: userPublicKey
+                                    USER_PUBLIC_KEY: userPublicKey,
+                                    NVIDIA_VISIBLE_DEVICES: 'all',
+                                    NVIDIA_DRIVER_CAPABILITIES: 'all',
                             ],
                             runCommand: [
                                     '/script/init_container.sh',

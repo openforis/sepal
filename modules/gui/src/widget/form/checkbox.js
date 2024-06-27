@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import React from 'react'
+
 import styles from './checkbox.module.css'
 
 export const FormCheckbox = ({label, input, tabIndex, className, onChange}) => {

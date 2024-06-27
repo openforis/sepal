@@ -1,16 +1,18 @@
+import React from 'react'
+
+import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {countryEETable} from '~/app/home/map/aoiLayer'
+import {compose} from '~/compose'
+import {msg} from '~/translate'
+import {Form} from '~/widget/form'
+import {PanelSections} from '~/widget/panelSections'
+
+import styles from './aoi.module.css'
 import {AssetBoundsSection} from './assetBoundsSection'
 import {CountrySection} from './countrySection'
 import {EETableSection} from './eeTableSection'
-import {Form} from '~/widget/form'
-import {PanelSections} from '~/widget/panelSections'
 import {PolygonSection} from './polygonSection'
-import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {SectionSelection} from './sectionSelection'
-import {compose} from '~/compose'
-import {countryEETable} from '~/app/home/map/aoiLayer'
-import {msg} from '~/translate'
-import React from 'react'
-import styles from './aoi.module.css'
 
 const fields = {
     section: new Form.Field()

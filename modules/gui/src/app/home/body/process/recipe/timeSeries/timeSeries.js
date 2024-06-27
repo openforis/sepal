@@ -1,16 +1,18 @@
-import {Aoi} from '../aoi'
-import {Map} from '../../../../map/map'
-import {Notifications} from '~/widget/notifications'
-import {RecipeActions, defaultModel} from './timeSeriesRecipe'
-import {TimeSeriesToolbar} from './panels/timeSeriesToolbar'
-import {compose} from '~/compose'
-import {initializeLayers} from '../recipeImageLayerSource'
-import {msg} from '~/translate'
-import {recipe} from '~/app/home/body/process/recipeContext'
-import {recipeAccess} from '../../recipeAccess'
-import {selectFrom} from '~/stateUtils'
-import React from 'react'
 import moment from 'moment'
+import React from 'react'
+
+import {recipe} from '~/app/home/body/process/recipeContext'
+import {compose} from '~/compose'
+import {selectFrom} from '~/stateUtils'
+import {msg} from '~/translate'
+import {Notifications} from '~/widget/notifications'
+
+import {Map} from '../../../../map/map'
+import {recipeAccess} from '../../recipeAccess'
+import {Aoi} from '../aoi'
+import {initializeLayers} from '../recipeImageLayerSource'
+import {TimeSeriesToolbar} from './panels/timeSeriesToolbar'
+import {defaultModel, RecipeActions} from './timeSeriesRecipe'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),

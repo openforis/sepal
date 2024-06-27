@@ -1,7 +1,7 @@
+import React from 'react'
+
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import React from 'react'
-import _ from 'lodash'
 
 export const withLeaveAlert = mapStateToLeaveAlert =>
     WrappedComponent => {

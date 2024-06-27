@@ -1,17 +1,19 @@
-import {AssetBrowser} from './assetBrowser'
-import {Button} from './button'
-import {Form} from '~/widget/form'
-import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {copyToClipboard} from '~/clipboard'
-import {currentUser} from '~/user'
-import {msg} from '~/translate'
-import {selectFrom} from '~/stateUtils'
-import {toSafeString} from '~/string'
-import {withActivators} from './activation/activator'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {copyToClipboard} from '~/clipboard'
+import {compose} from '~/compose'
+import {connect} from '~/connect'
+import {selectFrom} from '~/stateUtils'
+import {toSafeString} from '~/string'
+import {msg} from '~/translate'
+import {currentUser} from '~/user'
+import {Form} from '~/widget/form'
+
+import {withActivators} from './activation/activator'
+import {AssetBrowser} from './assetBrowser'
+import {Button} from './button'
 
 const mapStateToProps = state => ({
     projects: selectFrom(state, 'process.projects'),
