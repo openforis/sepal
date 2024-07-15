@@ -21,7 +21,7 @@ const fields = {
         .notBlank('user.changePassword.form.oldPassword.required'),
     newPassword: new Form.Field()
         .notBlank('user.changePassword.form.newPassword.required')
-        .match(/^.{8,100}$/, 'user.changePassword.form.newPassword.invalid'),
+        .match(/^.{12,100}$/, 'user.changePassword.form.newPassword.invalid'),
     confirmPassword: new Form.Field()
         .notBlank('user.changePassword.form.confirmPassword.required')
 }

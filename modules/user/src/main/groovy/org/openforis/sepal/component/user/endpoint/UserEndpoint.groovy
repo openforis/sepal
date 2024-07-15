@@ -30,7 +30,7 @@ class UserEndpoint {
             def nameConstraints = [notBlank(), maxLength(1000)]
             def emailConstraints = [notBlank(), email()]
             def organizationConstraints = [maxLength(1000)]
-            def passwordConstraints = [notBlank(), custom { it ==~ /^.{8,100}$/ }]
+            def passwordConstraints = [notBlank(), custom { it ==~ /^.{12,100}$/ }]
             def intendedUseConstraints = [notBlank()]
             def recaptchaTokenConstraints = [notBlank()]
 
