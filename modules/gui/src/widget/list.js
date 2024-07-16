@@ -20,14 +20,16 @@ class _ScrollableList extends React.Component {
 
     constructor() {
         super()
+        this.ref = React.createRef()
         this.renderScrollable = this.renderScrollable.bind(this)
     }
 
     render() {
         const {className} = this.props
         return (
-            <ElementResizeDetector resize$={this.autoCenter$}>
+            <ElementResizeDetector targetRef={this.ref} resize$={this.autoCenter$}>
                 <Scrollable
+                    ref={this.ref}
                     direction='y'
                     containerClassName={[className, styles.options].join(' ')}>
                     {this.renderScrollable}

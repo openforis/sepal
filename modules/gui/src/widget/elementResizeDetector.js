@@ -1,81 +1,36 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
-import React from 'react'
-import ReactResizeDetector from 'react-resize-detector'
-import {distinctUntilChanged, Subject, throttleTime} from 'rxjs'
+import {useCallback} from 'react'
+import {useResizeDetector} from 'react-resize-detector'
 
-import {compose} from '~/compose'
-import {withSubscriptions} from '~/subscription'
+const REFRESH_RATE_MS = 250
 
-const UPDATE_DEBOUNCE_MS = 250
+export const ElementResizeDetector = ({children, onResize, resize$, targetRef}) => {
+    const onResizeCallback = useCallback(({width, height}) => {
+        setImmediate(() => {
+            onResize && onResize({width, height})
+            resize$ && resize$.next({width, height})
+        })
+    }, [onResize, resize$])
 
-export class _ElementResizeDetector extends React.Component {
-    size$ = new Subject()
+    const {width, height} = useResizeDetector({
+        refreshMode: 'throttle',
+        refreshRate: REFRESH_RATE_MS,
+        refreshOptions: {leading: true, trailing: true},
+        targetRef,
+        onResize: onResizeCallback
+    })
 
-    state = {
-        width: null,
-        height: null
-    }
-
-    constructor() {
-        super()
-        this.onResize = this.onResize.bind(this)
-    }
-
-    render() {
-        return (
-            <ReactResizeDetector
-                handleHeight
-                handleWidth
-                onResize={this.onResize}>
-                {this.renderContent()}
-            </ReactResizeDetector>
-        )
-    }
-
-    onResize(width, height) {
-        this.size$.next({width, height})
-    }
-
-    renderContent() {
-        const {children} = this.props
-        if (_.isFunction(children)) {
-            const {width, height} = this.state
-            return (width && height) ? children({width, height}) : null
-        } else {
-            return children
-        }
-    }
-
-    componentDidMount() {
-        const {debounce, resize$, onResize, addSubscription} = this.props
-        addSubscription(
-            this.size$.pipe(
-                throttleTime(debounce, null, {leading: true, trailing: true}),
-                distinctUntilChanged()
-            ).subscribe(
-                size => {
-                    this.setState(size)
-                    resize$ && resize$.next(size)
-                    onResize && onResize(size)
-                }
-            )
-        )
-    }
+    return (
+        _.isFunction(children)
+            ? children({width, height})
+            : children
+    )
 }
-
-export const ElementResizeDetector = compose(
-    _ElementResizeDetector,
-    withSubscriptions()
-)
 
 ElementResizeDetector.propTypes = {
     children: PropTypes.any,
     debounce: PropTypes.number,
     resize$: PropTypes.object,
     onResize: PropTypes.func,
-}
-
-ElementResizeDetector.defaultProps = {
-    debounce: UPDATE_DEBOUNCE_MS
 }

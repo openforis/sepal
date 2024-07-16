@@ -33,6 +33,7 @@ class _PaletteLayer extends React.Component {
 
     constructor(props) {
         super(props)
+        this.ref = React.createRef()
         const {cursorValue$, addSubscription} = props
         this.setPaletteWidth = this.setPaletteWidth.bind(this)
         addSubscription(
@@ -62,14 +63,16 @@ class _PaletteLayer extends React.Component {
             <div className={styles.container}>
                 <div className={styles.legend}>
                     {this.renderMinValue()}
-                    <div
-                        className={styles.palette}
-                        style={{'--palette': inverted
-                            ? palette.slice().reverse()
-                            : palette}}>
-                        <ElementResizeDetector onResize={this.setPaletteWidth}/>
-                        {this.renderCursorValues({dataType, min, max})}
-                    </div>
+                    <ElementResizeDetector targetRef={this.ref} onResize={this.setPaletteWidth}>
+                        <div
+                            ref={this.ref}
+                            className={styles.palette}
+                            style={{'--palette': inverted
+                                ? palette.slice().reverse()
+                                : palette}}>
+                            {this.renderCursorValues({dataType, min, max})}
+                        </div>
+                    </ElementResizeDetector>
                     {this.renderMaxValue()}
                 </div>
             </div>

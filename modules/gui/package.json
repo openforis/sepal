@@ -45,7 +45,7 @@
         "react-markdown": "^9.0.1",
         "react-number-format": "^5.4.0",
         "react-redux": "9.1.2",
-        "react-resize-detector": "9.1.0",
+        "react-resize-detector": "11.0.1",
         "react-router-dom": "5.3.0",
         "react-textarea-autosize": "^8.5.3",
         "react-transition-group": "4.4.5",

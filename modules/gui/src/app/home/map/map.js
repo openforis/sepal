@@ -88,6 +88,8 @@ class _Map extends React.Component {
 
     constructor() {
         super()
+        this.ref = React.createRef()
+        this.onResize = this.onResize.bind(this)
         this.mapDelegate = this.mapDelegate.bind(this)
         this.setLinked = this.setLinked.bind(this)
         this.toggleRendering = this.toggleRendering.bind(this)
@@ -598,6 +600,10 @@ class _Map extends React.Component {
         }
     }
 
+    onResize(size) {
+        this.setState({size})
+    }
+
     render() {
         const {recipe, layers, imageLayerSources} = this.props
         const {googleMapsApiKey, nicfiPlanetApiKey} = this.state
@@ -607,27 +613,27 @@ class _Map extends React.Component {
             )
             .filter(mapComponent => mapComponent)
         return (
-            <ElementResizeDetector onResize={size => this.setState({size})}>
-                <MapApiKeyContext
-                    googleMapsApiKey={googleMapsApiKey}
-                    nicfiPlanetApiKey={nicfiPlanetApiKey}>
-                    <MapContext map={this.mapDelegate()}>
-                        {imageLayerSourceComponents}
-                        <SplitView
-                            className={styles.view}
-                            areas={this.renderAreas()}
-                            overlay={this.renderOverlay()}
-                            mode={layers.mode}
-                            position$={this.splitPosition$}
-                            dragging$={this.draggingSplit$}>
-                            <div className={styles.content}>
+            <MapApiKeyContext
+                googleMapsApiKey={googleMapsApiKey}
+                nicfiPlanetApiKey={nicfiPlanetApiKey}>
+                <MapContext map={this.mapDelegate()}>
+                    {imageLayerSourceComponents}
+                    <SplitView
+                        className={styles.view}
+                        areas={this.renderAreas()}
+                        overlay={this.renderOverlay()}
+                        mode={layers.mode}
+                        position$={this.splitPosition$}
+                        dragging$={this.draggingSplit$}>
+                        <ElementResizeDetector targetRef={this.ref} onResize={this.onResize}>
+                            <div ref={this.ref} className={styles.content}>
                                 {this.isInitialized() ? this.renderRecipe() : null}
                                 {this.renderDrawingModeIndicator()}
                             </div>
-                        </SplitView>
-                    </MapContext>
-                </MapApiKeyContext>
-            </ElementResizeDetector>
+                        </ElementResizeDetector>
+                    </SplitView>
+                </MapContext>
+            </MapApiKeyContext>
         )
     }
 

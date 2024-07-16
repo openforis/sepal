@@ -170,6 +170,12 @@ const MapInfoPanel = compose(
 )
 
 class _MapInfo extends React.PureComponent {
+    constructor(props) {
+        super(props)
+        this.ref = React.createRef()
+        this.onResize = this.onResize.bind(this)
+    }
+
     state = {
         view: {},
         width: null
@@ -195,6 +201,10 @@ class _MapInfo extends React.PureComponent {
         )
     }
 
+    onResize({width}) {
+        this.setState({width})
+    }
+
     renderScale() {
         const {activator: {activatables: {mapInfo: {active, toggle}}}} = this.props
         const {view: {scale}, width} = this.state
@@ -209,8 +219,8 @@ class _MapInfo extends React.PureComponent {
                     tooltip={active ? null : msg('map.info.tooltip')}
                     tooltipPlacement='bottomLeft'
                     onClick={toggle}>
-                    <ElementResizeDetector onResize={({width}) => this.setState({width})}>
-                        <div className={styles.content}>
+                    <ElementResizeDetector targetRef={this.ref} onResize={this.onResize}>
+                        <div ref={this.ref} className={styles.content}>
                             <div>{format.number({value: scale, unit: 'm/px'})}</div>
                             <div className={styles.scale}></div>
                             <div>{format.number({value: width * scale, unit: 'm'})}</div>

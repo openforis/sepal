@@ -24,6 +24,8 @@ export class Histogram extends React.Component {
 
     constructor(params) {
         super(params)
+        this.ref = React.createRef()
+        this.onResize = this.onResize.bind(this)
         this.onDragging = this.onDragging.bind(this)
     }
 
@@ -46,13 +48,17 @@ export class Histogram extends React.Component {
         )
     }
 
+    onResize({width}) {
+        this.setState({width})
+    }
+
     renderHistogram() {
         const {histogram: {data} = {}, min, max, onMinMaxChange} = this.props
         const {width} = this.state
         return (
             <div className={styles.histogram}>
-                <ElementResizeDetector onResize={({width}) => this.setState({width})}>
-                    <div className={styles.graph}>
+                <ElementResizeDetector targetRef={this.ref} onResize={this.onResize}>
+                    <div ref={this.ref} className={styles.graph}>
                         {width
                             ? (
                                 <Graph

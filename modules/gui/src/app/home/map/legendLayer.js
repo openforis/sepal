@@ -29,23 +29,26 @@ class _LegendLayer extends React.Component {
 
     constructor(props) {
         super(props)
+        this.ref = React.createRef()
         const {cursorValue$, addSubscription} = props
         addSubscription(
             cursorValue$.subscribe(value => this.setState({value}))
         )
     }
 
-    render() {
-        const {cursorValue$, mapArea: {area}, areas} = this.props
-        if (!cursorValue$) {
-            return null
-        }
-        const {labels, values, palette} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
-        if (!values || !palette) {
-            return null
-        }
+    renderPalette({values, palette}) {
+        return palette.map((color, i) =>
+            <div
+                key={values[i]}
+                style={{'--color': color}}
+                className={styles.color}
+            />
+        )
+    }
+
+    renderCursorValues({labels, values}) {
         const {value, paletteWidth} = this.state
-        const cursorValues = _.isNil(value)
+        return _.isNil(value)
             ? null
             : value.map((v, i) =>
                 <CursorValue
@@ -56,24 +59,26 @@ class _LegendLayer extends React.Component {
                     paletteWidth={paletteWidth}
                 />
             )
-        const colors = palette.map((color, i) =>
-            <div
-                key={values[i]}
-                style={{'--color': color}}
-                className={styles.color}
-            />
-        )
+    }
+
+    render() {
+        const {cursorValue$, mapArea: {area}, areas} = this.props
+        const {labels, values, palette} = selectFrom(areas[area], 'imageLayer.layerConfig.visParams') || {}
+        if (!cursorValue$ || !values || !palette) {
+            return null
+        }
         return (
             <div className={styles.container}>
                 <Tooltip
                     msg={this.renderFullLegend()}
                     placement='top'
                     clickTrigger={isMobile()}>
-                    <div className={styles.legend}>
-                        {colors}
-                        <ElementResizeDetector onResize={({width}) => this.setState({paletteWidth: width})}/>
-                        {cursorValues}
-                    </div>
+                    <ElementResizeDetector targetRef={this.ref} onResize={({width}) => this.setState({paletteWidth: width})}>
+                        <div ref={this.ref} className={styles.legend}>
+                            {this.renderPalette({values, palette})}
+                            {this.renderCursorValues({labels, values})}
+                        </div>
+                    </ElementResizeDetector>
                 </Tooltip>
             </div>
         )

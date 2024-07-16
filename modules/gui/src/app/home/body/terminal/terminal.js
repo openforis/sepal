@@ -87,13 +87,13 @@ class _TerminalSession extends React.Component {
 
     render() {
         return (
-            <ElementResizeDetector resize$={this.fit$}>
-                <ContentPadding menuPadding horizontalPadding verticalPadding>
-                    <Keybinding keymap={{' ': undefined}}>
-                        <div className={styles.terminal} ref={this.terminalContainer}></div>
-                    </Keybinding>
-                </ContentPadding>
-            </ElementResizeDetector>
+            <ContentPadding menuPadding horizontalPadding verticalPadding>
+                <Keybinding keymap={{' ': undefined}}>
+                    <ElementResizeDetector targetRef={this.terminalContainer} resize$={this.fit$}>
+                        <div ref={this.terminalContainer} className={styles.terminal}></div>
+                    </ElementResizeDetector>
+                </Keybinding>
+            </ContentPadding>
         )
     }
 

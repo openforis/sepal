@@ -83,7 +83,7 @@ class _Scrollable extends React.PureComponent {
     render() {
         const {containerClassName} = this.props
         return (
-            <ElementResizeDetector resize$={this.resize$}>
+            <ElementResizeDetector targetRef={this.containerRef} resize$={this.resize$}>
                 <div
                     ref={this.containerRef}
                     className={[

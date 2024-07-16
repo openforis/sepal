@@ -209,44 +209,45 @@ class Timeline extends React.Component {
             right: `${this.dayToPosition(maxDay) - this.dateToPosition(endDate) - 1}px`
         }
         return (
-            <div className={styles.container} ref={this.element}>
-                {disabled ? <div className={styles.disabled}/> : null}
-                {width
-                    ? <div className={styles.axisReference}>
-                        <div className={styles.centerMarker}>
-                            <div className={styles.label}>{this.formatDay(centerDay)}</div>
+            <ElementResizeDetector targetRef={this.element} onResize={({width}) => this.widthUpdated(width)}>
+                <div ref={this.element} className={styles.container}>
+                    {disabled ? <div className={styles.disabled}/> : null}
+                    {width
+                        ? <div className={styles.axisReference}>
+                            <div className={styles.centerMarker}>
+                                <div className={styles.label}>{this.formatDay(centerDay)}</div>
+                            </div>
+                            <Handle
+                                position={this.dateToPosition(startDate)}
+                                min={0}
+                                max={this.dateToPosition(centerDate)}
+                                onChange={this.startPositionChanged.bind(this)}>
+                                <DateFlag
+                                    date={startDate}
+                                    onChange={this.startIncrementDays.bind(this)}
+                                    className={styles.leftFlag}/>
+                            </Handle>
+                            <Handle
+                                position={this.dateToPosition(endDate)}
+                                min={this.dayToPosition(centerDay + 1)}
+                                max={width}
+                                onChange={this.endPositionChanged.bind(this)}>
+                                <DateFlag
+                                    date={endDate}
+                                    onChange={this.endIncrementDays.bind(this)}
+                                    className={styles.rightFlag}/>
+                            </Handle>
+                            <Axis
+                                dateRange={this}
+                                centerDate={centerDate}
+                                width={width}/>
+                            <div
+                                className={styles.selectedRange}
+                                style={selectRangeStyle}/>
                         </div>
-                        <Handle
-                            position={this.dateToPosition(startDate)}
-                            min={0}
-                            max={this.dateToPosition(centerDate)}
-                            onChange={this.startPositionChanged.bind(this)}>
-                            <DateFlag
-                                date={startDate}
-                                onChange={this.startIncrementDays.bind(this)}
-                                className={styles.leftFlag}/>
-                        </Handle>
-                        <Handle
-                            position={this.dateToPosition(endDate)}
-                            min={this.dayToPosition(centerDay + 1)}
-                            max={width}
-                            onChange={this.endPositionChanged.bind(this)}>
-                            <DateFlag
-                                date={endDate}
-                                onChange={this.endIncrementDays.bind(this)}
-                                className={styles.rightFlag}/>
-                        </Handle>
-                        <Axis
-                            dateRange={this}
-                            centerDate={centerDate}
-                            width={width}/>
-                        <div
-                            className={styles.selectedRange}
-                            style={selectRangeStyle}/>
-                    </div>
-                    : null}
-                <ElementResizeDetector onResize={({width}) => this.widthUpdated(width)}/>
-            </div>
+                        : null}
+                </div>
+            </ElementResizeDetector>
         )
     }
 }

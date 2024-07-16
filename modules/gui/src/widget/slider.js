@@ -478,6 +478,7 @@ export class Slider extends React.Component {
 
     constructor() {
         super()
+        this.ref = React.createRef()
         this.onPreview = this.onPreview.bind(this)
         this.onResize = this.onResize.bind(this)
     }
@@ -534,10 +535,11 @@ export class Slider extends React.Component {
         const {width} = this.state
         return (
             <div className={styles.container}>
-                <div className={styles.slider}>
-                    <ElementResizeDetector onResize={this.onResize}/>
-                    {width ? this.renderContainer() : null}
-                </div>
+                <ElementResizeDetector targetRef={this.ref} onResize={this.onResize}>
+                    <div ref={this.ref} className={styles.slider}>
+                        {width ? this.renderContainer() : null}
+                    </div>
+                </ElementResizeDetector>
             </div>
         )
     }
