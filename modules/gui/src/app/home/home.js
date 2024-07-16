@@ -27,8 +27,9 @@ const mapStateToProps = () => ({
 
 const RETRY_CONFIG = {
     minRetryDelay: 500,
-    maxRetryDelay: 30000,
-    retryDelayFactor: 2
+    maxRetryDelay: 10000,
+    retryDelayFactor: 2,
+    maxRetries: Number.MAX_SAFE_INTEGER
 }
 
 const timedRefresh$ = (task$, refreshSeconds = 60, _name) =>

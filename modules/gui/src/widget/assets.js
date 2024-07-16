@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React from 'react'
-import {catchError, EMPTY, exhaustMap, finalize, interval, last, map, merge, mergeWith, of, scan, Subject, switchMap, takeUntil, tap, throttleTime} from 'rxjs'
+import {catchError, EMPTY, exhaustMap, finalize, interval, map, merge, mergeWith, of, scan, Subject, switchMap, takeLast, takeUntil, tap, throttleTime} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -79,7 +79,7 @@ const loadAssets$ = () =>
                 ),
                 incremental
                     ? throttleTime(1000, null, {leading: true, trailing: true})
-                    : last(),
+                    : takeLast(1),
                 takeUntil(cancelReloadAssets$),
                 tap({
                     next: assetTree => updateAssetTree(assetTree),

@@ -23,7 +23,7 @@ const fields = {
     username: null,
     password: new Form.Field()
         .notBlank('landing.reset-password.password.required')
-        .match(/^.{8,100}$/, 'landing.reset-password.password.invalid'),
+        .match(/^.{12,100}$/, 'landing.reset-password.password.invalid'),
     password2: new Form.Field()
         .notBlank('landing.reset-password.password2.required')
 

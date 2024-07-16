@@ -2,7 +2,7 @@ import {get$, post$, postJson$} from '~/http-client'
 
 export default {
     loadAll$: () =>
-        get$('/api/tasks'),
+        get$('/api/tasks', {maxRetries: 0}),
 
     submit$: task =>
         postJson$('/api/tasks', {

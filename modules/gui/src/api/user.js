@@ -7,7 +7,7 @@ export default {
         }),
 
     loadUserMessages$: () =>
-        get$('/api/notification/notifications'),
+        get$('/api/notification/notifications', {maxRetries: 0}),
 
     updateMessage$: message =>
         post$(`/api/notification/messages/${message.id}`, {
@@ -25,7 +25,7 @@ export default {
         }),
 
     loadCurrentUserReport$: () =>
-        get$('/api/sessions/report'),
+        get$('/api/sessions/report', {maxRetries: 0}),
 
     signUp$: ({username, name, email, organization, intendedUse}, recaptchaToken) =>
         post$('/api/user/signup', {
