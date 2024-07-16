@@ -59,6 +59,9 @@ export const resetPassword$ = ({token, username, password, type, recaptchaToken}
         ),
         switchMap(() =>
             login$({username, password})
+        ),
+        switchMap(() =>
+            api.user.invalidateOtherSessions$()
         )
     )
 }
@@ -135,7 +138,9 @@ export const updateCurrentUserDetails$ = ({name, email, organization, intendedUs
     )
 
 export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
-    api.user.changePassword$({oldPassword, newPassword})
+    api.user.changePassword$({oldPassword, newPassword}).pipe(
+        switchMap(() => api.user.invalidateOtherSessions$())
+    )
 
 export const updateCurrentUserSession$ = session =>
     api.user.updateCurrentUserSession$(session).pipe(

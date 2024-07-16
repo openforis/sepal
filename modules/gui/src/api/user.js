@@ -142,5 +142,8 @@ export default {
     updateBudgetUpdateRequest$: budgetUpdateRequest =>
         post$('/api/budget/requestUpdate', {
             body: budgetUpdateRequest
-        })
+        }),
+
+    invalidateOtherSessions$: () =>
+        post$('/api/user/invalidateOtherSessions')
 }

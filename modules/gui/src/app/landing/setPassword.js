@@ -51,7 +51,7 @@ class _SetPassword extends React.Component {
     }
 
     componentDidMount() {
-        const {stream} = this.props
+        const {stream, inputs: {username}} = this.props
         const token = query().token
         stream('VALIDATE_TOKEN',
             validateToken$(token),
@@ -59,13 +59,14 @@ class _SetPassword extends React.Component {
                 actionBuilder('TOKEN_VALIDATED')
                     .set('user.tokenUser', user)
                     .dispatch()
+                username.set(user && user.username)
             },
             () => {
                 Notifications.error({
                     message: msg('landing.validate-token.error'),
                     timeout: 10
                 })
-                history().push('/process') // [TODO] fix this
+                history().push('/-/process') // [TODO] fix this
             }
         )
     }
@@ -91,7 +92,7 @@ class _SetPassword extends React.Component {
             ),
             user => {
                 credentialsPosted(user)
-                history().push('/process')
+                history().push('/-/process')
                 Notifications.success({message: msg('landing.reset-password.success')})
             },
             () => {
