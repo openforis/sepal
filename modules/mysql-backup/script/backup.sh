@@ -11,6 +11,7 @@ bash -c "mysqldump \
     --all-databases \
     --single-transaction \
     --quick \
+    --max-allowed-packet=128M \
     > /backup/dump.sql"
 
 echo "Backup completed"
