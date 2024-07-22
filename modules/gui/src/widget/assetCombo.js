@@ -184,8 +184,9 @@ class _AssetCombo extends React.Component {
         const {value} = this.props
         this.initializeDatasetsSearch()
         this.initializeSearch()
-        this.initializeLoad()
+        this.initializeLoadDataset()
         if (value) {
+            this.setState({filter: value})
             this.load$.next(value)
         }
     }
@@ -203,17 +204,21 @@ class _AssetCombo extends React.Component {
         )
     }
 
-    initializeLoad() {
+    initializeLoadDataset() {
         const {addSubscription} = this.props
         addSubscription(
             this.load$.pipe(
-                switchMap(id => api.gee.datasets$(id))
+                switchMap(id => api.gee.datasets$(id).pipe(
+                    map(datasets => ({id, datasets}))
+                )),
             ).subscribe({
-                next: ({community, gee}) => {
+                next: ({id, datasets: {community, gee}}) => {
                     if (community.matchingResults + gee.matchingResults === 1) {
                         const [asset] = [...community.datasets, ...gee.datasets]
                         this.loadMetadata(asset)
                         this.setDatasets({community, gee})
+                    } else {
+                        this.loadMetadata({id})
                     }
                 },
                 error: error => {
