@@ -2,7 +2,6 @@ package component.task
 
 import fake.Database
 import fake.FakeClock
-import fake.FakeMessageBroker
 import org.openforis.sepal.component.task.TaskComponent
 import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.api.Timeout
@@ -18,14 +17,12 @@ abstract class AbstractTaskTest extends Specification {
     final eventDispatcher = new SynchronousEventDispatcher()
     final sessionManager = new FakeWorkerSessionManager()
     final workerGateway = new FakeWorkerGateway()
-    final messageBroker = new FakeMessageBroker()
     final clock = new FakeClock()
     final component = new TaskComponent(
             connectionManager,
             eventDispatcher,
             sessionManager,
             workerGateway,
-            messageBroker,
             clock
     )
 

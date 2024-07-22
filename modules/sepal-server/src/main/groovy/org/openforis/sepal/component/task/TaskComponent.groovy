@@ -23,8 +23,6 @@ import org.openforis.sepal.util.SystemClock
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class TaskComponent extends DataSourceBackedComponent implements EndpointRegistry {
-    private final MessageBroker messageBroker
-
     TaskComponent(
             WorkerSessionComponent workerSessionComponent,
             WorkerGateway workerGateway,
@@ -34,7 +32,6 @@ class TaskComponent extends DataSourceBackedComponent implements EndpointRegistr
                 new AsynchronousEventDispatcher(),
                 new SessionComponentAdapter(workerSessionComponent),
                 workerGateway,
-                new RmbMessageBroker(connectionManager),
                 new SystemClock()
         )
     }
@@ -44,12 +41,10 @@ class TaskComponent extends DataSourceBackedComponent implements EndpointRegistr
             HandlerRegistryEventDispatcher eventDispatcher,
             WorkerSessionManager sessionManager,
             WorkerGateway workerGateway,
-            MessageBroker messageBroker,
             Clock clock) {
         super(connectionManager, eventDispatcher)
-        this.messageBroker = messageBroker
         def taskRepository = new JdbcTaskRepository(connectionManager, clock)
-        def taskGateway = new TaskGateway(taskRepository, connectionManager, messageBroker)
+        def taskGateway = new TaskGateway(taskRepository, connectionManager)
 
         command(SubmitTask, new SubmitTaskHandler(taskRepository, sessionManager, workerGateway, clock))
         command(ResubmitTask, new ResubmitTaskHandler(taskRepository, sessionManager, workerGateway, clock))
@@ -73,15 +68,6 @@ class TaskComponent extends DataSourceBackedComponent implements EndpointRegistr
 
     void registerEndpointsWith(Controller controller) {
         new TaskEndpoint(this).registerWith(controller)
-    }
-
-    void onStart() {
-        messageBroker.start()
-        schedule(1, MINUTES, new CancelTimedOutTasks())
-    }
-
-    void onStop() {
-        messageBroker?.stop()
     }
 
 }
