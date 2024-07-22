@@ -70,4 +70,9 @@ class TaskComponent extends DataSourceBackedComponent implements EndpointRegistr
         new TaskEndpoint(this).registerWith(controller)
     }
 
+    void onStart() {
+        schedule(1, MINUTES,
+            new CancelTimedOutTasks()
+        )
+    }
 }

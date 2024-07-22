@@ -22,8 +22,12 @@ else
   if [ ! -f "${MODULE}/build/index-template.html" ]; then
       mv "${MODULE}/build/index.html" "${MODULE}/build/index-template.html"
   fi
+  if [ ! -f "${MODULE}/build/404-template.html" ]; then
+      mv "${MODULE}/build/404.html" "${MODULE}/build/404-template.html"
+  fi
 
   template "${MODULE}/build/index-template.html" "${MODULE}/build/index.html"
+  template "${MODULE}/build/404-template.html" "${MODULE}/build/404.html"
 
   service nginx start
   pid=$(ps aux | grep '[/]usr/sbin/nginx' | awk '{ print $2 }')
