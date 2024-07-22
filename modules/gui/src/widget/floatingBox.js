@@ -68,12 +68,12 @@ class _FloatingBox extends React.Component {
         const {top, bottom, maxHeight, vPlacement} = this.getCorrectedVerticalPosition()
 
         const style = {
-            '--top': top,
-            '--bottom': bottom,
-            '--max-height': maxHeight,
-            '--left': left,
-            '--right': right,
-            '--max-width': maxWidth
+            '--top': Math.round(top),
+            '--bottom': Math.round(bottom),
+            '--max-height': Math.round(maxHeight),
+            '--left': Math.round(left),
+            '--right': Math.round(right),
+            '--max-width': Math.round(maxWidth)
         }
 
         return (
@@ -320,10 +320,10 @@ class _FloatingBox extends React.Component {
     }
 
     updateState(state) {
-        const updatedState = (prevState, state) =>
-            _.isEqual(_.pick(prevState, _.keys(state)), state) ? null : state
         this.setState(
-            prevState => updatedState(prevState, _.isFunction(state) ? state(prevState) : state)
+            prevState => _.isEqual(_.pick(prevState, _.keys(state)), state)
+                ? null
+                : state
         )
     }
 
