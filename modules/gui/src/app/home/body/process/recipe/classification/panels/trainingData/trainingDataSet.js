@@ -165,6 +165,18 @@ class _TrainingDataSet extends React.Component {
                 tooltip: msg('process.classification.panel.trainingData.type.RECIPE.tooltip'),
                 title: msg('process.classification.panel.trainingData.type.RECIPE.title'),
                 component: <RecipeSection ${...this.props}/>
+            },
+            {
+                value: 'CEO',
+                label: msg('process.classification.panel.trainingData.type.CEO.label'),
+                tooltip: msg('process.classification.panel.trainingData.type.CEO.tooltip'),
+                title: msg('process.classification.panel.trainingData.type.CEO.title'),
+                steps: [
+                    <CsvUploadSection ${...this.props}/>,
+                    <LocationStep ${...this.props}/>,
+                    <ClassStep ${...this.props}/>,
+                    <ClassMappingStep ${...this.props}/>
+                ]
             }
         ]
     }
