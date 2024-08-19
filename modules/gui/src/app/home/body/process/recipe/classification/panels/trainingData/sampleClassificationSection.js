@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
+import {RecipeInput} from 'widget/recipeInput'
 
 import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
@@ -18,11 +19,14 @@ class _SampleClassificationSection extends React.Component {
     state = {bands: []}
 
     render() {
+        const {inputs: {typeToSample}} = this.props
         return (
             <Layout>
                 {this.renderSamplesPerClass()}
                 {this.renderSampleScale()}
-                {this.renderAssetToSample()}
+                {this.renderTypeToSample()}
+                {typeToSample.value === 'ASSET' && this.renderAssetToSample()}
+                {typeToSample.value === 'RECIPE' && this.renderRecipeToSample()}
                 {this.renderValueColumnInput()}
             </Layout>
         )
@@ -79,6 +83,20 @@ class _SampleClassificationSection extends React.Component {
         )
     }
 
+    renderTypeToSample() {
+        const {inputs: {typeToSample}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.classification.panel.trainingData.form.sampleClassification.typeToSample.label')}
+                input={typeToSample}
+                options={[
+                    {value: 'ASSET', label: msg('process.classification.panel.trainingData.form.sampleClassification.typeToSample.ASSET')},
+                    {value: 'RECIPE', label: msg('process.classification.panel.trainingData.form.sampleClassification.typeToSample.RECIPE')},
+                ]}
+            />
+        )
+    }
+
     renderAssetToSample() {
         const {inputs: {assetToSample}} = this.props
         return (
@@ -91,9 +109,35 @@ class _SampleClassificationSection extends React.Component {
                 onLoading={() => this.setState({bands: []})}
                 onLoaded={({metadata}) => {
                     const bands = metadata.bands.map(({id}) => id) || []
-                    this.setState({bands})
+                    this.setState({bands}, () => this.loadInputData({
+                        asset: this.props.inputs.assetToSample.value,
+                        count: this.props.inputs.samplesPerClass.value,
+                        scale: this.props.inputs.sampleScale.value,
+                        classBand: this.props.inputs.valueColumn.value
+                    }))
                 }}
                 busyMessage={this.props.stream('SAMPLE_IMAGE').active && msg('widget.loading')}
+            />
+        )
+    }
+
+    renderRecipeToSample() {
+        const {inputs: {recipeIdToSample}} = this.props
+        return (
+            <RecipeInput
+                input={recipeIdToSample}
+                filter={type => !type.noImageOutput}
+                autoFocus
+                onLoading={() => this.setState({bands: []})}
+                onLoaded={({bandNames: bands, recipe}) => {
+                    this.setState({bands, recipeToSample: recipe}, () =>
+                        this.setState({bands}, () => this.loadInputData({
+                            asset: this.props.inputs.assetToSample.value,
+                            count: this.props.inputs.samplesPerClass.value,
+                            scale: this.props.inputs.sampleScale.value,
+                            classBand: this.props.inputs.valueColumn.value
+                        })))
+                }}
             />
         )
     }
@@ -124,29 +168,50 @@ class _SampleClassificationSection extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {assetToSample, samplesPerClass, sampleScale, valueColumn}} = this.props
+        const {inputs: {typeToSample, samplesPerClass, sampleScale}} = this.props
         const count = samplesPerClass.value || '100'
         const scale = sampleScale.value || '30'
         samplesPerClass.set(count)
         sampleScale.set(scale)
-        const asset = assetToSample.value
-        this.loadInputData({asset, count, scale, classBand: valueColumn.value})
+        if (!typeToSample.value) {
+            typeToSample.set('ASSET')
+        }
     }
 
     loadInputData({asset, count, scale, classBand}) {
-        if (!asset || !count || !scale)
+        const {inputs: {typeToSample}} = this.props
+        const {recipeToSample} = this.state
+        if (
+            (typeToSample.value === 'ASSET' && !asset)
+            || (typeToSample.value === 'RECIPE' && !recipeToSample)
+            || !count
+            || !scale
+        ) {
             return
+        }
         const {stream, inputs: {name, inputData, columns, valueColumn}, recipe} = this.props
         this.cancel$.next()
         name.set(null)
         inputData.set(null)
         columns.set(null)
         stream('SAMPLE_IMAGE',
-            api.gee.sampleImage$({asset, count, scale, classBand, recipe}).pipe(
+            api.gee.sampleImage$({
+                recipeToSample: typeToSample.value === 'ASSET'
+                    ? {type: 'ASSET', id: asset}
+                    : recipeToSample,
+                count,
+                scale,
+                classBand,
+                recipe
+            }).pipe(
                 takeUntil(this.cancel$)
             ),
             featureCollection => {
-                name.set(asset.substring(asset.lastIndexOf('/') + 1))
+                name.set(
+                    typeToSample.value === 'ASSET'
+                        ? asset.substring(asset.lastIndexOf('/') + 1)
+                        : recipeToSample.title || recipeToSample.placeholder
+                )
                 inputData.set(this.toInputData(featureCollection))
                 columns.set(['.geo', ...Object.keys(featureCollection.columns)])
                 if (!classBand) {

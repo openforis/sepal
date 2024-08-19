@@ -54,9 +54,9 @@ export default {
             maxRetries: 0
         }),
 
-    sampleImage$: ({asset, count, scale, classBand, recipe}) =>
+    sampleImage$: ({recipeToSample, count, scale, classBand, recipe}) =>
         postJson$('/api/gee/image/sample', {
-            body: {asset, count, scale, classBand, recipe},
+            body: {recipeToSample, count, scale, classBand, recipe},
             maxRetries: 0
         }),
 
