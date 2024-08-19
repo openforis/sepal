@@ -9,6 +9,7 @@ services:
     container_name: sandbox
     networks:
       - sepal
+    platform: linux/amd64 # Required for macOS builds
 
 networks:
   sepal:

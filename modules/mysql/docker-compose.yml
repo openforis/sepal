@@ -22,6 +22,7 @@ services:
       interval: 1s
       retries: 60
     restart: always
+    platform: linux/amd64 # Required for macOS builds
 
   mysql-admin:
     image: phpmyadmin/phpmyadmin:latest

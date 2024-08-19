@@ -5,9 +5,12 @@ import org.openforis.sepal.util.Config
 
 @Canonical
 class LocalConfig {
+
     final String host
 
     LocalConfig() {
-        host = System.getProperty('sepalHost')
+        // host = System.getProperty('sepalHost')
+        host = 'docker-api'
     }
+
 }

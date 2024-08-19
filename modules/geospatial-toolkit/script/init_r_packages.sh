@@ -10,6 +10,9 @@ export JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current
 export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
 export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
 
+R -e "install.packages('remotes', dependencies=TRUE)"
+# R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/')"
+
 apt-get update && apt-get install -y \
 	 libglpk-dev # required by igraph
 
@@ -294,8 +297,6 @@ R -e "install.packages(c(\
         'zeallot',\
         'zoo'
     ), repos='http://r-proxy:8180/')"
-
-R -e "install.packages('remotes', dependencies=TRUE, repos='http://r-proxy:8180/')"
 
 R -e "remotes::install_url(c(\
         'http://r-proxy:8180/github/cran/rgdal/archive/refs/heads/master.tar.gz',\

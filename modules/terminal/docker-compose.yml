@@ -18,6 +18,7 @@ services:
     restart: always
     ulimits:
       core: 0
+    platform: linux/amd64 # Required for macOS builds
 
 networks:
   sepal:

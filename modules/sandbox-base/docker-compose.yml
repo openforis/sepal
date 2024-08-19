@@ -6,3 +6,4 @@ services:
       context: ../..
       dockerfile: ./modules/sandbox-base/Dockerfile
     image: "openforis/sandbox-base:latest"
+    platform: linux/amd64 # Required for macOS builds
