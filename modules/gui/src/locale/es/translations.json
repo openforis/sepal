@@ -2126,10 +2126,18 @@
                             }
                         },
                         "sampleClassification": {
+                            "typeToSample": {
+                                "label": "",
+                                "ASSET": "",
+                                "RECIPE": ""
+                            },
                             "assetToSample": {
                                 "label": "EE asset ID de clasificación",
                                 "placeholder": "Introducir un ID de asset...",
                                 "required": "Debe introducir un ID de asset"
+                            },
+                            "recipeToSample": {
+                                "label": ""
                             },
                             "sampleScale": {
                                 "label": "Scale to sample in (m)",
@@ -2199,6 +2207,58 @@
                 "tilesFailed": "{failed} falló"
             },
             "tabPlaceholder": "Clasificación"
+        },
+        "regression": {
+            "bands": {
+                "regression": "Regresión"
+            },
+            "create": "Regresión",
+            "description": "",
+            "panel": {
+                "trainingData": {
+                    "form": {
+                        "eeTable": {
+                            "valueColumn": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "sampleImage": {
+                            "sampleCount": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": "",
+                                "suffix": "",
+                                "tooltip": ""
+                            },
+                            "valueBand": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "type": {
+                        "EE_TABLE": {
+                            "label": "Tabla Earth Engine",
+                            "tooltip": "",
+                            "title": "Tabla EE"
+                        },
+                        "SAMPLE_IMAGE": {
+                            "label": "",
+                            "tooltip": "",
+                            "title": ""
+                        },
+                        "RECIPE": {
+                            "label": "Guardar el flujo de trabajo de SEPAL",
+                            "tooltip": "",
+                            "title": ""
+                        }
+                    }
+                }
+            },
+            "tabPlaceholder": ""
         },
         "classChange": {
             "create": "",
