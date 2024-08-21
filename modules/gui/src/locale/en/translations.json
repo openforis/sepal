@@ -2137,9 +2137,7 @@
                                 "required": "You must enter an asset ID"
                             },
                             "recipeToSample": {
-                                "label": "Recipe to xample",
-                                "placeholder": "Enter an asset ID...",
-                                "required": "You must enter an asset ID"
+                                "label": "Recipe to sample"
                             },
                             "sampleScale": {
                                 "label": "Scale to sample in",
@@ -2153,7 +2151,7 @@
                                 "placeholder": "Count...",
                                 "required": "You must specify the number of samples to collect for each class",
                                 "suffix": "samples",
-                                "tooltip": "The number of samples to extract from the asset"
+                                "tooltip": "The number of samples to extract from the image"
                             },
                             "valueColumn": {
                                 "label": "Class band",
@@ -2207,6 +2205,58 @@
                 "label": "Classification",
                 "loading": "Loading tiles: {pending}",
                 "tilesFailed": "{failed} failed"
+            },
+            "tabPlaceholder": "Classification"
+        },
+        "regression": {
+            "bands": {
+                "regression": "Regression"
+            },
+            "create": "Regression",
+            "description": "Create a regression from SEPAL or Google Earth Engine imagery.",
+            "panel": {
+                "trainingData": {
+                    "form": {
+                        "eeTable": {
+                            "valueColumn": {
+                                "label": "Value column",
+                                "placeholder": "Select value column...",
+                                "tooltip": "Select column containing the values to train the regression classifier with."
+                            }
+                        },
+                        "sampleImage": {
+                            "sampleCount": {
+                                "label": "Sample count",
+                                "placeholder": "Count...",
+                                "required": "You must specify the number of samples to collect",
+                                "suffix": "samples",
+                                "tooltip": "The number of samples to extract from the image"
+                            },
+                            "valueBand": {
+                                "label": "Value band",
+                                "placeholder": "Select band with value to sample...",
+                                "tooltip": "The band to sample and use to train the regression classifier."
+                            }
+                        }
+                    },
+                    "type": {
+                        "EE_TABLE": {
+                            "label": "Earth Engine Table",
+                            "tooltip": "Load reference data from an EE table",
+                            "title": "EE Table"
+                        },
+                        "SAMPLE_IMAGE": {
+                            "label": "Sample Image",
+                            "tooltip": "Sample a pre-existing image",
+                            "title": "Sample Image"
+                        },
+                        "RECIPE": {
+                            "label": "Saved SEPAL recipe",
+                            "tooltip": "Use training data from a saved SEPAL recipe",
+                            "title": "SEPAL Recipe"
+                        }
+                    }
+                }
             },
             "tabPlaceholder": "Classification"
         },
