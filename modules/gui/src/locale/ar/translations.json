@@ -2126,10 +2126,18 @@
                             }
                         },
                         "sampleClassification": {
+                            "typeToSample": {
+                                "label": "",
+                                "ASSET": "",
+                                "RECIPE": ""
+                            },
                             "assetToSample": {
                                 "label": "",
                                 "placeholder": "",
                                 "required": ""
+                            },
+                            "recipeToSample": {
+                                "label": ""
                             },
                             "sampleScale": {
                                 "label": "",
@@ -2197,6 +2205,58 @@
                 "label": "",
                 "loading": "",
                 "tilesFailed": ""
+            },
+            "tabPlaceholder": ""
+        },
+        "regression": {
+            "bands": {
+                "regression": ""
+            },
+            "create": "",
+            "description": "",
+            "panel": {
+                "trainingData": {
+                    "form": {
+                        "eeTable": {
+                            "valueColumn": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "sampleImage": {
+                            "sampleCount": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": "",
+                                "suffix": "",
+                                "tooltip": ""
+                            },
+                            "valueBand": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "type": {
+                        "EE_TABLE": {
+                            "label": "",
+                            "tooltip": "",
+                            "title": ""
+                        },
+                        "SAMPLE_IMAGE": {
+                            "label": "",
+                            "tooltip": "",
+                            "title": ""
+                        },
+                        "RECIPE": {
+                            "label": "",
+                            "tooltip": "",
+                            "title": ""
+                        }
+                    }
+                }
             },
             "tabPlaceholder": ""
         },
