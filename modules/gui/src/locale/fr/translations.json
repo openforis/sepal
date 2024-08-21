@@ -2126,10 +2126,18 @@
                             }
                         },
                         "sampleClassification": {
+                            "typeToSample": {
+                                "label": "",
+                                "ASSET": "Asset EE",
+                                "RECIPE": "Formule"
+                            },
                             "assetToSample": {
                                 "label": "EE asset ID de la classification",
                                 "placeholder": "Entrez un ID d'asset...",
                                 "required": "Vous devez entrer un ID d'asset"
+                            },
+                            "recipeToSample": {
+                                "label": ""
                             },
                             "sampleScale": {
                                 "label": "Échelle de l'échantillonnage (m)",
@@ -2197,6 +2205,58 @@
                 "label": "Classification",
                 "loading": "{loaded} tuile(s) chargée(s) parmi {count}",
                 "tilesFailed": "Echec de {failed}"
+            },
+            "tabPlaceholder": "Classification"
+        },
+        "regression": {
+            "bands": {
+                "regression": "Régression"
+            },
+            "create": "Régression",
+            "description": "",
+            "panel": {
+                "trainingData": {
+                    "form": {
+                        "eeTable": {
+                            "valueColumn": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        },
+                        "sampleImage": {
+                            "sampleCount": {
+                                "label": "",
+                                "placeholder": "",
+                                "required": "",
+                                "suffix": "échantillons",
+                                "tooltip": ""
+                            },
+                            "valueBand": {
+                                "label": "",
+                                "placeholder": "",
+                                "tooltip": ""
+                            }
+                        }
+                    },
+                    "type": {
+                        "EE_TABLE": {
+                            "label": "Table Earth Engine",
+                            "tooltip": "",
+                            "title": "Table EE"
+                        },
+                        "SAMPLE_IMAGE": {
+                            "label": "",
+                            "tooltip": "",
+                            "title": ""
+                        },
+                        "RECIPE": {
+                            "label": "Sauvegarde de la formule SEPAL",
+                            "tooltip": "",
+                            "title": ""
+                        }
+                    }
+                }
             },
             "tabPlaceholder": "Classification"
         },
