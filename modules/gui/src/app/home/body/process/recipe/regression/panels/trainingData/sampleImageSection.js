@@ -169,7 +169,7 @@ class _SampleImageSection extends React.Component {
 
     componentDidMount() {
         const {inputs: {typeToSample, sampleCount, sampleScale}} = this.props
-        const count = sampleCount.value || '100'
+        const count = sampleCount.value || '1000'
         const scale = sampleScale.value || '30'
         sampleCount.set(count)
         sampleScale.set(scale)
