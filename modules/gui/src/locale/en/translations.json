@@ -2258,7 +2258,7 @@
                     }
                 }
             },
-            "tabPlaceholder": "Classification"
+            "tabPlaceholder": "Regression"
         },
         "classChange": {
             "create": "Class change",
