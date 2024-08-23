@@ -2236,7 +2236,9 @@
                                 "label": "",
                                 "placeholder": "",
                                 "tooltip": ""
-                            }
+                            },
+                            "noIntersection": "",
+                            "unableToSampleAllPixels": ""
                         }
                     },
                     "type": {
@@ -2258,7 +2260,7 @@
                     }
                 }
             },
-            "tabPlaceholder": "Classification"
+            "tabPlaceholder": "Régression"
         },
         "classChange": {
             "create": "",
