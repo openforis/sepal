@@ -28,13 +28,7 @@ class _Regression extends React.Component {
         this.recipeActions = RecipeActions(recipeId)
         initializeLayers({
             recipeId,
-            savedLayers,
-            // additionalFeatureLayerSources: [{
-            //     id: 'referenceData',
-            //     type: 'ReferenceData',
-            //     description: msg('featureLayerSources.ReferenceData.description'),
-            //     defaultEnabled: true
-            // }]
+            savedLayers
         })
     }
 
@@ -47,22 +41,6 @@ class _Regression extends React.Component {
             </Map>
         )
     }
-
-    // componentDidMount() {
-    // const {trainingDataSets} = this.props
-    // const referenceData = trainingDataSets
-    //     .filter(({type}) => type !== 'RECIPE')
-    //     .map(({dataSetId, referenceData}) =>
-    //         referenceData.map(point => ({...point, dataSetId}))
-    //     )
-    //     .flat()
-    // const countPerClass = {}
-    // referenceData.forEach(point => {
-    //     const pointClass = point['class']
-    //     countPerClass[pointClass] = (countPerClass[pointClass] || 0) + 1
-    // })
-    // this.recipeActions.setCountPerClass(countPerClass)
-    // }
 }
 
 const Regression = compose(
