@@ -2236,7 +2236,9 @@
                                 "label": "",
                                 "placeholder": "",
                                 "tooltip": ""
-                            }
+                            },
+                            "noIntersection": "",
+                            "unableToSampleAllPixels": ""
                         }
                     },
                     "type": {
